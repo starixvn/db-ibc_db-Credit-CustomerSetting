@@ -25,6 +25,7 @@ AS
 		- 20160406@Winnie: Implementing Group Stake Level Settings - [Redmine: #55532]
 		- 20160801@Elodie: Implementing GameBetLimit Plugin, GameStatus Plugin - [Redmine #60809]
 		- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
+		- 20170223@Elodie: Fix bug "newly created direct agent does not follow status of dummy master" - [Redmine #71925]
 							
 	*/
 BEGIN
@@ -90,7 +91,7 @@ BEGIN
 		END
 		
 		BEGIN TRY
-			IF @RoleID = 4 OR @IsDirect = 1
+			IF @RoleID = 4 OR (@IsDirect = 1 AND @RoleID = 3)
 			BEGIN
 				IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter4)
 				BEGIN
