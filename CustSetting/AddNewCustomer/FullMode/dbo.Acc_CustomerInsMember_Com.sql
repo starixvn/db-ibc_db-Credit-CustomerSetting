@@ -2427,6 +2427,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	END CATCH
 END
 
+
+
 GO 
 GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [vnteam]
 GO 
