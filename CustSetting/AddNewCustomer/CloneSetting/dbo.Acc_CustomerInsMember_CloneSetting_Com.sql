@@ -45,7 +45,8 @@ AS
 	- 20151223@Patrick: Add Max/Loss limit for RnG Casino [Redmine: #49528]
 	- 20160217@Dominic: Not allow to create a IMBC customer from MBC customer and and vice versa [Redmine: #50028]
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
-	
+	- 20170207@Elodie: Set HideGoldDeluxe = 0 for 789y site - [Redmine: #69200]
+
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -394,8 +395,8 @@ BEGIN
 				,maxpermatch154
 				,HideKeno
 				,DisableEsports
-				,CASE WHEN @Site = '789y' THEN 1 ELSE HideGoldDeluxe END AS HideGoldDeluxe
-				,CASE WHEN @Site = '789y' THEN 1 ELSE DisableGoldDeluxe END AS DisableGoldDeluxe
+				,HideGoldDeluxe 
+				,DisableGoldDeluxe
 				,HideColossusBet
 				,DisableColossusBet
 				,DisableSuperLive
