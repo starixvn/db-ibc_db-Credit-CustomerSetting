@@ -2,7 +2,7 @@
 	@custid		INT,
 	@Disable	BIT = NULL,	
 	@EnableDownlines BIT = 0,
-	
+	@SystemID	TINYINT = 1,
 	@UserID		INT = 0,
 	@SubAccID	INT = 0, --Sub-AccountID
 	@IP			VARCHAR(20)= '',
@@ -20,7 +20,10 @@
 			- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST)
 			- 20150821@Elodie: Exclude WON currency for GoldDeluxe [Redmine: #41785]
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+			- 20170203@Elodie: Change enable behavior [Redmine: #70722]
+
 		Parameter's Explanation:
+			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
 BEGIN
 	SET NOCOUNT ON 
@@ -42,7 +45,8 @@ BEGIN
 			@Disable_Old BIT,
 			@UplineDisable BIT,			
 			@HasDownline BIT = 0,
-			@Currency INT
+			@Currency INT,
+			@DisableDownlines_Old BIT = 0
 	
 	SELECT @roleid = roleid,
 			@Disable_Old = DisableGoldDeluxe, 
@@ -76,14 +80,33 @@ BEGIN
 		RETURN
 	END
 
-	IF @Disable_old = @Disable
-		RETURN
-	
 	SELECT	top 1 @HasDownline = 1 
 	FROM dbo.CustInfo WITH (NOLOCK)
 	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)
+
+	IF @HasDownline = 1
+	BEGIN
+		IF @roleid = 4 
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid = 3 AND DisableGoldDeluxe = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 3
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid = 2 AND DisableGoldDeluxe = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 2
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND DisableGoldDeluxe = 1)
+				SET @DisableDownlines_Old = 1
+		END
+	END
+
+	IF @Disable_old = @Disable AND @DisableDownlines_Old <> @EnableDownlines
+		RETURN
 	
 	IF @Disable = 0 -- check status upline
 	BEGIN
@@ -112,6 +135,24 @@ BEGIN
 		RETURN
 	END 
 	
+	IF ((@Disable = 1 AND @Disable_Old = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID <> 1 AND @roleid IN (4,3,2)
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
+						END, @ErrCode = 102
+		RETURN
+	END 
+
+	IF @Disable = 1 AND @EnableDownlines = 1
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to perform this action.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+						END, @ErrCode = 103
+		RETURN
+	END 
+
 	UPDATE dbo.CustInfo WITH(ROWLOCK, UPDLOCK)
 	SET DisableGoldDeluxe = @Disable,
 		HideGoldDeluxe = CASE WHEN HideGoldDeluxe = 1 THEN 0 ELSE HideGoldDeluxe END		
