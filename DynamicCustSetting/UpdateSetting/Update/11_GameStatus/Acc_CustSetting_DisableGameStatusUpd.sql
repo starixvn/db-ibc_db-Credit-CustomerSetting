@@ -15,7 +15,8 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 
-	Revisions:
+	Revision: 
+		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 
 	Param's Explanation:
 	• @IsDisabled

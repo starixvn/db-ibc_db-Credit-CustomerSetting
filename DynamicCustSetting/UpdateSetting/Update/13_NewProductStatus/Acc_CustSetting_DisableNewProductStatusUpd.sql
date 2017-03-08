@@ -372,6 +372,18 @@ BEGIN
 	
 	--START LOGGING			
 
+	-- Select ProductID and SettingLevel
+	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
+	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
+			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			INNER JOIN	#OldDisableStatTbl AS tmp
+					ON	psd.SportType = tmp.SportType
+					AND	psd.BetType = tmp.BetType
+			WHERE	psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+				AND psd.SettingType = 13	-- Product Status
+		 ) iq
+
 	-- Select ProductName
 	SELECT @ProductName = p.ProductName
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
