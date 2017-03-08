@@ -24,8 +24,9 @@ AS
 		- 20160309@Dominic: Support controling default product status by site and by currency - [Redmine: #53604]
 		- 20160406@Winnie: Implementing Group Stake Level Settings - [Redmine: #55532]
 		- 20160801@Elodie: Implementing GameBetLimit Plugin, GameStatus Plugin - [Redmine #60809]
-		- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
+		- 20161011@Winnie: Implement for Loss limit setting type - [RedmineID: #65472]
 		- 20170223@Elodie: Fix bug "newly created direct agent does not follow status of dummy master" - [Redmine #71925]
+		- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
 							
 	*/
 BEGIN
@@ -392,7 +393,7 @@ BEGIN
 					,dtl.SportType
 					,dtl.BetType
 					,dtl.IsLive
-					,0,0,0,0,0,0,0,0
+					,spt.SuperPT,0,0,0,0,0,0,0
 					,dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
@@ -423,7 +424,7 @@ BEGIN
 				   ,[MaxPT])
 				SELECT 
 				@custid,dtl.SportType,dtl.BetType,dtl.IsLive,
-					0,0,0,0,0,0,0,0
+					0,mpt.MasterPT,0,0,0,0,0,0
 					,dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType

@@ -875,7 +875,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20151119@Dominic: Fix bug when inserting setting into DCS structure Redmine Feature #26274
 			- 20160627@Winnie: Out right PT [Redmine #59438]  	
 			- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
-			
+			- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
 		Parameter's Explanation:
 		
 	*/
@@ -1469,33 +1469,33 @@ BEGIN
 		--insert into CustSetting3rd
 		INSERT INTO [dbo].[CustSetting3rd](custid, bettype, sporttype, apositiontaking, mpositiontaking, spositiontaking, playerdiscount, discount, adiscount, sdiscount, minbet, maxbet, autopositiontaking, isautopositiontaking, autompositiontaking, isautompositiontaking, alivepositiontaking, mlivepositiontaking, slivepositiontaking, autolivepositiontaking, isautolivepositiontaking, autolivempositiontaking, isautolivempositiontaking)
 		--v151
-		select @custid, 31, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 31, 151, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 31 AND custid = @srecommend
 		UNION ALL
-		select @custid, 32, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 41, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 42, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 51, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 52, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 32, 151, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 32 AND custid = @srecommend
+		UNION ALL					   
+		select @custid, 41, 151, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 41 AND custid = @srecommend
+		UNION ALL					   
+		select @custid, 42, 151, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 42 AND custid = @srecommend
+		UNION ALL					   
+		select @custid, 51, 151, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 51 AND custid = @srecommend
+		UNION ALL					   
+		select @custid, 52, 151, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 52 AND custid = @srecommend
 
 		--v152
 		UNION ALL
-		select @custid, 41, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 42, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 51, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 52, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 41, 152, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 41 AND custid = @srecommend
+		UNION ALL					   																																
+		select @custid, 42, 152, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 42 AND custid = @srecommend
+		UNION ALL					   																																
+		select @custid, 51, 152, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 51 AND custid = @srecommend
+		UNION ALL					   																																
+		select @custid, 52, 152, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 52 AND custid = @srecommend
 
 		--v153
 		UNION ALL
-		select @custid, 51, 153, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 51, 153, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 153 AND bettype = 51 AND custid = @srecommend
 		UNION ALL
-		select @custid, 52, 153, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 52, 153, 0, 0, spositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 153 AND bettype = 52 AND custid = @srecommend
 
 		----v201
 		--UNION ALL
@@ -1526,19 +1526,19 @@ BEGIN
 		--v180
 		
 		UNION ALL
-		select @custid, 1201, 180, 0, 0, ISNULL(@min_v180spositiontaking_1201,0), 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1201, 180, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 180 AND bettype = 1201 AND custid = @srecommend
 		UNION ALL
-		select @custid, 1231, 181, 0, 0, ISNULL(@min_v181spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1231, 181, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 181 AND bettype = 1231 AND custid = @srecommend
 		UNION ALL
-		select @custid, 1231, 182, 0, 0, ISNULL(@min_v182spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0		
+		select @custid, 1231, 182, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 182 AND bettype = 1231 AND custid = @srecommend		
 		UNION ALL
-		select @custid, 1231, 183, 0, 0, ISNULL(@min_v183spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0		
+		select @custid, 1231, 183, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 183 AND bettype = 1231 AND custid = @srecommend		
 		UNION ALL
-		select @custid, 1231, 184, 0, 0, ISNULL(@min_v184spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1231, 184, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 184 AND bettype = 1231 AND custid = @srecommend
 		UNION ALL
-		select @custid, 1231, 185, 0, 0, ISNULL(@min_v185spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1231, 185, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 185 AND bettype = 1231 AND custid = @srecommend
 		UNION ALL
-		select @custid, 1220, 186, 0, 0, ISNULL(@min_v186spositiontaking_1220,0), 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1220, 186, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 186 AND bettype = 1220 AND custid = @srecommend
 
 		
 		if @@Error <> 0
@@ -1993,34 +1993,33 @@ BEGIN
 		--UNION ALL
 		--select @custid, 3, 201, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		--v151
-		 
-		select @custid, 31, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 31, 151, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 31 AND custid = @mrecommend
 		UNION ALL
-		select @custid, 32, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 41, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 42, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 51, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 52, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 32, 151, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 32 AND custid = @mrecommend
+		UNION ALL					   
+		select @custid, 41, 151, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 41 AND custid = @mrecommend
+		UNION ALL					   
+		select @custid, 42, 151, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 42 AND custid = @mrecommend
+		UNION ALL					   
+		select @custid, 51, 151, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 51 AND custid = @mrecommend
+		UNION ALL					   
+		select @custid, 52, 151, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 52 AND custid = @mrecommend
 
 		--v152
 		UNION ALL
-		select @custid, 41, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 42, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 51, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 52, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 41, 152, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 41 AND custid = @mrecommend
+		UNION ALL					   																																
+		select @custid, 42, 152, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 42 AND custid = @mrecommend
+		UNION ALL					   																																
+		select @custid, 51, 152, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 51 AND custid = @mrecommend
+		UNION ALL					   																																
+		select @custid, 52, 152, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 52 AND custid = @mrecommend
 
 		--v153
 		UNION ALL
-		select @custid, 51, 153, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 51, 153, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 153 AND bettype = 51 AND custid = @mrecommend
 		UNION ALL
-		select @custid, 52, 153, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 52, 153, 0, mpositiontaking, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 153 AND bettype = 52 AND custid = @mrecommend
 
 		---- v161 number game
 		--custid, bettype, sporttype, apositiontaking, mpositiontaking, spositiontaking, playerdiscount, discount, adiscount, sdiscount, minbet, maxbet, autopositiontaking, isautopositiontaking, autompositiontaking, isautompositiontaking, alivepositiontaking, mlivepositiontaking, 
@@ -2043,19 +2042,19 @@ BEGIN
 		select @custid, 90, 161, 0, 0, 0, 0, @discountnumber, 0, 0, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, 0, 0, 0, @auto_v161mlivepositiontaking_90, @isauto_v161mlivepositiontaking_90
 
 		UNION ALL -- v180 virtual soccer
-		select @custid, 1201, 180, 0, ISNULL(@min_v180mpositiontaking_1201,0), 0, 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1201, 180, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 180 AND bettype = 1201 AND custid = @mrecommend
 		UNION ALL -- v181 virtual horse racing
-		select @custid, 1231, 181, 0, ISNULL(@min_v181mpositiontaking_1231,0), 0, 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1231, 181, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 181 AND bettype = 1231 AND custid = @mrecommend
 		UNION ALL -- v182 Virtual Greyhounds
-		select @custid, 1231, 182, 0, ISNULL(@min_v182mpositiontaking_1231,0), 0, 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1231, 182, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 182 AND bettype = 1231 AND custid = @mrecommend
 		UNION ALL -- v183 Virtual Speedway
-		select @custid, 1231, 183, 0, ISNULL(@min_v183mpositiontaking_1231,0), 0, 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1231, 183, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 183 AND bettype = 1231 AND custid = @mrecommend
 		UNION ALL -- v184 Virtual Motor Racing
-		select @custid, 1231, 184, 0, ISNULL(@min_v184mpositiontaking_1231,0), 0, 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1231, 184, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 184 AND bettype = 1231 AND custid = @mrecommend
 		UNION ALL -- v185 Virtual Cycling
-		select @custid, 1231, 185, 0, ISNULL(@min_v185mpositiontaking_1231,0), 0, 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 1231, 185, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 185 AND bettype = 1231 AND custid = @mrecommend
 		UNION ALL -- v186 virtual tennis
-		select @custid, 1220, 186, 0, ISNULL(@min_v186mpositiontaking_1220,0), 0, 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0		
+		select @custid, 1220, 186, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 186 AND bettype = 1220 AND custid = @mrecommend		
 
 		if @@error <> 0
 		BEGIN
@@ -2524,34 +2523,33 @@ BEGIN
 		--select @custid, 3, 201, 0, @v201mpositiontaking_3, @v201spositiontaking_3, 0, @v201discount, @v201adiscount, @v201sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 		--v151
-
-		select @custid, 31, 151, 0, @v151mpositiontaking_31, @v151spositiontaking_31, @v151playerdiscount_31, @v151discount_31, @v151adiscount_31, @v151sdiscount_31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 31, 151, apositiontaking, @v151mpositiontaking_31, @v151spositiontaking_31, @v151playerdiscount_31, @v151discount_31, @v151adiscount_31, @v151sdiscount_31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 31 AND custid = @recommend
 		UNION ALL
-		select @custid, 32, 151, 0, @v151mpositiontaking_32, @v151spositiontaking_32, @v151playerdiscount_31, @v151discount_31, @v151adiscount_31, @v151sdiscount_31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 32, 151, apositiontaking, @v151mpositiontaking_32, @v151spositiontaking_32, @v151playerdiscount_31, @v151discount_31, @v151adiscount_31, @v151sdiscount_31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 32 AND custid = @recommend 
 		UNION ALL
-		select @custid, 41, 151, 0, @v151mpositiontaking_41, @v151spositiontaking_41, @v151playerdiscount_41, @v151discount_41, @v151adiscount_41, @v151sdiscount_41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 41, 151, apositiontaking, @v151mpositiontaking_41, @v151spositiontaking_41, @v151playerdiscount_41, @v151discount_41, @v151adiscount_41, @v151sdiscount_41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 41 AND custid = @recommend
 		UNION ALL
-		select @custid, 42, 151, 0, @v151mpositiontaking_42, @v151spositiontaking_42, @v151playerdiscount_41, @v151discount_41, @v151adiscount_41, @v151sdiscount_41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 42, 151, apositiontaking, @v151mpositiontaking_42, @v151spositiontaking_42, @v151playerdiscount_41, @v151discount_41, @v151adiscount_41, @v151sdiscount_41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 42 AND custid = @recommend
 		UNION ALL
-		select @custid, 51, 151, 0, @v151mpositiontaking_51, @v151spositiontaking_51, @v151playerdiscount_51, @v151discount_51, @v151adiscount_51, @v151sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 51, 151, apositiontaking, @v151mpositiontaking_51, @v151spositiontaking_51, @v151playerdiscount_51, @v151discount_51, @v151adiscount_51, @v151sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 51 AND custid = @recommend
 		UNION ALL
-		select @custid, 52, 151, 0, @v151mpositiontaking_52, @v151spositiontaking_52, @v151playerdiscount_51, @v151discount_51, @v151adiscount_51, @v151sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 52, 151, apositiontaking, @v151mpositiontaking_52, @v151spositiontaking_52, @v151playerdiscount_51, @v151discount_51, @v151adiscount_51, @v151sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 151 AND bettype = 52 AND custid = @recommend
 
 		--v152
 		UNION ALL
-		select @custid, 41, 152, 0, @v152mpositiontaking_41, @v152spositiontaking_41, @v152playerdiscount_41, @v152discount_41, @v152adiscount_41, @v152sdiscount_41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 41, 152, apositiontaking, @v152mpositiontaking_41, @v152spositiontaking_41, @v152playerdiscount_41, @v152discount_41, @v152adiscount_41, @v152sdiscount_41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 41 AND custid = @recommend
 		UNION ALL
-		select @custid, 42, 152, 0, @v152mpositiontaking_42, @v152spositiontaking_42, @v152playerdiscount_41, @v152discount_41, @v152adiscount_41, @v152sdiscount_41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 42, 152, apositiontaking, @v152mpositiontaking_42, @v152spositiontaking_42, @v152playerdiscount_41, @v152discount_41, @v152adiscount_41, @v152sdiscount_41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 42 AND custid = @recommend
 		UNION ALL
-		select @custid, 51, 152, 0, @v152mpositiontaking_51, @v152spositiontaking_51, @v152playerdiscount_51, @v152discount_51, @v152adiscount_51, @v152sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 51, 152, apositiontaking, @v152mpositiontaking_51, @v152spositiontaking_51, @v152playerdiscount_51, @v152discount_51, @v152adiscount_51, @v152sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 51 AND custid = @recommend
 		UNION ALL
-		select @custid, 52, 152, 0, @v152mpositiontaking_52, @v152spositiontaking_52, @v152playerdiscount_51, @v152discount_51, @v152adiscount_51, @v152sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 52, 152, apositiontaking, @v152mpositiontaking_52, @v152spositiontaking_52, @v152playerdiscount_51, @v152discount_51, @v152adiscount_51, @v152sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 152 AND bettype = 52 AND custid = @recommend
 
 		--v153
 		UNION ALL
-		select @custid, 51, 153, 0, @v153mpositiontaking_51, @v153spositiontaking_51, @v153playerdiscount_51, @v153discount_51, @v153adiscount_51, @v153sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 51, 153, apositiontaking, @v153mpositiontaking_51, @v153spositiontaking_51, @v153playerdiscount_51, @v153discount_51, @v153adiscount_51, @v153sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 153 AND bettype = 51 AND custid = @recommend
 		UNION ALL
-		select @custid, 52, 153, 0, @v153mpositiontaking_52, @v153spositiontaking_52, @v153playerdiscount_51, @v153discount_51, @v153adiscount_51, @v153sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 52, 153, apositiontaking, @v153mpositiontaking_52, @v153spositiontaking_52, @v153playerdiscount_51, @v153discount_51, @v153adiscount_51, @v153sdiscount_51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 153 AND bettype = 52 AND custid = @recommend
 
 		--v161
 		UNION ALL
