@@ -56,6 +56,7 @@ BEGIN
 		- 20160810@Winnie: #61733 add more bettype VIP Barcarat setting
 		- 20170120@Elodie: Don't offer Massac(1507), Malta(1509) anymore [#70693]
 		- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
+		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -158,7 +159,7 @@ BEGIN
 	BEGIN
 		SET @IsHidden_NG2 = 0
 	END
-	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,4))
+	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,13))
 	BEGIN
 		SET @IsHidden_FishingWorld = 0
 	END
@@ -436,13 +437,15 @@ BEGIN
 
 	DROP TABLE #memberList
 END
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelByAg] TO [vnteam] AS [dbo]
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelByAg] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbDownlineNetView]
+GO 
+ GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbAdminNet]
+GO 
+ GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbDownlineNet]
+GO 
+ GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbExtAccNet]
+GO 

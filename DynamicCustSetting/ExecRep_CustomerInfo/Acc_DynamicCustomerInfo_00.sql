@@ -25,9 +25,9 @@ AS
 		- 20160406@Winnie: Implementing Group Stake Level Settings - [Redmine: #55532]
 		- 20160801@Elodie: Implementing GameBetLimit Plugin, GameStatus Plugin - [Redmine #60809]
 		- 20161011@Winnie: Implement for Loss limit setting type - [RedmineID: #65472]
+		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]					
 		- 20170223@Elodie: Fix bug "newly created direct agent does not follow status of dummy master" - [Redmine #71925]
 		- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
-							
 	*/
 BEGIN
 	SELECT @ErrCode = 0
@@ -43,13 +43,13 @@ BEGIN
 		DECLARE @xmlStrHidden XML
 		DECLARE @xmlStrSync XML
 
-		/********************************************* Product Status: SettingType = 4 ************************************/
+		/*********************** Product Status: SettingType = 4 & New Product Status: SettingType = 13**************************/
 		--Get sporttype/Bettype for this setting type	
 		SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
 		INTO #SportBettypeFilter4
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.[SportType] = psd.[SportType]	AND pbs.[BetType] = psd.[BetType]
-		WHERE psd.SettingType = 4
+		WHERE psd.SettingType = 4 OR psd.SettingType = 13
 			
 		----Hard code to hide CF if Upline is a dummy Super or Master
 		DECLARE @DirectUplineID INT, @IsDirect BIT = 0
@@ -300,7 +300,7 @@ BEGIN
 			INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden)
 			SELECT ProductID, SportType, BetType, IsHidden
 			FROM dbo.ProductSettingDetail WITH (NOLOCK)
-			WHERE SettingType IN (4,11)
+			WHERE SettingType IN (4,11,13)
 		
 			UPDATE op
 			SET op.IsHidden = stt.IsHidden
@@ -326,7 +326,7 @@ BEGIN
 				  ,IsLive
 			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 				INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.ProductID = op.ProductID
-			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11)
+			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
 		END
 
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
@@ -1533,3 +1533,6 @@ BEGIN
 	END
 	
 END
+GO
+
+

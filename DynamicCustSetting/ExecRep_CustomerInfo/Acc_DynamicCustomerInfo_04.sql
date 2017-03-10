@@ -12,7 +12,7 @@ AS
 	Revision: 
 		- 20160801@Elodie: Implement Game status (setting type = 11) - [Redmine: #60809]   
 		- 20170103@Elodie: Unhide all bettype although 1 bettype is enabled - [Redmine: #69679]   
-
+		- 20170307@Elodie: Implement New Product status (setting type = 13) - [Redmine: #70722]    
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -63,7 +63,7 @@ BEGIN
 			SELECT TOP 1 @ProductID = ps.ProductID
 			FROM #NewDisableStatTbl dis 
 				INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
-			WHERE dis.IsDisabled = 0 AND IsDisabledDownline = 0 AND ps.SettingType = 4
+			WHERE dis.IsDisabled = 0 AND IsDisabledDownline = 0 AND ps.SettingType IN (4,13)
 
 			SET @xmlStrHidden = (
 				SELECT (
@@ -71,7 +71,7 @@ BEGIN
 							, 0	AS '@s'
 						FROM ProductStatusProfile psp (NOLOCK)
 							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
-						WHERE ps.ProductID = @ProductID AND ps.SettingType = 4
+						WHERE ps.ProductID = @ProductID AND ps.SettingType IN (4,13)
 						FOR XML PATH('r')
 							, TYPE
 						)

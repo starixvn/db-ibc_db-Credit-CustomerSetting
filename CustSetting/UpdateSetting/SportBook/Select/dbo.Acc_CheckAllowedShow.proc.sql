@@ -34,6 +34,8 @@ Revisions:
 	- 20160801@Elodie: NG2 Product - [Redmine: #60809]
 	- 20161024@Elodie: Move to DBCUST/CustDB
 	- 20161115@Winnie: Fishing World - [Redmine: #62547]
+	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
+
 */
 
 	SET NOCOUNT ON
@@ -81,7 +83,7 @@ Revisions:
 	BEGIN
 		SET @IsHideVoidBridge = 0
 	END	
-	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,4))
+	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,13))
 	BEGIN
 		SET @IsHideFishingWorld = 0
 	END
@@ -97,7 +99,7 @@ Revisions:
 	INNER JOIN	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
 			ON	psd.SportType = psp.Sporttype
 			AND	psd.BetType = psp.Bettype
-			AND	psd.SettingType = 4
+			AND	psd.SettingType = 13
 	WHERE	cps.CustID = @CustID
 		AND	psd.ProductID = @FishingWorld
 		

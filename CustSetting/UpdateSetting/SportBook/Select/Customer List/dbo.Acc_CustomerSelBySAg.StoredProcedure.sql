@@ -54,7 +54,7 @@ AS
 		- 20160810@Winnie: #61733 add more bettype VIP Barcarat setting
 		- 20170120@Elodie: Don't offer Massac(1507), Malta(1509) anymore [#70693]
 		- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
-
+		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -258,7 +258,7 @@ BEGIN
 		SET @IsHidden_VoidBridge = 0
 	END
 	
-	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,4))
+	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,13))
 	BEGIN
 		SET @IsHidden_FishingWorld = 0
 	END
@@ -521,10 +521,8 @@ BEGIN
 		LEFT JOIN keno k ON ctm.custid = k.CustID	
 	ORDER BY  t.RowNumber	
 	
-	
-	
-	
 END
+
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerSelBySAg] TO [bodbAdminNet] AS [dbo]
 GO

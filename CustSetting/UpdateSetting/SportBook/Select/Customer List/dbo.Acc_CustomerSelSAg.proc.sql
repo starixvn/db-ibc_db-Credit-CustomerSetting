@@ -55,6 +55,7 @@ Revisions:
 	- 20160801@Elodie: NG2 Product - [Redmine: #60809]
 	- 20170120@Elodie: Don't offer Massac(1507), Malta(1509) anymore [#70693]
 	- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
+	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 
 Pattern Explanation:
 Search keyword: '%keyword%'
@@ -153,7 +154,7 @@ B: 'B%'
 	BEGIN
 		SET @IsHidden_NG2 = 0
 	END
-	 IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,4))
+	 IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,13))
 	BEGIN
 		SET @IsHidden_FishingWorld = 0
 	END
@@ -562,6 +563,8 @@ B: 'B%'
 		WHERE a.RowNumber BETWEEN @RowStart AND @RowEnd
 	END
 END
+
+
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerSelSAg] TO [bodbAdminNet] AS [dbo]
 GO

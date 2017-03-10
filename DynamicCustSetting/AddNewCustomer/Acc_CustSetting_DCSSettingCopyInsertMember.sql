@@ -23,6 +23,7 @@ AS
 		- 20160711@Winnie: fix bug #60611 [NAP - Copy New Member: a single log is written for both Allbet and Macau Games when copying]
 		- 20160801@Elodie: Implementing BetGameLimit Settings, GameStatus Setting - [Redmine: #60809]
 		- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
+		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -466,7 +467,7 @@ BEGIN
 	
 		SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlWinLossLimit)
 
-		EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
+				EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
 			  @CustID = @CustID
 			, @Limit = @xmlStr
 			, @SettingType = 6
@@ -787,7 +788,7 @@ BEGIN
 		
 			SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlLossLimit)
 
-			EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
+						EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
 				  @CustID = @CustID
 				, @Limit = @xmlStr
 				, @SettingType = 12
@@ -799,6 +800,76 @@ BEGIN
 			DELETE FROM	#TempLLimit WHERE ProductID=@ProductID12
 		END
 			
+	END
+
+	/********************************************* New Product Status: SettingType = 13 ************************************/
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13))
+	BEGIN
+		DECLARE @ProductID13 INT
+		CREATE TABLE #TempProductStatus (ProductID INT)
+		DECLARE @NewDisableProductStatTbl TABLE(
+			SportType				SMALLINT
+			, BetType				SMALLINT
+			, IsDisabled			BIT
+			, IsDisabledDownline	BIT
+			)
+	
+		INSERT INTO @NewDisableProductStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
+		SELECT psp.SportType
+			, psp.BetType		
+			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
+			, 0 AS IsDisabledDownline
+		FROM dbo.CustProductStatus stt WITH (NOLOCK) 
+			CROSS JOIN ProductStatusProfile PSP WITH (NOLOCK)
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
+		WHERE stt.CustID = @ExistingCustID
+
+		INSERT INTO #TempProductStatus(ProductID)	
+			SELECT 
+					DISTINCT
+					psd.ProductID				
+			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			INNER JOIN	@NewDisableProductStatTbl AS ts
+					ON	ts.SportType = psd.SportType
+					AND	ts.BetType = psd.BetType
+			WHERE psd.SettingType = 13
+				AND	psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+				
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempProductStatus)
+		BEGIN
+			SELECT TOP 1 @ProductID13 = ProductID FROM #TempProductStatus		
+			SET @xmlStatus = (SELECT (
+									SELECT nslt.SportType	AS '@SportType'
+										, nslt.BetType		AS '@BetType'
+										, nslt.IsDisabled	AS '@IsDisabled'
+										, nslt.IsDisabledDownline AS '@IsDisabledDownline'
+									FROM @NewDisableProductStatTbl nslt								
+										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+											WHERE psd.SettingType = 13 AND psd.ProductID = @ProductID13
+									FOR XML PATH('ProductStatus')
+										, TYPE
+									)
+							FOR XML PATH('ROOT')
+								, TYPE
+							)
+
+			SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlStatus)
+
+			IF EXISTS(SELECT TOP 1 1 FROM @NewDisableProductStatTbl)
+			BEGIN
+				EXEC Acc_CustSetting_DisableNewProductStatusUpd
+					  @CustID = @CustID
+					, @IsDisabled = @xmlStr
+					, @SubAccID = @SubAccID
+					, @IP = @IP
+					, @SystemID = 1
+					, @UserID = @UserID
+					, @ErrCode = @ErrCode OUTPUT
+					, @ErrMsg = @ErrMsg OUTPUT			
+			END
+			DELETE FROM	#TempProductStatus WHERE ProductID = @ProductID13
+		END
 	END
 END
 

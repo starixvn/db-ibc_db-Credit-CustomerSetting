@@ -16,8 +16,10 @@ AS
   - 20160413@Billy: Remove Site Currency check - [Redmine: #54672]  
   - 20160429@Winnie: Return column IsHiddenUpline for AllBet, VoidBridge  
   - 20160801@Elodie: Get Game status (setting type = 11) - [Redmine: #60809]   
+  - 20170307@Elodie: Get New product status (setting type = 13) - [Redmine: #70722]   
  Param's Explanation:  
- - @CustID:   
+ - @CustID: 
+ Example: EXEC Acc_CustSetting_StatusSettingSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
    
  */  
 BEGIN  
@@ -43,6 +45,11 @@ BEGIN
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11)
 	WHERE @SettingType IS NULL OR @SettingType = 11
+
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13)
+	WHERE @SettingType IS NULL OR @SettingType = 13
 
 	--DELETE sbf  
 	--FROM  #SportBettypeFilter sbf  
@@ -79,10 +86,10 @@ BEGIN
 			1 AS isSyncedUpline,
 			ISNULL(@downlines,0) As HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType  
+			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
-		WHERE pdt.SettingType IN (4,11) AND (@SettingType IS NULL OR pdt.SettingType = @SettingType)
+		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
     
 	END  
 	ELSE IF @RoleID = 3  
@@ -114,11 +121,11 @@ BEGIN
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) as IsSyncedUpline,  
 			ISNULL(@downlines,0) As HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType  
+			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @SuperID  
-		WHERE pdt.SettingType IN (4,11) AND (@SettingType IS NULL OR pdt.SettingType = @SettingType)
+		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 	END     
 	ELSE IF @RoleID = 2  
 	BEGIN  
@@ -149,11 +156,11 @@ BEGIN
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) AS IsSyncedUpline,  
 			ISNULL(@downlines,0) As HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType  
+			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @MasterID  
-		WHERE pdt.SettingType IN (4,11) AND (@SettingType IS NULL OR pdt.SettingType = @SettingType)
+		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 	END   
 	ELSE IF @RoleID = 1  
 	BEGIN  
@@ -169,13 +176,14 @@ BEGIN
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) as IsSyncedUpline,  
 			0 As HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType  
+			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @AgentID  
-		WHERE pdt.SettingType IN (4,11) AND (@SettingType IS NULL OR pdt.SettingType = @SettingType)  
+		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 	END   
 END
+
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustSetting_StatusSettingSelect] TO [bodbadminNet]
 GO
