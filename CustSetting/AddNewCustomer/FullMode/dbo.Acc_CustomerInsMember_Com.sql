@@ -1,3 +1,8 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -86,6 +91,10 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@MaxPerMatchv161 MONEY,
 
 	@MaxPerBallv161 MONEY = 0,		
+	-- BAIO
+	@v2spositiontaking_9999 SMALLMONEY = 0,
+	@v2mpositiontaking_9999 SMALLMONEY =0,
+	@v2apositiontaking_9999 SMALLMONEY =0,
 	
 	@spositiontaking_1 SMALLMONEY,
 	@spositiontaking_2 SMALLMONEY,
@@ -418,6 +427,7 @@ Revisions:
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20161223@Winnie: Hot Fix  Show Fishing World logs although this Product is not released to PROD yet [Redmine:69236]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]					
+	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -723,6 +733,11 @@ BEGIN
 				@v99apositiontaking_9 = @v99apositiontaking_9,
 				@v99apositiontaking_20 = @v99apositiontaking_20,
 				
+				-- BAIO
+				@v2spositiontaking_9999 = @v2spositiontaking_9999,
+				@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
+				@v2apositiontaking_9999 = @v2apositiontaking_9999,
+	
 				--HR Fixed Odds
 				@v154apositiontaking_20 = @v154apositiontaking_20,
 				
@@ -1139,6 +1154,11 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
 		@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
 		
+		-- BAIO
+		@v2spositiontaking_9999 = @v2spositiontaking_9999,
+		@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
+		@v2apositiontaking_9999 = @v2apositiontaking_9999,
+				
 		@MinBet = @MinBet,
 		@MaxBet = @MaxBet,	
 		@MinBetv2 = @MinBetv2,
@@ -1967,7 +1987,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v2spt_8="'+ COALESCE(CAST(@v2spositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	--'v2spt_9="'+ coalesce(cast(@v2spositiontaking_9 as varchar(50)),space(1)) + '" ' +
 	'v2spt_20="'+ COALESCE(CAST(@v2spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	--BAIO
+	'v2spt_9999="'+ COALESCE(CAST(@v2spositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	
 	'v3spt_1="'+ COALESCE(CAST(@v3spositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v3spt_2="'+ COALESCE(CAST(@v3spositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v3spt_3="'+ COALESCE(CAST(@v3spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2041,7 +2063,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v2mpt_8="'+ COALESCE(CAST(@v2mpositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	--'v2mpt_9="'+ coalesce(cast(@v2mpositiontaking_9 as varchar(50)),space(1)) + '" ' +
 	'v2mpt_20="'+ COALESCE(CAST(@v2mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	--BAIO 
+	'v2mpt_9999="'+ COALESCE(CAST(@v2mpositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	
 	'v3mpt_1="'+ COALESCE(CAST(@v3mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v3mpt_2="'+ COALESCE(CAST(@v3mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v3mpt_3="'+ COALESCE(CAST(@v3mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2115,7 +2139,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v2apt_8="'+ COALESCE(CAST(@v2apositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	--'v2apt_9="'+ coalesce(cast(@v2apositiontaking_9 as varchar(50)),space(1)) + '" ' +
 	'v2apt_20="'+ COALESCE(CAST(@v2apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	-- BAIO
+	'v2apt_9999="'+ COALESCE(CAST(@v2apositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	
 	'v3apt_1="'+ COALESCE(CAST(@v3apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v3apt_2="'+ COALESCE(CAST(@v3apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v3apt_3="'+ COALESCE(CAST(@v3apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2198,7 +2224,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v2spt_8="'+ COALESCE(CAST(@v2spositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		--'v2spt_9="'+ coalesce(cast(@v2spositiontaking_9 as varchar(50)),space(1)) + '" ' +
 		'v2spt_20="'+ COALESCE(CAST(@v2spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+		-- BAIO
+		'v2spt_9999="'+ COALESCE(CAST(@v2spositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		
 		'v3spt_1="'+ COALESCE(CAST(@v3spositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v3spt_2="'+ COALESCE(CAST(@v3spositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v3spt_3="'+ COALESCE(CAST(@v3spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2272,7 +2300,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v2mpt_8="'+ COALESCE(CAST(@v2mpositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		--'v2mpt_9="'+ coalesce(cast(@v2mpositiontaking_9 as varchar(50)),space(1)) + '" ' +
 		'v2mpt_20="'+ COALESCE(CAST(@v2mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+		--BAIO
+		'v2mpt_9999="'+ COALESCE(CAST(@v2mpositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		
 		'v3mpt_1="'+ COALESCE(CAST(@v3mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v3mpt_2="'+ COALESCE(CAST(@v3mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v3mpt_3="'+ COALESCE(CAST(@v3mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2346,7 +2376,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v2apt_8="'+ COALESCE(CAST(@v2apositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		--'v2apt_9="'+ coalesce(cast(@v2apositiontaking_9 as varchar(50)),space(1)) + '" ' +
 		'v2apt_20="'+ COALESCE(CAST(@v2apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+		--BAIO
+		'v2apt_9999="'+ COALESCE(CAST(@v2apositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		
 		'v3apt_1="'+ COALESCE(CAST(@v3apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v3apt_2="'+ COALESCE(CAST(@v3apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v3apt_3="'+ COALESCE(CAST(@v3apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +

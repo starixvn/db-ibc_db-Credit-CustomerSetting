@@ -1,3 +1,8 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Acc_CustSetting_06]
     @CustId              INT
   , @RoleId              INT
@@ -42,6 +47,7 @@ AS
 		- 20160621@Winnie: Add more customers not give commission [Redmine: #58999]		
 		- 20160901@Winnie: Add more customer ALHKD not give commission [Redmine: #58999]	
 		- 20160909@Winnie: Create the table CustNoComm to save customers not give commission [Redmine: #63736]	
+		- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
     Param's Explanation: 
 
     */

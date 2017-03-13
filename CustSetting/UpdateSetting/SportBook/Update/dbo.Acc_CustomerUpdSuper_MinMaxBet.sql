@@ -1,4 +1,9 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_MinMaxBet]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_MinMaxBet]
 	@custid int,
 	
 	@MinBet money,

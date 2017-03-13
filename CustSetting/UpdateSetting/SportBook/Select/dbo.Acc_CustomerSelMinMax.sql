@@ -1,4 +1,9 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
 	@custid int,	
 	@MinBet money output, @MaxBet money output, @MaxPerMatch money output,
 	@MinBetv2 money output, @MaxBetv2 money output, @MaxPerMatchv2 money output,
@@ -16,13 +21,13 @@ AS
 /*
 Created: 20110427@Simon
 Task : Select customer minbet, maxbet, maxpermatch. 
-DB: DBTXN/bodb02
+DB: DBCUST/CUSTDB
 Original:
 
 Revisions:
     - 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
-    
+    - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 Param's Explanation:
 • @custid: custid that need to be viewed.   
 */
@@ -39,7 +44,7 @@ BEGIN
 		@MinBetv2 = isnull(MinBet,0), 
 		@MaxBetv2 = isnull(MaxBet,0)
 	from custsetting WITH (NOLOCK)		
-	where custid = @CustID and bettype = 1 and sporttype=2
+	where custid = @CustID and bettype = 9999 and sporttype=2
 
 	Select 
 		@MinBetv3 = isnull(MinBet,0), 

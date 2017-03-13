@@ -1,14 +1,9 @@
-USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuper_All]    Script Date: 06/10/2015 14:59:56 ******/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuper_All    Script Date: 8/28/2014 2:05:03 AM ******/
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuper_All    Script Date: 8/21/2014 3:12:18 PM ******/
 
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuper_All    Script Date: 8/21/2014 2:58:06 PM ******/
 
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @custid int,-- superid
@@ -101,6 +96,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v2spositiontaking_8 smallmoney,
     --@v2spositiontaking_9 smallmoney,
     @v2spositiontaking_20 smallmoney,
+    @v2spositiontaking_9999 smallmoney = 0,
 
     @v3spositiontaking_1 smallmoney,
     @v3spositiontaking_2 smallmoney,
@@ -170,6 +166,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v2mpositiontaking_8 smallmoney = 0.7,
     --@v2mpositiontaking_9 smallmoney = 0.7,
     @v2mpositiontaking_20 smallmoney = 0.7,
+    @v2mpositiontaking_9999 smallmoney = 0.7,
 
     @v3mpositiontaking_1 smallmoney = 0.7,
     @v3mpositiontaking_2 smallmoney = 0.7,
@@ -240,6 +237,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v2apositiontaking_8 smallmoney = 0.7,
     --@v2apositiontaking_9 smallmoney = 0.7,
     @v2apositiontaking_20 smallmoney = 0.7,
+    @v2apositiontaking_9999 smallmoney = 0.7,
 
     @v3apositiontaking_1 smallmoney = 0.7,
     @v3apositiontaking_2 smallmoney = 0.7,
@@ -357,6 +355,7 @@ Revisions:
     - 20160310@Winnie: Fix bug #53736[Edit SB: Email is cleared when updating without any change in Edit SB page]
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
+    - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
     
 • @ErrCode:
     = 0: Update successfully.
@@ -503,7 +502,7 @@ Revisions:
 	from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 1
 
 	select @discountcs_old = sdiscount
-	from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 4
+	from custsetting (nolock) where custid = @custid and sporttype = 2 and bettype = 9999
 
 	--1x2
 	select @discount1x2_old = sdiscount
@@ -663,6 +662,8 @@ Revisions:
 		@v2spositiontaking_8_old smallmoney,
 		--@v2spositiontaking_9_old smallmoney,
 		@v2spositiontaking_20_old smallmoney,
+		@v2spositiontaking_9999_old smallmoney,
+		
 		@v3spositiontaking_1_old smallmoney,
 		@v3spositiontaking_2_old smallmoney,
 		@v3spositiontaking_3_old smallmoney,
@@ -725,6 +726,8 @@ Revisions:
 		@v2mpositiontaking_8_old smallmoney,
 		--@v2mpositiontaking_9_old smallmoney,
 		@v2mpositiontaking_20_old smallmoney,
+		@v2mpositiontaking_9999_old smallmoney,
+		
 		@v3mpositiontaking_1_old smallmoney,
 		@v3mpositiontaking_2_old smallmoney,
 		@v3mpositiontaking_3_old smallmoney,
@@ -788,6 +791,8 @@ Revisions:
 		@v2apositiontaking_8_old smallmoney,
 		--@v2apositiontaking_9_old smallmoney,
 		@v2apositiontaking_20_old smallmoney,
+		@v2apositiontaking_9999_old smallmoney,
+		
 		@v3apositiontaking_1_old smallmoney,
 		@v3apositiontaking_2_old smallmoney,
 		@v3apositiontaking_3_old smallmoney,
@@ -884,6 +889,7 @@ Revisions:
 	select @v2spositiontaking_8_old = spositiontaking, @v2mpositiontaking_8_old = mpositiontaking, @v2apositiontaking_8_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=8 and sporttype=2
 	--select @v2spositiontaking_9_old = spositiontaking, @v2mpositiontaking_9_old = mpositiontaking, @v2apositiontaking_9_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=2
 	select @v2spositiontaking_20_old = spositiontaking, @v2mpositiontaking_20_old = mpositiontaking, @v2apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=2
+	select @v2spositiontaking_9999_old = spositiontaking, @v2mpositiontaking_9999_old = mpositiontaking, @v2apositiontaking_9999_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9999 and sporttype=2
 
 	select @v3spositiontaking_1_old = spositiontaking, @v3mpositiontaking_1_old = mpositiontaking, @v3apositiontaking_1_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=1 and sporttype=3
 	select @v3spositiontaking_2_old = spositiontaking, @v3mpositiontaking_2_old = mpositiontaking, @v3apositiontaking_2_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=2 and sporttype=3
@@ -950,6 +956,8 @@ Revisions:
 		@v2spositiontaking_8 <> @v2spositiontaking_8_old or
 		--@v2spositiontaking_9 <> @v2spositiontaking_9_old or
 		@v2spositiontaking_20 <> @v2spositiontaking_20_old or
+		@v2spositiontaking_9999 <> @v2spositiontaking_9999_old or
+		
 		@v3spositiontaking_1 <> @v3spositiontaking_1_old or
 		@v3spositiontaking_2 <> @v3spositiontaking_2_old or
 		@v3spositiontaking_3 <> @v3spositiontaking_3_old or
@@ -1012,6 +1020,8 @@ Revisions:
 		@v2mpositiontaking_8 <> @v2mpositiontaking_8_old or
 		--@v2mpositiontaking_9 <> @v2mpositiontaking_9_old or
 		@v2mpositiontaking_20 <> @v2mpositiontaking_20_old or
+		@v2mpositiontaking_9999 <> @v2mpositiontaking_9999_old or
+		
 		@v3mpositiontaking_1 <> @v3mpositiontaking_1_old or
 		@v3mpositiontaking_2 <> @v3mpositiontaking_2_old or
 		@v3mpositiontaking_3 <> @v3mpositiontaking_3_old or
@@ -1075,6 +1085,8 @@ Revisions:
 		@v2apositiontaking_8 <> @v2apositiontaking_8_old or
 		--@v2apositiontaking_9 <> @v2apositiontaking_9_old or
 		@v2apositiontaking_20 <> @v2apositiontaking_20_old or
+		@v2apositiontaking_9999 <> @v2apositiontaking_9999_old or
+		
 		@v3apositiontaking_1 <> @v3apositiontaking_1_old or
 		@v3apositiontaking_2 <> @v3apositiontaking_2_old or
 		@v3apositiontaking_3 <> @v3apositiontaking_3_old or
@@ -1166,6 +1178,8 @@ Revisions:
 			@v2spositiontaking_8 = @v2spositiontaking_8,
 			--@v2spositiontaking_9 = @v2spositiontaking_9,
 			@v2spositiontaking_20 = @v2spositiontaking_20,
+			@v2spositiontaking_9999 = @v2spositiontaking_9999,
+			
 			@v3spositiontaking_1 = @v3spositiontaking_1,
 			@v3spositiontaking_2 = @v3spositiontaking_2,
 			@v3spositiontaking_3 = @v3spositiontaking_3,
@@ -1227,6 +1241,8 @@ Revisions:
 			@v2mpositiontaking_8 = @v2mpositiontaking_8,
 			--@v2mpositiontaking_9 = @v2mpositiontaking_9,
 			@v2mpositiontaking_20 = @v2mpositiontaking_20,
+			@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
+			
 			@v3mpositiontaking_1 = @v3mpositiontaking_1,
 			@v3mpositiontaking_2 = @v3mpositiontaking_2,
 			@v3mpositiontaking_3 = @v3mpositiontaking_3,
@@ -1288,6 +1304,8 @@ Revisions:
 			@v2apositiontaking_8 = @v2apositiontaking_8,
 			--@v2apositiontaking_9 = @v2apositiontaking_9,
 			@v2apositiontaking_20 = @v2apositiontaking_20,
+			@v2apositiontaking_9999 = @v2apositiontaking_9999,
+			
 			@v3apositiontaking_1 = @v3apositiontaking_1,
 			@v3apositiontaking_2 = @v3apositiontaking_2,
 			@v3apositiontaking_3 = @v3apositiontaking_3,

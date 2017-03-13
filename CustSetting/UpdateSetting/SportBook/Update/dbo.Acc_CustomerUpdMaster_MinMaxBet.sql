@@ -1,4 +1,9 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_MinMaxBet]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_MinMaxBet]
 	@custid int,-- masterid
 	
 	@minbet money,
@@ -105,6 +110,7 @@ Revisions:
 	- 20150714@Johnson: Write log value from db if not change when update multiple [Redmine: #39555]
 	- 20160712@Helen: Mixed Sports Parlay Min & Max Bet log is always written using OtherSports Min & Max Bet value when user update Bet Limit of other sports [Redmine: 60571]
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
+	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	
 Param's Explanation:
 • @ErrCode:
@@ -661,7 +667,7 @@ BEGIN
 		@MinMinBetv2 = MinBet,
 		@MaxMaxBetv2 = MaxBet
 	From custsetting with (NOLOCK)
-	where CustID = @srecommend and bettype=1 and sporttype=2
+	where CustID = @srecommend and bettype=9999 and sporttype=2
 
 	Select 
 		@MinMinBetv3 = MinBet,

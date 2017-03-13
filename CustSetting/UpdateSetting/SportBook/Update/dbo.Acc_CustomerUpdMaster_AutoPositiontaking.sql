@@ -1,10 +1,8 @@
-
-SET QUOTED_IDENTIFIER ON 
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
 GO
-SET ANSI_NULLS ON 
+SET QUOTED_IDENTIFIER ON
 GO
-
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdMaster_AutoPositiontaking    Script Date: 8/21/2014 3:12:20 PM ******/
 
 /****** Object:  Stored Procedure dbo.Acc_CustomerUpdMaster_AutoPositiontaking    Script Date: 8/21/2014 2:58:11 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking]
@@ -33,6 +31,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking]
     @auto_v2spositiontaking_8 smallmoney = 0,
 --    @auto_v2spositiontaking_9 smallmoney = 0,
     @auto_v2spositiontaking_20 smallmoney = 0,
+    @auto_v2spositiontaking_9999 smallmoney = 0,
     
     @auto_v3spositiontaking_1 smallmoney = 0,
     @auto_v3spositiontaking_2 smallmoney = 0,
@@ -126,6 +125,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking]
     @isauto_v2spositiontaking_8 bit = 0,
 --    @isauto_v2spositiontaking_9 bit = 0,
     @isauto_v2spositiontaking_20 bit = 0,
+    @isauto_v2spositiontaking_9999 bit = 0,
     
     @isauto_v3spositiontaking_1 bit = 0,
     @isauto_v3spositiontaking_2 bit = 0,
@@ -215,6 +215,8 @@ Revisions:
     - 20131029@Johnson: Apply execrep when update downlines
     - 20140624@Johnson: Add bettype Others for soccer & tennis [Redmine #16903]
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
+	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -327,6 +329,7 @@ Declare
     @old_auto_v2spositiontaking_8 smallmoney,
 --    @old_auto_v2spositiontaking_9 smallmoney,
     @old_auto_v2spositiontaking_20 smallmoney,
+    @old_auto_v2spositiontaking_9999 smallmoney,
     
     @old_auto_v3spositiontaking_1 smallmoney,
     @old_auto_v3spositiontaking_2 smallmoney,
@@ -395,6 +398,7 @@ Declare
     @old_isauto_v2spositiontaking_8 bit,
 --    @old_isauto_v2spositiontaking_9 bit,
     @old_isauto_v2spositiontaking_20 bit,
+    @old_isauto_v2spositiontaking_9999 bit,
     
     @old_isauto_v3spositiontaking_1 bit,
     @old_isauto_v3spositiontaking_2 bit,
@@ -492,6 +496,7 @@ select     @old_auto_v2spositiontaking_7    =    autopositiontaking        ,    
 select     @old_auto_v2spositiontaking_8    =    autopositiontaking        ,    @old_isauto_v2spositiontaking_8    =    isautopositiontaking        from custsetting with (nolock) where custid = @mrecommend and sporttype=2    and bettype=    8
 --select     @old_auto_v2spositiontaking_9    =    autopositiontaking        ,    @old_isauto_v2spositiontaking_9    =    isautopositiontaking        from custsetting with (nolock) where custid = @mrecommend and sporttype=2    and bettype=    9
 select     @old_auto_v2spositiontaking_20    =    autopositiontaking        ,    @old_isauto_v2spositiontaking_20    =    isautopositiontaking        from custsetting with (nolock) where custid = @mrecommend and sporttype=2    and bettype=    20
+select     @old_auto_v2spositiontaking_9999    =    autopositiontaking        ,    @old_isauto_v2spositiontaking_9999    =    isautopositiontaking        from custsetting with (nolock) where custid = @mrecommend and sporttype=2    and bettype=    9999
 
 select     @old_auto_v3spositiontaking_1    =    autopositiontaking        ,    @old_isauto_v3spositiontaking_1    =    isautopositiontaking        from custsetting with (nolock) where custid = @mrecommend and sporttype=3    and bettype=    1
 select     @old_auto_v3spositiontaking_2    =    autopositiontaking        ,    @old_isauto_v3spositiontaking_2    =    isautopositiontaking        from custsetting with (nolock) where custid = @mrecommend and sporttype=3    and bettype=    2
@@ -584,6 +589,7 @@ BEGIN
                 union all     select 8 as bettype, @auto_v2spositiontaking_8 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v2spositiontaking_8 as isautopositiontaking, 0    as isautolivepositiontaking
 --                union all     select 9 as bettype, @auto_v2spositiontaking_9 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v2spositiontaking_9 as isautopositiontaking, 0    as isautolivepositiontaking
                 union all     select 20 as bettype, @auto_v2spositiontaking_20 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v2spositiontaking_20 as isautopositiontaking, 0    as isautolivepositiontaking
+                union all     select 9999 as bettype, @auto_v2spositiontaking_9999 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v2spositiontaking_9999 as isautopositiontaking, 0    as isautolivepositiontaking
                 union all     select 10 as bettype, @auto_v2spositiontaking_10 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v2spositiontaking_10 as isautopositiontaking, 0    as isautolivepositiontaking
             
             ) as b on b.bettype = custsetting.bettype
@@ -875,6 +881,7 @@ EXEC Acc_CustSetting_05
     @isauto_v2spositiontaking_7 = @isauto_v2spositiontaking_7,
     @isauto_v2spositiontaking_8 = @isauto_v2spositiontaking_8,
     @isauto_v2spositiontaking_20 = @isauto_v2spositiontaking_20,
+    @isauto_v2spositiontaking_9999 = @isauto_v2spositiontaking_9999,
     
     @isauto_v3spositiontaking_1 = @isauto_v3spositiontaking_1,
     @isauto_v3spositiontaking_2 = @isauto_v3spositiontaking_2,
@@ -930,6 +937,7 @@ EXEC Acc_CustSetting_05
     @old_isauto_v2spositiontaking_7 = @old_isauto_v2spositiontaking_7,
     @old_isauto_v2spositiontaking_8 = @old_isauto_v2spositiontaking_8,
     @old_isauto_v2spositiontaking_20 = @old_isauto_v2spositiontaking_20,
+    @old_isauto_v2spositiontaking_9999 = @old_isauto_v2spositiontaking_9999,
     
     @old_isauto_v3spositiontaking_1 = @old_isauto_v3spositiontaking_1,
     @old_isauto_v3spositiontaking_2 = @old_isauto_v3spositiontaking_2,
@@ -986,6 +994,7 @@ EXEC Acc_CustSetting_05
     @auto_v2spositiontaking_8 = @auto_v2spositiontaking_8,
 --    @auto_v2spositiontaking_9 = @auto_v2spositiontaking_9,
     @auto_v2spositiontaking_20 = @auto_v2spositiontaking_20,
+    @auto_v2spositiontaking_9999 = @auto_v2spositiontaking_9999,
     
     @auto_v3spositiontaking_1 = @auto_v3spositiontaking_1,
     @auto_v3spositiontaking_2 = @auto_v3spositiontaking_2,
@@ -1042,6 +1051,7 @@ EXEC Acc_CustSetting_05
     @old_auto_v2spositiontaking_8 = @old_auto_v2spositiontaking_8,
 --    @old_auto_v2spositiontaking_9 = @old_auto_v2spositiontaking_9,
     @old_auto_v2spositiontaking_20 = @old_auto_v2spositiontaking_20,
+    @old_auto_v2spositiontaking_9999 = @old_auto_v2spositiontaking_9999,
     
     @old_auto_v3spositiontaking_1 = @old_auto_v3spositiontaking_1,
     @old_auto_v3spositiontaking_2 = @old_auto_v3spositiontaking_2,
@@ -1989,3 +1999,5 @@ GO
 GO 
  GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking] TO [bodbDownlineNet]
 GO 
+
+select convert(int, '123')
