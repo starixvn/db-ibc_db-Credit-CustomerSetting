@@ -1,10 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_MinMaxBet]
+﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_MinMaxBet]
 	@custid int,-- agentID
 	
 	@minbet money,
@@ -92,7 +86,7 @@ as
 /*
 Created: 20080515@Thien
 Task : Update Agent MinBet, MaxBet, MaxPerMatch
-DB: DBCUST/CUSTDB
+DB: DBTXN/bodb02
 Original:[Acc_CustomerUpdAgent_MinMaxBet]
 
 Revisions:
@@ -115,7 +109,6 @@ Revisions:
 	- 20150714@Johnson: Write log value from db if not change when update multiple [Redmine: #39555]
 	- 20160309@Winnie: fix bug #53635 [Master edit agent: Log for bet setting is generated when updating without any change]
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
-	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -393,7 +386,7 @@ Select
 	@MaxMaxBetv2 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
 from 
 	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend) and cs.bettype = 9999 and cs.sporttype=2
+	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=2
 where ci.custid = @MRecommend
 
 Select 
