@@ -502,7 +502,7 @@ Revisions:
 	from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 1
 
 	select @discountcs_old = sdiscount
-	from custsetting (nolock) where custid = @custid and sporttype = 2 and bettype = 9999
+	from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 4
 
 	--1x2
 	select @discount1x2_old = sdiscount

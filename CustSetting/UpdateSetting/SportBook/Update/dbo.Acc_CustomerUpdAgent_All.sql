@@ -665,7 +665,7 @@ BEGIN
 		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 1
 
 		select @discountcs_old = discount
-		from custsetting (nolock) where custid = @custid and sporttype = 2 and bettype = 9999
+		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 4
 
 		select @discount1x2_old = discount
 		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 5

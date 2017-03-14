@@ -1,12 +1,9 @@
-
-SET QUOTED_IDENTIFIER ON 
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
 GO
-SET ANSI_NULLS ON 
+SET QUOTED_IDENTIFIER ON
 GO
 
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpd_CheckParam_MAg    Script Date: 8/21/2014 3:12:18 PM ******/
-
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpd_CheckParam_MAg    Script Date: 8/21/2014 2:58:04 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam_MAg]
     @custid int,
     @minpositiontaking_1 smallmoney,
@@ -33,6 +30,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam_MAg]
     @minv2positiontaking_8 smallmoney,
     --@minv2positiontaking_9 smallmoney,
     @minv2positiontaking_20 smallmoney,
+    @minv2positiontaking_9999 smallmoney,
 
     @minv3positiontaking_1 smallmoney,
     @minv3positiontaking_2 smallmoney,
@@ -99,6 +97,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam_MAg]
     @maxv2positiontaking_8 smallmoney,
     --@maxv2positiontaking_9 smallmoney,
     @maxv2positiontaking_20 smallmoney,
+    @maxv2positiontaking_9999 smallmoney,
 
     @maxv3positiontaking_1 smallmoney,
     @maxv3positiontaking_2 smallmoney,
@@ -191,6 +190,7 @@ Revisions:
     - 20140725@Logan: 1. Exclude disabled agents while updating master's setting
                       2. Code aligning
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]                  
+    - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 
 Param's Explanation:
 • @ErrCode:
@@ -326,6 +326,10 @@ inner join (select 1 as sporttype --1
                  , 20 as bettype
                  , @maxv2positiontaking_20 as maxpositiontaking
                  , 0 as maxlivepositiontaking
+  union all select 2 as sporttype
+                 , 9999 as bettype
+                 , @maxv2positiontaking_9999 as maxpositiontaking
+                 , 0 as maxlivepositiontaking               
 --3
   union all select 3 as sporttype
                  , 1 as bettype
@@ -791,6 +795,10 @@ inner join (select 1 as sporttype
                  , 20 as bettype
                  , @minv2positiontaking_20 as minpositiontaking
                  , 0 as minlivepositiontaking
+ union all select 2 as sporttype
+                 , 9999 as bettype
+                 , @minv2positiontaking_9999 as minpositiontaking
+                 , 0 as minlivepositiontaking                
 --3
   union all select 3 as sporttype
                  , 1 as bettype
@@ -1086,17 +1094,6 @@ inner join custsetting3rd as scs with(NOLOCK) on scs.custid = c.srecommend and s
     */
 
 END
-
-
-
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpd_CheckParam_MAg] TO [vnteam]
 GO 

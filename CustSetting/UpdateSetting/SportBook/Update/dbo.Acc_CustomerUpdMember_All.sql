@@ -1,4 +1,9 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]  
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]  
 	@custid INT,--memberid  
 
 	@firstname NVARCHAR(50),  
@@ -119,6 +124,7 @@
 	@v2apositiontaking_8 SMALLMONEY,  
 	--@v2apositiontaking_9 SMALLMONEY,  
 	@v2apositiontaking_20 SMALLMONEY,  
+	@v2apositiontaking_9999 SMALLMONEY,  
 
 	@v3apositiontaking_1 SMALLMONEY,  
 	@v3apositiontaking_2 SMALLMONEY,  
@@ -233,6 +239,7 @@ Revisions:
  - 20160310@Winnie: Fix bug #53736[Edit SB: Email is cleared when updating without any change in Edit SB page]
  - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
  - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
+ - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -620,6 +627,7 @@ BEGIN
 	  @v2apositiontaking_8_old SMALLMONEY,  
 	  --@v2apositiontaking_9_old SMALLMONEY,  
 	  @v2apositiontaking_20_old SMALLMONEY,  
+	  @v2apositiontaking_9999_old SMALLMONEY,  
 	    
 	  @v3apositiontaking_1_old SMALLMONEY,  
 	  @v3apositiontaking_2_old SMALLMONEY,  
@@ -702,6 +710,7 @@ BEGIN
 	 select @v2apositiontaking_8_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=8 and sporttype=2  
 	 --select @v2apositiontaking_9_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=2
 	 select @v2apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=2  
+	 select @v2apositiontaking_9999_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9999 and sporttype=2  
 	  
 	 select @v3apositiontaking_1_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=1 and sporttype=3  
 	 select @v3apositiontaking_2_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=2 and sporttype=3  
@@ -767,6 +776,8 @@ BEGIN
 	   @v2apositiontaking_8 <> @v2apositiontaking_8_old or  
 	   --@v2apositiontaking_9 <> @v2apositiontaking_9_old or  
 	   @v2apositiontaking_20 <> @v2apositiontaking_20_old or  
+	   @v2apositiontaking_9999 <> @v2apositiontaking_9999_old or  
+	   
 	   @v3apositiontaking_1 <> @v3apositiontaking_1_old or  
 	   @v3apositiontaking_2 <> @v3apositiontaking_2_old or  
 	   @v3apositiontaking_3 <> @v3apositiontaking_3_old or  
@@ -839,6 +850,8 @@ BEGIN
 	   @v2apositiontaking_8 = @v2apositiontaking_8,  
 	   --@v2apositiontaking_9 = @v2apositiontaking_9,  
 	   @v2apositiontaking_20 = @v2apositiontaking_20,  
+	   @v2apositiontaking_9999 = @v2apositiontaking_9999,  
+	   
 	   @v3apositiontaking_1 = @v3apositiontaking_1,  
 	   @v3apositiontaking_2 = @v3apositiontaking_2,  
 	   @v3apositiontaking_3 = @v3apositiontaking_3,  

@@ -1,12 +1,9 @@
-
-SET QUOTED_IDENTIFIER ON 
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam,ITVivi" isFunction="0"></info>*/
+SET ANSI_NULLS ON
 GO
-SET ANSI_NULLS ON 
+SET QUOTED_IDENTIFIER ON
 GO
 
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpd_CheckParam    Script Date: 8/21/2014 3:12:18 PM ******/
-
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpd_CheckParam    Script Date: 8/21/2014 2:58:04 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam]
     @custid int,
     @minpositiontaking_1 smallmoney,
@@ -33,6 +30,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam]
     @minv2positiontaking_8 smallmoney,
     --@minv2positiontaking_9 smallmoney,
     @minv2positiontaking_20 smallmoney,
+    @minv2positiontaking_9999 smallmoney,
 
     @minv3positiontaking_1 smallmoney,
     @minv3positiontaking_2 smallmoney,
@@ -101,6 +99,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam]
     @maxv2positiontaking_8 smallmoney,
     --@maxv2positiontaking_9 smallmoney,
     @maxv2positiontaking_20 smallmoney,
+    @maxv2positiontaking_9999 smallmoney,
 
     @maxv3positiontaking_1 smallmoney,
     @maxv3positiontaking_2 smallmoney,
@@ -189,6 +188,8 @@ Revisions:
     - 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
     - 20140618@Johnson: Add bettype Others for soccer & tennis [Redmine: #16903]
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
+    - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+    
 Param's Explanation:
 • @ErrCode:
     = 0: check parameters successfully.
@@ -234,6 +235,7 @@ EXEC dbo.Acc_CustOverrideUpd_CheckParam_V
             @minv2positiontaking_8 = @minv2positiontaking_8,
             --@minv2positiontaking_9 = @minv2positiontaking_9,
             @minv2positiontaking_20 = @minv2positiontaking_20,
+            @minv2positiontaking_9999 = @minv2positiontaking_9999,
 
             @minv3positiontaking_1 = @minv3positiontaking_1,
             @minv3positiontaking_2 = @minv3positiontaking_2,
@@ -307,6 +309,7 @@ EXEC dbo.Acc_CustOverrideUpd_CheckParam_V
             @maxv2positiontaking_8 = @maxv2positiontaking_8,
             --@maxv2positiontaking_9 = @maxv2positiontaking_9,
             @maxv2positiontaking_20 = @maxv2positiontaking_20,
+            @maxv2positiontaking_9999 = @maxv2positiontaking_9999,
             
             @maxv3positiontaking_1 = @maxv3positiontaking_1,
             @maxv3positiontaking_2 = @maxv3positiontaking_2,
@@ -400,6 +403,7 @@ BEGIN
             @minv2positiontaking_8 = @minv2positiontaking_8,
             --@minv2positiontaking_9 = @minv2positiontaking_9,
             @minv2positiontaking_20 = @minv2positiontaking_20,
+            @minv2positiontaking_9999 = @minv2positiontaking_9999,
             
             @minv3positiontaking_1 = @minv3positiontaking_1,
             @minv3positiontaking_2 = @minv3positiontaking_2,
@@ -473,6 +477,7 @@ BEGIN
             @maxv2positiontaking_8 = @maxv2positiontaking_8,
             --@maxv2positiontaking_9 = @maxv2positiontaking_9,
             @maxv2positiontaking_20 = @maxv2positiontaking_20,
+            @maxv2positiontaking_9999 = @maxv2positiontaking_9999,
         
             @maxv3positiontaking_1 = @maxv3positiontaking_1,
             @maxv3positiontaking_2 = @maxv3positiontaking_2,
@@ -565,6 +570,7 @@ BEGIN
             @minv2positiontaking_8 = @minv2positiontaking_8,
             --@minv2positiontaking_9 = @minv2positiontaking_9,
             @minv2positiontaking_20 = @minv2positiontaking_20,
+            @minv2positiontaking_9999 = @minv2positiontaking_9999,
 
             @minv3positiontaking_1 = @minv3positiontaking_1,
             @minv3positiontaking_2 = @minv3positiontaking_2,
@@ -638,6 +644,7 @@ BEGIN
             @maxv2positiontaking_8 = @maxv2positiontaking_8,
             --@maxv2positiontaking_9 = @maxv2positiontaking_9,
             @maxv2positiontaking_20 = @maxv2positiontaking_20,
+            @maxv2positiontaking_9999 = @maxv2positiontaking_9999,
             
             @maxv3positiontaking_1 = @maxv3positiontaking_1,
             @maxv3positiontaking_2 = @maxv3positiontaking_2,
@@ -730,6 +737,7 @@ BEGIN
             @minv2positiontaking_8 = @minv2positiontaking_8,
             --@minv2positiontaking_9 = @minv2positiontaking_9,
             @minv2positiontaking_20 = @minv2positiontaking_20,
+            @minv2positiontaking_9999 = @minv2positiontaking_9999,
 
             @minv3positiontaking_1 = @minv3positiontaking_1,
             @minv3positiontaking_2 = @minv3positiontaking_2,
@@ -804,6 +812,7 @@ BEGIN
             @maxv2positiontaking_8 = @maxv2positiontaking_8,
             --@maxv2positiontaking_9 = @maxv2positiontaking_9,
             @maxv2positiontaking_20 = @maxv2positiontaking_20,
+            @maxv2positiontaking_9999 = @maxv2positiontaking_9999,
         
             @maxv3positiontaking_1 = @maxv3positiontaking_1,
             @maxv3positiontaking_2 = @maxv3positiontaking_2,
