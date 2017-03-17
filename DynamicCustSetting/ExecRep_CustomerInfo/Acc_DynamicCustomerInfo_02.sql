@@ -62,7 +62,7 @@ BEGIN
 		BEGIN
 			SELECT @_SourceSite = Site, @_SourceCurrency = currency FROM Customer WITH (NOLOCK) WHERE custid = @ExistingCustID
 
-			SELECT @_SourceSiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
+			SELECT @_SourceSiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_SourceSite
 
 			DECLARE @OfferedProduct TABLE (Sporttype SMALLINT, Bettype INT, IsHiddenSource BIT, IsHiddenDes BIT)
 
@@ -382,7 +382,7 @@ BEGIN
 
 		SELECT @_SourceSite = Site, @_SourceCurrency = currency FROM Customer WITH (NOLOCK) WHERE custid = @ExistingCustID
 
-		SELECT @_SourceSiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
+		SELECT @_SourceSiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_SourceSite
 
 		INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden, IsHiddenSource)
 		SELECT ProductID, SportType, BetType, IsHidden, IsHidden
@@ -492,7 +492,7 @@ BEGIN
 					,0,0,0,0,0,0,0,0
 					,dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
-					INNER JOIN #ProductSettingDetail ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive
+					INNER JOIN #ProductSettingDetail ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive  AND ps.SettingType = dtl.SettingType
 				WHERE ps.SettingType = 1 AND ps.IsHiddenSource = 1
 			END
 		END TRY
