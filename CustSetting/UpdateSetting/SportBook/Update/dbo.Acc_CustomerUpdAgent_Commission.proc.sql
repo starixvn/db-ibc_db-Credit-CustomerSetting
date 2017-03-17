@@ -1,9 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_Commission]
+﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_Commission]
 	@custid INT,-- AgentId
 	@groupa DECIMAL(9,8),
 	@groupb DECIMAL(9,8),
@@ -30,7 +25,7 @@ BEGIN
 Created: 20080514@Thien
 Task : Update Agent's Commission
 DB: DBCUST/CustDB
-Original:s
+Original:
 
 Revisions:
     - 20090314@HanhVu: add Korean language
@@ -125,7 +120,7 @@ Param's Explanation:
 			@Old_groupd = groupd 
 		FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND bettype=1 AND sporttype=1
 		
-		SELECT @Old_discountcs = discount FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 2 AND bettype = 9999
+		SELECT @Old_discountcs = discount FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 4
 		SELECT @Old_discount1x2 = discount	FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 5
 		SELECT @Old_discountHRFixedOdds = discount	FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 154 AND bettype = 20		
 		SELECT @Old_discountnumber = discount FROM custsetting3rd AS cs3 WITH (NOLOCK) WHERE custid = @custid AND sporttype = 161 AND bettype = 81
@@ -143,7 +138,7 @@ Param's Explanation:
 		SELECT 	
 			@discountcs = CASE WHEN @discountcs > adiscount THEN adiscount ELSE @discountcs END		
 		FROM custsetting AS cs WITH (NOLOCK) 
-		WHERE custid = @mrecommend AND sporttype = 2 AND bettype = 9999
+		WHERE custid = @mrecommend AND sporttype = 1 AND bettype = 4
 
 		---------------------------------------
 		--Get a2=m3 if a2>m3  - 1x2 
