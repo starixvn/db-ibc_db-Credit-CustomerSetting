@@ -408,6 +408,7 @@ Revisions:
 	- 20150806@Johnson:  Write log value from db if not change when update multiple [Redmine: #40880]				
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -4809,6 +4810,7 @@ BEGIN--Update Position Taking
 --			@auto_v2spositiontaking_9 = @auto_v2spositiontaking_9,
 		@auto_v2spositiontaking_20 = @auto_v2spositiontaking_20,
 		@auto_v2spositiontaking_9999 = @auto_v2spositiontaking_9999,
+		
 		@auto_v3spositiontaking_1 = @auto_v3spositiontaking_1,
 		@auto_v3spositiontaking_2 = @auto_v3spositiontaking_2,
 		@auto_v3spositiontaking_3 = @auto_v3spositiontaking_3,
@@ -4860,6 +4862,7 @@ BEGIN--Update Position Taking
 --			@isauto_v2spositiontaking_9 = @isauto_v2spositiontaking_9,
 		@isauto_v2spositiontaking_20 = @isauto_v2spositiontaking_20,
 		@isauto_v2spositiontaking_9999 = @isauto_v2spositiontaking_9999,
+		
 		@isauto_v3spositiontaking_1 = @isauto_v3spositiontaking_1,
 		@isauto_v3spositiontaking_2 = @isauto_v3spositiontaking_2,
 		@isauto_v3spositiontaking_3 = @isauto_v3spositiontaking_3,

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1276,6 +1276,7 @@ BEGIN
 	--			@v2apositiontaking_9 <> @v2apositiontaking_9_old or
 				@v2apositiontaking_20 <> @v2apositiontaking_20_old or
 				@v2apositiontaking_9999 <> @v2apositiontaking_9999_old or
+				
 				@v3apositiontaking_1 <> @v3apositiontaking_1_old or
 				@v3apositiontaking_2 <> @v3apositiontaking_2_old or
 				@v3apositiontaking_3 <> @v3apositiontaking_3_old or

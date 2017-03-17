@@ -1984,6 +1984,7 @@ BEGIN
 			union all 	select 3 as bettype, 2 as sporttype, @v2apositiontaking_3 as apositiontaking
 			union all 	select 10 as bettype, 2 as sporttype, @v2apositiontaking_10 as apositiontaking
 			union all 	select 20 as bettype, 2 as sporttype, @v2apositiontaking_20 as apositiontaking
+			union all 	select 9999 as bettype, 2 as sporttype, @v2apositiontaking_9999 as apositiontaking
 		) b
 		INNER JOIN 
 		(
@@ -4000,7 +4001,7 @@ SELECT
 	@v2apositiontaking_8 = CASE WHEN @v2apositiontaking_8<0 THEN 0 ELSE @v2apositiontaking_8 END,
 	--@v2apositiontaking_9 = CASE WHEN @v2apositiontaking_9<0 THEN 0 ELSE @v2apositiontaking_9 END,
 	@v2apositiontaking_20 = CASE WHEN @v2apositiontaking_20<0 THEN 0 ELSE @v2apositiontaking_20 END,
-	@v2apositiontaking_9999 = CASE WHEN @v2apositiontaking_20<0 THEN 0 ELSE @v2apositiontaking_9999 END,
+	@v2apositiontaking_9999 = CASE WHEN @v2apositiontaking_9999<0 THEN 0 ELSE @v2apositiontaking_9999 END,
 
 	@v3apositiontaking_1 = CASE WHEN @v3apositiontaking_1<0 THEN 0 ELSE @v3apositiontaking_1 END,
 	@v3apositiontaking_2 = CASE WHEN @v3apositiontaking_2<0 THEN 0 ELSE @v3apositiontaking_2 END,

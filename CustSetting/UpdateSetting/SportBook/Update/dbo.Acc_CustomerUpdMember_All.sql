@@ -240,6 +240,7 @@ Revisions:
  - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
  - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
  - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+ 
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  

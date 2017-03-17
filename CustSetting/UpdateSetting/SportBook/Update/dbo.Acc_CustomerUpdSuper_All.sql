@@ -1,10 +1,8 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-
-
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @custid int,-- superid
     @firstname nvarchar(50),

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -564,6 +564,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 		   + Separate custDB to new server DBCUST   
 		 - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]       
 		 - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+		 
         Parameter's Explanation:        
     */
 BEGIN

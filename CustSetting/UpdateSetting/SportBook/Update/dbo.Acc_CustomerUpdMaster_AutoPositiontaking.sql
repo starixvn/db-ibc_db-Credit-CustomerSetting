@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1983,14 +1983,6 @@ union all      select 90 as bettype,       0 as isautopositiontaking            
 
 
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking] TO [vnteam]
 GO 
  GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking] TO [bodbDownlineNetView]
@@ -1999,5 +1991,3 @@ GO
 GO 
  GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking] TO [bodbDownlineNet]
 GO 
-
-select convert(int, '123')

@@ -281,6 +281,7 @@ Revisions:
     - 20150609@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, temp sport, bettype table) [Redmine:#36216]
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+    
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.

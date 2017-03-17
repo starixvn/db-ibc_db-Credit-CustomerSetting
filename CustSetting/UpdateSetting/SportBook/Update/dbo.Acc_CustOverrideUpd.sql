@@ -210,6 +210,7 @@ Revisions:
                         2.Code aligning on modified parts
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216]                        
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
+	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 
 Param's Explanation:
 • @ErrCode:

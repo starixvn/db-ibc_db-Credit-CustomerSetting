@@ -91,10 +91,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@MaxPerMatchv161 MONEY,
 
 	@MaxPerBallv161 MONEY = 0,		
-	-- BAIO
-	@v2spositiontaking_9999 SMALLMONEY = 0,
-	@v2mpositiontaking_9999 SMALLMONEY =0,
-	@v2apositiontaking_9999 SMALLMONEY =0,
 	
 	@spositiontaking_1 SMALLMONEY,
 	@spositiontaking_2 SMALLMONEY,
@@ -127,7 +123,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v2spositiontaking_8 SMALLMONEY,
 	--@v2spositiontaking_9 smallmoney,
 	@v2spositiontaking_20 SMALLMONEY,
-	
+	@v2spositiontaking_9999 SMALLMONEY = 0,
+		
 	@v3spositiontaking_1 SMALLMONEY,
 	@v3spositiontaking_2 SMALLMONEY,
 	@v3spositiontaking_3 SMALLMONEY,
@@ -203,7 +200,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v2mpositiontaking_8 SMALLMONEY,
 	--@v2mpositiontaking_9 smallmoney,
 	@v2mpositiontaking_20 SMALLMONEY,
-
+	@v2mpositiontaking_9999 SMALLMONEY =0,
+	
+	
 	@v3mpositiontaking_1 SMALLMONEY,
 	@v3mpositiontaking_2 SMALLMONEY,
 	@v3mpositiontaking_3 SMALLMONEY,
@@ -279,7 +278,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v2apositiontaking_8 SMALLMONEY,
 	--@v2apositiontaking_9 smallmoney,
 	@v2apositiontaking_20 SMALLMONEY,
-
+	@v2apositiontaking_9999 SMALLMONEY =0,
+	
 	@v3apositiontaking_1 SMALLMONEY,
 	@v3apositiontaking_2 SMALLMONEY,
 	@v3apositiontaking_3 SMALLMONEY,
@@ -567,7 +567,8 @@ BEGIN
 				@v2spositiontaking_8 = @v2spositiontaking_8,
 				--@v2spositiontaking_9 = @v2spositiontaking_9,
 				@v2spositiontaking_20 = @v2spositiontaking_20,
-
+				@v2spositiontaking_9999 = @v2spositiontaking_9999,
+								
 				@v3spositiontaking_1 = @v3spositiontaking_1,
 				@v3spositiontaking_2 = @v3spositiontaking_2,
 				@v3spositiontaking_3 = @v3spositiontaking_3,
@@ -637,6 +638,7 @@ BEGIN
 				@v2mpositiontaking_8 = @v2mpositiontaking_8,
 				--@v2mpositiontaking_9 = @v2mpositiontaking_9,
 				@v2mpositiontaking_20 = @v2mpositiontaking_20,
+				@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
 
 				@v3mpositiontaking_1 = @v3mpositiontaking_1,
 				@v3mpositiontaking_2 = @v3mpositiontaking_2,
@@ -707,7 +709,8 @@ BEGIN
 				@v2apositiontaking_8 = @v2apositiontaking_8,
 				--@v2apositiontaking_9 = @v2apositiontaking_9,
 				@v2apositiontaking_20 = @v2apositiontaking_20,
-
+				@v2apositiontaking_9999 = @v2apositiontaking_9999,
+				
 				@v3apositiontaking_1 = @v3apositiontaking_1,
 				@v3apositiontaking_2 = @v3apositiontaking_2,
 				@v3apositiontaking_3 = @v3apositiontaking_3,
@@ -732,12 +735,7 @@ BEGIN
 				@v99apositiontaking_3 = @v99apositiontaking_3,
 				@v99apositiontaking_9 = @v99apositiontaking_9,
 				@v99apositiontaking_20 = @v99apositiontaking_20,
-				
-				-- BAIO
-				@v2spositiontaking_9999 = @v2spositiontaking_9999,
-				@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
-				@v2apositiontaking_9999 = @v2apositiontaking_9999,
-	
+									
 				--HR Fixed Odds
 				@v154apositiontaking_20 = @v154apositiontaking_20,
 				
@@ -957,7 +955,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v2spositiontaking_8 = @v2spositiontaking_8,
 		--@v2spositiontaking_9 = @v2spositiontaking_9,
 		@v2spositiontaking_20 = @v2spositiontaking_20,
-		
+		@v2spositiontaking_9999 = @v2spositiontaking_9999,
+				
 		@v3spositiontaking_1 = @v3spositiontaking_1,
 		@v3spositiontaking_2 = @v3spositiontaking_2,
 		@v3spositiontaking_3 = @v3spositiontaking_3,
@@ -1033,7 +1032,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v2mpositiontaking_8 = @v2mpositiontaking_8,
 		--@v2mpositiontaking_9 = @v2mpositiontaking_9,
 		@v2mpositiontaking_20 = @v2mpositiontaking_20,
-
+		@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
+				
 		@v3mpositiontaking_1 = @v3mpositiontaking_1,
 		@v3mpositiontaking_2 = @v3mpositiontaking_2,
 		@v3mpositiontaking_3 = @v3mpositiontaking_3,
@@ -1109,7 +1109,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v2apositiontaking_8 = @v2apositiontaking_8,
 		--@v2apositiontaking_9 = @v2apositiontaking_9,
 		@v2apositiontaking_20 = @v2apositiontaking_20,
-
+		@v2apositiontaking_9999 = @v2apositiontaking_9999,
+		
 		@v3apositiontaking_1 = @v3apositiontaking_1,
 		@v3apositiontaking_2 = @v3apositiontaking_2,
 		@v3apositiontaking_3 = @v3apositiontaking_3,
@@ -1153,12 +1154,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v161alivepositiontaking_87 = @v161alivepositiontaking_87,
 		@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
 		@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
-		
-		-- BAIO
-		@v2spositiontaking_9999 = @v2spositiontaking_9999,
-		@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
-		@v2apositiontaking_9999 = @v2apositiontaking_9999,
-				
+						
 		@MinBet = @MinBet,
 		@MaxBet = @MaxBet,	
 		@MinBetv2 = @MinBetv2,
