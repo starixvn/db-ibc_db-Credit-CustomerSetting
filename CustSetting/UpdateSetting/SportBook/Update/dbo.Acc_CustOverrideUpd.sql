@@ -1291,6 +1291,8 @@ BEGIN
     'minv2pt_8="'+ coalesce(cast(@minv2positiontaking_8 as varchar(50)),space(1)) + '" ' +
     --'minv2pt_9="'+ coalesce(cast(@minv2positiontaking_9 as varchar(50)),space(1)) + '" ' +
     'minv2pt_20="'+ coalesce(cast(@minv2positiontaking_20 as varchar(50)),space(1)) + '" ' +
+    'minv2pt_9999="'+ coalesce(cast(@minv2positiontaking_9999 as varchar(50)),space(1)) + '" ' +
+    
     'maxv2pt_1="'+ coalesce(cast(@maxv2positiontaking_1 as varchar(50)),space(1)) + '" ' +
     'maxv2pt_2="'+ coalesce(cast(@maxv2positiontaking_2 as varchar(50)),space(1)) + '" ' +
     'maxv2pt_3="'+ coalesce(cast(@maxv2positiontaking_3 as varchar(50)),space(1)) + '" ' +
@@ -1449,6 +1451,8 @@ BEGIN
     'minv2pt_7="'+ coalesce(cast(@old_minv2positiontaking_7 as varchar(50)),space(1)) + '" ' +
     'minv2pt_8="'+ coalesce(cast(@old_minv2positiontaking_8 as varchar(50)),space(1)) + '" ' +    
     'minv2pt_20="'+ coalesce(cast(@old_minv2positiontaking_20 as varchar(50)),space(1)) + '" ' +
+    'minv2pt_9999="'+ coalesce(cast(@old_minv2positiontaking_9999 as varchar(50)),space(1)) + '" ' +
+    
     'maxv2pt_1="'+ coalesce(cast(@old_maxv2positiontaking_1 as varchar(50)),space(1)) + '" ' +
     'maxv2pt_2="'+ coalesce(cast(@old_maxv2positiontaking_2 as varchar(50)),space(1)) + '" ' +
     'maxv2pt_3="'+ coalesce(cast(@old_maxv2positiontaking_3 as varchar(50)),space(1)) + '" ' +
