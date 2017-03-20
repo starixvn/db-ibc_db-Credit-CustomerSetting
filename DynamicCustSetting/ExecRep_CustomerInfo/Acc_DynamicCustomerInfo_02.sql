@@ -46,7 +46,8 @@ BEGIN
 			IF EXISTS(SELECT 1 FROM [dbo].[CustProductStatus] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 			BEGIN
 				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced )
-				SELECT @CustID,cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced
+				SELECT @CustID,cs.bitmapIsDisabled,cs.bitmapIsHidden,
+						CASE WHEN @RoleID = 4 THEN 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF ELSE bitmapHasSynced END
 				FROM [dbo].[CustProductStatus] cs WITH(NOLOCK)
 				WHERE CustID = @ExistingCustID
 			END
@@ -364,14 +365,16 @@ BEGIN
 			[SportType] [smallint] NOT NULL,
 			[BetType] [smallint] NOT NULL,
 			[IsLive] [bit] NOT NULL,
-			[IsHiddenSource] [BIT] NOT NULL
+			[IsHiddenSource] [BIT] NOT NULL,
+			[HasSyncSource] [BIT] NOT NULL
 		)
 		CREATE TABLE #OfferedProductList(
 			[ProductID] [tinyint] NOT NULL,
 			[SportType] [smallint] NOT NULL,
 			[BetType] [smallint] NOT NULL,
 			[IsHidden] [BIT] NOT NULL,
-			[IsHiddenSource] [BIT] NOT NULL
+			[IsHiddenSource] [BIT] NOT NULL,
+			[HasSyncSource] [BIT] NOT NULL
 		)
 
 		SELECT @AgentID = recommend, @RoleID = roleid, @_Site = Site, @_Currency = currency FROM Customer WITH (NOLOCK) WHERE custid = @CustID
@@ -384,10 +387,13 @@ BEGIN
 
 		SELECT @_SourceSiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_SourceSite
 
-		INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden, IsHiddenSource)
-		SELECT ProductID, SportType, BetType, IsHidden, IsHidden
-		FROM dbo.ProductSettingDetail WITH (NOLOCK)
-		WHERE SettingType IN (4,11,13)
+		INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden, IsHiddenSource,HasSyncSource)
+		SELECT ProductID, ps.SportType, ps.BetType, IsHidden, IsHidden, st.value
+		FROM dbo.ProductSettingDetail ps WITH (NOLOCK)
+			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ps.BetType AND psp.Sporttype = ps.SportType
+			CROSS APPLY dbo.CustProductStatus cps WITH (NOLOCK) 
+			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(cps.bitmapHasSynced, psp.bitmapOrder) st
+		WHERE SettingType IN (4,11,13) AND cps.CustID = @ExistingCustID
 		
 		UPDATE op
 		SET op.IsHidden = stt.IsHidden
@@ -423,50 +429,52 @@ BEGIN
 		FROM #OfferedProductList op
 		WHERE ProductID = 20
 
-		INSERT #ProductSettingDetail(SettingType,ProductID,SportType,BetType,IsLive,IsHiddenSource)
+		INSERT #ProductSettingDetail(SettingType,ProductID,SportType,BetType,IsLive,IsHiddenSource,HasSyncSource)
 		SELECT SettingType
 				,ps.ProductID
 				,ps.SportType
 				,ps.BetType
 				,IsLive
 				,op.IsHiddenSource
+				,op.HasSyncSource
 		FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
-			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource FROM #OfferedProductList WITH (NOLOCK)) op ON ps.ProductID = op.ProductID
+			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource 
+						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.ProductID = op.ProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
 		BEGIN TRY
 			IF EXISTS(SELECT TOP 1 1 FROM [dbo].[CustPTSetting3rd_Agent] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
-			INSERT INTO [dbo].[CustPTSetting3rd_Agent]
-				   ([CustID]
-				   ,[SportType]
-				   ,[BetType]
-				   ,[IsLive]
-				   ,[SuperPT]
-				   ,[MasterPT]
-				   ,[AgentPT]
-				   ,[IsAutoMasterPT]
-				   ,[AutoMasterPT]
-				   ,[IsAutoSuperPT]
-				   ,[AutoSuperPT]
-				   ,[MinPT]
-				   ,[MaxPT])
-				SELECT 
-					@CustID
-				   ,cs.SportType
-				   ,cs.BetType
-				   ,cs.IsLive
-				   ,[SuperPT]
-				   ,[MasterPT]
-				   ,[AgentPT]
-				   ,[IsAutoMasterPT]
-				   ,[AutoMasterPT]
-				   ,[IsAutoSuperPT]
-				   ,[AutoSuperPT]
-				   ,[MinPT]
-				   ,[MaxPT]
-				FROM [dbo].[CustPTSetting3rd_Agent] cs WITH(NOLOCK)
-					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive
-				WHERE CustID = @ExistingCustID AND ps.SettingType = 1 AND ps.IsHiddenSource = 0
+				INSERT INTO [dbo].[CustPTSetting3rd_Agent]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[IsLive]
+						,[SuperPT]
+						,[MasterPT]
+						,[AgentPT]
+						,[IsAutoMasterPT]
+						,[AutoMasterPT]
+						,[IsAutoSuperPT]
+						,[AutoSuperPT]
+						,[MinPT]
+						,[MaxPT])
+					SELECT 
+						@CustID
+						,cs.SportType
+						,cs.BetType
+						,cs.IsLive
+						,[SuperPT]
+						,[MasterPT]
+						,[AgentPT]
+						,[IsAutoMasterPT]
+						,[AutoMasterPT]
+						,[IsAutoSuperPT]
+						,[AutoSuperPT]
+						,[MinPT]
+						,[MaxPT]
+					FROM [dbo].[CustPTSetting3rd_Agent] cs WITH(NOLOCK)
+						INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive
+					WHERE CustID = @ExistingCustID AND ps.SettingType = 1 AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -493,7 +501,7 @@ BEGIN
 					,dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive  AND ps.SettingType = dtl.SettingType
-				WHERE ps.SettingType = 1 AND ps.IsHiddenSource = 1
+				WHERE ps.SettingType = 1 AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
@@ -522,7 +530,7 @@ BEGIN
 						   ,[MaxPerMatch]
 				FROM [dbo].[CustBetSetting3rd_Agent] cs WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9) AND ps.IsHiddenSource = 0
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -541,7 +549,7 @@ BEGIN
 					,0
 					,0
 				FROM #ProductSettingDetail t 
-				WHERE t.SettingType = 2 AND t.IsHiddenSource = 1
+				WHERE t.SettingType = 2 AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 				
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
 					   ([CustID]
@@ -559,7 +567,7 @@ BEGIN
 					,ps.DefaultMaxPerMatch
 				FROM #ProductSettingDetail t 
 					INNER JOIN dbo.ProductBetSetting ps WITH (NOLOCK) ON t.SportType = ps.Sporttype AND t.Bettype = ps.Bettype AND ps.IsDep = 0 AND ps.Currency = @_Currency
-				WHERE t.SettingType = 9 AND t.IsHiddenSource = 1
+				WHERE t.SettingType = 9 AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
@@ -585,7 +593,7 @@ BEGIN
 						   ,[Discount]
 				FROM [dbo].[CustDiscount3rd_Agent] cs WITH(NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (3,5) AND ps.IsHiddenSource = 0
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (3,5) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -600,7 +608,7 @@ BEGIN
 					,t.BetType
 					,0 -- 0 zero by default
 				FROM #ProductSettingDetail t 
-				WHERE t.SettingType IN (3,5) AND t.IsHiddenSource = 1
+				WHERE t.SettingType IN (3,5) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
@@ -631,7 +639,7 @@ BEGIN
 							,IsAutoReset
 				FROM [dbo].[CustWinLossLimit_Agent] cs WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN( 6,12) AND ps.IsHiddenSource = 0
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN( 6,12) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -652,7 +660,7 @@ BEGIN
 				FROM #ProductSettingDetail t 
 					INNER JOIN LossLimit_GlobalSetting gs ON gs.ProductId = t.ProductID
 					INNER JOIN CustInfo ci WITH (NOLOCK) ON gs.ExchangeId = ci.currency
-				WHERE ci.custid = @CustID AND t.SettingType IN (6,12) AND t.IsHiddenSource = 1
+				WHERE ci.custid = @CustID AND t.SettingType IN (6,12) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
@@ -681,7 +689,7 @@ BEGIN
 					,	cs.StakeLevelList
 				FROM dbo.CustStakeLevel_Agent AS cs
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (7,8) AND ps.IsHiddenSource = 0
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (7,8) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF	@RoleID = 4
 			BEGIN
@@ -698,7 +706,7 @@ BEGIN
 							AND	sl.GameTypeID = ps.Bettype
 						FOR XML PATH ('')
 					) sl(list)
-				WHERE ps.SettingType IN (7,8) AND ps.IsHiddenSource = 1
+				WHERE ps.SettingType IN (7,8) AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
