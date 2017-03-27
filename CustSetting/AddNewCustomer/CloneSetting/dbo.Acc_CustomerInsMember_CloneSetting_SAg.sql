@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" IsNested = 0></info>*/
+USE [CustDB]
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 	@Custid INT OUTPUT
 	,@UserName VARCHAR(30)
