@@ -1,7 +1,3 @@
-SET QUOTED_IDENTIFIER ON
-SET ANSI_NULLS ON
-GO
-
 ALTER PROCEDURE	dbo.Acc_CustSetting_10
 					@VirtualMultiplier		VARCHAR(MAX)
 AS
@@ -12,6 +8,7 @@ AS
 	Original:  
   
 	Revisions: 
+		- 20170328@Elodie: Expand the range of VR setting [RedmineID:#73808]
 	Param's Explanation:  
 		- @VirtualMultiplier = '<ROOT>
 									<Rate CustIDs="1,2,3,4,5,6" VirtualMultiplier="0.7" />	
@@ -47,7 +44,7 @@ BEGIN
 	INSERT INTO #tblVirtualRate 
 		(	CustID, VirtualMultiplier)
 	SELECT	CAST(ss.val AS INT)
-		,	CAST(Data.VirtualMultiplier * 100 AS INT)
+		,	CASE WHEN CAST(Data.VirtualMultiplier * 100 AS INT) > 200 THEN (CAST(Data.VirtualMultiplier * 100 AS INT)-200)/5+200 ELSE CAST(Data.VirtualMultiplier * 100 AS INT) END
 	FROM OPENXML (@DocHandler, '/ROOT/Rate',1) 
 	WITH (
 		CustIds				NVARCHAR(MAX)
