@@ -11,8 +11,8 @@ AS
 		- 20170328@Elodie: Expand the range of VR setting [RedmineID:#73808]
 	Param's Explanation:  
 		- @VirtualMultiplier = '<ROOT>
-									<Rate CustIDs="1,2,3,4,5,6" VirtualMultiplier="0.7" />	
-									<Rate CustIDs="11,22,33,44,55,66" VirtualMultiplier="1.5" />
+									<Rate CustIds="1,2,3,4,5,6" VirtualMultiplier="0.7" />	
+									<Rate CustIds="11,22,33,44,55,66" VirtualMultiplier="1.5" />
 								</ROOT>'
 */
 BEGIN
