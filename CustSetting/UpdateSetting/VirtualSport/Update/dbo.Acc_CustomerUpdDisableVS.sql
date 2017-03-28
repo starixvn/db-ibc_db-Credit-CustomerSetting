@@ -4,6 +4,7 @@
 	@DisableDownlines	BIT = true, --Disable all downline
 	@SubAccID				INT = 0, --Sub-AccountID
 	@UserID					INT,
+	@SystemID				TINYINT = 1,
 	@Language				VARCHAR(2) = 'E',
 	@ErrCode				INT = 0 OUTPUT,
 	@ErrMsg					NVARCHAR(200) = '' OUTPUT,
@@ -13,7 +14,7 @@ AS
 Created: 20120801@dan.nguyen
 Task : Update Vistual Sport status for customer
 DB: DBTXN/CustDB
-Original: Acc_CustomerUpdDisable151_31
+Original: Acc_CustomerUpdDisable151_31_xtest
 	
 Revisions:
     - 20121101: allow updating downline only if number of customer <= 5000
@@ -25,6 +26,7 @@ Revisions:
 	- 20141125@Jamie: Use Acc_CustomerInfo_Execrep_04 instead of Acc_ExecRep_Cust_04 [Redmine:#26497]
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+	- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 
 Param's Explanation:
 • @custid: customer id.   
@@ -42,6 +44,8 @@ EXEC Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@Err
 if @ErrCode <>0 return
 --end
 Declare @RoleID tinyint , @UplineDisable bit, @Old_Disable bit
+			,@HasDownline BIT = 0 
+			,@DisableDownlines_Old BIT = 0
 
 select	@RoleID = RoleID,
 		@Old_Disable = isnull(DisableVirtualSports, 0)
@@ -64,8 +68,43 @@ BEGIN
 		   @ErrCode = 103	
 	RETURN
 END
+SELECT top 1 @HasDownline = 1   
+	FROM dbo.CustInfo WITH (NOLOCK)  
+	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)  
+		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
+		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
 	
-if @Old_Disable = @Disable RETURN--and @IsUpdDownline = 0
+	IF (@Old_Disable = @Disable AND @Disable=1) OR  (@Old_Disable = @Disable AND @Disable=0 AND @DisableDownLines=1) 
+	BEGIN
+		SELECT @ErrCode=1
+		RETURN
+	END
+	IF (@Old_Disable = @Disable AND @Disable=0 AND @DisableDownLines=0)
+		BEGIN
+			IF @HasDownline = 1
+			BEGIN
+				IF @roleid = 4 
+				BEGIN
+					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid<>4 AND DisableVirtualSports = 1)
+						SET @DisableDownlines_Old = 1
+				END
+				ELSE IF @roleid = 3
+				BEGIN
+					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid<>3 AND DisableVirtualSports = 1)
+						SET @DisableDownlines_Old = 1
+				END
+				ELSE IF @roleid = 2
+				BEGIN
+					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid<>2 AND DisableVirtualSports = 1)
+						SET @DisableDownlines_Old = 1
+				END
+			END
+			IF @DisableDownlines_Old=0
+			BEGIN
+				SELECT @ErrCode=1
+				RETURN
+			END
+		END	
 
 if @Disable = 0 -- check status upline
 begin			
@@ -89,7 +128,14 @@ begin
 		return
 	END 
 end
-
+IF (@Disable = 1 AND @SystemID <> 1 AND @roleid IN (4,3,2))
+		BEGIN
+			SELECT @ErrMsg =  CASE @Language 
+								WHEN 'E' THEN 'You are not allowed to perform this action.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+							END, @ErrCode = 103
+			RETURN
+		END 
 --Check Allowed downlines during peak hour at weekend
 IF (@Disable = 1 or (@Disable = 0 and @DisableDownlines = 0))
 BEGIN
@@ -104,6 +150,7 @@ BEGIN
 END
 ---------------------
 
+
 update CustInfo with (ROWLOCK, UPDLOCK) set DisableVirtualSports = @Disable
 where CustID = @CustID
 if (@@error <> 0)
@@ -116,7 +163,11 @@ begin
 	return
 end
 --Check condition for update all downline
-if (@Disable = 1 or (@Disable = 0 and @DisableDownlines = 0)) --Disable all downline or enable all downline
+	IF ( @RoleID > 1 AND 
+		(@Disable = 1  
+			OR (@Disable = 0 AND (@DisableDownlines = 0 AND @HasDownline = 1))  
+		)  
+		)
 BEGIN TRY
 	--20130924@Kathy: Apply ExecRep 
 	EXEC [Acc_CustomerInfo_Execrep_04]
@@ -181,7 +232,6 @@ BEGIN CATCH
 		@TrackingValue = @LogSPData	 ,
 		@duration = @duration
 END CATCH
-
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableVS] TO [bodbAdminNet] AS [dbo]
 GO

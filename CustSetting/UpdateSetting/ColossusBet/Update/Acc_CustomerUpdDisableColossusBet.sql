@@ -3,7 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableColossusBet]
 	@custid  INT,  
 	@Disable BIT = NULL,   
 	@EnableDownlines BIT = 0,  
-
+	@SystemID	TINYINT = 1,
 	@UserID  INT = 0,  
 	@SubAccID INT = 0, --Sub-AccountID  
 	@IP   VARCHAR(20)= '',  
@@ -17,11 +17,10 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableColossusBet]
     Created: Helen  
     Date: 20150821
     Task: Updating Colossus Bet Status - Redmine: #41264
-    DB: DBCUST / CustDB
-    
+    DB: DBCUST / CustDB  
     
 	Revisions:
-	
+	- 20170307@Winnie: Change enable behavior [Redmine: #72336]
 	Parameters Explanation:
 	
 */ 
@@ -45,7 +44,9 @@ BEGIN
 	DECLARE @roleid INT,  
 			@Disable_Old BIT,  
 			@UplineDisable BIT,     
-			@HasDownline BIT = 0  
+			@HasDownline BIT = 0 
+			,@DisableDownlines_Old BIT = 0
+
 
 	SELECT @roleid = roleid,  
 			@Disable_Old = DisableColossusBet
@@ -63,14 +64,45 @@ BEGIN
 		RETURN  
 	END  
 
-	IF @Disable_old = @Disable  
-	RETURN  
-
 	SELECT top 1 @HasDownline = 1   
 	FROM dbo.CustInfo WITH (NOLOCK)  
 	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)  
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
+	
+	
+	IF (@Disable_Old = @Disable AND @Disable=1) OR  (@Disable_Old = @Disable AND @Disable=0 AND @EnableDownlines=0) 
+	BEGIN
+	SELECT @ErrCode=1
+	RETURN
+	END
+	IF (@Disable_Old = @Disable AND @Disable=0 AND @EnableDownlines=1)
+		BEGIN
+		IF @HasDownline = 1
+		BEGIN
+			IF @roleid = 4 
+			BEGIN
+				IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid<>4 AND DisableColossusBet = 1)
+					SET @DisableDownlines_Old = 1
+			END
+			ELSE IF @roleid = 3
+			BEGIN
+				IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid<>3 AND DisableColossusBet = 1)
+					SET @DisableDownlines_Old = 1
+			END
+			ELSE IF @roleid = 2
+			BEGIN
+				IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid<>2  AND DisableColossusBet = 1)
+					SET @DisableDownlines_Old = 1
+			END
+		END
+			IF @DisableDownlines_Old=0
+			BEGIN
+			SELECT @ErrCode=1
+			RETURN
+			END
+	END
+
 
 	IF @Disable = 0 -- check status upline  
 	BEGIN  
@@ -101,6 +133,15 @@ BEGIN
 						END, @ErrCode = 101  
 		RETURN  
 	END   
+	IF (@Disable = 1 AND @SystemID <> 1 AND @roleid IN (4,3,2))
+		BEGIN
+			SELECT @ErrMsg =  CASE @Language 
+								WHEN 'E' THEN 'You are not allowed to perform this action.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+							END, @ErrCode = 103
+			RETURN
+		END 
+	
 
 	-- Update chính nó  
 	UPDATE dbo.CustInfo WITH(ROWLOCK, UPDLOCK)  
@@ -199,7 +240,6 @@ BEGIN
 	END CATCH  
 
 END
-
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableColossusBet] TO [bodbAdminNet]
 GO 

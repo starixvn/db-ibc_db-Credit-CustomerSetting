@@ -3,7 +3,7 @@
 	,@Bettype INT
 	,@Disable BIT			
 	,@DisableDownLines BIT = 1
-
+	,@SystemID	TINYINT = 1
 	,@SubAccID INT = 0
 	,@UserID INT
 	,@UplineID INT	= 0
@@ -24,7 +24,7 @@ AS
 		20141125@Jamie: Use Acc_CustomerInfo_Execrep_04 instead of Acc_ExecRep_Cust_04 [Redmine:#26497]
 		- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
-		
+		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 	Param's Explanation:
 		• @custid: customer id.   
 		• @Disable: status of HideKeno
@@ -50,6 +50,7 @@ BEGIN
 		,@GameTypeID INT
 		,@HasUpdatedDisable BIT = 0
 		,@HasDownline BIT = 0
+		,@DisableDownlines_Old BIT = 0
 
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid
@@ -79,6 +80,44 @@ BEGIN
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)
 
+	IF (@Old_DisableBetType = @Disable AND @Disable=1) OR  (@Old_DisableBetType = @Disable AND @Disable=0 AND @DisableDownLines=1) 
+	BEGIN
+		SELECT @Errcode=1
+		RETURN
+	END
+	IF (@Old_DisableBetType = @Disable AND @Disable=0 AND @DisableDownLines=0)
+		BEGIN
+			IF @HasDownline = 1
+			BEGIN
+				IF @roleid = 4 
+				BEGIN
+					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
+								INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID 
+								WHERE srecommend = @custid AND ct.IsDisabled = 1 AND c.roleid<>4 AND  ct.GameTypeID = @GameTypeID)
+						SET @DisableDownlines_Old = 1
+				END
+				ELSE IF @roleid = 3
+				BEGIN
+					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK)
+								INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
+								WHERE mrecommend = @custid AND c.roleid<>3 AND  ct.GameTypeID = @GameTypeID)
+						SET @DisableDownlines_Old = 1
+				END
+				ELSE IF @roleid = 2
+				BEGIN
+					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK)
+								INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
+								WHERE recommend = @custid AND c.roleid<>2 AND roleid = 1 AND  ct.GameTypeID = @GameTypeID)
+						SET @DisableDownlines_Old = 1
+				END
+			END
+			IF @DisableDownlines_Old=0
+				BEGIN
+				SELECT @Errcode=1
+				RETURN
+	END
+		END
+		
 	IF(@RoleID = 1)
 	BEGIN
 		---------------------------
@@ -169,7 +208,14 @@ BEGIN
 
 			RETURN
 		END
-
+		IF (@Disable = 1 AND @SystemID <> 1 AND @roleid IN (4,3,2))
+		BEGIN
+			SELECT @ErrMsg =  CASE @Language 
+								WHEN 'E' THEN 'You are not allowed to perform this action.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+							END, @ErrCode = 103
+			RETURN
+		END 
 		UPDATE g
 		SET IsDisabled = @Disable
 		FROM dbo.CustGameType g WITH(ROWLOCK, UPDLOCK)

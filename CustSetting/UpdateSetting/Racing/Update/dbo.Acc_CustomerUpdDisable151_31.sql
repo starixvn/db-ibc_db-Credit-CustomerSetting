@@ -4,6 +4,7 @@
 	@DisableDownlines151_31 BIT = true, --Disable all downline
 	@SubAccID				INT = 0, --Sub-AccountID
 	@UserID					INT,
+	@SystemID				TINYINT = 1,
 	@Language				VARCHAR(2) = 'E',
 	@ErrCode				INT = 0 OUTPUT,
 	@ErrMsg					NVARCHAR(200) = '' OUTPUT,
@@ -34,7 +35,7 @@ Revisions:
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
 	- 20130226@Johnson: change linked server DB053 to DBAGE and write log on DBTXN if DBLOG failure
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB)
-
+	- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 Param's Explanation:
 • @custid: customer id.   
 • @Disable151_31: status
@@ -51,9 +52,12 @@ EXEC Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@Err
 if @ErrCode <>0 return
 --end
 Declare @RoleID tinyint , @UplineDisable151_31 bit, @Old_Disable151_31 bit
+		,@HasDownline BIT = 0 
+		,@DisableDownlines_Old BIT = 0
 
 select	@RoleID = RoleID,
 		@Old_Disable151_31 = isnull(DisableHorseracing, 0)
+		
 
 from Custinfo with (nolock)
 where CustID = @CustID
@@ -66,29 +70,45 @@ BEGIN
 					end, @ErrCode = 100	
 	return
 END
+SELECT top 1 @HasDownline = 1   
+	FROM dbo.CustInfo WITH (NOLOCK)  
+	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)  
+		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
+		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
 
---current status change or not?
--- Qui.Nguyen add "and @IsUpdDownline = 0" for wap
--- Remove @IsUpdDownline
 
-if @Old_Disable151_31 = @Disable151_31 RETURN--and @IsUpdDownline = 0
---begin
-	--rase message if Account was already disabled!
---	if (@Disable151_31 = 1 AND @UplineDisable151_31 = 1)
---	begin
---		SELECT @ErrMsg =  CASE @Language 
---							WHEN 'E' THEN 'Your account was disabled Horse Racing betting. Cannot edit customer.'
---							WHEN 'CS' THEN N'赛马投注目前已被上线限制。无法修改会员。'
---							WHEN 'CT' THEN N'賽馬投注目前已被上線限制。無法修改會員。'
---							WHEN 'TH' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'							
---							WHEN 'J' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'
---							WHEN 'KO' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'
---							ELSE N'Your account was disabled Horse Racing betting. Cannot edit customer.'
---						END
---	end
---
---	return
---end
+IF (@Old_Disable151_31 = @Disable151_31 AND @Disable151_31=1) OR  (@Old_Disable151_31 = @Disable151_31 AND @Disable151_31=0 AND @DisableDownlines151_31=1) 
+BEGIN
+SELECT @ErrCode=1
+RETURN
+END
+IF (@Old_Disable151_31 = @Disable151_31 AND @Disable151_31=0 AND @DisableDownlines151_31=0)
+	BEGIN
+	IF @HasDownline = 1
+	BEGIN
+		IF @roleid = 4 
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid<>4 AND DisableHorseracing = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 3
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid<>3 AND DisableHorseracing = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 2
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid<>2 AND DisableHorseracing = 1)
+				SET @DisableDownlines_Old = 1
+		END
+	END
+		IF @DisableDownlines_Old=0
+		BEGIN
+		SELECT @ErrCode=1
+		RETURN
+		END
+END
+
 
 if @Disable151_31 = 0 -- check status upline
 begin			
@@ -112,9 +132,14 @@ begin
 		return
 	END 
 end
-
-
-
+	IF (@Disable151_31 = 1 AND @SystemID <> 1 AND @roleid IN (4,3,2))
+		BEGIN
+			SELECT @ErrMsg =  CASE @Language 
+								WHEN 'E' THEN 'You are not allowed to perform this action.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+							END, @ErrCode = 103
+			RETURN
+		END 
 ---------------------
 
 update CustInfo with (ROWLOCK, UPDLOCK) set DisableHorseracing = @Disable151_31
@@ -130,7 +155,11 @@ begin
 	return
 end
 --Check condition for update all downline
-if (@Disable151_31 = 1 or (@Disable151_31 = 0 and @DisableDownlines151_31 = 0)) --Disable all downline or enable all downline
+	IF ( @RoleID > 1 AND 
+		(@Disable151_31 = 1  
+			OR (@Disable151_31 = 0 AND (@DisableDownlines151_31 = 0 AND @HasDownline = 1))  
+		)  
+		) 
 begin
 	if @RoleID = 4 
 	BEGIN
@@ -220,7 +249,6 @@ BEGIN CATCH
 		@TrackingValue = @LogSPData	 ,
 		@duration = @duration
 END CATCH
-
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_31] TO [bodbAdminNet]
 GO

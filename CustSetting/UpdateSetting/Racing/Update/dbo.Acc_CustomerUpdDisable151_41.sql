@@ -4,6 +4,7 @@
 	@DisableDownlines151_41	BIT = true, --Disable all downline
 	@SubAccID				INT = 0, --Sub-AccountID
 	@UserID					INT,
+	@SystemID				TINYINT = 1,
 	@Language				VARCHAR(2) = 'E',
 	@ErrCode				INT = 0 OUTPUT,
 	@ErrMsg					NVARCHAR(200) = '' OUTPUT,
@@ -25,6 +26,7 @@ Revisions:
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
 	- 20130226@Johnson: change linked server DB053 to DBAGE and write log on DBTXN if DBLOG failure
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB)
+	- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 Param's Explanation:
 â€¢ @custid: customer id.   
 â€¢ @Disable151_41: status
@@ -41,6 +43,9 @@ EXEC Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@Err
 if @ErrCode <>0 return 
 --end
 Declare @RoleID tinyint , @UplineDisable151_41 bit, @Old_Disable151_41 bit
+		,@HasDownline BIT = 0 
+		,@DisableDownlines_Old BIT = 0
+
 
 select	@RoleID = RoleID,
 		@Old_Disable151_41 = isnull(DisableOpenTote, 0)
@@ -56,29 +61,43 @@ BEGIN
 					end, @ErrCode = 100	
 	return
 END
+SELECT top 1 @HasDownline = 1   
+	FROM dbo.CustInfo WITH (NOLOCK)  
+	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)  
+		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
+		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
+IF (@Old_Disable151_41 = @Disable151_41 AND @Disable151_41=1) OR  (@Old_Disable151_41 = @Disable151_41 AND @Disable151_41=0 AND @DisableDownlines151_41=1) 
+BEGIN
+SELECT @ErrCode=1
+RETURN
+END
+IF (@Old_Disable151_41 = @Disable151_41 AND @Disable151_41=0 AND @DisableDownlines151_41=0)
+	BEGIN
+	IF @HasDownline = 1
+	BEGIN
+		IF @roleid = 4 
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid<>4  AND DisableOpenTote = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 3
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid<>3  AND DisableOpenTote = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 2
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid<>2 AND DisableOpenTote = 1)
+				SET @DisableDownlines_Old = 1
+		END
+	END
+		IF @DisableDownlines_Old=0
+		BEGIN
+		SELECT @ErrCode=1
+		RETURN
+		END
+END
 
---current status change or not?
--- Qui.Nguyen add "and @IsUpdDownline = 0" for wap
--- Remove @IsUpdDownline
-
-if @Old_Disable151_41 = @Disable151_41 RETURN--and @IsUpdDownline = 0
---begin
-	--rase message if Account was already disabled!
---	if (@Disable151_41 = 1 AND @UplineDisable151_41 = 1)
---	begin
---		SELECT @ErrMsg =  CASE @Language 
---							WHEN 'E' THEN 'Your account was disabled Horse Racing betting. Cannot edit customer.'
---							WHEN 'CS' THEN N'èµ›é©¬æŠ•æ³¨ç›®å‰å·²è¢«ä¸Šçº¿é™åˆ¶ã€‚æ— æ³•ä¿®æ”¹ä¼šå‘˜ã€‚'
---							WHEN 'CT' THEN N'è³½é¦¬æŠ•æ³¨ç›®å‰å·²è¢«ä¸Šç·šé™åˆ¶ã€‚ç„¡æ³•ä¿®æ”¹æœƒå“¡ã€‚'
---							WHEN 'TH' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'							
---							WHEN 'J' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'
---							WHEN 'KO' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'
---							ELSE N'Your account was disabled Horse Racing betting. Cannot edit customer.'
---						END
---	end
---
---	return
---end
 
 if @Disable151_41 = 0 -- check status upline
 begin			
@@ -102,9 +121,14 @@ begin
 		return
 	END 
 end
-
-
-
+IF (@Disable151_41 = 1 AND @SystemID <> 1 AND @roleid IN (4,3,2))
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to perform this action.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+						END, @ErrCode = 103
+		RETURN
+	END 
 ---------------------
 
 update CustInfo with (ROWLOCK, UPDLOCK) set DisableOpenTote = @Disable151_41
@@ -120,7 +144,11 @@ begin
 	return
 end
 --Check condition for update all downline
-if (@Disable151_41 = 1 or (@Disable151_41 = 0 and @DisableDownlines151_41 = 0)) --Disable all downline or enable all downline
+IF ( @RoleID > 1 AND 
+		(@Disable151_41 = 1  
+			OR (@Disable151_41 = 0 AND (@DisableDownlines151_41 = 0 AND @HasDownline = 1))  
+		)  
+		) 
 begin
 	if @RoleID = 4 
 	BEGIN
@@ -183,7 +211,7 @@ Select @LogSPData = '<Acc_CustomerUpdDisable151_41 CustID="'+ coalesce(cast(@Cus
 set @endRun = getdate()
 set @duration  = datediff (millisecond,@startRun,@endRun)
 
-/*1119	Acc_CustomerUpdDisableOpenTote	Update Enabled/Disabled Horse racing status*/
+/*1119	Acc_CustomerUpdDisableOpenTote_xtest	Update Enabled/Disabled Horse racing status*/
 BEGIN TRY
 	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 		@UserID = @UserID,
@@ -210,8 +238,6 @@ BEGIN CATCH
 		@TrackingValue = @LogSPData,
 		@duration = @duration
 END CATCH
-
-
 GO
 GRANT EXECUTE ON [dbo].Acc_CustomerUpdDisable151_41 TO [bodbAdminNet]
 GO
