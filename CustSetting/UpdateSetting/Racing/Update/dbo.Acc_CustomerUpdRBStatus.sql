@@ -120,7 +120,7 @@ BEGIN
 		@ErrCode=@ErrCode_Cur output, 
 		@ErrMsg=@ErrMsg_Cur output, 
 		@IP=@IP
-	IF @ErrCode_Cur > 0
+	IF @ErrCode_Cur > 1 
 	BEGIN
 		select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
 				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
@@ -147,7 +147,7 @@ BEGIN
 		@ErrCode=@ErrCode_Cur output, 
 		@ErrMsg=@ErrMsg_Cur output, 
 		@IP=@IP
-	IF @ErrCode_Cur > 0
+	IF @ErrCode_Cur > 1
 	BEGIN
 		select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
 				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
@@ -173,7 +173,7 @@ BEGIN
 		@ErrCode=@ErrCode_Cur output, 
 		@ErrMsg=@ErrMsg_Cur output, 
 		@IP=@IP
-	IF @ErrCode_Cur > 0
+	IF @ErrCode_Cur > 1
 	BEGIN
 		select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
 				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
@@ -199,7 +199,7 @@ BEGIN
 		@ErrCode=@ErrCode_Cur output, 
 		@ErrMsg=@ErrMsg_Cur output, 
 		@IP=@IP
-	IF @ErrCode_Cur > 0
+	IF @ErrCode_Cur > 1
 	BEGIN
 		select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
 				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
@@ -225,7 +225,7 @@ BEGIN
 		@ErrCode=@ErrCode_Cur output, 
 		@ErrMsg=@ErrMsg_Cur output, 
 		@IP=@IP
-	IF @ErrCode_Cur > 0
+	IF @ErrCode_Cur > 1
 	BEGIN
 		select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
 				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
@@ -251,7 +251,7 @@ BEGIN
 		@ErrCode=@ErrCode_Cur output, 
 		@ErrMsg=@ErrMsg_Cur output, 
 		@IP=@IP
-	IF @ErrCode_Cur > 0
+	IF @ErrCode_Cur > 1
 	BEGIN
 		select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
 				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
