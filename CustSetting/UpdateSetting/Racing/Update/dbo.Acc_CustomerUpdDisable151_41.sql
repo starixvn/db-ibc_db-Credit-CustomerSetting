@@ -68,7 +68,7 @@ SELECT top 1 @HasDownline = 1
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
 IF (@Old_Disable151_41 = @Disable151_41 AND @Disable151_41=1) OR  (@Old_Disable151_41 = @Disable151_41 AND @Disable151_41=0 AND @DisableDownlines151_41=1) 
 BEGIN
-SELECT @ErrCode=1
+
 RETURN
 END
 IF (@Old_Disable151_41 = @Disable151_41 AND @Disable151_41=0 AND @DisableDownlines151_41=0)
@@ -93,7 +93,7 @@ IF (@Old_Disable151_41 = @Disable151_41 AND @Disable151_41=0 AND @DisableDownlin
 	END
 		IF @DisableDownlines_Old=0
 		BEGIN
-		SELECT @ErrCode=1
+		
 		RETURN
 		END
 END

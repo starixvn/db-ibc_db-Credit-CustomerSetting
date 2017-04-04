@@ -68,7 +68,7 @@ BEGIN
 		
 IF (@Old_Disable153_51 = @Disable153_51 AND @Disable153_51=1) OR  (@Old_Disable153_51 = @Disable153_51 AND @Disable153_51=0 AND @DisableDownlines153_51=1) 
 BEGIN
-SELECT @ErrCode=1
+
 RETURN
 END
 IF (@Old_Disable153_51 = @Disable153_51 AND @Disable153_51=0 AND @DisableDownlines153_51=0)
@@ -92,8 +92,7 @@ IF (@Old_Disable153_51 = @Disable153_51 AND @Disable153_51=0 AND @DisableDownlin
 		END
 	END
 		IF @DisableDownlines_Old=0
-		BEGIN
-		SELECT @ErrCode=1
+		BEGIN		
 		RETURN
 		END
 END

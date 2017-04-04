@@ -79,7 +79,7 @@ SELECT top 1 @HasDownline = 1
 
 IF (@Old_Disable151_31 = @Disable151_31 AND @Disable151_31=1) OR  (@Old_Disable151_31 = @Disable151_31 AND @Disable151_31=0 AND @DisableDownlines151_31=1) 
 BEGIN
-SELECT @ErrCode=1
+
 RETURN
 END
 IF (@Old_Disable151_31 = @Disable151_31 AND @Disable151_31=0 AND @DisableDownlines151_31=0)
@@ -104,7 +104,7 @@ IF (@Old_Disable151_31 = @Disable151_31 AND @Disable151_31=0 AND @DisableDownlin
 	END
 		IF @DisableDownlines_Old=0
 		BEGIN
-		SELECT @ErrCode=1
+		
 		RETURN
 		END
 END

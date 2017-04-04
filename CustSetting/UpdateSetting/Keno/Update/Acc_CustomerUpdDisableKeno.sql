@@ -82,7 +82,7 @@ BEGIN
 
 	IF (@Old_DisableBetType = @Disable AND @Disable=1) OR  (@Old_DisableBetType = @Disable AND @Disable=0 AND @DisableDownLines=1) 
 	BEGIN
-		SELECT @Errcode=1
+		
 		RETURN
 	END
 	IF (@Old_DisableBetType = @Disable AND @Disable=0 AND @DisableDownLines=0)
@@ -113,7 +113,7 @@ BEGIN
 			END
 			IF @DisableDownlines_Old=0
 				BEGIN
-				SELECT @Errcode=1
+				
 				RETURN
 	END
 		END

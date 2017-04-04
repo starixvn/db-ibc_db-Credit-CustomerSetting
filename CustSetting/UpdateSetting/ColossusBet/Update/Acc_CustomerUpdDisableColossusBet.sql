@@ -72,8 +72,7 @@ BEGIN
 	
 	
 	IF (@Disable_Old = @Disable AND @Disable=1) OR  (@Disable_Old = @Disable AND @Disable=0 AND @EnableDownlines=0) 
-	BEGIN
-	SELECT @ErrCode=1
+	BEGIN	
 	RETURN
 	END
 	IF (@Disable_Old = @Disable AND @Disable=0 AND @EnableDownlines=1)
@@ -97,8 +96,7 @@ BEGIN
 			END
 		END
 			IF @DisableDownlines_Old=0
-			BEGIN
-			SELECT @ErrCode=1
+			BEGIN			
 			RETURN
 			END
 	END
