@@ -68,7 +68,10 @@ BEGIN
 		
 IF (@Old_Disable153_51 = @Disable153_51 AND @Disable153_51=1) OR  (@Old_Disable153_51 = @Disable153_51 AND @Disable153_51=0 AND @DisableDownlines153_51=1) 
 BEGIN
-
+SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
+						END, @ErrCode = 102
 RETURN
 END
 IF (@Old_Disable153_51 = @Disable153_51 AND @Disable153_51=0 AND @DisableDownlines153_51=0)
