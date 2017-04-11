@@ -47,6 +47,8 @@ BEGIN
 			@Old_Disable152_51 BIT
 			,@HasDownline BIT = 0 
 			,@DisableDownlines_Old BIT = 0
+			,@EnableDownlines BIT=0
+SET @EnableDownlines = CASE @DisableDownlines152_51 WHEN 0 THEN 1 ELSE 0 END
 
 	SELECT	@RoleID = RoleID,
 			@Old_Disable152_51 = ISNULL(Disable152_AU, 0)
@@ -67,39 +69,27 @@ SELECT top 1 @HasDownline = 1
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
 		
-IF (@Old_Disable152_51 = @Disable152_51 AND @Disable152_51=1) OR  (@Old_Disable152_51 = @Disable152_51 AND @Disable152_51=0 AND @DisableDownlines152_51=1) 
-BEGIN
-SELECT @ErrMsg =  CASE @Language 
-							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
-						END, @ErrCode = 102
-RETURN
-END
-IF (@Old_Disable152_51 = @Disable152_51 AND @Disable152_51=0 AND @DisableDownlines152_51=0)
-	BEGIN
-		IF @HasDownline = 1
+IF @HasDownline = 1
 	BEGIN
 		IF @roleid = 4 
 		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid<>4 AND Disable152_AU = 1)
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid = 3 AND Disable152_AU = 1)
 				SET @DisableDownlines_Old = 1
 		END
 		ELSE IF @roleid = 3
 		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid<>3 AND Disable152_AU = 1)
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid = 2 AND Disable152_AU = 1)
 				SET @DisableDownlines_Old = 1
 		END
 		ELSE IF @roleid = 2
 		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid<>2 AND Disable152_AU = 1)
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND Disable152_AU = 1)
 				SET @DisableDownlines_Old = 1
 		END
 	END
-		IF @DisableDownlines_Old=0
-		BEGIN		
+
+	IF @Old_Disable152_51 = @Disable152_51 AND @DisableDownlines_Old <> @EnableDownlines
 		RETURN
-		END
-END
 
 	IF @Disable152_51 = 0 -- check status upline
 	BEGIN
@@ -123,14 +113,23 @@ END
 			RETURN
 		END 
 	END
-IF (@Disable152_51 = 1 AND @SystemID <> 1 AND @roleid IN (4,3,2))
+	IF ((@Disable152_51 = 1 AND @Old_Disable152_51 = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID <> 1 AND @roleid IN (4,3,2)
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
+						END, @ErrCode = 102
+		RETURN
+	END 
+
+	IF @Disable152_51 = 1 AND @EnableDownlines = 1
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to perform this action.'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
 						END, @ErrCode = 103
 		RETURN
-	END
+	END 
 	---------------------
 
 	UPDATE CustInfo WITH(ROWLOCK, UPDLOCK) 

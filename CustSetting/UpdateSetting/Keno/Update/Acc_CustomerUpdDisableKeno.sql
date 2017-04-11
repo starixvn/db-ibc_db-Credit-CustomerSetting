@@ -51,7 +51,8 @@ BEGIN
 		,@HasUpdatedDisable BIT = 0
 		,@HasDownline BIT = 0
 		,@DisableDownlines_Old BIT = 0
-
+		,@EnableDownlines BIT=0
+	SET @EnableDownlines = CASE @DisableDownLines WHEN 0 THEN 1 ELSE 0 END
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid
 		,@ErrCode = @ErrCode OUTPUT
@@ -79,47 +80,34 @@ BEGIN
 	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)
-
-	IF (@Old_DisableBetType = @Disable AND @Disable=1) OR  (@Old_DisableBetType = @Disable AND @Disable=0 AND @DisableDownLines=1) 
+	
+	IF @HasDownline = 1
 	BEGIN
-		SELECT @ErrMsg =  CASE @Language 
-							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
-						END, @ErrCode = 102
-		RETURN
-	END
-	IF (@Old_DisableBetType = @Disable AND @Disable=0 AND @DisableDownLines=0)
+		IF @roleid = 4 
 		BEGIN
-			IF @HasDownline = 1
-			BEGIN
-				IF @roleid = 4 
-				BEGIN
-					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
-								INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID 
-								WHERE srecommend = @custid AND ct.IsDisabled = 1 AND c.roleid<>4 AND  ct.GameTypeID = @GameTypeID)
-						SET @DisableDownlines_Old = 1
-				END
-				ELSE IF @roleid = 3
-				BEGIN
-					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK)
-								INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
-								WHERE mrecommend = @custid AND c.roleid<>3 AND  ct.GameTypeID = @GameTypeID)
-						SET @DisableDownlines_Old = 1
-				END
-				ELSE IF @roleid = 2
-				BEGIN
-					IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK)
-								INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
-								WHERE recommend = @custid AND c.roleid<>2 AND roleid = 1 AND  ct.GameTypeID = @GameTypeID)
-						SET @DisableDownlines_Old = 1
-				END
-			END
-			IF @DisableDownlines_Old=0
-				BEGIN
-				
-				RETURN
-	END
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
+									INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID 
+									WHERE srecommend = @custid AND ct.IsDisabled = 1 AND c.roleid<>4 AND  ct.GameTypeID = @GameTypeID)
+				SET @DisableDownlines_Old = 1
 		END
+		ELSE IF @roleid = 3
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
+										INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
+										WHERE mrecommend = @custid AND ct.IsDisabled = 1  AND c.roleid<>3 AND  ct.GameTypeID = @GameTypeID)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 2
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK)
+										INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
+										WHERE recommend = @custid AND ct.IsDisabled = 1  AND roleid = 1 AND  ct.GameTypeID = @GameTypeID)
+				SET @DisableDownlines_Old = 1
+		END
+	END
+
+	IF @Old_DisableBetType = @Disable AND @DisableDownlines_Old <> @EnableDownlines
+		RETURN
 		
 	IF(@RoleID = 1)
 	BEGIN
@@ -143,6 +131,23 @@ BEGIN
 
 		RETURN
 	END
+	IF ((@Disable = 1 AND @Old_DisableBetType = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID <> 1 AND @roleid IN (4,3,2)
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
+						END, @ErrCode = 102
+		RETURN
+	END 
+
+	IF @Disable = 1 AND @EnableDownlines = 1
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to perform this action.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+						END, @ErrCode = 103
+		RETURN
+	END 
 
 	-- update CustGameType proccess
 	SELECT @GameTypeID = g.GameTypeID

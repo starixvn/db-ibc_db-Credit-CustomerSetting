@@ -71,41 +71,27 @@ BEGIN
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
 	
 	
-	IF (@Disable_Old = @Disable AND @Disable=1) OR  (@Disable_Old = @Disable AND @Disable=0 AND @EnableDownlines=0) 
-	BEGIN	
-	SELECT @ErrMsg =  CASE @Language 
-							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
-						END, @ErrCode = 102
-	RETURN
-	END
-	IF (@Disable_Old = @Disable AND @Disable=0 AND @EnableDownlines=1)
+	IF @HasDownline = 1
+	BEGIN
+		IF @roleid = 4 
 		BEGIN
-		IF @HasDownline = 1
-		BEGIN
-			IF @roleid = 4 
-			BEGIN
-				IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid<>4 AND DisableColossusBet = 1)
-					SET @DisableDownlines_Old = 1
-			END
-			ELSE IF @roleid = 3
-			BEGIN
-				IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid<>3 AND DisableColossusBet = 1)
-					SET @DisableDownlines_Old = 1
-			END
-			ELSE IF @roleid = 2
-			BEGIN
-				IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid<>2  AND DisableColossusBet = 1)
-					SET @DisableDownlines_Old = 1
-			END
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid = 3 AND DisableColossusBet = 1)
+				SET @DisableDownlines_Old = 1
 		END
-			IF @DisableDownlines_Old=0
-			BEGIN			
-			RETURN
-			END
+		ELSE IF @roleid = 3
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND roleid = 2 AND DisableColossusBet = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 2
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND DisableColossusBet = 1)
+				SET @DisableDownlines_Old = 1
+		END
 	END
 
-
+	IF @Disable_old = @Disable AND @DisableDownlines_Old <> @EnableDownlines
+	RETURN
 	IF @Disable = 0 -- check status upline  
 	BEGIN  
 		IF @RoleID = 4  --not checking the upline when the customer is the super  
@@ -135,14 +121,23 @@ BEGIN
 						END, @ErrCode = 101  
 		RETURN  
 	END   
-	IF (@Disable = 1 AND @SystemID <> 1 AND @roleid IN (4,3,2))
-		BEGIN
-			SELECT @ErrMsg =  CASE @Language 
-								WHEN 'E' THEN 'You are not allowed to perform this action.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
-							END, @ErrCode = 103
-			RETURN
-		END 
+	IF ((@Disable = 1 AND @Disable_Old = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID <> 1 AND @roleid IN (4,3,2)
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
+						END, @ErrCode = 102
+		RETURN
+	END 
+
+	IF @Disable = 1 AND @EnableDownlines = 1
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to perform this action.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+						END, @ErrCode = 103
+		RETURN
+	END 
 	
 
 	-- Update chính nó  
