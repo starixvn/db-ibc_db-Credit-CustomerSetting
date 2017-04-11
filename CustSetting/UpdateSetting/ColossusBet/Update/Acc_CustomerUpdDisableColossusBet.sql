@@ -121,7 +121,8 @@ BEGIN
 						END, @ErrCode = 101  
 		RETURN  
 	END   
-	IF ((@Disable = 1 AND @Disable_Old = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID <> 1 AND @roleid IN (4,3,2)
+	IF (--(@Disable = 1 AND @Disable_Old = 0) OR
+	 (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID <> 1 AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
@@ -130,7 +131,7 @@ BEGIN
 		RETURN
 	END 
 
-	IF @Disable = 1 AND @EnableDownlines = 1
+	IF @Disable = 1 --AND @EnableDownlines = 1
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to perform this action.'
