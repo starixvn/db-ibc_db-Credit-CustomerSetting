@@ -73,7 +73,13 @@ BEGIN
 			   @ErrCode = 103	
 		RETURN
 	END
-
+		-- update CustGameType proccess
+	SELECT @GameTypeID = g.GameTypeID
+	FROM DBPRO.bodb02.dbo.GameType g WITH(NOLOCK)
+	WHERE g.IBCBetTypeID = @Bettype
+		AND g.IsDisabled = 0 -- active bettype
+	
+	SET @GameTypeID = ISNULL(@GameTypeID, 0)
 	
 	SELECT	@HasDownline = 1 
 	FROM dbo.CustInfo WITH (NOLOCK)
@@ -150,13 +156,7 @@ BEGIN
 		RETURN
 	END 
 
-	-- update CustGameType proccess
-	SELECT @GameTypeID = g.GameTypeID
-	FROM DBPRO.bodb02.dbo.GameType g WITH(NOLOCK)
-	WHERE g.IBCBetTypeID = @Bettype
-		AND g.IsDisabled = 0 -- active bettype
-	
-	SET @GameTypeID = ISNULL(@GameTypeID, 0)
+
 
 	-- get old status on keno bettype	
 	SELECT TOP(1) @Old_DisableBetType = ISNULL(c.IsDisabled, 1)
