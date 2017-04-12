@@ -150,7 +150,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMasterHR_All]
     @Username varchar(30) = '' OUTPUT,
     @ErrCode varchar(300) = '' OUTPUT,
     @ErrMsg nvarchar(4000) = '' OUTPUT,
-    @IP varchar(15)=''
+    @IP varchar(15)='',
+	@SystemID TINYINT=1
 AS
 /*
 Created: 20090514@Phuc
@@ -187,7 +188,8 @@ Revisions:
                      Add parameter input @UpdatePositiontakingv151_31 => _51
                                 @UpdatePositiontakingv152_41 => _51
     - 20130226@Johnson: change linked server DB053 to DBAGE        
-	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)        
+	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)   
+	- 20170303@Winnie: Change enable behavior [Redmine: #72336]     
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.
@@ -228,6 +230,7 @@ BEGIN
         @UserID=@UserID, 
         @SubAccID=@SubAccID,
         @Language=@Language, 
+		@SystemID=@SystemID,
         @ErrCode=@ErrCode_Cur output, 
         @ErrMsg=@ErrMsg_Cur output, 
         @IP=@IP
@@ -255,6 +258,7 @@ BEGIN
         @UserID=@UserID, 
         @SubAccID=@SubAccID,
         @Language=@Language, 
+		@SystemID=@SystemID,
         @ErrCode=@ErrCode_Cur output, 
         @ErrMsg=@ErrMsg_Cur output, 
         @IP=@IP
@@ -282,6 +286,7 @@ END
             @UserID=@UserID, 
             @SubAccID=@SubAccID,
             @Language=@Language, 
+			@SystemID=@SystemID,
             @ErrCode=@ErrCode_Cur output, 
             @ErrMsg=@ErrMsg_Cur output, 
             @IP=@IP
@@ -308,6 +313,7 @@ END
             @UserID=@UserID, 
             @SubAccID=@SubAccID,
             @Language=@Language, 
+			@SystemID=@SystemID,
             @ErrCode=@ErrCode_Cur output, 
             @ErrMsg=@ErrMsg_Cur output, 
             @IP=@IP
@@ -334,6 +340,7 @@ END
             @UserID=@UserID, 
             @SubAccID=@SubAccID,
             @Language=@Language, 
+			@SystemID=@SystemID,
             @ErrCode=@ErrCode_Cur output, 
             @ErrMsg=@ErrMsg_Cur output, 
             @IP=@IP
@@ -360,6 +367,7 @@ END
             @UserID=@UserID, 
             @SubAccID=@SubAccID,
             @Language=@Language, 
+			@SystemID=@SystemID,
             @ErrCode=@ErrCode_Cur output, 
             @ErrMsg=@ErrMsg_Cur output, 
             @IP=@IP
