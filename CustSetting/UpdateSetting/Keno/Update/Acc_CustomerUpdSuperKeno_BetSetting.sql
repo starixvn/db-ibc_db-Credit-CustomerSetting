@@ -12,7 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperKeno_BetSetting]
 	@MinBet			MONEY,
 	@MaxBet			MONEY,
 	@MaxPerMatch	MONEY,
-	@SystemID INT,
+	@SystemID TINYINT=1,
 	@UserId INT = 0,
 	@SubAccID INT = 0,
 	@Ip VARCHAR(50) = '',
