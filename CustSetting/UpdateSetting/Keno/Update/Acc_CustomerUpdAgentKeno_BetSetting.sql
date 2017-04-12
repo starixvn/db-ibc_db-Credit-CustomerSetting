@@ -12,7 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentKeno_BetSetting]
 	, @MinBet MONEY
 	, @MaxBet MONEY
 	, @MaxPerMatch MONEY
-
+	, @SystemID INT
 	, @UserId INT = 0
 	, @SubAccID INT = 0
 	, @Ip VARCHAR(50) = ''
@@ -28,6 +28,7 @@ AS
 
 	Revisions:
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 	Parameters Explanation:
 		+ @ErrCode <0 : update successfully 
 			-100: status
@@ -73,6 +74,7 @@ BEGIN
 			, @DisableDownlines = @DisableDownlines
 			, @UserID = @UserID
 			, @SubAccID = @SubAccID
+			, @SystemID=@SystemID
 			, @Language	= @Language
 			, @ErrCode = @ErrCode_Cur OUTPUT
 			, @ErrMsg = @ErrMsg_Cur OUTPUT
