@@ -25,7 +25,7 @@ AS
 						IsDisabledDownline="1"
 				/>
 		</ROOT>
-
+	• @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -144,7 +144,7 @@ BEGIN
 	END
 
 	--60035: You are not allowed to disable for downlines.
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1 OR IsDisabledDownline = 1) AND @SystemID NOT IN (1,2)
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1 OR IsDisabledDownline = 1) AND @SystemID = 2
 	BEGIN
 		IF @RoleID = 4
 		BEGIN
