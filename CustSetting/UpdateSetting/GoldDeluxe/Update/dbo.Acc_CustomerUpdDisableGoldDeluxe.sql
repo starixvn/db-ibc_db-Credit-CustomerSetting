@@ -22,6 +22,7 @@
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 			- 20170203@Elodie: Change enable behavior [Redmine: #70722]
 			- 20170522@Helen:  New member by search copy: IsHiddenGoldLuxe=0 although Agent isHiddenGoldDluxe=1 [Redmine: #76921]
+			- 20170414@Winnie: Allowed disable on EXT-NAP [Redmine: #72336]
 
 		Parameter's Explanation:
 			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
@@ -136,7 +137,7 @@ BEGIN
 		RETURN
 	END 
 	
-	IF ((@Disable = 1 AND @Disable_Old = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID <> 1 AND @roleid IN (4,3,2)
+	IF ((@Disable = 1 AND @Disable_Old = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to disable for downlines.'

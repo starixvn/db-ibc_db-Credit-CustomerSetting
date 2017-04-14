@@ -20,7 +20,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableColossusBet]
     DB: DBCUST / CustDB  
     
 	Revisions:
-	- 20170307@Winnie: Change enable behavior [Redmine: #72336]
+	- 20170307@Winnie: Change enable behavior & Allowed disable on EXT-NAP [Redmine: #72336]
 	Parameters Explanation:
 	
 */ 
@@ -122,7 +122,7 @@ BEGIN
 		RETURN  
 	END   
 	IF (--(@Disable = 1 AND @Disable_Old = 0) OR
-	 (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID <> 1 AND @roleid IN (4,3,2)
+	 (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
@@ -131,7 +131,7 @@ BEGIN
 		RETURN
 	END 
 
-	IF @Disable = 1  AND @SystemID <> 1 --AND @EnableDownlines = 1
+	IF @Disable = 1  AND @SystemID =2  --AND @EnableDownlines = 1
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to perform this action.'
