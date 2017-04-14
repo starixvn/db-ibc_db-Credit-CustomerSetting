@@ -355,6 +355,17 @@ BEGIN
 		EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
 						, @RoleID			= @RoleID
 						, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+
+		IF @ProductID = 24 --Fishing World
+		BEGIN
+			IF @downlines = 1
+			BEGIN
+				IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND IsDisabledDownline= 0)
+					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3
+				IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1)
+					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
+			END
+		END
 	
 	END
 	
