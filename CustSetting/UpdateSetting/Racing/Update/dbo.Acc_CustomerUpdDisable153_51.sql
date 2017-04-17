@@ -87,7 +87,7 @@ IF @HasDownline = 1
 		END
 	END
 
-	IF @Disable153_51 = @Disable153_51 AND @DisableDownlines_Old <> @EnableDownlines
+	IF @Old_Disable153_51 = @Disable153_51 AND @DisableDownlines_Old <> @EnableDownlines
 		RETURN
 
 	IF @Disable153_51 = 0 -- check status upline
