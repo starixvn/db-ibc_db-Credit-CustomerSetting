@@ -52,10 +52,15 @@ Revisions:
 	DECLARE	@Cricket				INT = 20
 		,	@AllBet					INT = 21
 		,	@VoidBridge				INT = 22
-		,	@FishingWorld			INT = 24
-		,	@bitOrderVB				INT
+		,	@FishingWorld			INT = 24		
 		,	@NG2					INT = 23
 	
+	DECLARE @bitOrderVB				INT = 5
+		,	@bitOrderFW				INT = 8
+		,	@bitOrderNG2			INT = 4
+		,	@bitOrderCF				INT = 2
+		,	@bitOrderCriket			INT = 3
+
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend
 		, @AllowedColossusbets = CASE WHEN HideColossusBet = 0 THEN 1 ELSE 0 END		
 	from custinfo with (nolock) where CustID=@CustID
@@ -72,7 +77,7 @@ Revisions:
 	--SET @IsHideCockfighting = (SELECT SettingStatus FROM ProductSettingDetail WITH (NOLOCK) WHERE ProductID = 19 AND SettingType = 4)
 	EXEC Acc_CheckShowProduct @ProductID = 19, @IsHide = @IsHideCockfighting OUTPUT
 	
-	SET @AllowedCockfighting = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,2) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
+	SET @AllowedCockfighting = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderCF) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideCockfighting = 0 THEN 1 ELSE 0 END
 	
 	
@@ -93,35 +98,27 @@ Revisions:
 	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHideFishingWorld OUTPUT
 
 	SELECT	@AllowedFishingWorld =	CASE	WHEN @RoleID = 4 AND @IsHideFishingWorld = 0 THEN 1
-										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) = 0
-											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, psp.bitmapOrder) = 1
+										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderFW) = 0
+											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderFW) = 1
 											AND @IsHideFishingWorld = 0 
 											THEN 1
 										ELSE 0
 								END
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
-	CROSS JOIN	dbo.ProductStatusProfile AS psp WITH (NOLOCK)
-	INNER JOIN	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
-			ON	psd.SportType = psp.Sporttype
-			AND	psd.BetType = psp.Bettype
-			AND	psd.SettingType = 13
 	WHERE	cps.CustID = @CustID
-		AND	psd.ProductID = @FishingWorld
 		
-
-	SELECT TOP 1 @bitOrderVB=bitmapOrder FROM ProductStatusProfile(NOLOCK) WHERE Sporttype=212 AND Bettype=4001
 	SET @AllowedVoidBridge = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderVB) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideVoidBridge = 0 THEN 1 ELSE 0 END
 	
 	IF @RoleID IN (2,3,4)
 	BEGIN
 		IF @IsHideCricket = 0 AND EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @CustID AND [Site] = 'IMBC')
-			SET @AllowedCricket = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,3) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 THEN 1 ELSE 0 END
+			SET @AllowedCricket = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderCriket) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 THEN 1 ELSE 0 END
 	END
 	ELSE IF @RoleID = 1
 	BEGIN
 		IF @IsHideCricket = 0 AND EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @recommend AND [Site] = 'IMBC')
-			SET @AllowedCricket = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,3) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 THEN 1 ELSE 0 END
+			SET @AllowedCricket = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderCriket) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 THEN 1 ELSE 0 END
 	END
 	
 	If @RoleID=4
@@ -196,7 +193,7 @@ Revisions:
 	INNER JOIN	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
 			ON	psd.SportType = psp.Sporttype
 			AND	psd.BetType = psp.Bettype
-			AND	psd.SettingType = 4
+			AND	psd.SettingType = 13
 	WHERE	cps.CustID = @CustID
 		AND	psd.ProductID = @AllBet
 		
@@ -207,25 +204,19 @@ Revisions:
 	--	SELECT @IsHideNG2 = 1
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHideNG2 OUTPUT
 	IF @RoleID = 4
-		SELECT	@AllowedNG2 =	CASE	WHEN @IsHideNG2 = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) = 0 THEN 1
+		SELECT	@AllowedNG2 =	CASE	WHEN @IsHideNG2 = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderNG2)) = 0 THEN 1
 										ELSE 0 END
-		FROM	dbo.ProductStatusProfile AS psp WITH (NOLOCK)
-			INNER JOIN	dbo.ProductSettingDetail AS psd WITH (NOLOCK) ON psd.SportType = psp.Sporttype AND psd.BetType = psp.Bettype AND psd.SettingType = 11
-			CROSS JOIN CustProductStatus AS cps WITH (NOLOCK)
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
 		WHERE	cps.CustID = @CustID
-			AND	psd.ProductID = @NG2
 	ELSE 
-		SELECT	@AllowedNG2 =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) = 0
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, psp.bitmapOrder)) = 1
+		SELECT	@AllowedNG2 =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderNG2)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitOrderNG2)) = 1
 											AND @IsHideNG2 = 0 
 											THEN 1
 										ELSE 0 END
-		FROM	dbo.ProductStatusProfile AS psp WITH (NOLOCK)
-			INNER JOIN	dbo.ProductSettingDetail AS psd WITH (NOLOCK) ON psd.SportType = psp.Sporttype AND psd.BetType = psp.Bettype AND psd.SettingType = 11
-			CROSS JOIN CustProductStatus AS cps WITH (NOLOCK)
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
 			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
 		WHERE	cps.CustID = @CustID
-			AND	psd.ProductID = @NG2
 			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
