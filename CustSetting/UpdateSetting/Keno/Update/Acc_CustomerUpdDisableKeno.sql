@@ -87,6 +87,13 @@ BEGIN
 		AND g.IsDisabled = 0 -- active bettype
 	
 	SET @GameTypeID = ISNULL(@GameTypeID, 0)
+	-- get old status on keno bettype	
+	SELECT TOP(1) @Old_DisableBetType = ISNULL(c.IsDisabled, 1)
+	FROM dbo.CustGameType c WITH(NOLOCK)
+	WHERE c.custid = @CustID
+		AND c.GameTypeID = @GameTypeID
+		
+	SET @Old_DisableBetType = ISNULL(@Old_DisableBetType, 1)
 	
 	SELECT	@HasDownline = 1 
 	FROM dbo.CustInfo WITH (NOLOCK)
@@ -144,6 +151,7 @@ BEGIN
 
 		RETURN
 	END
+	
 	IF ((@Disable = 1 AND @Old_DisableBetType = 0) OR 
 	(@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
 	BEGIN
@@ -165,13 +173,7 @@ BEGIN
 
 
 		
-	-- get old status on keno bettype	
-	SELECT TOP(1) @Old_DisableBetType = ISNULL(c.IsDisabled, 1)
-	FROM dbo.CustGameType c WITH(NOLOCK)
-	WHERE c.custid = @CustID
-		AND c.GameTypeID = @GameTypeID
-		
-	SET @Old_DisableBetType = ISNULL(@Old_DisableBetType, 1)
+	
 
 	-- check to update IsDisabled
 	IF(@GameTypeID > 0)
@@ -389,6 +391,7 @@ BEGIN
 
 	RETURN
 END
+
 
 
 GO
