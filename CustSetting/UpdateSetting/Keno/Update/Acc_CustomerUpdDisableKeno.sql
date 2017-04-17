@@ -1,4 +1,11 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableKeno] 
+﻿USE [CustDB]
+GO
+/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdDisableKeno_xtest]    Script Date: 4/14/2017 2:55:28 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableKeno] 
 	@CustID INT
 	,@Bettype INT
 	,@Disable BIT			
@@ -114,7 +121,7 @@ BEGIN
 
 	IF @Old_DisableBetType = @Disable AND @DisableDownlines_Old <> @EnableDownlines
 		RETURN
-		
+
 	IF(@RoleID = 1)
 	BEGIN
 		---------------------------
@@ -157,7 +164,7 @@ BEGIN
 	END 
 
 
-
+		
 	-- get old status on keno bettype	
 	SELECT TOP(1) @Old_DisableBetType = ISNULL(c.IsDisabled, 1)
 	FROM dbo.CustGameType c WITH(NOLOCK)
@@ -167,9 +174,9 @@ BEGIN
 	SET @Old_DisableBetType = ISNULL(@Old_DisableBetType, 1)
 
 	-- check to update IsDisabled
-	IF(@GameTypeID > 0
-		AND ( @Old_DisableBetType <> @Disable )
-	)
+	IF(@GameTypeID > 0)
+		--AND ( @Old_DisableBetType <> @Disable )
+	--)
 	BEGIN
 		-- check uplineDisable
 		IF (@RoleID = 3) 
@@ -225,12 +232,13 @@ BEGIN
 							END, @ErrCode = 103
 			RETURN
 		END 
+	
 		UPDATE g
 		SET IsDisabled = @Disable
 		FROM dbo.CustGameType g WITH(ROWLOCK, UPDLOCK)
 		WHERE g.custid = @CustID
 			AND g.GameTypeID = @GameTypeID
-
+		
 		--Check condition for update all downline
 		IF ( @RoleID > 1 
 				AND (@Disable = 1
@@ -238,6 +246,7 @@ BEGIN
 				)
 			)
 		BEGIN
+	
 			EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid
 				,@roleid = @roleid
 				,@isExecRep = 1
@@ -277,6 +286,7 @@ BEGIN
 	END
 
 	-- check to update HideKeno
+	
 	IF (@HasUpdatedDisable = 1 
 		AND @Old_HideKeno = 1) 
 	BEGIN
@@ -387,6 +397,7 @@ BEGIN
 
 	RETURN
 END
+
 
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableKeno] TO [bodbAdminNet] AS [dbo]
