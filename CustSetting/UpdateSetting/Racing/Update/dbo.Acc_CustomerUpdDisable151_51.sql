@@ -102,8 +102,9 @@ BEGIN
 			RETURN
 		END 
 	END
+	IF ((@Disable151_51 = 1 AND @Old_Disable151_51 = 0) OR 
 
-
+	IF @Disable151_51 = 1  AND @EnableDownlines = 1
 
 	---------------------
 

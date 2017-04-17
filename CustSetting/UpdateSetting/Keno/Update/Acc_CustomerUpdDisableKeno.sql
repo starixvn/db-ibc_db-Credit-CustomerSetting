@@ -100,14 +100,14 @@ BEGIN
 		BEGIN
 			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
 									INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID 
-									WHERE srecommend = @custid AND ct.IsDisabled = 1 AND c.roleid<>4 AND  ct.GameTypeID = @GameTypeID)
+									WHERE srecommend = @custid AND ct.IsDisabled = 1 AND c.roleid=3 AND  ct.GameTypeID = @GameTypeID)
 				SET @DisableDownlines_Old = 1
 		END
 		ELSE IF @roleid = 3
 		BEGIN
 			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
 										INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
-										WHERE mrecommend = @custid AND ct.IsDisabled = 1  AND c.roleid<>3 AND  ct.GameTypeID = @GameTypeID)
+										WHERE mrecommend = @custid AND ct.IsDisabled = 1  AND c.roleid=2 AND  ct.GameTypeID = @GameTypeID)
 				SET @DisableDownlines_Old = 1
 		END
 		ELSE IF @roleid = 2
@@ -144,7 +144,7 @@ BEGIN
 
 		RETURN
 	END
-	IF (--(@Disable = 1 AND @Old_DisableBetType = 0) OR 
+	IF ((@Disable = 1 AND @Old_DisableBetType = 0) OR 
 	(@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
@@ -154,7 +154,7 @@ BEGIN
 		RETURN
 	END 
 
-	IF @Disable = 1 AND @SystemID =2  --AND @EnableDownlines = 1
+	IF @Disable = 1 AND @EnableDownlines = 1
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to perform this action.'

@@ -122,7 +122,7 @@ begin
 		return
 	END 
 end
-	IF (--(@Disable151_31 = 1 AND @Old_Disable151_31 = 0) OR 
+	IF ((@Disable151_31 = 1 AND @Old_Disable151_31 = 0) OR 
 	(@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID =2 AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
@@ -132,7 +132,7 @@ end
 		RETURN
 	END 
 
-	IF @Disable151_31 = 1 AND @SystemID =2-- AND @EnableDownlines = 1
+	IF @Disable151_31 = 1 AND @EnableDownlines = 1
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to perform this action.'
