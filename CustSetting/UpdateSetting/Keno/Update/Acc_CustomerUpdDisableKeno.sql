@@ -224,15 +224,7 @@ BEGIN
 
 			RETURN
 		END
-		IF (@Disable = 1 AND @SystemID <> 1 AND @roleid IN (4,3,2))
-		BEGIN
-			SELECT @ErrMsg =  CASE @Language 
-								WHEN 'E' THEN 'You are not allowed to perform this action.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
-							END, @ErrCode = 103
-			RETURN
-		END 
-	
+		
 		UPDATE g
 		SET IsDisabled = @Disable
 		FROM dbo.CustGameType g WITH(ROWLOCK, UPDLOCK)
