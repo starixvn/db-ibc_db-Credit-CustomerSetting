@@ -132,7 +132,7 @@ end
 		RETURN
 	END 
 
-	IF @Disable151_31 = 1 AND @EnableDownlines = 1
+	IF @Disable151_31 = 1 AND @EnableDownlines = 1 AND @HasDownline=1
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to perform this action.'
