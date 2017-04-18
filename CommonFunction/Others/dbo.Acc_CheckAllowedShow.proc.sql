@@ -1,3 +1,8 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 					@CustID					INT
 				,	@AllowedFI				BIT = 1		OUTPUT --unused
@@ -35,7 +40,7 @@ Revisions:
 	- 20161024@Elodie: Move to DBCUST/CustDB
 	- 20161115@Winnie: Fishing World - [Redmine: #62547]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
-
+	- 20170418@Winnie: Change to call the sp Acc_CheckShowProduct - [Redmine #72336]	
 */
 
 	SET NOCOUNT ON

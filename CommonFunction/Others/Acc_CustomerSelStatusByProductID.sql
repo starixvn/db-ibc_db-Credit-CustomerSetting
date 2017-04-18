@@ -1,3 +1,8 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Acc_CustomerSelStatusByProductId]  
 (
 	 @custid  INT
@@ -7,7 +12,7 @@ AS
 /*  Created: Winnie  
     Date: 20170310
     Task: Agent: Getting status by CustID & ProductID - (Redmine: #72336)
-    DB: DBCUST / bodb02   
+    DB: DBCUST / CUSTDB   
 	Revisions:	
 	Parameters Explanation
 */ 
