@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] 
 	  @IsDisabled	VARCHAR(MAX)
 	, @RoleID			INT
@@ -14,6 +18,9 @@ AS
 	Task : Validate enabled status
 	DB: DBCUST/CustDB
 	Original:
+
+	Revision: 
+		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -329,9 +336,3 @@ BEGIN
 	
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] TO [bodbExtAccNet]

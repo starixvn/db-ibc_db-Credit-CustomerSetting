@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO 
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableGameStatusUpd] 
 	  @CustID			INT
 	, @IsDisabled		VARCHAR(MAX)
@@ -577,11 +581,3 @@ BEGIN
 	DROP TABLE #OldDisableStatTbl
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusUpd] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_DisableGameStatusUpd] TO [vnteam]

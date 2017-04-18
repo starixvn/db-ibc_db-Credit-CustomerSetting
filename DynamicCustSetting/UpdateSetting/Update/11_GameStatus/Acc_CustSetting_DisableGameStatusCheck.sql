@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO 
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableGameStatusCheck] 
 	  @IsDisabled	VARCHAR(MAX)
 	, @RoleID			INT
@@ -302,11 +306,3 @@ BEGIN
 	
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusCheck] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_DisableGameStatusCheck] TO [vnteam]
