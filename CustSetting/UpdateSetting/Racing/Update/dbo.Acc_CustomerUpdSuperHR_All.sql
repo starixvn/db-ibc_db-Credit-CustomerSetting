@@ -1,14 +1,8 @@
-USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuperHR_All]    Script Date: 06/10/2015 15:34:48 ******/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperHR_All    Script Date: 8/28/2014 2:05:12 AM ******/
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperHR_All    Script Date: 8/21/2014 3:12:19 PM ******/
-
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperHR_All    Script Date: 8/21/2014 2:58:08 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperHR_All]
     @custid int,-- superid
     @UserID int = 0,
