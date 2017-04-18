@@ -21,8 +21,9 @@ Revisions:
 	- 20110709@Johnson: Change to use new server BD053 instead DB052
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
 	- 20130226@Johnson: change linked server DB053 to DBAGE and write log on DBTXN if DBLOG failure
+	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 Param's Explanation:
-â€¢ @custid: customer id.   
+• @custid: customer id.   
 
 */
 BEGIN
@@ -34,7 +35,7 @@ BEGIN
 	SET @startRun = GETDATE()
 
 	--Check disable user
-	EXEC DBAGE.bodb02.dbo.Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+	EXEC Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
 	IF @ErrCode <>0 
 		RETURN 
 	--end
@@ -67,8 +68,8 @@ BEGIN
 	--	begin
 	--		SELECT @ErrMsg =  CASE @Language 
 	--							WHEN 'E' THEN 'Your account was disabled Horse Racing betting. Cannot edit customer.'
-	--							WHEN 'CS' THEN N'èµ›é©¬æŠ•æ³¨ç›®å‰å·²è¢«ä¸Šçº¿é™åˆ¶ã€‚æ— æ³•ä¿®æ”¹ä¼šå‘˜ã€‚'
-	--							WHEN 'CT' THEN N'è³½é¦¬æŠ•æ³¨ç›®å‰å·²è¢«ä¸Šç·šé™åˆ¶ã€‚ç„¡æ³•ä¿®æ”¹æœƒå“¡ã€‚'
+	--							WHEN 'CS' THEN N'赛马投注目前已被上线限制。无法修改会员。'
+	--							WHEN 'CT' THEN N'賽馬投注目前已被上線限制。無法修改會員。'
 	--							WHEN 'TH' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'							
 	--							WHEN 'J' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'
 	--							WHEN 'KO' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'
@@ -215,9 +216,6 @@ BEGIN
 			@duration = @duration
 	END CATCH
 END
-
-
-
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_51] TO [bodbAdminNet]
 GO
