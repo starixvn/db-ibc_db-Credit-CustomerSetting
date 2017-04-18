@@ -364,9 +364,9 @@ BEGIN
 		BEGIN
 			IF @downlines = 1
 			BEGIN
-				IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND IsDisabledDownline= 0)
+				IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND IsDisabledDownline= 0) --enable downline
 					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3
-				IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1)
+				IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) --disable downline
 					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
 			END
 		END
