@@ -7,7 +7,7 @@ AS
 /*  Created: Winnie  
     Date: 20170310
     Task: Agent: Getting status by CustID & ProductID - (Redmine: #72336)
-    DB: DBACCC / bodb02   
+    DB: DBCUST / bodb02   
 	Revisions:	
 	Parameters Explanation
 */ 
@@ -175,7 +175,7 @@ BEGIN
 		UPDATE s
 		SET s.GameTypeID=g.GameTypeID
 		FROM @SportBettype s		
-		INNER JOIN Gametype g WITH(NOLOCK) ON s.Bettype=g.IBCBetTypeID
+		INNER JOIN DBACC.bodb02.dbo.Gametype g WITH(NOLOCK) ON s.Bettype=g.IBCBetTypeID
 		WHERE g.IsDisabled = 0 
 		
 		UPDATE s
