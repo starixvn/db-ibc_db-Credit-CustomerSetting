@@ -20,7 +20,8 @@ AS
 	Original:
 
 	Revisions:
-		   
+		- 20170417@Elodie: Notify downline when upline enable FW's status [Redmine:#737073]		  
+
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -142,7 +143,18 @@ BEGIN
 	
 	EXEC sp_xml_removedocument @iDoc
 
-	
+	-- Select ProductID and SettingLevel
+	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
+	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
+			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			INNER JOIN	#OldDisableStatTbl AS tmp
+					ON	psd.SportType = tmp.SportType
+					AND	psd.BetType = tmp.BetType
+			WHERE	psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+				AND psd.SettingType = 13	-- Product Status
+		 ) iq
+
 	--Validate new disabled status
 	EXEC [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] @IsDisabled = @IsDisabled
 		, @RoleID	= @RoleID
@@ -373,19 +385,7 @@ BEGIN
 	
 	END
 	
-	--START LOGGING		
-
-	-- Select ProductID and SettingLevel
-	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
-	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
-			INNER JOIN	#OldDisableStatTbl AS tmp
-					ON	psd.SportType = tmp.SportType
-					AND	psd.BetType = tmp.BetType
-			WHERE	psd.ProductID IS NOT NULL
-				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType = 13	-- Product Status
-		 ) iq
+	--START LOGGING			
 
 	-- Select ProductName
 	SELECT @ProductName = p.ProductName
