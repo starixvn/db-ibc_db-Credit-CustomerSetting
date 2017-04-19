@@ -35,7 +35,7 @@ BEGIN
 			IF EXISTS(SELECT 1  FROM dbo.CustInfo WITH (NOLOCK)  WHERE recommend = @CustID AND roleid=1)
 				SELECT @HasDownline=1
 			IF @HasDownline=1
-				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND DisableColossusBet=1)
+				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND DisableColossusBet=1)
 					SELECT @IsDisabledDownline=1
 		END		
 		ELSE IF @RoleID=3	
@@ -44,7 +44,7 @@ BEGIN
 			IF EXISTS(SELECT 1 FROM dbo.CustInfo WITH (NOLOCK)	WHERE mrecommend = @CustID AND roleid=2)
 				SELECT @HasDownline=1
 			IF @HasDownline=1
-				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3 AND DisableColossusBet=1)
+				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND DisableColossusBet=1)
 					SELECT @IsDisabledDownline=1
 		END		
 		ELSE IF @RoleID=4	
@@ -52,7 +52,7 @@ BEGIN
 			IF EXISTS(SELECT 1 FROM dbo.CustInfo WITH (NOLOCK)  WHERE srecommend = @CustID AND roleid=3)
 				SELECT @HasDownline=1
 			IF @HasDownline=1
-				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND DisableColossusBet=1)	
+				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND DisableColossusBet=1)	
 					SELECT @IsDisabledDownline=1
 		END
 		ELSE IF @RoleID=1
@@ -72,7 +72,7 @@ BEGIN
 			IF EXISTS(SELECT 1 FROM dbo.CustInfo WITH (NOLOCK)	WHERE recommend = @CustID AND roleid=1)
 				SELECT @HasDownline=1
 			IF @HasDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND DisableVirtualSports=1)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND DisableVirtualSports=1)
 					SELECT @IsDisabledDownline=1
 		END		
 		ELSE IF @RoleID=3	
@@ -81,7 +81,7 @@ BEGIN
 			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)  WHERE mrecommend = @CustID AND roleid=2)
 				SELECT @HasDownline=1
 			IF @HasDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3 AND DisableVirtualSports=1)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND DisableVirtualSports=1)
 					SELECT @IsDisabledDownline=1
 		END
 		ELSE IF @RoleID=4	
@@ -89,7 +89,7 @@ BEGIN
 			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)  WHERE srecommend = @CustID AND roleid=3)
 				SELECT @HasDownline=1
 			IF @HasDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND DisableVirtualSports=1)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND DisableVirtualSports=1)
 						SELECT @IsDisabledDownline=1
 		END	
 		ELSE IF @RoleID=1
@@ -109,9 +109,9 @@ BEGIN
 					SELECT @HasDownline=1
 			IF @HasDownline=1
 			BEGIN
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND DisableCasino=1)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND DisableCasino=1)
 					SELECT @IsDisabledDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND ISNULL(SyncCasino,0)=0)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND ISNULL(SyncCasino,0)=0)
 					SELECT @IsSyncedDownline=0
 			END
 		END		
@@ -122,9 +122,9 @@ BEGIN
 				SELECT @HasDownline=1
 			IF @HasDownline=1
 			BEGIN
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3 AND DisableCasino=1)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND DisableCasino=1)
 					SELECT @IsDisabledDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3 AND ISNULL(SyncCasino,0)=0)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND ISNULL(SyncCasino,0)=0)
 					SELECT @IsSyncedDownline=0
 			END
 		END
@@ -136,13 +136,13 @@ BEGIN
 			IF @HasDownline=1
 			BEGIN
 				
-				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND DisableCasino=1)
+				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND DisableCasino=1)
 				BEGIN
 				
 					SELECT @IsDisabledDownline=1
 						
 				END
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND ISNULL(SyncCasino,0)=0)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND ISNULL(SyncCasino,0)=0)
 					SELECT @IsSyncedDownline=0
 			END
 		END
@@ -197,7 +197,7 @@ BEGIN
 					UPDATE s
 					SET s.IsDisabledDownline=(SELECT TOP 1 IsDisabled FROM CustGameType ct WITH(NOLOCK) 
 									INNER JOIN  dbo.custInfo c WITH(NOLOCK) ON c.custid=ct.CustID 								
-									WHERE  srecommend= @custid AND c.roleid<>4 AND ct.IsDisabled = 1 AND s.GameTypeID=ct.GameTypeID)
+									WHERE  srecommend= @custid AND c.roleid=3 AND ct.IsDisabled = 1 AND s.GameTypeID=ct.GameTypeID)
 					FROM @SportBettype s
 		END
 		IF @RoleID=3	
@@ -214,7 +214,7 @@ BEGIN
 				UPDATE s
 				SET s.IsDisabledDownline=(SELECT TOP 1 IsDisabled FROM CustGameType ct WITH(NOLOCK) 
 										INNER JOIN  dbo.custInfo c WITH(NOLOCK) ON c.custid=ct.CustID 								
-										WHERE  mrecommend= @custid AND ct.IsDisabled = 1 AND c.roleid<>3 AND s.GameTypeID=ct.GameTypeID)
+										WHERE  mrecommend= @custid AND ct.IsDisabled = 1 AND c.roleid=2 AND s.GameTypeID=ct.GameTypeID)
 				FROM @SportBettype s 
 		END
 		IF @RoleID=2
@@ -231,7 +231,7 @@ BEGIN
 			UPDATE s
 			SET s.IsDisabledDownline=(SELECT TOP 1 IsDisabled FROM CustGameType ct WITH(NOLOCK) 
 									INNER JOIN  dbo.custInfo c WITH(NOLOCK) ON c.custid=ct.CustID 								
-									WHERE  recommend= @custid AND ct.IsDisabled = 1 AND c.roleid<>2 AND s.GameTypeID=ct.GameTypeID)
+									WHERE  recommend= @custid AND ct.IsDisabled = 1 AND c.roleid=1 AND s.GameTypeID=ct.GameTypeID)
 			FROM @SportBettype s 
 		END	
 		IF @RoleID=1
@@ -272,17 +272,17 @@ BEGIN
 					SELECT @HasDownline=1
 			IF @HasDownline=1
 				BEGIN	
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND DisableHorseracing=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND DisableHorseracing=1)
 					SELECT @IsDisabledDownline151_31=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND DisableOpenTote=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND DisableOpenTote=1)
 					SELECT @IsDisabledDownline151_41=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND Disable151_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND Disable151_AU=1)
 					SELECT @IsDisabledDownline151_51=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND Disable152_UK=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND Disable152_UK=1)
 					SELECT @IsDisabledDownline152_41=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND Disable152_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND Disable152_AU=1)
 					SELECT @IsDisabledDownline152_51=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid<>2 AND Disable153_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND Disable153_AU=1)
 					SELECT @IsDisabledDownline153_51=1
 				END
 		END
@@ -299,17 +299,17 @@ BEGIN
 				SELECT @HasDownline=1
 			IF @HasDownline=1	
 				BEGIN
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3  AND DisableHorseracing=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2  AND DisableHorseracing=1)
 					SELECT @IsDisabledDownline151_31=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3  AND DisableOpenTote=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2  AND DisableOpenTote=1)
 					SELECT @IsDisabledDownline151_41=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3  AND Disable151_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2  AND Disable151_AU=1)
 					SELECT @IsDisabledDownline151_51=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3  AND Disable152_UK=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2  AND Disable152_UK=1)
 					SELECT @IsDisabledDownline152_41=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3  AND Disable152_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2  AND Disable152_AU=1)
 					SELECT @IsDisabledDownline152_51=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid<>3  AND Disable153_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2  AND Disable153_AU=1)
 					SELECT @IsDisabledDownline153_51=1
 				END
 		END
@@ -319,17 +319,17 @@ BEGIN
 					SELECT @HasDownline=1
 			IF @HasDownline=1	
 				BEGIN
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND DisableHorseracing=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND DisableHorseracing=1)
 					SELECT @IsDisabledDownline151_31=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND DisableOpenTote=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND DisableOpenTote=1)
 					SELECT @IsDisabledDownline151_41=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND Disable151_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND Disable151_AU=1)
 					SELECT @IsDisabledDownline151_51=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND Disable152_UK=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND Disable152_UK=1)
 					SELECT @IsDisabledDownline152_41=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND Disable152_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND Disable152_AU=1)
 					SELECT @IsDisabledDownline152_51=1
-				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid<>4 AND Disable153_AU=1)
+				IF EXISTS(SELECT 1  FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND Disable153_AU=1)
 					SELECT @IsDisabledDownline153_51=1
 				END 
 		END
