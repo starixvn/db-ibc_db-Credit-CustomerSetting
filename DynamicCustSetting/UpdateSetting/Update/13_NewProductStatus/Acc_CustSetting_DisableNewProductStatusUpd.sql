@@ -588,9 +588,3 @@ BEGIN
 	DROP TABLE #OldDisableStatTbl
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusUpd] TO [bodbExtAccNet]
