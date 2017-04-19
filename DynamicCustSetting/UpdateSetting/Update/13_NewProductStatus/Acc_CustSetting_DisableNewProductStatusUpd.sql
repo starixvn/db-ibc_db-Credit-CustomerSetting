@@ -20,6 +20,7 @@ AS
 	Original:
 
 	Revisions:
+		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 		- 20170417@Elodie: Notify downline when upline enable FW's status [RedmineID: #73073]
 
 	Param's Explanation:
