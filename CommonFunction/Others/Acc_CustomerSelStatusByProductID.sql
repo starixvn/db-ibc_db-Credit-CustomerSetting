@@ -3,7 +3,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Acc_CustomerSelStatusByProductId]  
+ALTER PROCEDURE [dbo].[Acc_CustomerSelStatusByProductID]  
 (
 	 @custid  INT
 	 ,@ProductID INT
@@ -109,7 +109,7 @@ BEGIN
 					SELECT @HasDownline=1
 			IF @HasDownline=1
 			BEGIN
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND DisableCasino=1)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND DisableCasino=1 AND SyncCasino=1)
 					SELECT @IsDisabledDownline=1
 				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND ISNULL(SyncCasino,0)=0)
 					SELECT @IsSyncedDownline=0
@@ -122,7 +122,7 @@ BEGIN
 				SELECT @HasDownline=1
 			IF @HasDownline=1
 			BEGIN
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND DisableCasino=1)
+				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND DisableCasino=1 AND SyncCasino=1)
 					SELECT @IsDisabledDownline=1
 				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND ISNULL(SyncCasino,0)=0)
 					SELECT @IsSyncedDownline=0
@@ -136,7 +136,7 @@ BEGIN
 			IF @HasDownline=1
 			BEGIN
 				
-				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND DisableCasino=1)
+				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND DisableCasino=1  AND SyncCasino=1)
 				BEGIN
 				
 					SELECT @IsDisabledDownline=1
