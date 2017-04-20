@@ -20,7 +20,7 @@ AS
 	Original:
 
 	Revisions:
-		- 20170417@Elodie: Notify downline when upline enable FW's status [Redmine:#737073]		  
+		- 20170417@Elodie: Notify downline when upline enable FW's status [Redmine:#73073]		  
 
 	Param's Explanation:
 	• @IsDisabled
@@ -142,18 +142,6 @@ BEGIN
 			)
 	
 	EXEC sp_xml_removedocument @iDoc
-
-	-- Select ProductID and SettingLevel
-	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
-	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
-			INNER JOIN	#OldDisableStatTbl AS tmp
-					ON	psd.SportType = tmp.SportType
-					AND	psd.BetType = tmp.BetType
-			WHERE	psd.ProductID IS NOT NULL
-				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType = 13	-- Product Status
-		 ) iq
 
 	--Validate new disabled status
 	EXEC [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] @IsDisabled = @IsDisabled
@@ -312,13 +300,13 @@ BEGIN
 		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
 	WHERE CustID = @CustID
 	
+	SELECT TOP 1 @ProductID = ps.ProductID
+	FROM #NewDisableStatTbl dis 
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
+	WHERE ps.SettingType = 13
+
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 	BEGIN
-		SELECT TOP 1 @ProductID = ps.ProductID
-		FROM #NewDisableStatTbl dis 
-			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
-		WHERE dis.IsDisabled = 0 AND ps.SettingType = 13
-
 		SET @xmlStrHidden = (
 			SELECT (
 					SELECT psp.bitmapOrder	AS '@b'
@@ -377,7 +365,7 @@ BEGIN
 			IF @downlines = 1
 			BEGIN
 				IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND IsDisabledDownline= 0) --enable downline
-					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3
+					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3, @IsDisabled = @IsDisabled_Downline_tmp
 				IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) --disable downline
 					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
 			END
