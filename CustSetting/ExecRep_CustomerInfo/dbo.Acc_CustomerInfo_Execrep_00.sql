@@ -1,3 +1,8 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@custid INT =0,
 	@srecommend INT = 0,
@@ -44,6 +49,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v2spositiontaking_8 SMALLMONEY = 0,
 	--@v2spositiontaking_9 SMALLMONEY = 0,
 	@v2spositiontaking_20 SMALLMONEY = 0,
+	@v2spositiontaking_9999 SMALLMONEY = 0,
 	
 	@v3spositiontaking_1 SMALLMONEY = 0,
 	@v3spositiontaking_2 SMALLMONEY = 0,
@@ -161,6 +167,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@auto_v2spositiontaking_8 smallmoney = 0,
 --	@auto_v2spositiontaking_9 smallmoney = 0,
 	@auto_v2spositiontaking_20 smallmoney = 0,
+	@auto_v2spositiontaking_9999 smallmoney = 0,
 	
 	@auto_v3spositiontaking_1 smallmoney = 0,
 	@auto_v3spositiontaking_2 smallmoney = 0,
@@ -215,8 +222,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@min_v185spositiontaking_1231 smallmoney = 0,
 	@min_v186spositiontaking_1220 smallmoney = 0,
 	
-
-
 	@isauto_spositiontaking_1 BIT = 0,
 	@isauto_spositiontaking_2 BIT = 0,
 	@isauto_spositiontaking_3 BIT = 0,
@@ -248,6 +253,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@isauto_v2spositiontaking_8 BIT = 0,
 --	@isauto_v2spositiontaking_9 BIT = 0,
 	@isauto_v2spositiontaking_20 BIT = 0,
+	@isauto_v2spositiontaking_9999 BIT = 0,
 	
 	@isauto_v3spositiontaking_1 BIT = 0,
 	@isauto_v3spositiontaking_2 BIT = 0,
@@ -323,6 +329,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v2mpositiontaking_8 SMALLMONEY = 0,
 	--@v2mpositiontaking_9 SMALLMONEY = 0,
 	@v2mpositiontaking_20 SMALLMONEY = 0,
+	@v2mpositiontaking_9999 SMALLMONEY = 0,
 
 	@v3mpositiontaking_1 SMALLMONEY = 0,
 	@v3mpositiontaking_2 SMALLMONEY = 0,
@@ -441,6 +448,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@auto_v2mpositiontaking_8 smallmoney = 0,
 --	@auto_v2mpositiontaking_9 smallmoney = 0,
 	@auto_v2mpositiontaking_20 smallmoney = 0,
+	@auto_v2mpositiontaking_9999 smallmoney = 0,
 	
 	@auto_v3mpositiontaking_1 smallmoney = 0,
 	@auto_v3mpositiontaking_2 smallmoney = 0,
@@ -529,6 +537,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@isauto_v2mpositiontaking_8 BIT = 0,
 --	@isauto_v2mpositiontaking_9 BIT = 0,
 	@isauto_v2mpositiontaking_20 BIT = 0,
+	@isauto_v2mpositiontaking_9999 BIT = 0,
 	
 	@isauto_v3mpositiontaking_1 BIT = 0,
 	@isauto_v3mpositiontaking_2 BIT = 0,
@@ -606,6 +615,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v2apositiontaking_8 SMALLMONEY = 0,
 	--@v2apositiontaking_9 SMALLMONEY = 0,
 	@v2apositiontaking_20 SMALLMONEY = 0,
+	
+	@v2apositiontaking_9999 SMALLMONEY = 0,
 
 	@v3apositiontaking_1 SMALLMONEY = 0,
 	@v3apositiontaking_2 SMALLMONEY = 0,
@@ -672,7 +683,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v202apositiontaking_1508 SMALLMONEY = 0,
 	@v202apositiontaking_1509 SMALLMONEY = 0,
 	@v202apositiontaking_1514 SMALLMONEY = 0,
-	
+		
 	@MinBet MONEY = 0,
 	@MaxBet MONEY = 0,	
 	@MinBetv2 MONEY = 0,
@@ -876,6 +887,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20160627@Winnie: Out right PT [Redmine #59438]  	
 			- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 			- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
+			- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+			
 		Parameter's Explanation:
 		
 	*/
@@ -954,7 +967,8 @@ BEGIN
 		--UNION ALL	select @custid, 9, 2, @v2apositiontaking_9, @v2mpositiontaking_9, @v2spositiontaking_9, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, @v2spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 10, 2, @v2apositiontaking_10, @v2mpositiontaking_10, @v2spositiontaking_10,  0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0, 0, 0, 0, 0
-
+		UNION ALL	SELECT @custid, 9999, 2, @v2apositiontaking_9999, @v2mpositiontaking_9999, @v2spositiontaking_9999, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0, 0, 0, 0, 0
+		
 		UNION ALL	SELECT @custid, 1, 3, @v3apositiontaking_1, @v3mpositiontaking_1, @v3spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv3, @MaxBetv3, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 2, 3, @v3apositiontaking_2, @v3mpositiontaking_2, @v3spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv3, @MaxBetv3, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 3, 3, @v3apositiontaking_3, @v3mpositiontaking_3, @v3spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv3, @MaxBetv3, 0, 0, 0, 0, 0, 0, 0, 0
@@ -994,6 +1008,8 @@ BEGIN
 		--HR Fixed Odds
 		UNION ALL	SELECT @custid, 20, 154, ISNULL(@v154apositiontaking_20,0), ISNULL(@v154mpositiontaking_20,0), ISNULL(@v154spositiontaking_20,0), 0, 0, 0, 0, 0, 0, ISNULL(@discountHRFixedOdds,0), 0, 0, 0, 0, 0, 0, ISNULL(@MinBetv154,0), ISNULL(@MaxBetv154,0), 0, 0, 0, 0, 0, 0, 0, 0
 
+		
+		
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
@@ -1088,6 +1104,7 @@ BEGIN
 		UNION ALL SELECT @custid, 8, 2, 0, @v2spositiontaking_8, 0, 0.9
 		--UNION ALL select @custid, 9, 2, 0, @v2spositiontaking_9, 0, 0.9
 		UNION ALL SELECT @custid, 20, 2, 0, @v2spositiontaking_20, 0, 0.9
+		UNION ALL SELECT @custid, 9999, 2, 0, @v2spositiontaking_9999, 0, 0.9
 
 		UNION ALL SELECT @custid, 1, 3, 0, @v3spositiontaking_1, 0, 0.9
 		UNION ALL SELECT @custid, 2, 3, 0, @v3spositiontaking_2, 0, 0.9
@@ -1386,6 +1403,9 @@ BEGIN
 		--Get commission of Correct Score for MoneyLine
 		UNION ALL
 		select @custid, 20, 2, @v2spositiontaking_20, @v2mpositiontaking_20, 0, 0, 0, 0, 0, @auto_v2spositiontaking_20, @discountcs, 0, 0, 0, 0, 0, 0, 0, @minbetv2, @maxbetv2, 0, 0, @isauto_v2spositiontaking_20, 0, 0, 0, 0, 0
+		
+		UNION ALL
+		SELECT @custid, 9999, 2, @v2spositiontaking_9999, @v2mpositiontaking_9999, 0, 0, 0, 0, 0, @auto_v2spositiontaking_9999, @discountcs, 0, 0, 0, 0, 0, 0, 0, @minbetv2, @maxbetv2, 0, 0, @isauto_v2spositiontaking_9999, 0, 0, 0, 0, 0
 
 		UNION ALL
 		select @custid, 1, 3, @v3spositiontaking_1, @v3mpositiontaking_1, 0, 0, 0, 0, 0, @auto_v3spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @minbetv3, @maxbetv3, 0, 0, @isauto_v3spositiontaking_1, 0, 0, 0, 0, 0
@@ -1580,7 +1600,8 @@ BEGIN
 		UNION ALL select @custid, 2, 2, 0, 0.9, 0, 0.9
 		--UNION ALL select @custid, 9, 2, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 20, 2, 0, 0.9, 0, 0.9
-
+		UNION ALL select @custid, 9999, 2, 0, 0.9, 0, 0.9
+		
 		UNION ALL select @custid, 1, 3, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 3, 3, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 2, 3, 0, 0.9, 0, 0.9
@@ -1906,7 +1927,9 @@ BEGIN
 		--select @custid, 9, 2, @v2apositiontaking_9, @v2mpositiontaking_9, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, @auto_v2mpositiontaking_9, 0, @isauto_v2mpositiontaking_9, 0, 0 ,0 ,0 ,0
 		UNION ALL
 		select @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0,  @MinBetv2, @MaxBetv2, @auto_v2mpositiontaking_20, 0, @isauto_v2mpositiontaking_20, 0, 0 ,0 ,0 ,0
-
+		UNION ALL
+		select @custid, 9999, 2, @v2apositiontaking_9999, @v2mpositiontaking_9999, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0,  @MinBetv2, @MaxBetv2, @auto_v2mpositiontaking_9999, 0, @isauto_v2mpositiontaking_9999, 0, 0 ,0 ,0 ,0
+		
 		UNION ALL
 		select @custid, 1, 3, @v3apositiontaking_1, @v3mpositiontaking_1, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv3, @MaxBetv3, @auto_v3mpositiontaking_1, 0, @isauto_v3mpositiontaking_1, 0, 0 ,0 ,0 ,0
 		UNION ALL
@@ -2095,7 +2118,8 @@ BEGIN
 		UNION ALL select @custid, 8, 2, 0, 0.9, 0, 0.9
 		--UNION ALL select @custid, 9, 2, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 20, 2, 0, 0.9, 0, 0.9
-
+		UNION ALL select @custid, 9999, 2, 0, 0.9, 0, 0.9
+		
 		UNION ALL select @custid, 1, 3, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 2, 3, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 3, 3, 0, 0.9, 0, 0.9
@@ -2436,7 +2460,9 @@ BEGIN
 		--select @custid, 9, 2, @v2apositiontaking_9, @v2mpositiontaking_9, @v2spositiontaking_9, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL
 		select @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, @v2spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0, 0, 0, 0, 0
-
+		UNION ALL
+		SELECT @custid, 9999, 2, @v2apositiontaking_9999, @v2mpositiontaking_9999, @v2spositiontaking_9999, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0, 0, 0, 0, 0
+	
 		UNION ALL
 		select @custid, 1, 3, @v3apositiontaking_1, @v3mpositiontaking_1, @v3spositiontaking_1, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, @MinBetv3, @MaxBetv3, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL

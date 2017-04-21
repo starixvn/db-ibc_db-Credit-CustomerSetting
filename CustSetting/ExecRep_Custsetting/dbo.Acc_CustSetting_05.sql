@@ -1,3 +1,8 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @srecommend INT = 0,
     @mrecommend INT =0,
@@ -26,6 +31,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @isauto_v2spositiontaking_7 bit = 0,
     @isauto_v2spositiontaking_8 bit = 0,
     @isauto_v2spositiontaking_20 bit = 0,
+    @isauto_v2spositiontaking_9999 bit = 0,
     
     @isauto_v3spositiontaking_1 bit = 0,
     @isauto_v3spositiontaking_2 bit = 0,
@@ -81,6 +87,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @old_isauto_v2spositiontaking_7 bit = 0,
     @old_isauto_v2spositiontaking_8 bit = 0,
     @old_isauto_v2spositiontaking_20 bit = 0,
+    @old_isauto_v2spositiontaking_9999 bit = 0,
     
     @old_isauto_v3spositiontaking_1 bit = 0,
     @old_isauto_v3spositiontaking_2 bit = 0,
@@ -137,6 +144,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @auto_v2spositiontaking_8 smallmoney = 0,
 --    @auto_v2spositiontaking_9 smallmoney = 0,
     @auto_v2spositiontaking_20 smallmoney = 0,
+    @auto_v2spositiontaking_9999 smallmoney = 0,
     
     @auto_v3spositiontaking_1 smallmoney = 0,
     @auto_v3spositiontaking_2 smallmoney = 0,
@@ -193,6 +201,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @old_auto_v2spositiontaking_8 smallmoney = 0,
 --    @old_auto_v2spositiontaking_9 smallmoney = 0,
     @old_auto_v2spositiontaking_20 smallmoney = 0,
+    @old_auto_v2spositiontaking_9999 smallmoney = 0,
     
     @old_auto_v3spositiontaking_1 smallmoney = 0,
     @old_auto_v3spositiontaking_2 smallmoney = 0,
@@ -249,6 +258,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @isauto_v2mpositiontaking_7 bit = 0,
     @isauto_v2mpositiontaking_8 bit = 0,
     @isauto_v2mpositiontaking_20 bit = 0,
+    @isauto_v2mpositiontaking_9999 bit = 0,
     
     @isauto_v3mpositiontaking_1 bit = 0,
     @isauto_v3mpositiontaking_2 bit = 0,
@@ -304,6 +314,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @old_isauto_v2mpositiontaking_7 bit = 0,
     @old_isauto_v2mpositiontaking_8 bit = 0,
     @old_isauto_v2mpositiontaking_20 bit = 0,
+    @old_isauto_v2mpositiontaking_9999 bit = 0,
     
     @old_isauto_v3mpositiontaking_1 bit = 0,
     @old_isauto_v3mpositiontaking_2 bit = 0,
@@ -360,6 +371,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @auto_v2mpositiontaking_8 smallmoney = 0,
 --    @auto_v2mpositiontaking_9 smallmoney = 0,
     @auto_v2mpositiontaking_20 smallmoney = 0,
+    @auto_v2mpositiontaking_9999 smallmoney = 0,
     
     @auto_v3mpositiontaking_1 smallmoney = 0,
     @auto_v3mpositiontaking_2 smallmoney = 0,
@@ -415,6 +427,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @old_auto_v2mpositiontaking_8 smallmoney = 0,
 --    @old_auto_v2mpositiontaking_9 smallmoney = 0,
     @old_auto_v2mpositiontaking_20 smallmoney = 0,
+    @old_auto_v2mpositiontaking_9999 smallmoney = 0,
     
     @old_auto_v3mpositiontaking_1 smallmoney = 0,
     @old_auto_v3mpositiontaking_2 smallmoney = 0,
@@ -550,7 +563,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 		   + Improve medthod check table existing in subscribers	
 		   + Separate custDB to new server DBCUST   
 		 - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]       
-
+		 - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+		 
         Parameter's Explanation:        
     */
 BEGIN
@@ -1109,10 +1123,12 @@ BEGIN
                  , 0 AS old_autolivepositiontaking
                  , @old_isauto_spositiontaking_9999 AS old_isautopositiontaking
                  , 0 AS old_isautolivepositiontaking
-                 , 0 AS isautov2positiontaking
-                 , 0 AS autov2positiontaking
-                 , 0 AS old_autov2positiontaking
-                 , 0 AS old_isautov2positiontaking
+                 
+                 , @isauto_v2spositiontaking_9999 AS isautov2positiontaking
+                 , @auto_v2spositiontaking_9999 AS autov2positiontaking
+                 , @old_auto_v2spositiontaking_9999 AS old_autov2positiontaking
+                 , @old_isauto_v2spositiontaking_9999 AS old_isautov2positiontaking
+                                
                  , 0 AS isautov3positiontaking
                  , 0 AS autov3positiontaking
                  , 0 AS old_autov3positiontaking
@@ -1154,10 +1170,12 @@ BEGIN
                  , 0 AS old_autolivepositiontaking
                  , 0 AS old_isautopositiontaking
                  , 0 AS old_isautolivepositiontaking
+                 
                  , @isauto_v2spositiontaking_20 AS isautov2positiontaking
                  , @auto_v2spositiontaking_20 AS autov2positiontaking
                  , @old_auto_v2spositiontaking_20 AS old_autov2positiontaking
                  , @old_isauto_v2spositiontaking_20 AS old_isautov2positiontaking
+                 
                  , @isauto_v3spositiontaking_20 AS isautov3positiontaking
                  , @auto_v3spositiontaking_20 AS autov3positiontaking
                  , @old_auto_v3spositiontaking_20 AS old_autov3positiontaking
@@ -1440,7 +1458,7 @@ BEGIN
             END
 
             --UPDATE Basketball
-            IF @bettype IN (1, 2, 3, 7, 8, 9, 20,10)
+            IF @bettype IN (1, 2, 3, 7, 8, 9, 20,10,9999)
                AND (@autov2positiontaking <> @old_autov2positiontaking
                     OR @isautov2positiontaking <> @old_isautov2positiontaking
                    )
@@ -2351,10 +2369,12 @@ BEGIN
                  , @old_auto_mpositiontaking_9999  AS old_autopositiontaking
                  ,      0 AS old_autolivepositiontaking
                  , @old_isauto_mpositiontaking_9999  AS old_isautopositiontaking  ,                                        0 AS old_isautolivepositiontaking
-                 , 0 AS isautov2positiontaking
-                 , 0 AS autov2positiontaking
-                 , 0 AS old_autov2positiontaking
-                 ,     0 AS old_isautov2positiontaking
+                 
+                 , @isauto_v2mpositiontaking_9999 AS isautov2positiontaking
+                 , @auto_v2mpositiontaking_9999 AS autov2positiontaking
+                 , @old_auto_v2mpositiontaking_9999 AS old_autov2positiontaking
+                 , @old_isauto_v2mpositiontaking_9999 AS old_isautov2positiontaking
+                 
                  , 0 AS isautov3positiontaking
                  , 0 AS autov3positiontaking
                  , 0 AS old_autov3positiontaking
@@ -2384,10 +2404,12 @@ BEGIN
                  , 0 AS autopositiontaking    ,                                 0 AS autolivepositiontaking
                  ,                            0 AS old_autopositiontaking
                  , 0 AS old_autolivepositiontaking    ,                                   0 AS old_isautopositiontaking     ,                                        0 AS old_isautolivepositiontaking
+                 
                  ,  @isauto_v2mpositiontaking_20 AS isautov2positiontaking
                  , @auto_v2mpositiontaking_20 AS autov2positiontaking
                  , @old_auto_v2mpositiontaking_20 AS old_autov2positiontaking
                  , @old_isauto_v2mpositiontaking_20 AS old_isautov2positiontaking
+                 
                  , @isauto_v3mpositiontaking_20 AS isautov3positiontaking
                  , @auto_v3mpositiontaking_20 AS autov3positiontaking
                  , @old_auto_v3mpositiontaking_20 AS old_autov3positiontaking
@@ -2587,7 +2609,7 @@ BEGIN
                         END
                     END
                     --UPDATE Basketball
-                    if @bettype IN (1, 2, 3, 7, 8, 9,10, 20) AND (@autov2positiontaking <> @old_autov2positiontaking OR @isautov2positiontaking <> @old_isautov2positiontaking ) AND (@updatepositiontakingv2 = 1 OR @updatemultiple=0)
+                    if @bettype IN (1, 2, 3, 7, 8, 9,10, 20,9999) AND (@autov2positiontaking <> @old_autov2positiontaking OR @isautov2positiontaking <> @old_isautov2positiontaking ) AND (@updatepositiontakingv2 = 1 OR @updatemultiple=0)
                     BEGIN
                         if @isautov2positiontaking >0
                         BEGIN
