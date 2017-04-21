@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSettingSelect]   
    @CustID  INT  
  , @ProductID TINYINT = NULL  
@@ -17,6 +18,8 @@ AS
   - 20160429@Winnie: Return column IsHiddenUpline for AllBet, VoidBridge  
   - 20160801@Elodie: Get Game status (setting type = 11) - [Redmine: #60809]   
   - 20170307@Elodie: Get New product status (setting type = 13) - [Redmine: #70722]   
+  - 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+  
  Param's Explanation:  
  - @CustID: 
  Example: EXEC Acc_CustSetting_StatusSettingSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
@@ -72,9 +75,10 @@ BEGIN
 				ELSE ISNULL((	SELECT TOP 1 1  
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
-								WHERE srecommend = @CustID AND roleid = 3  
+								WHERE srecommend = @CustID 
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline,
+								
 			CASE WHEN @downlines = 0 THEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder))  
 				ELSE ISNULL((	SELECT TOP 1 0  
 								FROM dbo.custInfo ci WITH (NOLOCK)  
@@ -107,9 +111,10 @@ BEGIN
 				ELSE ISNULL((	SELECT TOP 1 1  
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
-								WHERE mrecommend = @CustID AND roleid = 2  
+								WHERE mrecommend = @CustID   
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline,  
+								
 			CASE WHEN @downlines = 0 THEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder))  
 				ELSE ISNULL((	SELECT TOP 1 0  
 								FROM dbo.custInfo ci WITH (NOLOCK)  
@@ -142,7 +147,7 @@ BEGIN
 				ELSE ISNULL((	SELECT TOP 1 1  
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 									INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
-								WHERE recommend = @CustID AND roleid = 1  
+								WHERE recommend = @CustID  
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline, 
 			CASE WHEN @downlines = 0 THEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder))  

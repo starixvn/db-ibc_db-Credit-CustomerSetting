@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMasterVS] 
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMasterVS] 
 	@custid	INT
 AS
 /*
@@ -13,6 +14,7 @@ AS
 		- 20131121@Kathy: Add Virtual Greyhounds (182), Virtual Motor Racing (184) [Redmine:#7234]
 		- 20140402@Kathy: Add Virtual Speedway (183), Virtual Virtual Cycling (185)	[Redmine:#14142]
 		- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB)
+		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 
 	Parameter's Explanation:
 */
@@ -69,7 +71,6 @@ SET NOCOUNT ON
 	SELECT top 1 @DisableDownlinesVirtualSports = ISNULL(DisableVirtualSports,0)
 	FROM custinfo WITH(NOLOCK)
 	WHERE mrecommend =@custid
-		AND roleid = 2
 		AND DisableVirtualSports = 1
 				
 	select @DisableUplineVirtualSports = isnull(DisableVirtualSports,0)
