@@ -170,8 +170,8 @@ BEGIN
 				WHERE uc.Commission > tmp.Commission)
 		BEGIN
 			SET @xml = (
-					SELECT 11 AS '@MsgID'
-						, 'The Commission must be less than or equal to the Given Commission.' AS '@Msg'
+					SELECT 1 AS '@MsgID'
+						, 'Invalid commission rate.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'

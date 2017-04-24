@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE CustDB
 GO
 
@@ -13,14 +14,12 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionUpd]
 	, @SettingType			INT
 AS
 /*
-	Created: 20141111@Dominic
-	Task : Update Customer's Discount
+	Created: 20170424@Elodie
+	Task : Update Customer's Ticket Commission
 	DB: DBCUST/CustDB
 	Original:
 
 	Revisions:
-		- 20151104@Billy: Update log structure - [Redmine: #46788]
-		- 20160104@Dominic: Implementing Charge Commission Plugin - [Redmine: #49689]
 
 	Param's Explanation:
 		• @Commission:
@@ -28,7 +27,7 @@ AS
 					<Commission 
 							SportType="160" 
 							BetType="1601" 
-							Commission="7.025"
+							Commission="0.070"
 					/>
 			</ROOT>
 		
@@ -43,7 +42,7 @@ BEGIN
 	DECLARE @startRun				DATETIME
 		,	@endRun					DATETIME
 		,	@duration				INT
-		,	@CorrectedDiscount_XML	VARCHAR(MAX)
+		,	@CorrectedComm_XML	VARCHAR(MAX)
 		
 	DECLARE @logSpData		NVARCHAR(MAX)
 		,	@logSpData_Old	NVARCHAR(MAX)
@@ -55,16 +54,16 @@ BEGIN
 		,	@RoleID			INT
 		
 		
-	DECLARE @NewDiscountTbl TABLE (
+	DECLARE @NewCommTbl TABLE (
 				SportType	SMALLINT
 			,	BetType		SMALLINT
-			,	Discount	DECIMAL(9, 8)
+			,	Commission	DECIMAL(9, 8)
 		)
 		
-	DECLARE @oldDiscountTbl TABLE (
+	DECLARE @OldCommTbl TABLE (
 				SportType	SMALLINT
 			,	BetType		SMALLINT
-			,	Discount	DECIMAL(9, 8)
+			,	Commission	DECIMAL(9, 8)
 		)
 
 	DECLARE @ProductID		TINYINT,
@@ -134,19 +133,19 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @Commission
 
-	INSERT @NewDiscountTbl
+	INSERT @NewCommTbl
 	SELECT SportType
 		, BetType
-		, CAST(Discount AS DECIMAL(9, 8)) AS Discount
-	FROM OPENXML(@iDoc, '/ROOT/Discount', 1) WITH (
+		, CAST(Commission AS DECIMAL(9, 8)) AS Commission
+	FROM OPENXML(@iDoc, '/ROOT/Commission', 1) WITH (
 			SportType SMALLINT
 			, BetType SMALLINT
-			, Discount VARCHAR(15)
+			, Commission VARCHAR(15)
 			)
 
 	EXEC sp_xml_removedocument @iDoc
 
-	EXEC [dbo].[Acc_CustSetting_DiscountCheck] 
+	EXEC [dbo].[Acc_CustSetting_CommissionCheck] 
 						@CustID			= @CustID
 						, @RoleID		= @RoleID
 						, @AgentID		= @AgentID
@@ -163,11 +162,11 @@ BEGIN
 	--Get old comm
 	IF @RoleID IN (2, 3, 4)
 	BEGIN
-		INSERT INTO @oldDiscountTbl
+		INSERT INTO @OldCommTbl
 		SELECT dc.SportType
 			, dc.BetType
-			, dc.Discount
-		FROM @NewDiscountTbl tmp
+			, dc.Commission
+		FROM @NewCommTbl tmp
 		INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK)
 			ON dc.SportType		= tmp.SportType
 				AND dc.BetType	= tmp.BetType
@@ -175,11 +174,11 @@ BEGIN
 	END
 	ELSE IF @RoleID = 1
 	BEGIN
-		INSERT INTO @oldDiscountTbl
+		INSERT INTO @OldCommTbl
 		SELECT dc.SportType
 			, dc.BetType
 			, dc.PlayerDiscount
-		FROM @NewDiscountTbl tmp
+		FROM @NewCommTbl tmp
 		INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK)
 			ON dc.SportType		= tmp.SportType
 				AND dc.BetType	= tmp.BetType
@@ -190,12 +189,12 @@ BEGIN
 	BEGIN
 		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, super_discount)
 		UPDATE tmp
-		SET tmp.Discount = CASE 
-				WHEN tmp.Discount < dcs.Discount
-					THEN tmp.Discount
+		SET tmp.Commission = CASE 
+				WHEN tmp.Commission < dcs.Commission
+					THEN tmp.Commission
 				ELSE dcs.Discount
 				END
-		FROM @NewDiscountTbl tmp
+		FROM @NewCommTbl tmp
 		INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH (NOLOCK)
 			ON tmp.SportType	= dcs.SportType
 				AND tmp.BetType = dcs.BetType
@@ -210,7 +209,7 @@ BEGIN
 					THEN tmp.Discount
 				ELSE dcm.Discount
 				END
-		FROM @NewDiscountTbl tmp
+		FROM @NewCommTbl tmp
 		INNER JOIN dbo.CustDiscount3rd_Agent dcm WITH (NOLOCK)
 			ON tmp.SportType	= dcm.SportType
 				AND tmp.BetType = dcm.BetType
@@ -225,7 +224,7 @@ BEGIN
 					THEN tmp.Discount
 				ELSE dca.Discount
 				END
-		FROM @NewDiscountTbl tmp
+		FROM @NewCommTbl tmp
 		INNER JOIN dbo.CustDiscount3rd_Agent dca WITH (NOLOCK)
 			ON dca.SportType	= tmp.SportType
 				AND dca.BetType = tmp.BetType
@@ -235,7 +234,7 @@ BEGIN
 	--Return XML result
 	SELECT @CorrectedDiscount_XML = (
 			SELECT *
-			FROM @NewDiscountTbl
+			FROM @NewCommTbl
 			FOR XML RAW('Discount')
 			)
 
@@ -255,7 +254,7 @@ BEGIN
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
 			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
-			INNER JOIN	@NewDiscountTbl AS tmp
+			INNER JOIN	@NewCommTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
 			WHERE	psd.ProductID IS NOT NULL
@@ -282,7 +281,7 @@ BEGIN
 				(
 					SELECT	@ProductID			AS '@ProductID',
 							Discount			AS '@Commission'
-					FROM	@oldDiscountTbl
+					FROM	@OldCommTbl
 					FOR XML PATH('Discount'),
 					TYPE
 				)
@@ -303,7 +302,7 @@ BEGIN
 				(
 					SELECT	SportType			AS '@SportType',
 							Discount			AS '@Commission'
-					FROM	@oldDiscountTbl
+					FROM	@OldCommTbl
 					FOR XML PATH('Discount'),
 					TYPE
 				)
@@ -324,7 +323,7 @@ BEGIN
 				(
 					SELECT	BetType				AS '@BetType',
 							Discount			AS '@Commission'
-					FROM	@oldDiscountTbl
+					FROM	@OldCommTbl
 					FOR XML PATH('Discount'),
 					TYPE
 				)
@@ -346,7 +345,7 @@ BEGIN
 					SELECT	SportType			AS '@SportType',
 							BetType				AS '@BetType',
 							Discount			AS '@Commission'
-					FROM	@oldDiscountTbl
+					FROM	@OldCommTbl
 					FOR XML PATH('Discount'),
 					TYPE
 				)
@@ -370,7 +369,7 @@ BEGIN
 				(
 				SELECT	@ProductID				AS '@ProductID',
 						Discount				AS '@Commission'
-				FROM	@NewDiscountTbl
+				FROM	@NewCommTbl
 				FOR XML PATH('Discount'),
 				TYPE
 				)
@@ -391,7 +390,7 @@ BEGIN
 				(
 				SELECT	SportType				AS '@SportType',
 						Discount				AS '@Commission'
-				FROM	@NewDiscountTbl
+				FROM	@NewCommTbl
 				FOR XML PATH('Discount'),
 				TYPE
 				)
@@ -412,7 +411,7 @@ BEGIN
 				(
 				SELECT	BetType					AS '@BetType',
 						Discount				AS '@Commission'
-				FROM	@NewDiscountTbl
+				FROM	@NewCommTbl
 				FOR XML PATH('Discount'),
 				TYPE
 				)
@@ -434,7 +433,7 @@ BEGIN
 				SELECT	SportType				AS '@SportType',
 						BetType					AS '@BetType',
 						Discount				AS '@Commission'
-				FROM	@NewDiscountTbl
+				FROM	@NewCommTbl
 				FOR XML PATH('Discount'),
 				TYPE
 				)
