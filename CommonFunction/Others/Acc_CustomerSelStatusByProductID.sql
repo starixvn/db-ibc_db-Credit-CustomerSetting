@@ -105,7 +105,7 @@ BEGIN
 		IF @RoleID=2
 		BEGIN
 			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@mrecommend
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE recommend = @CustID AND roleid=1)
+			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE recommend = @CustID AND roleid=1 AND SyncCasino=1)
 					SELECT @HasDownline=1
 			IF @HasDownline=1
 			BEGIN
@@ -118,7 +118,7 @@ BEGIN
 		ELSE IF @RoleID=3
 		BEGIN	
 			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@srecommend
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE mrecommend = @CustID AND roleid=2)
+			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE mrecommend = @CustID AND roleid=2 AND SyncCasino=1)
 				SELECT @HasDownline=1
 			IF @HasDownline=1
 			BEGIN
@@ -131,7 +131,7 @@ BEGIN
 		ELSE IF @RoleID=4	
 		BEGIN	
 			
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE srecommend = @CustID AND roleid=3)
+			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE srecommend = @CustID AND roleid=3 AND SyncCasino=1)
 				SELECT @HasDownline=1
 			IF @HasDownline=1
 			BEGIN
