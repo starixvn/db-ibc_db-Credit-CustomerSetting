@@ -68,7 +68,7 @@ BEGIN
 											INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-										WHERE srecommend = @CustID	
+										WHERE srecommend = @CustID
 											AND IsSynced.value = 1
 											AND IsDisabled.value = 1
 										), 0) END AS BIT) AS IsDisabledDownline,
@@ -107,7 +107,7 @@ BEGIN
 											INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-										WHERE mrecommend = @CustID	
+										WHERE mrecommend = @CustID
 											AND IsSynced.value = 1
 											AND IsDisabled.value = 1
 										), 0) END AS BIT) AS IsDisabledDownline,
