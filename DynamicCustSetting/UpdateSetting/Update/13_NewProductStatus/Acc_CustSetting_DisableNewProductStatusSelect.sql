@@ -61,7 +61,7 @@ BEGIN
 										WHERE srecommend = @CustID	AND roleid = 3
 											AND IsSynced.value = 1
 										), 0) END AS BIT) AS HasDownline,
-				CAST(CASE WHEN @downlines = 0 THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder),0)
+				CAST(CASE WHEN @downlines = 0 THEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder))
 							ELSE ISNULL((
 										SELECT TOP 1 1
 										FROM dbo.custInfo ci WITH (NOLOCK)
@@ -100,7 +100,7 @@ BEGIN
 										WHERE mrecommend = @CustID	AND roleid = 2
 											AND IsSynced.value = 1
 										), 0) END AS BIT) AS HasDownline,
-				CAST(CASE WHEN @downlines = 0 THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder),0)
+				CAST(CASE WHEN @downlines = 0 THEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder))
 							ELSE ISNULL((
 										SELECT TOP 1 1
 										FROM dbo.custInfo ci WITH (NOLOCK)
@@ -140,7 +140,7 @@ BEGIN
 										WHERE recommend = @CustID AND roleid = 1
 											AND IsSynced.value = 1
 										), 0) END AS BIT) AS HasDownline,
-				CAST(CASE WHEN @downlines = 0 THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder),0)
+				CAST(CASE WHEN @downlines = 0 THEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder))
 							ELSE ISNULL((
 										SELECT TOP 1 1
 										FROM dbo.custInfo ci WITH (NOLOCK)
