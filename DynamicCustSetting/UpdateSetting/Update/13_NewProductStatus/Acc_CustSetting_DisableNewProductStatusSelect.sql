@@ -11,7 +11,7 @@ AS
 
 	Revision:
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
-		
+
 	Param's Explanation: 
 
 	Example: EXEC Acc_CustSetting_DisableNewProductStatusSelect @CustID = 1275, @ProductID = 23
