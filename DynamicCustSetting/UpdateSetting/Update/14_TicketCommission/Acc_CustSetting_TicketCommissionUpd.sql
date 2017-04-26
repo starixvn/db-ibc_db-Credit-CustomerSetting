@@ -145,16 +145,16 @@ BEGIN
 
 	EXEC sp_xml_removedocument @iDoc
 
-	EXEC [dbo].[Acc_CustSetting_CommissionCheck] 
-						@CustID			= @CustID
-						, @RoleID		= @RoleID
-						, @AgentID		= @AgentID
-						, @MasterID		= @MasterID
-						, @SuperID		= @SuperID
+	EXEC [dbo].[Acc_CustSetting_TicketCommissionCheck] 
+						@CustID				= @CustID
+						, @RoleID			= @RoleID
+						, @AgentID			= @AgentID
+						, @MasterID			= @MasterID
+						, @SuperID			= @SuperID
 						, @Commission		= @Commission
-						, @ErrCode		= @ErrCode	OUTPUT
-						, @MsgType		= @MsgType  OUTPUT
-						, @ErrMsg		= @ErrMsg	OUTPUT
+						, @ErrCode			= @ErrCode	OUTPUT
+						, @MsgType			= @MsgType  OUTPUT
+						, @ErrMsg			= @ErrMsg	OUTPUT
 
 	IF @ErrCode <> 0
 		RETURN
@@ -165,7 +165,7 @@ BEGIN
 		INSERT INTO @OldCommTbl
 		SELECT dc.SportType
 			, dc.BetType
-			, dc.Commission
+			, dc.Discount
 		FROM @NewCommTbl tmp
 		INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK)
 			ON dc.SportType		= tmp.SportType
@@ -187,10 +187,10 @@ BEGIN
 
 	IF @RoleID = 3
 	BEGIN
-		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, super_discount)
+		--Update NEW_Commission = MIN( @NEW_Commission, super_Commission)
 		UPDATE tmp
 		SET tmp.Commission = CASE 
-				WHEN tmp.Commission < dcs.Commission
+				WHEN tmp.Commission < dcs.Discount
 					THEN tmp.Commission
 				ELSE dcs.Discount
 				END
@@ -202,11 +202,11 @@ BEGIN
 	END
 	ELSE IF @RoleID = 2
 	BEGIN
-		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, master_discount)
+		--Update NEW_Commission = MIN( @NEW_Commission, master_Commission)
 		UPDATE tmp
-		SET tmp.Discount = CASE 
-				WHEN tmp.Discount < dcm.Discount
-					THEN tmp.Discount
+		SET tmp.Commission = CASE 
+				WHEN tmp.Commission < dcm.Discount
+					THEN tmp.Commission
 				ELSE dcm.Discount
 				END
 		FROM @NewCommTbl tmp
@@ -217,11 +217,11 @@ BEGIN
 	END
 	ELSE IF @RoleID = 1 AND @SettingType = 3
 	BEGIN
-		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, agent_discount)
+		--Update NEW_Commission = MIN( @NEW_Commission, agent_Commission)
 		UPDATE tmp
-		SET tmp.Discount = CASE 
-				WHEN tmp.Discount < dca.Discount
-					THEN tmp.Discount
+		SET tmp.Commission = CASE 
+				WHEN tmp.Commission < dca.Discount
+					THEN tmp.Commission
 				ELSE dca.Discount
 				END
 		FROM @NewCommTbl tmp
@@ -235,7 +235,7 @@ BEGIN
 	SELECT @CorrectedDiscount_XML = (
 			SELECT *
 			FROM @NewCommTbl
-			FOR XML RAW('Discount')
+			FOR XML RAW('Commission')
 			)
 
 	SELECT @CorrectedDiscount_XML = '<ROOT>' + @CorrectedDiscount_XML + '</ROOT>'
@@ -280,12 +280,12 @@ BEGIN
 				@IP								AS '@IP',
 				(
 					SELECT	@ProductID			AS '@ProductID',
-							Discount			AS '@Commission'
+							Commission			AS '@Commission'
 					FROM	@OldCommTbl
-					FOR XML PATH('Discount'),
+					FOR XML PATH('Commission'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_DiscountUpd'),
+		FOR XML PATH('Acc_CustSetting_TicketCommissionUpd'),
 		TYPE
 	)
 	END
@@ -301,12 +301,12 @@ BEGIN
 				@IP								AS '@IP',
 				(
 					SELECT	SportType			AS '@SportType',
-							Discount			AS '@Commission'
+							Commission			AS '@Commission'
 					FROM	@OldCommTbl
-					FOR XML PATH('Discount'),
+					FOR XML PATH('Commission'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_DiscountUpd'),
+		FOR XML PATH('Acc_CustSetting_TicketCommissionUpd'),
 		TYPE
 	)
 	END
@@ -322,12 +322,12 @@ BEGIN
 				@IP								AS '@IP',
 				(
 					SELECT	BetType				AS '@BetType',
-							Discount			AS '@Commission'
+							Commission			AS '@Commission'
 					FROM	@OldCommTbl
-					FOR XML PATH('Discount'),
+					FOR XML PATH('Commission'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_DiscountUpd'),
+		FOR XML PATH('Acc_CustSetting_TicketCommissionUpd'),
 		TYPE
 	)
 	END
@@ -344,12 +344,12 @@ BEGIN
 				(
 					SELECT	SportType			AS '@SportType',
 							BetType				AS '@BetType',
-							Discount			AS '@Commission'
+							Commission			AS '@Commission'
 					FROM	@OldCommTbl
-					FOR XML PATH('Discount'),
+					FOR XML PATH('Commission'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_DiscountUpd'),
+		FOR XML PATH('Acc_CustSetting_TicketCommissionUpd'),
 		TYPE
 	)
 	END
@@ -368,12 +368,12 @@ BEGIN
 				@IP								AS '@IP',
 				(
 				SELECT	@ProductID				AS '@ProductID',
-						Discount				AS '@Commission'
+						Commission				AS '@Commission'
 				FROM	@NewCommTbl
-				FOR XML PATH('Discount'),
+				FOR XML PATH('Commission'),
 				TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_DiscountUpd'),
+		FOR XML PATH('Acc_CustSetting_TicketCommissionUpd'),
 		TYPE
 	)
 	END
@@ -389,12 +389,12 @@ BEGIN
 				@IP								AS '@IP',
 				(
 				SELECT	SportType				AS '@SportType',
-						Discount				AS '@Commission'
+						Commission				AS '@Commission'
 				FROM	@NewCommTbl
-				FOR XML PATH('Discount'),
+				FOR XML PATH('Commission'),
 				TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_DiscountUpd'),
+		FOR XML PATH('Acc_CustSetting_TicketCommissionUpd'),
 		TYPE
 	)
 	END
@@ -410,12 +410,12 @@ BEGIN
 				@IP								AS '@IP',
 				(
 				SELECT	BetType					AS '@BetType',
-						Discount				AS '@Commission'
+						Commission				AS '@Commission'
 				FROM	@NewCommTbl
-				FOR XML PATH('Discount'),
+				FOR XML PATH('Commission'),
 				TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_DiscountUpd'),
+		FOR XML PATH('Acc_CustSetting_TicketCommissionUpd'),
 		TYPE
 	)
 	END
@@ -432,12 +432,12 @@ BEGIN
 				(
 				SELECT	SportType				AS '@SportType',
 						BetType					AS '@BetType',
-						Discount				AS '@Commission'
+						Commission				AS '@Commission'
 				FROM	@NewCommTbl
-				FOR XML PATH('Discount'),
+				FOR XML PATH('Commission'),
 				TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_DiscountUpd'),
+		FOR XML PATH('Acc_CustSetting_TicketCommissionUpd'),
 		TYPE
 	)
 	END
@@ -446,16 +446,11 @@ BEGIN
 	SELECT @endRun	= GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
-	DECLARE @ActionID INT = 237
-	
-	IF @SettingType = 5
-		SELECT @ActionID = 248
-	
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 			@UserID				= @UserID
 			, @CustID			= @CustID
-			, @ActionID			= @ActionID
+			, @ActionID			= 250
 			, @TrackingValue	= @logSpData
 			, @TrackingValue2	= @logSpData_Old
 			, @duration			= @duration
@@ -465,7 +460,7 @@ BEGIN
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 			@UserID				= @UserID
 			, @CustID			= @CustID
-			, @ActionID			= @ActionID
+			, @ActionID			= 250
 			, @TrackingValue	= @logSpData
 			, @TrackingValue2	= @logSpData_Old
 			, @duration			= @duration
