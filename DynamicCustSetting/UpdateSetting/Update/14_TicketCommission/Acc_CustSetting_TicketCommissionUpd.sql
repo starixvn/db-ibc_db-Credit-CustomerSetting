@@ -235,7 +235,7 @@ BEGIN
 	SELECT @CorrectedDiscount_XML = (
 			SELECT *
 			FROM @NewCommTbl
-			FOR XML RAW('Commission')
+			FOR XML RAW('Discount')
 			)
 
 	SELECT @CorrectedDiscount_XML = '<ROOT>' + @CorrectedDiscount_XML + '</ROOT>'
