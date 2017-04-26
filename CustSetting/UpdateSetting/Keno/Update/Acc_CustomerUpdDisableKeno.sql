@@ -105,21 +105,21 @@ BEGIN
 		BEGIN
 			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
 									INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID 
-									WHERE srecommend = @custid AND ct.IsDisabled = 1 AND c.roleid=3 AND  ct.GameTypeID = @GameTypeID)
+									WHERE srecommend = @custid AND ct.IsDisabled = 1 AND  ct.GameTypeID = @GameTypeID)
 				SET @DisableDownlines_Old = 1
 		END
 		ELSE IF @roleid = 3
 		BEGIN
 			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
 										INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
-										WHERE mrecommend = @custid AND ct.IsDisabled = 1  AND c.roleid=2 AND  ct.GameTypeID = @GameTypeID)
+										WHERE mrecommend = @custid AND ct.IsDisabled = 1  AND  ct.GameTypeID = @GameTypeID)
 				SET @DisableDownlines_Old = 1
 		END
 		ELSE IF @roleid = 2
 		BEGIN
 			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK)
 										INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
-										WHERE recommend = @custid AND ct.IsDisabled = 1  AND roleid = 1 AND  ct.GameTypeID = @GameTypeID)
+										WHERE recommend = @custid AND ct.IsDisabled = 1  AND  ct.GameTypeID = @GameTypeID)
 				SET @DisableDownlines_Old = 1
 		END
 	END
