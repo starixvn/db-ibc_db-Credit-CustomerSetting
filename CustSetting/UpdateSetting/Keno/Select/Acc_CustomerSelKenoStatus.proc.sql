@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelKenoStatus] 
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerSelKenoStatus] 
 	@custid INT
 	, @roleid INT = NULL
 	, @uplineId INT = NULL
@@ -15,6 +16,7 @@ AS
 		- 20140605@Elodie: Expand bettype for Keno
 		- 20140806@Johnson: put WITH(NOLOCK) for missing SELECT commands
 		- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB, use temp table for GameType)
+		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -65,6 +67,7 @@ BEGIN
 		SELECT TOP 1 @HasDownline = 1
 		FROM dbo.custInfo c WITH (NOLOCK)
 		WHERE srecommend = @custid AND roleid = 3
+		
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH (NOLOCK) WHERE srecommend = @custid AND roleid = 3 AND hidekeno = 1)
 		BEGIN
 			UPDATE #kenoDownlines
@@ -78,7 +81,7 @@ BEGIN
 				LEFT JOIN (	SELECT DISTINCT g.gametypeid, g.IsDisabled
 							FROM dbo.CustGameType g WITH (NOLOCK)
 								INNER JOIN dbo.custInfo c WITH (NOLOCK) ON g.CustID = c.custid
-							WHERE (c.custid = @custid OR ( c.srecommend = @custid AND c.roleid = 3)) AND g.IsDisabled = 1
+							WHERE (c.custid = @custid OR ( c.srecommend = @custid )) AND g.IsDisabled = 1
 							) t ON k.gametypeid = t.GameTypeID
 		END
 	END
@@ -89,6 +92,7 @@ BEGIN
 		SELECT TOP 1 @HasDownline = 1
 		FROM dbo.custInfo c WITH (NOLOCK)
 		WHERE mrecommend = @custid AND roleid = 2
+		
 		IF EXISTS (	SELECT TOP 1 1 FROM dbo.custInfo c WITH (NOLOCK) WHERE mrecommend = @custid	AND roleid = 2 AND hidekeno = 1)
 		BEGIN
 			UPDATE #kenoDownlines
@@ -102,7 +106,8 @@ BEGIN
 				LEFT JOIN ( SELECT DISTINCT g.gametypeid, g.IsDisabled
 							FROM dbo.CustGameType g WITH (NOLOCK)
 								INNER JOIN dbo.custInfo c WITH (NOLOCK) ON g.CustID = c.custid
-							WHERE (c.custid = @custid OR ( c.mrecommend = @custid AND c.roleid = 2)) AND g.IsDisabled = 1
+							WHERE (c.custid = @custid OR ( c.mrecommend = @custid)
+								   ) AND g.IsDisabled = 1
 							) t ON k.gametypeid = t.GameTypeID
 		END
 	END
