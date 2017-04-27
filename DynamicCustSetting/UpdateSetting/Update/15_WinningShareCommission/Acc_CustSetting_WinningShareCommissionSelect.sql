@@ -7,8 +7,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_WinningShareCommissionSelect]
 	, @ProductID	TINYINT
 AS
 /*
-	Created: 20160801@Elodie
-	Task : Get Discount setting values of a product
+	Created: 20170424@Elodie
+	Task : Get Winning Share commission values of a product
 	DB: DBCUST/CustDB
 	Original:
 
@@ -16,20 +16,18 @@ AS
 	
 	Param's Explanation:
 	
+	Example: EXEC Acc_CustSetting_WinningShareCommissionSelect_xtest @CustID = 1176070, @ProductID = 26
 	*/
 BEGIN
 	DECLARE	@RoleID		TINYINT,
 			@SuperID	INT,
 			@MasterID	INT,
-			@AgentID	INT
+			@AgentID	INT,
+			@Case		VARCHAR(50)
 
 	SELECT SportType,Bettype,SettingType
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3) --Commission
-	
-	INSERT #SportBettypeFilter (SportType,Bettype,SettingType)
-	SELECT SportType,Bettype,SettingType
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5) --Charge Commission
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,15) --Commission
 
 	-- Select customer's information
 	SELECT	@RoleID     = c.roleid
@@ -40,92 +38,45 @@ BEGIN
 	WHERE	c.custid = @CustID
 
 	IF @RoleID = 4
-		SELECT	pdt.SportType,
-				pdt.BetType,
-				dc.Discount AS SuperDiscount,
-				ISNULL(pdt.MaxDiscount, 0) AS DefaultMaxDiscount,
-				pdt.IntervalValue AS IntervalComm
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)
-			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
-			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
-		WHERE dc.custid = @CustID
+		IF EXISTS (SELECT 1 FROM dbo.CustDirectAccount WITH (NOLOCK) WHERE CustID = @CustID)
+			SELECT @Case = 'WinningShareSuper'
+		ELSE
+		BEGIN
+			IF EXISTS (SELECT 1 
+						FROM dbo.CustDirectAccount da WITH (NOLOCK) 
+							INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.mrecommend = da.CustID)
+			SELECT @Case = 'WinningShareSuper_DirectMaster'
+		END
 	ELSE IF @RoleID = 3
-		SELECT	pdt.SportType,  
-				pdt.BetType,  
-				dc.Discount AS MasterDiscount,
-				sdc.Discount AS SuperDiscount,
-				pdt.IntervalValue AS IntervalComm
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft  ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
-			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype    
-			INNER JOIN dbo.CustDiscount3rd_Agent sdc WITH (NOLOCK) ON pdt.SportType = sdc.sporttype AND pdt.BetType = sdc.bettype 
-		WHERE dc.custid = @CustID AND sdc.custid = @SuperID
+		IF EXISTS (SELECT 1 FROM dbo.CustDirectAccount WITH (NOLOCK) WHERE CustID = @CustID)
+			SELECT @Case = 'WinningShareMaster'
+		ELSE
+		BEGIN
+			IF EXISTS (SELECT 1 
+						FROM dbo.CustDirectAccount da WITH (NOLOCK) 
+							INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.mrecommend = da.CustID)
+			SELECT @Case = 'WinningShareMaster'
+		END
 	ELSE IF @RoleID = 2
-		SELECT	pdt.SportType,  
-				pdt.BetType,
-				dc.Discount AS AgentDiscount,
-				mdc.Discount AS MasterDiscount,
-				pdt.IntervalValue AS IntervalComm
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
-			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
-			INNER JOIN dbo.CustDiscount3rd_Agent mdc WITH (NOLOCK) ON pdt.SportType = mdc.sporttype AND pdt.BetType = mdc.bettype 
-		WHERE dc.custid = @CustID AND mdc.custid = @MasterID   
+		IF EXISTS (SELECT 1 FROM dbo.CustDirectAccount WITH (NOLOCK) WHERE CustID = @CustID)
+			SELECT @Case = 'WinningShareAgent'
+		ELSE
+		BEGIN
+			IF EXISTS (SELECT 1 
+						FROM dbo.CustDirectAccount da WITH (NOLOCK) 
+							INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.mrecommend = da.CustID)
+			SELECT @Case = 'WinningShareAgent'
+		END 
+
 	ELSE IF @RoleID = 1
 	BEGIN
-		IF @UplineRoleID = 4
-		BEGIN
-			SELECT	pdt.SportType,  
-					pdt.BetType,  
-					dc.PlayerDiscount,  
-					dc.AgentDiscount,  
-					dc.MasterDiscount,
-					pdt.IntervalValue AS IntervalComm
-				FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
-				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
-			WHERE dc.custid = @CustID
-		END
-		ELSE IF @UplineRoleID = 3
-		BEGIN
-			SELECT	pdt.SportType,  
-					pdt.BetType,
-					dc.PlayerDiscount, 
-					dc.AgentDiscount,
-					pdt.IntervalValue AS IntervalComm
-			FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
-				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
-			WHERE dc.custid = @CustID
-		END
-		ELSE IF @UplineRoleID = 2
-		BEGIN
-			SELECT	pdt.SportType,  
-					pdt.BetType,
-					dc.PlayerDiscount, 
-					adc.Discount AS AgentDiscount,
-					pdt.IntervalValue AS IntervalComm
-			FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
-				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype   
-				INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON pdt.SportType = adc.sporttype AND pdt.BetType = adc.bettype 
-			WHERE dc.custid = @CustID AND adc.custid = @AgentID  
-			  
-		END
+		SELECT @Case = ''
 	END
+
+	SELECT sporttype, bettype, NumberValue AS WinningShareCommission 
+	FROM dbo.VendorGlobalSetting WITH (NOLOCK) 
+	WHERE VName = @Case
+
 	DROP TABLE #SportBettypeFilter
-
-	SELECT	160 AS SportType,  
-			1602 AS	BetType,
-			10 AS WinningShareCommission
 END
-
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinningShareCommissionSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinningShareCommissionSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinningShareCommissionSelect] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_WinningShareCommissionSelect] TO [vnteam]
 
