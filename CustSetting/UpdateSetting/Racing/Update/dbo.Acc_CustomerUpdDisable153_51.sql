@@ -21,6 +21,7 @@ Revisions:
 	 - 20110709@Johnson: Change to use new server BD053 instead DB052
 	 - 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
 	 - 20130226@Johnson: change linked server DB053 to DBAGE and write log on DBTXN if DBLOG failure
+	 - 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 Param's Explanation:
 â€¢ @custid: customer id.   
 
@@ -34,7 +35,7 @@ BEGIN
 	SET @startRun = GETDATE()
 
 	--Check disable user
-	EXEC DBAGE.bodb02.dbo.Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+	EXEC Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
 	IF @ErrCode <>0 
 		RETURN 
 	--end
@@ -215,9 +216,6 @@ BEGIN
 			@duration = @duration
 	END CATCH
 END
-
-
-
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable153_51] TO [bodbAdminNet]
 GO
