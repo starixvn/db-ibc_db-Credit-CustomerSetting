@@ -11,7 +11,6 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionUpd]
 	, @ErrCode				INT				= 0		OUTPUT
 	, @MsgType				INT				= 0		OUTPUT
 	, @ErrMsg				NVARCHAR(MAX)	= ''	OUTPUT
-	, @SettingType			INT
 AS
 /*
 	Created: 20170424@Elodie
@@ -57,13 +56,13 @@ BEGIN
 	DECLARE @NewCommTbl TABLE (
 				SportType	SMALLINT
 			,	BetType		SMALLINT
-			,	Commission	DECIMAL(9, 8)
+			,	Discount	DECIMAL(9, 8)
 		)
 		
 	DECLARE @OldCommTbl TABLE (
 				SportType	SMALLINT
 			,	BetType		SMALLINT
-			,	Commission	DECIMAL(9, 8)
+			,	Discount	DECIMAL(9, 8)
 		)
 
 	DECLARE @ProductID		TINYINT,
@@ -136,7 +135,7 @@ BEGIN
 	INSERT @NewCommTbl
 	SELECT SportType
 		, BetType
-		, CAST(Commission AS DECIMAL(9, 8)) AS Commission
+		, CAST(Commission AS DECIMAL(9, 8)) AS Discount
 	FROM OPENXML(@iDoc, '/ROOT/Commission', 1) WITH (
 			SportType SMALLINT
 			, BetType SMALLINT
@@ -189,9 +188,9 @@ BEGIN
 	BEGIN
 		--Update NEW_Commission = MIN( @NEW_Commission, super_Commission)
 		UPDATE tmp
-		SET tmp.Commission = CASE 
-				WHEN tmp.Commission < dcs.Discount
-					THEN tmp.Commission
+		SET tmp.Discount = CASE 
+				WHEN tmp.Discount < dcs.Discount
+					THEN tmp.Discount
 				ELSE dcs.Discount
 				END
 		FROM @NewCommTbl tmp
@@ -204,9 +203,9 @@ BEGIN
 	BEGIN
 		--Update NEW_Commission = MIN( @NEW_Commission, master_Commission)
 		UPDATE tmp
-		SET tmp.Commission = CASE 
-				WHEN tmp.Commission < dcm.Discount
-					THEN tmp.Commission
+		SET tmp.Discount = CASE 
+				WHEN tmp.Discount < dcm.Discount
+					THEN tmp.Discount
 				ELSE dcm.Discount
 				END
 		FROM @NewCommTbl tmp
@@ -215,37 +214,22 @@ BEGIN
 				AND tmp.BetType = dcm.BetType
 				AND dcm.custid	= @MasterID
 	END
-	ELSE IF @RoleID = 1 AND @SettingType = 3
-	BEGIN
-		--Update NEW_Commission = MIN( @NEW_Commission, agent_Commission)
-		UPDATE tmp
-		SET tmp.Commission = CASE 
-				WHEN tmp.Commission < dca.Discount
-					THEN tmp.Commission
-				ELSE dca.Discount
-				END
-		FROM @NewCommTbl tmp
-		INNER JOIN dbo.CustDiscount3rd_Agent dca WITH (NOLOCK)
-			ON dca.SportType	= tmp.SportType
-				AND dca.BetType = tmp.BetType
-				AND dca.custid	= @AgentID
-	END
 
 	--Return XML result
-	SELECT @CorrectedDiscount_XML = (
+	SELECT @CorrectedComm_XML = (
 			SELECT *
 			FROM @NewCommTbl
 			FOR XML RAW('Discount')
 			)
 
-	SELECT @CorrectedDiscount_XML = '<ROOT>' + @CorrectedDiscount_XML + '</ROOT>'
+	SELECT @CorrectedComm_XML = '<ROOT>' + @CorrectedComm_XML + '</ROOT>'
 
 	--execrept to update commission
 	EXEC dbo.Acc_DynamicCustSetting3rd_06
 			@CustId			= @custid
 			, @RoleId		= @RoleId
-			, @SettingType  = @SettingType
-			, @Commission_XML = @CorrectedDiscount_XML
+			, @SettingType  = 14
+			, @Discount_XML = @CorrectedComm_XML
 			
 
 	--START LOGGING		
@@ -259,7 +243,7 @@ BEGIN
 					AND	psd.BetType = tmp.BetType
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType = @SettingType	-- Discount
+				AND psd.SettingType = 14	-- Discount
 		 ) iq
 
 	-- Select ProductName
@@ -274,13 +258,12 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@SettingType					AS '@SettingType',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	@ProductID			AS '@ProductID',
-							Commission			AS '@Commission'
+							Discount			AS '@Commission'
 					FROM	@OldCommTbl
 					FOR XML PATH('Commission'),
 					TYPE
@@ -295,13 +278,12 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@SettingType					AS '@SettingType',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType			AS '@SportType',
-							Commission			AS '@Commission'
+							Discount			AS '@Commission'
 					FROM	@OldCommTbl
 					FOR XML PATH('Commission'),
 					TYPE
@@ -316,13 +298,12 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@SettingType					AS '@SettingType',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	BetType				AS '@BetType',
-							Commission			AS '@Commission'
+							Discount			AS '@Commission'
 					FROM	@OldCommTbl
 					FOR XML PATH('Commission'),
 					TYPE
@@ -337,14 +318,13 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@SettingType					AS '@SettingType',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType			AS '@SportType',
 							BetType				AS '@BetType',
-							Commission			AS '@Commission'
+							Discount			AS '@Commission'
 					FROM	@OldCommTbl
 					FOR XML PATH('Commission'),
 					TYPE
@@ -362,13 +342,12 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@SettingType					AS '@SettingType',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 				SELECT	@ProductID				AS '@ProductID',
-						Commission				AS '@Commission'
+						Discount				AS '@Commission'
 				FROM	@NewCommTbl
 				FOR XML PATH('Commission'),
 				TYPE
@@ -383,13 +362,12 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@SettingType					AS '@SettingType',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 				SELECT	SportType				AS '@SportType',
-						Commission				AS '@Commission'
+						Discount				AS '@Commission'
 				FROM	@NewCommTbl
 				FOR XML PATH('Commission'),
 				TYPE
@@ -404,13 +382,12 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@SettingType					AS '@SettingType',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 				SELECT	BetType					AS '@BetType',
-						Commission				AS '@Commission'
+						Discount				AS '@Commission'
 				FROM	@NewCommTbl
 				FOR XML PATH('Commission'),
 				TYPE
@@ -425,14 +402,13 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@SettingType					AS '@SettingType',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 				SELECT	SportType				AS '@SportType',
 						BetType					AS '@BetType',
-						Commission				AS '@Commission'
+						Discount				AS '@Commission'
 				FROM	@NewCommTbl
 				FOR XML PATH('Commission'),
 				TYPE

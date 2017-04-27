@@ -77,7 +77,7 @@ BEGIN
 		SELECT cs.SportType
 			, cs.BetType
 			, MIN(cs.Discount) AS Commission
-		FROM dbo.CustDiscount3rd_Agent_csr cs WITH (NOLOCK)
+		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 		INNER JOIN @NewCommTbl tmp
 			ON tmp.SportType	= cs.SportType
 				AND tmp.BetType = cs.BetType
@@ -92,7 +92,7 @@ BEGIN
 		SELECT cs.SportType
 			, cs.BetType
 			, MIN(cs.Discount) AS Commission
-		FROM dbo.CustDiscount3rd_Agent_csr cs WITH (NOLOCK)
+		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 		INNER JOIN @NewCommTbl tmp
 			ON tmp.SportType	= cs.SportType
 				AND tmp.BetType = cs.BetType
@@ -108,7 +108,7 @@ BEGIN
 		SELECT cs.SportType
 			, cs.BetType
 			, MIN(cs.Discount) AS Commission
-		FROM dbo.CustDiscount3rd_Agent_csr cs WITH (NOLOCK)
+		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 		INNER JOIN @NewCommTbl tmp
 			ON tmp.SportType	= cs.SportType
 				AND tmp.BetType = cs.BetType
@@ -163,11 +163,11 @@ BEGIN
 
 	IF @RoleID IN (1, 2, 3)
 	BEGIN
-		--Check if Commission<=MIN(upper.Commission)
+		--Check if Commission>=MIN(upper.Commission)
 		IF EXISTS(SELECT TOP 1 1
 				FROM @NewCommTbl tmp
 					INNER JOIN @UplineCommTbl uc ON uc.BetType = tmp.BetType AND uc.SportType = tmp.SportType
-				WHERE uc.Commission > tmp.Commission)
+				WHERE uc.Commission < tmp.Commission)
 		BEGIN
 			SET @xml = (
 					SELECT 1 AS '@MsgID'
@@ -177,7 +177,7 @@ BEGIN
 								, tmp.BetType AS '@BetType'
 							FROM @NewCommTbl tmp
 								INNER JOIN @UplineCommTbl uc ON uc.BetType = tmp.BetType AND uc.SportType = tmp.SportType
-							WHERE uc.Commission > tmp.Commission
+							WHERE uc.Commission < tmp.Commission
 							FOR XML PATH('Row')
 								, TYPE
 							)

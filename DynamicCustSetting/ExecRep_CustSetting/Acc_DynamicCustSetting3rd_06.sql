@@ -17,6 +17,8 @@ AS
 		- 20160104@Dominic: Implementing Charge Commission Plugin - [Redmine: #49689]
 		- 20160219@Dominic: Remove commission on C981RMB - [Redmine: #51057]  
 		- 20160909@Winnie: Not apply CustNoComm for 3rd product [Redmine: #63736]	
+		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
+
 	Param's Explanation:
 		 @SettingType: 3 - Given Comm
 						5 - Charge Comm
