@@ -213,6 +213,7 @@ begin
 End
 
 declare @LogSPData varchar(MAX)
+, @TrackingValue VARCHAR(2000)
 
 Select @LogSPData = '<Acc_CustomerUpdDisable151_31 CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
 					'Disable151_31="'+ coalesce(cast(@Disable151_31 as varchar(50)),space(1)) + '" '+
@@ -223,7 +224,15 @@ Select @LogSPData = '<Acc_CustomerUpdDisable151_31 CustID="'+ coalesce(cast(@Cus
 					'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+
 					'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+
 					'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
-
+	,@TrackingValue = '<Acc_CustomerUpdDisable151_31 CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
+					'Disable151_31="'+ coalesce(cast(@Old_Disable151_31 as varchar(50)),space(1)) + '" '+
+					'DisableDownline151_31="'+ coalesce(cast(@DisableDownlines_Old as varchar(50)),space(1)) + '" '+
+					'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" '+
+					'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+
+					'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+
+					'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+
+					'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+
+					'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
 set @endRun = getdate()
 set @duration  = datediff (millisecond,@startRun,@endRun)
 
@@ -233,25 +242,17 @@ BEGIN TRY
 		@UserID = @UserID,
 		@CustID = @CustID,
 		@ActionID = 1129,
-		@TrackingValue = @LogSPData	 ,
+		@TrackingValue = @LogSPData,
+		@TrackingValue2 = @TrackingValue,
 		@duration = @duration
 END TRY
-BEGIN CATCH	
-	Select @LogSPData = '<Acc_CustomerUpdDisable151_31 CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
-						'Disable151_31="'+ coalesce(cast(@Disable151_31 as varchar(50)),space(1)) + '" '+
-						'DisableDownline151_31="'+ coalesce(cast(@DisableDownlines151_31 as varchar(50)),space(1)) + '" '+
-						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" '+
-						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+
-						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+
-						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+
-						'ErrMsg="'+ ERROR_MESSAGE() +'" '+
-						'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
-	
+BEGIN CATCH		
 	EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 		@UserID = @UserID,
 		@CustID = @CustID,
 		@ActionID = 1129,
-		@TrackingValue = @LogSPData	 ,
+		@TrackingValue = @LogSPData,
+		@TrackingValue2 = @TrackingValue,
 		@duration = @duration
 END CATCH
 GO
