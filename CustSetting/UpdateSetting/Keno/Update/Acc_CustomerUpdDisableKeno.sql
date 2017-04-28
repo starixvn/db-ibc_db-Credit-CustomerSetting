@@ -342,7 +342,7 @@ BEGIN
 		,@TrackingValue = '<Acc_CustomerUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Bettype="' + coalesce(cast(@Bettype AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Disable="' + coalesce(cast(@Old_DisableBetType AS VARCHAR(50)), space(1)) + '" ' 
-		+ 'DisableDownlines="' + CASE WHEN @HasDownline = 1 THEN coalesce(cast(@DisableDownlines AS VARCHAR(50)), space(1)) ELSE '' END  + '" ' 
+		+ 'DisableDownlines="' + coalesce(cast(@DisableDownlines_Old AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' 
 		+ 'UserID="' + coalesce(cast(@UserID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'UplineID="' + coalesce(cast(@UplineID AS VARCHAR(50)), space(1)) + '" ' 
