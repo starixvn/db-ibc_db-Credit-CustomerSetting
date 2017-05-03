@@ -18,7 +18,7 @@
 		Created: Johnson
 		Date: 2012-08-15
 		Task: update bet setting of virtual sports on master
-		DB: DBTXN/custDB
+		DB: DBCUST/custDB
 		
 		Revisions:
 			- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
