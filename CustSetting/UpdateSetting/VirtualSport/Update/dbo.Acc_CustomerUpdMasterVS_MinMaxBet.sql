@@ -18,7 +18,7 @@
 		Created: Johnson
 		Date: 2012-08-15
 		Task: update bet setting of virtual sports on master
-		DB: DBTXN/custDB
+		DB: DBCUST/custDB
 		
 		Revisions:
 			- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
@@ -28,7 +28,7 @@
 			- 20131121@Elodie: Add Virtual greyhounds(182), Virtual Motor Racing(184)	
 			- 20140402@Kathy: Add Virtual Speedway (183), Virtual Virtual Cycling (185)	[Redmine:#14142]					
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
-											
+			- 20170425@Winnie: Hot fix Virtual Sports_ SubAcc Name is not shown in log bet setting -  [Redmine:75752] 						
 		Parameter's Explanation
 	*/
 SET NOCOUNT ON
@@ -299,6 +299,7 @@ SET NOCOUNT ON
 		'MinB="'+ coalesce(cast(@MinBet as varchar(50)),space(1)) + '" ' +
 		'MaxB="'+ coalesce(cast(@MaxBet as varchar(50)),space(1)) + '" ' +
 		'MPM="'+ coalesce(cast(@MaxPerMatch as varchar(50)),space(1)) + '" ' +
+		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
@@ -311,6 +312,7 @@ SET NOCOUNT ON
 		'MinB="'+ coalesce(cast(@MinBet_old as varchar(50)),space(1)) + '" ' +
 		'MaxB="'+ coalesce(cast(@MaxBet_old as varchar(50)),space(1)) + '" ' +
 		'MPM="'+ coalesce(cast(@MaxPerMatch_old as varchar(50)),space(1)) + '" ' +
+		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
@@ -336,6 +338,7 @@ SET NOCOUNT ON
 		'MinB="'+ coalesce(cast(@MinBet as varchar(50)),space(1)) + '" ' +
 		'MaxB="'+ coalesce(cast(@MaxBet as varchar(50)),space(1)) + '" ' +
 		'MPM="'+ coalesce(cast(@MaxPerMatch as varchar(50)),space(1)) + '" ' +
+		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
