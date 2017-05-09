@@ -888,7 +888,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 			- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
 			- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-			
+			- 20170505@Winnie Agent have no PT Setting but new creation member got setting [Redmine: #71639]
 		Parameter's Explanation:
 		
 	*/
@@ -2597,19 +2597,39 @@ BEGIN
 		--v180
 		UNION ALL
 		select @custid, 1201, 180, ISNULL(@v180apositiontaking_1201,0), ISNULL(@v180mpositiontaking_1201,0), ISNULL(@v180spositiontaking_1201,0), 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		FROM [CustSetting3rd] WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 180 AND bettype = 1201
+		
 		UNION ALL
 		select @custid, 1231, 181, ISNULL(@v181apositiontaking_1231,0), ISNULL(@v181mpositiontaking_1231,0), ISNULL(@v181spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		FROM [CustSetting3rd] WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 181 AND bettype = 1231
+		
 		UNION ALL
 		select @custid, 1231, 182, ISNULL(@v182apositiontaking_1231,0), ISNULL(@v182mpositiontaking_1231,0), ISNULL(@v182spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		FROM [CustSetting3rd] WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 182 AND bettype = 1231
+		
 		UNION ALL
 		select @custid, 1231, 183, ISNULL(@v183apositiontaking_1231,0), ISNULL(@v183mpositiontaking_1231,0), ISNULL(@v183spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		FROM [CustSetting3rd] WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 183 AND bettype = 1231
+		
 		UNION ALL
 		select @custid, 1231, 184, ISNULL(@v184apositiontaking_1231,0), ISNULL(@v184mpositiontaking_1231,0), ISNULL(@v184spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		FROM [CustSetting3rd] WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 184 AND bettype = 1231
+		
 		UNION ALL
 		select @custid, 1231, 185, ISNULL(@v185apositiontaking_1231,0), ISNULL(@v185mpositiontaking_1231,0), ISNULL(@v185spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		FROM [CustSetting3rd] WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 185 AND bettype = 1231
+		
 		UNION ALL
 		select @custid, 1220, 186, ISNULL(@v186apositiontaking_1220,0), ISNULL(@v186mpositiontaking_1220,0), ISNULL(@v186spositiontaking_1220,0), 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
-		
+		FROM [CustSetting3rd] WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 186 AND bettype = 1220
+
 		if @@Error <> 0
 		BEGIN
 			--Error occurs
@@ -2691,27 +2711,57 @@ BEGIN
 		SELECT @custid, 1101, 162, @v162apositiontaking_1101, @v162mpositiontaking_1101, @v162spositiontaking_1101, 0, @v162discount_1101, @v162adiscount_1101, @v162sdiscount_1101, 0, 0, 0, 0
 		UNION ALL
 		SELECT @custid, 1501, 202, ISNULL(@v202apositiontaking_1501,0), ISNULL(@v202mpositiontaking_1501,0), ISNULL(@v202spositiontaking_1501,0), 0, ISNULL(@v202discount_1501,0), ISNULL(@v202adiscount_1501,0), ISNULL(@v202sdiscount_1501,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1501
+
 		UNION ALL
 		SELECT @custid, 1511, 202, ISNULL(@v202apositiontaking_1511,0), ISNULL(@v202mpositiontaking_1511,0), ISNULL(@v202spositiontaking_1511,0), 0, ISNULL(@v202discount_1511,0), ISNULL(@v202adiscount_1511,0), ISNULL(@v202sdiscount_1511,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1511
+
 		UNION ALL
 		SELECT @custid, 1503, 202, ISNULL(@v202apositiontaking_1503,0), ISNULL(@v202mpositiontaking_1503,0), ISNULL(@v202spositiontaking_1503,0), 0, ISNULL(@v202discount_1503,0), ISNULL(@v202adiscount_1503,0), ISNULL(@v202sdiscount_1503,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1503
+
 		UNION ALL
 		SELECT @custid, 1504, 202, ISNULL(@v202apositiontaking_1504,0), ISNULL(@v202mpositiontaking_1504,0), ISNULL(@v202spositiontaking_1504,0), 0, ISNULL(@v202discount_1504,0), ISNULL(@v202adiscount_1504,0), ISNULL(@v202sdiscount_1504,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1504
+
 		UNION ALL
 		SELECT @custid, 1505, 202, ISNULL(@v202apositiontaking_1505,0), ISNULL(@v202mpositiontaking_1505,0), ISNULL(@v202spositiontaking_1505,0), 0, ISNULL(@v202discount_1505,0), ISNULL(@v202adiscount_1505,0), ISNULL(@v202sdiscount_1505,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1505
+		
 		UNION ALL
 		SELECT @custid, 1513, 202, ISNULL(@v202apositiontaking_1513,0), ISNULL(@v202mpositiontaking_1513,0), ISNULL(@v202spositiontaking_1513,0), 0, ISNULL(@v202discount_1513,0), ISNULL(@v202adiscount_1513,0), ISNULL(@v202sdiscount_1513,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1513
+		
 		UNION ALL
 		SELECT @custid, 1507, 202, ISNULL(@v202apositiontaking_1507,0), ISNULL(@v202mpositiontaking_1507,0), ISNULL(@v202spositiontaking_1507,0), 0, ISNULL(@v202discount_1507,0), ISNULL(@v202adiscount_1507,0), ISNULL(@v202sdiscount_1507,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1507		
+		
 		UNION ALL
 		SELECT @custid, 1508, 202, ISNULL(@v202apositiontaking_1508,0), ISNULL(@v202mpositiontaking_1508,0), ISNULL(@v202spositiontaking_1508,0), 0, ISNULL(@v202discount_1508,0), ISNULL(@v202adiscount_1508,0), ISNULL(@v202sdiscount_1508,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1508
+		
 		UNION ALL
 		SELECT @custid, 1509, 202, ISNULL(@v202apositiontaking_1509,0), ISNULL(@v202mpositiontaking_1509,0), ISNULL(@v202spositiontaking_1509,0), 0, ISNULL(@v202discount_1509,0), ISNULL(@v202adiscount_1509,0), ISNULL(@v202sdiscount_1509,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1509
+		
 		UNION ALL
 		SELECT @custid, 1514, 202, ISNULL(@v202apositiontaking_1514,0), ISNULL(@v202mpositiontaking_1514,0), ISNULL(@v202spositiontaking_1514,0), 0, ISNULL(@v202discount_1514,0), ISNULL(@v202adiscount_1514,0), ISNULL(@v202sdiscount_1514,0), 0, 0, 0, 0
+		FROM CustSettingGame WITH(NOLOCK)
+		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1514
+		
 		UNION ALL
 		SELECT @custid, 1701, 255, ISNULL(@v255apositiontaking_1701,0), ISNULL(@v255mpositiontaking_1701,0), ISNULL(@v255spositiontaking_1701,0), 0, ISNULL(@v255discount_1701,0), ISNULL(@v255adiscount_1701,0), ISNULL(@v255sdiscount_1701,0), 0, 0, 0, 0
-		FROM CustSettingGame 
+		FROM CustSettingGame WITH(NOLOCK)
 		WHERE custid = @recommend AND sporttype = 255 AND bettype = 1701
 								
 		if @@error <> 0
