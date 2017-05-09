@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableGameStatusSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
@@ -9,7 +10,7 @@ AS
 	Original:
 
 	Revision:
-	
+		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 	Param's Explanation: 
 
 	Example: EXEC Acc_CustSetting_DisableGameStatusSelect @CustID = 1275, @ProductID = 23
@@ -66,10 +67,11 @@ BEGIN
 											INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-										WHERE srecommend = @CustID	AND roleid = 3
+										WHERE srecommend = @CustID	
 											AND IsSynced.value = 1
 											AND IsDisabled.value = 1
 										), 0) END AS BIT) AS IsDisabledDownline,
+										
 				CAST(0 AS BIT) AS isDisabledUpline
 		FROM #SportBettypeFilter ft 
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
@@ -104,7 +106,7 @@ BEGIN
 											INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-										WHERE mrecommend = @CustID	AND roleid = 2
+										WHERE mrecommend = @CustID	
 											AND IsSynced.value = 1
 											AND IsDisabled.value = 1
 										), 0) END AS BIT) AS IsDisabledDownline,

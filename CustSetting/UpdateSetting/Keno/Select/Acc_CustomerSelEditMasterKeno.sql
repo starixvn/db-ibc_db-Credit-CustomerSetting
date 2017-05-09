@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMasterKeno]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMasterKeno]
 	@CustID		INT
 AS
 /*
@@ -10,6 +11,8 @@ AS
 	Revisions:
 		- 20150608@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB, Use temp table for GameType table)
 		- 20150801@Elodie: LEFT JOIN CustSettingGame, CustOverrideGame to show Power Keno [Redmine:#39192]
+		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+		
 	Parameters Explanations:
 			
 */
@@ -38,7 +41,7 @@ BEGIN
 	FROM dbo.CustGameType cg WITH (NOLOCK)
 		INNER JOIN @GameType gt ON cg.GameTypeID = gt.GameTypeID
 		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON cg.CustID = ci.CustID
-	WHERE ci.mrecommend = @CustID AND ci.roleid = 2
+	WHERE ci.mrecommend = @CustID 
 	GROUP BY cg.GameTypeID
 
 	--setting upline

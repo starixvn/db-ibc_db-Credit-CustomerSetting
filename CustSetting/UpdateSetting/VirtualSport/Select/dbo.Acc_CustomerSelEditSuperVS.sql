@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditSuperVS]
 	@custid		INT
 AS
@@ -13,6 +14,7 @@ AS
 		- 20131121@Kathy: Add Virtual Greyhounds (182), Virtual Motor Racing (184) [Redmine:#7234]	
 		- 20140402@Kathy: Add Virtual Speedway (183), Virtual Virtual Cycling (185)	[Redmine:#14142]
 		- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB)
+		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 
 	Parameters Explanations:
 
@@ -43,7 +45,7 @@ SELECT @downlines = CASE WHEN EXISTS(SELECT TOP 1 1 FROM custinfo WITH(NOLOCK) W
 
 SELECT TOP 1 @DisableDownlinesVirtualSports = ISNULL(DisableVirtualSports, 0) 
 FROM custinfo WITH (NOLOCK) 
-WHERE srecommend = @custid and roleid = 3 and DisableVirtualSports = 1
+WHERE srecommend = @custid and DisableVirtualSports = 1
 	
 --to facilitate in Web Interface
 SELECT 	@MaxPerMatch180_Min = 0, 

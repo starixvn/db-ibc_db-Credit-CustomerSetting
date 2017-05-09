@@ -1,5 +1,4 @@
-﻿use custdb
-go
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditSuperGoldDeluxe]    
     @custid  INT    
 AS    
@@ -12,6 +11,7 @@ AS
   Revisions:    
 	- 20150612@Kathy: Move sp from DBAGE.bodb02 to DBCUST.CustDB [Redmine:#36216]
 	- 20150721@Patrick: Add more winlimit section
+	- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 	
   Parameters Explanations:    
        
@@ -27,7 +27,7 @@ BEGIN
         
     IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)
         SET @Downlines = 0    
-    ELSE IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND roleid = 3 AND DisableGoldDeluxe = 1)
+    ELSE IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1)
         SET @DisableDownlines = 1
         
     SELECT    @DisableGoldDeluxe = DisableGoldDeluxe
@@ -62,7 +62,7 @@ BEGIN
             cs.sdiscount                    AS v255sdiscount_1701,    
             gs.Maxsdiscount                    AS v255sdicount_1701_max    
      FROM    CustSettingGame cs WITH(NOLOCK)
-     INNER JOIN ProductGlobalSetting gs
+     INNER JOIN ProductGlobalSetting gs WITH (NOLOCK)
         ON    gs.Sporttype =  cs.Sporttype 
             AND gs.IsDep = 0
      WHERE custid = @custid 

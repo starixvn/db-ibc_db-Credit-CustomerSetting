@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelEditSuperKeno]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerSelEditSuperKeno]
 	@CustID		INT
 AS
 /*
@@ -9,6 +10,8 @@ AS
 		
 	Revisions:
 		- 20150608@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB, Use temp table for GameType table)
+		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+		
 	Parameters Explanations:
 			
 */
@@ -32,12 +35,13 @@ BEGIN
 	SELECT @downlines = CASE WHEN EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3) THEN 1 ELSE 0 END
 	
 	DECLARE @DisableDownlinesKeno TABLE (GameTypeID INT, DisableDownlines BIT)
+	
 	INSERT INTO @DisableDownlinesKeno (GameTypeID, DisableDownlines)
 	SELECT cg.GameTypeID, CASE WHEN SUM(CASE WHEN cg.IsDisabled = 1 THEN 1 ELSE 0 END) > 0 THEN 1 ELSE 0 END
 	FROM dbo.CustGameType cg WITH (NOLOCK)
 		INNER JOIN @GameType gt ON cg.GameTypeID = gt.GameTypeID
 		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON cg.CustID = ci.CustID
-	WHERE ci.srecommend = @CustID AND ci.roleid = 3
+	WHERE ci.srecommend = @CustID 
 	GROUP BY cg.GameTypeID	
 
 	SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid

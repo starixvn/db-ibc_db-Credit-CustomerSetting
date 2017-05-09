@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperSettingSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
@@ -12,7 +13,8 @@ AS
 	Revision:
 		- 20160104@Dominic: Implementing Charge Commission Plugin Redmine #49689
 		- 20160801@Elodie: Move commission part to Acc_CustSetting_DiscountSelect [Redmine: #60809]
-	
+		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+		
 	Param's Explanation:
 	- @CustID: Super's ID
 	
@@ -117,7 +119,7 @@ BEGIN
 							SELECT TOP 1 1
 							FROM dbo.custInfo ci WITH (NOLOCK)
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
-							WHERE srecommend = @CustID	AND roleid = 3
+							WHERE srecommend = @CustID	
 								AND dbo.f_GetProductStatus(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) = 1
 							), 0)
 							

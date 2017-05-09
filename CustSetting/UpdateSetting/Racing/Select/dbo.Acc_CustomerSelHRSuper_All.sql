@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelHRSuper_All]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerSelHRSuper_All]
 	@custid int
 AS
 
@@ -14,6 +15,8 @@ Revisions:
 	- 20130305@Johnson: Get bet setting of 3rd
 	- 20130520@Johnson: check null bet setting of 3rd
 	- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB)
+	- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+	
 Param's Explanation:
 	@CustID: super ID
 */
@@ -72,12 +75,12 @@ Param's Explanation:
 		--@MaDisableHR BIT
 	SELECT @downlines = CASE WHEN EXISTS(SELECT top 1 1 FROM custinfo WITH(NOLOCK) WHERE srecommend = @custid and roleid = 3) THEN 1 ELSE 0 END
 								 
-	select top 1 @DisableDownlines151_31 = isnull(DisableHorseRacing,0) from custinfo with (NOLOCK) WHERE srecommend = @custid and roleid = 3 and DisableHorseRacing = 1
-	select top 1 @DisableDownlines151_41 = isnull(DisableOpenTote,0) from custinfo with (NOLOCK) WHERE srecommend = @custid and roleid = 3 and DisableOpenTote = 1
-	select top 1 @DisableDownlines151_51 = isnull(Disable151_AU,0) from custinfo with (NOLOCK) WHERE srecommend = @custid and roleid = 3 and Disable151_AU = 1
-	select top 1 @DisableDownlines152_41 = isnull(Disable152_UK,0) from custinfo with (NOLOCK) WHERE srecommend = @custid and roleid = 3 and Disable152_UK = 1
-	select top 1 @DisableDownlines152_51 = isnull(Disable152_AU,0) from custinfo with (NOLOCK) WHERE srecommend = @custid and roleid = 3 and Disable152_AU = 1
-	select top 1 @DisableDownlines153_51 = isnull(Disable153_AU,0) from custinfo with (NOLOCK) WHERE srecommend = @custid and roleid = 3 and Disable153_AU = 1
+	select top 1 @DisableDownlines151_31 = isnull(DisableHorseRacing,0) from custinfo with (NOLOCK) WHERE srecommend = @custid and DisableHorseRacing = 1
+	select top 1 @DisableDownlines151_41 = isnull(DisableOpenTote,0) from custinfo with (NOLOCK) WHERE srecommend = @custid  and DisableOpenTote = 1
+	select top 1 @DisableDownlines151_51 = isnull(Disable151_AU,0) from custinfo with (NOLOCK) WHERE srecommend = @custid  and Disable151_AU = 1
+	select top 1 @DisableDownlines152_41 = isnull(Disable152_UK,0) from custinfo with (NOLOCK) WHERE srecommend = @custid  and Disable152_UK = 1
+	select top 1 @DisableDownlines152_51 = isnull(Disable152_AU,0) from custinfo with (NOLOCK) WHERE srecommend = @custid  and Disable152_AU = 1
+	select top 1 @DisableDownlines153_51 = isnull(Disable153_AU,0) from custinfo with (NOLOCK) WHERE srecommend = @custid  and Disable153_AU = 1
 		
 	--end--		
 	SELECT @v151IBCPositiontaking_31 = AutoIBCPositiontaking_Tote, @v151IBCPositiontaking_41 = AutoIBCPositiontaking_Fixed, @v151IBCPositiontaking_51 = AutoIBCPT151_AU,
