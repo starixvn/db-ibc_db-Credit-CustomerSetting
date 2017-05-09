@@ -11,6 +11,7 @@ AS
 
 	Revision:
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+		- 20170417@Elodie: Notify downline when upline enable FW's status [RedmineID: #73073]
 
 	Param's Explanation: 
 

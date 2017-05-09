@@ -20,7 +20,7 @@ AS
 	Original:
 
 	Revisions:
-		- 20170417@Elodie: Notify downline when upline enable FW's status [Redmine:#73073]		  
+		- 20170417@Elodie: Notify downline when upline enable FW's status [RedmineID: #73073]
 
 	Param's Explanation:
 	• @IsDisabled
