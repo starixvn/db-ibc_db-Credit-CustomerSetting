@@ -50,6 +50,7 @@ AS
 	- 20160217@Dominic: Not allow to create a IMBC customer from MBC customer and and vice versa [Redmine: #50028]
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20170207@Elodie: Set HideGoldDeluxe = 0 for 789y site - [Redmine: #69200]
+	- 20170420@Helen:  Add Extra information for Direct Accounts, for NAP only - [Redmine:72339]
 
  Explanation's Param:  
 	- @ErrCode:
@@ -445,6 +446,7 @@ BEGIN
 		DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID  
 	END CATCH
 
+	
 	BEGIN TRY
 				EXEC dbo.Acc_CustomerInfo_Execrep_02
 			@custid = @custid,
@@ -565,6 +567,41 @@ BEGIN
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		RETURN	
 	END CATCH		
+	
+	BEGIN TRY
+		INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy)
+		SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy
+		FROM Customer ci WITH(NOLOCK)
+		WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
+		  
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+				,@ErrCode = 106
+			
+		-- ROLLBACK MANUALLY
+		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
+		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
+		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
+		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
+		DELETE FROM P2PGameSetting WITH (ROWLOCK) WHERE custid =  @CustID					
+		DELETE FROM P2PGroupComm WITH (ROWLOCK) WHERE custid =  @CustID
+		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
+		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
+		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
+		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @Custid
+		
+		RETURN	
+	END CATCH	
 		
 	SET @endRun=GETDATE()
 	SET @duration=datediff(millisecond,@startRun,@endRun)
