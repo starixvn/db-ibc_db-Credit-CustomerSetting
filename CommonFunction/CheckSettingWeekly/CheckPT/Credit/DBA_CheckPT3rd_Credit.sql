@@ -173,16 +173,6 @@ BEGIN
 
 	--Check a number of setting rows
 	INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
-	SELECT	42 AS ruleid, ds.bettype, ds.sporttype, ci.CustID, ci.CustID, 0, 0, 0
-	FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
-		CROSS APPLY (SELECT sporttype, bettype FROM #DataSample) ds
-	WHERE ci.srecommend = @srecommend
-		AND ci.roleid = 1
-		AND ci.Enabled = 1
-		AND ci.Currency NOT IN (20,27,28)   
-		AND NOT EXISTS (SELECT 1 FROM #MemberPT WHERE CustID = ci.custid)
-
-	INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
 	SELECT	42 AS ruleid, ds.bettype, ds.sporttype, cs.CustID, cs.CustID, 0, 0, 0
 	FROM	#MemberMissSetting cs
 		CROSS APPLY (SELECT sporttype, bettype FROM #DataSample) ds
