@@ -14,13 +14,14 @@
 		Created: Johnson
 		Date: 2015-04-23
 		Task: Update status of Gold Deluxe
-		DB: DBTXN/CustDB
+		DB: DBCUST/CustDB
 		
 		Revisions:
 			- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST)
 			- 20150821@Elodie: Exclude WON currency for GoldDeluxe [Redmine: #41785]
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 			- 20170203@Elodie: Change enable behavior [Redmine: #70722]
+			- 20170522@Helen:  New member by search copy: IsHiddenGoldLuxe=0 although Agent isHiddenGoldDluxe=1 [Redmine: #76921]
 
 		Parameter's Explanation:
 			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
@@ -155,7 +156,7 @@ BEGIN
 
 	UPDATE dbo.CustInfo WITH(ROWLOCK, UPDLOCK)
 	SET DisableGoldDeluxe = @Disable,
-		HideGoldDeluxe = CASE WHEN HideGoldDeluxe = 1 THEN 0 ELSE HideGoldDeluxe END		
+		HideGoldDeluxe = CASE WHEN @Disable = 0 AND HideGoldDeluxe = 1 THEN 0 ELSE HideGoldDeluxe END		
 	WHERE custid = @CustID
 		
 	--Check condition for update all downlines
