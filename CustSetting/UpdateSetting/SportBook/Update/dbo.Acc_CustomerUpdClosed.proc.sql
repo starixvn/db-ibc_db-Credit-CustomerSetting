@@ -41,7 +41,7 @@ Revisions:
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
 	- 20170504@Winnie: Color for closed Accounts  - [Redmine:#74494]
-Param's Explanation:
+Param's Explanation
 • @custid: custid that need to be viewed.   
 
 */
@@ -207,14 +207,17 @@ BEGIN
 
 	IF(@Closed=1)
 	BEGIN
-		update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 1
-		where custid = @custid
-
+		IF(@roleid=1)
 		update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 1
 		where custid = @custid
+		ELSE
+		BEGIN
+			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 1
+			where custid = @custid		
 
-		update [dbo].CustLoginInfoSub with (ROWLOCK, UPDLOCK) set ClosedReason = 1
-		where custid = @custid
+			update [dbo].CustLoginInfoSub with (ROWLOCK, UPDLOCK) set ClosedReason = 1
+			where custid = @custid
+		END
 	END
 
 	IF (@Old_Closed = 1 and @Closed = 0 and @LoginCount > 5) or (@Old_Closed = 1 and @Closed = 0 and @roleid = 1 and @logincount = 5)
