@@ -219,6 +219,20 @@ BEGIN
 			where custid = @custid
 		END
 	END
+	ELSE IF (@Closed=0)
+	BEGIN
+		IF(@roleid=1)
+		update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 0
+		where custid = @custid
+		ELSE
+		BEGIN
+			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 0
+			where custid = @custid		
+
+			update [dbo].CustLoginInfoSub with (ROWLOCK, UPDLOCK) set ClosedReason = 0
+			where custid = @custid
+		END
+	END
 
 	IF (@Old_Closed = 1 and @Closed = 0 and @LoginCount > 5) or (@Old_Closed = 1 and @Closed = 0 and @roleid = 1 and @logincount = 5)
 		update customer with (ROWLOCK, UPDLOCK) set logincount = 0
