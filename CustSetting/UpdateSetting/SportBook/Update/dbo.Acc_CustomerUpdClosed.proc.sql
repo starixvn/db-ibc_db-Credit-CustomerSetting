@@ -215,8 +215,6 @@ BEGIN
 			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 1
 			where custid = @custid		
 
-			update [dbo].CustLoginInfoSub with (ROWLOCK, UPDLOCK) set ClosedReason = 1
-			where custid = @custid
 		END
 	END
 	ELSE IF (@Closed=0)
@@ -229,8 +227,6 @@ BEGIN
 			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 0
 			where custid = @custid		
 
-			update [dbo].CustLoginInfoSub with (ROWLOCK, UPDLOCK) set ClosedReason = 0
-			where custid = @custid
 		END
 	END
 
