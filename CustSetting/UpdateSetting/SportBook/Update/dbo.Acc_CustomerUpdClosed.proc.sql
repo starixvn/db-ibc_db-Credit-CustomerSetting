@@ -208,8 +208,8 @@ BEGIN
 	IF(@Closed=1)
 	BEGIN
 		IF(@roleid=1)
-		update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 1
-		where custid = @custid
+			update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 1
+			where custid = @custid
 		ELSE
 		BEGIN
 			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 1
@@ -220,8 +220,8 @@ BEGIN
 	ELSE IF (@Closed=0)
 	BEGIN
 		IF(@roleid=1)
-		update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 0
-		where custid = @custid
+			update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 0
+			where custid = @custid
 		ELSE
 		BEGIN
 			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 0
