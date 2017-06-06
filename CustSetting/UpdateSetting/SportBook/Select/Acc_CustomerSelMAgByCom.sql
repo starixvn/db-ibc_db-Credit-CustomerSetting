@@ -59,6 +59,7 @@ BEGIN
 		- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
 		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 		- 20170417@Winnie: Change to call the sp Acc_CheckShowProduct- [Redmine #72336]	
+		- 20170605@Winnie: Apply Color for closed account [Redmine's Ids: #74494]
 	Pattern Explanation:
 	Search keyword: '%keyword%'
 	First char
@@ -159,7 +160,7 @@ BEGIN
 	''SELECT siteid , site,SpecialGroup FROM bodb02.dbo.f_GetDeniedSiteByUser( ''''' + @tmpUserid + ''''')'')'
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
 	EXECUTE(@SearchQuery)
-	Select * From 
+	Select a.*, ISNULL(cl.ClosedReason,0) AS ClosedReason From 
 	(
 		SELECT 		
 			ci.enabled, 
@@ -362,6 +363,7 @@ BEGIN
 			cda.Discount
 			
 	) a
+	LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON a.custid=cl.CustID
 	WHERE a.RowNumber BETWEEN @RowStart AND @RowEnd
 END
 
