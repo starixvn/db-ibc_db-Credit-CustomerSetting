@@ -32,7 +32,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdRBStatus]
 	@Language VARCHAR(2) = 'E',
 	@IP		VARCHAR(15) = '',
 	@ErrCode VARCHAR(500) = '' OUTPUT,
-	@ErrMsg VARCHAR(4000) = '' OUTPUT
+	@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	
  AS
 /*
