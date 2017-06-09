@@ -107,8 +107,8 @@ UPDATE lgTbl
 SET lgTbl.TrackingValue = lg.TrackingValue,
 	lgTbl.TrackingValue2 = lg.TrackingValue2
 FROM dbo.UserLog_RunSP lgTbl WITH (ROWLOCK, UPDLOCK)
-	INNER JOIN #LogTmp lg ON lg.LogID = lgTbl.logid
-WHERE lg.logid = 488059941
+	INNER JOIN #LogTmp lg ON lg.LogID = lgTbl.logid AND lg.CustID = lgTbl.custid
+WHERE ActionID = 1161 AND lg.custid = 24624300
 
 --DROP TABLE #LogTmp
 
