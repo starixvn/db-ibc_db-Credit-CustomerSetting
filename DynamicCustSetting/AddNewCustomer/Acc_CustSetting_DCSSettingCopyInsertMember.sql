@@ -726,6 +726,7 @@ BEGIN
 				EXEC Acc_CustSetting_DisableGameStatusUpd
 					  @CustID = @CustID
 					, @IsDisabled = @xmlStr
+					, @SystemID = 1
 					, @SubAccID = @SubAccID
 					, @IP = @IP
 					, @UserID = @UserID
