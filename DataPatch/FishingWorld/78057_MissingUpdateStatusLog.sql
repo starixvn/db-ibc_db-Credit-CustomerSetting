@@ -106,7 +106,7 @@ FROM #LogTmp
 UPDATE lgTbl
 SET lgTbl.TrackingValue = lg.TrackingValue,
 	lgTbl.TrackingValue2 = lg.TrackingValue2
-FROM dbo.UserLog_RunSP lgTbl
+FROM dbo.UserLog_RunSP lgTbl WITH (ROWLOCK, UPDLOCK)
 	INNER JOIN #LogTmp lg ON lg.LogID = lgTbl.logid
 
 --DROP TABLE #LogTmp
