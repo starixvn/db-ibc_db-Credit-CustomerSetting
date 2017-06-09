@@ -108,6 +108,7 @@ SET lgTbl.TrackingValue = lg.TrackingValue,
 	lgTbl.TrackingValue2 = lg.TrackingValue2
 FROM dbo.UserLog_RunSP lgTbl WITH (ROWLOCK, UPDLOCK)
 	INNER JOIN #LogTmp lg ON lg.LogID = lgTbl.logid
+WHERE lg.logid = 488059941
 
 --DROP TABLE #LogTmp
 
