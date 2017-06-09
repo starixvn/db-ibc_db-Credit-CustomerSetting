@@ -1,4 +1,8 @@
-
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdColossusBet]
 (    
     @custid        INT,          
@@ -17,7 +21,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdColossusBet]
     @IP         VARCHAR(50)  = '',      
     @UserID        INT    = 0,  
     @Language       VARCHAR(20)  = 'E',          
-    
+    @SystemID	TINYINT = 1,
     @ErrCode       VARCHAR(300) = '' OUTPUT,  
     @ErrMsg        NVARCHAR(4000) = '' OUTPUT  
       
@@ -31,7 +35,8 @@ AS
     
     
 	Revisions:
-		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]			            
+		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20170307@Winnie: Change enable behavior [Redmine: #72336]		            
 	Parameters Explanation
 	
 */ 
@@ -190,7 +195,7 @@ BEGIN
 	IF @IsUpdateDisable = 1
 	BEGIN
 		
-		EXEC Acc_CustomerUpdDisableColossusBet @custid=@custid,@Disable=@Disable,@EnableDownlines=@EnableDownlines,@UserID=@UserID,@SubAccID=@SubAccID,@IP=@IP,@Language='E',@ErrCode=@ErrCode_Cur OUTPUT,@ErrMsg=@ErrMsg_Cur OUTPUT  
+		EXEC Acc_CustomerUpdDisableColossusBet @custid=@custid,@SystemID=@SystemID ,@Disable=@Disable,@EnableDownlines=@EnableDownlines,@UserID=@UserID,@SubAccID=@SubAccID,@IP=@IP,@Language='E',@ErrCode=@ErrCode_Cur OUTPUT,@ErrMsg=@ErrMsg_Cur OUTPUT  
 		
 		IF @ErrCode_Cur <> 0  
 		BEGIN  

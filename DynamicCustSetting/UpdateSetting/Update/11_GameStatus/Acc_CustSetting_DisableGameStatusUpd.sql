@@ -1,9 +1,14 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO 
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableGameStatusUpd] 
 	  @CustID			INT
 	, @IsDisabled		VARCHAR(MAX)
 	, @SubAccID			INT				= 0
 	, @UserID			INT
 	, @IP				VARCHAR(50)		= ''
+	, @SystemID			TINYINT
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
@@ -14,7 +19,8 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 
-	Revisions:
+	Revision: 
+		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -146,6 +152,7 @@ BEGIN
 		, @AgentID	= @AgentID
 		, @MasterID = @MasterID
 		, @SuperID	= @SuperID
+		, @SystemID = @SystemID
 		, @ErrCode		= @ErrCode	OUTPUT
 		, @MsgType		= @MsgType  OUTPUT
 		, @ErrMsg		= @ErrMsg	OUTPUT
@@ -175,7 +182,7 @@ BEGIN
 										INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 										OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
 										OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-									WHERE srecommend = @CustID	AND roleid = 3
+									WHERE srecommend = @CustID
 										AND IsSynced.value = 1
 										AND IsDisabled.value = 1
 									), 0) END AS IsDisabledDownline
@@ -205,7 +212,7 @@ BEGIN
 										INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 										OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
 										OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-									WHERE mrecommend = @CustID	AND roleid = 2
+									WHERE mrecommend = @CustID
 										AND IsSynced.value = 1
 										AND IsDisabled.value = 1
 									), 0) END AS IsDisabledDownline
@@ -265,7 +272,7 @@ BEGIN
 			SELECT TOP 1 1
 			FROM #NewDisableStatTbl tmp
 				INNER JOIN #OldDisableStatTbl stt ON tmp.SportType	= stt.SportType	AND tmp.BetType = stt.BetType
-			WHERE tmp.IsDisabled <> stt.IsDisabled
+			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.IsDisabledDownline <> stt.IsDisabledDownline
 			)
 		RETURN
 
@@ -287,25 +294,25 @@ BEGIN
 			FOR XML PATH('root')
 				, TYPE
 			)
-	
 			
 	UPDATE CustProductStatus
 		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
 	WHERE CustID = @CustID
 	
-	
-	DECLARE @bitmapOrderHidden INT
-	
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 	BEGIN
-		
+		SELECT TOP 1 @ProductID = ps.ProductID
+		FROM #NewDisableStatTbl dis 
+			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
+		WHERE dis.IsDisabled = 0 AND ps.SettingType = 11
+
 		SET @xmlStrHidden = (
 			SELECT (
 					SELECT psp.bitmapOrder	AS '@b'
 						, 0	AS '@s'
 					FROM ProductStatusProfile psp (NOLOCK)
-						JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
-					WHERE TMP.IsDisabled = 0
+						INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
+					WHERE ps.ProductID = @ProductID AND ps.SettingType = 13
 					FOR XML PATH('r')
 						, TYPE
 					)
@@ -319,23 +326,41 @@ BEGIN
 	END
 	
 	--call execrept to update downline
-	IF @RoleID <> 1 AND EXISTS (
-			SELECT TOP 1 1
-			FROM #NewDisableStatTbl
-			WHERE IsDisabled = 1
-				OR (
-						IsDisabled				= 0
-						AND IsDisabledDownline	= 0
+	DECLARE @IsDisabled_Downline XML
+	
+	SET @IsDisabled_Downline = (
+			SELECT (
+					SELECT 
+						SportType AS '@SportType'
+						,BetType AS '@BetType'
+						,IsDisabled AS '@IsDisabled'
+						,IsDisabledDownline AS '@IsDisabledDownline'
+					FROM #NewDisableStatTbl
+					WHERE IsDisabled = 1
+						OR EXISTS (	SELECT TOP 1 1
+									FROM #NewDisableStatTbl
+									WHERE IsDisabled = 0
+											AND IsDisabledDownline	= 0
+									)
+					FOR XML PATH('ProductStatus')
+						, TYPE
 					)
+			FOR XML PATH('ROOT')
+				, TYPE
 			)
-	BEGIN		
-		
+	
+	DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
+	
+	SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
+
+
+	IF @RoleID <> 1 AND @IsDisabled_Downline_tmp <> '<ROOT/>'
+	BEGIN				
 		EXEC dbo.[Acc_DynamicCustomerInfo_04] 
 			@CustID = @CustID
 			, @RoleID			= @RoleID
-			, @IsDisabled_XML	= @IsDisabled
-			, @Action = 'GameStatus'
-	
+			, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+			, @Action = 'GameStatus'	
 	END
 	
 	--START LOGGING		
@@ -556,11 +581,3 @@ BEGIN
 	DROP TABLE #OldDisableStatTbl
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableGameStatusUpd] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_DisableGameStatusUpd] TO [vnteam]

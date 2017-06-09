@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] 
 	  @IsDisabled	VARCHAR(MAX)
 	, @RoleID			INT
@@ -15,6 +19,9 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 
+	Revision: 
+		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
+
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -25,7 +32,7 @@ AS
 						IsDisabledDownline="1"
 				/>
 		</ROOT>
-
+	• @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -144,7 +151,7 @@ BEGIN
 	END
 
 	--60035: You are not allowed to disable for downlines.
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1 OR IsDisabledDownline = 1) AND @SystemID <> 1
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1 OR IsDisabledDownline = 1) AND @SystemID = 2
 	BEGIN
 		IF @RoleID = 4
 		BEGIN
@@ -329,9 +336,3 @@ BEGIN
 	
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] TO [bodbExtAccNet]

@@ -1,3 +1,8 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Acc_CustomerSelSAg]
 	@Currency int = NULL,
 	@Closed bit = NULL,
@@ -56,7 +61,7 @@ Revisions:
 	- 20170120@Elodie: Don't offer Massac(1507), Malta(1509) anymore [#70693]
 	- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
-
+	- 20170417@Winnie: Change to call the sp Acc_CheckShowProduct- [Redmine #72336]	
 Pattern Explanation:
 Search keyword: '%keyword%'
 First char
@@ -120,44 +125,13 @@ B: 'B%'
 		,	@IsHidden_NG2				INT = 1
 		,	@IsHidden_FishingWorld		INT = 1
     
-    DECLARE	@SportBook2					INT = 16
-		,	@CockFighting				INT = 19
-		,	@Cricket					INT = 20
-		,	@AllBet						INT = 21
-		,	@VoidBridge					INT = 22
-		,	@NG2						INT = 23
-		,	@FishingWorld				INT = 24
-    
-	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@SportBook2,4))
-	BEGIN
-		SET @IsHidden_MuayThai = 0
-	END
-	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@CockFighting,4))
-	BEGIN
-		SET @IsHidden_CockFighting = 0
-	END
-    IF EXISTS(SELECT TOP(1) 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@AllBet, 4))
-	BEGIN
-	    SET	@IsHidden_AllBet = 0
-	END
-    
-    IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@Cricket,4))
-	BEGIN
-		SET @IsHidden_Cricket = 0
-	END
-
-	 IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@VoidBridge,4))
-	BEGIN
-		SET @IsHidden_VoidBridge = 0
-	END
-	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@NG2,11))
-	BEGIN
-		SET @IsHidden_NG2 = 0
-	END
-	 IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,13))
-	BEGIN
-		SET @IsHidden_FishingWorld = 0
-	END
+    EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 19, @IsHide = @IsHidden_CockFighting OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHidden_Cricket OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHidden_AllBet OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHidden_VoidBridge OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHidden_NG2 OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHidden_FishingWorld OUTPUT
 
 	IF(@System = 'ACCOUNTING')
 	BEGIN

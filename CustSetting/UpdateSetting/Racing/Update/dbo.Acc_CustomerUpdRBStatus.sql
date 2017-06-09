@@ -1,6 +1,4 @@
-﻿USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdRBStatus]    Script Date: 06/10/2015 14:47:02 ******/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdRBStatus]
 	@custid INT,
 	@SubAccID INT = 0,
 	@UserID INT,
-	
+	@SystemID				TINYINT = 1,
 	@UpdateDisable151_31 BIT = 0,
 	@UpdateDisable151_41 BIT = 0,
 	@UpdateDisable151_51 BIT = 0,
@@ -34,7 +32,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdRBStatus]
 	@Language VARCHAR(2) = 'E',
 	@IP		VARCHAR(15) = '',
 	@ErrCode VARCHAR(500) = '' OUTPUT,
-	@ErrMsg VARCHAR(4000) = '' OUTPUT
+	@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	
  AS
 /*
@@ -49,7 +47,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdRBStatus]
 		- 20130124@Scott : Update conditional when call sp  Acc_CustomerSelCheckAllowedDownlines
 		- 20130227@Johnson: change linked server DB053 to DBAGE		
 		- 20150609@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216]
-		
+		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 	Notes:
 		@ErrCode: Update Status Success:
 				-109: disableHR
@@ -111,6 +109,7 @@ BEGIN
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''							
 		EXEC dbo.Acc_CustomerUpdDisable151_31
 		@custid=@custid, 
+		@SystemID=@SystemID,
 		@Disable151_31=@Disable151_31, 
 		@DisableDownlines151_31=@DisableDownlines151_31,
 		@UserID=@UserID, 
@@ -137,6 +136,7 @@ BEGIN
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''							
 		EXEC dbo.Acc_CustomerUpdDisable151_41
 		@custid=@custid, 
+		@SystemID=@SystemID,
 		@Disable151_41=@Disable151_41,
 		@DisableDownlines151_41=@DisableDownlines151_41,
 		@UserID=@UserID, 
@@ -160,8 +160,9 @@ END
 IF @UpdateDisable151_51 = 1
 BEGIN
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''		
-		EXEC dbo.Acc_CustomerUpdDisable151_51	
+		EXEC dbo.Acc_CustomerUpdDisable151_51
 		@custid=@custid, 
+		@SystemID=@SystemID,
 		@Disable151_51=@Disable151_51, 
 		@DisableDownlines151_51=@DisableDownlines151_51,
 		@UserID=@UserID, 
@@ -187,6 +188,7 @@ BEGIN
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''		
 		EXEC dbo.Acc_CustomerUpdDisable152_41
 		@custid=@custid, 
+		@SystemID=@SystemID,
 		@Disable152_41=@Disable152_41, 
 		@DisableDownlines152_41=@DisableDownlines152_41,
 		@UserID=@UserID, 
@@ -212,6 +214,7 @@ BEGIN
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''		
 		EXEC dbo.Acc_CustomerUpdDisable152_51
 		@custid=@custid, 
+		@SystemID=@SystemID,
 		@Disable152_51=@Disable152_51, 
 		@DisableDownlines152_51=@DisableDownlines152_51,
 		@UserID=@UserID, 
@@ -236,7 +239,8 @@ IF @UpdateDisable153_51 = 1
 BEGIN
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''		
 		EXEC dbo.Acc_CustomerUpdDisable153_51
-		@custid=@custid, 
+		@custid=@custid,
+		@SystemID=@SystemID, 
 		@Disable153_51=@Disable153_51, 
 		@DisableDownlines153_51=@DisableDownlines153_51,
 		@UserID=@UserID, 

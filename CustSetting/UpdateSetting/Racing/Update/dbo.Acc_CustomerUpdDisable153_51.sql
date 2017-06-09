@@ -1,10 +1,15 @@
-﻿
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisable153_51]
 	@CustID					INT,
 	@Disable153_51			BIT,
 	@DisableDownlines153_51	BIT				= true, --Disable all downline
 	@SubAccID				INT				= 0, --Sub-AccountID
 	@UserID					INT,
+	@SystemID				TINYINT = 1,
 	@Language				VARCHAR(2)		= 'E',
 	@ErrCode				INT				= 0 OUTPUT,
 	@ErrMsg					NVARCHAR(200)	= '' OUTPUT,
@@ -22,6 +27,7 @@ Revisions:
 	 - 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
 	 - 20130226@Johnson: change linked server DB053 to DBAGE and write log on DBTXN if DBLOG failure
 	 - 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB)
+	 - 20170303@Winnie: Change enable behavior [Redmine: #72336]
 Param's Explanation:
 â€¢ @custid: customer id.   
 
@@ -42,6 +48,10 @@ BEGIN
 	DECLARE @RoleID TINYINT, 
 			@UplineDisable153_51 BIT,
 			@Old_Disable153_51 BIT
+			,@HasDownline BIT = 0 
+			,@DisableDownlines_Old BIT = 0
+			,@EnableDownlines BIT=0
+SET @EnableDownlines = CASE @DisableDownlines153_51 WHEN 0 THEN 1 ELSE 0 END
 
 	SELECT	@RoleID = RoleID,
 			@Old_Disable153_51 = ISNULL(Disable153_AU, 0)
@@ -56,29 +66,33 @@ BEGIN
 						END, @ErrCode = 100	
 		RETURN
 	END
+	SELECT top 1 @HasDownline = 1   
+	FROM dbo.CustInfo WITH (NOLOCK)  
+	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)  
+		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
+		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
+		
+IF @HasDownline = 1
+	BEGIN
+		IF @roleid = 4 
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND Disable153_AU = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 3
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND Disable153_AU = 1)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 2
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND Disable153_AU = 1)
+				SET @DisableDownlines_Old = 1
+		END
+	END
 
-	--current status change or not?
-	-- Qui.Nguyen add "and @IsUpdDownline = 0" for wap
-	-- Remove @IsUpdDownline
-
-	if @Old_Disable153_51 = @Disable153_51 RETURN--and @IsUpdDownline = 0
-	--begin
-		--rase message if Account was already disabled!
-	--	if (@DisableOpenTote = 1 AND @UplineDisableOpenTote = 1)
-	--	begin
-	--		SELECT @ErrMsg =  CASE @Language 
-	--							WHEN 'E' THEN 'Your account was disabled Horse Racing betting. Cannot edit customer.'
-	--							WHEN 'CS' THEN N'èµ›é©¬æŠ•æ³¨ç›®å‰å·²è¢«ä¸Šçº¿é™åˆ¶ã€‚æ— æ³•ä¿®æ”¹ä¼šå‘˜ã€‚'
-	--							WHEN 'CT' THEN N'è³½é¦¬æŠ•æ³¨ç›®å‰å·²è¢«ä¸Šç·šé™åˆ¶ã€‚ç„¡æ³•ä¿®æ”¹æœƒå“¡ã€‚'
-	--							WHEN 'TH' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'							
-	--							WHEN 'J' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'
-	--							WHEN 'KO' THEN N'Your account was disabled Horse Racing betting. Cannot edit customer.'
-	--							ELSE N'Your account was disabled Horse Racing betting. Cannot edit customer.'
-	--						END
-	--	end
-	--
-	--	return
-	--end
+	IF @Old_Disable153_51 = @Disable153_51 AND @DisableDownlines_Old <> @EnableDownlines
+		RETURN
 
 	IF @Disable153_51 = 0 -- check status upline
 	BEGIN
@@ -102,9 +116,24 @@ BEGIN
 			RETURN
 		END 
 	END
+	IF ((@Disable153_51 = 1 AND @Old_Disable153_51 = 0) OR 
+	(@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID =2 AND @roleid IN (4,3,2)
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
+						END, @ErrCode = 102
+		RETURN
+	END 
 
-
-
+	IF @Disable153_51 = 1 AND @EnableDownlines = 1 AND @HasDownline=1
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to perform this action.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+						END, @ErrCode = 103
+		RETURN
+	END 
 	---------------------
 
 	UPDATE CustInfo WITH(ROWLOCK, UPDLOCK) 
@@ -120,7 +149,11 @@ BEGIN
 		RETURN
 	END
 	--Check condition for update all downline
-	IF (@Disable153_51 = 1 or (@Disable153_51 = 0 and @DisableDownlines153_51 = 0)) --Disable all downline or enable all downline
+	IF ( @RoleID > 1 AND 
+		(@Disable153_51 = 1  
+			OR (@Disable153_51 = 0 AND (@DisableDownlines153_51 = 0 AND @HasDownline = 1))  
+		)  
+		) 		
 	BEGIN
 		IF @RoleID = 4 
 		BEGIN
@@ -174,7 +207,7 @@ BEGIN
 	END
 
 	DECLARE @LogSPData VARCHAR(MAX)
-
+	, @TrackingValue VARCHAR(2000)
 	SELECT @LogSPData = '<Acc_CustomerUpdDisable153_51 CustID="'+ COALESCE(CAST(@CustID AS VARCHAR(50)),SPACE(1)) + '" '+
 						'Disable153_51="'+ COALESCE(CAST(@Disable153_51 AS VARCHAR(50)),SPACE(1)) + '" '+
 						'DisableDownline153_51="'+ COALESCE(CAST(@DisableDownlines153_51 AS VARCHAR(50)),SPACE(1)) + '" '+
@@ -184,7 +217,15 @@ BEGIN
 						'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" '+
 						'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(400)),SPACE(1))+'" '+
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1))+'" />'
-
+			,@TrackingValue = '<Acc_CustomerUpdDisable153_51 CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
+					'Disable153_51="'+ coalesce(cast(@Old_Disable153_51 as varchar(50)),space(1)) + '" '+
+					'DisableDownline153_51="'+ coalesce(cast(@DisableDownlines_Old as varchar(50)),space(1)) + '" '+
+					'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" '+
+					'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+
+					'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+
+					'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+
+					'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+
+					'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF(millisecond,@startRun,@endRun)
 
@@ -197,17 +238,7 @@ BEGIN
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 	END TRY
-	BEGIN CATCH		
-		SELECT @LogSPData = '<Acc_CustomerUpdDisable153_51 CustID="'+ COALESCE(CAST(@CustID AS VARCHAR(50)),SPACE(1)) + '" '+
-							'Disable153_51="'+ COALESCE(CAST(@Disable153_51 AS VARCHAR(50)),SPACE(1)) + '" '+
-							'DisableDownline153_51="'+ COALESCE(CAST(@DisableDownlines153_51 AS VARCHAR(50)),SPACE(1)) + '" '+
-							'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" '+
-							'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" '+
-							'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1))+'" '+
-							'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" '+
-							'ErrMsg="'+ ERROR_MESSAGE() +'" '+
-							'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1))+'" />'
-		
+	BEGIN CATCH				
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @UserID,
 			@CustID = @CustID,

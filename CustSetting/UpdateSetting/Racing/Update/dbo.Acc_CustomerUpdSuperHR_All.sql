@@ -1,14 +1,8 @@
-USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuperHR_All]    Script Date: 06/10/2015 15:34:48 ******/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperHR_All    Script Date: 8/28/2014 2:05:12 AM ******/
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperHR_All    Script Date: 8/21/2014 3:12:19 PM ******/
-
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperHR_All    Script Date: 8/21/2014 2:58:08 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperHR_All]
     @custid int,-- superid
     @UserID int = 0,
@@ -146,7 +140,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperHR_All]
     @Username varchar(30) = '' OUTPUT,
     @ErrCode varchar(300) = '' OUTPUT,
     @ErrMsg nvarchar(4000) = '' OUTPUT,
-    @IP varchar(15)=''
+    @IP varchar(15)='',
+	@SystemID INT=1
 AS
 /*
 Created: 20090514@Phuc
@@ -177,7 +172,7 @@ Revisions:
     - 20110709@Johnson: Change to use new server BD053 instead DB052
     - 20130227@Johnson: change linked server DB053 to DBAGE
     - 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID) [Redmine:#36216]
-    
+    - 20170303@Winnie: Change enable behavior [Redmine: #72336]
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.
@@ -221,12 +216,13 @@ END
 IF @UpdateDisable151_31    = 1
 BEGIN                                
     Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''        
-                EXEC dbo.Acc_CustomerUpdDisable151_31    
+                EXEC dbo.Acc_CustomerUpdDisable151_31  
         @custid                    = @custid, 
         @Disable151_31            = @Disable151_31, 
         @DisableDownlines151_31    = @DisableDownlines151_31,
         @UserID                    = @UserID,             
         @Language                = @Language, 
+		@SystemID				=@SystemID,
         @ErrCode                = @ErrCode_Cur output, 
         @ErrMsg                    = @ErrMsg_Cur output, 
         @IP                        = @IP
@@ -252,6 +248,7 @@ BEGIN
         @Disable151_41            = @Disable151_41, 
         @DisableDownlines151_41    = @DisableDownlines151_41,
         @UserID                    = @UserID,
+		@SystemID				=@SystemID,
         @Language                = @Language, 
         @ErrCode                = @ErrCode_Cur output, 
         @ErrMsg                    = @ErrMsg_Cur output, 
@@ -278,7 +275,8 @@ BEGIN
         @Disable151_51            = @Disable151_51, 
         @DisableDownlines151_51    = @DisableDownlines151_51,
         @UserID                    = @UserID,             
-        @Language                = @Language, 
+        @Language                = @Language,
+		@SystemID				=@SystemID, 
         @ErrCode                = @ErrCode_Cur OUTPUT, 
         @ErrMsg                    = @ErrMsg_Cur OUTPUT, 
         @IP                        = @IP
@@ -305,6 +303,7 @@ BEGIN
         @DisableDownlines152_41    = @DisableDownlines152_41,
         @UserID                    = @UserID,             
         @Language                = @Language, 
+		@SystemID				=@SystemID,
         @ErrCode                = @ErrCode_Cur OUTPUT, 
         @ErrMsg                    = @ErrMsg_Cur OUTPUT, 
         @IP                        = @IP
@@ -329,7 +328,8 @@ BEGIN
         @custid                    = @custid, 
         @Disable152_51            = @Disable152_51, 
         @DisableDownlines152_51    = @DisableDownlines152_51,
-        @UserID                    = @UserID,             
+        @UserID                    = @UserID,        
+		@SystemID				=@SystemID,     
         @Language                = @Language, 
         @ErrCode                = @ErrCode_Cur OUTPUT, 
         @ErrMsg                    = @ErrMsg_Cur OUTPUT, 
@@ -357,6 +357,7 @@ BEGIN
         @DisableDownlines153_51    = @DisableDownlines153_51,
         @UserID                    = @UserID,             
         @Language                = @Language, 
+		@SystemID				=@SystemID,
         @ErrCode                = @ErrCode_Cur OUTPUT, 
         @ErrMsg                    = @ErrMsg_Cur OUTPUT, 
         @IP                        = @IP

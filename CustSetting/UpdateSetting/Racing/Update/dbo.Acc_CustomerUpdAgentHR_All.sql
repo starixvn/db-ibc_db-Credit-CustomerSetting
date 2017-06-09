@@ -1,4 +1,9 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentHR_All]
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentHR_All]
 	@custid int, --agentID
 	@UserID int = 0,
 
@@ -146,7 +151,8 @@
 	@Username varchar(30) = '' OUTPUT,
 	@ErrCode varchar(300) = '' OUTPUT,
 	@ErrMsg nvarchar(4000) = '' OUTPUT,
-	@IP varchar(15)=''
+	@IP varchar(15)='',
+	@SystemID TINYINT=1
 AS
 /*
 Created: 20090514@Phuc
@@ -183,7 +189,7 @@ Revisions:
 								@UpdatePositiontakingv152_41 => _51
 	- 20130226@Johnson: change linked server DB053 to DBAGE
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)
-
+	- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 Param's Explanation:
 â€¢ @ErrCode:
     = 0: Transaction recorded successfully.
@@ -224,6 +230,7 @@ BEGIN
 			@DisableDownlines151_31=@DisableDownlines151_31,
 			@UserID=@UserID, 
 			@SubAccID=@SubAccID,
+			@SystemID		= @SystemID,
 			@Language=@Language, 
 			@ErrCode=@ErrCode_Cur output, 
 			@ErrMsg=@ErrMsg_Cur output, 
@@ -252,6 +259,7 @@ BEGIN
 			@UserID=@UserID, 
 			@SubAccID=@SubAccID,
 			@Language=@Language, 
+			@SystemID		= @SystemID,
 			@ErrCode=@ErrCode_Cur output, 
 			@ErrMsg=@ErrMsg_Cur output, 
 			@IP=@IP
@@ -277,6 +285,7 @@ BEGIN
 			@DisableDownlines152_41=@DisableDownlines152_41,
 			@UserID=@UserID, 
 			@SubAccID=@SubAccID,
+			@SystemID		= @SystemID,
 			@Language=@Language, 
 			@ErrCode=@ErrCode_Cur output, 
 			@ErrMsg=@ErrMsg_Cur output, 
@@ -303,6 +312,7 @@ BEGIN
 			@DisableDownlines152_51=@DisableDownlines152_51,
 			@UserID=@UserID, 
 			@SubAccID=@SubAccID,
+			@SystemID		= @SystemID,
 			@Language=@Language, 
 			@ErrCode=@ErrCode_Cur output, 
 			@ErrMsg=@ErrMsg_Cur output, 
@@ -330,6 +340,7 @@ BEGIN
 			@UserID=@UserID, 
 			@SubAccID=@SubAccID,
 			@Language=@Language, 
+			@SystemID		= @SystemID,
 			@ErrCode=@ErrCode_Cur output, 
 			@ErrMsg=@ErrMsg_Cur output, 
 			@IP=@IP
@@ -356,6 +367,7 @@ BEGIN
 			@DisableDownlines151_41=@DisableDownlines151_41,
 			@UserID=@UserID, 
 			@SubAccID=@SubAccID,
+			@SystemID		= @SystemID,
 			@Language=@Language, 
 			@ErrCode=@ErrCode_Cur output, 
 			@ErrMsg=@ErrMsg_Cur output, 

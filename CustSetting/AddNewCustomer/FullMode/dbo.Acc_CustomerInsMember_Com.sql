@@ -1,7 +1,7 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
 GO
-SET QUOTED_IDENTIFIER ON
+
 GO
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@custid INT OUTPUT,
@@ -2427,14 +2427,5 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	END CATCH
 END
 
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [vnteam]
-GO 
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerInsMember_Com] TO [vnteam]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbAdminNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbDownlineNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbExtAccNet]
- 
+
+

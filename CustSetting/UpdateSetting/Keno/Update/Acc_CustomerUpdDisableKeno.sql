@@ -1,9 +1,14 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableKeno] 
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableKeno] 
 	@CustID INT
 	,@Bettype INT
 	,@Disable BIT			
 	,@DisableDownLines BIT = 1
-
+	,@SystemID	TINYINT = 1
 	,@SubAccID INT = 0
 	,@UserID INT
 	,@UplineID INT	= 0
@@ -24,7 +29,7 @@ AS
 		20141125@Jamie: Use Acc_CustomerInfo_Execrep_04 instead of Acc_ExecRep_Cust_04 [Redmine:#26497]
 		- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
-		
+		- 20170303@Winnie: Change enable behavior & Allowed disable on EXT-NAP [Redmine: #72336]
 	Param's Explanation:
 		• @custid: customer id.   
 		• @Disable: status of HideKeno
@@ -50,7 +55,9 @@ BEGIN
 		,@GameTypeID INT
 		,@HasUpdatedDisable BIT = 0
 		,@HasDownline BIT = 0
-
+		,@DisableDownlines_Old BIT = 0
+		,@EnableDownlines BIT=0
+	SET @EnableDownlines = CASE @DisableDownLines WHEN 0 THEN 1 ELSE 0 END
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid
 		,@ErrCode = @ErrCode OUTPUT
@@ -71,13 +78,54 @@ BEGIN
 			   @ErrCode = 103	
 		RETURN
 	END
-
+		-- update CustGameType proccess
+	SELECT @GameTypeID = g.GameTypeID
+	FROM DBPRO.bodb02.dbo.GameType g WITH(NOLOCK)
+	WHERE g.IBCBetTypeID = @Bettype
+		AND g.IsDisabled = 0 -- active bettype
+	
+	SET @GameTypeID = ISNULL(@GameTypeID, 0)
+	-- get old status on keno bettype	
+	SELECT TOP(1) @Old_DisableBetType = ISNULL(c.IsDisabled, 1)
+	FROM dbo.CustGameType c WITH(NOLOCK)
+	WHERE c.custid = @CustID
+		AND c.GameTypeID = @GameTypeID
+		
+	SET @Old_DisableBetType = ISNULL(@Old_DisableBetType, 1)
 	
 	SELECT	@HasDownline = 1 
 	FROM dbo.CustInfo WITH (NOLOCK)
 	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)
+	
+	IF @HasDownline = 1
+	BEGIN
+		IF @roleid = 4 
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
+									INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID 
+									WHERE srecommend = @custid AND ct.IsDisabled = 1 AND  ct.GameTypeID = @GameTypeID)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 3
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK) 
+										INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
+										WHERE mrecommend = @custid AND ct.IsDisabled = 1  AND  ct.GameTypeID = @GameTypeID)
+				SET @DisableDownlines_Old = 1
+		END
+		ELSE IF @roleid = 2
+		BEGIN
+			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo c WITH(NOLOCK)
+										INNER JOIN CustGameType ct WITH(NOLOCK) ON c.custid=ct.CustID  
+										WHERE recommend = @custid AND ct.IsDisabled = 1  AND  ct.GameTypeID = @GameTypeID)
+				SET @DisableDownlines_Old = 1
+		END
+	END
+
+	IF @Old_DisableBetType = @Disable AND @DisableDownlines_Old <> @EnableDownlines
+		RETURN
 
 	IF(@RoleID = 1)
 	BEGIN
@@ -101,27 +149,34 @@ BEGIN
 
 		RETURN
 	END
-
-	-- update CustGameType proccess
-	SELECT @GameTypeID = g.GameTypeID
-	FROM DBPRO.bodb02.dbo.GameType g WITH(NOLOCK)
-	WHERE g.IBCBetTypeID = @Bettype
-		AND g.IsDisabled = 0 -- active bettype
 	
-	SET @GameTypeID = ISNULL(@GameTypeID, 0)
+	IF ((@Disable = 1 AND @Old_DisableBetType = 0) OR 
+	(@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
+						END, @ErrCode = 102
+		RETURN
+	END 
 
-	-- get old status on keno bettype	
-	SELECT TOP(1) @Old_DisableBetType = ISNULL(c.IsDisabled, 1)
-	FROM dbo.CustGameType c WITH(NOLOCK)
-	WHERE c.custid = @CustID
-		AND c.GameTypeID = @GameTypeID
+	IF @Disable = 1 AND @EnableDownlines = 1 AND @HasDownline = 1
+	BEGIN
+		SELECT @ErrMsg =  CASE @Language 
+							WHEN 'E' THEN 'You are not allowed to perform this action.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
+						END, @ErrCode = 103
+		RETURN
+	END 
+
+
 		
-	SET @Old_DisableBetType = ISNULL(@Old_DisableBetType, 1)
+	
 
 	-- check to update IsDisabled
-	IF(@GameTypeID > 0
-		AND ( @Old_DisableBetType <> @Disable )
-	)
+	IF(@GameTypeID > 0)
+		--AND ( @Old_DisableBetType <> @Disable )
+	--)
 	BEGIN
 		-- check uplineDisable
 		IF (@RoleID = 3) 
@@ -169,13 +224,13 @@ BEGIN
 
 			RETURN
 		END
-
+		
 		UPDATE g
 		SET IsDisabled = @Disable
 		FROM dbo.CustGameType g WITH(ROWLOCK, UPDLOCK)
 		WHERE g.custid = @CustID
 			AND g.GameTypeID = @GameTypeID
-
+		
 		--Check condition for update all downline
 		IF ( @RoleID > 1 
 				AND (@Disable = 1
@@ -183,6 +238,7 @@ BEGIN
 				)
 			)
 		BEGIN
+	
 			EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid
 				,@roleid = @roleid
 				,@isExecRep = 1
@@ -222,6 +278,7 @@ BEGIN
 	END
 
 	-- check to update HideKeno
+	
 	IF (@HasUpdatedDisable = 1 
 		AND @Old_HideKeno = 1) 
 	BEGIN
@@ -285,7 +342,7 @@ BEGIN
 		,@TrackingValue = '<Acc_CustomerUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Bettype="' + coalesce(cast(@Bettype AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Disable="' + coalesce(cast(@Old_DisableBetType AS VARCHAR(50)), space(1)) + '" ' 
-		+ 'DisableDownlines="' + CASE WHEN @HasDownline = 1 THEN coalesce(cast(@DisableDownlines AS VARCHAR(50)), space(1)) ELSE '' END  + '" ' 
+		+ 'DisableDownlines="' + coalesce(cast(@DisableDownlines_Old AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' 
 		+ 'UserID="' + coalesce(cast(@UserID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'UplineID="' + coalesce(cast(@UplineID AS VARCHAR(50)), space(1)) + '" ' 
@@ -332,6 +389,8 @@ BEGIN
 
 	RETURN
 END
+
+
 
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableKeno] TO [bodbAdminNet] AS [dbo]
