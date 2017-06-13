@@ -1,13 +1,20 @@
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_03]
-	@CustID		INT,
-	@IsSynced	BIT = 1,
-	@RoleID		TINYINT,
-	@ProductID	TINYINT
+	@CustID			INT,
+	@SettingType	TINYINT = 4,
+	@IsSynced		BIT = 1,	
+	@RoleID			TINYINT,
+	@ProductID		TINYINT
 AS
 /*
 	Created: 20160215@Elodie
 	Task : Update Sync status settings
 	DB: DBCust/CustDB
+
+	Revision:
+		- 20170613@Elodie: Add Setting Type 13
 
 */
 BEGIN
@@ -27,7 +34,7 @@ BEGIN
 			,	psd.BetType
 	FROM	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
 	WHERE	psd.ProductID = @ProductID
-		AND	psd.SettingType = 4
+		AND	psd.SettingType = @SettingType
 
 	DECLARE @xmlStrSynced XML
 	
