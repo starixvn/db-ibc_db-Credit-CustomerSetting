@@ -22,6 +22,7 @@ AS
 	Revisions:
 		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 		- 20170417@Elodie: Notify downline when upline enable FW's status [RedmineID: #73073]
+		- 20170613@Elodie: Change logic to get HasDownlines and IsDisableDownline value [RedmineID:#78225]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -180,9 +181,9 @@ BEGIN
 								FROM dbo.custInfo ci WITH (NOLOCK)
 									INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 									OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-									OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
+									--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
 								WHERE srecommend = @CustID
-									AND IsSynced.value = 1
+									--AND IsSynced.value = 1
 									AND IsDisabled.value = 1
 								), 0)
 				 END AS IsDisabledDownline
@@ -210,9 +211,9 @@ BEGIN
 								FROM dbo.custInfo ci WITH (NOLOCK)
 									INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 									OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-									OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
+									--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
 								WHERE mrecommend = @CustID
-									AND IsSynced.value = 1
+									--AND IsSynced.value = 1
 									AND IsDisabled.value = 1
 								), 0)
 				 END AS IsDisabledDownline
@@ -241,9 +242,9 @@ BEGIN
 									FROM dbo.custInfo ci WITH (NOLOCK)
 										INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 										OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-										OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
+										--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
 									WHERE recommend = @CustID AND roleid = 1
-										AND IsSynced.value = 1
+										--AND IsSynced.value = 1
 										AND IsDisabled.value = 1
 									), 0)
 				 END AS IsDisabledDownline
