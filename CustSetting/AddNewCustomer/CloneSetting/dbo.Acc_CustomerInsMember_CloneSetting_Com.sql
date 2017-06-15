@@ -51,7 +51,7 @@ AS
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20170207@Elodie: Set HideGoldDeluxe = 0 for 789y site - [Redmine: #69200]
 	- 20170420@Helen:  Add Extra information for Direct Accounts, for NAP only - [Redmine:72339]
-
+	- 20170614@Johnson: Force Security Code for newly created Super on i7  - [Redmine: #78293]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -472,7 +472,7 @@ BEGIN
 
     DECLARE @isForcedChangeSecurityCode BIT = 0
 
-	SELECT @isForcedChangeSecurityCode = CASE WHEN @Site LIKE '789y%' THEN 0 ELSE 1 END
+	SELECT @isForcedChangeSecurityCode = 1
 
 	BEGIN TRY
 		INSERT INTO dbo.CustLoginInfo
