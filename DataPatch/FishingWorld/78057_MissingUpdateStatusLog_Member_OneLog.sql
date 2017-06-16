@@ -2803,7 +2803,7 @@ SELECT 488092920,0,1,0,0 UNION ALL
 SELECT 488093477,0,1,0,0 UNION ALL
 SELECT 488093710,0,1,0,0 
 
--- 3582 affected rows
+-- 2788 affected rows
 INSERT INTO #LogTmp (LogID, userID, CustID, LogDate)
 SELECT LogID, userid, ul.custid, logdate
 FROM dbo.UserLog_RunSP ul WITH (NOLOCK)
