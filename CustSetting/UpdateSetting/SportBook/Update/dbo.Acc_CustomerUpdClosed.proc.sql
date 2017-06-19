@@ -7,7 +7,8 @@
 	@Language varchar(2) = 'E',
 	@ErrCode int = 0 OUTPUT,
 	@ErrMsg nvarchar(500) = '' OUTPUT,
-	@IP varchar(15)=''
+	@IP varchar(15)='',
+	@SystemID TINYINT=1
 AS
 /*
 Created: 20080911@whoknow
@@ -207,14 +208,25 @@ BEGIN
 
 	IF(@Closed=1)
 	BEGIN
-		IF(@roleid=1)
-			update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 1
-			where custid = @custid
+		IF(@roleid=1 AND @SystemID=1)
+		BEGIN
+			UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
+			WHERE custid = @custid
+		END
+		ELSE IF(@roleid=1 AND @SystemID <> 1)
+		BEGIN
+			UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 2
+			WHERE custid = @custid
+		END
+		ELSE IF(@roleid IN(2,3,4) AND @SystemID=1)
+		BEGIN
+			UPDATE [dbo].[CustLoginInfo] WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
+			WHERE custid = @custid
+		END
 		ELSE
 		BEGIN
-			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 1
-			where custid = @custid		
-
+			UPDATE [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 2
+			WHERE custid = @custid
 		END
 	END
 	ELSE IF (@Closed=0)
@@ -287,7 +299,7 @@ BEGIN
 							'Closed="'+ coalesce(cast(@Closed as varchar(50)),space(1)) + '" ' +
 							'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 							'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-							'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
+							'Language="'+ coalesce(cast(@Language as varchar(2)),spa10ce(1))+'" ' +
 							'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
 							'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1))+'" ' +
 							'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
