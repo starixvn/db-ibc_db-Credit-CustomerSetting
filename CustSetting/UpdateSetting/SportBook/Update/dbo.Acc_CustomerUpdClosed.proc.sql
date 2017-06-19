@@ -299,7 +299,7 @@ BEGIN
 							'Closed="'+ coalesce(cast(@Closed as varchar(50)),space(1)) + '" ' +
 							'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 							'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-							'Language="'+ coalesce(cast(@Language as varchar(2)),spa10ce(1))+'" ' +
+							'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
 							'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
 							'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1))+'" ' +
 							'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
