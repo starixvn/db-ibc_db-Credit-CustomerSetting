@@ -498,7 +498,7 @@ BEGIN
 		LEFT JOIN custsetting cs WITH (NOLOCK) ON ctm.custid = cs.custid
 		LEFT JOIN custsetting3rd cs3 WITH (NOLOCK) ON ctm.custid = cs3.custid 
 		LEFT JOIN keno k ON ctm.custid = k.CustID	
-		LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON c.custid=cl.Custid
+		LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON t.custid=cl.Custid
 	ORDER BY  t.RowNumber	
 	
 END
