@@ -5373,10 +5373,13 @@ BEGIN
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    return
     END
+
+	DECLARE @ClosedReason TINYINT 
+	SELECT @ClosedReason=ClosedReason FROM CustLoginInfo WITH(NOLOCK) WHERE CustID=@recommend
 	IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
 	BEGIN
-		INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate])
-		VALUES(@custid,NULL,@IP,@creator,GETDATE())
+		INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
+		VALUES(@custid,NULL,@IP,@creator,GETDATE(),@ClosedReason)
 	END
     ------ Create default balance for Live casino for new customer
     --DECLARE @today smalldatetime
