@@ -36,9 +36,9 @@ EXECUTE(@SearchQuery)
 IF(@System = 'ACCOUNTING')
 BEGIN
 	
-	Select c.custid, c.username, c.currency as exchangeid, c.[site] AS siteName,cl.ClosedReason
+	Select c.custid, c.username, c.currency as exchangeid, c.[site] AS siteName, ISNULL(cl.ClosedReason,0) AS ClosedReason
 	from customer as c with (NOLOCK) 
-	LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON c.custid=cl.CustID
+	LEFT JOIN DBCUST.CUSTDB.dbo.CustLoginInfo cl WITH(NOLOCK) ON c.custid=cl.CustID
 	where c.roleid=4 and c.custid>100  
 	and c.srecommend NOT IN(SELECT custid from f_DepSuper_1 ('all'))
 	AND (@Userid IS NULL OR (@Userid IS NOT NULL AND site NOT IN (SELECT site FROM @tmp )))
@@ -46,9 +46,9 @@ BEGIN
 END
 ELSE
 BEGIN
-	SELECT c.custid, c.username, c.currency as exchangeid,c.[site] AS siteName,cl.ClosedReason
+	SELECT c.custid, c.username, c.currency as exchangeid,c.[site] AS siteName, ISNULL(cl.ClosedReason,0) AS ClosedReason
 	FROM customer AS c WITH (NOLOCK) 
-	LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON c.custid=cl.CustID
+	LEFT JOIN DBCUST.CUSTDB.dbo.CustLoginInfo cl WITH(NOLOCK) ON c.custid=cl.CustID
 	WHERE c.roleid = 4 
 		AND c.custid>100  
 		AND c.custid IN (SELECT custid FROM bodb_AGE.dbo.Acc_CustGroup WITH(NOLOCK) WHERE GroupName = @system)

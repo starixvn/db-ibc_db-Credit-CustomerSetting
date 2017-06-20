@@ -61,6 +61,7 @@ AS
 		- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
 		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 		- 20170417@Winnie: Change to call the sp Acc_CheckShowProduct- [Redmine #72336]	
+		- 20170620@Winnie: Apply color for closed accounts [RedmineID: #74494]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -489,6 +490,7 @@ BEGIN
 			ctm.DisableCricket,
 			ctm.HideCricket,
 			ISNULL(t.adiscountCricket,0)  AS discountCricket,
+			ISNULL(cl.ClosedReason,0)  AS ClosedReason,
 			RowNumber
 			
 	FROM customers ctm 
@@ -496,6 +498,7 @@ BEGIN
 		LEFT JOIN custsetting cs WITH (NOLOCK) ON ctm.custid = cs.custid
 		LEFT JOIN custsetting3rd cs3 WITH (NOLOCK) ON ctm.custid = cs3.custid 
 		LEFT JOIN keno k ON ctm.custid = k.CustID	
+		LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON c.custid=cl.Custid
 	ORDER BY  t.RowNumber	
 	
 END
