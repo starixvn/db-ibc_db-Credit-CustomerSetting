@@ -62,6 +62,7 @@ Revisions:
 	- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 	- 20170417@Winnie: Change to call the sp Acc_CheckShowProduct- [Redmine #72336]	
+	- 20170620@Winnie: Apply color for closed accounts - [Redmine #74494]	
 Pattern Explanation:
 Search keyword: '%keyword%'
 First char
@@ -274,7 +275,7 @@ B: 'B%'
 			ISNULL(cda.Discount,0) AS discountCricket,
 			ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_Cricket),1) AS DisableCricket,
 			CAST(CASE WHEN m.[site] = 'IMBC' AND @IsHidden_Cricket = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Cricket),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideCricket,
-			
+			ISNULL(cl.ClosedReason,0) AS ClosedReason,
 			ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, m.username) as RowNumber
 			
 		FROM 
@@ -303,7 +304,7 @@ B: 'B%'
 		   LEFT JOIN AgentCommRate AC WITH (NOLOCK) ON AC.CustId = CI.custid AND AC.Sporttype = 1 AND AC.Bettype = 301 
 		   LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
 		   LEFT JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON  cda.CustID = ci.custid AND cda.SportType = 50 AND cda.BetType = 501
-
+		   LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON m.custid=cl.CustID
 		   -- Check isHidden AllBet
 		   --OUTER APPLY	dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(m.custid, @AllBet) AS sbhsc
 		   
@@ -353,7 +354,8 @@ B: 'B%'
 			discountHRFixedOdds,
 			AC.CommRate	,
 			ac.CustId,
-			m.[site],cda.Discount	
+			m.[site],cda.Discount	,
+			cl.ClosedReason	
 		--ORDER BY ci.closed, m.username
 		) a
 		WHERE a.RowNumber BETWEEN @RowStart AND @RowEnd
@@ -475,7 +477,7 @@ B: 'B%'
 			ISNULL(cda.Discount,0) AS discountCricket,
 			ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_Cricket),1) AS DisableCricket,
 			CAST(CASE WHEN m.[site] = 'IMBC' AND @IsHidden_Cricket = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Cricket),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideCricket,
-			
+			ISNULL(cl.ClosedReason,0) AS ClosedReason,
 			
 			ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, m.username) as RowNumber
 		FROM 
@@ -489,7 +491,7 @@ B: 'B%'
 			LEFT JOIN AgentCommRate AC WITH (NOLOCK) ON AC.CustId = CI.custid AND AC.Sporttype = 1 AND AC.Bettype = 301 AND csuper.IsMyanmarOdds = 1
 			LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
 			LEFT JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON  cda.CustID = ci.custid AND cda.SportType = 50 AND cda.BetType = 501
-
+			LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON m.custid=cl.CustID
 		   -- Check isHidden AllBet
 		   --OUTER APPLY	dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(m.custid, @AllBet) AS sbhsc
 		   
@@ -532,7 +534,8 @@ B: 'B%'
 			cps.bitmapHasSynced,
 			csuper.IsMyanmarOdds,
 			ac.CommRate,
-			m.[site],cda.Discount			
+			m.[site],cda.Discount,
+			cl.ClosedReason	
 		) a
 		WHERE a.RowNumber BETWEEN @RowStart AND @RowEnd
 	END
