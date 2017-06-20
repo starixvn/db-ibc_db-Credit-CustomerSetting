@@ -17,8 +17,7 @@ AS
 		-20120525@Dom: exclude licensee customer for accounting site
 		-20130121@Dan: call to bodb_AGE for Acc_CustGroup
 		- 20150904@Helen: commission setting for MO [Redmine #41470]
-		- 20160630@Winnie: #48948 Hide_special_sites_from_unautorized_users
-		- 20170620@Winnie: Apply color for closed accounts [RedmineID: #74494]
+		- 20160630@Winnie: #48948 Hide_special_sites_from_unautorized_users	
 */
 
 SET NOCOUNT ON  
@@ -36,9 +35,8 @@ EXECUTE(@SearchQuery)
 IF(@System = 'ACCOUNTING')
 BEGIN
 	
-	Select c.custid, c.username, c.currency as exchangeid, c.[site] AS siteName, ISNULL(cl.ClosedReason,0) AS ClosedReason
+	Select c.custid, c.username, c.currency as exchangeid, c.[site] AS siteName
 	from customer as c with (NOLOCK) 
-	LEFT JOIN DBCUST.CUSTDB.dbo.CustLoginInfo cl WITH(NOLOCK) ON c.custid=cl.CustID
 	where c.roleid=4 and c.custid>100  
 	and c.srecommend NOT IN(SELECT custid from f_DepSuper_1 ('all'))
 	AND (@Userid IS NULL OR (@Userid IS NOT NULL AND site NOT IN (SELECT site FROM @tmp )))
@@ -46,9 +44,8 @@ BEGIN
 END
 ELSE
 BEGIN
-	SELECT c.custid, c.username, c.currency as exchangeid,c.[site] AS siteName, ISNULL(cl.ClosedReason,0) AS ClosedReason
-	FROM customer AS c WITH (NOLOCK) 
-	LEFT JOIN DBCUST.CUSTDB.dbo.CustLoginInfo cl WITH(NOLOCK) ON c.custid=cl.CustID
+	SELECT c.custid, c.username, c.currency as exchangeid,c.[site] AS siteName
+	FROM customer AS c WITH (NOLOCK) 	
 	WHERE c.roleid = 4 
 		AND c.custid>100  
 		AND c.custid IN (SELECT custid FROM bodb_AGE.dbo.Acc_CustGroup WITH(NOLOCK) WHERE GroupName = @system)
