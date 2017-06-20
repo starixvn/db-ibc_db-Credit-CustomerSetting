@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
+
 ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 					@CustID					INT
 				,	@AllowedFI				BIT = 1		OUTPUT --unused
@@ -16,6 +17,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedVoidBridge		BIT = 0		OUTPUT
 				,	@AllowedNG2				BIT = 0		OUTPUT
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
+				,	@AllowedLottery			BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -40,6 +42,7 @@ Revisions:
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 	- 20170418@Winnie: Change to call the sp Acc_CheckShowProduct - [Redmine #72336]	
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
+	- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
 */
 
 	SET NOCOUNT ON
@@ -50,6 +53,7 @@ Revisions:
 		,	@IsHideCricket			INT
 		,	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
+		,	@IsHiddenLottery		INT 
 		,	@IsHideNG2				INT
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
@@ -57,13 +61,15 @@ Revisions:
 	DECLARE	@Cricket				INT = 20
 		,	@AllBet					INT = 21
 		,	@VoidBridge				INT = 22
-		,	@FishingWorld			INT = 24		
+		,	@FishingWorld			INT = 24
+		,	@Lottery				INT = 28
 		,	@NG2					INT = 23
 		,	@VS						INT = 5
 	
 	DECLARE @bitOrderVB				INT = 5
 		,	@bitOrderFW				INT = 8
 		,	@bitOrderNG2			INT = 4
+		,	@bitOrderLottery		INT = 10
 		,	@bitOrderCF				INT = 2
 		,	@bitOrderCriket			INT = 3
 		,   @bitOrderVS				INT = 10
@@ -114,6 +120,17 @@ Revisions:
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
 		
+	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHiddenLottery OUTPUT
+	SELECT	@AllowedLottery =	CASE	WHEN @RoleID = 4 AND @IsHiddenLottery = 0 THEN 1
+										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderLottery) = 0
+											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderLottery) = 1
+											AND @IsHiddenLottery = 0 
+											THEN 1
+										ELSE 0
+								END
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	WHERE	cps.CustID = @CustID
+
 	SET @AllowedVoidBridge = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderVB) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideVoidBridge = 0 THEN 1 ELSE 0 END
 	
