@@ -560,4 +560,3 @@ B: 'B%'
 		WHERE a.RowNumber BETWEEN @RowStart AND @RowEnd
 	END
 END
-GO

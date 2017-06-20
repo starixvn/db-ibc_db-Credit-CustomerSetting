@@ -2,7 +2,6 @@
 USE CustDB
 GO 
 
-GO
 ALTER PROCEDURE [dbo].[Acc_CustomerSelByAg]  
 	@Recommend int,  
 	@IsAgentSite bit = 0,  
@@ -437,14 +436,4 @@ BEGIN
 	DROP TABLE #memberList
 END
 
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelByAg] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbDownlineNetView]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbDownlineNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerSelByAg] TO [bodbExtAccNet]
-GO 
+
