@@ -309,7 +309,7 @@ Revisions:
 	- 20161223@Winnie: Hot Fix  Show Fishing World logs although this Product is not released to PROD yet [Redmine:69236]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]					
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-
+	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -5373,7 +5373,11 @@ BEGIN
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    return
     END
-
+	IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
+	BEGIN
+		INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate])
+		VALUES(@custid,NULL,@IP,@creator,GETDATE())
+	END
     ------ Create default balance for Live casino for new customer
     --DECLARE @today smalldatetime
     --SET @today = convert(nvarchar(10), current_timestamp,120)
