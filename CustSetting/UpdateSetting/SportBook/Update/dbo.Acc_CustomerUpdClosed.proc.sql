@@ -280,6 +280,7 @@ BEGIN
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
 						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" ' +
+						'SystemID="'+ coalesce(cast(@SystemID as varchar(50)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
 
 	/* 1105	Acc_CustomerUpdClosed	Update Closed status  */
@@ -303,6 +304,7 @@ BEGIN
 							'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
 							'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
 							'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1))+'" ' +
+							'SystemID="'+ coalesce(cast(@SystemID as varchar(50)),space(1)) + '" ' +
 							'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
 
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
