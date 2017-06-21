@@ -265,7 +265,7 @@ BEGIN
 			,@RoleID		= @RoleID
 			,@Action		= 'Closed'
 			,@Closed		= @Closed
-
+			,@SystemID		=@SystemID
 	END
 
 
