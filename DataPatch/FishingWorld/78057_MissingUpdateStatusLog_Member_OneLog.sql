@@ -6,7 +6,7 @@
 USE bodb_CustomerLog
 GO
 
-CREATE TABLE #LogTmp (LogID BIGINT, userID INT, CustID INT, IP VARCHAR(50), LogDate DATETIME, LogDate_Login DATETIME,
+CREATE TABLE #LogTmp (LogID BIGINT, userID INT, SubUserID INT, CustID INT, IP VARCHAR(50), LogDate DATETIME, LogDate_Login DATETIME,
 						TrackingValue NVARCHAR(MAX), TrackingValue2 NVARCHAR(MAX), xmlNew XML, xmlOld XML,
 						IsDisableBefore BIT, IsDisableAfter BIT, 
 						IsDisableDownlineBefore BIT, IsDisableDownlineAfter BIT)
@@ -2815,12 +2815,13 @@ WHERE ActionID = 1161 AND TrackingValue IS NULL
 UPDATE l
 SET l.LogDate_Login = a.LogDate
 FROM #LogTmp l
-	CROSS APPLY (SELECT MAX(LogDate) LogDate FROM dbo.UserLog_Login ul WITH (NOLOCK) WHERE l.userID = ul.UserID AND l.LogDate > ul.LogDate AND ul.ActionID IN (1310,1303)) AS a
+	CROSS APPLY (SELECT MAX(LogDate) LogDate FROM dbo.UserLog_Login ul WITH (NOLOCK) WHERE l.userID = ul.UserID AND l.LogDate > ul.LogDate AND ul.ActionID IN (1310,1303,1302,1312,1313)) AS a
 
 UPDATE l
-SET IP = lg.IP
+SET IP = lg.IP,
+	l.SubUserID = lg.SubAccID
 FROM #LogTmp l
-	INNER JOIN dbo.UserLog_Login lg WITH (NOLOCK) ON l.userID = lg.UserID AND l.LogDate_Login = lg.LogDate AND ActionID IN (1310,1303)
+	INNER JOIN dbo.UserLog_Login lg WITH (NOLOCK) ON l.userID = lg.UserID AND l.LogDate_Login = lg.LogDate AND ActionID IN (1310,1303,1302,1312,1313)
 
 UPDATE l
 SET l.IsDisableBefore = tmp.IsDisableBefore,
@@ -2837,12 +2838,12 @@ UPDATE lg
 SET xmlOld =  (
 					SELECT	@ProductID						AS '@ProductID',
 							@ProductName					AS '@ProductName',
-							CustID							AS '@CustID',
+							lg1.CustID						AS '@CustID',
 							UserID							AS '@UserID',
-							''								AS '@SubAccName',
+							ISNULL(sub.username,'')			AS '@SubAccName',
 							IP								AS '@IP',
 							(
-								SELECT	@ProductID			AS '@ProductID',
+								SELECT	@ProductID				AS '@ProductID',
 										IsDisableBefore			AS '@IsDisabled',
 										IsDisableDownlineBefore	AS '@IsDisabledDownline'
 								FROM #LogTmp lg2
@@ -2851,6 +2852,7 @@ SET xmlOld =  (
 								TYPE
 							)
 					FROM #LogTmp lg1
+						LEFT JOIN bodb02.dbo.custSub sub WITH (NOLOCK) ON lg1.SubUserID = sub.subaccid
 					WHERE lg1.LogID = lg.LogID
 					FOR XML PATH('Acc_CustSetting_DisableNewProductStatusUpd'),
 					TYPE
@@ -2858,9 +2860,9 @@ SET xmlOld =  (
 		,xmlNew =  (
 					SELECT	@ProductID						AS '@ProductID',
 							@ProductName					AS '@ProductName',
-							CustID							AS '@CustID',
+							lg1.CustID						AS '@CustID',
 							UserID							AS '@UserID',
-							''								AS '@SubAccName',
+							ISNULL(sub.username,'')			AS '@SubAccName',
 							IP								AS '@IP',
 							(
 								SELECT	@ProductID					AS '@ProductID',
@@ -2872,6 +2874,7 @@ SET xmlOld =  (
 								TYPE
 							)
 					FROM #LogTmp lg1
+						LEFT JOIN bodb02.dbo.custSub sub WITH (NOLOCK) ON lg1.SubUserID = sub.subaccid
 					WHERE lg1.LogID = lg.LogID
 					FOR XML PATH('Acc_CustSetting_DisableNewProductStatusUpd'),
 					TYPE
