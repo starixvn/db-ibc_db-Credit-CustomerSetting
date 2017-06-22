@@ -43,7 +43,7 @@ BEGIN
 	DECLARE @LogSPData VARCHAR(MAX),  
 			@LogSPData_Old VARCHAR(2000)  
 	  
-	 Select @LogSPData = '<Acc_CustomerUpdAgentCashBalance CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
+	 Select @LogSPData = '<Acc_CustomerUpdAllDayBalTransfer CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		  'IsAllDayBalTransfer="'+ coalesce(cast(@IsAllDayBalTransfer as varchar(50)),space(1)) + '" '+  
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  	
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
@@ -51,7 +51,7 @@ BEGIN
 		  'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+  
 		  'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'  
 	  
-	  SELECT @LogSPData_Old = '<Acc_CustomerUpdAgentCashBalance CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
+	  SELECT @LogSPData_Old = '<Acc_CustomerUpdAllDayBalTransfer CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		  'IsAllDayBalTransfer="'+ coalesce(cast(@IsAllDayBalTransfer_Old as varchar(50)),space(1)) + '" '+ 	
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+	
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
@@ -66,7 +66,7 @@ BEGIN
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 		@UserID = @UserID,  
 		@CustID = @CustID,  
-		@ActionID = 1162,  
+		@ActionID = 705,  
 		@TrackingValue = @LogSPData  , 
 		@TrackingValue2 = @LogSPData_old  ,  
 		@duration = @duration  
@@ -75,7 +75,7 @@ BEGIN
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 		@UserID = @UserID,  
 		@CustID = @CustID,  
-		@ActionID = 1162,  
+		@ActionID = 705,  
 		@TrackingValue = @LogSPData,  
 		@TrackingValue2 = @LogSPData_old,  
 		@duration = @duration
