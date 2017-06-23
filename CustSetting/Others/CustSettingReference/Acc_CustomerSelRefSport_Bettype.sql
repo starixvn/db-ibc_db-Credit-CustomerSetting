@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 
 ALTER PROCEDURE  [dbo].[Acc_CustomerSelRefSport_Bettype]
 	 @CustID		INT = NULL
@@ -18,6 +18,7 @@ AS
 		- 20160923@Winnie: PH_AIO-_Phase_2 Hide parent(413,414,416) and using Sport_Bettype_Reference_Setting  [Redmine: #63076]
 		- 20161010@Elodie: Intergrate NG2 product
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
+		- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -34,6 +35,7 @@ BEGIN
 			,@DisableNumber			BIT = 0 
 			,@HideNG2				BIT = 0 
 			,@HideVS				BIT = 0 
+			,@HideLottery			BIT = 0 
 			,@IsMyanmarOdds			BIT = 0
 			,@recommend				INT = 0
 			,@isIMBC				BIT = 0
@@ -76,9 +78,13 @@ BEGIN
 
 			SELECT @HideNG2 = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,4))
 			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
-			WHERE CustID = @CustID		
+			WHERE CustID = @CustID	
 
 			SELECT @HideVS = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,10))
+			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
+			WHERE CustID = @CustID
+			
+			SELECT @HideLottery = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,11))
 			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
 			WHERE CustID = @CustID		
 	END
@@ -128,18 +134,14 @@ BEGIN
 			AND (SportType<=99 -- Sportbook
 					OR b.SportType = 154 -- HR FixOdds
 					OR b.SportType BETWEEN 213 AND 218 --NG2
-					OR b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 191) --Virtual Sport
+					OR b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 191 --Virtual Sport
+					OR b.SportType = 220) -- Lottery
+
 			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 191) THEN 0 ELSE 1 END
+			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
 	ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelRefSport_Bettype] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelRefSport_Bettype] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelRefSport_Bettype] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelRefSport_Bettype] TO [bodbExtAccNet] AS [dbo]
+
 

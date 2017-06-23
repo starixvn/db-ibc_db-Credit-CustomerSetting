@@ -256,13 +256,3 @@ Revisions:
 
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CheckAllowedShow] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CheckAllowedShow] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CheckAllowedShow] TO [bodbDownlineNetView]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CheckAllowedShow] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CheckAllowedShow] TO vnteam
