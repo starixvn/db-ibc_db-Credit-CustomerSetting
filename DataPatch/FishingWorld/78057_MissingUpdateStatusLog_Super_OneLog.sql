@@ -6,42 +6,34 @@
 USE bodb_CustomerLog
 GO
 
-CREATE TABLE #LogTmp (LogID BIGINT, userID INT, CustID INT, IP VARCHAR(50), LogDate DATETIME, LogDate_Login DATETIME,
+CREATE TABLE #LogTmp (LogID BIGINT, userID INT, SubAcc VARCHAR(30), CustID INT, IP VARCHAR(50),
 						TrackingValue NVARCHAR(MAX), TrackingValue2 NVARCHAR(MAX), xmlNew XML, xmlOld XML,
 						IsDisableBefore BIT, IsDisableAfter BIT, 
 						IsDisableDownlineBefore BIT, IsDisableDownlineAfter BIT)
 
-CREATE TABLE #InputTmp (LogID BIGINT, IsDisableBefore BIT, IsDisableAfter BIT, IsDisableDownlineBefore BIT, IsDisableDownlineAfter BIT)
+CREATE TABLE #InputTmp (LogID BIGINT, IsDisableBefore BIT, IsDisableAfter BIT, IsDisableDownlineBefore BIT, IsDisableDownlineAfter BIT, SubAcc VARCHAR(30), IP VARCHAR(50))
 
-INSERT INTO #InputTmp (LogID, IsDisableBefore, IsDisableAfter, IsDisableDownlineBefore, IsDisableDownlineAfter)
-SELECT 481953589,0,1,0,1 UNION ALL
-SELECT 481978877,0,1,0,1 UNION ALL
-SELECT 483599057,0,1,0,1 UNION ALL
-SELECT 485558069,1,0,1,0 
+INSERT INTO #InputTmp (LogID, IsDisableBefore, IsDisableAfter, IsDisableDownlineBefore, IsDisableDownlineAfter, SubAcc, IP)
+SELECT 481953589,0,1,0,1,'','121.127.16.91' UNION ALL
+SELECT 481978877,0,1,0,1,'','121.127.16.91' UNION ALL
+SELECT 483599057,0,1,0,1,'','36.37.232.115' UNION ALL
+SELECT 485558069,0,1,0,1,'','121.127.16.91' 
 
 -- 4 affected rows
-INSERT INTO #LogTmp (LogID, userID, CustID, LogDate)
-SELECT LogID, userid, ul.custid, logdate
+INSERT INTO #LogTmp (LogID, userID, CustID)
+SELECT LogID, userid, ul.custid
 FROM dbo.UserLog_RunSP ul WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.CustInfo ci WITH (NOLOCK) ON ul.custid = ci.custid
 WHERE ActionID = 1161 AND TrackingValue IS NULL
 	AND ci.currency <> 20 AND ci.roleid = 4
 
 UPDATE l
-SET l.LogDate_Login = a.LogDate
-FROM #LogTmp l
-	CROSS APPLY (SELECT MAX(LogDate) LogDate FROM dbo.UserLog_Login ul WITH (NOLOCK) WHERE l.userID = ul.UserID AND l.LogDate > ul.LogDate AND ul.ActionID IN (1306)) AS a
-
-UPDATE l
-SET IP = lg.IP
-FROM #LogTmp l
-	INNER JOIN dbo.UserLog_Login lg WITH (NOLOCK) ON l.userID = lg.UserID AND l.LogDate_Login = lg.LogDate AND ActionID IN (1306)
-
-UPDATE l
 SET l.IsDisableBefore = tmp.IsDisableBefore,
 	l.IsDisableAfter = tmp.IsDisableAfter,
 	l.IsDisableDownlineBefore = tmp.IsDisableDownlineBefore,
-	l.IsDisableDownlineAfter = tmp.IsDisableDownlineAfter
+	l.IsDisableDownlineAfter = tmp.IsDisableDownlineAfter,
+	l.SubAcc = tmp.SubAcc,
+	l.IP = tmp.IP
 FROM #LogTmp l
 	INNER JOIN #InputTmp tmp ON l.LogID = tmp.LogID
 
@@ -52,12 +44,12 @@ UPDATE lg
 SET xmlOld =  (
 					SELECT	@ProductID						AS '@ProductID',
 							@ProductName					AS '@ProductName',
-							CustID							AS '@CustID',
+							lg1.CustID						AS '@CustID',
 							UserID							AS '@UserID',
-							''								AS '@SubAccName',
+							lg1.SubAcc						AS '@SubAccName',
 							IP								AS '@IP',
 							(
-								SELECT	@ProductID			AS '@ProductID',
+								SELECT	@ProductID				AS '@ProductID',
 										IsDisableBefore			AS '@IsDisabled',
 										IsDisableDownlineBefore	AS '@IsDisabledDownline'
 								FROM #LogTmp lg2
@@ -73,9 +65,9 @@ SET xmlOld =  (
 		,xmlNew =  (
 					SELECT	@ProductID						AS '@ProductID',
 							@ProductName					AS '@ProductName',
-							CustID							AS '@CustID',
+							lg1.CustID						AS '@CustID',
 							UserID							AS '@UserID',
-							''								AS '@SubAccName',
+							lg1.SubAcc						AS '@SubAccName',
 							IP								AS '@IP',
 							(
 								SELECT	@ProductID					AS '@ProductID',

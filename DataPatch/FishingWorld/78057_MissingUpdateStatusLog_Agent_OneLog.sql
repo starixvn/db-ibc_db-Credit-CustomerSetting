@@ -6,22 +6,35 @@
 USE bodb_CustomerLog
 GO
 
-CREATE TABLE #LogTmp (LogID BIGINT, userID INT, CustID INT, IP VARCHAR(50), LogDate DATETIME, LogDate_Login DATETIME,
+CREATE TABLE #LogTmp (LogID BIGINT, userID INT, SubAcc VARCHAR(30), CustID INT, IP VARCHAR(50),
 						TrackingValue NVARCHAR(MAX), TrackingValue2 NVARCHAR(MAX), xmlNew XML, xmlOld XML,
 						IsDisableBefore BIT, IsDisableAfter BIT, 
 						IsDisableDownlineBefore BIT, IsDisableDownlineAfter BIT)
 
-CREATE TABLE #InputTmp (LogID BIGINT, IsDisableBefore BIT, IsDisableAfter BIT, IsDisableDownlineBefore BIT, IsDisableDownlineAfter BIT)
+CREATE TABLE #InputTmp (LogID BIGINT, IsDisableBefore BIT, IsDisableAfter BIT, IsDisableDownlineBefore BIT, IsDisableDownlineAfter BIT, SubAcc VARCHAR(30), IP VARCHAR(50))
 
-INSERT INTO #InputTmp (LogID, IsDisableBefore, IsDisableAfter, IsDisableDownlineBefore, IsDisableDownlineAfter)
-SELECT 481953589,0,1,0,1 UNION ALL
-SELECT 481978877,0,1,0,1 UNION ALL
-SELECT 483599057,0,1,0,1 UNION ALL
-SELECT 485558069,1,0,1,0 
+INSERT INTO #InputTmp (LogID, IsDisableBefore, IsDisableAfter, IsDisableDownlineBefore, IsDisableDownlineAfter, SubAcc, IP)
+SELECT 480779862,0,1,0,0,'','121.127.16.91' UNION ALL
+SELECT 481422919,0,0,1,0,'','61.7.141.42' UNION ALL
+SELECT 480923491,0,0,1,0,'','113.23.28.115' UNION ALL
+SELECT 481527262,0,0,1,0,'SD68SDSub15','103.239.55.53' UNION ALL
+SELECT 480639276,0,0,1,0,'','183.80.19.208' UNION ALL
+SELECT 488122056,0,0,1,0,'','175.100.87.112' UNION ALL
+SELECT 484364869,0,0,1,0,'','110.159.105.20' UNION ALL
+SELECT 480815209,0,0,1,0,'','103.14.250.67' UNION ALL
+SELECT 480815066,0,0,1,0,'','103.14.250.67' UNION ALL
+SELECT 486893618,0,0,1,0,'','223.206.233.249' UNION ALL
+SELECT 481076342,0,0,1,0,'','110.74.205.179' UNION ALL
+SELECT 481076227,0,0,1,0,'','110.74.205.179' UNION ALL
+SELECT 481076426,0,0,1,0,'','110.74.205.179' UNION ALL
+SELECT 481072793,0,0,1,0,'','110.74.205.179' UNION ALL
+SELECT 486097345,0,0,1,0,'','103.253.113.122' UNION ALL
+SELECT 481077573,0,0,1,0,'','110.74.205.179' UNION ALL
+SELECT 481080012,0,0,1,0,'','43.252.18.126' 
 
--- 127 affected rows
-INSERT INTO #LogTmp (LogID, userID, CustID, LogDate)
-SELECT LogID, userid, ul.custid, logdate
+-- 17 affected rows
+INSERT INTO #LogTmp (LogID, userID, CustID)
+SELECT LogID, userid, ul.custid
 FROM dbo.UserLog_RunSP ul WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.CustInfo ci WITH (NOLOCK) ON ul.custid = ci.custid
 WHERE ActionID = 1161 AND TrackingValue IS NULL
@@ -29,20 +42,12 @@ WHERE ActionID = 1161 AND TrackingValue IS NULL
 	AND ul.custid NOT IN (26031370) --Exclude agent who have over one log
 
 UPDATE l
-SET l.LogDate_Login = a.LogDate
-FROM #LogTmp l
-	CROSS APPLY (SELECT MAX(LogDate) LogDate FROM dbo.UserLog_Login ul WITH (NOLOCK) WHERE l.userID = ul.UserID AND l.LogDate > ul.LogDate AND ul.ActionID IN (1310,1303,1306)) AS a
-
-UPDATE l
-SET IP = lg.IP
-FROM #LogTmp l
-	INNER JOIN dbo.UserLog_Login lg WITH (NOLOCK) ON l.userID = lg.UserID AND l.LogDate_Login = lg.LogDate AND ActionID IN (1310,1303,1306)
-
-UPDATE l
 SET l.IsDisableBefore = tmp.IsDisableBefore,
 	l.IsDisableAfter = tmp.IsDisableAfter,
 	l.IsDisableDownlineBefore = tmp.IsDisableDownlineBefore,
-	l.IsDisableDownlineAfter = tmp.IsDisableDownlineAfter
+	l.IsDisableDownlineAfter = tmp.IsDisableDownlineAfter,
+	l.SubAcc = tmp.SubAcc,
+	l.IP = tmp.IP
 FROM #LogTmp l
 	INNER JOIN #InputTmp tmp ON l.LogID = tmp.LogID
 
@@ -53,12 +58,12 @@ UPDATE lg
 SET xmlOld =  (
 					SELECT	@ProductID						AS '@ProductID',
 							@ProductName					AS '@ProductName',
-							CustID							AS '@CustID',
+							lg1.CustID						AS '@CustID',
 							UserID							AS '@UserID',
-							''								AS '@SubAccName',
+							lg1.SubAcc						AS '@SubAccName',
 							IP								AS '@IP',
 							(
-								SELECT	@ProductID			AS '@ProductID',
+								SELECT	@ProductID				AS '@ProductID',
 										IsDisableBefore			AS '@IsDisabled',
 										IsDisableDownlineBefore	AS '@IsDisabledDownline'
 								FROM #LogTmp lg2
@@ -74,9 +79,9 @@ SET xmlOld =  (
 		,xmlNew =  (
 					SELECT	@ProductID						AS '@ProductID',
 							@ProductName					AS '@ProductName',
-							CustID							AS '@CustID',
+							lg1.CustID						AS '@CustID',
 							UserID							AS '@UserID',
-							''								AS '@SubAccName',
+							lg1.SubAcc						AS '@SubAccName',
 							IP								AS '@IP',
 							(
 								SELECT	@ProductID					AS '@ProductID',
