@@ -211,13 +211,29 @@ BEGIN
 	BEGIN
 		IF(@roleid=1 AND @SystemID=1)
 		BEGIN
-			UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
-			WHERE custid = @custid
+			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
+			BEGIN
+				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
+				VALUES(@custid,NULL,@IP,@UserID,GETDATE(),1)
+			END
+			ELSE
+			BEGIN
+				UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
+				WHERE custid = @custid
+			END
 		END
 		ELSE IF(@roleid=1 AND @SystemID <> 1)
 		BEGIN
-			UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 2
-			WHERE custid = @custid
+			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
+			BEGIN
+				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
+				VALUES(@custid,NULL,@IP,@UserID,GETDATE(),2)
+			END
+			ELSE
+			BEGIN
+				UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 2
+				WHERE custid = @custid
+			END
 		END
 		ELSE IF(@roleid IN(2,3,4) AND @SystemID=1)
 		BEGIN
@@ -315,4 +331,5 @@ BEGIN
 			@duration = @duration
 	END CATCH
 END
+
 GO
