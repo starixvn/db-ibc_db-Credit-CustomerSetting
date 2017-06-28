@@ -477,7 +477,7 @@ Revisions:
 						-108: disable FI, -109: disableHR)
 	- 20090801@Shifu: check disabled user
 	- 20091125@Terry: check disabled Casino
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]
 	- 20100909@Lukas:	- Add Number game setting
 						- Add Mixed sports setting
 						- Remove Mix parlay of basketball setting

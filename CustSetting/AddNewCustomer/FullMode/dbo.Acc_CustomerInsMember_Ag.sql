@@ -228,7 +228,7 @@ Revisions:
 	- 20100112@Kiwi: amend to write log in xml format.
 	- 20100414@Kiwi: Remove to do not insert answer field.
 	- 20100506@Huynguyen: Add param @DisableOpenTote
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]
 	- 20100828@Henry: remove mix parlay of basketball + add new section for MixParlay for Mix Sports + Setting for Numbergame
 	- 20100909@Jamie: + Add param @DisableCasino 
 					  + Remove param @DisableFinancial_WC 

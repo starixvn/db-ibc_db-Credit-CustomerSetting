@@ -380,7 +380,7 @@ Revisions:
 	- 20090917@Phuc: write log into DBLOG.
 	- 20091127@Jamie: Remove input @UpdateMultiple and write log @updatesuspended
 	- 20100112@Kiwi: amEND to write log in xml format.
-	- 20100730@Henry: grant execute to bodbExtAccNet
+	- 20100730@Henry: invoke execute to bodbExtAccNet
 	- 20100908@Lukas:	- Add number game setting
 						- Add mixed sports setting
 						- Remove mix parlay of basketball

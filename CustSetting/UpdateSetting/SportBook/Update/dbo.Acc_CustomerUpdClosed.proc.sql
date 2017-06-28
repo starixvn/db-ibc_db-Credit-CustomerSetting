@@ -29,7 +29,7 @@ Revisions:
 	- 20091008@Kiwi: Remove WriteLog_UserLog
 	- 20091125@Terry : add one more para @disCasino check disabled Casino
 	- 20100102@Lewin : modify LogSP Data, call WriteLog_UserLog_RunSPNew instead of WriteLog_UserLog_RunSP 
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]
 	- 20101021@Henry: Record execution time
 	- 20110907@Sophia: Change Linked Server from DB052 to DB053
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
