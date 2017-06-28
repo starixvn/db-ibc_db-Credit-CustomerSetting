@@ -1,6 +1,0 @@
-Acc_CustomerUpdAgent_All
-Acc_CustomerUpdMaster_All
-Acc_CustomerUpdMember_All
-Acc_CustomerUpdMember_Master
-Acc_CustomerUpdMember_Super
-Acc_CustomerUpdSuper_All

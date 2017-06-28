@@ -315,7 +315,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
 	@v10apositiontaking_10 smallmoney = 0.7,
 	@v11apositiontaking_10 smallmoney = 0.7,
 	@v99apositiontaking_10 smallmoney = 0.7,
-	
+	@SystemID TINYINT=1,
     @IP varchar(15)='',
     @UserID int = 0,    
     @Username varchar(30) = '' OUTPUT,
@@ -354,7 +354,7 @@ Revisions:
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-    
+    - 20170628@Winnie: Apply color for closed account   - [Redmine: 74494]
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -422,6 +422,7 @@ Revisions:
 		@UserID = @UserID,
 		@disCasino = @disCasino,
 		@Language = @Language,
+		@SystemID=@SystemID,
 		@ErrCode = @ErrCode_Cur OUTPUT,
 		@ErrMsg = @ErrMsg_Cur OUTPUT,
 		@IP = @IP
@@ -1385,8 +1386,3 @@ Revisions:
 	END
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_All] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_All] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuper_All] TO [vnteam] AS [dbo]

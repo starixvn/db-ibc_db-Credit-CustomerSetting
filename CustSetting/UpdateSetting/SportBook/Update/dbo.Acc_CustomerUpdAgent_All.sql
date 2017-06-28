@@ -452,7 +452,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@SubAccID int = 0, --Sub-AccountID
 	@UserID int,
 	@IP varchar(15)='',
-	
+	@systemID TINYINT=1,
 	@Username varchar(30) = '' OUTPUT,
 	@ErrCode varchar(300) = '' OUTPUT,
 	@ErrMsg nvarchar(4000) = '' OUTPUT
@@ -497,6 +497,7 @@ Revisions:
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+	- 20170628@Winnie: Color for closed account - [Redmine: 74494]
 Param's Explanation:
 • @ErrCode:
     = 0: Update Agent successfully.
@@ -573,6 +574,7 @@ BEGIN
 					@disCasino = @disCasino,				
 					@SubAccID = @SubAccID,
 					@UserID = @UserID,
+					@systemID=@systemID,
 					@Language = @Language,
 					@ErrCode = @ErrCode_Cur OUTPUT,
 					@ErrMsg = @ErrMsg_Cur OUTPUT,
@@ -1855,10 +1857,3 @@ BEGIN
 	END
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_All] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_All] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_All] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgent_All] TO [vnteam] AS [dbo]

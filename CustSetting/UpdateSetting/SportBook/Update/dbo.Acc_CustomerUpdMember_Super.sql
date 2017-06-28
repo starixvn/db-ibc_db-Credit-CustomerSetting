@@ -349,7 +349,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Super]
 	@UpdatePositiontakingv99MP BIT = 1,
 	@UpdatePositiontakingv154 BIT = 1,
 	@UpdatePositiontakingv161 BIT = 1,
-
+	@SystemID	TINYINT=1,
 	@language varchar(2) = 'E',
 	@SubAccID INT = 0, --Sub-AccountID
 	@IP varchar(15)='',
@@ -408,7 +408,7 @@ Revisions:
 	- 20150806@Johnson:  Write log value from db if not change when update multiple [Redmine: #40880]				
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-	
+	- 20170628@Winnie: Apply color for closed account - [Redmine: 74494]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -514,6 +514,7 @@ ELSE
 				@UserID = @UserID, 
 				@disCasino = @disCasino, 
 				@Language = @language,
+				@SystemID=@SystemID,
 				@ErrCode = @ErrCode_cur output, 
 				@ErrMsg = @ErrMsg_cur output, 
 				@IP = @IP
@@ -6434,10 +6435,3 @@ END--Update Position Taking
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_Super] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_Super] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_Super] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMember_Super] TO [vnteam] AS [dbo]
