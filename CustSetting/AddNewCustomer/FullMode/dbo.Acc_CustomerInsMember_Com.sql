@@ -2428,5 +2428,5 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	END CATCH
 END
 
-
+GO
 
