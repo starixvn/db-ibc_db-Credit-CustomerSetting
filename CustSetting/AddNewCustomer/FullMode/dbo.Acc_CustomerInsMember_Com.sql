@@ -323,7 +323,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v161alivepositiontaking_87 SMALLMONEY,
 	@v161alivepositiontaking_89 SMALLMONEY = 0,
 	@v161alivepositiontaking_90 SMALLMONEY = 0,
-	
+	@SystemID		TINYINT=1,
 	@Disable151_31 BIT = 0,-- @DisableHorseRacing -> @Disable151_31
 	@Disable151_41 BIT = 0,-- @DisableOpenTote -> @Disable151_41
 	@Disable151_51 BIT = 0,-- @Disable151_AU -> @Disable151_51
@@ -428,6 +428,7 @@ Revisions:
 	- 20161223@Winnie: Hot Fix  Show Fishing World logs although this Product is not released to PROD yet [Redmine:69236]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]					
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -823,7 +824,7 @@ BEGIN
 		@postal = @postal,
 		@TransferOption = NULL,
 		@suspended = 0,
-
+		@SystemID=@SystemID,
 		@autosuspend = @autosuspend,
 		@autosuspend2 = @autosuspend2,
 

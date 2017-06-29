@@ -182,7 +182,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@DisableFUNP2P BIT = 0,
 	
 	@IP VARCHAR(15)='',
-	
+	@SystemID		TINYINT=1,
 	@success BIT = 1 OUTPUT,
 	@Language VARCHAR(2)= 'E',
 	@SubAccID INT = 0, --Sub-AccountID
@@ -3599,7 +3599,7 @@ BEGIN
 
 	    --E-Sports
 	    @DisableEsports = @DisableEsports,
-    	
+    	@SystemID=@SystemID,
 	    @credit = @credit,
 	    @DisableP2P = @DisableP2P,
 	    @DisableFUNP2P = @DisableFUNP2P,
@@ -5373,14 +5373,7 @@ BEGIN
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    return
     END
-
-	DECLARE @ClosedReason TINYINT 
-	SELECT @ClosedReason=ClosedReason FROM CustLoginInfo WITH(NOLOCK) WHERE CustID=@recommend
-	IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
-	BEGIN
-		INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-		VALUES(@custid,NULL,@IP,@creator,GETDATE(),@ClosedReason)
-	END
+	
     ------ Create default balance for Live casino for new customer
     --DECLARE @today smalldatetime
     --SET @today = convert(nvarchar(10), current_timestamp,120)
