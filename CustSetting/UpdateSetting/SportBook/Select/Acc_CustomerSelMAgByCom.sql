@@ -92,9 +92,10 @@ BEGIN
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
 	EXECUTE(@SearchQuery)
 
-	CREATE TABLE #TempMaster(CustID INT PRIMARY KEY,Site VARCHAR(10),IsInternal BIT,ugroup VARCHAR(3),firstname NVARCHAR(50),lastname NVARCHAR(50),username2 NVARCHAR(50),phone NVARCHAR(50),mobilephone NVARCHAR(50),iplogin NVARCHAR(20))
-	INSERT INTO #TempMaster(CustID,Site,IsInternal)
-	select ci.custid,c.site,cm.IsInternal
+	CREATE TABLE #TempMaster(CustID INT PRIMARY KEY,Site VARCHAR(10),IsInternal BIT,ugroup VARCHAR(3),firstname NVARCHAR(50),lastname NVARCHAR(50),username2 NVARCHAR(50),phone NVARCHAR(50),mobilephone NVARCHAR(50),iplogin NVARCHAR(20), RowNumber BIGINT)
+	INSERT INTO #TempMaster(CustID,Site,IsInternal,RowNumber)
+	select ci.custid,c.site,cm.IsInternal,
+		ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, ci.username) as RowNumber
 	FROM Customer c WITH(NOLOCK)
 	INNER JOIN custInfo as ci with (NOLOCK) ON c.custid=ci.custid
 	INNER JOIN CustMaster cm WITH (NOLOCK) ON ci.custid = cm.custid
@@ -166,6 +167,7 @@ BEGIN
 	Select * From 
 	(
 		SELECT 		
+			m.RowNumber,
 			ci.enabled, 
 			ci.closed, 
 			ci.roleid,
@@ -290,9 +292,8 @@ BEGIN
 			CASE WHEN m.[site] = 'IMBC' THEN 1 ELSE 0 END AS IsIMBC,
 			ISNULL(cda.Discount,0) AS discountCricket,
 			ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_Cricket),1) AS DisableCricket,
-			CAST(CASE WHEN m.[site] = 'IMBC' AND @IsHidden_Cricket = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Cricket),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideCricket,
+			CAST(CASE WHEN m.[site] = 'IMBC' AND @IsHidden_Cricket = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Cricket),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideCricket
 		
-			ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, ci.username) as RowNumber
 		FROM 
 			#TempMaster AS m with (NOLOCK)
 			INNER JOIN custInfo as ci with (NOLOCK) on m.custid = ci.custid
@@ -314,7 +315,7 @@ BEGIN
 													WHEN ci.roleid = 2 THEN ci.mrecommend
 													ELSE ci.srecommend
 											END
-		
+		WHERE m.RowNumber BETWEEN @RowStart AND @RowEnd
 		group by
 			ci.enabled, 
 			ci.closed,
@@ -353,10 +354,12 @@ BEGIN
 			ac.CustId,
 			m.site,
 			cda.Discount,
-			cl.ClosedReason
+			cl.ClosedReason,
+			m.RowNumber
 	) a
-	WHERE a.RowNumber BETWEEN @RowStart AND @RowEnd
+	ORDER BY a.RowNumber
 END
+
 
 
 GO
