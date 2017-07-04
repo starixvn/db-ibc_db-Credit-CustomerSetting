@@ -21,6 +21,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_MAg]
 	,@IP varchar(15)=''		
 	,@ErrCode int = 0 output
 	,@ErrMsg nvarchar(4000) = '' output
+	,@SystemID TINYINT=1
 AS
 /*  
  Created by: Dan  
@@ -67,7 +68,7 @@ AS
 	- 20151223@Patrick: Add Max/Loss limit for RnG Casino [Redmine: #49528]
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20170420@Helen:  Add Extra information for Direct Accounts, for NAP only - [Redmine:72339]
-	
+	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -547,7 +548,15 @@ BEGIN
 	END
 	
 	DECLARE	@UplineSecurityCode			VARCHAR(50)
-		  , @isForcedChangeSecurityCode	BIT
+		  , @isForcedChangeSecurityCode	BIT, @ClosedReason TINYINT=0,@Closed BIT
+	SELECT TOP 1 @Closed=Closed FROM custInfo WITH(NOLOCK) WHERE custid=@ExistingCustid
+
+	IF (@SystemID=1 AND @Closed=1)
+		SELECT @ClosedReason=1
+	ELSE IF(@SystemID<>1 AND @Closed=1)
+		SELECT @ClosedReason=1
+	ELSE 
+		SELECT @ClosedReason=0
 
 	SELECT @UplineSecurityCode				= NULL
 		 , @isForcedChangeSecurityCode	= 0
@@ -563,12 +572,12 @@ BEGIN
 	INSERT INTO dbo.CustLoginInfo
 	(
 	    CustID, OldUserPwd, LastChangedPwdDate, isFirstLogin, SecurityCodeCount,
-	    SecurityCode, isForcedChangeSecurityCode, LastChangedSecurityCodeDate
+	    SecurityCode, isForcedChangeSecurityCode, LastChangedSecurityCodeDate,ClosedReason
 	)
 	VALUES
 	(
 	    @custid, NULL, GETDATE(), 1, 0,
-	    NULL, @isForcedChangeSecurityCode, NULL
+	    NULL, @isForcedChangeSecurityCode, NULL,@ClosedReason
 	)
 	
 	IF @@ERROR<>0

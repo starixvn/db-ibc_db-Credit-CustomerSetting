@@ -20,6 +20,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_Com]
 	,@IP VARCHAR(15)=''		
 	,@ErrCode INT = 0 OUTPUT
 	,@ErrMsg NVARCHAR(4000) = '' OUTPUT
+	,@SystemID TINYINT=1
 AS
 /*  
  Created by: Elodie  
@@ -52,6 +53,7 @@ AS
 	- 20170207@Elodie: Set HideGoldDeluxe = 0 for 789y site - [Redmine: #69200]
 	- 20170420@Helen:  Add Extra information for Direct Accounts, for NAP only - [Redmine:72339]
 	- 20170614@Johnson: Force Security Code for newly created Super on i7  - [Redmine: #78293]
+	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -470,7 +472,15 @@ BEGIN
 		RETURN
 	END CATCH
 
-    DECLARE @isForcedChangeSecurityCode BIT = 0
+    DECLARE @isForcedChangeSecurityCode BIT = 0, @ClosedReason TINYINT=0,@Closed BIT
+	SELECT TOP 1 @Closed=Closed FROM custInfo WITH(NOLOCK) WHERE custid=@ExistingCustid
+
+	IF (@SystemID=1 AND @Closed=1)
+		SELECT @ClosedReason=1
+	ELSE IF(@SystemID<>1 AND @Closed=1)
+		SELECT @ClosedReason=1
+	ELSE 
+		SELECT @ClosedReason=0
 
 	SELECT @isForcedChangeSecurityCode = 1
 
@@ -478,11 +488,11 @@ BEGIN
 		INSERT INTO dbo.CustLoginInfo
 		(
 		    CustID, OldUserPwd, LastChangedPwdDate, isFirstLogin, SecurityCodeCount,
-		    SecurityCode, isForcedChangeSecurityCode, LastChangedSecurityCodeDate
+		    SecurityCode, isForcedChangeSecurityCode, LastChangedSecurityCodeDate,ClosedReason
 		)
 		VALUES
 		(   @custid, NULL, GETDATE(), 1, 0,
-		    NULL, @isForcedChangeSecurityCode, NULL
+		    NULL, @isForcedChangeSecurityCode, NULL,@ClosedReason
 		)
 	END TRY
 	BEGIN CATCH
