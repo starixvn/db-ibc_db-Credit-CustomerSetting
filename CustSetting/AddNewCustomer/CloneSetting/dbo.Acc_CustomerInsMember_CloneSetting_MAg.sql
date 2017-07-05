@@ -554,7 +554,7 @@ BEGIN
 	IF (@SystemID=1 AND @Closed=1)
 		SELECT @ClosedReason=1
 	ELSE IF(@SystemID<>1 AND @Closed=1)
-		SELECT @ClosedReason=1
+		SELECT @ClosedReason=2
 	ELSE 
 		SELECT @ClosedReason=0
 
