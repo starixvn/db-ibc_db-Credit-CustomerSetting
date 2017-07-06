@@ -451,5 +451,4 @@ BEGIN
 
 	DROP TABLE #memberList
 END
-
-
+GO
