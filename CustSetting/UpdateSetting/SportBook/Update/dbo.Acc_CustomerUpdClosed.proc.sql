@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdClosed]
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdClosed]
 	@CustID int,
 	@Closed bit,	
 	@SubAccID int = 0, --Sub-AccountID
@@ -7,7 +8,8 @@
 	@Language varchar(2) = 'E',
 	@ErrCode int = 0 OUTPUT,
 	@ErrMsg nvarchar(500) = '' OUTPUT,
-	@IP varchar(15)=''
+	@IP varchar(15)='',
+	@SystemID TINYINT=1
 AS
 /*
 Created: 20080911@whoknow
@@ -27,7 +29,7 @@ Revisions:
 	- 20091008@Kiwi: Remove WriteLog_UserLog
 	- 20091125@Terry : add one more para @disCasino check disabled Casino
 	- 20100102@Lewin : modify LogSP Data, call WriteLog_UserLog_RunSPNew instead of WriteLog_UserLog_RunSP 
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]
 	- 20101021@Henry: Record execution time
 	- 20110907@Sophia: Change Linked Server from DB052 to DB053
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
@@ -40,8 +42,8 @@ Revisions:
 	- 20141125@Jamie: Use Acc_CustomerInfo_Execrep_04 instead of Acc_ExecRep_Cust_04 [Redmine:#26497]	
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
-	
-Param's Explanation:
+	- 20170504@Winnie: Color for closed Accounts  - [Redmine:#74494]
+Param's Explanation
 • @custid: custid that need to be viewed.   
 
 */
@@ -205,6 +207,58 @@ BEGIN
 	update custinfo with (ROWLOCK, UPDLOCK) set Closed = @Closed
 	where custid = @custid
 
+	IF(@Closed=1)
+	BEGIN
+		IF(@roleid=1 AND @SystemID=1)
+		BEGIN
+			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
+			BEGIN
+				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
+				VALUES(@custid,NULL,@IP,@UserID,GETDATE(),1)
+			END
+			ELSE
+			BEGIN
+				UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
+				WHERE custid = @custid
+			END
+		END
+		ELSE IF(@roleid=1 AND @SystemID <> 1)
+		BEGIN
+			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
+			BEGIN
+				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
+				VALUES(@custid,NULL,@IP,@UserID,GETDATE(),2)
+			END
+			ELSE
+			BEGIN
+				UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 2
+				WHERE custid = @custid
+			END
+		END
+		ELSE IF(@roleid IN(2,3,4) AND @SystemID=1)
+		BEGIN
+			UPDATE [dbo].[CustLoginInfo] WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
+			WHERE custid = @custid
+		END
+		ELSE
+		BEGIN
+			UPDATE [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 2
+			WHERE custid = @custid
+		END
+	END
+	ELSE IF (@Closed=0)
+	BEGIN
+		IF(@roleid=1)
+			update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 0
+			where custid = @custid
+		ELSE
+		BEGIN
+			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 0
+			where custid = @custid		
+
+		END
+	END
+
 	IF (@Old_Closed = 1 and @Closed = 0 and @LoginCount > 5) or (@Old_Closed = 1 and @Closed = 0 and @roleid = 1 and @logincount = 5)
 		update customer with (ROWLOCK, UPDLOCK) set logincount = 0
 		where custid = @custid 
@@ -227,7 +281,7 @@ BEGIN
 			,@RoleID		= @RoleID
 			,@Action		= 'Closed'
 			,@Closed		= @Closed
-
+			,@SystemID		=@SystemID
 	END
 
 
@@ -242,6 +296,7 @@ BEGIN
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
 						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" ' +
+						'SystemID="'+ coalesce(cast(@SystemID as varchar(50)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
 
 	/* 1105	Acc_CustomerUpdClosed	Update Closed status  */
@@ -265,6 +320,7 @@ BEGIN
 							'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
 							'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
 							'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1))+'" ' +
+							'SystemID="'+ coalesce(cast(@SystemID as varchar(50)),space(1)) + '" ' +
 							'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
 
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
@@ -275,11 +331,5 @@ BEGIN
 			@duration = @duration
 	END CATCH
 END
+
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdClosed] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdClosed] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdClosed] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdClosed] TO [vnteam] AS [dbo]

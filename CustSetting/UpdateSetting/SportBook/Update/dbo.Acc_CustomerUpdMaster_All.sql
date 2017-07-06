@@ -442,7 +442,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
 	@v10mpositiontaking_10 smallmoney = 0.7,
 	@v11mpositiontaking_10 smallmoney = 0.7,
 	@v99mpositiontaking_10 smallmoney = 0.7,
-
+	@SystemID			TINYINT=1,
     @IP varchar(15) = '',
     @UserID int,
     @Username varchar(30) = '' OUTPUT,
@@ -486,7 +486,7 @@ Revisions:
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-	
+	- 20170628@Winnie: Apply color for closed account - [Redmine: 74494]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -562,6 +562,7 @@ BEGIN
 					@disCasino = @disCasino,                
 					@SubAccID = @SubAccID,
 					@UserID = @UserID,
+					@SystemID=@SystemID,
 					@Language = @Language,
 					@ErrCode = @ErrCode_Cur OUTPUT,
 					@ErrMsg = @ErrMsg_Cur OUTPUT,
@@ -1865,12 +1866,4 @@ BEGIN
 		END
 	END
 END
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaster_All] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_All] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_All] TO [bodbDownlineNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_All] TO [bodbExtAccNet]
 GO 

@@ -334,7 +334,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Master]
 	@UpdatePositiontakingv99MP BIT = 1,
 	@UpdatePositiontakingv154 BIT = 1,
 	@UpdatePositiontakingv161 BIT = 1,
-
+	@SystemID		TINYINT=1,
 
 	@UserID INT,--masterid	
 	
@@ -368,7 +368,7 @@ Revisions:
 	- 20090917@Phuc: write log into DBLOG.
 	- 20091125@Terry: check disabled casino
 	- 20100112@Kiwi: Amend to write log in xml format.
-	- 20100730@Henry: grant execute to bodbExtAccNet
+	- 20100730@Henry: invoke execute to bodbExtAccNet
 	- 20100915@Lukas:	- Add number game setting
 						- Add mixed sports setting
 						- Remove mix parlay of basketball
@@ -397,6 +397,7 @@ Revisions:
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]  			
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+	- 20170628@Winnie: Apply color for closed account - [Redmine: 74494]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -500,7 +501,7 @@ END
 			--- update closed
 			IF @UpdateClosed = 1 --OR @closed is not null
 			BEGIN
-				exec [dbo].[Acc_CustomerUpdClosed] @CustID = @CustID, @Closed = @closed, @SubAccID = @SubAccID, @UserID = @UserID, @disCasino = @disCasino, @Language = @language,@ErrCode = @ErrCode_cur output, @ErrMsg = @ErrMsg_cur output, @IP = @IP
+				exec [dbo].[Acc_CustomerUpdClosed] @CustID = @CustID, @Closed = @closed, @SubAccID = @SubAccID, @UserID = @UserID, @disCasino = @disCasino,@SystemID=@SystemID, @Language = @language,@ErrCode = @ErrCode_cur output, @ErrMsg = @ErrMsg_cur output, @IP = @IP
 				IF @ErrCode_Cur > 0
 
 				BEGIN
@@ -8782,10 +8783,3 @@ if	@UpdatePositiontaking   = 1  or
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_Master] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_Master] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_Master] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMember_Master] TO [vnteam] AS [dbo]

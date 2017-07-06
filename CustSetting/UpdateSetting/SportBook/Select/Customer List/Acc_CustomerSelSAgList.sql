@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelSAgList]   
+﻿/*<info serverAlias="DBAGE-bodb02" executers="bodbadminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerSelSAgList]   
 	@System varchar(50) = 'ACCOUNTING'
 	,@Userid INT=NULL
 AS  
@@ -16,8 +17,7 @@ AS
 		-20120525@Dom: exclude licensee customer for accounting site
 		-20130121@Dan: call to bodb_AGE for Acc_CustGroup
 		- 20150904@Helen: commission setting for MO [Redmine #41470]
-		- 20160630@Winnie: #48948 Hide_special_sites_from_unautorized_users
-		
+		- 20160630@Winnie: #48948 Hide_special_sites_from_unautorized_users	
 */
 
 SET NOCOUNT ON  
@@ -45,7 +45,7 @@ END
 ELSE
 BEGIN
 	SELECT c.custid, c.username, c.currency as exchangeid,c.[site] AS siteName
-	FROM customer AS c WITH (NOLOCK) 
+	FROM customer AS c WITH (NOLOCK) 	
 	WHERE c.roleid = 4 
 		AND c.custid>100  
 		AND c.custid IN (SELECT custid FROM bodb_AGE.dbo.Acc_CustGroup WITH(NOLOCK) WHERE GroupName = @system)

@@ -196,7 +196,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 
 	@IP varchar(15)='',   
 	@Language VARCHAR(2)= 'E',  
-
+	@SystemID TINYINT=1,
 	@SubAccID INT = 0, --Sub-AccountID  
 	@Username varchar(30) = '' OUTPUT,  
 	@ErrCode varchar(300) = '' OUTPUT,  
@@ -221,7 +221,7 @@ Revisions:
  - 20090703@Phuc: enrich error message.(-101: general info, -102: closed, -103: suspended, -104: credit, -105: commission, -106: min/max bet, -107: positiontaking  
  - 20090801@Shifu: check disabled user  
  - 20091125@Terry: Check disabled casino  
- - 20100728@Kiwi: grant execute permission to [bodbExtAccNet]  
+ - 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]  
  - 20100830@Henry: Add Number Game + Mix Parlay Mixed Sports  
  - 20101028@Lukas: Add max per ball (number game)
  - 20110801@Lukas: (Number Game)
@@ -240,7 +240,7 @@ Revisions:
  - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
  - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
  - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
- 
+ - 20170628@Winnie: Appply color for closed account - [Redmine: 74494]
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -332,7 +332,8 @@ BEGIN
 		@disCasino = @disCasino,  
 		@SubAccID = @SubAccID,  
 		@UserID = @UserID,  
-		@Language = @Language,  
+		@Language = @Language,
+		@SystemID=@SystemID,  
 		@ErrCode = @ErrCode_Cur OUTPUT,  
 		@ErrMsg = @ErrMsg_Cur OUTPUT,  
 		@IP = @IP  
@@ -932,12 +933,4 @@ BEGIN
 	 END  
 	END
 END
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_All] TO [bodbAdminNet]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMember_All] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_All] TO [bodbDownlineNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_All] TO [bodbExtAccNet]
 GO 

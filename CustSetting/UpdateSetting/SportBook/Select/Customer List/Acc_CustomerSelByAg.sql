@@ -63,6 +63,7 @@ BEGIN
 		- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
 		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 		- 20170417@Winnie: Change to call the sp Acc_CheckShowProduct- [Redmine #72336]	
+		- 20170605@Winnie: Apply Color for closed account [Redmine's Ids: #74494]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -398,12 +399,13 @@ BEGIN
 		ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_FishingWorld), 0) AS SyncedFishingWorld,
 		ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_FishingWorld), 0) AS SyncedFishingWorldUpline,
 		1 AS SyncedFishingWorldDownline,
-		rn as RowNumber
+		rn as RowNumber,
+		ISNULL(cl.ClosedReason,0) AS ClosedReason
 	FROM src m  
 		INNER JOIN customer c (nolock) on m.custid = c.custid  
 		INNER JOIN Custinfo ci (nolock) on m.custid = ci.custid      	  
 		LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid
-
+		LEFT JOIN CustLoginInfo_Member cl WITH(NOLOCK) ON c.custid=cl.CustID
 		-- Check isHidden AllBet
 		--OUTER APPLY	dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(c.custid, @AllBet) AS sbhsc
 		

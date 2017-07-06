@@ -182,7 +182,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@DisableFUNP2P BIT = 0,
 	
 	@IP VARCHAR(15)='',
-	
+	@SystemID		TINYINT=1,
 	@success BIT = 1 OUTPUT,
 	@Language VARCHAR(2)= 'E',
 	@SubAccID INT = 0, --Sub-AccountID
@@ -228,7 +228,7 @@ Revisions:
 	- 20100112@Kiwi: amend to write log in xml format.
 	- 20100414@Kiwi: Remove to do not insert answer field.
 	- 20100506@Huynguyen: Add param @DisableOpenTote
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]
 	- 20100828@Henry: remove mix parlay of basketball + add new section for MixParlay for Mix Sports + Setting for Numbergame
 	- 20100909@Jamie: + Add param @DisableCasino 
 					  + Remove param @DisableFinancial_WC 
@@ -309,7 +309,7 @@ Revisions:
 	- 20161223@Winnie: Hot Fix  Show Fishing World logs although this Product is not released to PROD yet [Redmine:69236]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]					
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-
+	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -3599,7 +3599,7 @@ BEGIN
 
 	    --E-Sports
 	    @DisableEsports = @DisableEsports,
-    	
+    	@SystemID=@SystemID,
 	    @credit = @credit,
 	    @DisableP2P = @DisableP2P,
 	    @DisableFUNP2P = @DisableFUNP2P,
@@ -5373,7 +5373,7 @@ BEGIN
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    return
     END
-
+	
     ------ Create default balance for Live casino for new customer
     --DECLARE @today smalldatetime
     --SET @today = convert(nvarchar(10), current_timestamp,120)
@@ -5999,14 +5999,4 @@ BEGIN
     END CATCH
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Ag] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Ag] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Ag] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Ag] TO [vnteam] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerInsMember_Ag] TO [vnteam] AS [dbo]
 GO
