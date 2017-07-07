@@ -142,6 +142,4 @@ BEGIN
 			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
 	ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
 END
-
-
-
+GO
