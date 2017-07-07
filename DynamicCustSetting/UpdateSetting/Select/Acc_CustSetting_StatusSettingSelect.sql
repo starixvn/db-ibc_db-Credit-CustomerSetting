@@ -54,6 +54,9 @@ BEGIN
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13)
 	WHERE @SettingType IS NULL OR @SettingType = 13
 
+	--Hardcode to remove VS
+	DELETE FROM #SportBettypeFilter WHERE ProductID = 5
+
 	--DELETE sbf  
 	--FROM  #SportBettypeFilter sbf  
 	--INNER JOIN dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(@CustID, @ProductID) AS sbhsc  
