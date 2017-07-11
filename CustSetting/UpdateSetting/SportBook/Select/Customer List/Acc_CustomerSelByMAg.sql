@@ -1,8 +1,7 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
+USE CustDB
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[Acc_CustomerSelByMAg]
 	@MRecommend int,
 	@IsAgentSite bit = 0,	
@@ -62,6 +61,7 @@ AS
 		- 20161028@Winnie: Fishing world [Redmine's Ids: #65474]
 		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 		- 20170417@Winnie: Change to call the sp Acc_CheckShowProduct- [Redmine #72336]	
+		- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 		- 20170605@Winnie: Apply Color for closed account [Redmine's Ids: #74494]
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -205,6 +205,7 @@ BEGIN
 		,	@bitmapOrder_VoidBridge		INT
 		,	@bitmapOrder_NG2			INT
 		,	@bitmapOrder_FishingWorld	INT
+		,	@bitmapOrder_VS				INT
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
     SET @bitmapOrder_CockFighting = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 206 AND Bettype = 1003)
@@ -212,7 +213,7 @@ BEGIN
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
 	SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
-
+	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 
 	SET	@bitmapOrder_AllBet =	(
 									SELECT	psp.bitmapOrder
@@ -235,6 +236,7 @@ BEGIN
 		,	@IsHidden_VoidBridge		INT = 1
 		,	@IsHidden_NG2				INT = 1
 		,	@IsHidden_FishingWorld		INT = 1
+		,	@IsHidden_VS				INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 19, @IsHide = @IsHidden_CockFighting OUTPUT	
@@ -247,6 +249,8 @@ BEGIN
 		SELECT @IsHidden_Cricket=1
 	ELSE	
 		EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHidden_Cricket OUTPUT	
+
+	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
 
 	-- get data for filtered customers	
 	DECLARE @SearchQuery varchar(1024)
@@ -265,7 +269,7 @@ BEGIN
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, reject, closed, MatchLimit, VirtualMultiplier, Enabled, DisableHorseRacing,
 				DisableFinancial, DisableCasino, SyncCasino, DisableOutright, DisableOpenTote, DisableBingo, DisableNumber, SyncBingo,
 				disable151_au, disable152_uk, disable152_au, disable153_au , isAutoResetP2P, DisableP2P, DisableFunP2P, 
-				DisableLiveCasino,SyncLiveCasino, DisableVirtualSports, DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,cm.IsInternal,
+				DisableLiveCasino,SyncLiveCasino, DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,cm.IsInternal,
 				-- For MuayThai
 				ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_MuayThai),1) AS DisableMuayThai,
 				CAST(CASE WHEN @IsHidden_MuayThai = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_MuayThai),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideMuayThai,
@@ -347,6 +351,17 @@ BEGIN
 				CAST(CASE WHEN @IsHidden_NG2 = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_NG2),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideNG2Upline,			
 				ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_NG2), 0) AS SyncedNG2,
 				ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_NG2), 0) AS SyncedNG2Upline,	
+
+				-- For VS
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_VS)) AS DisableVirtualSports,				
+				CAST(	CASE	WHEN	@IsHidden_VS = 0 
+									AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VS), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideVirtualSports,
+				CAST(CASE	WHEN	@IsHidden_VS = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VS), 1)=0
+					THEN 0 ELSE 1
+					END AS BIT) AS HideVirtualSportsUpline,
 
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate
 		FROM Customer c WITH(NOLOCK)
@@ -455,8 +470,8 @@ BEGIN
 			ctm.DisableLiveCasino,
 			ctm.SyncLiveCasino,
 			
-			-- For VirtualSports
-			ctm.DisableVirtualSports,
+			---- For VirtualSports
+			--ctm.DisableVirtualSports,
 			ctm.DoubleCommLosing,
   
 			ctm.HideKeno,
@@ -495,6 +510,11 @@ BEGIN
 			ctm.SyncedFishingWorldUpline,
 			ctm.SyncedFishingWorldDownline,
 			
+			-- VS
+			ctm.DisableVirtualSports,
+			ctm.HideVirtualSports,
+			ctm.HideVirtualSportsUpline,
+
 			ctm.DisableNG2,
 			ctm.HideNG2,
 			ctm.HideNG2Upline,
@@ -517,14 +537,4 @@ BEGIN
 		
 	ORDER BY  t.RowNumber	
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelByMAg] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelByMAg] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelByMAg] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelByMAg] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelByMAg] TO [vnteam] AS [dbo]

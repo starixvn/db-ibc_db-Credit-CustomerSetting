@@ -2,7 +2,6 @@
 USE CustDB
 GO
 
-GO
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -428,7 +427,9 @@ Revisions:
 	- 20161223@Winnie: Hot Fix  Show Fishing World logs although this Product is not released to PROD yet [Redmine:69236]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]					
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -784,10 +785,10 @@ BEGIN
 	IF @IsAllowedHR = 0 
 		SELECT @Disable151_31 = 1
 
-	DECLARE @Disable180_1201 BIT, @HideVirtualSports  BIT, 
+	DECLARE --@Disable180_1201 BIT, @HideVirtualSports  BIT, 
 		@isAutoResetLiveCasino BIT , @MaxWinLiveCasino SMALLMONEY, @HideKeno BIT, @HideGoldDeluxe  BIT, @HideColossusBet BIT
 
-	SELECT @Disable180_1201 = 0, @HideVirtualSports = 1, 
+	SELECT --@Disable180_1201 = 0, @HideVirtualSports = 1, 
 			@isAutoResetLiveCasino = 1, @MaxWinLiveCasino =  0, @HideKeno = 1, @HideColossusBet = 1
 
 	SELECT @HideGoldDeluxe = 0 -- 20151001@Elodie: Set HideGoldDeluxe = 0, DisableGoldDeluxe = 0 for real super
@@ -846,8 +847,8 @@ BEGIN
 		@DisableFUNP2P = @DisableFUNP2P,
 		@ISAUTORESETP2P = 1,
 		@Disable162_1101 = @Disable162_1101,
-		@Disable180_1201 = @Disable180_1201,
-		@HideVirtualSports = @HideVirtualSports,
+		--@Disable180_1201 = @Disable180_1201,
+		--@HideVirtualSports = @HideVirtualSports,
 		@DoubleCommLosing = @DoubleCommLosing,
 		@isAutoResetLiveCasino = @isAutoResetLiveCasino, 
 		@MaxWinLiveCasino = @MaxWinLiveCasino,
@@ -1210,366 +1211,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		RETURN
 	END	
 
-
-	/*	
-	INSERT INTO [dbo].[custsetting]([custId], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [alivepositiontaking], [mlivepositiontaking], [slivepositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], [Minbet], [Maxbet], autopositiontaking, autolivepositiontaking, isautopositiontaking, isautolivepositiontaking)
-			SELECT @custid, 1, 1, @apositiontaking_1, @mpositiontaking_1, @spositiontaking_1, @alivepositiontaking_1, @mlivepositiontaking_1, @slivepositiontaking_1, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 3, 1, @apositiontaking_3, @mpositiontaking_3, @spositiontaking_3, @alivepositiontaking_3, @mlivepositiontaking_3, @slivepositiontaking_3, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 7, 1, @apositiontaking_7, @mpositiontaking_7, @spositiontaking_7, @alivepositiontaking_7, @mlivepositiontaking_7, @slivepositiontaking_7, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 8, 1, @apositiontaking_8, @mpositiontaking_8, @spositiontaking_8, @alivepositiontaking_8, @mlivepositiontaking_8, @slivepositiontaking_8, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 2, 1, @apositiontaking_2, @mpositiontaking_2, @spositiontaking_2, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-
-	--1x2
-	UNION ALL	SELECT @custid, 5, 1, @apositiontaking_5, @mpositiontaking_5, @spositiontaking_5, 0, 0, 0, 0, 0, 0, @discount1x2, 0, 0, 0, 0, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 4, 1, @apositiontaking_4, @mpositiontaking_4, @spositiontaking_4, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 6, 1, @apositiontaking_6, @mpositiontaking_6, @spositiontaking_6, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 9, 1, @apositiontaking_9, @mpositiontaking_9, @spositiontaking_9, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 10, 1, @apositiontaking_10, @mpositiontaking_10, @spositiontaking_10, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBet, @MaxBet, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 1, 2, @v2apositiontaking_1, @v2mpositiontaking_1, @v2spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 2, 2, @v2apositiontaking_2, @v2mpositiontaking_2, @v2spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 3, 2, @v2apositiontaking_3, @v2mpositiontaking_3, @v2spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 7, 2, @v2apositiontaking_7, @v2mpositiontaking_7, @v2spositiontaking_7, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 8, 2, @v2apositiontaking_8, @v2mpositiontaking_8, @v2spositiontaking_8, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0
-	--UNION ALL	select @custid, 9, 2, @v2apositiontaking_9, @v2mpositiontaking_9, @v2spositiontaking_9, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, @v2spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 1, 3, @v3apositiontaking_1, @v3mpositiontaking_1, @v3spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv3, @MaxBetv3, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 2, 3, @v3apositiontaking_2, @v3mpositiontaking_2, @v3spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv3, @MaxBetv3, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 3, 3, @v3apositiontaking_3, @v3mpositiontaking_3, @v3spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv3, @MaxBetv3, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 20, 3, @v3apositiontaking_20, @v3mpositiontaking_20, @v3spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv3, @MaxBetv3, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 1, 5, @v5apositiontaking_1, @v5mpositiontaking_1, @v5spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv5, @MaxBetv5, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 2, 5, @v5apositiontaking_2, @v5mpositiontaking_2, @v5spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv5, @MaxBetv5, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 3, 5, @v5apositiontaking_3, @v5mpositiontaking_3, @v5spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv5, @MaxBetv5, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 20, 5, @v5apositiontaking_20, @v5mpositiontaking_20, @v5spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv5, @MaxBetv5, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 1, 8, @v8apositiontaking_1, @v8mpositiontaking_1, @v8spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv8, @MaxBetv8, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 3, 8, @v8apositiontaking_3, @v8mpositiontaking_3, @v8spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv8, @MaxBetv8, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 20, 8, @v8apositiontaking_20, @v8mpositiontaking_20, @v8spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv8, @MaxBetv8, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 1, 10, @v10apositiontaking_1, @v10mpositiontaking_1, @v10spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv10, @MaxBetv10, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 2, 10, @v10apositiontaking_2, @v10mpositiontaking_2, @v10spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv10, @MaxBetv10, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 3, 10, @v10apositiontaking_3, @v10mpositiontaking_3, @v10spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv10, @MaxBetv10, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 20, 10, @v10apositiontaking_20, @v10mpositiontaking_20, @v10spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv10, @MaxBetv10, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 1, 11, @v11apositiontaking_1, @v11mpositiontaking_1, @v11spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv11, @MaxBetv11, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, @v11spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv11, @MaxBetv11, 0, 0, 0, 0
-
-	UNION ALL	SELECT @custid, 1, 99, @v99apositiontaking_1, @v99mpositiontaking_1, @v99spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 2, 99, @v99apositiontaking_2, @v99mpositiontaking_2, @v99spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 3, 99, @v99apositiontaking_3, @v99mpositiontaking_3, @v99spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, @v99spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0
-	--Mix Sports Parlay
-	UNION ALL	SELECT @custid, 9, 99, @v99apositiontaking_9, @v99mpositiontaking_9, @v99spositiontaking_9, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv99MP, @MaxBetv99MP, 0, 0, 0, 0
-	--HR Fixed Odds
-	UNION ALL	SELECT @custid, 20, 154, @v154apositiontaking_20, @v154mpositiontaking_20, @v154spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountHRFixedOdds, 0, 0, 0, 0, 0, 0, @MinBetv154, @MaxBetv154, 0, 0, 0, 0
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE custSetting WITH (ROWLOCK) WHERE custId  =@custid
-		
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
-
-	--insert into CustSetting3rd
-	INSERT INTO [dbo].[CustSetting3rd]([custId], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking],  [playerdiscount], [discount], [adiscount], [sdiscount], [Minbet], [Maxbet], autopositiontaking, isautopositiontaking, alivepositiontaking, mlivepositiontaking, slivepositiontaking, autolivepositiontaking, isautolivepositiontaking)
-				SELECT @custid, 2, 201, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 3, 201, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-	--v151
-	UNION ALL	SELECT @custid, 31, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 32, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 41, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 42, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 51, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 52, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-	--v152
-	UNION ALL	SELECT @custid, 41, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 42, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 51, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 52, 152, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-	--v153
-	UNION ALL	SELECT @custid, 51, 153, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 52, 153, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-	--v161
-	UNION ALL	SELECT @custid, 81, 161, @v161apositiontaking_81, @v161mpositiontaking_81, @v161spositiontaking_81, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 83, 161, @v161apositiontaking_83, @v161mpositiontaking_83, @v161spositiontaking_83, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 85, 161, 0, 0, 0, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_85, @v161mlivepositiontaking_85, @v161slivepositiontaking_85, 0, 0
-	UNION ALL	SELECT @custid, 86, 161, @v161apositiontaking_86, @v161mpositiontaking_86, @v161spositiontaking_86, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_86, @v161mlivepositiontaking_86, @v161slivepositiontaking_86, 0, 0
-	UNION ALL	SELECT @custid, 87, 161, 0, 0, 0, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_87, @v161mlivepositiontaking_87, @v161slivepositiontaking_87, 0, 0
-	UNION ALL	SELECT @custid, 88, 161, @v161apositiontaking_88, @v161mpositiontaking_88, @v161spositiontaking_88, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 89, 161, 0, 0, 0, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_89, @v161mlivepositiontaking_89, @v161slivepositiontaking_89, 0, 0
-	UNION ALL	SELECT @custid, 90, 161, 0, 0, 0, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, 0, 0
-	-- v18x
-	UNION ALL	SELECT @custid, 1201, 180, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 1231, 181, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	UNION ALL	SELECT @custid, 1220, 186, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE custSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
-
-	INSERT INTO [dbo].[custoverride]([custId], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-	SELECT @custid, 1, 1, 0, @spositiontaking_1, 0, @slivepositiontaking_1
-	UNION ALL SELECT @custid, 3, 1, 0, @spositiontaking_3, 0, @slivepositiontaking_3
-	UNION ALL SELECT @custid, 7, 1, 0, @spositiontaking_7, 0, @slivepositiontaking_7
-	UNION ALL SELECT @custid, 8, 1, 0, @spositiontaking_8, 0, @slivepositiontaking_8
-	UNION ALL SELECT @custid, 2, 1, 0, @spositiontaking_2, 0, 0.9
-	UNION ALL SELECT @custid, 4, 1, 0, @spositiontaking_4, 0, 0.9
-	UNION ALL SELECT @custid, 5, 1, 0, @spositiontaking_5, 0, 0.9
-	UNION ALL SELECT @custid, 6, 1, 0, @spositiontaking_6, 0, 0.9
-	UNION ALL SELECT @custid, 9, 1, 0, @spositiontaking_9, 0, 0.9
-	UNION ALL SELECT @custid, 10, 1, 0, @spositiontaking_10, 0, 0.9
-
-	UNION ALL SELECT @custid, 1, 2, 0, @v2spositiontaking_1, 0, 0.9
-	UNION ALL SELECT @custid, 2, 2, 0, @v2spositiontaking_2, 0, 0.9
-	UNION ALL SELECT @custid, 3, 2, 0, @v2spositiontaking_3, 0, 0.9
-	UNION ALL SELECT @custid, 7, 2, 0, @v2spositiontaking_7, 0, 0.9
-	UNION ALL SELECT @custid, 8, 2, 0, @v2spositiontaking_8, 0, 0.9
-	--UNION ALL select @custid, 9, 2, 0, @v2spositiontaking_9, 0, 0.9
-	UNION ALL SELECT @custid, 20, 2, 0, @v2spositiontaking_20, 0, 0.9
-
-	UNION ALL SELECT @custid, 1, 3, 0, @v3spositiontaking_1, 0, 0.9
-	UNION ALL SELECT @custid, 2, 3, 0, @v3spositiontaking_2, 0, 0.9
-	UNION ALL SELECT @custid, 3, 3, 0, @v3spositiontaking_3, 0, 0.9
-	UNION ALL SELECT @custid, 20, 3, 0, @v3spositiontaking_20, 0, 0.9
-
-	UNION ALL SELECT @custid, 1, 5, 0, @v5spositiontaking_1, 0, 0.9
-	UNION ALL SELECT @custid, 2, 5, 0, @v5spositiontaking_2, 0, 0.9
-	UNION ALL SELECT @custid, 3, 5, 0, @v5spositiontaking_3, 0, 0.9
-	UNION ALL SELECT @custid, 20, 5, 0, @v5spositiontaking_20, 0, 0.9
-
-	UNION ALL SELECT @custid, 1, 8, 0, @v8spositiontaking_1, 0, 0.9
-	UNION ALL SELECT @custid, 3, 8, 0, @v8spositiontaking_3, 0, 0.9
-	UNION ALL SELECT @custid, 20, 8, 0, @v8spositiontaking_20, 0, 0.9
-
-	UNION ALL SELECT @custid, 1, 10, 0, @v10spositiontaking_1, 0, 0.9
-	UNION ALL SELECT @custid, 2, 10, 0, @v10spositiontaking_2, 0, 0.9
-	UNION ALL SELECT @custid, 3, 10, 0, @v10spositiontaking_3, 0, 0.9
-	UNION ALL SELECT @custid, 20, 10, 0, @v10spositiontaking_20, 0, 0.9
-
-	UNION ALL SELECT @custid, 1, 11, 0, @v11spositiontaking_1, 0, 0.9
-	UNION ALL SELECT @custid, 20, 11, 0, @v11spositiontaking_20, 0, 0.9
-
-	UNION ALL SELECT @custid, 1, 99, 0, @v99spositiontaking_1, 0, 0.9
-	UNION ALL SELECT @custid, 2, 99, 0, @v99spositiontaking_2, 0, 0.9
-	UNION ALL SELECT @custid, 3, 99, 0, @v99spositiontaking_3, 0, 0.9
-	UNION ALL SELECT @custid, 9, 99, 0, @v99spositiontaking_9, 0, 0.9
-	UNION ALL SELECT @custid, 20, 99, 0, @v99spositiontaking_20, 0, 0.9
-	UNION ALL SELECT @custid, 20, 154, 0, @v154spositiontaking_20, 0, 0.9
-
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-		
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
-
-	-- Insert Into CustOverride3rd
-	INSERT INTO [dbo].[CustOverride3rd]([custId], [bettype], [sporttype], minpositiontaking, maxpositiontaking,minlivepositiontaking,maxlivepositiontaking)
-	SELECT @custid, 2, 201, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 3, 201, 0, 0.5, 0, 0.9
-	--v151 
-	UNION ALL SELECT @custid, 31, 151, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 32, 151, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 41, 151, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 42, 151, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 51, 151, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 52, 151, 0, 0.5, 0, 0.9
-	--v152
-	UNION ALL SELECT @custid, 41, 152, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 42, 152, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 51, 152, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 52, 152, 0, 0.5, 0, 0.9
-	--v153
-	UNION ALL SELECT @custid, 51, 153, 0, 0.5, 0, 0.9
-	UNION ALL SELECT @custid, 52, 153, 0, 0.5, 0, 0.9
-	--v161
-	UNION ALL SELECT @custid, 81, 161, 0, @v161spositiontaking_81, 0, 0.9
-	UNION ALL SELECT @custid, 83, 161, 0, @v161spositiontaking_83, 0, 0.9
-	UNION ALL SELECT @custid, 85, 161, 0, 0.9, 0, @v161slivepositiontaking_85
-	UNION ALL SELECT @custid, 86, 161, 0, @v161spositiontaking_86, 0, @v161slivepositiontaking_86
-	UNION ALL SELECT @custid, 87, 161, 0, 0.9, 0, @v161slivepositiontaking_87
-	UNION ALL SELECT @custid, 88, 161, 0, @v161spositiontaking_88, 0, 0.9
-	UNION ALL SELECT @custid, 89, 161, 0, 0.9, 0, @v161slivepositiontaking_89
-	UNION ALL SELECT @custid, 90, 161, 0, 0.9, 0, @v161slivepositiontaking_90
-	--v18x
-	UNION ALL SELECT @custid, 1201, 180, 0, 0.9, 0, 0.9
-	UNION ALL SELECT @custid, 1231, 181, 0, 0.9, 0, 0.9
-	UNION ALL SELECT @custid, 1220, 186, 0, 0.9, 0, 0.9
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-		
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
-
-	--Insert Into P2P Setting
-	INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-		(custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-	SELECT @custid  , 1001 , 1 , 0 , 0 , 0 , 0
-	UNION ALL SELECT @custid  , 1002 , 1 , 0 , 0 , 0 , 0
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END  
-
-	INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-			   (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-	SELECT @custid  , 1 , 0 , 0 , 0 , 0 
-	UNION ALL SELECT @custid  , 2 , 0 , 0 , 0 , 0 
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-		
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END           
-
-	--Insert live casino setting
-	INSERT INTO CustSettingGame([CustID]
-			   ,[Bettype]
-			   ,[Sporttype]
-			   ,[apositiontaking]
-			   ,[mpositiontaking]
-			   ,[spositiontaking]
-			   ,[playerdiscount]
-			   ,[discount]
-			   ,[adiscount]
-			   ,[sdiscount]
-			   ,[autopositiontaking]
-			   ,[isautopositiontaking]
-			   ,[autompositiontaking]
-			   ,[isautompositiontaking])
-	VALUES (@custid , 1101, 162, 0, 0, 0.9, 0, 0, 0, 0, 0, 0 ,0 ,0)
-	 
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
-		
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END     
-
-	INSERT INTO [bodb02].[dbo].[CustOverrideGame]
-			   ([CustID]
-			   ,[Bettype]
-			   ,[Sporttype]
-			   ,[minpositiontaking])
-	VALUES(@custid, 1101, 162, 0)
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
-		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
-		
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END     
-	*/
-
-
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
 
@@ -1764,7 +1405,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'disable152_41="'+ COALESCE(CAST(@Disable152_41 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disable152_51="'+ COALESCE(CAST(@Disable152_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disable153_51="'+ COALESCE(CAST(@Disable153_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablebingo="'+ COALESCE(CAST(@disablebingo AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -1798,7 +1439,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'disable152_41="'+ COALESCE(CAST(@Disable152_41 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disable152_51="'+ COALESCE(CAST(@Disable152_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disable153_51="'+ COALESCE(CAST(@Disable153_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablebingo="'+ COALESCE(CAST(@disablebingo AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -2427,6 +2068,4 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 			@duration = @duration
 	END CATCH
 END
-
 GO
-
