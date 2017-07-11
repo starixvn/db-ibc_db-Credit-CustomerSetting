@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 
 ALTER PROCEDURE  [dbo].[Acc_CustomerSelRefSport_Bettype]
 	 @CustID		INT = NULL
