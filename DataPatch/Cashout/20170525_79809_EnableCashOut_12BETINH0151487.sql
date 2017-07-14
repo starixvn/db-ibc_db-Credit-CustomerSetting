@@ -1,11 +1,11 @@
 /*
 	Created: 20170714@Elodie
-	Task : Initial data CashOut for 12Bet - Enable CashOut for new customer [RedmineID: #79809]
+	Task : Enable CashOut for 12BETINH0151487 customer [RedmineID: #79809]
 	DB: DBCust/CustDB	 
 */
 ------------------------------------------------------
-UPDATE 
-INSERT INTO dbo.Dep_CustProductSetting (CustID, ProductId, IsEnabled)
-SELECT 14543986 AS CustID, 25, 1
+UPDATE Dep_CustProductSetting WITH (ROWLOCK,UPDLOCK)
+SET IsEnabled = 1
+WHERE custid = 14543986 AND ProductID = 25
 
 
