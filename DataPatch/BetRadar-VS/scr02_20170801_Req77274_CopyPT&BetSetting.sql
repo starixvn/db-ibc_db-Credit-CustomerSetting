@@ -35,22 +35,37 @@ BEGIN
 	CREATE TABLE #MemberTemp
 	(
 		CustID INT PRIMARY KEY CLUSTERED,
+		maxpermatch180 MONEY,
+		maxpermatch181 MONEY,
+		maxpermatch182 MONEY,
+		maxpermatch183 MONEY,
+		maxpermatch184 MONEY,
+		maxpermatch185 MONEY,
+		maxpermatch186 MONEY
+
 	)
 
 	CREATE TABLE #SMATemp
 	(
 		CustID INT PRIMARY KEY CLUSTERED,
-		roleid TINYINT
+		roleid TINYINT,
+		maxpermatch180 MONEY,
+		maxpermatch181 MONEY,
+		maxpermatch182 MONEY,
+		maxpermatch183 MONEY,
+		maxpermatch184 MONEY,
+		maxpermatch185 MONEY,
+		maxpermatch186 MONEY
 	)
 	
-	INSERT INTO #MemberTemp (CustID)
-	SELECT custid
+	INSERT INTO #MemberTemp (CustID, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186)
+	SELECT custid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186
 	FROM Custinfo WITH (NOLOCK)
 	WHERE srecommend = @srecommend AND roleid = 1  AND Enabled = 1 AND custid <= @maxcustid
 	
 	
-	INSERT INTO #SMATemp (CustID, roleid)
-	SELECT custid, roleid
+	INSERT INTO #SMATemp (CustID, roleid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186)
+	SELECT custid, roleid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186
 	FROM Custinfo WITH (NOLOCK)
 	WHERE srecommend = @srecommend AND roleid IN (2,3,4) AND Enabled = 1 AND custid <= @maxcustid 
 
@@ -172,31 +187,29 @@ BEGIN
 	--Agent Level
 	INSERT INTO dbo.CustBetSetting3rd_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 	SELECT ci.custid, dest.tsporttype, dest.tbettype, cs.minbet, cs.maxbet, 
-			CASE WHEN dest.fSportType = 181 THEN c.maxpermatch181
-					WHEN dest.fSportType = 182 THEN c.maxpermatch182					 
-					WHEN dest.fSportType = 183 THEN c.maxpermatch183
-					WHEN dest.fSportType = 184 THEN c.maxpermatch184
-					WHEN dest.fSportType = 185 THEN c.maxpermatch185
-					WHEN dest.fSportType = 186 THEN c.maxpermatch186
-					ELSE c.maxpermatch180 END
+			CASE WHEN dest.fSportType = 181 THEN ci.maxpermatch181
+					WHEN dest.fSportType = 182 THEN ci.maxpermatch182					 
+					WHEN dest.fSportType = 183 THEN ci.maxpermatch183
+					WHEN dest.fSportType = 184 THEN ci.maxpermatch184
+					WHEN dest.fSportType = 185 THEN ci.maxpermatch185
+					WHEN dest.fSportType = 186 THEN ci.maxpermatch186
+					ELSE ci.maxpermatch180 END
 	FROM dbo.CustSetting3rd cs WITH(NOLOCK)
 		INNER JOIN #SMATemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
-		INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
 		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
 
 	--Member Level
 	INSERT INTO dbo.CustBetSetting3rd_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 	SELECT ci.custid, dest.tsporttype, dest.tbettype, cs.minbet, cs.maxbet, 
-			CASE WHEN dest.fSportType = 181 THEN c.maxpermatch181
-					WHEN dest.fSportType = 182 THEN c.maxpermatch182					 
-					WHEN dest.fSportType = 183 THEN c.maxpermatch183
-					WHEN dest.fSportType = 184 THEN c.maxpermatch184
-					WHEN dest.fSportType = 185 THEN c.maxpermatch185
-					WHEN dest.fSportType = 186 THEN c.maxpermatch186
-					ELSE c.maxpermatch180 END
+			CASE WHEN dest.fSportType = 181 THEN ci.maxpermatch181
+					WHEN dest.fSportType = 182 THEN ci.maxpermatch182					 
+					WHEN dest.fSportType = 183 THEN ci.maxpermatch183
+					WHEN dest.fSportType = 184 THEN ci.maxpermatch184
+					WHEN dest.fSportType = 185 THEN ci.maxpermatch185
+					WHEN dest.fSportType = 186 THEN ci.maxpermatch186
+					ELSE ci.maxpermatch180 END
 	FROM dbo.CustSetting3rd cs WITH(NOLOCK)
 		INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
-		INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
 		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
 	
 	DROP TABLE #SMATemp
