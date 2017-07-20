@@ -61,13 +61,13 @@ BEGIN
 	INSERT INTO #MemberTemp (CustID, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186)
 	SELECT custid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186
 	FROM Custinfo WITH (NOLOCK)
-	WHERE srecommend = @srecommend AND roleid = 1  AND Enabled = 1 AND custid <= @maxcustid
+	WHERE srecommend = @srecommend AND roleid = 1 AND custid <= @maxcustid
 	
 	
 	INSERT INTO #SMATemp (CustID, roleid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186)
 	SELECT custid, roleid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186
 	FROM Custinfo WITH (NOLOCK)
-	WHERE srecommend = @srecommend AND roleid IN (2,3,4) AND Enabled = 1 AND custid <= @maxcustid 
+	WHERE srecommend = @srecommend AND roleid IN (2,3,4) AND custid <= @maxcustid 
 
 	DECLARE @MaxPT TINYINT--, @MaxComm DECIMAL(9,8), @Currency INT
 	SELECT TOP 1 @MaxPT = MaxPT FROM dbo.ProductSettingDetail WITH (NOLOCK) WHERE ProductID = @ProductID AND SettingType = 1
