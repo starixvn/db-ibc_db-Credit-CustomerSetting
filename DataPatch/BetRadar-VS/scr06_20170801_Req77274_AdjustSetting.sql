@@ -121,7 +121,7 @@ SET csm.minBet = cs.minbet,
 FROM dbo.CustSetting3rd cs WITH(NOLOCK)
 	INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
 	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
-	INNER JOIN dbo.CustBetSetting3rd_Agent csm WITH(ROWLOCK,UPDLOCK) ON csm.custid = cs.custid and csm.sporttype = tSportType and csm.bettype = tBetType	
+	INNER JOIN dbo.CustBetSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK) ON csm.custid = cs.custid and csm.sporttype = tSportType and csm.bettype = tBetType	
 WHERE c.roleid = 1 AND Enabled = 1
 		AND (
 			cs.minBet <> csm.minBet
