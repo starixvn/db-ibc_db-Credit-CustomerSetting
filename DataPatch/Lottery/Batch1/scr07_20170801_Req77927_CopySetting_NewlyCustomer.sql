@@ -20,6 +20,7 @@ WHERE ci.roleid = 4
 			AND cs.isinternal = 0
 			AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
 			AND s.islicensee = 0
+			AND ci.site IN ('755555', 'Indo', 'KORIBC', '733333', '222223', '222225', '222227')
 
 DECLARE @ProductID TINYINT = 28
 CREATE TABLE #DestinationSportBetType(fSportType SMALLINT, fBetType SMALLINT,tSportType SMALLINT, tBetType SMALLINT, IsLive BIT,  SettingType INT)
@@ -49,13 +50,13 @@ CREATE TABLE #SMATemp
 INSERT INTO #MemberTemp (CustID, currency)
 SELECT custid, currency
 FROM Custinfo WITH (NOLOCK)
-WHERE srecommend IN (SELECT custid FROM #supers) AND roleid = 1  AND Enabled = 1 AND custid <= @maxcustid
+WHERE srecommend IN (SELECT custid FROM #supers) AND roleid = 1  AND Enabled = 1 AND custid > @maxcustid
 	
 	
 INSERT INTO #SMATemp (CustID, roleid, currency)
 SELECT custid, roleid, currency
 FROM Custinfo WITH (NOLOCK)
-WHERE srecommend IN (SELECT custid FROM #supers) AND roleid IN (2,3,4) AND Enabled = 1 AND custid <= @maxcustid 
+WHERE srecommend IN (SELECT custid FROM #supers) AND roleid IN (2,3,4) AND Enabled = 1 AND custid > @maxcustid 
 
 DECLARE @MaxPT TINYINT--, @MaxComm DECIMAL(9,8), @Currency INT
 SELECT TOP 1 @MaxPT = MaxPT FROM dbo.ProductSettingDetail WITH (NOLOCK) WHERE ProductID = @ProductID AND SettingType = 1
@@ -209,12 +210,11 @@ DECLARE @BitmapOrder TINYINT = 11
 
 UPDATE cs
 SET cs.bitmapIsHidden = IsHidden.NewBitmap,
-	bitmapIsDisabled = CASE WHEN ci.roleid = 1 THEN IsDisable.NewBitmap ELSE IsDisable_Enabled.NewBitmap END
+	bitmapIsDisabled = IsDisable.NewBitmap
 FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
 	INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.CustID
 	CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0) IsHidden
-	CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0) IsDisable_Enabled
-	CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,1) IsDisable
+	CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0) IsDisable
 WHERE ci.srecommend IN (SELECT custid FROM #supers) AND ci.custid > @MaxCustID
 
 
