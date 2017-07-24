@@ -260,7 +260,7 @@ SELECT ci.custid, dest.tsporttype, dest.tbettype, 0, cs.DefaultLossLimit, 1
 FROM #SMATemp ci WITH(NOLOCK) 
 	INNER JOIN dbo.LossLimit_GlobalSetting cs WITH(NOLOCK) ON ci.currency = cs.ExchangeId
 	CROSS APPLY #DestinationSportBetType dest WITH(NOLOCK) 	
-WHERE dest.SettingType = 6
+WHERE dest.SettingType = 6 AND cs.ProductId = @ProductID
 
 --Member Level
 INSERT INTO dbo.CustWinLossLimit_Member (CustId, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
@@ -268,7 +268,7 @@ SELECT ci.custid, dest.tsporttype, dest.tbettype, 0, cs.DefaultLossLimit, 1
 FROM #MemberTemp ci WITH(NOLOCK) 
 	INNER JOIN dbo.LossLimit_GlobalSetting cs WITH(NOLOCK) ON ci.currency = cs.ExchangeId
 	CROSS APPLY #DestinationSportBetType dest WITH(NOLOCK) 
-WHERE dest.SettingType = 6
+WHERE dest.SettingType = 6 AND cs.ProductId = @ProductID
 
 /*******************************CUST PRODUCTSTATUS TABLE*******************************/	
 DECLARE @BitmapOrder TINYINT = 11

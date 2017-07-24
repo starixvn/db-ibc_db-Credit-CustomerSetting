@@ -195,7 +195,7 @@ BEGIN
 	FROM #SMATemp ci WITH(NOLOCK) 
 		CROSS APPLY #DestinationSportBetType dest WITH(NOLOCK) 
 		CROSS APPLY dbo.LossLimit_GlobalSetting cs WITH(NOLOCK)
-	WHERE dest.SettingType = 6 AND cs.ExchangeId = @Currency
+	WHERE dest.SettingType = 6 AND cs.ExchangeId = @Currency AND cs.ProductId = @ProductID
 
 	--Member Level
 	INSERT INTO dbo.CustWinLossLimit_Member (CustId, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
@@ -203,7 +203,7 @@ BEGIN
 	FROM #MemberTemp ci WITH(NOLOCK) 
 		CROSS APPLY #DestinationSportBetType dest WITH(NOLOCK) 
 		CROSS APPLY dbo.LossLimit_GlobalSetting cs WITH(NOLOCK)
-	WHERE dest.SettingType = 6 AND cs.ExchangeId = @Currency
+	WHERE dest.SettingType = 6 AND cs.ExchangeId = @Currency AND cs.ProductId = @ProductID
 
 	DROP TABLE #SMATemp
 	DROP TABLE #MemberTemp
