@@ -4,6 +4,27 @@
 	Task: Copy permission Lottery from Keno for Ext Group
 	DB: DBEAS/bodb_EAS
 */
+--Reference f_SiteBySystem
+
+----Get Ext Group List
+--CREATE TABLE #supers (custid int,isfinished bit default(0))
+
+--INSERT INTO #supers(custid)
+--SELECT ci.custid
+--FROM customer ci WITH (NOLOCK) 
+--	INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
+--	LEFT JOIN custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
+--WHERE ci.roleid = 4  
+--	AND ci.username NOT LIKE '3rdSuper%'
+--	AND cs.isinternal = 0
+--	AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
+--	AND s.islicensee = 0
+--	AND ci.site IN ('755555', 'Indo', 'KORIBC', '733333', '222223', '222225', '222227')
+
+--SELECT  DISTINCT u.GroupName
+--FROM #supers c WITH(NOLOCK)
+--	INNER join DBAGE.bodb_AGE.dbo.Acc_CustGroup u WITH(NOLOCK) ON c.custid= u.custid
+
 USE bodb_EAS
 GO
 
@@ -13,19 +34,10 @@ CREATE TABLE #PermissionMapping (PermissionFrom SMALLINT, PermissionTo SMALLINT)
 INSERT INTO #GroupExt (GroupID)
 SELECT GroupID
 FROM dbo.eaGroup WITH(NOLOCK)
-WHERE GroupName IN ('ACCYEN'
-					,'ACCYEN789'
-					,'ACCYEN889'
-					,'ACCYEN668'
-					,'ACCNTD'
-					,'ACCIRR'
-					,'ACCUSD'
-					,'ACCUT'
-					,'ACCYEN888'
-					,'ACCUT2'
-					,'ACCUSDOTH')
+WHERE GroupName IN ('ACCTHAI','ACCTHAI2','ACCTHAI56','ACCTHAI99',
+					'ACCINDO','ACCIN','INDOBS','INDO2','INDO56','INDOWIN','INDO56B', 'ACCDDD')
 
-
+--input Permission To
 INSERT INTO #PermissionMapping (PermissionFrom, PermissionTo)
 SELECT 82, 104 --Keno ==> Edit NG2 Setting
 UNION ALL SELECT 85, 105 --Keno Bet Setting ==> Edit NG2 Betting Limit
