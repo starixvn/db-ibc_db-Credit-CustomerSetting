@@ -34,38 +34,23 @@ BEGIN
 
 	CREATE TABLE #MemberTemp
 	(
-		CustID INT PRIMARY KEY CLUSTERED,
-		maxpermatch180 MONEY,
-		maxpermatch181 MONEY,
-		maxpermatch182 MONEY,
-		maxpermatch183 MONEY,
-		maxpermatch184 MONEY,
-		maxpermatch185 MONEY,
-		maxpermatch186 MONEY
-
+		CustID INT PRIMARY KEY CLUSTERED
 	)
 
 	CREATE TABLE #SMATemp
 	(
 		CustID INT PRIMARY KEY CLUSTERED,
-		roleid TINYINT,
-		maxpermatch180 MONEY,
-		maxpermatch181 MONEY,
-		maxpermatch182 MONEY,
-		maxpermatch183 MONEY,
-		maxpermatch184 MONEY,
-		maxpermatch185 MONEY,
-		maxpermatch186 MONEY
+		roleid TINYINT
 	)
 	
-	INSERT INTO #MemberTemp (CustID, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186)
-	SELECT custid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186
+	INSERT INTO #MemberTemp (CustID)
+	SELECT custid
 	FROM Custinfo WITH (NOLOCK)
 	WHERE srecommend = @srecommend AND roleid = 1 AND custid <= @maxcustid
 	
 	
-	INSERT INTO #SMATemp (CustID, roleid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186)
-	SELECT custid, roleid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186
+	INSERT INTO #SMATemp (CustID, roleid)
+	SELECT custid, roleid
 	FROM Custinfo WITH (NOLOCK)
 	WHERE srecommend = @srecommend AND roleid IN (2,3,4) AND custid <= @maxcustid 
 
@@ -195,7 +180,8 @@ BEGIN
 					WHEN dest.fSportType = 186 THEN ci.maxpermatch186
 					ELSE ci.maxpermatch180 END
 	FROM dbo.CustSetting3rd cs WITH(NOLOCK)
-		INNER JOIN #SMATemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
+		INNER JOIN #SMATemp s WITH(NOLOCK) ON cs.CustID = s.custid
+		INNER JOIN custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid
 		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
 
 	--Member Level
@@ -209,7 +195,8 @@ BEGIN
 					WHEN dest.fSportType = 186 THEN ci.maxpermatch186
 					ELSE ci.maxpermatch180 END
 	FROM dbo.CustSetting3rd cs WITH(NOLOCK)
-		INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
+		INNER JOIN #MemberTemp m WITH(NOLOCK) ON cs.CustID = m.custid
+		INNER JOIN custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid
 		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
 	
 	DROP TABLE #SMATemp

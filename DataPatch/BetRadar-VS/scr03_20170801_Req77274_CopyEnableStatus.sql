@@ -26,11 +26,11 @@ BEGIN
 
 	/*******************************CUST PRODUCT STATUS TABLE*******************************/	
 	UPDATE cs
-	SET cs.bitmapIsHidden = dbo.f_GenerateProductStatus(bitmapIsHidden, @BitmapOrder, ci.HideVirtualSports),
-		bitmapIsDisabled = CASE WHEN ci.HideVirtualSports = 1 THEN dbo.f_GenerateProductStatus(bitmapIsDisabled, @BitmapOrder, 1) 
-								ELSE dbo.f_GenerateProductStatus(bitmapIsDisabled, @BitmapOrder, ci.DisableVirtualSports) END
+	SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,ci.HideVirtualSports)),
+		bitmapIsDisabled = CASE WHEN ci.HideVirtualSports = 1 THEN (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,1)) 
+								ELSE (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,ci.DisableVirtualSports)) END
 	FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
-		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.CustID
+		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.CustID		
 	WHERE ci.srecommend = @Custid AND ci.custid <= @maxcustid
 
 END
