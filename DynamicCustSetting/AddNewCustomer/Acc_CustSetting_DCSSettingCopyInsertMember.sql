@@ -879,7 +879,7 @@ BEGIN
 	END
 
 	/********************************************* Ticket Commision : SettingType = 14 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,3))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,14))
 	BEGIN
 		DECLARE @ProductID14 INT
 		CREATE TABLE #TicketComm (ProductID INT)
