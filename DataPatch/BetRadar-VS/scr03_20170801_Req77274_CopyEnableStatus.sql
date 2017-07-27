@@ -58,6 +58,14 @@ WHERE ci.roleid = 4
 			AND s.islicensee = 0
 			AND ci.custid <= @max_custid
 
+-- For deployer info
+DECLARE @super_cnt INT, @index INT = 0
+DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
+DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
+
+SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
+
 WHILE (1 = 1)
 BEGIN
 	UPDATE TOP (1) #Supers
@@ -66,7 +74,10 @@ BEGIN
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
-			
+		
+	SET @index = @index + 1
+	RAISERROR (@msg, 0, 1, @index, @srecommend) WITH NOWAIT
+
 	EXEC dbo.Acc_DynamicCustomerInfo_09 @custid = @srecommend
 			,@maxcustid = @max_custid
 			,@target = 'REPLICATED'
@@ -96,6 +107,14 @@ WHERE ci.roleid = 4
 			AND s.islicensee = 0
 			AND ci.custid <= @max_custid
 
+-- For deployer info
+DECLARE @super_cnt INT, @index INT = 0
+DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
+DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
+
+SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
+
 WHILE (1 = 1)
 BEGIN
 	UPDATE TOP (1) #Supers
@@ -104,6 +123,9 @@ BEGIN
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
+
+	SET @index = @index + 1
+	RAISERROR (@msg, 0, 1, @index, @srecommend) WITH NOWAIT
 
 	EXEC dbo.Acc_DynamicCustomerInfo_09 @custid = @srecommend
 			,@maxcustid = @max_custid
