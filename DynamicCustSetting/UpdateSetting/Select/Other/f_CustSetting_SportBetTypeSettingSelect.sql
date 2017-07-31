@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="" viewers="vnteam" isFunction="1"></info>*/
 ALTER FUNCTION f_CustSetting_SportBetTypeSettingSelect(@ProductID TINYINT, @SettingType SMALLINT) 
 RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
 BEGIN 
@@ -24,6 +25,5 @@ BEGIN
 	
 	RETURN
 END
-go
-GRANT SELECT ON f_CustSetting_SportBetTypeSettingSelect TO [bodbDownlineNet] 
+GO
 
