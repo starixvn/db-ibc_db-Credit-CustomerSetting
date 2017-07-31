@@ -13,10 +13,10 @@ AS
 	Original:
 
 	Revision:
-	
+		- 20170424@Elodie: Get Winning Share commission values of a product [Redmine: #75221]
 	Param's Explanation:
 	
-	Example: EXEC Acc_CustSetting_WinningShareCommissionSelect_xtest @CustID = 1176070, @ProductID = 26
+	Example: EXEC Acc_CustSetting_WinningShareCommissionSelect @CustID = 1176070, @ProductID = 26
 	*/
 BEGIN
 	DECLARE	@RoleID			TINYINT,
@@ -86,4 +86,4 @@ BEGIN
 
 	DROP TABLE #SportBettypeFilter
 END
-
+GO

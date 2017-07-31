@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" IsNested = 1></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" IsNested = "1"></info>*/
 USE [CustDB]
 GO
 
@@ -723,3 +723,4 @@ BEGIN
 		END CATCH
 	END	
 END
+GO

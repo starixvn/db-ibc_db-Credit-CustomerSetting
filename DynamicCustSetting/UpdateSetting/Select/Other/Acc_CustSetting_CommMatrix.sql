@@ -122,3 +122,4 @@ BEGIN
 
 	DROP TABLE #SportBettypeFilter
 END  
+GO

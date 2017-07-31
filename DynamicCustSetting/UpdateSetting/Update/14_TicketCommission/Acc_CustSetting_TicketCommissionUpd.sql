@@ -19,6 +19,7 @@ AS
 	Original:
 
 	Revisions:
+		- 20170424@Elodie: Update Customer's Ticket Commission [Redmine: #75221]
 
 	Param's Explanation:
 		• @Commission:
