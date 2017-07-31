@@ -861,9 +861,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 		Revisions:
 			- 20131120@Kathy: Add Virtual Greyhounds, Virtual Motor Racing (182, 184) [Redmine:#7234]. Refer to Sps:
 				+ Acc_CustomerInsMemb
-				+ Acc_CustomerInsMember_SAg_xtest
-				+ Acc_CustomerInsMember_MAg_xtest
-				+ Acc_CustomerInsMember_Ag_xtest
+				+ Acc_CustomerInsMember_SAg
+				+ Acc_CustomerInsMember_MAg
+				+ Acc_CustomerInsMember_Ag
 			- 20140303@Patrick	: Add more sport:202 for Keno
 			- 20140331@Sophia: remove Fi sporttype = 201
 			- 20140402@Kathy: Add Virtual Speedway (183), Virtual Virtual Cycling (185)	[Redmine:#14142]

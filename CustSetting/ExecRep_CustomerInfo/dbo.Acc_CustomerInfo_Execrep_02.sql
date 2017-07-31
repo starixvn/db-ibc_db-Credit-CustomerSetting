@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" IsNested = 1></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" IsNested = "1"></info>*/
 USE [CustDB]
 GO
 
@@ -391,4 +391,3 @@ BEGIN
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/
 END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerInfo_Execrep_02] TO [vnteam] AS [dbo]
