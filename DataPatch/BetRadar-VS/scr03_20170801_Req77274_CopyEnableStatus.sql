@@ -38,7 +38,7 @@ GO
 -- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
 ------------------------------------------------------	
 
--- BEGIN STEP 2: RUN THIS SCRIPT AT ALL REPLICATED SERVERS (06/DBTP) -----
+-- BEGIN STEP 2: RUN THIS SCRIPT AT ALL REPLICATED SERVERS -----
 --------------------------------------------------------------------------------------
 CREATE TABLE #supers (custid int,isfinished bit default(0))
 
@@ -83,7 +83,7 @@ BEGIN
 			,@target = 'REPLICATED'
 			
 			
-	waitfor delay '00:00:0.280'
+	waitfor delay '00:00:0.200'
 END
 GO
 
@@ -131,5 +131,5 @@ BEGIN
 			,@maxcustid = @max_custid
 			,@target = 'DBCUST'
 						
-	waitfor delay '00:00:0.280'
+	waitfor delay '00:00:0.200'
 END

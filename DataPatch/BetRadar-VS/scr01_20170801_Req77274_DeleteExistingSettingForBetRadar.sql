@@ -8,7 +8,6 @@
  -- BEGIN STEP 1: DEPLOY THIS SP @DBCUST.CustDB ------
 ------------------------------------------------------
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09]
-	@srecommend INT,
 	@target VARCHAR(20)
 AS
 BEGIN
@@ -23,128 +22,71 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN
 			
+	CREATE TABLE #CustPTSetting3rd_Agent (CustID INT PRIMARY KEY)
+	CREATE TABLE #CustPTSetting3rd_Member (CustID INT PRIMARY KEY)
+	CREATE TABLE #CustPTGroupSetting3rd_Member (CustID INT PRIMARY KEY)
+	CREATE TABLE #CustBetSetting3rd_Agent (CustID INT PRIMARY KEY)
+	CREATE TABLE #CustBetSetting3rd_Member (CustID INT PRIMARY KEY)
+
+	SELECT DISTINCT custid 
+	INTO #CustPT_Agent
+	FROM CustPTSetting3rd_Agent cg WITH(NOLOCK)		
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191
+
+	SELECT DISTINCT custid 
+	INTO #CustPT_Member
+	FROM CustPTSetting3rd_Member cg WITH(NOLOCK)		
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191
+
+	SELECT DISTINCT cg.AgentID AS CustID
+	INTO #CustPTGroup_Member
+	FROM CustPTGroupSetting3rd_Member cg WITH(NOLOCK)		
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191
+
+	SELECT DISTINCT custid 
+	INTO #CustBet_Agent
+	FROM CustBetSetting3rd_Agent cg WITH(NOLOCK)		
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191 OR cg.SportType = 199
+
+	SELECT DISTINCT custid 
+	INTO #CustBet_Member
+	FROM CustBetSetting3rd_Member cg WITH(NOLOCK)		
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191 OR cg.SportType = 199
+
 	DELETE cg
 	FROM CustPTSetting3rd_Agent cg WITH(UPDLOCK,ROWLOCK)		
-		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cg.CustID
-	WHERE (SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191)
-		AND ci.srecommend = @srecommend
+		INNER JOIN #CustPT_Agent ci ON ci.custid = cg.CustID
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191
 						
 	DELETE cg
 	FROM CustPTSetting3rd_Member cg WITH(UPDLOCK,ROWLOCK)		
-		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cg.CustID
-	WHERE (SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191)
-		AND ci.srecommend = @srecommend
+		INNER JOIN #CustPT_Member ci ON ci.custid = cg.CustID
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191
 		
 	DELETE cg
 	FROM CustPTGroupSetting3rd_Member cg WITH(UPDLOCK,ROWLOCK)		
-		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cg.AgentID
-	WHERE (SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191)
-		AND ci.srecommend = @srecommend
+		INNER JOIN #CustPTGroup_Member ci ON ci.CustID = cg.AgentID
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191		
 				
 	DELETE cg
 	FROM CustBetSetting3rd_Agent cg WITH(UPDLOCK,ROWLOCK)
-		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cg.CustID		
-	WHERE (SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191 OR cg.SportType = 199)
-		AND ci.srecommend = @srecommend
+		INNER JOIN #CustBet_Agent ci ON ci.custid = cg.CustID		
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191 OR cg.SportType = 199
 
 	DELETE cg
 	FROM CustBetSetting3rd_Member cg WITH(UPDLOCK,ROWLOCK)
-		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cg.CustID		
-	WHERE (SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191 OR cg.SportType = 199)
-		AND ci.srecommend = @srecommend
+		INNER JOIN #CustBet_Member ci ON ci.custid = cg.CustID		
+	WHERE SportType BETWEEN 180 AND 186 OR cg.SportType BETWEEN 190 AND 191 OR cg.SportType = 199
 
 END	
 GO
 -- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
 ------------------------------------------------------	
 
-CREATE TABLE #supers (custid int,isfinished bit default(0))
-
-DECLARE @max_custid INT, @srecommend INT
-
-SELECT @max_custid = xxx
-
-INSERT INTO #supers(custid)
-SELECT ci.custid
-FROM customer ci WITH (NOLOCK) 
-	INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
-	LEFT JOIN custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
-WHERE ci.roleid = 4  
-			AND ci.username NOT LIKE '3rdSuper%'
-			AND cs.isinternal = 0
-			AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
-			AND s.islicensee = 0
-
--- For deployer info
-DECLARE @super_cnt INT, @index INT = 0
-DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
-DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
-
-SET @super_cnt = (SELECT COUNT(*) FROM #supers )
-RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
-
-WHILE (1 = 1)
-BEGIN
-	UPDATE TOP (1) #Supers
-	SET isfinished = 1
-		,@srecommend = custid	
-	WHERE isfinished = 0
-	
-	IF @@ROWCOUNT = 0 BREAK
-		
-	SET @index = @index + 1
-	RAISERROR (@msg, 0, 1, @index, @srecommend) WITH NOWAIT
-
-	EXEC dbo.Acc_DynamicCustSetting3rd_09 @srecommend = @srecommend
-			,@target = 'REPLICATED'
-			
-			
-	waitfor delay '00:00:0.280'
-END
-GO
+-- BEGIN STEP 2: RUN THIS SCRIPT AT REPLICATED SERVERS -----
+--------------------------------------------------------------------------------------
+EXEC Acc_DynamicCustSetting3rd_09 @target = 'REPLICATED'
 
 -- BEGIN STEP 3: RUN THIS SCRIPT AT DBCUST -----
 --------------------------------------------------------------------------------------
-CREATE TABLE #supers (custid int,isfinished bit default(0))
-
-DECLARE @max_custid INT, @srecommend INT
-
-SELECT @max_custid = xxx
-
-INSERT INTO #supers(custid)
-SELECT ci.custid
-FROM customer ci WITH (NOLOCK) 
-	INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
-	LEFT JOIN custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
-WHERE ci.roleid = 4  
-			AND ci.username NOT LIKE '3rdSuper%'
-			AND cs.isinternal = 0
-			AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
-			AND s.islicensee = 0
-
--- For deployer info
-DECLARE @super_cnt INT, @index INT = 0
-DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
-DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
-
-SET @super_cnt = (SELECT COUNT(*) FROM #supers )
-RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
-
-WHILE (1 = 1)
-BEGIN
-	UPDATE TOP (1) #Supers
-	SET isfinished = 1
-		,@srecommend = custid	
-	WHERE isfinished = 0
-	
-	IF @@ROWCOUNT = 0 BREAK
-
-	SET @index = @index + 1
-	RAISERROR (@msg, 0, 1, @index, @srecommend) WITH NOWAIT
-
-	EXEC dbo.Acc_DynamicCustSetting3rd_09 @srecommend = @srecommend
-			,@target = 'DBCUST'
-						
-	waitfor delay '00:00:0.280'
-END
-
+EXEC Acc_DynamicCustSetting3rd_09 @target = 'DBCUST'

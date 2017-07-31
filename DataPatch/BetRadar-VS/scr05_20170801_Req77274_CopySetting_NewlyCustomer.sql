@@ -32,38 +32,23 @@ WHERE ProductID = @ProductID AND SettingType IN (1, 2)
 
 CREATE TABLE #MemberTemp
 (
-	CustID INT PRIMARY KEY CLUSTERED,
-	maxpermatch180 MONEY,
-	maxpermatch181 MONEY,
-	maxpermatch182 MONEY,
-	maxpermatch183 MONEY,
-	maxpermatch184 MONEY,
-	maxpermatch185 MONEY,
-	maxpermatch186 MONEY
-
+	CustID INT PRIMARY KEY CLUSTERED
 )
 
 CREATE TABLE #SMATemp
 (
 	CustID INT PRIMARY KEY CLUSTERED,
 	roleid TINYINT,
-	currency INT,
-	maxpermatch180 MONEY,
-	maxpermatch181 MONEY,
-	maxpermatch182 MONEY,
-	maxpermatch183 MONEY,
-	maxpermatch184 MONEY,
-	maxpermatch185 MONEY,
-	maxpermatch186 MONEY
+	currency INT
 )
 	
-INSERT INTO #MemberTemp (CustID, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186)
-SELECT custid, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186
+INSERT INTO #MemberTemp (CustID)
+SELECT custid
 FROM Custinfo WITH (NOLOCK)
 WHERE srecommend IN (SELECT custid FROM #supers) AND roleid = 1  AND custid > @MaxCustID
 	
-INSERT INTO #SMATemp (CustID, roleid, currency, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186)
-SELECT custid, roleid, currency, maxpermatch180, maxpermatch181, maxpermatch182, maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186
+INSERT INTO #SMATemp (CustID, roleid, currency)
+SELECT custid, roleid, currency
 FROM Custinfo WITH (NOLOCK)
 WHERE srecommend IN (SELECT custid FROM #supers) AND roleid IN (2,3,4) AND custid > @MaxCustID
 
@@ -130,57 +115,6 @@ FROM dbo.CustSetting3rd cs WITH(NOLOCK)
 	INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
 	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
 	
---DECLARE @apos SMALLMONEY,
---		@mpos SMALLMONEY
-	
---UPDATE cs
---SET cs.MinPT = @MaxPT
---FROM dbo.CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE MinPT > @MaxPT		
-	
---UPDATE cs
---SET @apos = CASE WHEN cs.AgentPT > @MaxPT THEN @MaxPT ELSE cs.AgentPT END,
---	cs.AgentPT = @apos,
---	@mpos = CASE WHEN @apos + cs.MasterPT > @MaxPT THEN @MaxPT- @apos ELSE cs.MasterPT END,
---	cs.MasterPT = @mpos,
---	cs.SuperPT = CASE WHEN @apos + @mpos + cs.SuperPT > @MaxPT THEN @MaxPT - @mpos -@apos ELSE cs.SuperPT END
---FROM  CustPTSetting3rd_Member cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #MemberTemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE cs.SuperPT + cs.MasterPT + cs.AgentPT > @MaxPT
-		
---UPDATE cs
---SET @apos = CASE WHEN cs.AgentPT > @MaxPT THEN @MaxPT ELSE cs.AgentPT END,
---	cs.AgentPT = @apos,
---	cs.MasterPT = CASE WHEN @apos + cs.MasterPT > @MaxPT THEN @MaxPT- @apos ELSE cs.MasterPT END		
---FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE cs.MasterPT + cs.AgentPT > @MaxPT	AND roleid = 2
-	
---UPDATE cs
---SET @mpos = CASE WHEN cs.MasterPT > @MaxPT THEN @MaxPT ELSE cs.MasterPT END,
---	cs.MasterPT = @mpos,
---	cs.SuperPT = CASE WHEN cs.SuperPT + @mpos > @MaxPT THEN @MaxPT - @mpos ELSE cs.SuperPT END 		
---FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE cs.MasterPT + cs.SuperPT > @MaxPT	AND roleid = 3
-		
---UPDATE cs
---SET cs.SuperPT = CASE WHEN cs.SuperPT <> @MaxPT THEN @MaxPT ELSE cs.SuperPT END, 		
---	cs.MasterPT = CASE WHEN cs.MasterPT <> @MaxPT THEN @MaxPT ELSE cs.MasterPT END, 	
---	cs.AgentPT = CASE WHEN cs.AgentPT <> @MaxPT THEN @MaxPT ELSE cs.AgentPT END 	
---FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE ci.custid = @srecommend		
---	AND (cs.SuperPT <> @MaxPT	
---		OR cs.MasterPT <> @MaxPT
---		OR cs.AgentPT <> @MaxPT)	
-
 --------------------------------------Bet Setting-------------------------------------------------		
 --Agent Level
 INSERT INTO dbo.CustBetSetting3rd_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
@@ -193,7 +127,8 @@ SELECT ci.custid, dest.tsporttype, dest.tbettype, cs.minbet, cs.maxbet,
 				WHEN dest.fSportType = 186 THEN ci.maxpermatch186
 				ELSE ci.maxpermatch180 END
 FROM dbo.CustSetting3rd cs WITH(NOLOCK)
-	INNER JOIN #SMATemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
+	INNER JOIN #SMATemp s WITH(NOLOCK) ON cs.CustID = s.custid
+	INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid
 	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
 
 --Member Level
@@ -207,7 +142,8 @@ SELECT ci.custid, dest.tsporttype, dest.tbettype, cs.minbet, cs.maxbet,
 				WHEN dest.fSportType = 186 THEN ci.maxpermatch186
 				ELSE ci.maxpermatch180 END
 FROM dbo.CustSetting3rd cs WITH(NOLOCK)
-	INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
+	INNER JOIN #MemberTemp m WITH(NOLOCK) ON cs.CustID = m.custid
+	INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid
 	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType	
 
 /*******************************CUST PRODUCTSTATUS TABLE*******************************/	
