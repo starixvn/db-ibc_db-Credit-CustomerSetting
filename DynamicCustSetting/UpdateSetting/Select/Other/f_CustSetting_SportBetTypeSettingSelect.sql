@@ -1,6 +1,18 @@
 /*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="" viewers="vnteam" isFunction="1"></info>*/
 ALTER FUNCTION f_CustSetting_SportBetTypeSettingSelect(@ProductID TINYINT, @SettingType SMALLINT) 
 RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
+/*
+	Created by: Elodie
+	Date: 20170317
+	Task: Get setting of product
+	DB: DBCust/CustDB, DBAGE/bodb02, DBACC/bodb02
+	Original: 
+	
+	Revisions:
+		- 20170317@Elodie: Get setting of product
+	Explanation's Param:
+		
+*/   
 BEGIN 
 	DECLARE @isTest BIT,@SQL NVARCHAR(100) = OBJECT_NAME(@@PROCID)
 
