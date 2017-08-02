@@ -4,205 +4,231 @@
 	DB: DBCUST/CustDB
 	Date: 20170801
 */ 
-DECLARE @ProductID TINYINT = 5
+ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09]
+AS
+BEGIN
+	
+	SET NOCOUNT ON
 
-CREATE TABLE #DestinationSportBetType(fSportType SMALLINT, fBetType SMALLINT,tSportType SMALLINT, tBetType SMALLINT, IsLive BIT,  SettingType INT)
-INSERT INTO #DestinationSportBetType
-SELECT	CASE WHEN SportType IN (190, 191, 199) THEN 180 ELSE SportType END, 
-		CASE WHEN SportType IN (190, 191, 199) THEN 1201 ELSE BetType END, 
-		SportType, BetType, 0, SettingType
-FROM dbo.ProductSettingDetail WITH (NOLOCK)
-WHERE ProductID = @ProductID AND SettingType IN (1, 2)
+	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
 
-CREATE TABLE #supers (custid INT)
-CREATE TABLE #SMAList_PT (custid INT)
-CREATE TABLE #SMAList_BetSetting (custid INT)
-CREATE TABLE #MemberList_PT (custid INT)
-CREATE TABLE #MemberList_BetSetting (custid INT)
-CREATE TABLE #CustList_Status (custid INT)
+	DECLARE @ProductID TINYINT = 5
+	DECLARE @fSportType SMALLINT, @fBetType SMALLINT, @tSportType SMALLINT, @tBetType SMALLINT, @IsLive BIT
 
-INSERT INTO #supers(custid)
-SELECT ci.custid
-FROM customer ci WITH (NOLOCK) 
-	INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
-	LEFT JOIN custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
-WHERE ci.roleid = 4  
-	AND ci.username NOT LIKE '3rdSuper%'
-	AND cs.isinternal = 0
-	AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
-	AND s.islicensee = 0
+	CREATE TABLE #DestinationSportBetType(fSportType SMALLINT, fBetType SMALLINT,tSportType SMALLINT, tBetType SMALLINT, IsLive BIT,  SettingType INT, IsFinished BIT)
+	INSERT INTO #DestinationSportBetType(fSportType, fBetType,tSportType, tBetType, IsLive,  SettingType, IsFinished)
+	SELECT	CASE WHEN SportType IN (190, 191, 199) THEN 180 ELSE SportType END, 
+			CASE WHEN SportType IN (190, 191, 199) THEN 1201 ELSE BetType END, 
+			SportType, BetType, 0, SettingType, 0
+	FROM dbo.ProductSettingDetail WITH (NOLOCK)
+	WHERE ProductID = @ProductID AND SettingType IN (1, 2)
 
---------------------------------------Get Affected Cust List-------------------------------------------------	
---Agent Level
-INSERT INTO #SMAList_PT (custid)
-SELECT ci.custid
-FROM dbo.CustSetting3rd cs WITH(NOLOCK) 
-	INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cs.custid
-	INNER JOIN dbo.custOverride3rd co WITH(NOLOCK) ON cs.custid = co.custid and cs.sporttype = co.sporttype and cs.bettype = co.bettype	
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
-	INNER JOIN dbo.CustPTSetting3rd_Agent csa WITH(NOLOCK) ON csa.custid = cs.custid and csa.sporttype = tSportType and csa.bettype = tBetType
-WHERE ci.roleid IN (2,3,4) AND Enabled = 1
-		AND (
-			cs.SPositionTaking * 100 <> csa.SuperPT
-			OR cs.MPositionTaking * 100 <> csa.MasterPT
-			OR cs.APositionTaking * 100 <> csa.AgentPT
-			OR cs.IsAutoMPositionTaking <> csa.IsAutoMasterPT
-			OR cs.AutoMPositionTaking * 100 <> csa.AutoMasterPT
-			OR cs.IsAutoPositionTaking <> csa.IsAutoSuperPT
-			OR cs.AutoPositionTaking * 100 <> csa.AutoSuperPT
-			OR co.MinPositionTaking  * 100 <> csa.MinPT 
-			)
+	--------------------------------------PT Setting-------------------------------------------------	
+	WHILE (1 = 1)
+	BEGIN		
+		CREATE TABLE #SMAList_PT (custid INT, SPositionTaking SMALLMONEY, MPositionTaking SMALLMONEY, APositionTaking SMALLMONEY, IsAutoMPositionTaking BIT, AutoMPositionTaking SMALLMONEY, IsAutoPositionTaking BIT, AutoPositionTaking SMALLMONEY, MinPositionTaking SMALLMONEY)
+		CREATE TABLE #MemberList_PT (custid INT, SPositionTaking SMALLMONEY, MPositionTaking SMALLMONEY, APositionTaking SMALLMONEY, IsAutoMPositionTaking BIT, AutoMPositionTaking SMALLMONEY, IsAutoPositionTaking BIT, AutoPositionTaking SMALLMONEY)	
 
---Member Level
-INSERT INTO #MemberList_PT (custid)
-SELECT ci.custid
-FROM dbo.CustSetting3rd cs WITH(NOLOCK)
-	INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cs.custid
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
-	INNER JOIN dbo.CustPTSetting3rd_Member csm WITH(NOLOCK) ON csm.custid = cs.custid and csm.sporttype = tSportType and csm.bettype = tBetType	
-WHERE ci.roleid = 1 AND Enabled = 1
-		AND (
-			cs.SPositionTaking  * 100 <> csm.SuperPT
-			OR cs.MPositionTaking  * 100 <> csm.MasterPT
-			OR cs.APositionTaking  * 100 <> csm.AgentPT
-			OR cs.IsAutoMPositionTaking <> csm.IsAutoMasterPT
-			OR cs.AutoMPositionTaking * 100 <> csm.AutoMasterPT
-			OR cs.IsAutoPositionTaking <> csm.IsAutoSuperPT
-			OR cs.AutoPositionTaking  * 100 <> csm.AutoSuperPT
-			)
+		UPDATE TOP (1) #DestinationSportBetType
+		SET IsFinished = 1
+			,@fBetType = fBetType	
+			,@fSportType = fSportType
+			,@tBetType = tBetType
+			,@tSportType = tSportType
+			,@IsLive = IsLive
+		WHERE IsFinished = 0
+			AND SettingType = 1
 
---Agent Level
-INSERT INTO #SMAList_BetSetting (custid)
-SELECT c.custid
-FROM dbo.CustSetting3rd cs WITH(NOLOCK)
-	INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
-	INNER JOIN dbo.CustBetSetting3rd_Agent csa WITH(NOLOCK) ON csa.custid = cs.custid and csa.sporttype = tSportType and csa.bettype = tBetType	
-WHERE c.roleid IN (2,3,4) AND Enabled = 1
-		AND (
-			cs.minBet <> csa.minBet
-			OR cs.MaxBet <> csa.MaxBet
-			OR CASE	WHEN dest.fSportType = 181 THEN c.maxpermatch181
-					WHEN dest.fSportType = 182 THEN c.maxpermatch182					 
-					WHEN dest.fSportType = 183 THEN c.maxpermatch183
-					WHEN dest.fSportType = 184 THEN c.maxpermatch184
-					WHEN dest.fSportType = 185 THEN c.maxpermatch185
-					WHEN dest.fSportType = 186 THEN c.maxpermatch186
-					ELSE c.maxpermatch180 END <> csa.maxperMatch			
-			)
+		IF @@ROWCOUNT = 0 BREAK
+	
+		--------------------------------------Get Affected Cust List-------------------------------------------------	
+		--Agent Level
+		INSERT INTO #SMAList_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking, MinPositionTaking)
+		SELECT ci.custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking, MinPositionTaking
+		FROM dbo.CustSetting3rd cs WITH(NOLOCK) 
+			INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cs.custid
+			INNER JOIN dbo.custOverride3rd co WITH(NOLOCK) ON cs.custid = co.custid and cs.sporttype = co.sporttype and cs.bettype = co.bettype	
+			INNER JOIN dbo.CustPTSetting3rd_Agent csa WITH(NOLOCK) ON csa.custid = cs.custid
+		WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType AND csa.SportType = @tSportType AND csa.BetType = @tBetType
+				AND ci.roleid IN (2,3,4) AND Enabled = 1			
+				AND (
+					cs.SPositionTaking * 100 <> csa.SuperPT
+					OR cs.MPositionTaking * 100 <> csa.MasterPT
+					OR cs.APositionTaking * 100 <> csa.AgentPT
+					OR cs.IsAutoMPositionTaking <> csa.IsAutoMasterPT
+					OR cs.AutoMPositionTaking * 100 <> csa.AutoMasterPT
+					OR cs.IsAutoPositionTaking <> csa.IsAutoSuperPT
+					OR cs.AutoPositionTaking * 100 <> csa.AutoSuperPT
+					OR co.MinPositionTaking  * 100 <> csa.MinPT 
+					)
 
---Member Level
-INSERT INTO #MemberList_BetSetting (custid)
-SELECT c.custid
-FROM dbo.CustSetting3rd cs WITH(NOLOCK)
-	INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
-	INNER JOIN dbo.CustBetSetting3rd_Member csm WITH(NOLOCK) ON csm.custid = cs.custid and csm.sporttype = tSportType and csm.bettype = tBetType	
-WHERE c.roleid = 1 AND Enabled = 1
-		AND (
-			cs.minBet <> csm.minBet
-			OR cs.MaxBet <> csm.MaxBet
-			OR CASE	WHEN dest.fSportType = 181 THEN c.maxpermatch181
-					WHEN dest.fSportType = 182 THEN c.maxpermatch182					 
-					WHEN dest.fSportType = 183 THEN c.maxpermatch183
-					WHEN dest.fSportType = 184 THEN c.maxpermatch184
-					WHEN dest.fSportType = 185 THEN c.maxpermatch185
-					WHEN dest.fSportType = 186 THEN c.maxpermatch186
-					ELSE c.maxpermatch180 END <> csm.maxperMatch			
-			)
-			
-/*******************************CUST PRODUCTSTATUS TABLE*******************************/	
-DECLARE @BitmapOrder TINYINT = 10
+		RAISERROR('Done: Get the affected SMA list for PT', 0, 1)  WITH NOWAIT
+	
+		--Member Level
+		INSERT INTO #MemberList_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking)
+		SELECT ci.custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking
+		FROM dbo.CustSetting3rd cs WITH(NOLOCK)
+			INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cs.custid
+			INNER JOIN dbo.CustPTSetting3rd_Member csm WITH(NOLOCK) ON csm.custid = cs.custid
+		WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType AND csm.SportType = @tSportType AND csm.BetType = @tBetType
+				AND ci.roleid = 1 AND Enabled = 1
+				AND (
+					cs.SPositionTaking  * 100 <> csm.SuperPT
+					OR cs.MPositionTaking  * 100 <> csm.MasterPT
+					OR cs.APositionTaking  * 100 <> csm.AgentPT
+					OR cs.IsAutoMPositionTaking <> csm.IsAutoMasterPT
+					OR cs.AutoMPositionTaking * 100 <> csm.AutoMasterPT
+					OR cs.IsAutoPositionTaking <> csm.IsAutoSuperPT
+					OR cs.AutoPositionTaking  * 100 <> csm.AutoSuperPT
+					)
 
-INSERT INTO #CustList_Status (custid)
-SELECT ci.custid
-FROM [dbo].[CustProductStatus] cs WITH(NOLOCK)
-	INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.CustID	
-WHERE ci.srecommend IN (SELECT custid FROM #supers) 
-	AND (cs.bitmapIsHidden <> (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(bitmapIsHidden, @BitmapOrder, ci.HideVirtualSports))  				
-	OR bitmapIsDisabled <> CASE WHEN ci.HideVirtualSports = 1 THEN (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(bitmapIsDisabled, @BitmapOrder, 1))
-							ELSE (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(bitmapIsDisabled, @BitmapOrder, ci.DisableVirtualSports)) END)
+		RAISERROR('Done: Get the affected member list for PT', 0, 1)  WITH NOWAIT
+		-------------------------------------------------Adjust data----------------------------------------------------
+		--Agent Level
+		UPDATE csa
+		SET	csa.SuperPT = cs.spositiontaking  *100
+			,csa.MasterPT =  cs.mpositiontaking  *100
+			,csa.AgentPT = cs.apositiontaking  *100
+			,csa.IsAutoMasterPT = cs.isautompositiontaking
+			,csa.AutoMasterPT = cs.autompositiontaking *100
+			,csa.IsAutoSuperPT = cs.isautopositiontaking 
+			,csa.AutoSuperPT = cs.autopositiontaking  *100
+			,csa.MinPT = cs.minpositiontaking *100
+		FROM dbo.CustPTSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK) 
+			INNER JOIN #SMAList_PT cs WITH (NOLOCK) ON cs.custid = csa.custid
+		WHERE csa.SportType = @tSportType AND csa.BetType = @tBetType
+	
+		RAISERROR('Done: Update the affected SMA list for PT', 0, 1)  WITH NOWAIT
 
--------------------------------------------------Adjust data----------------------------------------------------
------------PT Setting-------------------------------------------------		
---Agent Level
-UPDATE csa
-SET	csa.SuperPT = cs.spositiontaking  *100
-	,csa.MasterPT =  cs.mpositiontaking  *100
-	,csa.AgentPT = cs.apositiontaking  *100
-	,csa.IsAutoMasterPT = cs.isautompositiontaking
-	,csa.AutoMasterPT = cs.autompositiontaking *100
-	,csa.IsAutoSuperPT = cs.isautopositiontaking 
-	,csa.AutoSuperPT = cs.autopositiontaking  *100
-	,csa.MinPT = co.minpositiontaking *100
-FROM dbo.CustPTSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK) 
-	INNER JOIN #SMAList_PT ci WITH (NOLOCK) ON ci.custid = csa.custid
-	INNER JOIN dbo.CustSetting3rd cs WITH(NOLOCK)  ON cs.custid = ci.custid 
-	INNER JOIN dbo.custOverride3rd co WITH(NOLOCK) ON cs.custid = co.custid and cs.sporttype = co.sporttype and cs.bettype = co.bettype			
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType and csa.sporttype = tSportType and csa.bettype = tBetType
+		--MEMBER LEVEL
+		UPDATE csm
+		SET	csm.SuperPT = cs.spositiontaking  *100
+			,csm.MasterPT =  cs.mpositiontaking  *100
+			,csm.AgentPT = cs.apositiontaking  *100
+			,csm.IsAutoMasterPT = cs.isautompositiontaking
+			,csm.AutoMasterPT = cs.autompositiontaking *100
+			,csm.IsAutoSuperPT = cs.isautopositiontaking 
+			,csm.AutoSuperPT = cs.autopositiontaking  *100
+		FROM dbo.CustPTSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #MemberList_PT cs WITH (NOLOCK) ON cs.custid = csm.custid
+		WHERE csm.SportType = @tSportType AND csm.BetType = @tBetType	
 
---MEMBER LEVEL
-UPDATE csm
-SET	csm.SuperPT = cs.spositiontaking  *100
-	,csm.MasterPT =  cs.mpositiontaking  *100
-	,csm.AgentPT = cs.apositiontaking  *100
-	,csm.IsAutoMasterPT = cs.isautompositiontaking
-	,csm.AutoMasterPT = cs.autompositiontaking *100
-	,csm.IsAutoSuperPT = cs.isautopositiontaking 
-	,csm.AutoSuperPT = cs.autopositiontaking  *100
-FROM dbo.CustPTSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK)
-	INNER JOIN #MemberList_PT ci WITH (NOLOCK) ON ci.custid = csm.custid
-	INNER JOIN dbo.CustSetting3rd cs WITH(NOLOCK) ON csm.custid = cs.custid 
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType	and csm.sporttype = tSportType and csm.bettype = tBetType	
+		RAISERROR('Done: Update the affected member list for PT', 0, 1)  WITH NOWAIT
 
---------------------------------------Bet Setting-------------------------------------------------		
---Agent Level
-UPDATE csa
-SET csa.minBet = cs.minbet,       
-	csa.MaxBet = cs.MaxBet,   
-	csa.maxperMatch = CASE	WHEN dest.fSportType = 181 THEN c.maxpermatch181
-							WHEN dest.fSportType = 182 THEN c.maxpermatch182					 
-							WHEN dest.fSportType = 183 THEN c.maxpermatch183
-							WHEN dest.fSportType = 184 THEN c.maxpermatch184
-							WHEN dest.fSportType = 185 THEN c.maxpermatch185
-							WHEN dest.fSportType = 186 THEN c.maxpermatch186
-							ELSE c.maxpermatch180 END
-FROM dbo.CustBetSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK)
-	INNER JOIN #SMAList_BetSetting s WITH(NOLOCK) ON csa.CustID = s.custid
-	INNER JOIN dbo.custInfo c WITH(NOLOCK) ON csa.CustID = c.custid	
-	INNER JOIN dbo.CustSetting3rd cs WITH(NOLOCK) ON csa.custid = cs.custid 
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType and csa.sporttype = tSportType and csa.bettype = tBetType	
+		RAISERROR(@msgDone, 0, 1, @tSportType, @tBetType)  WITH NOWAIT
 
---Member Level
-UPDATE csm
-SET csm.minBet = cs.minbet,       
-	csm.MaxBet = cs.MaxBet,   
-	csm.maxperMatch = CASE	WHEN dest.fSportType = 181 THEN c.maxpermatch181
-							WHEN dest.fSportType = 182 THEN c.maxpermatch182					 
-							WHEN dest.fSportType = 183 THEN c.maxpermatch183
-							WHEN dest.fSportType = 184 THEN c.maxpermatch184
-							WHEN dest.fSportType = 185 THEN c.maxpermatch185
-							WHEN dest.fSportType = 186 THEN c.maxpermatch186
-							ELSE c.maxpermatch180 END
-FROM dbo.CustBetSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK)
-	INNER JOIN #MemberList_BetSetting m WITH(NOLOCK) ON csm.CustID = m.custid
-	INNER JOIN custInfo c WITH(NOLOCK) ON csm.CustID = c.custid	
-	INNER JOIN dbo.CustSetting3rd cs WITH(NOLOCK) ON csm.custid = cs.custid 
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND csm.sporttype = tSportType AND csm.bettype = tBetType AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType			
-			
-/*******************************CUST PRODUCTSTATUS TABLE*******************************/	
-UPDATE cs
-	SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,ci.HideVirtualSports)),
-		bitmapIsDisabled = CASE WHEN ci.HideVirtualSports = 1 THEN (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,1)) 
-								ELSE (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,ci.DisableVirtualSports)) END
-FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
-	INNER JOIN #CustList_Status c WITH(NOLOCK) ON cs.CustID = c.CustID	
-	INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.CustID	
+		DROP TABLE #SMAList_PT
+		DROP TABLE #MemberList_PT
+	END
 
+	--------------------------------------Bet Setting-------------------------------------------------		
+	WHILE (1 = 1)
+	BEGIN		
+		CREATE TABLE #SMAList_BetSetting (custid INT, minBet MONEY, MaxBet MONEY, MaxPerMatch MONEY)
+		CREATE TABLE #MemberList_BetSetting (custid INT, minBet MONEY, MaxBet MONEY, MaxPerMatch MONEY)
 
-DROP TABLE #DestinationSportBetType		
-DROP TABLE #SMAList_PT
-DROP TABLE #SMAList_BetSetting
-DROP TABLE #MemberList_PT
-DROP TABLE #MemberList_BetSetting
-DROP TABLE #supers	
+		UPDATE TOP (1) #DestinationSportBetType
+		SET IsFinished = 1
+			,@fBetType = fBetType	
+			,@fSportType = fSportType
+			,@tBetType = tBetType
+			,@tSportType = tSportType
+			,@IsLive = IsLive
+		WHERE IsFinished = 0
+			AND SettingType = 2
+
+		IF @@ROWCOUNT = 0 BREAK
+
+		--Agent Level
+		INSERT INTO #SMAList_BetSetting (custid, minBet, MaxBet, MaxPerMatch)
+		SELECT c.custid, cs.minBet, cs.MaxBet, CASE	WHEN @fSportType = 181 THEN c.maxpermatch181
+													WHEN @fSportType = 182 THEN c.maxpermatch182					 
+													WHEN @fSportType = 183 THEN c.maxpermatch183
+													WHEN @fSportType = 184 THEN c.maxpermatch184
+													WHEN @fSportType = 185 THEN c.maxpermatch185
+													WHEN @fSportType = 186 THEN c.maxpermatch186
+													ELSE c.maxpermatch180 END
+		FROM dbo.CustSetting3rd cs WITH(NOLOCK)
+			INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
+			INNER JOIN dbo.CustBetSetting3rd_Agent csa WITH(NOLOCK) ON csa.custid = cs.custid
+		WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType AND csa.SportType = @tSportType AND csa.BetType = @tBetType
+				AND c.roleid IN (2,3,4) AND Enabled = 1
+				AND (
+					cs.minBet <> csa.minBet
+					OR cs.MaxBet <> csa.MaxBet
+					OR CASE	WHEN @fSportType = 181 THEN c.maxpermatch181
+							WHEN @fSportType = 182 THEN c.maxpermatch182					 
+							WHEN @fSportType = 183 THEN c.maxpermatch183
+							WHEN @fSportType = 184 THEN c.maxpermatch184
+							WHEN @fSportType = 185 THEN c.maxpermatch185
+							WHEN @fSportType = 186 THEN c.maxpermatch186
+							ELSE c.maxpermatch180 END <> csa.maxperMatch			
+					)
+
+		RAISERROR('Done: Get the affected SMA list for bet setting', 0, 1)  WITH NOWAIT
+
+		--Member Level
+		INSERT INTO #MemberList_BetSetting (custid, minBet, MaxBet, MaxPerMatch)
+		SELECT c.custid, cs.minBet, cs.MaxBet, CASE	WHEN @fSportType = 181 THEN c.maxpermatch181
+													WHEN @fSportType = 182 THEN c.maxpermatch182					 
+													WHEN @fSportType = 183 THEN c.maxpermatch183
+													WHEN @fSportType = 184 THEN c.maxpermatch184
+													WHEN @fSportType = 185 THEN c.maxpermatch185
+													WHEN @fSportType = 186 THEN c.maxpermatch186
+													ELSE c.maxpermatch180 END
+		FROM dbo.CustSetting3rd cs WITH(NOLOCK)
+			INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid		
+			INNER JOIN dbo.CustBetSetting3rd_Member csm WITH(NOLOCK) ON csm.custid = cs.custid
+		WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType AND csm.SportType = @tSportType AND csm.BetType = @tBetType
+				AND c.roleid = 1 AND Enabled = 1
+				AND (
+					cs.minBet <> csm.minBet
+					OR cs.MaxBet <> csm.MaxBet
+					OR CASE	WHEN @fSportType = 181 THEN c.maxpermatch181
+							WHEN @fSportType = 182 THEN c.maxpermatch182					 
+							WHEN @fSportType = 183 THEN c.maxpermatch183
+							WHEN @fSportType = 184 THEN c.maxpermatch184
+							WHEN @fSportType = 185 THEN c.maxpermatch185
+							WHEN @fSportType = 186 THEN c.maxpermatch186
+							ELSE c.maxpermatch180 END <> csm.maxperMatch			
+					)
+	
+		RAISERROR('Done: Get the affected member list for bet setting', 0, 1)  WITH NOWAIT
+
+		--------------------------------------Bet Setting-------------------------------------------------		
+		--Agent Level
+		UPDATE csa
+		SET csa.minBet = cs.minbet,       
+			csa.MaxBet = cs.MaxBet,   
+			csa.maxperMatch = cs.MaxPerMatch
+		FROM dbo.CustBetSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #SMAList_BetSetting cs WITH(NOLOCK) ON csa.CustID = cs.custid
+		WHERE csa.SportType = @tSportType AND csa.BetType = @tBetType
+
+		RAISERROR('Done: Update the affected SMA list for bet setting', 0, 1)  WITH NOWAIT
+
+		--Member Level
+		UPDATE csm
+		SET csm.minBet = cs.minbet,       
+			csm.MaxBet = cs.MaxBet,   
+			csm.maxperMatch = cs.MaxPerMatch
+		FROM dbo.CustBetSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #MemberList_BetSetting cs WITH(NOLOCK) ON csm.CustID = cs.custid
+		WHERE csm.SportType = @tSportType AND csm.BetType = @tBetType
+
+		RAISERROR('Done: Update the affected member list for bet setting', 0, 1)  WITH NOWAIT
+
+		RAISERROR(@msgDone, 0, 1, @tSportType, @tBetType)  WITH NOWAIT
+
+		DROP TABLE #SMAList_BetSetting
+		DROP TABLE #MemberList_BetSetting
+	END
+END		
+GO
+-- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
+------------------------------------------------------	
+
+-- BEGIN STEP 2: RUN THIS SCRIPT AT DBCUST SERVERS -----
+--------------------------------------------------------------------------------------
+EXEC dbo.Acc_DynamicCustSetting3rd_09 
+

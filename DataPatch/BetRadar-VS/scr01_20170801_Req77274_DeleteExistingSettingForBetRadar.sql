@@ -20,13 +20,7 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN
-			
-	CREATE TABLE #CustPTSetting3rd_Agent (CustID INT PRIMARY KEY)
-	CREATE TABLE #CustPTSetting3rd_Member (CustID INT PRIMARY KEY)
-	CREATE TABLE #CustPTGroupSetting3rd_Member (CustID INT PRIMARY KEY)
-	CREATE TABLE #CustBetSetting3rd_Agent (CustID INT PRIMARY KEY)
-	CREATE TABLE #CustBetSetting3rd_Member (CustID INT PRIMARY KEY)
+	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN				
 
 	SELECT DISTINCT custid 
 	INTO #CustPT_Agent
