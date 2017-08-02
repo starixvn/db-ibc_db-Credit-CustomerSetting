@@ -34,26 +34,32 @@ BEGIN
 				AND roleid BETWEEN 1 AND 3)
 			OR (recommend IN (8346,104769) AND roleid BETWEEN 1 AND 2)
 
-		UPDATE cs
-		SET cs.bitmapIsHidden = IsHidden.NewBitmap,
-			bitmapIsDisabled = CASE WHEN ci.roleid BETWEEN 2 AND 4 THEN IsDisable.NewBitmap ELSE bitmapIsDisabled END
-		FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.CustID
-			CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0) IsHidden
-			CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0) IsDisable
-		WHERE ci.srecommend = @Custid 
+		SELECT custid, ci.roleid
+		INTO #CustListDirect
+		FROM dbo.custInfo ci WITH (NOLOCK)
+		WHERE ci.srecommend = @Custid AND ci.custid <= @maxcustid
 			AND NOT EXISTS (SELECT 1 FROM #IgnoredCust WHERE custid = ci.custid)
+
+		UPDATE cs
+		SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0)),
+			bitmapIsDisabled = CASE WHEN ci.roleid BETWEEN 2 AND 4 THEN (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0)) 
+									ELSE bitmapIsDisabled END
+		FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #CustListDirect ci WITH(NOLOCK) ON cs.CustID = ci.CustID
 	END
 	ELSE
 	BEGIN
+		SELECT custid, ci.roleid
+		INTO #CustList
+		FROM dbo.custInfo ci WITH (NOLOCK)
+		WHERE ci.srecommend = @Custid AND ci.custid <= @maxcustid
+
 		UPDATE cs
-		SET cs.bitmapIsHidden = IsHidden.NewBitmap,
-			bitmapIsDisabled = CASE WHEN ci.roleid BETWEEN 2 AND 4 THEN IsDisable.NewBitmap ELSE bitmapIsDisabled END
+		SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0)),
+			bitmapIsDisabled = CASE WHEN ci.roleid BETWEEN 2 AND 4 THEN (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0)) 
+									ELSE bitmapIsDisabled END
 		FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.CustID
-			CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0) IsHidden
-			CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0) IsDisable
-		WHERE ci.srecommend = @Custid 
+			INNER JOIN #CustList ci WITH(NOLOCK) ON cs.CustID = ci.CustID
 	END
 END
 GO

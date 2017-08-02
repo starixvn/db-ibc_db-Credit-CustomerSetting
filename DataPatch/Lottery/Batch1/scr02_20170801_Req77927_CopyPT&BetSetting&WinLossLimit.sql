@@ -25,15 +25,17 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
 	
+	DECLARE @fSportType SMALLINT, @fBetType SMALLINT
+
 	DECLARE @ProductID TINYINT = 28
-	CREATE TABLE #DestinationSportBetType(fSportType SMALLINT, fBetType SMALLINT,tSportType SMALLINT, tBetType SMALLINT, IsLive BIT,  SettingType INT)
-	INSERT INTO #DestinationSportBetType
-	SELECT	202, 1501, SportType, BetType, 0, SettingType
+	CREATE TABLE #DestinationSportBetType(fSportType SMALLINT, fBetType SMALLINT,tSportType SMALLINT, tBetType SMALLINT, IsLive BIT,  SettingType INT, IsFinished BIT)
+	INSERT INTO #DestinationSportBetType (fSportType, fBetType, tSportType, tBetType, IsLive, SettingType, IsFinished)
+	SELECT	202, 1501, SportType, BetType, 0, SettingType, 0
 	FROM dbo.ProductSettingDetail WITH (NOLOCK)
 	WHERE ProductID = @ProductID AND SettingType IN (1,6)
 
-	INSERT INTO #DestinationSportBetType
-	SELECT	202, 15, SportType, BetType, 0, SettingType
+	INSERT INTO #DestinationSportBetType (fSportType, fBetType, tSportType, tBetType, IsLive, SettingType, IsFinished)
+	SELECT	202, 15, SportType, BetType, 0, SettingType, 0
 	FROM dbo.ProductSettingDetail WITH (NOLOCK)
 	WHERE ProductID = @ProductID AND SettingType IN (2)
 
@@ -65,23 +67,27 @@ BEGIN
 	SELECT @Currency = currency FROM customer WITH (NOLOCK) WHERE custid = @srecommend
 	
 	--------------------------------------PT Setting-------------------------------------------------	
+	SELECT TOP (1) @fBetType = fBetType, @fSportType = fSportType 
+	FROM #DestinationSportBetType		
+	WHERE SettingType = 1
+
 	--AGENT LEVEL
 	INSERT INTO dbo.CustPTSetting3rd_Agent
 		(	[CustID]
-		   ,[SportType]
-		   ,[BetType]
-		   ,[IsLive]
-		   ,[SuperPT]
-		   ,[MasterPT]
-		   ,[AgentPT]
-		   ,[IsAutoMasterPT]
-		   ,[AutoMasterPT]
-		   ,[IsAutoSuperPT]
-		   ,[AutoSuperPT]
-		   ,[MinPT]
-		   ,[MaxPT])
+			,[SportType]
+			,[BetType]
+			,[IsLive]
+			,[SuperPT]
+			,[MasterPT]
+			,[AgentPT]
+			,[IsAutoMasterPT]
+			,[AutoMasterPT]
+			,[IsAutoSuperPT]
+			,[AutoSuperPT]
+			,[MinPT]
+			,[MaxPT])
 	SELECT 
-		cs.custid, dest.tsporttype, dest.tbettype, dest.IsLive
+		cs.custid, dest.tSportType, dest.tBetType, dest.IsLive
 		,cs.spositiontaking  *100
 		,cs.mpositiontaking  *100
 		,cs.apositiontaking  *100
@@ -94,23 +100,25 @@ BEGIN
 	FROM dbo.custSettingGame cs WITH(NOLOCK) 
 		INNER JOIN dbo.CustOverrideGame co WITH(NOLOCK) ON cs.custid = co.custid and cs.sporttype = co.sporttype and cs.bettype = co.bettype
 		INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
-		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
+		CROSS APPLY #DestinationSportBetType dest
+	WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType
+		AND dest.SettingType = 1
 	
 	--MEMBER LEVEL
 	INSERT INTO dbo.CustPTSetting3rd_Member
 		(	[custid]
-		  ,	[sporttype]
-		  ,	[bettype]
-		  ,	[islive]
-		  ,	[superPT]
-		  ,	[masterPT]
-		  ,	[agentPT]
-		  ,	[IsAutoMasterPT]
-		  ,	[AutoMasterPT]
-		  ,	[IsAutoSuperPT]
-		  ,	[AutoSuperPT])
+			,	[sporttype]
+			,	[bettype]
+			,	[islive]
+			,	[superPT]
+			,	[masterPT]
+			,	[agentPT]
+			,	[IsAutoMasterPT]
+			,	[AutoMasterPT]
+			,	[IsAutoSuperPT]
+			,	[AutoSuperPT])
 	SELECT 
-		cs.custid, dest.tsporttype, dest.tbettype, dest.IsLive
+		cs.custid, dest.tSportType, dest.tBetType, dest.IsLive
 		,cs.spositiontaking  *100
 		,cs.mpositiontaking  *100
 		,cs.apositiontaking  *100
@@ -120,73 +128,32 @@ BEGIN
 		,cs.autopositiontaking  *100
 	FROM dbo.custSettingGame cs WITH(NOLOCK)
 		INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
-		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
-	
-	--DECLARE @apos SMALLMONEY,
-	--		@mpos SMALLMONEY
-	
-	--UPDATE cs
-	--SET cs.MinPT = @MaxPT
-	--FROM dbo.CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
-	--	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
-	--	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
-	--WHERE MinPT > @MaxPT		
-	
-	--UPDATE cs
-	--SET @apos = CASE WHEN cs.AgentPT > @MaxPT THEN @MaxPT ELSE cs.AgentPT END,
-	--	cs.AgentPT = @apos,
-	--	@mpos = CASE WHEN @apos + cs.MasterPT > @MaxPT THEN @MaxPT- @apos ELSE cs.MasterPT END,
-	--	cs.MasterPT = @mpos,
-	--	cs.SuperPT = CASE WHEN @apos + @mpos + cs.SuperPT > @MaxPT THEN @MaxPT - @mpos -@apos ELSE cs.SuperPT END
-	--FROM  CustPTSetting3rd_Member cs WITH(UPDLOCK,ROWLOCK) 
-	--	INNER JOIN #MemberTemp ci WITH(NOLOCK) ON ci.custid = cs.custid
-	--	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
-	--WHERE cs.SuperPT + cs.MasterPT + cs.AgentPT > @MaxPT
-		
-	--UPDATE cs
-	--SET @apos = CASE WHEN cs.AgentPT > @MaxPT THEN @MaxPT ELSE cs.AgentPT END,
-	--	cs.AgentPT = @apos,
-	--	cs.MasterPT = CASE WHEN @apos + cs.MasterPT > @MaxPT THEN @MaxPT- @apos ELSE cs.MasterPT END		
-	--FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
-	--	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
-	--	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
-	--WHERE cs.MasterPT + cs.AgentPT > @MaxPT	AND roleid = 2
-	
-	--UPDATE cs
-	--SET @mpos = CASE WHEN cs.MasterPT > @MaxPT THEN @MaxPT ELSE cs.MasterPT END,
-	--	cs.MasterPT = @mpos,
-	--	cs.SuperPT = CASE WHEN cs.SuperPT + @mpos > @MaxPT THEN @MaxPT - @mpos ELSE cs.SuperPT END 		
-	--FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
-	--	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
-	--	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
-	--WHERE cs.MasterPT + cs.SuperPT > @MaxPT	AND roleid = 3
-		
-	--UPDATE cs
-	--SET cs.SuperPT = CASE WHEN cs.SuperPT <> @MaxPT THEN @MaxPT ELSE cs.SuperPT END, 		
-	--	cs.MasterPT = CASE WHEN cs.MasterPT <> @MaxPT THEN @MaxPT ELSE cs.MasterPT END, 	
-	--	cs.AgentPT = CASE WHEN cs.AgentPT <> @MaxPT THEN @MaxPT ELSE cs.AgentPT END 	
-	--FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
-	--	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
-	--	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
-	--WHERE ci.custid = @srecommend		
-	--	AND (cs.SuperPT <> @MaxPT	
-	--		OR cs.MasterPT <> @MaxPT
-	--		OR cs.AgentPT <> @MaxPT)	
+		CROSS APPLY #DestinationSportBetType dest
+	WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType
+		AND dest.SettingType = 1
 
 	--------------------------------------Bet Setting-------------------------------------------------		
+	SELECT TOP (1) @fBetType = fBetType, @fSportType = fSportType 
+	FROM #DestinationSportBetType		
+	WHERE SettingType = 2
+
 	--Agent Level
 	INSERT INTO dbo.CustBetSetting3rd_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 	SELECT ci.custid, dest.tsporttype, dest.tbettype, cs.minbet, cs.maxbet, cs.MaxPerGameType			
 	FROM dbo.CustGameType cs WITH(NOLOCK)
 		INNER JOIN #SMATemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
-		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.GameTypeID = dest.fBetType
+		CROSS APPLY #DestinationSportBetType dest
+	WHERE cs.GameTypeID = @fBetType
+		AND dest.SettingType = 2
 
 	--Member Level
 	INSERT INTO dbo.CustBetSetting3rd_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 	SELECT ci.custid, dest.tsporttype, dest.tbettype, cs.minbet, cs.maxbet, cs.MaxPerGameType					
 	FROM dbo.CustGameType cs WITH(NOLOCK)
 		INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
-		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.GameTypeID = dest.fBetType
+		CROSS APPLY #DestinationSportBetType dest
+	WHERE cs.GameTypeID = @fBetType
+		AND dest.SettingType = 2
 	
 	--------------------------------------Win Loss Limit-------------------------------------------------		
 	--Agent Level
@@ -259,7 +226,7 @@ BEGIN
 			,@target = 'REPLICATED'
 			
 			
-	waitfor delay '00:00:0.280'
+	waitfor delay '00:00:0.200'
 END
 GO
 
@@ -308,5 +275,5 @@ BEGIN
 			,@maxcustid = @max_custid
 			,@target = 'DBCUST'
 						
-	waitfor delay '00:00:0.280'
+	waitfor delay '00:00:0.200'
 END
