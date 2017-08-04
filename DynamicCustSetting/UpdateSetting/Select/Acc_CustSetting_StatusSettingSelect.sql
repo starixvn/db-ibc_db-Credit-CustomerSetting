@@ -19,7 +19,7 @@ AS
   - 20160801@Elodie: Get Game status (setting type = 11) - [Redmine: #60809]   
   - 20170307@Elodie: Get New product status (setting type = 13) - [Redmine: #70722]   
   - 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
-  
+  - 20170803@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
  Param's Explanation:  
  - @CustID: 
  Example: EXEC Acc_CustSetting_StatusSettingSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
@@ -37,7 +37,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @SuperID AND [Site] = 'IMBC')  
 		SET @IsIMBC = 1  
     
-	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType TINYINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT)
+	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT)
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   

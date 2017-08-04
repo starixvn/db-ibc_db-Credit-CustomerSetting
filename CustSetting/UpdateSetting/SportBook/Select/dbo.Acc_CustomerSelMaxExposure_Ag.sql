@@ -1,6 +1,6 @@
 ﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelMaxExposure_Ag]
 	@custid int,
-	@sporttype tinyint,
+	@sporttype SMALLINT,
 	@MaxExposure money OUTPUT
 AS
 /*
@@ -11,6 +11,7 @@ Original:
 
 Revisions:
 	- 20110520@Amy: Re-arrange bettype
+	- 20170803@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
