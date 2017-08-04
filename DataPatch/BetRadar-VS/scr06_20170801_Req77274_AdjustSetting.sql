@@ -10,6 +10,13 @@ BEGIN
 	
 	SET NOCOUNT ON
 
+	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN
+
 	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
 
 	DECLARE @ProductID TINYINT = 5

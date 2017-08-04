@@ -9,6 +9,13 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
+	IF NOT (dbo.f_CheckRepTable('Custinfo') = 1 
+	   AND dbo.f_CheckRepTable('CustProductStatus') = 1
+	   AND dbo.f_CheckRepTable('ProductSettingDetail') = 1
+	   AND dbo.f_CheckRepTable('ProductStatusProfile') = 1
+	   )
+		RETURN	
+
 	DECLARE @BitmapOrder TINYINT = 10
 
 	CREATE TABLE #CustList_Status (custid INT)
