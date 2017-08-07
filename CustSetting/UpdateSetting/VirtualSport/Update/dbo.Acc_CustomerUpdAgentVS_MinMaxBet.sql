@@ -1,6 +1,6 @@
 ﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet]
 	@custid int,-- agentID
-	@sporttype tinyint,
+	@sporttype SMALLINT,
 	@bettype int,	
 	@minbet money,
 	@maxbet money,

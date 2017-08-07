@@ -43,7 +43,7 @@ BEGIN
 	SET @startRun = GETDATE()
 
 	----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
