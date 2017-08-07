@@ -4,7 +4,7 @@
 	DB: DBCUST/CustDB
 	Date: 20170801
 */ 
-DECLARE @MaxCustID INT
+DECLARE @MaxCustID INT, @fSportType SMALLINT, @fBetType SMALLINT
 	
 SELECT @MaxCustID = xxx
 	
@@ -50,8 +50,7 @@ CREATE TABLE #SMATemp
 INSERT INTO #MemberTemp (CustID, currency)
 SELECT custid, currency
 FROM Custinfo WITH (NOLOCK)
-WHERE srecommend IN (SELECT custid FROM #supers) AND roleid = 1  AND Enabled = 1 AND custid > @maxcustid
-	
+WHERE srecommend IN (SELECT custid FROM #supers) AND roleid = 1  AND Enabled = 1 AND custid > @maxcustid	
 	
 INSERT INTO #SMATemp (CustID, roleid, currency)
 SELECT custid, roleid, currency
@@ -63,6 +62,10 @@ SELECT TOP 1 @MaxPT = MaxPT FROM dbo.ProductSettingDetail WITH (NOLOCK) WHERE Pr
 --SELECT TOP 1 @MaxComm = MaxDiscount FROM dbo.ProductSettingDetail WITH (NOLOCK) WHERE ProductID = @ProductID AND SettingType = 3
 	
 --------------------------------------PT Setting-------------------------------------------------	
+SELECT TOP (1) @fBetType = fBetType, @fSportType = fSportType 
+FROM #DestinationSportBetType		
+WHERE SettingType = 1
+
 --AGENT LEVEL
 INSERT INTO dbo.CustPTSetting3rd_Agent
 	(	[CustID]
@@ -92,7 +95,9 @@ SELECT
 FROM dbo.custSettingGame cs WITH(NOLOCK) 
 	INNER JOIN dbo.CustOverrideGame co WITH(NOLOCK) ON cs.custid = co.custid and cs.sporttype = co.sporttype and cs.bettype = co.bettype
 	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
+	CROSS APPLY #DestinationSportBetType dest
+WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType
+	AND dest.SettingType = 1
 	
 --MEMBER LEVEL
 INSERT INTO dbo.CustPTSetting3rd_Member
@@ -118,75 +123,32 @@ SELECT
 	,cs.autopositiontaking  *100
 FROM dbo.custSettingGame cs WITH(NOLOCK)
 	INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
+	CROSS APPLY #DestinationSportBetType dest
+WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType
+	AND dest.SettingType = 1
 	
---DECLARE @apos SMALLMONEY,
---		@mpos SMALLMONEY
-	
---UPDATE cs
---SET cs.MinPT = @MaxPT
---FROM dbo.CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE MinPT > @MaxPT		
-	
---UPDATE cs
---SET @apos = CASE WHEN cs.AgentPT > @MaxPT THEN @MaxPT ELSE cs.AgentPT END,
---	cs.AgentPT = @apos,
---	@mpos = CASE WHEN @apos + cs.MasterPT > @MaxPT THEN @MaxPT- @apos ELSE cs.MasterPT END,
---	cs.MasterPT = @mpos,
---	cs.SuperPT = CASE WHEN @apos + @mpos + cs.SuperPT > @MaxPT THEN @MaxPT - @mpos -@apos ELSE cs.SuperPT END
---FROM  CustPTSetting3rd_Member cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #MemberTemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE cs.SuperPT + cs.MasterPT + cs.AgentPT > @MaxPT
-		
---UPDATE cs
---SET @apos = CASE WHEN cs.AgentPT > @MaxPT THEN @MaxPT ELSE cs.AgentPT END,
---	cs.AgentPT = @apos,
---	cs.MasterPT = CASE WHEN @apos + cs.MasterPT > @MaxPT THEN @MaxPT- @apos ELSE cs.MasterPT END		
---FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE cs.MasterPT + cs.AgentPT > @MaxPT	AND roleid = 2
-	
---UPDATE cs
---SET @mpos = CASE WHEN cs.MasterPT > @MaxPT THEN @MaxPT ELSE cs.MasterPT END,
---	cs.MasterPT = @mpos,
---	cs.SuperPT = CASE WHEN cs.SuperPT + @mpos > @MaxPT THEN @MaxPT - @mpos ELSE cs.SuperPT END 		
---FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE cs.MasterPT + cs.SuperPT > @MaxPT	AND roleid = 3
-		
---UPDATE cs
---SET cs.SuperPT = CASE WHEN cs.SuperPT <> @MaxPT THEN @MaxPT ELSE cs.SuperPT END, 		
---	cs.MasterPT = CASE WHEN cs.MasterPT <> @MaxPT THEN @MaxPT ELSE cs.MasterPT END, 	
---	cs.AgentPT = CASE WHEN cs.AgentPT <> @MaxPT THEN @MaxPT ELSE cs.AgentPT END 	
---FROM  CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK) 
---	INNER JOIN #SMATemp ci WITH(NOLOCK) ON ci.custid = cs.custid
---	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.tBetType AND cs.sporttype = dest.tSportType
---WHERE ci.custid = @srecommend		
---	AND (cs.SuperPT <> @MaxPT	
---		OR cs.MasterPT <> @MaxPT
---		OR cs.AgentPT <> @MaxPT)	
-
 --------------------------------------Bet Setting-------------------------------------------------		
+SELECT TOP (1) @fBetType = fBetType, @fSportType = fSportType 
+FROM #DestinationSportBetType		
+WHERE SettingType = 2
+
 --Agent Level
 INSERT INTO dbo.CustBetSetting3rd_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 SELECT ci.custid, dest.tsporttype, dest.tbettype, cs.minbet, cs.maxbet, cs.MaxPerGameType			
 FROM dbo.CustGameType cs WITH(NOLOCK)
 	INNER JOIN #SMATemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
-	INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.GameTypeID = dest.fBetType
+	CROSS APPLY #DestinationSportBetType dest
+WHERE cs.GameTypeID = @fBetType
+	AND dest.SettingType = 2
 
 --Member Level
 INSERT INTO dbo.CustBetSetting3rd_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 SELECT ci.custid, dest.tsporttype, dest.tbettype, cs.minbet, cs.maxbet, cs.MaxPerGameType					
 FROM dbo.CustGameType cs WITH(NOLOCK)
 	INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.custid
-	INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
-	INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.GameTypeID = dest.fBetType
+	CROSS APPLY #DestinationSportBetType dest
+WHERE cs.GameTypeID = @fBetType
+	AND dest.SettingType = 2
 	
 --------------------------------------Win Loss Limit-------------------------------------------------		
 --Agent Level
@@ -208,15 +170,26 @@ WHERE dest.SettingType = 6 AND cs.ProductId = @ProductID
 /*******************************CUST PRODUCTSTATUS TABLE*******************************/	
 DECLARE @BitmapOrder TINYINT = 11
 
-UPDATE cs
-SET cs.bitmapIsHidden = IsHidden.NewBitmap,
-	bitmapIsDisabled = IsDisable.NewBitmap
-FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
-	INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.CustID
-	CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0) IsHidden
-	CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0) IsDisable
-WHERE ci.srecommend IN (SELECT custid FROM #supers) AND ci.custid > @MaxCustID
+SELECT custid
+INTO #IgnoredCust
+FROM dbo.custInfo WITH (NOLOCK)
+WHERE ((mrecommend IN (40958, 45638, 60349, 63971, 167860, 244268, 272369, 620479, 771534, 832960, 852273, 861558, 891798, 913666, 916007, 929428, 971014, 979669, 981513, 997587, 2006349, 2087760) AND roleid BETWEEN 1 AND 3)
+		OR (recommend IN (8346,104769) AND roleid BETWEEN 1 AND 2))
+	AND srecommend IN (324561, 395075, 506057, 674248, 796555, 993226, 1016771, 1036451, 1127269, 1156957, 1164457, 2042873, 2453866, 5005322, 17721601)
+	AND custid > @MaxCustID
 
+SELECT custid, ci.roleid
+INTO #CustList
+FROM dbo.custInfo ci WITH (NOLOCK)
+WHERE ci.srecommend IN (SELECT custid FROM #supers) AND custid > @MaxCustID
+	AND NOT EXISTS (SELECT 1 FROM #IgnoredCust WHERE custid = ci.custid)
+
+UPDATE cs
+SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0)),
+	bitmapIsDisabled = CASE WHEN ci.roleid BETWEEN 2 AND 4 THEN (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0)) 
+							ELSE (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,1)) END
+FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
+	INNER JOIN #CustList ci WITH(NOLOCK) ON cs.CustID = ci.CustID
 
 DROP TABLE #SMATemp
 DROP TABLE #MemberTemp

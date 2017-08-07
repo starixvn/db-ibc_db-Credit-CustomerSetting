@@ -1,172 +1,97 @@
 /*
 	Created: Elodie
-	Task: Adjust Setting for BetRadarVS
+	Task: Adjust Setting for Lottery
 	DB: DBCUST/CustDB
 	Date: 20170801
 */ 
-ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09]
+ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09] WITH RECOMPILE
 AS
-BEGIN
-	SET NOCOUNT ON
-	
-	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
-	
-	DECLARE @fSportType SMALLINT, @fBetType SMALLINT, @tSportType SMALLINT, @tBetType SMALLINT, @IsLive BIT
-	DECLARE @Threshold INT = 1000000
-	DECLARE @MaxCustID INT = 0, @MinCustID INT = 0	
-	CREATE TABLE #tblCust_BetSetting (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)
-	CREATE TABLE #tblCustNew_BetSetting (custid INT PRIMARY KEY,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)	
-	CREATE TABLE #tblCustOld_BetSetting (custid INT PRIMARY KEY,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)
 
-	CREATE TABLE #tblCust_PT (custid INT, SPositionTaking SMALLMONEY, MPositionTaking SMALLMONEY, APositionTaking SMALLMONEY, IsAutoMPositionTaking BIT, AutoMPositionTaking SMALLMONEY, IsAutoPositionTaking BIT, AutoPositionTaking SMALLMONEY, MinPositionTaking SMALLMONEY)
-	CREATE TABLE #tblCustNew_PT (custid INT, SPositionTaking SMALLMONEY, MPositionTaking SMALLMONEY, APositionTaking SMALLMONEY, IsAutoMPositionTaking BIT, AutoMPositionTaking SMALLMONEY, IsAutoPositionTaking BIT, AutoPositionTaking SMALLMONEY, MinPositionTaking SMALLMONEY)
-	CREATE TABLE #tblCustOld_PT (custid INT, SPositionTaking SMALLMONEY, MPositionTaking SMALLMONEY, APositionTaking SMALLMONEY, IsAutoMPositionTaking BIT, AutoMPositionTaking SMALLMONEY, IsAutoPositionTaking BIT, AutoPositionTaking SMALLMONEY, MinPositionTaking SMALLMONEY)	
+BEGIN
 	
+	SET NOCOUNT ON
+
+	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
+
+	CREATE TABLE #supers (custid int)
+
+	INSERT INTO #supers(custid)
+	SELECT ci.custid
+	FROM customer ci WITH (NOLOCK) 
+		INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
+		LEFT JOIN custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
+	WHERE ci.roleid = 4  
+		AND ci.username NOT LIKE '3rdSuper%'
+		AND cs.isinternal = 0
+		AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
+		AND s.islicensee = 0
+		AND ci.site IN ('755555', 'Indo', 'KORIBC', '733333', '222223', '222225', '222227')
+
+	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
+
+	CREATE TABLE #SMAList_PT (custid INT, SPositionTaking SMALLMONEY, MPositionTaking SMALLMONEY, APositionTaking SMALLMONEY, IsAutoMPositionTaking BIT, AutoMPositionTaking SMALLMONEY, IsAutoPositionTaking BIT, AutoPositionTaking SMALLMONEY, MinPositionTaking SMALLMONEY)
+	CREATE TABLE #MemberList_PT (custid INT, SPositionTaking SMALLMONEY, MPositionTaking SMALLMONEY, APositionTaking SMALLMONEY, IsAutoMPositionTaking BIT, AutoMPositionTaking SMALLMONEY, IsAutoPositionTaking BIT, AutoPositionTaking SMALLMONEY)	
+	CREATE TABLE #Super_WrongPT (custid INT, SPositionTaking SMALLMONEY, MPositionTaking SMALLMONEY, APositionTaking SMALLMONEY)
+
+	CREATE TABLE #SMAList_BetSetting (custid INT, minBet MONEY, MaxBet MONEY, MaxPerMatch MONEY)
+	CREATE TABLE #MemberList_BetSetting (custid INT, minBet MONEY, MaxBet MONEY, MaxPerMatch MONEY)
+
 	DECLARE @ProductID TINYINT = 28
-	CREATE TABLE #DestinationSportBetType(fSportType SMALLINT, fBetType SMALLINT,tSportType SMALLINT, tBetType SMALLINT, IsLive BIT,  SettingType INT)
-	INSERT INTO #DestinationSportBetType
-	SELECT	202, 1501, SportType, BetType, 0, SettingType
+	DECLARE @fSportType SMALLINT, @fBetType SMALLINT, @tSportType SMALLINT, @tBetType SMALLINT, @IsLive BIT
+	
+	CREATE TABLE #DestinationSportBetType(fSportType SMALLINT, fBetType SMALLINT,tSportType SMALLINT, tBetType SMALLINT, IsLive BIT,  SettingType INT, IsFinished BIT)
+	INSERT INTO #DestinationSportBetType(fSportType, fBetType,tSportType, tBetType, IsLive,  SettingType, IsFinished)
+	SELECT	202, 1501, SportType, BetType, 0, SettingType, 0
 	FROM dbo.ProductSettingDetail WITH (NOLOCK)
 	WHERE ProductID = @ProductID AND SettingType IN (1,6)
 
-	INSERT INTO #DestinationSportBetType
-	SELECT	202, 15, SportType, BetType, 0, SettingType
+	INSERT INTO #DestinationSportBetType(fSportType, fBetType,tSportType, tBetType, IsLive,  SettingType, IsFinished)
+	SELECT	202, 15, SportType, BetType, 0, SettingType, 0
 	FROM dbo.ProductSettingDetail WITH (NOLOCK)
 	WHERE ProductID = @ProductID AND SettingType IN (2)
 
 	--------------------------------------PT Setting-------------------------------------------------	
-	SELECT TOP (1) @fBetType = fBetType, @fSportType = fSportType , @tSportType = tSportType, @tBetType = tBetType
+	SELECT TOP (1) @fBetType = fBetType, @fSportType = fSportType, @tSportType = tSportType, @tBetType = tBetType
 	FROM #DestinationSportBetType		
 	WHERE SettingType = 1
 
 	--AGENT LEVEL
-	WHILE (1 = 1 )
-	BEGIN
-		INSERT INTO #tblCustNew_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking, MinPositionTaking)			
-		SELECT DISTINCT TOP (@Threshold) cs.CustID, cs.SuperPT, CS.MasterPT, cs.AgentPT, cs.IsAutoMasterPT, cs.AutoMasterPT, cs.IsAutoSuperPT, cs.AutoSuperPT, cs.MinPT
-		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) 			
-		WHERE cs.SportType = @tSportType AND cs.BetType = @tBetType
-			AND cs.CustID > @MinCustID
-		ORDER BY cs.custid
-
-		IF @@ROWCOUNT = 0 
-		BEGIN
-			TRUNCATE TABLE #tblCust_PT
-			TRUNCATE TABLE #tblCustOld_PT
-			TRUNCATE TABLE #tblCustNew_PT
-				
-			BREAK
-		END
-	
-		INSERT INTO #tblCustOld_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking, MinPositionTaking)			
-		SELECT DISTINCT cs.CustID, CS.spositiontaking, CS.mpositiontaking, cs.apositiontaking, cs.isautompositiontaking, cs.autompositiontaking, cs.isautopositiontaking, cs.autopositiontaking, co.minpositiontaking
-		FROM custSettingGame cs WITH (NOLOCK) 
-			INNER JOIN dbo.CustOverrideGame co WITH(NOLOCK) ON cs.custid = co.custid and cs.sporttype = co.sporttype and cs.bettype = co.bettype	
-		WHERE CS.sporttype = @fSportType AND cs.BetType = @fBetType
-			AND cs.CustID > @MinCustID AND cs.custid <= @MaxCustID
-		ORDER BY cs.custid
-
-		INSERT INTO #tblCust_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking)			
-		SELECT co.CustID, co.spositiontaking, co.mpositiontaking, co.apositiontaking, co.isautompositiontaking, co.autompositiontaking, co.isautopositiontaking, co.autopositiontaking, co.minpositiontaking
-		FROM #tblCustNew_PT cn
-			INNER JOIN #tblCustOld_PT co ON co.custid = cn.custid 
-		WHERE (
-				cn.SPositionTaking * 100 <> co.SPositionTaking
-				OR cn.MPositionTaking * 100 <> co.MPositionTaking
-				OR cn.APositionTaking * 100 <> co.APositionTaking
-				OR cn.IsAutoMPositionTaking <> co.IsAutoMPositionTaking
-				OR cn.AutoMPositionTaking * 100 <> co.AutoMPositionTaking
-				OR cn.IsAutoPositionTaking <> co.IsAutoPositionTaking
-				OR cn.AutoPositionTaking * 100 <> co.AutoPositionTaking
-				OR cn.MinPositionTaking  * 100 <> co.MinPositionTaking 
+	INSERT INTO #SMAList_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking, MinPositionTaking)
+	SELECT ci.custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking, MinPositionTaking
+	FROM dbo.custSettingGame cs WITH(NOLOCK) 
+		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cs.custid
+		INNER JOIN #supers s WITH (NOLOCK) ON ci.srecommend = s.custid
+		INNER JOIN dbo.CustOverrideGame co WITH(NOLOCK) ON cs.custid = co.custid and cs.sporttype = co.sporttype and cs.bettype = co.bettype	
+		INNER JOIN dbo.CustPTSetting3rd_Agent csa WITH(NOLOCK) ON csa.custid = cs.custid 
+	WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType AND csa.SportType = @tSportType AND csa.BetType = @tBetType
+			AND ci.roleid IN (2,3,4) AND Enabled = 1
+			AND (
+				cs.SPositionTaking * 100 <> csa.SuperPT
+				OR cs.MPositionTaking * 100 <> csa.MasterPT
+				OR cs.APositionTaking * 100 <> csa.AgentPT
+				OR cs.IsAutoMPositionTaking <> csa.IsAutoMasterPT
+				OR cs.AutoMPositionTaking * 100 <> csa.AutoMasterPT
+				OR cs.IsAutoPositionTaking <> csa.IsAutoSuperPT
+				OR cs.AutoPositionTaking * 100 <> csa.AutoSuperPT
+				OR co.MinPositionTaking  * 100 <> csa.MinPT 
 				)
-
-		UPDATE csa
-		SET	csa.SuperPT = cs.spositiontaking  *100
-			,csa.MasterPT =  cs.mpositiontaking  *100
-			,csa.AgentPT = cs.apositiontaking  *100
-			,csa.IsAutoMasterPT = cs.isautompositiontaking
-			,csa.AutoMasterPT = cs.autompositiontaking *100
-			,csa.IsAutoSuperPT = cs.isautopositiontaking 
-			,csa.AutoSuperPT = cs.autopositiontaking  *100
-			,csa.MinPT = cs.minpositiontaking *100
-		FROM dbo.CustPTSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #tblCust_PT cs WITH (NOLOCK) ON cs.custid = csa.custid
-		WHERE csa.SportType = @tSportType
-	
-		SELECT @MinCustID = @MaxCustID			
-
-		TRUNCATE TABLE #tblCust_PT
-		TRUNCATE TABLE #tblCustOld_PT
-		TRUNCATE TABLE #tblCustNew_PT
-	END
-
-	--Member LEVEL
-	WHILE (1 = 1 )
-	BEGIN
-		INSERT INTO #tblCustNew_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking)			
-		SELECT DISTINCT TOP (@Threshold) cs.CustID, cs.SuperPT, CS.MasterPT, cs.AgentPT, cs.IsAutoMasterPT, cs.AutoMasterPT, cs.IsAutoSuperPT, cs.AutoSuperPT
-		FROM dbo.CustPTSetting3rd_Member cs WITH (NOLOCK) 			
-		WHERE cs.SportType = @tSportType AND cs.BetType = @tBetType
-			AND cs.CustID > @MinCustID
-		ORDER BY cs.custid
-
-		IF @@ROWCOUNT = 0 
-			BREAK
-	
-		INSERT INTO #tblCustOld_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking, MinPositionTaking)			
-		SELECT DISTINCT cs.CustID, CS.spositiontaking, CS.mpositiontaking, cs.apositiontaking, cs.isautompositiontaking, cs.autompositiontaking, cs.isautopositiontaking, cs.autopositiontaking, co.minpositiontaking
-		FROM custSettingGame cs WITH (NOLOCK) 
-			INNER JOIN dbo.CustOverrideGame co WITH(NOLOCK) ON cs.custid = co.custid and cs.sporttype = co.sporttype and cs.bettype = co.bettype	
-		WHERE CS.sporttype = @fSportType AND cs.BetType = @fBetType
-			AND cs.CustID > @MinCustID AND cs.custid <= @MaxCustID
-		ORDER BY cs.custid
-
-		INSERT INTO #tblCust_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking)			
-		SELECT co.CustID, co.spositiontaking, co.mpositiontaking, co.apositiontaking, co.isautompositiontaking, co.autompositiontaking, co.isautopositiontaking, co.autopositiontaking, co.minpositiontaking
-		FROM #tblCustNew_PT cn
-			INNER JOIN #tblCustOld_PT co ON co.custid = cn.custid 
-		WHERE (
-				cn.SPositionTaking * 100 <> co.SPositionTaking
-				OR cn.MPositionTaking * 100 <> co.MPositionTaking
-				OR cn.APositionTaking * 100 <> co.APositionTaking
-				OR cn.IsAutoMPositionTaking <> co.IsAutoMPositionTaking
-				OR cn.AutoMPositionTaking * 100 <> co.AutoMPositionTaking
-				OR cn.IsAutoPositionTaking <> co.IsAutoPositionTaking
-				OR cn.AutoPositionTaking * 100 <> co.AutoPositionTaking
-				OR cn.MinPositionTaking  * 100 <> co.MinPositionTaking 
-				)
-
-		UPDATE csa
-		SET	csa.SuperPT = cs.spositiontaking  *100
-			,csa.MasterPT =  cs.mpositiontaking  *100
-			,csa.AgentPT = cs.apositiontaking  *100
-			,csa.IsAutoMasterPT = cs.isautompositiontaking
-			,csa.AutoMasterPT = cs.autompositiontaking *100
-			,csa.IsAutoSuperPT = cs.isautopositiontaking 
-			,csa.AutoSuperPT = cs.autopositiontaking  *100
-			,csa.MinPT = cs.minpositiontaking *100
-		FROM dbo.CustPTSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #tblCust_PT cs WITH (NOLOCK) ON cs.custid = csa.custid
-		WHERE csa.SportType = @tSportType
-	
-		SELECT @MinCustID = @MaxCustID			
-	END
 
 	--MEMBER LEVEL
-	UPDATE csm
-	SET	csm.SuperPT = cs.spositiontaking  *100
-		,csm.MasterPT =  cs.mpositiontaking  *100
-		,csm.AgentPT = cs.apositiontaking  *100
-		,csm.IsAutoMasterPT = cs.isautompositiontaking
-		,csm.AutoMasterPT = cs.autompositiontaking *100
-		,csm.IsAutoSuperPT = cs.isautopositiontaking 
-		,csm.AutoSuperPT = cs.autopositiontaking  *100
+	INSERT INTO #MemberList_PT (custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking)
+	SELECT ci.custid, SPositionTaking, MPositionTaking, APositionTaking, IsAutoMPositionTaking, AutoMPositionTaking, IsAutoPositionTaking, AutoPositionTaking
 	FROM dbo.custSettingGame cs WITH(NOLOCK)
 		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cs.custid
-		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 1 AND cs.bettype = dest.fBetType AND cs.sporttype = dest.fSportType
-		INNER JOIN dbo.CustPTSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK) ON csm.custid = cs.custid and csm.sporttype = tSportType and csm.bettype = tBetType	
-	WHERE ci.roleid = 1 AND Enabled = 1
+		INNER JOIN #supers s WITH (NOLOCK) ON ci.srecommend = s.custid
+		INNER JOIN dbo.CustPTSetting3rd_Member csm WITH(NOLOCK) ON csm.custid = cs.custid 
+	WHERE cs.bettype = @fBetType AND cs.sporttype = @fSportType AND csm.SportType = @tSportType AND csm.BetType = @tBetType
+			AND ci.roleid = 1 AND Enabled = 1
 			AND (
 				cs.SPositionTaking  * 100 <> csm.SuperPT
 				OR cs.MPositionTaking  * 100 <> csm.MasterPT
@@ -176,18 +101,81 @@ BEGIN
 				OR cs.IsAutoPositionTaking <> csm.IsAutoSuperPT
 				OR cs.AutoPositionTaking  * 100 <> csm.AutoSuperPT
 				)
+	
+	INSERT INTO #Super_WrongPT (custid, SPositionTaking, MPositionTaking, APositionTaking)
+	SELECT csa.custid, csa.SuperPT, csa.MasterPT, csa.AgentPT
+	FROM dbo.CustPTSetting3rd_Agent csa WITH(NOLOCK)
+		INNER JOIN #supers s WITH (NOLOCK) ON s.custid = csa.custid
+	WHERE csa.SportType = @tSportType AND csa.BetType = @tBetType
+			AND (
+				csa.MasterPT > csa.SuperPT
+				OR csa.AgentPT > csa.MasterPT
+				OR csa.AgentPT > csa.SuperPT
+				)
 
+	--Adjust data
+	WHILE (1 = 1)
+	BEGIN				
+		UPDATE TOP (1) #DestinationSportBetType
+		SET IsFinished = 1		
+			,@tBetType = tBetType
+			,@tSportType = tSportType
+			,@IsLive = IsLive
+		WHERE IsFinished = 0
+			AND SettingType = 1
+
+		IF @@ROWCOUNT = 0 BREAK	
+
+		UPDATE csa
+		SET	csa.SuperPT = cs.spositiontaking  *100
+			,csa.MasterPT =  cs.mpositiontaking  *100
+			,csa.AgentPT = cs.apositiontaking  *100
+			,csa.IsAutoMasterPT = cs.isautompositiontaking
+			,csa.AutoMasterPT = cs.autompositiontaking *100
+			,csa.IsAutoSuperPT = cs.isautopositiontaking 
+			,csa.AutoSuperPT = cs.autopositiontaking  *100
+			,csa.MinPT = cs.minpositiontaking *100
+		FROM dbo.CustPTSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #SMAList_PT cs WITH(NOLOCK) ON csa.custid = cs.custid
+		WHERE csa.SportType = @tSportType AND csa.BetType = @tBetType
+	
+		UPDATE csm
+		SET	csm.SuperPT = cs.spositiontaking  *100
+			,csm.MasterPT =  cs.mpositiontaking  *100
+			,csm.AgentPT = cs.apositiontaking  *100
+			,csm.IsAutoMasterPT = cs.isautompositiontaking
+			,csm.AutoMasterPT = cs.autompositiontaking *100
+			,csm.IsAutoSuperPT = cs.isautopositiontaking 
+			,csm.AutoSuperPT = cs.autopositiontaking  *100
+		FROM dbo.CustPTSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #MemberList_PT cs WITH (NOLOCK) ON cs.custid = csm.custid
+		WHERE csm.bettype = @tBetType AND csm.sporttype = @tSportType
+
+		--Adjust m4 = s4 if m4 > s4; a4 = m4 if a4 > m4; a4 = s4 if a4 > s4
+		UPDATE csa
+		SET	csa.MasterPT = CASE WHEN csa.MasterPT > csa.SuperPT THEN csa.SuperPT ELSE csa.MasterPT END,
+			csa.AgentPT = CASE	WHEN csa.AgentPT > csa.SuperPT THEN csa.SuperPT 
+								WHEN csa.AgentPT > csa.MasterPT THEN csa.MasterPT
+								ELSE csa.AgentPT END
+		FROM dbo.CustPTSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #Super_WrongPT cs WITH(NOLOCK) ON csa.custid = cs.custid
+		WHERE csa.SportType = @tSportType AND csa.BetType = @tBetType
+
+	END
 	--------------------------------------Bet Setting-------------------------------------------------		
+	SELECT TOP (1) @fBetType = fBetType, @fSportType = fSportType, @tSportType = tSportType, @tBetType = tBetType
+	FROM #DestinationSportBetType		
+	WHERE SettingType = 2
+
 	--Agent Level
-	UPDATE csa
-	SET csa.minBet = cs.MinBet,       
-		csa.MaxBet = cs.MaxBet,   
-		csa.maxperMatch = cs.MaxPerGameType
+	INSERT INTO #SMAList_BetSetting (custid, minBet, MaxBet, MaxPerMatch)
+	SELECT cs.custid, cs.MinBet, cs.MaxBet, cs.MaxPerGameType
 	FROM dbo.CustGameType cs WITH(NOLOCK)
 		INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
-		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.GameTypeID = dest.fBetType
-		INNER JOIN dbo.CustBetSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK) ON csa.custid = cs.custid and csa.sporttype = tSportType and csa.bettype = tBetType	
-	WHERE c.roleid IN (2,3,4) AND Enabled = 1
+		INNER JOIN #supers s WITH (NOLOCK) ON c.srecommend = s.custid
+		INNER JOIN dbo.CustBetSetting3rd_Agent csa WITH(NOLOCK) ON csa.custid = cs.custid
+	WHERE cs.GameTypeID = @fBetType AND csa.SportType = @tSportType AND csa.BetType = @tBetType
+			AND c.roleid IN (2,3,4) AND Enabled = 1
 			AND (
 				cs.minBet <> csa.minBet
 				OR cs.MaxBet <> csa.MaxBet
@@ -195,19 +183,57 @@ BEGIN
 				)
 
 	--Member Level
-	UPDATE csm
-	SET csm.minBet = cs.minbet,       
-		csm.MaxBet = cs.MaxBet,   
-		csm.maxperMatch = cs.MaxPerGameType
+	INSERT INTO #MemberList_BetSetting (custid, minBet, MaxBet, MaxPerMatch)
+	SELECT cs.custid, cs.MinBet, cs.MaxBet, cs.MaxPerGameType
 	FROM dbo.CustGameType cs WITH(NOLOCK)
 		INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
-		INNER JOIN #DestinationSportBetType dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.GameTypeID = dest.fBetType
-		INNER JOIN dbo.CustBetSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK) ON csm.custid = cs.custid and csm.sporttype = tSportType and csm.bettype = tBetType	
-	WHERE c.roleid = 1 AND Enabled = 1
+		INNER JOIN #supers s WITH (NOLOCK) ON c.srecommend = s.custid
+		INNER JOIN dbo.CustBetSetting3rd_Member csm WITH(NOLOCK) ON csm.custid = cs.custid
+	WHERE cs.GameTypeID = @fBetType AND csm.SportType = @tSportType AND csm.BetType = @tBetType
+			AND c.roleid = 1 AND Enabled = 1
 			AND (
 				cs.minBet <> csm.minBet
 				OR cs.MaxBet <> csm.MaxBet
 				OR cs.MaxPerGameType <> csm.maxperMatch			
 				)
 
+	WHILE (1 = 1)
+	BEGIN	
+		UPDATE TOP (1) #DestinationSportBetType
+		SET IsFinished = 1
+			,@fBetType = fBetType	
+			,@fSportType = fSportType
+			,@tBetType = tBetType
+			,@tSportType = tSportType
+			,@IsLive = IsLive
+		WHERE IsFinished = 0
+			AND SettingType = 2
+
+		IF @@ROWCOUNT = 0 BREAK
+
+		UPDATE csa
+		SET csa.minBet = cs.MinBet,       
+			csa.MaxBet = cs.MaxBet,   
+			csa.maxperMatch = cs.MaxPerMatch
+		FROM dbo.CustBetSetting3rd_Agent csa WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #SMAList_BetSetting cs WITH(NOLOCK) ON cs.custid = csa.CustID
+		WHERE csa.SportType = @tSportType AND csa.BetType = @tBetType
+
+		UPDATE csm
+		SET csm.minBet = cs.minbet,       
+			csm.MaxBet = cs.MaxBet,   
+			csm.maxperMatch = cs.MaxPerMatch
+		FROM dbo.CustBetSetting3rd_Member csm WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #MemberList_BetSetting cs WITH(NOLOCK) ON cs.custid = csm.CustID
+		WHERE csm.SportType = @tSportType AND csm.BetType = @tBetType
+	END
+
 	DROP TABLE #DestinationSportBetType		
+END
+GO
+-- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
+------------------------------------------------------	
+
+-- BEGIN STEP 2: RUN THIS SCRIPT AT DBCUST SERVERS -----
+--------------------------------------------------------------------------------------
+EXEC dbo.Acc_DynamicCustSetting3rd_09 

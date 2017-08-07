@@ -119,18 +119,15 @@ BEGIN
 	DECLARE @BitmapOrder TINYINT = 11
 	
 	UPDATE cs
-	SET cs.bitmapIsHidden = IsHidden.NewBitmap,
-		bitmapIsDisabled = IsDisable.NewBitmap
+	SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0)),
+		bitmapIsDisabled = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0))
 	FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN #SMATemp ci WITH(NOLOCK) ON cs.CustID = ci.CustID
-		CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0) IsHidden
-		CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0) IsDisable
 
 	UPDATE cs
-	SET cs.bitmapIsHidden = IsHidden.NewBitmap
+	SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0))
 	FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.CustID
-		CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0) IsHidden
 END
 GO
 -- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------

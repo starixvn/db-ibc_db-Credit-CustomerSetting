@@ -39,9 +39,9 @@ WHERE GroupName IN ('ACCTHAI','ACCTHAI2','ACCTHAI56','ACCTHAI99',
 
 --input Permission To
 INSERT INTO #PermissionMapping (PermissionFrom, PermissionTo)
-SELECT 82, 104 --Keno ==> Edit NG2 Setting
-UNION ALL SELECT 85, 105 --Keno Bet Setting ==> Edit NG2 Betting Limit
-UNION ALL SELECT 81, 103 --Enable Keno ==> Enable NG2 Status
+SELECT 82, 110 --Keno ==> Edit Lottery Setting
+UNION ALL SELECT 85, 111 --Keno Bet Setting ==> Edit Lottery Betting Limit
+UNION ALL SELECT 81, 109 --Enable Keno ==> Enable Lottery Status
 
 --SIT
 --SELECT 82, 102 --Keno ==> Edit NG2 Setting
