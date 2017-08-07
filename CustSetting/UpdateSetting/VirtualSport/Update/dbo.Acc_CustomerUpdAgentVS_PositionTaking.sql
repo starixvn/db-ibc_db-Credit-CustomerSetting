@@ -1,6 +1,6 @@
 ﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentVS_PositionTaking]        
 	@custid      INT, --agentID        
-	@sporttype     TINYINT,        
+	@sporttype     SMALLINT,        
 	@bettype     INT,        
 	     
 	@a2       SMALLMONEY,          
@@ -42,6 +42,7 @@ Revisions:
 	- 20131203@Johnson: Pass param @sporttype, @bettype when call sp Acc_CustSetting3rd_07 for agent			
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB, Use temp table for sports, bettype table)
 	- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:        
 • @ErrCode:        
     = 0: Update successfully.        
@@ -57,7 +58,7 @@ DECLARE @endRun DATETIME
 DECLARE @duration INT        
 
 ----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
