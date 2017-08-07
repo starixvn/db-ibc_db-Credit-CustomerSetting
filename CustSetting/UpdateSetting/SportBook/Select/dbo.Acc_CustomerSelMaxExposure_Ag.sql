@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelMaxExposure_Ag]
+﻿/*<info serverAlias="DBACC-bodb02,DBTXN-bodb02" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerSelMaxExposure_Ag]
 	@custid int,
 	@sporttype SMALLINT,
 	@MaxExposure money OUTPUT
@@ -32,8 +33,3 @@ select @MaxExposure = isnull(@MaxExposure, 0)
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMaxExposure_Ag] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMaxExposure_Ag] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelMaxExposure_Ag] TO [vnteam] AS [dbo]

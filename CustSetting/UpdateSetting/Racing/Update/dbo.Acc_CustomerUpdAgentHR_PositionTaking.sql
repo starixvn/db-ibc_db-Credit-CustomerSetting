@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentHR_PositionTaking]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentHR_PositionTaking]
 	@custid int, --agentID
 	--a2
 	@v151apositiontaking_31 smallmoney,
@@ -2040,8 +2041,3 @@ END CATCH
 	
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentHR_PositionTaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentHR_PositionTaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentHR_PositionTaking] TO [vnteam] AS [dbo]

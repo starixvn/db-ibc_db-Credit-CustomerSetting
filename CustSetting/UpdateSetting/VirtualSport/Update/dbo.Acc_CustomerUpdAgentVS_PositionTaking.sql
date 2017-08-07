@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentVS_PositionTaking]        
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentVS_PositionTaking]        
 	@custid      INT, --agentID        
 	@sporttype     SMALLINT,        
 	@bettype     INT,        
@@ -824,10 +825,3 @@ END CATCH
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_PositionTaking] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_PositionTaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_PositionTaking] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentVS_PositionTaking] TO [vnteam] AS [dbo]

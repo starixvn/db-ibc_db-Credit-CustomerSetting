@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking]
 (
 	@custid INT
@@ -348,10 +349,3 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking] TO [vnteam] AS [dbo]

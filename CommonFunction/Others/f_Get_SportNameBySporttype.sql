@@ -1,4 +1,5 @@
-﻿ALTER FUNCTION [dbo].[f_Get_SportNameBySporttype]
+﻿/*<info serverAlias="DBCUST-CUSTDB,DBTXN-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+ALTER FUNCTION [dbo].[f_Get_SportNameBySporttype]
 (
     @Sporttype    SMALLINT,
     @Language    NVARCHAR(5)='E' 
@@ -46,12 +47,3 @@ END
 
 
 GO
-GRANT VIEW DEFINITION ON [dbo].[f_Get_SportNameBySporttype] TO [vnteam]
-GO
-GRANT EXECUTE ON [dbo].[f_Get_SportNameBySporttype] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[f_Get_SportNameBySporttype] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[f_Get_SportNameBySporttype] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[f_Get_SportNameBySporttype] TO [bodbDownlineNetView]

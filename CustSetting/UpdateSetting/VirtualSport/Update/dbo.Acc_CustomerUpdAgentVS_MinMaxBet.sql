@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet]
 	@custid int,-- agentID
 	@sporttype SMALLINT,
 	@bettype int,	
@@ -405,10 +406,3 @@ END CATCH
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet] TO [vnteam] AS [dbo]

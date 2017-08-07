@@ -190,10 +190,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_StatusSettingSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_StatusSettingSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_StatusSettingSelect] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_StatusSettingSelect] TO [vnteam]
