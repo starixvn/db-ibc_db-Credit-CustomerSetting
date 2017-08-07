@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMasterHR_Positiontaking]
     @custid int,-- masterid    
     @v151spositiontaking_31 smallmoney,
@@ -111,7 +112,7 @@ Revisions:
     - 20140729@Logan: 1.Exclude disabled agents while updating SM's setting [Redmine: #19631]
                       2.Code aligning on modified parts
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, Use temp table for sports, bettype table)
-
+	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -128,7 +129,7 @@ declare @endRun datetime
 declare @duration int
 set @startRun = getdate()
 ----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
@@ -2460,10 +2461,4 @@ BEGIN CATCH
         @duration = @duration
 END CATCH
 
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMasterHR_Positiontaking] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterHR_Positiontaking] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterHR_Positiontaking] TO [bodbDownlineNet]
 GO 
