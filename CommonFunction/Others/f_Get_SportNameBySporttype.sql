@@ -1,6 +1,6 @@
 ﻿ALTER FUNCTION [dbo].[f_Get_SportNameBySporttype]
 (
-    @Sporttype    TINYINT,
+    @Sporttype    SMALLINT,
     @Language    NVARCHAR(5)='E' 
 )
 RETURNS NVARCHAR(100) 
@@ -15,6 +15,7 @@ AS
         - 20130124@Elodie: return SportName with English language in case of @SportName = '' or @SportName is null
         - 20130808@Elodie: Splitting DBTXN into DBCUST (call sport by link server)
 		- 20130808@Elodie: Migrate CustDB to new server DBCUST
+		- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 */
 BEGIN
     -- Declare the return variable here
