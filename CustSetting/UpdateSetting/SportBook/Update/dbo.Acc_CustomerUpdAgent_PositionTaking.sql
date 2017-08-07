@@ -383,7 +383,7 @@ Revisions:
 	- 20150714@Johnson: Write log value from db if not change when update multiple [Redmine: #39555]
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-	
+	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.

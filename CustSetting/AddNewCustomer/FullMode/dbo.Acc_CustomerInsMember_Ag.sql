@@ -310,6 +310,7 @@ Revisions:
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
+	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.

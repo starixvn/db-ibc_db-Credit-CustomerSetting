@@ -111,6 +111,7 @@ Revisions:
 			and check total downlines before UPDATEs
 	- 20131108@Elodie: Splitting bodb02 into CustDB (call sport, bettype by link database)			
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, Use temp table for sports, bettype table)
+	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.

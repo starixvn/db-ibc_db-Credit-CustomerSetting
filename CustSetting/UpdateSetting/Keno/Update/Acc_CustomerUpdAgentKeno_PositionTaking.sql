@@ -33,6 +33,7 @@ AS
 	Revisions:
 		- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, Use temp table for sports, bettype table)
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	Parameters Explanation:
 		@ErrCode: 0 is successful
 */
