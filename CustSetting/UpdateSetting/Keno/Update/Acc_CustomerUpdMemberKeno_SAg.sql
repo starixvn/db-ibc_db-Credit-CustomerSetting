@@ -472,7 +472,7 @@ BEGIN
 
 	--Call execrep
 	/*
-	EXEC dbo.Acc_CustSetting3rd_00_xtest
+	EXEC dbo.Acc_CustSetting3rd_00
 		@custid = @custid
 		, @recommend = @recommend
 		, @mrecommend = @mrecommend
