@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_MinMaxBet]
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_MinMaxBet]
 	@custid int,
 	
 	@MinBet money,
@@ -77,7 +78,7 @@ Revisions:
 	- 20131108@Elodie: Splitting bodb02 into CustDB (call sportype by link database)
 	- 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
-	
+	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -88,7 +89,7 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON
 	----- David @ 09 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	
 	BEGIN TRY
 		INSERT INTO @tmp_Sports (SportType, SportName)
@@ -546,3 +547,4 @@ BEGIN
 			@duration = @duration
 		END CATCH
 END
+GO

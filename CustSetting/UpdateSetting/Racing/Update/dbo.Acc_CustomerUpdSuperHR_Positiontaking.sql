@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuperHR_Positiontaking]    Script Date: 06/10/2015 15:49:02 ******/
@@ -96,6 +97,7 @@ Revisions:
     - 20140814@Logan:   1. Exclude disabled agents, members while updating super PT
                         2. Code aligning
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines, temp sport, bettype table) [Redmine:#36216]
+	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.
@@ -118,7 +120,7 @@ BEGIN
     Declare @ErrAcc nvarchar(4000)
     declare @ErrType varchar(1000)
 	
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
@@ -977,6 +979,3 @@ INNER JOIN (SELECT 151 AS sporttype
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperHR_Positiontaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperHR_Positiontaking] TO [vnteam] AS [dbo]

@@ -281,7 +281,7 @@ Revisions:
     - 20150609@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, temp sport, bettype table) [Redmine:#36216]
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-    
+    - 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.
@@ -313,7 +313,7 @@ BEGIN
     IF    @ErrCode <> 0 
         RETURN 
     ----------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
@@ -4335,6 +4335,3 @@ INNER JOIN (SELECT 161 AS sporttype
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_PositionTaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuper_PositionTaking] TO [vnteam] AS [dbo]

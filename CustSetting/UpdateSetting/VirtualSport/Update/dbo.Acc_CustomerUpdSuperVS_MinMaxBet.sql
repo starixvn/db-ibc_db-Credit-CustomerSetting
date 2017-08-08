@@ -1,4 +1,5 @@
-﻿USE [CustDB]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuperVS_MinMaxBet]    Script Date: 06/10/2015 16:08:33 ******/
 SET ANSI_NULLS ON
@@ -10,7 +11,7 @@ GO
 /****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperVS_MinMaxBet    Script Date: 12/5/2013 5:35:50 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperVS_MinMaxBet]
 	@custid			INT,
-	@sporttype tinyint,
+	@sporttype SMALLINT,
 	@bettype int,
 	@MinBet			MONEY,
 	@MaxBet			MONEY,
@@ -36,7 +37,7 @@ Revisions:
 	- 20140402@Kathy: Add Virtual Speedway (183), Virtual Virtual Cycling (185)	[Redmine:#14142]
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB) [Redmine:#36216]                                
 	- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
-							
+	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]						
 Param's Explanation:
 * @ErrCode:
     = 0: Transaction recorded successfully.
@@ -299,8 +300,3 @@ BEGIN CATCH
 END CATCH
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperVS_MinMaxBet] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperVS_MinMaxBet] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperVS_MinMaxBet] TO [vnteam] AS [dbo]

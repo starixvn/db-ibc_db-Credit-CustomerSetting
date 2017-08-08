@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuperVS_Positiontaking]    Script Date: 06/10/2015 16:12:26 ******/
@@ -11,7 +12,7 @@ GO
 /****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperVS_Positiontaking    Script Date: 8/21/2014 2:58:06 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperVS_Positiontaking]
     @custid int,-- superid    
-    @sporttype tinyint,
+    @sporttype SMALLINT,
     @bettype int,
     
     @s4 smallmoney = 0,
@@ -44,7 +45,7 @@ AS
                           2. Code aligning for modified parts
 		- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, temp sport, bettype table) [Redmine:#36216]                          
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
-
+		- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]			
     Param's Explanation:
     • @ErrCode:
         = 0: Transaction recorded successfully.
@@ -102,7 +103,7 @@ BEGIN
 END
 
 
-DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 
 BEGIN TRY
@@ -581,8 +582,3 @@ BEGIN CATCH
 END CATCH
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperVS_Positiontaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperVS_Positiontaking] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperVS_Positiontaking] TO [vnteam] AS [dbo]
