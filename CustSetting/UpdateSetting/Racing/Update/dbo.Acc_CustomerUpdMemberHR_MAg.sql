@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberHR_MAg] 
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberHR_MAg] 
 	@CustID int,--memberid
 	--m1
 	@v151mpositiontaking_31 smallmoney  = 0 OUTPUT,
@@ -108,6 +109,7 @@ Revisions:
 						merge code correct pt into sp execrep Acc_CustSetting3rd_08/Acc_CustSetting3rd_09[redmine:#11562]
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Use temp table for sports, bettype table,
 															Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)
+	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -124,7 +126,7 @@ declare @duration int
 set @startRun = getdate()
 
 ----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
@@ -2393,10 +2395,3 @@ Select @ErrCode = @ErrCode + '-107'+char(7), @ErrMsg = @ErrMsg + char(7)
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberHR_MAg] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberHR_MAg] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberHR_MAg] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberHR_MAg] TO [vnteam] AS [dbo]
