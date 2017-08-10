@@ -7,6 +7,8 @@
 USE CustDB
 GO
 
+PRINT N'Step 6: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.';  
+
 DECLARE @MaxCustID INT
 	
 SELECT @MaxCustID = xxx
@@ -72,3 +74,5 @@ FROM CustWinLossLimit_Member cg WITH(UPDLOCK,ROWLOCK)
 	INNER JOIN #supers s ON c.srecommend = s.custid			
 WHERE SportType = 220
 	AND cg.custid > @maxcustID	
+
+PRINT N'Step 6: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 

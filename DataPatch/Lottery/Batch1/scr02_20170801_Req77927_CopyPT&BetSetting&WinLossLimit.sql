@@ -23,8 +23,8 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
-	
+	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN	
+
 	DECLARE @fSportType SMALLINT, @fBetType SMALLINT
 
 	DECLARE @ProductID TINYINT = 28
@@ -34,8 +34,10 @@ BEGIN
 	FROM dbo.ProductSettingDetail WITH (NOLOCK)
 	WHERE ProductID = @ProductID AND SettingType IN (1,6)
 
+	--get Bet Setting of Keno - Max Keno (bet type id  = 1515)  to apply for all game types of Lottery (Max5D, Max3D, Max11x5, MaxDice)
+	--Use GameTypeID = 15 in CustGameType table
 	INSERT INTO #DestinationSportBetType (fSportType, fBetType, tSportType, tBetType, IsLive, SettingType, IsFinished)
-	SELECT	202, 15, SportType, BetType, 0, SettingType, 0
+	SELECT	202, 15, SportType, BetType, 0, SettingType, 0 
 	FROM dbo.ProductSettingDetail WITH (NOLOCK)
 	WHERE ProductID = @ProductID AND SettingType IN (2)
 
@@ -174,7 +176,7 @@ BEGIN
 
 	DROP TABLE #SMATemp
 	DROP TABLE #MemberTemp
-	DROP TABLE #DestinationSportBetType		
+	DROP TABLE #DestinationSportBetType			
 END
 GO
 -- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
@@ -232,6 +234,8 @@ GO
 
 -- BEGIN STEP 3: RUN THIS SCRIPT AT DBCUST -----
 --------------------------------------------------------------------------------------
+PRINT N'Step 2: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.';  
+
 CREATE TABLE #supers (custid int,isfinished bit default(0))
 
 DECLARE @max_custid INT, @srecommend INT
@@ -277,3 +281,5 @@ BEGIN
 						
 	waitfor delay '00:00:0.200'
 END
+
+PRINT N'Step 2: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 

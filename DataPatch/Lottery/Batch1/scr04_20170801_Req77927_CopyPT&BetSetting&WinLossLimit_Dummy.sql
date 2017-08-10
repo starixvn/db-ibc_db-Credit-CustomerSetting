@@ -23,8 +23,8 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN	
-	
+	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN			
+
 	DECLARE @fSportType SMALLINT, @fBetType SMALLINT
 
 	DECLARE @ProductID TINYINT = 28
@@ -245,7 +245,7 @@ BEGIN
 
 	DROP TABLE #SMATemp
 	DROP TABLE #MemberTemp
-	DROP TABLE #DestinationSportBetType		
+	DROP TABLE #DestinationSportBetType			
 END
 GO
 -- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
@@ -310,6 +310,8 @@ GO
 
 -- BEGIN STEP 3: RUN THIS SCRIPT AT DBCUST -----
 --------------------------------------------------------------------------------------
+PRINT N'Step 4: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.';  
+
 CREATE TABLE #supers (custid int,isfinished bit default(0))
 
 DECLARE @max_custid INT, @srecommend INT
@@ -347,3 +349,5 @@ BEGIN
 						
 	waitfor delay '00:00:0.280'
 END
+
+PRINT N'Step 4: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 

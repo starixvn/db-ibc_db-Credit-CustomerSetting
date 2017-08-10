@@ -20,8 +20,8 @@ BEGIN
 	   AND dbo.f_CheckRepTable('ProductSettingDetail') = 1
 	   AND dbo.f_CheckRepTable('ProductStatusProfile') = 1
 	   )
-		RETURN	
-	
+		RETURN			
+
 	CREATE TABLE #OfferedSite (site VARCHAR(10))
 	INSERT INTO #OfferedSite (site)
 	VALUES  ('755555'), ('Indo'), ('KORIBC'), ('733333'), ('222223'), ('222225'), ('222227')
@@ -128,6 +128,7 @@ BEGIN
 	SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0))
 	FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN #MemberTemp ci WITH(NOLOCK) ON cs.CustID = ci.CustID
+	
 END
 GO
 -- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
@@ -177,6 +178,8 @@ GO
 
 -- BEGIN STEP 3: RUN THIS SCRIPT AT DBCUST -----
 --------------------------------------------------------------------------------------
+PRINT N'Step 5: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.';  
+
 CREATE TABLE #supers (custid int,isfinished bit default(0))
 
 DECLARE @max_custid INT, @srecommend INT
@@ -215,3 +218,5 @@ BEGIN
 						
 	waitfor delay '00:00:0.280'
 END
+
+PRINT N'Step 5: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 

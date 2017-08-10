@@ -4,7 +4,7 @@
 	DB: DBCUST/CustDB
 	Date: 20170801
 */ 
-ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09] WITH RECOMPILE
+ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09] 
 AS
 
 BEGIN
@@ -18,7 +18,7 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN	
 
 	CREATE TABLE #supers (custid int)
 
@@ -33,6 +33,11 @@ BEGIN
 		AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
 		AND s.islicensee = 0
 		AND ci.site IN ('755555', 'Indo', 'KORIBC', '733333', '222223', '222225', '222227')
+	
+	INSERT INTO #supers(custid)
+	SELECT custid
+	FROM CustInfo ci WITH (NOLOCK)
+	WHERE custid IN (2,3,4,5,12,13,15)
 
 	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
 
@@ -228,7 +233,7 @@ BEGIN
 		WHERE csm.SportType = @tSportType AND csm.BetType = @tBetType
 	END
 
-	DROP TABLE #DestinationSportBetType		
+	DROP TABLE #DestinationSportBetType			
 END
 GO
 -- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
@@ -236,4 +241,8 @@ GO
 
 -- BEGIN STEP 2: RUN THIS SCRIPT AT DBCUST SERVERS -----
 --------------------------------------------------------------------------------------
+PRINT N'Step 10: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'
+
 EXEC dbo.Acc_DynamicCustSetting3rd_09 
+
+PRINT N'Step 10: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'

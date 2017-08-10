@@ -22,7 +22,7 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN			
+	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN				
 
 	SELECT DISTINCT custid 
 	INTO #CustPT_Agent
@@ -106,5 +106,9 @@ EXEC dbo.Acc_DynamicCustSetting3rd_09 @target = 'REPLICATED'
 
 -- BEGIN STEP 3: RUN THIS SCRIPT AT DBCUST -----
 --------------------------------------------------------------------------------------
+PRINT N'Step 1: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'
+
 EXEC dbo.Acc_DynamicCustSetting3rd_09 @target = 'DBCUST'
+
+PRINT N'Step 1: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'
 

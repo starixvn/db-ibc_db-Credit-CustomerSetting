@@ -4,6 +4,8 @@
 	DB: DBCUST/CustDB
 	Date: 20170801
 */ 
+PRINT N'Step 9: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.';  
+
 DECLARE @MaxCustID INT, @fSportType SMALLINT, @fBetType SMALLINT
 	
 SELECT @MaxCustID = xxx
@@ -252,3 +254,5 @@ FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
 DROP TABLE #SMATemp
 DROP TABLE #MemberTemp
 DROP TABLE #DestinationSportBetType		
+
+PRINT N'Step 9: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 

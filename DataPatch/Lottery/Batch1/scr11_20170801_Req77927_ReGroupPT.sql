@@ -22,7 +22,7 @@ BEGIN
 	   AND dbo.f_CheckRepTable('CustSettingMode3rd') = 1
 	   AND dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 1
 	   )
-	  RETURN
+	  RETURN	
 
 	CREATE TABLE #CustomerTemp
 	(
@@ -162,7 +162,7 @@ BEGIN
 	FROM [dbo].[CustPTSetting3rd_Member] cs WITH(NOLOCK)
 		INNER JOIN #GroupedCustomer temp1 WITH(NOLOCK)
 			ON cs.CustID = temp1.CustID
-	WHERE cs.SportType = 220
+	WHERE cs.SportType = 220	
 END
 GO
 
@@ -213,6 +213,8 @@ GO
 
 -- BEGIN STEP 3: RUN THIS SCRIPT AT DBCUST -----
 --------------------------------------------------------------------------------------
+PRINT N'Step 11: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'
+
 CREATE TABLE #supers (custid int,isfinished bit default(0))
 
 DECLARE @srecommend INT
@@ -254,3 +256,5 @@ BEGIN
 			
 	waitfor delay '00:00:0.280'
 END
+
+PRINT N'Step 11: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'

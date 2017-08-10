@@ -20,8 +20,8 @@ BEGIN
 	   AND dbo.f_CheckRepTable('ProductSettingDetail') = 1
 	   AND dbo.f_CheckRepTable('ProductStatusProfile') = 1
 	   )
-		RETURN	
-	
+		RETURN
+				
 	/*******************************CUST PRODUCT STATUS TABLE*******************************/	
 	DECLARE @BitmapOrder TINYINT = 11
 
@@ -54,13 +54,26 @@ BEGIN
 		FROM dbo.custInfo ci WITH (NOLOCK)
 		WHERE ci.srecommend = @Custid AND ci.custid <= @maxcustid
 
-		UPDATE cs
-		SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0)),
-			bitmapIsDisabled = CASE WHEN ci.roleid BETWEEN 2 AND 4 THEN (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0)) 
-									ELSE bitmapIsDisabled END
-		FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #CustList ci WITH(NOLOCK) ON cs.CustID = ci.CustID
-	END
+		IF EXISTS (	SELECT cu.custid 
+					FROM custaccount cu WITH(NOLOCK)
+						INNER JOIN custinfo c WITH(NOLOCK) ON cu.custid = c.custid
+					WHERE groupid = 515 and c.roleid = 4 AND c.custid = @Custid) -- belong THAUS headline
+		BEGIN
+			UPDATE cs
+			SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0))
+			FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
+				INNER JOIN #CustList ci WITH(NOLOCK) ON cs.CustID = ci.CustID
+		END
+		ELSE
+		BEGIN
+			UPDATE cs
+			SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0)),
+				bitmapIsDisabled = CASE WHEN ci.roleid BETWEEN 2 AND 4 THEN (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitmapOrder,0)) 
+										ELSE bitmapIsDisabled END
+			FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
+				INNER JOIN #CustList ci WITH(NOLOCK) ON cs.CustID = ci.CustID
+		END
+	END	
 END
 GO
 -- END STEP 1: DEPLOY THIS SP @DBCUST.CustDB --------
@@ -85,11 +98,7 @@ WHERE ci.roleid = 4
 		AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
 		AND s.islicensee = 0
 		AND ci.custid <= @max_custid
-		AND ci.site IN ('755555', 'Indo', 'KORIBC', '733333', '222223', '222225', '222227')
-		AND ci.custid NOT IN (	SELECT cu.custid 
-								FROM custaccount cu WITH(NOLOCK)
-									INNER join custinfo c WITH(NOLOCK) ON cu.custid=c.custid
-								WHERE groupid=515 and c.roleid=4) -- Ignored THAUS line		
+		AND ci.site IN ('755555', 'Indo', 'KORIBC', '733333', '222223', '222225', '222227')		
 
 -- For deployer info
 DECLARE @super_cnt INT, @index INT = 0
@@ -122,6 +131,8 @@ GO
 
 -- BEGIN STEP 3: RUN THIS SCRIPT AT DBCUST -----
 --------------------------------------------------------------------------------------
+PRINT N'Step 3: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.';  
+
 CREATE TABLE #supers (custid int,isfinished bit default(0))
 
 DECLARE @max_custid INT, @srecommend INT
@@ -139,11 +150,7 @@ WHERE ci.roleid = 4
 		AND ci.custid NOT IN (SELECT custid FROM Dep_CustSuper WITH(NOLOCK))
 		AND s.islicensee = 0
 		AND ci.custid <= @max_custid
-		AND ci.site IN ('755555', 'Indo', 'KORIBC', '733333', '222223', '222225', '222227')
-		AND ci.custid NOT IN (	SELECT cu.custid 
-						FROM custaccount cu WITH(NOLOCK)
-							INNER join custinfo c WITH(NOLOCK) ON cu.custid=c.custid
-						WHERE groupid=515 and c.roleid=4) -- Ignored THAUS line					
+		AND ci.site IN ('755555', 'Indo', 'KORIBC', '733333', '222223', '222225', '222227')						
 							
 -- For deployer info
 DECLARE @super_cnt INT, @index INT = 0
@@ -171,3 +178,5 @@ BEGIN
 						
 	waitfor delay '00:00:0.280'
 END
+
+PRINT N'Step 3: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 

@@ -4,6 +4,8 @@
 	DB: DBCUST/CustDB
 	Date: 20170801
 */ 
+PRINT N'Step 7: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 
+
 DECLARE @MaxCustID INT, @fSportType SMALLINT, @fBetType SMALLINT
 	
 SELECT @MaxCustID = xxx
@@ -183,6 +185,19 @@ INTO #CustList
 FROM dbo.custInfo ci WITH (NOLOCK)
 WHERE ci.srecommend IN (SELECT custid FROM #supers) AND custid > @MaxCustID
 	AND NOT EXISTS (SELECT 1 FROM #IgnoredCust WHERE custid = ci.custid)
+	AND NOT EXISTS (	SELECT cu.custid 
+						FROM custaccount cu WITH(NOLOCK)
+							INNER JOIN custinfo c WITH(NOLOCK) ON cu.custid = c.custid
+						WHERE groupid = 515 and c.roleid = 4 AND c.custid = ci.srecommend)
+
+SELECT custid, ci.roleid
+INTO #CustListTHAUS
+FROM dbo.custInfo ci WITH (NOLOCK)
+WHERE ci.srecommend IN (SELECT custid FROM #supers) AND custid > @MaxCustID
+	AND EXISTS (	SELECT cu.custid 
+						FROM custaccount cu WITH(NOLOCK)
+							INNER JOIN custinfo c WITH(NOLOCK) ON cu.custid = c.custid
+						WHERE groupid = 515 and c.roleid = 4 AND c.custid = ci.srecommend)
 
 UPDATE cs
 SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0)),
@@ -191,6 +206,13 @@ SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProduct
 FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
 	INNER JOIN #CustList ci WITH(NOLOCK) ON cs.CustID = ci.CustID
 
+UPDATE cs
+SET cs.bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitmapOrder,0))	
+FROM [dbo].[CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
+	INNER JOIN #CustListTHAUS ci WITH(NOLOCK) ON cs.CustID = ci.CustID
+
 DROP TABLE #SMATemp
 DROP TABLE #MemberTemp
 DROP TABLE #DestinationSportBetType		
+
+PRINT N'Step 7: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 

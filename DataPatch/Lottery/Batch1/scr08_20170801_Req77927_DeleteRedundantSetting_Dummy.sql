@@ -7,6 +7,8 @@
 USE CustDB
 GO
 
+PRINT N'Step 8: Start on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.';  
+
 DECLARE @MaxCustID INT
 	
 SELECT @MaxCustID = xxx
@@ -146,3 +148,5 @@ DELETE cg
 FROM CustWinLossLimit_Member cg WITH(UPDLOCK,ROWLOCK)
 	INNER JOIN #MemberTemp c WITH (NOLOCK) ON cg.CustID = c.custid
 WHERE SportType = 220
+
+PRINT N'Step 8: End on ' + CAST(GETDATE() AS NVARCHAR(30)) + N'.'; 
