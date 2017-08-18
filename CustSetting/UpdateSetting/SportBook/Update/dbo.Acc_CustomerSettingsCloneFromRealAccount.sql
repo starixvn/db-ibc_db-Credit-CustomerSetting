@@ -1,4 +1,8 @@
-﻿ ALTER PROCEDURE [dbo].[Acc_CustomerSettingsCloneFromRealAccount]
+﻿ /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+ USE CustDB 
+ GO
+
+ ALTER PROCEDURE [dbo].[Acc_CustomerSettingsCloneFromRealAccount]
 	@fromUsername	VARCHAR(50),
 	@toUsername		VARCHAR(50),
 	@userID			INT,
@@ -13,7 +17,8 @@
 		DB: DBTXN/CustDB
 		
 		Revisions:
-		
+			- 20170601@Elodie: Migrate Inspired VS to DCS structure [Redmine: #77274]
+
 		Parameter's Explantion:
 	*/
 BEGIN
@@ -288,13 +293,13 @@ BEGIN
 		c.maxpermatch161 = c2.maxpermatch161,
 		c.MaxPerBall161 = c2.MaxPerBall161,
 		
-		c.maxpermatch180 = c2.maxpermatch180,
-		c.maxpermatch181 = c2.maxpermatch181,
-		c.maxpermatch182 = c2.maxpermatch182,
-		c.maxpermatch183 = c2.maxpermatch183,
-		c.maxpermatch184 = c2.maxpermatch184,
-		c.maxpermatch185 = c2.maxpermatch185,
-		c.maxpermatch186 = c2.maxpermatch186,
+		--c.maxpermatch180 = c2.maxpermatch180,
+		--c.maxpermatch181 = c2.maxpermatch181,
+		--c.maxpermatch182 = c2.maxpermatch182,
+		--c.maxpermatch183 = c2.maxpermatch183,
+		--c.maxpermatch184 = c2.maxpermatch184,
+		--c.maxpermatch185 = c2.maxpermatch185,
+		--c.maxpermatch186 = c2.maxpermatch186,
 		
 		c.MaxPerMatch201 = c2.MaxPerMatch201
 	FROM @tmpUser t 

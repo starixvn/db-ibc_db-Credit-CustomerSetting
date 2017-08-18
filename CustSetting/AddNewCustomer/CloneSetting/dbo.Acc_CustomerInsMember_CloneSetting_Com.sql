@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [CustDB]
 GO
 
@@ -53,7 +53,9 @@ AS
 	- 20170207@Elodie: Set HideGoldDeluxe = 0 for 789y site - [Redmine: #69200]
 	- 20170420@Helen:  Add Extra information for Direct Accounts, for NAP only - [Redmine:72339]
 	- 20170614@Johnson: Force Security Code for newly created Super on i7  - [Redmine: #78293]
+	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
+
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -307,15 +309,15 @@ BEGIN
 				,DisableFunP2P
 				,DisableLiveCasino
 				,SyncLiveCasino
-				,DisableVirtualSports
-				,HideVirtualSports
-				,maxpermatch180
-				,maxpermatch181
-				,maxpermatch183--dom
-				,maxpermatch185--dom
-				,maxpermatch182
-				,maxpermatch184
-				,maxpermatch186
+				--,DisableVirtualSports
+				--,HideVirtualSports
+				--,maxpermatch180
+				--,maxpermatch181
+				--,maxpermatch183--dom
+				--,maxpermatch185--dom
+				--,maxpermatch182
+				--,maxpermatch184
+				--,maxpermatch186
 				,isAutoResetLiveCasino
 				,MaxWinLiveCasino
 				,DoubleCommLosing
@@ -385,15 +387,15 @@ BEGIN
 				,DisableFunP2P
 				,DisableLiveCasino
 				,0 as SyncLiveCasino
-				,DisableVirtualSports
-				,HideVirtualSports
-				,maxpermatch180
-				,maxpermatch181
-				,maxpermatch183--dom
-				,maxpermatch185--dom
-				,maxpermatch182
-				,maxpermatch184
-				,maxpermatch186
+				--,DisableVirtualSports
+				--,HideVirtualSports
+				--,maxpermatch180
+				--,maxpermatch181
+				--,maxpermatch183--dom
+				--,maxpermatch185--dom
+				--,maxpermatch182
+				--,maxpermatch184
+				--,maxpermatch186
 				,isAutoResetLiveCasino
 				,MaxWinLiveCasino
 				,doubleCommLosing
@@ -678,5 +680,4 @@ BEGIN
 		
 	SET NOCOUNT OFF
 END
-
 GO

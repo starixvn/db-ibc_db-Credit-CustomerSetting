@@ -1,8 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
+USE [CustDB]
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@custid INT =0,
 	@srecommend INT = 0,
@@ -113,13 +112,13 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v162spositiontaking_1101 SMALLMONEY =0,
 	@v255spositiontaking_1701 SMALLMONEY =0,
 
-	@v180spositiontaking_1201 smallmoney = 0,
-	@v181spositiontaking_1231 smallmoney = 0,
-	@v182spositiontaking_1231 smallmoney = 0,
-	@v183spositiontaking_1231 smallmoney = 0,
-	@v184spositiontaking_1231 smallmoney = 0,
-	@v185spositiontaking_1231 smallmoney = 0,
-	@v186spositiontaking_1220 smallmoney = 0,
+	--@v180spositiontaking_1201 smallmoney = 0,
+	--@v181spositiontaking_1231 smallmoney = 0,
+	--@v182spositiontaking_1231 smallmoney = 0,
+	--@v183spositiontaking_1231 smallmoney = 0,
+	--@v184spositiontaking_1231 smallmoney = 0,
+	--@v185spositiontaking_1231 smallmoney = 0,
+	--@v186spositiontaking_1220 smallmoney = 0,
 	
 
 	--@v201spositiontaking_2 smallmoney = 0,
@@ -213,14 +212,14 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@auto_v161slivepositiontaking_89 smallmoney = 0,
 	@auto_v161slivepositiontaking_90 smallmoney = 0,
 	
-	--n4 vs
-	@min_v180spositiontaking_1201 smallmoney = 0,	 --VS
-	@min_v181spositiontaking_1231 smallmoney = 0,
-	@min_v182spositiontaking_1231 smallmoney = 0,
-	@min_v183spositiontaking_1231 smallmoney = 0,
-	@min_v184spositiontaking_1231 smallmoney = 0,
-	@min_v185spositiontaking_1231 smallmoney = 0,
-	@min_v186spositiontaking_1220 smallmoney = 0,
+	----n4 vs
+	--@min_v180spositiontaking_1201 smallmoney = 0,	 --VS
+	--@min_v181spositiontaking_1231 smallmoney = 0,
+	--@min_v182spositiontaking_1231 smallmoney = 0,
+	--@min_v183spositiontaking_1231 smallmoney = 0,
+	--@min_v184spositiontaking_1231 smallmoney = 0,
+	--@min_v185spositiontaking_1231 smallmoney = 0,
+	--@min_v186spositiontaking_1220 smallmoney = 0,
 	
 	@isauto_spositiontaking_1 BIT = 0,
 	@isauto_spositiontaking_2 BIT = 0,
@@ -393,13 +392,13 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v162mpositiontaking_1101 SMALLMONEY =0,
 	@v255mpositiontaking_1701 SMALLMONEY =0,
 
-	@v180mpositiontaking_1201 smallmoney = 0,
-	@v181mpositiontaking_1231 smallmoney = 0,
-	@v182mpositiontaking_1231 smallmoney = 0,
-	@v183mpositiontaking_1231 smallmoney = 0,
-	@v184mpositiontaking_1231 smallmoney = 0,
-	@v185mpositiontaking_1231 smallmoney = 0,
-	@v186mpositiontaking_1220 smallmoney = 0,
+	--@v180mpositiontaking_1201 smallmoney = 0,
+	--@v181mpositiontaking_1231 smallmoney = 0,
+	--@v182mpositiontaking_1231 smallmoney = 0,
+	--@v183mpositiontaking_1231 smallmoney = 0,
+	--@v184mpositiontaking_1231 smallmoney = 0,
+	--@v185mpositiontaking_1231 smallmoney = 0,
+	--@v186mpositiontaking_1220 smallmoney = 0,
 	
 
 	--@v201mpositiontaking_2 smallmoney = 0,
@@ -497,13 +496,13 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@auto_v161mlivepositiontaking_89 smallmoney = 0,
 	@auto_v161mlivepositiontaking_90 smallmoney = 0,
 		
-	@min_v180mpositiontaking_1201 smallmoney = 0,--VS
-	@min_v181mpositiontaking_1231 smallmoney = 0,
-	@min_v182mpositiontaking_1231 smallmoney = 0,
-	@min_v183mpositiontaking_1231 smallmoney = 0,
-	@min_v184mpositiontaking_1231 smallmoney = 0,
-	@min_v185mpositiontaking_1231 smallmoney = 0,
-	@min_v186mpositiontaking_1220 smallmoney = 0,
+	--@min_v180mpositiontaking_1201 smallmoney = 0,--VS
+	--@min_v181mpositiontaking_1231 smallmoney = 0,
+	--@min_v182mpositiontaking_1231 smallmoney = 0,
+	--@min_v183mpositiontaking_1231 smallmoney = 0,
+	--@min_v184mpositiontaking_1231 smallmoney = 0,
+	--@min_v185mpositiontaking_1231 smallmoney = 0,
+	--@min_v186mpositiontaking_1220 smallmoney = 0,
 	
 
 	@isauto_mpositiontaking_1 BIT = 0,
@@ -665,13 +664,13 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v162apositiontaking_1101 SMALLMONEY = 0,
 	@v255apositiontaking_1701 SMALLMONEY = 0,
 
-	@v180apositiontaking_1201 SMALLMONEY = 0,
-	@v181apositiontaking_1231 SMALLMONEY = 0,
-	@v182apositiontaking_1231 SMALLMONEY = 0,
-	@v183apositiontaking_1231 SMALLMONEY = 0,
-	@v184apositiontaking_1231 SMALLMONEY = 0,
-	@v185apositiontaking_1231 SMALLMONEY = 0,
-	@v186apositiontaking_1220 SMALLMONEY = 0,
+	--@v180apositiontaking_1201 SMALLMONEY = 0,
+	--@v181apositiontaking_1231 SMALLMONEY = 0,
+	--@v182apositiontaking_1231 SMALLMONEY = 0,
+	--@v183apositiontaking_1231 SMALLMONEY = 0,
+	--@v184apositiontaking_1231 SMALLMONEY = 0,
+	--@v185apositiontaking_1231 SMALLMONEY = 0,
+	--@v186apositiontaking_1220 SMALLMONEY = 0,
 							  
 	@v202apositiontaking_1501 SMALLMONEY = 0,
 	@v202apositiontaking_1511 SMALLMONEY = 0,
@@ -715,20 +714,20 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@MinBetv161 MONEY = 0,
 	@MaxBetv161 MONEY = 0,	
 	
-	@minbetv180 money = 0,
-	@maxbetv180 money = 0,
-	@minbetv181 money = 0,
-	@maxbetv181 money = 0,
-	@minbetv182 money = 0,
-	@maxbetv182 money = 0,
-	@minbetv183 money = 0,
-	@maxbetv183 money = 0,
-	@minbetv184 money = 0,
-	@maxbetv184 money = 0,
-	@minbetv185 money = 0,
-	@maxbetv185 money = 0,
-	@minbetv186 money = 0,
-	@maxbetv186 money = 0,
+	--@minbetv180 money = 0,
+	--@maxbetv180 money = 0,
+	--@minbetv181 money = 0,
+	--@maxbetv181 money = 0,
+	--@minbetv182 money = 0,
+	--@maxbetv182 money = 0,
+	--@minbetv183 money = 0,
+	--@maxbetv183 money = 0,
+	--@minbetv184 money = 0,
+	--@maxbetv184 money = 0,
+	--@minbetv185 money = 0,
+	--@maxbetv185 money = 0,
+	--@minbetv186 money = 0,
+	--@maxbetv186 money = 0,
 	
 
 	@discount decimal(9,8)= 0,	
@@ -860,7 +859,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 		
 		Revisions:
 			- 20131120@Kathy: Add Virtual Greyhounds, Virtual Motor Racing (182, 184) [Redmine:#7234]. Refer to Sps:
-				+ Acc_CustomerInsMemb
+				+ Acc_CustomerInsMember_Com
 				+ Acc_CustomerInsMember_SAg
 				+ Acc_CustomerInsMember_MAg
 				+ Acc_CustomerInsMember_Ag
@@ -889,6 +888,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
 			- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 			- 20170505@Winnie Agent have no PT Setting but new creation member got setting [Redmine: #71639]
+			- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
+
 		Parameter's Explanation:
 		
 	*/
@@ -1053,14 +1054,14 @@ BEGIN
 		UNION ALL	SELECT @custid, 88, 161, @v161apositiontaking_88, @v161mpositiontaking_88, @v161spositiontaking_88, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 89, 161, 0, 0, 0, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_89, @v161mlivepositiontaking_89, @v161slivepositiontaking_89, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 90, 161, 0, 0, 0, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, 0, 0, 0, 0, 0, 0
-		-- v18x
-		UNION ALL	SELECT @custid, 1201, 180, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 1231, 181, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 1231, 182, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 1231, 183, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 1231, 184, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 1231, 185, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 1220, 186, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		---- v18x
+		--UNION ALL	SELECT @custid, 1201, 180, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		--UNION ALL	SELECT @custid, 1231, 181, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		--UNION ALL	SELECT @custid, 1231, 182, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		--UNION ALL	SELECT @custid, 1231, 183, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		--UNION ALL	SELECT @custid, 1231, 184, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		--UNION ALL	SELECT @custid, 1231, 185, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		--UNION ALL	SELECT @custid, 1220, 186, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 		
 
@@ -1178,14 +1179,14 @@ BEGIN
 		UNION ALL SELECT @custid, 88, 161, 0, @v161spositiontaking_88, 0, 0.9
 		UNION ALL SELECT @custid, 89, 161, 0, 0.9, 0, @v161slivepositiontaking_89
 		UNION ALL SELECT @custid, 90, 161, 0, 0.9, 0, @v161slivepositiontaking_90
-		--v18x
-		UNION ALL SELECT @custid, 1201, 180, 0, 0.9, 0, 0.9
-		UNION ALL SELECT @custid, 1231, 181, 0, 0.9, 0, 0.9
-		UNION ALL SELECT @custid, 1231, 182, 0, 0.9, 0, 0.9
-		UNION ALL SELECT @custid, 1231, 183, 0, 0.9, 0, 0.9
-		UNION ALL SELECT @custid, 1231, 184, 0, 0.9, 0, 0.9
-		UNION ALL SELECT @custid, 1231, 185, 0, 0.9, 0, 0.9
-		UNION ALL SELECT @custid, 1220, 186, 0, 0.9, 0, 0.9
+		----v18x
+		--UNION ALL SELECT @custid, 1201, 180, 0, 0.9, 0, 0.9
+		--UNION ALL SELECT @custid, 1231, 181, 0, 0.9, 0, 0.9
+		--UNION ALL SELECT @custid, 1231, 182, 0, 0.9, 0, 0.9
+		--UNION ALL SELECT @custid, 1231, 183, 0, 0.9, 0, 0.9
+		--UNION ALL SELECT @custid, 1231, 184, 0, 0.9, 0, 0.9
+		--UNION ALL SELECT @custid, 1231, 185, 0, 0.9, 0, 0.9
+		--UNION ALL SELECT @custid, 1220, 186, 0, 0.9, 0, 0.9
 		
 
 		IF @@ERROR <> 0
@@ -1543,22 +1544,22 @@ BEGIN
 		select @custid, 89, 161, 0, 0, 0, 0, 0, @discountnumber, 0, @minbetv161, @maxbetv161, 0, 0, 0, 0, 0, @v161mlivepositiontaking_89, @v161slivepositiontaking_89, @auto_v161slivepositiontaking_89, @isauto_v161slivepositiontaking_89, 0,0
 		UNION ALL
 		select @custid, 90, 161, 0, 0, 0, 0, 0, @discountnumber, 0, @minbetv161, @maxbetv161, 0, 0, 0, 0, 0, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, @auto_v161slivepositiontaking_90, @isauto_v161slivepositiontaking_90, 0,0
-		--v180
 		
-		UNION ALL
-		select @custid, 1201, 180, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 180 AND bettype = 1201 AND custid = @srecommend
-		UNION ALL
-		select @custid, 1231, 181, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 181 AND bettype = 1231 AND custid = @srecommend
-		UNION ALL
-		select @custid, 1231, 182, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 182 AND bettype = 1231 AND custid = @srecommend		
-		UNION ALL
-		select @custid, 1231, 183, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 183 AND bettype = 1231 AND custid = @srecommend		
-		UNION ALL
-		select @custid, 1231, 184, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 184 AND bettype = 1231 AND custid = @srecommend
-		UNION ALL
-		select @custid, 1231, 185, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 185 AND bettype = 1231 AND custid = @srecommend
-		UNION ALL
-		select @custid, 1220, 186, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 186 AND bettype = 1220 AND custid = @srecommend
+		----v180		
+		--UNION ALL
+		--select @custid, 1201, 180, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 180 AND bettype = 1201 AND custid = @srecommend
+		--UNION ALL
+		--select @custid, 1231, 181, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 181 AND bettype = 1231 AND custid = @srecommend
+		--UNION ALL
+		--select @custid, 1231, 182, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 182 AND bettype = 1231 AND custid = @srecommend		
+		--UNION ALL
+		--select @custid, 1231, 183, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 183 AND bettype = 1231 AND custid = @srecommend		
+		--UNION ALL
+		--select @custid, 1231, 184, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 184 AND bettype = 1231 AND custid = @srecommend
+		--UNION ALL
+		--select @custid, 1231, 185, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 185 AND bettype = 1231 AND custid = @srecommend
+		--UNION ALL
+		--select @custid, 1220, 186, 0, 0, spositiontaking, 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 186 AND bettype = 1220 AND custid = @srecommend
 
 		
 		if @@Error <> 0
@@ -1675,14 +1676,14 @@ BEGIN
 		UNION ALL select @custid, 88, 161, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 89, 161, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 90, 161, 0, 0.9, 0, 0.9
-		--v180
-		UNION ALL select @custid, 1201, 180, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 1231, 181, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 1231, 182, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 1231, 183, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 1231, 184, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 1231, 185, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 1220, 186, 0, 0.9, 0, 0.9
+		----v180
+		--UNION ALL select @custid, 1201, 180, 0, 0.9, 0, 0.9
+		--UNION ALL select @custid, 1231, 181, 0, 0.9, 0, 0.9
+		--UNION ALL select @custid, 1231, 182, 0, 0.9, 0, 0.9
+		--UNION ALL select @custid, 1231, 183, 0, 0.9, 0, 0.9
+		--UNION ALL select @custid, 1231, 184, 0, 0.9, 0, 0.9
+		--UNION ALL select @custid, 1231, 185, 0, 0.9, 0, 0.9
+		--UNION ALL select @custid, 1220, 186, 0, 0.9, 0, 0.9
 
 		
 
@@ -2064,20 +2065,20 @@ BEGIN
 		UNION ALL
 		select @custid, 90, 161, 0, 0, 0, 0, @discountnumber, 0, 0, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, 0, 0, 0, @auto_v161mlivepositiontaking_90, @isauto_v161mlivepositiontaking_90
 
-		UNION ALL -- v180 virtual soccer
-		select @custid, 1201, 180, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 180 AND bettype = 1201 AND custid = @mrecommend
-		UNION ALL -- v181 virtual horse racing
-		select @custid, 1231, 181, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 181 AND bettype = 1231 AND custid = @mrecommend
-		UNION ALL -- v182 Virtual Greyhounds
-		select @custid, 1231, 182, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 182 AND bettype = 1231 AND custid = @mrecommend
-		UNION ALL -- v183 Virtual Speedway
-		select @custid, 1231, 183, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 183 AND bettype = 1231 AND custid = @mrecommend
-		UNION ALL -- v184 Virtual Motor Racing
-		select @custid, 1231, 184, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 184 AND bettype = 1231 AND custid = @mrecommend
-		UNION ALL -- v185 Virtual Cycling
-		select @custid, 1231, 185, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 185 AND bettype = 1231 AND custid = @mrecommend
-		UNION ALL -- v186 virtual tennis
-		select @custid, 1220, 186, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 186 AND bettype = 1220 AND custid = @mrecommend		
+		--UNION ALL -- v180 virtual soccer
+		--select @custid, 1201, 180, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 180 AND bettype = 1201 AND custid = @mrecommend
+		--UNION ALL -- v181 virtual horse racing
+		--select @custid, 1231, 181, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 181 AND bettype = 1231 AND custid = @mrecommend
+		--UNION ALL -- v182 Virtual Greyhounds
+		--select @custid, 1231, 182, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 182 AND bettype = 1231 AND custid = @mrecommend
+		--UNION ALL -- v183 Virtual Speedway
+		--select @custid, 1231, 183, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 183 AND bettype = 1231 AND custid = @mrecommend
+		--UNION ALL -- v184 Virtual Motor Racing
+		--select @custid, 1231, 184, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 184 AND bettype = 1231 AND custid = @mrecommend
+		--UNION ALL -- v185 Virtual Cycling
+		--select @custid, 1231, 185, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 185 AND bettype = 1231 AND custid = @mrecommend
+		--UNION ALL -- v186 virtual tennis
+		--select @custid, 1220, 186, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 186 AND bettype = 1220 AND custid = @mrecommend		
 
 		if @@error <> 0
 		BEGIN
@@ -2195,20 +2196,20 @@ BEGIN
 		UNION ALL select @custid, 88, 161, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 89, 161, 0, 0.9, 0, 0.9
 		UNION ALL select @custid, 90, 161, 0, 0.9, 0, 0.9
-		-- v180 virtual soccer
-		UNION ALL select @custid, 1201, 180, 0, 0.9, 0, 0.9
-		-- v181 virtual horse racing
-		UNION ALL select @custid, 1231, 181, 0, 0.9, 0, 0.9
-		-- v182  Virtual Greyhounds
-		UNION ALL select @custid, 1231, 182, 0, 0.9, 0, 0.9
-		-- v183  Virtual Speedway
-		UNION ALL select @custid, 1231, 183, 0, 0.9, 0, 0.9
-		-- v184 Virtual Motor Racing
-		UNION ALL select @custid, 1231, 184, 0, 0.9, 0, 0.9
-		-- v185  Virtual Cycling
-		UNION ALL select @custid, 1231, 185, 0, 0.9, 0, 0.9
-		---- v186 virtual tennis
-		UNION ALL select @custid, 1220, 186, 0, 0.9, 0, 0.9
+		---- v180 virtual soccer
+		--UNION ALL select @custid, 1201, 180, 0, 0.9, 0, 0.9
+		---- v181 virtual horse racing
+		--UNION ALL select @custid, 1231, 181, 0, 0.9, 0, 0.9
+		---- v182  Virtual Greyhounds
+		--UNION ALL select @custid, 1231, 182, 0, 0.9, 0, 0.9
+		---- v183  Virtual Speedway
+		--UNION ALL select @custid, 1231, 183, 0, 0.9, 0, 0.9
+		---- v184 Virtual Motor Racing
+		--UNION ALL select @custid, 1231, 184, 0, 0.9, 0, 0.9
+		---- v185  Virtual Cycling
+		--UNION ALL select @custid, 1231, 185, 0, 0.9, 0, 0.9
+		------ v186 virtual tennis
+		--UNION ALL select @custid, 1220, 186, 0, 0.9, 0, 0.9
 		
 		
 		if @@error <> 0
@@ -2594,41 +2595,41 @@ BEGIN
 		select @custid, 89, 161, 0, 0, 0, @playerdiscountnumber, @discountnumber, @adiscountnumber, @sdiscountnumber, @MinBetv161, @MaxBetv161, 0, 0,@v161alivepositiontaking_89,@v161mlivepositiontaking_89,@v161slivepositiontaking_89,0,0, 0, 0, 0, 0
 		UNION ALL
 		select @custid, 90, 161, 0, 0, 0, @playerdiscountnumber, @discountnumber, @adiscountnumber, @sdiscountnumber, @MinBetv161, @MaxBetv161, 0, 0,@v161alivepositiontaking_90,@v161mlivepositiontaking_90,@v161slivepositiontaking_90,0,0, 0, 0, 0, 0
-		--v180
-		UNION ALL
-		select @custid, 1201, 180, ISNULL(@v180apositiontaking_1201,0), ISNULL(@v180mpositiontaking_1201,0), ISNULL(@v180spositiontaking_1201,0), 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
-		FROM [CustSetting3rd] WITH(NOLOCK)
-		WHERE custid = @recommend AND sporttype = 180 AND bettype = 1201
+		----v180
+		--UNION ALL
+		--select @custid, 1201, 180, ISNULL(@v180apositiontaking_1201,0), ISNULL(@v180mpositiontaking_1201,0), ISNULL(@v180spositiontaking_1201,0), 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		--FROM [CustSetting3rd] WITH(NOLOCK)
+		--WHERE custid = @recommend AND sporttype = 180 AND bettype = 1201
 		
-		UNION ALL
-		select @custid, 1231, 181, ISNULL(@v181apositiontaking_1231,0), ISNULL(@v181mpositiontaking_1231,0), ISNULL(@v181spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
-		FROM [CustSetting3rd] WITH(NOLOCK)
-		WHERE custid = @recommend AND sporttype = 181 AND bettype = 1231
+		--UNION ALL
+		--select @custid, 1231, 181, ISNULL(@v181apositiontaking_1231,0), ISNULL(@v181mpositiontaking_1231,0), ISNULL(@v181spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv181,0), ISNULL(@maxbetv181,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		--FROM [CustSetting3rd] WITH(NOLOCK)
+		--WHERE custid = @recommend AND sporttype = 181 AND bettype = 1231
 		
-		UNION ALL
-		select @custid, 1231, 182, ISNULL(@v182apositiontaking_1231,0), ISNULL(@v182mpositiontaking_1231,0), ISNULL(@v182spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
-		FROM [CustSetting3rd] WITH(NOLOCK)
-		WHERE custid = @recommend AND sporttype = 182 AND bettype = 1231
+		--UNION ALL
+		--select @custid, 1231, 182, ISNULL(@v182apositiontaking_1231,0), ISNULL(@v182mpositiontaking_1231,0), ISNULL(@v182spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv182,0), ISNULL(@maxbetv182,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		--FROM [CustSetting3rd] WITH(NOLOCK)
+		--WHERE custid = @recommend AND sporttype = 182 AND bettype = 1231
 		
-		UNION ALL
-		select @custid, 1231, 183, ISNULL(@v183apositiontaking_1231,0), ISNULL(@v183mpositiontaking_1231,0), ISNULL(@v183spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
-		FROM [CustSetting3rd] WITH(NOLOCK)
-		WHERE custid = @recommend AND sporttype = 183 AND bettype = 1231
+		--UNION ALL
+		--select @custid, 1231, 183, ISNULL(@v183apositiontaking_1231,0), ISNULL(@v183mpositiontaking_1231,0), ISNULL(@v183spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv183,0), ISNULL(@maxbetv183,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		--FROM [CustSetting3rd] WITH(NOLOCK)
+		--WHERE custid = @recommend AND sporttype = 183 AND bettype = 1231
 		
-		UNION ALL
-		select @custid, 1231, 184, ISNULL(@v184apositiontaking_1231,0), ISNULL(@v184mpositiontaking_1231,0), ISNULL(@v184spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
-		FROM [CustSetting3rd] WITH(NOLOCK)
-		WHERE custid = @recommend AND sporttype = 184 AND bettype = 1231
+		--UNION ALL
+		--select @custid, 1231, 184, ISNULL(@v184apositiontaking_1231,0), ISNULL(@v184mpositiontaking_1231,0), ISNULL(@v184spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv184,0), ISNULL(@maxbetv184,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		--FROM [CustSetting3rd] WITH(NOLOCK)
+		--WHERE custid = @recommend AND sporttype = 184 AND bettype = 1231
 		
-		UNION ALL
-		select @custid, 1231, 185, ISNULL(@v185apositiontaking_1231,0), ISNULL(@v185mpositiontaking_1231,0), ISNULL(@v185spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
-		FROM [CustSetting3rd] WITH(NOLOCK)
-		WHERE custid = @recommend AND sporttype = 185 AND bettype = 1231
+		--UNION ALL
+		--select @custid, 1231, 185, ISNULL(@v185apositiontaking_1231,0), ISNULL(@v185mpositiontaking_1231,0), ISNULL(@v185spositiontaking_1231,0), 0, 0, 0, 0, ISNULL(@minbetv185,0), ISNULL(@maxbetv185,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		--FROM [CustSetting3rd] WITH(NOLOCK)
+		--WHERE custid = @recommend AND sporttype = 185 AND bettype = 1231
 		
-		UNION ALL
-		select @custid, 1220, 186, ISNULL(@v186apositiontaking_1220,0), ISNULL(@v186mpositiontaking_1220,0), ISNULL(@v186spositiontaking_1220,0), 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
-		FROM [CustSetting3rd] WITH(NOLOCK)
-		WHERE custid = @recommend AND sporttype = 186 AND bettype = 1220
+		--UNION ALL
+		--select @custid, 1220, 186, ISNULL(@v186apositiontaking_1220,0), ISNULL(@v186mpositiontaking_1220,0), ISNULL(@v186spositiontaking_1220,0), 0, 0, 0, 0, ISNULL(@minbetv186,0), ISNULL(@maxbetv186,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0
+		--FROM [CustSetting3rd] WITH(NOLOCK)
+		--WHERE custid = @recommend AND sporttype = 186 AND bettype = 1220
 
 		if @@Error <> 0
 		BEGIN
@@ -3078,8 +3079,6 @@ BEGIN
 		IF(dbo.f_CheckRepTable('AgentCommRate') = 1) DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid		
 		IF(dbo.f_CheckRepTable('CustCommRate') = 1) DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
 	END
-	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/
-	
+	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/	
 END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerInfo_Execrep_00] TO [vnteam] AS [dbo]

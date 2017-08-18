@@ -1,7 +1,5 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+USE CustDB
 GO
 ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 					@CustID					INT
@@ -41,11 +39,12 @@ Revisions:
 	- 20161115@Winnie: Fishing World - [Redmine: #62547]
 	- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 	- 20170418@Winnie: Change to call the sp Acc_CheckShowProduct - [Redmine #72336]	
+	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 */
 
 	SET NOCOUNT ON
 
-	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit, @SyncBingo bit, @DisableBingo bit, @SyncLiveCS BIT  , @HideVirtualSports BIT
+	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit, @SyncBingo bit, @DisableBingo bit, @SyncLiveCS BIT 
 	Declare @srecommend int, @mrecommend int, @recommend int
 	DECLARE	@IsHideCockfighting		INT
 		,	@IsHideCricket			INT
@@ -53,18 +52,21 @@ Revisions:
 		,	@IsHideVoidBridge		INT
 		,	@IsHideNG2				INT
 		,	@IsHideFishingWorld		INT
+		,	@IsHideVS				INT
 
 	DECLARE	@Cricket				INT = 20
 		,	@AllBet					INT = 21
 		,	@VoidBridge				INT = 22
 		,	@FishingWorld			INT = 24		
 		,	@NG2					INT = 23
+		,	@VS						INT = 5
 	
 	DECLARE @bitOrderVB				INT = 5
 		,	@bitOrderFW				INT = 8
 		,	@bitOrderNG2			INT = 4
 		,	@bitOrderCF				INT = 2
 		,	@bitOrderCriket			INT = 3
+		,   @bitOrderVS				INT = 10
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend
 		, @AllowedColossusbets = CASE WHEN HideColossusBet = 0 THEN 1 ELSE 0 END		
@@ -146,11 +148,11 @@ Revisions:
 		End
 		-- For Casino (Check Upline allowed Casino)
 		if @RoleID=3
-			Select @SyncCasino=SyncCasino, @SyncBingo=SyncBingo, @DisableBingo = DisableBingo, @SyncLiveCS = SyncLiveCasino, @HideVirtualSports=HideVirtualSports from custinfo with (nolock) where CustID=@srecommend	
+			Select @SyncCasino=SyncCasino, @SyncBingo=SyncBingo, @DisableBingo = DisableBingo, @SyncLiveCS = SyncLiveCasino FROM custinfo with (nolock) where CustID=@srecommend	
 		Else if @RoleID=2
-			Select @SyncCasino=SyncCasino, @SyncBingo=SyncBingo, @DisableBingo = DisableBingo, @SyncLiveCS = SyncLiveCasino, @HideVirtualSports=HideVirtualSports from custinfo with (nolock) where CustID=@mrecommend	
+			Select @SyncCasino=SyncCasino, @SyncBingo=SyncBingo, @DisableBingo = DisableBingo, @SyncLiveCS = SyncLiveCasino from custinfo with (nolock) where CustID=@mrecommend	
 		Else if @RoleID=1
-			Select @SyncCasino=SyncCasino, @SyncBingo=SyncBingo, @DisableBingo = DisableBingo, @SyncLiveCS = SyncLiveCasino, @HideVirtualSports=HideVirtualSports from custinfo with (nolock) where CustID=@recommend		
+			Select @SyncCasino=SyncCasino, @SyncBingo=SyncBingo, @DisableBingo = DisableBingo, @SyncLiveCS = SyncLiveCasino from custinfo with (nolock) where CustID=@recommend		
 		
 		-- For Casino
 		if @SyncCasino!=1
@@ -171,7 +173,7 @@ Revisions:
 			set @AllowedLiveCS = 1
 		
 		-- For VS
-		SET @AllowedVS = CASE WHEN ISNULL(@HideVirtualSports,0) = 0 THEN 1 ELSE 0 END			
+		--SET @AllowedVS = CASE WHEN ISNULL(@HideVirtualSports,0) = 0 THEN 1 ELSE 0 END			
 	End
 
 	-- For Horse Racing	
@@ -225,6 +227,16 @@ Revisions:
 			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
+
+	-- For VS
+	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHideVS OUTPUT
+	SELECT	@AllowedVS = CASE	WHEN @RoleID = 4 AND @IsHideVS = 0 THEN 1
+								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderVS) = 0 AND @IsHideVS = 0 THEN 1
+								ELSE 0
+						END
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	WHERE	cps.CustID = @CustID
+
 END
 
 GO

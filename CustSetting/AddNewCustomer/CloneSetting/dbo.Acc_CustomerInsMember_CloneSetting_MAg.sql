@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [CustDB]
 GO
 
@@ -68,7 +68,9 @@ AS
 	- 20151223@Patrick: Add Max/Loss limit for RnG Casino [Redmine: #49528]
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20170420@Helen:  Add Extra information for Direct Accounts, for NAP only - [Redmine:72339]
+	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
+
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -389,15 +391,15 @@ BEGIN
 			,DisableFunP2P
 			,DisableLiveCasino
 			,SyncLiveCasino
-			,DisableVirtualSports
-			,HideVirtualSports
-			,maxpermatch180
-			,maxpermatch181
-			,maxpermatch183
-			,maxpermatch185
-			,maxpermatch182
-			,maxpermatch184
-			,maxpermatch186
+			--,DisableVirtualSports
+			--,HideVirtualSports
+			--,maxpermatch180
+			--,maxpermatch181
+			--,maxpermatch183
+			--,maxpermatch185
+			--,maxpermatch182
+			--,maxpermatch184
+			--,maxpermatch186
 			,isAutoResetLiveCasino
 			,MaxWinLiveCasino
 			,DoubleCommLosing
@@ -468,15 +470,15 @@ BEGIN
 			,DisableFunP2P
 			,DisableLiveCasino
 			,0 as SyncLiveCasino
-			,DisableVirtualSports
-			,HideVirtualSports
-			,maxpermatch180
-			,maxpermatch181
-			,maxpermatch183
-			,maxpermatch185
-			,maxpermatch182
-			,maxpermatch184
-			,maxpermatch186
+			--,DisableVirtualSports
+			--,HideVirtualSports
+			--,maxpermatch180
+			--,maxpermatch181
+			--,maxpermatch183
+			--,maxpermatch185
+			--,maxpermatch182
+			--,maxpermatch184
+			--,maxpermatch186
 			,isAutoResetLiveCasino
 			,MaxWinLiveCasino
 			,@doubleCommLosingUpline as DoubleCommLosing
@@ -750,5 +752,4 @@ BEGIN
 			
 	SET NOCOUNT OFF
 END
-
 GO
