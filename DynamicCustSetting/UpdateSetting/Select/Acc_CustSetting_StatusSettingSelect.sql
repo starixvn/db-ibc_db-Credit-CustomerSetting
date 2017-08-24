@@ -52,7 +52,7 @@ BEGIN
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13)
-	WHERE @SettingType IS NULL OR @SettingType = 13
+	WHERE @SettingType IS NULL OR @SettingType = 13	
 
 	--DELETE sbf  
 	--FROM  #SportBettypeFilter sbf  
