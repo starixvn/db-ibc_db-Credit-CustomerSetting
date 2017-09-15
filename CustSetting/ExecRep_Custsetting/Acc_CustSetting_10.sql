@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE	dbo.Acc_CustSetting_10
 					@VirtualMultiplier		VARCHAR(MAX),
 					@SportType				SMALLINT		= 0
@@ -172,3 +173,5 @@ BEGIN
 		END
 	END	
 END
+
+GO
