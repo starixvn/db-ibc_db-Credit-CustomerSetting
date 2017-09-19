@@ -1,6 +1,7 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberKeno_SAg] 
 	@CustID INT
-	, @SportType TINYINT
+	, @SportType SMALLINT
 	, @BetType INT
 	, @s1 SMALLMONEY = 0 --s1
 	, @us1 SMALLMONEY = 0 --us1
@@ -23,7 +24,7 @@ AS
 	Original: Acc_CustomerUpdMemberVS_SAg  
 	Revisions:  
 		- 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)
-		 
+		- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	Param's Explanation:  
 	• @ErrCode:  
 		<= 0: Update successfully.  
@@ -34,7 +35,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	----- David @ 09 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
@@ -471,7 +472,7 @@ BEGIN
 
 	--Call execrep
 	/*
-	EXEC dbo.Acc_CustSetting3rd_00_xtest
+	EXEC dbo.Acc_CustSetting3rd_00
 		@custid = @custid
 		, @recommend = @recommend
 		, @mrecommend = @mrecommend
@@ -588,3 +589,4 @@ BEGIN
 			, @duration = @duration
 	END CATCH	
 END
+GO

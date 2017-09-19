@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentHR_PositionTaking]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentHR_PositionTaking]
 	@custid int, --agentID
 	--a2
 	@v151apositiontaking_31 smallmoney,
@@ -111,6 +112,7 @@ Revisions:
 			and check total downlines before UPDATEs
 	- 20131108@Elodie: Splitting bodb02 into CustDB (call sport, bettype by link database)			
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, Use temp table for sports, bettype table)
+	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -127,7 +129,7 @@ declare @duration int
 set @startRun = getdate()
 
 ----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
@@ -2039,8 +2041,3 @@ END CATCH
 	
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentHR_PositionTaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentHR_PositionTaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentHR_PositionTaking] TO [vnteam] AS [dbo]

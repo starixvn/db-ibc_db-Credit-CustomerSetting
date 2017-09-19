@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE  [dbo].[Acc_CustomerUpdMemberKeno_Positiontaking]
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE  [dbo].[Acc_CustomerUpdMemberKeno_Positiontaking]
 	@custid		INT,	
 	@sporttype INT = 202,
 	@bettype INT,
@@ -21,11 +22,12 @@ AS
 	Revisions:
 		- 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)		
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+		- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	Parameter's Explanation:	
 */
 SET NOCOUNT ON 
 ----- David @ 09 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 
 	BEGIN TRY
@@ -339,3 +341,4 @@ DECLARE @startRun	DATETIME,
 			@TrackingValue2 = @TrackingValueDB,
 			@duration = @duration	
 	END CATCH
+GO

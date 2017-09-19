@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdMasterVS_Positiontaking]    Script Date: 6/6/2015 6:03:00 PM ******/
@@ -53,7 +54,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMasterVS_Positiontaking]
 			- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB, Use temp table for sports, bettype table, 
 																Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
-			
+			- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
         Parameter's Explanation:
     */
 SET NOCOUNT ON 
@@ -86,7 +87,7 @@ SET NOCOUNT ON
 
 	
 	----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
@@ -799,12 +800,4 @@ SET NOCOUNT ON
             @duration = @duration
     END CATCH
 
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMasterVS_Positiontaking] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterVS_Positiontaking] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterVS_Positiontaking] TO [bodbDownlineNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterVS_Positiontaking] TO [bodbExtAccNet]
 GO 

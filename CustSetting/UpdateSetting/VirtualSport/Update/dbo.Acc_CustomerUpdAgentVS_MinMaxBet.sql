@@ -1,6 +1,7 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet]
 	@custid int,-- agentID
-	@sporttype tinyint,
+	@sporttype SMALLINT,
 	@bettype int,	
 	@minbet money,
 	@maxbet money,
@@ -28,6 +29,7 @@ Revisions:
 	- 20140402@Kathy: Add Virtual Speedway (183), Virtual Virtual Cycling (185)	[Redmine:#14142]				
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.
@@ -404,10 +406,3 @@ END CATCH
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxBet] TO [vnteam] AS [dbo]

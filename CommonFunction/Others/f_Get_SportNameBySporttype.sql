@@ -1,6 +1,7 @@
-﻿ALTER FUNCTION [dbo].[f_Get_SportNameBySporttype]
+﻿/*<info serverAlias="DBCUST-CUSTDB,DBTXN-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="1"></info>*/
+ALTER FUNCTION [dbo].[f_Get_SportNameBySporttype]
 (
-    @Sporttype    TINYINT,
+    @Sporttype    SMALLINT,
     @Language    NVARCHAR(5)='E' 
 )
 RETURNS NVARCHAR(100) 
@@ -15,6 +16,7 @@ AS
         - 20130124@Elodie: return SportName with English language in case of @SportName = '' or @SportName is null
         - 20130808@Elodie: Splitting DBTXN into DBCUST (call sport by link server)
 		- 20130808@Elodie: Migrate CustDB to new server DBCUST
+		- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 */
 BEGIN
     -- Declare the return variable here
@@ -45,12 +47,3 @@ END
 
 
 GO
-GRANT VIEW DEFINITION ON [dbo].[f_Get_SportNameBySporttype] TO [vnteam]
-GO
-GRANT EXECUTE ON [dbo].[f_Get_SportNameBySporttype] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[f_Get_SportNameBySporttype] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[f_Get_SportNameBySporttype] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[f_Get_SportNameBySporttype] TO [bodbDownlineNetView]

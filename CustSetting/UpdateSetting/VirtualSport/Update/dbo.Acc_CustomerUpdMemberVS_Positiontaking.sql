@@ -1,4 +1,5 @@
-﻿USE [CustDB]
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdMemberVS_Positiontaking]    Script Date: 06/16/2015 15:52:17 ******/
 SET ANSI_NULLS ON
@@ -34,6 +35,7 @@ AS
 			- 20131113@Johnson: Use execrept Acc_CustSetting3rd_00 to correct after update pt on member 
 			- 20150606@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID, temp sport, bettype table) [Redmine:#36216]
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+			- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 		Parameter's Explanation:	
 	*/
 SET NOCOUNT ON 
@@ -72,7 +74,7 @@ SET NOCOUNT ON
 					
 	SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = '', @ErrCode = '', @ErrMsg = ''
 		
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 
 	BEGIN TRY
@@ -388,10 +390,3 @@ SET NOCOUNT ON
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_Positiontaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_Positiontaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_Positiontaking] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberVS_Positiontaking] TO [vnteam] AS [dbo]

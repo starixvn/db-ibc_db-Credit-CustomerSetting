@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
 USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Acc_CustOverrideUpdVS]    Script Date: 06/10/2015 17:24:44 ******/
@@ -13,7 +14,7 @@ GO
 /****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdVS    Script Date: 12/5/2013 5:35:45 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustOverrideUpdVS] 
     @custid int,
-    @sporttype tinyint,
+    @sporttype SMALLINT,
     @bettype int,
     
     @positiontaking_min smallmoney = 0,
@@ -43,6 +44,7 @@ AS
         - 20131112@Johnson: change to use execrep Acc_CustSetting3rd_04 instead of Acc_CustSetting3rd_00 for updating min pt on super
         - 20131203@Johnson: Pass param @sporttype, @bettype when call sp Acc_CustSetting3rd_04 for super
         - 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216]
+		- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
     Param's Explanation:
     • @ErrCode:
         = 0: Update successfully.
@@ -285,10 +287,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdVS] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdVS] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdVS] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpdVS] TO [vnteam] AS [dbo]

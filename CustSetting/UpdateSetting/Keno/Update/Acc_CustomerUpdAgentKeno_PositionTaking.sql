@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking]
 (
 	@custid INT
@@ -33,6 +34,7 @@ AS
 	Revisions:
 		- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, Use temp table for sports, bettype table)
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	Parameters Explanation:
 		@ErrCode: 0 is successful
 */
@@ -43,7 +45,7 @@ BEGIN
 	SET @startRun = GETDATE()
 
 	----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	
 	BEGIN TRY
@@ -347,10 +349,3 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentKeno_PositionTaking] TO [vnteam] AS [dbo]

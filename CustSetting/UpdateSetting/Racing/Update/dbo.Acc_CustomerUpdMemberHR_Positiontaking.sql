@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberHR_PositionTaking]
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberHR_PositionTaking]
 	@custid INT,--memberid		
 	@v151apositiontaking_31 SMALLMONEY,
 	@v151apositiontaking_32 SMALLMONEY,
@@ -58,6 +59,7 @@ Revisions:
 	- 20131108@Elodie: Splitting bodb02 into CustDB (call sports, bettype by link database)
 	- 20131113@Johnson: Use execrept Acc_CustSetting3rd_00 to correct after update pt on member 
 	- 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)
+	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -68,7 +70,7 @@ Param's Explanation:
 
 SET NOCOUNT ON
 ----- David @ 09 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 
 	BEGIN TRY
@@ -1227,3 +1229,4 @@ BEGIN CATCH
 		@TrackingValue2 = @TrackingValueDB,
 		@duration = @duration
 END CATCH
+GO
