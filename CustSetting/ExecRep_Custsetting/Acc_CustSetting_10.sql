@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE	dbo.Acc_CustSetting_10
+ALTER PROCEDURE [dbo].[Acc_CustSetting_10_xpre]
 					@VirtualMultiplier		VARCHAR(MAX),
 					@SportType				SMALLINT		= 0
 AS
@@ -29,7 +29,7 @@ BEGIN
 	CREATE TABLE	#tblVirtualRate (
 						CustID				INT
 							CONSTRAINT PK_tblVirtualRate PRIMARY KEY CLUSTERED
-					,	VirtualMultiplier	SMALLMONEY
+					,	VirtualMultiplier	TINYINT
 					,	isFinished			BIT
 							CONSTRAINT DF_tblVirtualRate_isFinished DEFAULT 0
 					)
@@ -49,7 +49,7 @@ BEGIN
 	EXECUTE	sp_xml_preparedocument
 				@DocHandler				OUTPUT
 			,	@virtualmultiplier
-
+	
 	INSERT INTO #tblVirtualRate 
 		(	CustID, VirtualMultiplier)
 	SELECT	CAST(ss.val AS INT)
@@ -60,12 +60,39 @@ BEGIN
 	,	VirtualMultiplier	SMALLMONEY	
 	) AS Data
 	CROSS APPLY	dbo.strSplit(Data.CustIds, ',') AS ss
-
+		
+	IF (@SportType=1)	
+	BEGIN
+			INSERT INTO #Temp(CustID,sporttype,bettype,isLive,virtualRate)			
+			SELECT	CAST(ss.val AS INT),aa.sporttype,aa.bettype,aa.isLive
+			, Data.VirtualMultiplier
+			FROM OPENXML (@DocHandler, '/ROOT/Rate',1) 
+			WITH (
+				CustIds				NVARCHAR(MAX)
+			,	VirtualMultiplier	SMALLMONEY	
+			) AS Data
+			CROSS APPLY	dbo.strSplit(Data.CustIds, ',') AS ss		
+			CROSS APPLY (SELECT sporttype,bettype,islive FROM [ProfileVirtualSetting] WITH(NOLOCK) WHERE sporttype=1) aa
+	END
+	ELSE IF (@SportType=2)			
+	BEGIN
+			INSERT INTO #Temp(CustID,sporttype,bettype,isLive,virtualRate)			
+			SELECT	CAST(ss.val AS INT),aa.sporttype,aa.bettype,aa.isLive
+			, Data.VirtualMultiplier
+			FROM OPENXML (@DocHandler, '/ROOT/Rate',1) 
+			WITH (
+				CustIds				NVARCHAR(MAX)
+			,	VirtualMultiplier	SMALLMONEY	
+			) AS Data
+			CROSS APPLY	dbo.strSplit(Data.CustIds, ',') AS ss		
+			CROSS APPLY (SELECT sporttype,bettype,islive FROM [ProfileVirtualSetting] WITH(NOLOCK) WHERE sporttype<>1) aa
+	END 
+	
 	EXECUTE	sp_xml_removedocument
 				@DocHandler
 	-- END - Read XML
-
-	IF	dbo.f_CheckRepTable('CustVirtualSetting') <> 1 OR NOT EXISTS (SELECT 1 FROM #tblVirtualrate)
+	
+	IF	dbo.f_CheckRepTable('CustVirtualSetting') <> 1 --OR NOT EXISTS (SELECT 1 FROM #tblVirtualrate)
 		RETURN
 
 	SELECT	TOP 1
@@ -76,19 +103,18 @@ BEGIN
 
 	WHILE 0 = 0
 	BEGIN
-		DELETE FROM @processingCustID
-
-	    UPDATE TOP(500) #tblVirtualRate
-		SET	isFinished = 1
-		OUTPUT	Deleted.CustID
-		INTO	@processingCustID (CustID)
-		WHERE	isFinished = 0
+			UPDATE TOP(500) #tblVirtualRate
+			SET	isFinished = 1
+			OUTPUT	Deleted.CustID
+			INTO	@processingCustID (CustID)
+			WHERE	isFinished = 0
 
 		IF	@@ROWCOUNT = 0
 			BREAK
-
+		
 		IF(@SportType=0)
 		BEGIN
+			
 			-- Update filled bitmapVirtual
 			UPDATE	cvs
 			SET	cvs.bitmapVirtual = CONVERT(BINARY(64), REPLICATE(CAST(CAST(tvr.VirtualMultiplier AS BINARY(1)) AS VARCHAR), 64))
@@ -111,11 +137,7 @@ BEGIN
 		END
 		ELSE IF(@SportType=1)
 		BEGIN
-			INSERT INTO #Temp(CustID,sporttype,bettype,isLive,virtualRate)
-			SELECT CustID,sporttype,bettype,isLive,VirtualMultiplier			
-			FROM #tblVirtualRate
-				CROSS APPLY (SELECT sporttype,bettype,islive FROM [ProfileVirtualSetting] WITH(NOLOCK) WHERE sporttype=1) aa
-
+			
 			UPDATE cvs
 				SET		bitmapVirtual = (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_multiple(bitmapVirtual, CONVERT(VARCHAR(MAX), virtualXML)))
 				FROM		CustVirtualSetting AS cvs WITH(UPDLOCK, ROWLOCK)
@@ -142,11 +164,7 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			INSERT INTO #Temp(CustID,sporttype,bettype,isLive,virtualRate)
-			SELECT CustID,sporttype,bettype,isLive,VirtualMultiplier			
-			FROM #tblVirtualRate
-				CROSS APPLY (SELECT sporttype,bettype,islive FROM [ProfileVirtualSetting] WITH(NOLOCK) WHERE sporttype<>1) aa
-
+			
 			UPDATE cvs
 				SET		bitmapVirtual = (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_multiple(bitmapVirtual, CONVERT(VARCHAR(MAX), virtualXML)))
 				FROM		CustVirtualSetting AS cvs WITH(UPDLOCK, ROWLOCK)
@@ -173,5 +191,6 @@ BEGIN
 		END
 	END	
 END
+
 
 GO
