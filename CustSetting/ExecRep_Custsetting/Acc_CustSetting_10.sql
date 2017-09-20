@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustSetting_10_xpre]
+ALTER PROCEDURE [dbo].[Acc_CustSetting_10]
 					@VirtualMultiplier		VARCHAR(MAX),
 					@SportType				SMALLINT		= 0
 AS
@@ -11,7 +11,7 @@ AS
   
 	Revisions: 
 		- 20170328@Elodie: Expand the range of VR setting [RedmineID:#73808]
-		- 20170915@Winnie: Update logic to VR auto-adjustment job Phase 2 RedmineID:#82312
+		- 20170915@Winnie: Update logic to VR auto-adjustment job Phase 2 [RedmineID:#82312]
 	Param's Explanation:  
 		- @VirtualMultiplier = '<ROOT>
 									<Rate CustIds="1,2,3,4,5,6" VirtualMultiplier="0.7" />	
