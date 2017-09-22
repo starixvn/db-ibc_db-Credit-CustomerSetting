@@ -1,4 +1,5 @@
-﻿use CustDB
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+use CustDB
 go
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditAgentGoldDeluxe]
 	@custid		INT,
@@ -12,7 +13,9 @@ AS
 	Revisions:
 		- 20150612@Kathy: Move sp from DBAGE.bodb02 to DBCUST.CustDB [Redmine:#36216]
 		- 20150721@Patrick: Add more winlimit section
-	
+		- 20170921@Johnson: Fix the unsynchronized setting,fix @Downline status to show checkbox enable downline [Redmine: #72973]
+							+@Downline = 1: has at least one customer has sync status
+										=0 : all downlines not sync	
 	Parameters Explanation
 */
 BEGIN
@@ -32,18 +35,18 @@ BEGIN
 	DECLARE @v255adiscount_1701				DECIMAL(9,8)
 			,@DisableAutoMPT				BIT
 			,@max_v255mpositiontaking_1701 SMALLMONEY
-			,@Downlines						BIT	= 1
+			,@Downlines						BIT	= 0
 			,@DisableDownlines				BIT = 0
 			,@DisableGoldDeluxe				BIT
 			,@DisableUpline					BIT = 0
 
 	SELECT	@DisableAutoMPT = DisableAutoMPT
-	FROM	custmaster WITH(NOLOCK)
+	FROM	dbo.custmaster WITH(NOLOCK)
 	WHERE	custid = @mrecommend
 			
-	IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid = 1)
-		SET @Downlines = 0	-- dont have any downlines
-	ELSE IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND DisableGoldDeluxe = 1)
+	IF EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid = 1 AND HideGoldDeluxe = 0)
+		SET @Downlines = 1	
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND DisableGoldDeluxe = 1)
 		SET @DisableDownlines = 1
 	
 	SELECT	@DisableGoldDeluxe = DisableGoldDeluxe
@@ -57,7 +60,7 @@ BEGIN
 	--Master Comm	
 	SELECT	@v255adiscount_1701 = adiscount,
 			@max_v255mpositiontaking_1701 = mpositiontaking
-	FROM	CustSettingGame WITH(NOLOCK)
+	FROM	dbo.CustSettingGame WITH(NOLOCK)
 	WHERE	custid = @mrecommend 
 			AND sporttype = 255 
 			AND bettype = 1701
@@ -97,8 +100,8 @@ BEGIN
 			
 			--n2
 			co.minpositiontaking as v255apositiontaking_1701_min	
-	FROM	custsettingGame cs WITH(NOLOCK)
-		INNER JOIN custoverrideGame co WITH(NOLOCK) 
+	FROM	dbo.custsettingGame cs WITH(NOLOCK)
+		INNER JOIN dbo.custoverrideGame co WITH(NOLOCK) 
 			ON cs.custid = co.custid 
 				AND cs.sporttype = co.sporttype 
 				AND cs.bettype = co.bettype
@@ -107,7 +110,7 @@ BEGIN
 			AND cs.bettype = 1701
 	
 	-- bet setting
-		EXEC dbo.Acc_CustomerSelStakeLevelGoldDeluxe
+	EXEC dbo.Acc_CustomerSelStakeLevelGoldDeluxe
 		@custid		= @custid
 		,@UplineId	= @mrecommend
 	
@@ -118,12 +121,3 @@ BEGIN
 
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentGoldDeluxe] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentGoldDeluxe] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentGoldDeluxe] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentGoldDeluxe] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelEditAgentGoldDeluxe] TO [vnteam] AS [dbo]

@@ -12,7 +12,9 @@ AS
 	- 20150612@Kathy: Move sp from DBAGE.bodb02 to DBCUST.CustDB [Redmine:#36216]
 	- 20150721@Patrick: Add more winlimit section
 	- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
-	
+	- 20170921@Johnson: Fix the unsynchronized setting,fix @Downline status to show checkbox enable downline [Redmine: #72973]
+							+@Downline = 1: has at least one customer has sync status
+										=0 : all downlines not sync	
   Parameters Explanations:    
        
  */    
@@ -21,13 +23,13 @@ BEGIN
     SET NOCOUNT ON    
         
     DECLARE @min_spositiontaking    SMALLMONEY    
-            ,@Downlines                BIT    = 1
-            ,@DisableDownlines        BIT = 0
-            ,@DisableGoldDeluxe        BIT 
+            ,@Downlines             BIT    = 0
+            ,@DisableDownlines      BIT = 0
+            ,@DisableGoldDeluxe     BIT 
         
-    IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)
-        SET @Downlines = 0    
-    ELSE IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1)
+    IF EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND custID <> @custID AND HideGoldDeluxe = 0)
+        SET @Downlines = 1    
+    IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1)
         SET @DisableDownlines = 1
         
     SELECT    @DisableGoldDeluxe = DisableGoldDeluxe
@@ -35,7 +37,7 @@ BEGIN
     WHERE    custid = @custid
         
     SELECT    @min_spositiontaking = minpositiontaking    
-    FROM    CustOverrideGame WITH(NOLOCK)    
+    FROM    dbo.CustOverrideGame WITH(NOLOCK)    
     WHERE    custid = @custid 
             AND sporttype = 255 
             AND bettype = 1701  
@@ -61,8 +63,8 @@ BEGIN
             cs.spositiontaking                AS v255spositiontaking_1701,    
             cs.sdiscount                    AS v255sdiscount_1701,    
             gs.Maxsdiscount                    AS v255sdicount_1701_max    
-     FROM    CustSettingGame cs WITH(NOLOCK)
-     INNER JOIN ProductGlobalSetting gs WITH (NOLOCK)
+     FROM    dbo.CustSettingGame cs WITH(NOLOCK)
+     INNER JOIN dbo.ProductGlobalSetting gs WITH (NOLOCK)
         ON    gs.Sporttype =  cs.Sporttype 
             AND gs.IsDep = 0
      WHERE custid = @custid 
@@ -80,21 +82,4 @@ BEGIN
 		, @BetType = 1701
         
 END
-
-
-
-
-
-
-
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperGoldDeluxe] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperGoldDeluxe] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperGoldDeluxe] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperGoldDeluxe] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelEditSuperGoldDeluxe] TO [vnteam] AS [dbo]

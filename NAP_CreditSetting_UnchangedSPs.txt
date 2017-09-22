@@ -1,0 +1,2 @@
+DynamicCustSetting\UpdateSetting\Update\13_NewProductStatus\Acc_CustSetting_DisableNewProductStatusUpd.sql
+CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdDisableGoldDeluxe.sql

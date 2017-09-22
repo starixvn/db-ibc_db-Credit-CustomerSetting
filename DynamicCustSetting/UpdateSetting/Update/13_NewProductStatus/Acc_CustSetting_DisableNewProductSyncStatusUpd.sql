@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+
 USE CustDB
 GO
 
@@ -16,7 +18,7 @@ AS
 	Task: Update synchronize status on a product (Setting Type 13)
     
 	Revisions:
-			
+		- 20170919@Johnson: fix the unsynchronized setting (settingType = 13), do not update sync for downlines [Redmine: #72973]							 	
 	Parameters Explanation:  
 	
  */
@@ -30,12 +32,7 @@ BEGIN
 	DECLARE	@logSpData		NVARCHAR(MAX)
 		,	@logSpData_Old	NVARCHAR(MAX)
 		,	@xml			XML
-		
-	DECLARE	@AgentID		INT
-		,	@MasterID		INT
-		,	@SuperID		INT
-		,	@RoleID			INT
-	
+				
 	DECLARE	@ProductName	VARCHAR(50)
 		,	@SettingLevel	TINYINT
 
@@ -46,19 +43,10 @@ BEGIN
 	CREATE TABLE	#OldSyncStatTbl  (
 						SportType			SMALLINT
 					,	BetType				SMALLINT
-					,	IsSynced			BIT
-					,	IsSyncedDownline	BIT
+					,	IsSynced			BIT					
 					)
 
 	SET	@startRun = GETDATE()
-
-	--Get line information
-	SELECT	@AgentID = ci.recommend
-		,	@MasterID = ci.mrecommend
-		,	@SuperID = ci.srecommend
-		,	@RoleID	= ci.roleid
-	FROM	dbo.custInfo AS ci WITH (NOLOCK)
-	WHERE	ci.custid = @CustID
 	
 	INSERT INTO	#NewSyncStatTbl (
 					SportType
@@ -70,114 +58,18 @@ BEGIN
 	WHERE	psd.ProductID = @ProductID
 		AND	psd.SettingType = 13
 
-	--Get old disabled status
-	DECLARE @downlines BIT  = 0
-	
-	IF @roleid = 4
-	BEGIN		
-		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)
-			SET @downlines = 1
-			
-		INSERT INTO #OldSyncStatTbl (SportType,BetType,IsSynced,IsSyncedDownline)
-		SELECT	psp.SportType
-			,	psp.BetType
-			,	dbo.f_GetProductStatus(stt.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-			,	CASE WHEN @downlines = 0	
-						THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapHasSynced, PSP.bitmapOrder),0)
-						ELSE ISNULL	((
-									SELECT	TOP 1 0
-									FROM		dbo.custInfo ci WITH (NOLOCK)
-									INNER JOIN	dbo.CustProductStatus cps_temp 
-											ON	ci.custid = cps_temp.CustID
-									WHERE	srecommend = @CustID
-										--AND	roleid = 3
-										AND	dbo.f_GetProductStatus(cps_temp.bitmapHasSynced, PSP.bitmapOrder) = 0
-								), 1)
-				END AS IsSyncedDownline
-		FROM		#NewSyncStatTbl tmp
-		INNER JOIN	ProductStatusProfile PSP WITH (NOLOCK) 
-				ON	tmp.SportType = psp.Sporttype 
-				AND	tmp.BetType = psp.Bettype
-		INNER JOIN	dbo.CustProductStatus stt WITH (NOLOCK) 
-				ON	stt.CustID = @CustID
-				
-	END
-	ELSE IF @roleid = 3
-	BEGIN
-	
-		IF EXISTS (SELECT 1
-						FROM custinfo WITH (NOLOCK)
-						WHERE mrecommend = @CustID	AND roleid = 2
-						)
-			SET @downlines = 1	
+	--Get old disabled status			
+	INSERT INTO #OldSyncStatTbl (SportType,BetType,IsSynced)
+	SELECT	psp.SportType
+		,	psp.BetType
+		,	dbo.f_GetProductStatus(stt.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced			
+	FROM		#NewSyncStatTbl tmp
+	INNER JOIN	dbo.ProductStatusProfile PSP WITH (NOLOCK) 
+			ON	tmp.SportType = psp.Sporttype 
+			AND	tmp.BetType = psp.Bettype
+	INNER JOIN	dbo.CustProductStatus stt WITH (NOLOCK) 
+			ON	stt.CustID = @CustID
 		
-		INSERT INTO #OldSyncStatTbl (SportType,BetType,IsSynced,IsSyncedDownline)
-		SELECT	psp.SportType
-			,	psp.BetType
-			,	dbo.f_GetProductStatus(stt.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-			,	CASE 	
-					WHEN @downlines = 0	THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapHasSynced, PSP.bitmapOrder),0)
-					ELSE ISNULL((
-							SELECT TOP 1 0
-							FROM dbo.custInfo ci WITH (NOLOCK)
-								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
-							WHERE mrecommend = @CustID	--AND roleid = 2
-								AND dbo.f_GetProductStatus(cps_temp.bitmapHasSynced, PSP.bitmapOrder) = 0
-							), 1)
-								
-				 END AS IsSyncedDownline
-		
-		FROM #NewSyncStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-				 
-	END 	
-	ELSE IF @roleid = 2
-	BEGIN
-	
-		IF EXISTS (SELECT 1
-						FROM custinfo WITH (NOLOCK)
-						WHERE recommend = @CustID AND roleid = 1
-						)
-			SET @downlines = 1	
-		
-		INSERT INTO #OldSyncStatTbl (SportType,BetType,IsSynced,IsSyncedDownline)
-		SELECT psp.SportType
-			, psp.BetType
-			, dbo.f_GetProductStatus(stt.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-			
-			, CASE 	
-						WHEN @downlines = 0	THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapHasSynced, PSP.bitmapOrder),0)
-						ELSE ISNULL((
-								SELECT TOP 1 0
-								FROM dbo.custInfo ci WITH (NOLOCK)
-									INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
-								WHERE recommend = @CustID	--AND roleid = 1
-									AND dbo.f_GetProductStatus(cps_temp.bitmapHasSynced, PSP.bitmapOrder) = 0
-								), 1)
-								
-				 END AS IsSyncedDownline
-		
-		FROM #NewSyncStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-				 
-	END 
-	ELSE IF @roleid = 1
-	BEGIN
-	
-		INSERT INTO #OldSyncStatTbl (SportType,BetType,IsSynced,IsSyncedDownline)
-		SELECT psp.SportType
-			, psp.BetType
-			, dbo.f_GetProductStatus(stt.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-			
-			, 0 IsSyncedDownline
-		
-		FROM #NewSyncStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-			
-	END
 
 	--IF NOT EXISTS (
 	--		SELECT TOP 1 1
@@ -205,19 +97,7 @@ BEGIN
 	UPDATE CustProductStatus
 		SET bitmapHasSynced = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSynced)))	
 	WHERE CustID = @CustID
-	
-	--call execrept to update downline
-	IF @RoleID <> 1 
-	BEGIN
-				EXECUTE	dbo.[Acc_DynamicCustomerInfo_03] 
-					@CustID			= @CustID
-				,	@SettingType	= 13
-				,	@IsSynced       = @IsSynced
-				,	@RoleID			= @RoleID
-				,	@ProductID		= @ProductID
-	
-	END
-	
+			
 	--START LOGGING		
 
 	-- Select ProductID and SettingLevel
@@ -248,8 +128,8 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
-								IsSynced			AS '@IsSynced',
-								IsSyncedDownline	AS '@IsSyncedDownline'
+								IsSynced			AS '@IsSynced',	
+								0					AS '@IsSyncedDownline'--hardcode =0 for syncDownline to not change web log		
 						FROM #OldSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -269,8 +149,8 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								IsSynced			AS '@IsSynced',
-								IsSyncedDownline	AS '@IsSyncedDownline'
+								IsSynced			AS '@IsSynced',	
+								0					AS '@IsSyncedDownline'								
 						FROM #OldSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -290,8 +170,8 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
-								IsSynced			AS '@IsSynced',
-								IsSyncedDownline	AS '@IsSyncedDownline'
+								IsSynced			AS '@IsSynced',	
+								0					AS '@IsSyncedDownline'								
 						FROM #OldSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -312,8 +192,8 @@ BEGIN
 					(
 						SELECT	SportType			AS '@SportType',
 								BetType				AS '@BetType',
-								IsSynced			AS '@IsSynced',
-								IsSyncedDownline	AS '@IsSyncedDownline'
+								IsSynced			AS '@IsSynced',	
+								0					AS '@IsSyncedDownline'								
 						FROM #OldSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -336,8 +216,8 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
-								@IsSynced			AS '@IsSynced',
-								@IsSynced			AS '@IsSyncedDownline'
+								@IsSynced			AS '@IsSynced',	
+								0					AS '@IsSyncedDownline'								
 						FROM #NewSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -357,8 +237,8 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								@IsSynced			AS '@IsSynced',
-								@IsSynced			AS '@IsSyncedDownline'
+								@IsSynced			AS '@IsSynced',	
+								0					AS '@IsSyncedDownline'								
 						FROM #NewSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -378,8 +258,8 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
-								@IsSynced			AS '@IsSynced',
-								@IsSynced			AS '@IsSyncedDownline'
+								@IsSynced			AS '@IsSynced',	
+								0					AS '@IsSyncedDownline'								
 						FROM #NewSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -400,8 +280,8 @@ BEGIN
 					(
 						SELECT	SportType			AS '@SportType',
 								BetType				AS '@BetType',
-								@IsSynced			AS '@IsSynced',
-								@IsSynced			AS '@IsSyncedDownline'
+								@IsSynced			AS '@IsSynced',	
+								0					AS '@IsSyncedDownline'								
 						FROM #NewSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -436,13 +316,4 @@ BEGIN
 	DROP TABLE #NewSyncStatTbl
 	DROP TABLE #OldSyncStatTbl
 END
-
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductSyncStatusUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductSyncStatusUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableNewProductSyncStatusUpd] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_DisableNewProductSyncStatusUpd] TO [vnteam]
