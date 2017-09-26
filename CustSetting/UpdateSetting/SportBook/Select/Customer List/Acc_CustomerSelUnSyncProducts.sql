@@ -44,7 +44,7 @@ BEGIN
 	
 	SELECT @isSyncAB = CAST(CASE WHEN ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderAB),0) = 0 THEN 0 ELSE 1 END AS BIT),
 		@isSyncVB = CAST(CASE WHEN ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB),0) = 0 THEN 0 ELSE 1 END AS BIT)
-	FROM dbo.CustProductStatus WITH(NOLOCK)
+	FROM dbo.CustProductStatus cps WITH(NOLOCK)
 	WHERE custid = @custid
 		
 	IF @roleid = 4
@@ -78,7 +78,7 @@ BEGIN
 		BEGIN
 			IF EXISTS(SELECT TOP 1 1 
 					FROM dbo.CustInfo ci WITH(NOLOCK)
-						INNER JOIN CustProductStatus cs WITH(NOLOCK) ON ci.custid = cs.custid
+						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.custid
 					WHERE srecommend = @custid
 						AND roleid = 3
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderAB) = 0
@@ -91,7 +91,7 @@ BEGIN
 		BEGIN
 			IF EXISTS(SELECT TOP 1 1 
 					FROM dbo.CustInfo ci WITH(NOLOCK)
-						INNER JOIN CustProductStatus cs WITH(NOLOCK) ON ci.custid = cs.custid
+						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.custid
 					WHERE srecommend = @custid
 						AND roleid = 3
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
@@ -131,7 +131,7 @@ BEGIN
 		BEGIN
 			IF EXISTS(SELECT TOP 1 1 
 					FROM dbo.CustInfo ci WITH(NOLOCK)
-						INNER JOIN CustProductStatus cs WITH(NOLOCK) ON ci.custid = cs.custid
+						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.custid
 					WHERE mrecommend = @custid
 						AND roleid = 2
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderAB) = 0
@@ -144,7 +144,7 @@ BEGIN
 		BEGIN
 			IF EXISTS(SELECT TOP 1 1 
 					FROM dbo.CustInfo ci WITH(NOLOCK)
-						INNER JOIN CustProductStatus cs WITH(NOLOCK) ON ci.custid = cs.custid
+						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.custid
 					WHERE mrecommend = @custid
 						AND roleid = 2
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
@@ -184,7 +184,7 @@ BEGIN
 		BEGIN
 			IF EXISTS(SELECT TOP 1 1 
 					FROM dbo.CustInfo ci WITH(NOLOCK)
-						INNER JOIN CustProductStatus cs WITH(NOLOCK) ON ci.custid = cs.custid
+						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.custid
 					WHERE recommend = @custid
 						AND roleid = 1
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderAB) = 0
@@ -197,7 +197,7 @@ BEGIN
 		BEGIN
 			IF EXISTS(SELECT TOP 1 1 
 					FROM dbo.CustInfo ci WITH(NOLOCK)
-						INNER JOIN CustProductStatus cs WITH(NOLOCK) ON ci.custid = cs.custid
+						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.custid
 					WHERE recommend = @custid
 						AND roleid = 1
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
