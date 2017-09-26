@@ -344,7 +344,7 @@ BEGIN
 			INSERT INTO #customer(custid, RowNumber)
 			SELECT custid, RowNumber
 			FROM (
-					SELECT custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
+					SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
 					FROM dbo.custinfo ci WITH (NOLOCK) 
 						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
 					WHERE MRecommend = @MRecommend 
@@ -456,7 +456,7 @@ BEGIN
 			INSERT INTO #customer(custid,RowNumber)
 			SELECT custid, RowNumber	
 			FROM (
-					SELECT custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
+					SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
 					FROM dbo.custinfo ci WITH(NOLOCK) 
 						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
 					WHERE MRecommend = @MRecommend 

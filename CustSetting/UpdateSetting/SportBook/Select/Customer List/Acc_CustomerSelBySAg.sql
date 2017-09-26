@@ -461,7 +461,7 @@ BEGIN
 			FROM (
 					SELECT c.custid , ROW_NUMBER() OVER (ORDER BY c.enabled DESC, c.closed, ISNULL(c.reject,0), c.username) as RowNumber 
 					FROM dbo.custinfo c WITH(NOLOCK) 
-						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
+						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON c.custid = cs.custid
 					WHERE c.srecommend = @SRecommend 
 						AND c.roleid=3
 						AND c.username LIKE '%' + @Username + '%'  

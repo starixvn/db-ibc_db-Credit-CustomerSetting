@@ -240,7 +240,7 @@ BEGIN
 			INSERT INTO #memberList (custid, rn)
 			SELECT custid, rn
 			FROM (
-					SELECT custid,
+					SELECT ci.custid,
 						ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ci.reject, ci.username) as rn
 					FROM dbo.custInfo ci with(nolock)
 						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid					
@@ -340,7 +340,7 @@ BEGIN
 			INSERT INTO #memberList (custid, rn)
 			SELECT custid, rn
 			FROM (
-					SELECT custid,
+					SELECT ci.custid,
 						ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ci.reject, ci.username) AS rn
 					FROM dbo.custInfo ci WITH(NOLOCK)
 						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid					
@@ -450,7 +450,7 @@ BEGIN
 			INSERT INTO #memberList (custid, rn)
 			SELECT custid, rn
 			FROM (
-					SELECT custid,
+					SELECT ci.custid,
 						ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ci.reject, ci.username) AS rn
 					FROM dbo.custInfo ci with(nolock)
 						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid					
