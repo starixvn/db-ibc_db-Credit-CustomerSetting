@@ -18,6 +18,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedNG2				BIT = 0		OUTPUT
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedLottery			BIT = 0		OUTPUT
+				,	@AllowedLucky3			BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -43,6 +44,8 @@ Revisions:
 	- 20170418@Winnie: Change to call the sp Acc_CheckShowProduct - [Redmine #72336]	
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
+	- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
+
 */
 
 	SET NOCOUNT ON
@@ -55,18 +58,21 @@ Revisions:
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
 		,	@IsHideNG2				INT
+		,	@IsHideLucky3			INT
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
 
 	DECLARE	@Cricket				INT = 20
 		,	@AllBet					INT = 21
 		,	@VoidBridge				INT = 22
+		,	@Lucky3					INT = 26
 		,	@FishingWorld			INT = 24
 		,	@Lottery				INT = 28
 		,	@NG2					INT = 23
 		,	@VS						INT = 5
 	
 	DECLARE @bitOrderVB				INT = 5
+		,	@bitOrderLucky3			INT = 9
 		,	@bitOrderFW				INT = 8
 		,	@bitOrderNG2			INT = 4
 		,	@bitOrderLottery		INT = 10
@@ -108,8 +114,19 @@ Revisions:
 	--END
 	EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHideCricket OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 26, @IsHide = @IsHideLucky3 OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHideFishingWorld OUTPUT
 
+	SELECT	@AllowedLucky3 =	CASE	WHEN @RoleID = 4 AND @IsHideLucky3 = 0 THEN 1
+										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderLucky3) = 0
+											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderLucky3) = 1
+											AND @IsHideLucky3 = 0 
+											THEN 1
+										ELSE 0
+								END
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	WHERE	cps.CustID = @CustID
+	
 	SELECT	@AllowedFishingWorld =	CASE	WHEN @RoleID = 4 AND @IsHideFishingWorld = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderFW) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderFW) = 1
@@ -119,7 +136,7 @@ Revisions:
 								END
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
-		
+
 	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHiddenLottery OUTPUT
 	SELECT	@AllowedLottery =	CASE	WHEN @RoleID = 4 AND @IsHiddenLottery = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderLottery) = 0

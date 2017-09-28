@@ -1,0 +1,111 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE CustDB
+GO
+
+ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionSelect] 
+	  @CustID		INT
+	, @ProductID	TINYINT
+	, @UplineRoleID TINYINT = NULL
+AS
+/*
+	Created: 20170424@Elodie
+	Task : Get Ticket commission setting values of a product
+	DB: DBCUST/CustDB
+	Original:
+
+	Revision:
+	
+	Param's Explanation:
+	
+	*/
+BEGIN
+	DECLARE	@RoleID		TINYINT,
+			@SuperID	INT,
+			@MasterID	INT,
+			@AgentID	INT
+
+	SELECT SportType,Bettype,SettingType
+	INTO #SportBettypeFilter
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) --Commission
+	
+	-- Select customer's information
+	SELECT	@RoleID     = c.roleid
+		,	@SuperID	= c.srecommend
+		,	@MasterID	= c.mrecommend
+		,	@AgentID	= c.recommend
+	FROM	dbo.Customer AS c WITH(NOLOCK)
+	WHERE	c.custid = @CustID
+
+	IF @RoleID = 4
+		SELECT	pdt.SportType,
+				pdt.BetType,
+				dc.Discount AS SuperCommission,
+				ISNULL(pdt.MaxDiscount, 0) AS MaxGivenCommission
+		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)
+			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
+			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
+		WHERE dc.custid = @CustID
+	ELSE IF @RoleID = 3
+		SELECT	ft.SportType,  
+				ft.BetType,  
+				dc.Discount AS MasterCommission,
+				sdc.Discount AS SuperCommission
+		FROM #SportBettypeFilter ft  
+			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON ft.SportType = dc.sporttype AND ft.BetType = dc.bettype    
+			INNER JOIN dbo.CustDiscount3rd_Agent sdc WITH (NOLOCK) ON ft.SportType = sdc.sporttype AND ft.BetType = sdc.bettype 
+		WHERE dc.custid = @CustID AND sdc.custid = @SuperID
+	ELSE IF @RoleID = 2
+		SELECT	ft.SportType,  
+				ft.BetType,
+				dc.Discount AS AgentCommission,
+				mdc.Discount AS MasterCommission
+		FROM #SportBettypeFilter ft 
+			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON ft.SportType = dc.sporttype AND ft.BetType = dc.bettype 
+			INNER JOIN dbo.CustDiscount3rd_Agent mdc WITH (NOLOCK) ON ft.SportType = mdc.sporttype AND ft.BetType = mdc.bettype 
+		WHERE dc.custid = @CustID AND mdc.custid = @MasterID   
+	ELSE IF @RoleID = 1
+	BEGIN
+		IF @UplineRoleID = 4
+		BEGIN
+			SELECT	ft.SportType,  
+					ft.BetType,  
+					dc.AgentDiscount AS AgentCommission,  
+					dc.MasterDiscount AS MasterCommission
+				FROM #SportBettypeFilter ft 
+				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON ft.SportType = dc.sporttype AND ft.BetType = dc.bettype 
+			WHERE dc.custid = @CustID
+		END
+		ELSE IF @UplineRoleID = 3
+		BEGIN
+			SELECT	ft.SportType,  
+					ft.BetType,
+					dc.AgentDiscount AS AgentCommission
+			FROM #SportBettypeFilter ft 
+				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON ft.SportType = dc.sporttype AND ft.BetType = dc.bettype 
+			WHERE dc.custid = @CustID
+		END
+		ELSE IF @UplineRoleID = 2
+		BEGIN
+			SELECT	ft.SportType,  
+					ft.BetType,
+					dc.PlayerDiscount AS MemberCommission, 
+					adc.Discount AS AgentCommission
+			FROM #SportBettypeFilter ft 
+				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON ft.SportType = dc.sporttype AND ft.BetType = dc.bettype   
+				INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON ft.SportType = adc.sporttype AND ft.BetType = adc.bettype 
+			WHERE dc.custid = @CustID AND adc.custid = @AgentID  
+			  
+		END
+	END
+	DROP TABLE #SportBettypeFilter
+END
+
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionSelect] TO [bodbadminNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionSelect] TO [bodbDownlineNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionSelect] TO [bodbExtAccNet]
+GO
+GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_TicketCommissionSelect] TO [vnteam]
+

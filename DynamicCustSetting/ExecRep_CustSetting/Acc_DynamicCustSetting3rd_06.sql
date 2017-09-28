@@ -1,10 +1,7 @@
-
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE CustDB
 GO
 
-/****** Object:  Stored Procedure dbo.Acc_DynamicCustSetting3rd_06    Script Date: 12/9/2015 12:57:52 PM ******/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_06]
     @CustId int,
     @RoleId int,
@@ -20,9 +17,12 @@ AS
 		- 20160104@Dominic: Implementing Charge Commission Plugin - [Redmine: #49689]
 		- 20160219@Dominic: Remove commission on C981RMB - [Redmine: #51057]  
 		- 20160909@Winnie: Not apply CustNoComm for 3rd product [Redmine: #63736]	
+		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
+
 	Param's Explanation:
 		 @SettingType: 3 - Given Comm
 						5 - Charge Comm
+						14 - Ticket Comm
 */
 BEGIN
     SET NOCOUNT ON;
@@ -108,7 +108,7 @@ BEGIN
 			@PlayerDiscount = dcmem.PlayerDiscount,			
 			@MasterDiscount= CASE WHEN @MasterDiscount < @SuperDiscount THEN @MasterDiscount ELSE @SuperDiscount END,
 			@AgentDiscount= CASE WHEN @AgentDiscount < @MasterDiscount THEN @AgentDiscount ELSE @MasterDiscount END,
-			@PlayerDiscount= CASE WHEN @PlayerDiscount < @AgentDiscount OR @SettingType = 5 THEN @PlayerDiscount ELSE @AgentDiscount END,
+			@PlayerDiscount= CASE WHEN @PlayerDiscount < @AgentDiscount OR @SettingType IN (5,14) THEN @PlayerDiscount ELSE @AgentDiscount END,
 			dcmem.SuperDiscount = @SuperDiscount,
 			dcmem.MasterDiscount = @MasterDiscount,
 			dcmem.AgentDiscount = @AgentDiscount,
@@ -163,7 +163,7 @@ BEGIN
 			@PlayerDiscount = dcmem.PlayerDiscount,	
 			@SuperDiscount = CASE WHEN @SuperDiscount < @MasterDiscount THEN @MasterDiscount ELSE @SuperDiscount END,
 			@AgentDiscount= CASE WHEN @AgentDiscount < @MasterDiscount THEN @AgentDiscount ELSE @MasterDiscount END,
-			@PlayerDiscount= CASE WHEN @PlayerDiscount < @AgentDiscount OR @SettingType = 5 THEN @PlayerDiscount ELSE @AgentDiscount END,
+			@PlayerDiscount= CASE WHEN @PlayerDiscount < @AgentDiscount OR @SettingType IN (5,14) THEN @PlayerDiscount ELSE @AgentDiscount END,
 			dcmem.SuperDiscount = @SuperDiscount,
 			dcmem.MasterDiscount = @MasterDiscount,
 			dcmem.AgentDiscount = @AgentDiscount,
@@ -206,7 +206,7 @@ BEGIN
 			@PlayerDiscount = dcmem.PlayerDiscount,	
 			@SuperDiscount = CASE WHEN @SuperDiscount < @AgentDiscount THEN @AgentDiscount ELSE @SuperDiscount END,
 			@MasterDiscount= CASE WHEN @MasterDiscount < @AgentDiscount THEN @AgentDiscount ELSE @MasterDiscount END,
-			@PlayerDiscount= CASE WHEN @PlayerDiscount < @AgentDiscount OR @SettingType = 5 THEN @PlayerDiscount ELSE @AgentDiscount END,
+			@PlayerDiscount= CASE WHEN @PlayerDiscount < @AgentDiscount OR @SettingType IN (5,14) THEN @PlayerDiscount ELSE @AgentDiscount END,
 			dcmem.SuperDiscount = @SuperDiscount,
 			dcmem.MasterDiscount = @MasterDiscount,
 			dcmem.AgentDiscount = @AgentDiscount,

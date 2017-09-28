@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" IsNested = 1></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" IsNested = "1"></info>*/
 USE [CustDB]
 GO
 
@@ -22,6 +22,7 @@ AS
 		- 20170310@Elodie: Implementing NewProductStatus Plugin - [Redmine #60809]
 		- 20170310@Elodie: Update status by site and currency which user is offered - [Redmine #73126]
 		- 20170310@Elodie: No data of DCS product when copy super from non-offered sites to offered sites - [Redmine #73155]
+		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -579,7 +580,7 @@ BEGIN
 			RETURN
 		END CATCH
 	
-		/********************************************* Commision : SettingType = 3, Charge comm: Setting Type = 5 ****************************************/
+		/************************* Commision : SettingType = 3, Charge comm: Setting Type = 5, Ticket comm: Setting Type = 14*****************/
 		BEGIN TRY
 			IF EXISTS(SELECT TOP 1 1 FROM [dbo].[CustDiscount3rd_Agent] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 				INSERT INTO [dbo].[CustDiscount3rd_Agent]
@@ -593,7 +594,7 @@ BEGIN
 						   ,[Discount]
 				FROM [dbo].[CustDiscount3rd_Agent] cs WITH(NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (3,5) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (3,5,14) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -608,7 +609,7 @@ BEGIN
 					,t.BetType
 					,0 -- 0 zero by default
 				FROM #ProductSettingDetail t 
-				WHERE t.SettingType IN (3,5) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
+				WHERE t.SettingType IN (3,5,14) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
@@ -722,3 +723,4 @@ BEGIN
 		END CATCH
 	END	
 END
+GO

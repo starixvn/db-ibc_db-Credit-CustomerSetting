@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember] 
 	@CustID				INT
 	, @ProductID		TINYINT = NULL
@@ -24,6 +28,7 @@ AS
 		- 20160801@Elodie: Implementing BetGameLimit Settings, GameStatus Setting - [Redmine: #60809]
 		- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
 		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
+		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -870,6 +875,71 @@ BEGIN
 					, @ErrMsg = @ErrMsg OUTPUT			
 			END
 			DELETE FROM	#TempProductStatus WHERE ProductID = @ProductID13
+		END
+	END
+
+	/********************************************* Ticket Commision : SettingType = 14 ****************************************/
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,14))
+	BEGIN
+		DECLARE @ProductID14 INT
+		CREATE TABLE #TicketComm (ProductID INT)
+		DECLARE @NewCommTbl TABLE (
+				SportType	SMALLINT
+			,	BetType		SMALLINT
+			,	Discount	DECIMAL(9, 8)
+		)
+	
+		INSERT INTO @NewCommTbl
+		SELECT dc.SportType
+			, dc.BetType
+			, dc.PlayerDiscount
+		FROM dbo.CustDiscount3rd_Member dc WITH(NOLOCK)
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
+		WHERE dc.CustID	= @ExistingCustID
+		
+		INSERT INTO #TicketComm(ProductID)	
+			SELECT 
+					DISTINCT
+					psd.ProductID				
+			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			INNER JOIN	@NewCommTbl AS ts
+					ON	ts.SportType = psd.SportType
+					AND	ts.BetType = psd.BetType
+			WHERE	psd.SettingType = 14
+				AND psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+			
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TicketComm)
+		BEGIN
+			SELECT TOP 1 @ProductID14=ProductID FROM #TicketComm		
+			SET @xmlDiscount = ( SELECT (
+										SELECT nslt.SportType AS '@SportType'
+											, nslt.BetType AS '@BetType'
+											, Discount AS '@Commission'
+										FROM @NewCommTbl nslt
+										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+											WHERE psd.SettingType = 14 AND psd.ProductID=@ProductID14
+										FOR XML PATH('Commission')
+											, TYPE
+										)
+								FOR XML PATH('ROOT')
+									, TYPE
+								)
+
+			SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlDiscount)
+
+			IF EXISTS(SELECT TOP 1 1 FROM @NewCommTbl)
+			BEGIN
+				EXEC Acc_CustSetting_TicketCommissionUpd 		
+					  @CustID = @CustID
+					, @Commission = @xmlStr
+					, @SubAccID = @SubAccID
+					, @IP = @IP
+					, @UserID = @UserID
+					, @ErrCode = @ErrCode OUTPUT
+					, @ErrMsg = @ErrMsg OUTPUT
+			END
+			DELETE FROM	#TicketComm WHERE ProductID=@ProductID14
 		END
 	END
 END

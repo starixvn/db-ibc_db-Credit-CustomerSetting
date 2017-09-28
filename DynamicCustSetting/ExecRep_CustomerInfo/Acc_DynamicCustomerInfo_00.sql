@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" isNested="1"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00] 
 	@CustID				INT
 	, @SuperID			INT
@@ -28,6 +32,7 @@ AS
 		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]					
 		- 20170223@Elodie: Fix bug "newly created direct agent does not follow status of dummy master" - [Redmine #71925]
 		- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
+		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 	*/
 BEGIN
 	SELECT @ErrCode = 0
@@ -902,10 +907,13 @@ BEGIN
 			RETURN
 		END CATCH
 	
-		/********************************************* Commision : SettingType = 3 ****************************************/
+		/********************************************* Commision : SettingType = 3, Ticket Commision : SettingType = 14 ****************************************/
 		SELECT * INTO #SportBettypeFilter3
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3)
-	
+		INSERT INTO #SportBettypeFilter3
+		SELECT * 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14)
+
 		BEGIN TRY
 			IF @RoleID = 4
 			BEGIN
