@@ -19,6 +19,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedLottery			BIT = 0		OUTPUT
 				,	@AllowedLucky3			BIT = 0		OUTPUT
+				,	@AllowedBullFighting	BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -45,6 +46,7 @@ Revisions:
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
 	- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
+	- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
 
 */
 
@@ -61,8 +63,10 @@ Revisions:
 		,	@IsHideLucky3			INT
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
+		,	@IsHideBullFighting		INT
 
 	DECLARE	@Cricket				INT = 20
+		,	@CockFighting			INT = 19
 		,	@AllBet					INT = 21
 		,	@VoidBridge				INT = 22
 		,	@Lucky3					INT = 26
@@ -70,32 +74,33 @@ Revisions:
 		,	@Lottery				INT = 28
 		,	@NG2					INT = 23
 		,	@VS						INT = 5
+		,	@BullFighting			INT = 30
 	
-	DECLARE @bitOrderVB				INT = 5
-		,	@bitOrderLucky3			INT = 9
-		,	@bitOrderFW				INT = 8
-		,	@bitOrderNG2			INT = 4
-		,	@bitOrderLottery		INT = 11
-		,	@bitOrderCF				INT = 2
-		,	@bitOrderCriket			INT = 3
-		,   @bitOrderVS				INT = 10
+	DECLARE @bitOrderVB				INT 
+		,	@bitOrderLucky3			INT 
+		,	@bitOrderFW				INT 
+		,	@bitOrderNG2			INT 
+		,	@bitOrderLottery		INT 
+		,	@bitOrderCF				INT 
+		,	@bitOrderCriket			INT 
+		,   @bitOrderVS				INT 
+		,   @bitOrderBF				INT 
+
+    SET @bitOrderCF = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 206 AND Bettype = 1003)
+    SET @bitOrderCriket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
+	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
+	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
+	SET @bitOrderNG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
+	SET @bitOrderLucky3 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 160 AND Bettype = 1600)
+	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
+	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
+	SET @bitOrderBF = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 207 AND Bettype = 1004)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend
 		, @AllowedColossusbets = CASE WHEN HideColossusBet = 0 THEN 1 ELSE 0 END		
 	from custinfo with (nolock) where CustID=@CustID
 	
-	--SELECT cs.CustID, cs.bitmapHasSynced, cs.bitmapIsHidden, cs.bitmapIsDisabled
-	--INTO #CustProductStatus
-	--FROM DBCUST.CustDB.dbo.CustProductStatus cs WITH (NOLOCK)
-	--WHERE 1 = CASE	WHEN @RoleID = 4 AND cs.CustID = @CustID THEN 1
-	--				WHEN @RoleID = 3 AND cs.CustID IN (@CustID,@srecommend) THEN 1
-	--				WHEN @RoleID = 2 AND cs.CustID IN (@CustID,@mrecommend) THEN 1
-	--				WHEN @RoleID = 1 AND cs.CustID IN (@CustID,@recommend) THEN 1
-	--				ELSE 0 END
-
-	--SET @IsHideCockfighting = (SELECT SettingStatus FROM ProductSettingDetail WITH (NOLOCK) WHERE ProductID = 19 AND SettingType = 4)
 	EXEC Acc_CheckShowProduct @ProductID = 19, @IsHide = @IsHideCockfighting OUTPUT
-	
 	SET @AllowedCockfighting = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderCF) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideCockfighting = 0 THEN 1 ELSE 0 END
 	
@@ -116,6 +121,7 @@ Revisions:
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 26, @IsHide = @IsHideLucky3 OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHideFishingWorld OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 30, @IsHide = @IsHidden_BullFighting OUTPUT
 
 	SELECT	@AllowedLucky3 =	CASE	WHEN @RoleID = 4 AND @IsHideLucky3 = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderLucky3) = 0
@@ -268,6 +274,17 @@ Revisions:
 								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderVS) = 0 AND @IsHideVS = 0 THEN 1
 								ELSE 0
 						END
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	WHERE	cps.CustID = @CustID
+
+	EXEC Acc_CheckShowProduct @ProductID = 30, @IsHide = @IsHidden_BullFighting OUTPUT
+	SELECT	@AllowedBullFighting =	CASE	WHEN @RoleID = 4 AND @IsHidden_BullFighting = 0 THEN 1
+										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderBF) = 0
+											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderBF) = 1
+											AND @IsHidden_BullFighting = 0 
+											THEN 1
+										ELSE 0
+								END
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
 
