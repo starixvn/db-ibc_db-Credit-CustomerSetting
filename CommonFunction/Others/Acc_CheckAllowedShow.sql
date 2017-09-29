@@ -75,7 +75,7 @@ Revisions:
 		,	@bitOrderLucky3			INT = 9
 		,	@bitOrderFW				INT = 8
 		,	@bitOrderNG2			INT = 4
-		,	@bitOrderLottery		INT = 10
+		,	@bitOrderLottery		INT = 11
 		,	@bitOrderCF				INT = 2
 		,	@bitOrderCriket			INT = 3
 		,   @bitOrderVS				INT = 10
