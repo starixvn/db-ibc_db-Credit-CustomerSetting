@@ -346,7 +346,7 @@ BEGIN
 					END AS BIT) AS HideBullFighting,
 			CAST(CASE	WHEN	@IsHidden_BullFighting = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_BullFighting), 1)=0
 					THEN 0 ELSE 1
-					END AS BIT) AS HideBullFightingUpline
+					END AS BIT) AS HideBullFightingUpline,
 
 			-- For Cricket
 			CASE WHEN m.[site] = 'IMBC' THEN 1 ELSE 0 END AS IsIMBC,
