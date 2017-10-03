@@ -70,6 +70,7 @@ AS
 	- 20170420@Helen:  Add Extra information for Direct Accounts, for NAP only - [Redmine:72339]
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
+	- 20170920@Helen: TO Control Phase 3 - [Redmine: 75557]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -84,6 +85,9 @@ BEGIN
 
 --20140619@Johnson: Check IP to create downline-----------------
 	Declare @isValidIP bit
+	
+	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME
+	SET @CreateDate = GETDATE()
 	
 	EXEC Acc_CustomerInsMember_CheckIP 
 			@IP = @IP,
@@ -655,6 +659,15 @@ BEGIN
 		FROM Customer ci WITH(NOLOCK)
 		WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 			AND ci.mrecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
+		
+		IF @@ROWCOUNT <> 0 
+		BEGIN
+			SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+										'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +
+										'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(4000)),SPACE(1)) + '" />'
+			EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 602,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
+		END	
+			
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrMsg = CASE @Language 
@@ -753,3 +766,8 @@ BEGIN
 	SET NOCOUNT OFF
 END
 GO
+GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_CloneSetting_MAg] TO [bodbAdminNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_CloneSetting_MAg] TO [bodbDownlineNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_CloneSetting_MAg] TO [bodbExtAccNet]
