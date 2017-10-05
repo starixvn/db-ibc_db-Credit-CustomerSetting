@@ -79,7 +79,7 @@ BEGIN
 				ELSE ISNULL((	SELECT TOP 1 1  
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
-								WHERE srecommend = @CustID 
+								WHERE srecommend = @CustID 									
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline,
 											 
@@ -91,6 +91,7 @@ BEGIN
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
 								WHERE srecommend = @CustID  
+									AND ci.custid <> @custid
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
 								), 0) END AS BIT)  HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
@@ -134,6 +135,7 @@ BEGIN
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
 								WHERE mrecommend = @CustID  
+									AND ci.custid <> @custid
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
 								), 0) END AS BIT)  HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
@@ -176,6 +178,7 @@ BEGIN
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
 								WHERE recommend = @CustID  
+									AND ci.custid <> @custid
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
 								), 0) END AS BIT)  HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
