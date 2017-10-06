@@ -1,5 +1,7 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
+
 ALTER PROCEDURE dbo.Acc_CustomerWinLimitIns @CustId INT
 	, @UplineId INT
 	, @IP VARCHAR(50) = ''
@@ -8,14 +10,16 @@ ALTER PROCEDURE dbo.Acc_CustomerWinLimitIns @CustId INT
 	, @ErrMsg NVARCHAR(4000) = '' OUTPUT
 AS
 /*  
-  Created: 20151223@Patrick  
-  Task: Add new member to CustWinlimit
-  DB: DBCUST/CustDB  
+	Created: 20151223@Patrick  
+	Task: Add new member to CustWinlimit
+	DB: DBCUST/CustDB  
     
-  Revisions:  
-  Parameters Explanation:    
-	@UplineId is uplineid or existing custid
- */
+	Revisions:  
+		- 20171005@Elodie: Default Max Loss is wrong for Casino when creating new Super [RedmineID:#84432]
+
+	Parameters Explanation:    
+		@UplineId is uplineid or existing custid
+*/
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @StartRun DATETIME, @EndRun DATETIME, @Duration INT, @LogSPData VARCHAR(MAX)
@@ -27,7 +31,7 @@ BEGIN
 		SELECT @CurrencyId = Currency FROM dbo.CustInfo WITH(NOLOCK) WHERE CustId = @CustId
 
 		SELECT @DefaultMaxLossLimit = DefaultLossLimit
-		FROM dbo.LossLimit_GlobalSetting WITH(NOLOCK) WHERE ExchangeId = @CurrencyId
+		FROM dbo.LossLimit_GlobalSetting WITH(NOLOCK) WHERE ExchangeId = @CurrencyId AND ProductId = 6
 
 		--insert default value fro super level
 		INSERT INTO dbo.CustWinLimit(CustId, SportType, BetType, MaxWinLimit, IsAutoReset, MaxLossLimit)
@@ -137,18 +141,5 @@ BEGIN
 		END CATCH
 
 	END
-	
-
 END
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitIns] TO [bodbAdminNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitIns] TO [bodbDownlineNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitIns] TO [bodbExtAccNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerWinLimitIns] TO [vnteam] AS [dbo]
 GO
