@@ -29,7 +29,7 @@ BEGIN
         
     IF EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND custID <> @custID AND HideGoldDeluxe = 0)
         SET @Downlines = 1    
-    IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1)
+    IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
         SET @DisableDownlines = 1
         
     SELECT    @DisableGoldDeluxe = DisableGoldDeluxe

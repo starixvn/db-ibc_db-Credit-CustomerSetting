@@ -46,7 +46,7 @@ BEGIN
 			
 	IF EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid = 1 AND HideGoldDeluxe = 0)
 		SET @Downlines = 1	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND DisableGoldDeluxe = 1)
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
 		SET @DisableDownlines = 1
 	
 	SELECT	@DisableGoldDeluxe = DisableGoldDeluxe
