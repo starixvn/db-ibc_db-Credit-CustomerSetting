@@ -30,7 +30,7 @@ BEGIN
 		@bitmapOrderVB TINYINT
 		
 	SELECT @roleid = roleid, 
-		@isSyncGD = HideGoldDeluxe,
+		@isSyncGD = CASE WHEN HideGoldDeluxe = 0 THEN 1 ELSE 0 END,
 		@isSyncCS = SyncCasino
 	FROM dbo.CustInfo WITH(NOLOCK)
 	WHERE custid = @custid
