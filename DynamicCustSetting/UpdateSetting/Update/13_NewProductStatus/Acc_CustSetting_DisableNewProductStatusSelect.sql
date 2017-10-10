@@ -72,11 +72,12 @@ BEGIN
 							ELSE ISNULL((
 										SELECT TOP 1 1
 										FROM dbo.custInfo ci WITH (NOLOCK)
-											INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
+											INNER JOIN dbo.CustProductStatus cps_temp WITH(NOLOCK) ON ci.custid = cps_temp.CustID
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-											--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
+											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
 										WHERE srecommend = @CustID
 											AND IsDisabled.value = 1
+											AND IsSynced.value = 1
 										), 0) END AS BIT) AS IsDisabledDownline,
 										
 				CAST(0 AS BIT) AS isDisabledUpline
@@ -110,11 +111,12 @@ BEGIN
 							ELSE ISNULL((
 										SELECT TOP 1 1
 										FROM dbo.custInfo ci WITH (NOLOCK)
-											INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
+											INNER JOIN dbo.CustProductStatus cps_temp WITH(NOLOCK) ON ci.custid = cps_temp.CustID
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-											--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
+											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
 										WHERE mrecommend = @CustID
 											AND IsDisabled.value = 1
+											AND IsSynced.value = 1
 										), 0) END AS BIT) AS IsDisabledDownline,
 										
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline
@@ -149,11 +151,12 @@ BEGIN
 							ELSE ISNULL((
 										SELECT TOP 1 1
 										FROM dbo.custInfo ci WITH (NOLOCK)
-											INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
+											INNER JOIN dbo.CustProductStatus cps_temp WITH(NOLOCK) ON ci.custid = cps_temp.CustID
 											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-											--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
+											OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
 										WHERE recommend = @CustID AND roleid = 1
 											AND IsDisabled.value = 1
+											AND IsSynced.value = 1
 										), 0) END AS BIT) AS IsDisabledDownline,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline
 		FROM #SportBettypeFilter ft 

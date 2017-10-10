@@ -53,7 +53,7 @@ SET NOCOUNT ON
  
 	IF @roleid = 4 
 	BEGIN
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1)
+		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
 			SET @IsDisabledDownline = 1
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND HideGoldDeluxe = 0 AND custid <> @custid)
 			SET @hasDownline = 1
@@ -62,7 +62,7 @@ SET NOCOUNT ON
 	END
 	ELSE IF @roleid = 3
 	BEGIN
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND DisableGoldDeluxe = 1)
+		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
 			SET @IsDisabledDownline = 1
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND HideGoldDeluxe = 0 AND custid <> @custid)
 			SET @hasDownline = 1
@@ -74,7 +74,7 @@ SET NOCOUNT ON
 	END
 	ELSE IF @roleid = 2
 	BEGIN
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND DisableGoldDeluxe = 1)
+		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
 			SET @IsDisabledDownline = 1
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND HideGoldDeluxe = 0 AND custid <> @custid)
 			SET @hasDownline = 1
