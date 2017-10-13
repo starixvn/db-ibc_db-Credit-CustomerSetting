@@ -1,13 +1,9 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableColossusBet]  
 (
 	@custid  INT,  
 	@Disable BIT = NULL,   
-	@EnableDownlines BIT = 0,  
+	@EnableDownlines BIT = NULL,  
 	@SystemID	TINYINT = 1,
 	@UserID  INT = 0,  
 	@SubAccID INT = 0, --Sub-AccountID  
@@ -26,6 +22,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableColossusBet]
     
 	Revisions:
 	- 20170307@Winnie: Change enable behavior & Allowed disable on EXT-NAP [Redmine: #72336]
+	- 20171013@Johnson: Set @EnableDownlines = NULL as default when dont have downline [Redmine: #72973]
 	Parameters Explanation:
 	
 */ 
@@ -95,7 +92,7 @@ BEGIN
 		END
 	END
 
-	IF @Disable_old = @Disable AND @DisableDownlines_Old <> @EnableDownlines
+	IF @Disable_old = @Disable AND (@DisableDownlines_Old <> @EnableDownlines OR @EnableDownlines IS NULL)
 	RETURN
 	IF @Disable = 0 -- check status upline  
 	BEGIN  
@@ -244,9 +241,3 @@ BEGIN
 
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableColossusBet] TO [bodbAdminNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableColossusBet] TO [bodbDownlineNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableColossusBet] TO [bodbExtAccNet]
-GO 
