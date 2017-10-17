@@ -18,7 +18,8 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 
-	Revisions:
+	Revisions: 
+		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]
 
 	Param's Explanation:
 	• @BetLimit:
@@ -445,4 +446,4 @@ BEGIN
 						, @duration			= @duration
 	END CATCH
 END
-
+GO

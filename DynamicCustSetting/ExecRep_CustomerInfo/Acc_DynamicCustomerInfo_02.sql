@@ -23,6 +23,7 @@ AS
 		- 20170310@Elodie: Update status by site and currency which user is offered - [Redmine #73126]
 		- 20170310@Elodie: No data of DCS product when copy super from non-offered sites to offered sites - [Redmine #73155]
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
+		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -531,7 +532,7 @@ BEGIN
 						   ,[MaxPerMatch]
 				FROM [dbo].[CustBetSetting3rd_Agent] cs WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9,16) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -568,7 +569,7 @@ BEGIN
 					,ps.DefaultMaxPerMatch
 				FROM #ProductSettingDetail t 
 					INNER JOIN dbo.ProductBetSetting ps WITH (NOLOCK) ON t.SportType = ps.Sporttype AND t.Bettype = ps.Bettype AND ps.IsDep = 0 AND ps.Currency = @_Currency
-				WHERE t.SettingType = 9 AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
+				WHERE t.SettingType IN (9,16) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH

@@ -12,6 +12,9 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 
+	Revisions: 
+		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]
+
 	Param's Explanation:
 		
 */
@@ -126,3 +129,4 @@ BEGIN
 
 	DROP TABLE #SportBettypeFilter
 END
+GO

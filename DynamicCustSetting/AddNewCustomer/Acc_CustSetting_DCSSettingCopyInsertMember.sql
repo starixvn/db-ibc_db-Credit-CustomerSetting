@@ -29,6 +29,7 @@ AS
 		- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
 		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
+		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -672,6 +673,7 @@ BEGIN
 			DELETE FROM	#TempGameBetlimit WHERE ProductID=@ProductID9
 		END
 	END
+	
 	/********************************************* Game Status: SettingType = 11 ************************************/
 	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11))
 	BEGIN
@@ -940,6 +942,77 @@ BEGIN
 					, @ErrMsg = @ErrMsg OUTPUT
 			END
 			DELETE FROM	#TicketComm WHERE ProductID=@ProductID14
+		END
+	END
+
+	/********************************************* Bet Setting : SettingType = 16 ****************************************/
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16))
+	BEGIN
+		DECLARE @ProductID16 INT
+		CREATE TABLE #TempBetSetting (ProductID INT)
+		DECLARE @NewBetSettingTbl TABLE (
+			SportType			SMALLINT
+			, BetType			SMALLINT
+			, MinBet			MONEY
+			, MaxBet			MONEY
+			, MaxPerMatch		MONEY
+			)
+
+		INSERT INTO @NewBetSettingTbl
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.MinBet
+			, bl.MaxBet
+			, bl.MaxPerMatch
+		FROM dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
+		WHERE bl.custid = @ExistingCustID
+		
+		INSERT INTO #TempBetSetting(ProductID)	
+		SELECT 
+				DISTINCT
+				psd.ProductID				
+		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		INNER JOIN	@NewBetSettingTbl AS ts
+				ON	ts.SportType = psd.SportType
+				AND	ts.BetType = psd.BetType
+		WHERE	psd.SettingType = 16
+			AND psd.ProductID IS NOT NULL
+			AND	psd.SettingLevel IS NOT NULL
+			
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempBetSetting)
+		BEGIN
+			SELECT TOP 1 @ProductID16=ProductID FROM #TempBetSetting		
+			SET @xmlBetLimit = (SELECT (
+										SELECT nslt.SportType	AS '@SportType'
+											, nslt.BetType		AS '@BetType'
+											, MinBet			AS '@MinBet'
+											, MaxBet			AS '@MaxBet'
+											, MaxPerMatch		AS '@MaxPerMatch'
+										FROM @NewBetSettingTbl nslt
+										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
+											WHERE psd.SettingType = 16 AND psd.ProductID = @ProductID16
+										FOR XML PATH('BetLimit')
+											, TYPE
+										)
+								FOR XML PATH('ROOT')
+									, TYPE
+								)
+	
+			SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlBetLimit)
+
+			IF EXISTS(SELECT TOP 1 1 FROM @NewBetSettingTbl)
+			BEGIN
+				EXEC Acc_CustSetting_BetSettingUpd
+					  @CustID = @CustID
+					, @BetLimit = @xmlStr
+					, @SubAccID = @SubAccID
+					, @IP = @IP
+					, @UserID = @UserID
+					, @ErrCode = @ErrCode OUTPUT
+					, @ErrMsg = @ErrMsg OUTPUT
+			END
+			DELETE FROM	#TempBetSetting WHERE ProductID=@ProductID16
 		END
 	END
 END
