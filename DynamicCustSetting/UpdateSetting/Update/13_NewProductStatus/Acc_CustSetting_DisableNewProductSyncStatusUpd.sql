@@ -128,8 +128,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
-								IsSynced			AS '@IsSynced',	
-								0					AS '@IsSyncedDownline'--hardcode =0 for syncDownline to not change web log		
+								IsSynced			AS '@IsSynced'								
 						FROM #OldSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -149,8 +148,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								IsSynced			AS '@IsSynced',	
-								0					AS '@IsSyncedDownline'								
+								IsSynced			AS '@IsSynced'								
 						FROM #OldSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -170,8 +168,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
-								IsSynced			AS '@IsSynced',	
-								0					AS '@IsSyncedDownline'								
+								IsSynced			AS '@IsSynced'								
 						FROM #OldSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -192,8 +189,7 @@ BEGIN
 					(
 						SELECT	SportType			AS '@SportType',
 								BetType				AS '@BetType',
-								IsSynced			AS '@IsSynced',	
-								0					AS '@IsSyncedDownline'								
+								IsSynced			AS '@IsSynced'							
 						FROM #OldSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -216,8 +212,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
-								@IsSynced			AS '@IsSynced',	
-								0					AS '@IsSyncedDownline'								
+								@IsSynced			AS '@IsSynced'						
 						FROM #NewSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -237,8 +232,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								@IsSynced			AS '@IsSynced',	
-								0					AS '@IsSyncedDownline'								
+								@IsSynced			AS '@IsSynced'							
 						FROM #NewSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -258,8 +252,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
-								@IsSynced			AS '@IsSynced',	
-								0					AS '@IsSyncedDownline'								
+								@IsSynced			AS '@IsSynced'							
 						FROM #NewSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -280,8 +273,7 @@ BEGIN
 					(
 						SELECT	SportType			AS '@SportType',
 								BetType				AS '@BetType',
-								@IsSynced			AS '@IsSynced',	
-								0					AS '@IsSyncedDownline'								
+								@IsSynced			AS '@IsSynced'								
 						FROM #NewSyncStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE

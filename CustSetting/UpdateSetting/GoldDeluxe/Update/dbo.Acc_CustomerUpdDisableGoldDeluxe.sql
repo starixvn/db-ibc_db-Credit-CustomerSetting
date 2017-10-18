@@ -116,9 +116,12 @@ BEGIN
 		IF @HideGoldDeluxe_Old = 1
 		BEGIN
 			--update sync incase no change status
-			UPDATE CustInfo WITH(UPDLOCK,ROWLOCK)
+			UPDATE dbo.CustInfo WITH(UPDLOCK,ROWLOCK)
 			SET HideGoldDeluxe = 0
-			WHERE custid = @custid			
+			WHERE custid = @custid	
+			
+			--write log for 
+			GOTO WRITELOG	
 		END
 		
 		RETURN
@@ -207,12 +210,14 @@ BEGIN
 		END CATCH
 	END
 	
+	WRITELOG:
 	DECLARE @LogSPData VARCHAR(MAX),  
 			@LogSPData_Old VARCHAR(2000)  
 	  
 	 Select @LogSPData = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
+		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  
 		  'ApplyDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+  
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
@@ -222,7 +227,9 @@ BEGIN
 		  'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'  
 	  
 	  SELECT @LogSPData_Old = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
-		  'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+  
+		 
+		 'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+  
+		  'HideGD="'+ coalesce(cast(@HideGoldDeluxe_Old as varchar(50)),space(1)) + '" '+  
 		  'ApplyDownlines="'+ CASE WHEN @DisableDownlines_Old = 1 THEN  coalesce(cast(0 as varchar(50)),space(1)) ELSE  coalesce(cast(1 as varchar(50)),space(1)) END +'" '+    
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
@@ -246,6 +253,7 @@ BEGIN
 	BEGIN CATCH
 		Select @LogSPData = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
+		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  
 		  'ApplyDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+  
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
@@ -264,5 +272,4 @@ BEGIN
 	END CATCH
 		
 END
-
 GO
