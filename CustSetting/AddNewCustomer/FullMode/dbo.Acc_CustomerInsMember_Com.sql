@@ -2068,4 +2068,11 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 			@duration = @duration
 	END CATCH
 END
+
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbAdminNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbDownlineNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbExtAccNet]
 GO
