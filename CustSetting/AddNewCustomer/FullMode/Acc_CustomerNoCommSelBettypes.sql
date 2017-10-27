@@ -2,7 +2,7 @@
 USE [bodb02]
 GO
 
-CREATE PROCEDURE [dbo].[Acc_CustomerNoCommSelBettypes] 
+ALTER PROCEDURE [dbo].[Acc_CustomerNoCommSelBettypes] 
 
 AS
 /*
@@ -15,24 +15,12 @@ Revisions:
 Param's Explanation:
 */
 
-SELECT DISTINCT s.SportType,s.bettype,'Asian HDC, OU, OE' AS GroupBettype
-FROM SportBettypeMatrix s WITH(NOLOCK) 
-	INNER JOIN bettype b WITH(NOLOCK)  ON s.BetType=b.typeid
-WHERE ProductID=1 and bettype IN (1,2,3,7,8) AND SportType<>154
-
+SELECT 1 AS SportType,1 AS bettype,'Asian HDC, OU, OE' AS GroupBettype
 UNION
-SELECT DISTINCT s.SportType,s.bettype,'1x2' AS GroupBettype
-FROM SportBettypeMatrix s WITH(NOLOCK) 
-	INNER JOIN bettype b WITH(NOLOCK)  ON s.BetType=b.typeid
-WHERE ProductID=1 and bettype =5
-
+SELECT 1 AS SportType,5 AS bettype,'1x2' AS GroupBettype
 UNION 
 SELECT 154 AS SportType,20 AS bettype,'HR Fixed Odds' AS GroupBettype
-
 UNION
-SELECT DISTINCT s.SportType,s.bettype,'Other Bettypes' AS GroupBettype
-FROM SportBettypeMatrix s WITH(NOLOCK) 
-	INNER JOIN bettype b WITH(NOLOCK)  ON s.BetType=b.typeid
-WHERE ProductID=1 and bettype IN (4,6,9,10,20,21,22,9999) AND SportType<>154
+SELECT 1 AS SportType,4 AS bettype,'Other Bettypes' AS GroupBettype
 
 GO
