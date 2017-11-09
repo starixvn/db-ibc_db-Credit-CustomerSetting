@@ -112,6 +112,7 @@ BEGIN
 				CASE WHEN ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0 THEN 1 ELSE 0 END AS IsAllowUnlimit
 		FROM @NewBetSettingTbl s
 			INNER JOIN dbo.ProductBetSetting ps ON ps.Sporttype = s.SportType AND ps.Bettype = s.BetType
+		WHERE ps.Currency = @Currency
 	END
 
 	IF @RoleID = 3
