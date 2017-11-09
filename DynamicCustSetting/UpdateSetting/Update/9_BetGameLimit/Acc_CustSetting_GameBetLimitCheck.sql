@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="1"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetLimitCheck] 
 	  @CustID		INT
 	, @RoleID		INT
@@ -14,6 +18,9 @@ AS
 	Task : Check Customer's Bet Game Limits
 	DB: DBCUST/CustDB
 	Original:
+
+	Revision: 
+		- 20171109@Elodie: Cannot update Bet Setting of Super with value <> 0 when global setting = 0 [RedmineID:#86041]
 
 	Param's Explanation:
 	• @GameBetLimit:
@@ -102,8 +109,10 @@ BEGIN
 	ELSE
 	BEGIN
 		INSERT INTO @BetGameUnlimit
-		SELECT SportType, BetType, 0 AS IsAllowUnlimit
+		SELECT s.SportType, s.BetType, 
+				CASE WHEN ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0 THEN 1 ELSE 0 END AS IsAllowUnlimit
 		FROM @NewBetLimitTbl s
+			INNER JOIN dbo.ProductBetSetting ps ON ps.Sporttype = s.SportType AND ps.Bettype = s.BetType		
 	END
 
 	IF @RoleID = 3
@@ -492,12 +501,4 @@ BEGIN
 		END
 	END
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GameBetLimitCheck] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GameBetLimitCheck] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GameBetLimitCheck] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_GameBetLimitCheck] TO [vnteam] AS [dbo]

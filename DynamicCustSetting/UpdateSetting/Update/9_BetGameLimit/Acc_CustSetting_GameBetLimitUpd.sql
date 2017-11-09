@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetLimitUpd] 
 	  @CustID		INT
 	, @GameBetLimit	VARCHAR(MAX)
@@ -15,6 +19,7 @@ AS
 	Original:
 
 	Revisions:
+		- 20160801@Elodie: Initial SP
 
 	Param's Explanation:
 	• @GameBetLimit:
@@ -441,10 +446,4 @@ BEGIN
 						, @duration			= @duration
 	END CATCH
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GameBetLimitUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GameBetLimitUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GameBetLimitUpd] TO [bodbExtAccNet]
