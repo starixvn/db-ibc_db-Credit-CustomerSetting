@@ -580,4 +580,4 @@ BEGIN
 	DROP TABLE #NewDisableStatTbl
 	DROP TABLE #OldDisableStatTbl
 END
-
+GO

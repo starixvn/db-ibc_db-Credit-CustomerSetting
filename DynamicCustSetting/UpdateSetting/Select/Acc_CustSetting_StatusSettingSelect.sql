@@ -20,6 +20,10 @@ AS
   - 20170307@Elodie: Get New product status (setting type = 13) - [Redmine: #70722]   
   - 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
   - 20170803@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
+  - 20170919@Johnson: fix the unsynchronized setting, remove IsDownlineSynced 
+					and fix hasDownline status to show checkbox enable downline [Redmine: #72973]
+						+hasDownline = 1: has at least one customer has sync status
+									=0 : all downlines not sync	
  Param's Explanation:  
  - @CustID: 
  Example: EXEC Acc_CustSetting_StatusSettingSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
@@ -75,23 +79,25 @@ BEGIN
 				ELSE ISNULL((	SELECT TOP 1 1  
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
-								WHERE srecommend = @CustID 
+								WHERE srecommend = @CustID 									
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
+									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline,
-								
-			CASE WHEN @downlines = 0 THEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder))  
-				ELSE ISNULL((	SELECT TOP 1 0  
-								FROM dbo.custInfo ci WITH (NOLOCK)  
-								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
-								WHERE srecommend = @CustID --AND roleid = 3  
-									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 0
-								), 1) END AS IsSyncedDownline,  
+			CAST(1 as BIT) as IsSyncedDownline,								 
 			0 AS isDisabledUpline, 
 			1 AS isSyncedUpline,
-			ISNULL(@downlines,0) As HasDownline  
+			CAST(CASE WHEN @downlines = 0 THEN 0
+						ELSE ISNULL((	
+								SELECT TOP 1 1  
+								FROM dbo.custInfo ci WITH (NOLOCK)  
+								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
+								WHERE srecommend = @CustID  
+									AND ci.custid <> @custid
+									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
+								), 0) END AS BIT)  HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
-			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
+			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
     
@@ -113,6 +119,7 @@ BEGIN
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
 								WHERE mrecommend = @CustID   
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
+									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline,  
 								
 			CASE WHEN @downlines = 0 THEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder))  
@@ -120,14 +127,22 @@ BEGIN
 								FROM dbo.custInfo ci WITH (NOLOCK)  
 								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
 								WHERE mrecommend = @CustID --AND roleid = 2  
-									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 0  
+									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 0  									
 								), 1) END AS IsSyncedDownline,  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) as IsDisabledUpline,  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) as IsSyncedUpline,  
-			ISNULL(@downlines,0) As HasDownline  
+			CAST(CASE WHEN @downlines = 0 THEN 0
+						ELSE ISNULL((	
+								SELECT TOP 1 1  
+								FROM dbo.custInfo ci WITH (NOLOCK)  
+								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
+								WHERE mrecommend = @CustID  
+									AND ci.custid <> @custid
+									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
+								), 0) END AS BIT)  HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
-			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
+			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @SuperID  
 		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
@@ -149,6 +164,7 @@ BEGIN
 									INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
 								WHERE recommend = @CustID  
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
+									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline, 
 			CASE WHEN @downlines = 0 THEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder))  
 				ELSE ISNULL((	SELECT TOP 1 0  
@@ -159,7 +175,15 @@ BEGIN
 								), 1) END AS IsSyncedDownline,
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) AS IsSyncedUpline,  
-			ISNULL(@downlines,0) As HasDownline  
+			CAST(CASE WHEN @downlines = 0 THEN 0
+						ELSE ISNULL((	
+								SELECT TOP 1 1  
+								FROM dbo.custInfo ci WITH (NOLOCK)  
+								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
+								WHERE recommend = @CustID  
+									AND ci.custid <> @custid
+									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
+								), 0) END AS BIT)  HasDownline  
 		FROM DBCUST.CUSTDB.dbo.ProductSettingDetail pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 

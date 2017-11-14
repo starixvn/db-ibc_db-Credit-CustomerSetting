@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_04]
 	@custid int,
 	@roleid tinyint,
@@ -13,6 +15,7 @@ AS
 		- 20160801@Elodie: Implement Game status (setting type = 11) - [Redmine: #60809]   
 		- 20170103@Elodie: Unhide all bettype although 1 bettype is enabled - [Redmine: #69679]   
 		- 20170307@Elodie: Implement New Product status (setting type = 13) - [Redmine: #70722]    
+		- 20170919@Johnson: fix the unsynchronized setting (settingType = 13), do not update status for un-sync downlines [Redmine: #72973]							
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -23,7 +26,12 @@ BEGIN
 	--Check if XML is null or empty
 	IF @IsDisabled_XML IS NULL OR @IsDisabled_XML='' RETURN
 		
-	DECLARE @iDoc INT, @xmlStrDisabled XML, @xmlStrHidden XML, @ProductID INT
+	DECLARE @iDoc INT, 
+			@xmlStrDisabled XML, 
+			@xmlStrHidden XML, 
+			@ProductID INT,
+			@BitmapOrder TINYINT,
+			@SettingType TINYINT
 
 	CREATE TABLE #NewDisableStatTbl(
 				SportType SMALLINT,
@@ -48,7 +56,7 @@ BEGIN
 				SELECT (
 						SELECT psp.bitmapOrder	AS '@b'
 							, tmp.IsDisabled	AS '@s'
-						FROM ProductStatusProfile psp WITH (NOLOCK)
+						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 						WHERE tmp.IsDisabled = 1 OR (tmp.IsDisabled = 0 AND tmp.IsDisabledDownline = 0)
 						FOR XML PATH('r')
@@ -57,7 +65,8 @@ BEGIN
 				FOR XML PATH('root')
 					, TYPE
 				)
-	
+		
+				
 		IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabledDownline = 0 AND IsDisabled = 0)
 		BEGIN
 			SELECT TOP 1 @ProductID = ps.ProductID
@@ -69,7 +78,7 @@ BEGIN
 				SELECT (
 						SELECT psp.bitmapOrder	AS '@b'
 							, 0	AS '@s'
-						FROM ProductStatusProfile psp (NOLOCK)
+						FROM dbo.ProductStatusProfile psp (NOLOCK)
 							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 						WHERE ps.ProductID = @ProductID AND ps.SettingType IN (4,13)
 						FOR XML PATH('r')
@@ -79,66 +88,144 @@ BEGIN
 					, TYPE
 				)
 		END	
-	
-		IF @RoleID=4
+		
+		SELECT TOP 1 @BitmapOrder = psp.bitmapOrder,
+			@SettingType = ps.SettingType
+		FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
+			INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType		
+			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
+		WHERE ps.SettingType IN (4,13)	
+				
+		--BEGIN SettingType=4
+		IF (@SettingType = 4)
 		BEGIN
-		
-			UPDATE T 
-				SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
-			FROM  CustProductStatus T
-				INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
-			WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)
-		
-			IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+			IF @RoleID=4
 			BEGIN
-		
+			
 				UPDATE T 
-					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
-				FROM CustProductStatus T 
-					INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
-				WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+				FROM  dbo.CustProductStatus T
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+				WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)				
+			
+				IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+				BEGIN
+			
+					UPDATE T 
+						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+					FROM dbo.CustProductStatus T 
+						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+					WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)
+				
+				END
 			
 			END
 		
-		END
-	
-		ELSE IF @RoleID=3
-		BEGIN
-			UPDATE T 
-				SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
-			FROM  CustProductStatus T
-				INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
-			WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
-		
-			IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+			ELSE IF @RoleID=3
 			BEGIN
-		
-				UPDATE T WITH (UPDLOCK,ROWLOCK)
-					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
-				FROM CustProductStatus T 
-					INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+				UPDATE T 
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+				FROM  dbo.CustProductStatus T
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
 			
+				IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+				BEGIN
+			
+					UPDATE T WITH (UPDLOCK,ROWLOCK)
+						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+					FROM dbo.CustProductStatus T 
+						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+					WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
+				
+				END
 			END
-		END
-		ELSE IF @RoleID=2
-		BEGIN
-			UPDATE T 
-				SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
-			FROM  CustProductStatus T
-				INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
-			WHERE CI.recommend = @custid AND CI.roleid = 1
-		
-			IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+			ELSE IF @RoleID=2
 			BEGIN
 				UPDATE T 
-					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
-				FROM CustProductStatus T 
-					INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+				FROM  dbo.CustProductStatus T
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.recommend = @custid AND CI.roleid = 1
 			
+				IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+				BEGIN
+					UPDATE T 
+						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+					FROM dbo.CustProductStatus T 
+						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+					WHERE CI.recommend = @custid AND CI.roleid = 1
+				
+				END
+			END
+		END	--End settingType=4
+		ELSE --Begin SettingType =13
+		BEGIN
+			IF @RoleID=4
+			BEGIN			
+				UPDATE T 
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+				FROM  dbo.CustProductStatus T
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+				WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)
+					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+			
+				IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+				BEGIN
+			
+					UPDATE T 
+						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+					FROM dbo.CustProductStatus T 
+						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+					WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)
+						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+				END
+			
+			END
+		
+			ELSE IF @RoleID=3
+			BEGIN
+				UPDATE T 
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+				FROM  dbo.CustProductStatus T
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+				WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
+					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+			
+				IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+				BEGIN
+			
+					UPDATE T WITH (UPDLOCK,ROWLOCK)
+						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+					FROM dbo.CustProductStatus T 
+						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+					WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
+						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+				
+				END
+			END
+			ELSE IF @RoleID=2
+			BEGIN
+				UPDATE T 
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+				FROM  dbo.CustProductStatus T
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+				WHERE CI.recommend = @custid AND CI.roleid = 1
+					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+			
+				IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+				BEGIN
+					UPDATE T 
+						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+					FROM dbo.CustProductStatus T 
+						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+					WHERE CI.recommend = @custid AND CI.roleid = 1
+						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+				
+				END
 			END
 		END
+		--End SettingType=13
 	END
 	ELSE IF @Action = 'GameStatus'
 	BEGIN
@@ -165,8 +252,7 @@ BEGIN
 						)
 				FOR XML PATH('root')
 					, TYPE
-				)
-		DECLARE @BitmapOrder TINYINT
+				)	
 
 		--Get 1 bettype as representation to check Synced
 		SELECT TOP 1 @BitmapOrder = psp.bitmapOrder
@@ -250,9 +336,5 @@ BEGIN
 		END
 	END
 END
-
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_DynamicCustomerInfo_04] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_DynamicCustomerInfo_04] TO [vnteam] AS [dbo]
+
