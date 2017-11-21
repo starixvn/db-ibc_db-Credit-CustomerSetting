@@ -83,7 +83,7 @@ BEGIN
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline,
-			CAST(1 as BIT) as IsSyncedDownline,								 
+											 
 			0 AS isDisabledUpline, 
 			1 AS isSyncedUpline,
 			CAST(CASE WHEN @downlines = 0 THEN 0
@@ -121,14 +121,7 @@ BEGIN
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline,  
-								
-			CASE WHEN @downlines = 0 THEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder))  
-				ELSE ISNULL((	SELECT TOP 1 0  
-								FROM dbo.custInfo ci WITH (NOLOCK)  
-								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
-								WHERE mrecommend = @CustID --AND roleid = 2  
-									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 0  									
-								), 1) END AS IsSyncedDownline,  
+			  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) as IsDisabledUpline,  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) as IsSyncedUpline,  
 			CAST(CASE WHEN @downlines = 0 THEN 0
@@ -165,14 +158,7 @@ BEGIN
 								WHERE recommend = @CustID  
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
-								), 0) END AS IsDisabledDownline, 
-			CASE WHEN @downlines = 0 THEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder))  
-				ELSE ISNULL((	SELECT TOP 1 0  
-								FROM dbo.custInfo ci WITH (NOLOCK)  
-									INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
-								WHERE recommend = @CustID --AND roleid = 1  
-									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 0  
-								), 1) END AS IsSyncedDownline,
+								), 0) END AS IsDisabledDownline, 			
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) AS IsSyncedUpline,  
 			CAST(CASE WHEN @downlines = 0 THEN 0
@@ -199,8 +185,7 @@ BEGIN
 					ELSE (CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0 THEN 0 ELSE 1 END) END AS BIT) AS isHidden,    
 			CAST(CASE WHEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsHidden, PSP.bitmapOrder))=0 THEN 0 ELSE 1 END AS BIT) AS isHiddenUpline,   
 			CASE WHEN stt.CustID IS NULL THEN 1 ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) END AS isDisabled,  
-			0 AS IsDisabledDownline,
-			1 AS IsSyncedDownline,
+			0 AS IsDisabledDownline,			
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) as IsSyncedUpline,  
 			0 As HasDownline  
