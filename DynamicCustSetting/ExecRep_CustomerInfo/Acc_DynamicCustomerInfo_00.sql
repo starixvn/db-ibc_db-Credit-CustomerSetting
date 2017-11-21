@@ -1429,12 +1429,14 @@ BEGIN
 						OR smcs.custid = @MasterID
 				GROUP BY smcs.SportType,smcs.BetType
 			
-				INSERT INTO @BetGameUnlimit
+				INSERT INTO @BetGameUnlimit				
 				SELECT cs.SportType,cs.BetType,
-						CASE WHEN cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0 THEN 1 ELSE 0 END AS IsAllowUnlimit
+						CASE WHEN (cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0) 
+									OR (ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0) THEN 1 ELSE 0 END AS IsAllowUnlimit
 				FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter9 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-				WHERE cs.custid = @SuperID 
+					INNER JOIN dbo.ProductBetSetting ps ON ps.Sporttype = cs.SportType AND ps.Bettype = cs.BetType
+				WHERE cs.custid = @SuperID AND ps.Currency = @_Currency
 
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
 				   ([CustID]
@@ -1485,12 +1487,14 @@ BEGIN
 						OR custid = @AgentID
 				GROUP BY smcs.SportType,smcs.BetType
 			
-				INSERT INTO @BetGameUnlimitSuper
+				INSERT INTO @BetGameUnlimitSuper							
 				SELECT cs.SportType,cs.BetType,
-						CASE WHEN cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0 THEN 1 ELSE 0 END AS IsAllowUnlimit
+						CASE WHEN (cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0) 
+									OR (ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0) THEN 1 ELSE 0 END AS IsAllowUnlimit
 				FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter9 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-				WHERE cs.custid = @SuperID 
+					INNER JOIN dbo.ProductBetSetting ps ON ps.Sporttype = cs.SportType AND ps.Bettype = cs.BetType
+				WHERE cs.custid = @SuperID AND ps.Currency = @_Currency
 
 				INSERT INTO [dbo].[CustBetSetting3rd_Member]
 				   ([CustID]

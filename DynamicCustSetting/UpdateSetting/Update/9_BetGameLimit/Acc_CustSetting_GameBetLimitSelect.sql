@@ -12,6 +12,9 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 
+	Revision: 
+		- 20171109@Elodie: Cannot update Bet Setting of Super with value <> 0 when global setting = 0 [RedmineID:#86041]
+
 	Param's Explanation:
 		
 */
