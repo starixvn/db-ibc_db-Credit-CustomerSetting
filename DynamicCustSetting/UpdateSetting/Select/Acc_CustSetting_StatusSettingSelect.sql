@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSettingSelect_UAT1]   
+ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSettingSelect]   
    @CustID  INT  
  , @ProductID TINYINT = NULL  
  , @RoleID INT = NULL  
