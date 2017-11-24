@@ -1,7 +1,5 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
 GO
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_ProductProfileSelect]   
@@ -12,7 +10,7 @@ AS
 /*  
  Created: 20150702@Dominic  
  Task : Get Product Profile  
- DB:  DBCUST/custdb  
+ DB:  DBCUST/CustDB  
  Original:  
   
  Param's Explanation:  
@@ -45,11 +43,4 @@ BEGIN
 	
 	DROP TABLE #SportBettypeFilter
 END  
-  
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductProfileSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductProfileSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductProfileSelect] TO [bodbExtAccNet]

@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentSettingSelect]   
 	@CustID			INT  
 	, @ProductID	TINYINT = NULL 
@@ -201,11 +205,4 @@ BEGIN
 	
 	DROP TABLE #SportBettypeFilter
 END  
-  
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AgentSettingSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AgentSettingSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AgentSettingSelect] TO [bodbExtAccNet]

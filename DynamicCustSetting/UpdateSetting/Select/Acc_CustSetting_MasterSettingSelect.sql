@@ -1,4 +1,7 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterSettingSelect]   
 	@CustID			INT  
 	, @ProductID	TINYINT  
@@ -169,11 +172,4 @@ BEGIN
 	END    
 	DROP TABLE #SportBettypeFilter
 END  
-  
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MasterSettingSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MasterSettingSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MasterSettingSelect] TO [bodbExtAccNet]

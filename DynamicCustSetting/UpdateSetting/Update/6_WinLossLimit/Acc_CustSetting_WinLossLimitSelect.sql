@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
@@ -193,10 +197,4 @@ BEGIN
 	
 	DROP TABLE #SportBettypeFilter
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitSelect] TO [bodbExtAccNet]
