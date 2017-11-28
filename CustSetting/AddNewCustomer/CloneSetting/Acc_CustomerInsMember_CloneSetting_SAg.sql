@@ -1,7 +1,10 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [CustDB]
 GO
-
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
+GO
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 	@Custid INT OUTPUT
 	,@UserName VARCHAR(30)
@@ -69,6 +72,7 @@ AS
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
 	- 20170920@Helen: TO Control Phase 3 - [Redmine: 75557]
+	- 20171113@Helen: Support to add default TO setting for new direct customers - [Redmine:86052]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -125,11 +129,13 @@ BEGIN
 
 
 	-- Check role and master of existing agent
-	DECLARE @existingUsername VARCHAR(30),@roleid tinyint, @existingSrecommend INT, @Enabled BIT
+	DECLARE @existingUsername VARCHAR(30),@roleid tinyint, @existingSrecommend INT, @Enabled BIT, @site NVARCHAR(50), @currency INT
 	
-	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @existingSrecommend = ISNULL(srecommend,0), @Enabled = ISNULL(Enabled, 0)
+	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @existingSrecommend = ISNULL(srecommend,0), @Enabled = ISNULL(Enabled, 0), @currency = currency
 	FROM dbo.custInfo WITH(NOLOCK) 
 	WHERE custid = @ExistingCustid
+	
+	SET @site = (SELECT Site FROM dbo.Customer WITH (NOLOCK) WHERE custid = @ExistingCustid)
 	
 	IF ( NOT (@roleid = 3 AND @existingSrecommend = @srecommend))
 	BEGIN		
@@ -648,6 +654,41 @@ BEGIN
 		BEGIN
 			SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" />'
 			EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 601,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
+			
+			INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+            SELECT @custid
+                    -- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
+                    , CASE 
+                            -- currency RM in default Setting
+                            WHEN TO_tmp.TOCurrency = 2 THEN CONVERT(MONEY,TO_tmp.MaxTurnOver / E1.actualrate) 
+                            -- NOT currency RM in default Setting
+                            ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
+                    END AS MaxTurnOver
+                    , TO_tmp.Sporttype, 0
+            
+            FROM (        
+					-- Soccer 
+					SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+					FROM dbo.f_TOControl_GlobalSettingSel () f1                
+					WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
+					ORDER BY f1.site DESC, f1.ExchangeID DESC                
+	                
+					UNION ALL
+					-- Others sport
+					SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+					FROM dbo.f_TOControl_GlobalSettingSel () f2                
+					WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
+					ORDER BY f2.site DESC, f2.ExchangeID DESC
+					) AS TO_tmp
+                            
+                INNER JOIN dbo.Exchange e WITH (NOLOCK) ON e.ExchangeID = TO_tmp.TOCurrency
+                INNER JOIN dbo.Exchange e1 WITH (NOLOCK) ON e1.ExchangeID = @currency
+		
+			DELETE dbo.TOControl_GlobalSetting
+			WHERE CustID = @srecommend
+			
+			DELETE dbo.TOControl_Setting
+			WHERE CustID = @srecommend
 		END	
 				
 	END TRY

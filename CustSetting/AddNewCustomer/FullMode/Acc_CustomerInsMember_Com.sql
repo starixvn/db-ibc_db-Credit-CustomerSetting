@@ -1,7 +1,10 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
-
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
+GO
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
