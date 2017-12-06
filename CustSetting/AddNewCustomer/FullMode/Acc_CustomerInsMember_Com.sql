@@ -432,7 +432,7 @@ Revisions:
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
-
+	- 20171205@Johnson: add more log for special, doublecomm, autosuspend status [Redmine: #87121]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -1402,6 +1402,14 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	)iq
 
 	SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
+	--20171205@Johnson: add more log for status
+	'Special=" " ' +
+	'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	
 	'disablehorseracing="'+ COALESCE(CAST(@Disable151_31 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disableOT="'+ COALESCE(CAST(@Disable151_41 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disable151_51="'+ COALESCE(CAST(@Disable151_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -1436,6 +1444,14 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	END TRY
 	BEGIN CATCH
 		SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
+		--20171205@Johnson: add more log for status
+		'Special=" " ' +
+		'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		
 		'disablehorseracing="'+ COALESCE(CAST(@Disable151_31 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disableOT="'+ COALESCE(CAST(@Disable151_41 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disable151_51="'+ COALESCE(CAST(@Disable151_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -2071,11 +2087,5 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 			@duration = @duration
 	END CATCH
 END
+GO
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_Com] TO [bodbExtAccNet]
-GO

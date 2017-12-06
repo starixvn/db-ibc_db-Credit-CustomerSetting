@@ -311,6 +311,7 @@ Revisions:
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
 	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
+	- 20171206@Johnson: add more log for special, doublecomm, autosuspend status [Redmine: #87121]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -5739,6 +5740,14 @@ BEGIN
     'Danger2="'+ COALESCE(CAST(@AgentDanger2 AS VARCHAR(5)), SPACE(1)) + '" ' +
     'Danger3="'+ COALESCE(CAST(@AgentDanger3 AS VARCHAR(5)), SPACE(1)) + '" ' +
     'Abnormal="'+ COALESCE(CAST(@AgentAbnormal AS VARCHAR(5)), SPACE(1)) + '" ' +
+	--20171206@Johnson: add more log for status
+	'Special=" " ' +
+	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'DoubleCommLosing="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(1)),SPACE(1)) + '" ' +
+	
     'DisableHorseRacing="'+ COALESCE(CAST(@Disable151_31 AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableOT ="'+ COALESCE(CAST(@Disable151_41 AS VARCHAR(1)), SPACE(1)) + '" ' +
     'Disable151_51 ="'+ COALESCE(CAST(@Disable151_51 AS VARCHAR(1)), SPACE(1)) + '" ' +  
@@ -5776,6 +5785,14 @@ BEGIN
 	    'Danger2="'+ COALESCE(CAST(@AgentDanger2 AS VARCHAR(5)), SPACE(1)) + '" ' +
 	    'Danger3="'+ COALESCE(CAST(@AgentDanger3 AS VARCHAR(5)), SPACE(1)) + '" ' +
 	    'Abnormal="'+ COALESCE(CAST(@AgentAbnormal AS VARCHAR(5)), SPACE(1)) + '" ' +
+		--20171206@Johnson: add more log for status
+		'Special=" " ' +
+		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'DoubleCommLosing="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(1)),SPACE(1)) + '" ' +
+		
 	    'DisableHorseRacing="'+ COALESCE(CAST(@Disable151_31 AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableOT ="'+ COALESCE(CAST(@Disable151_41 AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'Disable151_51 ="'+ COALESCE(CAST(@Disable151_51 AS VARCHAR(1)), SPACE(1)) + '" ' +  
