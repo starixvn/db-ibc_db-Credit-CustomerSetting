@@ -5746,7 +5746,7 @@ BEGIN
 	'DoubleCommLosing="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
 	
     'DisableHorseRacing="'+ COALESCE(CAST(@Disable151_31 AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableOT ="'+ COALESCE(CAST(@Disable151_41 AS VARCHAR(1)), SPACE(1)) + '" ' +
@@ -5791,7 +5791,7 @@ BEGIN
 		'DoubleCommLosing="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
 		
 	    'DisableHorseRacing="'+ COALESCE(CAST(@Disable151_31 AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableOT ="'+ COALESCE(CAST(@Disable151_41 AS VARCHAR(1)), SPACE(1)) + '" ' +
