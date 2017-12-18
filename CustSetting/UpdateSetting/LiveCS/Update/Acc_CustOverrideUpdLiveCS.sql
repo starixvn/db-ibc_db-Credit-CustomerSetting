@@ -1,16 +1,6 @@
 USE [CustDB]
 GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustOverrideUpdLiveCS]    Script Date: 06/10/2015 17:11:10 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdLiveCS    Script Date: 8/28/2014 2:05:17 AM ******/
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdLiveCS    Script Date: 8/21/2014 3:12:19 PM ******/
 
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdLiveCS    Script Date: 8/21/2014 2:58:08 PM ******/
-
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdLiveCS    Script Date: 12/5/2013 5:35:45 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustOverrideUpdLiveCS]
     @custid        INT,
     @UplineID    INT = 0,
@@ -162,11 +152,3 @@ SET NOCOUNT ON
             @TrackingValue2 = @TrackingValueDB,
             @duration = @duration
     END CATCH
-
-
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdLiveCS] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdLiveCS] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpdLiveCS] TO [vnteam] AS [dbo]
