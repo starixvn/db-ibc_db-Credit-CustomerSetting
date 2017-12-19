@@ -312,6 +312,7 @@ Revisions:
 	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
 	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	- 20171206@Johnson: add more log for special, doublecomm, autosuspend status [Redmine: #87121]
+	- 20171208@Vicky: set comm of sportbook = 0 if agent of member exists in table CustNoComm [RedmineID: #87758]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -441,27 +442,6 @@ BEGIN
 		END
 	END 
 	-----/20160120@Lukas -----------------
-	--20141113@Johnson: hardcode agent list not give commission for downlines
-	DECLARE @tblAgent TABLE(custid INT)
-	
-	INSERT INTO @tblAgent(custid)
-		 SELECT	52466	--	8RM
-	UNION SELECT	134456	--	XYZRM
-	UNION SELECT	11656507	--	J00101311101
-	UNION SELECT	11656514	--	J00101311102
-	UNION SELECT	11656525	--	J00101311150
-	UNION SELECT	11642591	--	XXCH60011100
-	UNION SELECT	3645795	--	999RMA01
-	UNION SELECT	3645796	--	999RMA02
-	UNION SELECT	3645798	--	999RMA50
-	UNION SELECT	4430389	--	C527A
-	UNION SELECT	4430395	--	C527B
-	UNION SELECT	6201735	--	6HK2501
-	UNION SELECT	15819264	--	HK000002
-	
-	--UUS accounnts for testing
-	UNION SELECT	14180041	--	supertestUAT0101
-	--End agent list------------------------------------------
 	
     declare @startRun datetime
     declare @endRun datetime
@@ -3633,8 +3613,8 @@ BEGIN
 		RETURN
 	END
     	
-    --Hardcode commission for member under specficis agents
-    IF @recommend IN (SELECT custid FROM @tblAgent)	 
+    --set comm of sportbook = 0 if agent of member exist in table CustNoComm
+    IF EXISTS(SELECT 1 FROM CustNoComm WHERE custID = @recommend)
     BEGIN
 	    SELECT @playerdiscount = 0,	@discount = 0, @adiscount = 0, @sdiscount = 0,
 		    @playerdiscount1x2 = 0, @discount1x2 = 0, @adiscount1x2 = 0, @sdiscount1x2 = 0,
@@ -6017,3 +5997,4 @@ BEGIN
     END CATCH
 END
 GO
+
