@@ -33,6 +33,7 @@ AS
 		- 20170223@Elodie: Fix bug "newly created direct agent does not follow status of dummy master" - [Redmine #71925]
 		- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
+		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 	*/
 BEGIN
 	SELECT @ErrCode = 0
@@ -1345,7 +1346,10 @@ BEGIN
 	
 		SELECT t.* INTO #SportBettypeFilter9
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9) t
-	
+		INSERT INTO #SportBettypeFilter9
+		SELECT * 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16)
+
 		BEGIN TRY
 			IF @RoleID = 4
 			BEGIN
@@ -1425,12 +1429,14 @@ BEGIN
 						OR smcs.custid = @MasterID
 				GROUP BY smcs.SportType,smcs.BetType
 			
-				INSERT INTO @BetGameUnlimit
+				INSERT INTO @BetGameUnlimit				
 				SELECT cs.SportType,cs.BetType,
-						CASE WHEN cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0 THEN 1 ELSE 0 END AS IsAllowUnlimit
+						CASE WHEN (cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0) 
+									OR (ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0) THEN 1 ELSE 0 END AS IsAllowUnlimit
 				FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter9 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-				WHERE cs.custid = @SuperID 
+					INNER JOIN dbo.ProductBetSetting ps ON ps.Sporttype = cs.SportType AND ps.Bettype = cs.BetType
+				WHERE cs.custid = @SuperID AND ps.Currency = @_Currency
 
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
 				   ([CustID]
@@ -1481,12 +1487,14 @@ BEGIN
 						OR custid = @AgentID
 				GROUP BY smcs.SportType,smcs.BetType
 			
-				INSERT INTO @BetGameUnlimitSuper
+				INSERT INTO @BetGameUnlimitSuper							
 				SELECT cs.SportType,cs.BetType,
-						CASE WHEN cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0 THEN 1 ELSE 0 END AS IsAllowUnlimit
+						CASE WHEN (cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0) 
+									OR (ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0) THEN 1 ELSE 0 END AS IsAllowUnlimit
 				FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter9 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-				WHERE cs.custid = @SuperID 
+					INNER JOIN dbo.ProductBetSetting ps ON ps.Sporttype = cs.SportType AND ps.Bettype = cs.BetType
+				WHERE cs.custid = @SuperID AND ps.Currency = @_Currency
 
 				INSERT INTO [dbo].[CustBetSetting3rd_Member]
 				   ([CustID]

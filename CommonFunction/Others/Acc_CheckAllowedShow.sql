@@ -19,6 +19,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedLottery			BIT = 0		OUTPUT
 				,	@AllowedLucky3			BIT = 0		OUTPUT
+				,	@AllowedBullFighting	BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -45,6 +46,7 @@ Revisions:
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
 	- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
+	- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
 
 */
 
@@ -61,62 +63,39 @@ Revisions:
 		,	@IsHideLucky3			INT
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
+		,	@IsHideBullFighting		INT
 
-	DECLARE	@Cricket				INT = 20
-		,	@AllBet					INT = 21
-		,	@VoidBridge				INT = 22
-		,	@Lucky3					INT = 26
-		,	@FishingWorld			INT = 24
-		,	@Lottery				INT = 28
-		,	@NG2					INT = 23
-		,	@VS						INT = 5
-	
-	DECLARE @bitOrderVB				INT = 5
-		,	@bitOrderLucky3			INT = 9
-		,	@bitOrderFW				INT = 8
-		,	@bitOrderNG2			INT = 4
-		,	@bitOrderLottery		INT = 11
-		,	@bitOrderCF				INT = 2
-		,	@bitOrderCriket			INT = 3
-		,   @bitOrderVS				INT = 10
+	DECLARE @bitOrderVB				INT 
+		,	@bitOrderLucky3			INT 
+		,	@bitOrderFW				INT 
+		,	@bitOrderNG2			INT 
+		,	@bitOrderLottery		INT 
+		,	@bitOrderCF				INT 
+		,	@bitOrderCriket			INT 
+		,   @bitOrderVS				INT 
+		,   @bitOrderBF				INT 
+
+    SET @bitOrderCF = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 206 AND Bettype = 1003)
+    SET @bitOrderCriket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
+	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
+	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
+	SET @bitOrderNG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
+	SET @bitOrderLucky3 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 160 AND Bettype = 1600)
+	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
+	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
+	SET @bitOrderBF = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 207 AND Bettype = 1004)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend
 		, @AllowedColossusbets = CASE WHEN HideColossusBet = 0 THEN 1 ELSE 0 END		
 	from custinfo with (nolock) where CustID=@CustID
 	
-	--SELECT cs.CustID, cs.bitmapHasSynced, cs.bitmapIsHidden, cs.bitmapIsDisabled
-	--INTO #CustProductStatus
-	--FROM DBCUST.CustDB.dbo.CustProductStatus cs WITH (NOLOCK)
-	--WHERE 1 = CASE	WHEN @RoleID = 4 AND cs.CustID = @CustID THEN 1
-	--				WHEN @RoleID = 3 AND cs.CustID IN (@CustID,@srecommend) THEN 1
-	--				WHEN @RoleID = 2 AND cs.CustID IN (@CustID,@mrecommend) THEN 1
-	--				WHEN @RoleID = 1 AND cs.CustID IN (@CustID,@recommend) THEN 1
-	--				ELSE 0 END
-
-	--SET @IsHideCockfighting = (SELECT SettingStatus FROM ProductSettingDetail WITH (NOLOCK) WHERE ProductID = 19 AND SettingType = 4)
+	--For Cockfighting
 	EXEC Acc_CheckShowProduct @ProductID = 19, @IsHide = @IsHideCockfighting OUTPUT
-	
 	SET @AllowedCockfighting = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderCF) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideCockfighting = 0 THEN 1 ELSE 0 END
-	
-	
-	--IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@Cricket,4))
-	--BEGIN
-	--	SET @IsHideCricket = 0
-	--END
-	--IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@VoidBridge,4))
-	--BEGIN
-	--	SET @IsHideVoidBridge = 0
-	--END	
-	--IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@FishingWorld,13))
-	--BEGIN
-	--	SET @IsHideFishingWorld = 0
-	--END
-	EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHideCricket OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT
+		
+	--For Lucky3
 	EXEC Acc_CheckShowProduct @ProductID = 26, @IsHide = @IsHideLucky3 OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHideFishingWorld OUTPUT
-
 	SELECT	@AllowedLucky3 =	CASE	WHEN @RoleID = 4 AND @IsHideLucky3 = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderLucky3) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderLucky3) = 1
@@ -127,6 +106,8 @@ Revisions:
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
 	
+	--For FishingWorld
+	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHideFishingWorld OUTPUT
 	SELECT	@AllowedFishingWorld =	CASE	WHEN @RoleID = 4 AND @IsHideFishingWorld = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderFW) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderFW) = 1
@@ -137,6 +118,7 @@ Revisions:
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
 
+	--For Lottery
 	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHiddenLottery OUTPUT
 	SELECT	@AllowedLottery =	CASE	WHEN @RoleID = 4 AND @IsHiddenLottery = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderLottery) = 0
@@ -148,9 +130,13 @@ Revisions:
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
 
+	--For VoidBridge
+	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT
 	SET @AllowedVoidBridge = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderVB) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideVoidBridge = 0 THEN 1 ELSE 0 END
 	
+	--For Cricket
+	EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHideCricket OUTPUT
 	IF @RoleID IN (2,3,4)
 	BEGIN
 		IF @IsHideCricket = 0 AND EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @CustID AND [Site] = 'IMBC')
@@ -204,23 +190,13 @@ Revisions:
 		if @SyncLiveCS != 1
 			set @AllowedLiveCS = 0
 		else
-			set @AllowedLiveCS = 1
-		
-		-- For VS
-		--SET @AllowedVS = CASE WHEN ISNULL(@HideVirtualSports,0) = 0 THEN 1 ELSE 0 END			
+			set @AllowedLiveCS = 1				
 	End
 
 	-- For Horse Racing	
 	Exec Acc_CheckHRAllowedCurrency @CurrencyID=@mCurrencyID, @Allowed= @AllowedHR OUTPUT
 
-
 	-- For AllBet
-	--IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@AllBet, 4))
-	--	--SELECT	@IsHideAllBet = sbhsc.IsHidden
-	--	--FROM	dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(@CustID, @AllBet) AS sbhsc
-	--	SELECT	@IsHideAllBet = 0
-	--ELSE
-	--	SELECT	@IsHideAllBet = 1
 	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHideAllBet OUTPUT
 	SELECT	@AllowedAllBet =	CASE	WHEN @RoleID = 4 AND @IsHideAllBet = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) = 0
@@ -236,13 +212,9 @@ Revisions:
 			AND	psd.BetType = psp.Bettype
 			AND	psd.SettingType = 13
 	WHERE	cps.CustID = @CustID
-		AND	psd.ProductID = @AllBet
+		AND	psd.ProductID = 21
 		
 	-- For NG2
-	--IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@NG2,11))
-	--	SELECT @IsHideNG2 = 0
-	--ELSE
-	--	SELECT @IsHideNG2 = 1
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHideNG2 OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedNG2 =	CASE	WHEN @IsHideNG2 = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderNG2)) = 0 THEN 1
@@ -271,5 +243,16 @@ Revisions:
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
 
+	-- For BullFighting
+	EXEC Acc_CheckShowProduct @ProductID = 30, @IsHide = @IsHideBullFighting OUTPUT
+	SELECT	@AllowedBullFighting =	CASE	WHEN @RoleID = 4 AND @IsHideBullFighting = 0 THEN 1
+										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderBF) = 0
+											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderBF) = 1
+											AND @IsHideBullFighting = 0 
+											THEN 1
+										ELSE 0
+								END
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	WHERE	cps.CustID = @CustID
 END
 GO

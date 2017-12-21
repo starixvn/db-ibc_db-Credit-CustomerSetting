@@ -62,6 +62,7 @@ BEGIN
 		- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
 		- 20170605@Winnie: Apply Color for closed account [Redmine's Ids: #74494]
 		- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
+		- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
 
 	Pattern Explanation:
 	Search keyword: '%keyword%'
@@ -131,7 +132,8 @@ BEGIN
 		,	@bitmapOrder_Lucky3			INT
 		,	@bitmapOrder_FishingWorld	INT
 		,	@bitmapOrder_VS				INT
-    
+		,	@bitmapOrder_BullFighting	INT
+
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
     SET @bitmapOrder_CockFighting = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 206 AND Bettype = 1003)
     SET @bitmapOrder_Cricket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
@@ -141,6 +143,7 @@ BEGIN
 	SET @bitmapOrder_Lucky3 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 160 AND Bettype = 1600)
 	SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
+	SET @bitmapOrder_BullFighting = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 207 AND Bettype = 1004)
 
 	SET	@bitmapOrder_AllBet =	(
 									SELECT	psp.bitmapOrder
@@ -165,7 +168,8 @@ BEGIN
 		,	@IsHidden_Lucky3			INT = 1    
 		,	@IsHidden_FishingWorld		INT = 1
 		,	@IsHidden_VS				INT = 1
-    
+		,	@IsHidden_BullFighting		INT = 1
+
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 19, @IsHide = @IsHidden_CockFighting OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHidden_Cricket OUTPUT
@@ -175,7 +179,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHidden_NG2 OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 26, @IsHide = @IsHidden_Lucky3 OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHidden_FishingWorld OUTPUT
-
+	EXEC Acc_CheckShowProduct @ProductID = 30, @IsHide = @IsHidden_BullFighting OUTPUT
 
 	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
 
@@ -333,6 +337,17 @@ BEGIN
 							ELSE 1 
 					END AS BIT) AS HideVirtualSports,
 			CAST(CASE WHEN @IsHidden_VS = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VS), 1)=0 THEN 0 ELSE 1 END AS BIT) AS HideVirtualSportsUpline,
+			-- For BullFighting
+			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BullFighting)) AS DisableBullFighting,		
+			CAST(	CASE	WHEN	@IsHidden_BullFighting = 0 						
+								AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_BullFighting), 1) = 0 
+								THEN 0
+							ELSE 1 
+					END AS BIT) AS HideBullFighting,
+			CAST(CASE	WHEN	@IsHidden_BullFighting = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_BullFighting), 1)=0
+					THEN 0 ELSE 1
+					END AS BIT) AS HideBullFightingUpline,
+
 			-- For Cricket
 			CASE WHEN m.[site] = 'IMBC' THEN 1 ELSE 0 END AS IsIMBC,
 			ISNULL(cda.Discount,0) AS discountCricket,
