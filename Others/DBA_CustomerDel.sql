@@ -2,7 +2,7 @@ USE [CustDB]
 GO
  
 ALTER PROCEDURE [dbo].[DBA_CustomerDel]
-	@username VARCHAR(40),
+	@username VARCHAR(30),
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg VARCHAR(200) = '' OUTPUT
 AS
@@ -23,7 +23,7 @@ AS
 		- 20141022@Lukas: delete data in table custgameType
 		- 20150622@Daniel: Separated custDB to server DBCUST
 		- 20170419@Helen: Hotfix Missing Setting 
-		- 20070505@Elodie: Delete customer from setting tables of DCS
+		- 20171225@Elodie: Delete customer from setting tables of DCS
 	
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
@@ -45,7 +45,6 @@ IF @@ROWCOUNT = 0
 IF @roleid = 0
 	SELECT @ErrMsg = N'USERNAME not existed!'
 	
-
 ---Check Horse Racing, Financials, Casino
 /*
 if @syncCasino = 1
@@ -72,13 +71,33 @@ BEGIN
 	DELETE custsub WHERE custid IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid in(4,3,2))
 	
 	-- delete licensee superid
-	DELETE Dep_CustSuper WHERE custid = @custid	
-		
+	DELETE Dep_CustSuper WHERE custid = @custid		
+
 	--insert downline custids into @tmp_custID	
 	DELETE @tmp_custID
 	INSERT INTO @tmp_custID
 	SELECT custID FROM customer WITH (NOLOCK) WHERE srecommend = @custid
 		
+	--Delete cust login info
+	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE CustLoginInfo_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustLoginInfoSub WHERE custid IN (SELECT custID FROM @tmp_custID)	
+
+	DELETE dbo.CustDirectAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustAllowList WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustDirect WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.BetTradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.TradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Cust12Bet WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.custAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustGroupHeadline WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Dep_CustBAActive WHERE custid IN (SELECT custID FROM @tmp_custID)	
+
 	--Delete setting credit
 	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -96,7 +115,6 @@ BEGIN
 	DELETE dbo.CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -115,9 +133,11 @@ BEGIN
 
 	DELETE CustPTGroupSetting3rd_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 
-	--Delete setting deposit
+	--Delete setting deposit	
 	DELETE Dep_CustSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
 	DELETE dbo.Dep_CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -130,7 +150,13 @@ BEGIN
 	DELETE dbo.Dep_CustSettingMode WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustStakeLevel_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustStakeLevel_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustDiscountSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Dep_CustBetSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustBetSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 
+	
+	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 	DELETE Dep_LicenseeProductSetting WHERE custid = @custid
 
@@ -163,6 +189,26 @@ BEGIN
 	INSERT INTO @tmp_custID
 	SELECT custID FROM customer WITH (NOLOCK) WHERE mrecommend = @custid
 	
+	--Delete cust login info
+	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE CustLoginInfo_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustLoginInfoSub WHERE custid IN (SELECT custID FROM @tmp_custID)	
+
+	DELETE dbo.CustDirectAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustAllowList WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustDirect WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.BetTradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.TradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Cust12Bet WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.custAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustGroupHeadline WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Dep_CustBAActive WHERE custid IN (SELECT custID FROM @tmp_custID)
+
 	--Delete setting credit
 	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -179,7 +225,6 @@ BEGIN
 	DELETE dbo.CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -201,6 +246,8 @@ BEGIN
 	--Delete setting deposit
 	DELETE Dep_CustSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
 	DELETE dbo.Dep_CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -213,7 +260,12 @@ BEGIN
 	DELETE dbo.Dep_CustSettingMode WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustStakeLevel_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustStakeLevel_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
-
+	DELETE dbo.Dep_CustDiscountSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Dep_CustBetSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustBetSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
+	
+	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE mrecommend = @custid and roleid = 2)		
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE mrecommend = @custid and roleid = 2)	
 
 	--Delete balance table
@@ -244,6 +296,26 @@ BEGIN
 	INSERT INTO @tmp_custID
 	SELECT custID FROM customer WITH (NOLOCK) WHERE recommend = @custid
 	
+	--Delete cust login info
+	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE CustLoginInfo_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustLoginInfoSub WHERE custid IN (SELECT custID FROM @tmp_custID)	
+
+	DELETE dbo.CustDirectAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustAllowList WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustDirect WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.BetTradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.TradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Cust12Bet WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.custAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustGroupHeadline WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Dep_CustBAActive WHERE custid IN (SELECT custID FROM @tmp_custID)
+
 	--Delete setting credit
 	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -261,7 +333,6 @@ BEGIN
 	DELETE dbo.CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -283,6 +354,8 @@ BEGIN
 	--Delete setting deposit
 	DELETE Dep_CustSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
 	DELETE dbo.Dep_CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -295,7 +368,13 @@ BEGIN
 	DELETE dbo.Dep_CustSettingMode WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustStakeLevel_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustStakeLevel_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustDiscountSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Dep_CustBetSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustBetSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 
+	
+	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID = @custid	
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID = @custid
 
 	--Delete balance table
@@ -332,6 +411,20 @@ BEGIN
 		SELECT @ErrMsg = N'Got bettrans already. Cannot delete.', @ErrCode = 100
 		RETURN
 	END
+	--Delete cust login info
+	DELETE CustLoginInfo_Member WHERE custid = @custid	
+
+	DELETE dbo.CustDirectAccount WHERE custid = @custid		
+	DELETE dbo.Acc_CustAllowList WHERE custid = @custid	
+	DELETE dbo.Acc_CustDirect WHERE custid = @custid	
+	DELETE dbo.Cust12Bet WHERE custid = @custid	
+	DELETE dbo.custAccount WHERE custid = @custid	
+	DELETE dbo.CustGroupHeadline WHERE custid = @custid	
+	DELETE dbo.CustNoComm WHERE custid = @custid	
+	DELETE dbo.CustRequestGame WHERE custid = @custid	
+	DELETE dbo.CustVirtualSetting WHERE custid = @custid
+	DELETE dbo.Dep_CustBAActive WHERE custid = @custid
+
 	--Delete setting credit
 	DELETE custsetting WHERE custid = @custid
 	DELETE CustSetting3rd WHERE custid = @custid
@@ -344,7 +437,6 @@ BEGIN
 	
 	DELETE dbo.CustCommRate WHERE custid = @custid
 	DELETE CustWinLimit WHERE custid = @custid
-	DELETE CustLoginInfo WHERE custid = @custid
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid = @custid
@@ -359,6 +451,8 @@ BEGIN
 	--Delete setting deposit
 	DELETE Dep_CustSetting WHERE custid = @custid
 	DELETE Dep_CustSetting3rd WHERE custid = @custid
+	DELETE Dep_CustProductSetting WHERE custid = @custid
+	DELETE Dep_CustSetting_AGCasino WHERE custid = @custid
 
 	DELETE dbo.Dep_CustCommRate WHERE custid = @custid
 	DELETE dbo.Dep_CustSettingGame WHERE custid = @custid
@@ -368,7 +462,9 @@ BEGIN
 	DELETE dbo.Dep_CustPTSetting_Member WHERE custid = @custid
 	DELETE dbo.Dep_CustSettingMode WHERE custid = @custid
 	DELETE dbo.Dep_CustStakeLevel_Member WHERE custid = @custid
-
+	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid = @custid
+	DELETE dbo.Dep_CustBetSetting_Member WHERE custid = @custid
+		
 	--Delete balance table
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
