@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_PTMatrix]
    @ProductID TINYINT = 0,
    @SportType SMALLINT = 0,
@@ -14,6 +15,7 @@ AS
  Revision:
     - 20151021@Billy: Change parameter from (@ProductID, @UserName) to (@SportType, @BetType, @isLive, @UserName)
 	- 20160912@Elodie: Support view PT by product - [Redmine: #60809]
+	- 20171214@Vicky: NAP - System show duplicate data when viewing PT of Cricket - [Redmine: #87939]
 
  Param's Explanation:  
 
@@ -50,11 +52,13 @@ BEGIN
 		[MaxPT] [tinyint]
 	)	
 	
-	SELECT ProductID, SportType, BetType
+	SELECT ProductID, SportType, BetType, IsLive
 	INTO #SportList
 	FROM dbo.ProductSettingDetail
 	WHERE SettingType = 1 
 		AND ProductID = CASE WHEN @ProductID = 0 THEN ProductID ELSE @ProductID END
+		AND IsLive <= @isLive
+		
 
 	INSERT @PTMatrix
 	SELECT
@@ -72,11 +76,11 @@ BEGIN
 		,spt.[MinPT]
 		,spt.[MaxPT]
 	FROM [dbo].[CustPTSetting3rd_Agent] spt WITH(NOLOCK)
-		INNER JOIN #SportList s ON s.SportType = spt.SportType AND s.BetType = spt.BetType
+		INNER JOIN #SportList s ON s.SportType = spt.SportType AND s.BetType = spt.BetType AND s.IsLive = spt.IsLive
 	WHERE CustID = @SRecommend
 		AND spt.SportType = CASE WHEN @SportType = 0 THEN spt.SportType ELSE @SportType END
 		AND spt.BetType = CASE WHEN @BetType = 0 THEN spt.BetType ELSE @BetType END
-		AND IsLive <= @isLive
+		--AND spt.IsLive <= @isLive
 	
 	IF @RoleID IN (3, 2, 1)
 	BEGIN
@@ -95,11 +99,11 @@ BEGIN
 			,mpt.[MinPT]
 			,mpt.[MaxPT]
 		FROM [dbo].[CustPTSetting3rd_Agent] mpt WITH(NOLOCK)
-			INNER JOIN #SportList s ON s.SportType = mpt.SportType AND s.BetType = mpt.BetType
+			INNER JOIN #SportList s ON s.SportType = mpt.SportType AND s.BetType = mpt.BetType AND s.IsLive = mpt.IsLive
 		WHERE CustID = @MRecommend
 			AND mpt.SportType = CASE WHEN @SportType = 0 THEN mpt.SportType ELSE @SportType END
 			AND mpt.BetType = CASE WHEN @BetType = 0 THEN mpt.BetType ELSE @BetType END
-			AND IsLive <= @isLive
+			--AND mpt.IsLive <= @isLive
 		
 		IF @RoleID IN (2, 1)
 		BEGIN
@@ -118,11 +122,11 @@ BEGIN
 				,apt.[MinPT]
 				,apt.[MaxPT]
 			FROM [dbo].[CustPTSetting3rd_Agent] apt WITH(NOLOCK)
-				INNER JOIN #SportList s ON s.SportType = apt.SportType AND s.BetType = apt.BetType
+				INNER JOIN #SportList s ON s.SportType = apt.SportType AND s.BetType = apt.BetType AND s.IsLive = apt.IsLive
 			WHERE CustID = @Recommend
 				AND apt.SportType = CASE WHEN @SportType = 0 THEN apt.SportType ELSE @SportType END
 				AND apt.BetType = CASE WHEN @BetType = 0 THEN apt.BetType ELSE @BetType END
-				AND IsLive <= @isLive
+				--AND apt.IsLive <= @isLive
 			
 			IF @RoleID = 1
 			BEGIN
@@ -145,11 +149,11 @@ BEGIN
 						, NULL
 						, NULL
 					FROM [dbo].CustPTSetting3rd_Member mempt WITH (NOLOCK)
-						INNER JOIN #SportList s ON s.SportType = mempt.SportType AND s.BetType = mempt.BetType
+						INNER JOIN #SportList s ON s.SportType = mempt.SportType AND s.BetType = mempt.BetType AND s.IsLive = mempt.IsLive
 					WHERE CustID = @CustID
 						AND mempt.SportType = CASE WHEN @SportType = 0 THEN mempt.SportType ELSE @SportType END
 						AND mempt.BetType = CASE WHEN @BetType = 0 THEN mempt.BetType ELSE @BetType END	
-						AND IsLive <= @isLive
+						--AND mempt.IsLive <= @isLive
 				END
 				ELSE
 				BEGIN
@@ -168,11 +172,11 @@ BEGIN
 						, NULL
 						, NULL
 					FROM [dbo].CustPTGroupSetting3rd_Member mempt WITH (NOLOCK)
-						INNER JOIN #SportList s ON s.SportType = mempt.SportType AND s.BetType = mempt.BetType
+						INNER JOIN #SportList s ON s.SportType = mempt.SportType AND s.BetType = mempt.BetType AND s.IsLive = mempt.IsLive
 					WHERE AgentID = @Recommend
 						AND mempt.SportType = CASE WHEN @SportType = 0 THEN mempt.SportType ELSE @SportType END
 						AND mempt.BetType = CASE WHEN @BetType = 0 THEN mempt.BetType ELSE @BetType END	
-						AND IsLive <= @isLive
+						--AND mempt.IsLive <= @isLive
 				END
 			END
 		END
@@ -199,10 +203,4 @@ BEGIN
 		, [IsLive]
 		, [RoleID] DESC
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_PTMatrix] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_PTMatrix] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_PTMatrix] TO [bodbExtAccNet]
