@@ -8,7 +8,7 @@ AS
 	
 	Revisions:
 		- 20150608@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB, Use temp table for GameType table)
-	
+		- 20180115@Johnson: Remove downlines status for new direction change[RedmineID: #87328]
 	Parameters Explanation
 */
 BEGIN
@@ -29,21 +29,7 @@ BEGIN
 		SELECT GameTypeID, IBCBetTypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK) WHERE IBCBetTypeID BETWEEN 1501 AND 1599 AND IsDisabled = 0
 	END CATCH
 	----- 20150608@Kos -------------------
-
-	--Check downline?
-	DECLARE @hasDownline BIT = 0
-	SELECT @hasDownline = CASE WHEN EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid = 1) THEN 1 ELSE 0 END
-
-	--Get downlines
-	DECLARE @DisableDownlinesKeno TABLE (GameTypeID INT, DisableDownlines BIT)
-	INSERT INTO @DisableDownlinesKeno (GameTypeID, DisableDownlines)
-	SELECT cg.GameTypeID, CASE WHEN SUM(CASE WHEN cg.IsDisabled = 1 THEN 1 ELSE 0 END) > 0 THEN 1 ELSE 0 END
-	FROM dbo.CustGameType cg WITH (NOLOCK)
-		INNER JOIN @GameType gt ON cg.GameTypeID = gt.GameTypeID
-		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON cg.CustID = ci.CustID
-	WHERE ci.recommend = @custid AND ci.roleid = 1
-	GROUP BY cg.GameTypeID
-
+	
 	DECLARE @MasterDisabled TABLE (gametypeid INT, IsDisabled BIT)
 	INSERT INTO @MasterDisabled (gametypeid, IsDisabled)
 	SELECT cg.gametypeid, cg.IsDisabled
@@ -78,13 +64,11 @@ BEGIN
 		, CASE WHEN ul.MinBet_Min < bs.MinBet THEN bs.MinBet ELSE ul.MinBet_Min END MinBet_Min
 		, ul.MaxBet_Max, ul.MaxPerMatch_Max
 		, cg.IsDisabled
-		, md.IsDisabled AS DisableUplinesKeno
-		, CASE WHEN @hasDownline = 0 THEN cg.IsDisabled ELSE ISNULL(d.DisableDownlines, 1) END AS DisableDownlinesKeno
+		, md.IsDisabled AS DisableUplinesKeno		
 	FROM dbo.CustGameType cg WITH (NOLOCK)
 		INNER JOIN @MasterSetting ul ON cg.GameTypeID = ul.GameTypeID
 		INNER JOIN @MasterDisabled md ON cg.GameTypeID = md.GameTypeID
-		INNER JOIN @GameType gt ON cg.GameTypeID = gt.GameTypeID
-		LEFT JOIN @DisableDownlinesKeno d ON cg.GameTypeID = d.GameTypeID
+		INNER JOIN @GameType gt ON cg.GameTypeID = gt.GameTypeID		
 		INNER JOIN ProductBetSetting bs ON gt.IBCBetTypeID = bs.bettype AND bs.sporttype = 202 AND Currency = @Currency	AND IsDep = 0
 	WHERE cg.CustID = @CustID
 	ORDER BY gt.IBCBetTypeID
@@ -109,3 +93,4 @@ BEGIN
 	WHERE cs.custid = @custid AND cs.bettype BETWEEN 1501 AND 1599 AND cs.sporttype = 202
 
 END
+GO

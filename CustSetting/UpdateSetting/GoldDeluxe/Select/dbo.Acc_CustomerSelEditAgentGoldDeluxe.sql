@@ -16,6 +16,7 @@ AS
 		- 20170921@Johnson: Fix the unsynchronized setting,fix @Downline status to show checkbox enable downline [Redmine: #72973]
 							+@Downline = 1: has at least one customer has sync status
 										=0 : all downlines not sync	
+		- 20180109@Johnson: remove downlines status for new direction[Redmine:#87328]																							
 	Parameters Explanation
 */
 BEGIN
@@ -34,20 +35,13 @@ BEGIN
 
 	DECLARE @v255adiscount_1701				DECIMAL(9,8)
 			,@DisableAutoMPT				BIT
-			,@max_v255mpositiontaking_1701 SMALLMONEY
-			,@Downlines						BIT	= 0
-			,@DisableDownlines				BIT = 0
+			,@max_v255mpositiontaking_1701 SMALLMONEY			
 			,@DisableGoldDeluxe				BIT
 			,@DisableUpline					BIT = 0
 
 	SELECT	@DisableAutoMPT = DisableAutoMPT
 	FROM	dbo.custmaster WITH(NOLOCK)
 	WHERE	custid = @mrecommend
-			
-	IF EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid = 1 AND HideGoldDeluxe = 0)
-		SET @Downlines = 1	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
-		SET @DisableDownlines = 1
 	
 	SELECT	@DisableGoldDeluxe = DisableGoldDeluxe
 	FROM	dbo.custInfo WITH(NOLOCK)
@@ -74,9 +68,7 @@ BEGIN
 			,mobilephone
 			,fax
 			,ISNULL(@DisableUpline,1) 		AS DisableUpline
-			,ISNULL(@DisableGoldDeluxe,1)	AS DisableGoldDeluxe
-			,@Downlines						AS Downlines
-			,@DisableDownlines				AS DisableDownlines
+			,ISNULL(@DisableGoldDeluxe,1)	AS DisableGoldDeluxe			
 	FROM	dbo.Customer WITH (NOLOCK)
 	WHERE	custID = @CustID   	  
 	

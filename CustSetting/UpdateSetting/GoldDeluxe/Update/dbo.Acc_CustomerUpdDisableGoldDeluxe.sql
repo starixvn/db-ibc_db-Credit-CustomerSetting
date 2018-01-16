@@ -1,9 +1,7 @@
 ﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 	@custid		INT,
-	@Disable	BIT = NULL,	
-	@EnableDownlines BIT = NULL,
-	@SystemID	TINYINT = 1,
+	@Disable	BIT = NULL,			
 	@UserID		INT = 0,
 	@SubAccID	INT = 0, --Sub-AccountID
 	@IP			VARCHAR(20)= '',
@@ -26,8 +24,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 			- 20170414@Winnie: Allowed disable on EXT-NAP [Redmine: #72336]
 			- 20171013@Johnson: Set @EnableDownlines = NULL as default when dont have downline 
 								and update sync for that customer if not sync yet incase no change status[Redmine: #72973]
-		Parameter's Explanation:
-			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
+			- 20180112@Johnson:	use this sp for update status on alpha and remove enableDownlines for new direction [redmine:#87328]				
+		Parameter's Explanation:			
 	*/
 BEGIN
 	SET NOCOUNT ON 
@@ -57,7 +55,7 @@ BEGIN
 			@Disable_Old = DisableGoldDeluxe, 
 			@HideGoldDeluxe_Old = HideGoldDeluxe,
 			@Currency = currency		
-	FROM custInfo WITH(NOLOCK)
+	FROM dbo.custInfo WITH(NOLOCK)
 	WHERE custid = @custid
 	
 	            
@@ -111,7 +109,7 @@ BEGIN
 		END
 	END
 
-	IF @Disable_old = @Disable AND (@DisableDownlines_Old <> @EnableDownlines OR @EnableDownlines IS NULL)
+	IF @Disable_old = @Disable
 	BEGIN
 		IF @HideGoldDeluxe_Old = 1
 		BEGIN
@@ -154,21 +152,15 @@ BEGIN
 		RETURN
 	END 
 	
-	IF ((@Disable = 1 AND @Disable_Old = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
+	--dont allow disable on alpha
+	IF @Disable = 1 
+		AND @Disable_Old = 0
+		AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
 						END, @ErrCode = 102
-		RETURN
-	END 
-
-	IF @Disable = 1 AND @EnableDownlines = 1 AND @HasDownline=1
-	BEGIN
-		SELECT @ErrMsg =  CASE @Language 
-							WHEN 'E' THEN 'You are not allowed to perform this action.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
-						END, @ErrCode = 103
 		RETURN
 	END 
 
@@ -178,11 +170,9 @@ BEGIN
 	WHERE custid = @CustID
 		
 	--Check condition for update all downlines
-	IF ( @RoleID > 1 
-			AND (@Disable = 1
-					OR (@Disable = 0 AND (@EnableDownlines = 1 AND @HasDownline = 1))
-			)
-		)
+	IF  @RoleID > 1 
+		AND	@Disable = 1
+		AND @HasDownline = 1			
 	BEGIN
 		EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid
 				,@roleid = @roleid
@@ -217,8 +207,7 @@ BEGIN
 	 Select @LogSPData = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
-		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  
-		  'ApplyDownlines="'+ coalesce(cast(ISNULL(@EnableDownlines,0) as varchar(50)),space(1)) + '" '+  
+		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  		 
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
@@ -229,8 +218,7 @@ BEGIN
 	  SELECT @LogSPData_Old = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		 
 		 'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+  
-		  'HideGD="'+ coalesce(cast(@HideGoldDeluxe_Old as varchar(50)),space(1)) + '" '+  
-		  'ApplyDownlines="'+ CASE WHEN @DisableDownlines_Old = 1 OR @roleid =1 THEN  coalesce(cast(0 as varchar(50)),space(1)) ELSE  coalesce(cast(1 as varchar(50)),space(1)) END +'" '+    
+		  'HideGD="'+ coalesce(cast(@HideGoldDeluxe_Old as varchar(50)),space(1)) + '" '+  		 
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
@@ -245,7 +233,7 @@ BEGIN
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 		@UserID = @UserID,  
 		@CustID = @CustID,  
-		@ActionID = 1155,  
+		@ActionID = 1167,  
 		@TrackingValue = @LogSPData  , 
 		@TrackingValue2 = @LogSPData_old  ,  
 		@duration = @duration  
@@ -253,8 +241,7 @@ BEGIN
 	BEGIN CATCH
 		Select @LogSPData = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
-		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  
-		  'ApplyDownlines="'+ coalesce(cast(ISNULL(@EnableDownlines,0) as varchar(50)),space(1)) + '" '+  
+		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  		 
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
@@ -265,7 +252,7 @@ BEGIN
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 		@UserID = @UserID,  
 		@CustID = @CustID,  
-		@ActionID = 1155,  
+		@ActionID = 1167,  
 		@TrackingValue = @LogSPData,  
 		@TrackingValue2 = @LogSPData_old,  
 		@duration = @duration

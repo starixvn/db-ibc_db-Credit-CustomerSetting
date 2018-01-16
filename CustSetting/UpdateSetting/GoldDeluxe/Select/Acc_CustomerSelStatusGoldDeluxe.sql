@@ -16,7 +16,7 @@ AS
 							and fix hasDownline status to show checkbox enable downline [Redmine: #72973]
 							+hasDownline = 1: has at least one customer has sync status
 										=0 : all downlines not sync			
-							
+		- 20180112@Johnson: new direction for status [Redmine:#87328]					
 	Parameter's Explanation:
  */
  BEGIN
@@ -29,11 +29,16 @@ SET NOCOUNT ON
 	   @roleid   TINYINT,  
 	   @IsDisabled			BIT, 
 	   @IsSync				BIT,            
-	   @HasDownline			BIT=0,
+	 
 	   @IsDisabledUpline    BIT,
 	   @IsSyncedUpline		BIT,
-	   @IsDisabledDownline	BIT=0
-
+	   
+	   @TotalDisabledMasters 	INT=0,
+	   @TotalEnabledMasters 	INT =0,
+	   @TotalDisabledAgents 	INT=0,
+	   @TotalEnabledAgents 		INT=0,
+	   @TotalDisabledMembers 	INT=0,
+	   @TotalEnabledMembers		INT=0
 			   
 	SELECT @IsDisabled = ISNULL(DisableGoldDeluxe,1),  
 			@IsSync=CASE WHEN HideGoldDeluxe=0 THEN 1 ELSE 0 END,   
@@ -53,19 +58,29 @@ SET NOCOUNT ON
  
 	IF @roleid = 4 
 	BEGIN
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
-			SET @IsDisabledDownline = 1
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND HideGoldDeluxe = 0 AND custid <> @custid)
-			SET @hasDownline = 1
+		SELECT @TotalDisabledMasters = SUM(CASE WHEN roleid = 3 AND DisableGoldDeluxe =1 THEN 1 ELSE 0 END),
+			@TotalEnabledMasters = SUM(CASE WHEN roleid = 3 AND DisableGoldDeluxe =0 THEN 1 ELSE 0 END),
+			@TotalDisabledAgents = SUM(CASE WHEN roleid = 2 AND DisableGoldDeluxe =1 THEN 1 ELSE 0 END),
+			@TotalEnabledAgents = SUM(CASE WHEN roleid = 2 AND DisableGoldDeluxe =0 THEN 1 ELSE 0 END),
+			@TotalDisabledMembers = SUM(CASE WHEN roleid = 1 AND DisableGoldDeluxe =1 THEN 1 ELSE 0 END),
+			@TotalEnabledMembers = SUM(CASE WHEN roleid = 1 AND DisableGoldDeluxe =0 THEN 1 ELSE 0 END)
+		FROM dbo.CustInfo WITH(NOLOCK)
+		WHERE srecommend = @custid
+			AND custid <> @custid
+			AND HideGoldDeluxe = 0
 		
 		SELECT @IsDisabledUpline = 0,@IsSyncedUpline=1
 	END
 	ELSE IF @roleid = 3
 	BEGIN
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
-			SET @IsDisabledDownline = 1
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND HideGoldDeluxe = 0 AND custid <> @custid)
-			SET @hasDownline = 1
+		SELECT @TotalDisabledAgents = SUM(CASE WHEN roleid = 2 AND DisableGoldDeluxe =1 THEN 1 ELSE 0 END),
+			@TotalEnabledAgents = SUM(CASE WHEN roleid = 2 AND DisableGoldDeluxe =0 THEN 1 ELSE 0 END),
+			@TotalDisabledMembers = SUM(CASE WHEN roleid = 1 AND DisableGoldDeluxe =1 THEN 1 ELSE 0 END),
+			@TotalEnabledMembers = SUM(CASE WHEN roleid = 1 AND DisableGoldDeluxe =0 THEN 1 ELSE 0 END)
+		FROM dbo.CustInfo WITH(NOLOCK)
+		WHERE mrecommend = @custid
+			AND custid <> @custid
+			AND HideGoldDeluxe = 0
 		
 		SELECT @IsDisabledUpline = DisableGoldDeluxe,
 			@IsSyncedUpline=CASE WHEN HideGoldDeluxe=0 THEN 1 ELSE 0 END 
@@ -74,10 +89,12 @@ SET NOCOUNT ON
 	END
 	ELSE IF @roleid = 2
 	BEGIN
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND DisableGoldDeluxe = 1 AND HideGoldDeluxe = 0)
-			SET @IsDisabledDownline = 1
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND HideGoldDeluxe = 0 AND custid <> @custid)
-			SET @hasDownline = 1
+		SELECT @TotalDisabledMembers = SUM(CASE WHEN roleid = 1 AND DisableGoldDeluxe =1 THEN 1 ELSE 0 END),
+			@TotalEnabledMembers = SUM(CASE WHEN roleid = 1 AND DisableGoldDeluxe =0 THEN 1 ELSE 0 END)
+		FROM dbo.CustInfo WITH(NOLOCK)
+		WHERE recommend = @custid
+			AND custid <> @custid
+			AND HideGoldDeluxe = 0
 		
 		SELECT @IsDisabledUpline = DisableGoldDeluxe,
 				@IsSyncedUpline=CASE WHEN HideGoldDeluxe=0 THEN 1 ELSE 0 END 
@@ -86,9 +103,6 @@ SET NOCOUNT ON
 	END
 	ELSE 
 	BEGIN
-		SET @IsDisabledDownline = 0
-		SET @hasDownline = 0
-		
 		SELECT @IsDisabledUpline = DisableGoldDeluxe,
 				@IsSyncedUpline=CASE WHEN HideGoldDeluxe=0 THEN 1 ELSE 0 END 
 		FROM dbo.custinfo WITH(NOLOCK) 
@@ -108,9 +122,15 @@ SET NOCOUNT ON
 		1700				AS	Bettype,       
 		@IsDisabled			AS  IsDisabled,
 		@IsSync				AS	IsSync , 		
-		@HasDownline		AS	HasDownline,
+		
 		@IsDisabledUpline   AS  IsDisabledUpline,
 		@IsSyncedUpline		AS	IsSyncedUpline,
-		@IsDisabledDownline	AS	IsDisabledDownline
+		
+		@TotalDisabledMasters AS TotalDisabledMasters,
+		@TotalEnabledMasters  AS TotalEnabledMasters,
+		@TotalDisabledAgents  AS TotalDisabledAgents,
+		@TotalEnabledAgents	  AS TotalEnabledAgents,
+		@TotalDisabledMembers AS TotalDisabledMembers,
+		@TotalEnabledMembers  AS TotalEnabledMembers
 END
 GO
