@@ -21,7 +21,9 @@ BEGIN
 	SET NOCOUNT ON  
 
 	DECLARE @UplineID INT,@RoleID INT, @IsDisabled BIT,@IsDisabledDownline BIT=0,@HasDownline BIT=0,@isHidden BIT=0,@IsHiddenUpline BIT=0,@IsSync BIT=1,@IsSyncedDownline BIT=1,
-			@IsDisabledUpline BIT=0,@IsSyncedUpline BIT=1,@recommend INT,@mrecommend INT,@srecommend INT
+			@IsDisabledUpline BIT=0,@IsSyncedUpline BIT=1,@recommend INT,@mrecommend INT,@srecommend INT,
+			@TotalEnabledMasters INT = 0, @TotalDisabledMasters INT = 0, @TotalEnabledAgents INT = 0, @TotalDisabledAgents INT = 0, @TotalEnabledMembers INT = 0, @TotalDisabledMembers INT = 0
+	
 	DECLARE @tmpProduct TABLE(ProductID INT)
 	
 	DECLARE @SportBettype TABLE(ProductID INT,
@@ -120,57 +122,75 @@ BEGIN
 	--END 	
 	ELSE IF @ProductID=6 -- Casino
 	BEGIN
-		SELECT @RoleID=RoleID,@IsDisabled=DisableCasino,@IsSync=ISNULL(SyncCasino,0),@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend FROM custInfo WITH(NOLOCK) WHERE custid=@custid
+		SELECT @RoleID=RoleID,
+			@IsDisabled=DisableCasino,
+			@IsSync=ISNULL(SyncCasino,0),
+			@recommend=recommend,
+			@mrecommend=mrecommend,
+			@srecommend=srecommend 
+		FROM custInfo WITH(NOLOCK) 
+		WHERE custid=@custid
+		
 		IF @RoleID=2
 		BEGIN
-			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@mrecommend
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE recommend = @CustID AND roleid=1 AND SyncCasino=1)
-					SELECT @HasDownline=1
-			IF @HasDownline=1
-			BEGIN
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND DisableCasino=1 AND SyncCasino=1)
-					SELECT @IsDisabledDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND ISNULL(SyncCasino,0)=0)
-					SELECT @IsSyncedDownline=0
-			END
+			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino 
+			FROM dbo.CustInfo WITH (NOLOCK)  
+			WHERE custid=@mrecommend
+			
+			SELECT @TotalDisabledMembers = SUM(CASE WHEN DisableCasino = 1 THEN 1 ELSE 0 END),
+				@TotalEnabledMembers = SUM(CASE WHEN DisableCasino = 0 THEN 1 ELSE 0 END)
+			FROM dbo.CustInfo WITH(NOLOCK)
+			WHERE recommend=@custid
+				AND roleid = 1
+				AND SyncCasino=1			
 		END		
 		ELSE IF @RoleID=3
 		BEGIN	
-			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@srecommend
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE mrecommend = @CustID AND roleid=2 AND SyncCasino=1)
-				SELECT @HasDownline=1
-			IF @HasDownline=1
-			BEGIN
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND DisableCasino=1 AND SyncCasino=1)
-					SELECT @IsDisabledDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND ISNULL(SyncCasino,0)=0)
-					SELECT @IsSyncedDownline=0
-			END
+			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino 
+			FROM dbo.CustInfo WITH (NOLOCK)  
+			WHERE custid=@srecommend
+			
+			SELECT @TotalDisabledAgents = SUM(CASE WHEN DisableCasino = 1 AND roleid = 2 THEN 2 ELSE 0 END),
+				@TotalEnabledAgents = SUM(CASE WHEN DisableCasino = 0 AND roleid = 2 THEN 2 ELSE 0 END),
+				@TotalDisabledMembers = SUM(CASE WHEN DisableCasino = 1 AND roleid = 1 THEN 1 ELSE 0 END),
+				@TotalEnabledMembers = SUM(CASE WHEN DisableCasino = 0 AND roleid = 1 THEN 1 ELSE 0 END)
+			FROM dbo.CustInfo WITH(NOLOCK)
+			WHERE mrecommend=@custid				
+				AND SyncCasino=1
 		END
 		ELSE IF @RoleID=4	
 		BEGIN	
-			
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE srecommend = @CustID AND roleid=3 AND SyncCasino=1)
-				SELECT @HasDownline=1
-			IF @HasDownline=1
-			BEGIN
-				
-				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND DisableCasino=1  AND SyncCasino=1)
-				BEGIN
-				
-					SELECT @IsDisabledDownline=1
-						
-				END
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND ISNULL(SyncCasino,0)=0)
-					SELECT @IsSyncedDownline=0
-			END
+			SELECT @TotalDisabledMasters = SUM(CASE WHEN DisableCasino = 1 AND roleid = 3 THEN 1 ELSE 0 END),
+				@TotalEnabledMasters = SUM(CASE WHEN DisableCasino = 0 AND roleid = 3 THEN 1 ELSE 0 END),
+				@TotalDisabledAgents = SUM(CASE WHEN DisableCasino = 1 AND roleid = 2 THEN 1 ELSE 0 END),
+				@TotalEnabledAgents = SUM(CASE WHEN DisableCasino = 0 AND roleid = 2 THEN 1 ELSE 0 END),
+				@TotalDisabledMembers = SUM(CASE WHEN DisableCasino = 1 AND roleid = 1 THEN 1 ELSE 0 END),
+				@TotalEnabledMembers = SUM(CASE WHEN DisableCasino = 0 AND roleid = 1 THEN 1 ELSE 0 END)
+			FROM dbo.CustInfo WITH(NOLOCK)
+			WHERE srecommend=@custid				
+				AND SyncCasino=1			
 		END
 		ELSE IF @RoleID=1
 		BEGIN	
 			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@recommend
 		END
-		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline)
-		VALUES(@ProductID,208,2101,@IsDisabled,@IsDisabledDownline,@HasDownline,@IsSync,@isHidden,@IsDisabledUpline,@IsHiddenUpline,@IsSyncedUpline,@IsSyncedDownline)			
+		INSERT INTO @SportBettype(ProductID,
+								Sporttype, 
+								Bettype ,
+								IsDisabled ,
+								IsSync,
+								IsHidden,
+								IsDisabledUpline,
+								IsHiddenUpline,
+								IsSyncedUpline,
+								TotalDisabledMasters,
+								TotalEnabledMasters,
+								TotalDisabledAgents,
+								TotalEnabledAgents,
+								TotalDisabledMembers,
+								TotalEnabledMembers)
+		VALUES(@ProductID,208,2101,@IsDisabled,@IsSync,@isHidden,@IsDisabledUpline,@IsHiddenUpline,@IsSyncedUpline,
+				@TotalDisabledMasters,@TotalEnabledMasters,@TotalDisabledAgents,@TotalEnabledAgents,@TotalDisabledMembers,@TotalEnabledMembers)			
 	END 	
 	ELSE IF @ProductID=8--Keno
 	BEGIN	
