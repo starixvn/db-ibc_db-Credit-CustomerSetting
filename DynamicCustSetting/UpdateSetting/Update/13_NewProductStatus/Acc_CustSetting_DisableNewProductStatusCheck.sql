@@ -238,4 +238,4 @@ BEGIN
 	DROP TABLE #NewDisableStatTbl
 	
 END
-
+GO
