@@ -7,7 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableKeno]
 	@CustID INT
 	,@Bettype INT
 	,@Disable BIT			
-	
+	,@SystemID	TINYINT = 1
 	,@SubAccID INT = 0
 	,@UserID INT
 	,@UplineID INT	= 0
@@ -51,11 +51,8 @@ BEGIN
 		,@UplineDisable BIT = 0
 		,@Old_HideKeno BIT
 		,@Old_DisableBetType BIT
-		,@GameTypeID INT
-		,@HasUpdatedDisable BIT = 0
-		,@HasDownline BIT = 0
-		,@DownlinesHideKeno BIT = 0
-		,@DisableDownlines_Old BIT = 0
+		,@GameTypeID INT			
+		,@DownlinesHideKeno BIT = 0		
 		
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid
@@ -92,12 +89,6 @@ BEGIN
 		
 	SET @Old_DisableBetType = ISNULL(@Old_DisableBetType, 1)
 	
-	SELECT	@HasDownline = 1 
-	FROM dbo.CustInfo WITH (NOLOCK)
-	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)
-		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)
-		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)
-	
 	IF @Old_DisableBetType = @Disable
 		RETURN
 
@@ -125,7 +116,7 @@ BEGIN
 	END
 	
 	--dont allow disable on alpha
-	IF @Disable = 1 AND @Old_DisableBetType = 0 AND @roleid IN (4,3,2)
+	IF @Disable = 1 AND @Old_DisableBetType = 0 AND @SystemID = 2 AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
@@ -133,70 +124,8 @@ BEGIN
 						END, @ErrCode = 102
 		RETURN
 	END 
-
-
-	-- check to update IsDisabled
-	IF(@GameTypeID > 0)
-		--AND ( @Old_DisableBetType <> @Disable )
-	--)
-	BEGIN
-		-- check uplineDisable
-		IF (@RoleID = 3) 
-			SELECT TOP(1) @UplineDisable = CASE 
-				WHEN c.HideKeno = 0 AND ISNULL(IsDisabled, 0) = 0 THEN 0 
-				ELSE 1 END
-			FROM dbo.CustInfo c WITH (NOLOCK)
-			LEFT JOIN dbo.CustGameType g WITH (NOLOCK)
-				ON g.custid = c.custid
-			WHERE g.custid = (SELECT SRecommend FROM dbo.Custinfo WITH (NOLOCK)
-							WHERE custid = @CustID)
-				and g.GameTypeID = @GameTypeID
-
-		IF (@RoleID = 2) 
-			SELECT TOP(1) @UplineDisable = CASE 
-				WHEN c.HideKeno = 0 AND ISNULL(IsDisabled, 0) = 0 THEN 0 
-				ELSE 1 END
-			FROM dbo.CustInfo c WITH (NOLOCK)
-			LEFT JOIN dbo.CustGameType g WITH (NOLOCK)
-				ON g.custid = c.custid
-			WHERE g.custid = (SELECT MRecommend FROM dbo.Custinfo WITH (NOLOCK)
-							WHERE custid = @CustID)
-				and g.GameTypeID = @GameTypeID
-
-		IF (@RoleID = 1) 
-			SELECT TOP(1) @UplineDisable = CASE 
-				WHEN c.HideKeno = 0 AND ISNULL(IsDisabled, 0) = 0 THEN 0 
-				ELSE 1 END
-			FROM dbo.CustInfo c WITH (NOLOCK)
-			LEFT JOIN dbo.CustGameType g WITH (NOLOCK)
-				ON g.custid = c.custid
-			WHERE g.custid = (SELECT Recommend FROM dbo.Custinfo WITH (NOLOCK)
-							WHERE custid = @CustID)
-				and g.GameTypeID = @GameTypeID
-
-		IF (@RoleID = 4) SET @UplineDisable = 0 --not checking the upline when the customer is the super
-
-		IF (@UplineDisable = 1)
-		BEGIN
-			SELECT @ErrMsg = CASE @Language
-					WHEN 'E' THEN 'Account was disabled Keno. Unable to edit downlines.'
-					ELSE [dbo].[f_Get_MsgNamebyMsgID](60030, @Language)
-					END
-				,@ErrCode = 101
-
-			RETURN
-		END
-		
-		UPDATE g
-		SET IsDisabled = @Disable
-		FROM dbo.CustGameType g WITH(ROWLOCK, UPDLOCK)
-		WHERE g.custid = @CustID
-			AND g.GameTypeID = @GameTypeID
-		
-		SET @HasUpdatedDisable = 1
-	END
-
-	IF(@GameTypeID = 0)
+	
+	IF(ISNULL(@GameTypeID,0) = 0)
 	BEGIN
 		SELECT @ErrMsg = 'Bettype is disabled. Update process is unsuccessful.'
 			,@ErrCode = 105
@@ -204,29 +133,132 @@ BEGIN
 		RETURN
 	END
 
-	-- check to update HideKeno
 	
-	IF (@HasUpdatedDisable = 1 AND @Old_HideKeno = 1) 
+	-- check uplineDisable
+	IF (@RoleID = 3) 
+	BEGIN
+		SELECT TOP(1) @UplineDisable = CASE 
+			WHEN c.HideKeno = 0 AND ISNULL(IsDisabled, 0) = 0 THEN 0 
+			ELSE 1 END
+		FROM dbo.CustInfo c WITH (NOLOCK)
+		LEFT JOIN dbo.CustGameType g WITH (NOLOCK)
+			ON g.custid = c.custid
+		WHERE g.custid = (SELECT SRecommend FROM dbo.Custinfo WITH (NOLOCK)
+						WHERE custid = @CustID)
+			and g.GameTypeID = @GameTypeID
+	END
+	ELSE IF (@RoleID = 2) 
+	BEGIN
+		SELECT TOP(1) @UplineDisable = CASE 
+			WHEN c.HideKeno = 0 AND ISNULL(IsDisabled, 0) = 0 THEN 0 
+			ELSE 1 END
+		FROM dbo.CustInfo c WITH (NOLOCK)
+		LEFT JOIN dbo.CustGameType g WITH (NOLOCK)
+			ON g.custid = c.custid
+		WHERE g.custid = (SELECT MRecommend FROM dbo.Custinfo WITH (NOLOCK)
+						WHERE custid = @CustID)
+			and g.GameTypeID = @GameTypeID
+	END
+	ELSE IF (@RoleID = 1) 
+	BEGIN
+		SELECT TOP(1) @UplineDisable = CASE 
+			WHEN c.HideKeno = 0 AND ISNULL(IsDisabled, 0) = 0 THEN 0 
+			ELSE 1 END
+		FROM dbo.CustInfo c WITH (NOLOCK)
+		LEFT JOIN dbo.CustGameType g WITH (NOLOCK)
+			ON g.custid = c.custid
+		WHERE g.custid = (SELECT Recommend FROM dbo.Custinfo WITH (NOLOCK)
+						WHERE custid = @CustID)
+			and g.GameTypeID = @GameTypeID
+	END
+	ELSE IF (@RoleID = 4) 
+		SET @UplineDisable = 0 --not checking the upline when the customer is the super
+
+	IF (@UplineDisable = 1)
+	BEGIN
+		SELECT @ErrMsg = CASE @Language
+				WHEN 'E' THEN 'Account was disabled Keno. Unable to edit downlines.'
+				ELSE [dbo].[f_Get_MsgNamebyMsgID](60030, @Language)
+				END
+			,@ErrCode = 101
+
+		RETURN
+	END
+
+	UPDATE g
+	SET IsDisabled = @Disable
+	FROM dbo.CustGameType g WITH(ROWLOCK, UPDLOCK)
+	WHERE g.custid = @CustID
+		AND g.GameTypeID = @GameTypeID
+	
+	--Disable all downline
+	IF (@RoleID > 1 AND @Disable = 1)	
+	BEGIN TRY
+		--Check condition for update all downline		
+		EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid
+			,@roleid = @roleid
+			,@isExecRep = 1
+			,@Language = @Language
+			,@ErrMsg = @ErrMsg OUTPUT
+			,@ErrCode = @ErrCode OUTPUT
+
+		IF @ErrCode <> 0 RETURN
+		
+		EXEC [Acc_Custsetting3rd_10] @CustID = @CustID
+			,@RoleID = @RoleID
+			,@Action = 'UpdKeno-Disable'
+			,@DisableKeno = @Disable
+			,@GameTypeID = @GameTypeID
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = CASE @Language
+				WHEN 'E' THEN 'Update process is unsuccessful.'
+				ELSE [dbo].[f_Get_MsgNamebyMsgID](90001, @Language)
+				END
+		SET @ErrCode = 102
+		RETURN
+	END CATCH
+	
+	-- check to update HideKeno
+	IF (@Old_HideKeno = 1) 
 	BEGIN	
 		UPDATE cust
 		SET HideKeno = 0
 		FROM dbo.CustInfo cust WITH (ROWLOCK, UPDLOCK)
 		WHERE CustID = @CustID
 		
-		IF (@@ERROR <> 0)
+		SELECT TOP (1) @DownlinesHideKeno = HideKeno
+		FROM dbo.CustInfo WITH(NOLOCK)
+		WHERE (@RoleID = 4 AND srecommend = @CustID AND Custid <> @CustID AND HideKeno = 1)
+			OR (@RoleID = 3 AND mrecommend = @CustID AND Custid <> @CustID AND HideKeno = 1)
+			OR (@RoleID = 2 AND recommend = @CustID AND Custid <> @CustID AND HideKeno = 1)
+				
+		IF(@RoleID > 1 			
+			AND @DownlinesHideKeno = 1
+			AND @Disable =1)--touch on downline
 		BEGIN
-			SELECT @ErrMsg = CASE @Language
-					WHEN 'E' THEN 'Update process is unsuccessful.'
-					ELSE [dbo].[f_Get_MsgNamebyMsgID](90001, @Language)
-					END
-				,@ErrCode = 104
+			BEGIN TRY	
+				--update HideKeno for all downline
+				EXEC [Acc_CustomerInfo_Execrep_04] @CustID = @CustID
+					,@RoleID = @RoleID
+					,@Action = 'UpdKeno-Hide'	
+					,@UpdateAllMasters = 1
+					,@UpdateAllAgents = 1
+					,@UpdateAllMembers = 1
+			END TRY
+			BEGIN CATCH
+				SELECT @ErrMsg = CASE @Language
+						WHEN 'E' THEN 'Update process is unsuccessful.'
+						ELSE [dbo].[f_Get_MsgNamebyMsgID](90001, @Language)
+						END
 
-			RETURN
+				SET @ErrCode = 103
+
+				RETURN
+			END CATCH
 		END
 	END
 		
-	IF(@HasUpdatedDisable = 0) RETURN
-
 	-- write runSP log
 	DECLARE @LogSPData VARCHAR(2000)
 		, @TrackingValue VARCHAR(2000)

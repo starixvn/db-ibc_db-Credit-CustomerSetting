@@ -1,7 +1,8 @@
 ﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 	@custid		INT,
-	@Disable	BIT = NULL,			
+	@Disable	BIT = NULL,	
+	@SystemID	TINYINT = 1,	
 	@UserID		INT = 0,
 	@SubAccID	INT = 0, --Sub-AccountID
 	@IP			VARCHAR(20)= '',
@@ -24,8 +25,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 			- 20170414@Winnie: Allowed disable on EXT-NAP [Redmine: #72336]
 			- 20171013@Johnson: Set @EnableDownlines = NULL as default when dont have downline 
 								and update sync for that customer if not sync yet incase no change status[Redmine: #72973]
-			- 20180112@Johnson:	use this sp for update status on alpha and remove enableDownlines for new direction [redmine:#87328]				
-		Parameter's Explanation:			
+			- 20180112@Johnson:	use this sp for update status on alpha & setting page and remove enableDownlines for new direction [redmine:#87328]				
+		Parameter's Explanation:	
+			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
 BEGIN
 	SET NOCOUNT ON 
@@ -48,8 +50,7 @@ BEGIN
 			@HideGoldDeluxe_Old BIT,
 			@UplineDisable BIT,			
 			@HasDownline BIT = 0,
-			@Currency INT,
-			@DisableDownlines_Old BIT = 0
+			@Currency INT			
 	
 	SELECT @roleid = roleid,
 			@Disable_Old = DisableGoldDeluxe, 
@@ -89,26 +90,7 @@ BEGIN
 	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)
-
-	IF @HasDownline = 1
-	BEGIN
-		IF @roleid = 4 
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 3
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND DisableGoldDeluxe = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 2
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND DisableGoldDeluxe = 1)
-				SET @DisableDownlines_Old = 1
-		END
-	END
-
+	
 	IF @Disable_old = @Disable
 	BEGIN
 		IF @HideGoldDeluxe_Old = 1
@@ -155,6 +137,7 @@ BEGIN
 	--dont allow disable on alpha
 	IF @Disable = 1 
 		AND @Disable_Old = 0
+		AND @SystemID = 2
 		AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
@@ -183,7 +166,7 @@ BEGIN
 
 		IF @ErrCode <> 0 RETURN
 		
-		--Disable all downlines or enable all downlines
+		--Disable all downlines on nap
 		BEGIN TRY
 			EXEC [Acc_CustomerInfo_Execrep_04] @CustID = @CustID
 					,@RoleID = @RoleID
@@ -209,7 +192,7 @@ BEGIN
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
 		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  		 
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
-		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
+		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +		  
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
 		  'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+  
 		  'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+  
@@ -220,7 +203,7 @@ BEGIN
 		 'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+  
 		  'HideGD="'+ coalesce(cast(@HideGoldDeluxe_Old as varchar(50)),space(1)) + '" '+  		 
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
-		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
+		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +		 
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
 		  'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+  
 		  'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+  
