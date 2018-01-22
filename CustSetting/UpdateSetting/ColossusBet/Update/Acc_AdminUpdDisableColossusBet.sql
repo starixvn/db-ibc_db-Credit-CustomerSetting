@@ -53,8 +53,7 @@ BEGIN
 	DECLARE @roleid INT,  
 			@Disable_Old BIT,  
 			@UplineDisable BIT,     
-			@HasDownline BIT = 0 
-			,@DisableDownlines_Old BIT = 0
+			@HasDownline BIT = 0 			
 
 	SELECT @roleid = roleid,  
 			@Disable_Old = DisableColossusBet
@@ -78,26 +77,6 @@ BEGIN
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
 	
-	
-	IF @HasDownline = 1
-	BEGIN
-		IF @roleid = 4 
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 3
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 2
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-	END
-
 	IF @Disable_old = @Disable 
 	RETURN
 	
@@ -153,11 +132,17 @@ BEGIN
 	WHERE custid = @CustID  
 
 	--Check condition for update all downlines  
-	IF ( @RoleID > 1 AND 
-		(@Disable = 1  
-			OR (@Disable = 0 AND (@EnableDownlines = 1 AND @HasDownline = 1))  
-		)  
-		)  
+	IF ( @RoleID > 1 
+		AND (@Disable = 1  
+			OR (@Disable = 0 
+				AND @HasDownline = 1
+				AND (@UpdateAllMasters = 1 
+					OR @UpdateAllAgents = 1 
+					OR @UpdateAllMembers = 1 
+					)  
+				)  
+			)
+		)	
 	BEGIN  
 		EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid  
 		,@roleid = @roleid  
@@ -189,8 +174,13 @@ BEGIN
 			@LogSPData_Old VARCHAR(2000)    
 	 
 	SELECT @LogSPData = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
-		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
+		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
+		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
@@ -199,8 +189,13 @@ BEGIN
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'    
 	 
 	SELECT @LogSPData_Old = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
-		'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ CASE WHEN @DisableDownlines_Old = 1 THEN  coalesce(cast(0 as varchar(50)),space(1)) ELSE  coalesce(cast(1 as varchar(50)),space(1)) END +'" '+    
+		'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+    		
+		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
@@ -223,8 +218,13 @@ BEGIN
 	BEGIN CATCH  
 
 	SELECT @LogSPData = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
-		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
+		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
+		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    

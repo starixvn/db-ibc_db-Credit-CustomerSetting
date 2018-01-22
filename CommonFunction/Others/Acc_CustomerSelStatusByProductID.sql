@@ -39,12 +39,12 @@ BEGIN
 								IsHiddenUpline BIT,
 								IsSyncedUpline BIT,
 								IsSyncedDownline BIT, 
-								TotalEnabledMasters INT, 
-								TotalDisabledMasters INT, 
-								TotalEnabledAgents INT, 
-								TotalDisabledAgents INT, 
-								TotalEnabledMembers INT,
-								TotalDisabledMembers INT
+								TotalEnabledMasters INT DEFAULT 0, 
+								TotalDisabledMasters INT DEFAULT 0, 
+								TotalEnabledAgents INT DEFAULT 0, 
+								TotalDisabledAgents INT DEFAULT 0, 
+								TotalEnabledMembers INT DEFAULT 0,
+								TotalDisabledMembers INT DEFAULT 0
 								)		
 	
 	IF @ProductID=15 -- CB
