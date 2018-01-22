@@ -173,7 +173,7 @@ BEGIN
 	DECLARE @LogSPData VARCHAR(MAX),    
 			@LogSPData_Old VARCHAR(2000)    
 	 
-	SELECT @LogSPData = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
+	SELECT @LogSPData = '<Acc_AdminUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
 		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
 		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
@@ -188,7 +188,7 @@ BEGIN
 		'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+    
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'    
 	 
-	SELECT @LogSPData_Old = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
+	SELECT @LogSPData_Old = '<Acc_AdminUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+    		
 		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
 		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
@@ -217,7 +217,7 @@ BEGIN
 	END TRY   
 	BEGIN CATCH  
 
-	SELECT @LogSPData = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
+	SELECT @LogSPData = '<Acc_AdminUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
 		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
 		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 

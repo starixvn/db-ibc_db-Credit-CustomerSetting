@@ -15,7 +15,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdColossusBet]
     -- updated Value for Commission & Cash In Share
     @v204Commission_18001 DECIMAL(9,8) = NULL,  
     @v204CashInShare_18002 DECIMAL(9,8)= NULL,  
-    @EnableDownlines BIT = 0,
+    
 	@Disable BIT = NULL,
 	@SubAccID	INT = 0, 
     @IP         VARCHAR(50)  = '',      
@@ -37,6 +37,7 @@ AS
 	Revisions:
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
 		- 20170307@Winnie: Change enable behavior [Redmine: #72336]		            
+		- 20180122@Johnson: remove @EnableDownlines for new direction [Redmine: #87328] 
 	Parameters Explanation
 	
 */ 
@@ -195,7 +196,7 @@ BEGIN
 	IF @IsUpdateDisable = 1
 	BEGIN
 		
-		EXEC Acc_CustomerUpdDisableColossusBet @custid=@custid,@SystemID=@SystemID ,@Disable=@Disable,@EnableDownlines=@EnableDownlines,@UserID=@UserID,@SubAccID=@SubAccID,@IP=@IP,@Language='E',@ErrCode=@ErrCode_Cur OUTPUT,@ErrMsg=@ErrMsg_Cur OUTPUT  
+		EXEC Acc_CustomerUpdDisableColossusBet @custid=@custid,@SystemID=@SystemID ,@Disable=@Disable,@UserID=@UserID,@SubAccID=@SubAccID,@IP=@IP,@Language='E',@ErrCode=@ErrCode_Cur OUTPUT,@ErrMsg=@ErrMsg_Cur OUTPUT  
 		
 		IF @ErrCode_Cur <> 0  
 		BEGIN  
@@ -215,9 +216,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdColossusBet] TO [bodbAdminNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdColossusBet] TO [bodbDownlineNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdColossusBet] TO [bodbExtAccNet]
-GO 
