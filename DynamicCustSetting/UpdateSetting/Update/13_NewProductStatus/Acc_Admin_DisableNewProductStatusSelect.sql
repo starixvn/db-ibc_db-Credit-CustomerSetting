@@ -85,8 +85,8 @@ BEGIN
 	BEGIN
 		INSERT INTO #DownlineStatus (Sporttype, Bettype, TotalDisabledMasters, TotalEnabledMasters, TotalDisabledAgents, TotalEnabledAgents, TotalDisabledMembers, TotalEnabledMembers)
 		SELECT	ft.SportType, ft.Bettype,
-				NULL,
-				NULL,
+				0,
+				0,
 				SUM(CASE WHEN roleid = 2 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 1 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN roleid = 2 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 0 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN roleid = 1 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 1 THEN 1 ELSE 0 END),
@@ -118,10 +118,10 @@ BEGIN
 	BEGIN
 		INSERT INTO #DownlineStatus (Sporttype, Bettype, TotalDisabledMasters, TotalEnabledMasters, TotalDisabledAgents, TotalEnabledAgents, TotalDisabledMembers, TotalEnabledMembers)
 		SELECT	ft.SportType, ft.Bettype,
-				NULL,
-				NULL,
-				NULL,
-				NULL,
+				0,
+				0,
+				0,
+				0,
 				SUM(CASE WHEN roleid = 1 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 1 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN roleid = 1 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 0 THEN 1 ELSE 0 END)
 		FROM #SportBettypeFilter ft 
@@ -155,17 +155,16 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,
-				TotalDisabledMasters,
-				TotalEnabledMasters, 
-				TotalDisabledAgents, 
-				TotalEnabledAgents, 
-				TotalDisabledMembers,
-				TotalEnabledMembers
+				0 AS TotalDisabledMasters,
+				0 AS TotalEnabledMasters, 
+				0 AS TotalDisabledAgents, 
+				0 AS TotalEnabledAgents, 
+				0 AS TotalDisabledMembers,
+				0 AS TotalEnabledMembers
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @AgentID
-			INNER JOIN #DownlineStatus ds ON ds.Bettype = ft.BetType AND ds.Sporttype = ft.SportType		
 	END
 	DROP TABLE #SportBettypeFilter
 END
