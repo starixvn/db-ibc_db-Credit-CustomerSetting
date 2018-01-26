@@ -3597,11 +3597,6 @@ BEGIN
 	    return
     END
 
-    --Racing
-    --EXEC Acc_CustomerUpdMemberHR_MinMaxPositiontaking @custid = @custid, @srecommend = @srecommend , @mrecommend = @mrecommend , @recommend = @recommend
-
-    END
-
     /*--Virtual soccer
     --EXEC dbo.Acc_CustomerUpdMemberVS_MinMaxPositiontaking @sporttype = 180, @bettype = 1201, @custid = @custid, @recommend = @recommend, @mrecommend = @mrecommend, @srecommend = @srecommend
 
