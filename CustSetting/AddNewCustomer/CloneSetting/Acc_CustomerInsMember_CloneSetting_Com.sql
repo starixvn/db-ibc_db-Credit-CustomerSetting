@@ -60,7 +60,7 @@ AS
 	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
 	- 20170920@Helen: TO Control Phase 3 - [Redmine: 75557]
 	- 20171113@Helen: Support to add default TO setting for new direct customers - [Redmine:86052]
-
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
