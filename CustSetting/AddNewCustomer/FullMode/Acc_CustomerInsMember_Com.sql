@@ -33,8 +33,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	--comm 1x2
 	@discount1x2 DECIMAL(9,8)=0,
 	
-	@discountnumber DECIMAL(9,8)=0,
-	@discountHRFixedOdds DECIMAL(9,8)=0,
+	@discountnumber DECIMAL(9,8)=0,	
 	-- MyanmarOdds
 	@discountMyanmarOdds DECIMAL(9,8)=0,
 
@@ -80,13 +79,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	--Mix Parlay soccer sports
 	@MinBetv1MP MONEY = 0,
 	@MaxBetv1MP MONEY = 0,
-	@MaxPerMatchv1MP MONEY = 0,
-	
-	--HR Fixed Odds
-	@MinBetv154 MONEY = 0,
-	@MaxBetv154 MONEY = 0,
-	@MaxPerMatchv154 MONEY = 0,
-	
+	@MaxPerMatchv1MP MONEY = 0,	
+
 	--Number game
 	@MinBetv161 MONEY,
 	@MaxBetv161 MONEY,
@@ -155,10 +149,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99spositiontaking_3 SMALLMONEY,
 	@v99spositiontaking_9 SMALLMONEY,
 	@v99spositiontaking_20 SMALLMONEY,
-	
-	--HR Fixed Odds
-	@v154spositiontaking_20 SMALLMONEY = 0,
-	
+
 	--v161
 	@v161spositiontaking_81 SMALLMONEY,
 	@v161spositiontaking_83 SMALLMONEY,
@@ -232,11 +223,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99mpositiontaking_2 SMALLMONEY,
 	@v99mpositiontaking_3 SMALLMONEY,
 	@v99mpositiontaking_9 SMALLMONEY,
-	@v99mpositiontaking_20 SMALLMONEY,
-	
-	--HR Fixed Odds
-	@v154mpositiontaking_20 SMALLMONEY = 0,
-	
+	@v99mpositiontaking_20 SMALLMONEY,	
+
 	--v161
 	@v161mpositiontaking_81 SMALLMONEY,
 	@v161mpositiontaking_83 SMALLMONEY,
@@ -310,10 +298,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99apositiontaking_3 SMALLMONEY,
 	@v99apositiontaking_9 SMALLMONEY,
 	@v99apositiontaking_20 SMALLMONEY,
-	
-	--HR Fixed Odds
-	@v154apositiontaking_20 SMALLMONEY = 0,
-	
+
 	--v161
 	@v161apositiontaking_81 SMALLMONEY,
 	@v161apositiontaking_83 SMALLMONEY,
@@ -326,22 +311,14 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v161alivepositiontaking_89 SMALLMONEY = 0,
 	@v161alivepositiontaking_90 SMALLMONEY = 0,
 	@SystemID		TINYINT=1,
-	@Disable151_31 BIT = 0,-- @DisableHorseRacing -> @Disable151_31
-	@Disable151_41 BIT = 0,-- @DisableOpenTote -> @Disable151_41
-	@Disable151_51 BIT = 0,-- @Disable151_AU -> @Disable151_51
-	@Disable152_41 BIT = 0,-- @Disable152_UK -> @Disable152_41
-	@Disable152_51 BIT = 0,-- @Disable152_AU -> @Disable152_51
-	@Disable153_51 BIT = 0,-- @Disable153_AU -> @Disable153_51
 	@DisableFinancial BIT = 0,
 	@DisableCasino BIT = 0, 
 	@DisableBingo BIT = 0,
 	@DisableNumber BIT = 0,
 	@DisableP2P BIT = 1,
-	@DisableFUNP2P BIT = 1,
-	@Disable162_1101 BIT = 0,
+	@DisableFUNP2P BIT = 1,	
 	@DoubleCommLosing BIT = 1,
 	@DisableCasinoBonus BIT = 1,
-	@DisableHRFixedOdds BIT = 0,
 	@DisableEsports BIT = 0,
 	@DisableGoldDeluxe BIT = 0,
 	@DisableSuperLive BIT = 1,
@@ -433,6 +410,7 @@ Revisions:
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
 	- 20171205@Johnson: add more log for special, doublecomm, autosuspend status [Redmine: #87121]
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  	
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -491,8 +469,7 @@ BEGIN
 				@groupd = @groupd,
 				@discountcs = @discountcs,	
 				@discount1x2 = @discount1x2, --1x2		
-				@discountnumber = @discountnumber, --Number Game
-				@discountHRFixedOdds = @discountHRFixedOdds,
+				@discountnumber = @discountnumber, --Number Game			
 				@discountMyanmarOdds = @discountMyanmarOdds, -- MyanmarOdds
 				
 				@MinBet = @MinBet,
@@ -529,13 +506,8 @@ BEGIN
 				--Mix Parlay Soccer sports
 				@MinBetv1MP = @MinBetv1MP,
 				@MaxBetv1MP = @MaxBetv1MP,
-				@MaxPerMatchv1MP = @MaxPerMatchv1MP,
-				
-				--HR Fixed Odds
-				@MinBetv154 = @MinBetv154,
-				@MaxBetv154 = @MaxBetv154,
-				@MaxPerMatchv154 = @MaxPerMatchv154,
-				
+				@MaxPerMatchv1MP = @MaxPerMatchv1MP,				
+
 				--Number game
 				@MinBetv161 = @MinBetv161,
 				@MaxBetv161 = @MaxBetv161,
@@ -598,10 +570,7 @@ BEGIN
 				@v99spositiontaking_3 = @v99spositiontaking_3,
 				@v99spositiontaking_9 = @v99spositiontaking_9,
 				@v99spositiontaking_20 = @v99spositiontaking_20,
-				
-				--HR Fixed Odds
-				@v154spositiontaking_20 = @v154spositiontaking_20,
-				
+
 				--v161
 				@v161spositiontaking_81 = @v161spositiontaking_81,
 				@v161spositiontaking_83 = @v161spositiontaking_83,
@@ -668,11 +637,7 @@ BEGIN
 				@v99mpositiontaking_2 = @v99mpositiontaking_2,
 				@v99mpositiontaking_3 = @v99mpositiontaking_3,
 				@v99mpositiontaking_9 = @v99mpositiontaking_9,
-				@v99mpositiontaking_20 = @v99mpositiontaking_20,
-				
-				--HR Fixed Odds
-				@v154mpositiontaking_20 = @v154mpositiontaking_20,
-				
+				@v99mpositiontaking_20 = @v99mpositiontaking_20,		
 				--v161
 				@v161mpositiontaking_81 = @v161mpositiontaking_81,
 				@v161mpositiontaking_83 = @v161mpositiontaking_83,
@@ -740,10 +705,7 @@ BEGIN
 				@v99apositiontaking_3 = @v99apositiontaking_3,
 				@v99apositiontaking_9 = @v99apositiontaking_9,
 				@v99apositiontaking_20 = @v99apositiontaking_20,
-									
-				--HR Fixed Odds
-				@v154apositiontaking_20 = @v154apositiontaking_20,
-				
+
 				--v161
 				@v161apositiontaking_81 = @v161apositiontaking_81,
 				@v161apositiontaking_83 = @v161apositiontaking_83,
@@ -781,18 +743,13 @@ BEGIN
 	END
 
 	--check for allow play horseracing
-	DECLARE @IsAllowedHR BIT
-	EXEC Acc_CheckHRAllowedCurrency
-		@CurrencyID = @currency,
-		@Allowed = @IsAllowedHR OUTPUT
-	IF @IsAllowedHR = 0 
-		SELECT @Disable151_31 = 1
+	
 
 	DECLARE --@Disable180_1201 BIT, @HideVirtualSports  BIT, 
-		@isAutoResetLiveCasino BIT , @MaxWinLiveCasino SMALLMONEY, @HideKeno BIT, @HideGoldDeluxe  BIT, @HideColossusBet BIT
+		@HideKeno BIT, @HideGoldDeluxe  BIT, @HideColossusBet BIT
 
 	SELECT --@Disable180_1201 = 0, @HideVirtualSports = 1, 
-			@isAutoResetLiveCasino = 1, @MaxWinLiveCasino =  0, @HideKeno = 1, @HideColossusBet = 1
+			@HideKeno = 1, @HideColossusBet = 1
 
 	SELECT @HideGoldDeluxe = 0 -- 20151001@Elodie: Set HideGoldDeluxe = 0, DisableGoldDeluxe = 0 for real super
 		
@@ -830,14 +787,7 @@ BEGIN
 		@suspended = 0,
 		@SystemID=@SystemID,
 		@autosuspend = @autosuspend,
-		@autosuspend2 = @autosuspend2,
-
-		@Disable151_31 = @Disable151_31,
-		@Disable151_41 = @Disable151_41,
-		@Disable151_51 = @Disable151_51,
-		@Disable152_41 = @Disable152_41,
-		@Disable152_51 = @Disable152_51,
-		@Disable153_51 = @Disable153_51,
+		@autosuspend2 = @autosuspend2,		
 		@matchlimit = 1,
 		--@Johnson: Disable virtual rate status as default
 		@virtualmultiplier = 0,	
@@ -848,15 +798,11 @@ BEGIN
 		@DisableCasino = @DisableCasino,
 		@DisableP2P = @DisableP2P,
 		@DisableFUNP2P = @DisableFUNP2P,
-		@ISAUTORESETP2P = 1,
-		@Disable162_1101 = @Disable162_1101,
+		@ISAUTORESETP2P = 1,	
 		--@Disable180_1201 = @Disable180_1201,
 		--@HideVirtualSports = @HideVirtualSports,
-		@DoubleCommLosing = @DoubleCommLosing,
-		@isAutoResetLiveCasino = @isAutoResetLiveCasino, 
-		@MaxWinLiveCasino = @MaxWinLiveCasino,
-		@DisableCasinoBonus = @DisableCasinoBonus,
-		@DisableHRFixedOdds = @DisableHRFixedOdds,
+		@DoubleCommLosing = @DoubleCommLosing,		
+		@DisableCasinoBonus = @DisableCasinoBonus,		
 		@DisableEsports = @DisableEsports,
 		
 		@DisableGoldDeluxe = @DisableGoldDeluxe,
@@ -878,8 +824,6 @@ BEGIN
 		@MaxPerMatchv99MP = @MaxPerMatchv99MP,
 		
 		@MaxPerMatchv1MP = @MaxPerMatchv1MP,
-		
-		@MaxPerMatchv154 = @MaxPerMatchv154,
 		@MaxPerMatchv161 = @MaxPerMatchv161,	
 		@MaxPerBallv161 = @MaxPerBallv161,	
 		
@@ -989,10 +933,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v99spositiontaking_2 = @v99spositiontaking_2,
 		@v99spositiontaking_3 = @v99spositiontaking_3,
 		@v99spositiontaking_9 = @v99spositiontaking_9,
-		@v99spositiontaking_20 = @v99spositiontaking_20,
-		
-		--HR Fixed Odds
-		@v154spositiontaking_20 = @v154spositiontaking_20,
+		@v99spositiontaking_20 = @v99spositiontaking_20,	
 		
 		--v161
 		@v161spositiontaking_81 = @v161spositiontaking_81,
@@ -1067,10 +1008,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v99mpositiontaking_3 = @v99mpositiontaking_3,
 		@v99mpositiontaking_9 = @v99mpositiontaking_9,
 		@v99mpositiontaking_20 = @v99mpositiontaking_20,
-		
-		--HR Fixed Odds
-		@v154mpositiontaking_20 = @v154mpositiontaking_20,
-		
+
 		--v161
 		@v161mpositiontaking_81 = @v161mpositiontaking_81,
 		@v161mpositiontaking_83 = @v161mpositiontaking_83,
@@ -1144,10 +1082,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v99apositiontaking_3 = @v99apositiontaking_3,
 		@v99apositiontaking_9 = @v99apositiontaking_9,
 		@v99apositiontaking_20 = @v99apositiontaking_20,
-		
-		--HR Fixed Odds
-		@v154apositiontaking_20 = @v154apositiontaking_20,
-		
+
 		--v161
 		@v161apositiontaking_81 = @v161apositiontaking_81,
 		@v161apositiontaking_83 = @v161apositiontaking_83,
@@ -1182,11 +1117,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		
 		--Mix Parlay Soccer sports
 		@MinBetv1MP = @MinBetv1MP,
-		@MaxBetv1MP = @MaxBetv1MP,		
-		
-		--HR Fixed Odds
-		@MinBetv154 = @MinBetv154,
-		@MaxBetv154 = @MaxBetv154,		
+		@MaxBetv1MP = @MaxBetv1MP,	
+
 		--Number game
 		@MinBetv161 = @MinBetv161,
 		@MaxBetv161 = @MaxBetv161,	
@@ -1199,8 +1131,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@discountMyanmarOdds = @discountMyanmarOdds,
 		
 		@discountnumber = @discountnumber,
-		@discountHRFixedOdds = @discountHRFixedOdds,
-		
+	
 		@ErrCode = @ErrCode OUTPUT
 
 	IF @ErrCode > 0
@@ -1297,7 +1228,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	SET @LogSPData = @LogSPData + 
 	'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'discountHRFixedOdds="'+ COALESCE(CAST(@discountHRFixedOdds AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)),SPACE(1)) + '" ' 
 
 	IF @IsMyanmarOdds = 1
@@ -1325,8 +1255,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'groupd="'+ COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
 		SET @LogSPData = @LogSPData +
 		'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'discountHRFixedOdds="'+ COALESCE(CAST(@discountHRFixedOdds AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' +	
 		'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)),SPACE(1)) + '" ' 
 		IF @IsMyanmarOdds = 1
 			SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
@@ -1408,21 +1337,13 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	
-	'disablehorseracing="'+ COALESCE(CAST(@Disable151_31 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disableOT="'+ COALESCE(CAST(@Disable151_41 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disable151_51="'+ COALESCE(CAST(@Disable151_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disable152_41="'+ COALESCE(CAST(@Disable152_41 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disable152_51="'+ COALESCE(CAST(@Disable152_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disable153_51="'+ COALESCE(CAST(@Disable153_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
 	--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablebingo="'+ COALESCE(CAST(@disablebingo AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disableP2P="'+ COALESCE(CAST(@disableP2P AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disableFunP2P="'+ COALESCE(CAST(@disableFunP2P AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disable162_1101="'+ COALESCE(CAST(@disable162_1101 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'disableFunP2P="'+ COALESCE(CAST(@disableFunP2P AS VARCHAR(1)),SPACE(1)) + '" ' +	
 	'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -1431,7 +1352,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'DisableColossusBet="'+ COALESCE(CAST(@DisableColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
 
 	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disableHRFixedOdds="'+ COALESCE(CAST(@disableHRFixedOdds AS VARCHAR(1)),SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
+	 @LogDataKeno + @LogDataSP2 +
 	'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" />'
 
 	BEGIN TRY
@@ -1451,20 +1372,13 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		
-		'disablehorseracing="'+ COALESCE(CAST(@Disable151_31 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disableOT="'+ COALESCE(CAST(@Disable151_41 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disable151_51="'+ COALESCE(CAST(@Disable151_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disable152_41="'+ COALESCE(CAST(@Disable152_41 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disable152_51="'+ COALESCE(CAST(@Disable152_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disable153_51="'+ COALESCE(CAST(@Disable153_51 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	
 		--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablebingo="'+ COALESCE(CAST(@disablebingo AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disableP2P="'+ COALESCE(CAST(@disableP2P AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disableFunP2P="'+ COALESCE(CAST(@disableFunP2P AS VARCHAR(1)),SPACE(1)) + '" ' +	
-		'disable162_1101="'+ COALESCE(CAST(@disable162_1101 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'disableFunP2P="'+ COALESCE(CAST(@disableFunP2P AS VARCHAR(1)),SPACE(1)) + '" ' +		
 		'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -1472,8 +1386,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'HideColossusBet="'+ COALESCE(CAST(@HideColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'DisableColossusBet="'+ COALESCE(CAST(@DisableColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
 		
-		'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disableHRFixedOdds="'+ COALESCE(CAST(@disableHRFixedOdds AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +		
 		'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
 		'ErrMsg="'+ ERROR_MESSAGE() + '" />'
 		
@@ -1519,10 +1432,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'MinBv1MP="'+ COALESCE(CAST(@MinBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxBv1MP="'+ COALESCE(CAST(@MaxBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MPMv1MP="'+ COALESCE(CAST(@MaxPerMatchv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-	
-	'MinBv154="'+ COALESCE(CAST(@MinBetv154 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv154="'+ COALESCE(CAST(@MaxBetv154 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv154="'+ COALESCE(CAST(@MaxPerMatchv154 AS VARCHAR(50)),SPACE(1)) + '" ' +
+
 	'MinBv161="'+ COALESCE(CAST(@MinBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxBv161="'+ COALESCE(CAST(@MaxBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MPMv161="'+ COALESCE(CAST(@MaxPerMatchv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1569,10 +1479,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'MinBv1MP="'+ COALESCE(CAST(@MinBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MaxBv1MP="'+ COALESCE(CAST(@MaxBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MPMv1MP="'+ COALESCE(CAST(@MaxPerMatchv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
-		'MinBv154="'+ COALESCE(CAST(@MinBetv154 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv154="'+ COALESCE(CAST(@MaxBetv154 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv154="'+ COALESCE(CAST(@MaxPerMatchv154 AS VARCHAR(50)),SPACE(1)) + '" ' +
+
 		'MinBv161="'+ COALESCE(CAST(@MinBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MaxBv161="'+ COALESCE(CAST(@MaxBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MPMv161="'+ COALESCE(CAST(@MaxPerMatchv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1676,8 +1583,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v99spt_9="'+ COALESCE(CAST(@v99spositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_20="'+ COALESCE(CAST(@v99spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v154spt_20="'+ COALESCE(CAST(@v154spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v161spt_81="'+ COALESCE(CAST(@v161spositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161spt_83="'+ COALESCE(CAST(@v161spositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	--'v161spt_85="'+ coalesce(cast(@v161spositiontaking_85 as varchar(50)),space(1)) + '" ' +
@@ -1752,8 +1657,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v99mpt_9="'+ COALESCE(CAST(@v99mpositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_20="'+ COALESCE(CAST(@v99mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v154mpt_20="'+ COALESCE(CAST(@v154mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v161mpt_81="'+ COALESCE(CAST(@v161mpositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161mpt_83="'+ COALESCE(CAST(@v161mpositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	--'v161mpt_85="'+ coalesce(cast(@v161mpositiontaking_85 as varchar(50)),space(1)) + '" ' +
@@ -1827,8 +1730,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v99apt_3="'+ COALESCE(CAST(@v99apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_9="'+ COALESCE(CAST(@v99apositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_20="'+ COALESCE(CAST(@v99apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v154apt_20="'+ COALESCE(CAST(@v154apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v161apt_81="'+ COALESCE(CAST(@v161apositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161apt_83="'+ COALESCE(CAST(@v161apositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1912,9 +1813,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v99spt_3="'+ COALESCE(CAST(@v99spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99spt_9="'+ COALESCE(CAST(@v99spositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99spt_20="'+ COALESCE(CAST(@v99spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
-		'v154spt_20="'+ COALESCE(CAST(@v154spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
+
 		'v161spt_81="'+ COALESCE(CAST(@v161spositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161spt_83="'+ COALESCE(CAST(@v161spositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		--'v161spt_85="'+ coalesce(cast(@v161spositiontaking_85 as varchar(50)),space(1)) + '" ' +
@@ -1988,9 +1887,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v99mpt_3="'+ COALESCE(CAST(@v99mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99mpt_9="'+ COALESCE(CAST(@v99mpositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99mpt_20="'+ COALESCE(CAST(@v99mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
-		'v154mpt_20="'+ COALESCE(CAST(@v154mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
+
 		'v161mpt_81="'+ COALESCE(CAST(@v161mpositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161mpt_83="'+ COALESCE(CAST(@v161mpositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		--'v161mpt_85="'+ coalesce(cast(@v161mpositiontaking_85 as varchar(50)),space(1)) + '" ' +
@@ -2064,9 +1961,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v99apt_3="'+ COALESCE(CAST(@v99apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99apt_9="'+ COALESCE(CAST(@v99apositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99apt_20="'+ COALESCE(CAST(@v99apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
-		'v154apt_20="'+ COALESCE(CAST(@v154apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
+
 		'v161apt_81="'+ COALESCE(CAST(@v161apositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161apt_83="'+ COALESCE(CAST(@v161apositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		--'v161apt_85="'+ coalesce(cast(@v161apositiontaking_85 as varchar(50)),space(1)) + '" ' +

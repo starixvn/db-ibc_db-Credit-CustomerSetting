@@ -246,8 +246,8 @@ BEGIN
 			
 	BEGIN TRY
 		-- insert CustSuper info
-		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, AutoIBCPT151_AU, AutoIBCPT152_UK, AutoIBCPT152_AU, AutoIBCPT153_AU, IsInternal, TransferOption, LimitPerIP, SelectedBetting)  
-		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, AutoIBCPT151_AU, AutoIBCPT152_UK, AutoIBCPT152_AU, AutoIBCPT153_AU, @IsInternal, TransferOption, LimitPerIP, SelectedBetting
+		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting)  
+		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting
 		FROM CustSuper WITH(NOLOCK)
 		WHERE custid=@ExistingCustid		
 	END TRY
@@ -289,36 +289,22 @@ BEGIN
 				,maxpermatch11
 				,maxpermatch12
 				,maxpermatch99
-				,Enabled           
-				,maxpermatch151
-				,maxpermatch201
-				,DisableHorseRacing
+				,Enabled   
+				,maxpermatch201				
 				,DisableFinancial
 				,DisableCasino
 				,SyncCasino           
-				,DisableOutright
-				,DisableOpenTote
-				,maxpermatch151_OT
+				,DisableOutright				
 				,MaxPerMatch99MP
 				,DisableBingo
 				,DisableNumber
 				,maxpermatch161
 				,SyncBingo
-				,MaxPerBall161
-				,MaxPerMatch151_AU
-				,MaxPerMatch152_UK
-				,MaxPerMatch152_AU
-				,MaxPerMatch153_AU
-				,Disable151_AU
-				,Disable152_UK
-				,Disable152_AU
-				,Disable153_AU
+				,MaxPerBall161				
 				,MaxTransferP2P
 				,IsAutoResetP2P
 				,DisableP2P
-				,DisableFunP2P
-				,DisableLiveCasino
-				,SyncLiveCasino
+				,DisableFunP2P				
 				--,DisableVirtualSports
 				--,HideVirtualSports
 				--,maxpermatch180
@@ -327,13 +313,9 @@ BEGIN
 				--,maxpermatch185--dom
 				--,maxpermatch182
 				--,maxpermatch184
-				--,maxpermatch186
-				,isAutoResetLiveCasino
-				,MaxWinLiveCasino
+				--,maxpermatch186				
 				,DoubleCommLosing
-				,DisableCasinoBonus
-				,DisableHRFixedOdds
-				,maxpermatch154
+				,DisableCasinoBonus		
 				,HideKeno
 				,DisableEsports
 				,HideGoldDeluxe
@@ -367,36 +349,22 @@ BEGIN
 				,maxpermatch11
 				,maxpermatch12
 				,maxpermatch99
-				,Enabled           
-				,maxpermatch151
-				,maxpermatch201
-				,DisableHorseRacing
+				,Enabled  
+				,maxpermatch201			
 				,DisableFinancial
 				,DisableCasino
 				,0 as SyncCasino           
-				,DisableOutright
-				,DisableOpenTote
-				,maxpermatch151_OT
+				,DisableOutright				
 				,MaxPerMatch99MP
 				,DisableBingo
 				,DisableNumber
 				,maxpermatch161
 				,0 as SyncBingo
-				,MaxPerBall161
-				,MaxPerMatch151_AU
-				,MaxPerMatch152_UK
-				,MaxPerMatch152_AU
-				,MaxPerMatch153_AU
-				,Disable151_AU
-				,Disable152_UK
-				,Disable152_AU
-				,Disable153_AU
+				,MaxPerBall161				
 				,MaxTransferP2P
 				,IsAutoResetP2P
 				,DisableP2P
-				,DisableFunP2P
-				,DisableLiveCasino
-				,0 as SyncLiveCasino
+				,DisableFunP2P				
 				--,DisableVirtualSports
 				--,HideVirtualSports
 				--,maxpermatch180
@@ -405,13 +373,9 @@ BEGIN
 				--,maxpermatch185--dom
 				--,maxpermatch182
 				--,maxpermatch184
-				--,maxpermatch186
-				,isAutoResetLiveCasino
-				,MaxWinLiveCasino
+				--,maxpermatch186				
 				,doubleCommLosing
-				,DisableCasinoBonus
-				,DisableHRFixedOdds
-				,maxpermatch154
+				,DisableCasinoBonus		
 				,HideKeno
 				,DisableEsports
 				,HideGoldDeluxe 

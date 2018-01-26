@@ -73,7 +73,7 @@ AS
 	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
 	- 20170920@Helen: TO Control Phase 3 - [Redmine: 75557]
 	- 20171113@Helen: Support to add default TO setting for new direct customers - [Redmine:86052]
-	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -354,36 +354,23 @@ BEGIN
 			,maxpermatch11
 			,maxpermatch12
 			,maxpermatch99
-			,Enabled           
-			,maxpermatch151
+			,Enabled   
 			,maxpermatch201
 			,DisableHorseRacing
 			,DisableFinancial
 			,DisableCasino
 			,SyncCasino           
-			,DisableOutright
-			,DisableOpenTote
-			,maxpermatch151_OT
+			,DisableOutright		
 			,MaxPerMatch99MP
 			,DisableBingo
 			,DisableNumber
 			,maxpermatch161
 			,SyncBingo
 			,MaxPerBall161
-			,MaxPerMatch151_AU
-			,MaxPerMatch152_UK
-			,MaxPerMatch152_AU
-			,MaxPerMatch153_AU
-			,Disable151_AU
-			,Disable152_UK
-			,Disable152_AU
-			,Disable153_AU
 			,MaxTransferP2P
 			,IsAutoResetP2P
 			,DisableP2P
-			,DisableFunP2P
-			,DisableLiveCasino
-			,SyncLiveCasino
+			,DisableFunP2P			
 			--,DisableVirtualSports
 			--,HideVirtualSports
 			--,maxpermatch180
@@ -392,13 +379,9 @@ BEGIN
 			--,maxpermatch185--dom
 			--,maxpermatch182
 			--,maxpermatch184
-			--,maxpermatch186
-			,isAutoResetLiveCasino
-			,MaxWinLiveCasino
+			--,maxpermatch186		
 			,DoubleCommLosing
-			,DisableCasinoBonus
-			,DisableHRFixedOdds
-			,maxpermatch154
+			,DisableCasinoBonus			
 			,HideKeno
 			,DisableEsports
 			,HideGoldDeluxe
@@ -433,36 +416,23 @@ BEGIN
 			,maxpermatch11
 			,maxpermatch12
 			,maxpermatch99
-			,@enableUpline as Enabled           
-			,maxpermatch151
+			,@enableUpline as Enabled 
 			,maxpermatch201
 			,DisableHorseRacing
 			,DisableFinancial
 			,DisableCasino
 			,0 as SyncCasino           
 			,DisableOutright
-			,DisableOpenTote
-			,maxpermatch151_OT
 			,MaxPerMatch99MP
 			,DisableBingo
 			,DisableNumber
 			,maxpermatch161
 			,0 as SyncBingo
 			,MaxPerBall161
-			,MaxPerMatch151_AU
-			,MaxPerMatch152_UK
-			,MaxPerMatch152_AU
-			,MaxPerMatch153_AU
-			,Disable151_AU
-			,Disable152_UK
-			,Disable152_AU
-			,Disable153_AU
 			,MaxTransferP2P
 			,IsAutoResetP2P
 			,DisableP2P
-			,DisableFunP2P
-			,DisableLiveCasino
-			,0 as SyncLiveCasino
+			,DisableFunP2P			
 			--,DisableVirtualSports
 			--,HideVirtualSports
 			--,maxpermatch180
@@ -471,13 +441,9 @@ BEGIN
 			--,maxpermatch185--dom
 			--,maxpermatch182
 			--,maxpermatch184
-			--,maxpermatch186
-			,isAutoResetLiveCasino
-			,MaxWinLiveCasino
+			--,maxpermatch186			
 			,@doubleCommLosingUpline as doubleCommLosing
-			,1
-			,DisableHRFixedOdds
-			,maxpermatch154
+			,1			
 			,HideKeno
 			,DisableEsports
 			,HideGoldDeluxe
