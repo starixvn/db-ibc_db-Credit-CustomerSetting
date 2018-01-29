@@ -337,6 +337,7 @@ BEGIN
 	-- write runSP log
 	DECLARE @LogSPData VARCHAR(2000)
 		, @TrackingValue VARCHAR(2000)
+		, @ActionID INT
 	
 
 	SELECT @LogSPData = '<Acc_AdminUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
@@ -380,13 +381,71 @@ BEGIN
 
 	/*1148	Acc_CustomerUpdDisableKeno	Update Enabled/Disabled Keno status*/
 	BEGIN TRY
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60003 
+										WHEN 3 THEN 61006
+										WHEN 2 THEN 62006 
+										WHEN 1 THEN 63006 END
+										
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 			,@CustID = @CustID
-			,@ActionID = 1168
+			,@ActionID = @ActionID
 			,@Doing = 'Update Keno status for credit customer'
 			,@TrackingValue = @LogSPData
 			,@TrackingValue2 = @TrackingValue
 			,@duration = @duration
+		
+		--write log for downlines in-case update downlines
+		IF @HasDownline = 1			
+		BEGIN
+			IF @roleid >3 
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllMasters = 1 )
+					)			
+			BEGIN
+				--actionID on master
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 61007, 
+					@Doing = 'Update Keno status for credit customer',					
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @TrackingValue  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllAgents = 1 )
+					)	
+			BEGIN	
+				--actionID on agent
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 62007,  
+					@Doing = 'Update Keno status for credit customer',
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @TrackingValue  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllMembers = 1 )
+					)
+			BEGIN
+				--actionID on member
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 63007,  
+					@Doing = 'Update Keno status for credit customer',
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @TrackingValue  ,  
+					@duration = @duration
+			END	
+		END	
 	END TRY
 
 	BEGIN CATCH
@@ -408,13 +467,71 @@ BEGIN
 			+ 'ErrMsg="' + ERROR_MESSAGE() + '" ' 
 			+ 'IP="' + coalesce(cast(@IP AS VARCHAR(15)), space(1)) + '" />'
 
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60003 
+										WHEN 3 THEN 61006
+										WHEN 2 THEN 62006 
+										WHEN 1 THEN 63006 END
+										
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 			,@CustID = @CustID
-			,@ActionID = 1168
+			,@ActionID = @ActionID
 			,@Doing = 'Update Keno status for credit customer'
 			,@TrackingValue = @LogSPData
 			,@TrackingValue2 = @TrackingValue
 			,@duration = @duration
+		
+		--write log for downlines in-case update downlines
+		IF @HasDownline = 1			
+		BEGIN
+			IF @roleid >3 
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllMasters = 1 )
+					)			
+			BEGIN
+				--actionID on master
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 61007, 
+					@Doing = 'Update Keno status for credit customer',					
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @TrackingValue  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllAgents = 1 )
+					)	
+			BEGIN	
+				--actionID on agent
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 62007,  
+					@Doing = 'Update Keno status for credit customer',
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @TrackingValue  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllMembers = 1 )
+					)
+			BEGIN
+				--actionID on member
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 63007,  
+					@Doing = 'Update Keno status for credit customer',
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @TrackingValue  ,  
+					@duration = @duration
+			END	
+		END
 	END CATCH
 
 	RETURN

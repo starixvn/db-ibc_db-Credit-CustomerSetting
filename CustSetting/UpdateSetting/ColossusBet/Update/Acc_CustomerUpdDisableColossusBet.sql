@@ -140,7 +140,8 @@ BEGIN
 	END  
 
 	DECLARE @LogSPData VARCHAR(MAX),    
-			@LogSPData_Old VARCHAR(2000)    
+			@LogSPData_Old VARCHAR(2000),
+			@ActionID INT
 	 
 	SELECT @LogSPData = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
@@ -164,13 +165,59 @@ BEGIN
 	SET @duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)    
 
 	BEGIN TRY  
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
-		@UserID = @UserID,    
-		@CustID = @CustID,    
-		@ActionID = 1157,    
-		@TrackingValue = @LogSPData  ,   
-		@TrackingValue2 = @LogSPData_old  ,    
-		@duration = @duration    
+	--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60006 
+										WHEN 3 THEN 61012
+										WHEN 2 THEN 62012 
+										WHEN 1 THEN 63012 END
+										
+		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
+			@UserID = @UserID,    
+			@CustID = @CustID,    
+			@ActionID = @ActionID,    
+			@TrackingValue = @LogSPData  ,   
+			@TrackingValue2 = @LogSPData_old  ,    
+			@duration = @duration  
+		
+		--write log for downlines in-case disable downline
+		IF @Disable = 1
+		BEGIN
+			IF @roleid >3
+			BEGIN
+				--actionID on master
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 61013,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+			BEGIN	
+				--actionID on agent
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 62013,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+			BEGIN
+				--actionID on member
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 63013,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration
+			END		
+		END		
 	END TRY   
 	BEGIN CATCH  
 
@@ -183,14 +230,59 @@ BEGIN
 		'ErrMsg="'+ ERROR_MESSAGE() +'" '+    
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'   
 	   
-	EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
-		@UserID = @UserID,    
-		@CustID = @CustID,    
-		@ActionID = 1157,    
-		@TrackingValue = @LogSPData,    
-		@TrackingValue2 = @LogSPData_old,    
-		@duration = @duration  
-
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60006 
+										WHEN 3 THEN 61012
+										WHEN 2 THEN 62012 
+										WHEN 1 THEN 63012 END
+										
+		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
+			@UserID = @UserID,    
+			@CustID = @CustID,    
+			@ActionID = @ActionID,    
+			@TrackingValue = @LogSPData  ,   
+			@TrackingValue2 = @LogSPData_old  ,    
+			@duration = @duration  
+		
+		--write log for downlines in-case disable downline
+		IF @Disable = 1
+		BEGIN
+			IF @roleid >3
+			BEGIN
+				--actionID on master
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 61013,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+			BEGIN	
+				--actionID on agent
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 62013,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+			BEGIN
+				--actionID on member
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 63013,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration
+			END		
+		END		
 	END CATCH  
 
 END

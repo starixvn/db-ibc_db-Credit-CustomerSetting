@@ -228,7 +228,8 @@ Thank you'
 	--Log data
 	WRITELOG:
 	DECLARE @LogData NVARCHAR(MAX)
-	DECLARE @TrackingValue2 NVARCHAR(MAX)
+			,@TrackingValue2 NVARCHAR(MAX)
+			,@ActionID INT
 	---------------------------
 	select @LogData ='<Acc_AdminUpdCSStatus_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'disabledCS="'+ coalesce(cast(@disabledCS as varchar(50)),space(1)) + '" ' +
@@ -266,13 +267,68 @@ Thank you'
 	set @duration  = datediff (millisecond,@startRun,@endRun)
 
 	BEGIN TRY
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60005 
+										WHEN 3 THEN 61010
+										WHEN 2 THEN 62010 
+										WHEN 1 THEN 63010 END
+										
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 			@UserID = @UserID, 
 			@CustID = @custid,
-			@ActionID = 1175,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogData,
 			@TrackingValue2 = @TrackingValue2,
 			@duration = @duration
+			
+		--write log for downlines in-case disable downline
+		IF @HasDownline = 1
+		BEGIN
+			IF @roleid >3 
+				AND ( @DisabledCS = 1 
+					OR (@DisabledCS = 0 AND @UpdateAllMasters = 1 )
+					)			
+			BEGIN
+				--actionID on master
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 61011,  
+					@TrackingValue = @LogData  , 
+					@TrackingValue2 = @TrackingValue2  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+				AND ( @DisabledCS = 1 
+					OR (@DisabledCS = 0 AND @UpdateAllAgents = 1 )
+					)	
+			BEGIN	
+				--actionID on agent
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 62011,  
+					@TrackingValue = @LogData  , 
+					@TrackingValue2 = @TrackingValue2  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+				AND ( @DisabledCS = 1 
+					OR (@DisabledCS = 0 AND @UpdateAllMembers = 1 )
+					)
+			BEGIN
+				--actionID on member
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 63011,  
+					@TrackingValue = @LogData  , 
+					@TrackingValue2 = @TrackingValue2  ,  
+					@duration = @duration
+			END	
+		END			
 	END TRY
 	BEGIN CATCH
 		select @LogData ='<Acc_AdminUpdCSStatus_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
@@ -291,13 +347,68 @@ Thank you'
 		'IP="'+ coalesce(cast(@IP as varchar(20)),space(1)) + '" ' +
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))  + '" />'
 		
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60005 
+										WHEN 3 THEN 61010
+										WHEN 2 THEN 62010 
+										WHEN 1 THEN 63010 END
+										
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 			@UserID = @UserID, 
 			@CustID = @custid,
-			@ActionID = 1175,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogData,
 			@TrackingValue2 = @TrackingValue2,
 			@duration = @duration
+			
+		--write log for downlines in-case disable downline
+		IF @HasDownline = 1
+		BEGIN
+			IF @roleid >3 
+				AND ( @DisabledCS = 1 
+					OR (@DisabledCS = 0 AND @UpdateAllMasters = 1 )
+					)			
+			BEGIN
+				--actionID on master
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 61011,  
+					@TrackingValue = @LogData  , 
+					@TrackingValue2 = @TrackingValue2  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+				AND ( @DisabledCS = 1 
+					OR (@DisabledCS = 0 AND @UpdateAllAgents = 1 )
+					)	
+			BEGIN	
+				--actionID on agent
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 62011,  
+					@TrackingValue = @LogData  , 
+					@TrackingValue2 = @TrackingValue2  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+				AND ( @DisabledCS = 1 
+					OR (@DisabledCS = 0 AND @UpdateAllMembers = 1 )
+					)
+			BEGIN
+				--actionID on member
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = 63011,  
+					@TrackingValue = @LogData  , 
+					@TrackingValue2 = @TrackingValue2  ,  
+					@duration = @duration
+			END	
+		END	
 	END CATCH
 END
 GO
