@@ -69,7 +69,7 @@ BEGIN
 		- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
 		- 20170925@Johnson: Add filter product un-sync for Casino,GD,Allbet,Macau [Redmine: #72973]
 		- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
-
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -500,14 +500,12 @@ BEGIN
 			,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.discount else 0 end) as discount
 			,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.discount else 0 end) as discountcs
 			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.discount else 0 end) as discount1x2
-			,max(case when cs3.sporttype = 161 and cs3.bettype = 81 then cs3.discount else 0 end) as discountnumber
-			,max(case when cs.sporttype = 154 and cs.bettype = 20 then cs.discount else 0 end) as discountHRFixedOdds
+			,max(case when cs3.sporttype = 161 and cs3.bettype = 81 then cs3.discount else 0 end) as discountnumber			
 
 			,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.playerdiscount else 0 end) as playerdiscount
 			,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.playerdiscount else 0 end) as playerdiscountcs
 			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.playerdiscount else 0 end) as playerdiscount1x2
-			,max(case when cs3.sporttype = 161 and cs3.bettype = 81 then cs3.playerdiscount else 0 end) as playerdiscountnumber
-			,max(case when cs.sporttype = 154 and cs.bettype = 20 then cs.playerdiscount else 0 end) as playerdiscountHRFixedOdds
+			,max(case when cs3.sporttype = 161 and cs3.bettype = 81 then cs3.playerdiscount else 0 end) as playerdiscountnumber			
 
 			,min(case when g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516) then cg.IsDisabled else 1 end) as DisableKeno
 			,ISNULL(C.playerdiscountMyanmarOdds,0) AS playerdiscountMyanmarOdds
@@ -515,7 +513,7 @@ BEGIN
 			,ISNULL(C.discountCricket,0) AS discountCricket
 		FROM #memberList c
 			LEFT JOIN CustSetting cs with(nolock) 
-				on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) or (cs.sporttype = 154 and cs.bettype = 20))
+				on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) )
 			LEFT JOIN CustSetting3rd cs3 with(nolock) on c.custid = cs3.custid and cs3.sporttype = 161 and cs3.bettype = 81
 			LEFT JOIN CustGameType cg with(nolock) on c.custid = cg.custid
 			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516)
@@ -533,15 +531,11 @@ BEGIN
 		discount,  
 		discountcs,  
 		discount1x2,  
-		discountnumber,  
-		discountHRFixedOdds,
-
+		discountnumber,  		
 		playerdiscount,  
 		playerdiscountcs,  
 		playerdiscount1x2,   
-		playerdiscountnumber,  
-		playerdiscountHRFixedOdds,
-
+		playerdiscountnumber,  		
 		-- For casino  
 		ci.synccasino,  
 		ci.disablecasino,  
@@ -553,27 +547,11 @@ BEGIN
 		ci.isAutoResetP2P,
 		ci.DisableP2P,
 		ci.DisableFunP2P,
-		--For Live Casino
-		ci.DisableLiveCasino,
-		ci.SyncLiveCasino,	
+	
 		-- For VirtualSports
 		--ci.DisableVirtualSports,	
 		ci.DoubleCommLosing,
-
-		-- HR Fixed Odds
-		ci.DisableHRFixedOdds,
-		isnull( case when ci.disablehorseracing = 0 
-								or ci.disableOpenTote = 0 
-								or ci.disable151_au = 0 
-								or ci.disable152_uk = 0
-								or ci.disable152_au = 0 
-								or ci.disable153_au = 0 then 0 else 1 end ,0) as Disable151,
-		isnull(ci.disablehorseracing,0) as disable151_31,
-		isnull(ci.disableOpenTote,0) as disable151_41,
-		isnull(ci.disable151_au,0) as disable151_51,
-		isnull(ci.disable152_uk,0) as disable152_41,
-		isnull(ci.disable152_au,0) as disable152_51,
-		isnull(ci.disable153_au,0) as disable153_51,
+		
 		isnull(ci.disablefinancial,0) as disableFI,    
 		ci.HideKeno,
 		ISNULL(m.DisableKeno,0) AS DisableKeno,	

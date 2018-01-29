@@ -66,7 +66,7 @@ Revisions:
 	- 20170620@Winnie: Apply color for closed accounts - [Redmine #74494]	
 	- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
 	- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
-
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 Pattern Explanation:
 Search keyword: '%keyword%'
 First char
@@ -211,8 +211,7 @@ B: 'B%'
 			
 			discountcs,
 			discount1x2,	
-			max(case when cs3rd.bettype = 81 and cs3rd.sporttype = 161 then cs3rd.sdiscount else 0 end) as discountNumber,	
-			discountHRFixedOdds,
+			max(case when cs3rd.bettype = 81 and cs3rd.sporttype = 161 then cs3rd.sdiscount else 0 end) as discountNumber,			
 			ci.matchlimit,
 			ci.virtualmultiplier-1 as VirtualMultiplier,
 
@@ -342,8 +341,7 @@ B: 'B%'
 					MAX(case when cs.bettype = 1 and cs.sporttype=1 then cs.groupd else 0 end) as groupd,
 				
 					max(case when cs.bettype = 4 and cs.sporttype=1 then cs.sdiscount else 0 end) as discountcs,
-					max(case when cs.bettype = 5 and cs.sporttype=1 then cs.sdiscount else 0 end) as discount1x2,
-					max(case when cs.bettype = 20 and cs.sporttype = 154 then cs.sdiscount else 0 end) as discountHRFixedOdds			
+					max(case when cs.bettype = 5 and cs.sporttype=1 then cs.sdiscount else 0 end) as discount1x2					
 				from custsetting cs with (nolock)
 				group by custid
 			) cs on m.custid = cs.custid	
@@ -400,8 +398,7 @@ B: 'B%'
 			groupc, 
 			groupd,		
 			discountcs,
-			discount1x2,
-			discountHRFixedOdds,
+			discount1x2,			
 			AC.CommRate	,
 			ac.CustId,
 			m.[site],cda.Discount	,
@@ -462,8 +459,7 @@ B: 'B%'
 
 			max(case when cs.bettype = 4 and cs.sporttype=1 then cs.sdiscount else 0 end) as discountcs,
 			max(case when cs.bettype = 5 and cs.sporttype=1 then cs.sdiscount else 0 end) as discount1x2,
-			max(case when cs3rd.bettype = 81 and cs3rd.sporttype = 161 then cs3rd.sdiscount else 0 end) as discountNumber,		
-			max(case when cs.bettype = 20 and cs.sporttype = 154 then cs.sdiscount else 0 end) as discountHRFixedOdds,
+			max(case when cs3rd.bettype = 81 and cs3rd.sporttype = 161 then cs3rd.sdiscount else 0 end) as discountNumber,			
 			ci.matchlimit,
 			ci.virtualmultiplier-1 as VirtualMultiplier,
 

@@ -67,7 +67,7 @@ AS
 		- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
 		- 20170925@Johnson: Add filter product un-sync for Casino,GD,Allbet,Macau [Redmine: #72973]
 		- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
-
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -512,9 +512,9 @@ BEGIN
 	;WITH customers AS
 	(
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, reject, closed, MatchLimit, VirtualMultiplier, Enabled, DisableHorseRacing,
-				DisableFinancial, DisableCasino, SyncCasino, DisableOutright, DisableOpenTote, DisableBingo, DisableNumber, SyncBingo,
-				disable151_au, disable152_uk, disable152_au, disable153_au , isAutoResetP2P, DisableP2P, DisableFunP2P, 
-				DisableLiveCasino,SyncLiveCasino, DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,
+				DisableFinancial, DisableCasino, SyncCasino, DisableOutright,  DisableBingo, DisableNumber, SyncBingo,
+				isAutoResetP2P, DisableP2P, DisableFunP2P, 
+				DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,
 				-- For MuayThai
 				ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_MuayThai),1) AS DisableMuayThai,
 				CAST(CASE WHEN @IsHidden_MuayThai = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_MuayThai),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideMuayThai,
@@ -669,11 +669,10 @@ BEGIN
 			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupc ELSE 0 END) groupc, 
 			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupd ELSE 0 END) groupd, 
 			MAX(CASE WHEN cs.bettype = 4 and cs.sporttype=1 then cs.adiscount else 0 end) as discountcs,	
-			MAX(CASE WHEN cs.bettype = 5 and cs.sporttype=1 then cs.adiscount else 0 end) as discount1x2,				
-			MAX(CASE WHEN cs.bettype = 20 and cs.sporttype = 154 then cs.adiscount else 0 end) as discountHRFixedOdds
+			MAX(CASE WHEN cs.bettype = 5 and cs.sporttype=1 then cs.adiscount else 0 end) as discount1x2
 		FROM dbo.CustSetting cs WITH(NOLOCK) 
 		WHERE custid IN (SELECT custid FROM #customer)
-			AND sporttype IN (1,154) AND bettype IN (1,4,5,20)
+			AND sporttype IN (1) AND bettype IN (1,4,5,20)
 		GROUP BY cs.custid 
 	),
 	keno AS
@@ -689,19 +688,7 @@ BEGIN
 			ctm.closed, 
 			ISNULL(ctm.reject,0) as suspended,	
 			ISNULL(ctm.DisableOutright,0) as DisableOutright,
-			ISNULL(ctm.DisableAutoMPT,0) as DisableAutoMPT,
-			ISNULL( CASE WHEN ctm.disablehorseracing = 0 
-							or ctm.disableOpenTote = 0 
-							or ctm.disable151_au = 0 
-							or ctm.disable152_uk = 0
-							or ctm.disable152_au = 0 
-							or ctm.disable153_au = 0 then 0 else 1 end ,0) as Disable151,
-			ISNULL(ctm.disablehorseracing,0) as disable151_31,
-			ISNULL(ctm.disableOpenTote,0) as disable151_41,
-			ISNULL(ctm.disable151_au,0) as disable151_51,
-			ISNULL(ctm.disable152_uk,0) as disable152_41,
-			ISNULL(ctm.disable152_au,0) as disable152_51,
-			ISNULL(ctm.disable153_au,0) as disable153_51,
+			ISNULL(ctm.DisableAutoMPT,0) as DisableAutoMPT,	
 			ISNULL(ctm.disablefinancial,0) as DisableFI,
 			ctm.username, 
 			ctm.custid, 
@@ -719,8 +706,7 @@ BEGIN
 			cs.groupd as groupd, 
 			discountcs discountcs,	
 			discount1x2 discount1x2,	
-			discountnumber discountnumber,
-			discountHRFixedOdds discountHRFixedOdds,
+			discountnumber discountnumber,			
 			ctm.currency,	
 			ctm.matchlimit,
 			ctm.virtualmultiplier-1 as VirtualMultiplier,
@@ -738,11 +724,7 @@ BEGIN
 			--For P2P
 			ctm.isAutoResetP2P,
 			ctm.DisableP2P,
-			ctm.DisableFunP2P,
-			
-			-- For live casino
-			ctm.DisableLiveCasino,
-			ctm.SyncLiveCasino,
+			ctm.DisableFunP2P,		
 			  
 			---- For VirtualSports
 			--ctm.DisableVirtualSports,
