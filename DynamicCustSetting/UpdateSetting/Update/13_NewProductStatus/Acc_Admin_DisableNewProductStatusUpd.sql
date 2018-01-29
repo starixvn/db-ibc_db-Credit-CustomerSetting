@@ -2,13 +2,11 @@
 USE CustDB
 GO
 
-CREATE PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusUpd] 
+ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusUpd] 
 	  @CustID			INT
 	, @IsDisabled		VARCHAR(MAX)
-	, @SubAccID			INT				= 0
 	, @UserID			INT
 	, @IP				VARCHAR(50)		= ''
-	, @SystemID			TINYINT
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
@@ -28,7 +26,13 @@ AS
 				<ProductStatus
 						SportType="1" 
 						BetType="1" 
-						IsDisabled="1"						
+						IsDisabled="1"	
+						UpdateAllMasters="1"					
+						UpdateAllAgents="1"
+						UpdateAllMembers="1"
+						DisableAllMasters="0"
+						DisableAllAgents="0"
+						DisableAllMembers="0"
 				/>
 		</ROOT>
 
@@ -57,11 +61,23 @@ BEGIN
 		SportType				SMALLINT
 		, BetType				SMALLINT
 		, IsDisabled			BIT
+		, UpdateAllMasters		BIT
+		, UpdateAllAgents		BIT
+		, UpdateAllMembers		BIT
+		, DisableAllMasters		BIT
+		, DisableAllAgents		BIT
+		, DisableAllMembers		BIT
 		)
 	CREATE TABLE #OldDisableStatTbl  (
-		SportType		SMALLINT
-		, BetType		SMALLINT
-		, IsDisabled	BIT
+		SportType				SMALLINT
+		, BetType				SMALLINT
+		, IsDisabled			BIT
+		, UpdateAllMasters		BIT
+		, UpdateAllAgents		BIT
+		, UpdateAllMembers		BIT
+		, DisableAllMasters		BIT
+		, DisableAllAgents		BIT
+		, DisableAllMembers		BIT
 		)
 
 	SELECT	@ErrCode	= 0
@@ -135,17 +151,22 @@ BEGIN
 			SportType				SMALLINT
 			, BetType				SMALLINT
 			, IsDisabled			BIT
+			, UpdateAllMasters		BIT
+			, UpdateAllAgents		BIT
+			, UpdateAllMembers		BIT
+			, DisableAllMasters		BIT
+			, DisableAllAgents		BIT
+			, DisableAllMembers		BIT
 			)
 	
 	EXEC sp_xml_removedocument @iDoc
 
 	--Validate new disabled status
-	EXEC [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] @IsDisabled = @IsDisabled
+	EXEC [dbo].[Acc_Admin_DisableNewProductStatusCheck] @IsDisabled = @IsDisabled
 		, @RoleID	= @RoleID
 		, @AgentID	= @AgentID
 		, @MasterID = @MasterID
 		, @SuperID	= @SuperID
-		, @SystemID = @SystemID
 		, @ErrCode	= @ErrCode	OUTPUT
 		, @MsgType	= @MsgType  OUTPUT
 		, @ErrMsg	= @ErrMsg	OUTPUT
@@ -158,40 +179,64 @@ BEGIN
 	
 	IF @roleid = 4
 	BEGIN		
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled)
+		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
 		SELECT psp.SportType
 			, psp.BetType
-			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled			
+			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled
+			, tmp.UpdateAllAgents
+			, tmp.UpdateAllMasters
+			, tmp.UpdateAllMembers
+			, tmp.DisableAllMasters
+			, tmp.DisableAllAgents
+			, tmp.DisableAllMembers			
 		FROM #NewDisableStatTbl tmp
 			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
 	END
 	ELSE IF @roleid = 3
 	BEGIN
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled)
+		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
 		SELECT psp.SportType
 			, psp.BetType
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
+			, tmp.UpdateAllAgents
+			, tmp.UpdateAllMasters
+			, tmp.UpdateAllMembers
+			, tmp.DisableAllMasters
+			, tmp.DisableAllAgents
+			, tmp.DisableAllMembers
 		FROM #NewDisableStatTbl tmp
 			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
 	END 	
 	ELSE IF @roleid = 2
 	BEGIN
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled)
+		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
 		SELECT psp.SportType
 			, psp.BetType
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
+			, tmp.UpdateAllAgents
+			, tmp.UpdateAllMasters
+			, tmp.UpdateAllMembers
+			, tmp.DisableAllMasters
+			, tmp.DisableAllAgents
+			, tmp.DisableAllMembers
 		FROM #NewDisableStatTbl tmp
 			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
 	END 
 	ELSE IF @roleid = 1
 	BEGIN
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled)
+		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
 		SELECT psp.SportType
 			, psp.BetType
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
+			, tmp.UpdateAllAgents
+			, tmp.UpdateAllMasters
+			, tmp.UpdateAllMembers
+			, tmp.DisableAllMasters
+			, tmp.DisableAllAgents
+			, tmp.DisableAllMembers
 		FROM #NewDisableStatTbl tmp
 			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
@@ -202,7 +247,7 @@ BEGIN
 			SELECT TOP 1 1
 			FROM #NewDisableStatTbl tmp
 				INNER JOIN #OldDisableStatTbl stt ON tmp.SportType	= stt.SportType	AND tmp.BetType = stt.BetType
-			WHERE tmp.IsDisabled <> stt.IsDisabled
+			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 AND tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1
 			)
 		RETURN
 
@@ -255,6 +300,55 @@ BEGIN
 		
 	END
 	
+	--call execrept to update downline
+	DECLARE @IsDisabled_Downline XML
+	
+	SET @IsDisabled_Downline = (
+			SELECT (
+					SELECT 
+						SportType AS '@SportType'
+						,BetType AS '@BetType'
+						,IsDisabled AS '@IsDisabled'
+						,UpdateAllMasters AS '@UpdateAllMasters'
+						,UpdateAllAgents AS '@UpdateAllAgents'
+						,UpdateAllMembers AS '@UpdateAllMembers'
+						,DisableAllMasters AS '@DisableAllMasters'
+						,DisableAllAgents AS '@DisableAllAgents'
+						,DisableAllMembers AS '@DisableAllMembers'
+
+					FROM #NewDisableStatTbl
+					WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1
+					FOR XML PATH('ProductStatus')
+						, TYPE
+					)
+			FOR XML PATH('ROOT')
+				, TYPE
+			)
+	
+	DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
+	
+	SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
+	
+	IF @RoleID <> 1 AND @IsDisabled_Downline_tmp <> '<ROOT/>'
+	BEGIN		
+				EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
+						, @RoleID			= @RoleID
+						, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+						, @Action			= 'NewProductStatus'
+
+		IF @ProductID = 24 --Fishing World
+		BEGIN
+			IF @downlines = 1
+			BEGIN
+				IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND IsDisabledDownline= 0) --enable downline
+					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3, @IsDisabled = @IsDisabled_Downline_tmp
+				IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) --disable downline
+					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
+			END
+		END
+	
+	END
+
 	--START LOGGING			
 
 	-- Select ProductID and SettingLevel
@@ -281,7 +375,6 @@ BEGIN
 					@ProductName					AS '@ProductName',
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
@@ -301,7 +394,6 @@ BEGIN
 					@ProductName					AS '@ProductName',
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -321,7 +413,6 @@ BEGIN
 					@ProductName					AS '@ProductName',
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
@@ -341,7 +432,6 @@ BEGIN
 					@ProductName					AS '@ProductName',
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -365,7 +455,6 @@ BEGIN
 					@ProductName					AS '@ProductName',
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
@@ -385,7 +474,6 @@ BEGIN
 					@ProductName					AS '@ProductName',
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -405,7 +493,6 @@ BEGIN
 					@ProductName					AS '@ProductName',
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
@@ -425,7 +512,6 @@ BEGIN
 					@ProductName					AS '@ProductName',
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',

@@ -2,7 +2,7 @@
 USE CustDB
 GO
  
-CREATE PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusSelect] 
+ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
 AS
@@ -70,6 +70,7 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
 				CAST(0 AS BIT) AS isDisabledUpline,
+				CAST(0 AS BIT) AS isHiddenUpline,
 				TotalDisabledMasters,
 				TotalEnabledMasters, 
 				TotalDisabledAgents, 
@@ -102,6 +103,7 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsHidden, PSP.bitmapOrder)) AS isHiddenUpline,
 				TotalDisabledMasters,
 				TotalEnabledMasters, 
 				TotalDisabledAgents, 
@@ -135,6 +137,7 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsHidden, PSP.bitmapOrder)) AS isHiddenUpline,
 				TotalDisabledMasters,
 				TotalEnabledMasters, 
 				TotalDisabledAgents, 
@@ -155,6 +158,7 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsHidden, PSP.bitmapOrder)) AS isHiddenUpline,
 				0 AS TotalDisabledMasters,
 				0 AS TotalEnabledMasters, 
 				0 AS TotalDisabledAgents, 
