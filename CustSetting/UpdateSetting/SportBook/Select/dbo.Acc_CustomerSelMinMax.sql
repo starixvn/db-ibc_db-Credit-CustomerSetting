@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
 	@custid int,	
 	@MinBet money output, @MaxBet money output, @MaxPerMatch money output,
 	@MinBetv2 money output, @MaxBetv2 money output, @MaxPerMatchv2 money output,
@@ -9,8 +10,7 @@
 	@MinBetv11 money output, @MaxBetv11 money output, @MaxPerMatchv11 money output,
 	@MinBetv99 money output, @MaxBetv99 money output, @MaxPerMatchv99 money output,
 	@MinBetv99MP money output, @MaxBetv99MP money output, @MaxPerMatchv99MP money output,
-	@MinBetv1MP money output, @MaxBetv1MP money output, @MaxPerMatchv1MP money output,
-	@MinBetv154 money = 0 output, @MaxBetv154 money = 0 output, @MaxPerMatchv154 money = 0 output,
+	@MinBetv1MP money output, @MaxBetv1MP money output, @MaxPerMatchv1MP money output,	
 	@MinBetv161 money output, @MaxBetv161 money output, @MaxPerMatchv161 money output, @MaxPerBallv161 money output
 AS
 /*
@@ -22,7 +22,7 @@ Original:
 Revisions:
     - 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
-    
+    - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 Param's Explanation:
 • @custid: custid that need to be viewed.   
 */
@@ -91,12 +91,6 @@ BEGIN
 
 
 	Select 
-		@MinBetv154 = isnull(MinBet,0), 
-		@MaxBetv154 = isnull(MaxBet,0)
-	from custsetting WITH (NOLOCK)
-	where custid = @CustID and bettype = 20 and sporttype=154
-
-	Select 
 		@MinBetv161 = isnull(MinBet,0), 
 		@MaxBetv161 = isnull(MaxBet,0)
 	from custsetting3rd WITH (NOLOCK)
@@ -114,8 +108,7 @@ BEGIN
 		@MaxPerMatchv11 = MaxPerMatch11, 
 		@MaxPerMatchv99 = MaxPerMatch99,
 		@MaxPerMatchv99MP = MaxPerMatch99MP,
-		@MaxPerMatchv1MP = MaxPerMatch1MP,
-		@MaxPerMatchv154 = MaxPerMatch154,
+		@MaxPerMatchv1MP = MaxPerMatch1MP,		
 		@MaxPerMatchv161 = MaxPerMatch161,
 		@MaxPerBallv161 = MaxPerBall161
 	from custinfo WITH (NOLOCK) 

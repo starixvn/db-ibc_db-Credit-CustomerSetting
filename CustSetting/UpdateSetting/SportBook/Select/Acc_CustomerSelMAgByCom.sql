@@ -63,7 +63,7 @@ BEGIN
 		- 20170605@Winnie: Apply Color for closed account [Redmine's Ids: #74494]
 		- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
 		- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
-
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	Pattern Explanation:
 	Search keyword: '%keyword%'
 	First char
@@ -213,8 +213,7 @@ BEGIN
 		
 			max(case when cs.bettype = 4 and cs.sporttype=1 then cs.adiscount else 0 end) as discountcs,
 			max(case when cs.bettype = 5 and cs.sporttype=1 then cs.adiscount else 0 end) as discount1x2,
-			max(case when cs3.bettype = 81 and cs3.sporttype = 161 then cs3.adiscount else 0 end) as discountnumber,
-			max(case when cs.bettype = 20 and cs.sporttype = 154 then cs.adiscount else 0 end) as discountHRFixedOdds,
+			max(case when cs3.bettype = 81 and cs3.sporttype = 161 then cs3.adiscount else 0 end) as discountnumber,			
 			ci.currency as exchangeid,
 			ci.currency,
 			m.isinternal,
