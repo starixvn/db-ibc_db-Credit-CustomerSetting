@@ -2463,3 +2463,4 @@ BEGIN
 			OR cs.isautolivempositiontaking <> t.isautolivempositiontaking	
 	
 END
+GO

@@ -860,3 +860,4 @@ SET NOCOUNT ON
 		WHERE custid=@custid
 	END
 END
+GO

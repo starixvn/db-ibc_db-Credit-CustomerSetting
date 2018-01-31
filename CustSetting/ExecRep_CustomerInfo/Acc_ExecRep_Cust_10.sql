@@ -349,3 +349,4 @@ BEGIN
 			AND Recommend = @CustID
 	END
 END
+GO

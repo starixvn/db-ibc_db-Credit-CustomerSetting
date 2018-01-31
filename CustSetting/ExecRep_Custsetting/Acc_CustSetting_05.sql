@@ -1,8 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @srecommend INT = 0,
     @mrecommend INT =0,
@@ -546,8 +543,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
         Date: 2013-10-29
         Task: Apply execrep when UPDATE auto pt ON master , agent, member levels
         DB: DBCUST/custDB
-        Original versions: Acc_CustomerUpdMaster_AutoPositiontaking_xtest
-                    Acc_CustomerUpdAgent_AutoPositiontaking_xtest
+        Original versions: Acc_CustomerUpdMaster_AutoPositiontaking
+                    Acc_CustomerUpdAgent_AutoPositiontaking
         
         Revision:
             - 20131105@Elodie: Add HR Fixed Odds [Redmine:#6505]
@@ -2803,3 +2800,4 @@ BEGIN
         DEALLOCATE CUR
     END
 END
+GO

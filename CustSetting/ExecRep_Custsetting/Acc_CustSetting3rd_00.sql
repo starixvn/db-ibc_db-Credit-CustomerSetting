@@ -529,3 +529,4 @@ BEGIN
 	
     RETURN	
 END--end mode = 'Keno', 'GoldDeluxe'
+GO

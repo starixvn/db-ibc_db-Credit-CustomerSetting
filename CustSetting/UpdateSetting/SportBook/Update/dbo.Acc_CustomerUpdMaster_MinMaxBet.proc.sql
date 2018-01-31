@@ -81,7 +81,7 @@ as
 Created: 20080515@Thien
 Task : Update master's min/max bet/maxpermatch 
 DB: DBTXN/bodb02
-Original: [Acc_CustomerUpdMaster_MinMaxBet_xtest]
+Original: [Acc_CustomerUpdMaster_MinMaxBet]
 
 Revisions:
     - 20090314@HanhVu: add Korean language

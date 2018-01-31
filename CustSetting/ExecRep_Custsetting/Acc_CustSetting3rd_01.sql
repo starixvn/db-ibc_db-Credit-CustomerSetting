@@ -3,6 +3,7 @@ ALTER PROCEDURE [Acc_CustSetting3rd_01]
 	@srecommend int,
 	@mode varchar(20) = 'number' --'horse' or 'number' or 'finance' or 'virtual-sports'
 AS
+BEGIN
 --@Source Control
 /*
 Created: 20090520@Phuc
@@ -235,7 +236,7 @@ BEGIN
 	    
     RETURN
 END
-
+END
 
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustSetting3rd_01] TO [bodbAdminNet] AS [dbo]
