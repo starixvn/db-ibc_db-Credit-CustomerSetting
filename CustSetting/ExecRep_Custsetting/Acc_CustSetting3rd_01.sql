@@ -1,5 +1,5 @@
 ﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE [Acc_CustSetting3rd_01]
+ALTER PROCEDURE dbo.Acc_CustSetting3rd_01
 	@srecommend int,
 	@mode varchar(20) = 'number' --'horse' or 'number' or 'finance' or 'virtual-sports'
 AS
