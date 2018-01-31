@@ -1,9 +1,9 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Commission]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Commission]
 	@custid INT,-- MemberId
 	@playerdiscount DECIMAL(9,8),
 	@playerdiscountcs DECIMAL(9,8),	
 	@playerdiscount1x2 DECIMAL(9,8)=0,
-	@playerdiscountHRFixedOdds DECIMAL(9,8)=0,
 	@playerdiscountnumber DECIMAL(9,8)=0,
 	
 	@IsMyanmarOdds BIT = 0,
@@ -45,7 +45,7 @@ Revisions:
 	- 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
 	- 20131029@Kathy: Apply exec rep to update commission [Redmine:#3244]
 	- 20150904@Helen: commission setting for MO [Redmine #41470]
-	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]		
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -64,14 +64,14 @@ Param's Explanation:
 	DECLARE @Old_playerdiscount DECIMAL(9,8),
 			@Old_playerdiscountcs DECIMAL(9,8),	
 			@Old_playerdiscount1x2 DECIMAL(9,8),
-			@Old_playerdiscountHRFixedOdds DECIMAL(9,8),
+			
 			@Old_playerdiscountnumber DECIMAL(9,8)
 
 	--Check Param
 	IF	@playerdiscount<0 OR @playerdiscount>0.2
 		OR @playerdiscountcs<0 OR @playerdiscountcs>0.2
 		OR @playerdiscount1x2<0 OR @playerdiscount1x2>0.2
-		OR @playerdiscountHRFixedOdds<0 OR @playerdiscountHRFixedOdds>0.2
+		
 		OR @playerdiscountnumber<0 OR @playerdiscountnumber>0.2	
 	BEGIN	
 		SELECT @ErrMsg = CASE @Language 
@@ -84,7 +84,7 @@ Param's Explanation:
 	
 	---------------------------------------
 	DECLARE @username VARCHAR(40), @recommend INT,
-			@discount DECIMAL(9,8), @discountcs DECIMAL(9,8), @discount1x2 DECIMAL(9,8), @discountHRFixedOdds DECIMAL(9,8), @discountnumber DECIMAL(9,8),@ugroup VARCHAR(10)
+			@discount DECIMAL(9,8), @discountcs DECIMAL(9,8), @discount1x2 DECIMAL(9,8),@discountnumber DECIMAL(9,8),@ugroup VARCHAR(10)
 	declare @err1 int, @err2 int
 			
 	SELECT @UserName  = username,
@@ -97,7 +97,7 @@ Param's Explanation:
 		SELECT @Old_playerdiscount=playerdiscount FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND sporttype=1 AND bettype=1
 		SELECT @Old_playerdiscountcs=playerdiscount FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 4
 		SELECT @Old_playerdiscount1x2=playerdiscount FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 5
-		SELECT @Old_playerdiscountHRFixedOdds=playerdiscount FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND sporttype = 154 AND bettype = 20	
+	
 		SELECT @Old_playerdiscountnumber=playerdiscount FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND Sporttype = 161 AND bettype = 81	
 
 		--Get g2
@@ -118,11 +118,7 @@ Param's Explanation:
 		FROM custsetting WITH (NOLOCK)
 		WHERE custid = @recommend AND sporttype = 1 AND bettype = 5
 		
-		--HR Fixed Odds
-		SELECT @discountHRFixedOdds = discount
-		FROM custsetting WITH (NOLOCK)
-		WHERE custid = @recommend AND sporttype = 154 AND bettype = 20
-		
+	
 		--161
 		SELECT @discountnumber = discount
 		FROM custsetting3rd WITH (NOLOCK)
@@ -134,7 +130,7 @@ Param's Explanation:
 			@playerdiscount = CASE WHEN @playerdiscount>@discount THEN @discount ELSE @playerdiscount END,
 			@playerdiscountcs = CASE WHEN @playerdiscountcs>@discountcs THEN @discountcs ELSE @playerdiscountcs END,
 			@playerdiscount1x2 = CASE WHEN @playerdiscount1x2>@discount1x2 THEN @discount1x2 ELSE @playerdiscount1x2 END,		
-			@playerdiscountHRFixedOdds = CASE WHEN @playerdiscountHRFixedOdds>@discountHRFixedOdds THEN @discountHRFixedOdds ELSE @playerdiscountHRFixedOdds END,				
+				
 			@playerdiscountnumber = CASE WHEN @playerdiscountnumber>@discountnumber THEN @discountnumber ELSE @playerdiscountnumber END
 		---------------------------------------
 		Declare @RoleId int
@@ -164,8 +160,7 @@ Param's Explanation:
 			@CustId = @custid,
 			@RoleId = @RoleId,
 			@groupa = @playerdiscount ,
-			@discountcs = @playerdiscountcs,	
-			@discountHRFixedOdds = @playerdiscountHRFixedOdds,	
+			@discountcs = @playerdiscountcs,			
 			@discount1x2 = @playerdiscount1x2,
 			@discountMyanmarOdds = @discountMyanmarOdds,
 			@IsMyanmarOdds = @IsMyanmarOdds
@@ -185,8 +180,7 @@ Param's Explanation:
 	Select @LogSPData = '<Acc_CustomerUpdMember_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'playerdiscount="'+ coalesce(cast(@playerdiscount as varchar(50)),space(1)) + '" ' +
 	'playerdiscountcs="'+ coalesce(cast(@playerdiscountcs as varchar(50)),space(1)) + '" ' +
-	'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' +
-	'playerdiscountHRFixedOdds="'+ coalesce(cast(@playerdiscountHRFixedOdds as varchar(50)),space(1)) + '" ' +
+	'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' +	
 	'playerdiscountnumber="'+ coalesce(cast(@playerdiscountnumber as varchar(50)),space(1)) + '" '
 	
 	IF @IsMyanmarOdds = 1
@@ -204,7 +198,7 @@ Param's Explanation:
 	'playerdiscount="'+ coalesce(cast(@Old_playerdiscount as varchar(50)),space(1)) + '" ' +
 	'playerdiscountcs="'+ coalesce(cast(@Old_playerdiscountcs as varchar(50)),space(1)) + '" ' +
 	'playerdiscount1x2="'+ coalesce(cast(@Old_playerdiscount1x2 as varchar(50)),space(1)) + '" ' +
-	'playerdiscountHRFixedOdds="'+ coalesce(cast(@Old_playerdiscountHRFixedOdds as varchar(50)),space(1)) + '" ' +
+	
 	'playerdiscountnumber="'+ coalesce(cast(@Old_playerdiscountnumber as varchar(50)),space(1)) + '" ' 
 	
 	IF @IsMyanmarOdds = 1
@@ -237,7 +231,7 @@ Param's Explanation:
 		'playerdiscount="'+ coalesce(cast(@playerdiscount as varchar(50)),space(1)) + '" ' +
 		'playerdiscountcs="'+ coalesce(cast(@playerdiscountcs as varchar(50)),space(1)) + '" ' +
 		'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' +
-		'playerdiscountHRFixedOdds="'+ coalesce(cast(@playerdiscountHRFixedOdds as varchar(50)),space(1)) + '" ' +	
+	
 		'playerdiscountnumber="'+ coalesce(cast(@playerdiscountnumber as varchar(50)),space(1)) + '" ' 
 		
 		IF @IsMyanmarOdds = 1 
@@ -255,7 +249,7 @@ Param's Explanation:
 		'playerdiscount="'+ coalesce(cast(@Old_playerdiscount as varchar(50)),space(1)) + '" ' +
 		'playerdiscountcs="'+ coalesce(cast(@Old_playerdiscountcs as varchar(50)),space(1)) + '" ' +
 		'playerdiscount1x2="'+ coalesce(cast(@Old_playerdiscount1x2 as varchar(50)),space(1)) + '" ' +
-		'playerdiscountHRFixedOdds="'+ coalesce(cast(@Old_playerdiscountHRFixedOdds as varchar(50)),space(1)) + '" ' +
+		
 		'playerdiscountnumber="'+ coalesce(cast(@Old_playerdiscountnumber as varchar(50)),space(1)) + '" ' 
 		
 		IF @IsMyanmarOdds = 1 

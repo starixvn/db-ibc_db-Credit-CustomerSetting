@@ -1,7 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO 
-
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_01]
 	@custid INT =0,
 	@srecommend INT = 0,

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,7 +18,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@discountcs decimal(9,8),
 	@discount1x2 decimal(9,8)=0,	
 	@discountnumber decimal(9,8), 
-	@discountHRFixedOdds DECIMAL(9,8)=0,
 	@discountMyanmarOdds DECIMAL(9,8)=0, -- MyanmarOdds
 	@closed bit,
 	@Suspended bit,
@@ -65,12 +64,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	-- soccer sports
 	@MinBetv1MP money,
 	@MaxBetv1MP money,
-	@MaxPerMatchv1MP money,
-	
-	--HR Fixed Odds
-	@MinBetv154 MONEY = 0,
-	@MaxBetv154 MONEY = 0,
-	@MaxPerMatchv154 MONEY = 0,
+	@MaxPerMatchv1MP money,	
 	
 	-- number game
 	@MinBetv161 money,
@@ -157,9 +151,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	-- mixed sports
 	@v99apositiontaking_9 smallmoney,
 	
-	--HR Fixed Odds
-	@v154apositiontaking_20 SMALLMONEY = 0,
-	
 	--- number game
 	@v161apositiontaking_81 smallmoney,
 	@v161apositiontaking_83 smallmoney,
@@ -213,9 +204,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	-- mixed sports
 	@v99mpositiontaking_9 smallmoney,
 
-	--HR Fixed Odds
-	@v154mpositiontaking_20 SMALLMONEY = 0,
-	
 	-- number game
 	@v161mpositiontaking_81 smallmoney,
 	@v161mpositiontaking_83 smallmoney,
@@ -287,9 +275,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	-- mixed sports
 	@auto_v99mpositiontaking_9 smallmoney = 0,
 
-	--HR Fixed Odds
-	@auto_v154mpositiontaking_20 SMALLMONEY = 0,
-	
 	-- number game
 	@auto_v161mpositiontaking_81 smallmoney = 0,
 	@auto_v161mpositiontaking_83 smallmoney = 0,
@@ -359,10 +344,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 
 	-- mixed sports
 	@isauto_v99mpositiontaking_9 bit = 0,
-	
-	--HR Fixed Odds
-	@isauto_v154mpositiontaking_20 SMALLMONEY = 0,
-	
+
 	-- number game
 	@isauto_v161mpositiontaking_81 bit = 0,
 	@isauto_v161mpositiontaking_83 bit = 0,
@@ -390,9 +372,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@UpdateMinMaxBetv99MP bit = 1,
 	
 	@UpdateMinMaxBetv1MP bit = 1,
-	
-	--HR Fixed Odds
-	@UpdateMinMaxBetv154 bit = 1,
+
 	-- number game
 	@UpdateMinMaxBetv161 bit = 1,
 	
@@ -439,8 +419,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	
 	--mixed sports
 	@UpdatePositiontakingv99MP bit = 1, 
-	--HR Fixed Odds
-	@UpdatePositiontakingv154 bit = 1,
+
 	-- number game
 	@UpdatePositiontakingv161 bit = 1,
 	
@@ -498,6 +477,7 @@ Revisions:
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20170628@Winnie: Color for closed account - [Redmine: 74494]
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 Param's Explanation:
 • @ErrCode:
     = 0: Update Agent successfully.
@@ -658,8 +638,7 @@ BEGIN
 			@groupc_old decimal(9,8),
 			@groupd_old decimal(9,8),
 			@discountcs_old decimal(9,8),
-			@discount1x2_old decimal(9,8),
-			@discountHRFixedOdds_old decimal(9,8),
+			@discount1x2_old decimal(9,8),		
 			@discountnumber_old decimal(9,8),
 			@discountMyanmarOdds_old DECIMAL(9,8) = 0
 			
@@ -671,9 +650,6 @@ BEGIN
 
 		select @discount1x2_old = discount
 		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 5
-
-		select @discountHRFixedOdds_old = discount
-		from custsetting (nolock) where custid = @custid and sporttype = 154 and bettype = 20
 		
 		-- discount number
 		select @discountnumber_old = discount
@@ -690,7 +666,7 @@ BEGIN
 			SET @discountMyanmarOdds_old = (SELECT CommRate FROM AgentCommRate WITH (NOLOCK) WHERE CustId = @custid AND Sporttype = 1 AND Bettype = 301)
 		END
 		if (@groupa_old <> @groupa) or (@groupb_old <> @groupb) or (@groupc_old <> @groupc) or (@groupd_old <> @groupd)
-			or (@discountcs_old <> @discountcs) or (@discount1x2_old <> @discount1x2) or (@discountHRFixedOdds_old <> @discountHRFixedOdds)or (@discountnumber_old <> @discountnumber)
+			or (@discountcs_old <> @discountcs) or (@discount1x2_old <> @discount1x2) or (@discountnumber_old <> @discountnumber)
 			OR (@IsMyanmarOdds = 1 AND @discountMyanmarOdds <> @discountMyanmarOdds_old)
 			set @updatecomm_old = 1
 		else 
@@ -707,8 +683,7 @@ BEGIN
 				@groupc = @groupc,
 				@groupd = @groupd,
 				@discountcs = @discountcs,
-				@discount1x2 = @discount1x2, --1x2 
-				@discountHRFixedOdds =@discountHRFixedOdds,
+				@discount1x2 = @discount1x2, --1x2 			
 				@discountnumber = @discountnumber,
 				@updatecomm_old = @updatecomm_old,
 				-- For Myanmar Odds
@@ -746,8 +721,7 @@ BEGIN
 		@UpdateMinMaxBetv11  = 1 or
 		@UpdateMinMaxBetv99  = 1 or
 		@UpdateMinMaxBetv99MP = 1 or
-		@UpdateMinMaxBetv1MP = 1 or
-		@UpdateMinMaxBetv154  = 1 or
+		@UpdateMinMaxBetv1MP = 1 or		
 		@UpdateMinMaxBetv161 = 1    
 	BEGIN
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
@@ -787,12 +761,8 @@ BEGIN
 			-- soccer sports	
 			@minbetv1mp = @minbetv1mp,
 			@maxbetv1mp = @maxbetv1mp,
-			@maxpermatchv1mp = @maxpermatchv1mp,
-			
-			@MinBetv154 = @MinBetv154,
-			@MaxBetv154 = @MaxBetv154,
-			@MaxPerMatchv154 = @MaxPerMatchv154,
-			
+			@maxpermatchv1mp = @maxpermatchv1mp,			
+		
 			--number game
 			@minbetv161 = @minbetv161,
 			@maxbetv161 = @maxbetv161,
@@ -810,8 +780,7 @@ BEGIN
 			@UpdateMinMaxBetv11 = @UpdateMinMaxBetv11,
 			@UpdateMinMaxBetv99 = @UpdateMinMaxBetv99,
 			@UpdateMinMaxBetv99MP = @UpdateMinMaxBetv99MP,
-			@UpdateMinMaxBetv1MP = @UpdateMinMaxBetv1MP,
-			@UpdateMinMaxBetv154 = @UpdateMinMaxBetv154,
+			@UpdateMinMaxBetv1MP = @UpdateMinMaxBetv1MP,			
 			@UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,
 			@SubAccID = @SubAccID,
 			@UserID = @UserID,
@@ -841,8 +810,7 @@ BEGIN
 		@UpdatePositiontakingv10   = 1  or
 		@UpdatePositiontakingv11   = 1  or
 		@UpdatePositiontakingv99   = 1  or
-		@UpdatePositiontakingv99MP = 1 or
-		@UpdatePositiontakingv154   = 1  or	
+		@UpdatePositiontakingv99MP = 1 or		
 		@UpdatePositiontakingv161 = 1
 	BEGIN	
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
@@ -919,8 +887,7 @@ BEGIN
 
 			-- mixed sports
 			@v99apositiontaking_9_old smallmoney,
-			@v154apositiontaking_20_old smallmoney,
-
+			
 			-- number game
 			@v161apositiontaking_81_old smallmoney,
 			@v161apositiontaking_83_old smallmoney,
@@ -974,8 +941,7 @@ BEGIN
 		
 			--- mixed sports
 			@v99mpositiontaking_9_old smallmoney,
-			@v154mpositiontaking_20_old smallmoney,
-			
+		
 			-- number game
 			@v161mpositiontaking_81_old smallmoney,
 			@v161mpositiontaking_83_old smallmoney,
@@ -1045,7 +1011,6 @@ BEGIN
 
 			-- mixed sports
 			@auto_v99mpositiontaking_9_old smallmoney ,
-			@auto_v154mpositiontaking_20_old smallmoney ,
 			
 			-- number game
 			@auto_v161mpositiontaking_81_old smallmoney ,
@@ -1115,7 +1080,6 @@ BEGIN
 
 			-- mixed sports
 			@isauto_v99mpositiontaking_9_old bit ,
-			@isauto_v154mpositiontaking_20_old bit ,
 			
 			-- number game
 			@isauto_v161mpositiontaking_81_old bit ,
@@ -1228,8 +1192,7 @@ BEGIN
 
 		-- mixed sports
 		select @v99mpositiontaking_9_old = mpositiontaking, @v99apositiontaking_9_old = apositiontaking, @auto_v99mpositiontaking_9_old = autompositiontaking, @isauto_v99mpositiontaking_9_old = isautompositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=99
-		select @v154mpositiontaking_20_old = mpositiontaking, @v154apositiontaking_20_old = apositiontaking, @auto_v154mpositiontaking_20_old = autompositiontaking, @isauto_v154mpositiontaking_20_old = isautompositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=154
-
+		
 		-- number game
 		select @v161mpositiontaking_81_old = mpositiontaking, @v161apositiontaking_81_old = apositiontaking, @auto_v161mpositiontaking_81_old = autompositiontaking, @isauto_v161mpositiontaking_81_old = isautompositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=81 and sporttype=161
 		select @v161mpositiontaking_83_old = mpositiontaking, @v161apositiontaking_83_old = apositiontaking, @auto_v161mpositiontaking_83_old = autompositiontaking, @isauto_v161mpositiontaking_83_old = isautompositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=83 and sporttype=161
@@ -1304,7 +1267,6 @@ BEGIN
 				@v99apositiontaking_20 <> @v99apositiontaking_20_old or
 				-- mixed sports
 				@v99apositiontaking_9 <> @v99apositiontaking_9_old or		
-				@v154apositiontaking_20 <> @v154apositiontaking_20_old or
 				
 				-- number game
 				@v161apositiontaking_81 <> @v161apositiontaking_81_old or
@@ -1353,8 +1315,7 @@ BEGIN
 				@v99mpositiontaking_20 <> @v99mpositiontaking_20_old or
 				-- mixed sports
 				@v99mpositiontaking_9 <> @v99mpositiontaking_9_old or
-				@v154mpositiontaking_20 <> @v154mpositiontaking_20_old or
-				
+			
 				-- number game			
 				@v161mpositiontaking_81 <> @v161mpositiontaking_81_old or
 				@v161mpositiontaking_83 <> @v161mpositiontaking_83_old or
@@ -1417,7 +1378,6 @@ BEGIN
 				@auto_v99mpositiontaking_20 <> @auto_v99mpositiontaking_20_old or
 				-- mixed sports
 				@auto_v99mpositiontaking_9 <> @auto_v99mpositiontaking_9_old or
-				@auto_v154mpositiontaking_20 <> @auto_v154mpositiontaking_20_old or
 				
 				-- mixed sports
 				@auto_v161mpositiontaking_81 <> @auto_v161mpositiontaking_81_old or
@@ -1481,7 +1441,6 @@ BEGIN
 				@isauto_v99mpositiontaking_20 <> @isauto_v99mpositiontaking_20_old or
 				-- mixed sports
 				@isauto_v99mpositiontaking_9 <> @isauto_v99mpositiontaking_9_old or
-				@isauto_v154mpositiontaking_20 <> @isauto_v154mpositiontaking_20_old or
 				
 				-- number game
 				@isauto_v161mpositiontaking_81 <> @isauto_v161mpositiontaking_81_old or
@@ -1598,7 +1557,6 @@ BEGIN
 
 				-- mixed sports
 				@v99apositiontaking_9 = @v99apositiontaking_9,
-				@v154apositiontaking_20 = @v154apositiontaking_20,
 				
 				-- number game
 				@v161apositiontaking_81 = @v161apositiontaking_81,
@@ -1647,7 +1605,6 @@ BEGIN
 				@v99mpositiontaking_20 = @v99mpositiontaking_20,
 				-- mixed sports
 				@v99mpositiontaking_9 = @v99mpositiontaking_9,
-				@v154mpositiontaking_20 = @v154mpositiontaking_20,
 				
 				-- number game
 				@v161mpositiontaking_81 = @v161mpositiontaking_81,
@@ -1711,7 +1668,6 @@ BEGIN
 				@auto_v99mpositiontaking_20 = @auto_v99mpositiontaking_20,
 				--- mixed sports
 				@auto_v99mpositiontaking_9 = @auto_v99mpositiontaking_9,
-				@auto_v154mpositiontaking_20 = @auto_v154mpositiontaking_20,
 				
 				-- number game
 				@auto_v161mpositiontaking_81 = @auto_v161mpositiontaking_81,
@@ -1774,7 +1730,6 @@ BEGIN
 				@isauto_v99mpositiontaking_20 = @isauto_v99mpositiontaking_20,
 				-- mixed sports
 				@isauto_v99mpositiontaking_9 = @isauto_v99mpositiontaking_9,
-				@isauto_v154mpositiontaking_20 = @isauto_v154mpositiontaking_20,
 				
 				-- number game
 				@isauto_v161mpositiontaking_81 = @isauto_v161mpositiontaking_81,
@@ -1834,8 +1789,7 @@ BEGIN
 				@UpdatePositiontakingv10 = @UpdatePositiontakingv10,
 				@UpdatePositiontakingv11 = @UpdatePositiontakingv11,
 				@UpdatePositiontakingv99 = @UpdatePositiontakingv99,
-				@UpdatePositiontakingv99MP = @UpdatePositiontakingv99MP,
-				@UpdatePositiontakingv154 = @UpdatePositiontakingv154,			
+				@UpdatePositiontakingv99MP = @UpdatePositiontakingv99MP,				
 				@UpdatePositiontakingv161 = @UpdatePositiontakingv161,
 				@SubAccID = @SubAccID,
 				@UserID = @UserID,

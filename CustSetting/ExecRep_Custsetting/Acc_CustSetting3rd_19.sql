@@ -1,11 +1,4 @@
-USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustSetting3rd_19]    Script Date: 06/11/2015 06:28:29 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
  ALTER PROCEDURE [dbo].[Acc_CustSetting3rd_19]
 	@srecommend INT	
 	,@maxcustid INT
@@ -22,7 +15,7 @@ Revisions:
 	- 20150610@Daniel: 
 	    + Improve medthod check table existing in subscribers	
 	    + Separate custDB to new server DBCUST   
-	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
 Parameter's Explanation:  
 
 */
@@ -47,17 +40,16 @@ BEGIN
 			,@currency INT
 			,@custid INT
 			,@uplineID INT
-			,@roleid INT
-			,@syncLiveCasino BIT
+			,@roleid INT			
 	
-	CREATE TABLE #tmpCust (custid INT, syncLiveCasino BIT, roleid INT, UplineID INT)
+	CREATE TABLE #tmpCust (custid INT,roleid INT, UplineID INT)
 	
 	SELECT @currency = currency 
 	FROM custinfo WITH(NOLOCK) 
 	WHERE custid = @srecommend 
 	
-	INSERT INTO #tmpCust(custid,syncLiveCasino,roleid,UplineID)
-	SELECT custid, syncLiveCasino, roleid, 
+	INSERT INTO #tmpCust(custid,roleid,UplineID)
+	SELECT custid,  roleid, 
 		CASE WHEN roleid = 3 THEN srecommend
 			WHEN roleid = 2 THEN mrecommend
 			WHEN roleid = 1 THEN recommend  ELSE 0 END
@@ -68,8 +60,7 @@ BEGIN
 	WHILE (1=1)
 	BEGIN
 		SELECT TOP (1) @custid = custid
-			,@roleid = roleid
-			,@syncLiveCasino = syncLiveCasino
+			,@roleid = roleid		
 			,@UplineID = uplineID
 		FROM #tmpCust		
 		ORDER BY roleid DESC
@@ -82,174 +73,77 @@ BEGIN
 			,@StakeLevelList_1701 = ''
 			,@StakeLevelList_1702 = ''
 			
-		IF @syncLiveCasino = 1
+	
+		IF @roleid = 4
 		BEGIN
-			--get stakelevel from LiveCasino
-			SELECT @StakeLevelList_1701 = StakeLevelList
-			FROM LCS_CustGameType s with(Nolock) 
-			WHERE custid = @custid
-				AND GameTypeID = 108
-				
-			SELECT @StakeLevelList_1702 = StakeLevelList
-			FROM LCS_CustGameType s with(Nolock) 
-			WHERE custid = @custid
-				AND GameTypeID = 109	
-			
+			--get stake from Global settings
 			SELECT @StakeLevelList_1701_new = @StakeLevelList_1701_new + CONVERT(VARCHAR(10),StakeLevelID) + ','
-			FROM (
-			SELECT MinStake, MaxStake
-			FROM LCS_StakeLevel WITH(NOLOCK) 
-			WHERE stakeLevelID IN (SELECT val FROM strSplit(@StakeLevelList_1701,','))
-			)t 
-			INNER JOIN bodb02.dbo.StakeLevel s WITH(NOLOCK) ON t.MinStake = s.MinStake AND t.MaxStake = s.MaxStake
+			FROM bodb02.dbo.StakeLevel s WITH(NOLOCK) 
 			WHERE s.ExchangeID = @currency 
 				AND GameTypeID = 1701
 			ORDER BY s.MinStake, s.MaxStake
-			
-			IF @StakeLevelList_1701_new <> ''
-				SELECT @StakeLevelList_1701_new = left(@StakeLevelList_1701_new,len(@StakeLevelList_1701_new) - 1)
-			
+				
 			SELECT @StakeLevelList_1702_new = @StakeLevelList_1702_new + CONVERT(VARCHAR(10),StakeLevelID) + ','
-			FROM (
-			SELECT MinStake, MaxStake
-			FROM LCS_StakeLevel WITH(NOLOCK) 
-			WHERE stakeLevelID IN (SELECT val FROM strSplit(@StakeLevelList_1701,','))
-			)t 
-			INNER JOIN bodb02.dbo.StakeLevel s WITH(NOLOCK) ON t.MinStake = s.MinStake AND t.MaxStake = s.MaxStake
+			FROM bodb02.dbo.StakeLevel s WITH(NOLOCK) 
 			WHERE s.ExchangeID = @currency 
 				AND GameTypeID = 1702
 			ORDER BY s.MinStake, s.MaxStake
+				
+			IF @StakeLevelList_1701_new <> ''
+				SELECT @StakeLevelList_1701_new = left(@StakeLevelList_1701_new,len(@StakeLevelList_1701_new) - 1)
 			
 			IF @StakeLevelList_1702_new <> ''
 				SELECT @StakeLevelList_1702_new = left(@StakeLevelList_1702_new,len(@StakeLevelList_1702_new) - 1)
-			
+				
 			INSERT INTO CustGameType(custid,GameTypeID,StakeLevelList)
 			SELECT @custid, 1701,@StakeLevelList_1701_new
 			UNION 
 			SELECT @custid, 1702,@StakeLevelList_1702_new
 		END
-		ELSE
+		ELSE IF @roleid IN (2,3)
 		BEGIN
-			IF @roleid = 4
-			BEGIN
-				--get stake from Global settings
-				SELECT @StakeLevelList_1701_new = @StakeLevelList_1701_new + CONVERT(VARCHAR(10),StakeLevelID) + ','
-				FROM bodb02.dbo.StakeLevel s WITH(NOLOCK) 
-				WHERE s.ExchangeID = @currency 
-					AND GameTypeID = 1701
-				ORDER BY s.MinStake, s.MaxStake
-				
-				SELECT @StakeLevelList_1702_new = @StakeLevelList_1702_new + CONVERT(VARCHAR(10),StakeLevelID) + ','
-				FROM bodb02.dbo.StakeLevel s WITH(NOLOCK) 
-				WHERE s.ExchangeID = @currency 
-					AND GameTypeID = 1702
-				ORDER BY s.MinStake, s.MaxStake
-				
-				IF @StakeLevelList_1701_new <> ''
-					SELECT @StakeLevelList_1701_new = left(@StakeLevelList_1701_new,len(@StakeLevelList_1701_new) - 1)
-			
-				IF @StakeLevelList_1702_new <> ''
-					SELECT @StakeLevelList_1702_new = left(@StakeLevelList_1702_new,len(@StakeLevelList_1702_new) - 1)
-				
-				INSERT INTO CustGameType(custid,GameTypeID,StakeLevelList)
-				SELECT @custid, 1701,@StakeLevelList_1701_new
-				UNION 
-				SELECT @custid, 1702,@StakeLevelList_1702_new
-			END
-			ELSE IF @roleid IN (2,3)
-			BEGIN
-				INSERT INTO CustGameType(custid,GameTypeID,StakeLevelList)
-				SELECT @custid, GameTypeID,	StakeLevelList
-				FROM CustGameType WITH(NOLOCK)
-				WHERE custID = @uplineID
-					AND GameTypeID IN (1701,1702)
-			END
-			ELSE IF @roleid = 1
-			BEGIN
-				SELECT @StakeLevelList_1701 = StakeLevelList
-				FROM CustGameType WITH(NOLOCK) 
-				WHERE custid = @uplineID
-					AND GameTypeID = 1701
-				
-				SELECT @StakeLevelList_1702 = StakeLevelList
-				FROM CustGameType WITH(NOLOCK) 
-				WHERE custid = @uplineID
-					AND GameTypeID = 1702
-				
-				--get lowest stake level from upline to apply for member
-				SELECT TOP (1) @StakeLevelList_1701_new = CONVERT(varchar(10),StakeLevelID)
-				FROM bodb02.dbo.StakeLevel WITH(NOLOCK) 		
-				WHERE StakeLevelID IN (SELECT val FROM strSplit(@StakeLevelList_1701,','))
-				ORDER BY MinStake, MaxStake ASC
-				
-				SELECT TOP (1) @StakeLevelList_1702_new = CONVERT(varchar(10),StakeLevelID)
-				FROM bodb02.dbo.StakeLevel WITH(NOLOCK) 		
-				WHERE StakeLevelID IN (SELECT val FROM strSplit(@StakeLevelList_1702,','))
-				ORDER BY MinStake, MaxStake ASC
-				
-				INSERT INTO CustGameType(custid,GameTypeID,StakeLevelList)
-				SELECT @custid, 1701,@StakeLevelList_1701_new
-				UNION 
-				SELECT @custid, 1702,@StakeLevelList_1702_new
-			END
+			INSERT INTO CustGameType(custid,GameTypeID,StakeLevelList)
+			SELECT @custid, GameTypeID,	StakeLevelList
+			FROM CustGameType WITH(NOLOCK)
+			WHERE custID = @uplineID
+				AND GameTypeID IN (1701,1702)
 		END
+		ELSE IF @roleid = 1
+		BEGIN
+			SELECT @StakeLevelList_1701 = StakeLevelList
+			FROM CustGameType WITH(NOLOCK) 
+			WHERE custid = @uplineID
+				AND GameTypeID = 1701
+				
+			SELECT @StakeLevelList_1702 = StakeLevelList
+			FROM CustGameType WITH(NOLOCK) 
+			WHERE custid = @uplineID
+				AND GameTypeID = 1702
+				
+			--get lowest stake level from upline to apply for member
+			SELECT TOP (1) @StakeLevelList_1701_new = CONVERT(varchar(10),StakeLevelID)
+			FROM bodb02.dbo.StakeLevel WITH(NOLOCK) 		
+			WHERE StakeLevelID IN (SELECT val FROM strSplit(@StakeLevelList_1701,','))
+			ORDER BY MinStake, MaxStake ASC
+				
+			SELECT TOP (1) @StakeLevelList_1702_new = CONVERT(varchar(10),StakeLevelID)
+			FROM bodb02.dbo.StakeLevel WITH(NOLOCK) 		
+			WHERE StakeLevelID IN (SELECT val FROM strSplit(@StakeLevelList_1702,','))
+			ORDER BY MinStake, MaxStake ASC
+				
+			INSERT INTO CustGameType(custid,GameTypeID,StakeLevelList)
+			SELECT @custid, 1701,@StakeLevelList_1701_new
+			UNION 
+			SELECT @custid, 1702,@StakeLevelList_1702_new
+		END
+		
 		
 		DELETE #tmpCust WHERE custid = @custid
 	END
-	
-	
-	INSERT INTO [dbo].[CustSettingGame]
-           ([CustID]
-           ,[Bettype]
-           ,[Sporttype]
-           ,[apositiontaking]
-           ,[mpositiontaking]
-           ,[spositiontaking]
-           ,[playerdiscount]
-           ,[discount]
-           ,[adiscount]
-           ,[sdiscount]
-           ,[autopositiontaking]
-           ,[isautopositiontaking]
-           ,[autompositiontaking]
-           ,[isautompositiontaking])
-	SELECT cs.[CustID]
-           ,1701 as [Bettype]
-           ,255 as [Sporttype]
-           ,[apositiontaking]
-           ,[mpositiontaking]
-           ,[spositiontaking]
-           ,[playerdiscount]
-           ,[discount]
-           ,[adiscount]
-           ,[sdiscount]
-           ,[autopositiontaking]
-           ,[isautopositiontaking]
-           ,[autompositiontaking]
-           ,[isautompositiontaking]
-	FROM  CustSettingGame cs WITH(NOLOCK) 
-		INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid
-	WHERE ci.srecommend = @srecommend
-		AND ci.custid <= @maxcustid
-		AND cs.sporttype = 162
-		AND cs.bettype = 1101  
+
 	       
 	
-	INSERT INTO [dbo].[CustOverrideGame]
-           ([CustID]
-           ,[Bettype]
-           ,[Sporttype]
-           ,[minpositiontaking])
-	SELECT cs.[CustID]
-           ,1701 as [Bettype]
-           ,255 as [Sporttype]
-           ,[minpositiontaking]           
-    FROM  CustOverrideGame cs WITH(NOLOCK) 
-		INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid
-	WHERE ci.srecommend = @srecommend
-		AND ci.custid <= @maxcustid
-		AND cs.sporttype = 162
-		AND cs.bettype = 1101  
+
 	
 	DECLARE @apos SMALLMONEY,
 			@mpos SMALLMONEY

@@ -1,8 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @custid int,-- superid
     @firstname nvarchar(50),
@@ -55,11 +51,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @MinBetv1MP money ,
     @MaxBetv1MP money ,
     @MaxPerMatchv1MP money,
-    
-    --HR Fixed Odds
-    @MinBetv154 MONEY = 0,
-    @MaxBetv154 MONEY = 0,
-    @MaxPerMatchv154 MONEY = 0,
+ 
     
     @MinBetv161 money ,
     @MaxBetv161 money ,
@@ -124,10 +116,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99spositiontaking_3 smallmoney,
     @v99spositiontaking_9 smallmoney,
     @v99spositiontaking_20 smallmoney,
-    
-    --HR Fixed Odds
-    @v154spositiontaking_20 SMALLMONEY = 0.9,
-    
+
     @v161spositiontaking_81 smallmoney,
     @v161spositiontaking_83 smallmoney,
     --@v161spositiontaking_85 smallmoney,
@@ -195,10 +184,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99mpositiontaking_3 smallmoney = 0.7,
     @v99mpositiontaking_20 smallmoney = 0.7,
     @v99mpositiontaking_9 smallmoney = 0.7,
-    
-    --HR Fixed Odds
-    @v154mpositiontaking_20 SMALLMONEY = 0,
-    
+
     @v161mpositiontaking_81 smallmoney = 0.7,
     @v161mpositiontaking_83 smallmoney = 0.7,
     --@v161mpositiontaking_85 smallmoney = 0.7,
@@ -265,10 +251,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99apositiontaking_3 smallmoney = 0.7,
     @v99apositiontaking_9 smallmoney = 0.7,
     @v99apositiontaking_20 smallmoney = 0.7,
-    
-    --HR Fixed Odds
-    @v154apositiontaking_20 SMALLMONEY = 0,
-    
+
     @v161apositiontaking_81 smallmoney = 0.7,
     @v161apositiontaking_83 smallmoney = 0.7,
     --@v161apositiontaking_85 smallmoney = 0.7,
@@ -288,7 +271,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @discountcs decimal(9,8),
     @discount1x2 decimal(9,8)=0,
     @discountnumber decimal(9,8)=0,
-    @discountHRFixedOdds DECIMAL(9,8)=0,
+  
 	@discountMyanmarOdds DECIMAL(9,8)=0,
 	
 	-- Provide Outright PT for Sports
@@ -355,6 +338,7 @@ Revisions:
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
     - 20170628@Winnie: Apply color for closed account   - [Redmine: 74494]
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -493,7 +477,7 @@ Revisions:
 			@discountcs_old decimal(9,8),
 			@discount1x2_old decimal(9,8),
 			@discountnumber_old decimal(9,8),
-			@discountHRFixedOdds_old decimal(9,8),
+			
 			@discountMyanmarOdds_old DECIMAL(9,8)
 
 	
@@ -506,10 +490,6 @@ Revisions:
 	--1x2
 	select @discount1x2_old = sdiscount
 	from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 5
-
-	--v154
-	select @discountHRFixedOdds_old = sdiscount
-	from custsetting (nolock) where custid = @custid and sporttype = 154 and bettype = 20
 
 	--v161
 	select @discountnumber_old = sdiscount
@@ -527,7 +507,7 @@ Revisions:
 	END
 	
 	if (@groupa_old <> @groupa) or (@groupb_old <> @groupb) or (@groupc_old <> @groupc) or (@groupd_old <> @groupd)
-		or (@discountcs_old <> @discountcs) or (@discount1x2_old <> @discount1x2) or (@discountHRFixedOdds_old <> @discountHRFixedOdds) or (@discountnumber_old <> @discountnumber)
+		or (@discountcs_old <> @discountcs) or (@discount1x2_old <> @discount1x2) or (@discountnumber_old <> @discountnumber)
 		or (@IsMyanmarOdds = 1 AND @discountMyanmarOdds <> @discountMyanmarOdds_old)
 		set @updatecomm_old = 1
 	else 
@@ -546,7 +526,7 @@ Revisions:
 			@discountcs = @discountcs,
 			@discount1x2 = @discount1x2,
 			@discountnumber = @discountnumber,
-			@discountHRFixedOdds =@discountHRFixedOdds,
+		
 	        -- For Myanmar Odds
 	        @IsMyanmarOdds = @IsMyanmarOdds,
 	        @discountMyanmarOdds = @discountMyanmarOdds,
@@ -608,10 +588,7 @@ Revisions:
 		@MinBetv1MP = @MinBetv1MP,
 		@MaxBetv1MP = @MaxBetv1MP,
 		@MaxPerMatchv1MP = @MaxPerMatchv1MP,
-		
-		@MinBetv154 = @MinBetv154,
-		@MaxBetv154 = @MaxBetv154,
-		@MaxPerMatchv154 = @MaxPerMatchv154,    
+	
 		@MinBetv161 = @MinBetv161,
 		@MaxBetv161 = @MaxBetv161,
 		@MaxPerMatchv161 = @MaxPerMatchv161,
@@ -688,9 +665,7 @@ Revisions:
 		@v99spositiontaking_9_old smallmoney,
 		@v99spositiontaking_20_old smallmoney,
 	    
-		--HR Fixed Odds
-		@v154spositiontaking_20_old smallmoney,
-	    
+	
 		@v161spositiontaking_81_old smallmoney,
 		@v161spositiontaking_83_old smallmoney,
 		--@v161spositiontaking_85_old smallmoney,
@@ -752,10 +727,7 @@ Revisions:
 		@v99mpositiontaking_3_old smallmoney,
 		@v99mpositiontaking_9_old smallmoney,
 		@v99mpositiontaking_20_old smallmoney,
-	    
-		--HR Fixed Odds
-		@v154mpositiontaking_20_old smallmoney,
-	    
+	
 		@v161mpositiontaking_81_old smallmoney,
 		@v161mpositiontaking_83_old smallmoney,
 		--@v161mpositiontaking_85_old smallmoney,
@@ -816,10 +788,7 @@ Revisions:
 		@v99apositiontaking_3_old smallmoney,
 		@v99apositiontaking_9_old smallmoney,
 		@v99apositiontaking_20_old smallmoney,
-	    
-		--HR Fixed Odds
-		@v154apositiontaking_20_old smallmoney,
-	    
+	
 		@v161apositiontaking_81_old smallmoney,
 		@v161apositiontaking_83_old smallmoney,
 		--@v161apositiontaking_85_old smallmoney,
@@ -919,9 +888,6 @@ Revisions:
 	select @v99spositiontaking_9_old = spositiontaking, @v99mpositiontaking_9_old = mpositiontaking, @v99apositiontaking_9_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=99
 	select @v99spositiontaking_20_old = spositiontaking, @v99mpositiontaking_20_old = mpositiontaking, @v99apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=99
 
-	--HR Fixed Odds
-	select @v154spositiontaking_20_old = spositiontaking, @v154mpositiontaking_20_old = mpositiontaking, @v154apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=154
-
 	--v161
 	select @v161spositiontaking_81_old = spositiontaking, @v161mpositiontaking_81_old = mpositiontaking, @v161apositiontaking_81_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=81 and sporttype=161
 	select @v161spositiontaking_83_old = spositiontaking, @v161mpositiontaking_83_old = mpositiontaking, @v161apositiontaking_83_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=83 and sporttype=161
@@ -982,9 +948,7 @@ Revisions:
 		@v99spositiontaking_9 <> @v99spositiontaking_9_old or
 		@v99spositiontaking_20 <> @v99spositiontaking_20_old or
 	    
-		--HR Fixed Odds
-		@v154spositiontaking_20 <> @v154spositiontaking_20_old or
-	    
+	
 		@v161spositiontaking_81 <> @v161spositiontaking_81_old or
 		@v161spositiontaking_83 <> @v161spositiontaking_83_old or
 		--@v161spositiontaking_85 <> @v161spositiontaking_85_old or
@@ -1046,10 +1010,7 @@ Revisions:
 		@v99mpositiontaking_3 <> @v99mpositiontaking_3_old or
 		@v99mpositiontaking_9 <> @v99mpositiontaking_9_old or
 		@v99mpositiontaking_20 <> @v99mpositiontaking_20_old or
-	    
-		--HR Fixed Odds
-		@v154mpositiontaking_20 <> @v154mpositiontaking_20_old or
-	    
+	
 		@v161mpositiontaking_81 <> @v161mpositiontaking_81_old or
 		@v161mpositiontaking_83 <> @v161mpositiontaking_83_old or
 		--@v161mpositiontaking_85 <> @v161mpositiontaking_85_old or
@@ -1110,10 +1071,7 @@ Revisions:
 		@v99apositiontaking_3 <> @v99apositiontaking_3_old or
 		@v99apositiontaking_9 <> @v99apositiontaking_9_old or
 		@v99apositiontaking_20 <> @v99apositiontaking_20_old or
-	    
-		--HR Fixed Odds
-		@v154apositiontaking_20 <> @v154apositiontaking_20_old or
-	    
+
 		@v161apositiontaking_81 <> @v161apositiontaking_81_old or
 		@v161apositiontaking_83 <> @v161apositiontaking_83_old or
 		--@v161apositiontaking_85 <> @v161apositiontaking_85_old or
@@ -1203,9 +1161,7 @@ Revisions:
 			@v99spositiontaking_3 = @v99spositiontaking_3,
 			@v99spositiontaking_9 = @v99spositiontaking_9,
 			@v99spositiontaking_20 = @v99spositiontaking_20,
-	        
-			--HR Fixed Odds
-			@v154spositiontaking_20 = @v154spositiontaking_20,
+	
 	        
 			@v161spositiontaking_81 = @v161spositiontaking_81,
 			@v161spositiontaking_83 = @v161spositiontaking_83,
@@ -1267,8 +1223,7 @@ Revisions:
 			@v99mpositiontaking_3 = @v99mpositiontaking_3,
 			@v99mpositiontaking_9 = @v99mpositiontaking_9,
 			@v99mpositiontaking_20 = @v99mpositiontaking_20,
-			--HR Fixed Odds
-			@v154mpositiontaking_20 = @v154mpositiontaking_20,
+	
 	        
 			@v161mpositiontaking_81 = @v161mpositiontaking_81,
 			@v161mpositiontaking_83 = @v161mpositiontaking_83,
@@ -1329,9 +1284,7 @@ Revisions:
 			@v99apositiontaking_3 = @v99apositiontaking_3,
 			@v99apositiontaking_9 = @v99apositiontaking_9,
 			@v99apositiontaking_20 = @v99apositiontaking_20,
-			--HR Fixed Odds
-			@v154apositiontaking_20 = @v154apositiontaking_20,
-	        
+	
 			@v161apositiontaking_81 = @v161apositiontaking_81,
 			@v161apositiontaking_83 = @v161apositiontaking_83,
 			--@v161apositiontaking_85 = @v161apositiontaking_85,
