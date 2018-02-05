@@ -335,11 +335,11 @@ BEGIN
 	SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
 	
 	IF @RoleID <> 1 AND @IsDisabled_Downline_tmp <> '<ROOT/>'
-	BEGIN		
-				EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
-						, @RoleID			= @RoleID
-						, @IsDisabled_XML	= @IsDisabled_Downline_tmp
-						, @Action			= 'GameStatus'
+	BEGIN				
+		EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
+				, @RoleID			= @RoleID
+				, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+				, @Action			= 'GameStatus'
 	END
 
 	--START LOGGING		

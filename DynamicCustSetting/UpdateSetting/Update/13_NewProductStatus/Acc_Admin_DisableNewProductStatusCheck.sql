@@ -2,13 +2,12 @@
 USE CustDB
 GO
 
-CREATE PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusCheck] 
+ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusCheck] 
 	  @IsDisabled	VARCHAR(MAX)
 	, @RoleID			INT
 	, @AgentID			INT
 	, @MasterID			INT
 	, @SuperID			INT
-	, @SystemID			TINYINT	
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
@@ -141,9 +140,9 @@ BEGIN
 	END
 
 	--90012: You are not allowed to perform this action.
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1 AND ((UpdateAllMasters = 1 AND DisableAllMasters = 0) OR (UpdateAllAgents = 1 AND DisableAllAgents = 0) OR (UpdateAllMembers = 1 AND DisableAllMembers = 0)))
-		OR EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 AND DisableAllMasters = 1 AND ((UpdateAllAgents = 1 AND DisableAllAgents = 0) OR (UpdateAllMembers = 1 AND DisableAllMembers = 0)))
-		OR EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1 AND DisableAllAgents = 1 AND UpdateAllMembers = 1 AND DisableAllMembers = 0)
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1 AND ((UpdateAllMasters = 1 AND DisableAllMasters = 0 AND @RoleID = 4) OR (UpdateAllAgents = 1 AND DisableAllAgents = 0 AND @RoleID IN (4,3)) OR (UpdateAllMembers = 1 AND DisableAllMembers = 0 AND @RoleID IN (4,3,2))))
+		OR EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 AND DisableAllMasters = 1 AND @RoleID = 4 AND ((UpdateAllAgents = 1 AND DisableAllAgents = 0) OR (UpdateAllMembers = 1 AND DisableAllMembers = 0)))
+		OR EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1 AND DisableAllAgents = 1 AND @RoleID IN (4,3) AND UpdateAllMembers = 1 AND DisableAllMembers = 0)
 	BEGIN
 		INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 		SELECT tmp.SportType
