@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_GameEnableJackpotSel]
     @custid INT,
-    @isTest BIT = 1
+    @isTest BIT = 0
 AS
 /*
 	Created: 20180206@Vicky
