@@ -8,8 +8,6 @@ Task: select Progressive Jackpot list
 DB: DBCUST.CustDB
 Original:
 
-   Revisions:
-
 */
 BEGIN
     SET NOCOUNT ON
