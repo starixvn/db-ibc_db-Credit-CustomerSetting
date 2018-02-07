@@ -34,7 +34,9 @@ AS
 		- 20170223@Elodie: Change preset PT to max PT - [Redmine: #71883]
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
+		- 20180206@Elodie: Fix bug "default status of new direct master does not take into ProductStatusSiteCurrency table" - [Redmine #90570]
 	*/
+
 BEGIN
 	SELECT @ErrCode = 0
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT
@@ -77,7 +79,7 @@ BEGIN
 			WHERE SportType = 206
 		END	
 		
-		IF @RoleID = 4
+		IF @RoleID = 4 OR (@IsDirect = 1 AND @RoleID = 3)
 		BEGIN
 			SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID
 			SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
