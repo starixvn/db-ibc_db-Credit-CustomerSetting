@@ -19,7 +19,7 @@ BEGIN
     FROM customer c
         LEFT JOIN  customer ca ON c.recommend = ca.custid
         INNER JOIN [site] s    ON s.[site]    = COALESCE(c.[site], ca.[site])
-    WHERE c.custid = 8
+    WHERE c.custid = @custid
     
     SELECT sbm.SportType, gls.SportType, gls.BetType
         FROM GameLaunchPerCurrency glc
