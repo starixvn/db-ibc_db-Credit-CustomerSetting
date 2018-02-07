@@ -12,8 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_AdminUpdDisableColossusBet]
 	@DisableAllAgents  BIT = NULL,
 	@DisableAllMembers BIT = NULL,
 	
-	@UserID  INT = 0,  
-	@SubAccID INT = 0, --Sub-AccountID  
+	@UserID  INT = 0,  	
 	@IP   VARCHAR(20)= '',  
 	@Language VARCHAR(2) = 'E',  
 	@ErrCode INT = 0 OUTPUT,  
@@ -177,13 +176,12 @@ BEGIN
 	SELECT @LogSPData = '<Acc_AdminUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
 		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
-		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+ 
 		'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
-		'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
 		'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
-		'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  
-		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
-		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
+		'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
+		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    		
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
 		'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+    
 		'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+    
@@ -192,13 +190,12 @@ BEGIN
 	SELECT @LogSPData_Old = '<Acc_AdminUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+    		
 		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
-		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+ 
 		'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
-		'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
 		'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
-		'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  
-		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
-		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
+		'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
+		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    		
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
 		'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+    
 		'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+    
@@ -210,9 +207,9 @@ BEGIN
 	BEGIN TRY  
 		--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60007 
-										WHEN 3 THEN 61014
-										WHEN 2 THEN 62014 
-										WHEN 1 THEN 63014 END
+										WHEN 3 THEN 65014
+										WHEN 2 THEN 70021 
+										WHEN 1 THEN 75028 END
 										
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
 			@UserID = @UserID,    
@@ -230,11 +227,13 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllMasters = 1 )
 					)			
 			BEGIN
+				SELECT @ActionID = 65015
+				
 				--actionID on master
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61015,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration  
@@ -245,11 +244,14 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllAgents = 1 )
 					)	
 			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70022
+												WHEN 4 THEN 70023 END
+												
 				--actionID on agent
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62015,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration 
@@ -260,11 +262,14 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllMembers = 1 )
 					)
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75029 
+												WHEN 3 THEN 75030
+												WHEN 4 THEN 75031 END
 				--actionID on member
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63015,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration
@@ -273,83 +278,90 @@ BEGIN
 	END TRY   
 	BEGIN CATCH  
 
-	SELECT @LogSPData = '<Acc_AdminUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
-		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
-		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
-		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
-		'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
-		'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
-		'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
-		'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  
-		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
-		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
-		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
-		'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+    
-		'ErrMsg="'+ ERROR_MESSAGE() +'" '+    
-		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'   
+		SELECT @LogSPData = '<Acc_AdminUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
+			'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
+			'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+			'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+ 
+			'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
+			'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
+			'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
+			'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
+			'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    		
+			'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
+			'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+    
+			'ErrMsg="'+ ERROR_MESSAGE() +'" '+    
+			'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'   
 	   
-	--write log for themself
-	SELECT @ActionID = CASE @roleid WHEN 4 THEN 60007 
-									WHEN 3 THEN 61014
-									WHEN 2 THEN 62014 
-									WHEN 1 THEN 63014 END
-									
-	EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
-		@UserID = @UserID,    
-		@CustID = @CustID,    
-		@ActionID = @ActionID,    
-		@TrackingValue = @LogSPData  ,   
-		@TrackingValue2 = @LogSPData_old  ,    
-		@duration = @duration 
-	
-	--write log for downlines in-case disable downline
-	IF @HasDownline = 1
-	BEGIN
-		IF @roleid >3 
-			AND ( @Disable = 1 
-				OR (@Disable = 0 AND @UpdateAllMasters = 1 )
-				)			
-		BEGIN
-			--actionID on master
-			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
-				@UserID = @UserID,  
-				@CustID = @CustID,  
-				@ActionID = 61015,  
-				@TrackingValue = @LogSPData  , 
-				@TrackingValue2 = @LogSPData_old  ,  
-				@duration = @duration  
-		END
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60007 
+										WHEN 3 THEN 65014
+										WHEN 2 THEN 70021 
+										WHEN 1 THEN 75028 END
+										
+		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
+			@UserID = @UserID,    
+			@CustID = @CustID,    
+			@ActionID = @ActionID,    
+			@TrackingValue = @LogSPData  ,   
+			@TrackingValue2 = @LogSPData_old  ,    
+			@duration = @duration 
 		
-		IF @Roleid >2
-			AND ( @Disable = 1 
-				OR (@Disable = 0 AND @UpdateAllAgents = 1 )
-				)	
-		BEGIN	
-			--actionID on agent
-			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
-				@UserID = @UserID,  
-				@CustID = @CustID,  
-				@ActionID = 62015,  
-				@TrackingValue = @LogSPData  , 
-				@TrackingValue2 = @LogSPData_old  ,  
-				@duration = @duration 
-		END
-		
-		IF @Roleid >1
-			AND ( @Disable = 1 
-				OR (@Disable = 0 AND @UpdateAllMembers = 1 )
-				)
+		--write log for downlines in-case disable downline
+		IF @HasDownline = 1
 		BEGIN
-			--actionID on member
-			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
-				@UserID = @UserID,  
-				@CustID = @CustID,  
-				@ActionID = 63015,  
-				@TrackingValue = @LogSPData  , 
-				@TrackingValue2 = @LogSPData_old  ,  
-				@duration = @duration
+			IF @roleid >3 
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllMasters = 1 )
+					)			
+			BEGIN
+				SELECT @ActionID = 65015
+				
+				--actionID on master
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllAgents = 1 )
+					)	
+			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70022
+												WHEN 4 THEN 70023 END
+												
+				--actionID on agent
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllMembers = 1 )
+					)
+			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75029 
+												WHEN 3 THEN 75030
+												WHEN 4 THEN 75031 END
+				--actionID on member
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration
+			END	
 		END	
-	END	 
 
 	END CATCH  
 

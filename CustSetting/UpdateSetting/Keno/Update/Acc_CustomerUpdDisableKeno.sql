@@ -293,9 +293,9 @@ BEGIN
 	BEGIN TRY
 		--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60002 
-										WHEN 3 THEN 61004 
-										WHEN 2 THEN 62004 
-										WHEN 1 THEN 63004 END
+										WHEN 3 THEN 65004 
+										WHEN 2 THEN 70006
+										WHEN 1 THEN 75008 END
 										
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 			,@CustID = @CustID
@@ -310,11 +310,13 @@ BEGIN
 		BEGIN
 			IF @roleid >3
 			BEGIN
+				SELECT @ActionID = 65005
+				
 				--actionID on master
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61005,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -322,12 +324,15 @@ BEGIN
 			END
 			
 			IF @Roleid >2
-			BEGIN	
+			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70007 
+												WHEN 4 THEN 70008 END
+										
 				--actionID on agent
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62005,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -336,11 +341,15 @@ BEGIN
 			
 			IF @Roleid >1
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75009 
+												WHEN 3 THEN 75010 
+												WHEN 4 THEN 75011 END
+												
 				--actionID on member
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63005,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -363,9 +372,9 @@ BEGIN
 
 		--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60002 
-										WHEN 3 THEN 61004 
-										WHEN 2 THEN 62004 
-										WHEN 1 THEN 63004 END
+										WHEN 3 THEN 65004 
+										WHEN 2 THEN 70006
+										WHEN 1 THEN 75008 END
 										
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 			,@CustID = @CustID
@@ -380,11 +389,13 @@ BEGIN
 		BEGIN
 			IF @roleid >3
 			BEGIN
+				SELECT @ActionID = 65005
+				
 				--actionID on master
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61005,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -392,12 +403,15 @@ BEGIN
 			END
 			
 			IF @Roleid >2
-			BEGIN	
+			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70007 
+												WHEN 4 THEN 70008 END
+										
 				--actionID on agent
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62005,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -406,17 +420,21 @@ BEGIN
 			
 			IF @Roleid >1
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75009 
+												WHEN 3 THEN 75010 
+												WHEN 4 THEN 75011 END
+												
 				--actionID on member
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63005,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
 					@duration = @duration
 			END		
-		END		
+		END	
 	END CATCH
 
 	RETURN

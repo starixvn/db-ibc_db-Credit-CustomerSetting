@@ -167,9 +167,9 @@ BEGIN
 	BEGIN TRY  
 	--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60006 
-										WHEN 3 THEN 61012
-										WHEN 2 THEN 62012 
-										WHEN 1 THEN 63012 END
+										WHEN 3 THEN 65012
+										WHEN 2 THEN 70018
+										WHEN 1 THEN 75024 END
 										
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
 			@UserID = @UserID,    
@@ -184,11 +184,12 @@ BEGIN
 		BEGIN
 			IF @roleid >3
 			BEGIN
+				SELECT @ActionID = 65013
 				--actionID on master
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61013,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration  
@@ -196,11 +197,14 @@ BEGIN
 			
 			IF @Roleid >2
 			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70019
+												WHEN 4 THEN 70020 END
+												
 				--actionID on agent
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62013,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration 
@@ -208,11 +212,15 @@ BEGIN
 			
 			IF @Roleid >1
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75025
+												WHEN 3 THEN 75026
+												WHEN 4 THEN 75027 END
+												
 				--actionID on member
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63013,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration
@@ -232,9 +240,9 @@ BEGIN
 	   
 		--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60006 
-										WHEN 3 THEN 61012
-										WHEN 2 THEN 62012 
-										WHEN 1 THEN 63012 END
+										WHEN 3 THEN 65012
+										WHEN 2 THEN 70018
+										WHEN 1 THEN 75024 END
 										
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
 			@UserID = @UserID,    
@@ -249,11 +257,12 @@ BEGIN
 		BEGIN
 			IF @roleid >3
 			BEGIN
+				SELECT @ActionID = 65013
 				--actionID on master
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61013,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration  
@@ -261,11 +270,14 @@ BEGIN
 			
 			IF @Roleid >2
 			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70019
+												WHEN 4 THEN 70020 END
+												
 				--actionID on agent
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62013,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration 
@@ -273,11 +285,15 @@ BEGIN
 			
 			IF @Roleid >1
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75025
+												WHEN 3 THEN 75026
+												WHEN 4 THEN 75027 END
+												
 				--actionID on member
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63013,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @LogSPData_old  ,  
 					@duration = @duration

@@ -235,15 +235,14 @@ Thank you'
 	'disabledCS="'+ coalesce(cast(@disabledCS as varchar(50)),space(1)) + '" ' +
 	'syncCS="'+ coalesce(cast(@syncCS as varchar(50)),space(1)) + '" ' +
 	'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
-	'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+	'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+ 
 	'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
-	'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
+	'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
 	'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
-	'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  	
+	'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  	
 	'status="'+ coalesce(cast(@status as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1)) + '" ' +
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
+	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +	
 	'IP="'+ coalesce(cast(@IP as varchar(20)),space(1)) + '" ' +
 	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))  + '" />'
 
@@ -251,15 +250,14 @@ Thank you'
 	'disabledCS="'+ coalesce(cast(@Old_disabledCS as varchar(50)),space(1)) + '" ' +
 	'syncCS="'+ coalesce(cast(@SyncCasino as varchar(50)),space(1)) + '" ' +
 	'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
-	'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+	'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+ 
 	'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
-	'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
+	'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
 	'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
-	'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  	
+	'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  	
 	'status="'+ coalesce(cast(@status as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1)) + '" ' +
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
+	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +	
 	'IP="'+ coalesce(cast(@IP as varchar(20)),space(1)) + '" ' +
 	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))  + '" />'
 
@@ -269,9 +267,9 @@ Thank you'
 	BEGIN TRY
 		--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60005 
-										WHEN 3 THEN 61010
-										WHEN 2 THEN 62010 
-										WHEN 1 THEN 63010 END
+										WHEN 3 THEN 65010
+										WHEN 2 THEN 70015 
+										WHEN 1 THEN 75020 END
 										
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 			@UserID = @UserID, 
@@ -289,11 +287,13 @@ Thank you'
 					OR (@DisabledCS = 0 AND @UpdateAllMasters = 1 )
 					)			
 			BEGIN
+				SELECT @ActionID = 65011
+				
 				--actionID on master
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61011,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogData  , 
 					@TrackingValue2 = @TrackingValue2  ,  
 					@duration = @duration  
@@ -304,11 +304,14 @@ Thank you'
 					OR (@DisabledCS = 0 AND @UpdateAllAgents = 1 )
 					)	
 			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70016 
+												WHEN 4 THEN 70017 END
+										
 				--actionID on agent
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62011,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogData  , 
 					@TrackingValue2 = @TrackingValue2  ,  
 					@duration = @duration 
@@ -319,11 +322,15 @@ Thank you'
 					OR (@DisabledCS = 0 AND @UpdateAllMembers = 1 )
 					)
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75021 
+												WHEN 3 THEN 75022
+												WHEN 4 THEN 75023 END
+												
 				--actionID on member
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63011,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogData  , 
 					@TrackingValue2 = @TrackingValue2  ,  
 					@duration = @duration
@@ -335,23 +342,22 @@ Thank you'
 		'disabledCS="'+ coalesce(cast(@disabledCS as varchar(50)),space(1)) + '" ' +
 		'syncCS="'+ coalesce(cast(@syncCS as varchar(50)),space(1)) + '" ' +
 		'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
-		'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '+ 
+		'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+ 
 		'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
-		'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
 		'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
-		'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '+  
+		'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  	
 		'status="'+ coalesce(cast(@status as varchar(50)),space(1)) + '" ' +
 		'ErrMsg="'+ ERROR_MESSAGE() + '" ' +
-		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
+		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +		
 		'IP="'+ coalesce(cast(@IP as varchar(20)),space(1)) + '" ' +
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))  + '" />'
 		
 		--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60005 
-										WHEN 3 THEN 61010
-										WHEN 2 THEN 62010 
-										WHEN 1 THEN 63010 END
+										WHEN 3 THEN 65010
+										WHEN 2 THEN 70015 
+										WHEN 1 THEN 75020 END
 										
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 			@UserID = @UserID, 
@@ -369,11 +375,13 @@ Thank you'
 					OR (@DisabledCS = 0 AND @UpdateAllMasters = 1 )
 					)			
 			BEGIN
+				SELECT @ActionID = 65011
+				
 				--actionID on master
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61011,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogData  , 
 					@TrackingValue2 = @TrackingValue2  ,  
 					@duration = @duration  
@@ -384,11 +392,14 @@ Thank you'
 					OR (@DisabledCS = 0 AND @UpdateAllAgents = 1 )
 					)	
 			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70016 
+												WHEN 4 THEN 70017 END
+										
 				--actionID on agent
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62011,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogData  , 
 					@TrackingValue2 = @TrackingValue2  ,  
 					@duration = @duration 
@@ -399,11 +410,15 @@ Thank you'
 					OR (@DisabledCS = 0 AND @UpdateAllMembers = 1 )
 					)
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75021 
+												WHEN 3 THEN 75022
+												WHEN 4 THEN 75023 END
+												
 				--actionID on member
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63011,  
+					@ActionID = @ActionID,  
 					@TrackingValue = @LogData  , 
 					@TrackingValue2 = @TrackingValue2  ,  
 					@duration = @duration

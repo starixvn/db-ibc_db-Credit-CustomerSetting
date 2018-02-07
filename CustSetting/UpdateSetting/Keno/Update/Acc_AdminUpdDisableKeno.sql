@@ -12,7 +12,6 @@ ALTER PROCEDURE [dbo].[Acc_AdminUpdDisableKeno]
 	,@DisableAllAgents  BIT = NULL
 	,@DisableAllMembers BIT = NULL
 	
-	,@SubAccID INT = 0
 	,@UserID INT
 	,@UplineID INT	= 0
 	,@Language VARCHAR(2) = 'E'
@@ -343,14 +342,13 @@ BEGIN
 	SELECT @LogSPData = '<Acc_AdminUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Bettype="' + coalesce(cast(@Bettype AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Disable="' + coalesce(cast(@Disable AS VARCHAR(50)), space(1)) + '" ' 
-		+ 'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" ' 
-		+ 'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '
+		+ 'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '
+		+ 'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
 		+ 'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '  
-		+ 'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" ' 
-		+ 'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '  
-		+ 'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '
+		+ 'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
+		+ 'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '
+		+ 'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
 		  
-		+ 'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' 
 		+ 'UserID="' + coalesce(cast(@UserID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'UplineID="' + coalesce(cast(@UplineID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Language="' + coalesce(cast(@Language AS VARCHAR(2)), space(1)) + '" ' 
@@ -361,14 +359,13 @@ BEGIN
 		,@TrackingValue = '<Acc_AdminUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Bettype="' + coalesce(cast(@Bettype AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Disable="' + coalesce(cast(@Old_DisableBetType AS VARCHAR(50)), space(1)) + '" ' 
-		+'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" ' 
-		+'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '
-		+'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '  
-		+'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" ' 
-		+'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '  
-		+'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '
-		  
-		+ 'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' 
+		+ 'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '
+		+ 'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
+		+ 'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '  
+		+ 'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
+		+ 'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '
+		+ 'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
+		
 		+ 'UserID="' + coalesce(cast(@UserID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'UplineID="' + coalesce(cast(@UplineID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Language="' + coalesce(cast(@Language AS VARCHAR(2)), space(1)) + '" ' 
@@ -383,9 +380,9 @@ BEGIN
 	BEGIN TRY
 		--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60003 
-										WHEN 3 THEN 61006
-										WHEN 2 THEN 62006 
-										WHEN 1 THEN 63006 END
+										WHEN 3 THEN 65006
+										WHEN 2 THEN 70009 
+										WHEN 1 THEN 75012 END
 										
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 			,@CustID = @CustID
@@ -403,11 +400,13 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllMasters = 1 )
 					)			
 			BEGIN
+				SELECT @ActionID = 65007
+				
 				--actionID on master
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61007, 
+					@ActionID = @ActionID, 
 					@Doing = 'Update Keno status for credit customer',					
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -419,11 +418,13 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllAgents = 1 )
 					)	
 			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70010 
+												WHEN 4 THEN 70011 END
 				--actionID on agent
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62007,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -435,11 +436,14 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllMembers = 1 )
 					)
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75013 
+												WHEN 3 THEN 75014
+												WHEN 4 THEN 75015 END
 				--actionID on member
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63007,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -452,14 +456,13 @@ BEGIN
 		SELECT @LogSPData = '<Acc_AdminUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
 			+ 'Bettype="' + coalesce(cast(@Bettype AS VARCHAR(50)), space(1)) + '" ' 
 			+ 'Disable="' + coalesce(cast(@Disable AS VARCHAR(50)), space(1)) + '" ' 
-			+'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" ' 
-			+'DisableAllMasters="'+ coalesce(cast(ISNULL(@DisableAllMasters,0) as varchar(50)),space(1)) + '" '
-			+'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '  
-			+'DisableAllAgents="'+ coalesce(cast(ISNULL(@DisableAllAgents,0) as varchar(50)),space(1)) + '" ' 
-			+'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '  
-			+'DisableAllMembers="'+ coalesce(cast(ISNULL(@DisableAllMembers,0) as varchar(50)),space(1)) + '" '
-			  
-			+ 'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' 
+			+ 'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '
+			+ 'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
+			+ 'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '  
+			+ 'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
+			+ 'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '
+			+ 'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),space(1)) as varchar(50)),space(1)) + '" '
+			
 			+ 'UserID="' + coalesce(cast(@UserID AS VARCHAR(50)), space(1)) + '" ' 
 			+ 'UplineID="' + coalesce(cast(@UplineID AS VARCHAR(50)), space(1)) + '" ' 
 			+ 'Language="' + coalesce(cast(@Language AS VARCHAR(2)), space(1)) + '" ' 
@@ -469,9 +472,9 @@ BEGIN
 
 		--write log for themself
 		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60003 
-										WHEN 3 THEN 61006
-										WHEN 2 THEN 62006 
-										WHEN 1 THEN 63006 END
+										WHEN 3 THEN 65006
+										WHEN 2 THEN 70009 
+										WHEN 1 THEN 75012 END
 										
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 			,@CustID = @CustID
@@ -489,11 +492,13 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllMasters = 1 )
 					)			
 			BEGIN
+				SELECT @ActionID = 65007
+				
 				--actionID on master
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 61007, 
+					@ActionID = @ActionID, 
 					@Doing = 'Update Keno status for credit customer',					
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -505,11 +510,13 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllAgents = 1 )
 					)	
 			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70010 
+												WHEN 4 THEN 70011 END
 				--actionID on agent
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 62007,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
@@ -521,17 +528,20 @@ BEGIN
 					OR (@Disable = 0 AND @UpdateAllMembers = 1 )
 					)
 			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75013 
+												WHEN 3 THEN 75014
+												WHEN 4 THEN 75015 END
 				--actionID on member
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 					@UserID = @UserID,  
 					@CustID = @CustID,  
-					@ActionID = 63007,  
+					@ActionID = @ActionID,  
 					@Doing = 'Update Keno status for credit customer',
 					@TrackingValue = @LogSPData  , 
 					@TrackingValue2 = @TrackingValue  ,  
 					@duration = @duration
 			END	
-		END
+		END	
 	END CATCH
 
 	RETURN
