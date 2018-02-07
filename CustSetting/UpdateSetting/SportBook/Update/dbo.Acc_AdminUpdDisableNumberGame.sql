@@ -80,7 +80,11 @@ BEGIN
 	END
 	--END
 
-	IF @Old_DisableNumber = @Disable RETURN
+	IF @Old_DisableNumber = @Disable 
+		AND @UpdateAllMasters = 0 
+		AND @UpdateAllAgents = 0 
+		AND @UpdateAllMembers = 0
+	RETURN
 
 	IF @Disable = 0 -- check status upline
 	begin			
