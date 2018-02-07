@@ -21,7 +21,7 @@ BEGIN
         INNER JOIN [site] s    ON s.[site]    = COALESCE(c.[site], ca.[site])
     WHERE c.custid = @custid
     
-    SELECT sbm.SportType, gls.SportType, gls.BetType
+    SELECT sbm.productid, gls.SportType, gls.BetType
         FROM GameLaunchPerCurrency glc
             INNER JOIN GameLaunchPerSite gls                   ON gls.SportType = glc.SportType AND gls.BetType = glc.BetType
             INNER JOIN DBAGE.bodb02.dbo.SportBettypeMatrix sbm ON sbm.SportType = glc.SportType AND sbm.BetType = glc.BetType
