@@ -1,9 +1,8 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_AdminUpdDisableNumberGame]
 	@CustID INT,
-	@DisableNumber BIT,
-	@DisableDownline BIT = true, --Disable all downline
-	@SubAccID INT = 0, --Sub-AccountID
+	@Disable BIT,
+	
 	@UpdateAllMasters BIT = 0,
 	@UpdateAllAgents  BIT = 0,
 	@UpdateAllMembers BIT = 0,
@@ -37,7 +36,7 @@ Revisions:
 	- 20180202@Johnson: remove @DisableDownline for new direction for status [redmine: #87328]
 Param's Explanation:
 • @custid: customer id.   
-• @DisableNumber: status
+• @Disable: status
 */
 BEGIN
 	SET NOCOUNT ON
@@ -68,7 +67,7 @@ BEGIN
 	END
 
 	--Check Allowed downlines during peak hour at weekend
-	IF (@DisableNumber = 1 OR (@DisableNumber = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)))
+	IF (@Disable = 1 OR (@Disable = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)))
 	BEGIN
 		EXEC Acc_CustomerSelCheckAllowedDownlines	@custid=@custid,
 												@roleid=@roleid,
@@ -81,9 +80,9 @@ BEGIN
 	END
 	--END
 
-	IF @Old_DisableNumber = @DisableNumber RETURN
+	IF @Old_DisableNumber = @Disable RETURN
 
-	IF @DisableNumber = 0 -- check status upline
+	IF @Disable = 0 -- check status upline
 	begin			
 		IF @RoleID = 3
 			SELECT @UplineDisableNumber = ISNULL(DisableNumber,0) FROM CustInfo WITH (NOLOCK)
@@ -107,7 +106,7 @@ BEGIN
 	END
 
 	--upline status and downlines not suitable
-	IF @DisableNumber = 1
+	IF @Disable = 1
 	AND (
 		(@UpdateAllMasters = 1 AND @DisableAllMasters = 0)
 		OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
@@ -123,7 +122,7 @@ BEGIN
 
 	---------------------
 
-	UPDATE CustInfo WITH (ROWLOCK, UPDLOCK) SET DisableNumber = @DisableNumber
+	UPDATE CustInfo WITH (ROWLOCK, UPDLOCK) SET DisableNumber = @Disable
 	WHERE CustID = @CustID
 	IF (@@error <> 0)
 	begin
@@ -136,14 +135,14 @@ BEGIN
 		RETURN
 	END
 	--Check condition for update all downline
-	IF (@DisableNumber = 1 OR (@DisableNumber = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1))) --Disable all downline OR enable all downline
+	IF (@Disable = 1 OR (@Disable = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1))) --Disable all downline OR enable all downline
 	BEGIN TRY
 		--20130926@Kathy: Apply ExecRep 
 		EXEC [Acc_CustomerInfo_Execrep_04]
 			@CustID		= @CustID,
 			@RoleID		= @RoleID,
 			@Action		= 'DisableNumberGame',
-			@DisableNumberGame = @DisableNumber,
+			@DisableNumberGame = @Disable,
 			
 			@UpdateAllMasters = @UpdateAllMasters,
 			@UpdateAllAgents = @UpdateAllAgents,
@@ -172,7 +171,7 @@ BEGIN
 			@ActionID INT
 
 	SELECT @LogSPData = '<Acc_AdminUpdDisableNumberGame CustID="'+ COALESCE(CAST(@CustID as VARCHAR(50)),SPACE(1)) + '" '+
-						'DisableNumber="'+ COALESCE(CAST(@DisableNumber as VARCHAR(50)),SPACE(1)) + '" '+
+						'DisableNumber="'+ COALESCE(CAST(@Disable as VARCHAR(50)),SPACE(1)) + '" '+
 						'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
 						'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+ 
 						'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
@@ -219,8 +218,8 @@ BEGIN
 			@duration = @duration
 		
 		IF @roleid >3 
-				AND ( @DisableNumber = 1 
-					OR (@DisableNumber = 0 AND @UpdateAllMasters = 1 )
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllMasters = 1 )
 					)			
 		BEGIN
 			SELECT @ActionID = 65017
@@ -236,8 +235,8 @@ BEGIN
 		END
 		
 		IF @Roleid >2
-			AND ( @DisableNumber = 1 
-				OR (@DisableNumber = 0 AND @UpdateAllAgents = 1 )
+			AND ( @Disable = 1 
+				OR (@Disable = 0 AND @UpdateAllAgents = 1 )
 				)	
 		BEGIN	
 			SELECT @ActionID = CASE @roleid WHEN 3 THEN 70025
@@ -254,8 +253,8 @@ BEGIN
 		END
 		
 		IF @Roleid >1
-			AND ( @DisableNumber = 1 
-				OR (@DisableNumber = 0 AND @UpdateAllMembers = 1 )
+			AND ( @Disable = 1 
+				OR (@Disable = 0 AND @UpdateAllMembers = 1 )
 				)
 		BEGIN
 			SELECT @ActionID = CASE @roleid WHEN 2 THEN 75033 
@@ -273,14 +272,14 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 		SELECT @LogSPData = '<Acc_AdminUpdDisableNumberGame CustID="'+ COALESCE(CAST(@CustID as VARCHAR(50)),SPACE(1)) + '" '+
-							'DisableNumber="'+ COALESCE(CAST(@DisableNumber as VARCHAR(50)),SPACE(1)) + '" '+
+							'DisableNumber="'+ COALESCE(CAST(@Disable as VARCHAR(50)),SPACE(1)) + '" '+
 							'UpdateAllMasters="'+ coalesce(cast(ISNULL(@UpdateAllMasters,0) as varchar(50)),space(1)) + '" '+ 
 							'DisableAllMasters="'+ coalesce(cast(ISNULL(CAST(@DisableAllMasters AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+ 
 							'UpdateAllAgents="'+ coalesce(cast(ISNULL(@UpdateAllAgents,0) as varchar(50)),space(1)) + '" '+  
 							'DisableAllAgents="'+ coalesce(cast(ISNULL(CAST(@DisableAllAgents AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
 							'UpdateAllMembers="'+ coalesce(cast(ISNULL(@UpdateAllMembers,0) as varchar(50)),space(1)) + '" '+  
 							'DisableAllMembers="'+ coalesce(cast(ISNULL(CAST(@DisableAllMembers AS VARCHAR(10)),0) as varchar(50)),space(1)) + '" '+  
-							'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) as VARCHAR(30)),SPACE(1)) + '" '+
+							
 							'UserID="'+ COALESCE(CAST(@UserID as VARCHAR(50)),SPACE(1)) + '" '+
 							'Language="'+ COALESCE(CAST(@Language as VARCHAR(2)),SPACE(1))+'" '+
 							'ErrCode="'+ COALESCE(CAST(ERROR_NUMBER() as VARCHAR(50)),SPACE(1)) + '" '+
@@ -303,8 +302,8 @@ BEGIN
 			@duration = @duration
 		
 		IF @roleid >3 
-				AND ( @DisableNumber = 1 
-					OR (@DisableNumber = 0 AND @UpdateAllMasters = 1 )
+				AND ( @Disable = 1 
+					OR (@Disable = 0 AND @UpdateAllMasters = 1 )
 					)			
 		BEGIN
 			SELECT @ActionID = 65017
@@ -320,8 +319,8 @@ BEGIN
 		END
 		
 		IF @Roleid >2
-			AND ( @DisableNumber = 1 
-				OR (@DisableNumber = 0 AND @UpdateAllAgents = 1 )
+			AND ( @Disable = 1 
+				OR (@Disable = 0 AND @UpdateAllAgents = 1 )
 				)	
 		BEGIN	
 			SELECT @ActionID = CASE @roleid WHEN 3 THEN 70025
@@ -338,8 +337,8 @@ BEGIN
 		END
 		
 		IF @Roleid >1
-			AND ( @DisableNumber = 1 
-				OR (@DisableNumber = 0 AND @UpdateAllMembers = 1 )
+			AND ( @Disable = 1 
+				OR (@Disable = 0 AND @UpdateAllMembers = 1 )
 				)
 		BEGIN
 			SELECT @ActionID = CASE @roleid WHEN 2 THEN 75033 
