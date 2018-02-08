@@ -35,7 +35,15 @@ AS
 						DisableAllMembers="0"
 				/>
 		</ROOT>
-
+	Example: 
+		DECLARE @p3 int
+		SET @p3=0
+		DECLARE @p4 nvarchar(200)
+		SET @p4=N''
+		DECLARE @p5 int
+		SET @p5=0
+		EXEC Acc_Admin_DisableGameStatusUpd_UAT1 @UserID=169368,@IP='202.78.231.34',@MsgType=@p3 output,@ErrMsg=@p4 output,@ErrCode=@p5 output,@IsDisabled='<ROOT><ProductStatus SportType="213" BetType="2501" IsDisabled="1" UpdateAllMasters="1"	UpdateAllAgents="1" UpdateAllMembers="1" DisableAllMasters="1" DisableAllAgents="1" DisableAllMembers="1"/></ROOT>',@CustID=1176070
+		SELECT @p3, @p4, @p5
 */
 BEGIN
 	SET NOCOUNT ON
@@ -47,7 +55,13 @@ BEGIN
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
 		, @xml				XML
-		
+		, @WriteLogMaster	BIT = 0
+		, @WriteLogAgent	BIT = 0
+		, @WriteLogMember	BIT = 0
+		, @ActionID			INT
+
+	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
+
 	DECLARE @AgentID	INT
 		, @MasterID		INT
 		, @SuperID		INT
@@ -160,7 +174,6 @@ BEGIN
 			)
 	
 	EXEC sp_xml_removedocument @iDoc
-
 	
 	--Validate new disabled status
 	EXEC [dbo].[Acc_Admin_DisableGameStatusCheck] 
@@ -179,74 +192,20 @@ BEGIN
 	--Get old disabled status
 	DECLARE @downlines BIT  = 0, @Upline INT 
 	
-	IF @roleid = 4
-	BEGIN		
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
-		SELECT	psp.SportType,
-				psp.BetType,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled,
-				tmp.UpdateAllAgents,
-				tmp.UpdateAllMasters,
-				tmp.UpdateAllMembers,
-				tmp.DisableAllMasters,
-				tmp.DisableAllAgents,
-				tmp.DisableAllMembers
-		FROM #NewDisableStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-				
-	END
-	ELSE IF @roleid = 3
-	BEGIN
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
-		SELECT	psp.SportType,
-				psp.BetType,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled,
-				tmp.UpdateAllAgents,
-				tmp.UpdateAllMasters,
-				tmp.UpdateAllMembers,
-				tmp.DisableAllMasters,
-				tmp.DisableAllAgents,
-				tmp.DisableAllMembers
-		FROM #NewDisableStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-	END 	
-	ELSE IF @roleid = 2
-	BEGIN
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
-		SELECT	psp.SportType,
-				psp.BetType,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled,
-				tmp.UpdateAllAgents,
-				tmp.UpdateAllMasters,
-				tmp.UpdateAllMembers,
-				tmp.DisableAllMasters,
-				tmp.DisableAllAgents,
-				tmp.DisableAllMembers
-		FROM #NewDisableStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-				 
-	END 
-	ELSE IF @roleid = 1
-	BEGIN
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
-		SELECT	psp.SportType,
-				psp.BetType,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled,
-				tmp.UpdateAllAgents,
-				tmp.UpdateAllMasters,
-				tmp.UpdateAllMembers,
-				tmp.DisableAllMasters,
-				tmp.DisableAllAgents,
-				tmp.DisableAllMembers
-		FROM #NewDisableStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-			
-	END
-		
+	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
+	SELECT	psp.SportType,
+			psp.BetType,
+			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled,
+			tmp.UpdateAllMasters,
+			tmp.UpdateAllAgents,
+			tmp.UpdateAllMembers,
+			tmp.DisableAllMasters,
+			tmp.DisableAllAgents,
+			tmp.DisableAllMembers
+	FROM #NewDisableStatTbl tmp
+		INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
+		INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
+
 	--If status did not be changed than return
 	IF NOT EXISTS (
 			SELECT TOP 1 1
@@ -360,6 +319,29 @@ BEGIN
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 	WHERE p.ProductID = @ProductID
 
+	--Get ActionID
+	SELECT @WriteLogMaster = 1
+	FROM #NewDisableStatTbl
+	WHERE UpdateAllMasters = 1
+
+	SELECT @WriteLogAgent = 1
+	FROM #NewDisableStatTbl
+	WHERE UpdateAllAgents = 1
+
+	SELECT @WriteLogMember = 1
+	FROM #NewDisableStatTbl
+	WHERE UpdateAllMembers= 1
+
+	INSERT INTO @LogAction (ActionID)
+	SELECT l.ActionID
+	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
+		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
+	WHERE l.SPName = 'Acc_Admin_DisableGameStatusUpd' AND ld.ProductID = @ProductID AND ld.Level = @RoleID
+		AND ((l.ActionID BETWEEN 60500 AND 64999 AND @RoleID = 4)
+			OR (l.ActionID BETWEEN 65500 AND 69999 AND ((@RoleID = 4 AND @WriteLogMaster = 1) OR @RoleID = 3))
+			OR (l.ActionID BETWEEN 70500 AND 74999 AND ((@RoleID IN (4,3) AND @WriteLogAgent = 1) OR @RoleID = 2))
+			OR (l.ActionID BETWEEN 75500 AND 79999 AND ((@RoleID IN (4,3,2) AND @WriteLogMember = 1) OR @RoleID = 1)))
+
 	IF @SettingLevel = 1			-- Product setting level
 	BEGIN
 		SET @xml = (
@@ -370,12 +352,18 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
-								IsDisabled			AS '@IsDisabled'
+								IsDisabled			AS '@IsDisabled',
+								UpdateAllMasters	AS '@UpdateAllMasters',
+								DisableAllMasters	AS '@DisableAllMasters',
+								UpdateAllAgents		AS '@UpdateAllAgents',
+								DisableAllAgents	AS '@DisableAllAgents',
+								UpdateAllMembers	AS '@UpdateAllMembers',
+								DisableAllMembers	AS '@DisableAllMembers'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableGameStatusUpd'),
+			FOR XML PATH('Acc_Admin_DisableGameStatusUpd'),
 			TYPE
 		)
 	END
@@ -389,12 +377,18 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								IsDisabled			AS '@IsDisabled'
+								IsDisabled			AS '@IsDisabled',
+								UpdateAllMasters	AS '@UpdateAllMasters',
+								DisableAllMasters	AS '@DisableAllMasters',
+								UpdateAllAgents		AS '@UpdateAllAgents',
+								DisableAllAgents	AS '@DisableAllAgents',
+								UpdateAllMembers	AS '@UpdateAllMembers',
+								DisableAllMembers	AS '@DisableAllMembers'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableGameStatusUpd'),
+			FOR XML PATH('Acc_Admin_DisableGameStatusUpd'),
 			TYPE
 		)
 	END
@@ -408,12 +402,18 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
-								IsDisabled			AS '@IsDisabled'
+								IsDisabled			AS '@IsDisabled',
+								UpdateAllMasters	AS '@UpdateAllMasters',
+								DisableAllMasters	AS '@DisableAllMasters',
+								UpdateAllAgents		AS '@UpdateAllAgents',
+								DisableAllAgents	AS '@DisableAllAgents',
+								UpdateAllMembers	AS '@UpdateAllMembers',
+								DisableAllMembers	AS '@DisableAllMembers'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableGameStatusUpd'),
+			FOR XML PATH('Acc_Admin_DisableGameStatusUpd'),
 			TYPE
 		)
 	END
@@ -427,13 +427,19 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								BetType				AS '@BetType',
-								IsDisabled			AS '@IsDisabled'
-						FROM #OldDisableStatTbl
+								BetType			AS '@BetType',
+								IsDisabled		AS '@IsDisabled',
+								UpdateAllMasters	AS '@UpdateAllMasters',
+								DisableAllMasters	AS '@DisableAllMasters',
+								UpdateAllAgents	AS '@UpdateAllAgents',
+								DisableAllAgents	AS '@DisableAllAgents',
+								UpdateAllMembers	AS '@UpdateAllMembers',
+								DisableAllMembers	AS '@DisableAllMembers'
+						FROM #OldDisableStatTbl 
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableGameStatusUpd'),
+			FOR XML PATH('Acc_Admin_DisableGameStatusUpd'),
 			TYPE
 		)
 	END
@@ -450,12 +456,18 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
-								IsDisabled			AS '@IsDisabled'
+								IsDisabled			AS '@IsDisabled',
+								UpdateAllMasters	AS '@UpdateAllMasters',
+								DisableAllMasters	AS '@DisableAllMasters',
+								UpdateAllAgents		AS '@UpdateAllAgents',
+								DisableAllAgents	AS '@DisableAllAgents',
+								UpdateAllMembers	AS '@UpdateAllMembers',
+								DisableAllMembers	AS '@DisableAllMembers'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableGameStatusUpd'),
+			FOR XML PATH('Acc_Admin_DisableGameStatusUpd'),
 			TYPE
 		)
 	END
@@ -469,12 +481,18 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								IsDisabled			AS '@IsDisabled'
+								IsDisabled			AS '@IsDisabled',
+								UpdateAllMasters	AS '@UpdateAllMasters',
+								DisableAllMasters	AS '@DisableAllMasters',
+								UpdateAllAgents		AS '@UpdateAllAgents',
+								DisableAllAgents	AS '@DisableAllAgents',
+								UpdateAllMembers	AS '@UpdateAllMembers',
+								DisableAllMembers	AS '@DisableAllMembers'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableGameStatusUpd'),
+			FOR XML PATH('Acc_Admin_DisableGameStatusUpd'),
 			TYPE
 		)
 	END
@@ -488,12 +506,18 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
-								IsDisabled			AS '@IsDisabled'
+								IsDisabled			AS '@IsDisabled',
+								UpdateAllMasters	AS '@UpdateAllMasters',
+								DisableAllMasters	AS '@DisableAllMasters',
+								UpdateAllAgents		AS '@UpdateAllAgents',
+								DisableAllAgents	AS '@DisableAllAgents',
+								UpdateAllMembers	AS '@UpdateAllMembers',
+								DisableAllMembers	AS '@DisableAllMembers'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableGameStatusUpd'),
+			FOR XML PATH('Acc_Admin_DisableGameStatusUpd'),
 			TYPE
 		)
 	END
@@ -508,12 +532,18 @@ BEGIN
 					(
 						SELECT	SportType			AS '@SportType',
 								BetType				AS '@BetType',
-								IsDisabled			AS '@IsDisabled'
+								IsDisabled			AS '@IsDisabled',
+								UpdateAllMasters	AS '@UpdateAllMasters',
+								DisableAllMasters	AS '@DisableAllMasters',
+								UpdateAllAgents		AS '@UpdateAllAgents',
+								DisableAllAgents	AS '@DisableAllAgents',
+								UpdateAllMembers	AS '@UpdateAllMembers',
+								DisableAllMembers	AS '@DisableAllMembers'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableGameStatusUpd'),
+			FOR XML PATH('Acc_Admin_DisableGameStatusUpd'),
 			TYPE
 		)
 	END
@@ -522,23 +552,33 @@ BEGIN
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-			, @CustID			= @CustID
-			, @ActionID			= 1171
-			, @TrackingValue	= @logSpData
-			, @TrackingValue2	= @logSpData_Old
-			, @duration			= @duration
-	END TRY
+	WHILE (1=1)
+	BEGIN
+		UPDATE TOP (1) @LogAction
+		SET IsFinished = 1, @ActionID = ActionID
+		WHERE IsFinished = 0
 
-	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-			, @CustID			= @CustID
-			, @ActionID			= 1171
-			, @TrackingValue	= @logSpData
-			, @TrackingValue2	= @logSpData_Old
-			, @duration			= @duration
-	END CATCH
+		IF @@ROWCOUNT = 0 BREAK
+
+		BEGIN TRY
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+				, @CustID			= @CustID
+				, @ActionID			= @ActionID
+				, @TrackingValue	= @logSpData
+				, @TrackingValue2	= @logSpData_Old
+				, @duration			= @duration
+		END TRY
+
+		BEGIN CATCH
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+				, @CustID			= @CustID
+				, @ActionID			= @ActionID
+				, @TrackingValue	= @logSpData
+				, @TrackingValue2	= @logSpData_Old
+				, @duration			= @duration
+		END CATCH
+	END
+
 	DROP TABLE #NewDisableStatTbl
 	DROP TABLE #OldDisableStatTbl
 END
