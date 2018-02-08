@@ -803,8 +803,7 @@ BEGIN
 		  AND dbo.f_CheckRepTable('ProductBetSetting') = 1 
 		  AND dbo.f_CheckRepTable('AgentCommRate') = 1
 		 AND dbo.f_CheckRepTable('CustCommRate') = 1
-		  --AND dbo.f_CheckRepTable('P2PGAMESETTING') = 1 
-		  --AND dbo.f_CheckRepTable('P2PGroupComm') = 1		  
+	
 	   )
 	BEGIN
 
@@ -1058,47 +1057,8 @@ BEGIN
 			RETURN
 		END
 
-		--Insert Into P2P Setting
-		INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-			(custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-		SELECT @custid  , 1001 , 1 , 0 , 0 , 0 , 0
-		UNION ALL SELECT @custid  , 1002 , 1 , 0 , 0 , 0 , 0
+		
 
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE custSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			
-			RETURN
-		END  
-
-		INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-				   (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-		SELECT @custid  , 1 , 0 , 0 , 0 , 0 
-		UNION ALL SELECT @custid  , 2 , 0 , 0 , 0 , 0 
-
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE custSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-			
-			RETURN
-		END           
 		
 		--Insert live casino, Keno, GoldDeluxe setting
 		INSERT INTO CustSettingGame([CustID]
@@ -1137,8 +1097,7 @@ BEGIN
 			DELETE CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
 			DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
 			DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		
 			DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 			
 			RETURN
@@ -1171,8 +1130,7 @@ BEGIN
 			DELETE CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
 			DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
 			DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		
 			DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 			
@@ -1202,8 +1160,7 @@ BEGIN
 			DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+		
 			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
@@ -1502,57 +1459,7 @@ BEGIN
 			DELETE CustOverride3rd with (ROWLOCK) where custid =  @custid
 						
 			return
-		END
-
-		--Insert Into P2P Setting
-		INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-			(custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-		SELECT @custid  , 1001 , StakeLevel1 , 0 , 0 , 0 , 0 FROM dbo.P2PGAMESETTING WITH(ROWLOCK) WHERE custid = @srecommend AND bettype = 1001
-		UNION ALL 
-		SELECT @custid  , 1002 , StakeLevel1 , 0 , 0 , 0 , 0 FROM dbo.P2PGAMESETTING WITH(ROWLOCK) WHERE custid = @srecommend AND bettype = 1002
-		 
-		 
-		if @@error <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=119
-			
-			-- ROLLBACK MANUALLY
-			DELETE [CustSetting] with (ROWLOCK) where custid =  @custid
-			DELETE [CustSetting3rd] with (ROWLOCK) where custid = @custid
-			DELETE CustOverride with (ROWLOCK) where custid =  @custid
-			DELETE CustOverride3rd with (ROWLOCK) where custid =  @custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			
-			return
-		END
-
-
-		INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-				   (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-		SELECT @custid  , 1 , 0 , 0 , 0 , 0 
-		UNION ALL SELECT @custid  , 2 , 0 , 0 , 0 , 0
-		--SELECT @custid custId,groupID,sdiscount,0 adiscount,0 discount,0 playerdiscount
-		--FROM dbo.P2PGroupComm
-		--Where custid  = @srecommend ; 
-
-		 
-		if @@error <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=119
-			
-			-- ROLLBACK MANUALLY
-			DELETE [CustSetting] with (ROWLOCK) where custid =  @custid
-			DELETE [CustSetting3rd] with (ROWLOCK) where custid = @custid
-			DELETE CustOverride with (ROWLOCK) where custid =  @custid
-			DELETE CustOverride3rd with (ROWLOCK) where custid =  @custid
-
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-						
-			return
-		END
+		END	
 
 		--Insert live casino setting
 		INSERT INTO CustSettingGame([CustID]
@@ -1587,8 +1494,7 @@ BEGIN
 			DELETE [CustSetting3rd] with (ROWLOCK) where custid = @custid
 			DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
 			DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		
 			DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 						
 			RETURN
@@ -1619,8 +1525,7 @@ BEGIN
 			DELETE [CustSetting3rd] with (ROWLOCK) where custid = @custid
 			DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
 			DELETE [custOverride3rd] WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+			
 			DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 						
@@ -1672,8 +1577,7 @@ BEGIN
 			DELETE dbo.CustSetting3rd with (ROWLOCK) where custid = @custid
 			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+		
 			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid
@@ -1977,54 +1881,6 @@ BEGIN
 			return
 		END
 
-		--Insert Into P2P Setting
-		INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-			(custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-		SELECT @custid  , 1001 , stakeLevel1 , 0 , 0 , 0 , 0 FROM dbo.P2PGAMESETTING WITH(ROWLOCK) WHERE custid = @mrecommend AND bettype = 1001
-		UNION ALL 
-		SELECT @custid  , 1002 , stakeLevel1 , 0 , 0 , 0 , 0 FROM dbo.P2PGAMESETTING WITH(ROWLOCK) WHERE custid = @mrecommend AND bettype = 1002
-
-		if @@error <> 0
-		BEGIN
-
-			--Error occur
-			SELECT @ErrCode = 115
-				
-			-- ROLLBACK MANUALLY
-			DELETE custsetting with (ROWLOCK) where custid =  @custid
-			DELETE custsetting3rd with (ROWLOCK) where custid =  @custid
-			DELETE custoverride with (ROWLOCK) where custid =  @custid
-			DELETE CustOverride3rd with (ROWLOCK) where custid =  @custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-				
-			return
-		END
-
-		INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-				   (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-		SELECT @custid  , 1 , 0 , 0 , 0 , 0 
-		UNION ALL SELECT @custid  , 2 , 0 , 0 , 0 , 0           
-		--SELECT @custid custId,groupID,sdiscount,adiscount,0 discount,0 playerdiscount
-		--FROM dbo.P2PGroupComm
-		--Where custid  = @mrecommend ; 
-
-
-		if @@error <> 0
-		BEGIN
-
-			--Error occur
-			SELECT @ErrCode = 115
-				
-			-- ROLLBACK MANUALLY	
-			DELETE custsetting with (ROWLOCK) where custid =  @custid
-			DELETE custsetting3rd with (ROWLOCK) where custid =  @custid
-			DELETE custoverride with (ROWLOCK) where custid =  @custid
-			DELETE CustOverride3rd with (ROWLOCK) where custid =  @custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-				
-			return
-		END
 
 		--- insert into CustSettingGame
 		INSERT INTO custsettingGame(CustID, Bettype, Sporttype, apositiontaking, mpositiontaking, spositiontaking, playerdiscount, discount, adiscount, sdiscount, autopositiontaking, isautopositiontaking, autompositiontaking, isautompositiontaking)
@@ -2048,8 +1904,7 @@ BEGIN
 			DELETE custsetting3rd with (ROWLOCK) where custid =  @custid
 			DELETE custoverride with (ROWLOCK) where custid =  @custid
 			DELETE CustOverride3rd with (ROWLOCK) where custid =  @custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid	
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		
 			DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
 				
 			RETURN
@@ -2077,8 +1932,7 @@ BEGIN
 			DELETE custsetting3rd with (ROWLOCK) where custid =  @custid
 			DELETE custoverride with (ROWLOCK) where custid =  @custid
 			DELETE CustOverride3rd with (ROWLOCK) where custid =  @custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid	
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		
 			DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
 			DELETE Custoverridegame WITH (ROWLOCK) WHERE custId  =@custid
 				
@@ -2152,8 +2006,7 @@ BEGIN
 			DELETE dbo.custsetting3rd with (ROWLOCK) where custid = @custid
 			DELETE dbo.custoverride with (ROWLOCK) where custid = @custid
 			DELETE dbo.CustOverride3rd with (ROWLOCK) where custid = @custid
-			DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid	
-			DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+			
 			DELETE dbo.custsettingGame WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.Custoverridegame WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.CustGameType WITH (ROWLOCK) WHERE custId = @custid
@@ -2354,70 +2207,7 @@ BEGIN
 
 			return
 		END
-		
-		--Insert Into P2P Setting
-		INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-			(custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-		SELECT @custid  , bettype , StakeLevel1 , 0 , 0 , 0 , 0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype = 1001
-		UNION ALL 
-		SELECT @custid  , bettype , StakeLevel1 , 0 , 0 , 0 , 0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype = 1002
 
-
-		if @@error <> 0
-		BEGIN
-			--Error occurs
-			SELECT @ErrCode=216
-			
-			-- ROLLBACK MANUALLY
-			Delete custsetting with (ROWLOCK) where custid  =@custid
-			Delete CustSetting3rd with (ROWLOCK) where custid  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			
-			return
-		END
-
-
-		INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-
-				   (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-		SELECT @custid custId
-			,P2PGroupComm.groupID
-			,GC_S.sdiscount
-			,GC_M.adiscount
-			,P2PGroupComm.discount
-			,0 playerdiscount
-		FROM dbo.P2PGroupComm WITH(NOLOCK) 
-		INNER JOIN (
-			SELECT groupID
-				,sdiscount
-			FROM dbo.P2PGroupComm WITH(NOLOCK) 
-			WHERE custid = @srecommend
-			) GC_S ON GC_S.GROUPID = P2PGroupComm.GROUPID
-		INNER JOIN (
-			SELECT groupID
-				,adiscount
-			FROM dbo.P2PGroupComm WITH(NOLOCK) 
-			WHERE custid = @mrecommend
-			) GC_M ON GC_M.GROUPID = P2PGroupComm.GROUPID
-		WHERE custid = @recommend;
-
-		--SELECT @custid custId,groupID,sdiscount,adiscount,discount,0 playerdiscount
-		--FROM dbo.P2PGroupComm
-		--Where custid  = @recommend ; 
-
-		if @@error <> 0
-		BEGIN
-			--Error occurs
-			SELECT @ErrCode=216
-			
-			-- ROLLBACK MANUALLY
-			Delete custsetting with (ROWLOCK) where custid  =@custid
-			Delete CustSetting3rd with (ROWLOCK) where custid  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-			
-			return
-		END
 
 		--- insert into custsettingGame
 		INSERT INTO custsettingGame(CustID, Bettype, Sporttype, apositiontaking, mpositiontaking, spositiontaking, playerdiscount, discount, adiscount, sdiscount, autopositiontaking, isautopositiontaking, autompositiontaking, isautompositiontaking)
@@ -2485,8 +2275,7 @@ BEGIN
 			-- ROLLBACK MANUALLY
 			Delete custsetting with (ROWLOCK) where custid  =@custid
 			Delete CustSetting3rd with (ROWLOCK) where custid  =@custid
-			DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+			
 			DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
 				
 			RETURN
@@ -2562,8 +2351,7 @@ BEGIN
 			-- ROLLBACK MANUALLY
 			Delete dbo.custsetting with (ROWLOCK) where custid = @custid
 			Delete dbo.CustSetting3rd with (ROWLOCK) where custid = @custid
-			DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+			
 			DELETE dbo.custsettingGame WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.CustGameType WITH (ROWLOCK) WHERE custId = @custid			
 				
@@ -2604,8 +2392,7 @@ BEGIN
 			-- ROLLBACK MANUALLY
 			Delete dbo.custsetting with (ROWLOCK) where custid = @custid
 			Delete dbo.CustSetting3rd with (ROWLOCK) where custid = @custid
-			DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+			
 			DELETE dbo.custsettingGame WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.CustGameType WITH (ROWLOCK) WHERE custId = @custid			
 				
@@ -2644,8 +2431,7 @@ BEGIN
 			DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+			
 			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
@@ -2669,8 +2455,7 @@ BEGIN
 			DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+		
 			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
@@ -2708,8 +2493,7 @@ BEGIN
 			DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
 			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+		
 			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
@@ -2746,8 +2530,7 @@ BEGIN
 				DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
 				DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
 				DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-				DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-				DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+			
 				DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 				DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 				DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
@@ -2782,8 +2565,7 @@ BEGIN
 		IF(dbo.f_CheckRepTable('CustSetting3rd') = 1) DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
 		IF(dbo.f_CheckRepTable('custOverride') = 1) DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
 		IF(dbo.f_CheckRepTable('custOverride3rd') = 1) DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-		IF(dbo.f_CheckRepTable('P2PGameSetting') = 1) DELETE dbo.P2PGameSetting WITH (ROWLOCK) WHERE custId = @custid
-		IF(dbo.f_CheckRepTable('P2PGroupComm') = 1) DELETE dbo.P2PGroupComm WITH (ROWLOCK) WHERE custId = @custid
+		
 		IF(dbo.f_CheckRepTable('CustSettingGame') = 1) DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		IF(dbo.f_CheckRepTable('CustOverrideGame') = 1) DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 		IF(dbo.f_CheckRepTable('CustGameType') = 1) DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 

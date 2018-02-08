@@ -307,10 +307,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@SystemID		TINYINT=1,
 	@DisableFinancial BIT = 0,
 	@DisableCasino BIT = 0, 
-	@DisableBingo BIT = 0,
 	@DisableNumber BIT = 0,
-	@DisableP2P BIT = 1,
-	@DisableFUNP2P BIT = 1,	
 	@DoubleCommLosing BIT = 1,
 	@DisableCasinoBonus BIT = 1,
 	@DisableEsports BIT = 0,
@@ -787,12 +784,11 @@ BEGIN
 		@virtualmultiplier = 0,	
 		
 		@DisableFinancial = @DisableFinancial,
-		@DisableBingo = @DisableBingo,
-		@DisableNumber = @DisableNumber,
+		
+	
 		@DisableCasino = @DisableCasino,
-		@DisableP2P = @DisableP2P,
-		@DisableFUNP2P = @DisableFUNP2P,
-		@ISAUTORESETP2P = 1,	
+		@DisableNumber = @DisableNumber,
+	
 		--@Disable180_1201 = @Disable180_1201,
 		--@HideVirtualSports = @HideVirtualSports,
 		@DoubleCommLosing = @DoubleCommLosing,		
@@ -1334,10 +1330,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
 	--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disablebingo="'+ COALESCE(CAST(@disablebingo AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disableP2P="'+ COALESCE(CAST(@disableP2P AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'disableFunP2P="'+ COALESCE(CAST(@disableFunP2P AS VARCHAR(1)),SPACE(1)) + '" ' +	
+
 	'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -1369,10 +1363,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	
 		--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disablebingo="'+ COALESCE(CAST(@disablebingo AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disableP2P="'+ COALESCE(CAST(@disableP2P AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'disableFunP2P="'+ COALESCE(CAST(@disableFunP2P AS VARCHAR(1)),SPACE(1)) + '" ' +		
 		'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +

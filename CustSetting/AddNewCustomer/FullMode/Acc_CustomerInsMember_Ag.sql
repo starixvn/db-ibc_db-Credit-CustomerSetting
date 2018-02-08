@@ -70,8 +70,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@suspended BIT = NULL,	
 	@DisableFinancial BIT = 0,
 	@DisableCasino BIT = 0, 
-	@DisableBingo BIT = 0,
 	@DisableNumber BIT = 0,	
+
 	--@Disable180_1201 BIT = 0,
 	
 	@recommend INT,
@@ -156,10 +156,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@v161alivepositiontaking_87 SMALLMONEY,
 	@v161alivepositiontaking_89 SMALLMONEY = 0,
 	@v161alivepositiontaking_90 SMALLMONEY = 0,
-	
-	@DisableP2P BIT = 0,
-	@DisableFUNP2P BIT = 0,
-	
+
 	@IP VARCHAR(15)='',
 	@SystemID		TINYINT=1,
 	@success BIT = 1 OUTPUT,
@@ -1513,11 +1510,8 @@ BEGIN
          , @DisableFinancial = CASE WHEN DisableFinancial = 1 THEN 1 ELSE @DisableFinancial END
          , @DisableCasino = CASE WHEN DisableCasino = 1 THEN 1 ELSE @DisableCasino END        
          , @DisableOutright = DisableOutright 
-		 , @DisableColossusBet = DisableColossusBet 
-         , @DisableBingo = CASE WHEN DisableBingo = 1 THEN 1 ELSE @DisableBingo END
+		 , @DisableColossusBet = DisableColossusBet      
          , @DisableNumber = CASE WHEN DisableNumber = 1 THEN 1 ELSE @DisableNumber END
-         , @DisableP2P = CASE WHEN DisableP2P = 1 THEN 1 ELSE @DisableP2P END
-         , @DisableFUNP2P = CASE WHEN DisableFUNP2P = 1 THEN 1 ELSE @DisableFUNP2P END        
          --, @Disable180_1201 = DisableVirtualSports
          --, @HideVirtualSports = HideVirtualSports
          , @DisableCasinoBonus = 1
@@ -3068,8 +3062,8 @@ BEGIN
 	    @virtualmultiplier = @virtualmultiplier,
 	    @DisableFinancial = @DisableFinancial,
 	    @DisableCasino = @DisableCasino,
-	    @DisableBingo = @DisableBingo,
-	    @DisableNumber = @DisableNumber,	 
+		@DisableNumber = @DisableNumber,	 
+	 
 	    --@Disable180_1201 = @Disable180_1201,
 	    --@HideVirtualSports = @HideVirtualSports,
 	    @DoubleCommLosing = 0,-- off double comm losing WHEN create new member
@@ -3109,9 +3103,7 @@ BEGIN
 	    --E-Sports
 	    @DisableEsports = @DisableEsports,
     	@SystemID=@SystemID,
-	    @credit = @credit,
-	    @DisableP2P = @DisableP2P,
-	    @DisableFUNP2P = @DisableFUNP2P,
+	    @credit = @credit,	
 	    @IP = @IP,
 	    @TransferOption_dec = NULL,
 	    @copyFromCustID = @copyFromCustID,
@@ -3579,9 +3571,7 @@ BEGIN
     	
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid	 
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3617,9 +3607,7 @@ BEGIN
     	
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid	
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3656,8 +3644,6 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3693,8 +3679,7 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	  
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3730,8 +3715,7 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3766,9 +3750,7 @@ BEGIN
     	
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid	   
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3804,8 +3786,7 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	 
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3840,8 +3821,7 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	  
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3870,8 +3850,6 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -3905,9 +3883,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	 
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -3942,9 +3918,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -3979,9 +3953,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	 
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -4016,9 +3988,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	   
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -4054,9 +4024,7 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -4091,9 +4059,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	   
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -4128,9 +4094,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	  
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -4165,9 +4129,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -4202,9 +4164,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	   
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -4239,9 +4199,7 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting      with(ROWLOCK) WHERE custid = @custid
-	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGameSetting   WITH(ROWLOCK) WHERE custid = @custid
-	    DELETE P2PGroupComm     WITH(ROWLOCK) WHERE custid = @custid
+	    Delete CustSetting3rd   with(ROWLOCK) WHERE custid = @custid	 
 	    DELETE custsettingGame  WITH(ROWLOCK) WHERE custId = @custid	
 	    DELETE custOverride     WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
@@ -4507,80 +4465,7 @@ BEGIN
     	
 		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    return
-    END
-
-    --Insert INTo P2P Setting
-    INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-	    (custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-    SELECT @custid  , bettype , StakeLevel1 , 0 , 0 , 0 , 0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype = 1001
-    UNION ALL 
-    SELECT @custid  , bettype , StakeLevel1 , 0 , 0 , 0 , 0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype = 1002
-
-
-    IF @@error <> 0
-    BEGIN
-	    --Error occurs
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create member fail. Please try again'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-						    END	
-			    , @success = 0, @ErrCode=216
-    	
-	    -- ROLLBACK MANUALLY
-	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-    		
-		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    return
-    END
-
-
-    INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-               (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-    SELECT @custid custId
-	    ,P2PGroupComm.groupID
-	    ,GC_S.sdiscount
-	    ,GC_M.adiscount
-	    ,P2PGroupComm.discount
-	    ,0 playerdiscount
-    FROM dbo.P2PGroupComm WITH(NOLOCK) 
-    INNER JOIN (
-	    SELECT groupID
-		    ,sdiscount
-	    FROM dbo.P2PGroupComm WITH(NOLOCK) 
-	    WHERE custid = @srecommend
-	    ) GC_S ON GC_S.GROUPID = P2PGroupComm.GROUPID
-    INNER JOIN (
-	    SELECT groupID
-		    ,adiscount
-	    FROM dbo.P2PGroupComm WITH(NOLOCK) 
-	    WHERE custid = @mrecommend
-	    ) GC_M ON GC_M.GROUPID = P2PGroupComm.GROUPID
-    WHERE custid = @recommend;
-
-    --SELECT @custid custId,groupID,sdiscount,adiscount,discount,0 playerdiscount
-    --FROM dbo.P2PGroupComm
-    --Where custid  = @recommend ; 
-
-    IF @@error <> 0
-    BEGIN
-	    --Error occurs
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create member fail. Please try again'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-						    END	
-			    , @success = 0, @ErrCode=216
-    	
-	    -- ROLLBACK MANUALLY
-	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-    	
-		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    return
-    END
+    END  
     
     */
 
@@ -4600,9 +4485,7 @@ BEGIN
     	
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid	
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -4629,9 +4512,7 @@ BEGIN
     	
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	    DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid	  
 	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -4666,8 +4547,7 @@ BEGIN
 	   -- -- ROLLBACK MANUALLY
 	   -- Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	   -- Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	   -- DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	   -- DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	
 	   -- DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid	
 	   -- DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	   -- DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -4699,8 +4579,7 @@ BEGIN
 	   -- -- ROLLBACK MANUALLY
 	   -- Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	   -- Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid
-	   -- DELETE P2PGameSetting WITH (ROWLOCK) WHERE custid  =@custid
-	   -- DELETE P2PGroupComm WITH (ROWLOCK) WHERE custid  =@custid
+	
 	   -- DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
 	   -- DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
 	   -- DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
@@ -5013,8 +4892,8 @@ BEGIN
     --'DisableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableCasino="'+ COALESCE(CAST(@DisableCasino AS VARCHAR(1)), SPACE(1)) + '" ' +   
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
-    'DisableBingo="'+ COALESCE(CAST(@DisableBingo AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableNumber="'+ COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
+
     'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)), SPACE(1)) + '" ' +
 	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)), SPACE(1)) + '" ' +
@@ -5050,8 +4929,8 @@ BEGIN
 	    --'DisableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableCasino="'+ COALESCE(CAST(@DisableCasino AS VARCHAR(1)), SPACE(1)) + '" ' +	  
 	    'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
-	    'DisableBingo="'+ COALESCE(CAST(@DisableBingo AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableNumber="'+ COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' +	   
+	  
 	    'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)), SPACE(1)) + '" ' +
 		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)), SPACE(1)) + '" ' +

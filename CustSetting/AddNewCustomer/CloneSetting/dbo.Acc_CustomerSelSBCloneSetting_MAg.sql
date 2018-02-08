@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelSBCloneSetting_MAg]
 	@Custid INT
 AS
@@ -13,6 +14,7 @@ AS
 		- 20131018@Kathy: Add HR Fixed Odds (154) [Redmine:#6505]
 		- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB)
 		- 20150904@Helen: commission setting for MO [Redmine #41470]
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	Explanation's Param:
 */
 
@@ -52,9 +54,7 @@ BEGIN
 		--Number Game commission
 		,v161discount_81=MAX(CASE WHEN cs3rd.bettype=81 AND cs3rd.sporttype=161 THEN cs3rd.discount ELSE 0 END)
 		
-		--HR Fixed Odds commission
-		,max(case when cs.bettype = 20 and cs.sporttype = 154 then cs.discount else 0 end) as v154discount_20
-
+		
 		,dbo.F_Decimal_Binary(ISNULL(TransferOption,0))  as TransferOption
 			
 	---------- bet setting section---------------------------------------------------------------------------------------

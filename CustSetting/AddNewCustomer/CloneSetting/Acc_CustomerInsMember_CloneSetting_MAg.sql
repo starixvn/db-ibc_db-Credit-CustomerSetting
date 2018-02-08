@@ -371,15 +371,12 @@ BEGIN
 			,SyncCasino           
 			,DisableOutright
 			,MaxPerMatch99MP
-			,DisableBingo
 			,DisableNumber
+		
 			,maxpermatch161
-			,SyncBingo
+		
 			,MaxPerBall161			
-			,MaxTransferP2P
-			,IsAutoResetP2P
-			,DisableP2P
-			,DisableFunP2P			
+			
 			--,DisableVirtualSports
 			--,HideVirtualSports
 			--,maxpermatch180
@@ -432,15 +429,12 @@ BEGIN
 			,0 as SyncCasino           
 			,DisableOutright		
 			,MaxPerMatch99MP
-			,DisableBingo
 			,DisableNumber
+			
 			,maxpermatch161
-			,0 as SyncBingo
+			
 			,MaxPerBall161			
-			,MaxTransferP2P
-			,IsAutoResetP2P
-			,DisableP2P
-			,DisableFunP2P		
+		
 			--,DisableVirtualSports
 			--,HideVirtualSports
 			--,maxpermatch180
@@ -568,8 +562,7 @@ BEGIN
 		DELETE FROM dbo.CustGameType WITH (ROWLOCK) WHERE CustID = @CustID 
 		DELETE FROM dbo.Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID 
 		DELETE FROM custsettingGame with (ROWLOCK) where custid =  @custid
-		DELETE FROM P2PGroupComm WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM P2PGameSetting WITH (ROWLOCK) WHERE custid =  @CustID
+	
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM custsetting WITH (ROWLOCK) WHERE custid =  @CustID
@@ -604,8 +597,7 @@ BEGIN
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM P2PGameSetting WITH (ROWLOCK) WHERE custid =  @CustID					
-		DELETE FROM P2PGroupComm WITH (ROWLOCK) WHERE custid =  @CustID
+	
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
@@ -680,8 +672,7 @@ BEGIN
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM P2PGameSetting WITH (ROWLOCK) WHERE custid =  @CustID					
-		DELETE FROM P2PGroupComm WITH (ROWLOCK) WHERE custid =  @CustID
+	
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
