@@ -57,6 +57,8 @@ BEGIN
 		INTO #SportBettypeFilter4
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.[SportType] = psd.[SportType]	AND pbs.[BetType] = psd.[BetType]
+			INNER JOIN (SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4)
+						UNION ALL SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13))t ON pbs.[SportType] = t.[SportType]	AND pbs.[BetType] = t.[BetType]
 		WHERE psd.SettingType = 4 OR psd.SettingType = 13
 			
 		----Hard code to hide CF if Upline is a dummy Super or Master
