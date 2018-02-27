@@ -512,7 +512,7 @@ BEGIN
 	;WITH customers AS
 	(
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, reject, closed, MatchLimit, VirtualMultiplier, Enabled, 
-				DisableFinancial, DisableCasino, SyncCasino, DisableOutright, DisableNumber
+				DisableFinancial, DisableCasino, SyncCasino, DisableOutright, DisableNumber,
 				
 				DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,
 				-- For MuayThai
