@@ -42,7 +42,7 @@ AS
 		SET @p4=N''
 		DECLARE @p5 int
 		SET @p5=0
-		EXEC Acc_Admin_DisableGameStatusUpd_UAT1 @UserID=169368,@IP='202.78.231.34',@MsgType=@p3 output,@ErrMsg=@p4 output,@ErrCode=@p5 output,@IsDisabled='<ROOT><ProductStatus SportType="213" BetType="2501" IsDisabled="1" UpdateAllMasters="1"	UpdateAllAgents="1" UpdateAllMembers="1" DisableAllMasters="1" DisableAllAgents="1" DisableAllMembers="1"/></ROOT>',@CustID=1176070
+		EXEC Acc_Admin_DisableGameStatusUpd @UserID=169368,@IP='202.78.231.34',@MsgType=@p3 output,@ErrMsg=@p4 output,@ErrCode=@p5 output,@IsDisabled='<ROOT><ProductStatus SportType="213" BetType="2501" IsDisabled="1" UpdateAllMasters="1"	UpdateAllAgents="1" UpdateAllMembers="1" DisableAllMasters="1" DisableAllAgents="1" DisableAllMembers="1"/></ROOT>',@CustID=1176070
 		SELECT @p3, @p4, @p5
 */
 BEGIN
