@@ -366,7 +366,7 @@ BEGIN
 			,maxpermatch99
 			,Enabled           			
 			,maxpermatch201		
-			,DisableFinancial
+		
 			,DisableCasino
 			,SyncCasino           
 			,DisableOutright
@@ -424,7 +424,7 @@ BEGIN
 			,maxpermatch99
 			,@enableUpline as Enabled          
 			,maxpermatch201		
-			,DisableFinancial
+			
 			,DisableCasino
 			,0 as SyncCasino           
 			,DisableOutright		

@@ -284,8 +284,7 @@ BEGIN
 				,maxpermatch12
 				,maxpermatch99
 				,Enabled   
-				,maxpermatch201				
-				,DisableFinancial
+				,maxpermatch201								
 				,DisableCasino
 				,SyncCasino           
 				,DisableOutright				
@@ -340,8 +339,7 @@ BEGIN
 				,maxpermatch12
 				,maxpermatch99
 				,Enabled  
-				,maxpermatch201			
-				,DisableFinancial
+				,maxpermatch201							
 				,DisableCasino
 				,0 as SyncCasino           
 				,DisableOutright				

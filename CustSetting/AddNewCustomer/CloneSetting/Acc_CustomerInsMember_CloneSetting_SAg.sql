@@ -350,8 +350,7 @@ BEGIN
 			,maxpermatch99
 			,Enabled   
 			,maxpermatch201
-			,DisableHorseRacing
-			,DisableFinancial
+			,DisableHorseRacing			
 			,DisableCasino
 			,SyncCasino           
 			,DisableOutright		
@@ -409,8 +408,7 @@ BEGIN
 			,maxpermatch99
 			,@enableUpline as Enabled 
 			,maxpermatch201
-			,DisableHorseRacing
-			,DisableFinancial
+			,DisableHorseRacing			
 			,DisableCasino
 			,0 as SyncCasino           
 			,DisableOutright

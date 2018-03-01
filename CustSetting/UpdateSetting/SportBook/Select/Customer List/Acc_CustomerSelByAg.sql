@@ -542,7 +542,7 @@ BEGIN
 		--ci.DisableVirtualSports,	
 		ci.DoubleCommLosing,
 		
-		isnull(ci.disablefinancial,0) as disableFI,    
+	
 		ci.HideKeno,
 		ISNULL(m.DisableKeno,0) AS DisableKeno,	
 		ISNULL(ci.DisableGoldDeluxe,1) AS DisableGoldDeluxe,

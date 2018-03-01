@@ -68,7 +68,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	
 	@credit MONEY,
 	@suspended BIT = NULL,	
-	@DisableFinancial BIT = 0,
+	
 	@DisableCasino BIT = 0, 
 	@DisableNumber BIT = 0,	
 
@@ -1507,7 +1507,7 @@ BEGIN
          --, @MaxPerMatchv184 = MaxPerMatch184
          --, @MaxPerMatchv185 = MaxPerMatch185
          --, @MaxPerMatchv186 = MaxPerMatch186       
-         , @DisableFinancial = CASE WHEN DisableFinancial = 1 THEN 1 ELSE @DisableFinancial END
+        
          , @DisableCasino = CASE WHEN DisableCasino = 1 THEN 1 ELSE @DisableCasino END        
          , @DisableOutright = DisableOutright 
 		 , @DisableColossusBet = DisableColossusBet      
@@ -3060,7 +3060,7 @@ BEGIN
 	    @DisableOutright = @DisableOutright,	
 	    @matchlimit = @matchlimit,
 	    @virtualmultiplier = @virtualmultiplier,
-	    @DisableFinancial = @DisableFinancial,
+	   
 	    @DisableCasino = @DisableCasino,
 		@DisableNumber = @DisableNumber,	 
 	 

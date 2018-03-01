@@ -517,7 +517,7 @@ BEGIN
 	;WITH customers AS
 	(
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, reject, closed, MatchLimit, VirtualMultiplier, Enabled,
-				DisableFinancial, DisableCasino, SyncCasino, DisableOutright,DisableNumber, 				
+				 DisableCasino, SyncCasino, DisableOutright,DisableNumber, 				
 				DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,cm.IsInternal,
 				-- For MuayThai
 				ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_MuayThai),1) AS DisableMuayThai,
@@ -695,7 +695,7 @@ BEGIN
 			ctm.closed, 
 			ISNULL(ctm.reject,0) as suspended,	
 			ISNULL(ctm.DisableOutright,0) as DisableOutright,						
-			ISNULL(ctm.disablefinancial,0) as DisableFI,
+			
 			ctm.username, 
 			ctm.custid, 
 			ctm.roleid,

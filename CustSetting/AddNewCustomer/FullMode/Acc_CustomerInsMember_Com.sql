@@ -304,8 +304,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v161alivepositiontaking_87 SMALLMONEY,
 	@v161alivepositiontaking_89 SMALLMONEY = 0,
 	@v161alivepositiontaking_90 SMALLMONEY = 0,
-	@SystemID		TINYINT=1,
-	@DisableFinancial BIT = 0,
+	@SystemID		TINYINT=1,	
 	@DisableCasino BIT = 0, 
 	@DisableNumber BIT = 0,
 	@DoubleCommLosing BIT = 1,
@@ -782,8 +781,7 @@ BEGIN
 		@matchlimit = 1,
 		--@Johnson: Disable virtual rate status as default
 		@virtualmultiplier = 0,	
-		
-		@DisableFinancial = @DisableFinancial,
+	
 		
 	
 		@DisableCasino = @DisableCasino,
