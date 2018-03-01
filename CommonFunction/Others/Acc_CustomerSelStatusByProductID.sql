@@ -300,7 +300,6 @@ BEGIN
 			FROM @SportBettype s 
 			INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
 			WHERE ct.CustID=@srecommend	
-			
 			SELECT @IsHiddenUpline=HideKeno FROM custInfo  WITH (NOLOCK)  WHERE custid=@srecommend
 			
 			;WITH t as 
@@ -330,7 +329,6 @@ BEGIN
 			FROM @SportBettype s 
 			INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
 			WHERE ct.CustID=@mrecommend	
-			
 			SELECT @IsHiddenUpline=HideKeno FROM custInfo  WITH (NOLOCK)  WHERE custid=@mrecommend
 			
 			;WITH t as 
@@ -356,7 +354,6 @@ BEGIN
 			FROM @SportBettype s 
 			INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
 			WHERE ct.CustID=@recommend	
-			
 			SELECT @IsHiddenUpline=HideKeno FROM custInfo  WITH (NOLOCK)  WHERE custid=@recommend
 		END		
 		UPDATE s
@@ -364,79 +361,8 @@ BEGIN
 		FROM @SportBettype s	
 		
 		DELETE FROM @SportBettype WHERE IsDisabled IS NULL	
+
 	END 
-	IF @ProductID=12 -- GD
-	BEGIN
-		SELECT @RoleID=RoleID,@IsDisabled=DisableGoldDeluxe,@isHidden=HideGoldDeluxe,@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend,
-			@IsSync = CASE WHEN HideGoldDeluxe = 1 THEN 0 ELSE 1 END 
-		FROM custInfo WITH(NOLOCK) 
-		WHERE custid=@custid
-		
-		IF @RoleID=2
-		BEGIN
-			SELECT @IsHiddenUpline=HideGoldDeluxe,@IsDisabledUpline=DisableGoldDeluxe,
-				@IsSyncedUpline = CASE WHEN HideGoldDeluxe = 1 THEN 0 ELSE 1 END
-			FROM dbo.CustInfo WITH (NOLOCK)  
-			WHERE custid=@mrecommend
-			
-			SELECT @TotalDisabledMembers = SUM(CASE WHEN DisableGoldDeluxe =1 THEN 1 ELSE 0 END),
-				@TotalEnabledMembers = SUM(CASE WHEN DisableGoldDeluxe = 0 THEN 1 ELSE 0 END)
-			FROM dbo.CustInfo WITH(NOLOCK)
-			WHERE recommend = @custid
-				AND roleid = 1
-		END		
-		ELSE IF @RoleID=3	
-		BEGIN
-			SELECT @IsHiddenUpline=HideGoldDeluxe,@IsDisabledUpline=DisableGoldDeluxe,
-				@IsSyncedUpline = CASE WHEN HideGoldDeluxe = 1 THEN 0 ELSE 1 END  
-			FROM dbo.CustInfo WITH (NOLOCK)  
-			WHERE custid=@srecommend
-			
-			SELECT @TotalDisabledAgents = SUM(CASE WHEN DisableGoldDeluxe =1 AND roleid = 2 THEN 1 ELSE 0 END),
-				@TotalEnabledAgents = SUM(CASE WHEN DisableGoldDeluxe = 0 AND roleid = 2 THEN 1 ELSE 0 END),
-				@TotalDisabledMembers = SUM(CASE WHEN DisableGoldDeluxe =1 AND roleid = 1 THEN 1 ELSE 0 END),
-				@TotalEnabledMembers = SUM(CASE WHEN DisableGoldDeluxe = 0 AND roleid = 1 THEN 1 ELSE 0 END)
-			FROM dbo.CustInfo WITH(NOLOCK)
-			WHERE mrecommend = @custid						
-		END		
-		ELSE IF @RoleID=4	
-		BEGIN
-			SELECT @TotalDisabledMasters = SUM(CASE WHEN DisableGoldDeluxe =1 AND roleid = 3 THEN 1 ELSE 0 END),
-				@TotalEnabledMasters = SUM(CASE WHEN DisableGoldDeluxe = 0 AND roleid = 3 THEN 1 ELSE 0 END),
-				@TotalDisabledAgents = SUM(CASE WHEN DisableGoldDeluxe =1 AND roleid = 2 THEN 1 ELSE 0 END),
-				@TotalEnabledAgents = SUM(CASE WHEN DisableGoldDeluxe = 0 AND roleid = 2 THEN 1 ELSE 0 END),
-				@TotalDisabledMembers = SUM(CASE WHEN DisableGoldDeluxe =1 AND roleid = 1 THEN 1 ELSE 0 END),
-				@TotalEnabledMembers = SUM(CASE WHEN DisableGoldDeluxe = 0 AND roleid = 1 THEN 1 ELSE 0 END)
-			FROM dbo.CustInfo WITH(NOLOCK)
-			WHERE srecommend = @custid
-			
-			SELECT @IsSyncedUpline = 1
-		END
-		ELSE IF @RoleID=1
-		BEGIN
-			SELECT @IsHiddenUpline=HideGoldDeluxe,@IsDisabledUpline=DisableGoldDeluxe,
-				@IsSyncedUpline = CASE WHEN HideGoldDeluxe = 1 THEN 0 ELSE 1 END  
-			FROM dbo.CustInfo WITH (NOLOCK)  
-			WHERE custid=@recommend
-		END
-		INSERT INTO @SportBettype(ProductID,
-								Sporttype, 
-								Bettype ,
-								IsDisabled ,
-								IsSync,
-								IsHidden,
-								IsDisabledUpline,
-								IsHiddenUpline,
-								IsSyncedUpline,
-								TotalDisabledMasters,
-								TotalEnabledMasters,
-								TotalDisabledAgents,
-								TotalEnabledAgents,
-								TotalDisabledMembers,
-								TotalEnabledMembers)
-		VALUES(@ProductID,255,1701,@IsDisabled,@IsSync,@isHidden,@IsDisabledUpline,@IsHiddenUpline,@IsSyncedUpline,
-			@TotalDisabledMasters,@TotalEnabledMasters,@TotalDisabledAgents,@TotalEnabledAgents,@TotalDisabledMembers,@TotalEnabledMembers)
-	END 	
 	
 	ELSE IF @ProductID=2--HR
 	BEGIN
