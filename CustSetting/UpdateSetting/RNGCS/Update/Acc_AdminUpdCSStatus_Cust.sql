@@ -210,7 +210,7 @@ Thank you'
 			,@UpdateAllAgents = @UpdateAllAgents
 			,@UpdateAllMembers = @UpdateAllMembers
 			,@DisableAllMasters = @DisableAllMasters
-			,@DisableAllAgents = @DisableAllMasters
+			,@DisableAllAgents = @DisableAllAgents
 			,@DisableAllMembers = @DisableAllMembers
 	END 
 

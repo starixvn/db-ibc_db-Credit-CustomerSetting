@@ -155,9 +155,15 @@ BEGIN
 		--Disable all downlines or enable all downlines  
 		BEGIN TRY  
 			EXEC [Acc_CustomerInfo_Execrep_04] @CustID = @CustID  
-			 ,@RoleID = @RoleID  
-			 ,@DisableColossusBet = @Disable  
-			 ,@Action = 'ColossusBet'  
+				,@RoleID = @RoleID  
+				,@DisableColossusBet = @Disable 
+				,@UpdateAllMasters = @UpdateAllMasters
+				,@UpdateAllAgents = @UpdateAllAgents
+				,@UpdateAllMembers = @UpdateAllMembers
+				,@DisableAllMasters = @DisableAllMasters
+				,@DisableAllAgents = @DisableAllAgents
+				,@DisableAllMembers = @DisableAllMembers			 
+				,@Action = 'ColossusBet'  
 		END TRY  
 		BEGIN CATCH  
 			SELECT @ErrMsg = CASE @Language  
