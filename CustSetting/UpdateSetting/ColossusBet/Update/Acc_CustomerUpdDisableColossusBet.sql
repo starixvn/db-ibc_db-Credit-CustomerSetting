@@ -126,13 +126,7 @@ BEGIN
 		BEGIN TRY  
 			EXEC [Acc_CustomerInfo_Execrep_04] @CustID = @CustID  
 			,@RoleID = @RoleID  
-			,@DisableColossusBet = @Disable
-			,@UpdateAllMasters = @UpdateAllMasters
-			,@UpdateAllAgents = @UpdateAllAgents
-			,@UpdateAllMembers = @UpdateAllMembers
-			,@DisableAllMasters = @DisableAllMasters
-			,@DisableAllAgents = @DisableAllAgents
-			,@DisableAllMembers = @DisableAllMembers			 
+			,@DisableColossusBet = @Disable						 
 			,@Action = 'ColossusBet'  
 		END TRY  
 		BEGIN CATCH  

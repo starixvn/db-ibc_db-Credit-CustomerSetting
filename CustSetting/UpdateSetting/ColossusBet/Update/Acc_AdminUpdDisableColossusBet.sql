@@ -76,7 +76,7 @@ BEGIN
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
 	
-	IF @Disable_old = @Disable 
+	IF @Disable_old = @Disable AND @UpdateAllMasters = 0 AND @UpdateAllAgents = 0 AND @UpdateAllMembers = 0
 	RETURN
 	
 	IF @Disable = 0 -- check status upline  
