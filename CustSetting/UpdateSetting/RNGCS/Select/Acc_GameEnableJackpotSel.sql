@@ -29,8 +29,8 @@ BEGIN
             AND gls.IsLaunched = 1
             AND glc.currency = @var_curr
             AND gls.siteID = @var_siteid
-            AND glc.isTest = @isTest
-            AND gls.isTest = @isTest
+            AND glc.isTest <= @isTest
+            AND gls.isTest <= @isTest
 
 END
 GO
