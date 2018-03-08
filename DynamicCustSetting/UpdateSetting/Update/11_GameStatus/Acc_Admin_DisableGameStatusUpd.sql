@@ -175,6 +175,15 @@ BEGIN
 	
 	EXEC sp_xml_removedocument @iDoc
 	
+	UPDATE #NewDisableStatTbl
+	SET UpdateAllMasters = CASE WHEN @RoleID = 4 THEN 1 ELSE UpdateAllMasters END,
+		DisableAllMasters = CASE WHEN @RoleID = 4 THEN 1 ELSE DisableAllMasters END,
+		UpdateAllAgents = CASE WHEN @RoleID IN (4, 3) THEN 1 ELSE UpdateAllAgents END,
+		DisableAllAgents = CASE WHEN @RoleID IN (4, 3) THEN 1 ELSE DisableAllAgents END,
+		UpdateAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE UpdateAllMembers END,
+		DisableAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE DisableAllMembers END
+	WHERE IsDisabled = 1
+
 	--Validate new disabled status
 	EXEC [dbo].[Acc_Admin_DisableGameStatusCheck] 
 		@IsDisabled		= @IsDisabled
@@ -211,7 +220,7 @@ BEGIN
 			SELECT TOP 1 1
 			FROM #NewDisableStatTbl tmp
 				INNER JOIN #OldDisableStatTbl stt ON tmp.SportType	= stt.SportType	AND tmp.BetType = stt.BetType
-			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 AND tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1
+			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 OR tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1
 			)
 		RETURN
 

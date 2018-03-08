@@ -219,7 +219,7 @@ BEGIN
 			SELECT TOP 1 1
 			FROM #NewDisableStatTbl tmp
 				INNER JOIN #OldDisableStatTbl stt ON tmp.SportType	= stt.SportType	AND tmp.BetType = stt.BetType
-			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 AND tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1
+			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 OR tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1
 			)
 		RETURN
 
