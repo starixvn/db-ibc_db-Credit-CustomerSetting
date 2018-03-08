@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_GameEnableJackpotSel]
-    @custid INT,
+    @custid INT, --member
     @isTest BIT = 0
 AS
 /*
@@ -18,7 +18,7 @@ BEGIN
     SELECT @var_curr = c.currency, @var_siteid = s.siteid
     FROM customer c
         LEFT JOIN  customer ca ON c.recommend = ca.custid
-        INNER JOIN [site] s    ON s.[site]    = COALESCE(c.[site], ca.[site])
+        INNER JOIN [site] s    ON s.[site]    = (CASE WHEN c.roleid = 1 THEN ca.[site] ELSE c.[site] END)
     WHERE c.custid = @custid
     
     SELECT sbm.productid, gls.SportType, gls.BetType
