@@ -10,9 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperKeno_BetSetting]
 
 	@UpdateStatus BIT = 0,
 	@Disable BIT = 1,
-	@DisableDownLines BIT = 1,
-
-	
+		
 	@UpdateMinMaxBet BIT = 0,
 	@MinBet			MONEY,
 	@MaxBet			MONEY,
@@ -34,6 +32,7 @@ AS
 	Revisions:
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
+		- 20180312@Johnson: remove @DisableDownLines for new product status direction [redmine: #87328]
 	Parameters Explanation:
 		+ @ErrCode <0 : update successfully 
 			-100: status
@@ -83,8 +82,7 @@ BEGIN
 			@Bettype				= @Bettype,
 			@SystemID=@SystemID,
 			@Disable				= @Disable,
-			@DisableDownlines		= @DisableDownlines,
-
+			
 			@UserID					= @UserID, 			
 			@SubAccID				= @SubAccID,
 			@Language				= @Language, 
@@ -140,8 +138,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_BetSetting] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_BetSetting] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperKeno_BetSetting] TO [vnteam] AS [dbo]

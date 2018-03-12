@@ -11,8 +11,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentKeno_BetSetting]
 
 	, @UpdateStatus BIT = 0
 	, @Disable BIT = 1
-	, @DisableDownLines BIT = 1
-	
+		
 	, @UpdateMinMaxBet BIT = 0
 	, @MinBet MONEY
 	, @MaxBet MONEY
@@ -29,11 +28,12 @@ AS
 /*
 	Created: 20140320@Patrick
 	Task: Master updates Keno bet setting on Agent
-	DB: DBTXN/CustDB
+	DB: DBCUST/CustDB
 
 	Revisions:
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
 		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
+		- 20180312@Johnson: remove @DisableDownLines for new product status direction [redmine: #87328]
 		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 	Parameters Explanation:
 		+ @ErrCode <0 : update successfully 
@@ -77,7 +77,7 @@ BEGIN
 		EXEC dbo.Acc_CustomerUpdDisableKeno @custid = @custid
 			, @Bettype = @Bettype
 			, @Disable = @Disable
-			, @DisableDownlines = @DisableDownlines
+			
 			, @UserID = @UserID
 			, @SubAccID = @SubAccID
 			, @SystemID=@SystemID
@@ -126,11 +126,5 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_BetSetting] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_BetSetting] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_BetSetting] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentKeno_BetSetting] TO [vnteam] AS [dbo]
+
 

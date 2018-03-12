@@ -33,6 +33,7 @@ AS
 	Revisions:
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]		
 		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
+		- 20180312@Johnson: remove @DisableDownLines for new product status direction [redmine: #87328]
 		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 	Parameters Explanation:
 		+@Disable: Status of bettype (0: enable,1: disable, NULL:nothing)
@@ -93,7 +94,7 @@ BEGIN
 			@CustID = @custid
 			,@Bettype = @bettype
 			,@Disable = @Disable			
-			,@DisableDownLines = 0
+			
 			,@SubAccID = @SubAccID
 			, @SystemID=@SystemID
 			,@UserID = @UserID
@@ -145,10 +146,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberKeno_BetSetting] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberKeno_BetSetting] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberKeno_BetSetting] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberKeno_BetSetting] TO [vnteam] AS [dbo]
