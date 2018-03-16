@@ -264,7 +264,7 @@ BEGIN
 		SELECT	GameTypeID, @CustID, MinBet, MaxBet, MaxPerGameType, IsDisabled, StakeLevelList
 		FROM	dbo.CustGameType WITH(NOLOCK)
 		WHERE	Custid = @ExistingCustid
-				AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
+				
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
