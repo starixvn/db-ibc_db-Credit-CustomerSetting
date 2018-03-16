@@ -396,6 +396,7 @@ BEGIN
 			CROSS APPLY dbo.CustProductStatus cps WITH (NOLOCK) 
 			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(cps.bitmapHasSynced, psp.bitmapOrder) st
 		WHERE SettingType IN (4,11,13) AND cps.CustID = @ExistingCustID
+		AND ProductID<>19
 		
 		UPDATE op
 		SET op.IsHidden = stt.IsHidden

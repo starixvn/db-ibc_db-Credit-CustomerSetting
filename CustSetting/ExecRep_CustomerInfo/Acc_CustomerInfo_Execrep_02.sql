@@ -75,7 +75,8 @@ BEGIN
 			,isautolivempositiontaking	
 		FROM dbo.custSetting WITH(NOLOCK)
 		WHERE custid=@ExistingCustid
-		
+		AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
+
 		IF @@error <> 0
 		BEGIN 	
 			SELECT @ErrCode = 107
@@ -110,7 +111,8 @@ BEGIN
 			,isautolivempositiontaking
 		FROM dbo.CustSetting3rd WITH(NOLOCK)
 		WHERE custid=@ExistingCustid
-		
+		AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
+
 		IF @@error <> 0
 		BEGIN 	
 			SELECT @ErrCode = 108
@@ -138,6 +140,7 @@ BEGIN
 			maxlivepositiontaking
 		FROM dbo.custOverride WITH(NOLOCK)
 		WHERE custid=@ExistingCustid
+				AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
 
 		if @@error <> 0
 		BEGIN
@@ -169,7 +172,7 @@ BEGIN
 			maxlivepositiontaking
 		FROM dbo.custOverride3rd WITH(NOLOCK)
 		WHERE custid=@ExistingCustid
-
+				AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
 		IF @@error <> 0
 		BEGIN
 			--Error occur
@@ -217,7 +220,7 @@ BEGIN
 			isautompositiontaking
 		FROM custsettingGame WITH(NOLOCK)
 		WHERE custid = @ExistingCustid
-
+				AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
 		if @@error <> 0
 		BEGIN
 
@@ -261,7 +264,7 @@ BEGIN
 		SELECT	GameTypeID, @CustID, MinBet, MaxBet, MaxPerGameType, IsDisabled, StakeLevelList
 		FROM	dbo.CustGameType WITH(NOLOCK)
 		WHERE	Custid = @ExistingCustid
-
+				AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs

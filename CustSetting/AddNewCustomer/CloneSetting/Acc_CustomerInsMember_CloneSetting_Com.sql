@@ -313,6 +313,7 @@ BEGIN
 				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
+				,Disable151_AU
 				)
 		 SELECT
 				@CustID
@@ -369,6 +370,7 @@ BEGIN
 				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
+				,1
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 	END TRY	
