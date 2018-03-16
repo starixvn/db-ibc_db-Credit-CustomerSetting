@@ -24,6 +24,7 @@ AS
 		- 20170310@Elodie: No data of DCS product when copy super from non-offered sites to offered sites - [Redmine #73155]
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT

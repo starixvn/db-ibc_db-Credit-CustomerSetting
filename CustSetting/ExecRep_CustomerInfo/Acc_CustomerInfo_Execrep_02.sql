@@ -241,10 +241,10 @@ BEGIN
 		SELECT @CustID, Bettype, Sporttype, minpositiontaking
 		FROM Custoverridegame WITH(NOLOCK)
 		WHERE custid = @ExistingCustid
+			AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
 
 		if @@error <> 0
 		BEGIN
-
 			--Error occur
 			SELECT @ErrCode = 114
 				
