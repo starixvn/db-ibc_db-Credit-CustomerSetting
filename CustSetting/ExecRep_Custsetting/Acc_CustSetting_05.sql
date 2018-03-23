@@ -1,8 +1,5 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @srecommend INT = 0,
     @mrecommend INT =0,
@@ -63,7 +60,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 
     -- mixed sports
     @isauto_v99spositiontaking_9 bit = 0,
-    @isauto_v154spositiontaking_20 bit = 0,
+  
     
     @old_isauto_spositiontaking_1 bit = 0, 
     @old_isauto_spositiontaking_2 bit = 0, 
@@ -119,7 +116,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 
     -- mixed sports
     @old_isauto_v99spositiontaking_9 bit = 0,
-    @old_isauto_v154spositiontaking_20 bit = 0,
+   
     
     @auto_spositiontaking_1 smallmoney = 0, 
     @auto_spositiontaking_2 smallmoney = 0,
@@ -176,8 +173,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 
     -- mixed sports
     @auto_v99spositiontaking_9 smallmoney = 0,
-    @auto_v154spositiontaking_20 smallmoney = 0,
-
+  
     @old_auto_spositiontaking_1 smallmoney = 0, 
     @old_auto_spositiontaking_2 smallmoney = 0,
     @old_auto_spositiontaking_3 smallmoney = 0,
@@ -233,8 +229,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 
     -- mixed sports
     @old_auto_v99spositiontaking_9 smallmoney = 0,
-    @old_auto_v154spositiontaking_20 smallmoney = 0,
-    
+   
     --UPDATE auto pt ON agent
     @isauto_mpositiontaking_1 bit = 0, 
     @isauto_mpositiontaking_2 bit = 0, 
@@ -290,7 +285,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 
     -- mixed sports
     @isauto_v99mpositiontaking_9 bit = 0,
-    @isauto_v154mpositiontaking_20 bit = 0,
+  
     
     @old_isauto_mpositiontaking_1 bit = 0, 
     @old_isauto_mpositiontaking_2 bit = 0, 
@@ -346,8 +341,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 
     -- mixed sports
     @old_isauto_v99mpositiontaking_9 bit = 0,
-    @old_isauto_v154mpositiontaking_20 bit = 0,
-    
+   
     @auto_mpositiontaking_1 smallmoney = 0, 
     @auto_mpositiontaking_2 smallmoney = 0,
     @auto_mpositiontaking_3 smallmoney = 0,
@@ -402,8 +396,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     
     -- mixed sports
     @auto_v99mpositiontaking_9 smallmoney = 0,
-    @auto_v154mpositiontaking_20 smallmoney = 0,
-    
+  
     @old_auto_mpositiontaking_1 smallmoney = 0, 
     @old_auto_mpositiontaking_2 smallmoney = 0,
     @old_auto_mpositiontaking_3 smallmoney = 0,
@@ -458,8 +451,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     
     -- mixed sports
     @old_auto_v99mpositiontaking_9 smallmoney = 0,
-    @old_auto_v154mpositiontaking_20 smallmoney = 0,
-    
+  
     @updatemultiple bit = 0,
     @updatepositiontaking bit = 1,
     
@@ -473,8 +465,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 
     -- mixed sports
     @updatepositiontakingv99mp bit = 1,
-    @updatepositiontakingv154 bit = 1,
-    
+  
     @updateallmembers bit = 0,
     @newspositiontaking smallmoney = 0,
     @newmpositiontaking smallmoney = 0,
@@ -552,8 +543,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
         Date: 2013-10-29
         Task: Apply execrep when UPDATE auto pt ON master , agent, member levels
         DB: DBCUST/custDB
-        Original versions: Acc_CustomerUpdMaster_AutoPositiontaking_xtest
-                    Acc_CustomerUpdAgent_AutoPositiontaking_xtest
+        Original versions: Acc_CustomerUpdMaster_AutoPositiontaking
+                    Acc_CustomerUpdAgent_AutoPositiontaking
         
         Revision:
             - 20131105@Elodie: Add HR Fixed Odds [Redmine:#6505]
@@ -564,7 +555,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 		   + Separate custDB to new server DBCUST   
 		 - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]       
 		 - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-		 
+		 - 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
         Parameter's Explanation:        
     */
 BEGIN
@@ -591,7 +582,7 @@ BEGIN
             @autov99positiontaking smallmoney,
             -- mixed sports
             @autov99mppositiontaking smallmoney,
-            @autov154positiontaking smallmoney,
+          
 
             @old_autopositiontaking smallmoney,
             @old_autolivepositiontaking smallmoney,
@@ -606,8 +597,7 @@ BEGIN
             
             -- mixed sports
             @old_autov99mppositiontaking smallmoney,
-            @old_autov154positiontaking smallmoney,
-
+         
 
             @maxpos smallmoney,
             @isautopositiontaking bit, 
@@ -623,8 +613,7 @@ BEGIN
 
             -- mixed sports
             @isautov99mppositiontaking bit,
-            @isautov154positiontaking bit,
-
+           
             @old_isautopositiontaking smallmoney, 
             @old_isautolivepositiontaking smallmoney, 
     
@@ -637,9 +626,7 @@ BEGIN
             @old_isautov99positiontaking smallmoney,
     
             -- mixed sports
-            @old_isautov99mppositiontaking smallmoney,
-            @old_isautov154positiontaking smallmoney
-        
+            @old_isautov99mppositiontaking smallmoney
     --UPDATE min/max pt ON master
     IF @roleid = 3
     BEGIN
@@ -684,11 +671,7 @@ BEGIN
                  , 0 AS isautov99mppositiontaking
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
-                 , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 , 0 AS old_autov99mppositiontaking          
 --2
   UNION ALL SELECT 2 AS bettype
                    , @isauto_spositiontaking_2        AS isautopositiontaking
@@ -731,10 +714,7 @@ BEGIN
                    , 0 AS autov99mppositiontaking
                    , 0 AS old_isautov99mppositiontaking
                    , 0 AS old_autov99mppositiontaking
-                   , 0 AS isautov154positiontaking
-                   , 0 AS autov154positiontaking
-                   , 0 AS old_autov154positiontaking
-                   , 0 AS old_isautov154positiontaking
+                  
 --3
   UNION ALL SELECT 3 AS bettype
                  , @isauto_spositiontaking_3 AS isautopositiontaking
@@ -777,10 +757,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                
 --4
   UNION ALL SELECT 4 AS bettype
                  , @isauto_spositiontaking_4 AS isautopositiontaking
@@ -823,10 +800,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+               
 --5
   UNION ALL SELECT 5 AS bettype
                  , @isauto_spositiontaking_5 AS isautopositiontaking
@@ -869,10 +843,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+               
 --6
   UNION ALL SELECT 6 AS bettype
                  , @isauto_spositiontaking_6 AS isautopositiontaking
@@ -915,10 +886,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 
 --7
   UNION ALL SELECT 7 AS bettype
                  , @isauto_spositiontaking_7 AS isautopositiontaking
@@ -961,10 +929,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+              
 --8
   UNION ALL SELECT 8 AS bettype
                  , @isauto_spositiontaking_8 AS isautopositiontaking
@@ -1007,10 +972,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 
 --9
   UNION ALL SELECT 9 AS bettype
                  , @isauto_spositiontaking_9 AS isautopositiontaking
@@ -1053,10 +1015,7 @@ BEGIN
                  , @auto_v99spositiontaking_9 AS autov99mppositiontaking
                  , @old_isauto_v99spositiontaking_9 AS old_isautov99mppositiontaking
                  , @old_auto_v99spositiontaking_9 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                
 --10
   UNION ALL SELECT 10 AS bettype
                  , @isauto_spositiontaking_10 AS isautopositiontaking
@@ -1108,11 +1067,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+             
 --9999
   UNION ALL SELECT 9999 AS bettype
                  , @isauto_spositiontaking_9999 AS isautopositiontaking
@@ -1157,10 +1112,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+              
   UNION ALL SELECT 20 AS bettype
                  , 0 AS isautopositiontaking
                  , 0 AS isautolivepositiontaking
@@ -1204,10 +1156,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , @isauto_v154spositiontaking_20 ASisautov154positiontaking
-                 , @auto_v154spositiontaking_20 AS autov154positiontaking
-                 , @old_auto_v154spositiontaking_20 AS old_autov154positiontaking
-                 , @old_isauto_v154spositiontaking_20 AS old_isautov154positiontaking
+               
   UNION ALL SELECT 21 AS bettype
                  , 0 AS isautopositiontaking
                  , 0 AS isautolivepositiontaking
@@ -1249,10 +1198,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+             
   UNION ALL SELECT 22 AS bettype
                  , 0 AS isautopositiontaking
                  , 0 AS isautolivepositiontaking
@@ -1294,11 +1240,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
-        
+              
         OPEN CUR
 
         FETCH NEXT FROM CUR INTO
@@ -1330,9 +1272,7 @@ BEGIN
           , @old_autov99positiontaking, @old_isautov99positiontaking
           , @isautov99mppositiontaking, @autov99mppositiontaking
           , @old_autov99mppositiontaking, @old_isautov99mppositiontaking
-          --154
-          , @isautov154positiontaking, @autov154positiontaking
-          , @old_autov154positiontaking, @old_isautov154positiontaking
+         
 
         WHILE @@FETCH_STATUS = 0
         BEGIN
@@ -1931,65 +1871,6 @@ BEGIN
             END-- END live
 
 
-            --UPDATE HR Fixed Odds
-            IF @bettype IN (20)
-               AND (@autov154positiontaking <> @old_autov154positiontaking
-                    OR @isautov154positiontaking <> @old_isautov154positiontaking
-                   )
-               AND (@updatepositiontakingv154 = 1
-                    OR @updatemultiple = 0
-                   )
-            BEGIN
-                IF @isautov154positiontaking >0
-                BEGIN
-                    SELECT @maxpos = spositiontaking
-                      FROM custsetting cs WITH(NOLOCK)
-                     WHERE custid = @srecommend
-                       AND sporttype = 154
-                       AND bettype = @bettype
-
-                    UPDATE cs WITH(ROWLOCK, UPDLOCK)
-                       SET spositiontaking =
-                             CASE
-                               WHEN @maxpos - mpositiontaking - apositiontaking > @autov154positiontaking THEN @autov154positiontaking
-                               ELSE @maxpos - mpositiontaking - apositiontaking
-                             END
-                      FROM custsetting cs
-                INNER JOIN custInfo c WITH(NOLOCK) ON cs.custid = c.custid
-                     WHERE c.mrecommend = @mrecommend
-                       AND c.roleid = 1
-                       AND c.Enabled = 1
-                       AND cs.bettype = @bettype
-                       AND cs.sporttype = 154
-                       AND cs.isautopositiontaking = 0
-
-                END
-                else if @isautov154positiontaking <> @old_isautov154positiontaking
-                BEGIN
-                    if @updateallmembers = 1
-                    BEGIN
-                        UPDATE cs WITH(ROWLOCK, UPDLOCK)
-                           SET spositiontaking =
-                                 CASE
-                                   WHEN mcs.spositiontaking < @newspositiontaking THEN mcs.spositiontaking
-                                   ELSE @newspositiontaking
-                                 END
-                          FROM custsetting cs
-                    INNER JOIN custInfo c WITH(NOLOCK) ON cs.custid = c.custid
-                    INNER JOIN custsetting mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
-                                                           AND cs.sporttype = mcs.sporttype
-                                                           AND cs.bettype = mcs.bettype
-                         WHERE c.mrecommend = @mrecommend
-                           AND c.roleid = 1
-                           AND c.Enabled = 1
-                           AND cs.bettype = @bettype
-                           AND cs.sporttype = 154
-                           AND cs.isautopositiontaking = 0
-
-                    END
-                END
-            END
-            
             FETCH NEXT FROM CUR INTO
                     @bettype, @isautopositiontaking, @isautolivepositiontaking, @autopositiontaking, @autolivepositiontaking, @old_autopositiontaking, @old_autolivepositiontaking, @old_isautopositiontaking, @old_isautolivepositiontaking,
                     @isautov2positiontaking, @autov2positiontaking, @old_autov2positiontaking, @old_isautov2positiontaking,    
@@ -1999,8 +1880,7 @@ BEGIN
                     @isautov10positiontaking, @autov10positiontaking, @old_autov10positiontaking, @old_isautov10positiontaking,
                     @isautov11positiontaking, @autov11positiontaking, @old_autov11positiontaking, @old_isautov11positiontaking,
                     @isautov99positiontaking, @autov99positiontaking, @old_autov99positiontaking, @old_isautov99positiontaking,
-                    @isautov99mppositiontaking, @autov99mppositiontaking, @old_autov99mppositiontaking, @old_isautov99mppositiontaking,
-                    @isautov154positiontaking, @autov154positiontaking, @old_autov154positiontaking, @old_isautov154positiontaking
+                    @isautov99mppositiontaking, @autov99mppositiontaking, @old_autov99mppositiontaking, @old_isautov99mppositiontaking
         END
 
         CLOSE CUR
@@ -2040,10 +1920,7 @@ BEGIN
                  , @old_isauto_v11mpositiontaking_1 AS old_isautov11positiontaking
                  , @isauto_v99mpositiontaking_1 AS isautov99positiontaking    ,       @auto_v99mpositiontaking_1 AS autov99positiontaking    ,       @old_auto_v99mpositiontaking_1 AS old_autov99positiontaking
                  , @old_isauto_v99mpositiontaking_1 AS old_isautov99positiontaking    ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking   
       UNION ALL SELECT 2 AS bettype
                  , @isauto_mpositiontaking_2  AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2073,10 +1950,7 @@ BEGIN
                  ,   0 AS old_isautov11positiontaking
                  , @isauto_v99mpositiontaking_2 AS isautov99positiontaking    ,       @auto_v99mpositiontaking_2 AS autov99positiontaking    ,       @old_auto_v99mpositiontaking_2 AS old_autov99positiontaking
                  , @old_isauto_v99mpositiontaking_2 AS old_isautov99positiontaking    ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking    
       UNION ALL SELECT 3 AS bettype
                  , @isauto_mpositiontaking_3  AS isautopositiontaking
                  , @isauto_mlivepositiontaking_3 AS isautolivepositiontaking
@@ -2109,10 +1983,7 @@ BEGIN
                  ,   0 AS old_isautov11positiontaking
                  , @isauto_v99mpositiontaking_3 AS isautov99positiontaking    ,       @auto_v99mpositiontaking_3 AS autov99positiontaking    ,       @old_auto_v99mpositiontaking_3 AS old_autov99positiontaking
                  , @old_isauto_v99mpositiontaking_3 AS old_isautov99positiontaking    ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking   
       UNION ALL SELECT 4 AS bettype
                  , @isauto_mpositiontaking_4  AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2141,10 +2012,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking    
       UNION ALL SELECT 5 AS bettype
                  , @isauto_mpositiontaking_5  AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2174,10 +2042,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking   
       UNION ALL SELECT 6 AS bettype
                  , @isauto_mpositiontaking_6  AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2207,10 +2072,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking    
       UNION ALL SELECT 7 AS bettype
                  , @isauto_mpositiontaking_7  AS isautopositiontaking
                  , @isauto_mlivepositiontaking_7 AS isautolivepositiontaking
@@ -2242,10 +2104,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking   
       UNION ALL SELECT 8 AS bettype
                  , @isauto_mpositiontaking_8  AS isautopositiontaking
                  , @isauto_mlivepositiontaking_8 AS isautolivepositiontaking
@@ -2276,10 +2135,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking   
       UNION ALL SELECT 9 AS bettype
                  , @isauto_mpositiontaking_9  AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2305,11 +2161,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,    @isauto_v99mpositiontaking_9  AS isautov99mppositiontaking    ,        @auto_v99mpositiontaking_9 AS autov99mppositiontaking    ,       @old_auto_v99mpositiontaking_9 AS old_autov99mppositiontaking
-                 ,          @old_isauto_v99mpositiontaking_9 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
-      
+                 ,          @old_isauto_v99mpositiontaking_9 AS old_isautov99mppositiontaking  
       UNION ALL SELECT 10 AS bettype
                  , @isauto_mpositiontaking_10 AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2359,10 +2211,7 @@ BEGIN
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
-                 , 0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                
       UNION ALL SELECT 9999 AS bettype
                  , @isauto_mpositiontaking_9999  AS isautopositiontaking    ,                          0 AS isautolivepositiontaking
                  , @auto_mpositiontaking_9999 AS autopositiontaking    ,                             0 AS autolivepositiontaking
@@ -2394,10 +2243,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,                                0  AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking  
       UNION ALL SELECT 20 AS bettype
                  , 0 AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2428,10 +2274,7 @@ BEGIN
                  , @isauto_v99mpositiontaking_20 AS isautov99positiontaking
                  , @auto_v99mpositiontaking_20 AS autov99positiontaking    ,       @old_auto_v99mpositiontaking_20 AS old_autov99positiontaking
                  , @old_isauto_v99mpositiontaking_20 AS old_isautov99positiontaking    ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,@isauto_v154mpositiontaking_20 ASisautov154positiontaking
-                 , @auto_v154mpositiontaking_20 AS autov154positiontaking
-                 , @old_auto_v154mpositiontaking_20 AS old_autov154positiontaking
-                 , @old_isauto_v154mpositiontaking_20 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking   
       UNION ALL SELECT 21 AS bettype
                  , 0 AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2460,10 +2303,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
+                 ,                                         0 AS old_isautov99mppositiontaking   
       UNION ALL SELECT 22 AS bettype
                  , 0 AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking
@@ -2492,11 +2332,7 @@ BEGIN
                  , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
                  ,                         0 AS old_autov99positiontaking
                  ,     0 AS old_isautov99positiontaking                                ,                                0 AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking    ,0 AS isautov154positiontaking
-                 , 0 AS autov154positiontaking
-                 , 0 AS old_autov154positiontaking
-                 , 0 AS old_isautov154positiontaking
-            
+                 ,                                         0 AS old_isautov99mppositiontaking  
                 OPEN CUR
 
                 FETCH NEXT FROM CUR INTO
@@ -2508,9 +2344,7 @@ BEGIN
                     @isautov10positiontaking, @autov10positiontaking, @old_autov10positiontaking, @old_isautov10positiontaking,
                     @isautov11positiontaking, @autov11positiontaking, @old_autov11positiontaking, @old_isautov11positiontaking,
                     @isautov99positiontaking, @autov99positiontaking, @old_autov99positiontaking, @old_isautov99positiontaking,
-                    @isautov99mppositiontaking, @autov99mppositiontaking, @old_autov99mppositiontaking, @old_isautov99mppositiontaking,                    
-                    @isautov154positiontaking, @autov154positiontaking, @old_autov154positiontaking, @old_isautov154positiontaking
-
+                    @isautov99mppositiontaking, @autov99mppositiontaking, @old_autov99mppositiontaking, @old_isautov99mppositiontaking
                 --UPDATE use Auto_MPT at agent fOR all members only when:
                 --(autoMPT at agent changes AND isauto at agent = 1
                 --OR isauto at agent changes FROM 0 to 1)
@@ -2950,47 +2784,7 @@ BEGIN
                             END
                         END
                     END                
-                    --UPDATE HR Fixed Odds
-                    if @bettype IN (20) AND (@autov154positiontaking <> @old_autov154positiontaking OR @isautov154positiontaking <> @old_isautov154positiontaking ) AND (@updatepositiontakingv154 = 1 OR @updatemultiple=0)
-                    BEGIN
-                        if @isautov154positiontaking >0 --Use AUTO MPT
-                        BEGIN
-                            --m1=min(m3-a1,u2)
-                            SELECT @maxpos = mpositiontaking FROM custsetting cs WITH(NOLOCK) WHERE custid = @mrecommend
-                           AND sporttype=154 AND bettype = @bettype
-                            UPDATE cs WITH(ROWLOCK, UPDLOCK)
-                       SET mpositiontaking =
-                             CASE
-                               WHEN @maxpos - apositiontaking>@autov154positiontaking THEN @autov154positiontaking
-                               ELSE @maxpos - apositiontaking END
-                          FROM custsetting cs
-                INNER JOIN  custinfo AS c WITH(NOLOCK) ON cs.custid = c.custid
-                         WHERE  c.recommend = @recommend
-                           AND c.roleid = 1 AND cs.bettype = @bettype
-                                                          AND cs.sporttype=154                            
-                        END
-                        else if @isautov154positiontaking <> @old_isautov154positiontaking -- Not use AUTO MPT
-                        BEGIN
-                            if @updateallmembers = 1 -- all member
-                            BEGIN
-                                --m1=min(m2,@newmpositiontaking)
-                                UPDATE cs WITH(ROWLOCK, UPDLOCK)
-                       SET mpositiontaking =
-                             CASE
-                               WHEN acs.mpositiontaking<@newmpositiontaking THEN acs.mpositiontaking
-                               ELSE @newmpositiontaking END
-                              FROM custsetting cs
-                INNER JOIN  custinfo AS c WITH(NOLOCK) ON cs.custid = c.custid
-                                INNER JOIN  custsetting AS acs WITH(NOLOCK) ON acs.custid = @recommend
-                                                          AND cs.sporttype=acs.sporttype
-                                                          AND cs.bettype=acs.bettype
-                             WHERE  c.recommend = @recommend
-                           AND c.roleid = 1 AND cs.bettype = @bettype
-                                                          AND cs.sporttype=154                                
-                            END
-                        END
-                    END                
-                                    
+                              
                     FETCH NEXT FROM CUR INTO
                         @bettype, @isautopositiontaking, @isautolivepositiontaking, @autopositiontaking, @autolivepositiontaking, @old_autopositiontaking, @old_autolivepositiontaking, @old_isautopositiontaking, @old_isautolivepositiontaking,
                         @isautov2positiontaking, @autov2positiontaking, @old_autov2positiontaking, @old_isautov2positiontaking,    
@@ -3000,10 +2794,10 @@ BEGIN
                         @isautov10positiontaking, @autov10positiontaking, @old_autov10positiontaking, @old_isautov10positiontaking,
                         @isautov11positiontaking, @autov11positiontaking, @old_autov11positiontaking, @old_isautov11positiontaking,
                         @isautov99positiontaking, @autov99positiontaking, @old_autov99positiontaking, @old_isautov99positiontaking,
-                        @isautov99mppositiontaking, @autov99mppositiontaking, @old_autov99mppositiontaking, @old_isautov99mppositiontaking,
-                        @isautov154positiontaking, @autov154positiontaking, @old_autov154positiontaking, @old_isautov154positiontaking
+                        @isautov99mppositiontaking, @autov99mppositiontaking, @old_autov99mppositiontaking, @old_isautov99mppositiontaking
             END
         CLOSE CUR
         DEALLOCATE CUR
     END
 END
+GO

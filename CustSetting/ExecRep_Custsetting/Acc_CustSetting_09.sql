@@ -1,8 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Custsetting_09] 
 	@custid int,
 	@roleid INT,
@@ -306,7 +302,7 @@ AS
 		   + Separate custDB to new server DBCUST   
 		 - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]  			
 		 - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-		 
+		 - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		Parameter's Explanation:
 	*/
 BEGIN
@@ -2467,3 +2463,4 @@ BEGIN
 			OR cs.isautolivempositiontaking <> t.isautolivempositiontaking	
 	
 END
+GO

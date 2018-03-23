@@ -1,23 +1,19 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 alter PROCEDURE [dbo].[Acc_CustomerUpdMaster_Commission]
-    @custid INT,-- masterId
-    
+    @custid INT,-- masterId    
     @groupa DECIMAL(9,8),
     @groupb DECIMAL(9,8),
     @groupc DECIMAL(9,8),
     @groupd DECIMAL(9,8),
     @discountcs DECIMAL(9,8),
     @discount1x2 DECIMAL(9,8)=0,
-    @discountHRFixedOdds DECIMAL(9,8)=0,
     @IsMyanmarOdds BIT = 0,
     @discountMyanmarOdds DECIMAL(9,8)=0,
-    @discountMyanmarOdds_old DECIMAL(9,8)=0,
-    
+    @discountMyanmarOdds_old DECIMAL(9,8)=0,    
     --- number game commission
     @discountnumber decimal(9,8) = 0,
-
     @updatecomm_old BIT = 1,
-    @SubAccID INT = 0, --Sub-AccountID
-    
+    @SubAccID INT = 0, --Sub-AccountID    
     @UserID INT = 0,    
     @Language VARCHAR(2) = 'E',
     @IP VARCHAR(15)='',
@@ -53,7 +49,7 @@ Revisions:
     - 20131029@Kathy: Apply exec rep to update commission [Redmine:#3244]
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB)
 	- 20150904@Helen: commission setting for MO [Redmine #41470]
-	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 Param's Explanation:
 • @ErrCode:
     = 0: Update agent's commission successfully.
@@ -74,15 +70,14 @@ Param's Explanation:
 		@Old_groupc DECIMAL(9,8),
 		@Old_groupd DECIMAL(9,8),
 		@Old_discountcs DECIMAL(9,8),
-		@Old_discount1x2 DECIMAL(9,8),    
-		@Old_discountHRFixedOdds DECIMAL(9,8),
+		@Old_discount1x2 DECIMAL(9,8),    	
 		@Old_discountnumber decimal(9,8)
 	    
 	--Check Param
 	IF 
 		@discountcs<0 OR @discountcs>0.2
 		OR @discount1x2<0 OR @discount1x2>0.2
-		OR @discountHRFixedOdds<0 OR @discountHRFixedOdds>0.2
+	
 		OR @discountnumber < 0 OR @discountnumber > 0.2
 		OR @groupa<0 OR @groupa>0.2
 		OR @groupb<0 OR @groupb>0.2
@@ -130,8 +125,7 @@ Param's Explanation:
 		FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND bettype=1 AND sporttype=1
 	    
 		SELECT @Old_discountcs = adiscount FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 4
-		SELECT @Old_discount1x2 = adiscount    FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 5
-		SELECT @Old_discountHRFixedOdds = adiscount    FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 154 AND bettype = 20    
+		SELECT @Old_discount1x2 = adiscount    FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 5		
 		SELECT @Old_discountnumber = adiscount FROM custsetting3rd AS cs3 WITH (NOLOCK) WHERE custid = @custid AND sporttype = 161 AND bettype = 81
 	    
 		--Get g3=g4 if g3>g4
@@ -154,11 +148,7 @@ Param's Explanation:
 		WHERE custid = @srecommend AND bettype = 5 AND sporttype = 1
 	    
 		---------------------------------------
-		--Get m3=s4 if m3>s4 --HR Fixed Odds
-		SELECT @discountHRFixedOdds = CASE WHEN @discountHRFixedOdds > sdiscount THEN sdiscount ELSE @discountHRFixedOdds END
-		FROM custsetting AS cs WITH (NOLOCK) 
-		WHERE custid = @srecommend AND bettype = 20 AND sporttype = 154
-	    
+		
 		---------------------------------------
 		--Get m3=s4 if m3>s4 --number game
 		SELECT @discountnumber = case when @discountnumber > sdiscount then sdiscount else @discountnumber end
@@ -185,8 +175,7 @@ Param's Explanation:
 			@groupb = @groupb,
 			@groupc = @groupc,
 			@groupd = @groupd,
-			@discountcs = @discountcs,
-			@discountHRFixedOdds = @discountHRFixedOdds,
+			@discountcs = @discountcs,			
 			@discount1x2 = @discount1x2,
 			@discountMyanmarOdds = @discountMyanmarOdds,
 			@IsMyanmarOdds = @IsMyanmarOdds
@@ -214,7 +203,7 @@ Param's Explanation:
 	SET @LogSPData = @LogSPData +
 	'discountcs="'+ coalesce(cast(@discountcs as varchar(50)),space(1)) + '" ' +
 	'discount1x2="'+ coalesce(cast(@discount1x2 as varchar(50)),space(1)) + '" ' +
-	'discountHRFixedOdds="'+ coalesce(cast(@discountHRFixedOdds as varchar(50)),space(1)) + '" ' +
+	
 	'discountnumber="'+ coalesce(cast(@discountnumber as varchar(50)),space(1)) + '" ' 
 
 	IF @IsMyanmarOdds = 1
@@ -238,7 +227,7 @@ Param's Explanation:
 	SET @TrackingValue2 = @TrackingValue2 +
 	'discountcs="'+ coalesce(cast(@Old_discountcs as varchar(50)),space(1)) + '" ' +
 	'discount1x2="'+ coalesce(cast(@Old_discount1x2 as varchar(50)),space(1)) + '" ' +
-	'discountHRFixedOdds="'+ coalesce(cast(@Old_discountHRFixedOdds as varchar(50)),space(1)) + '" ' +
+	
 	'discountnumber="'+ coalesce(cast(@Old_discountnumber as varchar(50)),space(1)) + '" ' 
 
 	IF @IsMyanmarOdds = 1
@@ -274,8 +263,7 @@ Param's Explanation:
 		'groupd="'+ coalesce(cast(@groupd as varchar(50)),space(1)) + '" ' 
 		SET @LogSPData = @LogSPData +
 		'discountcs="'+ coalesce(cast(@discountcs as varchar(50)),space(1)) + '" ' +
-		'discount1x2="'+ coalesce(cast(@discount1x2 as varchar(50)),space(1)) + '" ' +
-		'discountHRFixedOdds="'+ coalesce(cast(@discountHRFixedOdds as varchar(50)),space(1)) + '" ' +
+		'discount1x2="'+ coalesce(cast(@discount1x2 as varchar(50)),space(1)) + '" ' +		
 		'discountnumber="'+ coalesce(cast(@discountnumber as varchar(50)),space(1)) + '" ' 
 	    
 		IF @IsMyanmarOdds = 1
@@ -298,8 +286,7 @@ Param's Explanation:
 		'groupd="'+ coalesce(cast(@Old_groupd as varchar(50)),space(1)) + '" ' 
 		SET @TrackingValue2 = @TrackingValue2 +
 		'discountcs="'+ coalesce(cast(@Old_discountcs as varchar(50)),space(1)) + '" ' +
-		'discount1x2="'+ coalesce(cast(@Old_discount1x2 as varchar(50)),space(1)) + '" ' +
-		'discountHRFixedOdds="'+ coalesce(cast(@Old_discountHRFixedOdds as varchar(50)),space(1)) + '" ' +
+		'discount1x2="'+ coalesce(cast(@Old_discount1x2 as varchar(50)),space(1)) + '" ' +		
 		'discountnumber="'+ coalesce(cast(@Old_discountnumber as varchar(50)),space(1)) + '" ' 
 	    
 		IF @IsMyanmarOdds = 1

@@ -1,10 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-USE [CustDB]
-GO
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_Com]
 	@Custid INT OUTPUT
 	,@UserName VARCHAR(30)
@@ -60,7 +54,7 @@ AS
 	- 20170704@Winnie: Apply color for closed account - [Redmine: #74494]
 	- 20170920@Helen: TO Control Phase 3 - [Redmine: 75557]
 	- 20171113@Helen: Support to add default TO setting for new direct customers - [Redmine:86052]
-
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -246,8 +240,8 @@ BEGIN
 			
 	BEGIN TRY
 		-- insert CustSuper info
-		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, AutoIBCPT151_AU, AutoIBCPT152_UK, AutoIBCPT152_AU, AutoIBCPT153_AU, IsInternal, TransferOption, LimitPerIP, SelectedBetting)  
-		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, AutoIBCPT151_AU, AutoIBCPT152_UK, AutoIBCPT152_AU, AutoIBCPT153_AU, @IsInternal, TransferOption, LimitPerIP, SelectedBetting
+		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting)  
+		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting
 		FROM CustSuper WITH(NOLOCK)
 		WHERE custid=@ExistingCustid		
 	END TRY
@@ -289,36 +283,17 @@ BEGIN
 				,maxpermatch11
 				,maxpermatch12
 				,maxpermatch99
-				,Enabled           
-				,maxpermatch151
-				,maxpermatch201
-				,DisableHorseRacing
-				,DisableFinancial
+				,Enabled   
+				,maxpermatch201								
 				,DisableCasino
 				,SyncCasino           
-				,DisableOutright
-				,DisableOpenTote
-				,maxpermatch151_OT
+				,DisableOutright				
 				,MaxPerMatch99MP
-				,DisableBingo
 				,DisableNumber
 				,maxpermatch161
-				,SyncBingo
-				,MaxPerBall161
-				,MaxPerMatch151_AU
-				,MaxPerMatch152_UK
-				,MaxPerMatch152_AU
-				,MaxPerMatch153_AU
-				,Disable151_AU
-				,Disable152_UK
-				,Disable152_AU
-				,Disable153_AU
-				,MaxTransferP2P
-				,IsAutoResetP2P
-				,DisableP2P
-				,DisableFunP2P
-				,DisableLiveCasino
-				,SyncLiveCasino
+				
+				,MaxPerBall161				
+				
 				--,DisableVirtualSports
 				--,HideVirtualSports
 				--,maxpermatch180
@@ -327,13 +302,9 @@ BEGIN
 				--,maxpermatch185--dom
 				--,maxpermatch182
 				--,maxpermatch184
-				--,maxpermatch186
-				,isAutoResetLiveCasino
-				,MaxWinLiveCasino
+				--,maxpermatch186				
 				,DoubleCommLosing
-				,DisableCasinoBonus
-				,DisableHRFixedOdds
-				,maxpermatch154
+				,DisableCasinoBonus		
 				,HideKeno
 				,DisableEsports
 				,HideGoldDeluxe
@@ -342,6 +313,7 @@ BEGIN
 				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
+				,Disable151_AU
 				)
 		 SELECT
 				@CustID
@@ -367,36 +339,18 @@ BEGIN
 				,maxpermatch11
 				,maxpermatch12
 				,maxpermatch99
-				,Enabled           
-				,maxpermatch151
-				,maxpermatch201
-				,DisableHorseRacing
-				,DisableFinancial
+				,Enabled  
+				,maxpermatch201							
 				,DisableCasino
 				,0 as SyncCasino           
-				,DisableOutright
-				,DisableOpenTote
-				,maxpermatch151_OT
+				,DisableOutright				
 				,MaxPerMatch99MP
-				,DisableBingo
 				,DisableNumber
+				
 				,maxpermatch161
-				,0 as SyncBingo
-				,MaxPerBall161
-				,MaxPerMatch151_AU
-				,MaxPerMatch152_UK
-				,MaxPerMatch152_AU
-				,MaxPerMatch153_AU
-				,Disable151_AU
-				,Disable152_UK
-				,Disable152_AU
-				,Disable153_AU
-				,MaxTransferP2P
-				,IsAutoResetP2P
-				,DisableP2P
-				,DisableFunP2P
-				,DisableLiveCasino
-				,0 as SyncLiveCasino
+				
+				,MaxPerBall161				
+			
 				--,DisableVirtualSports
 				--,HideVirtualSports
 				--,maxpermatch180
@@ -405,13 +359,9 @@ BEGIN
 				--,maxpermatch185--dom
 				--,maxpermatch182
 				--,maxpermatch184
-				--,maxpermatch186
-				,isAutoResetLiveCasino
-				,MaxWinLiveCasino
+				--,maxpermatch186				
 				,doubleCommLosing
-				,DisableCasinoBonus
-				,DisableHRFixedOdds
-				,maxpermatch154
+				,DisableCasinoBonus		
 				,HideKeno
 				,DisableEsports
 				,HideGoldDeluxe 
@@ -420,6 +370,7 @@ BEGIN
 				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
+				,1
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 	END TRY	
@@ -523,8 +474,7 @@ BEGIN
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM P2PGameSetting WITH (ROWLOCK) WHERE custid =  @CustID					
-		DELETE FROM P2PGroupComm WITH (ROWLOCK) WHERE custid =  @CustID
+		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
 		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
@@ -580,8 +530,7 @@ BEGIN
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM P2PGameSetting WITH (ROWLOCK) WHERE custid =  @CustID					
-		DELETE FROM P2PGroupComm WITH (ROWLOCK) WHERE custid =  @CustID
+		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
 		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
@@ -649,8 +598,7 @@ BEGIN
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM P2PGameSetting WITH (ROWLOCK) WHERE custid =  @CustID					
-		DELETE FROM P2PGroupComm WITH (ROWLOCK) WHERE custid =  @CustID
+		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
 		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    

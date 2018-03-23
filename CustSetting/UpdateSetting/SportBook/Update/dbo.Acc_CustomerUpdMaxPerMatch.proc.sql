@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaxPerMatch]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaxPerMatch]
 	@custid int,
 	@maxpermatch money,
 	@maxpermatchv2 money,
@@ -10,7 +11,7 @@
 	@maxpermatchv99 money,
 	@maxpermatchv99MP money,
 	@maxpermatchv1MP money,
-	@maxpermatchv154 money,
+	
 	@maxpermatchv161 money,
 	@UpdateMultiple bit = 0,	
 	@UpdateMinMaxBet bit = 1,
@@ -23,7 +24,7 @@
 	@UpdateMinMaxBetv99 bit = 1,
 	@UpdateMinMaxBetv99MP bit = 1,
 	@UpdateMinMaxBetv1MP bit = 1,
-	@UpdateMinMaxBetv154 bit = 1,	
+	
 	@UpdateMinMaxBetv161 bit = 1,
 	@Language varchar(2) = 'E',
 	@ErrCode int = 0 OUTPUT,
@@ -43,6 +44,7 @@ Revisions:
     - 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
     - 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -63,7 +65,7 @@ set
 	MaxPerMatch99=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv99=1 then @MaxPerMatchv99 else MaxPerMatch99 end,
 	MaxPerMatch99MP=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv99MP=1 then @MaxPerMatchv99MP else MaxPerMatch99MP end,
 	MaxPerMatch1MP=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv1MP=1 then @MaxPerMatchv1MP else MaxPerMatch1MP end,
-	MaxPerMatch154=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv154=1 then @MaxPerMatchv154 else MaxPerMatch154 end,
+	
 	MaxPerMatch161=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv161=1 then @MaxPerMatchv161 else MaxPerMatch161 end
 where custid = @custid 
 if (@@error <> 0)

@@ -67,7 +67,7 @@ AS
 		- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
 		- 20170925@Johnson: Add filter product un-sync for Casino,GD,Allbet,Macau [Redmine: #72973]
 		- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
-
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -103,7 +103,7 @@ BEGIN
 	
 	-- For DCS Product
     DECLARE	@bitmapOrder_MuayThai		INT
-		,	@bitmapOrder_CockFighting	INT
+		
 		,	@bitmapOrder_Cricket		INT
 		,	@bitmapOrder_AllBet			INT
 		,	@bitmapOrder_AllBetVIP		INT
@@ -116,7 +116,7 @@ BEGIN
 		,	@bitmapOrder_BullFighting	INT
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
-    SET @bitmapOrder_CockFighting = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 206 AND Bettype = 1003)
+   
     SET @bitmapOrder_Cricket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitmapOrder_Lottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
@@ -140,7 +140,7 @@ BEGIN
 								)
     
     DECLARE	@IsHidden_MuayThai			INT = 1
-		,	@IsHidden_CockFighting		INT = 1
+		
 		,	@IsHidden_Cricket			INT = 1
 		,	@IsHidden_AllBet			INT = 1
 		,	@IsHidden_VoidBridge		INT = 1
@@ -152,7 +152,7 @@ BEGIN
 		,	@IsHidden_BullFighting	INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 19, @IsHide = @IsHidden_CockFighting OUTPUT	
+	
 	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHidden_AllBet OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHidden_VoidBridge OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHidden_Lottery OUTPUT
@@ -511,16 +511,14 @@ BEGIN
 	
 	;WITH customers AS
 	(
-		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, reject, closed, MatchLimit, VirtualMultiplier, Enabled, DisableHorseRacing,
-				DisableFinancial, DisableCasino, SyncCasino, DisableOutright, DisableOpenTote, DisableBingo, DisableNumber, SyncBingo,
-				disable151_au, disable152_uk, disable152_au, disable153_au , isAutoResetP2P, DisableP2P, DisableFunP2P, 
-				DisableLiveCasino,SyncLiveCasino, DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,
+		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, reject, closed, MatchLimit, VirtualMultiplier, Enabled, 
+				DisableCasino, SyncCasino, DisableOutright, DisableNumber,
+				
+				DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,
 				-- For MuayThai
 				ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_MuayThai),1) AS DisableMuayThai,
 				CAST(CASE WHEN @IsHidden_MuayThai = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_MuayThai),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideMuayThai,
-				-- For CockFighting
-				ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_CockFighting),1) AS DisableCockFighting,
-				CAST(CASE WHEN @IsHidden_CockFighting = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_CockFighting),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideCockFighting,
+				
 				-- For AllBet
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_AllBet)) AS DisableAllBet,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_AllBetVIP)) AS DisableAllBetVIP,
@@ -669,11 +667,10 @@ BEGIN
 			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupc ELSE 0 END) groupc, 
 			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupd ELSE 0 END) groupd, 
 			MAX(CASE WHEN cs.bettype = 4 and cs.sporttype=1 then cs.adiscount else 0 end) as discountcs,	
-			MAX(CASE WHEN cs.bettype = 5 and cs.sporttype=1 then cs.adiscount else 0 end) as discount1x2,				
-			MAX(CASE WHEN cs.bettype = 20 and cs.sporttype = 154 then cs.adiscount else 0 end) as discountHRFixedOdds
+			MAX(CASE WHEN cs.bettype = 5 and cs.sporttype=1 then cs.adiscount else 0 end) as discount1x2
 		FROM dbo.CustSetting cs WITH(NOLOCK) 
 		WHERE custid IN (SELECT custid FROM #customer)
-			AND sporttype IN (1,154) AND bettype IN (1,4,5,20)
+			AND sporttype IN (1) AND bettype IN (1,4,5,20)
 		GROUP BY cs.custid 
 	),
 	keno AS
@@ -689,20 +686,8 @@ BEGIN
 			ctm.closed, 
 			ISNULL(ctm.reject,0) as suspended,	
 			ISNULL(ctm.DisableOutright,0) as DisableOutright,
-			ISNULL(ctm.DisableAutoMPT,0) as DisableAutoMPT,
-			ISNULL( CASE WHEN ctm.disablehorseracing = 0 
-							or ctm.disableOpenTote = 0 
-							or ctm.disable151_au = 0 
-							or ctm.disable152_uk = 0
-							or ctm.disable152_au = 0 
-							or ctm.disable153_au = 0 then 0 else 1 end ,0) as Disable151,
-			ISNULL(ctm.disablehorseracing,0) as disable151_31,
-			ISNULL(ctm.disableOpenTote,0) as disable151_41,
-			ISNULL(ctm.disable151_au,0) as disable151_51,
-			ISNULL(ctm.disable152_uk,0) as disable152_41,
-			ISNULL(ctm.disable152_au,0) as disable152_51,
-			ISNULL(ctm.disable153_au,0) as disable153_51,
-			ISNULL(ctm.disablefinancial,0) as DisableFI,
+			ISNULL(ctm.DisableAutoMPT,0) as DisableAutoMPT,	
+			
 			ctm.username, 
 			ctm.custid, 
 			ctm.roleid,
@@ -719,8 +704,7 @@ BEGIN
 			cs.groupd as groupd, 
 			discountcs discountcs,	
 			discount1x2 discount1x2,	
-			discountnumber discountnumber,
-			discountHRFixedOdds discountHRFixedOdds,
+			discountnumber discountnumber,			
 			ctm.currency,	
 			ctm.matchlimit,
 			ctm.virtualmultiplier-1 as VirtualMultiplier,
@@ -731,19 +715,7 @@ BEGIN
 			ctm.disablecasino,
 			
 			ctm.isinternal,
-			ctm.syncBingo,
 			ctm.DisableNumber,
-			ctm.DisableBingo,
-			
-			--For P2P
-			ctm.isAutoResetP2P,
-			ctm.DisableP2P,
-			ctm.DisableFunP2P,
-			
-			-- For live casino
-			ctm.DisableLiveCasino,
-			ctm.SyncLiveCasino,
-			  
 			---- For VirtualSports
 			--ctm.DisableVirtualSports,
 			ctm.DoubleCommLosing,
@@ -756,8 +728,8 @@ BEGIN
 			ISNULL(ctm.DisableColossusBet,1) AS DisableColossusBet,
 			ctm.DisableMuayThai,
 			ctm.HideMuayThai,
-			ctm.DisableCockFighting,
-			ctm.HideCockFighting,
+	
+		
 			ctm.DisableAllBet,
 			ctm.DisableAllBetVIP,
 			ctm.HideAllBet,

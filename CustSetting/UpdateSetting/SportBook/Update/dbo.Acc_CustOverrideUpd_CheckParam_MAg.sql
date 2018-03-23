@@ -60,8 +60,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam_MAg]
     @minv99positiontaking_3 smallmoney,
     @minv99positiontaking_9 smallmoney,
     @minv99positiontaking_20 smallmoney,
-    
-    @minv154positiontaking_20 smallmoney,
+
     --v161
     @minv161positiontaking_81 smallmoney,
     @minv161positiontaking_83 smallmoney,
@@ -127,8 +126,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam_MAg]
     @maxv99positiontaking_3 smallmoney,
     @maxv99positiontaking_9 smallmoney,
     @maxv99positiontaking_20 smallmoney,
-    
-    @maxv154positiontaking_20 smallmoney,
+
     
     --v161
     @maxv161positiontaking_81 smallmoney,
@@ -191,7 +189,7 @@ Revisions:
                       2. Code aligning
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]                  
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
-
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
 Param's Explanation:
 • @ErrCode:
     = 0: check parameters successfully.
@@ -445,11 +443,7 @@ inner join (select 1 as sporttype --1
                  , 20 as bettype
                  , @maxv99positiontaking_20 as maxpositiontaking
                  , 0 as maxlivepositiontaking
---154
-  union all select 154 as sporttype
-                 , 20 as bettype
-                 , @maxv154positiontaking_20 as maxpositiontaking
-                 , 0 as maxlivepositiontaking
+
            ) as b on aco.sporttype = b.sporttype and aco.bettype = b.bettype
 INNER JOIN custInfo ci ON ci.custid = aco.custid
      where ci.mrecommend = @custid
@@ -914,11 +908,7 @@ inner join (select 1 as sporttype
                  , 20 as bettype
                  , @minv99positiontaking_20 as minpositiontaking
                  , 0 as minlivepositiontaking
---154
-  union all select 154 as sporttype
-                 , 20 as bettype
-                 , @minv154positiontaking_20 as minpositiontaking
-                 , 0 as minlivepositiontaking
+
            ) b on cs.sporttype = b.sporttype and cs.bettype = b.bettype
 inner join custsetting as scs with(NOLOCK) on c.srecommend = scs.custid and scs.sporttype = b.sporttype and scs.bettype = b.bettype
       where cs.custid = @custid

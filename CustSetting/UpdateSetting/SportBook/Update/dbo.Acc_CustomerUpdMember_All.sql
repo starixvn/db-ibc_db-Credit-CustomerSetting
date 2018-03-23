@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,7 +19,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@playerdiscountcs DECIMAL(9,8),  
 	@playerdiscount1x2 DECIMAL(9,8)=0,  
 	@playerdiscountnumber DECIMAL(9,8)=0,  
-	@playerdiscountHRFixedOdds decimal(9,8)=0,
+	
 	@playerdiscountMyanmarOdds DECIMAL(9,8)=0, -- MyanmarOdds
 	
 	@UpdateCommission BIT = 1,  
@@ -65,11 +65,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@MinBetv1MP MONEY,  
 	@MaxBetv1MP MONEY,  
 	@MaxPerMatchv1MP MONEY,  
-	
-	--HR Fixed Odds
-	@MinBetv154 MONEY = 0,
-	@MaxBetv154 MONEY = 0,
-	@MaxPerMatchv154 MONEY = 0,
+
 	
 	--Number Game  
 	@MinBetv161 MONEY,  
@@ -89,7 +85,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 
 	@UpdateMinMaxBetv99MP BIT = 1,  
 	@UpdateMinMaxBetv1MP BIT = 1,
-	@UpdateMinMaxBetv154 bit = 1,
+	
 	@UpdateMinMaxBetv161 BIT = 1,  
 
 	@credit MONEY,  
@@ -155,9 +151,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@v99apositiontaking_9 SMALLMONEY,  
 	@v99apositiontaking_20 SMALLMONEY,  
 
-	--HR Fixed Odds
-	@v154apositiontaking_20 SMALLMONEY = 0,
-	
+
 	--v161  
 	@v161apositiontaking_81 smallmoney,   
 	@v161apositiontaking_83 smallmoney,       
@@ -189,7 +183,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@UpdatePositiontakingv99 BIT = 1,  
 	@UpdatePositiontakingv99MP BIT = 1,  
 	@UpdatePositiontakingv1MP BIT = 1,  
-	@UpdatePositiontakingv154 BIT = 1,
+	
 	@UpdatePositiontakingv161 BIT = 1,  
 
 	@UserID INT,    
@@ -241,6 +235,7 @@ Revisions:
  - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
  - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
  - 20170628@Winnie: Appply color for closed account - [Redmine: 74494]
+ - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -414,7 +409,7 @@ BEGIN
 	 Declare @playerdiscount_old DECIMAL(9,8),  
 	   @playerdiscountcs_old DECIMAL(9,8),  
 	   @playerdiscount1x2_old DECIMAL(9,8),  
-	   @playerdiscountHRFixedOdds_old decimal(9,8),
+	
 	   @playerdiscountnumber_old DECIMAL(9,8),  
 	   @discountMyanmarOdds_old DECIMAL(9,8)=0,
 	   @updatecomm_old bit  
@@ -428,9 +423,6 @@ BEGIN
 		select @playerdiscount1x2_old = playerdiscount  
 		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 5  
 
-		select @playerdiscountHRFixedOdds_old = playerdiscount
-		from custsetting (nolock) where custid = @custid and sporttype = 154 and bettype = 20
-		   
 		select @playerdiscountnumber_old = playerdiscount  
 		from custsetting3rd (nolock) where custid = @custid and sporttype = 161 and bettype = 81  
 
@@ -452,7 +444,7 @@ BEGIN
 		END
 			
 		if @playerdiscount_old <> @playerdiscount or @playerdiscountcs_old <> @playerdiscountcs   
-			or @playerdiscount1x2_old <> @playerdiscount1x2 or @playerdiscountnumber_old <> @playerdiscountnumber or @playerdiscountHRFixedOdds_old <> @playerdiscountHRFixedOdds
+			or @playerdiscount1x2_old <> @playerdiscount1x2 or @playerdiscountnumber_old <> @playerdiscountnumber 
 			OR (@IsMyanmarOdds = 1 AND @playerdiscountMyanmarOdds <> @discountMyanmarOdds_old)
 			set @updatecomm_old = 1  
 		else   
@@ -465,7 +457,7 @@ BEGIN
 	   @playerdiscount = @playerdiscount,  
 	   @playerdiscountcs = @playerdiscountcs,  
 	   @playerdiscount1x2 = @playerdiscount1x2,  
-	   @playerdiscountHRFixedOdds = @playerdiscountHRFixedOdds,
+	  
 	   @playerdiscountnumber = @playerdiscountnumber,  
 	   -- For Myanmar Odds
 	   @IsMyanmarOdds = @IsMyanmarOdds,
@@ -504,7 +496,7 @@ BEGIN
 		@UpdateMinMaxBetv99  = 1 or  
 		@UpdateMinMaxBetv99MP = 1 or  
 		@UpdateMinMaxBetv1MP = 1 or  
-		@UpdateMinMaxBetv154  = 1 or  
+		
 		@UpdateMinMaxBetv161 = 1  
 	BEGIN  
 	 Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''  
@@ -542,9 +534,7 @@ BEGIN
 	  @maxbetv1MP = @maxbetv1MP,  
 	  @maxpermatchv1MP = @maxpermatchv1MP,  
 	  
-	  @minbetv154 = @minbetv154,  
-	  @maxbetv154 = @maxbetv154,  
-	  @maxpermatchv154 = @maxpermatchv154,  
+	
 	  @minbetv161 = @minbetv161,  
 	  @maxbetv161 = @maxbetv161,  
 	  @maxpermatchv161 = @maxpermatchv161,  
@@ -562,7 +552,7 @@ BEGIN
 	  
 	  @UpdateMinMaxBetv1MP = @UpdateMinMaxBetv1MP,  
 	  
-	  @UpdateMinMaxBetv154 = @UpdateMinMaxBetv154,  
+	
 	  @UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,  
 	  @SubAccID = @SubAccID,  
 	  @UserID = @UserID,  
@@ -599,7 +589,7 @@ BEGIN
 	 
 	 @UpdatePositiontakingv1MP  = 1 or  
 	 
-	 @UpdatePositiontakingv154   = 1  or  
+	 
 	 @UpdatePositiontakingv161  = 1  
 	BEGIN  
 	 Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''  
@@ -660,8 +650,7 @@ BEGIN
 	  @v99apositiontaking_9_old SMALLMONEY,  
 	  @v99apositiontaking_20_old SMALLMONEY,  
 	    
-	  @v154apositiontaking_20_old SMALLMONEY,  
-	  
+	
 	  @v161apositiontaking_81_old SMALLMONEY,   
 	  @v161apositiontaking_83_old SMALLMONEY,        
 	  @v161apositiontaking_86_old SMALLMONEY,   
@@ -743,8 +732,7 @@ BEGIN
 	 select @v99apositiontaking_9_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=99  
 	 select @v99apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=99  
 	   
-	 select @v154apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=154 
-	  
+
 	 select @v161apositiontaking_81_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=81 and sporttype=161  
 	 select @v161apositiontaking_83_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=83 and sporttype=161  
 	 select @v161apositiontaking_88_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=88 and sporttype=161  
@@ -805,7 +793,6 @@ BEGIN
 	   @v99apositiontaking_9 <> @v99apositiontaking_9_old or  
 	   @v99apositiontaking_20 <> @v99apositiontaking_20_old or  
 
-	   @v154apositiontaking_20 <> @v154apositiontaking_20_old or  
 	     
 	   @v161apositiontaking_81 <> @v161apositiontaking_81_old or  
 	   @v161apositiontaking_83 <> @v161apositiontaking_83_old or    
@@ -879,8 +866,6 @@ BEGIN
 	   @v99apositiontaking_9 = @v99apositiontaking_9,  
 	   @v99apositiontaking_20 = @v99apositiontaking_20,  
 
-	   @v154apositiontaking_20 = @v154apositiontaking_20,  
-	     
 	   @v161apositiontaking_81 = @v161apositiontaking_81,  
 	   @v161apositiontaking_83 = @v161apositiontaking_83,  
 	   @v161apositiontaking_86 = @v161apositiontaking_86,  
@@ -909,8 +894,7 @@ BEGIN
 	   @UpdatePositiontakingv10 = @UpdatePositiontakingv10,  
 	   @UpdatePositiontakingv11 = @UpdatePositiontakingv11,  
 	   @UpdatePositiontakingv99 = @UpdatePositiontakingv99,  
-	   @UpdatePositiontakingv99MP = @UpdatePositiontakingv99MP,  
-	   @UpdatePositiontakingv154 = @UpdatePositiontakingv154,  
+	   @UpdatePositiontakingv99MP = @UpdatePositiontakingv99MP,  	   
 	   @UpdatePositiontakingv161 = @UpdatePositiontakingv161,  
 	   @UserID = @UserID,  
 	   @IP = @IP,  

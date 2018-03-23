@@ -1,4 +1,4 @@
-﻿ /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
  USE CustDB 
  GO
 
@@ -18,7 +18,7 @@
 		
 		Revisions:
 			- 20170601@Elodie: Migrate Inspired VS to DCS structure [Redmine: #77274]
-
+			- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		Parameter's Explantion:
 	*/
 BEGIN
@@ -282,14 +282,7 @@ BEGIN
 		c.maxpermatch11 = c2.maxpermatch11,
 		
 		c.maxpermatch99 = c2.maxpermatch99,
-		c.MaxPerMatch99MP = c2.MaxPerMatch99MP,	
-		c.maxpermatch151 = c2.maxpermatch151,
-		c.maxpermatch151_OT = c2.maxpermatch151_OT,		
-		c.MaxPerMatch151_AU = c2.MaxPerMatch151_AU,
-		c.MaxPerMatch152_UK = c2.MaxPerMatch152_UK,
-		c.MaxPerMatch152_AU = c2.MaxPerMatch152_AU,
-		c.MaxPerMatch153_AU = c2.MaxPerMatch153_AU,
-		c.maxpermatch154 = c2.maxpermatch154,
+		c.MaxPerMatch99MP = c2.MaxPerMatch99MP,		
 		c.maxpermatch161 = c2.maxpermatch161,
 		c.MaxPerBall161 = c2.MaxPerBall161,
 		

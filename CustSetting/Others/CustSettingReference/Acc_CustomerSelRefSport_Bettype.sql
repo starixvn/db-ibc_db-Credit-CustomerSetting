@@ -19,7 +19,7 @@ AS
 		- 20161010@Elodie: Intergrate NG2 product
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 		- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
-
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
 		@isShowAll: 0: Show Active Bettype, 1: Show ALL 
@@ -29,8 +29,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON 
-	DECLARE	 @DisableHRFixedOdds	BIT = 0
-			,@HideKeno				BIT = 0 
+	DECLARE	 @HideKeno				BIT = 0 
 			,@DisableKeno			INT = 0 
 			,@DisableNumber			BIT = 0 
 			,@HideNG2				BIT = 0 
@@ -61,8 +60,7 @@ BEGIN
 	
 	IF @RoleID BETWEEN 2 AND 4 
 	BEGIN
-			SELECT	 @DisableHRFixedOdds = ci.DisableHRFixedOdds
-					,@HideKeno			 = ci.HideKeno
+			SELECT	 @HideKeno			 = ci.HideKeno
 					,@DisableNumber		 = ci.DisableNumber
 					
 			FROM	CustDB.dbo.CustInfo ci WITH (NOLOCK) 
@@ -101,8 +99,7 @@ BEGIN
 	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
 	FROM	dbo.Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE	Sporttype NOT IN (
-				 CASE WHEN @DisableHRFixedOdds = 1 THEN 154 ELSE 0 END				--HR Fixed Odds
-				,CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
+				 CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
 				,CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
 				,CASE WHEN @IsMyanmarOdds = 0 AND Bettype IN (301,302,303,304) THEN 1 ELSE 0 END -- MyanmarOdds
 				,27, 50 -- Cricket
@@ -132,7 +129,7 @@ BEGIN
 			AND (SportType<>SporttypeRefPT OR bettype <>BettypeRefPT)
 			AND NOT EXISTS (SELECT TOP 1 1 FROM Sport_Bettype_Reference a (NOLOCK) WHERE a.Sporttype=b.SportType AND a.Bettype=b.BetType)
 			AND (SportType<=99 -- Sportbook
-					OR b.SportType = 154 -- HR FixOdds
+					
 					OR b.SportType BETWEEN 213 AND 218 --NG2
 					OR b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 191 --Virtual Sport
 					OR b.SportType = 220) -- Lottery

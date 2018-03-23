@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_ExecRep_Cust_04]
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_ExecRep_Cust_04]
 	@custid int,
 	@roleid tinyint,
 	@action varchar(30) = '',
@@ -6,12 +7,9 @@
 	@Suspended	BIT =0,
 	@Closed		BIT =0,
 	@disabledCS BIT =0,
-	@DisableLiveCasino BIT = 0,
-	@DisableHRFixedOdds BIT = 0,
 	@DisableVS BIT = 0,
 	@EnableVS BIT = 0,
 	@DisableNumberGame BIT = 0,
-	@BingoStatus BIT = 0,
 	@AutoSuspendSoccer BIT = 0,
 	@AutoSuspendOtherSports BIT = 0,
 	@rowcount INT = 0 OUTPUT
@@ -32,7 +30,7 @@ Revisions:
 	- 20150610@Daniel: 
 	    + Improve medthod check table existing in subscribers	
 	    + Separate custDB to new server DBCUST 	
-	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
 Param's Explanation:
 	@Action: 
 		+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -43,8 +41,6 @@ Param's Explanation:
 		+ 'DisableVS': Disable Virtual Sport [@DisableVS]
 		+ 'EnableVS': Enable Virtual Sport [@EnableVS]
 		+ 'DisableNumberGame': Number game status [@DisableNumberGame]
-		+ 'DisableHRFixedOdds': HR Fixed Odds status [@DisableHRFixedOdds]
-		+ 'BingoStatus': Bingo status [@BingoStatus]
 		+ 'AutoSuspend': Auto suspend all: Soccer and Other Sports [@AutoSuspendSoccer, @AutoSuspendOtherSports]
 		+ 'AutoSuspendSoccer': Auto suspend for Soccer[@AutoSuspendSoccer]
 		+ 'AutoSuspendOther': Auto suspend for Other Sports [@AutoSuspendOtherSports]
@@ -145,22 +141,22 @@ BEGIN
 		WHERE	SyncCasino=1 AND recommend=@custid AND roleid = 1
 	END
 END
-ELSE IF @Action = 'DisableLiveCasino'
-BEGIN 
-	IF @roleid = 4
-			UPDATE CustInfo WITH(ROWLOCK, UPDLOCK)
-			SET DisableLiveCasino = @DisableLiveCasino
-			WHERE srecommend = @custid 
-		
-	IF @roleid = 3 
-		UPDATE CustInfo WITH(ROWLOCK, UPDLOCK)
-		SET DisableLiveCasino = @DisableLiveCasino
-		WHERE mrecommend = @custid 
-		
-	IF @roleid =2
-		UPDATE CustInfo WITH(ROWLOCK, UPDLOCK) 
-		SET DisableLiveCasino = @DisableLiveCasino
-		WHERE recommend = @custid 	
+ELSE IF @Action = 'DisableNumberGame'
+BEGIN
+	if @RoleID = 4 
+		update CustInfo with (ROWLOCK, UPDLOCK) 
+		set DisableNumber = @DisableNumberGame 
+		where SRecommend = @CustID
+
+	if @RoleID = 3 
+		update CustInfo with (ROWLOCK, UPDLOCK) 
+		set DisableNumber = @DisableNumberGame 
+		where MRecommend = @CustID
+
+	if @RoleID = 2 
+		update CustInfo with (ROWLOCK, UPDLOCK) 
+		set DisableNumber = @DisableNumberGame 
+		where Recommend = @CustID
 END
 ELSE IF @Action = 'DisableVS'
 BEGIN
@@ -198,55 +194,7 @@ BEGIN
 				HideVirtualSports = CASE WHEN HideVirtualSports = 1 THEN 0 ELSE HideVirtualSports END 
 		WHERE recommend = @custid 
 END
-ELSE IF @Action = 'DisableNumberGame'
-BEGIN
-	if @RoleID = 4 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableNumber = @DisableNumberGame 
-		where SRecommend = @CustID
 
-	if @RoleID = 3 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableNumber = @DisableNumberGame 
-		where MRecommend = @CustID
-
-	if @RoleID = 2 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableNumber = @DisableNumberGame 
-		where Recommend = @CustID
-END
-ELSE IF @Action = 'DisableHRFixedOdds'
-BEGIN
-	if @RoleID = 4 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableHRFixedOdds = @DisableHRFixedOdds
-		where SRecommend = @CustID
-
-	if @RoleID = 3 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableHRFixedOdds = @DisableHRFixedOdds 
-		where MRecommend = @CustID
-
-	if @RoleID = 2 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableHRFixedOdds = @DisableHRFixedOdds 
-		where Recommend = @CustID
-END
-ELSE IF @Action = 'BingoStatus'
-BEGIN
-	IF @RoleID = 4
-		UPDATE CustInfo WITH (ROWLOCK, UPDLOCK) SET
-			DisableBingo = @BingoStatus
-		WHERE SyncBingo=1 AND srecommend=@custid AND roleid in (1,2,3)
-	IF @RoleID = 3
-		UPDATE CustInfo WITH (ROWLOCK, UPDLOCK) SET
-			DisableBingo = @BingoStatus
-		WHERE SyncBingo=1 AND mrecommend=@custid AND roleid in (1,2)
-	IF @RoleID = 2
-		UPDATE CustInfo WITH (ROWLOCK, UPDLOCK) SET
-			DisableBingo = @BingoStatus
-		WHERE SyncBingo=1 AND recommend=@custid AND roleid = 1
-END
 else if @Action = 'AutoSuspend'
 BEGIN
 	IF @roleID = 4 
