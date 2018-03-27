@@ -783,6 +783,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20170505@Winnie Agent have no PT Setting but new creation member got setting [Redmine: #71639]
 			- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 			- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+			- 20180327@Vicky: add header infomation [Redmine: #90422]
 		Parameter's Explanation:
 		
 	*/
