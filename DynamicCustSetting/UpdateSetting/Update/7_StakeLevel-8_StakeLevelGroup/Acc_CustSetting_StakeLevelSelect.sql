@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevelSelect
 					@CustID			INT
 				,	@ProductID		TINYINT
@@ -9,6 +10,7 @@ AS
 	Original:
 	
 		- 20160812@Helen: NAP - Bet Limit - Stake level does not order by Max then Min Stake [Redmine: 62429]
+		- 20180327@Vicky: add header infomation [Redmine: #90422]
 
 	Param's Explanation:
 */
@@ -138,9 +140,3 @@ BEGIN
 	DROP TABLE #SportBetTypeFilter;
 END;
 GO
-
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelSelect TO bodbAdminNet;
-GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelSelect TO bodbDownlineNet;
-GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelSelect TO bodbExtAccNet;
