@@ -271,6 +271,7 @@ Revisions:
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
     - 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
+	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.
@@ -302,25 +303,34 @@ BEGIN
     IF    @ErrCode <> 0 
         RETURN 
     ----------
-	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
-	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
-	
 	BEGIN TRY
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBAGE.bodb02.dbo.Sports WITH (NOLOCK)		
+		SELECT *
+		INTO #tmp_Sports
+		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBTXN.bodb02.dbo.Sports WITH (NOLOCK)	
+		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Sports
+			INSERT INTO #tmp_Sports
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
+		END
 	END CATCH
 
 	BEGIN TRY			
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBAGE.bodb02.dbo.Bettype WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_Bettype
+		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBTXN.bodb02.dbo.Bettype WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Bettype
+			INSERT INTO #tmp_Bettype
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
+		END
 	END CATCH
 	
     --Check Param
@@ -1255,7 +1265,7 @@ BEGIN
 
     --check n4<=s4
         select @ErrType = ''
-        select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ cast((co.minpositiontaking) as varchar(10))
+        select @ErrType = @ErrType + s.name + '-'+ bt.Name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))
         + case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MinLive: '+ cast((co.minlivepositiontaking) as varchar(10)) else '' end + '<br>'
         from custoverride as co with (NOLOCK) 
         inner join
@@ -1320,8 +1330,8 @@ BEGIN
             union all     select 20 as bettype, 99 as sporttype, @v99spositiontaking_20 as spositiontaking, 0 as slivepositiontaking
     
         ) as b on co.sporttype=b.sporttype and co.bettype = b.bettype
-        INNER JOIN @tmp_sports s on b.sporttype = s.sporttype
-        INNER JOIN @tmp_bettype bt on b.bettype = bt.typeid
+        INNER JOIN #tmp_sports s on b.sporttype = s.ID
+        INNER JOIN #tmp_bettype bt on b.bettype = bt.ID
     where co.custid = @custid and (    
                         (b.spositiontaking<co.minpositiontaking) or 
                         (b.sporttype = 1 and b.bettype in (1,3,7,8) and (b.slivepositiontaking<co.minlivepositiontaking))
@@ -1338,7 +1348,7 @@ BEGIN
 
     --v161
     select @ErrType = ''
-        select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ cast((co.minpositiontaking) as varchar(10))
+        select @ErrType = @ErrType + s.name + '-'+ bt.Name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))
         + case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '-MinLive: '+ cast((co.minlivepositiontaking) as varchar(10)) else '' end + '<br>'
         from custoverride3rd as co with (NOLOCK) 
         inner join
@@ -1353,8 +1363,8 @@ BEGIN
             union all     select 90 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_90 as slivepositiontaking
             
         ) as b on co.sporttype=b.sporttype and co.bettype = b.bettype
-        INNER JOIN @tmp_sports s  on b.sporttype = s.sporttype
-        INNER JOIN @tmp_bettype bt on b.bettype = bt.typeid
+        INNER JOIN #tmp_sports s  on b.sporttype = s.ID
+        INNER JOIN #tmp_bettype bt on b.bettype = bt.ID
     where co.custid = @custid and (    
                         (b.spositiontaking<co.minpositiontaking) or 
                         (b.sporttype = 161 and b.bettype in (85,86,87,89,90) and (b.slivepositiontaking<co.minlivepositiontaking))

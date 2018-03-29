@@ -55,6 +55,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMasterVS_Positiontaking]
 																Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 			- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
+			- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
         Parameter's Explanation:
     */
 SET NOCOUNT ON 
@@ -87,25 +88,34 @@ SET NOCOUNT ON
 
 	
 	----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
-	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
-	
 	BEGIN TRY
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBAGE.bodb02.dbo.Sports WITH (NOLOCK)		
+		SELECT *
+		INTO #tmp_Sports
+		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBTXN.bodb02.dbo.Sports WITH (NOLOCK)	
+		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Sports
+			INSERT INTO #tmp_Sports
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
+		END
 	END CATCH
 
 	BEGIN TRY			
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBAGE.bodb02.dbo.Bettype WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_Bettype
+		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBTXN.bodb02.dbo.Bettype WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Bettype
+			INSERT INTO #tmp_Bettype
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
+		END
 	END CATCH
 ----- /Elodie @ 01 JUN 2015 -------------------
 
@@ -242,14 +252,14 @@ SET NOCOUNT ON
         
         --n3<=m3<=l3
         select @ErrType = ''
-        select @ErrType = @ErrType + s.SportName + ' - ' + typenamee 
+        select @ErrType = @ErrType + s.Name + ' - ' + bt.Name 
             + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10)) + '<br>'
         from custoverride3rd as co with (NOLOCK) inner join
             (
                 select @bettype as bettype, @sporttype as sporttype, @s3 as spositiontaking, @m3 as mpositiontaking, @is3 as isauto_spositiontaking, @n3 as minpositiontaking
             ) as b on co.sporttype=b.sporttype and co.bettype = b.bettype
-            INNER JOIN @tmp_Bettype bt on b.bettype = bt.typeid
-            INNER JOIN @tmp_Sports s on b.sporttype = s.sporttype
+            INNER JOIN #tmp_Bettype bt on b.bettype = bt.ID
+            INNER JOIN #tmp_Sports s on b.sporttype = s.ID
         where co.custid = @custid and (    
                             (b.mpositiontaking>co.maxpositiontaking or b.mpositiontaking<b.minpositiontaking)        
                         )

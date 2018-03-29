@@ -295,6 +295,7 @@ Revisions:
 	- 20171208@Vicky: set comm of sportbook = 0 if agent of member exists in table CustNoComm [RedmineID: #87758]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute. Normal agent can open up to 10 members per minute
+	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -304,36 +305,50 @@ Param's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
------ Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
-	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
-	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
-
+----- Elodie @ 01 JUN 2015 -------------------	
 	BEGIN TRY
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBAGE.bodb02.dbo.Sports WITH (NOLOCK)		
+		SELECT *
+		INTO #tmp_Sports
+		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBTXN.bodb02.dbo.Sports WITH (NOLOCK)	
+		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Sports
+			INSERT INTO #tmp_Sports
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
+		END
 	END CATCH
 
 	BEGIN TRY			
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBAGE.bodb02.dbo.Bettype WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_Bettype
+		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBTXN.bodb02.dbo.Bettype WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Bettype
+			INSERT INTO #tmp_Bettype
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
+		END
 	END CATCH
 
 	BEGIN TRY		
-		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_GameType
+		FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_GameType') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_GameType
+			INSERT INTO #tmp_GameType
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBTXN')	
+		END
 	END CATCH
 ----- /Elodie @ 01 JUN 2015 -------------------
 /*
@@ -1842,8 +1857,8 @@ BEGIN
     END
 
     SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType +  (CASE WHEN MP=0 THEN sportname ELSE 'Mixed Sports' END )       + ', '
-    FROM @tmp_Sports sports inner join
+    SELECT @ErrType = @ErrType +  (CASE WHEN MP=0 THEN Name ELSE 'Mixed Sports' END )       + ', '
+    FROM #tmp_Sports sports inner join
     (
 				    SELECT 1 AS sporttype,0 AS MP, @MinBet AS MinBet, @MaxBet AS MaxBet, @MaxPerMatch AS MaxPerMatch
 	    UNION ALL	SELECT 2 AS sporttype,0 AS MP, @MinBetv2 AS MinBet, @MaxBetv2 AS MaxBet, @MaxPerMatchv2 AS MaxPerMatch
@@ -1858,7 +1873,7 @@ BEGIN
 	    UNION ALL	SELECT 1 AS sporttype,1 AS MP, @MinBetv1MP AS MinBet, @MaxBetv1MP AS MaxBet, @MaxPerMatchv1MP AS MaxPerMatch   
 	  
 	    UNION ALL	SELECT 161 AS sporttype,0 AS MP, @MinBetv161 AS MinBet, @MaxBetv161 AS MaxBet, @MaxPerMatchv161 AS MaxPerMatch	 
-    ) AS b on sports.sporttype = b.sporttype
+    ) AS b on sports.ID = b.sporttype
     WHERE (MinBet<>0 AND MaxBet <> 0 AND  MinBet>MaxBet) 
 	    OR (MaxBet<> 0 AND MaxPerMatch <> 0 AND MaxBet>MaxPerMatch) 
 	    OR (MinBet <> 0 AND MaxPerMatch <> 0 AND MinBet>MaxPerMatch)
@@ -2202,9 +2217,9 @@ BEGIN
 
     --check a1<=min(a2,a4) - Vinh
     SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((max_apositiontaking) AS VARCHAR(10))
+    SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.name + '-Max: '+ CAST((max_apositiontaking) AS VARCHAR(10))
     + CASE WHEN b.sporttype in (1,161) AND b.bettype in (1,3,7,8,85,86,87,89,90) THEN '-MaxLive: '+ CAST((max_alivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
-    FROM @tmp_Sports sports inner join
+    FROM #tmp_Sports sports inner join
     (
 			    SELECT 1 AS bettype, 1 AS sporttype, @apositiontaking_1 AS apositiontaking, @alivepositiontaking_1 AS alivepositiontaking, @max_apositiontaking_1 AS max_apositiontaking,  @max_alivepositiontaking_1 AS max_alivepositiontaking
 	    UNION ALL 	SELECT 3 AS bettype, 1 AS sporttype, @apositiontaking_3 AS apositiontaking, @alivepositiontaking_3 AS alivepositiontaking, @max_apositiontaking_3 AS max_apositiontaking,  @max_alivepositiontaking_3 AS max_alivepositiontaking
@@ -2276,8 +2291,8 @@ BEGIN
 	    UNION ALL 	SELECT 89 AS bettype, 161 AS sporttype, 0 AS apositiontaking, @v161alivepositiontaking_89 AS alivepositiontaking, 0 AS max_apositiontaking,  @max_v161alivepositiontaking_89 AS max_alivepositiontaking
 	    UNION ALL 	SELECT 90 AS bettype, 161 AS sporttype, 0 AS apositiontaking, @v161alivepositiontaking_90 AS alivepositiontaking, 0 AS max_apositiontaking,  @max_v161alivepositiontaking_90 AS max_alivepositiontaking
     			
-	    ) AS b on sports.sporttype = b.sporttype
-	    inner join @tmp_Bettype bettype on b.bettype = bettype.typeid
+	    ) AS b on sports.ID = b.sporttype
+	    inner join #tmp_Bettype bettype on b.bettype = bettype.ID
 	    WHERE (apositiontaking>max_apositiontaking)
 		    OR (alivepositiontaking >max_alivepositiontaking)
 
@@ -2988,8 +3003,8 @@ BEGIN
     --End Hard code for Horse racing: check valid minbet, maxbet, maxpermatch for HR IF invalid copy FROM upline
 
     SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + (CASE WHEN MP=0 THEN sportname ELSE 'Mixed Sports' END )   + ', '
-    FROM @tmp_Sports sports inner join
+    SELECT @ErrType = @ErrType + (CASE WHEN MP=0 THEN sports.name ELSE 'Mixed Sports' END )   + ', '
+    FROM #tmp_Sports sports inner join
     (
 				    SELECT 1 AS sporttype,0 AS MP, @MinBet AS MinBet, @MinMinBet AS MinMinBet
 	    UNION ALL	SELECT 2 AS sporttype,0 AS MP, @MinBetv2 AS MinBet, @MinMinBetv2 AS MinMinBet
@@ -3002,7 +3017,7 @@ BEGIN
 	    UNION ALL	SELECT 99 AS sporttype,0 AS MP, @MinBetv99 AS MinBet, @MinMinBetv99 AS MinMinBet	 
 	    UNION ALL	SELECT 99 AS sporttype,1 AS MP, @MinBetv99MP AS MinBet, @MinMinBetv99MP AS MinMinBet	   
 	    UNION ALL	SELECT 161 AS sporttype,0 AS MP, @MinBetv161 AS MinBet, @MinMinBetv161 AS MinMinBet	
-    ) AS b on sports.sporttype = b.sporttype
+    ) AS b on sports.ID = b.sporttype
     WHERE MinMinBet>0 AND MinBet>0 AND MinBet<MinMinBet
     IF @ErrType <>''
     BEGIN
@@ -3016,8 +3031,8 @@ BEGIN
     END
 
     SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + (CASE WHEN MP=0 THEN sportname ELSE 'Mixed Sports' END )   + ', '
-    FROM @tmp_Sports sports inner join
+    SELECT @ErrType = @ErrType + (CASE WHEN MP=0 THEN sports.name ELSE 'Mixed Sports' END )   + ', '
+    FROM #tmp_Sports sports inner join
     (
 				    SELECT 1 AS sporttype,0 AS MP, @MaxBet AS MaxBet, @MaxMaxBet AS MaxMaxBet
 	    UNION ALL	SELECT 2 AS sporttype,0 AS MP, @MaxBetv2 AS MaxBet, @MaxMaxBetv2 AS MaxMaxBet
@@ -3030,7 +3045,7 @@ BEGIN
 	    UNION ALL	SELECT 99 AS sporttype,1 AS MP, @MaxBetv99MP AS MaxBet, @MaxMaxBetv99MP AS MaxMaxBet	 	    
 	    UNION ALL	SELECT 161 AS sporttype,0 AS MP, @MaxBetv161 AS MaxBet, @MaxMaxBetv161 AS MaxMaxBet	 
     	
-    ) AS b on sports.sporttype = b.sporttype
+    ) AS b on sports.ID = b.sporttype
     WHERE MaxMaxBet>0 AND MaxBet>0 AND MaxBet>MaxMaxBet
     IF @ErrType <>''
     BEGIN
@@ -3044,8 +3059,8 @@ BEGIN
     END
 
     SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + (CASE WHEN MP=0 THEN sportname ELSE 'Mixed Sports' END )   + ', '
-    FROM @tmp_Sports sports inner join
+    SELECT @ErrType = @ErrType + (CASE WHEN MP=0 THEN sports.name ELSE 'Mixed Sports' END )   + ', '
+    FROM #tmp_Sports sports inner join
     (
 				    SELECT 1 AS sporttype,0 AS MP, @MaxPerMatch AS MaxPerMatch, @MaxMaxPerMatch AS MaxMaxPerMatch
 	    UNION ALL	SELECT 2 AS sporttype,0 AS MP, @MaxPerMatchv2 AS MaxPerMatch, @MaxMaxPerMatchv2 AS MaxMaxPerMatch
@@ -3060,7 +3075,7 @@ BEGIN
 	    UNION ALL	SELECT 1 AS sporttype,1 AS MP, @MaxPerMatchv1MP AS MaxPerMatch, @MaxMaxPerMatchv1MP AS MaxMaxPerMatch	 
 	   
 	    UNION ALL	SELECT 161 AS sporttype,0 AS MP, @MaxPerMatchv161 AS MaxPerMatch, @MaxMaxPerMatchv161 AS MaxMaxPerMatch
-    ) AS b on sports.sporttype = b.sporttype
+    ) AS b on sports.ID = b.sporttype
     WHERE MaxMaxPerMatch>0 AND MaxPerMatch>0 AND MaxPerMatch>MaxMaxPerMatch
     IF @ErrType <>''
     BEGIN
@@ -3076,9 +3091,9 @@ BEGIN
     SELECT @ErrType = ''
     IF @MaxPerBallv161 > 0 AND @MaxMaxPerBallv161 > 0 AND @MaxPerBallv161 > @MaxMaxPerBallv161
     BEGIN
-	    SELECT @ErrType = @ErrType + sportname 
-	    FROM @tmp_Sports sports
-	    WHERE sporttype = 161
+	    SELECT @ErrType = @ErrType + sports.name 
+	    FROM #tmp_Sports sports
+	    WHERE ID = 161
     	
 	    SELECT @ErrMsg= CASE @Language
 						    WHEN 'E' THEN 'Max Per Ball must equal to OR less than Agent Max Per Ball ('+@ErrType+').'
@@ -4899,7 +4914,7 @@ BEGIN
 	    + '=' + '"' + CAST(cg.IsDisabled AS VARCHAR(1)) + '"' + SPACE(1), + 'Disable202_' + CAST(IBCBetTypeID AS VARCHAR(10)) 
 	    + '=' + '"' + CAST(cg.IsDisabled AS VARCHAR(1)) + '"' + SPACE(1))
     FROM dbo.CustGameType cg WITH(NOLOCK)
-    INNER JOIN @tmp_GameType gt ON cg.GameTypeID = gt.GameTypeID
+    INNER JOIN #tmp_GameType gt ON cg.GameTypeID = gt.ID
     WHERE cg.CustID = @recommend AND IBCBetTypeID BETWEEN 1501 AND 1599 AND gt.IsDisabled = 0
 
     SET @LogDataKeno = 'HideKeno="'+ COALESCE(CAST(@HideKeno AS VARCHAR(1)), SPACE(1)) + '" ' + @LogDataKeno
