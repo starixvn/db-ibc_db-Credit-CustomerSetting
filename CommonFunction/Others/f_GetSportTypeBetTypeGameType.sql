@@ -10,6 +10,7 @@ AS
 	DB: DBCUST/CUSTDB
 	Original:
 	Revisions:
+		-- 20190329@Winnie: Create function [RedmineID:#91216]
 		Param's Explanation:
 			@Mode=1: Get Sporttype
 			@Mode=2: Get Bettype
