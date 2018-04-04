@@ -16,10 +16,10 @@ BEGIN
     DECLARE @var_siteid INT, @var_curr INT, @var_casino_sync BIT
 
     SELECT @var_curr = c.currency, @var_siteid = s.siteid, @var_casino_sync = ci.SyncCasino
-    FROM customer c
-        LEFT JOIN  customer ca ON c.recommend = ca.custid
-        INNER JOIN custInfo ci ON c.custid = ci.custid
-        INNER JOIN [site] s    ON s.[site]    = (CASE WHEN c.roleid = 1 THEN ca.[site] ELSE c.[site] END)
+    FROM customer c WITH (NOLOCK)
+        LEFT JOIN  customer ca WITH (NOLOCK) ON c.recommend = ca.custid
+        INNER JOIN custInfo ci WITH (NOLOCK) ON c.custid = ci.custid
+        INNER JOIN [site]   s  WITH (NOLOCK) ON s.[site] = (CASE WHEN c.roleid = 1 THEN ca.[site] ELSE c.[site] END)
     WHERE c.custid = @custid
     
     SELECT sbm.productid, gls.SportType, gls.BetType
