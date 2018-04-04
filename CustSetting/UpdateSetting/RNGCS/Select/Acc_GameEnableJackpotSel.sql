@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_GameEnableJackpotSel]
     @custid INT, --member
+    @checkSync BIT = 1,
     @isTest BIT = 0
 AS
 /*
@@ -33,7 +34,7 @@ BEGIN
             AND glc.isTest <= @isTest
             AND gls.isTest <= @isTest
             --check sync casino
-            AND (gls.SportType <> 208 OR @var_casino_sync = 1)
+            AND (@checkSync = 0 OR (gls.SportType <> 208 OR @var_casino_sync = 1))
 
 END
 GO
