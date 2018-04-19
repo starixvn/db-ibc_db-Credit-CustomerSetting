@@ -39,7 +39,7 @@ BEGIN
     FROM CustInfo ci WITH (NOLOCK)
         INNER JOIN #SuperTemp s ON s.custid = ci.srecommend
         INNER JOIN CustPTSetting3rd_Member cs WITH (NOLOCK) ON ci.CustID = cs.CustID
-    WHERE   ci.roleid = 1 AND cs.SportType = @SportType
+    WHERE   ci.roleid = 1 AND cs.SportType = @SportType AND ci.Enabled = 1
     
     
     INSERT INTO #MemberPT (CustID, recommend,mrecommend,srecommend,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT,IsGroup)
@@ -48,7 +48,7 @@ BEGIN
         INNER JOIN #SuperTemp s ON s.custid = ci.srecommend
         INNER JOIN CustSettingMode3rd csm WITH (NOLOCK) ON ci.custid = csm.CustID AND csm.IsGrouped = 1
         INNER JOIN CustPTGroupSetting3rd_Member cs WITH (NOLOCK) ON cs.AgentID = ci.recommend  
-    WHERE  ci.roleid = 1 AND cs.SportType = @SportType
+    WHERE  ci.roleid = 1 AND cs.SportType = @SportType AND ci.Enabled = 1
 
     
     INSERT INTO #AgentPT (CustID, recommend,mrecommend,srecommend,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT, MinPT, MaxPT)            
@@ -56,7 +56,7 @@ BEGIN
     FROM CustInfo ci WITH (NOLOCK)
         INNER JOIN #SuperTemp s ON s.custid = ci.srecommend
         INNER JOIN CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
-    WHERE   ci.roleid = 2 AND cs.SportType = @SportType
+    WHERE   ci.roleid = 2 AND cs.SportType = @SportType AND ci.Enabled = 1
 
     
     INSERT INTO #MasterPT (CustID, recommend,mrecommend,srecommend,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT,MinPT,MaxPT)         
@@ -64,7 +64,7 @@ BEGIN
     FROM CustInfo ci WITH (NOLOCK)
         INNER JOIN #SuperTemp s ON s.custid = ci.srecommend
         INNER JOIN CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
-    WHERE   ci.roleid = 3 AND cs.SportType = @SportType 
+    WHERE   ci.roleid = 3 AND cs.SportType = @SportType AND ci.Enabled = 1
     
     
     INSERT INTO #SuperPT (CustID, SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT,MinPT,MaxPT)          
@@ -72,7 +72,7 @@ BEGIN
     FROM CustInfo ci WITH (NOLOCK)
         INNER JOIN #SuperTemp s ON s.custid = ci.srecommend
         INNER JOIN CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
-    WHERE ci.roleid = 4 AND cs.SportType = @SportType
+    WHERE ci.roleid = 4 AND cs.SportType = @SportType AND ci.Enabled = 1
     
 
     CREATE CLUSTERED INDEX CIX_MemberPT ON #MemberPT(CustID, sporttype, bettype)
