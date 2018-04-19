@@ -20,6 +20,7 @@ AS
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 		- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20180214@Vicky: Add VS Basketball Product - [Redmine #89284]
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
 		@isShowAll: 0: Show Active Bettype, 1: Show ALL 
@@ -131,11 +132,11 @@ BEGIN
 			AND (SportType<=99 -- Sportbook
 					
 					OR b.SportType BETWEEN 213 AND 218 --NG2
-					OR b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 191 --Virtual Sport
+					OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 193) --Virtual Sport
 					OR b.SportType = 220) -- Lottery
 
 			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
-			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 191) THEN 0 ELSE 1 END
+			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 193) THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
 	ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
 END
