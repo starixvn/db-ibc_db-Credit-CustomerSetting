@@ -11,7 +11,13 @@ AS
     
     
     Param's Explanation:
-    Exameple1: EXEC dbo.[DBA_CheckPTGame_for_Line_DCS] @srecommendList = '20', @SportType = 193, @BetType = 2801
+    Exameple1:
+        IF OBJECT_ID('tempdb..##CheckPTResult_Credit') IS NOT NULL
+		BEGIN
+		    DELETE FROM ##CheckPTResult_Credit
+		END 
+        EXEC dbo.[DBA_CheckPTGame_for_Line_DCS] @srecommendList = '20', @SportType = 193, @BetType = 2801
+        SELECT * FROM ##CheckPTResult_Credit
 */
 BEGIN
     SET NOCOUNT ON
