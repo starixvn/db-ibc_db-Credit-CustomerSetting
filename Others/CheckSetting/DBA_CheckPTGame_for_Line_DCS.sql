@@ -1,4 +1,4 @@
-
+/*<info serverAlias="DBACC-bodb02" executers="vnteam" viewers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE dbo.[DBA_CheckPTGame_for_Line_DCS]
      @srecommendList VARCHAR(MAX) 
     ,@SportType SMALLINT = 0
@@ -613,7 +613,3 @@ BEGIN
 
 END
 GO
-GRANT EXECUTE ON [dbo].[DBA_CheckPTGame_for_Line_DCS] TO [vnteam] AS [dbo]
-GO
-
-
