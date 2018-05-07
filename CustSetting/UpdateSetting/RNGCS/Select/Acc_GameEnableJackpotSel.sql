@@ -7,7 +7,12 @@ AS
     Created: 20180206@Vicky
     Task: select Progressive Jackpot list
     DB: DBCUST.CustDB
-    Original:
+    
+    Revisions:
+        - 20180507@Vicky: Remove hardcode to show JP for UUS acc [Redmine: #89952]
+    
+    Param's Explanation:
+        - @custid: Member & SMA
 
 */
 BEGIN
