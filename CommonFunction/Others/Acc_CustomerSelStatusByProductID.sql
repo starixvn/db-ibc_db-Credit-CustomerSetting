@@ -158,7 +158,7 @@ BEGIN
 
 		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline,GameTypeID)	
 		SELECT 8,202,IBCBetTypeID,NULL,0,0,1,0,0,0,1,1,GameTypeID		
-		FROM DBTXN.bodb02.dbo.Gametype WHERE IBCBetTypeID NOT IN(1502,1507,1509) AND IsDisabled = 0 
+		FROM DBACC.bodb02.dbo.Gametype WHERE  IBCBetTypeID BETWEEN 1501 AND 1599 AND IBCBetTypeID NOT IN(1502,1507,1509) AND IsDisabled = 0 
 
 		UPDATE s
 		SET s.IsDisabled=ct.IsDisabled
