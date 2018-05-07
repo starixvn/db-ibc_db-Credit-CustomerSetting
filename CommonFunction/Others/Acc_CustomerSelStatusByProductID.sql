@@ -12,6 +12,7 @@ AS
 	Revisions:	
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure [Redmine: #77274]
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20170504@Winnie: [Keno] - New 6 mini games - Customer Setting Development [RedmineID: #93796]
 	Parameters Explanation
 */ 
 
@@ -155,26 +156,9 @@ BEGIN
 	BEGIN	
 		SELECT @Ishidden=HideKeno,@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend,@RoleID=roleid FROM custInfo  WITH (NOLOCK)  WHERE custid=@custid
 		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline)	
-		SELECT 8,202,1501,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1503,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1504,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1505,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1508,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1511,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1513,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1514,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1515,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1516,NULL,0,0,1,0,0,0,1,1
-		
+		SELECT 8,202,IBCBetTypeID,NULL,0,0,1,0,0,0,1,1		
+		FROM DBTXN.bodb02.dbo.Gametype WHERE IBCBetTypeID NOT IN(1502,1507,1509)
+
 		UPDATE s
 		SET s.GameTypeID=g.GameTypeID
 		FROM @SportBettype s		
@@ -250,4 +234,5 @@ BEGIN
 	
 	SELECT ProductID,Sporttype, Bettype,IsDisabled,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline FROM @SportBettype
 END
+
 GO
