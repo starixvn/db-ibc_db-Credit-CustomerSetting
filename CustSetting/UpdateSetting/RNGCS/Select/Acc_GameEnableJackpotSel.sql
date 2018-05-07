@@ -9,7 +9,7 @@ AS
     DB: DBCUST.CustDB
     
     Revisions:
-        - 20180507@Vicky: Remove hardcode to show JP for UUS acc [Redmine: #89952]
+        - 20180507@Vicky: Remove hardcode of UUS checking [Redmine: #89952]
     
     Param's Explanation:
         - @custid: Member & SMA
