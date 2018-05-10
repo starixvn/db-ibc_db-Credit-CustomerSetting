@@ -7,7 +7,12 @@ AS
     Created: 20180206@Vicky
     Task: select Progressive Jackpot list
     DB: DBCUST.CustDB
-    Original:
+    
+    Revisions:
+        - 20180507@Vicky: Remove hardcode of UUS checking [Redmine: #89952]
+    
+    Param's Explanation:
+        - @custid: Member & SMA
 
 */
 BEGIN
@@ -25,7 +30,8 @@ BEGIN
     FROM GameLaunchPerCurrency glc
         INNER JOIN GameLaunchPerSite gls                   ON gls.SportType = glc.SportType AND gls.BetType = glc.BetType
         INNER JOIN DBAGE.bodb02.dbo.SportBettypeMatrix sbm ON sbm.SportType = glc.SportType AND sbm.BetType = glc.BetType
-    WHERE   ((glc.IsLaunched = 1 AND gls.IsLaunched = 1) OR (@var_siteid = 1 AND @var_curr = 20)/*for test*/)
+    WHERE   glc.IsLaunched = 1 
+            AND gls.IsLaunched = 1
             AND glc.currency = @var_curr
             AND gls.siteID = @var_siteid
             AND glc.isTest <= @isTest
