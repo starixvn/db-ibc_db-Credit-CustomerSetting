@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevelGroupSelect
 					@CustID			INT
 				,	@ProductID		TINYINT
@@ -8,6 +9,9 @@ AS
 	Database: DBCUST/CustDB
 	Original:
 
+    Revision:
+            - 20180327@Vicky: add header infomation [Redmine: #90422]
+    
 	Param's Explanation:
 */
 BEGIN
@@ -129,9 +133,3 @@ BEGIN
 	DROP TABLE #SportBetTypeFilter;
 END;
 GO
-
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelGroupSelect TO bodbAdminNet;
-GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelGroupSelect TO bodbDownlineNet;
-GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelGroupSelect TO bodbExtAccNet;
