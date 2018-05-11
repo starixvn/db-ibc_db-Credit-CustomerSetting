@@ -157,7 +157,7 @@ BEGIN
 		SELECT @Ishidden=HideKeno,@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend,@RoleID=roleid FROM custInfo  WITH (NOLOCK)  WHERE custid=@custid
 
 		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline,GameTypeID)	
-		SELECT 8,202,IBCBetTypeID,NULL,0,0,1,0,0,0,1,1,GameTypeID		
+		SELECT 8,202,IBCBetTypeID,NULL,NULL,0,1,0,0,0,1,1,GameTypeID		
 		FROM DBACC.bodb02.dbo.Gametype WHERE  IBCBetTypeID BETWEEN 1501 AND 1599 AND IBCBetTypeID NOT IN(1502,1507,1509) AND IsDisabled = 0 
 
 		UPDATE s
@@ -223,7 +223,8 @@ BEGIN
 		UPDATE s
 		SET s.HasDownline=@HasDownline,s.IsHiddenUpline=@IsHiddenUpline
 		FROM @SportBettype s	
-			
+		
+		DELETE FROM @SportBettype WHERE IsDisabled IS NULL	
 
 	END 
 	
