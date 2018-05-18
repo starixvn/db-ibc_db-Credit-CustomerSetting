@@ -12,6 +12,7 @@ AS
 	Revisions:	
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure [Redmine: #77274]
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20170504@Winnie: [Keno] - New 6 mini games - Customer Setting Development [RedmineID: #93796]
 	Parameters Explanation
 */ 
 
@@ -154,33 +155,11 @@ BEGIN
 	ELSE IF @ProductID=8--Keno
 	BEGIN	
 		SELECT @Ishidden=HideKeno,@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend,@RoleID=roleid FROM custInfo  WITH (NOLOCK)  WHERE custid=@custid
-		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline)	
-		SELECT 8,202,1501,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1503,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1504,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1505,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1508,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1511,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1513,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1514,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1515,NULL,0,0,1,0,0,0,1,1
-		UNION
-		SELECT 8,202,1516,NULL,0,0,1,0,0,0,1,1
-		
-		UPDATE s
-		SET s.GameTypeID=g.GameTypeID
-		FROM @SportBettype s		
-		INNER JOIN DBACC.bodb02.dbo.Gametype g WITH(NOLOCK) ON s.Bettype=g.IBCBetTypeID
-		WHERE g.IsDisabled = 0 
-		
+
+		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline,GameTypeID)	
+		SELECT 8,202,IBCBetTypeID,NULL,NULL,0,1,0,0,0,1,1,GameTypeID		
+		FROM DBACC.bodb02.dbo.Gametype WHERE  IBCBetTypeID BETWEEN 1501 AND 1599 AND IBCBetTypeID NOT IN(1502,1507,1509) AND IsDisabled = 0 
+
 		UPDATE s
 		SET s.IsDisabled=ct.IsDisabled
 		FROM @SportBettype s 
@@ -244,10 +223,12 @@ BEGIN
 		UPDATE s
 		SET s.HasDownline=@HasDownline,s.IsHiddenUpline=@IsHiddenUpline
 		FROM @SportBettype s	
-			
+		
+		DELETE FROM @SportBettype WHERE IsDisabled IS NULL	
 
 	END 
 	
 	SELECT ProductID,Sporttype, Bettype,IsDisabled,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline FROM @SportBettype
 END
+
 GO
