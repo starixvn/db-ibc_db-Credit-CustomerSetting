@@ -248,3 +248,5 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 	END CATCH
 		---------------------------------------------------------
 END
+
+GO
