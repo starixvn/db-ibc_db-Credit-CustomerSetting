@@ -33,6 +33,7 @@ AS
 	Revisions:
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]		
 		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
+		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 	Parameters Explanation:
 		+@Disable: Status of bettype (0: enable,1: disable, NULL:nothing)
 		+@IsUpdateMinMaxBet: check to update min/max (0:nothing, 1:update)

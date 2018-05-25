@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMasterKeno_MinMaxBet]
 (
 	@CustId INT --master
@@ -27,6 +28,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMasterKeno_MinMaxBet]
 		- 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)
 		- 20160413@Dominic: HotFix - Alpha - Update Keno setting - No error alert when update minbet=0 and minbet <upline minbet [Redmine: #55596]
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 	Parameter's Explanation
 		@ErrCode:
 			= 0: Update successfully.
@@ -105,7 +107,7 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
        AND cg.GameTypeID = @GameTypeID
 
 	--Check @MinBet >= Super's MinBet
-	IF (@MinMinBet > 0 AND NOT(@MinBet=0 AND @MaxBet=0 AND @MaxPerMatch=0) AND @MinBet < @MinMinBet)
+	IF (@MinMinBet > 0 AND @MinBet>0 AND NOT(@MinBet=0 AND @MaxBet=0 AND @MaxPerMatch=0) AND @MinBet < @MinMinBet)
 	BEGIN
 		SELECT @ErrMsg =
                  CASE @Language
