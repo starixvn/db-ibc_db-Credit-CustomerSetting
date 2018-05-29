@@ -206,8 +206,8 @@ BEGIN
 			FROM dbo.CustInfo WITH (NOLOCK)  
 			WHERE custid=@srecommend
 			
-			SELECT @TotalDisabledAgents = SUM(CASE WHEN DisableCasino = 1 AND roleid = 2 THEN 2 ELSE 0 END),
-				@TotalEnabledAgents = SUM(CASE WHEN DisableCasino = 0 AND roleid = 2 THEN 2 ELSE 0 END),
+			SELECT @TotalDisabledAgents = SUM(CASE WHEN DisableCasino = 1 AND roleid = 2 THEN 1 ELSE 0 END),
+				@TotalEnabledAgents = SUM(CASE WHEN DisableCasino = 0 AND roleid = 2 THEN 1 ELSE 0 END),
 				@TotalDisabledMembers = SUM(CASE WHEN DisableCasino = 1 AND roleid = 1 THEN 1 ELSE 0 END),
 				@TotalEnabledMembers = SUM(CASE WHEN DisableCasino = 0 AND roleid = 1 THEN 1 ELSE 0 END)
 			FROM dbo.CustInfo WITH(NOLOCK)

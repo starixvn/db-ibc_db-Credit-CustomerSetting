@@ -50,7 +50,10 @@ BEGIN
 	EXEC Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output
 	IF @ErrCode <>0 RETURN
 	--END
-	DECLARE @RoleID TINYINT , @UplineDisableNumber BIT, @Old_DisableNumber BIT
+	DECLARE @RoleID TINYINT , 
+		@UplineDisableNumber BIT, 
+		@Old_DisableNumber BIT,
+		@Allow2Udpate BIT = 1
 
 	SELECT	@RoleID = RoleID,
 			@Old_DisableNumber = ISNULL(DisableNumber, 0)
@@ -108,13 +111,62 @@ BEGIN
 			RETURN
 		END 
 	END
-
+	
+	--check constraint parameters
+	SELECT @Allow2Udpate=1
+	IF(@roleid = 4)
+	BEGIN
+		IF (@UpdateAllMembers=1 AND @UpdateAllAgents=1 AND @DisableAllAgents=1 AND @DisableAllMembers=0)
+			OR (@UpdateAllMasters=1 AND @UpdateAllAgents=1 AND @DisableAllMasters=1 AND @DisableAllAgents=0)			
+		SELECT @Allow2Udpate=0		
+		
+		IF @UpdateAllMembers=1 AND @UpdateAllAgents=0 AND @DisableAllMembers=0
+		BEGIN
+			IF EXISTS(SELECT TOP 1 1 
+					FROM dbo.CustInfo WITH(NOLOCK) 
+					WHERE srecommend = @custid
+						AND roleid = 2
+						AND DisableNumber = 1						
+					)
+			SELECT @Allow2Udpate=0			
+		END
+		
+		IF @UpdateAllAgents=1 AND @UpdateAllMasters=0 AND @DisableAllAgents=0
+		BEGIN
+			IF EXISTS(SELECT TOP 1 1 
+					FROM dbo.CustInfo WITH(NOLOCK) 
+					WHERE srecommend = @custid
+						AND roleid = 3
+						AND DisableNumber = 1						
+					)
+			SELECT @Allow2Udpate=0			
+		END
+	END	
+	ELSE IF (@Roleid =3)
+	BEGIN	
+		IF (@UpdateAllMembers=1 AND @UpdateAllAgents=1 AND @DisableAllAgents=1 AND @DisableAllMembers=0)			
+			SELECT @Allow2Udpate=0	
+			
+		IF @UpdateAllMembers=1 AND @UpdateAllAgents=0 AND @DisableAllMembers=0
+		BEGIN
+			IF EXISTS(SELECT TOP 1 1 
+					FROM dbo.CustInfo WITH(NOLOCK) 
+					WHERE mrecommend = @custid
+						AND roleid = 2
+						AND DisableNumber = 1
+					)
+			SELECT @Allow2Udpate=0			
+		END
+	END
+	
 	--upline status and downlines not suitable
-	IF @Disable = 1
-	AND (
-		(@UpdateAllMasters = 1 AND @DisableAllMasters = 0)
-		OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
-		OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
+	IF @Allow2Udpate=0
+	OR (@Disable = 1
+		AND (
+			(@UpdateAllMasters = 1 AND @DisableAllMasters = 0)
+			OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
+			OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
+			)
 		)	
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 

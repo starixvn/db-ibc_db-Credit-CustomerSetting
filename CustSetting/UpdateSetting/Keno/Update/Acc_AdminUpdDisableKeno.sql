@@ -51,7 +51,8 @@ BEGIN
 		,@Old_DisableBetType BIT
 		,@GameTypeID INT
 		,@HasUpdatedDisable BIT = 0
-		,@HasDownline BIT = 0		
+		,@HasDownline BIT = 0	
+		,@Allow2Udpate BIT = 1
 			
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid
@@ -143,15 +144,70 @@ BEGIN
 		RETURN
 	END
 	
+	--check constraint parameters
+	SELECT @Allow2Udpate=1
+	IF(@roleid = 4)
+	BEGIN
+		IF (@UpdateAllMembers=1 AND @UpdateAllAgents=1 AND @DisableAllAgents=1 AND @DisableAllMembers=0)
+			OR (@UpdateAllMasters=1 AND @UpdateAllAgents=1 AND @DisableAllMasters=1 AND @DisableAllAgents=0)			
+		SELECT @Allow2Udpate=0
+		
+		IF @UpdateAllMembers=1 AND @UpdateAllAgents=0 AND @DisableAllMembers=0
+		BEGIN
+			IF EXISTS(SELECT TOP 1 1 
+					FROM dbo.CustInfo ci WITH(NOLOCK) 
+						INNER JOIN dbo.CustGameType c WITH(NOLOCK) ON c.custid = ci.CustID
+					WHERE srecommend = @custid
+						AND roleid = 2
+						AND c.IsDisabled = 1
+						AND c.GameTypeID = @GameTypeID						
+					)
+			SELECT @Allow2Udpate=0			
+		END
+		
+		IF @UpdateAllAgents=1 AND @UpdateAllMasters=0 AND @DisableAllAgents=0
+		BEGIN
+			IF EXISTS(SELECT TOP 1 1 
+					FROM dbo.CustInfo ci WITH(NOLOCK) 
+						INNER JOIN dbo.CustGameType c WITH(NOLOCK) ON c.custid = ci.CustID
+					WHERE srecommend = @custid
+						AND roleid = 3
+						AND c.IsDisabled = 1
+						AND c.GameTypeID = @GameTypeID	
+					)
+			SELECT @Allow2Udpate=0			
+		END
+	END	
+	ELSE IF (@Roleid =3)
+	BEGIN		
+		IF (@UpdateAllMembers=1 AND @UpdateAllAgents=1 AND @DisableAllAgents=1 AND @DisableAllMembers=0)			
+			SELECT @Allow2Udpate=0	
+			
+		IF @UpdateAllMembers=1 AND @UpdateAllAgents=0 AND @DisableAllMembers=0
+		BEGIN
+			IF EXISTS(SELECT TOP 1 1 
+					FROM dbo.CustInfo ci WITH(NOLOCK) 
+						INNER JOIN dbo.CustGameType c WITH(NOLOCK) ON c.custid = ci.CustID					
+					WHERE mrecommend = @custid
+						AND roleid = 2
+						AND c.IsDisabled = 1
+						AND c.GameTypeID = @GameTypeID
+					)
+			SELECT @Allow2Udpate=0			
+		END
+	END
+	
 	--status not suitable between upline & downline
-	IF @Disable = 1 
-		AND 
-		(	
-			(@UpdateAllMasters = 1 AND @DisableAllMasters = 0)
-			OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
-			OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
-		)
-		AND @HasDownline = 1
+	IF @Allow2Udpate=0
+		OR (@Disable = 1 
+			AND 
+				(	
+					(@UpdateAllMasters = 1 AND @DisableAllMasters = 0)
+					OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
+					OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
+				)
+				AND @HasDownline = 1
+			)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to perform this action.'
