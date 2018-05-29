@@ -68,6 +68,7 @@ AS
 		- 20170925@Johnson: Add filter product un-sync for Casino,GD,Allbet,Macau [Redmine: #72973]
 		- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -676,9 +677,9 @@ BEGIN
 	keno AS
 	(
 		SELECT	cg.CustID
-				,min(CASE WHEN g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516) then cg.IsDisabled else 1 end) as DisableKeno
+				,min(CASE WHEN g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524) then cg.IsDisabled else 1 end) as DisableKeno
 		FROM dbo.CustGameType cg WITH(NOLOCK) 
-			INNER JOIN @tmp_GameType g ON cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516)		
+			INNER JOIN @tmp_GameType g ON cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524)		
 		WHERE CustID IN (SELECT CustID FROM #customer)
 		GROUP BY cg.CustID 
 	)
