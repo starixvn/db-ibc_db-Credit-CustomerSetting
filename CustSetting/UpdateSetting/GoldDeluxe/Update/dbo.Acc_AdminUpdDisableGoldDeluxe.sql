@@ -138,6 +138,32 @@ BEGIN
 		RETURN
 	END 
 	
+	IF @Disable = 1
+	BEGIN
+		EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid
+				,@roleid = @roleid
+				,@isExecRep = 1
+				,@Language = @Language
+				,@ErrMsg = @ErrMsg OUTPUT
+				,@ErrCode = @ErrCode OUTPUT
+
+		IF @ErrCode <> 0 RETURN
+	END
+	
+	IF @Disable = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)	
+	BEGIN
+		EXEC Acc_AdminCheckAllowedDownlinesByLevel @custid=@custid,
+											@roleid=@roleid,
+											@isExecRep=1,
+											@UpdateAllMasters = @UpdateAllMasters,
+											@UpdateAllAgents = @UpdateAllAgents,
+											@UpdateAllMembers = @UpdateAllMembers,
+											@Language=@Language,
+											@ErrMsg=@ErrMsg output,
+											@ErrCode=@ErrCode output
+		IF @ErrCode <>0 RETURN
+	END	
+	
 	--check constraint parameters
 	SELECT @Allow2Udpate=1
 	IF(@roleid = 4)
@@ -219,15 +245,6 @@ BEGIN
 			)						
 		)
 	BEGIN
-		EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid
-				,@roleid = @roleid
-				,@isExecRep = 1
-				,@Language = @Language
-				,@ErrMsg = @ErrMsg OUTPUT
-				,@ErrCode = @ErrCode OUTPUT
-
-		IF @ErrCode <> 0 RETURN
-		
 		--Disable all downlines or enable all downlines by level
 		BEGIN TRY
 			EXEC [Acc_CustomerInfo_Execrep_04] @CustID = @CustID

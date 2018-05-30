@@ -70,7 +70,7 @@ BEGIN
 	END
 
 	--Check Allowed downlines during peak hour at weekend
-	IF (@Disable = 1 OR (@Disable = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)))
+	IF (@Disable = 1)
 	BEGIN
 		EXEC Acc_CustomerSelCheckAllowedDownlines	@custid=@custid,
 												@roleid=@roleid,
@@ -80,6 +80,20 @@ BEGIN
 												@ErrCode=@ErrCode output
 		IF @ErrCode <>0 RETURN
 
+	END
+	
+	IF @Disable = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)
+	BEGIN
+		EXEC Acc_AdminCheckAllowedDownlinesByLevel @custid=@custid,
+												@roleid=@roleid,
+												@isExecRep=1,
+												@UpdateAllMasters = @UpdateAllMasters,
+												@UpdateAllAgents = @UpdateAllAgents,
+												@UpdateAllMembers = @UpdateAllMembers,
+												@Language=@Language,
+												@ErrMsg=@ErrMsg output,
+												@ErrCode=@ErrCode output
+		IF @ErrCode <>0 RETURN
 	END
 	--END
 

@@ -221,6 +221,34 @@ BEGIN
 		--AND ( @Old_DisableBetType <> @Disable )
 	--)
 	BEGIN
+		--Check Allowed downlines during peak hour at weekend
+		IF (@Disable = 1)
+		BEGIN
+			EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid  
+			,@roleid = @roleid  
+			,@isExecRep = 1  
+			,@Language = @Language  
+			,@ErrMsg = @ErrMsg OUTPUT  
+			,@ErrCode = @ErrCode OUTPUT  
+
+			IF @ErrCode <> 0 RETURN  
+		END
+		
+		IF @Disable = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)	
+		BEGIN
+			EXEC Acc_AdminCheckAllowedDownlinesByLevel @custid=@custid,
+												@roleid=@roleid,
+												@isExecRep=1,
+												@UpdateAllMasters = @UpdateAllMasters,
+												@UpdateAllAgents = @UpdateAllAgents,
+												@UpdateAllMembers = @UpdateAllMembers,
+												@Language=@Language,
+												@ErrMsg=@ErrMsg output,
+												@ErrCode=@ErrCode output
+			IF @ErrCode <>0 RETURN
+		END
+		--end check downlines 
+		
 		-- check uplineDisable
 		IF (@RoleID = 3) 
 		BEGIN
@@ -291,16 +319,6 @@ BEGIN
 				)
 			)			
 		BEGIN
-	
-			EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid
-				,@roleid = @roleid
-				,@isExecRep = 1
-				,@Language = @Language
-				,@ErrMsg = @ErrMsg OUTPUT
-				,@ErrCode = @ErrCode OUTPUT
-
-			IF @ErrCode <> 0 RETURN
-
 			--Disable all downline or enable all downline
 			BEGIN TRY
 				EXEC [Acc_Custsetting3rd_10] @CustID = @CustID
