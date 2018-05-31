@@ -177,21 +177,24 @@ BEGIN
 	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1
 
 	--Check Allowed downlines	
-	EXEC dbo.Acc_AdminCheckAllowedDownlinesByLevel 
-			@custid				= @custid
-		,	@roleid				= @roleid
-		,	@isExecRep			= 1
-		,	@UpdateAllMasters	= @UpdateAllMasters
-		,	@UpdateAllAgents	= @UpdateAllAgents
-		,	@UpdateAllMembers	= @UpdateAllMembers
-		,	@Language			= 'E'
-		,	@ErrCode			= @ErrCode	OUTPUT
-		,	@ErrMsg				= @ErrMsg	OUTPUT
-
-	IF @ErrCode > 0
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1) AND @RoleID <> 1
 	BEGIN
-		SET @MsgType = 101
-		RETURN
+		EXEC dbo.Acc_AdminCheckAllowedDownlinesByLevel 
+				@custid				= @custid
+			,	@roleid				= @roleid
+			,	@isExecRep			= 1
+			,	@UpdateAllMasters	= @UpdateAllMasters
+			,	@UpdateAllAgents	= @UpdateAllAgents
+			,	@UpdateAllMembers	= @UpdateAllMembers
+			,	@Language			= 'E'
+			,	@ErrCode			= @ErrCode	OUTPUT
+			,	@ErrMsg				= @ErrMsg	OUTPUT
+
+		IF @ErrCode > 0
+		BEGIN
+			SET @MsgType = 101
+			RETURN
+		END
 	END
 
 	--Validate new disabled status
@@ -286,38 +289,41 @@ BEGIN
 	--call execrept to update downline
 	DECLARE @IsDisabled_Downline XML
 	
-	SET @IsDisabled_Downline = (
-			SELECT (
-					SELECT 
-						SportType AS '@SportType'
-						,BetType AS '@BetType'
-						,IsDisabled AS '@IsDisabled'
-						,UpdateAllMasters AS '@UpdateAllMasters'
-						,UpdateAllAgents AS '@UpdateAllAgents'
-						,UpdateAllMembers AS '@UpdateAllMembers'
-						,DisableAllMasters AS '@DisableAllMasters'
-						,DisableAllAgents AS '@DisableAllAgents'
-						,DisableAllMembers AS '@DisableAllMembers'
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1) AND @RoleID <> 1
+	BEGIN
+		SET @IsDisabled_Downline = (
+				SELECT (
+						SELECT 
+							SportType AS '@SportType'
+							,BetType AS '@BetType'
+							,IsDisabled AS '@IsDisabled'
+							,UpdateAllMasters AS '@UpdateAllMasters'
+							,UpdateAllAgents AS '@UpdateAllAgents'
+							,UpdateAllMembers AS '@UpdateAllMembers'
+							,DisableAllMasters AS '@DisableAllMasters'
+							,DisableAllAgents AS '@DisableAllAgents'
+							,DisableAllMembers AS '@DisableAllMembers'
 
-					FROM #NewDisableStatTbl
-					WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1
-					FOR XML PATH('ProductStatus')
-						, TYPE
-					)
-			FOR XML PATH('ROOT')
-				, TYPE
-			)
+						FROM #NewDisableStatTbl
+						WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1
+						FOR XML PATH('ProductStatus')
+							, TYPE
+						)
+				FOR XML PATH('ROOT')
+					, TYPE
+				)
 	
-	DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
+		DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
 	
-	SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
+		SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
 	
-	IF @RoleID <> 1 AND @IsDisabled_Downline_tmp <> '<ROOT/>'
-	BEGIN				
-		EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
-				, @RoleID			= @RoleID
-				, @IsDisabled_XML	= @IsDisabled_Downline_tmp
-				, @Action			= 'GameStatus'
+		IF @IsDisabled_Downline_tmp <> '<ROOT/>'
+		BEGIN				
+			EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
+					, @RoleID			= @RoleID
+					, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+					, @Action			= 'GameStatus'
+		END
 	END
 
 	--START LOGGING		

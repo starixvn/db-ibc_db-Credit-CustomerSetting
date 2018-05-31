@@ -273,9 +273,9 @@ BEGIN
 		IF @IsDisabled_Downline_tmp <> '<ROOT/>'
 		BEGIN		
 			EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
-							, @RoleID			= @RoleID
-							, @IsDisabled_XML	= @IsDisabled_Downline_tmp
-							, @Action			= 'GameStatus'
+				, @RoleID			= @RoleID
+				, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+				, @Action			= 'GameStatus'
 		END
 	END
 
