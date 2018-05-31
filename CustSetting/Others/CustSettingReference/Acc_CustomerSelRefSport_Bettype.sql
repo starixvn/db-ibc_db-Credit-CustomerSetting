@@ -21,6 +21,7 @@ AS
 		- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20180214@Vicky: Add VS Basketball Product - [Redmine #89284]
+		- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
 		@isShowAll: 0: Show Active Bettype, 1: Show ALL 
@@ -71,7 +72,7 @@ BEGIN
 			FROM	DBCUST.CustDB.dbo.CustGameType cg WITH (NOLOCK) 
 					LEFT JOIN dbo.GameType g WITH (NOLOCK) ON cg.GameTypeID = g.GameTypeID 
 			WHERE	cg.CustID = @CustID
-					AND g.IBCBetTypeID IN (1501,1503,1504,1505,1507,1508,1509,1511,1513)	--Keno Bettype 
+					AND g.IBCBetTypeID IN (1501,1503,1504,1505,1507,1508,1509,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524)	--Keno Bettype 
 			
 			SET @IsMyanmarOdds = CustDB.dbo.fn_IsMyanmarOdds(@Custid)
 
