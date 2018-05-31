@@ -34,6 +34,7 @@ AS
 	Revisions:
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
+		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 	Parameters Explanation:
 		@ErrCode = -100 & -101: update successfully
 			-100: status
