@@ -59,6 +59,9 @@ BEGIN
 		, @WriteLogAgent	BIT = 0
 		, @WriteLogMember	BIT = 0
 		, @ActionID			INT
+		, @UpdateAllMasters	BIT
+		, @UpdateAllAgents  BIT
+		, @UpdateAllMembers BIT
 
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 
@@ -136,22 +139,7 @@ BEGIN
 		SET @ErrCode = 101
 		SET @ErrMsg = 'Users are not in the same line!'
 		RETURN
-	END
-	
-	--Check Allowed downlines	
-	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
-												@custid		= @custid
-											,	@roleid		= @roleid
-											,	@isExecRep	= 1
-											,	@Language	= 'E'
-											,	@ErrCode	= @ErrCode	OUTPUT
-											,	@ErrMsg		= @ErrMsg	OUTPUT
-
-	IF @ErrCode > 0
-	BEGIN
-		SET @MsgType = 101
-		RETURN
-	END
+	END		
 
 	--Parse XML
 	DECLARE @iDoc INT
@@ -183,6 +171,28 @@ BEGIN
 		UpdateAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE UpdateAllMembers END,
 		DisableAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE DisableAllMembers END
 	WHERE IsDisabled = 1
+
+	SELECT TOP 1 @UpdateAllMasters =  1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1
+	SELECT TOP 1 @UpdateAllAgents =  1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1
+	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1
+
+	--Check Allowed downlines	
+	EXEC dbo.Acc_AdminCheckAllowedDownlinesByLevel 
+			@custid				= @custid
+		,	@roleid				= @roleid
+		,	@isExecRep			= 1
+		,	@UpdateAllMasters	= @UpdateAllMasters
+		,	@UpdateAllAgents	= @UpdateAllAgents
+		,	@UpdateAllMembers	= @UpdateAllMembers
+		,	@Language			= 'E'
+		,	@ErrCode			= @ErrCode	OUTPUT
+		,	@ErrMsg				= @ErrMsg	OUTPUT
+
+	IF @ErrCode > 0
+	BEGIN
+		SET @MsgType = 101
+		RETURN
+	END
 
 	--Validate new disabled status
 	EXEC [dbo].[Acc_Admin_DisableGameStatusCheck] 

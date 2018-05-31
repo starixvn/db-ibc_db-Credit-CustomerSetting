@@ -121,21 +121,6 @@ BEGIN
 		RETURN
 	END
 	
-	--Check Allowed downlines	
-	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
-												@custid		= @custid
-											,	@roleid		= @roleid
-											,	@isExecRep	= 1
-											,	@Language	= 'E'
-											,	@ErrCode	= @ErrCode	OUTPUT
-											,	@ErrMsg		= @ErrMsg	OUTPUT
-
-	IF @ErrCode > 0
-	BEGIN
-		SET @MsgType = 101
-		RETURN
-	END
-
 	--Parse XML
 	DECLARE @iDoc INT
 
@@ -151,6 +136,25 @@ BEGIN
 			)
 	
 	EXEC sp_xml_removedocument @iDoc
+
+	--Check Allowed downlines	
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) AND @SystemID <> 2 AND @RoleID <> 1
+	BEGIN
+		EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
+				@custid		= @custid
+			,	@roleid		= @roleid
+			,	@isExecRep	= 1
+			,	@Language	= 'E'
+			,	@ErrCode	= @ErrCode	OUTPUT
+			,	@ErrMsg		= @ErrMsg	OUTPUT
+
+		IF @ErrCode > 0
+		BEGIN
+			SET @MsgType = 101
+			RETURN
+		END
+
+	END
 
 	--Validate new disabled status
 	EXEC [dbo].[Acc_CustSetting_DisableGameStatusCheck] 
@@ -236,6 +240,45 @@ BEGIN
 		
 	END
 	
+	--call execrept to update downline when disable status
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) AND @SystemID <> 2 AND @RoleID <> 1
+	BEGIN		
+		DECLARE @IsDisabled_Downline XML
+	
+		SET @IsDisabled_Downline = (
+				SELECT (
+					SELECT 
+						SportType AS '@SportType'
+						,BetType AS '@BetType'
+						,IsDisabled AS '@IsDisabled'
+						,1 AS '@UpdateAllMasters'
+						,1 AS '@UpdateAllAgents'
+						,1 AS '@UpdateAllMembers'
+						,1 AS '@DisableAllMasters'
+						,1 AS '@DisableAllAgents'
+						,1 AS '@DisableAllMembers'
+					FROM #NewDisableStatTbl
+					WHERE IsDisabled = 1
+					FOR XML PATH('ProductStatus')
+						, TYPE
+					)
+			FOR XML PATH('ROOT')
+				, TYPE
+			)
+	
+		DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
+	
+		SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
+	
+		IF @IsDisabled_Downline_tmp <> '<ROOT/>'
+		BEGIN		
+			EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
+							, @RoleID			= @RoleID
+							, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+							, @Action			= 'GameStatus'
+		END
+	END
+
 	--START LOGGING		
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel

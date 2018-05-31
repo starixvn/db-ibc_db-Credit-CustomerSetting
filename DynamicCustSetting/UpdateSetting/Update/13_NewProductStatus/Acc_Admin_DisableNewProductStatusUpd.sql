@@ -59,6 +59,11 @@ BEGIN
 		, @WriteLogAgent	BIT = 0
 		, @WriteLogMember	BIT = 0
 		, @ActionID			INT
+		, @UpdateAllMasters	BIT = 0
+		, @UpdateAllAgents  BIT = 0
+		, @UpdateAllMembers BIT = 0
+
+
 
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 
@@ -136,22 +141,7 @@ BEGIN
 		SET @ErrCode = 101
 		SET @ErrMsg = 'Users are not in the same line!'
 		RETURN
-	END
-	
-	--Check Allowed downlines	
-	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
-												@custid		= @custid
-											,	@roleid		= @roleid
-											,	@isExecRep	= 1
-											,	@Language	= 'E'
-											,	@ErrCode	= @ErrCode	OUTPUT
-											,	@ErrMsg		= @ErrMsg	OUTPUT
-
-	IF @ErrCode > 0
-	BEGIN
-		SET @MsgType = 101
-		RETURN
-	END
+	END		
 
 	--Parse XML
 	DECLARE @iDoc INT
@@ -183,6 +173,31 @@ BEGIN
 		UpdateAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE UpdateAllMembers END,
 		DisableAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE DisableAllMembers END
 	WHERE IsDisabled = 1
+
+	SELECT TOP 1 @UpdateAllMasters =  1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1
+	SELECT TOP 1 @UpdateAllAgents =  1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1
+	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1
+
+	--Check Allowed downlines	
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1) AND @RoleID <> 1
+	BEGIN
+		EXEC dbo.Acc_AdminCheckAllowedDownlinesByLevel 
+				@custid				= @custid
+			,	@roleid				= @roleid
+			,	@isExecRep			= 1
+			,	@UpdateAllMasters	= @UpdateAllMasters
+			,	@UpdateAllAgents	= @UpdateAllAgents
+			,	@UpdateAllMembers	= @UpdateAllMembers
+			,	@Language			= 'E'
+			,	@ErrCode			= @ErrCode	OUTPUT
+			,	@ErrMsg				= @ErrMsg	OUTPUT
+
+		IF @ErrCode > 0
+		BEGIN
+			SET @MsgType = 101
+			RETURN
+		END
+	END
 
 	--Validate new disabled status
 	EXEC [dbo].[Acc_Admin_DisableNewProductStatusCheck] @IsDisabled = @IsDisabled
@@ -275,52 +290,52 @@ BEGIN
 	--call execrept to update downline
 	DECLARE @IsDisabled_Downline XML
 	
-	SET @IsDisabled_Downline = (
-			SELECT (
-					SELECT 
-						SportType AS '@SportType'
-						,BetType AS '@BetType'
-						,IsDisabled AS '@IsDisabled'
-						,UpdateAllMasters AS '@UpdateAllMasters'
-						,UpdateAllAgents AS '@UpdateAllAgents'
-						,UpdateAllMembers AS '@UpdateAllMembers'
-						,DisableAllMasters AS '@DisableAllMasters'
-						,DisableAllAgents AS '@DisableAllAgents'
-						,DisableAllMembers AS '@DisableAllMembers'
-
-					FROM #NewDisableStatTbl
-					WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1
-					FOR XML PATH('ProductStatus')
-						, TYPE
-					)
-			FOR XML PATH('ROOT')
-				, TYPE
-			)
-	
-	DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
-	
-	SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
-	
-	IF @RoleID <> 1 AND @IsDisabled_Downline_tmp <> '<ROOT/>'
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1) AND @RoleID <> 1
 	BEGIN		
-				EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
-						, @RoleID			= @RoleID
-						, @IsDisabled_XML	= @IsDisabled_Downline_tmp
-						, @Action			= 'NewProductStatus'
-
-		IF @ProductID = 24 --Fishing World
-		BEGIN
-			IF @downlines = 1
-			BEGIN
-				IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND IsDisabledDownline= 0) --enable downline
-					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3, @IsDisabled = @IsDisabled_Downline_tmp
-				IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) --disable downline
-					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
-			END
-		END
+		SET @IsDisabled_Downline = (
+				SELECT (
+						SELECT 
+							SportType AS '@SportType'
+							,BetType AS '@BetType'
+							,IsDisabled AS '@IsDisabled'
+							,UpdateAllMasters AS '@UpdateAllMasters'
+							,UpdateAllAgents AS '@UpdateAllAgents'
+							,UpdateAllMembers AS '@UpdateAllMembers'
+							,DisableAllMasters AS '@DisableAllMasters'
+							,DisableAllAgents AS '@DisableAllAgents'
+							,DisableAllMembers AS '@DisableAllMembers'
+						FROM #NewDisableStatTbl
+						WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1
+						FOR XML PATH('ProductStatus')
+							, TYPE
+						)
+				FOR XML PATH('ROOT')
+					, TYPE
+				)
 	
-	END
+		DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
+	
+		SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
+	
+		IF @IsDisabled_Downline_tmp <> '<ROOT/>'
+		BEGIN					
+			IF @ProductID = 24 --Fishing World
+			BEGIN
+				IF @downlines = 1
+				BEGIN
+					IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND UpdateAllMembers = 1 AND DisableAllMembers = 0) --enable member downline
+						EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3, @IsDisabled = @IsDisabled_Downline_tmp
+					IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) --disable downline
+						EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
+				END
+			END	
 
+			EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
+					, @RoleID			= @RoleID
+					, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+					, @Action			= 'NewProductStatus'
+		END
+	END
 	--START LOGGING			
 
 	-- Select ProductID and SettingLevel
