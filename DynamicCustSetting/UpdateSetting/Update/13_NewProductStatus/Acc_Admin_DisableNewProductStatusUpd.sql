@@ -219,8 +219,8 @@ BEGIN
 	SELECT psp.SportType
 		, psp.BetType
 		, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled
-		, tmp.UpdateAllAgents
 		, tmp.UpdateAllMasters
+		, tmp.UpdateAllAgents
 		, tmp.UpdateAllMembers
 		, tmp.DisableAllMasters
 		, tmp.DisableAllAgents
