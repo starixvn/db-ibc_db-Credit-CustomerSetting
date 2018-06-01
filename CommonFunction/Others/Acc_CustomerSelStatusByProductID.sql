@@ -257,11 +257,11 @@ BEGIN
 		FROM custInfo  WITH (NOLOCK)  
 		WHERE custid=@custid
 
-		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,
+		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,GameTypeID,
 								TotalEnabledMasters,TotalDisabledMasters,TotalEnabledAgents,TotalDisabledAgents,TotalEnabledMembers,TotalDisabledMembers)
-		SELECT 8,202,IBCBetTypeID,NULL,0,0,0,0,1,0,0,0,0,0,0		
+		SELECT 8,202,IBCBetTypeID,NULL,0,0,0,0,1,GameTypeID,0,0,0,0,0,0
 		FROM DBACC.bodb02.dbo.Gametype WHERE  IBCBetTypeID BETWEEN 1501 AND 1599 AND IBCBetTypeID NOT IN(1502,1507,1509) AND IsDisabled = 0 
-
+		
 		UPDATE s
 		SET s.IsDisabled=ct.IsDisabled
 		FROM @SportBettype s 

@@ -254,33 +254,16 @@ BEGIN
 		FROM custInfo  WITH (NOLOCK)  
 		WHERE custid=@custid
 		
-		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,
-								TotalEnabledMasters,TotalDisabledMasters,TotalEnabledAgents,TotalDisabledAgents,TotalEnabledMembers,TotalDisabledMembers)	
-		SELECT 8,202,1501,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1503,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1504,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1505,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1508,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1511,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1513,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1514,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1515,NULL,0,0,0,0,1,0,0,0,0,0,0
-		UNION
-		SELECT 8,202,1516,NULL,0,0,0,0,1,0,0,0,0,0,0
-				
+		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,GameTypeID,
+								TotalEnabledMasters,TotalDisabledMasters,TotalEnabledAgents,TotalDisabledAgents,TotalEnabledMembers,TotalDisabledMembers)
+		SELECT 8,202,IBCBetTypeID,NULL,0,0,0,0,1,GameTypeID,0,0,0,0,0,0
+		FROM DBACC.bodb02.dbo.Gametype WHERE  IBCBetTypeID BETWEEN 1501 AND 1599 AND IBCBetTypeID NOT IN(1502,1507,1509) AND IsDisabled = 0 
+		
 		UPDATE s
-		SET s.GameTypeID=g.GameTypeID
-		FROM @SportBettype s		
-		INNER JOIN DBACC.bodb02.dbo.Gametype g WITH(NOLOCK) ON s.Bettype=g.IBCBetTypeID
-		WHERE g.IsDisabled = 0 
+		SET s.IsDisabled=ct.IsDisabled
+		FROM @SportBettype s 
+		INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
+		WHERE ct.CustID=@custid 
 		
 		UPDATE s
 		SET s.IsDisabled=ct.IsDisabled
