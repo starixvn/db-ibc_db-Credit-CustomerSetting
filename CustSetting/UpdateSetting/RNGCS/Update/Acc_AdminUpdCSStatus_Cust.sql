@@ -150,7 +150,7 @@ BEGIN
 	BEGIN
 		IF (@UpdateAllMembers=1 AND @UpdateAllAgents=1 AND @DisableAllAgents=1 AND @DisableAllMembers=0)
 			OR (@UpdateAllMasters=1 AND @UpdateAllAgents=1 AND @DisableAllMasters=1 AND @DisableAllAgents=0)			
-			OR (@Disable = 1 
+			OR (@disabledCS = 1 
 				AND @HasDownline=1
 				AND (@UpdateAllMasters = 0 OR @UpdateAllAgents = 0 OR @UpdateAllMembers = 0
 					OR (@UpdateAllMasters =1 AND @DisableAllMasters = 0)
@@ -187,7 +187,7 @@ BEGIN
 	ELSE IF (@Roleid =3)
 	BEGIN	
 		IF (@UpdateAllMembers=1 AND @UpdateAllAgents=1 AND @DisableAllAgents=1 AND @DisableAllMembers=0)			
-			OR (@Disable = 1 
+			OR (@disabledCS = 1 
 				AND @HasDownline=1
 				AND (@UpdateAllAgents = 0 OR @UpdateAllMembers = 0					
 					OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
@@ -210,7 +210,7 @@ BEGIN
 	END
 	ELSE IF (@roleid =2)
 	BEGIN
-		IF @Disable = 1 
+		IF @disabledCS = 1 
 			AND @HasDownline=1
 			AND (@UpdateAllMembers = 0					
 				OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
