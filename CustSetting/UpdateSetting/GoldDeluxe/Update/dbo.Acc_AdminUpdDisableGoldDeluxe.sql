@@ -170,6 +170,14 @@ BEGIN
 	BEGIN
 		IF (@UpdateAllMembers=1 AND @UpdateAllAgents=1 AND @DisableAllAgents=1 AND @DisableAllMembers=0)
 			OR (@UpdateAllMasters=1 AND @UpdateAllAgents=1 AND @DisableAllMasters=1 AND @DisableAllAgents=0)			
+			OR (@Disable = 1 
+				AND @HasDownline=1
+				AND (@UpdateAllMasters = 0 OR @UpdateAllAgents = 0 OR @UpdateAllMembers = 0
+					OR (@UpdateAllMasters =1 AND @DisableAllMasters = 0)
+					OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
+					OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
+					)
+				)
 		SELECT @Allow2Udpate=0		
 		
 		IF @UpdateAllMembers=1 AND @UpdateAllAgents=0 AND @DisableAllMembers=0
@@ -197,6 +205,13 @@ BEGIN
 	ELSE IF (@Roleid =3)
 	BEGIN	
 		IF (@UpdateAllMembers=1 AND @UpdateAllAgents=1 AND @DisableAllAgents=1 AND @DisableAllMembers=0)			
+			OR (@Disable = 1 
+				AND @HasDownline=1
+				AND (@UpdateAllAgents = 0 OR @UpdateAllMembers = 0					
+					OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
+					OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
+					)
+				)
 			SELECT @Allow2Udpate=0	
 			
 		IF @UpdateAllMembers=1 AND @UpdateAllAgents=0 AND @DisableAllMembers=0
@@ -210,16 +225,18 @@ BEGIN
 			SELECT @Allow2Udpate=0			
 		END
 	END
+	ELSE IF (@roleid =2)
+	BEGIN
+		IF @Disable = 1 
+			AND @HasDownline=1
+			AND (@UpdateAllMembers = 0					
+				OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
+				)
+		SELECT @Allow2Udpate=0		
+	END
 	
 	--upline status and downlines not suitable
-	IF @Allow2Udpate=0 
-	OR (@Disable = 1 AND @HasDownline=1 
-		AND (
-			(@UpdateAllMasters = 1 AND @DisableAllMasters = 0)
-			OR (@UpdateAllAgents = 1 AND @DisableAllAgents = 0)
-			OR (@UpdateAllMembers = 1 AND @DisableAllMembers = 0)
-			)	
-		)	
+	IF @Allow2Udpate=0 	
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to perform this action.'
