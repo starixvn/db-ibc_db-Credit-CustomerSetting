@@ -84,7 +84,7 @@ BEGIN
 		IF @ErrCode <>0 RETURN
 	END
 	
-	IF @Disable = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)	
+	IF @DisableCS = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)	
 	BEGIN
 		EXEC Acc_AdminCheckAllowedDownlinesByLevel @custid=@custid,
 											@roleid=@roleid,
