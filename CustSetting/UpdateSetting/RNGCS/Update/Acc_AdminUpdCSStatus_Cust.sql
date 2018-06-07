@@ -70,36 +70,6 @@ BEGIN
 		RETURN
 	END
 
-
-	-- Check Allowed downlines during peak hour at weekend
-	IF @disabledCS = 1 
-	BEGIN
-		
-		EXEC dbo.Acc_CustomerSelCheckAllowedDownlines	@custid=@custid,
-												@roleid=@roleid,
-												@isExecRep=1, -- Apply Exec Rep 
-												@Language=@Language,
-												@ErrMsg=@ErrMsg output,
-												@ErrCode=@ErrCode output
-		IF @ErrCode <>0 RETURN
-	END
-	
-	IF @DisabledCS = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)	
-	BEGIN
-		EXEC Acc_AdminCheckAllowedDownlinesByLevel @custid=@custid,
-											@roleid=@roleid,
-											@isExecRep=1,
-											@UpdateAllMasters = @UpdateAllMasters,
-											@UpdateAllAgents = @UpdateAllAgents,
-											@UpdateAllMembers = @UpdateAllMembers,
-											@Language=@Language,
-											@ErrMsg=@ErrMsg output,
-											@ErrCode=@ErrCode output
-		IF @ErrCode <>0 RETURN
-	END
-	--end check downlines 
-	 
-
 	IF(@roleid = 4)
 	BEGIN
 		SELECT @Allow2Udpate=1		

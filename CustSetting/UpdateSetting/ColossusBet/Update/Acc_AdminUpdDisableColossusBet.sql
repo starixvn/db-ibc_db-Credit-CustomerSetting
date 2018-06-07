@@ -80,32 +80,18 @@ BEGIN
 	IF @Disable_old = @Disable AND @UpdateAllMasters = 0 AND @UpdateAllAgents = 0 AND @UpdateAllMembers = 0
 	RETURN
 	
-	--Check Allowed downlines during peak hour at weekend
-	IF (@Disable = 1)
-	BEGIN
-		EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid  
-		,@roleid = @roleid  
-		,@isExecRep = 1  
-		,@Language = @Language  
-		,@ErrMsg = @ErrMsg OUTPUT  
-		,@ErrCode = @ErrCode OUTPUT  
+	--Check Allowed downlines during peak hour at weekend	
+	EXEC Acc_AdminCheckAllowedDownlinesByLevel @custid=@custid,
+										@roleid=@roleid,
+										@isExecRep=1,
+										@UpdateAllMasters = @UpdateAllMasters,
+										@UpdateAllAgents = @UpdateAllAgents,
+										@UpdateAllMembers = @UpdateAllMembers,
+										@Language=@Language,
+										@ErrMsg=@ErrMsg output,
+										@ErrCode=@ErrCode output
+	IF @ErrCode <>0 RETURN
 
-		IF @ErrCode <> 0 RETURN  
-	END
-	
-	IF @Disable = 0 AND (@UpdateAllMasters = 1 OR @UpdateAllAgents =1 OR @UpdateAllMembers=1)	
-	BEGIN
-		EXEC Acc_AdminCheckAllowedDownlinesByLevel @custid=@custid,
-											@roleid=@roleid,
-											@isExecRep=1,
-											@UpdateAllMasters = @UpdateAllMasters,
-											@UpdateAllAgents = @UpdateAllAgents,
-											@UpdateAllMembers = @UpdateAllMembers,
-											@Language=@Language,
-											@ErrMsg=@ErrMsg output,
-											@ErrCode=@ErrCode output
-		IF @ErrCode <>0 RETURN
-	END
 	--end check downlines 
 	
 	IF @Disable = 0 -- check status upline  
