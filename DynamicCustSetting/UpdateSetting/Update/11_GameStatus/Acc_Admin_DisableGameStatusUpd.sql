@@ -163,15 +163,6 @@ BEGIN
 	
 	EXEC sp_xml_removedocument @iDoc
 	
-	UPDATE #NewDisableStatTbl
-	SET UpdateAllMasters = CASE WHEN @RoleID = 4 THEN 1 ELSE UpdateAllMasters END,
-		DisableAllMasters = CASE WHEN @RoleID = 4 THEN 1 ELSE DisableAllMasters END,
-		UpdateAllAgents = CASE WHEN @RoleID IN (4, 3) THEN 1 ELSE UpdateAllAgents END,
-		DisableAllAgents = CASE WHEN @RoleID IN (4, 3) THEN 1 ELSE DisableAllAgents END,
-		UpdateAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE UpdateAllMembers END,
-		DisableAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE DisableAllMembers END
-	WHERE IsDisabled = 1
-
 	SELECT TOP 1 @UpdateAllMasters =  1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1
 	SELECT TOP 1 @UpdateAllAgents =  1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1
 	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1
@@ -212,8 +203,6 @@ BEGIN
 		RETURN
 	
 	--Get old disabled status
-	DECLARE @downlines BIT  = 0, @Upline INT 
-	
 	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
 	SELECT	psp.SportType,
 			psp.BetType,

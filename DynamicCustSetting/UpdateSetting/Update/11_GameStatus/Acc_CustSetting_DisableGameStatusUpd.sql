@@ -172,8 +172,6 @@ BEGIN
 		RETURN
 	
 	--Get old disabled status
-	DECLARE @downlines BIT  = 0, @Upline INT 
-
 	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled)
 	SELECT	psp.SportType,
 			psp.BetType,

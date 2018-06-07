@@ -173,9 +173,6 @@ BEGIN
 	IF @ErrCode <> 0
 		RETURN
 	
-	--Get old disabled status
-	DECLARE @downlines BIT  = 0, @Upline INT 
-	
 	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled)
 	SELECT psp.SportType
 		, psp.BetType
@@ -276,10 +273,7 @@ BEGIN
 		BEGIN		
 			IF @ProductID = 24 --Fishing World
 			BEGIN
-				IF @downlines = 1
-				BEGIN
-					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
-				END
+				EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
 			END
 			
 			EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID

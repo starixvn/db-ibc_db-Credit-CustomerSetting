@@ -63,8 +63,6 @@ BEGIN
 		, @UpdateAllAgents  BIT = 0
 		, @UpdateAllMembers BIT = 0
 
-
-
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 
 	DECLARE @AgentID	INT
@@ -165,15 +163,6 @@ BEGIN
 	
 	EXEC sp_xml_removedocument @iDoc
 
-	UPDATE #NewDisableStatTbl
-	SET UpdateAllMasters = CASE WHEN @RoleID = 4 THEN 1 ELSE UpdateAllMasters END,
-		DisableAllMasters = CASE WHEN @RoleID = 4 THEN 1 ELSE DisableAllMasters END,
-		UpdateAllAgents = CASE WHEN @RoleID IN (4, 3) THEN 1 ELSE UpdateAllAgents END,
-		DisableAllAgents = CASE WHEN @RoleID IN (4, 3) THEN 1 ELSE DisableAllAgents END,
-		UpdateAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE UpdateAllMembers END,
-		DisableAllMembers = CASE WHEN @RoleID IN (4, 3, 2) THEN 1 ELSE DisableAllMembers END
-	WHERE IsDisabled = 1
-
 	SELECT TOP 1 @UpdateAllMasters =  1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1
 	SELECT TOP 1 @UpdateAllAgents =  1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1
 	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1
@@ -200,7 +189,8 @@ BEGIN
 	END
 
 	--Validate new disabled status
-	EXEC [dbo].[Acc_Admin_DisableNewProductStatusCheck] @IsDisabled = @IsDisabled
+	EXEC [dbo].[Acc_Admin_DisableNewProductStatusCheck] 
+		@IsDisabled = @IsDisabled
 		, @RoleID	= @RoleID
 		, @AgentID	= @AgentID
 		, @MasterID = @MasterID
@@ -213,7 +203,7 @@ BEGIN
 		RETURN
 	
 	--Get old disabled status
-	DECLARE @downlines BIT  = 0, @Upline INT 
+	DECLARE @downlines BIT  = 0
 	
 	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
 	SELECT psp.SportType
@@ -321,6 +311,20 @@ BEGIN
 		BEGIN					
 			IF @ProductID = 24 --Fishing World
 			BEGIN
+				IF (@RoleID = 4 AND EXISTS (	SELECT 1
+											FROM custinfo WITH (NOLOCK)
+											WHERE srecommend = @CustID AND roleid = 1
+											))
+					OR (@RoleID = 3 AND EXISTS (SELECT 1
+												FROM custinfo WITH (NOLOCK)
+												WHERE mrecommend = @CustID AND roleid = 1
+												))
+					OR (@RoleID = 2 AND EXISTS (SELECT 1
+												FROM custinfo WITH (NOLOCK)
+												WHERE recommend = @CustID AND roleid = 1
+												))
+					SET @downlines = 1
+
 				IF @downlines = 1
 				BEGIN
 					IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND UpdateAllMembers = 1 AND DisableAllMembers = 0) --enable member downline

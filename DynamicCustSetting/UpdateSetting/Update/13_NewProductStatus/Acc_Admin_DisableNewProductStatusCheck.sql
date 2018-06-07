@@ -140,6 +140,18 @@ BEGIN
 	END
 
 	--90012: You are not allowed to perform this action.
+	--Update disable of upline and not update for downline
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1 AND ((UpdateAllMasters = 0 AND @RoleID = 4) OR (UpdateAllAgents = 0 AND @RoleID IN (4,3)) OR (UpdateAllMembers = 0 AND @RoleID IN (4,3,2))))
+	BEGIN
+		INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
+		SELECT tmp.SportType
+			, tmp.BetType
+			, 90012 AS MsgID
+		FROM #NewDisableStatTbl tmp
+		WHERE IsDisabled = 1 AND ((UpdateAllMasters = 0 AND @RoleID = 4) OR (UpdateAllAgents = 0 AND @RoleID IN (4,3)) OR (UpdateAllMembers = 0 AND @RoleID IN (4,3,2)))
+	END
+
+	--90012: You are not allowed to perform this action.
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 AND DisableAllMasters = 0 AND IsDisabled = 1) 
 	BEGIN
 		IF @RoleID = 4--disable super and enable master

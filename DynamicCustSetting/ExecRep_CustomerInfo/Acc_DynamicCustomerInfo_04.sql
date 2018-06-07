@@ -160,7 +160,7 @@ BEGIN
 	END
 	IF @Action = 'NewProductStatus' --Setting type = 13
 	BEGIN
-		CREATE TABLE #NewDisableStatTbl(
+		CREATE TABLE #NewStatTbl(
 				SportType			SMALLINT,
 				BetType				SMALLINT,
 				IsDisabled			BIT,
@@ -175,17 +175,17 @@ BEGIN
 		--Parse XML				
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @IsDisabled_XML
 		
-		INSERT INTO #NewDisableStatTbl
+		INSERT INTO #NewStatTbl
 		SELECT *
 		FROM OPENXML (@iDoc, '/ROOT/ProductStatus',1) 
 		WITH(SportType smallint,BetType smallint,IsDisabled BIT,UpdateAllMasters BIT,UpdateAllAgents BIT,UpdateAllMembers BIT,DisableAllMasters BIT,DisableAllAgents BIT,DisableAllMembers BIT)	
 		
 		EXEC sp_xml_removedocument @iDoc
 		
-		IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+		IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
 		BEGIN
 			SELECT TOP 1 @ProductID = ps.ProductID
-			FROM #NewDisableStatTbl dis 
+			FROM #NewStatTbl dis 
 				INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
 			WHERE dis.IsDisabled = 0 AND ps.SettingType = 13
 
@@ -206,7 +206,7 @@ BEGIN
 		
 		SELECT TOP 1 @BitmapOrder = psp.bitmapOrder
 		FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
-			INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType		
+			INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType		
 			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
 		WHERE ps.SettingType = 13
 		
@@ -217,7 +217,7 @@ BEGIN
 						SELECT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMasters	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
-							INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 						WHERE UpdateAllMasters = 1
 						FOR XML PATH('r')
 							, TYPE
@@ -231,7 +231,7 @@ BEGIN
 						SELECT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllAgents	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
-							INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 						WHERE tmp.UpdateAllAgents = 1
 						FOR XML PATH('r')
 							, TYPE
@@ -245,7 +245,7 @@ BEGIN
 						SELECT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
-							INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 						WHERE tmp.UpdateAllMembers = 1
 						FOR XML PATH('r')
 							, TYPE
@@ -275,7 +275,7 @@ BEGIN
 			WHERE CI.srecommend = @custid AND CI.roleid = 1
 				AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
 
-			IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+			IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
 			BEGIN
 				UPDATE T 
 					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
@@ -292,7 +292,7 @@ BEGIN
 						SELECT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllAgents	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
-							INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 						WHERE tmp.UpdateAllAgents = 1
 						FOR XML PATH('r')
 							, TYPE
@@ -306,7 +306,7 @@ BEGIN
 						SELECT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
-							INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 						WHERE tmp.UpdateAllMembers = 1
 						FOR XML PATH('r')
 							, TYPE
@@ -329,7 +329,7 @@ BEGIN
 			WHERE CI.mrecommend = @custid AND CI.roleid = 1
 				AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
 
-			IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+			IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
 			BEGIN
 				UPDATE T 
 					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
@@ -346,7 +346,7 @@ BEGIN
 						SELECT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
-							INNER JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 						WHERE tmp.UpdateAllMembers = 1
 						FOR XML PATH('r')
 							, TYPE
@@ -362,7 +362,7 @@ BEGIN
 			WHERE CI.recommend = @custid AND CI.roleid = 1
 				AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
 
-			IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+			IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
 			BEGIN
 				UPDATE T 
 					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
