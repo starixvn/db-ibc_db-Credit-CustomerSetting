@@ -345,7 +345,7 @@ BEGIN
 			FROM @SportBettype s 
 				INNER JOIN dbo.CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
 				INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON ci.custid = ct.custid
-			WHERE ci.mrecommend = @custid
+			WHERE ci.recommend = @custid
 			GROUP BY ct.GameTypeID
 			)
 			UPDATE s
