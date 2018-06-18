@@ -568,7 +568,9 @@ BEGIN
 	END 
 
 	SELECT ProductID,Sporttype, Bettype,IsDisabled,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline, 
-		TotalDisabledMasters, TotalEnabledMasters, TotalDisabledAgents, TotalEnabledAgents, TotalDisabledMembers, TotalEnabledMembers
+		ISNULL(TotalDisabledMasters,0) TotalDisabledMasters, ISNULL(TotalEnabledMasters,0) TotalEnabledMasters, 
+		ISNULL(TotalDisabledAgents,0) TotalDisabledAgents, ISNULL(TotalEnabledAgents,0) TotalEnabledAgents, 
+		ISNULL(TotalDisabledMembers,0) TotalDisabledMembers, ISNULL(TotalEnabledMembers,0) TotalEnabledMembers
 	FROM @SportBettype
 END
 GO

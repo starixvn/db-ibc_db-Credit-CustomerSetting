@@ -235,7 +235,7 @@ BEGIN
 				
 		IF(@RoleID > 1 			
 			AND @DownlinesHideKeno = 1
-			AND @Disable =1)--touch on downline
+			)--touch on downline
 		BEGIN
 			BEGIN TRY	
 				--update HideKeno for all downline
