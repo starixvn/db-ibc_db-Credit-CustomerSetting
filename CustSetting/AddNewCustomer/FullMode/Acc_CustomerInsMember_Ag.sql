@@ -1,4 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -291,6 +294,7 @@ Revisions:
 	- 20171206@Johnson: add more log for special, doublecomm, autosuspend status [Redmine: #87121]
 	- 20171208@Vicky: set comm of sportbook = 0 if agent of member exists in table CustNoComm [RedmineID: #87758]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute. Normal agent can open up to 10 members per minute
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -332,7 +336,7 @@ BEGIN
 		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
 	END CATCH
 ----- /Elodie @ 01 JUN 2015 -------------------
-
+/*
 ----- viet @ 15 JUL 2013 -------------------
 	declare @lastMinuteMemberCount INT
 	
@@ -359,6 +363,95 @@ BEGIN
 	END
 
 ----- / viet @ 15 JUL 2013 -----------------
+*/
+	
+-----BEGIN: 20180703@viet: normal agent can create up to 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute
+	DECLARE @mrecommend int, @RestrictedCredit money = 100
+	IF @credit < @RestrictedCredit
+	BEGIN
+		--Restricted Agent, can open up to 1 low-credit member each minute--------------
+		IF @recommend IN (
+			29189968	-- SD68103Z		-- added by Viet @ 20180703, approved by Bill	
+			,19103670,19741775,28938022,28891851,29801621,29801393 -- test agents, for qc to verify
+		)
+		BEGIN
+			SELECT TOP (1) @success = CASE WHEN creatdate > DATEADD(MINUTE, -1, CURRENT_TIMESTAMP) THEN 0 ELSE 1 END
+			FROM dbo.customer WITH(NOLOCK)
+			WHERE roleid =1 and recommend = @recommend 
+			ORDER BY custid desc
+		
+			IF (@success = 0) -- not allow	
+			BEGIN		
+				Select	@ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Sorry. You cannot create member too often.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40030,@Language)
+							end,
+						@success = 0, @ErrCode = 998
+				RETURN
+			END
+		END 	
+	
+		--Restricted Master, can open up to 1 low-credit member each minute--------------
+		SELECT @mrecommend=mrecommend FROM dbo.customer WITH(NOLOCK) WHERE custid = @recommend
+		IF @mrecommend IN (
+			28785174	--TVVD08	-- added by Viet @ 20180703, approved by Bill
+			,28988011	--OP29TZ	-- added by Viet @ 20180703, approved by Bill
+			,29399238	--XTV27H6	-- added by Viet @ 20180703, approved by Bill
+			,29488489	--DTF1903	-- added by Viet @ 20180703, approved by Bill
+			,29488508	--DTF1904	-- added by Viet @ 20180703, approved by Bill
+			,29944587	--TK15Z1	-- added by Viet @ 20180703, approved by Bill
+			,30891589	--TY95KE	-- added by Viet @ 20180703, approved by Bill
+			,30915916	--SD38AH	-- added by Viet @ 20180703, approved by Bill
+			,30919961	--SU7CM		-- added by Viet @ 20180703, approved by Bill
+			,19741652,28099463,29801147 -- test masters, for QC to verify
+		)
+		BEGIN
+			SELECT TOP (1) @success = CASE WHEN creatdate > DATEADD(MINUTE, -1, CURRENT_TIMESTAMP) THEN 0 ELSE 1 END
+			FROM dbo.customer WITH(NOLOCK)
+			WHERE roleid =1 and mrecommend = @mrecommend 
+			ORDER BY custid desc
+
+			IF (@success = 0) -- not allow	
+			BEGIN		
+				Select	@ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Sorry. You cannot create member too often.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40030,@Language)
+							end,
+						@success = 0, @ErrCode = 998
+				RETURN
+			END
+		END
+	END
+
+	IF @recommend NOT IN (6201735, 11656507, 3645795, 3645796) -- internal agents: allow to create member freely
+	BEGIN -- can create upto 10 members / min
+		DECLARE @result_top10 as TABLE (custid int)
+		INSERT INTO @result_top10 (custid)
+		SELECT TOP (10) custid
+		FROM Customer WITH(NOLOCK)
+		WHERE recommend = @recommend
+			and roleid = 1
+		ORDER BY custid DESC
+	
+		IF @@ROWCOUNT = 10
+		BEGIN
+			SELECT @success = CASE WHEN creatdate > DATEADD(MINUTE, -1, CURRENT_TIMESTAMP) THEN 0 ELSE 1 END
+			FROM dbo.customer WITH(NOLOCK)
+			WHERE custid IN (SELECT min(custid) FROM @result_top10)
+
+			IF (@success = 0) -- not allow	
+			BEGIN		
+				Select	@ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Sorry. You cannot create member too often.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40030,@Language)
+							end,
+						@success = 0, @ErrCode = 998
+				RETURN
+			END
+		END	
+	END
+-----END: 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit-member each minute. Normal agent can open up to 10 members per minute
+
 
 --20140619@Johnson: Check IP to create downline-----------------
 	Declare @isValidIP BIT
@@ -512,7 +605,7 @@ BEGIN
 
 
 
-    declare @transcode bigint, @currency INT, @mrecommend INT, @pwdexpiry datetime, @srecommend INT,
+    declare @transcode bigint, @currency INT, @pwdexpiry datetime, @srecommend INT,
 	    @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY,
 	    @MinMinBetv2 MONEY, @MaxMaxBetv2 MONEY, @MaxMaxPerMatchv2 MONEY,
 	    @MinMinBetv3 MONEY, @MaxMaxBetv3 MONEY, @MaxMaxPerMatchv3 MONEY,
@@ -3144,7 +3237,7 @@ BEGIN
 			@v255discount_1701 = 0 , @v255adiscount_1701 = 0, @v255sdiscount_1701 = 0
     END
   
-    EXEC dbo.Acc_CustomerInfo_Execrep_00
+        EXEC dbo.Acc_CustomerInfo_Execrep_00
 	    @custid = @custid,
 	    @srecommend = @srecommend,
 	    @mrecommend = @mrecommend,
