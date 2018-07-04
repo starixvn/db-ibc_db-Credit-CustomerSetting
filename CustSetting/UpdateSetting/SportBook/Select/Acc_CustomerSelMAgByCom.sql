@@ -3,7 +3,7 @@ USE CustDB
 GO 
 
 ALTER PROCEDURE [dbo].[Acc_CustomerSelMAgByCom]
-	@Currency int = NULL,
+	@Currency INT = NULL,
 	@Closed bit = NULL,
 	@DoubleCommLosing bit = NULL,
 	@IsInternal bit = NULL,
@@ -13,7 +13,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerSelMAgByCom]
 	@PageIndex int=1,
 	@TotalPages int=0 OUTPUT,
 	@TotalItems int=0 OUTPUT,
-	@Userid		INT=NULL
+	@Userid		INT=NULL,
+	@SiteType SMALLINT = 0, --credit or deposit
 AS
 BEGIN
 /*
@@ -65,6 +66,7 @@ BEGIN
 		- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
+		- 20180704@Vicky:  NAP - Add new permission control to view Licensee Account [Redminid: #96118]
 		- 20180830@Elodie: Add new bettype of Poker Games Product - [Redmine: #97675]
 
 		- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
@@ -75,6 +77,7 @@ BEGIN
 		A: 'A%'
 		B: 'B%'
 		0-9: '[0-9]%'	
+	- @SiteType: 1: Credit; 2: Deposit; 0: ALL
 */
 
 	SET NOCOUNT ON
@@ -97,6 +100,17 @@ BEGIN
 	
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
 	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
+	
+	INSERT INTO  @tmp (siteid, site, SpecialGroup)
+    SELECT s.siteID, s.site
+    FROM site s
+    WHERE s.siteid NOT IN (SELECT siteid FROM @tmp)
+          AND 1 =  CASE  
+                      WHEN @SiteType = 0 THEN 0 
+                      WHEN @SiteType = 1 AND s.isLicensee = 1 THEN 1 --excludes deposit site
+                      WHEN @SiteType = 2 AND s.isLicensee = 0 THEN 1 --excludes credit site
+                   END
+                   
 
 	CREATE TABLE #TempMaster(CustID INT PRIMARY KEY,Site VARCHAR(10),IsInternal BIT,ugroup VARCHAR(3),firstname NVARCHAR(50),lastname NVARCHAR(50),username2 NVARCHAR(50),phone NVARCHAR(50),mobilephone NVARCHAR(50),iplogin NVARCHAR(20), RowNumber BIGINT)
 	INSERT INTO #TempMaster(CustID,Site,IsInternal,RowNumber)
