@@ -162,8 +162,8 @@ Pattern Explanation:
 	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
 	
 	INSERT INTO  @tmp (siteid, site, SpecialGroup)
-	SELECT s.siteID, s.site
-    FROM site s
+	SELECT s.siteID, s.site, s.SpecialGroup
+    FROM site s WITH (NOLOCK)
     WHERE s.siteid NOT IN (SELECT siteid FROM @tmp)
 	      AND 1 =  CASE  
 	                  WHEN @SiteType = 0 THEN 0 
