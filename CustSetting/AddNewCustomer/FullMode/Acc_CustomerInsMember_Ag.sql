@@ -370,10 +370,7 @@ BEGIN
 	IF @credit < @RestrictedCredit
 	BEGIN
 		--Restricted Agent, can open up to 1 low-credit member each minute--------------
-		IF @recommend IN (
-			29189968	-- SD68103Z		-- added by Viet @ 20180703, approved by Bill	
-			,19103670,19741775,28938022,28891851,29801621,29801393 -- test agents, for qc to verify
-		)
+		IF EXISTS(SELECT 1 from dbo.f_RestrictedRobotAgents('agent') WHERE custid = @recommend)
 		BEGIN
 			SELECT TOP (1) @success = CASE WHEN creatdate > DATEADD(MINUTE, -1, CURRENT_TIMESTAMP) THEN 0 ELSE 1 END
 			FROM dbo.customer WITH(NOLOCK)
@@ -393,18 +390,7 @@ BEGIN
 	
 		--Restricted Master, can open up to 1 low-credit member each minute--------------
 		SELECT @mrecommend=mrecommend FROM dbo.customer WITH(NOLOCK) WHERE custid = @recommend
-		IF @mrecommend IN (
-			28785174	--TVVD08	-- added by Viet @ 20180703, approved by Bill
-			,28988011	--OP29TZ	-- added by Viet @ 20180703, approved by Bill
-			,29399238	--XTV27H6	-- added by Viet @ 20180703, approved by Bill
-			,29488489	--DTF1903	-- added by Viet @ 20180703, approved by Bill
-			,29488508	--DTF1904	-- added by Viet @ 20180703, approved by Bill
-			,29944587	--TK15Z1	-- added by Viet @ 20180703, approved by Bill
-			,30891589	--TY95KE	-- added by Viet @ 20180703, approved by Bill
-			,30915916	--SD38AH	-- added by Viet @ 20180703, approved by Bill
-			,30919961	--SU7CM		-- added by Viet @ 20180703, approved by Bill
-			,19741652,28099463,29801147 -- test masters, for QC to verify
-		)
+		IF EXISTS(SELECT 1 from dbo.f_RestrictedRobotAgents('master') WHERE custid = @mrecommend)
 		BEGIN
 			SELECT TOP (1) @success = CASE WHEN creatdate > DATEADD(MINUTE, -1, CURRENT_TIMESTAMP) THEN 0 ELSE 1 END
 			FROM dbo.customer WITH(NOLOCK)
