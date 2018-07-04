@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE Acc_CustSetting_CheckIsDeposit 
+ALTER PROCEDURE [dbo].[Acc_CustSetting_CheckIsDeposit] 
         @UserName NVARCHAR(50)='',
         @CustID INT = 0
 AS
