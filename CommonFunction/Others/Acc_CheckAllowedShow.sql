@@ -20,6 +20,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedLottery			BIT = 0		OUTPUT
 				,	@AllowedLucky3			BIT = 0		OUTPUT
 				,	@AllowedBullFighting	BIT = 0		OUTPUT
+				,	@AllowedPokerGames		BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -47,6 +48,7 @@ Revisions:
 	- 20170801@Elodie: Add Keno Lottery Product - [Redmine #74313]
 	- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
 	- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
+	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
 
 */
 
@@ -64,6 +66,7 @@ Revisions:
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
 		,	@IsHideBullFighting		INT
+		,	@IsHidePokerGames		INT
 
 	DECLARE @bitOrderVB				INT 
 		,	@bitOrderLucky3			INT 
@@ -74,6 +77,7 @@ Revisions:
 		,	@bitOrderCriket			INT 
 		,   @bitOrderVS				INT 
 		,   @bitOrderBF				INT 
+		,   @bitOrderPG				INT 
 
     SET @bitOrderCF = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 206 AND Bettype = 1003)
     SET @bitOrderCriket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
@@ -84,6 +88,7 @@ Revisions:
 	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitOrderBF = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 207 AND Bettype = 1004)
+	SET @bitOrderPG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 163 AND Bettype = 1401)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend
 		, @AllowedColossusbets = CASE WHEN HideColossusBet = 0 THEN 1 ELSE 0 END		
@@ -214,6 +219,17 @@ Revisions:
 	WHERE	cps.CustID = @CustID
 		AND	psd.ProductID = 21
 		
+	-- For PokerGames
+	EXEC Acc_CheckShowProduct @ProductID = 33, @IsHide = @IsHidePokerGames OUTPUT
+	SELECT	@AllowedPokerGames =CASE	WHEN @RoleID = 4 AND @IsHidePokerGames = 0 THEN 1
+										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderPG) = 0
+											AND @IsHidePokerGames = 0 
+											THEN 1
+										ELSE 0
+								END
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	WHERE	cps.CustID = @CustID
+
 	-- For NG2
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHideNG2 OUTPUT
 	IF @RoleID = 4
