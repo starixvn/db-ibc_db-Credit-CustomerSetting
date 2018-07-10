@@ -753,12 +753,12 @@ BEGIN
 			ctm.SyncedAllBetUpline,
 			ctm.SyncedAllBetDownline,
 
-			ctm.DisableCardClub1401,
-			ctm.DisableCardClub1402,
-			ctm.DisableCardClub1403,
-			ctm.DisableCardClub1404,
-			ctm.HideCardClub,
-			ctm.HideCardClubUpline,
+			ctm.DisablePokerGames1401,
+			ctm.DisablePokerGames1402,
+			ctm.DisablePokerGames1403,
+			ctm.DisablePokerGames1404,
+			ctm.HidePokerGames,
+			ctm.HidePokerGamesUpline,
 
 			ISNULL(t.IsMyanmarOdds,0) AS IsMyanmarOdds,
 			ISNULL(t.discountMyanmarOdds,0) AS discountMyanmarOdds,
