@@ -14,7 +14,8 @@ AS
         - @UserNameList: 'MKW2RMB26, MKW3RMB, ITSA0341'
         
  Example:
-        EXEC [dbo].[Acc_CustSetting_CheckListDeposit] @UserNameList='MKW2RMB26, MKW3RMB, ITSA0341'
+        EXEC [dbo].[Acc_CustSetting_CheckListDeposit_UAT4] @UserNameList='MKW2RMB26, MKW3RMB, ITSA0341, usernameisnotexist'         
+        EXEC [dbo].[Acc_CustSetting_CheckListDeposit_UAT4] @CustIDList='267943, 268560, 77629, 77315, 123'
  */  
 BEGIN
     
