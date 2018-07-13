@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustSetting_CheckListDeposit_UAT4] 
+ALTER PROCEDURE [dbo].[Acc_CustSetting_CheckListDeposit] 
         @UserNameList NVARCHAR(MAX)=''
         ,@CustIDList  VARCHAR(MAX)=''
 AS
@@ -14,7 +14,7 @@ AS
         - @UserNameList: 'MKW2RMB26, MKW3RMB, ITSA0341'
         
  Example:
-        EXEC [dbo].[Acc_CustSetting_CheckListDeposit_UAT4] @UserNameList='MKW2RMB26, MKW3RMB, ITSA0341'
+        EXEC [dbo].[Acc_CustSetting_CheckListDeposit] @UserNameList='MKW2RMB26, MKW3RMB, ITSA0341'
  */  
 BEGIN
     
