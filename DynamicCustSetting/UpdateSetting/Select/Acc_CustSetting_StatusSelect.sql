@@ -14,6 +14,7 @@ AS
  Original:  
   
  Revisions:  
+	- 20180611@Elodie: Setting status of a product [Redmine: #58776]
  
  Param's Explanation:  
  
@@ -159,3 +160,4 @@ BEGIN
 		WHERE stt.CustID = @CustID AND stt_UPLINE.CustID = @AgentID
 	END   
 END
+GO
