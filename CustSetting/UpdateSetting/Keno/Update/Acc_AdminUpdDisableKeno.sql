@@ -99,22 +99,10 @@ BEGIN
 	--Get downlines HideKeno status 
 	SELECT TOP (1) @DownlinesHideKeno = HideKeno
 	FROM dbo.CustInfo WITH(NOLOCK)
-	WHERE (@RoleID = 4 AND srecommend = @CustID AND Custid <> @CustID AND HideKeno = 1
-			AND ((@UpdateAllMasters =1 AND roleid = 3)
-				OR (@UpdateAllAgents =1 AND roleid = 2)
-				OR (@UpdateAllMembers =1 AND roleid = 1)
-				)
-		)
-		OR (@RoleID = 3 AND mrecommend = @CustID AND Custid <> @CustID AND HideKeno = 1
-			AND ((@UpdateAllAgents =1 AND roleid = 2)
-				OR (@UpdateAllMembers =1 AND roleid = 1)
-				)
-		)
-		OR (@RoleID = 2 AND recommend = @CustID AND Custid <> @CustID AND HideKeno = 1
-			AND (@UpdateAllMembers =1 AND roleid = 1)
-			)
-	
-	
+	WHERE (@RoleID = 4 AND srecommend = @CustID AND Custid <> @CustID AND HideKeno = 1)
+		OR (@RoleID = 3 AND mrecommend = @CustID AND Custid <> @CustID AND HideKeno = 1)
+		OR (@RoleID = 2 AND recommend = @CustID AND Custid <> @CustID AND HideKeno = 1)
+		
 	--dont change anything
 	IF @Old_DisableBetType = @Disable AND @UpdateAllMasters = 0 AND @UpdateAllAgents = 0 AND @UpdateAllMembers = 0
 		RETURN
