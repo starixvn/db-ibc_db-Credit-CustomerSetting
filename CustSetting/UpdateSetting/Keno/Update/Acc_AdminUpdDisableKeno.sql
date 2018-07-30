@@ -96,26 +96,24 @@ BEGIN
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)
 	
-	--Get downlines HideKeno status  
-	IF (@UpdateAllMasters = 1 OR @UpdateAllAgents = 1 OR @UpdateAllMembers = 1)
-	BEGIN
-		SELECT TOP (1) @DownlinesHideKeno = HideKeno
-		FROM dbo.CustInfo WITH(NOLOCK)
-		WHERE (@RoleID = 4 AND srecommend = @CustID AND Custid <> @CustID AND HideKeno = 1
-				AND ((@UpdateAllMasters =1 AND roleid = 3)
-					OR (@UpdateAllAgents =1 AND roleid = 2)
-					OR (@UpdateAllMembers =1 AND roleid = 1)
-					)
-			)
-			OR (@RoleID = 3 AND mrecommend = @CustID AND Custid <> @CustID AND HideKeno = 1
-				AND ((@UpdateAllAgents =1 AND roleid = 2)
-					OR (@UpdateAllMembers =1 AND roleid = 1)
-					)
-			)
-			OR (@RoleID = 2 AND recommend = @CustID AND Custid <> @CustID AND HideKeno = 1
-				AND (@UpdateAllMembers =1 AND roleid = 1)
+	--Get downlines HideKeno status 
+	SELECT TOP (1) @DownlinesHideKeno = HideKeno
+	FROM dbo.CustInfo WITH(NOLOCK)
+	WHERE (@RoleID = 4 AND srecommend = @CustID AND Custid <> @CustID AND HideKeno = 1
+			AND ((@UpdateAllMasters =1 AND roleid = 3)
+				OR (@UpdateAllAgents =1 AND roleid = 2)
+				OR (@UpdateAllMembers =1 AND roleid = 1)
 				)
-	END
+		)
+		OR (@RoleID = 3 AND mrecommend = @CustID AND Custid <> @CustID AND HideKeno = 1
+			AND ((@UpdateAllAgents =1 AND roleid = 2)
+				OR (@UpdateAllMembers =1 AND roleid = 1)
+				)
+		)
+		OR (@RoleID = 2 AND recommend = @CustID AND Custid <> @CustID AND HideKeno = 1
+			AND (@UpdateAllMembers =1 AND roleid = 1)
+			)
+	
 	
 	--dont change anything
 	IF @Old_DisableBetType = @Disable AND @UpdateAllMasters = 0 AND @UpdateAllAgents = 0 AND @UpdateAllMembers = 0
@@ -369,16 +367,15 @@ BEGIN
 		IF(@RoleID > 1 
 			AND @HasDownline = 1
 			AND @DownlinesHideKeno = 1
-			AND (@UpdateAllMasters =1 OR  @UpdateAllAgents =1 OR @UpdateAllMembers =1)
-			)
+		)
 		BEGIN
 			BEGIN TRY	
 				--update HideKeno for all downlines by level
 				EXEC [Acc_CustomerInfo_Execrep_04] @CustID = @CustID
 					,@RoleID = @RoleID
-					,@UpdateAllMasters = @UpdateAllMasters
-					,@UpdateAllAgents = @UpdateAllAgents
-					,@UpdateAllMembers = @UpdateAllMembers					
+					,@UpdateAllMasters = 1
+					,@UpdateAllAgents = 1
+					,@UpdateAllMembers = 1
 					,@Action = 'UpdKeno-Hide'	
 			END TRY
 			BEGIN CATCH
