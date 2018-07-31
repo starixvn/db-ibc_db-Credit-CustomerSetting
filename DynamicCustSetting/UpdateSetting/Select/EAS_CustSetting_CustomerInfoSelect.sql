@@ -16,17 +16,39 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
-	--CustSuperProfile
-	SELECT c.username AS UserName
-			, c.username2 AS UserName2
-			, CASE WHEN c.roleid = 4 THEN sp.firstname ELSE c.firstname END AS FirstName
-			, CASE WHEN c.roleid = 4 THEN sp.lastname ELSE c.lastname END AS LastName
-			, CASE WHEN c.roleid = 4 THEN sp.phone ELSE c.phone END AS Phone
-			, CASE WHEN c.roleid = 4 THEN sp.mobilephone ELSE c.mobilephone END AS MobilePhone
-			, CASE WHEN c.roleid = 4 THEN sp.email ELSE c.email END AS Email
-			, CASE WHEN c.roleid = 4 THEN sp.fax ELSE c.fax END AS Fax
-			, c.currency AS Currency
-	FROM dbo.Customer c WITH (NOLOCK)
-		INNER JOIN CustSuperProfile sp WITH (NOLOCK) ON c.custid = sp.custid
-	WHERE c.custID = @CustID
+	DECLARE @RoleId TINYINT 
+
+	SELECT @RoleId = roleid FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID
+
+	IF @RoleId = 4
+	BEGIN
+		--CustSuperProfile
+		SELECT c.username AS UserName
+				, c.username2 AS UserName2
+				, sp.firstname AS FirstName
+				, sp.lastname AS LastName
+				, sp.phone AS Phone
+				, sp.mobilephone AS MobilePhone
+				, sp.email AS Email
+				, sp.fax AS Fax
+				, c.currency AS Currency
+		FROM dbo.Customer c WITH (NOLOCK)
+			INNER JOIN CustSuperProfile sp WITH (NOLOCK) ON c.custid = sp.custid
+		WHERE c.custID = @CustID
+	END
+	ELSE
+	BEGIN
+		--CustSuperProfile
+		SELECT c.username AS UserName
+				, c.username2 AS UserName2
+				, c.firstname AS FirstName
+				, c.lastname AS LastName
+				, c.phone AS Phone
+				, c.mobilephone AS MobilePhone
+				, c.email AS Email
+				, c.fax AS Fax
+				, c.currency AS Currency
+		FROM dbo.Customer c WITH (NOLOCK)
+		WHERE c.custID = @CustID
+	END
 END
