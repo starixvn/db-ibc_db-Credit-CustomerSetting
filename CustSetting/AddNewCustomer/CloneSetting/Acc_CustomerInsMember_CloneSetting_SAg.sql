@@ -68,6 +68,7 @@ AS
 	- 20170920@Helen: TO Control Phase 3 - [Redmine: 75557]
 	- 20171113@Helen: Support to add default TO setting for new direct customers - [Redmine:86052]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20180621@Razor: Add Message Customer Read Status [Redmind: #94705]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -267,6 +268,20 @@ BEGIN
 		RETURN
 	END	
 	
+	EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @Custid, 0, 3, @ErrCode, @ErrMsg
+	IF @ErrCode <> 0
+	BEGIN
+			SELECT @ErrMsg = CASE @Language 
+							    WHEN 'E' THEN 'Create customer failed. Please try again.'
+							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
+						    END
+				, @ErrCode = 107
+		 -- ROLLBACK MANUALLY
+			DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
+			
+			RETURN
+	END
+	
 	SET @mrecommend = @custid
 	UPDATE Customer WITH (ROWLOCK, UPDLOCK) 
 	SET mrecommend = @custid 
@@ -281,7 +296,9 @@ BEGIN
 			,@ErrCode = 104
 			
 		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.customer WITH(ROWLOCK) WHERE CustID = @CustID			
+		DELETE FROM dbo.customer WITH(ROWLOCK) WHERE CustID = @CustID
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		
 		RETURN
 	END	
 			
@@ -306,7 +323,8 @@ BEGIN
 
 		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
-		 
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		
 		RETURN  
 	END  
 
@@ -454,7 +472,8 @@ BEGIN
 		-- ROLLBACK MANUALLY			
 		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
-
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		
 		RETURN
 	END
 
@@ -490,6 +509,7 @@ BEGIN
 
 		-- ROLLBACK MANUALLY	
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
@@ -557,6 +577,7 @@ BEGIN
 		DELETE FROM custsetting3rd WITH(ROWLOCK) WHERE custid =  @CustID				
 		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  		
 		
@@ -578,6 +599,7 @@ BEGIN
 			
 		-- ROLLBACK MANUALLY
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
@@ -653,6 +675,7 @@ BEGIN
 			
 		-- ROLLBACK MANUALLY
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
