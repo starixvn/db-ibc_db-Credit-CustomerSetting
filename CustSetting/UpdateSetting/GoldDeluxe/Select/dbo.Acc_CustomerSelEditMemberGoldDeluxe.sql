@@ -1,4 +1,5 @@
-﻿use CustDB
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+use CustDB
 go
 
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMemberGoldDeluxe]
@@ -13,7 +14,7 @@ AS
 	Revisions:
 		- 20150612@Kathy: Move sp from DBAGE.bodb02 to DBCUST.CustDB [Redmine:#36216]
 		- 20150721@Patrick: Add more winlimit section
-
+		- 20180112@Johnson: remove downlines status for new direction[Redmine:#87328]																							
 	Parameters Explanation
 */
 BEGIN
@@ -103,9 +104,7 @@ BEGIN
 			,mobilephone
 			,fax
 			,ISNULL(@DisableUpline,1) 		AS DisableUpline
-			,ISNULL(@DisableGoldDeluxe,1)	AS DisableGoldDeluxe
-			,0								AS Downlines
-			,0								AS DisableDownlines
+			,ISNULL(@DisableGoldDeluxe,1)	AS DisableGoldDeluxe			
 	FROM	dbo.Customer WITH (NOLOCK)
 	WHERE	custID = @CustID   	  
 	
@@ -137,12 +136,3 @@ END
 exec [dbo].[Acc_CustomerSelEditMemberGoldDeluxe] @custid = 642719,@recommend = 642706
 */
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberGoldDeluxe] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberGoldDeluxe] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberGoldDeluxe] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberGoldDeluxe] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelEditMemberGoldDeluxe] TO [vnteam] AS [dbo]

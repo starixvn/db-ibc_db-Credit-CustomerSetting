@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditAgentColossusBet]  
 (
 	 @custid  INT,  
@@ -13,7 +14,7 @@ AS
     
     
 	Revisions:
-	
+		- 20180122@Johnson: remove downline status for new direction [redmine: #87328]
 	Parameters Explanation
 	
 */ 
@@ -33,17 +34,9 @@ BEGIN
 		RETURN  
 
 	DECLARE @max_discount_comm   DECIMAL(9,8)    
-	   , @max_discount_CashInShare   DECIMAL(9,8)    
-	   , @Downlines      BIT = 1  
-	   , @DisableDownlines    BIT = 0  
+	   , @max_discount_CashInShare   DECIMAL(9,8)    	   
 	   , @DisableColossusBet    BIT  
 	   , @DisableUpline     BIT = 0  
-
-	 
-	IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid = 1)  
-		SET @Downlines = 0 -- dont have any downlines  
-	ELSE IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND roleid = 1 AND DisableColossusBet = 1)  
-		SET @DisableDownlines = 1  
 
 	SELECT @DisableColossusBet = DisableColossusBet  
 	FROM dbo.custInfo WITH(NOLOCK)  
@@ -75,9 +68,7 @@ BEGIN
 		,mobilephone  
 		,fax  
 		,ISNULL(@DisableUpline,1)   AS DisableUpline  
-		,ISNULL(@DisableColossusBet,1) AS DisableColossusBet  
-		,@Downlines      AS Downlines  
-		,@DisableDownlines    AS DisableDownlines  
+		,ISNULL(@DisableColossusBet,1) AS DisableColossusBet  		
 	FROM dbo.Customer WITH (NOLOCK)  
 	WHERE custID = @CustID        
 
@@ -102,12 +93,4 @@ BEGIN
   
 END
 go
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentColossusBet] TO [bodbAdminNet] -- accouting
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentColossusBet]TO [bodbDownlineNet] -- alpha
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentColossusBet] TO [bodbExtAccNet] -- External
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentColossusBet] TO bodbDownlineNetView
 
-GO 

@@ -2,8 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableColossusBet]  
 (
 	@custid  INT,  
-	@Disable BIT = NULL,   
-	@EnableDownlines BIT = NULL,  
+	@Disable BIT = NULL,   	
 	@SystemID	TINYINT = 1,
 	@UserID  INT = 0,  
 	@SubAccID INT = 0, --Sub-AccountID  
@@ -23,6 +22,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableColossusBet]
 	Revisions:
 	- 20170307@Winnie: Change enable behavior & Allowed disable on EXT-NAP [Redmine: #72336]
 	- 20171013@Johnson: Set @EnableDownlines = NULL as default when dont have downline [Redmine: #72973]
+	- 20180122@Johnson: Remove @EnableDownlines for new direction update status [Redmine:#87328]
 	Parameters Explanation:
 	
 */ 
@@ -45,10 +45,7 @@ BEGIN
 
 	DECLARE @roleid INT,  
 			@Disable_Old BIT,  
-			@UplineDisable BIT,     
-			@HasDownline BIT = 0 
-			,@DisableDownlines_Old BIT = 0
-
+			@UplineDisable BIT
 
 	SELECT @roleid = roleid,  
 			@Disable_Old = DisableColossusBet
@@ -65,35 +62,10 @@ BEGIN
 
 		RETURN  
 	END  
-
-	SELECT top 1 @HasDownline = 1   
-	FROM dbo.CustInfo WITH (NOLOCK)  
-	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)  
-		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
-		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
 	
-	
-	IF @HasDownline = 1
-	BEGIN
-		IF @roleid = 4 
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 3
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 2
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-	END
-
-	IF @Disable_old = @Disable AND (@DisableDownlines_Old <> @EnableDownlines OR @EnableDownlines IS NULL)
+	IF @Disable_old = @Disable 
 	RETURN
+	
 	IF @Disable = 0 -- check status upline  
 	BEGIN  
 		IF @RoleID = 4  --not checking the upline when the customer is the super  
@@ -123,8 +95,7 @@ BEGIN
 						END, @ErrCode = 101  
 		RETURN  
 	END   
-	IF ((@Disable = 1 AND @Disable_Old = 0) OR
-	 (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
+	IF (@Disable = 1 AND @Disable_Old = 0) AND @SystemID=2 AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
@@ -133,28 +104,14 @@ BEGIN
 		RETURN
 	END 
 
-	IF @Disable = 1 AND @EnableDownlines = 1 AND @HasDownline=1
-	BEGIN
-		SELECT @ErrMsg =  CASE @Language 
-							WHEN 'E' THEN 'You are not allowed to perform this action.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
-						END, @ErrCode = 103
-		RETURN
-	END 
-	
-
-	-- Update chính nó  
+	-- Update status
 	UPDATE dbo.CustInfo WITH(ROWLOCK, UPDLOCK)  
 		SET DisableColossusBet = @Disable,  
 			HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END    
 	WHERE custid = @CustID  
 
 	--Check condition for update all downlines  
-	IF ( @RoleID > 1 AND 
-		(@Disable = 1  
-			OR (@Disable = 0 AND (@EnableDownlines = 1 AND @HasDownline = 1))  
-		)  
-		)  
+	IF (@RoleID > 1 AND @Disable = 1)  		
 	BEGIN  
 		EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid  
 		,@roleid = @roleid  
@@ -165,12 +122,12 @@ BEGIN
 
 		IF @ErrCode <> 0 RETURN  
 
-		--Disable all downlines or enable all downlines  
+		--Disable all downlines 
 		BEGIN TRY  
 			EXEC [Acc_CustomerInfo_Execrep_04] @CustID = @CustID  
-			 ,@RoleID = @RoleID  
-			 ,@DisableColossusBet = @Disable  
-			 ,@Action = 'ColossusBet'  
+			,@RoleID = @RoleID  
+			,@DisableColossusBet = @Disable						 
+			,@Action = 'ColossusBet'  
 		END TRY  
 		BEGIN CATCH  
 			SELECT @ErrMsg = CASE @Language  
@@ -183,11 +140,11 @@ BEGIN
 	END  
 
 	DECLARE @LogSPData VARCHAR(MAX),    
-			@LogSPData_Old VARCHAR(2000)    
+			@LogSPData_Old VARCHAR(2000),
+			@ActionID INT
 	 
 	SELECT @LogSPData = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
-		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
+		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
@@ -196,8 +153,7 @@ BEGIN
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'    
 	 
 	SELECT @LogSPData_Old = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
-		'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ CASE WHEN @DisableDownlines_Old = 1 THEN  coalesce(cast(0 as varchar(50)),space(1)) ELSE  coalesce(cast(1 as varchar(50)),space(1)) END +'" '+    
+		'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+    		
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
@@ -209,19 +165,72 @@ BEGIN
 	SET @duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)    
 
 	BEGIN TRY  
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
-		@UserID = @UserID,    
-		@CustID = @CustID,    
-		@ActionID = 1157,    
-		@TrackingValue = @LogSPData  ,   
-		@TrackingValue2 = @LogSPData_old  ,    
-		@duration = @duration    
+	--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60006 
+										WHEN 3 THEN 65012
+										WHEN 2 THEN 70018
+										WHEN 1 THEN 75024 END
+										
+		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
+			@UserID = @UserID,    
+			@CustID = @CustID,    
+			@ActionID = @ActionID,    
+			@TrackingValue = @LogSPData  ,   
+			@TrackingValue2 = @LogSPData_old  ,    
+			@duration = @duration  
+		
+		--write log for downlines in-case disable downline
+		IF @Disable = 1
+		BEGIN
+			IF @roleid >3
+			BEGIN
+				SELECT @ActionID = 65013
+				--actionID on master
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70019
+												WHEN 4 THEN 70020 END
+												
+				--actionID on agent
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75025
+												WHEN 3 THEN 75026
+												WHEN 4 THEN 75027 END
+												
+				--actionID on member
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration
+			END		
+		END		
 	END TRY   
 	BEGIN CATCH  
 
 	SELECT @LogSPData = '<Acc_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
-		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
+		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    		
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
@@ -229,14 +238,67 @@ BEGIN
 		'ErrMsg="'+ ERROR_MESSAGE() +'" '+    
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'   
 	   
-	EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
-		@UserID = @UserID,    
-		@CustID = @CustID,    
-		@ActionID = 1157,    
-		@TrackingValue = @LogSPData,    
-		@TrackingValue2 = @LogSPData_old,    
-		@duration = @duration  
-
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60006 
+										WHEN 3 THEN 65012
+										WHEN 2 THEN 70018
+										WHEN 1 THEN 75024 END
+										
+		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP    
+			@UserID = @UserID,    
+			@CustID = @CustID,    
+			@ActionID = @ActionID,    
+			@TrackingValue = @LogSPData  ,   
+			@TrackingValue2 = @LogSPData_old  ,    
+			@duration = @duration  
+		
+		--write log for downlines in-case disable downline
+		IF @Disable = 1
+		BEGIN
+			IF @roleid >3
+			BEGIN
+				SELECT @ActionID = 65013
+				--actionID on master
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70019
+												WHEN 4 THEN 70020 END
+												
+				--actionID on agent
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75025
+												WHEN 3 THEN 75026
+												WHEN 4 THEN 75027 END
+												
+				--actionID on member
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration
+			END		
+		END		
 	END CATCH  
 
 END

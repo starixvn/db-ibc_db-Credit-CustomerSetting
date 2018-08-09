@@ -23,6 +23,7 @@ AS
 		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 		- 20170417@Elodie: Notify downline when upline enable FW's status [RedmineID: #73073]
 		- 20170613@Elodie: Change logic to get HasDownlines and IsDisableDownline value [RedmineID:#78225]
+		- 20180112@Elodie: Remove IsDisableDownline value [RedmineID:#87328]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -30,11 +31,18 @@ AS
 				<ProductStatus
 						SportType="1" 
 						BetType="1" 
-						IsDisabled="1"
-						IsDisabledDownline="1"
+						IsDisabled="1"						
 				/>
 		</ROOT>
-
+	Example: 
+		DECLARE @p3 int
+		SET @p3=0
+		DECLARE @p4 nvarchar(200)
+		SET @p4=N''
+		DECLARE @p5 int
+		SET @p5=0
+		EXEC Acc_CustSetting_DisableNewProductStatusUpd @UserID=169368,@IP='202.78.231.34',@MsgType=@p3 output,@ErrMsg=@p4 output,@ErrCode=@p5 output,@IsDisabled='<ROOT><ProductStatus SportType="212" BetType="4001" IsDisabled="1"/></ROOT>',@CustID=1176070, @SystemID = 1
+		SELECT @p3, @p4, @p5
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -46,7 +54,11 @@ BEGIN
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
 		, @xml				XML
-		
+		, @EnableOnly		BIT = 1
+		, @ActionID			INT
+
+	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
+
 	DECLARE @AgentID	INT
 		, @MasterID		INT
 		, @SuperID		INT
@@ -60,13 +72,11 @@ BEGIN
 		SportType				SMALLINT
 		, BetType				SMALLINT
 		, IsDisabled			BIT
-		, IsDisabledDownline	BIT
 		)
 	CREATE TABLE #OldDisableStatTbl  (
 		SportType		SMALLINT
 		, BetType		SMALLINT
 		, IsDisabled	BIT
-		, IsDisabledDownline	BIT
 		)
 
 	SELECT	@ErrCode	= 0
@@ -111,22 +121,7 @@ BEGIN
 		SET @ErrCode = 101
 		SET @ErrMsg = 'Users are not in the same line!'
 		RETURN
-	END
-	
-	--Check Allowed downlines	
-	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
-												@custid		= @custid
-											,	@roleid		= @roleid
-											,	@isExecRep	= 1
-											,	@Language	= 'E'
-											,	@ErrCode	= @ErrCode	OUTPUT
-											,	@ErrMsg		= @ErrMsg	OUTPUT
-
-	IF @ErrCode > 0
-	BEGIN
-		SET @MsgType = 101
-		RETURN
-	END
+	END		
 
 	--Parse XML
 	DECLARE @iDoc INT
@@ -140,13 +135,32 @@ BEGIN
 			SportType				SMALLINT
 			, BetType				SMALLINT
 			, IsDisabled			BIT
-			, IsDisabledDownline	BIT
 			)
 	
 	EXEC sp_xml_removedocument @iDoc
 
+	--Check Allowed downlines	
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) AND @SystemID <> 2 AND @RoleID <> 1
+	BEGIN
+		EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
+				@custid		= @custid
+			,	@roleid		= @roleid
+			,	@isExecRep	= 1
+			,	@Language	= 'E'
+			,	@ErrCode	= @ErrCode	OUTPUT
+			,	@ErrMsg		= @ErrMsg	OUTPUT
+
+		IF @ErrCode > 0
+		BEGIN
+			SET @MsgType = 101
+			RETURN
+		END
+
+	END
+
 	--Validate new disabled status
-	EXEC [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] @IsDisabled = @IsDisabled
+	EXEC [dbo].[Acc_CustSetting_DisableNewProductStatusCheck] 
+		@IsDisabled = @IsDisabled
 		, @RoleID	= @RoleID
 		, @AgentID	= @AgentID
 		, @MasterID = @MasterID
@@ -159,120 +173,20 @@ BEGIN
 	IF @ErrCode <> 0
 		RETURN
 	
-	--Get old disabled status
-	DECLARE @downlines BIT  = 0, @Upline INT 
-	
-	IF @roleid = 4
-	BEGIN		
-		IF EXISTS (SELECT 1
-						FROM custinfo WITH (NOLOCK)
-						WHERE srecommend = @CustID	AND roleid = 3
-						)
-			SET @downlines = 1
-			
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
-		SELECT psp.SportType
-			, psp.BetType
-			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled
-			, CASE 	
-					WHEN @downlines = 0	THEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder))
-					ELSE ISNULL((
-								SELECT TOP 1 1
-								FROM dbo.custInfo ci WITH (NOLOCK)
-									INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
-									OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-									--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-								WHERE srecommend = @CustID
-									--AND IsSynced.value = 1
-									AND IsDisabled.value = 1
-								), 0)
-				 END AS IsDisabledDownline
-		FROM #NewDisableStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-	END
-	ELSE IF @roleid = 3
-	BEGIN
-	
-		IF EXISTS (SELECT 1
-						FROM custinfo WITH (NOLOCK)
-						WHERE mrecommend = @CustID	AND roleid = 2
-						)
-			SET @downlines = 1	
-		
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
-		SELECT psp.SportType
-			, psp.BetType
-			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
-			, CASE 	
-					WHEN @downlines = 0	THEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder))
-					ELSE ISNULL((
-								SELECT TOP 1 1
-								FROM dbo.custInfo ci WITH (NOLOCK)
-									INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
-									OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-									--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-								WHERE mrecommend = @CustID
-									--AND IsSynced.value = 1
-									AND IsDisabled.value = 1
-								), 0)
-				 END AS IsDisabledDownline
-		FROM #NewDisableStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-	END 	
-	ELSE IF @roleid = 2
-	BEGIN
-	
-		IF EXISTS (SELECT 1
-						FROM custinfo WITH (NOLOCK)
-						WHERE recommend = @CustID AND roleid = 1
-						)
-			SET @downlines = 1	
-		
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
-		SELECT psp.SportType
-			, psp.BetType
-			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
-			
-			, CASE 	
-						WHEN @downlines = 0	THEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder))
-						ELSE ISNULL((
-									SELECT TOP 1 1
-									FROM dbo.custInfo ci WITH (NOLOCK)
-										INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
-										OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-										--OUTER APPLY dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder) AS IsSynced
-									WHERE recommend = @CustID AND roleid = 1
-										--AND IsSynced.value = 1
-										AND IsDisabled.value = 1
-									), 0)
-				 END AS IsDisabledDownline
-		FROM #NewDisableStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-				 
-	END 
-	ELSE IF @roleid = 1
-	BEGIN
-	
-		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
-		SELECT psp.SportType
-			, psp.BetType
-			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
-			, 0 IsDisabledDownline
-		FROM #NewDisableStatTbl tmp
-			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
-			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
-			
-	END
-		
+	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled)
+	SELECT psp.SportType
+		, psp.BetType
+		, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled			
+	FROM #NewDisableStatTbl tmp
+		INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
+		INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID		
+
 	--If status did not be changed than return
 	IF NOT EXISTS (
 			SELECT TOP 1 1
 			FROM #NewDisableStatTbl tmp
 				INNER JOIN #OldDisableStatTbl stt ON tmp.SportType	= stt.SportType	AND tmp.BetType = stt.BetType
-			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.IsDisabledDownline <> stt.IsDisabledDownline
+			WHERE tmp.IsDisabled <> stt.IsDisabled
 			)
 		RETURN
 
@@ -325,23 +239,25 @@ BEGIN
 		
 	END
 	
-	--call execrept to update downline
-	DECLARE @IsDisabled_Downline XML
+	--call execrept to update downline when disable status
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) AND @SystemID <> 2 AND @RoleID <> 1
+	BEGIN		
+		DECLARE @IsDisabled_Downline XML
 	
-	SET @IsDisabled_Downline = (
-			SELECT (
+		SET @IsDisabled_Downline = (
+				SELECT (
 					SELECT 
 						SportType AS '@SportType'
 						,BetType AS '@BetType'
 						,IsDisabled AS '@IsDisabled'
-						,IsDisabledDownline AS '@IsDisabledDownline'
+						,1 AS '@UpdateAllMasters'
+						,1 AS '@UpdateAllAgents'
+						,1 AS '@UpdateAllMembers'
+						,1 AS '@DisableAllMasters'
+						,1 AS '@DisableAllAgents'
+						,1 AS '@DisableAllMembers'
 					FROM #NewDisableStatTbl
 					WHERE IsDisabled = 1
-						OR EXISTS (	SELECT TOP 1 1
-									FROM #NewDisableStatTbl
-									WHERE IsDisabled = 0
-											AND IsDisabledDownline	= 0
-									)
 					FOR XML PATH('ProductStatus')
 						, TYPE
 					)
@@ -349,31 +265,25 @@ BEGIN
 				, TYPE
 			)
 	
-	DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
+		DECLARE @IsDisabled_Downline_tmp VARCHAR(MAX)		
 	
-	SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
+		SET @IsDisabled_Downline_tmp = CONVERT(VARCHAR(MAX),@IsDisabled_Downline)
 	
-	IF @RoleID <> 1 AND @IsDisabled_Downline_tmp <> '<ROOT/>'
-	BEGIN		
-		EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
-						, @RoleID			= @RoleID
-						, @IsDisabled_XML	= @IsDisabled_Downline_tmp
-
-		IF @ProductID = 24 --Fishing World
-		BEGIN
-			IF @downlines = 1
+		IF @IsDisabled_Downline_tmp <> '<ROOT/>'
+		BEGIN		
+			IF @ProductID = 24 --Fishing World
 			BEGIN
-				IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND IsDisabledDownline= 0) --enable downline
-					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3, @IsDisabled = @IsDisabled_Downline_tmp
-				IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) --disable downline
-					EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
+				EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
 			END
+			
+			EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
+							, @RoleID			= @RoleID
+							, @IsDisabled_XML	= @IsDisabled_Downline_tmp
+							, @Action			= 'NewProductStatus'
 		END
-	
 	END
-	
-	--START LOGGING			
 
+	--START LOGGING			
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
@@ -391,6 +301,21 @@ BEGIN
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 	WHERE p.ProductID = @ProductID
 
+	--Get ActionID
+	SELECT @EnableOnly = 0
+	FROM #NewDisableStatTbl
+	WHERE IsDisabled = 1
+
+	INSERT INTO @LogAction (ActionID)
+	SELECT l.ActionID
+	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
+		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
+	WHERE l.SPName = 'Acc_CustSetting_DisableNewProductStatusUpd' AND ld.ProductID = @ProductID AND ld.Level = @RoleID
+		AND ((l.ActionID BETWEEN 60500 AND 64999 AND @RoleID = 4)
+			OR (l.ActionID BETWEEN 65500 AND 69999 AND ((@RoleID = 4 AND @EnableOnly = 0) OR @RoleID = 3))
+			OR (l.ActionID BETWEEN 70500 AND 74999 AND ((@RoleID IN (4,3) AND @EnableOnly = 0) OR @RoleID = 2))
+			OR (l.ActionID BETWEEN 75500 AND 79999 AND ((@RoleID IN (4,3,2) AND @EnableOnly = 0) OR @RoleID = 1)))
+
 	IF @SettingLevel = 1			-- Product setting level
 	BEGIN
 		SET @xml = (
@@ -402,8 +327,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
-								IsDisabled			AS '@IsDisabled',
-								IsDisabledDownline	AS '@IsDisabledDownline'
+								IsDisabled			AS '@IsDisabled'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -423,8 +347,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								IsDisabled			AS '@IsDisabled',
-								IsDisabledDownline	AS '@IsDisabledDownline'
+								IsDisabled			AS '@IsDisabled'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -444,8 +367,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
-								IsDisabled			AS '@IsDisabled',
-								IsDisabledDownline	AS '@IsDisabledDownline'
+								IsDisabled			AS '@IsDisabled'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -466,8 +388,7 @@ BEGIN
 					(
 						SELECT	SportType			AS '@SportType',
 								BetType				AS '@BetType',
-								IsDisabled			AS '@IsDisabled',
-								IsDisabledDownline	AS '@IsDisabledDownline'
+								IsDisabled			AS '@IsDisabled'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -490,8 +411,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
-								IsDisabled			AS '@IsDisabled',
-								IsDisabledDownline	AS '@IsDisabledDownline'
+								IsDisabled			AS '@IsDisabled'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -511,8 +431,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
-								IsDisabled			AS '@IsDisabled',
-								IsDisabledDownline	AS '@IsDisabledDownline'
+								IsDisabled			AS '@IsDisabled'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -532,8 +451,7 @@ BEGIN
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
-								IsDisabled			AS '@IsDisabled',
-								IsDisabledDownline	AS '@IsDisabledDownline'
+								IsDisabled			AS '@IsDisabled'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -554,8 +472,7 @@ BEGIN
 					(
 						SELECT	SportType			AS '@SportType',
 								BetType				AS '@BetType',
-								IsDisabled			AS '@IsDisabled',
-								IsDisabledDownline	AS '@IsDisabledDownline'
+								IsDisabled			AS '@IsDisabled'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -567,25 +484,35 @@ BEGIN
 	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
 	SELECT @endRun = GETDATE()
-		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
+		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)	
+	
+	WHILE (1=1)
+	BEGIN
+		UPDATE TOP (1) @LogAction
+		SET IsFinished = 1, @ActionID = ActionID
+		WHERE IsFinished = 0
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-			, @CustID			= @CustID
-			, @ActionID			= 1161
-			, @TrackingValue	= @logSpData
-			, @TrackingValue2	= @logSpData_Old
-			, @duration			= @duration
-	END TRY
+		IF @@ROWCOUNT = 0 BREAK
 
-	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-			, @CustID			= @CustID
-			, @ActionID			= 1161
-			, @TrackingValue	= @logSpData
-			, @TrackingValue2	= @logSpData_Old
-			, @duration			= @duration
-	END CATCH
+		BEGIN TRY
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+				, @CustID			= @CustID
+				, @ActionID			= @ActionID
+				, @TrackingValue	= @logSpData
+				, @TrackingValue2	= @logSpData_Old
+				, @duration			= @duration
+		END TRY
+
+		BEGIN CATCH
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+				, @CustID			= @CustID
+				, @ActionID			= @ActionID
+				, @TrackingValue	= @logSpData
+				, @TrackingValue2	= @logSpData_Old
+				, @duration			= @duration
+		END CATCH
+	END
+
 	DROP TABLE #NewDisableStatTbl
 	DROP TABLE #OldDisableStatTbl
 END

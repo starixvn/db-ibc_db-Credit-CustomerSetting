@@ -2,8 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 	@custid		INT,
 	@Disable	BIT = NULL,	
-	@EnableDownlines BIT = NULL,
-	@SystemID	TINYINT = 1,
+	@SystemID	TINYINT = 1,	
 	@UserID		INT = 0,
 	@SubAccID	INT = 0, --Sub-AccountID
 	@IP			VARCHAR(20)= '',
@@ -26,7 +25,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 			- 20170414@Winnie: Allowed disable on EXT-NAP [Redmine: #72336]
 			- 20171013@Johnson: Set @EnableDownlines = NULL as default when dont have downline 
 								and update sync for that customer if not sync yet incase no change status[Redmine: #72973]
-		Parameter's Explanation:
+			- 20180112@Johnson:	use this sp for update status on alpha & setting page and remove enableDownlines for new direction [redmine:#87328]				
+		Parameter's Explanation:	
 			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
 BEGIN
@@ -50,14 +50,13 @@ BEGIN
 			@HideGoldDeluxe_Old BIT,
 			@UplineDisable BIT,			
 			@HasDownline BIT = 0,
-			@Currency INT,
-			@DisableDownlines_Old BIT = 0
+			@Currency INT			
 	
 	SELECT @roleid = roleid,
 			@Disable_Old = DisableGoldDeluxe, 
 			@HideGoldDeluxe_Old = HideGoldDeluxe,
 			@Currency = currency		
-	FROM custInfo WITH(NOLOCK)
+	FROM dbo.custInfo WITH(NOLOCK)
 	WHERE custid = @custid
 	
 	            
@@ -91,27 +90,8 @@ BEGIN
 	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)
 		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)
-
-	IF @HasDownline = 1
-	BEGIN
-		IF @roleid = 4 
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableGoldDeluxe = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 3
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND DisableGoldDeluxe = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 2
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND DisableGoldDeluxe = 1)
-				SET @DisableDownlines_Old = 1
-		END
-	END
-
-	IF @Disable_old = @Disable AND (@DisableDownlines_Old <> @EnableDownlines OR @EnableDownlines IS NULL)
+	
+	IF @Disable_old = @Disable
 	BEGIN
 		IF @HideGoldDeluxe_Old = 1
 		BEGIN
@@ -154,21 +134,16 @@ BEGIN
 		RETURN
 	END 
 	
-	IF ((@Disable = 1 AND @Disable_Old = 0) OR (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
+	--dont allow disable on alpha
+	IF @Disable = 1 
+		AND @Disable_Old = 0
+		AND @SystemID = 2
+		AND @roleid IN (4,3,2)
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
 							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
 						END, @ErrCode = 102
-		RETURN
-	END 
-
-	IF @Disable = 1 AND @EnableDownlines = 1 AND @HasDownline=1
-	BEGIN
-		SELECT @ErrMsg =  CASE @Language 
-							WHEN 'E' THEN 'You are not allowed to perform this action.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
-						END, @ErrCode = 103
 		RETURN
 	END 
 
@@ -178,11 +153,9 @@ BEGIN
 	WHERE custid = @CustID
 		
 	--Check condition for update all downlines
-	IF ( @RoleID > 1 
-			AND (@Disable = 1
-					OR (@Disable = 0 AND (@EnableDownlines = 1 AND @HasDownline = 1))
-			)
-		)
+	IF  @RoleID > 1 
+		AND	@Disable = 1
+		AND @HasDownline = 1			
 	BEGIN
 		EXEC Acc_CustomerSelCheckAllowedDownlines @custid = @custid
 				,@roleid = @roleid
@@ -193,7 +166,7 @@ BEGIN
 
 		IF @ErrCode <> 0 RETURN
 		
-		--Disable all downlines or enable all downlines
+		--Disable all downlines on nap
 		BEGIN TRY
 			EXEC [Acc_CustomerInfo_Execrep_04] @CustID = @CustID
 					,@RoleID = @RoleID
@@ -212,15 +185,15 @@ BEGIN
 	
 	WRITELOG:
 	DECLARE @LogSPData VARCHAR(MAX),  
-			@LogSPData_Old VARCHAR(2000)  
-	  
+			@LogSPData_Old VARCHAR(2000),
+			@ActionID INT 	
+		
 	 Select @LogSPData = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
-		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  
-		  'ApplyDownlines="'+ coalesce(cast(ISNULL(@EnableDownlines,0) as varchar(50)),space(1)) + '" '+  
+		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  		 
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
-		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
+		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +		  
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
 		  'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+  
 		  'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+  
@@ -229,10 +202,9 @@ BEGIN
 	  SELECT @LogSPData_Old = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		 
 		 'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+  
-		  'HideGD="'+ coalesce(cast(@HideGoldDeluxe_Old as varchar(50)),space(1)) + '" '+  
-		  'ApplyDownlines="'+ CASE WHEN @DisableDownlines_Old = 1 OR @roleid =1 THEN  coalesce(cast(0 as varchar(50)),space(1)) ELSE  coalesce(cast(1 as varchar(50)),space(1)) END +'" '+    
+		  'HideGD="'+ coalesce(cast(@HideGoldDeluxe_Old as varchar(50)),space(1)) + '" '+  		 
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
-		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
+		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +		 
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
 		  'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+  
 		  'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+  
@@ -242,34 +214,140 @@ BEGIN
 	 SET @duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)  
 
 	BEGIN TRY
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60000 
+										WHEN 3 THEN 65000 
+										WHEN 2 THEN 70000 
+										WHEN 1 THEN 75000 END
+		
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 		@UserID = @UserID,  
 		@CustID = @CustID,  
-		@ActionID = 1155,  
+		@ActionID = @ActionID,  
 		@TrackingValue = @LogSPData  , 
 		@TrackingValue2 = @LogSPData_old  ,  
 		@duration = @duration  
+		
+		--write log for downlines in-case disable downline
+		IF @Disable = 1 AND @HasDownline = 1
+		BEGIN
+			IF @roleid >3
+			BEGIN
+				SELECT @ActionID = 65001
+				
+				--actionID on master
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70001
+												WHEN 4 THEN 70002 END
+										
+				--actionID on agent
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75001
+												WHEN 3 THEN 75002 
+												WHEN 4 THEN 75003 END
+				--actionID on member
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration
+			END		
+		END				
 	END TRY 
 	BEGIN CATCH
 		Select @LogSPData = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
-		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  
-		  'ApplyDownlines="'+ coalesce(cast(ISNULL(@EnableDownlines,0) as varchar(50)),space(1)) + '" '+  
+		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  		 
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
 		  'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+  
 		  'ErrMsg="'+ ERROR_MESSAGE() +'" '+  
 		  'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />' 
-		 		
+		
+		--write log for themself
+		SELECT @ActionID = CASE @roleid WHEN 4 THEN 60000 
+										WHEN 3 THEN 65000 
+										WHEN 2 THEN 70000 
+										WHEN 1 THEN 75000 END
+		
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
 		@UserID = @UserID,  
 		@CustID = @CustID,  
-		@ActionID = 1155,  
-		@TrackingValue = @LogSPData,  
-		@TrackingValue2 = @LogSPData_old,  
-		@duration = @duration
-	END CATCH
+		@ActionID = @ActionID,  
+		@TrackingValue = @LogSPData  , 
+		@TrackingValue2 = @LogSPData_old  ,  
+		@duration = @duration  
 		
+		--write log for downlines in-case disable downline
+		IF @Disable = 1 AND @HasDownline = 1
+		BEGIN
+			IF @roleid >3
+			BEGIN
+				SELECT @ActionID = 65001
+				
+				--actionID on master
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration  
+			END
+			
+			IF @Roleid >2
+			BEGIN	
+				SELECT @ActionID = CASE @roleid WHEN 3 THEN 70001
+												WHEN 4 THEN 70002 END
+										
+				--actionID on agent
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration 
+			END
+			
+			IF @Roleid >1
+			BEGIN
+				SELECT @ActionID = CASE @roleid WHEN 2 THEN 75001
+												WHEN 3 THEN 75002 
+												WHEN 4 THEN 75003 END
+				--actionID on member
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+					@UserID = @UserID,  
+					@CustID = @CustID,  
+					@ActionID = @ActionID,  
+					@TrackingValue = @LogSPData  , 
+					@TrackingValue2 = @LogSPData_old  ,  
+					@duration = @duration
+			END		
+		END			
+	END CATCH		
 END
 GO

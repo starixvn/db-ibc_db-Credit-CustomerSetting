@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMemberColossusBet]
 (  
 	@custid  INT,  
@@ -13,7 +14,7 @@ AS
     
     
 	Revisions:
-	
+		- 20180122@Johnson: remove downline status for new direction [redmine: #87328]
 	Parameters Explanation
 	
 */ 
@@ -57,9 +58,7 @@ BEGIN
 		,mobilephone  
 		,fax  
 		,ISNULL(@DisableUpline,1)   AS DisableUpline  
-		,ISNULL(@DisableColossusBet,1) AS DisableColossusBet  
-		,0        AS Downlines  
-		,0        AS DisableDownlines  
+		,ISNULL(@DisableColossusBet,1) AS DisableColossusBet  		  
 	FROM dbo.Customer WITH (NOLOCK)  
 	WHERE custID = @CustID        
 
@@ -83,11 +82,3 @@ BEGIN
 END  
 GO
 
-
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberColossusBet] TO [bodbAdminNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberColossusBet]  TO [bodbDownlineNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberColossusBet]  TO [bodbExtAccNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberColossusBet] TO bodbDownlineNetView

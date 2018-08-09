@@ -13,7 +13,7 @@ AS
     
 	Revisions:
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
-		
+		- 20180122@Johnson: remove downline status for new direction [redmine: #87328]
 	Parameters Explanation
 	
 */ 
@@ -22,14 +22,7 @@ BEGIN
           
     SET NOCOUNT ON      
           
-    DECLARE @Downlines BIT    = 1  
-            ,@DisableDownlines BIT = 0  
-            ,@DisableColossusBet BIT   
-          
-    IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)  
-        SET @Downlines = 0      
-    ELSE IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableColossusBet = 1)  
-        SET @DisableDownlines = 1  
+    DECLARE @DisableColossusBet BIT   
           
     SELECT  @DisableColossusBet = DisableColossusBet  
     FROM    dbo.custInfo WITH(NOLOCK)  
@@ -45,9 +38,7 @@ BEGIN
             ,mobilephone  
             ,fax  
             ,0 AS DisableUpline  
-            ,ISNULL(@DisableColossusBet,1) AS DisableColossusBet  
-            ,@Downlines AS Downlines  
-            ,@DisableDownlines AS DisableDownlines  
+            ,ISNULL(@DisableColossusBet,1) AS DisableColossusBet              
     FROM  dbo.Customer WITH (NOLOCK)  
     WHERE custID = @CustID             
            
@@ -73,12 +64,4 @@ BEGIN
 	SET NOCOUNT OFF
           
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperColossusBet] TO [bodbAdminNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperColossusBet] TO [bodbDownlineNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperColossusBet] TO [bodbExtAccNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperColossusBet] TO bodbDownlineNetView
