@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_RacingBetSettingUpd]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_RacingBetSettingUpd]
 	@userid		INT,
 	
 	@sporttype	INT,
@@ -19,6 +20,8 @@
 		Revisions:
 			- 20130520@Johnson: insert racing bet setting of 3rd incase of not exists
 			- 20130808@Elodie: Splitting DBTXN into DBCUST
+			- 20180808@Helen: DB05.DBPOLICY migration - [Redmine:99462]
+			
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
@@ -28,7 +31,7 @@ SET NOCOUNT ON
 	
 	SET @Begin = GETDATE();
 	
-	EXEC DBPOLICY.bodb02.dbo.Acc_Con_CheckPermission @custid = @UserID, @funcname = '[RacingDefaultSetting]', @System = @System, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT;
+	EXEC NAP_UserControl.dbo.Acc_Con_CheckPermission @custid = @UserID, @funcname = '[RacingDefaultSetting]', @System = @System, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT;
 	
 	IF @ErrCode <> 0
 		RETURN;

@@ -67,6 +67,8 @@ BEGIN
 		- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
 		- 20180830@Elodie: Add new bettype of Poker Games Product - [Redmine: #97675]
 
+		- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
+		
 	Pattern Explanation:
 	Search keyword: '%keyword%'
 	First char
@@ -89,15 +91,12 @@ BEGIN
 		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
 	END CATCH
 	----- /Elodie @ 01 JUN 2015 -------------------
-	DECLARE @SearchQuery varchar(1024)
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
 	DECLARE @tmpUserid VARCHAR(50)
 	SELECT @tmpUserid=CAST(@Userid AS VARCHAR(50))
-	SELECT @SearchQuery = 'SELECT * 
-	FROM OPENQUERY(DBPOLICY, 
-	''SELECT siteid , site,SpecialGroup FROM bodb02.dbo.f_GetDeniedSiteByUser( ''''' + @tmpUserid + ''''')'')'
+	
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
-	EXECUTE(@SearchQuery)
+	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
 
 	CREATE TABLE #TempMaster(CustID INT PRIMARY KEY,Site VARCHAR(10),IsInternal BIT,ugroup VARCHAR(3),firstname NVARCHAR(50),lastname NVARCHAR(50),username2 NVARCHAR(50),phone NVARCHAR(50),mobilephone NVARCHAR(50),iplogin NVARCHAR(20), RowNumber BIGINT)
 	INSERT INTO #TempMaster(CustID,Site,IsInternal,RowNumber)

@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustomerSelSAg]
 	@Currency int = NULL,
 	@Closed bit = NULL,
@@ -70,6 +67,8 @@ Revisions:
 	- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]	
 
+	- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
+	
 Pattern Explanation:
 Search keyword: '%keyword%'
 First char
@@ -97,7 +96,6 @@ B: 'B%'
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1 
 	Declare @tbDummySuper table (custid int primary key)
 	Declare @tbCurrency table (exchangeId int primary key)
-	DECLARE @SearchQuery varchar(1024)
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
 	DECLARE @tmpUserid VARCHAR(50)
 
@@ -155,12 +153,9 @@ B: 'B%'
 	IF(@System = 'ACCOUNTING')
 	BEGIN
 	SELECT @tmpUserid=CAST(@Userid AS VARCHAR(50))
-	SELECT @SearchQuery = 'SELECT * 
-	FROM OPENQUERY(DBPOLICY, 
-	''SELECT siteid , site,SpecialGroup FROM bodb02.dbo.f_GetDeniedSiteByUser( ''''' + @tmpUserid + ''''')'')'
 
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
-	EXECUTE(@SearchQuery)
+	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
 	
 		IF @TotalPages = 0
 		BEGIN
