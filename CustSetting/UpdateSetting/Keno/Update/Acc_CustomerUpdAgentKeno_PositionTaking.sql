@@ -35,6 +35,7 @@ AS
 		- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB, Use temp table for sports, bettype table)
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
 		- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
+		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 	Parameters Explanation:
 		@ErrCode: 0 is successful
 */
@@ -45,25 +46,34 @@ BEGIN
 	SET @startRun = GETDATE()
 
 	----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
-	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
-	
 	BEGIN TRY
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBAGE.bodb02.dbo.Sports WITH (NOLOCK)		
+		SELECT *
+		INTO #tmp_Sports
+		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBTXN.bodb02.dbo.Sports WITH (NOLOCK)	
+		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Sports
+			INSERT INTO #tmp_Sports
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
+		END
 	END CATCH
 
 	BEGIN TRY			
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBAGE.bodb02.dbo.Bettype WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_Bettype
+		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBTXN.bodb02.dbo.Bettype WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Bettype
+			INSERT INTO #tmp_Bettype
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
+		END
 	END CATCH
 	----- /Elodie @ 01 JUN 2015 -------------------
 
@@ -121,7 +131,7 @@ BEGIN
 	--check n3<=m2+a2  if im2 = 0, 
 	--a2<=l3 and um2+a2>=n3 if im2 = 1
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType + s.SportName + ' - ' + typenamee + '-Min: '+ CAST((co.minpositiontaking) AS VARCHAR(10)) + '<br>'
+	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.name + '-Min: '+ CAST((co.minpositiontaking) AS VARCHAR(10)) + '<br>'
 	FROM dbo.custoverrideGame co WITH(NOLOCK)
 		INNER JOIN 
 		(
@@ -129,8 +139,8 @@ BEGIN
 				, @a2 AS apositiontaking, @m2 AS mpositiontaking
 				, @im2 AS isauto_mpositiontaking, @um2 AS auto_mpositiontaking
 		) b ON co.bettype = b.bettype AND co.sporttype = b.sporttype
-		INNER JOIN @tmp_Bettype bt ON b.bettype = bt.typeid
-		INNER JOIN @tmp_Sports s ON b.sporttype = s.sporttype
+		INNER JOIN #tmp_Bettype bt ON b.bettype = bt.ID
+		INNER JOIN #tmp_Sports s ON b.sporttype = s.ID
 	WHERE co.custid = @mrecommend
 		AND (((b.isauto_mpositiontaking = 0) AND (b.mpositiontaking + b.apositiontaking < co.minpositiontaking)) 
 			OR (b.isauto_mpositiontaking > 0 AND (b.apositiontaking + b.auto_mpositiontaking < co.minpositiontaking)))
@@ -146,12 +156,12 @@ BEGIN
 
 	--n2<=a2
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType + s.SportName + ' - ' + typenamee + '-Min: '+ CAST((co.minpositiontaking) AS VARCHAR(10)) + '<br>'
+	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.Name + '-Min: '+ CAST((co.minpositiontaking) AS VARCHAR(10)) + '<br>'
 	FROM (SELECT @BetType AS bettype, @SportType AS sporttype, @n2 AS minpositiontaking) AS co
 		INNER JOIN (SELECT @BetType AS bettype, @SportType AS sporttype, @a2 AS apositiontaking) AS b
 			ON co.bettype = b.bettype AND co.sporttype = b.sporttype
-		INNER JOIN @tmp_Bettype bt ON b.bettype = bt.typeid
-		INNER JOIN @tmp_Sports s ON b.sporttype = s.sporttype
+		INNER JOIN #tmp_Bettype bt ON b.bettype = bt.ID
+		INNER JOIN #tmp_Sports s ON b.sporttype = s.ID
 	WHERE b.apositiontaking < co.minpositiontaking
 
 	IF @ErrType <> ''
@@ -174,8 +184,8 @@ BEGIN
 		SELECT @BetType AS bettype, @SportType AS sporttype, @a2 AS apositiontaking
 			, @m2 AS mpositiontaking, @MPositiontaking_Max AS max_mapositiontaking
 	) b
-		INNER JOIN @tmp_Bettype bt ON b.bettype = bt.typeid
-		INNER JOIN @tmp_Sports s ON b.sporttype = s.sporttype
+		INNER JOIN #tmp_Bettype bt ON b.bettype = bt.ID
+		INNER JOIN #tmp_Sports s ON b.sporttype = s.ID
 	WHERE (b.apositiontaking + b.mpositiontaking > b.max_mapositiontaking) 
 
 	IF @ErrType <> ''
@@ -189,14 +199,14 @@ BEGIN
 	
 	--check um2<=min(m3,l3)
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType + s.SportName + ' - ' + typenamee + '-Max: '+ CAST(max_mapositiontaking AS VARCHAR(10)) + '<br>'
+	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.name + '-Max: '+ CAST(max_mapositiontaking AS VARCHAR(10)) + '<br>'
 	FROM 
 	(
 		SELECT @BetType AS bettype, @SportType AS sporttype, @um2 as autopositiontaking
 			, @im2 as isautopositiontaking, @MPositiontaking_Max as max_mapositiontaking
 	) AS b 
-		INNER JOIN @tmp_Bettype bt ON b.bettype = bt.typeid
-		INNER JOIN @tmp_Sports s ON b.sporttype = s.sporttype
+		INNER JOIN #tmp_Bettype bt ON b.bettype = bt.ID
+		INNER JOIN #tmp_Sports s ON b.sporttype = s.ID
 	WHERE b.isautopositiontaking = 1
 		AND b.autopositiontaking > max_mapositiontaking
 		

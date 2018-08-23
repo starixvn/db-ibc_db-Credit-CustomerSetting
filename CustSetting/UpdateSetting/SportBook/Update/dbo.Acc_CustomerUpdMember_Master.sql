@@ -395,7 +395,8 @@ Revisions:
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20170628@Winnie: Apply color for closed account - [Redmine: 74494]
 	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
-	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -421,25 +422,34 @@ BEGIN
 	END
 	*/
 	----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
-	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
-	
 	BEGIN TRY
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBAGE.bodb02.dbo.Sports WITH (NOLOCK)		
+		SELECT *
+		INTO #tmp_Sports
+		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBTXN.bodb02.dbo.Sports WITH (NOLOCK)	
+		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Sports
+			INSERT INTO #tmp_Sports
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
+		END
 	END CATCH
 
 	BEGIN TRY			
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBAGE.bodb02.dbo.Bettype WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_Bettype
+		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBTXN.bodb02.dbo.Bettype WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Bettype
+			INSERT INTO #tmp_Bettype
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
+		END
 	END CATCH
 ----- /Elodie @ 01 JUN 2015 -------------------
 
@@ -2847,7 +2857,7 @@ if	@UpdatePositiontaking   = 1  or
 
 		--Check um1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 				(	SELECT 1 AS sporttype, 1 AS bettype, @auto_mpositiontaking_mem_1 AS autopositiontaking, @isauto_mpositiontaking_mem_1 AS isautopositiontaking, @auto_mlivepositiontaking_mem_1 AS autolivepositiontaking, @isauto_mlivepositiontaking_mem_1 AS isautolivepositiontaking
@@ -2863,8 +2873,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 1 AS sporttype, 10 AS bettype, @auto_mpositiontaking_mem_10 AS autopositiontaking, @isauto_mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					UNION ALL		SELECT 1 AS sporttype, 9999 AS bettype, @auto_mpositiontaking_mem_9999 AS autopositiontaking, @isauto_mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 				) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 			WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -2883,7 +2893,7 @@ if	@UpdatePositiontaking   = 1  or
 
 		--Check um1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(	SELECT 1 AS sporttype, 1 AS bettype, @max_mapositiontaking_1 AS maxmpositiontaking, @auto_mpositiontaking_mem_1 AS autopositiontaking, @isauto_mpositiontaking_mem_1 AS isautopositiontaking, @auto_mlivepositiontaking_mem_1 AS autolivepositiontaking, @isauto_mlivepositiontaking_mem_1 AS isautolivepositiontaking, @max_malivepositiontaking_1 AS maxmlivepositiontaking
@@ -2899,8 +2909,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 1 AS sporttype, 10 AS bettype, @max_mapositiontaking_10 AS maxmpositiontaking	,@auto_mpositiontaking_mem_10 AS autopositiontaking, @isauto_mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking,  0 AS maxmlivepositiontaking
 					UNION ALL		SELECT 1 AS sporttype, 9999 AS bettype, @max_mapositiontaking_9999 AS maxmpositiontaking	,@auto_mpositiontaking_mem_9999 AS autopositiontaking, @isauto_mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking,  0 AS maxmlivepositiontaking
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 		WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 		IF @ErrType <>''
@@ -2919,7 +2929,7 @@ if	@UpdatePositiontaking   = 1  or
 		
 		--Check um1>= um1_min(= m1_min)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(	SELECT 1 AS sporttype, 1 AS bettype, @min_mp_1 AS minmpositiontaking, @auto_mpositiontaking_mem_1 AS autopositiontaking, @isauto_mpositiontaking_mem_1 AS isautopositiontaking, @auto_mlivepositiontaking_mem_1 AS autolivepositiontaking, @isauto_mlivepositiontaking_mem_1 AS isautolivepositiontaking, @min_mlp_1 AS minmlivepositiontaking
@@ -2935,8 +2945,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 1 AS sporttype, 10 AS bettype, @min_mp_10 AS minmpositiontaking	,@auto_mpositiontaking_mem_10 AS autopositiontaking, @isauto_mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking,  0 AS minmlivepositiontaking
 					UNION ALL		SELECT 1 AS sporttype, 9999 AS bettype, @min_mp_9999 AS minmpositiontaking	,@auto_mpositiontaking_mem_9999 AS autopositiontaking, @isauto_mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking,  0 AS minmlivepositiontaking
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 		WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 		IF @ErrType <>''
@@ -2955,7 +2965,7 @@ if	@UpdatePositiontaking   = 1  or
 		
 		--Check m1<=min(m3,m4)
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+		SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 		+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 		FROM (
 								SELECT 1 AS sporttype	,	 1 AS bettype	,	 @mpositiontaking_1 AS mpositiontaking	,	 @max_mapositiontaking_1 AS maxmpositiontaking	,	 @mlivepositiontaking_1 AS mlivepositiontaking	,	 @max_malivepositiontaking_1 AS maxmlivepositiontaking
@@ -2972,8 +2982,8 @@ if	@UpdatePositiontaking   = 1  or
 				UNION ALL		SELECT 1 AS sporttype	,	 9999 AS bettype	,	 @mpositiontaking_9999 AS mpositiontaking	,	 @max_mapositiontaking_9999 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 			
 		)b 	
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 		WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 			OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -2993,7 +3003,7 @@ if	@UpdatePositiontaking   = 1  or
 
 		--Check m1<=l3
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+		SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 		+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 				(
@@ -3012,8 +3022,8 @@ if	@UpdatePositiontaking   = 1  or
 													
 					
 				) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype  bettype ON b.bettype = bettype.ID
 		WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 		IF @ErrType <>''
 		BEGIN
@@ -3030,7 +3040,7 @@ if	@UpdatePositiontaking   = 1  or
 		
 		--check m1<=m1_max
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+		SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 		+ CASE WHEN b.sporttype in (1) AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 		FROM
 			(
@@ -3047,8 +3057,8 @@ if	@UpdatePositiontaking   = 1  or
 				UNION ALL		SELECT 1 AS sporttype	,	 10 AS bettype	,	 @mpositiontaking_10 AS mpositiontaking	,	 @max_mp_10 as maxmpositiontaking, @isauto_mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_mpositiontaking_10 as isauto_mpositiontaking, 0 as maxmlivepositiontaking, 0 as isauto_mlivepositiontaking_mem, 0 as isauto_mlivepositiontaking, 0 AS mlivepositiontaking
 				UNION ALL		SELECT 1 AS sporttype	,	 9999 AS bettype	,	 @mpositiontaking_9999 AS mpositiontaking	,	 @max_mp_9999 as maxmpositiontaking, @isauto_mpositiontaking_mem_9999 as isauto_mpositiontaking_mem, @isauto_mpositiontaking_9999 as isauto_mpositiontaking, 0 as maxmlivepositiontaking, 0 as isauto_mlivepositiontaking_mem, 0 as isauto_mlivepositiontaking, 0 AS mlivepositiontaking
 			) b
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 		WHERE (b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0) OR (b.bettype IN (1,3,7,8) and b.mlivepositiontaking > maxmlivepositiontaking and isauto_mlivepositiontaking_mem = 0 and isauto_mlivepositiontaking = 0)
 		
 		IF @ErrType <>''
@@ -3067,7 +3077,7 @@ if	@UpdatePositiontaking   = 1  or
 		
 		--check m1>=m1_min
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+		SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 		+ CASE WHEN b.sporttype in (1) AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 		FROM
 			(
@@ -3084,8 +3094,8 @@ if	@UpdatePositiontaking   = 1  or
 				UNION ALL		SELECT 1 AS sporttype	,	 10 AS bettype	,	 @mpositiontaking_10 AS mpositiontaking	,	 @min_mp_10 as minmpositiontaking, @isauto_mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_mpositiontaking_10 as isauto_mpositiontaking, 0 as minmlivepositiontaking, 0 as isauto_mlivepositiontaking_mem, 0 as isauto_mlivepositiontaking, 0 AS mlivepositiontaking
 				UNION ALL		SELECT 1 AS sporttype	,	 9999 AS bettype	,	 @mpositiontaking_9999 AS mpositiontaking	,	 @min_mp_9999 as minmpositiontaking, @isauto_mpositiontaking_mem_9999 as isauto_mpositiontaking_mem, @isauto_mpositiontaking_9999 as isauto_mpositiontaking, 0 as minmlivepositiontaking, 0 as isauto_mlivepositiontaking_mem, 0 as isauto_mlivepositiontaking, 0 AS mlivepositiontaking
 			) b
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 		WHERE (b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0) OR (b.bettype IN (1,3,7,8) and b.mlivepositiontaking < minmlivepositiontaking and isauto_mlivepositiontaking_mem = 0 and isauto_mlivepositiontaking = 0)
 		
 		IF @ErrType <>''
@@ -3132,7 +3142,7 @@ if	@UpdatePositiontaking   = 1  or
 					
 		--Check um1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 				(	SELECT 2 AS sporttype, 1 AS bettype, @auto_v2mpositiontaking_mem_1 AS autopositiontaking, @isauto_v2mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
@@ -3145,8 +3155,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 2 AS sporttype, 20 AS bettype, @auto_v2mpositiontaking_mem_20 AS autopositiontaking, @isauto_v2mpositiontaking_mem_20 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					UNION ALL		SELECT 2 AS sporttype, 9999 AS bettype, @auto_v2mpositiontaking_mem_9999 AS autopositiontaking, @isauto_v2mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 				) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 			WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -3165,7 +3175,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check um1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(
@@ -3179,8 +3189,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 2 AS sporttype, 20 AS bettype, @max_v2mapositiontaking_20 AS maxmpositiontaking, @auto_v2mpositiontaking_mem_20 AS autopositiontaking, @isauto_v2mpositiontaking_mem_20 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking,  0 AS maxmlivepositiontaking
 					UNION ALL		SELECT 2 AS sporttype, 9999 AS bettype, @max_v2mapositiontaking_9999 AS maxmpositiontaking, @auto_v2mpositiontaking_mem_9999 AS autopositiontaking, @isauto_v2mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking,  0 AS maxmlivepositiontaking
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -3199,7 +3209,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check um1>= um1_min (= m1_min)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(
@@ -3213,8 +3223,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 2 AS sporttype, 20 AS bettype, @min_v2mp_20 AS minmpositiontaking, @auto_v2mpositiontaking_mem_20 AS autopositiontaking, @isauto_v2mpositiontaking_mem_20 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking,  0 AS minmlivepositiontaking
 					UNION ALL		SELECT 2 AS sporttype, 9999 AS bettype, @min_v2mp_9999 AS minmpositiontaking, @auto_v2mpositiontaking_mem_9999 AS autopositiontaking, @isauto_v2mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking,  0 AS minmlivepositiontaking
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -3233,7 +3243,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check m1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (	SELECT 2 AS sporttype	,	 1 AS bettype	,	 @v2mpositiontaking_1 AS mpositiontaking	,	 @max_v2mapositiontaking_1 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 					UNION ALL		SELECT 2 AS sporttype	,	 2 AS bettype	,	 @v2mpositiontaking_2 AS mpositiontaking	,	 @max_v2mapositiontaking_2 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
@@ -3246,8 +3256,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 2 AS sporttype	,	 9999 AS bettype	,	 @v2mpositiontaking_9999 AS mpositiontaking	,	 @max_v2mapositiontaking_9999 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 
 			)b 	
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 				OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -3267,7 +3277,7 @@ if	@UpdatePositiontaking   = 1  or
 
 			--Check m1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(							
@@ -3282,8 +3292,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 2 AS sporttype	,	 9999 AS bettype	,	 @v2mpositiontaking_9999 AS mpositiontaking	,	 0 AS mlivepositiontaking
 
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 			IF @ErrType <>''
 			BEGIN
@@ -3300,7 +3310,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1<=m1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 2 AS sporttype	,	 1 AS bettype	,	 @v2mpositiontaking_1 AS mpositiontaking	,@max_v2mp_1 as maxmpositiontaking, @isauto_v2mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v2mpositiontaking_1 as isauto_mpositiontaking
@@ -3313,8 +3323,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 2 AS sporttype	,	 20 AS bettype	,	 @v2mpositiontaking_20 AS mpositiontaking	,	 @max_v2mp_20 as maxmpositiontaking, @isauto_v2mpositiontaking_mem_20 as isauto_mpositiontaking_mem, @isauto_v2mpositiontaking_20 as isauto_mpositiontaking
 					UNION ALL		SELECT 2 AS sporttype	,	 9999 AS bettype	,	 @v2mpositiontaking_9999 AS mpositiontaking	,	 @max_v2mp_9999 as maxmpositiontaking, @isauto_v2mpositiontaking_mem_9999 as isauto_mpositiontaking_mem, @isauto_v2mpositiontaking_9999 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -3333,7 +3343,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1>=m1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 2 AS sporttype	,	 1 AS bettype	,	 @v2mpositiontaking_1 AS mpositiontaking	,@min_v2mp_1 as minmpositiontaking, @isauto_v2mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v2mpositiontaking_1 as isauto_mpositiontaking
@@ -3346,8 +3356,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 2 AS sporttype	,	 20 AS bettype	,	 @v2mpositiontaking_20 AS mpositiontaking	,	 @min_v2mp_20 as minmpositiontaking, @isauto_v2mpositiontaking_mem_20 as isauto_mpositiontaking_mem, @isauto_v2mpositiontaking_20 as isauto_mpositiontaking
 					UNION ALL		SELECT 2 AS sporttype	,	 9999 AS bettype	,	 @v2mpositiontaking_9999 AS mpositiontaking	,	 @min_v2mp_9999 as minmpositiontaking, @isauto_v2mpositiontaking_mem_9999 as isauto_mpositiontaking_mem, @isauto_v2mpositiontaking_9999 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -3390,7 +3400,7 @@ if	@UpdatePositiontaking   = 1  or
 		
 			--Check um1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 				(
@@ -3400,8 +3410,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 3 AS sporttype, 10 AS bettype, @auto_v3mpositiontaking_mem_10 AS autopositiontaking, @isauto_v3mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					UNION ALL		SELECT 3 AS sporttype, 20 AS bettype, @auto_v3mpositiontaking_mem_20 AS autopositiontaking, @isauto_v3mpositiontaking_mem_20 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 				) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 			WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -3420,7 +3430,7 @@ if	@UpdatePositiontaking   = 1  or
 
 			--Check um1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(
@@ -3430,8 +3440,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 3 AS sporttype, 10 AS bettype, @max_v3mapositiontaking_10 AS maxmpositiontaking, @auto_v3mpositiontaking_mem_10 AS autopositiontaking, @isauto_v3mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 						UNION ALL		SELECT 3 AS sporttype, 20 AS bettype, @max_v3mapositiontaking_20 AS maxmpositiontaking, @auto_v3mpositiontaking_mem_20 AS autopositiontaking, @isauto_v3mpositiontaking_mem_20 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -3450,7 +3460,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check um1>= um1_min(=m1_min)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(
@@ -3460,8 +3470,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 3 AS sporttype, 10 AS bettype, @min_v3mp_10 AS minmpositiontaking, @auto_v3mpositiontaking_mem_10 AS autopositiontaking, @isauto_v3mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
 						UNION ALL		SELECT 3 AS sporttype, 20 AS bettype, @min_v3mp_20 AS minmpositiontaking, @auto_v3mpositiontaking_mem_20 AS autopositiontaking, @isauto_v3mpositiontaking_mem_20 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -3480,7 +3490,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check m1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (
 									SELECT 3 AS sporttype	,	 1 AS bettype	,	 @v3mpositiontaking_1 AS mpositiontaking	,	 @max_v3mapositiontaking_1 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
@@ -3491,8 +3501,8 @@ if	@UpdatePositiontaking   = 1  or
 																	
 					
 			)b 	
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 				OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -3512,7 +3522,7 @@ if	@UpdatePositiontaking   = 1  or
 
 			--Check m1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(								
@@ -3523,8 +3533,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 3 AS sporttype	,	 20 AS bettype	,	 @v3mpositiontaking_20 AS mpositiontaking	,	 0 AS mlivepositiontaking
 				
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 			IF @ErrType <>''
 			BEGIN
@@ -3541,7 +3551,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1<=m1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 3 AS sporttype	,	 1 AS bettype	,	 @v3mpositiontaking_1 AS mpositiontaking	,@max_v3mp_1 as maxmpositiontaking, @isauto_v3mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v3mpositiontaking_1 as isauto_mpositiontaking
@@ -3551,8 +3561,8 @@ if	@UpdatePositiontaking   = 1  or
 					
 					UNION ALL		SELECT 3 AS sporttype	,	 20 AS bettype	,	 @v3mpositiontaking_20 AS mpositiontaking	,	 @max_v3mp_20 as maxmpositiontaking, @isauto_v3mpositiontaking_mem_20 as isauto_mpositiontaking_mem, @isauto_v3mpositiontaking_20 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -3571,7 +3581,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1>=m1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 3 AS sporttype	,	 1 AS bettype	,	 @v3mpositiontaking_1 AS mpositiontaking	,@min_v3mp_1 as minmpositiontaking, @isauto_v3mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v3mpositiontaking_1 as isauto_mpositiontaking
@@ -3581,8 +3591,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 3 AS sporttype	,	 10 AS bettype	,	 @v3mpositiontaking_10 AS mpositiontaking	,	 @min_v3mp_10 as minmpositiontaking, @isauto_v3mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v3mpositiontaking_10 as isauto_mpositiontaking
 					
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -3624,7 +3634,7 @@ if	@UpdatePositiontaking   = 1  or
 			END
 		--Check um1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(	SELECT 5 AS sporttype, 1 AS bettype, @auto_v5mpositiontaking_mem_1 AS autopositiontaking, @isauto_v5mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
@@ -3635,8 +3645,8 @@ if	@UpdatePositiontaking   = 1  or
 						
 						UNION ALL		SELECT 5 AS sporttype, 9999 AS bettype, @auto_v5mpositiontaking_mem_9999 AS autopositiontaking, @isauto_v5mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 			WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -3655,7 +3665,7 @@ if	@UpdatePositiontaking   = 1  or
 
 		--Check um1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(
@@ -3666,8 +3676,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 5 AS sporttype, 10 AS bettype, @max_v5mapositiontaking_10 AS maxmpositiontaking, @auto_v5mpositiontaking_mem_10 AS autopositiontaking, @isauto_v5mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 					UNION ALL		SELECT 5 AS sporttype, 9999 AS bettype, @max_v5mapositiontaking_9999 AS maxmpositiontaking, @auto_v5mpositiontaking_mem_9999 AS autopositiontaking, @isauto_v5mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -3686,7 +3696,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 		--Check um1>= um1_min(=m1_min)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(
@@ -3698,8 +3708,8 @@ if	@UpdatePositiontaking   = 1  or
 					
 					UNION ALL		SELECT 5 AS sporttype, 9999 AS bettype, @min_v5mp_9999 AS minmpositiontaking, @auto_v5mpositiontaking_mem_9999 AS autopositiontaking, @isauto_v5mpositiontaking_mem_9999 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking < b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -3718,7 +3728,7 @@ if	@UpdatePositiontaking   = 1  or
 							
 			--Check m1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (
 							SELECT 5 AS sporttype	,	 1 AS bettype	,	 @v5mpositiontaking_1 AS mpositiontaking	,	 @max_v5mapositiontaking_1 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
@@ -3730,8 +3740,8 @@ if	@UpdatePositiontaking   = 1  or
 					
 					UNION ALL		SELECT 5 AS sporttype	,	 9999 AS bettype	,	 @v5mpositiontaking_9999 AS mpositiontaking	,	 @max_v5mapositiontaking_9999 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 			)b 	
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 				OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -3751,7 +3761,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check m1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(
@@ -3764,8 +3774,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 5 AS sporttype	,	 9999 AS bettype	,	 @v5mpositiontaking_9999 AS mpositiontaking	,	 0 AS mlivepositiontaking
 
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 			IF @ErrType <>''
 			BEGIN
@@ -3782,7 +3792,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1<=m1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 5 AS sporttype	,	 1 AS bettype	,	 @v5mpositiontaking_1 AS mpositiontaking	,@max_v5mp_1 as maxmpositiontaking, @isauto_v5mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v5mpositiontaking_1 as isauto_mpositiontaking
@@ -3792,8 +3802,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 5 AS sporttype	,	 10 AS bettype	,	 @v5mpositiontaking_10 AS mpositiontaking	,	 @max_v5mp_10 as maxmpositiontaking, @isauto_v5mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v5mpositiontaking_10 as isauto_mpositiontaking
 					UNION ALL		SELECT 5 AS sporttype	,	 9999 AS bettype	,	 @v5mpositiontaking_9999 AS mpositiontaking	,	 @max_v5mp_9999 as maxmpositiontaking, @isauto_v5mpositiontaking_mem_9999 as isauto_mpositiontaking_mem, @isauto_v5mpositiontaking_9999 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -3812,7 +3822,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1>=m1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 5 AS sporttype	,	 1 AS bettype	,	 @v5mpositiontaking_1 AS mpositiontaking	,@min_v5mp_1 as minmpositiontaking, @isauto_v5mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v5mpositiontaking_1 as isauto_mpositiontaking
@@ -3823,8 +3833,8 @@ if	@UpdatePositiontaking   = 1  or
 					
 					UNION ALL		SELECT 5 AS sporttype	,	 9999 AS bettype	,	 @v5mpositiontaking_9999 AS mpositiontaking	,	 @min_v5mp_9999 as minmpositiontaking, @isauto_v5mpositiontaking_mem_9999 as isauto_mpositiontaking_mem, @isauto_v5mpositiontaking_9999 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -3863,7 +3873,7 @@ if	@UpdatePositiontaking   = 1  or
 		
 				--Check um1<=l3
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(	SELECT 8 AS sporttype, 1 AS bettype, @auto_v8mpositiontaking_mem_1 AS autopositiontaking, @isauto_v8mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
@@ -3872,8 +3882,8 @@ if	@UpdatePositiontaking   = 1  or
 						
 						UNION ALL		SELECT 8 AS sporttype, 10 AS bettype, @auto_v8mpositiontaking_mem_10 AS autopositiontaking, @isauto_v8mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 				WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -3892,7 +3902,7 @@ if	@UpdatePositiontaking   = 1  or
 
 			--Check um1<=min(m3,m4)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(	SELECT 8 AS sporttype, 1 AS bettype, @max_v8mapositiontaking_1 AS maxmpositiontaking, @auto_v8mpositiontaking_mem_1 AS autopositiontaking, @isauto_v8mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
@@ -3902,8 +3912,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 8 AS sporttype, 10 AS bettype, @max_v8mapositiontaking_10 AS maxmpositiontaking, @auto_v8mpositiontaking_mem_10 AS autopositiontaking, @isauto_v8mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 						
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 				IF @ErrType <>''
@@ -3922,7 +3932,7 @@ if	@UpdatePositiontaking   = 1  or
 				
 			--Check um1>=um1_min(=m1_min)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(	SELECT 8 AS sporttype, 1 AS bettype, @min_v8mp_1 AS minmpositiontaking, @auto_v8mpositiontaking_mem_1 AS autopositiontaking, @isauto_v8mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
@@ -3932,8 +3942,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 8 AS sporttype, 10 AS bettype, @min_v8mp_10 AS minmpositiontaking, @auto_v8mpositiontaking_mem_10 AS autopositiontaking, @isauto_v8mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
 						
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 				IF @ErrType <>''
@@ -3952,7 +3962,7 @@ if	@UpdatePositiontaking   = 1  or
 						
 				--Check m1<=min(m3,m4)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM (
 																	
@@ -3963,8 +3973,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 8 AS sporttype	,	 10 AS bettype	,	 @v8mpositiontaking_10 AS mpositiontaking	,	 @max_v8mapositiontaking_10 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 						
 				)b 	
-					inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-					inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+					inner join #tmp_Sports sports ON b.sporttype = sports.ID
+					inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 					OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -3984,7 +3994,7 @@ if	@UpdatePositiontaking   = 1  or
 				
 				--Check m1<=l3
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 					FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 						(
@@ -3995,8 +4005,8 @@ if	@UpdatePositiontaking   = 1  or
 															
 
 						) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-					inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-					inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+					inner join #tmp_Sports sports ON b.sporttype = sports.ID
+					inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 				IF @ErrType <>''
 				BEGIN
@@ -4013,7 +4023,7 @@ if	@UpdatePositiontaking   = 1  or
 				
 				--check m1<=m1_max
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
 				FROM
 					(
 							SELECT 8 AS sporttype	,	 1 AS bettype	,	 @v8mpositiontaking_1 AS mpositiontaking	,@max_v8mp_1 as maxmpositiontaking, @isauto_v8mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v8mpositiontaking_1 as isauto_mpositiontaking
@@ -4023,8 +4033,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 8 AS sporttype	,	 10 AS bettype	,	 @v8mpositiontaking_10 AS mpositiontaking	,	 @max_v8mp_10 as maxmpositiontaking, @isauto_v8mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v8mpositiontaking_10 as isauto_mpositiontaking
 						
 					) b
-					inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-					inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+					inner join #tmp_Sports sports ON b.sporttype = sports.ID
+					inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 				
 				IF @ErrType <>''
@@ -4043,7 +4053,7 @@ if	@UpdatePositiontaking   = 1  or
 				
 				--check m1>=m1_min
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
 				FROM
 					(
 							SELECT 8 AS sporttype	,	 1 AS bettype	,	 @v8mpositiontaking_1 AS mpositiontaking	,@min_v8mp_1 as minmpositiontaking, @isauto_v8mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v8mpositiontaking_1 as isauto_mpositiontaking
@@ -4052,8 +4062,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 8 AS sporttype	,	 10 AS bettype	,	 @v8mpositiontaking_10 AS mpositiontaking	,	 @min_v8mp_10 as minmpositiontaking, @isauto_v8mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v8mpositiontaking_10 as isauto_mpositiontaking
 						
 					) b
-					inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-					inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+					inner join #tmp_Sports sports ON b.sporttype = sports.ID
+					inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 				
 				IF @ErrType <>''
@@ -4095,7 +4105,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 		--Check um1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 				(	SELECT 10 AS sporttype, 1 AS bettype, @auto_v10mpositiontaking_mem_1 AS autopositiontaking, @isauto_v10mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
@@ -4105,8 +4115,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 10 AS sporttype, 10 AS bettype, @auto_v10mpositiontaking_mem_10 AS autopositiontaking, @isauto_v10mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					
 				) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 			WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -4125,7 +4135,7 @@ if	@UpdatePositiontaking   = 1  or
 		
 		--Check um1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(	SELECT 10 AS sporttype, 1 AS bettype, @max_v10mapositiontaking_1 AS maxmpositiontaking, @auto_v10mpositiontaking_mem_1 AS autopositiontaking, @isauto_v10mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
@@ -4135,8 +4145,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 10 AS sporttype, 10 AS bettype, @max_v10mapositiontaking_10 AS maxmpositiontaking, @auto_v10mpositiontaking_mem_10 AS autopositiontaking, @isauto_v10mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 					
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -4155,7 +4165,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check um1<=um1_min(=m1_min)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(	SELECT 10 AS sporttype, 1 AS bettype, @min_v10mp_1 AS minmpositiontaking, @auto_v10mpositiontaking_mem_1 AS autopositiontaking, @isauto_v10mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
@@ -4165,8 +4175,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 10 AS sporttype, 10 AS bettype, @min_v10mp_10 AS minmpositiontaking, @auto_v10mpositiontaking_mem_10 AS autopositiontaking, @isauto_v10mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
 
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -4185,7 +4195,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check m1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (
 									SELECT 10 AS sporttype	,	 1 AS bettype	,	 @v10mpositiontaking_1 AS mpositiontaking	,	 @max_v10mapositiontaking_1 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
@@ -4194,8 +4204,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 10 AS sporttype	,	 20 AS bettype	,	 @v10mpositiontaking_20 AS mpositiontaking	,	 @max_v10mapositiontaking_20 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 					UNION ALL		SELECT 10 AS sporttype	,	 10 AS bettype	,	 @v10mpositiontaking_10 AS mpositiontaking	,	 @max_v10mapositiontaking_10 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 			)b 			
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 				OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -4215,7 +4225,7 @@ if	@UpdatePositiontaking   = 1  or
 
 			--Check m1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(
@@ -4226,8 +4236,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 10 AS sporttype	,	 10 AS bettype	,	 @v10mpositiontaking_10 AS mpositiontaking	,	 0 AS mlivepositiontaking
 
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 			IF @ErrType <>''
 			BEGIN
@@ -4244,7 +4254,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1<=m1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 10 AS sporttype	,	 1 AS bettype	,	 @v10mpositiontaking_1 AS mpositiontaking	,@max_v10mp_1 as maxmpositiontaking, @isauto_v10mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v10mpositiontaking_1 as isauto_mpositiontaking
@@ -4253,8 +4263,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 10 AS sporttype	,	 20 AS bettype	,	 @v10mpositiontaking_20 AS mpositiontaking	,	 @max_v10mp_20 as maxmpositiontaking, @isauto_v10mpositiontaking_mem_20 as isauto_mpositiontaking_mem, @isauto_v10mpositiontaking_20 as isauto_mpositiontaking
 					UNION ALL		SELECT 10 AS sporttype	,	 10 AS bettype	,	 @v10mpositiontaking_10 AS mpositiontaking	,	 @max_v10mp_10 as maxmpositiontaking, @isauto_v10mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v10mpositiontaking_10 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -4273,7 +4283,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1>=m1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 10 AS sporttype	,	 1 AS bettype	,	 @v10mpositiontaking_1 AS mpositiontaking	,@min_v10mp_1 as minmpositiontaking, @isauto_v10mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v10mpositiontaking_1 as isauto_mpositiontaking
@@ -4282,8 +4292,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 10 AS sporttype	,	 20 AS bettype	,	 @v10mpositiontaking_20 AS mpositiontaking	,	 @min_v10mp_20 as minmpositiontaking, @isauto_v10mpositiontaking_mem_20 as isauto_mpositiontaking_mem, @isauto_v10mpositiontaking_20 as isauto_mpositiontaking
 					UNION ALL		SELECT 10 AS sporttype	,	 10 AS bettype	,	 @v10mpositiontaking_10 AS mpositiontaking	,	 @min_v10mp_10 as minmpositiontaking, @isauto_v10mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v10mpositiontaking_10 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -4323,7 +4333,7 @@ if	@UpdatePositiontaking   = 1  or
 
 		--Check um1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 				(	SELECT 11 AS sporttype, 1 AS bettype, @auto_v11mpositiontaking_mem_1 AS autopositiontaking, @isauto_v11mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
@@ -4331,8 +4341,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 11 AS sporttype, 10 AS bettype, @auto_v11mpositiontaking_mem_10 AS autopositiontaking, @isauto_v11mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					
 				) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 			WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -4351,7 +4361,7 @@ if	@UpdatePositiontaking   = 1  or
 
 			--Check um1<=min(m3,m4)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(	SELECT 11 AS sporttype, 1 AS bettype, @max_v11mapositiontaking_1 AS maxmpositiontaking, @auto_v11mpositiontaking_mem_1 AS autopositiontaking, @isauto_v11mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
@@ -4359,8 +4369,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 11 AS sporttype, 10 AS bettype, @max_v11mapositiontaking_10 AS maxmpositiontaking, @auto_v11mpositiontaking_mem_10 AS autopositiontaking, @isauto_v11mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -4379,7 +4389,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check um1>=um1_min(=m1_min)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(	SELECT 11 AS sporttype, 1 AS bettype, @min_v11mp_1 AS minmpositiontaking, @auto_v11mpositiontaking_mem_1 AS autopositiontaking, @isauto_v11mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
@@ -4387,8 +4397,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 11 AS sporttype, 10 AS bettype, @min_v11mp_10 AS minmpositiontaking, @auto_v11mpositiontaking_mem_10 AS autopositiontaking, @isauto_v11mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
 
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -4407,7 +4417,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check m1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (
 					
@@ -4417,8 +4427,8 @@ if	@UpdatePositiontaking   = 1  or
 					
 					
 			)b 	
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 				OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -4438,7 +4448,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check m1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(
@@ -4447,8 +4457,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 11 AS sporttype	,	 10 AS bettype	,	 @v11mpositiontaking_10 AS mpositiontaking	,	 0 AS mlivepositiontaking
 						
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 			IF @ErrType <>''
 			BEGIN
@@ -4465,7 +4475,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1<=m1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 11 AS sporttype	,	 1 AS bettype	,	 @v11mpositiontaking_1 AS mpositiontaking	,@max_v11mp_1 as maxmpositiontaking, @isauto_v11mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v11mpositiontaking_1 as isauto_mpositiontaking
@@ -4473,8 +4483,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 11 AS sporttype	,	 10 AS bettype	,	 @v11mpositiontaking_10 AS mpositiontaking	,	 @max_v11mp_10 as maxmpositiontaking, @isauto_v11mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v11mpositiontaking_10 as isauto_mpositiontaking
 					
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -4493,7 +4503,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1>=m1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 11 AS sporttype	,	 1 AS bettype	,	 @v11mpositiontaking_1 AS mpositiontaking	,@min_v11mp_1 as minmpositiontaking, @isauto_v11mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v11mpositiontaking_1 as isauto_mpositiontaking
@@ -4501,8 +4511,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 11 AS sporttype	,	 10 AS bettype	,	 @v11mpositiontaking_10 AS mpositiontaking	,	 @min_v11mp_10 as minmpositiontaking, @isauto_v11mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v11mpositiontaking_10 as isauto_mpositiontaking
 					
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -4544,7 +4554,7 @@ if	@UpdatePositiontaking   = 1  or
 				
 		--Check um1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 				(	SELECT 99 AS sporttype, 1 AS bettype, @auto_v99mpositiontaking_mem_1 AS autopositiontaking, @isauto_v99mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
@@ -4554,8 +4564,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 99 AS sporttype, 10 AS bettype, @auto_v99mpositiontaking_mem_10 AS autopositiontaking, @isauto_v99mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					
 				) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 			WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -4574,7 +4584,7 @@ if	@UpdatePositiontaking   = 1  or
 
 			--Check um1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(	SELECT 99 AS sporttype, 1 AS bettype, @max_v99mapositiontaking_1 AS maxmpositiontaking, @auto_v99mpositiontaking_mem_1 AS autopositiontaking, @isauto_v99mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
@@ -4584,8 +4594,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 99 AS sporttype, 10 AS bettype, @max_v99mapositiontaking_10 AS maxmpositiontaking,@auto_v99mpositiontaking_mem_10 AS autopositiontaking, @isauto_v99mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 				
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -4604,7 +4614,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check um1>= um1_min (=m1_min)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM 
 				(	SELECT 99 AS sporttype, 1 AS bettype, @min_v99mp_1 AS minmpositiontaking, @auto_v99mpositiontaking_mem_1 AS autopositiontaking, @isauto_v99mpositiontaking_mem_1 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
@@ -4614,8 +4624,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 99 AS sporttype, 10 AS bettype, @min_v99mp_10 AS minmpositiontaking,@auto_v99mpositiontaking_mem_10 AS autopositiontaking, @isauto_v99mpositiontaking_mem_10 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
 				
 				) AS b 
-			inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-			inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+			inner join #tmp_Sports sports ON b.sporttype = sports.ID
+			inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 			IF @ErrType <>''
@@ -4634,7 +4644,7 @@ if	@UpdatePositiontaking   = 1  or
 						
 			--Check m1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (
 									SELECT 99 AS sporttype	,	 1 AS bettype	,	 @v99mpositiontaking_1 AS mpositiontaking	,	 @max_v99mapositiontaking_1 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
@@ -4643,8 +4653,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 99 AS sporttype	,	 20 AS bettype	,	 @v99mpositiontaking_20 AS mpositiontaking	,	 @max_v99mapositiontaking_20 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 					UNION ALL		SELECT 99 AS sporttype	,	 10 AS bettype	,	 @v99mpositiontaking_10 AS mpositiontaking	,	 @max_v99mapositiontaking_10 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 			)b 	
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 				OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -4663,7 +4673,7 @@ if	@UpdatePositiontaking   = 1  or
 			END
 			--Check m1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(
@@ -4674,8 +4684,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 99 AS sporttype	,	 10 AS bettype	,	 @v99mpositiontaking_10 AS mpositiontaking	,	 0 AS mlivepositiontaking
 
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 			IF @ErrType <>''
 			BEGIN
@@ -4692,7 +4702,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1<=m1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 99 AS sporttype	,	 1 AS bettype	,	 @v99mpositiontaking_1 AS mpositiontaking	,@max_v99mp_1 as maxmpositiontaking, @isauto_v99mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v99mpositiontaking_1 as isauto_mpositiontaking
@@ -4701,8 +4711,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 99 AS sporttype	,	 20 AS bettype	,	 @v99mpositiontaking_20 AS mpositiontaking	,	 @max_v99mp_20 as maxmpositiontaking, @isauto_v99mpositiontaking_mem_20 as isauto_mpositiontaking_mem, @isauto_v99mpositiontaking_20 as isauto_mpositiontaking
 					UNION ALL		SELECT 99 AS sporttype	,	 10 AS bettype	,	 @v99mpositiontaking_10 AS mpositiontaking	,	 @max_v99mp_10 as maxmpositiontaking, @isauto_v99mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v99mpositiontaking_10 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -4721,7 +4731,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1>=m1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
 			FROM
 				(
 						SELECT 99 AS sporttype	,	 1 AS bettype	,	 @v99mpositiontaking_1 AS mpositiontaking	,@min_v99mp_1 as minmpositiontaking, @isauto_v99mpositiontaking_mem_1 as isauto_mpositiontaking_mem, @isauto_v99mpositiontaking_1 as isauto_mpositiontaking
@@ -4730,8 +4740,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 99 AS sporttype	,	 20 AS bettype	,	 @v99mpositiontaking_20 AS mpositiontaking	,	 @min_v99mp_20 as minmpositiontaking, @isauto_v99mpositiontaking_mem_20 as isauto_mpositiontaking_mem, @isauto_v99mpositiontaking_20 as isauto_mpositiontaking
 					UNION ALL		SELECT 99 AS sporttype	,	 10 AS bettype	,	 @v99mpositiontaking_10 AS mpositiontaking	,	 @min_v99mp_10 as minmpositiontaking, @isauto_v99mpositiontaking_mem_10 as isauto_mpositiontaking_mem, @isauto_v99mpositiontaking_10 as isauto_mpositiontaking
 				) b
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 			
 			IF @ErrType <>''
@@ -4769,14 +4779,14 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check um1<=l3
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 					(	
 						SELECT 99 AS sporttype, 9 AS bettype, @auto_v99mpositiontaking_mem_9 AS autopositiontaking, @isauto_v99mpositiontaking_mem_9 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking
 					) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 				WHERE co.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>co.maxlivepositiontaking))
 
@@ -4795,14 +4805,14 @@ if	@UpdatePositiontaking   = 1  or
 
 				--Check um1<=min(m3,m4)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(	
 						SELECT 99 AS sporttype, 9 AS bettype, @max_v99mapositiontaking_9 AS maxmpositiontaking, @auto_v99mpositiontaking_mem_9 AS autopositiontaking, @isauto_v99mpositiontaking_mem_9 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS maxmlivepositiontaking
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 				IF @ErrType <>''
@@ -4821,14 +4831,14 @@ if	@UpdatePositiontaking   = 1  or
 				
 				--Check um1>=um1_min(=m1_min)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(	
 						SELECT 99 AS sporttype, 9 AS bettype, @min_v99mp_9 AS minmpositiontaking, @auto_v99mpositiontaking_mem_9 AS autopositiontaking, @isauto_v99mpositiontaking_mem_9 AS isautopositiontaking, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 AS minmlivepositiontaking
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 				IF @ErrType <>''
@@ -4847,14 +4857,14 @@ if	@UpdatePositiontaking   = 1  or
 								
 				--Check m1<=min(m3,m4)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM (
 						SELECT 99 AS sporttype	,	 9 AS bettype	,	 @v99mpositiontaking_9 AS mpositiontaking	,	 @max_v99mapositiontaking_9 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
 
 				)b 	
-					inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-					inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+					inner join #tmp_Sports sports ON b.sporttype = sports.ID
+					inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 					OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -4875,14 +4885,14 @@ if	@UpdatePositiontaking   = 1  or
 
 				--Check m1<=l3
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co.maxpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=1 AND b.bettype IN (1,3,7,8) THEN '-MaxLive: '+ CAST((co.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 					FROM custoverride AS co WITH (NOLOCK) INNER JOIN
 						(
 							SELECT 99 AS sporttype	,	 9 AS bettype	,	 @v99mpositiontaking_9 AS mpositiontaking	,	 0 AS mlivepositiontaking
 						) AS b ON co.sporttype=b.sporttype AND co.bettype=b.bettype
-					inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-					inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+					inner join #tmp_Sports sports ON b.sporttype = sports.ID
+					inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE co.custid = @mrecommend AND ((b.mpositiontaking>co.maxpositiontaking) OR (b.sporttype=1 AND b.bettype IN (1,3,7,8) AND b.mlivepositiontaking>co.maxlivepositiontaking))
 				IF @ErrType <>''
 				BEGIN
@@ -4899,13 +4909,13 @@ if	@UpdatePositiontaking   = 1  or
 				
 				--check m1<=m1_max
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10)) + '<br>'
 				FROM
 					(
 							SELECT 99 AS sporttype	,	 9 AS bettype	,	 @v99mpositiontaking_9 AS mpositiontaking	,@max_v99mp_9 as maxmpositiontaking, @isauto_v99mpositiontaking_mem_9 as isauto_mpositiontaking_mem, @isauto_v99mpositiontaking_9 as isauto_mpositiontaking
 					) b
-					inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-					inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+					inner join #tmp_Sports sports ON b.sporttype = sports.ID
+					inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE b.mpositiontaking > maxmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 				
 				IF @ErrType <>''
@@ -4924,13 +4934,13 @@ if	@UpdatePositiontaking   = 1  or
 				
 				--check m1>=m1_min
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10)) + '<br>'
 				FROM
 					(
 							SELECT 99 AS sporttype	,	 9 AS bettype	,	 @v99mpositiontaking_9 AS mpositiontaking	,@min_v99mp_9 as minmpositiontaking, @isauto_v99mpositiontaking_mem_9 as isauto_mpositiontaking_mem, @isauto_v99mpositiontaking_9 as isauto_mpositiontaking
 					) b
-					inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-					inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+					inner join #tmp_Sports sports ON b.sporttype = sports.ID
+					inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE b.mpositiontaking < minmpositiontaking and isauto_mpositiontaking_mem = 0 and isauto_mpositiontaking = 0 
 				
 				IF @ErrType <>''
@@ -4978,7 +4988,7 @@ if	@UpdatePositiontaking   = 1  or
 
 				--Check um1<=l3
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co3.maxpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co3.maxpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=161 AND b.bettype IN (85,86,87,89,90) THEN '-MaxLive: '+ CAST((co3.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride3rd AS co3 WITH (NOLOCK) INNER JOIN
 					(
@@ -4992,8 +5002,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 161 AS sporttype, 90 AS bettype, 0								 AS autopositiontaking, 0								   AS isautopositiontaking, @auto_v161mlivepositiontaking_mem_90 AS autolivepositiontaking, @isauto_v161mlivepositiontaking_mem_90 AS isautolivepositiontaking
 						
 					) AS b ON co3.sporttype=b.sporttype AND co3.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 
 				WHERE co3.custid = @mrecommend AND ((b.isautopositiontaking>0 AND b.autopositiontaking>co3.maxpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=161 AND b.bettype IN (85,86,87,89,90) AND b.autolivepositiontaking>co3.maxlivepositiontaking))
 
@@ -5012,7 +5022,7 @@ if	@UpdatePositiontaking   = 1  or
 								
 			--Check um1<=min(m3,m4)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=161 AND b.bettype IN (85,86,87,89,90) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(
@@ -5026,8 +5036,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 161 AS sporttype, 90 AS bettype, 0						AS maxmpositiontaking, 0                                AS autopositiontaking, 0								   AS isautopositiontaking, @auto_V161mlivepositiontaking_mem_90 AS autolivepositiontaking, @isauto_V161mlivepositiontaking_mem_90 AS isautolivepositiontaking, @max_v161malivepositiontaking_90 AS maxmlivepositiontaking
 
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE (b.isautopositiontaking>0 AND b.autopositiontaking>b.maxmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=161 AND b.bettype IN (85,86,87,89,90) AND b.autolivepositiontaking>b.maxmlivepositiontaking)
 
 				IF @ErrType <>''
@@ -5046,7 +5056,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--Check um1>=um1_min(=m1_min)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 				+ CASE WHEN b.sporttype=161 AND b.bettype IN (85,86,87,89,90) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM 
 					(
@@ -5060,8 +5070,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 161 AS sporttype, 90 AS bettype, 0						AS minmpositiontaking, 0                                AS autopositiontaking, 0								   AS isautopositiontaking, @auto_V161mlivepositiontaking_mem_90 AS autolivepositiontaking, @isauto_V161mlivepositiontaking_mem_90 AS isautolivepositiontaking, @min_v161mlp_90 AS minmlivepositiontaking
 
 					) AS b 
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 				WHERE (b.isautopositiontaking>0 AND b.autopositiontaking<b.minmpositiontaking) OR (b.isautolivepositiontaking>0 AND b.sporttype=161 AND b.bettype IN (85,86,87,89,90) AND b.autolivepositiontaking<b.minmlivepositiontaking)
 
 				IF @ErrType <>''
@@ -5080,7 +5090,7 @@ if	@UpdatePositiontaking   = 1  or
 					
 			--Check m1<=min(m3,m4)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87,89,90) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (
 									SELECT 161 AS sporttype	,	 81 AS bettype	,	 @v161mpositiontaking_81 AS mpositiontaking	,	 @max_v161mapositiontaking_81 AS maxmpositiontaking	,	 0 AS mlivepositiontaking	,	 0 AS maxmlivepositiontaking
@@ -5093,8 +5103,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 161 AS sporttype	,	 90 AS bettype	,	 0						 AS mpositiontaking,	 0							  AS maxmpositiontaking, 	 @v161mlivepositiontaking_90 AS mlivepositiontaking	,	 @max_v161malivepositiontaking_90 AS maxmlivepositiontaking
 
 			)b 	
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking>b.maxmpositiontaking) 
 				OR (b.sporttype in (1,161) AND b.bettype IN (1,3,7,8,85,86,87,89,90) AND b.mlivepositiontaking>b.maxmlivepositiontaking)
 
@@ -5114,7 +5124,7 @@ if	@UpdatePositiontaking   = 1  or
 
 			--Check m1<=l3
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((co3.maxpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((co3.maxpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype=161 AND b.bettype IN (85,86,87,89,90) THEN '-MaxLive: '+ CAST((co3.maxlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 				FROM custoverride3rd AS co3 WITH (NOLOCK) INNER JOIN
 					(
@@ -5128,8 +5138,8 @@ if	@UpdatePositiontaking   = 1  or
 						UNION ALL		SELECT 161 AS sporttype	,	 90 AS bettype	,	 0 AS mpositiontaking	,	 @v161mlivepositiontaking_90 AS mlivepositiontaking
 						
 					) AS b ON co3.sporttype=b.sporttype AND co3.bettype=b.bettype
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE co3.custid = @mrecommend AND ((b.mpositiontaking>co3.maxpositiontaking) OR (b.sporttype=161 AND b.bettype IN (85,86,87) AND b.mlivepositiontaking>co3.maxlivepositiontaking))
 			IF @ErrType <>''
 			BEGIN
@@ -5146,7 +5156,7 @@ if	@UpdatePositiontaking   = 1  or
 				
 			--check m1 <= m1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (161) AND b.bettype IN (85,86,87,89,90) THEN '-MaxLive: '+ CAST((b.maxmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (
 									SELECT 161 AS sporttype	,	 81 AS bettype	,	 @v161mpositiontaking_81 AS mpositiontaking	,	 @max_v161mp_81 AS maxmpositiontaking,	 @isauto_v161mpositiontaking_mem_81 as isauto_mpositiontaking_mem, @isauto_v161mpositiontaking_81 as isauto_mpositiontaking, 0							AS mlivepositiontaking	,	 0				 AS maxmlivepositiontaking,	0										as isauto_mlivepositiontaking_mem, 0									as isauto_mlivepositiontaking
@@ -5159,8 +5169,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 161 AS sporttype	,	 90 AS bettype	,	 0						 AS mpositiontaking,	 0				AS maxmpositiontaking, 	 0									as isauto_mpositiontaking_mem, 0							  as isauto_mpositiontaking, @v161mlivepositiontaking_90 AS mlivepositiontaking	,	 @max_v161mlp_90 AS maxmlivepositiontaking,	@isauto_v161mlivepositiontaking_mem_90  as isauto_mlivepositiontaking_mem, @isauto_v161mlivepositiontaking_90   as isauto_mlivepositiontaking
 
 				)b 	
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking>b.maxmpositiontaking and b.isauto_mpositiontaking_mem = 0 and b.isauto_mpositiontaking = 0) 
 				OR (b.sporttype in (161) AND b.bettype IN (85,86,87,89,90) AND b.mlivepositiontaking>b.maxmlivepositiontaking and b.isauto_mlivepositiontaking_mem = 0 and b.isauto_mlivepositiontaking = 0)
 
@@ -5180,7 +5190,7 @@ if	@UpdatePositiontaking   = 1  or
 			
 			--check m1 >= m1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sportname + '-'+ typenamee + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
+			SELECT @ErrType = @ErrType + sports.Name + '-'+ bettype.Name + '-Min: '+ CAST((b.minmpositiontaking) AS VARCHAR(10))
 			+ CASE WHEN b.sporttype in (161) AND b.bettype IN (85,86,87,89,90) THEN '-MinLive: '+ CAST((b.minmlivepositiontaking) AS VARCHAR(10)) ELSE '' END + '<br>'
 			FROM (
 									SELECT 161 AS sporttype	,	 81 AS bettype	,	 @v161mpositiontaking_81 AS mpositiontaking	,	 @min_v161mp_81 AS minmpositiontaking,	 @isauto_v161mpositiontaking_mem_81 as isauto_mpositiontaking_mem, @isauto_v161mpositiontaking_81 as isauto_mpositiontaking, 0							AS mlivepositiontaking	,	 0				 AS minmlivepositiontaking,	0										as isauto_mlivepositiontaking_mem, 0									as isauto_mlivepositiontaking
@@ -5193,8 +5203,8 @@ if	@UpdatePositiontaking   = 1  or
 					UNION ALL		SELECT 161 AS sporttype	,	 90 AS bettype	,	 0						 AS mpositiontaking,	 0				AS minmpositiontaking, 	 0									as isauto_mpositiontaking_mem, 0							  as isauto_mpositiontaking, @v161mlivepositiontaking_90 AS mlivepositiontaking	,	 @min_v161mlp_90 AS minmlivepositiontaking,	@isauto_v161mlivepositiontaking_mem_90  as isauto_mlivepositiontaking_mem, @isauto_v161mlivepositiontaking_90   as isauto_mlivepositiontaking
 
 				)b 	
-				inner join @tmp_Sports sports ON b.sporttype = sports.sporttype
-				inner join @tmp_Bettype bettype ON b.bettype = bettype.typeid
+				inner join #tmp_Sports sports ON b.sporttype = sports.ID
+				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
 			WHERE (b.mpositiontaking<b.minmpositiontaking and b.isauto_mpositiontaking_mem = 0 and b.isauto_mpositiontaking = 0) 
 				OR (b.sporttype in (161) AND b.bettype IN (85,86,87,89,90) AND b.mlivepositiontaking<b.minmlivepositiontaking and b.isauto_mlivepositiontaking_mem = 0 and b.isauto_mlivepositiontaking = 0)
 
