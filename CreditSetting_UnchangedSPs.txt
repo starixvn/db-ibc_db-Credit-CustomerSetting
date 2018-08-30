@@ -23,3 +23,4 @@ DynamicCustSetting\UpdateSetting\Update\3_Commission-5_ChargeComm\Acc_CustSettin
 DynamicCustSetting\UpdateSetting\Update\13_NewProductStatus\Acc_CustSetting_DisableNewProductStatusSelect.sql
 DynamicCustSetting\UpdateSetting\Update\13_NewProductStatus\Acc_Admin_DisableNewProductStatusSelect.sql
 CommonFunction\Others\Acc_CheckShowProduct.SQL
+
