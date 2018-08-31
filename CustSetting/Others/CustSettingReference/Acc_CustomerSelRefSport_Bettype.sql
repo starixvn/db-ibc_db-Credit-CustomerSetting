@@ -22,6 +22,8 @@ AS
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20180214@Vicky: Add VS Basketball Product - [Redmine #89284]
 		- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
+		- 20180830@Elodie: Add Poker Games Product - [Redmine: #97675]
+
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
 		@isShowAll: 0: Show Active Bettype, 1: Show ALL 
@@ -37,6 +39,7 @@ BEGIN
 			,@HideNG2				BIT = 0 
 			,@HideVS				BIT = 0 
 			,@HideLottery			BIT = 0 
+			,@HidePokerGames		BIT = 0 
 			,@IsMyanmarOdds			BIT = 0
 			,@recommend				INT = 0
 			,@isIMBC				BIT = 0
@@ -87,6 +90,10 @@ BEGIN
 			SELECT @HideLottery = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,11))
 			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
 			WHERE CustID = @CustID		
+
+			SELECT @HidePokerGames = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,13))
+			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
+			WHERE CustID = @CustID		
 	END
 	
 	IF @RoleID = 1
@@ -134,11 +141,13 @@ BEGIN
 					
 					OR b.SportType BETWEEN 213 AND 218 --NG2
 					OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 193) --Virtual Sport
-					OR b.SportType = 220) -- Lottery
+					OR b.SportType = 220 -- Lottery
+					OR b.SportType = 163) -- PokerGames
 
 			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 193) THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
+			AND 1 = CASE WHEN @HidePokerGames = 1 AND b.SportType = 163 THEN 0 ELSE 1 END
 	ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
 END
 GO
