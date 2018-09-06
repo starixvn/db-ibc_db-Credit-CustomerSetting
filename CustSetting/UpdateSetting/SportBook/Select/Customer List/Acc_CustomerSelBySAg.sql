@@ -70,6 +70,8 @@ AS
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 		- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
+		- 20180830@Elodie: Add new bettype of Poker Games Product - [Redmine: #97675]
+
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -119,6 +121,7 @@ BEGIN
 		,	@bitmapOrder_PokerGames1402	INT
 		,	@bitmapOrder_PokerGames1403	INT
 		,	@bitmapOrder_PokerGames1404	INT
+		,	@bitmapOrder_PokerGames1405	INT
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)   
     SET @bitmapOrder_Cricket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
@@ -136,6 +139,7 @@ BEGIN
     SELECT	@bitmapOrder_PokerGames1402 = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 163 AND	psp.Bettype = 1402)
 	SELECT	@bitmapOrder_PokerGames1403 =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 163 AND	psp.Bettype = 1403)
     SELECT	@bitmapOrder_PokerGames1404 = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 163 AND	psp.Bettype = 1404)
+	SELECT	@bitmapOrder_PokerGames1405 = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 163 AND	psp.Bettype = 1405)
     
     DECLARE	@IsHidden_MuayThai			INT = 1
 		
@@ -545,8 +549,9 @@ BEGIN
 				-- For Poker Games
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1401)) AS DisablePokerGames1401,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1402)) AS DisablePokerGames1402,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1402)) AS DisablePokerGames1403,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1402)) AS DisablePokerGames1404,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1403)) AS DisablePokerGames1403,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1404)) AS DisablePokerGames1404,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1405)) AS DisablePokerGames1405,
 				CAST(CASE WHEN @IsHidden_PokerGames = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_PokerGames1401), 1) = 0 THEN 0 ELSE 1 END AS BIT) AS HidePokerGames,
 				CAST(CASE WHEN @IsHidden_PokerGames = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_PokerGames1401), 1)=0 THEN 0 ELSE 1 END AS BIT) AS HidePokerGamesUpline,
 
@@ -749,6 +754,7 @@ BEGIN
 			ctm.DisablePokerGames1402,
 			ctm.DisablePokerGames1403,
 			ctm.DisablePokerGames1404,
+			ctm.DisablePokerGames1405,
 			ctm.HidePokerGames,
 			ctm.HidePokerGamesUpline,
 			ctm.DisableVoidBridge,

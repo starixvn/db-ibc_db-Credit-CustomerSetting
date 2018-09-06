@@ -68,7 +68,7 @@ Revisions:
 	- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
-	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
+	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]	
 
 Pattern Explanation:
 Search keyword: '%keyword%'
@@ -112,10 +112,7 @@ B: 'B%'
 		,	@bitmapOrder_FishingWorld	INT
 		,	@bitmapOrder_VS				INT
 		,	@bitmapOrder_BullFighting	INT
-		,	@bitmapOrder_PokerGames1401	INT
-		,	@bitmapOrder_PokerGames1402	INT
-		,	@bitmapOrder_PokerGames1403	INT
-		,	@bitmapOrder_PokerGames1404	INT
+		,	@bitmapOrder_PokerGames1401	INT		
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)  
     SET @bitmapOrder_Cricket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)

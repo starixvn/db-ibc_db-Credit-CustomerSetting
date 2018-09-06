@@ -49,7 +49,6 @@ Revisions:
 	- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
 	- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
 	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
-
 */
 
 	SET NOCOUNT ON
