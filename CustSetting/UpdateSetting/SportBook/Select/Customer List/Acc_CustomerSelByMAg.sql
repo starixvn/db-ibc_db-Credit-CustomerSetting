@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustomerSelByMAg]
 	@MRecommend int,
 	@IsAgentSite bit = 0,	
@@ -72,7 +69,8 @@ AS
 		- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 		- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
 		- 20180830@Elodie: Add new bettype of Poker Games Product - [Redmine: #97675]
-
+		- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
+		
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -506,16 +504,12 @@ BEGIN
 	END
 	
 	-- get data for filtered customers	
-	DECLARE @SearchQuery varchar(1024)
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
 	DECLARE @tmpUserid VARCHAR(50)
 	SELECT @tmpUserid=CAST(@Userid AS VARCHAR(50))
-	SELECT @SearchQuery = 'SELECT * 
-	FROM OPENQUERY(DBPOLICY, 
-	''SELECT siteid , site,SpecialGroup FROM bodb02.dbo.f_GetDeniedSiteByUser( ''''' + @tmpUserid + ''''')'')'
-
+	
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
-	EXECUTE(@SearchQuery)
+	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
 	
 	;WITH customers AS
 	(

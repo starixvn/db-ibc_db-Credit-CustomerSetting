@@ -400,7 +400,9 @@ Revisions:
 	- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 	- 20170620@Winnie: Apply color for closed account - [RedmineID: 74494]
 	- 20171205@Johnson: add more log for special, doublecomm, autosuspend status [Redmine: #87121]
-	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]  	
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -414,14 +416,10 @@ BEGIN
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
 	DECLARE @tmpUserid VARCHAR(50)
 	
-	DECLARE @SearchQuery varchar(1024)
 	SELECT @tmpUserid=CAST(@creator AS VARCHAR(50))
-	SELECT @SearchQuery = 'SELECT * 
-	FROM OPENQUERY(DBPOLICY, 
-	''SELECT siteid , site,SpecialGroup FROM bodb02.dbo.f_GetDeniedSiteByUser( ''''' + @tmpUserid + ''''')'')'
-
+		
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
-	EXECUTE(@SearchQuery)	
+	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
 	
 	IF (@site IN (SELECT site FROM @tmp ))
 	BEGIN
