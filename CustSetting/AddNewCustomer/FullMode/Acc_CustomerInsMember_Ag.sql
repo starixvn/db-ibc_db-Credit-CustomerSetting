@@ -296,6 +296,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute. Normal agent can open up to 10 members per minute
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
+	- 20180924@Phillip: NAP - Allow Admin user to create more than 10 member per minute. [RedmineID: #101967]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -424,7 +425,7 @@ BEGIN
 		END
 	END
 
-	IF @recommend NOT IN (6201735, 11656507, 3645795, 3645796) -- internal agents: allow to create member freely
+	IF @SystemID <> 1 AND @recommend NOT IN (6201735, 11656507, 3645795, 3645796) -- internal agents: allow to create member freely
 	BEGIN -- can create upto 10 members / min
 		DECLARE @result_top10 as TABLE (custid int)
 		INSERT INTO @result_top10 (custid)
