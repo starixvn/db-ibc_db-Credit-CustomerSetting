@@ -5,9 +5,11 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_CheckListDeposit]
 AS
 /*  
  Created: 20180713@Vicky  
- Task : Check if customer is a deposit customer or not
+ Task : Check if a customer is a deposit customer or not
  DB:  DBCUST/CustDB   
- Original:  
+ Original: Acc_CustSetting_CheckIsDeposit
+ 
+ Revisions: 
         - 20180713@Vicky: NAP - Add new permission control to view Licensee Account [Redmine: #96118]
         
  Param's Explanation:
