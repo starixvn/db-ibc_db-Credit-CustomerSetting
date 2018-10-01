@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustSetting_CheckListDeposit_UAT4] 
-        @UserNameList NVARCHAR(MAX)=''
-        ,@CustIDList  VARCHAR(MAX)=''
+ALTER PROCEDURE [dbo].[Acc_CustSetting_CheckListDeposit] 
+        @UserNameList NVARCHAR(MAX)		= ''
+        ,@CustIDList  VARCHAR(MAX)		= ''
 AS
 /*  
  Created: 20180713@Vicky  
