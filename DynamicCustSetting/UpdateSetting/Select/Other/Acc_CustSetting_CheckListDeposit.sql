@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustSetting_CheckListDeposit] 
+ALTER PROCEDURE [dbo].[Acc_CustSetting_CheckListDeposit_UAT4] 
         @UserNameList NVARCHAR(MAX)=''
         ,@CustIDList  VARCHAR(MAX)=''
 AS
@@ -21,19 +21,32 @@ AS
  */  
 BEGIN
     
-    DECLARE @tblCust TABLE (CustInfo NVARCHAR(50))
+    DECLARE @tblCust TABLE (CustInfo VARCHAR(50), srecommend INT)
 
     IF @UserNameList != ''
     BEGIN
-        INSERT INTO @tblCust (CustInfo )
-        SELECT RTRIM(LTRIM(val)) FROM dbo.strSplit(@UserNameList,',') 
+        INSERT INTO @tblCust (CustInfo)
+        SELECT RTRIM(LTRIM(val)) 
+        FROM dbo.strSplit(@UserNameList,',') 
         
-        SELECT tmpCust.CustInfo, 
+        UPDATE tc
+        SET srecommend = ci.srecommend
+        FROM @tblCust tc
+        	INNER JOIN dbo.Customer ci WITH (NOLOCK) ON ci.username = tc.CustInfo 
+        
+        UPDATE tc
+        SET srecommend = ci.srecommend
+        FROM @tblCust tc
+        	INNER JOIN dbo.Customer ci WITH (NOLOCK) ON ci.username2 = tc.CustInfo
+        WHERE tc.srecommend IS NULL
+        
+        
+        SELECT tc.CustInfo, 
             (CASE WHEN dep.CustId IS NULL THEN 0 ELSE 1 END) AS IsDeposit,
-            (CASE WHEN ci.CustId  IS NULL THEN 0 ELSE 1 END) AS IsValid
-        FROM @tblCust tmpCust
-            LEFT JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.username = tmpCust.CustInfo
-            LEFT JOIN dbo.Dep_CustSuper dep WITH (NOLOCK) ON ci.srecommend = dep.custid
+            (CASE WHEN tc.srecommend  IS NULL THEN 0 ELSE 1 END) AS IsValid
+        FROM @tblCust tc
+        	LEFT JOIN dbo.Dep_CustSuper dep WITH (NOLOCK) ON tc.srecommend = dep.custid
+            
     END
     ELSE 
     BEGIN
