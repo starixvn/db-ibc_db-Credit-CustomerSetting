@@ -71,6 +71,7 @@ AS
 	- 20171113@Helen: Support to add default TO setting for new direct customers - [Redmine:86052]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180621@Razor: Add Message Customer Read Status [Redmind: #94705]
+	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -113,6 +114,8 @@ BEGIN
 			UNION ALL
 				SELECT 1 FROM dbo.custsub WITH(NOLOCK) WHERE username= @username
 		)
+		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
 	BEGIN		
 		Select @ErrMsg = case @Language 
 								when 'E' then 'This username is not available.'
