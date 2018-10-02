@@ -297,6 +297,7 @@ Revisions:
 	- 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute. Normal agent can open up to 10 members per minute
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 	- 20180924@Phillip: NAP - Allow Admin user to create more than 10 member per minute. [RedmineID: #101967]
+	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -530,82 +531,11 @@ BEGIN
 					    END,
 			    @success = 0, @ErrCode = 999
 	    return
-    END
-
-    /*thien@20081205: thien unblock again FROM Ah Wan request
-    --NOT allow agent under KH, KR, KAR, KBR, KCR, LDR, KM, KAM to create downlines (Requested by wan 04-Dec-2008)
-    IF exists (SELECT 1 FROM custinfo WITH(NOLOCK) WHERE custid = @recommend AND srecommend in (194355, 194356, 726562, 726571, 726579, 1164457, 194354, 726582))
-    BEGIN	
-	    SELECT	@ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Sorry. You cannot create more member.'
-							    WHEN 'CS' THEN N'对不起，您不能增加任何新的会员.'
-							    WHEN 'CT' THEN N'對不起, 您不能增加任何新的會員.'	
-							    WHEN 'TH' THEN N'ขออภัย คุณไม่สามารถเปิดบัญชีเพื่อเพิ่มจำนวนลูกค้าได้มากกว่านี้.'						
-							    ELSE N'Sorry. You cannot create more member.'
-					    END,
-			    @success = 0, @ErrCode = 999
-	    IF @ReturnErrCode = 0
-			    RaisError (@ErrMsg, 16, 1)		
-	    return
-    END
-    */
-    --Check Limit of Newly Created Member Per Day of Super Agent
-    declare @SAgLimit		smallint = -1 --Default Unlimit
-    declare @SAgNewMemCount smallint = 0
-
-
-    SELECT @SAgLimit = a.maxNewMemPerDay
-      FROM CustSuper a WITH(NOLOCK) inner join Customer b WITH(NOLOCK)
-        on a.custid = b.srecommend
-     WHERE 1=1   
-       AND b.custid = @recommend
-       AND b.roleid = 2
-       AND a.IsInternal = 0			--is not INTernal Super account
-       AND a.custid > 100			--is not System Dummy Super Agent
-       AND not exists (SELECT 1		--is not Dummy Super Agent of Deposit
-                         FROM Dep_CustSuper c WITH(NOLOCK)
-                        WHERE c.custid = a.custid
-                      )
-
-    IF (@SAgLimit = 0)
-    begin
-	    SELECT @ErrMsg = CASE @Language
-						    WHEN 'E' THEN 'Your limit of creating new member account per day is over. Please contact your upline OR CSD for further information.'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40031, @Language)
-					     END,
-		       @success = 0,
-		       @ErrCode = 1000
-	    return
-    END
-
-    IF (@SAgLimit <> -1)
-    begin
-	    SELECT @SAgNewMemCount = count(distinct a.custid)
-	      FROM Customer a WITH(NOLOCK) inner join Customer b WITH(NOLOCK)
-	        on a.srecommend = b.srecommend
-	     WHERE 1=1
-	       AND b.custid	= @recommend
-	       AND a.roleid	= 1
-	       AND b.roleid	= 2
-	       AND convert(date, a.creatdate) = convert(date, SYSDATETIME())
-
-	    IF @SAgNewMemCount >= @SAgLimit
-	    begin
-		    SELECT @ErrMsg = CASE @Language
-							    WHEN 'E' THEN 'Your limit of creating new member account per day is over. Please contact your upline OR CSD for further information.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40031, @Language)
-						     END,
-			       @success = 0,
-			       @ErrCode = 1000
-		    return
-	    END
-    END
+    END        
 
     --Check an account disabled OR not 
     EXEC dbo.Acc_CustomerSelCheckEnable @custid = @recommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
-    IF @ErrCode <>0		return 
-
-
+    IF @ErrCode <>0	RETURN 
 
     declare @transcode bigint, @currency INT, @pwdexpiry datetime, @srecommend INT,
 	    @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY,
@@ -1621,6 +1551,10 @@ BEGIN
      FROM custinfo WITH(NOLOCK)
      WHERE CustID = @recommend
 
+	--Check Limit max members creation per Super
+	EXEC Age_MaxMemberLimitBySuperCheck @custid = @srecommend, @ErrMsg = @ErrMsg OUTPUT, @ErrCode = @ErrCode OUTPUT
+	IF @ErrCode <> 0 RETURN
+    
     IF @isSearchAndCopy = 1
     BEGIN
         SELECT	@DisableEsports = DisableEsports,
