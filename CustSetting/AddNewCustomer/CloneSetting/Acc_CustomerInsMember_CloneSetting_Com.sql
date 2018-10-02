@@ -1,4 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_Com]
 	@Custid INT OUTPUT
 	,@UserName VARCHAR(30)
@@ -56,6 +59,8 @@ AS
 	- 20171113@Helen: Support to add default TO setting for new direct customers - [Redmine:86052]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180621@Razor: Add Message Customer Read Status [Redmind: #94705]
+	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
+
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -257,8 +262,9 @@ BEGIN
 			
 	BEGIN TRY
 		-- insert CustSuper info
-		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting)  
-		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting
+		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember)  
+		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting,
+			CASE WHEN @Site = '789y' THEN 20000 ELSE -1 END
 		FROM CustSuper WITH(NOLOCK)
 		WHERE custid=@ExistingCustid		
 	END TRY

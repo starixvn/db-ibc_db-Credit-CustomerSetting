@@ -537,6 +537,13 @@ BEGIN
     EXEC dbo.Acc_CustomerSelCheckEnable @custid = @recommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
     IF @ErrCode <>0	RETURN 
 
+	--Check Limit max members creation per Super
+	IF @SystemID <> 1
+	BEGIN
+		EXEC Age_MaxMemberLimitBySuperCheck @custid = @recommend, @ErrMsg = @ErrMsg OUTPUT, @ErrCode = @ErrCode OUTPUT
+		IF @ErrCode <> 0 RETURN
+	END
+
     declare @transcode bigint, @currency INT, @pwdexpiry datetime, @srecommend INT,
 	    @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY,
 	    @MinMinBetv2 MONEY, @MaxMaxBetv2 MONEY, @MaxMaxPerMatchv2 MONEY,
@@ -1549,11 +1556,7 @@ BEGIN
 		 , @HideColossusBet = HideColossusBet
 		 , @DisableSuperLive = DisableSuperLive
      FROM custinfo WITH(NOLOCK)
-     WHERE CustID = @recommend
-
-	--Check Limit max members creation per Super
-	EXEC Age_MaxMemberLimitBySuperCheck @custid = @srecommend, @ErrMsg = @ErrMsg OUTPUT, @ErrCode = @ErrCode OUTPUT
-	IF @ErrCode <> 0 RETURN
+     WHERE CustID = @recommend	
     
     IF @isSearchAndCopy = 1
     BEGIN
