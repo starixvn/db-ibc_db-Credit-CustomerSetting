@@ -70,7 +70,7 @@ BEGIN
 		- 20180830@Elodie: Add new bettype of Poker Games Product - [Redmine: #97675]
 
 		- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
-		
+		- 20180918@Winnie: Esports Product - [Redmine: #101526]
     Pattern Explanation:
     Search keyword: '%keyword%'
     First char
