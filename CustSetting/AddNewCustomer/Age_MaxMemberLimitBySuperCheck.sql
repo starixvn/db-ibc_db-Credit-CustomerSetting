@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
 USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Age_MaxMemberLimitBySuperCheck]    Script Date: 10/04/2018 15:13:53 ******/
@@ -56,3 +57,7 @@ BEGIN
 		SELECT @ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40038,@Language)
 	END
 END
+GO
+GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbAdminNet]
+GO
+GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbDownlineNet]

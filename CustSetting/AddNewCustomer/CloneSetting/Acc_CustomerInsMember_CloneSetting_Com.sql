@@ -29,7 +29,7 @@ AS
  Task: Add new super from existing super [Redmine:#5456]
  DB: DBCUST/CustDB  
   
- History:  
+ Revisions:  
 	- 20131113@Johnson: Apply execrep WHEN insert setting INTo CustSetting/CustSetting3rd/...
 	- 20131121@Elodie: Add Virtual greyhounds(182), Virtual Motor Racing(184) [Redmine:#7234]
 	- 20140304@Patrick	: Add more sport: 202 for Keno
