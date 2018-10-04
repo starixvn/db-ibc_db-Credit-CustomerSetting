@@ -1,10 +1,16 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="0"></info>*/
 USE [CustDB]
+GO
+/****** Object:  StoredProcedure [dbo].[Age_MaxMemberLimitBySuperCheck]    Script Date: 10/04/2018 15:13:53 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 
 ALTER PROCEDURE [dbo].[Age_MaxMemberLimitBySuperCheck]
-	@AgentId		INT,
-	@IsReachLimit	BIT OUTPUT
+	@AgentId	INT,
+	@Language	VARCHAR(10) = 'E',
+	@ErrCode	INT = 0 OUTPUT,
+	@ErrMsg		NVARCHAR(300) = '' OUTPUT
 AS
 
 /*
@@ -41,8 +47,12 @@ BEGIN
 	FROM dbo.CustSuper
 	WHERE CustId = @SuperId
 	
-	SET @IsReachLimit = CASE
+	SET @ErrCode = CASE
 							WHEN @CurrentMembers > = @MaxMemberLimit THEN 1
 							ELSE 0
 						END
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40038,@Language)
+	END
 END
