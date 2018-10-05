@@ -43,6 +43,7 @@ BEGIN
 	SELECT MaxWinLimit
 		, MaxWinLimit * @CreditAmount AS MaxWinAmount
 		, MaxLossLimit AS MaxLossAmount
+		, @Amount as CurrentAmount
 		, CASE WHEN MaxWinLimit = 0 THEN -1 --unlimited
 				WHEN @Amount > 0 AND @CreditAmount = 0 AND MaxWinLimit > 0 THEN -2--N/A
 				WHEN @Amount > 0 AND @CreditAmount > 0 AND MaxWinLimit > 0 THEN @Amount * 100/(MaxWinLimit * @CreditAmount) 
