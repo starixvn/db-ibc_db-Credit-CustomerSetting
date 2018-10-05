@@ -1,3 +1,5 @@
+/*<info serverAlias="DBTXN-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+
 ALTER PROCEDURE dbo.Acc_CustSetting_WinLossPercentSelect 
 	@CustId INT
 	,@SportType SMALLINT
@@ -9,8 +11,10 @@ AS
   DB: DBTXN/bodb02
     
   Revisions:  
-
-  Parameters Explanation:    
+	- 20181004@Johnson: hotfix for member winloss limit with no given credit[Redmined: #102008]	
+  Parameters Explanation: 
+	WinPercent: -1: winloss setting is unlimited
+				-2: N/A win/loss <> 0 and given credit = 0
  */
 BEGIN
 	SET NOCOUNT ON	
@@ -39,22 +43,15 @@ BEGIN
 	SELECT MaxWinLimit
 		, MaxWinLimit * @CreditAmount AS MaxWinAmount
 		, MaxLossLimit AS MaxLossAmount
-		, CASE WHEN @Amount > 0 AND @CreditAmount = 0 AND MaxWinLimit > 0 THEN @Amount * 100
+		, CASE WHEN MaxWinLimit = 0 THEN -1 --unlimited
+				WHEN @Amount > 0 AND @CreditAmount = 0 AND MaxWinLimit > 0 THEN -2--N/A
 				WHEN @Amount > 0 AND @CreditAmount > 0 AND MaxWinLimit > 0 THEN @Amount * 100/(MaxWinLimit * @CreditAmount) 
 				ELSE 0 END AS WinPercent
-		, CASE WHEN @Amount < 0 AND MaxLossLimit > 0 THEN @Amount * -100/MaxLossLimit
+		, CASE WHEN MaxLossLimit = 0 THEN -1--unlimited				
+				WHEN @Amount < 0 AND MaxLossLimit > 0 THEN @Amount * -100/MaxLossLimit
 				ELSE 0 END AS LossPercent
 	FROM DBCUST.CustDB.dbo.CustWinLossLimit_Member c WITH(NOLOCK)
 	WHERE CustId = @CustId AND SportType = @SportType AND BetType = @BetType
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossPercentSelect] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossPercentSelect] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossPercentSelect] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossPercentSelect] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_WinLossPercentSelect] TO [vnteam] AS [dbo]
