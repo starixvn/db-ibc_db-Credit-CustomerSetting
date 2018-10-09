@@ -29,7 +29,7 @@ AS
  
  DB: DBCUST/CustDB
   
- History:  
+ Revisions:  
 	- 20120323 @Dan: check roleid and the master of existing agent before copying 
 	- 20120718@Dan: add 1 more field "site" in CustAgent table
 	- 20120801@Dan: add 3 fields in custinfo table (VS)

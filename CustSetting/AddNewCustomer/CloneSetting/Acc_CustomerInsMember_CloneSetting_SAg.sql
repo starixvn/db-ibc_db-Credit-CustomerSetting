@@ -28,7 +28,7 @@ AS
  
  DB: DBCUST/CustDB  
   
- History:  
+ Revisions:  
 	- 20120323 @Dan: check roleid and the super of existing master before copying 
 	- 20120820@Dan: add 3 fields in custinfo table (VS)
 	- 20120829@Dan: isSync status for 3 products - Casino,Bingo and LiveCasino will not be cloned
