@@ -17,7 +17,7 @@ AS
 /*
 	Created by: 20180924@Phillip
 	Task: Limit max members creation per Super: #101994
-	DB: DBCUST.CustDB
+	DB: DBCUST/CustDB
 	Original:	
 	
 	Revisions:
@@ -25,7 +25,9 @@ AS
 	
 	Param's Explanation:
 	- @AgentId: Agent Id
-	- @IsReachLimit: Is Reach Limit or not
+	- @Language: Language
+	- @ErrCode: Error Code
+	- @ErrMsg: Error Message
 */
 
 BEGIN
@@ -33,31 +35,42 @@ BEGIN
 	DECLARE @CurrentMembers INT,
 			@MaxMemberLimit	INT,
 			@SuperId		INT
-			
-	SELECT @CurrentMembers = COUNT(*)
-	FROM dbo.custinfo WITH (NOLOCK)
-	WHERE recommend = @AgentId
-		AND roleid = 1
-		AND [Enabled] = 1
 		
 	SELECT @SuperId = srecommend
 	FROM dbo.custinfo WITH (NOLOCK)
 	WHERE custid = @AgentId
 	
+	SELECT @CurrentMembers = COUNT(*)
+	FROM dbo.custinfo WITH (NOLOCK)
+	WHERE srecommend = @SuperId
+		AND roleid = 1
+		AND [Enabled] = 1
+		
 	SELECT @MaxMemberLimit = MaxMember
 	FROM dbo.CustSuper
 	WHERE CustId = @SuperId
 	
+	IF @MaxMemberLimit = -1
+	BEGIN
+		RETURN
+	END
+	
 	SET @ErrCode = CASE
-							WHEN @CurrentMembers > = @MaxMemberLimit THEN 1
-							ELSE 0
-						END
+		WHEN @CurrentMembers > = @MaxMemberLimit THEN 1
+		ELSE 0
+	END
 	IF @ErrCode <> 0
 	BEGIN
-		SELECT @ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40038,@Language)
+		SELECT @ErrMsg = CASE @Language 
+           WHEN 'E' THEN 'Sorry, you cannot create more Member accounts because the total Members under your upline have exceeded the limit. Please contact your upline for further assistance.'
+           ELSE [dbo].[f_Get_MsgNamebyMsgID](40038,@Language)
 	END
 END
 GO
 GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbAdminNet]
 GO
 GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbDownlineNet]
+GO
+GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbDownlineNetView]
+GO
+GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbExtAccNet]
