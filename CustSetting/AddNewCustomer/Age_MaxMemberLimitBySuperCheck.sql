@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Age_MaxMemberLimitBySuperCheck]    Script Date: 10/04/2018 15:13:53 ******/
@@ -39,21 +39,21 @@ BEGIN
 	SELECT @SuperId = srecommend
 	FROM dbo.custinfo WITH (NOLOCK)
 	WHERE custid = @AgentId
-	
-	SELECT @CurrentMembers = COUNT(*)
-	FROM dbo.custinfo WITH (NOLOCK)
-	WHERE srecommend = @SuperId
-		AND roleid = 1
-		AND [Enabled] = 1
 		
 	SELECT @MaxMemberLimit = MaxMember
-	FROM dbo.CustSuper
+	FROM dbo.CustSuper WITH (NOLOCK)
 	WHERE CustId = @SuperId
 	
 	IF @MaxMemberLimit = -1
 	BEGIN
 		RETURN
 	END
+	
+	SELECT @CurrentMembers = COUNT(*)
+	FROM dbo.custinfo WITH (NOLOCK)
+	WHERE srecommend = @SuperId
+		AND roleid = 1
+		AND [Enabled] = 1
 	
 	SET @ErrCode = CASE
 		WHEN @CurrentMembers > = @MaxMemberLimit THEN 1
@@ -62,8 +62,9 @@ BEGIN
 	IF @ErrCode <> 0
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
-           WHEN 'E' THEN 'Sorry, you cannot create more Member accounts because the total Members under your upline have exceeded the limit. Please contact your upline for further assistance.'
-           ELSE [dbo].[f_Get_MsgNamebyMsgID](40038,@Language)
+			WHEN 'E' THEN N'Sorry, you cannot create more Member accounts because the total Members under your upline have exceeded the limit. Please contact your upline for further assistance.'
+			ELSE [dbo].[f_Get_MsgNamebyMsgID](40038,@Language)
+			END
 	END
 END
 GO
