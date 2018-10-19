@@ -33,13 +33,14 @@ BEGIN
         SET srecommend = ci.srecommend
         FROM @tblCust tc
         	INNER JOIN dbo.Customer ci WITH (NOLOCK) ON ci.username = tc.CustInfo 
+        WHERE ci.roleid  IN (1,2,3,4)
         
         UPDATE tc
         SET srecommend = ci.srecommend
         FROM @tblCust tc
         	INNER JOIN dbo.Customer ci WITH (NOLOCK) ON ci.username2 = tc.CustInfo
-        WHERE tc.srecommend IS NULL
-        
+        WHERE tc.srecommend IS NULL AND ci.roleid  IN (1,2,3,4)
+
         
         SELECT tc.CustInfo, 
             (CASE WHEN dep.CustId IS NULL THEN 0 ELSE 1 END) AS IsDeposit,
@@ -55,9 +56,9 @@ BEGIN
         
         SELECT tmpCust.CustInfo, 
             (CASE WHEN dep.CustId IS NULL THEN 0 ELSE 1 END) AS IsDeposit,
-            (CASE WHEN ci.CustId  IS NULL THEN 0 ELSE 1 END) AS IsValid
+            (CASE WHEN ci.srecommend  IS NULL THEN 0 ELSE 1 END) AS IsValid
         FROM @tblCust tmpCust
-            LEFT JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = tmpCust.CustInfo
+            LEFT JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = tmpCust.CustInfo AND ci.roleid  IN (1,2,3,4)
             LEFT JOIN dbo.Dep_CustSuper dep WITH (NOLOCK) ON ci.srecommend = dep.custid
     END 
 END
