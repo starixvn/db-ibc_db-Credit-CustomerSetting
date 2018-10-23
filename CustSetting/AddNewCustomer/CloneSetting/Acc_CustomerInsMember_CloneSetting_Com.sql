@@ -60,6 +60,7 @@ AS
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180621@Razor: Add Message Customer Read Status [Redmind: #94705]
 	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
+	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882] 
 
  Explanation's Param:  
 	- @ErrCode:
@@ -85,6 +86,8 @@ BEGIN
 			UNION ALL
 				SELECT 1 FROM dbo.custsub WITH(NOLOCK) WHERE username= @username
 		)
+		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
 	BEGIN		
 		SELECT @ErrMsg = CASE @Language 
 								WHEN 'E' THEN 'This username is not available.'								
@@ -262,9 +265,11 @@ BEGIN
 			
 	BEGIN TRY
 		-- insert CustSuper info
+		DECLARE @MaxMember INT
+		SELECT CASE WHEN @Site = '789y' THEN 20000 ELSE -1 END
+
 		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember)  
-		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting,
-			CASE WHEN @Site = '789y' THEN 20000 ELSE -1 END
+		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting, @MaxMember			
 		FROM CustSuper WITH(NOLOCK)
 		WHERE custid=@ExistingCustid		
 	END TRY
@@ -655,6 +660,7 @@ BEGIN
 	'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as VARCHAR(100)),space(1))) + '" ' +
 	'site="'+ coalesce(cast(@site as VARCHAR(50)),space(1)) + '" ' +	
 	'credit="'+ coalesce(cast(@Credit as VARCHAR(50)),space(1)) + '" ' +	
+	'MaxMember="'+ coalesce(cast(@MaxMember as VARCHAR(50)),space(1)) + '" ' +	
 	'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'IP="'+ coalesce(cast(@IP as VARCHAR(15)),space(1)) + '" ' +	
 	'Language="'+ coalesce(cast(@Language as VARCHAR(2)),space(1)) + '" ' +	
@@ -685,6 +691,7 @@ BEGIN
 		'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as VARCHAR(100)),space(1))) + '" ' +
 		'site="'+ coalesce(cast(@site as VARCHAR(50)),space(1)) + '" ' +	
 		'credit="'+ coalesce(cast(@Credit as VARCHAR(50)),space(1)) + '" ' +	
+		'MaxMember="'+ coalesce(cast(@MaxMember as VARCHAR(50)),space(1)) + '" ' +	
 		'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'IP="'+ coalesce(cast(@IP as VARCHAR(15)),space(1)) + '" ' +	
 		'Language="'+ coalesce(cast(@Language as VARCHAR(2)),space(1)) + '" ' +	

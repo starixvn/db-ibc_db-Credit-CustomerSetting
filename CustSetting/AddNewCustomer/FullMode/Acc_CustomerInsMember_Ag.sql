@@ -298,6 +298,8 @@ Revisions:
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 	- 20180924@Phillip: NAP - Allow Admin user to create more than 10 member per minute. [RedmineID: #101967]
 	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
+	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
+
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -1782,9 +1784,11 @@ BEGIN
 
     SELECT @site=CASE WHEN @ugroup like 'indo_' THEN 'INDO' ELSE '' END, @ugroup = CASE WHEN @ugroup like 'indo_' THEN right(@ugroup,1) ELSE @ugroup END
 
-    IF exists(SELECT 1 FROM customer WITH(NOLOCK) WHERE username= @username)
-	    OR exists (SELECT 1 FROM customer WITH(NOLOCK) WHERE username2 = @username)
-	    OR exists(SELECT 1 FROM custsub WITH(NOLOCK) WHERE username= @username) 
+    IF EXISTS(SELECT 1 FROM customer WITH(NOLOCK) WHERE username= @username)
+	    OR EXISTS (SELECT 1 FROM customer WITH(NOLOCK) WHERE username2 = @username)
+	    OR EXISTS (SELECT 1 FROM custsub WITH(NOLOCK) WHERE username= @username) 
+		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
     BEGIN
 	    SELECT @ErrMsg = CASE @Language 
 							    WHEN 'E' THEN 'This username is not available.'
