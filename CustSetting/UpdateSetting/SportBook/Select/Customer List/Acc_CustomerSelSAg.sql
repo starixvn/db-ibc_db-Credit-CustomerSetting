@@ -9,9 +9,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerSelSAg]
 	@System varchar(50) = 'ACCOUNTING',
 	@PageSize int=50,
 	@PageIndex int=1,
+	@SiteType SMALLINT = 0, --credit or deposit
 	@TotalPages int=0 OUTPUT,
 	@TotalItems int=0 OUTPUT,
 	@Userid		INT=NULL
+	
 AS
 BEGIN
 /*
@@ -66,15 +68,17 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]	
+	- 20180704@Vicky:  NAP - Add new permission control to view Licensee Account [Redminid: #96118]
 
 	- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
 	
 Pattern Explanation:
-Search keyword: '%keyword%'
-First char
-A: 'A%'
-B: 'B%'
-0-9: '[0-9]%'
+		Search keyword: '%keyword%'
+		First char
+		A: 'A%'
+		B: 'B%'
+		0-9: '[0-9]%'
+		- @SiteType: 1: Credit; 2: Deposit; 0: ALL
 */
 
 	SET NOCOUNT ON
@@ -156,6 +160,16 @@ B: 'B%'
 
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
 	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
+	
+	INSERT INTO  @tmp (siteid, site, SpecialGroup)
+	SELECT s.siteID, s.site, s.SpecialGroup
+    FROM site s WITH (NOLOCK)
+    WHERE s.siteid NOT IN (SELECT siteid FROM @tmp)
+	      AND 1 =  CASE  
+	                  WHEN @SiteType = 0 THEN 0 
+	                  WHEN @SiteType = 1 AND s.isLicensee = 1 THEN 1 --excludes deposit site
+	                  WHEN @SiteType = 2 AND s.isLicensee = 0 THEN 1 --excludes credit site
+	               END
 	
 		IF @TotalPages = 0
 		BEGIN
