@@ -540,7 +540,7 @@ BEGIN
 	--Check Limit max members creation per Super
 	IF @SystemID <> 1
 	BEGIN
-		EXEC Age_MaxMemberLimitBySuperCheck @AgentId = @recommend, @ErrMsg = @ErrMsg OUTPUT, @ErrCode = @ErrCode OUTPUT
+		EXEC Age_MaxMemberLimitBySuperCheck @AgentId = @recommend, @Language = @Language, @ErrMsg = @ErrMsg OUTPUT, @ErrCode = @ErrCode OUTPUT
 		IF @ErrCode <> 0 RETURN
 	END
 
