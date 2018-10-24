@@ -266,7 +266,7 @@ BEGIN
 	BEGIN TRY
 		-- insert CustSuper info
 		DECLARE @MaxMember INT
-		SELECT CASE WHEN @Site = '789y' THEN 20000 ELSE -1 END
+		SELECT @MaxMember = CASE WHEN @Site = '789y' THEN 20000 ELSE -1 END
 
 		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember)  
 		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting, @MaxMember			
