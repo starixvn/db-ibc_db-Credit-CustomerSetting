@@ -265,8 +265,9 @@ BEGIN
 			
 	BEGIN TRY
 		-- insert CustSuper info
-		DECLARE @MaxMember INT
+		DECLARE @MaxMember INT, @MaxMemberLog VARCHAR(50)
 		SELECT @MaxMember = CASE WHEN @Site = '789y' THEN 20000 ELSE -1 END
+		SELECT @MaxMemberLog = CASE WHEN @Site = '789y' THEN '20000' ELSE 'Unlimited' END
 
 		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember)  
 		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting, @MaxMember			
@@ -660,7 +661,7 @@ BEGIN
 	'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as VARCHAR(100)),space(1))) + '" ' +
 	'site="'+ coalesce(cast(@site as VARCHAR(50)),space(1)) + '" ' +	
 	'credit="'+ coalesce(cast(@Credit as VARCHAR(50)),space(1)) + '" ' +	
-	'MaxMember="'+ coalesce(cast(@MaxMember as VARCHAR(50)),space(1)) + '" ' +	
+	'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
 	'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'IP="'+ coalesce(cast(@IP as VARCHAR(15)),space(1)) + '" ' +	
 	'Language="'+ coalesce(cast(@Language as VARCHAR(2)),space(1)) + '" ' +	
@@ -691,7 +692,7 @@ BEGIN
 		'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as VARCHAR(100)),space(1))) + '" ' +
 		'site="'+ coalesce(cast(@site as VARCHAR(50)),space(1)) + '" ' +	
 		'credit="'+ coalesce(cast(@Credit as VARCHAR(50)),space(1)) + '" ' +	
-		'MaxMember="'+ coalesce(cast(@MaxMember as VARCHAR(50)),space(1)) + '" ' +	
+		'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
 		'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'IP="'+ coalesce(cast(@IP as VARCHAR(15)),space(1)) + '" ' +	
 		'Language="'+ coalesce(cast(@Language as VARCHAR(2)),space(1)) + '" ' +	

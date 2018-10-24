@@ -1138,8 +1138,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
 
-	DECLARE @MaxMember INT
-	SELECT @MaxMember = CASE WHEN @Site = '789y' THEN 20000 ELSE -1 END
+	DECLARE @MaxMemberLog VARCHAR(50)
+	SELECT @MaxMemberLog = CASE WHEN @Site = '789y' THEN '20000' ELSE 'Unlimited' END
 
 	DECLARE @LogSPData VARCHAR(MAX)
 	--Write general info
@@ -1162,7 +1162,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'site="'+ COALESCE(CAST(@site AS VARCHAR(100)),SPACE(1)) + '" ' +
 	'currency="'+ COALESCE(CAST(@currency AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxMember="'+ coalesce(cast(@MaxMember as VARCHAR(50)),space(1)) + '" ' +	
+	'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
 	'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
 	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 	'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1196,7 +1196,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'site="'+ COALESCE(CAST(@site AS VARCHAR(100)),SPACE(1)) + '" ' +
 		'currency="'+ COALESCE(CAST(@currency AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxMember="'+ coalesce(cast(@MaxMember as VARCHAR(50)),space(1)) + '" ' +	
+		'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
 		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
 		'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 		'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +
