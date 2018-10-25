@@ -402,7 +402,9 @@ Revisions:
 	- 20171205@Johnson: add more log for special, doublecomm, autosuspend status [Redmine: #87121]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]  	
-	
+	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
+	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -721,6 +723,8 @@ BEGIN
 	IF EXISTS(SELECT 1 FROM Customer WITH (NOLOCK) WHERE username= @username)
 		OR EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE username2 = @username)
 		OR EXISTS(SELECT 1 FROM custSub WITH (NOLOCK) WHERE username= @username)
+		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'This username is not available.'
@@ -1134,6 +1138,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
 
+	DECLARE @MaxMemberLog VARCHAR(50)
+	SELECT @MaxMemberLog = CASE WHEN @Site = '789y' THEN '20000' ELSE 'Unlimited' END
+
 	DECLARE @LogSPData VARCHAR(MAX)
 	--Write general info
 	SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1155,6 +1162,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'site="'+ COALESCE(CAST(@site AS VARCHAR(100)),SPACE(1)) + '" ' +
 	'currency="'+ COALESCE(CAST(@currency AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
 	'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
 	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 	'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1188,6 +1196,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'site="'+ COALESCE(CAST(@site AS VARCHAR(100)),SPACE(1)) + '" ' +
 		'currency="'+ COALESCE(CAST(@currency AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
 		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
 		'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 		'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +
