@@ -302,6 +302,7 @@ Revisions:
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
 	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526]
 	- 20181205@Kan: Write @SystemID param into log [Redmine:104431]
+	- 20181102@Johnson: Apply service broker for logging [Redmine: #103547]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 Param's Explanation:	
 • @ErrCode:
@@ -5019,27 +5020,47 @@ BEGIN
     Declare @LogSPCredit VARCHAR(200)
     SELECT @LogSPCredit = 'UserName='+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + ',
     SubAccName='+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1))
+	
+	DECLARE @log xml, @SB_Error BIT = 0
+ 
+	SELECT @log = (SELECT @Creator as '@UserID',
+						@custid as '@CustID',
+						@LogSPCredit as '@Doing',						
+						@credit as '@NewValue',
+						@IP as '@IP',
+						1207 as '@ActionID'
+					FOR XML PATH('Row')	
+				)
 
-    BEGIN TRY
-	    EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-		    @UserID = @Creator,
-		    @CustID = @CustID,
-		    @Doing = @LogSPCredit,
-		    @NewValue = @credit,
-		    @IP = @IP,
-		    @ActionID = 1207
-    END TRY
-    BEGIN CATCH		
-	    SELECT @LogSPCredit = @LogSPCredit + ', ErrMsg= ' + error_message()
+	EXEC bodb_CustomerLog.sb.CustomerLog_SendMessage @xml = @log, 
+													@MessageType='MessageType_CustomerLog_UserLog_Credit', 
+													@functionName = 'UserLog_Credit',
+													@SB_Error = @SB_Error out
 
-	    EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-		    @UserID = @Creator,
-		    @CustID = @CustID,
-		    @Doing = @LogSPCredit,
-		    @NewValue = @credit,
-		    @IP = @IP,
-		    @ActionID = 1207
-    END CATCH
+	--if ssb error
+	IF @SB_Error = 1
+	BEGIN
+		BEGIN TRY
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+				@UserID = @Creator,
+				@CustID = @CustID,
+				@Doing = @LogSPCredit,
+				@NewValue = @credit,
+				@IP = @IP,
+				@ActionID = 1207
+		END TRY
+		BEGIN CATCH		
+			SELECT @LogSPCredit = @LogSPCredit + ', ErrMsg= ' + error_message()
+
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+				@UserID = @Creator,
+				@CustID = @CustID,
+				@Doing = @LogSPCredit,
+				@NewValue = @credit,
+				@IP = @IP,
+				@ActionID = 1207
+		END CATCH
+	END	
 
     --Write PT log
     SELECT @LogSPData = '<Acc_CustomerInsMember_Ag apt_1="'+ COALESCE(CAST(@apositiontaking_1 AS VARCHAR(50)), SPACE(1)) + '" ' +
