@@ -487,8 +487,7 @@ BEGIN
 	END
 	ELSE --select MinBet = Old_Minbet to write log in case not update
 	BEGIN
-		SELECT @MinBetv164 = @Old_MinBetv164, @MaxBetv164 = @Old_MaxBetv164 , @MaxPerMatchv164 = @Old_MaxPerMatchv164,
-				@MaxPerBallv164 = @Old_MaxPerBallv164
+		SELECT @MinBetv164 = @Old_MinBetv164, @MaxBetv164 = @Old_MaxBetv164 , @MaxPerMatchv164 = @Old_MaxPerMatchv164				
 	END
 	---------------------------------------------------------------
 
