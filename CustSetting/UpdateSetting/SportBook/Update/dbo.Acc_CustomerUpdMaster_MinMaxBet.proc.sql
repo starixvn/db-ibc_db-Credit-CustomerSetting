@@ -199,7 +199,7 @@ BEGIN
 		
 		
 		@Old_MinBetv161 = @MinBetv161 AND @Old_MaxBetv161 = @MaxBetv161 AND @Old_MaxPerMatchv161 = @MaxPerMatchv161 AND
-		@Old_MaxPerBallv161 = @MaxPerBallv161 
+		@Old_MaxPerBallv161 = @MaxPerBallv161 AND
 		@Old_MinBetv164 = @MinBetv164 AND @Old_MaxBetv164 = @MaxBetv164 AND @Old_MaxPerMatchv164 = @MaxPerMatchv164 
 		RETURN
 
