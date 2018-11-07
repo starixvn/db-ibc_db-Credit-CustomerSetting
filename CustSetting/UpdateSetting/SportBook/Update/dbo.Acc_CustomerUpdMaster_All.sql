@@ -1,9 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @custid int,-- masterid    
     @disCasino bit = 0,    
@@ -65,7 +60,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @maxbetv161 money,
     @maxpermatchv161 money,
     @maxperballv161 money,
-
+	
+	@minbetv164 money=0,
+    @maxbetv164 money=0,
+    @maxpermatchv164 money=0,
+	
     @credit money,
     @Language varchar(2),
     @UpdateMultiple bit = 0,
@@ -166,7 +165,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @UpdateMinMaxBetv1MP bit = 1,
 
     @UpdateMinMaxBetv161 bit = 1,
-
+	@UpdateMinMaxBetv164 bit = 1,
+	
     @UpdatePositiontaking bit = 1,
     @UpdatePositiontakingv2 bit = 1,
     @UpdatePositiontakingv3 bit = 1,
@@ -179,7 +179,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @UpdatePositiontakingv99MP bit = 1,
 
     @UpdatePositiontakingv161 bit = 1,
-
+	@UpdatePositiontakingv164 bit = 1,
+	
     @UpdateClosed bit = 1,
     @UpdateSuspended BIT = 1,
 
@@ -437,7 +438,7 @@ as
 /*
 Created: 20080514@Thien
 Task : Update master
-DB: DBTXN/bodb02
+DB: DBCUST/CUSTDB
 Original: Acc_CustomerUpdEditCustomer_SAg
 
 Revisions:
@@ -471,6 +472,7 @@ Revisions:
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20170628@Winnie: Apply color for closed account - [Redmine: 74494]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -717,7 +719,8 @@ BEGIN
 		@UpdateMinMaxBetv99  = 1 or
 		@UpdateMinMaxBetv99MP = 1 or
 		@UpdateMinMaxBetv1MP = 1 or	
-		@UpdateMinMaxBetv161 = 1
+		@UpdateMinMaxBetv161 = 1 or
+		@UpdateMinMaxBetv164 = 1
 	BEGIN
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
 		EXEC dbo.Acc_CustomerUpdMaster_MinMaxBet
@@ -763,7 +766,11 @@ BEGIN
 			@maxpermatchv161 = @maxpermatchv161,
 
 			@maxperballv161 = @maxperballv161,
-
+			
+			@minbetv164 = @minbetv164,
+			@maxbetv164 = @maxbetv164,
+			@maxpermatchv164 = @maxpermatchv164,
+			
 			@UpdateMultiple = @UpdateMultiple,
 			@UpdateMinMaxBet = @UpdateMinMaxBet,
 			@UpdateMinMaxBetv2 = @UpdateMinMaxBetv2,
@@ -779,6 +786,7 @@ BEGIN
 			@UpdateMinMaxBetv1MP = @UpdateMinMaxBetv1MP,			
 			
 			@UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,
+			@UpdateMinMaxBetv164 = @UpdateMinMaxBetv164,
 
 			@SubAccID = @SubAccID,
 			@UserID = @UserID,
@@ -809,7 +817,8 @@ BEGIN
 		@UpdatePositiontakingv11   = 1  or
 		@UpdatePositiontakingv99   = 1  or
 		@UpdatePositiontakingv99MP = 1 or		
-		@UpdatePositiontakingv161 = 1
+		@UpdatePositiontakingv161 = 1 or
+		@UpdatePositiontakingv164 = 1
 	BEGIN
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
 		--Check Old_PT <> New_PT

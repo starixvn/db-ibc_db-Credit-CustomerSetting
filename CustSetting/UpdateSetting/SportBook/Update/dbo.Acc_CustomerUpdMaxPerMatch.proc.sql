@@ -13,6 +13,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaxPerMatch]
 	@maxpermatchv1MP money,
 	
 	@maxpermatchv161 money,
+	@maxpermatchv164 money=0,
 	@UpdateMultiple bit = 0,	
 	@UpdateMinMaxBet bit = 1,
 	@UpdateMinMaxBetv2 bit = 1,
@@ -26,6 +27,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaxPerMatch]
 	@UpdateMinMaxBetv1MP bit = 1,
 	
 	@UpdateMinMaxBetv161 bit = 1,
+	@UpdateMinMaxBetv164 bit = 1,
 	@Language varchar(2) = 'E',
 	@ErrCode int = 0 OUTPUT,
 	@ErrMsg nvarchar(4000) = '' OUTPUT
@@ -34,7 +36,7 @@ AS
 /*
 Created: 20081118@Phuc
 Task : Update Maxpermatch
-DB: DBTXN/bodb02
+DB: DBCUST/CUSTDB
 Original:
 
 Revisions:
@@ -45,6 +47,7 @@ Revisions:
     - 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -66,7 +69,8 @@ set
 	MaxPerMatch99MP=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv99MP=1 then @MaxPerMatchv99MP else MaxPerMatch99MP end,
 	MaxPerMatch1MP=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv1MP=1 then @MaxPerMatchv1MP else MaxPerMatch1MP end,
 	
-	MaxPerMatch161=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv161=1 then @MaxPerMatchv161 else MaxPerMatch161 end
+	MaxPerMatch161=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv161=1 then @MaxPerMatchv161 else MaxPerMatch161 end,
+	MaxPerMatch164=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv164=1 then @MaxPerMatchv164 else MaxPerMatch164 end
 where custid = @custid 
 if (@@error <> 0)
 begin
@@ -77,10 +81,4 @@ begin
 	return
 end
 
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatch] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatch] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaxPerMatch] TO [vnteam] AS [dbo]

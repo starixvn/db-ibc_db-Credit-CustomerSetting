@@ -655,6 +655,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@MinBetv161 MONEY = 0,
 	@MaxBetv161 MONEY = 0,	
 	
+	@MinBetv164 MONEY = 0,
+	@MaxBetv164 MONEY = 0,
+	
 	--@minbetv180 money = 0,
 	--@maxbetv180 money = 0,
 	--@minbetv181 money = 0,
@@ -784,6 +787,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 			- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 			- 20180327@Vicky: add header infomation [Redmine: #90422]
+			- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 		Parameter's Explanation:
 		
 	*/
@@ -923,6 +927,8 @@ BEGIN
 		UNION ALL	SELECT @custid, 88, 161, @v161apositiontaking_88, @v161mpositiontaking_88, @v161spositiontaking_88, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 89, 161, 0, 0, 0, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_89, @v161mlivepositiontaking_89, @v161slivepositiontaking_89, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 90, 161, 0, 0, 0, 0, 0, 0, @discountnumber, @MinBetv161, @MaxBetv161, 0, 0, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, 0, 0, 0, 0, 0, 0
+		--v164
+		UNION ALL	SELECT @custid, 8101, 164, 0, 0, 0, 0, 0, 0, 0, @MinBetv164, @MaxBetv164, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		---- v18x
 		--UNION ALL	SELECT @custid, 1201, 180, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 		--UNION ALL	SELECT @custid, 1231, 181, 0.9, 0.9, 0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -1320,6 +1326,8 @@ BEGIN
 		select @custid, 89, 161, 0, 0, 0, 0, 0, @discountnumber, 0, @minbetv161, @maxbetv161, 0, 0, 0, 0, 0, @v161mlivepositiontaking_89, @v161slivepositiontaking_89, @auto_v161slivepositiontaking_89, @isauto_v161slivepositiontaking_89, 0,0
 		UNION ALL
 		select @custid, 90, 161, 0, 0, 0, 0, 0, @discountnumber, 0, @minbetv161, @maxbetv161, 0, 0, 0, 0, 0, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, @auto_v161slivepositiontaking_90, @isauto_v161slivepositiontaking_90, 0,0
+		UNION ALL
+		select @custid, 8101, 164, 0, 0, 0, 0, 0, 0, 0, @minbetv164, @maxbetv164, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0
 		
 		----v180		
 		--UNION ALL
@@ -1733,6 +1741,8 @@ BEGIN
 		select @custid, 89, 161, 0, 0, 0, 0, @discountnumber, 0, 0, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, @v161alivepositiontaking_89, @v161mlivepositiontaking_89, 0, 0, 0, @auto_v161mlivepositiontaking_89, @isauto_v161mlivepositiontaking_89
 		UNION ALL
 		select @custid, 90, 161, 0, 0, 0, 0, @discountnumber, 0, 0, @MinBetv161, @MaxBetv161, 0, 0, 0, 0, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, 0, 0, 0, @auto_v161mlivepositiontaking_90, @isauto_v161mlivepositiontaking_90
+		UNION ALL
+		select @custid, 8101, 164, 0, 0, 0, 0, 0, 0, 0, @MinBetv164, @MaxBetv164, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 		--UNION ALL -- v180 virtual soccer
 		--select @custid, 1201, 180, 0, mpositiontaking, 0, 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 FROM dbo.CustSetting3rd WITH (NOLOCK) WHERE sporttype = 180 AND bettype = 1201 AND custid = @mrecommend
@@ -2158,6 +2168,8 @@ BEGIN
 		select @custid, 89, 161, 0, 0, 0, @playerdiscountnumber, @discountnumber, @adiscountnumber, @sdiscountnumber, @MinBetv161, @MaxBetv161, 0, 0,@v161alivepositiontaking_89,@v161mlivepositiontaking_89,@v161slivepositiontaking_89,0,0, 0, 0, 0, 0
 		UNION ALL
 		select @custid, 90, 161, 0, 0, 0, @playerdiscountnumber, @discountnumber, @adiscountnumber, @sdiscountnumber, @MinBetv161, @MaxBetv161, 0, 0,@v161alivepositiontaking_90,@v161mlivepositiontaking_90,@v161slivepositiontaking_90,0,0, 0, 0, 0, 0
+		UNION ALL
+		select @custid, 8101, 164, 0, 0, 0, 0, 0, 0, 0, @MinBetv164, @MaxBetv164, 0, 0,0,0,0,0,0, 0, 0, 0, 0
 		----v180
 		--UNION ALL
 		--select @custid, 1201, 180, ISNULL(@v180apositiontaking_1201,0), ISNULL(@v180mpositiontaking_1201,0), ISNULL(@v180spositiontaking_1201,0), 0, 0, 0, 0, ISNULL(@minbetv180,0), ISNULL(@maxbetv180,0), 0, 0,0,0,0,0,0, 0, 0, 0, 0

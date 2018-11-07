@@ -1,8 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]  
 	@custid INT,--memberid  
 
@@ -73,7 +69,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@MaxPerMatchv161 MONEY,  
 
 	@MaxPerBallv161 money = 0,
-
+	
+	@MinBetv164 MONEY=0,  
+	@MaxBetv164 MONEY=0,  
+	@MaxPerMatchv164 MONEY=0, 
+	
 	@UpdateMinMaxBet BIT = 1,   
 	@UpdateMinMaxBetv2 BIT = 1,   
 	@UpdateMinMaxBetv3 BIT = 1,   
@@ -87,6 +87,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@UpdateMinMaxBetv1MP BIT = 1,
 	
 	@UpdateMinMaxBetv161 BIT = 1,  
+	@UpdateMinMaxBetv164 BIT = 1,  
 
 	@credit MONEY,  
 
@@ -185,6 +186,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@UpdatePositiontakingv1MP BIT = 1,  
 	
 	@UpdatePositiontakingv161 BIT = 1,  
+	@UpdatePositiontakingv164 BIT = 1,  
 
 	@UserID INT,    
 
@@ -236,6 +238,7 @@ Revisions:
  - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
  - 20170628@Winnie: Appply color for closed account - [Redmine: 74494]
  - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+ - 20181107@Johnson: add Happy 5 [Redmine: #104006]
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -497,7 +500,8 @@ BEGIN
 		@UpdateMinMaxBetv99MP = 1 or  
 		@UpdateMinMaxBetv1MP = 1 or  
 		
-		@UpdateMinMaxBetv161 = 1  
+		@UpdateMinMaxBetv161 = 1 or
+		@UpdateMinMaxBetv164 = 1  	
 	BEGIN  
 	 Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''  
 	 EXEC dbo.Acc_CustomerUpdMember_MinMaxBet   
@@ -539,6 +543,11 @@ BEGIN
 	  @maxbetv161 = @maxbetv161,  
 	  @maxpermatchv161 = @maxpermatchv161,  
 	  @maxperballv161 = @maxperballv161,
+	  
+	  @minbetv164 = @minbetv164,  
+	  @maxbetv164 = @maxbetv164,  
+	  @maxpermatchv164 = @maxpermatchv164,
+	  
 	  @UpdateMultiple = @UpdateMultiple,  
 	  @UpdateMinMaxBet = @UpdateMinMaxBet,  
 	  @UpdateMinMaxBetv2 = @UpdateMinMaxBetv2,  
@@ -554,6 +563,7 @@ BEGIN
 	  
 	
 	  @UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,  
+	  @UpdateMinMaxBetv164 = @UpdateMinMaxBetv164,  
 	  @SubAccID = @SubAccID,  
 	  @UserID = @UserID,  
 	  @Language = @Language,  

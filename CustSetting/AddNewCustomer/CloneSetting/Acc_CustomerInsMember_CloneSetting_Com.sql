@@ -63,6 +63,7 @@ AS
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882] 
 	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526] 	
 	- 20181105@Louis: Credit Collection Summary  [RedmineID: #98621]
+	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -325,7 +326,7 @@ BEGIN
 				,maxpermatch161
 				
 				,MaxPerBall161				
-				
+				,maxpermatch164
 				--,DisableVirtualSports
 				--,HideVirtualSports
 				--,maxpermatch180
@@ -382,7 +383,7 @@ BEGIN
 				,maxpermatch161
 				
 				,MaxPerBall161				
-			
+				,maxpermatch164
 				--,DisableVirtualSports
 				--,HideVirtualSports
 				--,maxpermatch180
@@ -717,6 +718,5 @@ BEGIN
 	SET NOCOUNT OFF
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_CloneSetting_Com] TO [bodbAdminNet]
-GO
+
 
