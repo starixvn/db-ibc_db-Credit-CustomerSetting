@@ -62,6 +62,7 @@ AS
 	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882] 
 	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526] 	
+	- 20181105@Louis: Credit Collection Summary  [RedmineID: #98621]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -576,13 +577,15 @@ BEGIN
 	END CATCH		
 	
 	BEGIN TRY
-		INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy)
-		SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy
+		INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status)
+		SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status
 		FROM Customer ci WITH(NOLOCK)
 		WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 		
 		IF @@ROWCOUNT <> 0 
 			BEGIN
+				EXEC dbo.Acc_CreditCollStatusInit @CustId = @custid, @UserId = @creator, @IP = @IP, @Language = @Language
+				
 				SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" />'
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 600,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
