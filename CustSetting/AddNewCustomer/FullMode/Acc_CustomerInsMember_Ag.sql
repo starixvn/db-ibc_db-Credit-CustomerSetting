@@ -5028,7 +5028,8 @@ BEGIN
 						@LogSPCredit as '@Doing',						
 						@credit as '@NewValue',
 						@IP as '@IP',
-						1207 as '@ActionID'
+						1207 as '@ActionID',
+						getdate() as '@LogDate'
 					FOR XML PATH('Row')	
 				)
 

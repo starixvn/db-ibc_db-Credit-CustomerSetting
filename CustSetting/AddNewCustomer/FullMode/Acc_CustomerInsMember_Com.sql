@@ -1516,7 +1516,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 						@LogSPCredit as '@Doing',						
 						@credit as '@NewValue',
 						@IP as '@IP',
-						1208 as '@ActionID'
+						1208 as '@ActionID',
+						getdate() as '@LogDate'
 					FOR XML PATH('Row')	
 				)
 
