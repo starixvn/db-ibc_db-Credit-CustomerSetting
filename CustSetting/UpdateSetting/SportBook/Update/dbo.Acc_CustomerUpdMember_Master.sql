@@ -397,6 +397,7 @@ Revisions:
 	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
+	- 20181122@Johnson: remove redundant log status [redmine: #105164]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -541,46 +542,6 @@ END
 			
 		END
 
-
-	--Log customer info
-	DECLARE @LogSPData VARCHAR(MAX)
-	
-	SELECT @LogSPData = '<Acc_CustomerUpdMember_Master custid="'+ COALESCE(CAST(@CustID AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'Closed="'+ COALESCE(CAST(@Closed AS VARCHAR(2)),SPACE(1)) + '" ' +
-	'ClosedMultiple="'+ COALESCE(CAST(@UpdateClosed AS VARCHAR(2)),SPACE(1)) + '" ' +
-	'suspended="'+ COALESCE(CAST(@suspended AS VARCHAR(2)),SPACE(1)) + '" ' +
-	'suspendedMultiple="'+ COALESCE(CAST(@UpdateSuspended AS VARCHAR(2)),SPACE(1)) + '" ' +
-	'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
-	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),SPACE(1)) + '" ' +
-	'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
-
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-			@UserID = @UserID,
-			@CustID = @CustID,
-			@ActionID = 1117,
-			@TrackingValue = @LogSPData
-	END TRY
-	BEGIN CATCH
-		SELECT @LogSPData = '<Acc_CustomerUpdMember_Master custid="'+ COALESCE(CAST(@CustID AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'Closed="'+ COALESCE(CAST(@Closed AS VARCHAR(2)),SPACE(1)) + '" ' +
-		'ClosedMultiple="'+ COALESCE(CAST(@UpdateClosed AS VARCHAR(2)),SPACE(1)) + '" ' +
-		'suspended="'+ COALESCE(CAST(@suspended AS VARCHAR(2)),SPACE(1)) + '" ' +
-		'suspendedMultiple="'+ COALESCE(CAST(@UpdateSuspended AS VARCHAR(2)),SPACE(1)) + '" ' +
-		'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
-		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),SPACE(1)) + '" ' +
-		'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
-		'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1)) + '" ' +
-		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
-		
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-			@UserID = @UserID,
-			@CustID = @CustID,
-			@ActionID = 1117,
-			@TrackingValue = @LogSPData
-	END CATCH
 -----------------------------------------------------------------------------------------------------------------------------------
 --BEGIN Update Position Taking
 if	@UpdatePositiontaking   = 1  or
@@ -6981,7 +6942,8 @@ if	@UpdatePositiontaking   = 1  or
 
 		--Log for PT
 		DECLARE @TrackingValue2 VARCHAR(MAX)
-			
+				,@LogSPData VARCHAR(MAX)
+				
 		SELECT @LogSPData = '<Acc_CustomerUpdMember_Master><info Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),SPACE(1)) + '" ' +
 		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />' +
