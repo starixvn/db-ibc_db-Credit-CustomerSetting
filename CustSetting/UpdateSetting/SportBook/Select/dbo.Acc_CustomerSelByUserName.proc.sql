@@ -14,6 +14,8 @@ Revisions:
 	- 20100724@Henry: Enhance the performance
 	- 20101119@Henry: if not accounting then get custid where super in Acc_CustSite depending on site
 	- 20130121@Dan: change linked server DB06 to DBACC, call to DBAGE/bodb_AGE for Acc_CustGroup
+	- 20181122@Elodie: DB053/bodb_Age Migration [Redmine:#104770]
+
 Param's Explanation:
 	@username: username want to get all info related
 */	
@@ -52,7 +54,7 @@ BEGIN
 				custid = @Custid
 				--AND srecommend NOT IN (SELECT custid FROM dbo.f_GetDummySuper())
 				--AND Currency IN (SELECT exchangeId FROM dbo.f_CurrencyBySystem(@System))
-				AND srecommend IN (SELECT CustID FROM bodb_AGE.dbo.Acc_CustGroup WHERE GroupName = @System )
+				AND srecommend IN (SELECT CustID FROM dbo.Acc_CustGroup WHERE GroupName = @System )
 				
 END
 
