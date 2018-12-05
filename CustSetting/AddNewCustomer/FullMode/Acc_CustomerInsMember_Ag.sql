@@ -304,6 +304,7 @@ Revisions:
 	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
 	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526]
+	- 20181205@Kan: Write @SystemID param into log [Redmine:104431]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 Param's Explanation:	
 • @ErrCode:
@@ -4684,6 +4685,7 @@ BEGIN
     'isSearchAndCopy ="'+ COALESCE(CAST(@isSearchAndCopy AS VARCHAR(5)), SPACE(1)) + '" ' +
     'copyFromCustID ="'+ COALESCE(CAST(@copyFromCustID AS VARCHAR(20)), SPACE(1)) + '" ' +
     'copyFromUsername ="'+ COALESCE(@copyFromUsername, SPACE(1)) + '" ' +
+	'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
     'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1)) + '" ' +
     'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(4000)), SPACE(1)) + '" />'
 
@@ -4715,6 +4717,7 @@ BEGIN
 	    'isSearchAndCopy ="'+ COALESCE(CAST(@isSearchAndCopy AS VARCHAR(5)), SPACE(1)) + '" ' +
 	    'copyFromCustID ="'+ COALESCE(CAST(@copyFromCustID AS VARCHAR(20)), SPACE(1)) + '" ' +
 	    'copyFromUsername ="'+ COALESCE(@copyFromUsername, SPACE(1)) + '" ' +
+		'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
 	    'ErrCode="'+ COALESCE(CAST(ERROR_NUMBER() AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'ErrMsg="'+ COALESCE(CAST(ERROR_MESSAGE() AS VARCHAR(4000)), SPACE(1)) + '" />'
 

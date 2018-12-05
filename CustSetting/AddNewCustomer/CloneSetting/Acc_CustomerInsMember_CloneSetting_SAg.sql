@@ -69,8 +69,9 @@ AS
 	- 20171113@Helen: Support to add default TO setting for new direct customers - [Redmine:86052]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180621@Razor: Add Message Customer Read Status [Redmind: #94705]
-	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
+	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
 	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526] 
+	- 20181205@Kan: Write @SystemID param into log [Redmine:104431]
 	- 20181105@Louis: Credit Collection Summary  [RedmineID: #98621]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
  Explanation's Param:  
@@ -722,6 +723,7 @@ BEGIN
 	'CopiedFrom="'+cast(@ExistingCustid as VARCHAR(10))+'" '+
 	'CopiedFomUsername="'+c.username+'" '+
 	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccountID) as VARCHAR(30)),space(1)) + '" ' +
+	'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
 	'ErrCode="'+ coalesce(cast(@ErrCode as VARCHAR(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as VARCHAR(4000)),space(1)) + '" />'
 	FROM dbo.customer AS c WITH(NOLOCK) 
@@ -753,6 +755,7 @@ BEGIN
 		'CopiedFrom="'+cast(@ExistingCustid as VARCHAR(10))+'" '+
 		'CopiedFomUsername="'+c.username+'" '+
 		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccountID) as VARCHAR(30)),space(1)) + '" ' +
+		'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
 		'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as VARCHAR(50)),space(1)) + '" ' +
 		'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as VARCHAR(4000)),space(1)) + '" />'
 		FROM dbo.customer AS c WITH(NOLOCK) 
