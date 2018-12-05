@@ -1201,8 +1201,9 @@ IF 	@Old_MinBet = @MinBet AND @Old_MaxBet = @MaxBet AND	@Old_MaxPerMatch = @MaxP
 	@Old_MinBetv99MP = @MinBetv99MP AND @Old_MaxBetv99MP = @MaxBetv99MP AND @Old_MaxPerMatchv99MP = @MaxPerMatchv99MP AND
 	@Old_MinBetv1MP = @MinBetv1MP AND @Old_MaxBetv1MP = @MaxBetv1MP AND @Old_MaxPerMatchv1MP = @MaxPerMatchv1MP AND
 	
-	@Old_MinBetv161 = @MinBetv161 AND @Old_MaxBetv161 = @MaxBetv161 AND @Old_MaxPerMatchv161 = @MaxPerMatchv161 AND
-	@Old_MaxPerBallv161 = @MaxPerBallv161 RETURN	
+	@Old_MinBetv161 = @MinBetv161 AND @Old_MaxBetv161 = @MaxBetv161 AND @Old_MaxPerMatchv161 = @MaxPerMatchv161 AND	@Old_MaxPerBallv161 = @MaxPerBallv161 AND
+	@Old_MinBetv164 = @MinBetv164 AND @Old_MaxBetv164 = @MaxBetv164 AND @Old_MaxPerMatchv164 = @MaxPerMatchv164
+	RETURN	
 ---------------------------------------------------------------------------------------------------		
 update custsetting with (ROWLOCK, UPDLOCK)
 set
