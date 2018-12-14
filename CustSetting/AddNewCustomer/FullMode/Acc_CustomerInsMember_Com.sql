@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -309,7 +309,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@DisableNumber BIT = 0,
 	@DoubleCommLosing BIT = 1,
 	@DisableCasinoBonus BIT = 1,
-	@DisableEsports BIT = 0,
+	
 	@DisableGoldDeluxe BIT = 0,
 	@DisableSuperLive BIT = 1,
 	@DisableColossusBet BIT = 1,
@@ -404,7 +404,7 @@ Revisions:
 	- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]  	
 	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
-
+	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526] 	
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -793,7 +793,7 @@ BEGIN
 		--@HideVirtualSports = @HideVirtualSports,
 		@DoubleCommLosing = @DoubleCommLosing,		
 		@DisableCasinoBonus = @DisableCasinoBonus,		
-		@DisableEsports = @DisableEsports,
+
 		
 		@DisableGoldDeluxe = @DisableGoldDeluxe,
 		@HideGoldDeluxe = @HideGoldDeluxe,
@@ -1337,7 +1337,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
 
-	'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)),SPACE(1)) + '" ' +
+	
 	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 
@@ -1369,7 +1369,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)),SPACE(1)) + '" ' +
+		
 		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 		

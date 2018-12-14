@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 	@Custid INT OUTPUT
 	,@UserName VARCHAR(30)
@@ -70,6 +70,7 @@ AS
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180621@Razor: Add Message Customer Read Status [Redmind: #94705]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
+	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526] 
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -394,7 +395,7 @@ BEGIN
 			,DoubleCommLosing
 			,DisableCasinoBonus			
 			,HideKeno
-			,DisableEsports
+			
 			,HideGoldDeluxe
 			,DisableGoldDeluxe
 			,HideColossusBet
@@ -453,7 +454,7 @@ BEGIN
 			,@doubleCommLosingUpline as doubleCommLosing
 			,1			
 			,HideKeno
-			,DisableEsports
+			
 			,HideGoldDeluxe
 			,DisableGoldDeluxe
 			,HideColossusBet

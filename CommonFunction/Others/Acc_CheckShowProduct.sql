@@ -1,6 +1,5 @@
-/*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
+/*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
 
 ALTER PROCEDURE [dbo].[Acc_CheckShowProduct]
 	@ProductID	TINYINT,

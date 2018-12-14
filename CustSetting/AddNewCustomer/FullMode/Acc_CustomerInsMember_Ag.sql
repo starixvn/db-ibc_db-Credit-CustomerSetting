@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 USE CustDB
 GO
 
@@ -299,7 +299,7 @@ Revisions:
 	- 20180924@Phillip: NAP - Allow Admin user to create more than 10 member per minute. [RedmineID: #101967]
 	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
-
+	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -592,9 +592,7 @@ BEGIN
 	    @autosuspend BIT,
 	    @autosuspend2 BIT,
 	    
-	    --E-Sports
-	    @DisableEsports BIT,
-
+	 
     --	@AgentMaxPerMatch MONEY, @AgentMaxPerMatchb MONEY,
     --	@MaxPerMatch_AllOtherMember MONEY, @MaxPerMatchv2_AllOtherMember MONEY,
 
@@ -1550,8 +1548,7 @@ BEGIN
          --, @HideVirtualSports = HideVirtualSports
          , @DisableCasinoBonus = 1
          , @virtualmultiplier = ISNULL(virtualmultiplier, 1)           
-         , @HideKeno = HideKeno
-         , @DisableEsports = DisableEsports
+         , @HideKeno = HideKeno      
 		 , @DisableGoldDeluxe = DisableGoldDeluxe
 		 , @HideGoldDeluxe = HideGoldDeluxe
 		 , @DisableColossusBet = DisableColossusBet
@@ -1562,7 +1559,7 @@ BEGIN
     
     IF @isSearchAndCopy = 1
     BEGIN
-        SELECT	@DisableEsports = DisableEsports,
+        SELECT	
 				@DisableOutright = DisableOutright,
 				@DisableColossusBet = DisableColossusBet,
 				@DisableSuperLive = DisableSuperLive
@@ -3136,8 +3133,7 @@ BEGIN
 		
 		@DisableSuperLive = @DisableSuperLive,
 
-	    --E-Sports
-	    @DisableEsports = @DisableEsports,
+	   
     	@SystemID=@SystemID,
 	    @credit = @credit,	
 	    @IP = @IP,
@@ -4930,7 +4926,7 @@ BEGIN
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableNumber="'+ COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
 
-    'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)), SPACE(1)) + '" ' +
+   
 	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)), SPACE(1)) + '" ' +
 	'HideColossusBet="'+ COALESCE(CAST(@HideColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -4967,7 +4963,7 @@ BEGIN
 	    'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableNumber="'+ COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' +	   
 	  
-	    'DisableEsports="'+ COALESCE(CAST(@DisableEsports AS VARCHAR(1)), SPACE(1)) + '" ' +
+	    
 		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)), SPACE(1)) + '" ' +
 		'HideColossusBet="'+ COALESCE(CAST(@HideColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
