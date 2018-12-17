@@ -1,6 +1,4 @@
 ﻿/*<info serverAlias="DBAGE-bodb02" executers="bodbadminNet,bodbExtAccNet" isFunction="0"></info>*/
-USE bodb02 
-GO
 
 ALTER PROC [dbo].[Acc_CustomerSelByUserName] 
 	@Custid int = null,
