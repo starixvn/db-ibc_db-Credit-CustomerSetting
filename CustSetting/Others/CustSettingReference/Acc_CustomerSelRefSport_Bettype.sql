@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE  [dbo].[Acc_CustomerSelRefSport_Bettype]
 	 @CustID		INT = NULL
@@ -23,6 +23,7 @@ AS
 		- 20180214@Vicky: Add VS Basketball Product - [Redmine #89284]
 		- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 		- 20180830@Elodie: Add Poker Games Product - [Redmine: #97675]
+		- 20181218@Johnson: Add Happy 5 [Redmine: #104006]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -142,6 +143,7 @@ BEGIN
 					OR b.SportType BETWEEN 213 AND 218 --NG2
 					OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 193) --Virtual Sport
 					OR b.SportType = 220 -- Lottery
+					OR b.sportType = 164--Happy 5
 					OR b.SportType = 163) -- PokerGames
 
 			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
