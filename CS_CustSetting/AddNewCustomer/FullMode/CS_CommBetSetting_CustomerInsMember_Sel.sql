@@ -1,0 +1,85 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
+ALTER PROCEDURE CS_CommBetSetting_CustomerInsMember_Sel
+	@RoleId TINYINT,
+	@CustID INT	= NULL,
+	@uGroup VARCHAR(3) = NULL,
+	@ProductID TINYINT = 1,
+	@IsTest BIT = 0
+AS
+/*
+	Created: 20181212@Elodie
+	Task : Select some info of commission and betsetting when creating new downline
+	DB: DBCUST/CustDB
+	Original:
+
+	Revisions:
+		- 20181212@Elodie: Initial SP [Redmine:#105338]
+		
+	Param's Explanation:
+		• @RoleId:
+			= 4: Create super 
+			= 3: Create master 
+			= 2: Create agent 
+			= 1: Create member 
+	Example: 
+		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 4, @IsTest = 1
+		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
+		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1 
+		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
+		
+*/
+
+BEGIN
+	SET NOCOUNT ON
+		
+	/********************************************* Comm & BetSetting: SettingType = 2 ***********************************/
+	SELECT t.* INTO #SportBettypeFilter2
+	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 2, @IsTest) t
+	
+	IF @RoleId = 4
+	BEGIN
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
+			0 AS MinComm, CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS MaxCom
+		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
+			INNER JOIN #SportBettypeFilter2 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
+			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive
+	END
+	ELSE IF @RoleId = 3
+	BEGIN
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
+			0 AS MinComm, sc.Discount AS MaxCom,
+			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet,
+			0 AS MinMaxPerMatch, bs.MaxPerMatch AS MaxMaxPerMatch
+		FROM dbo.f_CS_GetDiscount_Agent (@CustID) sc
+			INNER JOIN #SportBettypeFilter2 ft ON sc.SportType = ft.SportType AND sc.BetType = ft.BetType AND sc.IsLive = ft.IsLive
+			INNER JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
+			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive  AND gc.GroupId = sc.GroupId
+		WHERE bs.CustId = @CustID
+	END
+	ELSE IF @RoleId = 2
+	BEGIN
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
+			0 AS MinComm, mc.Discount AS MaxCom,
+			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet,
+			0 AS MinMaxPerMatch, bs.MaxPerMatch AS MaxMaxPerMatch
+		FROM dbo.f_CS_GetDiscount_Agent (@CustID) mc
+			INNER JOIN #SportBettypeFilter2 ft ON mc.SportType = ft.SportType AND mc.BetType = ft.BetType AND mc.IsLive = ft.IsLive
+			INNER JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
+			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = mc.GroupId
+		WHERE bs.CustId = @CustID
+	END
+	ELSE IF @RoleId = 1
+	BEGIN
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
+			0 AS MinComm, ac.Discount AS MaxCom,
+			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet,
+			0 AS MinMaxPerMatch, bs.MaxPerMatch AS MaxMaxPerMatch
+		FROM dbo.f_CS_GetDiscount_Agent (@CustID) ac
+			INNER JOIN #SportBettypeFilter2 ft ON ac.SportType = ft.SportType AND ac.BetType = ft.BetType AND ac.IsLive = ft.IsLive
+			INNER JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
+			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = ac.GroupId 
+		WHERE (gc.uGroup = @uGroup OR gc.GroupId IS NULL) AND bs.CustId = @CustID
+	END
+END
+GO

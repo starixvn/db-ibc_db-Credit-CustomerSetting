@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="" viewers="" isFunction="1"></info>*/
-CREATE FUNCTION dbo.f_CS_SportBetTypeSettingSelect(@ProductID TINYINT, @SettingType SMALLINT, @isTest BIT) 
+ALTER FUNCTION dbo.f_CS_SportBetTypeSettingSelect(@ProductID TINYINT, @SettingType SMALLINT, @isTest BIT) 
 RETURNS TABLE 
 /*
 	Created by: Elodie

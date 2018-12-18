@@ -5,9 +5,11 @@ ALTER PROCEDURE [dbo].[CS_DynamicCustomerInfo_00]
 	@MasterID		INT,
 	@AgentID		INT,
 	@RoleID			TINYINT,
+	@ProductID		TINYINT = 1,
 	@PTSetting		VARCHAR(MAX),
 	@BetSetting		VARCHAR(MAX),
 	@CommSetting	VARCHAR(MAX),	
+	@IsTest			BIT = 0,
 	@ErrCode		INT	= 0 OUTPUT
 AS
 /*
@@ -20,11 +22,13 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine: #105338]
 
 	Param's Explanation:
-		
+	@RoleID = 4:
+		@@PTSetting = <ROOT>
+							<PT SportType="1" BetType="1" IsLive="0" SuperMinPT="20" SuperMaxPT = "80"/>
+						</ROOT>
 */
 BEGIN
-	DECLARE @ProductID TINYINT = 255
-	
+	SET NOCOUNT ON
 	SELECT @ErrCode = 0
 	
 	IF(dbo.f_CheckRepTable('CS_CustPTSetting_Agent') = 1
@@ -38,59 +42,23 @@ BEGIN
 		AND dbo.f_CheckRepTable('CS_ProductSettingDetail') = 1 
 	   )
 	 BEGIN
-		CREATE TABLE #ProductSettingDetail(
-			[SettingType] [smallint] NOT NULL,
-			[SportType] [smallint] NOT NULL,
-			[BetType] [smallint] NOT NULL,
-			[IsLive] [bit] NOT NULL
-		)
-		
-		IF @RoleID = 4
-		BEGIN
-			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive)
-			SELECT SettingType
-				  ,ps.SportType
-				  ,ps.BetType
-				  ,IsLive
-			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
-		END
-
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
 		SELECT t.* INTO #SportBettypeFilter1
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1) t
+		FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 1, @IsTest) t
 		
 		BEGIN TRY
 			IF @RoleID = 4
-			BEGIN
-				--s4: 0
-				--m4: 0
-				--a4: 0
-				--n4: 0
-				--l4: Default Max PT
-				INSERT INTO [dbo].[CustPTSetting3rd_Agent]
-				   ([CustID]
-				   ,[SportType]
-				   ,[BetType]
-				   ,[IsLive]
-				   ,[SuperPT]
-				   ,[MasterPT]
-				   ,[AgentPT]
-				   ,[IsAutoMasterPT]
-				   ,[AutoMasterPT]
-				   ,[IsAutoSuperPT]
-				   ,[AutoSuperPT]
-				   ,[MinPT]
-				   ,[MaxPT])
+			BEGIN				
+				INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT)				       
 				SELECT 
 					@Custid
-					,dtl.SportType
-					,dtl.BetType
-					,dtl.IsLive
-					,0,0,0,0,0,0,0,0
-					,dtl.MaxPT
-				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
-					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
-					INNER JOIN #ProductSettingDetail fil ON ft.SettingType = fil.SettingType AND ft.SportType = fil.SportType AND ft.BetType = fil.BetType AND ft.IsLive = fil.IsLive
+					,NULL
+					,NULL
+					,NULL
+					,
+					,
+				FROM dbo.f_DCS_PT_XMLParse(@PTSetting) pt
+					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive
 			END
 			ELSE IF @RoleID = 3
 			BEGIN
