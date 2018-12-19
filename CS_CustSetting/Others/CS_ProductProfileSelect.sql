@@ -11,7 +11,10 @@ AS
 	Task : Get Product Profile  
 	DB:  DBCUST/CustDB  
 	Original:  
-  
+	
+	Revision:
+		- 20181212@Elodie: Initial SP [Redmine: #105338]
+
 	Param's Explanation:  
 		
 	Example: 

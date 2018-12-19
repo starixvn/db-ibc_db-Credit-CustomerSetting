@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCust-CustDB,DBACC-bodb02" selecters="" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION dbo.f_CS_SportBetTypeSettingSelect(@ProductID TINYINT, @SettingType SMALLINT, @isTest BIT) 
 RETURNS TABLE 
 /*

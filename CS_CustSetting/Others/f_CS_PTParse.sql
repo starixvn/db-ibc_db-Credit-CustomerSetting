@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
 
 ALTER FUNCTION f_CS_PTParse(@DataXML XML) 
 RETURNS TABLE 
@@ -9,6 +9,7 @@ RETURNS TABLE
     DB: DBCUST/CustDB
     Original versions:                
     Revision:
+		- 20181212@Elodie: Initial SP [Redmine: #105338]
 
     Parameter's Explanation:
 		- @DataXML

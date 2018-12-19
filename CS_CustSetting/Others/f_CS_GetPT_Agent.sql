@@ -1,9 +1,21 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
 
 CREATE FUNCTION [dbo].[f_CS_GetPT_Agent] (@CustId INT)	       
 RETURNS TABLE
 AS
-	--Created: 20181212@Viet	
+/*
+	Created by: Viet
+	Date: 20181212
+	Task: Get PT of agent
+	DB: DBCust/CustDB, DBACC/bodb02
+	Original: 
+	
+	Revisions:
+		- 20181212@Viet: Initial SP [Redmine: #105338]
+
+	Explanation's Param:
+		
+*/ 
 RETURN
 	SELECT seq.sporttype, seq.bettype, seq.isLive, 
 		CASE WHEN pt.SuperPT IS NULL THEN NULL ELSE CONVERT(TINYINT, SUBSTRING(pt.SuperPT, seq.ByteOrder, 1)) END AS SuperPT,

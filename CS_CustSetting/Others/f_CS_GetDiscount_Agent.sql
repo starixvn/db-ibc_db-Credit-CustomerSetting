@@ -1,9 +1,21 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
 
 ALTER FUNCTION [dbo].[f_CS_GetDiscount_Agent] (@CustId INT)	       
 RETURNS TABLE
 AS
-	--Created: 20181212@Viet	
+/*
+	Created by: Viet
+	Date: 20181212
+	Task: Get comm of agent
+	DB: DBCust/CustDB, DBACC/bodb02
+	Original: 
+	
+	Revisions:
+		- 20181212@Viet: Initial SP [Redmine: #105338]
+
+	Explanation's Param:
+		
+*/   
 RETURN
 	SELECT seq.sporttype, seq.bettype, seq.isLive, seq.groupID, t.value AS Discount
 	FROM dbo.CS_CustDiscount_Agent dc WITH(NOLOCK)	

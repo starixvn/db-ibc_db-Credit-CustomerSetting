@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" selecters="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION [dbo].[f_SetBinaryValues] (@binStr VARBINARY(256), @xmlStr XML)   
 RETURNS TABLE  
 AS  
@@ -7,7 +7,7 @@ AS
 	DB: DBCust/custDB
 
 	Revision:     
-	
+		- 20181212@Viet: Initial SP [Redmine: #105338]
 	Param's Explanation:   
 		@xmlStr:   
 			+ FORMAT: <root><r pos="" val="" /></root>  
