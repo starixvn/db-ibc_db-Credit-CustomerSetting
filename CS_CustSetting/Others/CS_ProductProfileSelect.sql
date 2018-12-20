@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE [dbo].[CS_ProductProfileSelect]   
+ALTER PROCEDURE CS_ProductProfileSelect
 	@ProductID		TINYINT = NULL,
 	@SettingType	SMALLINT = NULL,
 	@SystemID		TINYINT  = 0,

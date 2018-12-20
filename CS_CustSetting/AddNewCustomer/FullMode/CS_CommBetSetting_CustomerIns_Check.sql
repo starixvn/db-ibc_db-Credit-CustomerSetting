@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE CS_CommBetSetting_CustomerIns_Sel
+ALTER PROCEDURE CS_CommBetSetting_CustomerIns_Check
 	@RoleId TINYINT,
 	@CustID INT	= NULL,
 	@uGroup VARCHAR(3) = NULL,
@@ -23,10 +23,10 @@ AS
 			= 2: Create agent 
 			= 1: Create member 
 	Example: 
-		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 4, @IsTest = 1
-		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
-		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1 
-		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
+		EXEC CS_CommBetSetting_CustomerIns_Check @RoleId = 4, @IsTest = 1
+		EXEC CS_CommBetSetting_CustomerIns_Check @RoleId = 3, @CustID = 33418956, @IsTest = 1
+		EXEC CS_CommBetSetting_CustomerIns_Check @RoleId = 2, @CustID = 33418957, @IsTest = 1 
+		EXEC CS_CommBetSetting_CustomerIns_Check @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
 		
 */
 

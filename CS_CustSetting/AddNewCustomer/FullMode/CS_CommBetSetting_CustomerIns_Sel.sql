@@ -23,10 +23,10 @@ AS
 			= 2: Create agent 
 			= 1: Create member 
 	Example: 
-		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 4, @IsTest = 1
-		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
-		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1 
-		EXEC CS_CommBetSetting_CustomerInsMember_Sel @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
+		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 4, @IsTest = 1
+		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
+		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1 
+		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
 		
 */
 

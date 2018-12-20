@@ -62,7 +62,7 @@ BEGIN
 		RETURN
 	END
 
-	EXEC dbo.CS_CustomerInsMember_Check 
+	EXEC dbo.CS_CustomerIns_Check 
 		@PTSetting		= @PTSetting,
 		@BetSetting		= @BetSetting,
 		@CommSetting	= @CommSetting,
@@ -173,7 +173,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 600,
+		@ActionID = 100400,
 		@TrackingValue = @LogSPData,
 		@duration = @duration	
 	--status
@@ -186,7 +186,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 1100,
+		@ActionID = 100500,
 		@TrackingValue = @LogSPData,
 		@duration = @duration	
 	
@@ -200,7 +200,7 @@ BEGIN
 		@Doing = @LogSPCredit,
 		@NewValue = @credit,
 		@IP = @IP,
-		@ActionID = 1208
+		@ActionID = 1213
 
 	--Write PT log
 	SELECT '<CS_CustomerIns_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
@@ -210,7 +210,7 @@ BEGIN
 	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 400,
+		@ActionID = 100000,
 		@TrackingValue = @LogSPData,
 		@duration = @duration
 
@@ -222,7 +222,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 300,
+		@ActionID = 100300,
 		@TrackingValue = @LogSPData,
 		@duration = @duration
 
@@ -234,7 +234,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 200,
+			@ActionID = 100200,
 			@TrackingValue = @LogSPData,
 			@duration = @duration	
 END
