@@ -532,9 +532,9 @@ BEGIN
 		'MaxBv1MP="'+ coalesce(cast(@Old_MaxBetv1MP as varchar(50)),space(1))+ '" ' +
 		'MPMv1MP="'+ coalesce(cast(@Old_MaxPerMatchv1MP as varchar(50)),space(1))+ '" ' +
 		
-		'MinBv164="'+ coalesce(cast(@MinBetv164 as varchar(50)),space(1))+ '" ' +
-		'MaxBv164="'+ coalesce(cast(@MaxBetv164 as varchar(50)),space(1))+ '" ' +
-		'MPMv164="'+ coalesce(cast(@MaxPerMatchv164 as varchar(50)),space(1))+ '" ' +	
+		'MinBv164="'+ coalesce(cast(@Old_MinBetv164 as varchar(50)),space(1))+ '" ' +
+		'MaxBv164="'+ coalesce(cast(@Old_MaxBetv164 as varchar(50)),space(1))+ '" ' +
+		'MPMv164="'+ coalesce(cast(@Old_MaxPerMatchv164 as varchar(50)),space(1))+ '" ' +	
 		
 		'MinBv161="'+ coalesce(cast(@Old_MinBetv161 as varchar(50)),space(1))+ '" ' +
 		'MaxBv161="'+ coalesce(cast(@Old_MaxBetv161 as varchar(50)),space(1))+ '" ' +
