@@ -1,8 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
 
-ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
+ALTER PROCEDURE CS_CustomerIns_Ag
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
 	@lastname NVARCHAR(50),

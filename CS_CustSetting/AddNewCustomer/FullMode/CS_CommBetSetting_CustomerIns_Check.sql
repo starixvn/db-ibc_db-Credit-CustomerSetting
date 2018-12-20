@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE CS_CommBetSetting_CustomerInsMember_Sel
+ALTER PROCEDURE CS_CommBetSetting_CustomerIns_Sel
 	@RoleId TINYINT,
 	@CustID INT	= NULL,
 	@uGroup VARCHAR(3) = NULL,

@@ -17,7 +17,7 @@ AS
 		
 */   
 RETURN
-	SELECT seq.sporttype, seq.bettype, seq.isLive, seq.groupID, t.value AS Discount
+	SELECT seq.sporttype, seq.bettype, seq.isLive, seq.groupID, t.value AS Discount, t.ValueId
 	FROM dbo.CS_CustDiscount_Agent dc WITH(NOLOCK)	
 		CROSS APPLY dbo.CS_ByteSeq seq WITH(NOLOCK)
 		INNER JOIN dbo.CS_CommTemplate t WITH(NOLOCK) ON CONVERT(TINYINT, SUBSTRING(dc.discount, seq.ByteOrder, 1)) = t.ValueID
