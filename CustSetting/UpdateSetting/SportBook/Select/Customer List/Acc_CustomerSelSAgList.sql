@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBAGE-bodb02" executers="bodbadminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBAGE-bodb02" executers="bodbadminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelSAgList]   
 	@System varchar(50) = 'ACCOUNTING'
 	,@Userid INT=NULL
@@ -19,6 +19,7 @@ AS
 		- 20150904@Helen: commission setting for MO [Redmine #41470]
 		- 20160630@Winnie: #48948 Hide_special_sites_from_unautorized_users	
 		- 20180808@Helen: DB05.DBPOLICY migration - Move to DBCUST [Redmine:99462]
+		- 20181122@Elodie: DB053/bodb_Age Migration [Redmine:#104770]
 */
 BEGIN
 	SET NOCOUNT ON  
@@ -49,17 +50,11 @@ BEGIN
 		FROM customer AS c WITH (NOLOCK) 	
 		WHERE c.roleid = 4 
 			AND c.custid>100  
-			AND c.custid IN (SELECT custid FROM bodb_AGE.dbo.Acc_CustGroup WITH(NOLOCK) WHERE GroupName = @system)
+			AND c.custid IN (SELECT custid FROM dbo.Acc_CustGroup WITH(NOLOCK) WHERE GroupName = @system)
 			--AND c.currency IN (SELECT exchangeID FROM dbo.f_CurrencyBySystem(@System))
 			--AND c.custid NOT IN (SELECT custid FROM dbo.f_GetDummySuper())
 		ORDER BY c.username 
 	END
 END
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSAgList] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSAgList] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelSAgList] TO [vnteam] 
 
 

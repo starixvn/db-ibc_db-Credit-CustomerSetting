@@ -69,9 +69,9 @@ Revisions:
 	- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]	
 	- 20180704@Vicky:  NAP - Add new permission control to view Licensee Account [Redminid: #96118]
-
 	- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
 	- 20180918@Winnie: Esports Product - [Redmine: #101526]	
+	- 20181122@Elodie: DB053/bodb_Age Migration [Redmine:#104770]
 	
 Pattern Explanation:
 		Search keyword: '%keyword%'
@@ -439,7 +439,7 @@ Pattern Explanation:
 					Custinfo as m with (NOLOCK)
 					INNER JOIN CustSuper as csuper with (NOLOCK) on m.custid = csuper.custid
 				WHERE	
-					m.custid IN (SELECT custid FROM DBAGE.bodb_AGE.dbo.Acc_CustGroup WITH (NOLOCK) WHERE GroupName = @System)
+					m.custid IN (SELECT custid FROM dbo.Acc_CustGroup WITH (NOLOCK) WHERE GroupName = @System)
 					AND m.roleid=4 
 					AND csuper.IsInternal = 0	
 					AND m.closed = case when @closed is null then m.closed else @closed end
@@ -585,7 +585,7 @@ Pattern Explanation:
 		   
 			
 		WHERE	
-				m.custid IN (SELECT custid FROM DBAGE.bodb_AGE.dbo.Acc_CustGroup WITH (NOLOCK) WHERE groupname = @system AND roleid = 4)
+				m.custid IN (SELECT custid FROM dbo.Acc_CustGroup WITH (NOLOCK) WHERE groupname = @system AND roleid = 4)
 				AND m.roleid=4 
 				AND csuper.IsInternal = 0
 				AND ci.closed = case when @closed is null then ci.closed else @closed end
