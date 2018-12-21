@@ -1,27 +1,27 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
-	@custid INT OUTPUT,
-	@username VARCHAR(30),
-	@userpwd VARCHAR(40),
-	@firstname NVARCHAR(50),
-	@lastname NVARCHAR(50),
-	@phone NVARCHAR(50),
-	@mobilephone NVARCHAR(50),
-	@fax NVARCHAR(50),
-	@currency INT, 
-	@credit MONEY,
-	@PTSetting VARCHAR(MAX),
-	@BetSetting VARCHAR(MAX),
-	@CommSetting VARCHAR(MAX),
-	@creator INT,
-	@site NVARCHAR(50),	
-	@isinternal BIT = 0,
-	@SystemID TINYINT=1,	
-	@IP VARCHAR(15)='',
-	@Language VARCHAR(2)= 'E',
-	@IsTest BIT = 0,
-	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(2000) = '' OUTPUT
+	@custid				INT OUTPUT,
+	@username			VARCHAR(30),
+	@userpwd			VARCHAR(40),
+	@firstname			NVARCHAR(50),
+	@lastname			NVARCHAR(50),
+	@phone				NVARCHAR(50),
+	@mobilephone		NVARCHAR(50),
+	@fax				NVARCHAR(50),
+	@currency			INT, 
+	@credit				MONEY,
+	@PTSetting			VARCHAR(MAX),
+	@BetSetting			VARCHAR(MAX),
+	@CommSetting		VARCHAR(MAX),
+	@creator			INT,
+	@site				NVARCHAR(50),	
+	@isinternal			BIT = 0,
+	@SystemID			TINYINT = 1,	
+	@IP					VARCHAR(15)='',
+	@Language			VARCHAR(2)= 'E',
+	@IsTest				BIT = 0,
+	@ErrCode			INT = 0 OUTPUT,
+	@ErrMsg				NVARCHAR(2000) = '' OUTPUT
 AS
 /*
 	Created: 20181212@Elodie
@@ -181,7 +181,7 @@ BEGIN
 						'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 						'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 						'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
-						'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" />'
+						'IsInternal="'+ COALESCE(CAST(@IsInternal AS VARCHAR(1)),SPACE(1)) + '" />'
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
