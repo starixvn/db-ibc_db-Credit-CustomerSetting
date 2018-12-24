@@ -2,9 +2,9 @@
 ALTER PROCEDURE [dbo].[CS_CustomerIns_Check] 
 	@UplineID		INT = NULL,	
 	@ProductID		TINYINT = 1,
-	@PTSetting		VARCHAR(MAX),
-	@BetSetting		VARCHAR(MAX),
-	@CommSetting	VARCHAR(MAX),
+	@PTSetting		VARCHAR(MAX) = NULL,
+	@BetSetting		VARCHAR(MAX) = NULL,
+	@CommSetting	VARCHAR(MAX) = NULL,
 	@uGroup			VARCHAR(3) = NULL,
 	@IsTest			BIT = 0,
 	@ErrCode		INT	= 0 OUTPUT,

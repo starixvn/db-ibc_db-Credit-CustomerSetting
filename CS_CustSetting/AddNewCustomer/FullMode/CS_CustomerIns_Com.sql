@@ -62,16 +62,16 @@ BEGIN
 		RETURN
 	END
 
-	EXEC dbo.CS_CustomerIns_Check 
-		@PTSetting		= @PTSetting,
-		@BetSetting		= @BetSetting,
-		@CommSetting	= @CommSetting,
-		@IsTest			= @IsTest, 
-		@ErrCode		= @ErrCode OUTPUT,
-		@ErrMsg			= @ErrMsg OUTPUT
-	IF @ErrCode <> 0
-		RETURN
-
+	--EXEC dbo.CS_CustomerIns_Check 
+	--	@PTSetting		= @PTSetting,
+	--	@BetSetting		= @BetSetting,
+	--	@CommSetting	= @CommSetting,
+	--	@IsTest			= @IsTest, 
+	--	@ErrCode		= @ErrCode OUTPUT,
+	--	@ErrMsg			= @ErrMsg OUTPUT
+	--IF @ErrCode <> 0
+	--	RETURN
+	
 	--Insert general info
 	EXEC dbo.Acc_CustomerInsUserInfo 
 		@custid = @custid OUTPUT,
@@ -116,6 +116,17 @@ BEGIN
 		@DisableSuperLive = 1,
 		@HideKeno = 1,
 
+		@MaxPerMatch = 0,
+		@MaxPerMatchv2 = 0,
+		@MaxPerMatchv3 = 0,
+		@MaxPerMatchv5 = 0,
+		@MaxPerMatchv8 = 0,
+		@MaxPerMatchv10 = 0,
+		@MaxPerMatchv11 = 0,
+		@MaxPerMatchv99 = 0,
+		@MaxPerMatchv99MP = 0,
+		@MaxPerMatchv161 = 0,	
+
 		@credit = @credit,
 		@maxcredit = NULL,
 		@IP = @IP,
@@ -127,7 +138,7 @@ BEGIN
 	--Error occurs
 	IF @ErrCode <> 0
 		RETURN	
-			
+				
 	EXEC dbo.CS_DynamicCustomerInfo_00
 		@CustID			= @custid,	
 		@PTSetting		= @PTSetting, 
@@ -145,7 +156,7 @@ BEGIN
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END	
-
+	
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
 
@@ -203,9 +214,9 @@ BEGIN
 		@ActionID = 1213
 
 	--Write PT log
-	SELECT '<CS_CustomerIns_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
-		+ LTRIM(RTRIM(SUBSTRING(@PTSetting, 7, LEN(@PTSetting) - 13))) 
-		+ '</CS_CustomerIns_Com>' 
+	SELECT @LogSPData = '<CS_CustomerIns_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
+						+ LTRIM(RTRIM(SUBSTRING(@PTSetting, 7, LEN(@PTSetting) - 13))) 
+						+ '</CS_CustomerIns_Com>' 
 
 	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
@@ -213,11 +224,11 @@ BEGIN
 		@ActionID = 100000,
 		@TrackingValue = @LogSPData,
 		@duration = @duration
-
+	
 	--Write Bet setting log
-	SELECT '<CS_CustomerIns_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
-		+ LTRIM(RTRIM(SUBSTRING(@BetSetting, 7, LEN(@BetSetting) - 13))) 
-		+ '</CS_CustomerIns_Com>' 
+	SELECT @LogSPData = '<CS_CustomerIns_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
+						+ LTRIM(RTRIM(SUBSTRING(@BetSetting, 7, LEN(@BetSetting) - 13))) 
+						+ '</CS_CustomerIns_Com>' 
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
@@ -225,11 +236,11 @@ BEGIN
 		@ActionID = 100300,
 		@TrackingValue = @LogSPData,
 		@duration = @duration
-
+	
 	--Write commission log	
-	SELECT '<CS_CustomerIns_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
-		+ LTRIM(RTRIM(SUBSTRING(@CommSetting, 7, LEN(@CommSetting) - 13))) 
-		+ '</CS_CustomerIns_Com>' 
+	SELECT @LogSPData = '<CS_CustomerIns_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
+						+ LTRIM(RTRIM(SUBSTRING(@CommSetting, 7, LEN(@CommSetting) - 13))) 
+						+ '</CS_CustomerIns_Com>' 
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 			@UserID = @Creator,
@@ -237,6 +248,7 @@ BEGIN
 			@ActionID = 100200,
 			@TrackingValue = @LogSPData,
 			@duration = @duration	
+	
 END
 GO
 

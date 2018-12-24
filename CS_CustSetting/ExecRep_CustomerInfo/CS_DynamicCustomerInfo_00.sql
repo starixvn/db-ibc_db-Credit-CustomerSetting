@@ -2,9 +2,9 @@
 ALTER PROCEDURE [dbo].[CS_DynamicCustomerInfo_00] 
 	@CustID			INT,	
 	@ProductID		TINYINT = 1,
-	@PTSetting		VARCHAR(MAX),
-	@BetSetting		VARCHAR(MAX),
-	@CommSetting	VARCHAR(MAX),
+	@PTSetting		VARCHAR(MAX) = NULL,
+	@BetSetting		VARCHAR(MAX) = NULL,
+	@CommSetting	VARCHAR(MAX) = NULL,
 	@uGroup			VARCHAR(3) = NULL,
 	@IsTest			BIT = 0,
 	@ErrCode		INT	= 0 OUTPUT
@@ -137,21 +137,48 @@ BEGIN
 	DECLARE @Discount_XML XML, @PlayerDiscount_XML XML, @AgentDiscount_XML XML, @MasterDiscount_XML XML, @SuperDiscount_XML XML
 	DECLARE @_PTSetting XML, @_BetSetting XML, @_CommSetting XML
 	DECLARE @SuperID INT, @MasterID INT, @AgentID INT, @RoleID TINYINT
-
+	DECLARE @DefautBytePT BINARY(10) = 0x00,  @DefautByteCommAgent BINARY(50) = 0x00, @DefautByteCommMember BINARY(30) = 0x00
 	SELECT @ErrCode = 0, @_PTSetting = @PTSetting, @_BetSetting = @BetSetting, @_CommSetting = @CommSetting
 	SELECT @SuperID = srecommend, @MasterID = mrecommend, @AgentID = recommend, @RoleID = roleid FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID
 	
-	/********************************************* Position Taking: SettingType = 1 ***********************************/
+	/********************************************* Position Taking: SettingType = 1 ***********************************/	
 	SELECT t.* INTO #SportBettypeFilter1
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 1, @IsTest) t
 		
-	SELECT * INTO #PT_tmp
+	SELECT pt.* INTO #PT_tmp
 	FROM dbo.f_CS_PTParse(@_PTSetting) pt
 		INNER JOIN #SportBettypeFilter1 ft ON pt.SportType = ft.SportType AND pt.BetType = ft.BetType AND pt.IsLive = ft.IsLive
 
 	BEGIN TRY
 		IF @RoleID = 4
-		BEGIN						
+		BEGIN					
+			SET @MinPT_XML =(
+								SELECT (
+										SELECT	bs.ByteOrder	AS '@pos',
+												pt.MinPT		AS '@val'
+										FROM #PT_tmp pt
+											INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = pt.SportType AND bs.BetType = pt.BetType AND bs.IsLive = pt.IsLive
+										WHERE bs.Type = 'PTSetting'
+										FOR XML PATH('r')
+											, TYPE
+										)
+								FOR XML PATH('root')
+									, TYPE
+								)
+
+			SET @MaxPT_XML =(
+								SELECT (
+										SELECT	bs.ByteOrder	AS '@pos',
+												pt.MaxPT		AS '@val'
+										FROM #PT_tmp pt
+											INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = pt.SportType AND bs.BetType = pt.BetType AND bs.IsLive = pt.IsLive
+										WHERE bs.Type = 'PTSetting'
+										FOR XML PATH('r')
+											, TYPE
+										)
+								FOR XML PATH('root')
+									, TYPE
+								)				
 			INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT)				       
 			SELECT 
 				@Custid
@@ -160,8 +187,8 @@ BEGIN
 				,NULL
 				,minpt.binaryStr_new
 				,maxpt.binaryStr_new
-			FROM dbo.f_SetBinaryValues(0x00, @MinPT_XML) minpt
-				CROSS APPLY dbo.f_SetBinaryValues(0x00, @MaxPT_XML) maxpt
+			FROM dbo.f_SetBinaryValues(@DefautBytePT, @MinPT_XML) minpt
+				CROSS APPLY dbo.f_SetBinaryValues(@DefautBytePT, @MaxPT_XML) maxpt			
 		END
 		ELSE IF @RoleID = 3
 		BEGIN								
@@ -187,7 +214,7 @@ BEGIN
 				,NULL
 				,NULL
 				,NULL
-			FROM dbo.f_SetBinaryValues(0x00, @SuperPT_XML) superpt
+			FROM dbo.f_SetBinaryValues(@DefautBytePT, @SuperPT_XML) superpt
 
 		END
 		ELSE IF @RoleID = 2
@@ -218,8 +245,8 @@ BEGIN
 										)
 								FOR XML PATH('root')
 									, TYPE
-								)
-				
+								)							
+
 			INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT)				       
 			SELECT 
 				@Custid
@@ -228,8 +255,8 @@ BEGIN
 				,agentpt.binaryStr_new
 				,NULL
 				,NULL
-			FROM dbo.f_SetBinaryValues(0x00, @MasterPT_XML) masterpt
-				CROSS APPLY dbo.f_SetBinaryValues(0x00, @AgentPT_XML) agentpt
+			FROM dbo.f_SetBinaryValues(@DefautBytePT, @MasterPT_XML) masterpt
+				CROSS APPLY dbo.f_SetBinaryValues(@DefautBytePT, @AgentPT_XML) agentpt
 
 			INSERT INTO dbo.CS_CustPTGroupSetting_Member (AgentId, SuperPT, MasterPT, AgentPT)							       
 			SELECT 
@@ -238,9 +265,9 @@ BEGIN
 				,masterpt.binaryStr_new
 				,agentpt.binaryStr_new
 			FROM CS_CustPTSetting_Agent cs WITH (NOLOCK)
-				CROSS APPLY dbo.f_SetBinaryValues(0x00, @MasterPT_XML) masterpt
-				CROSS APPLY dbo.f_SetBinaryValues(0x00, @AgentPT_XML) agentpt
-			WHERE cs.CustId = @SuperID
+				CROSS APPLY dbo.f_SetBinaryValues(@DefautBytePT, @MasterPT_XML) masterpt
+				CROSS APPLY dbo.f_SetBinaryValues(@DefautBytePT, @AgentPT_XML) agentpt
+			WHERE cs.CustId = @MasterID
 		END			
 	END TRY
 	BEGIN CATCH
@@ -261,18 +288,18 @@ BEGIN
 	SELECT t.* INTO #SportBettypeFilter2
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 2, @IsTest) t			
 	
-	SELECT * INTO #Comm_tmp
+	SELECT comm.* INTO #Comm_tmp
 	FROM dbo.f_CS_CommParse(@_CommSetting) comm
 		INNER JOIN #SportBettypeFilter2 ft ON comm.SportType = ft.SportType AND comm.BetType = ft.BetType AND comm.IsLive = ft.IsLive
 
 	BEGIN TRY
 		IF @RoleID IN (4,3,2)
-		BEGIN
+		BEGIN			
 			INSERT INTO dbo.CS_CustBetSetting_Agent (CustId, SportType, BetType, IsLive, MaxBet, MaxPerMatch)
 			SELECT @CustID, cs.SportType, cs.BetType, cs.IsLive, MaxBet, MaxPerMatch
 			FROM f_CS_BetSettingParse(@_BetSetting) cs
 				INNER JOIN #SportBettypeFilter2 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
-
+			
 			SET @Discount_XML =(
 								SELECT (
 										SELECT	bs.ByteOrder	AS '@pos',
@@ -285,11 +312,11 @@ BEGIN
 										)
 								FOR XML PATH('root')
 									, TYPE
-								)
-				
+								)			
+			
 			INSERT INTO dbo.CS_CustDiscount_Agent (CustId, Discount)
 			SELECT @CustID, comm.binaryStr_new	
-			FROM dbo.f_SetBinaryValues(0x00, @Discount_XML) comm									
+			FROM dbo.f_SetBinaryValues(@DefautByteCommAgent, @Discount_XML) comm															
 		END
 		ELSE IF @RoleID = 1
 		BEGIN					
@@ -375,41 +402,42 @@ BEGIN
 			BEGIN
 				IF EXISTS (	SELECT 1
 							FROM CS_CustGroupDiscount_Member cs
-								CROSS APPLY dbo.f_SetBinaryValues(0x00, @PlayerDiscount_XML) playercomm	
-								CROSS APPLY dbo.f_SetBinaryValues(0x00, @AgentDiscount_XML) acomm	
-								CROSS APPLY dbo.f_SetBinaryValues(0x00, @MasterDiscount_XML) mcomm	
-								CROSS APPLY dbo.f_SetBinaryValues(0x00, @SuperDiscount_XML)	scomm
+								CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @PlayerDiscount_XML) playercomm	
+								CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @AgentDiscount_XML) acomm	
+								CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @MasterDiscount_XML) mcomm	
+								CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @SuperDiscount_XML) scomm
 							WHERE cs.AgentId = @AgentID 
-								AND (cs.PlayerDiscount <> playercomm.binaryStr_new
-									OR cs.AgentDiscount <> acomm.binaryStr_new
-									OR cs.MasterDiscount <> mcomm.binaryStr_new
-									OR cs.SuperDiscount <> scomm.binaryStr_new)
+								AND cs.PlayerDiscount = playercomm.binaryStr_new
+								AND cs.AgentDiscount = acomm.binaryStr_new
+								AND cs.MasterDiscount = mcomm.binaryStr_new
+								AND cs.SuperDiscount = scomm.binaryStr_new
 							)
-				BEGIN
-					INSERT INTO dbo.CS_CustDiscount_Member (CustId, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
-					SELECT @CustID, playercomm.binaryStr_new, acomm.binaryStr_new, mcomm.binaryStr_new, scomm.binaryStr_new
-					FROM dbo.f_SetBinaryValues(0x00, @PlayerDiscount_XML) playercomm	
-						CROSS APPLY dbo.f_SetBinaryValues(0x00, @AgentDiscount_XML) acomm	
-						CROSS APPLY dbo.f_SetBinaryValues(0x00, @MasterDiscount_XML) mcomm	
-						CROSS APPLY dbo.f_SetBinaryValues(0x00, @SuperDiscount_XML)	scomm
-
-					INSERT INTO dbo.CS_CustSettingMode (CustId, IsGroupPT, IsGroupComm)
-					SELECT @CustID, 1, 0
-				END
-				ELSE
 				BEGIN
 					INSERT INTO dbo.CS_CustSettingMode (CustId, IsGroupPT, IsGroupComm)
 					SELECT @CustID, 1, 1
+					
+				END
+				ELSE
+				BEGIN
+					INSERT INTO dbo.CS_CustDiscount_Member (CustId, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
+					SELECT @CustID, playercomm.binaryStr_new, acomm.binaryStr_new, mcomm.binaryStr_new, scomm.binaryStr_new
+					FROM dbo.f_SetBinaryValues(@DefautByteCommMember, @PlayerDiscount_XML) playercomm	
+						CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @AgentDiscount_XML) acomm	
+						CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @MasterDiscount_XML) mcomm	
+						CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @SuperDiscount_XML)	scomm
+
+					INSERT INTO dbo.CS_CustSettingMode (CustId, IsGroupPT, IsGroupComm)
+					SELECT @CustID, 1, 0
 				END
 			END
 			ELSE
 			BEGIN
 				INSERT INTO dbo.CS_CustGroupDiscount_Member (AgentId, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
 				SELECT @AgentID, playercomm.binaryStr_new, acomm.binaryStr_new, mcomm.binaryStr_new, scomm.binaryStr_new
-				FROM dbo.f_SetBinaryValues(0x00, @PlayerDiscount_XML) playercomm	
-					CROSS APPLY dbo.f_SetBinaryValues(0x00, @AgentDiscount_XML) acomm	
-					CROSS APPLY dbo.f_SetBinaryValues(0x00, @MasterDiscount_XML) mcomm	
-					CROSS APPLY dbo.f_SetBinaryValues(0x00, @SuperDiscount_XML)	scomm
+				FROM dbo.f_SetBinaryValues(@DefautByteCommMember, @PlayerDiscount_XML) playercomm	
+					CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @AgentDiscount_XML) acomm	
+					CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @MasterDiscount_XML) mcomm	
+					CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @SuperDiscount_XML)	scomm
 
 				INSERT INTO dbo.CS_CustSettingMode (CustId, IsGroupPT, IsGroupComm)
 				SELECT @CustID, 1, 1

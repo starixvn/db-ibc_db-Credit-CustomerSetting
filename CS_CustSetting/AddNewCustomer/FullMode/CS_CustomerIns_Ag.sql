@@ -8,8 +8,7 @@ ALTER PROCEDURE CS_CustomerIns_Ag
 	@credit				MONEY,	
 	@creator			INT,
 	@recommend			INT,
-
-	@PTSetting			VARCHAR(MAX),
+	
 	@BetSetting			VARCHAR(MAX),
 	@CommSetting		VARCHAR(MAX),
 	@IsTest				BIT = 0,
@@ -195,17 +194,16 @@ BEGIN
     DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT
     SET @startRun = GETDATE()
 
-	EXEC dbo.CS_CustomerIns_Check 
-		@UplineID		= @recommend,
-		@PTSetting		= @PTSetting,
-		@BetSetting		= @BetSetting,
-		@CommSetting	= @CommSetting,
-		@IsTest			= @IsTest, 
-		@ugroup			= @ugroup,
-		@ErrCode		= @ErrCode OUTPUT,
-		@ErrMsg			= @ErrMsg OUTPUT
-	IF @ErrCode <> 0
-		RETURN
+	--EXEC dbo.CS_CustomerIns_Check 
+	--	@UplineID		= @recommend,		
+	--	@BetSetting		= @BetSetting,
+	--	@CommSetting	= @CommSetting,
+	--	@IsTest			= @IsTest, 
+	--	@ugroup			= @ugroup,
+	--	@ErrCode		= @ErrCode OUTPUT,
+	--	@ErrMsg			= @ErrMsg OUTPUT
+	--IF @ErrCode <> 0
+	--	RETURN
 
     SELECT @currency = currency
          , @mrecommend = mrecommend
@@ -274,7 +272,17 @@ BEGIN
 	    @DisableCasino = 1,
 		@DisableNumber = 1,	 
 	    @DoubleCommLosing = 1,-- off double comm losing WHEN create new member
-	    @DisableCasinoBonus = 1,	    	 
+	    @DisableCasinoBonus = 1,
+		@MaxPerMatch = 0,
+		@MaxPerMatchv2 = 0,
+		@MaxPerMatchv3 = 0,
+		@MaxPerMatchv5 = 0,
+		@MaxPerMatchv8 = 0,
+		@MaxPerMatchv10 = 0,
+		@MaxPerMatchv11 = 0,
+		@MaxPerMatchv99 = 0,
+		@MaxPerMatchv99MP = 0,
+		@MaxPerMatchv161 = 0,		    	 
 	    
 	    @IP = @IP,
 	    @TransferOption_dec = NULL,
@@ -319,8 +327,7 @@ BEGIN
     END
 	
 	EXEC dbo.CS_DynamicCustomerInfo_00
-		@CustID			= @custid,	
-		@PTSetting		= @PTSetting, 
+		@CustID			= @custid,			
 		@BetSetting		= @BetSetting,
 		@CommSetting	= @CommSetting,
 		@IsTest			= @IsTest, 
@@ -394,24 +401,12 @@ BEGIN
 		@Doing = @LogSPCredit,
 		@NewValue = @credit,
 		@IP = @IP,
-		@ActionID = 1216
-
-	--Write PT log
-	SELECT '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
-		+ LTRIM(RTRIM(SUBSTRING(@PTSetting, 7, LEN(@PTSetting) - 13))) 
-		+ '</CS_CustomerIns_Ag>' 
-
-	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
-		@UserID = @Creator,
-		@CustID = @CustID,
-		@ActionID = 100003,
-		@TrackingValue = @LogSPData,
-		@duration = @duration
+		@ActionID = 1216	
 
     --Write Bet setting log
-	SELECT '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
-		+ LTRIM(RTRIM(SUBSTRING(@BetSetting, 7, LEN(@BetSetting) - 13))) 
-		+ '</CS_CustomerIns_Ag>' 
+	SELECT @LogSPData = '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
+						+ LTRIM(RTRIM(SUBSTRING(@BetSetting, 7, LEN(@BetSetting) - 13))) 
+						+ '</CS_CustomerIns_Ag>' 
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
@@ -421,9 +416,9 @@ BEGIN
 		@duration = @duration
 
     --Write commission log	
-	SELECT '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
-		+ LTRIM(RTRIM(SUBSTRING(@CommSetting, 7, LEN(@CommSetting) - 13))) 
-		+ '</CS_CustomerIns_Ag>' 
+	SELECT @LogSPData = '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
+						+ LTRIM(RTRIM(SUBSTRING(@CommSetting, 7, LEN(@CommSetting) - 13))) 
+						+ '</CS_CustomerIns_Ag>' 
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
