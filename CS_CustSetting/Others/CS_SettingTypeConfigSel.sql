@@ -37,7 +37,7 @@ BEGIN
 				--1 - Update
 				--2 - Read Only
 				--3 - Hidden
-				--, ISNULL(dpl.DisplayMode,1) DisplayMode
+				--, ISNULL(dpl.DisplayMode,1) DisplayMode				
 		FROM dbo.CS_ProductSettingDetail pdt WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			--LEFT JOIN #ProductSettingSiteDisplay dpl ON dpl.SettingType = pdt.SettingType

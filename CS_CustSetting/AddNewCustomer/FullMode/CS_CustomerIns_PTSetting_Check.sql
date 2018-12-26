@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE CS_PTSetting_CustomerIns_Check
+ALTER PROCEDURE CS_CustomerIns_PTSetting_Check
 	@CustID			INT,
 	@SuperID		INT,
 	@MasterID		INT,

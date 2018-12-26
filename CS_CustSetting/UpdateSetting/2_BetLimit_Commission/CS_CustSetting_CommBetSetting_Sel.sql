@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE CS_CommBetSetting_CustomerIns_Sel
+ALTER PROCEDURE CS_CustSetting_CommBetSetting_Sel
 	@RoleId TINYINT,
 	@CustID INT	= NULL,
 	@uGroup VARCHAR(3) = NULL,
@@ -9,7 +9,7 @@ ALTER PROCEDURE CS_CommBetSetting_CustomerIns_Sel
 AS
 /*
 	Created: 20181212@Elodie
-	Task : Select some info of commission and betsetting when creating new downline
+	Task : Select some info of commission and betsetting when update comm and bet setting
 	DB: DBCUST/CustDB
 	Original:
 
@@ -18,21 +18,23 @@ AS
 		
 	Param's Explanation:
 		• @RoleId:
-			= 4: Create super 
-			= 3: Create master 
-			= 2: Create agent 
-			= 1: Create member 
+			= 4: Update super 
+			= 3: Update master 
+			= 2: Update agent 
+			= 1: Update member 
 	Example: 
-		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 4, @IsTest = 1
-		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
-		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1 
-		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
+		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 4, @IsTest = 1
+		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
+		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1 
+		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
 		
 */
 
 BEGIN
 	SET NOCOUNT ON
-		
+	DECLARE @SuperId INT, @MasterId INT, @AgentId INT
+	SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID AND roleid = @RoleId
+
 	/********************************************* Comm & BetSetting: SettingType = 2 ***********************************/
 	SELECT t.* INTO #SportBettypeFilter2
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 2, @IsTest) t

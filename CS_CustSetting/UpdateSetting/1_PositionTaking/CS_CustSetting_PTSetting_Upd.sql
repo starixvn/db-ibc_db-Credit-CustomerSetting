@@ -1,14 +1,23 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE CS_PTSetting_CustomerIns_Sel
-	@RoleId TINYINT,
-	@CustID INT	= NULL,
-	@ProductID TINYINT = 1,
-	@IsTest BIT = 0
+ALTER PROCEDURE CS_CustSetting_PTSetting_Upd
+	@RoleId			TINYINT,
+	@CustID			INT,
+	@PTSetting		VARCHAR(MAX),
+	@ProductID		TINYINT = 1,
+	@IsTest			BIT = 0,
+
+	@SubAccID		INT = 0,
+	@UserID			INT = 0,       
+	@IP				VARCHAR(15)='',
+	@Language		VARCHAR(2)= 'E',
+	@ErrCode		INT	= 0 OUTPUT,
+	@MsgType		INT	= 0 OUTPUT,
+	@ErrMsg			VARCHAR(MAX) = '' OUTPUT
 AS
 /*
 	Created: 20181212@Elodie
-	Task : Select PT info when creating new downline
+	Task : Update PT
 	DB: DBCUST/CustDB
 	Original:
 
@@ -16,43 +25,359 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		
 	Param's Explanation:
-		• @RoleId:
-			= 4: Create super 
-			= 3: Create master 
-			= 2: Create agent 			
-	Example: 
-		EXEC CS_PTSetting_CustomerIns_Sel @RoleId = 4, @IsTest = 1
-		EXEC CS_PTSetting_CustomerIns_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
-		EXEC CS_PTSetting_CustomerIns_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1
+		• @RoleId 
+			= 4: Update super 
+				@PTSetting:	<ROOT>
+								<PT SportType="1" BetType="1" IsLive="0" MinPT="20" MaxPT = "80"/>
+							</ROOT>	
+			= 3: Update master 
+				@PTSetting: <ROOT>
+								<PT SportType="1" BetType="1" IsLive="0" SuperPT="10"/>
+							</ROOT>
+			= 2: Update agent 
+				@PTSetting: <ROOT>
+								<PT SportType="1" BetType="1" IsLive="0" MasterPT="20" AgentPT = "50"/>
+							</ROOT>				
 */
 
 BEGIN
 	SET NOCOUNT ON
+	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML, @_PTSetting XML, @xml XML  
+	DECLARE @MinPT_XML XML, @MaxPT_XML XML, @SuperPT_XML XML, @MasterPT_XML XML, @AgentPT_XML XML
+	DECLARE @ProductName VARCHAR(50), @SettingLevel	TINYINT
+	DECLARE @SuperId INT, @MasterId INT, @AgentId INT
+
+	IF @PTSetting = '' RETURN 
+
+	SELECT @ErrCode = 0, @_PTSetting = @PTSetting	
+	SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID AND roleid = @RoleId	
+
+	---------------------------
+	-- ***Check Downline Belonging***
+	EXEC dbo.Age_CustomerSelCheckBelongingByCustID 
+		@SessionCustID	= @Userid 
+		,@Custid		= @custid		
+		,@roleid		= @roleid OUTPUT
+	IF (@roleid = 0) RETURN
 	
+	--Check disable user
+	EXEC dbo.Acc_CustomerSelCheckEnable 
+		@custid		= @custid
+		,@ErrCode	= @ErrCode OUTPUT
+		,@ErrMsg	= @ErrMsg OUTPUT
+		
+	IF @ErrCode > 0	
+	BEGIN
+		SELECT @MsgType = 101
+		RETURN
+	END
+	--end
+
+	---- Checking total downlines before update 
+    EXEC dbo.Acc_CustomerSelCheckAllowedDownlines    
+		@custid			= @custid
+        ,@roleid		= @roleid
+        ,@isExecRep		= 1
+        ,@isUpdatePT	= 1
+        ,@Sporttype		= 1
+        ,@Language		= @Language
+        ,@ErrMsg		= @ErrMsg OUTPUT
+        ,@ErrCode		= @ErrCode OUTPUT
+        
+    IF @ErrCode > 0	
+	BEGIN
+		SELECT @MsgType = 101
+		RETURN
+	END 
+    
+	EXEC CS_CustSetting_PTSetting_Check
+		@RoleId			= @RoleId,
+		@CustID			= @CustID,
+		@PTSetting		= @PTSetting,
+		@ProductID		= @ProductID,
+		@IsTest			= @IsTest,
+		@ErrCode		= @ErrCode OUTPUT,
+		@MsgType		= @MsgType OUTPUT,
+		@ErrMsg			= @ErrMsg OUTPUT
+	IF @ErrCode > 0
+		RETURN
+
+    SET @startRun = GETDATE()
+
 	/********************************************* Position Taking: SettingType = 1 ***********************************/
 	SELECT t.* INTO #SportBettypeFilter1
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID,1, @IsTest) t
 	
+	SELECT pt.* INTO #PT_tmp
+	FROM dbo.f_CS_PTParse(@_PTSetting) pt
+		INNER JOIN #SportBettypeFilter1 ft ON pt.SportType = ft.SportType AND pt.BetType = ft.BetType AND pt.IsLive = ft.IsLive
+	
+	-- Select ProductID and SettingLevel
+	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
+	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
+			FROM CS_ProductSettingDetail AS psd WITH(NOLOCK)
+				INNER JOIN #PT_tmp AS tmp ON psd.SportType = tmp.SportType AND	psd.BetType = tmp.BetType AND psd.IsLive = tmp.IsLive
+			WHERE	psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+				AND psd.SettingType = 1	-- Position Taking
+		 ) iq
+
+	-- Select ProductName
+	SELECT @ProductName = p.ProductName
+	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
+	WHERE p.ProductID = @ProductID
+	
 	IF @RoleId = 4
 	BEGIN
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, 0 AS MinPT, ps.MaxPT AS MaxPT
-		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
-			INNER JOIN #SportBettypeFilter1 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
+		SELECT @ActionId = 100003
+		/*
+		-- Log old data
+		IF @SettingLevel = 1			-- Product setting level
+		BEGIN
+			SET @xml = (
+						SELECT  @ProductID						AS '@ProductID',
+								@ProductName					AS '@ProductName',
+								@custid                         AS '@CustID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+								@userid                         AS '@UserID',
+								@IP                             AS '@IP',
+								(
+									SELECT  @ProductID										AS '@ProductID',
+											cs.isLive										AS '@IsLive',
+											CONVERT(DECIMAL(10,2), cs.MinPT/100.0)			AS '@SuperMinPT',
+											CONVERT(DECIMAL(10,2), cs.MaxPT/100.0)			AS '@SuperMaxPT'
+									FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+									FOR XML PATH('PT'), 
+									TYPE
+								)
+						FOR XML PATH('CS_CustSetting_PTSetting_Upd'), 
+						TYPE
+					)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+		SET @xml = (
+					SELECT  @ProductID						AS '@ProductID',
+							@ProductName					AS '@ProductName',
+							@custid                         AS '@CustID',
+							dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+							@userid                         AS '@UserID',
+							@IP                             AS '@IP',
+							(
+								SELECT  cs.sporttype									AS '@SportType',
+										cs.isLive										AS '@IsLive',
+										CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+										cs.isAutoMasterPT								AS '@IsAutoMasterPT',
+										CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+										CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
+										CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
+										t.UpdAllMems									AS '@UpdAllMems',
+										CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
+								FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
+									INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
+															AND cs.bettype = t.BetType 
+															AND cs.isLive = t.IsLive
+								WHERE custid = @custid
+								FOR XML PATH('PT'), 
+								TYPE
+							)
+					FOR XML PATH('CS_CustSetting_PTSetting_Upd'), 
+					TYPE
+				)
+				END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT  @ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@custid                         AS '@CustID',
+					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					@userid                         AS '@UserID',
+					@IP                             AS '@IP',
+					(
+						SELECT  cs.bettype										AS '@BetType',
+								cs.isLive										AS '@IsLive',
+								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
+								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
+								CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
+								t.UpdAllMems									AS '@UpdAllMems',
+								CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
+						FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
+							INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
+													AND cs.bettype = t.BetType 
+													AND cs.isLive = t.IsLive
+						WHERE custid = @custid
+						FOR XML PATH('PT'), 
+						TYPE
+					)
+			FOR XML PATH('CS_CustSetting_PTSetting_Upd'), 
+			TYPE
+		)
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT  @ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@custid                         AS '@CustID',
+					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					@userid                         AS '@UserID',
+					@IP                             AS '@IP',
+					(
+						SELECT  cs.sporttype									AS '@SportType',
+								cs.bettype										AS '@BetType',
+								cs.isLive										AS '@IsLive',
+								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
+								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
+								CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
+								t.UpdAllMems									AS '@UpdAllMems',
+								CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
+						FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
+							INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
+													AND cs.bettype = t.BetType 
+													AND cs.isLive = t.IsLive
+						WHERE custid = @custid
+						FOR XML PATH('PT'), 
+						TYPE
+					)
+			FOR XML PATH('CS_CustSetting_PTSetting_Upd'), 
+			TYPE
+		)
+		END
+		*/
+
+		SET @logSPData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+		SET @MinPT_XML =(
+							SELECT (
+									SELECT	bs.ByteOrder	AS '@pos',
+											pt.MinPT		AS '@val'
+									FROM #PT_tmp pt
+										INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = pt.SportType AND bs.BetType = pt.BetType AND bs.IsLive = pt.IsLive
+									WHERE bs.Type = 'PTSetting'
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
+								, TYPE
+							)
+
+		SET @MaxPT_XML =(
+							SELECT (
+									SELECT	bs.ByteOrder	AS '@pos',
+											pt.MaxPT		AS '@val'
+									FROM #PT_tmp pt
+										INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = pt.SportType AND bs.BetType = pt.BetType AND bs.IsLive = pt.IsLive
+									WHERE bs.Type = 'PTSetting'
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
+								, TYPE
+							)	
+
+		UPDATE cs
+		SET cs.MinPT = minpt.binaryStr_new,
+			cs.MaxPT = maxpt.binaryStr_new
+		FROM dbo.CS_CustPTSetting_Agent cs WITH (ROWLOCK)
+			CROSS APPLY dbo.f_SetBinaryValues(cs.MinPT, @MinPT_XML) minpt
+			CROSS APPLY dbo.f_SetBinaryValues(cs.MaxPT, @MaxPT_XML) maxpt	
+		WHERE cs.CustId = @CustID
 	END
 	ELSE IF @RoleId = 3
 	BEGIN
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, 0 AS MinPT, pt.MaxPT AS MaxPT
-		FROM dbo.f_CS_GetPT_Agent (@CustID)	pt 		
-			INNER JOIN #SportBettypeFilter1 ft ON pt.SportType = ft.SportType AND pt.BetType = ft.BetType AND pt.IsLive = ft.IsLive
+		SELECT @ActionId = 100004
+
+		SET @SuperPT_XML =(
+							SELECT (
+									SELECT	bs.ByteOrder	AS '@pos',
+											pt.SuperPT		AS '@val'
+									FROM #PT_tmp pt
+										INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = pt.SportType AND bs.BetType = pt.BetType AND bs.IsLive = pt.IsLive
+									WHERE bs.Type = 'PTSetting'
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
+								, TYPE
+							)
+
+		
+		UPDATE cs
+		SET cs.SuperPT = spt.binaryStr_new
+		FROM dbo.CS_CustPTSetting_Agent cs WITH (ROWLOCK) 
+			CROSS APPLY dbo.f_SetBinaryValues(cs.SuperPT, @SuperPT_XML) spt
+		WHERE cs.CustId = @CustID
+
+		UPDATE cs
+		SET cs.SuperPT = mpt.binaryStr_new
+		FROM dbo.CS_CustPTGroupSetting_Member cs WITH (ROWLOCK) 
+			INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cs.AgentId
+			CROSS APPLY dbo.f_SetBinaryValues(cs.SuperPT, @SuperPT_XML) mpt
+		WHERE ci.mrecommend = @CustID AND ci.roleid = 2
 	END	
 	ELSE IF @RoleId = 2
 	BEGIN
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, spt.MinPT - mpt.SuperPT AS MinPT, spt.MaxPT - mpt.SuperPT AS MaxPT
-		FROM CustInfo ci WITH (NOLOCK) 
-			CROSS APPLY dbo.f_CS_GetPT_Agent (ci.srecommend) spt 			
-			CROSS APPLY dbo.f_CS_GetPT_Agent (ci.custid) mpt 
-			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive AND mpt.SportType = ft.SportType AND mpt.BetType = ft.BetType AND mpt.IsLive = ft.IsLive 
-		WHERE ci.custid = @CustId
+		SELECT @ActionId = 100005
+
+		SET @MasterPT_XML =(
+							SELECT (
+									SELECT	bs.ByteOrder	AS '@pos',
+											pt.MasterPT		AS '@val'
+									FROM #PT_tmp pt
+										INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = pt.SportType AND bs.BetType = pt.BetType AND bs.IsLive = pt.IsLive
+									WHERE bs.Type = 'PTSetting'
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
+								, TYPE
+							)
+
+		SET @AgentPT_XML =(
+							SELECT (
+									SELECT	bs.ByteOrder	AS '@pos',
+											pt.AgentPT		AS '@val'
+									FROM #PT_tmp pt
+										INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = pt.SportType AND bs.BetType = pt.BetType AND bs.IsLive = pt.IsLive
+									WHERE bs.Type = 'PTSetting'
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
+								, TYPE
+							)	
+
+		UPDATE cs
+		SET cs.MasterPT = apt1.binaryStr_new,
+			cs.AgentPT = apt2.binaryStr_new
+		FROM dbo.CS_CustPTSetting_Agent cs WITH (ROWLOCK) 
+			CROSS APPLY dbo.f_SetBinaryValues(cs.MasterPT, @MasterPT_XML) apt1
+			CROSS APPLY dbo.f_SetBinaryValues(cs.AgentPT, @AgentPT_XML) apt2
+		WHERE cs.CustId = @CustID
+
+		UPDATE cs
+		SET cs.MasterPT = apt1.binaryStr_new,
+			cs.AgentPT = apt2.binaryStr_new
+		FROM dbo.CS_CustPTGroupSetting_Member cs WITH (ROWLOCK) 
+			CROSS APPLY dbo.f_SetBinaryValues(cs.MasterPT, @MasterPT_XML) apt1
+			CROSS APPLY dbo.f_SetBinaryValues(cs.AgentPT, @AgentPT_XML) apt2
+		WHERE cs.AgentId = @CustID
 	END	
+
+	-- end write log
+	SET @endRun		= GETDATE()  
+	SET @duration	= DATEDIFF(MILLISECOND, @startRun, @endRun) 
+						
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @UserID,
+		@CustID = @CustID,
+		@ActionID = @ActionId,
+		@TrackingValue = @LogSPData,
+		@TrackingValue2 = @logSPData_Old,
+		@duration = @duration
 END
 GO
