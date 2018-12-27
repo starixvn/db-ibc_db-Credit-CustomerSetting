@@ -1,8 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@custid int,
 	@firstname nvarchar(50),
@@ -72,6 +68,10 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@MaxPerMatchv161 money,
 	
 	@MaxPerBallv161 money = 0,
+	
+	@MinBetv164 money=0,
+	@MaxBetv164 money=0,
+	@MaxPerMatchv164 money=0,
 	
 	@credit money,
 	@maxcredit money = null, -- max credit agent give member 
@@ -375,6 +375,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 
 	-- number game
 	@UpdateMinMaxBetv161 bit = 1,
+	@UpdateMinMaxBetv164 bit = 1,
 	
 	@UpdatePositiontaking bit = 1,
 	@UpdatePositiontakingv2 bit = 1,
@@ -478,6 +479,7 @@ Revisions:
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20170628@Winnie: Color for closed account - [Redmine: 74494]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20181107@Johnson: add Happy 5 [Redmine: #104006]
 Param's Explanation:
 • @ErrCode:
     = 0: Update Agent successfully.
@@ -722,7 +724,8 @@ BEGIN
 		@UpdateMinMaxBetv99  = 1 or
 		@UpdateMinMaxBetv99MP = 1 or
 		@UpdateMinMaxBetv1MP = 1 or		
-		@UpdateMinMaxBetv161 = 1    
+		@UpdateMinMaxBetv161 = 1 or
+		@UpdateMinMaxBetv164 = 1  		
 	BEGIN
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
 		EXEC dbo.Acc_CustomerUpdAgent_MinMaxBet
@@ -769,7 +772,11 @@ BEGIN
 			@maxpermatchv161 = @maxpermatchv161,
 		
 			@MaxPerBallv161 = @MaxPerBallv161,
-
+			
+			@minbetv164 = @minbetv164,
+			@maxbetv164 = @maxbetv164,
+			@maxpermatchv164 = @maxpermatchv164,
+			
 			@UpdateMultiple = @UpdateMultiple,
 			@UpdateMinMaxBet = @UpdateMinMaxBet,
 			@UpdateMinMaxBetv2 = @UpdateMinMaxBetv2,
@@ -782,6 +789,7 @@ BEGIN
 			@UpdateMinMaxBetv99MP = @UpdateMinMaxBetv99MP,
 			@UpdateMinMaxBetv1MP = @UpdateMinMaxBetv1MP,			
 			@UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,
+			@UpdateMinMaxBetv164 = @UpdateMinMaxBetv164,
 			@SubAccID = @SubAccID,
 			@UserID = @UserID,
 			@Language = @Language,

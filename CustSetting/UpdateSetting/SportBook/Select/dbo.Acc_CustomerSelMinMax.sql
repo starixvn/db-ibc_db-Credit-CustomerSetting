@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
 	@custid int,	
 	@MinBet money output, @MaxBet money output, @MaxPerMatch money output,
@@ -11,18 +11,20 @@ ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
 	@MinBetv99 money output, @MaxBetv99 money output, @MaxPerMatchv99 money output,
 	@MinBetv99MP money output, @MaxBetv99MP money output, @MaxPerMatchv99MP money output,
 	@MinBetv1MP money output, @MaxBetv1MP money output, @MaxPerMatchv1MP money output,	
-	@MinBetv161 money output, @MaxBetv161 money output, @MaxPerMatchv161 money output, @MaxPerBallv161 money output
+	@MinBetv161 money output, @MaxBetv161 money output, @MaxPerMatchv161 money output, @MaxPerBallv161 money output,
+	@MinBetv164 money output, @MaxBetv164 money output, @MaxPerMatchv164 money output
 AS
 /*
 Created: 20110427@Simon
 Task : Select customer minbet, maxbet, maxpermatch. 
-DB: DBTXN/bodb02
+DB: DBCUST/CUSTDB
 Original:
 
 Revisions:
     - 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
     - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 Param's Explanation:
 • @custid: custid that need to be viewed.   
 */
@@ -95,7 +97,12 @@ BEGIN
 		@MaxBetv161 = isnull(MaxBet,0)
 	from custsetting3rd WITH (NOLOCK)
 	where custid = @CustID and bettype = 81 and sporttype=161
-
+	
+	Select 
+		@MinBetv164 = isnull(MinBet,0), 
+		@MaxBetv164 = isnull(MaxBet,0)
+	from custsetting3rd WITH (NOLOCK)
+	where custid = @CustID and bettype = 8101 and sporttype=164
 
 	--MAX PER MATCH
 	Select 
@@ -110,10 +117,10 @@ BEGIN
 		@MaxPerMatchv99MP = MaxPerMatch99MP,
 		@MaxPerMatchv1MP = MaxPerMatch1MP,		
 		@MaxPerMatchv161 = MaxPerMatch161,
-		@MaxPerBallv161 = MaxPerBall161
+		@MaxPerBallv161 = MaxPerBall161,
+		@MaxPerMatchv164 = MaxPerMatch164
 	from custinfo WITH (NOLOCK) 
 	where custid = @CustID
 
 END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelMinMax] TO [vnteam] AS [dbo]

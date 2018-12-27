@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @custid int,-- superid
     @firstname nvarchar(50),
@@ -58,7 +58,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @MaxPerMatchv161 money,
 
     @MaxPerBallv161 money = 0,
-        
+    
+	@MinBetv164 money =0,
+    @MaxBetv164 money =0,
+    @MaxPerMatchv164 money=0,
+	
     @credit money,
     @Language varchar(2),
     
@@ -310,7 +314,7 @@ BEGIN
 /*
 Created: 20080514@Thien
 Task : Update Super
-DB: DBTXN/bodb02
+DB: DBCUST/CUSTDB
 Original:Acc_CustomerUpdEditCustomer_Com
 
 Revisions:
@@ -339,6 +343,7 @@ Revisions:
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
     - 20170628@Winnie: Apply color for closed account   - [Redmine: 74494]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
+	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -595,6 +600,10 @@ Revisions:
 	    
 		@MaxPerBallv161 = @MaxPerBallv161,
 	    
+		@MinBetv164 = @MinBetv164,
+		@MaxBetv164 = @MaxBetv164,
+		@MaxPerMatchv164 = @MaxPerMatchv164,
+		
 		@UserID = @UserID,
 		@Language = @Language,
 		@IP = @IP,

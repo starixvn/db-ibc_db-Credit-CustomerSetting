@@ -80,7 +80,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@MaxBetv161 MONEY,
 	@MaxPerMatchv161 MONEY,
 
-	@MaxPerBallv161 MONEY = 0,		
+	@MaxPerBallv161 MONEY = 0,
+
+	@MinBetv164 MONEY,
+	@MaxBetv164 MONEY,
+	@MaxPerMatchv164 MONEY,	
 	
 	@spositiontaking_1 SMALLMONEY,
 	@spositiontaking_2 SMALLMONEY,
@@ -405,6 +409,7 @@ Revisions:
 	- 20181002@Elodie: Limit max members creation per Super. [RedmineID: #101994]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
 	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526] 	
+	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -504,6 +509,10 @@ BEGIN
 				@MaxPerMatchv161 = @MaxPerMatchv161,
 
 				@MaxPerBallv161 = @MaxPerBallv161,
+				
+				@MinBetv164 = @MinBetv164,
+				@MaxBetv164 = @MaxBetv164,
+				@MaxPerMatchv164 = @MaxPerMatchv164,
 				
 				@spositiontaking_1 = @spositiontaking_1,
 				@spositiontaking_2 = @spositiontaking_2,
@@ -816,7 +825,7 @@ BEGIN
 		@MaxPerMatchv1MP = @MaxPerMatchv1MP,
 		@MaxPerMatchv161 = @MaxPerMatchv161,	
 		@MaxPerBallv161 = @MaxPerBallv161,	
-		
+		@MaxPerMatchv164 = @MaxPerMatchv164,
 		--keno
 		@HideKeno = @HideKeno,
 
@@ -1112,6 +1121,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		--Number game
 		@MinBetv161 = @MinBetv161,
 		@MaxBetv161 = @MaxBetv161,	
+		
+		@MinBetv164 = @MinBetv164,
+		@MaxBetv164 = @MaxBetv164,
 		
 		@discountcs = @discountcs, 
 		--comm 1x2
@@ -1422,7 +1434,11 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'MinBv1MP="'+ COALESCE(CAST(@MinBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxBv1MP="'+ COALESCE(CAST(@MaxBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MPMv1MP="'+ COALESCE(CAST(@MaxPerMatchv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	
+	'MinBv164="'+ COALESCE(CAST(@MinBetv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'MaxBv164="'+ COALESCE(CAST(@MaxBetv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'MPMv164="'+ COALESCE(CAST(@MaxPerMatchv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	
 	'MinBv161="'+ COALESCE(CAST(@MinBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxBv161="'+ COALESCE(CAST(@MaxBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MPMv161="'+ COALESCE(CAST(@MaxPerMatchv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1469,7 +1485,11 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'MinBv1MP="'+ COALESCE(CAST(@MinBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MaxBv1MP="'+ COALESCE(CAST(@MaxBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MPMv1MP="'+ COALESCE(CAST(@MaxPerMatchv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+		
+		'MinBv164="'+ COALESCE(CAST(@MinBetv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'MaxBv164="'+ COALESCE(CAST(@MaxBetv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'MPMv164="'+ COALESCE(CAST(@MaxPerMatchv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		
 		'MinBv161="'+ COALESCE(CAST(@MinBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MaxBv161="'+ COALESCE(CAST(@MaxBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MPMv161="'+ COALESCE(CAST(@MaxPerMatchv161 AS VARCHAR(50)),SPACE(1)) + '" ' +

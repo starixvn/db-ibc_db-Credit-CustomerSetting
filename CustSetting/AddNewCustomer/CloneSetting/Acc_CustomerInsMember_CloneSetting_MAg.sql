@@ -73,6 +73,8 @@ AS
 	- 20180621@Razor: Add Message Customer Read Status [Redmind: #94705]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
 	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526] 	
+	- 20181205@Kan: Write @SystemID param into log [Redmine:104431]
+	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -398,7 +400,7 @@ BEGIN
 			,maxpermatch161
 		
 			,MaxPerBall161			
-			
+			,maxpermatch164
 			--,DisableVirtualSports
 			--,HideVirtualSports
 			--,maxpermatch180
@@ -457,7 +459,7 @@ BEGIN
 			,maxpermatch161
 			
 			,MaxPerBall161			
-		
+			,maxpermatch164
 			--,DisableVirtualSports
 			--,HideVirtualSports
 			--,maxpermatch180
@@ -737,6 +739,7 @@ BEGIN
 	'CopiedFrom="'+cast(@ExistingCustid as varchar(10))+'" '+
 	'CopiedFomUsername="'+c.username+'" '+
 	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccountID) as varchar(30)),space(1)) + '" ' +
+	'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(4000)),space(1)) + '" />'
 	FROM dbo.customer AS c WITH(NOLOCK) 
@@ -768,6 +771,7 @@ BEGIN
 		'CopiedFrom="'+cast(@ExistingCustid as varchar(10))+'" '+
 		'CopiedFomUsername="'+c.username+'" '+
 		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccountID) as varchar(30)),space(1)) + '" ' +
+		'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
 		'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
 		'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1)) + '" />'
 		FROM dbo.customer AS c WITH(NOLOCK) 
@@ -784,8 +788,3 @@ BEGIN
 	SET NOCOUNT OFF
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_CloneSetting_MAg] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_CloneSetting_MAg] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerInsMember_CloneSetting_MAg] TO [bodbExtAccNet]
