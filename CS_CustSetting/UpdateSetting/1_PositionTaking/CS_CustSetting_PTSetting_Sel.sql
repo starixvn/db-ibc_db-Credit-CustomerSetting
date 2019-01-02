@@ -63,7 +63,7 @@ BEGIN
 
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, mpt.SuperPT, 
 			CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MinSuperPT, 
-			spt.MaxPT - dl.MaxPTDownline AS MaxSuperPT
+			CASE WHEN spt.MaxPT > dl.MaxPTDownline THEN spt.MaxPT - dl.MaxPTDownline ELSE 0 END AS MaxSuperPT
 		FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
 			INNER JOIN dbo.f_CS_GetPT_Agent(@CustID) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 			LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
@@ -71,10 +71,14 @@ BEGIN
 	END	
 	ELSE IF @RoleId = 2
 	BEGIN
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, spt.MinPT - mpt.SuperPT AS MinAllowedPT, spt.MaxPT - mpt.SuperPT AS MaxAllowedPT, 
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, 
+			CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END AS MinAllowedPT, 
+			CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS MaxAllowedPT, 
 			apt.MasterPT, apt.AgentPT,
-			0 AS MinMasterPT, spt.MaxPT - mpt.SuperPT AS MaxMasterPT,
-			0 AS MinAgentPT, spt.MaxPT - mpt.SuperPT AS MaxAgentPT
+			0 AS MinMasterPT, 
+			CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS MaxMasterPT,
+			0 AS MinAgentPT, 
+			CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS MaxAgentPT
 		FROM dbo.f_CS_GetPT_Agent (@SuperId) spt 			
 			INNER JOIN dbo.f_CS_GetPT_Agent (@MasterId) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 			INNER JOIN dbo.f_CS_GetPT_Agent (@CustID) apt ON apt.SportType = mpt.SportType AND apt.BetType = mpt.BetType AND apt.IsLive = mpt.IsLive

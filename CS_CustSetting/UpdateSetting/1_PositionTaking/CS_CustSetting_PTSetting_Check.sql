@@ -215,14 +215,14 @@ BEGIN
 
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT ft.SportType, ft.Bettype, ft.IsLive,
-			CASE	WHEN mpt.SuperPT < spt.MinPT - ISNULL(dl.MaxPTDownline,0) THEN 301
-					WHEN mpt.SuperPT > spt.MaxPT - ISNULL(dl.MaxPTDownline,0) THEN 302 END			
+			CASE	WHEN mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 301
+					WHEN mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 302 END			
 		FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
 			INNER JOIN #NewPT mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 			LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
 			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
-		WHERE mpt.SuperPT < spt.MinPT - ISNULL(dl.MaxPTDownline,0) --check s3 >= n4 - MAX(m1+a1)
-			OR mpt.SuperPT > spt.MaxPT - ISNULL(dl.MaxPTDownline,0) --check s3 <= l4 - MAX(m1+a1)
+		WHERE mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 >= n4 - MAX(m1+a1)
+			OR mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 <= l4 - MAX(m1+a1)
 
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -306,14 +306,14 @@ BEGIN
 
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, 
-			CASE	WHEN apt.MasterPT + apt.AgentPT < spt.MinPT - mpt.SuperPT THEN 201
-					WHEN apt.MasterPT + apt.AgentPT > spt.MaxPT - mpt.SuperPT THEN 202 END
+			CASE	WHEN apt.MasterPT + apt.AgentPT < CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END THEN 201 
+					WHEN apt.MasterPT + apt.AgentPT > CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END THEN 202 END
 		FROM dbo.f_CS_GetPT_Agent (@SuperId) spt 			
 			INNER JOIN dbo.f_CS_GetPT_Agent (@MasterId) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 			INNER JOIN #NewPT apt ON apt.SportType = mpt.SportType AND apt.BetType = mpt.BetType AND apt.IsLive = mpt.IsLive
 			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
-		WHERE apt.MasterPT + apt.AgentPT < spt.MinPT - mpt.SuperPT --check a2 + m2 >= n4 - s1
-			OR apt.MasterPT + apt.AgentPT > spt.MaxPT - mpt.SuperPT --check a2 + m2 <= l4 - s1
+		WHERE apt.MasterPT + apt.AgentPT < CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END --check a2 + m2 >= n4 - s1
+			OR apt.MasterPT + apt.AgentPT > CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END --check a2 + m2 <= l4 - s1
 
 		IF @@ROWCOUNT <> 0
 		BEGIN

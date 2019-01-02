@@ -1,5 +1,5 @@
 /*<info serverAlias="DBACC-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE CS_CurrencyListSel
+ALTER PROCEDURE CS_CurrencyListSel
 /*	
 	Created: 20181212@Elodie
 	Task : Currency list select

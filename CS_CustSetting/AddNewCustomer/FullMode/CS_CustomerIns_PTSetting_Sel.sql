@@ -47,7 +47,13 @@ BEGIN
 	END	
 	ELSE IF @RoleId = 2
 	BEGIN
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, spt.MinPT - mpt.SuperPT AS MinAllowedPT, spt.MaxPT - mpt.SuperPT AS MaxAllowedPT, 0 AS MinMasterPT, spt.MaxPT - mpt.SuperPT AS MaxMasterPT, 0 AS MinAgentPT, spt.MaxPT - mpt.SuperPT AS MaxAgentPT
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, 
+				CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END AS MinAllowedPT, 
+				CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS MaxAllowedPT, 
+				0 AS MinMasterPT, 
+				CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS MaxMasterPT, 
+				0 AS MinAgentPT, 
+		CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS MaxAgentPT
 		FROM CustInfo ci WITH (NOLOCK) 
 			CROSS APPLY dbo.f_CS_GetPT_Agent (ci.srecommend) spt 			
 			CROSS APPLY dbo.f_CS_GetPT_Agent (ci.custid) mpt 

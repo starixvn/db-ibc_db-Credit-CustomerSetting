@@ -3,7 +3,7 @@
 ALTER PROCEDURE CS_CustomerIns_CommBetSetting_Sel
 	@RoleId TINYINT,
 	@CustID INT	= NULL,
-	@uGroup VARCHAR(3) = NULL,
+	--@uGroup VARCHAR(3) = NULL,
 	@ProductID TINYINT = 1,
 	@IsTest BIT = 0
 AS
@@ -40,7 +40,9 @@ BEGIN
 	IF @RoleId = 4
 	BEGIN
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
-			0 AS MinComm, CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS MaxCom
+			0 AS MinComm, 
+			CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS MaxComm,
+			CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS SuperComm
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter2 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive
@@ -48,7 +50,7 @@ BEGIN
 	ELSE IF @RoleId = 3
 	BEGIN
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
-			0 AS MinComm, sc.Discount AS MaxCom,
+			0 AS MinComm, sc.Discount AS MaxComm, sc.Discount AS MasterComm,
 			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet,
 			0 AS MinMaxPerMatch, bs.MaxPerMatch AS MaxMaxPerMatch
 		FROM dbo.f_CS_GetDiscount_Agent (@CustID) sc
@@ -60,7 +62,7 @@ BEGIN
 	ELSE IF @RoleId = 2
 	BEGIN
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
-			0 AS MinComm, mc.Discount AS MaxCom,
+			0 AS MinComm, mc.Discount AS MaxComm, mc.Discount AS AgentComm,
 			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet,
 			0 AS MinMaxPerMatch, bs.MaxPerMatch AS MaxMaxPerMatch
 		FROM dbo.f_CS_GetDiscount_Agent (@CustID) mc
@@ -72,14 +74,14 @@ BEGIN
 	ELSE IF @RoleId = 1
 	BEGIN
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
-			0 AS MinComm, ac.Discount AS MaxCom,
+			0 AS MinComm, ac.Discount AS MaxComm, ac.Discount AS MemberComm,
 			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet,
 			0 AS MinMaxPerMatch, bs.MaxPerMatch AS MaxMaxPerMatch
 		FROM dbo.f_CS_GetDiscount_Agent (@CustID) ac
 			INNER JOIN #SportBettypeFilter2 ft ON ac.SportType = ft.SportType AND ac.BetType = ft.BetType AND ac.IsLive = ft.IsLive
 			INNER JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = ac.GroupId 
-		WHERE (gc.uGroup = @uGroup OR gc.GroupId IS NULL) AND bs.CustId = @CustID
+		WHERE bs.CustId = @CustID --AND (gc.uGroup = @uGroup OR gc.GroupId IS NULL)
 	END
 END
 GO
