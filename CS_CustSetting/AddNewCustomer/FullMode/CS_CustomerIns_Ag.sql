@@ -20,6 +20,8 @@ ALTER PROCEDURE CS_CustomerIns_Ag
 	@IP					VARCHAR(15)='',
 	@success			BIT = 1 OUTPUT,
 	@ErrCode			INT = 0 OUTPUT,
+	@ErrSettingType 	TINYINT = 0 OUTPUT,
+	@MsgType			INT	= 0 OUTPUT,
 	@ErrMsg				NVARCHAR(4000) = '' OUTPUT	
 AS
 /*
@@ -67,6 +69,7 @@ BEGIN
 				SELECT	@ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry. You cannot create member too often.'
 												ELSE [dbo].[f_Get_MsgNamebyMsgID](40030,@Language) END,
 						@success = 0, @ErrCode = 998
+				SELECT @ErrSettingType = 1, @MsgType = 200	
 				RETURN
 			END
 		END 	
@@ -84,6 +87,7 @@ BEGIN
 				SELECT	@ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry. You cannot create member too often.'
 												ELSE [dbo].[f_Get_MsgNamebyMsgID](40030,@Language) END,
 						@success = 0, @ErrCode = 998
+				SELECT @ErrSettingType = 1, @MsgType = 200	
 				RETURN
 			END
 		END
@@ -109,6 +113,7 @@ BEGIN
 				SELECT	@ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry. You cannot create member too often.'
 												ELSE [dbo].[f_Get_MsgNamebyMsgID](40030,@Language) END,
 						@success = 0, @ErrCode = 998
+				SELECT @ErrSettingType = 1, @MsgType = 200	
 				RETURN
 			END
 		END	
@@ -143,6 +148,7 @@ BEGIN
 		SELECT	@ErrMsg = CASE @Language WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline OR CSD for further information.'
 										ELSE [dbo].[f_Get_MsgNamebyMsgID](40032,@Language) END,
 				@ErrCode = 1001	
+		SELECT @ErrSettingType = 1, @MsgType = 200	
 		RETURN
 	END
     --End check IP--------------------------------------------------
@@ -160,6 +166,7 @@ BEGIN
 			SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'This function is under maintenance and not available at the moment. Please kindly check back later. Thank you!' 
 											ELSE [dbo].[f_Get_MsgNamebyMsgID](90011, @Language) END,
 				   @success = 0, @ErrCode = 101
+			SELECT @ErrSettingType = 1, @MsgType = 200	
 			RETURN
 		END
 	END 
@@ -167,8 +174,11 @@ BEGIN
 
 	--Check an account disabled or not 
     EXEC dbo.Acc_CustomerSelCheckEnable @custid = @recommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
-    IF @ErrCode <>0		
+    IF @ErrCode <>0	
+	BEGIN
+		SELECT @ErrSettingType = 1, @MsgType = 200		
 		RETURN 
+	END
 	
 	IF EXISTS(SELECT 1 FROM customer WITH(NOLOCK) WHERE username= @username)
 	    or EXISTS (SELECT 1 FROM customer WITH(NOLOCK) WHERE username2 = @username)
@@ -181,6 +191,7 @@ BEGIN
 						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
 					    END		
 	    SELECT @ErrCode = 1101
+		SELECT @ErrSettingType = 1, @MsgType = 200	
 	    RETURN
     END
 
@@ -188,22 +199,30 @@ BEGIN
 	IF @SystemID <> 1
 	BEGIN
 		EXEC Age_MaxMemberLimitBySuperCheck @AgentId = @recommend, @Language = @Language, @ErrMsg = @ErrMsg OUTPUT, @ErrCode = @ErrCode OUTPUT
-		IF @ErrCode <> 0 RETURN
+		IF @ErrCode <> 0 
+		BEGIN
+			SELECT @ErrSettingType = 1, @MsgType = 200	
+			RETURN
+		END
 	END
 
     DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT
     SET @startRun = GETDATE()
 
-	--EXEC dbo.CS_CustomerIns_Check 
-	--	@UplineID		= @recommend,		
-	--	@BetSetting		= @BetSetting,
-	--	@CommSetting	= @CommSetting,
-	--	@IsTest			= @IsTest, 
-	--	@ugroup			= @ugroup,
-	--	@ErrCode		= @ErrCode OUTPUT,
-	--	@ErrMsg			= @ErrMsg OUTPUT
-	--IF @ErrCode <> 0
-	--	RETURN
+	EXEC dbo.CS_CustomerIns_Check 
+		@RoleId			= 1,
+		@custid			= @recommend,
+		@BetSetting		= @BetSetting,
+		@CommSetting	= @CommSetting,
+		@credit			= @credit,
+		@uGroup			= @uGroup,
+		@IsTest			= @IsTest, 
+		@ErrCode		= @ErrCode OUTPUT,
+		@ErrSettingType = @ErrSettingType OUTPUT,
+		@MsgType		= @MsgType OUTPUT,
+		@ErrMsg			= @ErrMsg OUTPUT
+	IF @ErrCode <> 0
+		RETURN
 
     SELECT @currency = currency
          , @mrecommend = mrecommend
@@ -227,6 +246,7 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](70003,@Language)
 						END	
 				,@success = 0, @ErrCode = 204
+		SELECT @ErrSettingType = 1, @MsgType = 200	
 		RETURN
     END
 
@@ -290,7 +310,10 @@ BEGIN
 	    @ErrCode = @ErrCode OUTPUT,
 	    @ErrMsg = @ErrMsg OUTPUT
     IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrSettingType = 1, @MsgType = 200	
 		RETURN
+	END
 
      ---- Create balance for new customer   
 	EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT
@@ -302,7 +325,7 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
 						END	
 			    , @success = 0, @ErrCode=216
-    	
+    	SELECT @ErrSettingType = 1, @MsgType = 200	
 	    -- ROLLBACK MANUALLY
 		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
@@ -318,7 +341,7 @@ BEGIN
 							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
 						    END	
 			    , @success = 0, @ErrCode=216
-    	
+    	SELECT @ErrSettingType = 1, @MsgType = 200	
 	    -- ROLLBACK MANUALLY
 		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
 		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
@@ -339,7 +362,7 @@ BEGIN
 							WHEN 'E' then 'Create customer fail. Please try again'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
-		
+		SELECT @ErrSettingType = 1, @MsgType = 200	
 		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
 		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID

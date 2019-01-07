@@ -10,17 +10,22 @@ ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
 	@fax				NVARCHAR(50),
 	@currency			INT, 
 	@credit				MONEY,
+
 	@PTSetting			VARCHAR(MAX),
 	@BetSetting			VARCHAR(MAX),
 	@CommSetting		VARCHAR(MAX),
+	@IsTest				BIT = 0,
+
 	@creator			INT,
 	@site				NVARCHAR(50),	
 	@isinternal			BIT = 0,
+
 	@SystemID			TINYINT = 1,	
 	@IP					VARCHAR(15)='',
-	@Language			VARCHAR(2)= 'E',
-	@IsTest				BIT = 0,
+	@Language			VARCHAR(2)= 'E',	
 	@ErrCode			INT = 0 OUTPUT,
+	@ErrSettingType 	TINYINT = 0 OUTPUT,
+	@MsgType			INT	= 0 OUTPUT,
 	@ErrMsg				NVARCHAR(2000) = '' OUTPUT
 AS
 /*
@@ -58,19 +63,24 @@ BEGIN
 							WHEN 'E' THEN 'This username is not available.'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
 						END
-		SELECT @ErrCode = 101		
+		SELECT @ErrCode = 101
+		SELECT @ErrSettingType = 1, @MsgType = 200	
 		RETURN
 	END
 
-	--EXEC dbo.CS_CustomerIns_Check 
-	--	@PTSetting		= @PTSetting,
-	--	@BetSetting		= @BetSetting,
-	--	@CommSetting	= @CommSetting,
-	--	@IsTest			= @IsTest, 
-	--	@ErrCode		= @ErrCode OUTPUT,
-	--	@ErrMsg			= @ErrMsg OUTPUT
-	--IF @ErrCode <> 0
-	--	RETURN
+	EXEC dbo.CS_CustomerIns_Check 
+		@RoleId			= 4,
+		@PTSetting		= @PTSetting,
+		@BetSetting		= @BetSetting,
+		@CommSetting	= @CommSetting,
+		@credit			= @credit,
+		@IsTest			= @IsTest, 
+		@ErrCode		= @ErrCode OUTPUT,
+		@ErrSettingType = @ErrSettingType OUTPUT,
+		@MsgType		= @MsgType OUTPUT,
+		@ErrMsg			= @ErrMsg OUTPUT
+	IF @ErrCode <> 0
+		RETURN
 	
 	--Insert general info
 	EXEC dbo.Acc_CustomerInsUserInfo 
@@ -137,7 +147,10 @@ BEGIN
 		@ErrMsg = @ErrMsg OUTPUT
 	--Error occurs
 	IF @ErrCode <> 0
+	BEGIN 
+		SELECT @ErrSettingType = 1, @MsgType = 200	
 		RETURN	
+	END
 				
 	EXEC dbo.CS_DynamicCustomerInfo_00
 		@CustID			= @custid,	
@@ -149,10 +162,10 @@ BEGIN
 	IF @ErrCode > 0
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
-							when 'E' then 'Create customer fail. Please try again'
+							WHEN 'E' THEN 'Create customer fail. Please try again'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
-		
+		SELECT @ErrSettingType = 1, @MsgType = 200	
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END	

@@ -45,9 +45,20 @@ BEGIN
 		WHERE ci.srecommend = @CustId AND ci.roleid = 2
 		GROUP BY cs.sporttype, cs.bettype, cs.Islive
 
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, spt.MinPT AS SuperMinPT, spt.MaxPT AS SuperMaxPT, 0 AS MinSuperMinPT, ISNULL(dl.MinPTDownline,spt.MaxPT) AS MaxSuperMinPT, ISNULL(dl.MaxPTDownline,0) AS MinSuperMaxPT, ps.MaxPT AS MaxSuperMaxPT
+		SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.SuperPT) AS MaxSuperPT
+		INTO #PTMaster4
+		FROM dbo.custInfo ci WITH (NOLOCK) 	
+			CROSS APPLY dbo.f_CS_GetPT_Agent(ci.custid) cs
+			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
+		WHERE ci.srecommend = @CustId AND ci.roleid = 3
+		GROUP BY cs.sporttype, cs.bettype, cs.Islive
+
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, spt.MinPT AS SuperMinPT, spt.MaxPT AS SuperMaxPT, 
+			0 AS MinSuperMinPT, ISNULL(dl.MinPTDownline,spt.MaxPT) AS MaxSuperMinPT, 
+			CASE WHEN ISNULL(dl.MaxPTDownline,0) > ISNULL(mpt.MaxSuperPT,0) THEN ISNULL(dl.MaxPTDownline,0) ELSE ISNULL(mpt.MaxSuperPT,0) END AS MinSuperMaxPT, ps.MaxPT AS MaxSuperMaxPT
 		FROM dbo.f_CS_GetPT_Agent(@CustId) spt	
 			LEFT JOIN #PTDownlines4 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
+			LEFT JOIN #PTMaster4 mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
 			INNER JOIN dbo.CS_ProductSettingDetail ps WITH (NOLOCK) ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType	
 	END
@@ -61,9 +72,9 @@ BEGIN
 		WHERE ci.srecommend = @SuperId AND ci.roleid = 2
 		GROUP BY cs.sporttype, cs.bettype, cs.Islive
 
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, mpt.SuperPT, 
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, mpt.SuperPT,
 			CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MinSuperPT, 
-			CASE WHEN spt.MaxPT > dl.MaxPTDownline THEN spt.MaxPT - dl.MaxPTDownline ELSE 0 END AS MaxSuperPT
+			CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MaxSuperPT
 		FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
 			INNER JOIN dbo.f_CS_GetPT_Agent(@CustID) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 			LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
