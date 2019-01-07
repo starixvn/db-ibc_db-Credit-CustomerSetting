@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE  [dbo].[Acc_CustomerSelRefSport_Bettype]
 	 @CustID		INT = NULL
 	,@RoleID		INT = 0 
@@ -24,6 +23,7 @@ AS
 		- 20180529@Winnie: Alpha/EXT NAP - Super/Master/Agent/Member List: missing 6 new Keno bettypes in select SP [RedmineID: #96035]
 		- 20180830@Elodie: Add Poker Games Product - [Redmine: #97675]
 		- 20181218@Johnson: Add Happy 5 [Redmine: #104006]
+		- 20181227@Johnson: Add range for VS Betradar(190-198) [Redmine: #104809]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -141,13 +141,13 @@ BEGIN
 			AND (SportType<=99 -- Sportbook
 					
 					OR b.SportType BETWEEN 213 AND 218 --NG2
-					OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 193) --Virtual Sport
+					OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) --Virtual Sport
 					OR b.SportType = 220 -- Lottery
 					OR b.sportType = 164--Happy 5
 					OR b.SportType = 163) -- PokerGames
 
 			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
-			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 193) THEN 0 ELSE 1 END
+			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HidePokerGames = 1 AND b.SportType = 163 THEN 0 ELSE 1 END
 	ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
