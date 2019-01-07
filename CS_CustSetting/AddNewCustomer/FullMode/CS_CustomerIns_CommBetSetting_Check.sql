@@ -88,7 +88,7 @@ BEGIN
 	SELECT t.* INTO #SportBettypeFilter2
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID,2, @IsTest) t
 	
-	--Check BetSetting
+	--Start check BetSetting
 	SELECT bs.* INTO #NewBetSetting
 	FROM dbo.f_CS_BetSettingParse(@_BetSetting) bs
 		INNER JOIN #SportBettypeFilter2 ft ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
@@ -151,65 +151,69 @@ BEGIN
 		END
 	END	
 
-	--Check MaxBet < upline's maxbet
-	--Check MaxPerMatch < upline's maxPerMatch
-	INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-	SELECT cs.SportType, cs.BetType, cs.IsLive, 
-		CASE	WHEN cs.MaxBet > ubs.MaxBet THEN 402
-				WHEN cs.MaxPerMatch > ubs.MaxPerMatch THEN 403 END
-	FROM #NewBetSetting cs
-		INNER JOIN dbo.CS_CustBetSetting_Agent ubs WITH (NOLOCK) ON ubs.SportType = cs.SportType AND ubs.BetType = cs.BetType AND ubs.IsLive = cs.IsLive
-	WHERE ubs.CustId = @CustId
-		AND (cs.MaxBet > ubs.MaxBet OR cs.MaxPerMatch > ubs.MaxPerMatch)
-
-	IF @@ROWCOUNT <> 0
+	IF @RoleId <> 4
 	BEGIN
-		IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 402)
+		--Check MaxBet < upline's maxbet
+		--Check MaxPerMatch < upline's maxPerMatch
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 
+			CASE	WHEN cs.MaxBet > ubs.MaxBet THEN 402
+					WHEN cs.MaxPerMatch > ubs.MaxPerMatch THEN 403 END
+		FROM #NewBetSetting cs
+			INNER JOIN dbo.CS_CustBetSetting_Agent ubs WITH (NOLOCK) ON ubs.SportType = cs.SportType AND ubs.BetType = cs.BetType AND ubs.IsLive = cs.IsLive
+		WHERE ubs.CustId = @CustId
+			AND (cs.MaxBet > ubs.MaxBet OR cs.MaxPerMatch > ubs.MaxPerMatch)
+
+		IF @@ROWCOUNT <> 0
 		BEGIN
-			SET @ErrType = (
-					SELECT 10042 AS '@MsgID'
-						, 'Max bet is out of range.' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-							FROM @ErrorTbl tmp
-							WHERE	ErrCode = 402									
-							FOR XML PATH('Row')
-								, TYPE	
-							)						
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-			SET @MsgType = 71
-			SET @ErrCode = 402
+			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 402)
+			BEGIN
+				SET @ErrType = (
+						SELECT 10042 AS '@MsgID'
+							, 'Max bet is out of range.' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 402									
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 402
 		
-			RETURN
-		END
-		ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 403)
-		BEGIN
-			SET @ErrType = (
-					SELECT 10043 AS '@MsgID'
-						, 'Max bet per match is out of range.' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-							FROM @ErrorTbl tmp
-							WHERE	ErrCode = 403									
-							FOR XML PATH('Row')
-								, TYPE	
-							)						
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-			SET @MsgType = 71
-			SET @ErrCode = 403
+				RETURN
+			END
+			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 403)
+			BEGIN
+				SET @ErrType = (
+						SELECT 10043 AS '@MsgID'
+							, 'Max bet per match is out of range.' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 403									
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 403
 		
-			RETURN
-		END
-	END	
-	
+				RETURN
+			END
+		END	
+	END
+	--End check BetSetting
+
 	--Check Comm
 	SELECT cs.* INTO #NewComm
 	FROM dbo.f_CS_CommParse(@_CommSetting) cs

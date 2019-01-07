@@ -22,7 +22,7 @@ ALTER PROCEDURE CS_CustomerIns_Ag
 	@ErrCode			INT = 0 OUTPUT,
 	@ErrSettingType 	TINYINT = 0 OUTPUT,
 	@MsgType			INT	= 0 OUTPUT,
-	@ErrMsg				NVARCHAR(4000) = '' OUTPUT	
+	@ErrMsg				NVARCHAR(MAX) = '' OUTPUT	
 AS
 /*
 	Created: 20181212@Elodie

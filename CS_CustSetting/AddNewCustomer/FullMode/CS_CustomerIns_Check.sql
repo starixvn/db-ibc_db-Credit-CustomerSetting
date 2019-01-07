@@ -139,6 +139,30 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
+	DECLARE @Credit_AllDownline MONEY, @UplineCredit MONEY
+
+	SELECT @UplineCredit = isnull(credit, 0) FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID
+	
+	IF @RoleId = 3	
+	BEGIN
+		SELECT @Credit_AllDownline = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where srecommend = @CustID and RoleID = @RoleId		
+	END
+	ELSE IF @RoleId = 2
+	BEGIN
+		SELECT @Credit_AllDownline = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where mrecommend = @CustID and RoleID = @RoleId
+	END
+	ELSE IF @RoleId = 1
+	BEGIN
+		SELECT @Credit_AllDownline = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where recommend = @CustID and RoleID = @RoleId
+	END
+
+	IF @Credit > @UplineCredit - @Credit_AllDownline
+	BEGIN
+		SELECT @ErrMsg = '<Root MsgID="70024" Msg="Insufficient credit."></Root>'		    
+		SELECT @ErrCode = 100, @ErrSettingType = 1, @MsgType = 100
+	    RETURN
+	END
+
 	EXEC dbo.CS_CustomerIns_PTSetting_Check 
 		@CustID = @CustID, 
 	    @RoleID = @RoleID,
@@ -173,29 +197,7 @@ BEGIN
 		RETURN
 	END
 
-	DECLARE @Credit_AllDownline MONEY, @UplineCredit MONEY
-
-	SELECT @UplineCredit = isnull(credit, 0) FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID
 	
-	IF @RoleId = 3	
-	BEGIN
-		SELECT @Credit_AllDownline = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where srecommend = @CustID and RoleID = @RoleId		
-	END
-	ELSE IF @RoleId = 2
-	BEGIN
-		SELECT @Credit_AllDownline = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where mrecommend = @CustID and RoleID = @RoleId
-	END
-	ELSE IF @RoleId = 1
-	BEGIN
-		SELECT @Credit_AllDownline = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where recommend = @CustID and RoleID = @RoleId
-	END
-
-	IF @Credit > @UplineCredit - @Credit_AllDownline
-	BEGIN
-		SELECT @ErrMsg = '<Root MsgID="70024" Msg="Insufficient credit."></Root>'		    
-		SELECT @ErrCode = 100, @ErrSettingType = 1, @MsgType = 100
-	    RETURN
-	END
 END
 GO
 

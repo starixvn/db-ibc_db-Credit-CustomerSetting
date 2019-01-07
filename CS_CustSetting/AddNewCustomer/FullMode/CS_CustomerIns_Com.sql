@@ -26,7 +26,7 @@ ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
 	@ErrCode			INT = 0 OUTPUT,
 	@ErrSettingType 	TINYINT = 0 OUTPUT,
 	@MsgType			INT	= 0 OUTPUT,
-	@ErrMsg				NVARCHAR(2000) = '' OUTPUT
+	@ErrMsg				NVARCHAR(MAX) = '' OUTPUT
 AS
 /*
 	Created: 20181212@Elodie

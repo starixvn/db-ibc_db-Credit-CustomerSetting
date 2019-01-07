@@ -69,30 +69,13 @@ AS
 								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
 								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
 								...						
-							</ROOT>
-		• RuleCheck
-			+ Roleid = 4:
-				- n4 >= 0, l4 >= 0
-				- n4 <= MaxPT, l4 <= MaxPT
-				- l4 >= n4
-				- l4 >= MAX(s1+m1+a1)
-				- n4 <= MIN(s1+m1+a1)
-			+ Roleid = 3:
-				- s3 >= 0
-				- s3 <= l4
-				- s3 >= n4 - MAX(m1+a1)
-				- s3 <= l4 - MAX(m1+a1)
-			+ Roleid = 2:
-				- m2 >= 0, a2 >=0
-				- m2 <= l4, a2<=l4
-				- a2 + m2 >= n4 - s1
-				- a2 + m2 <= l4 - s1
+							</ROOT>		
 */
 
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @SuperId INT, @MasterId INT, @AgentId INT
-	DECLARE @ErrType XML, @_CommSetting XML, @_BetSetting XML  
+	DECLARE @ErrType XML, @_CommSetting XML, @_BetSetting XML, @uGroup VARCHAR(3)
 	DECLARE @ErrorTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, ErrCode INT)
 
 	SELECT @ErrCode = 0, @_CommSetting = @CommSetting, @_BetSetting = @BetSetting	
@@ -102,7 +85,7 @@ BEGIN
 	SELECT t.* INTO #SportBettypeFilter2
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID,2, @IsTest) t
 	
-	--Check BetSetting
+	--Start check BetSetting
 	SELECT bs.* INTO #NewBetSetting
 	FROM dbo.f_CS_BetSettingParse(@_BetSetting) bs
 		INNER JOIN #SportBettypeFilter2 ft ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
@@ -165,22 +148,21 @@ BEGIN
 
 	IF @RoleId = 4
 	BEGIN	
-		SELECT mb.sporttype, mb.bettype, mb.Islive, mc.GroupId,
-			MAX(mb.MaxBet) AS MaxMaxBetDownline, MAX(mb.MaxPerMatch) AS MaxMaxPerMatchDownline, MAX(mc.Discount) AS MaxCommDownline
-		INTO #Downlines4
+		SELECT mb.sporttype, mb.bettype, mb.Islive,
+			MAX(mb.MaxBet) AS MaxMaxBetDownline, MAX(mb.MaxPerMatch) AS MaxMaxPerMatchDownline
+		INTO #BetDownlines4
 		FROM dbo.custInfo ci WITH (NOLOCK) 	
-			CROSS APPLY dbo.f_CS_GetDiscount_Agent(ci.custid) mc
-			INNER JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.CustId = ci.custid AND mc.sporttype = mb.SportType AND mc.Bettype = mb.BetType AND mc.isLive = mb.IsLive
+			INNER JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.CustId = ci.custid
 			INNER JOIN #SportBettypeFilter2 ft ON mb.SportType = ft.SportType AND mb.BetType = ft.BetType AND mb.IsLive = ft.IsLive
 		WHERE ci.srecommend = @CustId AND ci.roleid = 3
-		GROUP BY mb.sporttype, mb.bettype, mb.Islive, mc.GroupId
+		GROUP BY mb.sporttype, mb.bettype, mb.Islive
 					
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT cs.SportType, cs.BetType, cs.IsLive, 
 			CASE	WHEN cs.MaxBet < dl.MaxMaxBetDownline THEN 402
 					WHEN cs.MaxPerMatch < dl.MaxMaxPerMatchDownline THEN 403 END
 		FROM #NewBetSetting cs
-			INNER JOIN #Downlines4 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
+			INNER JOIN #BetDownlines4 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
 		WHERE cs.MaxBet < dl.MaxMaxBetDownline
 			OR cs.MaxPerMatch < dl.MaxMaxPerMatchDownline
 
@@ -234,84 +216,34 @@ BEGIN
 	END
 	ELSE IF @RoleId = 3
 	BEGIN		
-		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT cs.SportType, cs.BetType, cs.IsLive, 300
-		FROM #NewPT cs
-			INNER JOIN dbo.f_CS_GetPT_Agent(@SuperId) spt ON cs.SportType = spt.Sporttype AND cs.BetType = spt.bettype AND cs.IsLive = spt.IsLive
-		WHERE cs.SuperPT < 0 --check s3 >= 0
-			OR cs.SuperPT > spt.MaxPT --check s3 <= l4
-		
-		IF @@ROWCOUNT <> 0
-		BEGIN
-			SET @ErrType = (
-					SELECT 20001 AS '@MsgID'
-						, 'Wrong position taking.' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-							FROM @ErrorTbl tmp
-							WHERE	ErrCode = 300									
-							FOR XML PATH('Row')
-								, TYPE	
-							)						
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-			SET @MsgType = 5
-			SET @ErrCode = 300
-		
-			RETURN
-		END
-
-		SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.MasterPT + cs.AgentPT) AS MaxPTDownline 
-		INTO #PTDownlines3
+		SELECT mb.sporttype, mb.bettype, mb.Islive,
+			MAX(mb.MaxBet) AS MaxMaxBetDownline, MAX(mb.MaxPerMatch) AS MaxMaxPerMatchDownline
+		INTO #BetDownlines3
 		FROM dbo.custInfo ci WITH (NOLOCK) 	
-			CROSS APPLY dbo.f_CS_GetPTGroup_Member(ci.custid) cs
-			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
-		WHERE ci.srecommend = @SuperId AND ci.roleid = 2
-		GROUP BY cs.sporttype, cs.bettype, cs.Islive
-
+			INNER JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.CustId = ci.custid
+			INNER JOIN #SportBettypeFilter2 ft ON mb.SportType = ft.SportType AND mb.BetType = ft.BetType AND mb.IsLive = ft.IsLive
+		WHERE ci.mrecommend = @CustId AND ci.roleid = 2
+		GROUP BY mb.sporttype, mb.bettype, mb.Islive
+					
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT ft.SportType, ft.Bettype, ft.IsLive,
-			CASE	WHEN mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 301
-					WHEN mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 302 END			
-		FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
-			INNER JOIN #NewPT mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
-			LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
-			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
-		WHERE mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 >= n4 - MAX(m1+a1)
-			OR mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 <= l4 - MAX(m1+a1)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 
+			CASE	WHEN cs.MaxBet < ISNULL(dl.MaxMaxBetDownline,0) OR cs.MaxBet > sb.MaxBet THEN 302
+					WHEN cs.MaxPerMatch < ISNULL(dl.MaxMaxPerMatchDownline,0) OR cs.MaxPerMatch > sb.MaxPerMatch THEN 303 END
+		FROM #NewBetSetting cs			
+			INNER JOIN dbo.CS_CustBetSetting_Agent sb WITH (NOLOCK) ON sb.SportType = cs.SportType AND sb.BetType = cs.BetType AND sb.IsLive = cs.IsLive
+			LEFT JOIN #BetDownlines3 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
+		WHERE sb.CustId = @SuperId AND (cs.MaxBet < dl.MaxMaxBetDownline
+											OR cs.MaxPerMatch < dl.MaxMaxPerMatchDownline
+											OR cs.MaxBet > sb.MaxBet
+											OR cs.MaxPerMatch > sb.MaxPerMatch)
 
 		IF @@ROWCOUNT <> 0
 		BEGIN
-			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 301)
+			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 302)
 			BEGIN
 				SET @ErrType = (
-						SELECT 20030 AS '@MsgID'
-							, 'New Super PT is too low. It makes some lines'' Total PT Taken become less than Super Min PT' AS '@Msg'
-							, (
-								SELECT tmp.SportType AS '@SportType'
-									, tmp.BetType AS '@BetType'
-								FROM @ErrorTbl tmp
-								WHERE	ErrCode = 301									
-								FOR XML PATH('Row')
-									, TYPE	
-								)						
-						FOR XML PATH('Root')
-							, TYPE
-						)		
-				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-				SET @MsgType = 5
-				SET @ErrCode = 301
-		
-				RETURN
-			END
-			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 302)
-			BEGIN
-				SET @ErrType = (
-						SELECT 20031 AS '@MsgID'
-							, 'New Super PT is too high. It makes some lines'' Total PT Taken become greater than Super Max PT' AS '@Msg'
+						SELECT 10042 AS '@MsgID'
+							, 'Max bet is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -324,68 +256,21 @@ BEGIN
 							, TYPE
 						)		
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-				SET @MsgType = 5
+				SET @MsgType = 71
 				SET @ErrCode = 302
 		
 				RETURN
 			END
-		END
-	END	
-	ELSE IF @RoleId = 2
-	BEGIN
-		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT cs.SportType, cs.BetType, cs.IsLive, 200
-		FROM #NewPT cs
-			INNER JOIN dbo.f_CS_GetPT_Agent(@SuperId) spt ON cs.SportType = spt.Sporttype AND cs.BetType = spt.bettype AND cs.IsLive = spt.IsLive
-		WHERE cs.MasterPT < 0 OR cs.AgentPT < 0 --check m2 >= 0, a2 >=0
-			OR cs.MasterPT > spt.MaxPT OR cs.AgentPT > spt.MaxPT --check m2 <= l4, a2<=l4
-		
-		IF @@ROWCOUNT <> 0
-		BEGIN
-			SET @ErrType = (
-					SELECT 20001 AS '@MsgID'
-						, 'Wrong position taking.' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-							FROM @ErrorTbl tmp
-							WHERE	ErrCode = 200									
-							FOR XML PATH('Row')
-								, TYPE	
-							)						
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-			SET @MsgType = 5
-			SET @ErrCode = 200
-		
-			RETURN
-		END
-
-		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, 
-			CASE	WHEN apt.MasterPT + apt.AgentPT < CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END THEN 201 
-					WHEN apt.MasterPT + apt.AgentPT > CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END THEN 202 END
-		FROM dbo.f_CS_GetPT_Agent (@SuperId) spt 			
-			INNER JOIN dbo.f_CS_GetPT_Agent (@MasterId) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
-			INNER JOIN #NewPT apt ON apt.SportType = mpt.SportType AND apt.BetType = mpt.BetType AND apt.IsLive = mpt.IsLive
-			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
-		WHERE apt.MasterPT + apt.AgentPT < CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END --check a2 + m2 >= n4 - s1
-			OR apt.MasterPT + apt.AgentPT > CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END --check a2 + m2 <= l4 - s1
-
-		IF @@ROWCOUNT <> 0
-		BEGIN
-			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 201)
+			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 303)
 			BEGIN
 				SET @ErrType = (
-						SELECT 20032 AS '@MsgID'
-							, 'Master & Agent''s Total PT is too low. It makes the line''s Total PT less than Super Min PT' AS '@Msg'
+						SELECT 10043 AS '@MsgID'
+							, 'Max bet per match is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
 								FROM @ErrorTbl tmp
-								WHERE	ErrCode = 201									
+								WHERE	ErrCode = 303									
 								FOR XML PATH('Row')
 									, TYPE	
 								)						
@@ -393,16 +278,43 @@ BEGIN
 							, TYPE
 						)		
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-				SET @MsgType = 5
-				SET @ErrCode = 201
+				SET @MsgType = 71
+				SET @ErrCode = 303
 		
 				RETURN
 			END
-			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 202)
+		END		
+	END	
+	ELSE IF @RoleId = 2
+	BEGIN
+		SELECT mb.sporttype, mb.bettype, mb.Islive,
+			MAX(mb.MaxBet) AS MaxMaxBetDownline, MAX(mb.MaxPerMatch) AS MaxMaxPerMatchDownline
+		INTO #BetDownlines2
+		FROM dbo.custInfo ci WITH (NOLOCK) 	
+			INNER JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.CustId = ci.custid
+			INNER JOIN #SportBettypeFilter2 ft ON mb.SportType = ft.SportType AND mb.BetType = ft.BetType AND mb.IsLive = ft.IsLive
+		WHERE ci.recommend = @CustId AND ci.roleid = 1
+		GROUP BY mb.sporttype, mb.bettype, mb.Islive
+					
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 
+			CASE	WHEN cs.MaxBet < ISNULL(dl.MaxMaxBetDownline,0) OR cs.MaxBet > mb.MaxBet THEN 202
+					WHEN cs.MaxPerMatch < ISNULL(dl.MaxMaxPerMatchDownline,0) OR cs.MaxPerMatch > mb.MaxPerMatch THEN 203 END
+		FROM #NewBetSetting cs			
+			INNER JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.SportType = cs.SportType AND mb.BetType = cs.BetType AND mb.IsLive = cs.IsLive
+			LEFT JOIN #BetDownlines3 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
+		WHERE mb.CustId = @MasterId AND (cs.MaxBet < dl.MaxMaxBetDownline
+											OR cs.MaxPerMatch < dl.MaxMaxPerMatchDownline
+											OR cs.MaxBet > mb.MaxBet
+											OR cs.MaxPerMatch > mb.MaxPerMatch)
+
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 202)
 			BEGIN
 				SET @ErrType = (
-						SELECT 20033 AS '@MsgID'
-							, 'Master & Agent''s Total PT is too high. It makes the line''s Total PT greater than Super Max PT' AS '@Msg'
+						SELECT 10042 AS '@MsgID'
+							, 'Max bet is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -415,12 +327,396 @@ BEGIN
 							, TYPE
 						)		
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-				SET @MsgType = 5
+				SET @MsgType = 71
 				SET @ErrCode = 202
 		
 				RETURN
 			END
-		END
+			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 203)
+			BEGIN
+				SET @ErrType = (
+						SELECT 10043 AS '@MsgID'
+							, 'Max bet per match is out of range.' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 203									
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 203
+		
+				RETURN
+			END
+		END		
 	END	
+	ELSE IF @RoleId = 1
+	BEGIN
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 
+			CASE	WHEN cs.MaxBet > ab.MaxBet THEN 102
+					WHEN cs.MaxPerMatch > ab.MaxPerMatch THEN 103 END
+		FROM #NewBetSetting cs			
+			INNER JOIN dbo.CS_CustBetSetting_Agent ab WITH (NOLOCK) ON ab.SportType = cs.SportType AND ab.BetType = cs.BetType AND ab.IsLive = cs.IsLive
+		WHERE ab.CustId = @AgentId AND (cs.MaxBet > ab.MaxBet OR cs.MaxPerMatch > ab.MaxPerMatch)
+
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 102)
+			BEGIN
+				SET @ErrType = (
+						SELECT 10042 AS '@MsgID'
+							, 'Max bet is out of range.' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 102									
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 102
+		
+				RETURN
+			END
+			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 103)
+			BEGIN
+				SET @ErrType = (
+						SELECT 10043 AS '@MsgID'
+							, 'Max bet per match is out of range.' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 103									
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 103
+		
+				RETURN
+			END
+		END		
+	END	
+	--End check BetSetting
+
+	--Start check CommSetting
+	SELECT cs.* INTO #NewComm
+	FROM dbo.f_CS_CommParse(@_CommSetting) cs
+		INNER JOIN #SportBettypeFilter2 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
+
+	--Check if new discount is invalid
+	INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+	SELECT cs.SportType, cs.BetType, cs.IsLive, 404
+	FROM #NewComm cs
+		LEFT JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cs.ValueId
+	WHERE ct.ValueId IS NULL
+
+	IF @@ROWCOUNT <> 0
+	BEGIN
+		SET @ErrType = (
+				SELECT 1 AS '@MsgID'
+					, 'Invalid commission rate.' AS '@Msg'
+					, (
+						SELECT tmp.SportType AS '@SportType'
+							, tmp.BetType AS '@BetType'
+						FROM @ErrorTbl tmp
+						WHERE	ErrCode = 404									
+						FOR XML PATH('Row')
+							, TYPE	
+						)						
+				FOR XML PATH('Root')
+					, TYPE
+				)		
+		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+		SET @MsgType = 51
+		SET @ErrCode = 404
+		
+		RETURN
+	END
+
+	IF @RoleId = 4
+	BEGIN
+		--Check if new discount > default Max Discount
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 405
+		FROM #NewComm cs
+			INNER JOIN CS_ProductSettingDetail ps  WITH (NOLOCK) ON ps.SportType = cs.SportType AND ps.BetType = cs.BetType AND ps.IsLive = cs.IsLive AND ps.SettingType = 2
+			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cs.ValueId
+			LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = ps.SportType AND gc.BetType = ps.BetType AND gc.IsLive = ps.IsLive AND gc.GroupId = cs.GroupId
+		WHERE ct.Value > CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END
+
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			SET @ErrType = (
+					SELECT 1 AS '@MsgID'
+						, 'Invalid commission rate.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 405									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 51
+			SET @ErrCode = 405
+		
+			RETURN
+		END
+		
+		SELECT mc.sporttype, mc.bettype, mc.Islive, mc.GroupId, MAX(mc.Discount) AS MaxCommDownline
+		INTO #CommDownlines4
+		FROM dbo.custInfo ci WITH (NOLOCK) 	
+			CROSS APPLY dbo.f_CS_GetDiscount_Agent(ci.custid) mc 
+			INNER JOIN #SportBettypeFilter2 ft ON mc.SportType = ft.SportType AND mc.BetType = ft.BetType AND mc.IsLive = ft.IsLive
+		WHERE ci.srecommend = @CustId AND ci.roleid = 3
+		GROUP BY mc.sporttype, mc.bettype, mc.Islive, mc.GroupId
+		
+		--Check if new discount < downline's discount
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 406
+		FROM #NewComm cs
+			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cs.ValueId
+			INNER JOIN #SportBettypeFilter2 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
+			LEFT JOIN #CommDownlines4 dl WITH (NOLOCK) ON dl.SportType = cs.SportType AND dl.BetType = cs.BetType AND dl.IsLive = cs.IsLive AND dl.GroupId = cs.GroupId
+		WHERE ct.Value < ISNULL(dl.MaxCommDownline,0)
+	
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			SET @ErrType = (
+					SELECT 11 AS '@MsgID'
+						, 'Commission is out of range.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 406									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 51
+			SET @ErrCode = 406
+		
+			RETURN
+		END
+	END
+	ELSE IF @RoleId = 3
+	BEGIN 
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cm.SportType, cm.BetType, cm.IsLive, 305		
+		FROM #NewComm cm
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@SuperId) uc ON cm.SportType = uc.SportType AND cm.BetType = uc.BetType AND cm.IsLive = uc.IsLive AND uc.groupID = cm.GroupId
+			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cm.ValueId
+		WHERE ct.Value > uc.Discount
+
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			SET @ErrType = (
+					SELECT 11 AS '@MsgID'
+						, 'Commission is out of range.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 305									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 51
+			SET @ErrCode = 305
+		
+			RETURN
+		END	
+
+		SELECT mc.sporttype, mc.bettype, mc.Islive, mc.GroupId, MAX(mc.Discount) AS MaxCommDownline
+		INTO #CommDownlines3
+		FROM dbo.custInfo ci WITH (NOLOCK) 	
+			CROSS APPLY dbo.f_CS_GetDiscount_Agent(ci.custid) mc 
+			INNER JOIN #SportBettypeFilter2 ft ON mc.SportType = ft.SportType AND mc.BetType = ft.BetType AND mc.IsLive = ft.IsLive
+		WHERE ci.mrecommend = @CustId AND ci.roleid = 2
+		GROUP BY mc.sporttype, mc.bettype, mc.Islive, mc.GroupId
+
+		--Check if new discount < downline's discount
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 306
+		FROM #NewComm cs
+			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cs.ValueId
+			INNER JOIN #SportBettypeFilter2 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
+			LEFT JOIN #CommDownlines3 dl WITH (NOLOCK) ON dl.SportType = cs.SportType AND dl.BetType = cs.BetType AND dl.IsLive = cs.IsLive AND dl.GroupId = cs.GroupId
+		WHERE ct.Value < ISNULL(dl.MaxCommDownline,0)
+	
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			SET @ErrType = (
+					SELECT 11 AS '@MsgID'
+						, 'Commission is out of range.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 306									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 51
+			SET @ErrCode = 306
+		
+			RETURN
+		END
+	END
+	ELSE IF @RoleId = 2
+	BEGIN 
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cm.SportType, cm.BetType, cm.IsLive, 205
+		FROM #NewComm cm
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@MasterId) uc ON cm.SportType = uc.SportType AND cm.BetType = uc.BetType AND cm.IsLive = uc.IsLive AND uc.groupID = cm.GroupId
+			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cm.ValueId
+		WHERE ct.Value > uc.Discount
+
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			SET @ErrType = (
+					SELECT 11 AS '@MsgID'
+						, 'Commission is out of range.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 205									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 51
+			SET @ErrCode = 205
+		
+			RETURN
+		END	
+		
+		SELECT memc.sporttype, memc.bettype, memc.Islive, gc.GroupId, MAX(memc.PlayerDiscount) AS MaxCommDownline
+		INTO #CommDownlines2
+		FROM dbo.customer c WITH (NOLOCK) 	
+			CROSS APPLY dbo.f_CS_GetDiscount_Member(c.custid) memc 
+			INNER JOIN #SportBettypeFilter2 ft ON memc.SportType = ft.SportType AND memc.BetType = ft.BetType AND memc.IsLive = ft.IsLive
+			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.uGroup = c.ugroup
+		WHERE c.recommend = @CustID AND c.roleid = 1
+		GROUP BY memc.sporttype, memc.bettype, memc.Islive, gc.GroupId
+
+		SELECT memc.sporttype, memc.bettype, memc.Islive, gc.GroupId, MAX(memc.PlayerDiscount) AS MaxCommDownline
+		INTO #CommGroupDownlines2
+		FROM dbo.f_CS_GetGroupDiscount_Member(@CustID) memc  
+			CROSS JOIN dbo.customer c WITH (NOLOCK) 	
+			INNER JOIN dbo.CS_CustSettingMode cm WITH (NOLOCK) ON cm.CustId = c.custid 			
+			INNER JOIN #SportBettypeFilter2 ft ON memc.SportType = ft.SportType AND memc.BetType = ft.BetType AND memc.IsLive = ft.IsLive
+			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.uGroup = c.ugroup
+		WHERE c.recommend = @CustID AND c.roleid = 1 AND cm.IsGroupComm = 1
+		GROUP BY memc.sporttype, memc.bettype, memc.Islive, gc.GroupId
+
+		--Check if new discount < downline's discount
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 206
+		FROM #NewComm cs
+			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cs.ValueId
+			INNER JOIN #SportBettypeFilter2 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
+			LEFT JOIN #CommDownlines2 dl WITH (NOLOCK) ON dl.SportType = cs.SportType AND dl.BetType = cs.BetType AND dl.IsLive = cs.IsLive AND dl.GroupId = cs.GroupId
+			LEFT JOIN #CommGroupDownlines2 dlg WITH (NOLOCK) ON dlg.SportType = cs.SportType AND dlg.BetType = cs.BetType AND dlg.IsLive = cs.IsLive AND dlg.GroupId = cs.GroupId
+		WHERE ct.Value < CASE WHEN ISNULL(dl.MaxCommDownline,0) < ISNULL(dlg.MaxCommDownline,0) THEN ISNULL(dlg.MaxCommDownline,0) ELSE ISNULL(dl.MaxCommDownline,0) END
+	
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			SET @ErrType = (
+					SELECT 11 AS '@MsgID'
+						, 'Commission is out of range.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 206									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 51
+			SET @ErrCode = 206
+		
+			RETURN
+		END
+	END
+	ELSE IF @RoleId = 1
+	BEGIN 
+		SELECT @uGroup = ugroup FROM Customer WITH (NOLOCK) WHERE custid = @CustID
+
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cm.SportType, cm.BetType, cm.IsLive, 105		
+		FROM #NewComm cm
+			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cm.ValueId
+			INNER JOIN #SportBettypeFilter2 ft ON cm.SportType = ft.SportType AND cm.BetType = ft.BetType AND cm.IsLive = ft.IsLive
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@AgentId) uc ON cm.SportType = uc.SportType AND cm.BetType = uc.BetType AND cm.IsLive = uc.IsLive
+			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = uc.sporttype AND gc.BetType = uc.bettype AND gc.IsLive = uc.isLive AND gc.GroupId = uc.groupID			
+		WHERE (gc.uGroup = @uGroup OR gc.GroupId IS NULL) AND ct.Value > uc.Discount
+
+		IF @@ROWCOUNT <> 0
+		BEGIN
+			SET @ErrType = (
+					SELECT 11 AS '@MsgID'
+						, 'Commission is out of range.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 105									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 51
+			SET @ErrCode = 105
+		
+			RETURN
+		END	
+	END
+	--End check CommSetting
 END
 GO
