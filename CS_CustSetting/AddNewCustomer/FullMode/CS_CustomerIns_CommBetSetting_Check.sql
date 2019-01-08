@@ -113,6 +113,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 400									
 							FOR XML PATH('Row')
@@ -135,6 +136,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 401									
 							FOR XML PATH('Row')
@@ -173,7 +175,8 @@ BEGIN
 							, 'Max bet is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
-									, tmp.BetType AS '@BetType'
+									, tmp.BetType AS '@BetType'									
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 402									
 								FOR XML PATH('Row')
@@ -196,6 +199,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 403									
 								FOR XML PATH('Row')
@@ -234,6 +238,7 @@ BEGIN
 					, (
 						SELECT tmp.SportType AS '@SportType'
 							, tmp.BetType AS '@BetType'
+							, tmp.IsLive AS '@IsLive'
 						FROM @ErrorTbl tmp
 						WHERE	ErrCode = 404									
 						FOR XML PATH('Row')
@@ -268,6 +273,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 405									
 							FOR XML PATH('Row')
@@ -300,6 +306,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 406									
 							FOR XML PATH('Row')
@@ -333,6 +340,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 407									
 							FOR XML PATH('Row')
