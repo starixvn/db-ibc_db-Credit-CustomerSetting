@@ -17,6 +17,7 @@ Revisions:
 	- 20101119@Henry: if not accounting then get custid where super in Acc_CustSite depending on site
 	- 20130121@Dan: change linked server DB06 to DBACC, call to DBAGE/bodb_AGE for Acc_CustGroup
 	- 20181122@Elodie: DB053/bodb_Age Migration [Redmine:#104770]
+	- 20190201@Phillip: #105338 Build Customer Setting with Singbet Style
 
 Param's Explanation:
 	@username: username want to get all info related
@@ -45,7 +46,7 @@ BEGIN
 		Select	custid, isnull(fax,'') as fax, firstname, lastname, isnull(mobilephone,'') as mobilephone,
 				isnull(phone,'') as phone, srecommend, roleid, username
 			From Customer with (NOLOCK)
-			WHERE Custid = @Custid
+			WHERE Custid = @Custid AND [site] <> 'CN88'
 	END
 	ELSE
 	BEGIN	

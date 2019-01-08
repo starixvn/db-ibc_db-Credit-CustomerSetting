@@ -20,6 +20,7 @@ AS
 		- 20160630@Winnie: #48948 Hide_special_sites_from_unautorized_users	
 		- 20180808@Helen: DB05.DBPOLICY migration - Move to DBCUST [Redmine:99462]
 		- 20181122@Elodie: DB053/bodb_Age Migration [Redmine:#104770]
+		- 20190201@Phillip: #105338 Build Customer Setting with Singbet Style
 */
 BEGIN
 	SET NOCOUNT ON  
@@ -39,7 +40,7 @@ BEGIN
 		
 		Select c.custid, c.username, c.currency as exchangeid, c.[site] AS siteName
 		from customer as c with (NOLOCK) 
-		where c.roleid=4 and c.custid>100  
+		where c.roleid=4 and c.custid>100 and c.[site] <> 'CN88'
 		and c.srecommend NOT IN(SELECT custid from f_DepSuper_1 ('all'))
 		AND (@Userid IS NULL OR (@Userid IS NOT NULL AND site NOT IN (SELECT site FROM @tmp )))
 		order by c.username   
