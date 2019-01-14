@@ -13,6 +13,7 @@ ALTER PROCEDURE CS_CustomerIns_Ag
 	@CommSetting		VARCHAR(MAX),
 	@IsTest				BIT = 0,
 	@ugroup				VARCHAR(3),
+	@ProductId			TINYINT = 1,
 
 	@Language			VARCHAR(2)= 'E',
 	@SubAccID			INT = 0,--Sub-AccountID,	
@@ -373,46 +374,35 @@ BEGIN
     SET @endRun = getdate()
 	SET @duration  = datediff (millisecond,@startRun,@endRun)
 
-    DECLARE @LogSPData VARCHAR(MAX)
+    DECLARE @LogSPData VARCHAR(MAX), @LogXML XML
 
-     --Write general info
-    SELECT @LogSPData = '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'username="'+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + '" ' +
-		'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
-		'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'ugroup="'+ COALESCE(CAST(@ugroup AS VARCHAR(5)), SPACE(1)) + '" ' +
-		'creator="'+ COALESCE(CAST(@creator AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'recommend="'+ COALESCE(CAST(@recommend AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'site="'+ COALESCE(CAST('' AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'success="'+ COALESCE(CAST(@success AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
-		'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
-		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +
-		'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(5000)), SPACE(1)) + '" />'
+    --Write general info
+	SELECT @LogSPData = '<R name="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)),SPACE(1))) + '" ' +
+						'username="'+ COALESCE(CAST(@username AS VARCHAR(30)),SPACE(1)) + '" ' +
+						'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
+						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
+						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
     EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 100403,
+		@ActionID = 160003,
 		@TrackingValue = @LogSPData,
-		@duration = @duration		
+		@duration = @duration			
 
 	--Log status
-    SELECT @LogSPData = '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-						'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
-						'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
-						'suspended="'+ COALESCE(CAST(@Asuspended AS VARCHAR(1)), SPACE(1)) + '" ' +
-						'closed="'+ COALESCE(CAST(@UplineClosed AS VARCHAR(1)), SPACE(1)) + '" ' +	
-						'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
-						'IsInternal="'+ COALESCE(CAST(@IsInternal AS VARCHAR(1)), SPACE(1)) + '" />'
+    SELECT @LogSPData = '<R Status="'+ CASE WHEN @Asuspended = 0 AND @UplineClosed = 0 THEN 'Open' 
+											WHEN @Asuspended = 1 AND @UplineClosed = 0 THEN 'Suspended' 
+											WHEN @UplineClosed = 1 THEN 'Closed' END + '" ' +
+						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
+						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
     EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 100503,
+		@ActionID = 165002,
 		@TrackingValue = @LogSPData,
-		@duration = @duration	
+		@duration = @duration			
 
 	-- Write Log Credit	
     DECLARE @LogSPCredit VARCHAR(MAX)
@@ -427,27 +417,52 @@ BEGIN
 		@ActionID = 1216	
 
     --Write Bet setting log
-	SELECT @LogSPData = '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
-						+ LTRIM(RTRIM(SUBSTRING(@BetSetting, 7, LEN(@BetSetting) - 13))) 
-						+ '</CS_CustomerIns_Ag>' 
+	SELECT * INTO #BetSetting_tmp
+	FROM dbo.f_CS_BetSettingParse(CAST(@BetSetting AS XML))
+
+	SELECT @LogXML = (SELECT	@ProductId						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+								@IP                             AS '@IP',
+								(SELECT SportType AS '@Sport'
+									, BetType AS '@BT'
+									, IsLive AS '@IsL'
+									, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30)) AS '@Max'
+									, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30)) AS '@MPM'
+								FROM #BetSetting_tmp
+								FOR XML PATH('C'), TYPE)						
+						FOR XML PATH('R'), TYPE)		
+	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 100303,
+		@ActionID = 149999,
 		@TrackingValue = @LogSPData,
 		@duration = @duration
 
     --Write commission log	
-	SELECT @LogSPData = '<CS_CustomerIns_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '">' 
-						+ LTRIM(RTRIM(SUBSTRING(@CommSetting, 7, LEN(@CommSetting) - 13))) 
-						+ '</CS_CustomerIns_Ag>' 
+	SELECT * INTO #Comm_tmp
+	FROM dbo.f_CS_CommParse(CAST(@CommSetting AS XML))
+
+	SELECT @LogXML = (SELECT	@ProductId						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+								@IP                             AS '@IP',
+								(SELECT t.SportType AS '@Sport'
+									, t.BetType AS '@BT'
+									, t.IsLive AS '@IsL'
+									, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30)) AS '@Comm'
+								FROM #Comm_tmp t
+									INNER JOIN dbo.CS_CommTemplate ct ON ct.ValueId = t.ValueId
+								FOR XML PATH('C'), TYPE)						
+						FOR XML PATH('R'), TYPE)
+
+	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
-		@UserID = @Creator,
-		@CustID = @CustID,
-		@ActionID = 100203,
-		@TrackingValue = @LogSPData,
-		@duration = @duration	
+			@UserID = @Creator,
+			@CustID = @CustID,
+			@ActionID = 139999,
+			@TrackingValue = @LogSPData,
+			@duration = @duration
 END
 GO

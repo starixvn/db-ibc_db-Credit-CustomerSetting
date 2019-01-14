@@ -44,8 +44,8 @@ AS
 			+ Roleid = 3:
 				- s3 >= 0
 				- s3 <= l4
-				- s3 >= n4 - MAX(m1+a1)
-				- s3 <= l4 - MAX(m1+a1)
+				- s3 >= n4 - MAX(m2+a2) if master has at least 1 agent
+				- s3 <= l4 - MAX(m2+a2) if master has at least 1 agent
 			+ Roleid = 2:
 				- m2 >= 0, a2 >=0
 				- m2 <= l4, a2<=l4
@@ -176,13 +176,13 @@ BEGIN
 			RETURN
 		END		
 
-		SELECT cs.sporttype, cs.bettype, cs.Islive, MIN(cs.SuperPT + cs.MasterPT + cs.AgentPT) AS MinPTDownline, MAX(cs.SuperPT + cs.MasterPT + cs.AgentPT) AS MaxPTDownline 
+		SELECT acs.sporttype, acs.bettype, acs.Islive, MIN(acs.SuperPT + acs.MasterPT + acs.AgentPT) AS MinPTDownline, MAX(acs.SuperPT + acs.MasterPT + acs.AgentPT) AS MaxPTDownline 
 		INTO #PTDownlines4
-		FROM dbo.custInfo ci WITH (NOLOCK) 	
-			CROSS APPLY dbo.f_CS_GetPTGroup_Member(ci.custid) cs
-			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
-		WHERE ci.srecommend = @CustId AND ci.roleid = 2
-		GROUP BY cs.sporttype, cs.bettype, cs.Islive
+		FROM dbo.custInfo a WITH (NOLOCK) 	
+			CROSS APPLY dbo.f_CS_GetPTGroup_Member(a.custid) acs
+			INNER JOIN #SportBettypeFilter1 ft ON acs.SportType = ft.SportType AND acs.BetType = ft.BetType AND acs.IsLive = ft.IsLive
+		WHERE a.srecommend = @CustId AND a.roleid = 2
+		GROUP BY acs.sporttype, acs.bettype, acs.Islive
 
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT ft.SportType, ft.Bettype, ft.IsLive,
@@ -246,7 +246,9 @@ BEGIN
 	ELSE IF @RoleId = 3
 	BEGIN		
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT cs.SportType, cs.BetType, cs.IsLive, 300
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 
+			CASE	WHEN cs.SuperPT < 0 THEN 300
+					WHEN cs.SuperPT > spt.MaxPT THEN 303 END
 		FROM #NewPT cs
 			INNER JOIN dbo.f_CS_GetPT_Agent(@SuperId) spt ON cs.SportType = spt.Sporttype AND cs.BetType = spt.bettype AND cs.IsLive = spt.IsLive
 		WHERE cs.SuperPT < 0 --check s3 >= 0
@@ -254,60 +256,17 @@ BEGIN
 		
 		IF @@ROWCOUNT <> 0
 		BEGIN
-			SET @ErrType = (
-					SELECT 20001 AS '@MsgID'
-						, 'Wrong position taking.' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, tmp.IsLive AS '@IsLive'
-							FROM @ErrorTbl tmp
-							WHERE	ErrCode = 300									
-							FOR XML PATH('Row')
-								, TYPE	
-							)						
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-			SET @MsgType = 5
-			SET @ErrCode = 300
-		
-			RETURN
-		END
-
-		SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.MasterPT + cs.AgentPT) AS MaxPTDownline 
-		INTO #PTDownlines3
-		FROM dbo.custInfo ci WITH (NOLOCK) 	
-			CROSS APPLY dbo.f_CS_GetPTGroup_Member(ci.custid) cs
-			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
-		WHERE ci.srecommend = @SuperId AND ci.roleid = 2
-		GROUP BY cs.sporttype, cs.bettype, cs.Islive
-
-		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT ft.SportType, ft.Bettype, ft.IsLive,
-			CASE	WHEN mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 301
-					WHEN mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 302 END			
-		FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
-			INNER JOIN #NewPT mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
-			LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
-			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
-		WHERE mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 >= n4 - MAX(m1+a1)
-			OR mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 <= l4 - MAX(m1+a1)
-
-		IF @@ROWCOUNT <> 0
-		BEGIN
-			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 301)
+			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 300)
 			BEGIN
 				SET @ErrType = (
-						SELECT 20035 AS '@MsgID'
-							, 'New Super PT is too low. It makes some lines'' Total PT Taken become less than Super Min PT' AS '@Msg'
+						SELECT 20001 AS '@MsgID'
+							, 'Wrong position taking.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
 									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
-								WHERE	ErrCode = 301									
+								WHERE	ErrCode = 300									
 								FOR XML PATH('Row')
 									, TYPE	
 								)						
@@ -316,11 +275,11 @@ BEGIN
 						)		
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
 				SET @MsgType = 5
-				SET @ErrCode = 301
+				SET @ErrCode = 300
 		
 				RETURN
 			END
-			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 302)
+			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 303)
 			BEGIN
 				SET @ErrType = (
 						SELECT 20036 AS '@MsgID'
@@ -330,7 +289,7 @@ BEGIN
 									, tmp.BetType AS '@BetType'
 									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
-								WHERE	ErrCode = 302									
+								WHERE	ErrCode = 303									
 								FOR XML PATH('Row')
 									, TYPE	
 								)						
@@ -339,16 +298,91 @@ BEGIN
 						)		
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
 				SET @MsgType = 5
-				SET @ErrCode = 302
+				SET @ErrCode = 303
 		
 				RETURN
 			END
 		END
-	END	
+
+		SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.MasterPT + cs.AgentPT) AS MaxPTDownline 
+		INTO #PTDownlines3
+		FROM dbo.custInfo ci WITH (NOLOCK) 	
+			CROSS APPLY dbo.f_CS_GetPT_Agent(ci.custid) cs
+			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
+		WHERE ci.srecommend = @SuperId AND ci.roleid = 2
+		GROUP BY cs.sporttype, cs.bettype, cs.Islive
+
+		IF @@ROWCOUNT <> 0 --If Master has at least 1 Agent: Range: [Max(0, Super Min PT - (Master PT + Agent PT)); Super Max PT - (Master PT + Agent PT)]
+		BEGIN
+			INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+			SELECT ft.SportType, ft.Bettype, ft.IsLive,
+				CASE	WHEN mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 301
+						WHEN mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 302 END			
+			FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
+				INNER JOIN #NewPT mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
+				LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
+				INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
+			WHERE mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 >= n4 - MAX(m2+a2)
+				OR mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 <= l4 - MAX(m2+a2)
+
+			IF @@ROWCOUNT <> 0
+			BEGIN
+				IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 301)
+				BEGIN
+					SET @ErrType = (
+							SELECT 20035 AS '@MsgID'
+								, 'New Super PT is too low. It makes some lines'' Total PT Taken become less than Super Min PT' AS '@Msg'
+								, (
+									SELECT tmp.SportType AS '@SportType'
+										, tmp.BetType AS '@BetType'
+										, tmp.IsLive AS '@IsLive'
+									FROM @ErrorTbl tmp
+									WHERE	ErrCode = 301									
+									FOR XML PATH('Row')
+										, TYPE	
+									)						
+							FOR XML PATH('Root')
+								, TYPE
+							)		
+					SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+					SET @MsgType = 5
+					SET @ErrCode = 301
+		
+					RETURN
+				END
+				ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 302)
+				BEGIN
+					SET @ErrType = (
+							SELECT 20036 AS '@MsgID'
+								, 'New Super PT is too high. It makes some lines'' Total PT Taken become greater than Super Max PT' AS '@Msg'
+								, (
+									SELECT tmp.SportType AS '@SportType'
+										, tmp.BetType AS '@BetType'
+										, tmp.IsLive AS '@IsLive'
+									FROM @ErrorTbl tmp
+									WHERE	ErrCode = 302									
+									FOR XML PATH('Row')
+										, TYPE	
+									)						
+							FOR XML PATH('Root')
+								, TYPE
+							)		
+					SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+					SET @MsgType = 5
+					SET @ErrCode = 302
+		
+					RETURN
+				END
+			END
+		END	
+	END
 	ELSE IF @RoleId = 2
 	BEGIN
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT cs.SportType, cs.BetType, cs.IsLive, 200
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 
+			CASE	WHEN cs.MasterPT < 0 OR cs.AgentPT < 0 THEN 200
+					WHEN cs.MasterPT > spt.MaxPT THEN 203
+					WHEN cs.AgentPT > spt.MaxPT THEN 204 END
 		FROM #NewPT cs
 			INNER JOIN dbo.f_CS_GetPT_Agent(@SuperId) spt ON cs.SportType = spt.Sporttype AND cs.BetType = spt.bettype AND cs.IsLive = spt.IsLive
 		WHERE cs.MasterPT < 0 OR cs.AgentPT < 0 --check m2 >= 0, a2 >=0
@@ -356,26 +390,75 @@ BEGIN
 		
 		IF @@ROWCOUNT <> 0
 		BEGIN
-			SET @ErrType = (
-					SELECT 20001 AS '@MsgID'
-						, 'Wrong position taking.' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, tmp.IsLive AS '@IsLive'
-							FROM @ErrorTbl tmp
-							WHERE	ErrCode = 200									
-							FOR XML PATH('Row')
-								, TYPE	
-							)						
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-			SET @MsgType = 5
-			SET @ErrCode = 200
+			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 200)
+			BEGIN
+				SET @ErrType = (
+						SELECT 20001 AS '@MsgID'
+							, 'Wrong position taking.' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 200									
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 5
+				SET @ErrCode = 200
 		
-			RETURN
+				RETURN
+			END
+			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 203)
+			BEGIN
+				SET @ErrType = (
+						SELECT 20039 AS '@MsgID'
+							, 'Master''s PT is too high. It makes the line''s Total PT greater than Super Max PT' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 203									
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 5
+				SET @ErrCode = 203
+		
+				RETURN
+			END
+			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 204)
+			BEGIN
+				SET @ErrType = (
+						SELECT 20040 AS '@MsgID'
+							, 'Agent''s PT is too high. It makes the line''s Total PT greater than Super Max PT' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 204									
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 5
+				SET @ErrCode = 204
+		
+				RETURN
+			END
 		END
 
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)

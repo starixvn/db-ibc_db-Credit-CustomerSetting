@@ -37,13 +37,13 @@ BEGIN
 	
 	IF @RoleId = 4
 	BEGIN
-		SELECT cs.sporttype, cs.bettype, cs.Islive, MIN(cs.SuperPT + cs.MasterPT + cs.AgentPT) AS MinPTDownline, MAX(cs.SuperPT + cs.MasterPT + cs.AgentPT) AS MaxPTDownline 
+		SELECT acs.sporttype, acs.bettype, acs.Islive, MIN(acs.SuperPT + acs.MasterPT + acs.AgentPT) AS MinPTDownline, MAX(acs.SuperPT + acs.MasterPT + acs.AgentPT) AS MaxPTDownline 
 		INTO #PTDownlines4
-		FROM dbo.custInfo ci WITH (NOLOCK) 	
-			CROSS APPLY dbo.f_CS_GetPTGroup_Member(ci.custid) cs
-			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
-		WHERE ci.srecommend = @CustId AND ci.roleid = 2
-		GROUP BY cs.sporttype, cs.bettype, cs.Islive
+		FROM dbo.custInfo a WITH (NOLOCK) 	
+			CROSS APPLY dbo.f_CS_GetPTGroup_Member(a.custid) acs
+			INNER JOIN #SportBettypeFilter1 ft ON acs.SportType = ft.SportType AND acs.BetType = ft.BetType AND acs.IsLive = ft.IsLive
+		WHERE a.srecommend = @CustId AND a.roleid = 2
+		GROUP BY acs.sporttype, acs.bettype, acs.Islive
 
 		SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.SuperPT) AS MaxSuperPT
 		INTO #PTMaster4
@@ -67,18 +67,30 @@ BEGIN
 		SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.MasterPT + cs.AgentPT) AS MaxPTDownline 
 		INTO #PTDownlines3
 		FROM dbo.custInfo ci WITH (NOLOCK) 	
-			CROSS APPLY dbo.f_CS_GetPTGroup_Member(ci.custid) cs
+			CROSS APPLY dbo.f_CS_GetPT_Agent(ci.custid) cs
 			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
 		WHERE ci.srecommend = @SuperId AND ci.roleid = 2
 		GROUP BY cs.sporttype, cs.bettype, cs.Islive
 
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, mpt.SuperPT,
-			CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MinSuperPT, 
-			CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MaxSuperPT
-		FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
-			INNER JOIN dbo.f_CS_GetPT_Agent(@CustID) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
-			LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
-			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
+		IF @@ROWCOUNT <> 0 --If Master has at least 1 Agent: Range: [Max(0, Super Min PT - (Master PT + Agent PT)); Super Max PT - (Master PT + Agent PT)]
+		BEGIN
+			SELECT ft.SportType, ft.Bettype, ft.IsLive, mpt.SuperPT,
+				CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MinSuperPT, 
+				CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MaxSuperPT
+			FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
+				INNER JOIN dbo.f_CS_GetPT_Agent(@CustID) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
+				LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
+				INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
+		END
+		ELSE --If Master has no Agent: Range: [0; Super Max PT]
+		BEGIN
+			SELECT ft.SportType, ft.Bettype, ft.IsLive, mpt.SuperPT,
+				0 AS MinSuperPT, 
+				spt.MaxPT AS MaxSuperPT
+			FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
+				INNER JOIN dbo.f_CS_GetPT_Agent(@CustID) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
+				INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
+		END
 	END	
 	ELSE IF @RoleId = 2
 	BEGIN

@@ -108,6 +108,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 400									
 							FOR XML PATH('Row')
@@ -130,6 +131,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 401									
 							FOR XML PATH('Row')
@@ -176,6 +178,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 402									
 								FOR XML PATH('Row')
@@ -198,6 +201,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 403									
 								FOR XML PATH('Row')
@@ -247,6 +251,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 302									
 								FOR XML PATH('Row')
@@ -269,6 +274,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 303									
 								FOR XML PATH('Row')
@@ -318,6 +324,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 202									
 								FOR XML PATH('Row')
@@ -340,6 +347,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 203									
 								FOR XML PATH('Row')
@@ -376,6 +384,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 102									
 								FOR XML PATH('Row')
@@ -398,6 +407,7 @@ BEGIN
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
 								FROM @ErrorTbl tmp
 								WHERE	ErrCode = 103									
 								FOR XML PATH('Row')
@@ -436,6 +446,7 @@ BEGIN
 					, (
 						SELECT tmp.SportType AS '@SportType'
 							, tmp.BetType AS '@BetType'
+							, tmp.IsLive AS '@IsLive'
 						FROM @ErrorTbl tmp
 						WHERE	ErrCode = 404									
 						FOR XML PATH('Row')
@@ -470,6 +481,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 405									
 							FOR XML PATH('Row')
@@ -510,6 +522,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 406									
 							FOR XML PATH('Row')
@@ -542,6 +555,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 305									
 							FOR XML PATH('Row')
@@ -582,6 +596,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 306									
 							FOR XML PATH('Row')
@@ -614,6 +629,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 205									
 							FOR XML PATH('Row')
@@ -666,6 +682,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 206									
 							FOR XML PATH('Row')
@@ -702,6 +719,7 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
 							FROM @ErrorTbl tmp
 							WHERE	ErrCode = 105									
 							FOR XML PATH('Row')

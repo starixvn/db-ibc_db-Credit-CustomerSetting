@@ -42,9 +42,9 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML, @_PTSetting XML, @xml XML  
+	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML, @_PTSetting XML, @xml XML, @xml_Old XML  
 	DECLARE @MinPT_XML XML, @MaxPT_XML XML, @SuperPT_XML XML, @MasterPT_XML XML, @AgentPT_XML XML
-	DECLARE @ProductName VARCHAR(50), @SettingLevel	TINYINT
+	DECLARE @SettingLevel	TINYINT
 	DECLARE @SuperId INT, @MasterId INT, @AgentId INT
 
 	IF @PTSetting = '' RETURN 
@@ -122,135 +122,83 @@ BEGIN
 				AND psd.SettingType = 1	-- Position Taking
 		 ) iq
 
-	-- Select ProductName
-	SELECT @ProductName = p.ProductName
-	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
-	WHERE p.ProductID = @ProductID
-	
 	IF @RoleId = 4
-	BEGIN
-		SELECT @ActionId = 100003
-		/*
+	BEGIN						
 		-- Log old data
 		IF @SettingLevel = 1			-- Product setting level
 		BEGIN
-			SET @xml = (
-						SELECT  @ProductID						AS '@ProductID',
-								@ProductName					AS '@ProductName',
-								@custid                         AS '@CustID',
-								dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
-								@userid                         AS '@UserID',
-								@IP                             AS '@IP',
-								(
-									SELECT  @ProductID										AS '@ProductID',
-											cs.isLive										AS '@IsLive',
-											CONVERT(DECIMAL(10,2), cs.MinPT/100.0)			AS '@SuperMinPT',
-											CONVERT(DECIMAL(10,2), cs.MaxPT/100.0)			AS '@SuperMaxPT'
-									FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-									FOR XML PATH('PT'), 
-									TYPE
-								)
-						FOR XML PATH('CS_CustSetting_PTSetting_Upd'), 
-						TYPE
-					)
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  @ProductID														AS '@ProductID',
+												cs.isLive														AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
 		END
 		ELSE IF @SettingLevel = 2		-- SportType setting level
 		BEGIN
-		SET @xml = (
-					SELECT  @ProductID						AS '@ProductID',
-							@ProductName					AS '@ProductName',
-							@custid                         AS '@CustID',
-							dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
-							@userid                         AS '@UserID',
-							@IP                             AS '@IP',
-							(
-								SELECT  cs.sporttype									AS '@SportType',
-										cs.isLive										AS '@IsLive',
-										CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
-										cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-										CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-										CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-										CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
-										t.UpdAllMems									AS '@UpdAllMems',
-										CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
-								FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
-									INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
-															AND cs.bettype = t.BetType 
-															AND cs.isLive = t.IsLive
-								WHERE custid = @custid
-								FOR XML PATH('PT'), 
-								TYPE
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype													AS '@Sport',
+												cs.isLive														AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
 							)
-					FOR XML PATH('CS_CustSetting_PTSetting_Upd'), 
-					TYPE
-				)
-				END
+		END
 		ELSE IF @SettingLevel = 3		-- BetType setting level
 		BEGIN
-			SET @xml = (
-			SELECT  @ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@custid                         AS '@CustID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
-					@userid                         AS '@UserID',
-					@IP                             AS '@IP',
-					(
-						SELECT  cs.bettype										AS '@BetType',
-								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
-								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
-								t.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
-						FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
-							INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
-													AND cs.bettype = t.BetType 
-													AND cs.isLive = t.IsLive
-						WHERE custid = @custid
-						FOR XML PATH('PT'), 
-						TYPE
-					)
-			FOR XML PATH('CS_CustSetting_PTSetting_Upd'), 
-			TYPE
-		)
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.bettype														AS '@BT',
+												cs.isLive														AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+												FOR XML PATH('C'), 
+												TYPE
+											)
+									FOR XML PATH('R'), 
+									TYPE
+							)					
 		END
 		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
 		BEGIN
-			SET @xml = (
-			SELECT  @ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@custid                         AS '@CustID',
-					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
-					@userid                         AS '@UserID',
-					@IP                             AS '@IP',
-					(
-						SELECT  cs.sporttype									AS '@SportType',
-								cs.bettype										AS '@BetType',
-								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
-								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
-								t.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
-						FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
-							INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
-													AND cs.bettype = t.BetType 
-													AND cs.isLive = t.IsLive
-						WHERE custid = @custid
-						FOR XML PATH('PT'), 
-						TYPE
-					)
-			FOR XML PATH('CS_CustSetting_PTSetting_Upd'), 
-			TYPE
-		)
-		END
-		*/
-
-		SET @logSPData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype													AS '@Sport',
+												cs.bettype														AS '@BT',
+												cs.isLive														AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+												FOR XML PATH('C'), 
+												TYPE
+											)
+									FOR XML PATH('R'), 
+									TYPE
+							)
+		END		
+				
 		SET @MinPT_XML =(
 							SELECT (
 									SELECT	bs.ByteOrder	AS '@pos',
@@ -286,10 +234,158 @@ BEGIN
 			CROSS APPLY dbo.f_SetBinaryValues(cs.MinPT, @MinPT_XML) minpt
 			CROSS APPLY dbo.f_SetBinaryValues(cs.MaxPT, @MaxPT_XML) maxpt	
 		WHERE cs.CustId = @CustID
+
+		-- Log new data
+		IF @SettingLevel = 1			-- Product setting level
+		BEGIN
+			SET @xml = (
+						SELECT  @ProductID						AS '@ProductID',
+								@IP                             AS '@IP',
+								(
+									SELECT  @ProductID														AS '@ProductID',
+											cs.isLive														AS '@IsL',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+									FROM #PT_tmp cs
+									FOR XML PATH('C'), 
+									TYPE
+								)
+						FOR XML PATH('R'), 
+						TYPE
+					)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+		SET @xml = (
+					SELECT  @ProductID						AS '@ProductID',
+							@IP                             AS '@IP',
+							(
+								SELECT  cs.sporttype													AS '@Sport',
+										cs.isLive														AS '@IsL',
+										CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+										CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+								FROM #PT_tmp cs
+								FOR XML PATH('C'), 
+								TYPE
+							)
+					FOR XML PATH('R'), 
+					TYPE
+				)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT  @ProductID						AS '@ProductID',
+					@IP                             AS '@IP',
+					(
+						SELECT  cs.bettype														AS '@BT',
+								cs.isLive														AS '@IsL',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+						FROM #PT_tmp cs
+								FOR XML PATH('C'), 
+								TYPE
+							)
+					FOR XML PATH('R'), 
+					TYPE
+					)					
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT  @ProductID						AS '@ProductID',
+					@IP                             AS '@IP',
+					(
+						SELECT  cs.sporttype													AS '@Sport',
+								cs.bettype														AS '@BT',
+								cs.isLive														AS '@IsL',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+						FROM #PT_tmp cs
+								FOR XML PATH('C'), 
+								TYPE
+							)
+					FOR XML PATH('R'), 
+					TYPE
+					)
+		END				
 	END
 	ELSE IF @RoleId = 3
 	BEGIN
-		SELECT @ActionId = 100004
+		-- Log old data
+		IF @SettingLevel = 1			-- Product setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+									@IP                             AS '@IP',
+									(
+										SELECT  @ProductID														AS '@ProductID',
+												cs.isLive														AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype													AS '@Sport',
+												cs.isLive														AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.bettype														AS '@BT',
+												cs.isLive														AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+												FOR XML PATH('C'), 
+												TYPE
+											)
+									FOR XML PATH('R'), 
+									TYPE
+							)					
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype													AS '@Sport',
+												cs.bettype														AS '@BT',
+												cs.isLive														AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+												FOR XML PATH('C'), 
+												TYPE
+											)
+									FOR XML PATH('R'), 
+									TYPE
+							)
+		END	
 
 		SET @SuperPT_XML =(
 							SELECT (
@@ -318,10 +414,162 @@ BEGIN
 			INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = cs.AgentId
 			CROSS APPLY dbo.f_SetBinaryValues(cs.SuperPT, @SuperPT_XML) mpt
 		WHERE ci.mrecommend = @CustID AND ci.roleid = 2
+
+		-- Log new data
+		IF @SettingLevel = 1			-- Product setting level
+		BEGIN
+			SET @xml = (
+						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+								@IP                             AS '@IP',
+								(
+									SELECT  @ProductID														AS '@ProductID',
+											cs.isLive														AS '@IsL',
+											CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+									FROM #PT_tmp cs
+									FOR XML PATH('C'), 
+									TYPE
+								)
+						FOR XML PATH('R'), 
+						TYPE
+					)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+		SET @xml = (
+					SELECT  @ProductID						AS '@ProductID',
+							dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+							@IP                             AS '@IP',
+							(
+								SELECT  cs.sporttype													AS '@Sport',
+										cs.isLive														AS '@IsL',
+										CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+								FROM #PT_tmp cs
+								FOR XML PATH('C'), 
+								TYPE
+							)
+					FOR XML PATH('R'), 
+					TYPE
+				)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT  @ProductID						AS '@ProductID',
+					dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+					@IP                             AS '@IP',
+					(
+						SELECT  cs.bettype														AS '@BT',
+								cs.isLive														AS '@IsL',
+								CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+						FROM #PT_tmp cs
+								FOR XML PATH('C'), 
+								TYPE
+							)
+					FOR XML PATH('R'), 
+					TYPE
+					)					
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT  @ProductID						AS '@ProductID',
+					dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+					@IP                             AS '@IP',
+					(
+						SELECT  cs.sporttype													AS '@Sport',
+								cs.bettype														AS '@BT',
+								cs.isLive														AS '@IsL',
+								CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+						FROM #PT_tmp cs
+								FOR XML PATH('C'), 
+								TYPE
+							)
+					FOR XML PATH('R'), 
+					TYPE
+					)
+		END				
 	END	
 	ELSE IF @RoleId = 2
 	BEGIN
-		SELECT @ActionId = 100005
+		-- Log old data
+		IF @SettingLevel = 1			-- Product setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+									@IP                             AS '@IP',
+									(
+										SELECT  @ProductID															AS '@ProductID',
+												cs.isLive															AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype														AS '@Sport',
+												cs.isLive															AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.bettype															AS '@BT',
+												cs.isLive															AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+												FOR XML PATH('C'), 
+												TYPE
+											)
+									FOR XML PATH('R'), 
+									TYPE
+							)					
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype														AS '@Sport',
+												cs.bettype															AS '@BT',
+												cs.isLive															AS '@IsL',
+												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+												FOR XML PATH('C'), 
+												TYPE
+											)
+									FOR XML PATH('R'), 
+									TYPE
+							)
+		END	
 
 		SET @MasterPT_XML =(
 							SELECT (
@@ -366,12 +614,99 @@ BEGIN
 			CROSS APPLY dbo.f_SetBinaryValues(cs.MasterPT, @MasterPT_XML) apt1
 			CROSS APPLY dbo.f_SetBinaryValues(cs.AgentPT, @AgentPT_XML) apt2
 		WHERE cs.AgentId = @CustID
+
+		-- Log new data
+		IF @SettingLevel = 1			-- Product setting level
+		BEGIN
+			SET @xml = (
+						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+								@IP                             AS '@IP',
+								(
+									SELECT  @ProductID															AS '@ProductID',
+											cs.isLive															AS '@IsL',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+											CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+									FROM #PT_tmp cs
+									FOR XML PATH('C'), 
+									TYPE
+								)
+						FOR XML PATH('R'), 
+						TYPE
+					)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+		SET @xml = (
+					SELECT  @ProductID						AS '@ProductID',
+							dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+							@IP                             AS '@IP',
+							(
+								SELECT  cs.sporttype														AS '@Sport',
+										cs.isLive															AS '@IsL',
+										CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+										CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+								FROM #PT_tmp cs
+								FOR XML PATH('C'), 
+								TYPE
+							)
+					FOR XML PATH('R'), 
+					TYPE
+				)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml = (
+						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+								@IP                             AS '@IP',
+								(
+									SELECT  cs.bettype															AS '@BT',
+											cs.isLive															AS '@IsL',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+											CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+									FROM #PT_tmp cs
+											FOR XML PATH('C'), 
+											TYPE
+										)
+								FOR XML PATH('R'), 
+								TYPE
+						)					
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml = (
+						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
+								@IP                             AS '@IP',
+								(
+									SELECT  cs.sporttype														AS '@Sport',
+											cs.bettype															AS '@BT',
+											cs.isLive															AS '@IsL',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+											CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+									FROM #PT_tmp cs
+											FOR XML PATH('C'), 
+											TYPE
+										)
+								FOR XML PATH('R'), 
+								TYPE
+						)
+		END	
 	END	
 
 	-- end write log
 	SET @endRun		= GETDATE()  
 	SET @duration	= DATEDIFF(MILLISECOND, @startRun, @endRun) 
-						
+		
+	SET @logSPData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml_Old), '" />', '"/"')		
+	SET @logSPData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')				
+
+	SELECT @ActionId = l.ActionID
+	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
+		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
+	WHERE l.SPName = 'CS_CustSetting_PTSetting_Upd' AND ld.ProductID = @ProductID AND ld.Level = @RoleID	
+				
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,
 		@CustID = @CustID,
