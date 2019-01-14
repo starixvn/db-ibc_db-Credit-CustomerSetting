@@ -11,6 +11,7 @@ ALTER PROCEDURE CS_CustSetting_CommBetSetting_Upd
 	@SubAccID		INT = 0,
 	@UserID			INT = 0,       
 	@IP				VARCHAR(15)='',
+	@Language		VARCHAR(2)= 'E',
 	@ErrCode		INT	= 0 OUTPUT,
 	@MsgType		INT	= 0 OUTPUT,
 	@ErrMsg			VARCHAR(MAX) = '' OUTPUT
@@ -78,13 +79,493 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @uGroup VARCHAR(3)
+	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML
+	DECLARE @_CommSetting XML, @_BetSetting XML, @xml XML, @xml_Old XML, @IsGroupComm BIT
+	DECLARE @Discount_XML XML, @PlayerDiscount_XML XML, @AgentDiscount_XML XML, @MasterDiscount_XML XML, @SuperDiscount_XML XML
+	DECLARE @GroupADiscount_XML XML, @GroupBDiscount_XML XML, @GroupCDiscount_XML XML, @GroupDDiscount_XML XML
+	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @uGroup VARCHAR(3), @SettingLevel TINYINT
+	DECLARE @OldBetLimitTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, MaxBet MONEY, MaxPerMatch MONEY)
+	DECLARE @OldCommSMATbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, GroupA DECIMAL(9,8), GroupB DECIMAL(9,8), GroupC DECIMAL(9,8), GroupD DECIMAL(9,8), Comm DECIMAL(9,8))
+	DECLARE @OldCommMemberTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, Comm DECIMAL(9,8))
+	DECLARE @DownlineGroupComm TABLE (AgentId INT, uGroup VARCHAR(3), NumOfMember INT)
+
+	SELECT @ErrCode = 0, @_CommSetting = @CommSetting, @_BetSetting = @BetSetting
 	SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID AND roleid = @RoleId
+
+	IF @_BetSetting IS NULL OR @_CommSetting IS NULL
+		RETURN
+
+	---------------------------
+	-- ***Check Downline Belonging***
+	EXEC dbo.Age_CustomerSelCheckBelongingByCustID 
+		@SessionCustID	= @Userid 
+		,@Custid		= @custid		
+		,@roleid		= @roleid OUTPUT
+	IF (@roleid = 0) RETURN
+	
+	--Check disable user
+	EXEC dbo.Acc_CustomerSelCheckEnable 
+		@custid		= @custid
+		,@ErrCode	= @ErrCode OUTPUT
+		,@ErrMsg	= @ErrMsg OUTPUT
+		
+	IF @ErrCode > 0	
+	BEGIN
+		SELECT @MsgType = 101
+		RETURN
+	END
+	--end
+
+	---- Checking total downlines before update 
+    EXEC dbo.Acc_CustomerSelCheckAllowedDownlines    
+		@custid			= @custid
+        ,@roleid		= @roleid
+        ,@isExecRep		= 1
+        ,@isUpdatePT	= 0
+        ,@Sporttype		= 1
+        ,@Language		= @Language
+        ,@ErrMsg		= @ErrMsg OUTPUT
+        ,@ErrCode		= @ErrCode OUTPUT
+        
+    IF @ErrCode > 0	
+	BEGIN
+		SELECT @MsgType = 101
+		RETURN
+	END 
+
+	EXEC dbo.CS_CustSetting_CommBetSetting_Check
+		@RoleId			= @RoleId,
+		@CustID			= @CustID,
+		@CommSetting	= @CommSetting,
+		@BetSetting		= @BetSetting,
+		@ProductID		= @ProductID,
+		@IsTest			= @IsTest,
+		@ErrCode		= @ErrCode OUTPUT,
+		@MsgType		= @MsgType OUTPUT,
+		@ErrMsg			= @ErrMsg OUTPUT
+	IF @ErrCode > 0
+		RETURN
+
+    SET @startRun = GETDATE()
 
 	/********************************************* Comm & BetSetting: SettingType = 2 ***********************************/
 	SELECT t.* INTO #SportBettypeFilter2
-	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 2, @IsTest) t
+	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 2, @IsTest) t	
+
+	---------------------Start BetSetting--------------------------------------
+	SELECT bs.* INTO #BetSetting_tmp
+	FROM dbo.f_CS_BetSettingParse(@_BetSetting) bs
+		INNER JOIN #SportBettypeFilter2 ft ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive	
+
+	IF @RoleID = 1
+	BEGIN				
+		--get old settings
+		INSERT INTO @OldBetLimitTbl
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.IsLive
+			, bl.MaxBet
+			, bl.MaxPerMatch
+		FROM dbo.CS_CustBetSetting_Member bl WITH (NOLOCK)
+			INNER JOIN #BetSetting_tmp tmp ON tmp.SportType	= bl.sporttype AND tmp.BetType = bl.bettype AND tmp.IsLive = bl.IsLive
+		WHERE bl.custid = @CustID
+
+		--update bet settings
+		UPDATE main
+		SET main.maxbet			= tmp.MaxBet, 
+			main.maxpermatch	= tmp.MaxperMatch
+		FROM dbo.CS_CustBetSetting_Member main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #BetSetting_tmp tmp ON tmp.SportType	= main.sporttype AND tmp.BetType = main.bettype AND tmp.IsLive = main.IsLive
+		WHERE main.custid = @CustID
+			AND (main.maxbet <> tmp.MaxBet OR main.maxpermatch <> tmp.MaxperMatch)
+	END
+	ELSE IF @RoleID IN (2, 3, 4)
+	BEGIN
+		--get old settings
+		INSERT INTO @OldBetLimitTbl
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.IsLive
+			, bl.MaxBet
+			, bl.MaxPerMatch
+		FROM dbo.CS_CustBetSetting_Agent bl WITH (NOLOCK)
+			INNER JOIN #BetSetting_tmp tmp ON tmp.SportType	= bl.sporttype AND tmp.BetType = bl.bettype AND tmp.IsLive = bl.IsLive
+		WHERE bl.custid = @CustID
+
+		--update new settings
+		UPDATE main
+		SET main.maxbet			= tmp.MaxBet, 
+			main.maxpermatch	= tmp.MaxperMatch
+		FROM dbo.CS_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #BetSetting_tmp tmp ON tmp.SportType	= main.sporttype AND tmp.BetType = main.bettype AND tmp.IsLive = main.IsLive
+		WHERE main.custid = @CustID
+			AND (main.maxbet <> tmp.MaxBet OR main.maxpermatch <> tmp.MaxperMatch)		
+	END
+	---------------------End BetSetting--------------------------------------
+
+	---------------------Start CommSetting--------------------------------------
+	SELECT cm.* INTO #CommSetting_tmp
+	FROM dbo.f_CS_CommParse(@_CommSetting) cm
+		INNER JOIN #SportBettypeFilter2 ft ON cm.SportType = ft.SportType AND cm.BetType = ft.BetType AND cm.IsLive = ft.IsLive	
+
+	IF @RoleID = 1
+	BEGIN		
+		SELECT @IsGroupComm = IsGroupComm FROM dbo.CS_CustSettingMode WITH (NOLOCK) WHERE CustId = @CustID
+		
+		IF @IsGroupComm = 1
+		BEGIN			
+			SELECT cm.* INTO #CommGroupMem_tmp
+			FROM #CommSetting_tmp cm
+				INNER JOIN dbo.CS_CommTemplate ct ON ct.ValueId = cm.ValueId
+				INNER JOIN dbo.f_CS_GetGroupDiscount_Member(@CustID) cs ON cs.sporttype = cm.SportType AND cs.bettype = cm.BetType AND cs.isLive = cm.IsLive
+			WHERE cs.PlayerDiscount <> ct.Value
+
+			INSERT INTO @OldCommMemberTbl(SportType, BetType, IsLive, Comm)
+			SELECT cm.SportType, cm.BetType, cm.IsLive, cm.PlayerDiscount
+			FROM dbo.f_CS_GetGroupDiscount_Member(@CustID) cm
+				LEFT JOIN #CommSetting_tmp tmp ON tmp.SportType = cm.sporttype AND tmp.BetType = cm.bettype AND tmp.IsLive = cm.isLive
+
+			SET @PlayerDiscount_XML =(
+										SELECT (
+												SELECT	bs.ByteOrder	AS '@pos',
+														comm.ValueId	AS '@val'
+												FROM #CommGroupMem_tmp comm
+													INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive
+												WHERE bs.Type = 'DiscountMember'
+												FOR XML PATH('r')
+													, TYPE
+												)
+										FOR XML PATH('root')
+											, TYPE
+										)
+			IF EXISTS (SELECT 1 FROM dbo.CS_CustDiscount_Member WITH (NOLOCK) WHERE CustId = @CustID)
+			BEGIN
+				UPDATE cm
+				SET cm.PlayerDiscount = playercomm.binaryStr_new
+				FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
+					CROSS JOIN dbo.CS_CustGroupDiscount_Member gm WITH (NOLOCK) 
+					CROSS APPLY dbo.f_SetBinaryValues(gm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
+				WHERE cm.CustId = @CustID AND gm.AgentId = @AgentId				
+			END
+			ELSE
+			BEGIN
+				INSERT INTO CS_CustDiscount_Member (CustId, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
+				SELECT @CustID, playercomm.binaryStr_new, gm.AgentDiscount, gm.MasterDiscount, gm.SuperDiscount
+				FROM dbo.CS_CustGroupDiscount_Member gm WITH (NOLOCK) 
+					CROSS APPLY dbo.f_SetBinaryValues(gm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
+				WHERE gm.AgentId = @AgentId
+			END
+
+			UPDATE cm
+			SET cm.IsGroupComm = 0
+			FROM dbo.CS_CustSettingMode cm WITH (ROWLOCK)
+			WHERE cm.CustId = @CustID
+		END
+		ELSE
+		BEGIN
+			SELECT cm.* INTO #CommMem_tmp
+			FROM #CommSetting_tmp cm
+				INNER JOIN dbo.CS_CommTemplate ct ON ct.ValueId = cm.ValueId
+				INNER JOIN dbo.f_CS_GetDiscount_Member(@CustID) cs ON cs.sporttype = cm.SportType AND cs.bettype = cm.BetType AND cs.isLive = cm.IsLive
+			WHERE cs.PlayerDiscount <> ct.Value
+
+			INSERT INTO @OldCommMemberTbl(SportType, BetType, IsLive, Comm)
+			SELECT cm.SportType, cm.BetType, cm.IsLive, PlayerDiscount
+			FROM dbo.f_CS_GetDiscount_Member(@CustID) cm
+				INNER JOIN #CommSetting_tmp tmp ON tmp.SportType = cm.sporttype AND tmp.BetType = cm.bettype AND tmp.IsLive = cm.isLive
+
+			SET @PlayerDiscount_XML =(
+										SELECT (
+												SELECT	bs.ByteOrder	AS '@pos',
+														comm.ValueId	AS '@val'
+												FROM #CommMem_tmp comm
+													INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive
+												WHERE bs.Type = 'DiscountMember'
+												FOR XML PATH('r')
+													, TYPE
+												)
+										FOR XML PATH('root')
+											, TYPE
+										)
+
+			UPDATE cm
+			SET cm.PlayerDiscount = playercomm.binaryStr_new
+			FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
+				CROSS APPLY dbo.f_SetBinaryValues(cm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
+			WHERE cm.CustId = @CustID
+		END				
+	END
+	ELSE IF @RoleID IN (2,3,4)
+	BEGIN
+		SELECT cm.* INTO #CommSMA_tmp
+		FROM #CommSetting_tmp cm
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@CustID) cs ON cs.sporttype = cm.SportType AND cs.bettype = cm.BetType AND cs.isLive = cm.IsLive AND cs.groupID = cm.GroupId
+		WHERE cm.ValueId <> cs.ValueId
+
+		INSERT INTO @OldCommSMATbl(SportType, BetType, IsLive)
+		SELECT DISTINCT SportType, BetType, IsLive
+		FROM #CommSetting_tmp
+
+		UPDATE l
+		SET l.GroupA = t.Discount
+		FROM @OldCommSMATbl l
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@CustID) t ON t.SportType = l.SportType AND t.BetType = l.BetType AND t.IsLive = l.IsLive	
+			LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = t.SportType AND gc.BetType = t.BetType AND gc.IsLive = t.IsLive AND gc.GroupId = t.GroupId
+		WHERE gc.GroupName = 'A'
+
+		UPDATE l
+		SET l.GroupB = t.Discount
+		FROM @OldCommSMATbl l
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@CustID) t ON t.SportType = l.SportType AND t.BetType = l.BetType AND t.IsLive = l.IsLive	
+			LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = t.SportType AND gc.BetType = t.BetType AND gc.IsLive = t.IsLive AND gc.GroupId = t.GroupId
+		WHERE gc.GroupName = 'B'
+
+		UPDATE l
+		SET l.GroupC = t.Discount
+		FROM @OldCommSMATbl l
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@CustID) t ON t.SportType = l.SportType AND t.BetType = l.BetType AND t.IsLive = l.IsLive	
+			LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = t.SportType AND gc.BetType = t.BetType AND gc.IsLive = t.IsLive AND gc.GroupId = t.GroupId
+		WHERE gc.GroupName = 'C'
+
+		UPDATE l
+		SET l.GroupD = t.Discount
+		FROM @OldCommSMATbl l
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@CustID) t ON t.SportType = l.SportType AND t.BetType = l.BetType AND t.IsLive = l.IsLive	
+			LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = t.SportType AND gc.BetType = t.BetType AND gc.IsLive = t.IsLive AND gc.GroupId = t.GroupId
+		WHERE gc.GroupName = 'D'
+
+		UPDATE l
+		SET l.Comm = t.Discount
+		FROM @OldCommSMATbl l
+			INNER JOIN dbo.f_CS_GetDiscount_Agent(@CustID) t ON t.SportType = l.SportType AND t.BetType = l.BetType AND t.IsLive = l.IsLive	
+			LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = t.SportType AND gc.BetType = t.BetType AND gc.IsLive = t.IsLive AND gc.GroupId = t.GroupId
+		WHERE gc.GroupId IS NULL
+
+		SET @Discount_XML =(
+								SELECT (
+										SELECT	bs.ByteOrder	AS '@pos',
+												comm.ValueId	AS '@val'
+										FROM #CommSMA_tmp comm
+											INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+										WHERE bs.Type = 'DiscountAgent'
+										FOR XML PATH('r')
+											, TYPE
+										)
+								FOR XML PATH('root')
+									, TYPE
+								)			
+		
+		SET @GroupADiscount_XML =(
+								SELECT (
+										SELECT	bs.ByteOrder	AS '@pos',
+												comm.ValueId	AS '@val'
+										FROM #CommSMA_tmp comm
+											INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+											LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = comm.SportType AND gc.BetType = comm.BetType AND gc.IsLive = comm.IsLive AND gc.GroupId = comm.GroupId
+										WHERE bs.Type = 'DiscountMember'
+											AND (gc.GroupName = 'A' OR gc.GroupId IS NULL)
+										FOR XML PATH('r')
+											, TYPE
+										)
+								FOR XML PATH('root')
+									, TYPE
+								)	
+								
+		SET @GroupBDiscount_XML =(
+								SELECT (
+										SELECT	bs.ByteOrder	AS '@pos',
+												comm.ValueId	AS '@val'
+										FROM #CommSMA_tmp comm
+											INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+											LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = comm.SportType AND gc.BetType = comm.BetType AND gc.IsLive = comm.IsLive AND gc.GroupId = comm.GroupId
+										WHERE bs.Type = 'DiscountMember'
+											AND (gc.GroupName = 'B' OR gc.GroupId IS NULL)
+										FOR XML PATH('r')
+											, TYPE
+										)
+								FOR XML PATH('root')
+									, TYPE
+								)			
+		
+		SET @GroupCDiscount_XML =(
+								SELECT (
+										SELECT	bs.ByteOrder	AS '@pos',
+												comm.ValueId	AS '@val'
+										FROM #CommSMA_tmp comm
+											INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+											LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = comm.SportType AND gc.BetType = comm.BetType AND gc.IsLive = comm.IsLive AND gc.GroupId = comm.GroupId
+										WHERE bs.Type = 'DiscountMember'
+											AND (gc.GroupName = 'C' OR gc.GroupId IS NULL)
+										FOR XML PATH('r')
+											, TYPE
+										)
+								FOR XML PATH('root')
+									, TYPE
+								)		
+		SET @GroupDDiscount_XML =(
+								SELECT (
+										SELECT	bs.ByteOrder	AS '@pos',
+												comm.ValueId	AS '@val'
+										FROM #CommSMA_tmp comm
+											INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+											LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = comm.SportType AND gc.BetType = comm.BetType AND gc.IsLive = comm.IsLive AND gc.GroupId = comm.GroupId
+										WHERE bs.Type = 'DiscountMember'
+											AND (gc.GroupName = 'D' OR gc.GroupId IS NULL)
+										FOR XML PATH('r')
+											, TYPE
+										)
+								FOR XML PATH('root')
+									, TYPE
+								)		
+
+		UPDATE ca
+		SET ca.Discount = comm.binaryStr_new
+		FROM dbo.CS_CustDiscount_Agent ca WITH (ROWLOCK)
+			CROSS APPLY dbo.f_SetBinaryValues(ca.Discount, @Discount_XML) comm	
+		WHERE ca.CustId = @CustID
+
+		IF @RoleId = 2
+		BEGIN
+			IF @GroupADiscount_XML IS NULL OR @GroupADiscount_XML = ''
+			BEGIN
+				UPDATE cm
+				SET cm.AgentDiscount = acomm.binaryStr_new
+				FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
+					INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
+					CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupADiscount_XML) acomm	
+				WHERE c.recommend = @CustID AND c.ugroup = 'CNA'
+			END
+			
+			IF @GroupBDiscount_XML IS NULL OR @GroupBDiscount_XML = ''
+			BEGIN
+				UPDATE cm
+				SET cm.AgentDiscount = acomm.binaryStr_new
+				FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
+					INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
+					CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupBDiscount_XML) acomm	
+				WHERE c.recommend = @CustID AND c.ugroup = 'CNB'
+			END
+
+			IF @GroupCDiscount_XML IS NULL OR @GroupCDiscount_XML = ''
+			BEGIN
+				UPDATE cm
+				SET cm.AgentDiscount = acomm.binaryStr_new
+				FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
+					INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
+					CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupCDiscount_XML) acomm	
+				WHERE c.recommend = @CustID AND c.ugroup = 'CNC'
+			END
+
+			IF @GroupDDiscount_XML IS NULL OR @GroupDDiscount_XML = ''
+			BEGIN
+				UPDATE cm
+				SET cm.AgentDiscount = acomm.binaryStr_new
+				FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
+					INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
+					CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupDDiscount_XML) acomm	
+				WHERE c.recommend = @CustID AND c.ugroup = 'CND'
+			END
+
+			INSERT INTO @DownlineGroupComm (AgentId, uGroup, NumOfMember)
+			SELECT @CustID, c.ugroup, COUNT(1)
+			FROM dbo.CS_CustSettingMode cs WITH (NOLOCK)
+				INNER JOIN Customer c WITH (NOLOCK) ON c.custid = cs.CustId
+			WHERE c.recommend = @CustID AND c.roleid = 1 AND cs.IsGroupComm = 1
+			GROUP BY uGroup
+		END
+		
+	END
+	---------------------End CommSetting--------------------------------------
+
+	-- Select ProductID and SettingLevel
+	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
+	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
+			FROM CS_ProductSettingDetail AS psd WITH(NOLOCK)
+				INNER JOIN #BetSetting_tmp AS tmp ON psd.SportType = tmp.SportType AND	psd.BetType = tmp.BetType AND psd.IsLive = tmp.IsLive
+			WHERE	psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+				AND psd.SettingType = 2	-- Comm & BetSetting
+		 ) iq
 	
+	--Update BetSetting
+	-- Log old data
+	IF @SettingLevel = 1 -- Product setting level
+	BEGIN
+		SET @xml_Old = (
+						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+								@IP                             AS '@IP',
+								(
+									SELECT  @ProductID														AS '@ProductID'
+											--CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+											--CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+									FROM dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK)
+										INNER
+									WHERE bs.CustId = @CustID
+									FOR XML PATH('C'), 
+									TYPE
+								)
+						FOR XML PATH('R'), 
+						TYPE
+						)
+	END
+	ELSE IF @SettingLevel = 2		-- SportType setting level
+	BEGIN
+		SET @xml_Old = (
+						SELECT  @ProductID						AS '@ProductID',
+								@IP                             AS '@IP',
+								(
+									SELECT  cs.sporttype													AS '@Sport',
+											cs.isLive														AS '@IsL',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+									FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+									FOR XML PATH('C'), 
+									TYPE
+								)
+						FOR XML PATH('R'), 
+						TYPE
+						)
+	END
+	ELSE IF @SettingLevel = 3		-- BetType setting level
+	BEGIN
+		SET @xml_Old = (
+						SELECT  @ProductID						AS '@ProductID',
+								@IP                             AS '@IP',
+								(
+									SELECT  cs.bettype														AS '@BT',
+											cs.isLive														AS '@IsL',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+									FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+											FOR XML PATH('C'), 
+											TYPE
+										)
+								FOR XML PATH('R'), 
+								TYPE
+						)					
+	END
+	ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+	BEGIN
+		SET @xml_Old = (
+						SELECT  @ProductID						AS '@ProductID',
+								@IP                             AS '@IP',
+								(
+									SELECT  cs.sporttype													AS '@Sport',
+											cs.bettype														AS '@BT',
+											cs.isLive														AS '@IsL',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+											CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+									FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+											FOR XML PATH('C'), 
+											TYPE
+										)
+								FOR XML PATH('R'), 
+								TYPE
+						)
+	END		
+				
+
 	IF @RoleId = 4
 	BEGIN
 		SELECT mb.sporttype, mb.bettype, mb.Islive, mc.GroupId,

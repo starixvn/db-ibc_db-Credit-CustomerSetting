@@ -37,7 +37,7 @@ BEGIN
 	
 	IF @RoleId = 4
 	BEGIN
-		SELECT acs.sporttype, acs.bettype, acs.Islive, MIN(acs.SuperPT + acs.MasterPT + acs.AgentPT) AS MinPTDownline, MAX(acs.SuperPT + acs.MasterPT + acs.AgentPT) AS MaxPTDownline 
+		SELECT acs.sporttype, acs.bettype, acs.Islive, MAX(acs.SuperPT + acs.MasterPT + acs.AgentPT) AS MaxPTDownline 
 		INTO #PTDownlines4
 		FROM dbo.custInfo a WITH (NOLOCK) 	
 			CROSS APPLY dbo.f_CS_GetPTGroup_Member(a.custid) acs
@@ -54,7 +54,7 @@ BEGIN
 		GROUP BY cs.sporttype, cs.bettype, cs.Islive
 
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, spt.MinPT AS SuperMinPT, spt.MaxPT AS SuperMaxPT, 
-			0 AS MinSuperMinPT, ISNULL(dl.MinPTDownline,spt.MaxPT) AS MaxSuperMinPT, 
+			0 AS MinSuperMinPT, ps.MaxPT AS MaxSuperMinPT, 
 			CASE WHEN ISNULL(dl.MaxPTDownline,0) > ISNULL(mpt.MaxSuperPT,0) THEN ISNULL(dl.MaxPTDownline,0) ELSE ISNULL(mpt.MaxSuperPT,0) END AS MinSuperMaxPT, ps.MaxPT AS MaxSuperMaxPT
 		FROM dbo.f_CS_GetPT_Agent(@CustId) spt	
 			LEFT JOIN #PTDownlines4 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
