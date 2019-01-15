@@ -657,11 +657,8 @@ BEGIN
 		SELECT memc.sporttype, memc.bettype, memc.Islive, gc.GroupId, MAX(memc.PlayerDiscount) AS MaxCommDownline
 		INTO #CommGroupDownlines2
 		FROM dbo.f_CS_GetGroupDiscount_Member(@CustID) memc  
-			CROSS JOIN dbo.customer c WITH (NOLOCK) 	
-			INNER JOIN dbo.CS_CustSettingMode cm WITH (NOLOCK) ON cm.CustId = c.custid 			
 			INNER JOIN #SportBettypeFilter2 ft ON memc.SportType = ft.SportType AND memc.BetType = ft.BetType AND memc.IsLive = ft.IsLive
-			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.uGroup = c.ugroup
-		WHERE c.recommend = @CustID AND c.roleid = 1 AND cm.IsGroupComm = 1
+			INNER JOIN dbo.CS_GroupConfig gc ON memc.uGroup = gc.uGroup
 		GROUP BY memc.sporttype, memc.bettype, memc.Islive, gc.GroupId
 
 		--Check if new discount < downline's discount

@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,vnteam" viewers="" isFunction="1"></info>*/
 
-CREATE FUNCTION [dbo].[f_CS_GetGroupDiscount_Member] (@AgentId INT)	       
+ALTER FUNCTION [dbo].[f_CS_GetGroupDiscount_Member] (@AgentId INT)	       
 RETURNS TABLE
 AS
 /*
@@ -17,7 +17,7 @@ AS
 		
 */ 	
 RETURN
-	SELECT seq.sporttype, seq.bettype, seq.isLive, pc.value AS PlayerDiscount, ac.value AS AgentDiscount, mc.value AS MasterDiscount, sc.value AS SuperDiscount
+	SELECT seq.sporttype, seq.bettype, seq.isLive, dc.uGroup, pc.value AS PlayerDiscount, ac.value AS AgentDiscount, mc.value AS MasterDiscount, sc.value AS SuperDiscount
 	FROM dbo.CS_CustGroupDiscount_Member dc WITH(NOLOCK)	
 		CROSS APPLY dbo.CS_ByteSeq seq WITH(NOLOCK)
 		INNER JOIN dbo.CS_CommTemplate pc WITH(NOLOCK) ON CONVERT(TINYINT, SUBSTRING(dc.PlayerDiscount, seq.ByteOrder, 1)) = pc.ValueID

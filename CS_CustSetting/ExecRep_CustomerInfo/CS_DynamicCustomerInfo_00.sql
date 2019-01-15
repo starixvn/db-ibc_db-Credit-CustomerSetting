@@ -398,7 +398,7 @@ BEGIN
 										FOR XML PATH('root')
 											, TYPE
 										)
-			IF EXISTS (SELECT 1 FROM dbo.custInfo WITH (NOLOCK) WHERE recommend = @AgentID AND roleid = 1)
+			IF EXISTS (SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE recommend = @AgentID AND roleid = 1 AND uGroup = @uGroup)
 			BEGIN
 				IF EXISTS (	SELECT 1
 							FROM CS_CustGroupDiscount_Member cs
@@ -406,7 +406,7 @@ BEGIN
 								CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @AgentDiscount_XML) acomm	
 								CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @MasterDiscount_XML) mcomm	
 								CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @SuperDiscount_XML) scomm
-							WHERE cs.AgentId = @AgentID 
+							WHERE cs.AgentId = @AgentID AND uGroup = @uGroup
 								AND cs.PlayerDiscount = playercomm.binaryStr_new
 								AND cs.AgentDiscount = acomm.binaryStr_new
 								AND cs.MasterDiscount = mcomm.binaryStr_new
@@ -432,8 +432,8 @@ BEGIN
 			END
 			ELSE
 			BEGIN
-				INSERT INTO dbo.CS_CustGroupDiscount_Member (AgentId, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
-				SELECT @AgentID, playercomm.binaryStr_new, acomm.binaryStr_new, mcomm.binaryStr_new, scomm.binaryStr_new
+				INSERT INTO dbo.CS_CustGroupDiscount_Member (AgentId, uGroup, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
+				SELECT @AgentID, @uGroup, playercomm.binaryStr_new, acomm.binaryStr_new, mcomm.binaryStr_new, scomm.binaryStr_new
 				FROM dbo.f_SetBinaryValues(@DefautByteCommMember, @PlayerDiscount_XML) playercomm	
 					CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @AgentDiscount_XML) acomm	
 					CROSS APPLY dbo.f_SetBinaryValues(@DefautByteCommMember, @MasterDiscount_XML) mcomm	
