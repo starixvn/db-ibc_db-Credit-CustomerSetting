@@ -80,7 +80,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML
-	DECLARE @_CommSetting XML, @_BetSetting XML, @xml XML, @xml_Old XML, @IsGroupComm BIT
+	DECLARE @_CommSetting XML, @_BetSetting XML, @xml XML, @xml_Old XML, @IsGroupComm BIT, @uGroup VARCHAR(3)
 	DECLARE @Discount_XML XML, @PlayerDiscount_XML XML
 	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @SettingLevel TINYINT
 	DECLARE @OldBetLimitTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, MaxBet MONEY, MaxPerMatch MONEY)
@@ -210,19 +210,21 @@ BEGIN
 	IF @RoleID = 1
 	BEGIN		
 		SELECT @IsGroupComm = IsGroupComm FROM dbo.CS_CustSettingMode WITH (NOLOCK) WHERE CustId = @CustID
-		
+		SELECT @uGroup = uGroup FROM Customer WITH (NOLOCK) WHERE custid = @CustID
+
 		IF @IsGroupComm = 1
 		BEGIN			
 			SELECT cm.* INTO #CommGroupMem_tmp
 			FROM #CommSetting_tmp cm
 				INNER JOIN dbo.CS_CommTemplate ct ON ct.ValueId = cm.ValueId
 				INNER JOIN dbo.f_CS_GetGroupDiscount_Member(@AgentId) cs ON cs.sporttype = cm.SportType AND cs.bettype = cm.BetType AND cs.isLive = cm.IsLive
-			WHERE cs.PlayerDiscount <> ct.Value
+			WHERE cs.PlayerDiscount <> ct.Value AND cs.uGroup = @uGroup
 
 			INSERT INTO @OldCommMemberTbl(SportType, BetType, IsLive, Comm)
 			SELECT cm.SportType, cm.BetType, cm.IsLive, cm.PlayerDiscount
 			FROM dbo.f_CS_GetGroupDiscount_Member(@AgentId) cm
 				INNER JOIN #CommSetting_tmp tmp ON tmp.SportType = cm.sporttype AND tmp.BetType = cm.bettype AND tmp.IsLive = cm.isLive
+			WHERE cm.uGroup = @uGroup
 
 			SET @PlayerDiscount_XML =(
 										SELECT (
@@ -244,7 +246,7 @@ BEGIN
 				FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 					CROSS JOIN dbo.CS_CustGroupDiscount_Member gm WITH (NOLOCK) 
 					CROSS APPLY dbo.f_SetBinaryValues(gm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
-				WHERE cm.CustId = @CustID AND gm.AgentId = @AgentId				
+				WHERE cm.CustId = @CustID AND gm.AgentId = @AgentId AND gm.uGroup = @uGroup				
 			END
 			ELSE
 			BEGIN
@@ -252,7 +254,7 @@ BEGIN
 				SELECT @CustID, playercomm.binaryStr_new, gm.AgentDiscount, gm.MasterDiscount, gm.SuperDiscount
 				FROM dbo.CS_CustGroupDiscount_Member gm WITH (NOLOCK) 
 					CROSS APPLY dbo.f_SetBinaryValues(gm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
-				WHERE gm.AgentId = @AgentId
+				WHERE gm.AgentId = @AgentId AND gm.uGroup = @uGroup
 			END
 
 			UPDATE cm
@@ -396,13 +398,8 @@ BEGIN
 										)
 								FOR XML PATH('root')
 									, TYPE
-								)			
-		UPDATE ca
-		SET ca.Discount = comm.binaryStr_new
-		FROM dbo.CS_CustDiscount_Agent ca WITH (ROWLOCK)
-			CROSS APPLY dbo.f_SetBinaryValues(ca.Discount, @Discount_XML) comm	
-		WHERE ca.CustId = @CustID
-
+								)		
+								
 		EXEC dbo.CS_DynamicCustSetting_00
 			@RoleId			= @RoleId,
 			@CustID			= @CustID,
@@ -410,6 +407,12 @@ BEGIN
 			@ProductID		= @ProductID,
 			@IsTest			= @IsTest,
 			@SettingType	= 2
+				
+		UPDATE ca
+		SET ca.Discount = comm.binaryStr_new
+		FROM dbo.CS_CustDiscount_Agent ca WITH (ROWLOCK)
+			CROSS APPLY dbo.f_SetBinaryValues(ca.Discount, @Discount_XML) comm	
+		WHERE ca.CustId = @CustID		
 	END
 
 	SELECT @endRun = GETDATE()
@@ -767,6 +770,146 @@ BEGIN
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @NewCommSMATbl cs 
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END	
+	END
+	ELSE
+	BEGIN
+		-- Log old data
+		IF @SettingLevel = 1 -- Product setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID														AS '@ProductID'
+									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAccName'
+									, @IP															AS '@IP'
+									, cs.isLive														AS '@IsL'
+									, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+							FROM @OldCommMemberTbl cs 
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype													AS '@Sport'
+												, cs.isLive														AS '@IsL'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+										FROM @OldCommMemberTbl cs 
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.bettype														AS '@BT'
+												, cs.isLive														AS '@IsL'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+										FROM @OldCommMemberTbl cs 
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)					
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml_Old = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype													AS '@Sport'
+												, cs.bettype													AS '@BT'
+												, cs.isLive														AS '@IsL'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+										FROM @OldCommMemberTbl cs 
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END		
+	
+		-- Log new data
+		IF @SettingLevel = 1 -- Product setting level
+		BEGIN
+			SET @xml = (
+							SELECT  @ProductID														AS '@ProductID'
+									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAccName'
+									, @IP															AS '@IP'
+									, cs.isLive														AS '@IsL'
+									, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
+							FROM #CommSetting_tmp cs 
+								INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+			SET @xml = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype													AS '@Sport'
+												, cs.isLive														AS '@IsL'
+												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
+										FROM #CommSetting_tmp cs 
+											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId 
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.bettype														AS '@BT'
+												, cs.isLive														AS '@IsL'
+												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
+										FROM #CommSetting_tmp cs 
+											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
+							)					
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml = (
+							SELECT  @ProductID						AS '@ProductID',
+									@IP                             AS '@IP',
+									(
+										SELECT  cs.sporttype													AS '@Sport'
+												, cs.bettype													AS '@BT'
+												, cs.isLive														AS '@IsL'
+												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
+										FROM #CommSetting_tmp cs 
+											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
 										FOR XML PATH('C'), 
 										TYPE
 									)

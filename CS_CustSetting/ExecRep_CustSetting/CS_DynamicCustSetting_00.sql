@@ -51,7 +51,7 @@ BEGIN
 											SELECT	bs.ByteOrder	AS '@pos',
 													comm.ValueId	AS '@val'
 											FROM #CommSMA_tmp comm
-												INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+												INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive
 												LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = comm.SportType AND gc.BetType = comm.BetType AND gc.IsLive = comm.IsLive AND gc.GroupId = comm.GroupId
 											WHERE bs.Type = 'DiscountMember'
 												AND (gc.GroupName = 'A' OR gc.GroupId IS NULL)
@@ -67,7 +67,7 @@ BEGIN
 											SELECT	bs.ByteOrder	AS '@pos',
 													comm.ValueId	AS '@val'
 											FROM #CommSMA_tmp comm
-												INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+												INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive
 												LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = comm.SportType AND gc.BetType = comm.BetType AND gc.IsLive = comm.IsLive AND gc.GroupId = comm.GroupId
 											WHERE bs.Type = 'DiscountMember'
 												AND (gc.GroupName = 'B' OR gc.GroupId IS NULL)
@@ -83,7 +83,7 @@ BEGIN
 											SELECT	bs.ByteOrder	AS '@pos',
 													comm.ValueId	AS '@val'
 											FROM #CommSMA_tmp comm
-												INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+												INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive
 												LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = comm.SportType AND gc.BetType = comm.BetType AND gc.IsLive = comm.IsLive AND gc.GroupId = comm.GroupId
 											WHERE bs.Type = 'DiscountMember'
 												AND (gc.GroupName = 'C' OR gc.GroupId IS NULL)
@@ -98,7 +98,7 @@ BEGIN
 											SELECT	bs.ByteOrder	AS '@pos',
 													comm.ValueId	AS '@val'
 											FROM #CommSMA_tmp comm
-												INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive AND bs.GroupId = comm.GroupId
+												INNER JOIN dbo.CS_ByteSeq bs WITH (NOLOCK) ON bs.SportType = comm.SportType AND bs.BetType = comm.BetType AND bs.IsLive = comm.IsLive
 												LEFT JOIN dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = comm.SportType AND gc.BetType = comm.BetType AND gc.IsLive = comm.IsLive AND gc.GroupId = comm.GroupId
 											WHERE bs.Type = 'DiscountMember'
 												AND (gc.GroupName = 'D' OR gc.GroupId IS NULL)
@@ -139,7 +139,7 @@ BEGIN
 					UPDATE cm
 					SET cm.AgentDiscount = acomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
-						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupADiscount_XML) acomm	
+						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupBDiscount_XML) acomm	
 					WHERE cm.AgentId = @CustID AND cm.uGroup = 'CNB'
 				END
 
@@ -155,7 +155,7 @@ BEGIN
 					UPDATE cm
 					SET cm.AgentDiscount = acomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
-						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupADiscount_XML) acomm	
+						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupCDiscount_XML) acomm	
 					WHERE cm.AgentId = @CustID AND cm.uGroup = 'CNC'
 				END
 
@@ -171,7 +171,7 @@ BEGIN
 					UPDATE cm
 					SET cm.AgentDiscount = acomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
-						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupADiscount_XML) acomm	
+						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupDDiscount_XML) acomm	
 					WHERE cm.AgentId = @CustID AND cm.uGroup = 'CND'
 				END
 			END

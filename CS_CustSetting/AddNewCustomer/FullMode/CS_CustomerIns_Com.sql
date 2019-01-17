@@ -212,17 +212,12 @@ BEGIN
 	SELECT * INTO #PT_tmp
 	FROM dbo.f_CS_PTParse(CAST(@PTSetting AS XML))
 
-	SELECT @LogXML = (SELECT	@ProductId						AS '@ProductID',
-								@IP                             AS '@IP',
-								(
-									SELECT  @ProductID														AS '@ProductID',
-											cs.isLive														AS '@IsL',
-											CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
-											CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
-									FROM #PT_tmp cs
-									FOR XML PATH('C'), 
-									TYPE
-								)
+	SELECT @LogXML = (SELECT	@ProductId														AS '@ProductID',
+								@IP																AS '@IP',
+								cs.isLive														AS '@IsL',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+						FROM #PT_tmp cs
 						FOR XML PATH('R'), 
 						TYPE
 					)

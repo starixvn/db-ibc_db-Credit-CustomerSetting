@@ -308,7 +308,7 @@ BEGIN
 					WHEN cs.MaxPerMatch < ISNULL(dl.MaxMaxPerMatchDownline,0) OR cs.MaxPerMatch > mb.MaxPerMatch THEN 203 END
 		FROM #NewBetSetting cs			
 			INNER JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.SportType = cs.SportType AND mb.BetType = cs.BetType AND mb.IsLive = cs.IsLive
-			LEFT JOIN #BetDownlines3 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
+			LEFT JOIN #BetDownlines2 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
 		WHERE mb.CustId = @MasterId AND (cs.MaxBet < dl.MaxMaxBetDownline
 											OR cs.MaxPerMatch < dl.MaxMaxPerMatchDownline
 											OR cs.MaxBet > mb.MaxBet

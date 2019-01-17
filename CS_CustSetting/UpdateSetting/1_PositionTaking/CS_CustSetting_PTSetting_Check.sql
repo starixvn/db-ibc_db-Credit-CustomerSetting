@@ -309,7 +309,7 @@ BEGIN
 		FROM dbo.custInfo ci WITH (NOLOCK) 	
 			CROSS APPLY dbo.f_CS_GetPT_Agent(ci.custid) cs
 			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive
-		WHERE ci.srecommend = @SuperId AND ci.roleid = 2
+		WHERE ci.srecommend = @SuperId AND ci.roleid = 2 AND ci.mrecommend = @CustID
 		GROUP BY cs.sporttype, cs.bettype, cs.Islive
 
 		IF @@ROWCOUNT <> 0 --If Master has at least 1 Agent: Range: [Max(0, Super Min PT - (Master PT + Agent PT)); Super Max PT - (Master PT + Agent PT)]

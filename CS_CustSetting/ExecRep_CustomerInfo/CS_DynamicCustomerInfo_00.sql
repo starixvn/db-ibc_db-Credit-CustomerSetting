@@ -398,7 +398,7 @@ BEGIN
 										FOR XML PATH('root')
 											, TYPE
 										)
-			IF EXISTS (SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE recommend = @AgentID AND roleid = 1 AND uGroup = @uGroup)
+			IF EXISTS (SELECT 1 FROM CS_CustGroupDiscount_Member WITH (NOLOCK) WHERE AgentId = @AgentID AND uGroup = @uGroup)
 			BEGIN
 				IF EXISTS (	SELECT 1
 							FROM CS_CustGroupDiscount_Member cs

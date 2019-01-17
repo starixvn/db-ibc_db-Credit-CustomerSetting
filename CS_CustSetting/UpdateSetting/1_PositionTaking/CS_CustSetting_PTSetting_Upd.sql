@@ -128,17 +128,12 @@ BEGIN
 		IF @SettingLevel = 1			-- Product setting level
 		BEGIN
 			SET @xml_Old = (
-							SELECT  @ProductID						AS '@ProductID',
-									@IP                             AS '@IP',
-									(
-										SELECT  @ProductID														AS '@ProductID',
-												cs.isLive														AS '@IsL',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
-										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-										FOR XML PATH('C'), 
-										TYPE
-									)
+							SELECT  @ProductID														AS '@ProductID',
+									@IP																AS '@IP',
+									cs.isLive														AS '@IsL',
+									CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+									CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 							FOR XML PATH('R'), 
 							TYPE
 							)
@@ -239,17 +234,12 @@ BEGIN
 		IF @SettingLevel = 1			-- Product setting level
 		BEGIN
 			SET @xml = (
-						SELECT  @ProductID						AS '@ProductID',
-								@IP                             AS '@IP',
-								(
-									SELECT  @ProductID														AS '@ProductID',
-											cs.isLive														AS '@IsL',
-											CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
-											CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
-									FROM #PT_tmp cs
-									FOR XML PATH('C'), 
-									TYPE
-								)
+						SELECT  @ProductID														AS '@ProductID',
+								@IP																AS '@IP',
+								cs.isLive														AS '@IsL',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
+						FROM #PT_tmp cs								
 						FOR XML PATH('R'), 
 						TYPE
 					)
@@ -316,17 +306,12 @@ BEGIN
 		IF @SettingLevel = 1			-- Product setting level
 		BEGIN
 			SET @xml_Old = (
-							SELECT  @ProductID						AS '@ProductID',
-									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
-									@IP                             AS '@IP',
-									(
-										SELECT  @ProductID														AS '@ProductID',
-												cs.isLive														AS '@IsL',
-												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
-										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-										FOR XML PATH('C'), 
-										TYPE
-									)
+							SELECT  @ProductID														AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID)									AS '@SubAcc',
+									@IP																AS '@IP',
+									cs.isLive														AS '@IsL',
+									CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 							FOR XML PATH('R'), 
 							TYPE
 							)
@@ -419,17 +404,12 @@ BEGIN
 		IF @SettingLevel = 1			-- Product setting level
 		BEGIN
 			SET @xml = (
-						SELECT  @ProductID						AS '@ProductID',
-								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
-								@IP                             AS '@IP',
-								(
-									SELECT  @ProductID														AS '@ProductID',
-											cs.isLive														AS '@IsL',
-											CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
-									FROM #PT_tmp cs
-									FOR XML PATH('C'), 
-									TYPE
-								)
+						SELECT  @ProductID														AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID)									AS '@SubAcc',
+								@IP																AS '@IP',
+								cs.isLive														AS '@IsL',
+								CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPT'
+						FROM #PT_tmp cs
 						FOR XML PATH('R'), 
 						TYPE
 					)
@@ -496,18 +476,13 @@ BEGIN
 		IF @SettingLevel = 1			-- Product setting level
 		BEGIN
 			SET @xml_Old = (
-							SELECT  @ProductID						AS '@ProductID',
-									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
-									@IP                             AS '@IP',
-									(
-										SELECT  @ProductID															AS '@ProductID',
-												cs.isLive															AS '@IsL',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
-												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
-										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-										FOR XML PATH('C'), 
-										TYPE
-									)
+							SELECT  @ProductID															AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID)										AS '@SubAcc',
+									@IP																	AS '@IP',
+									cs.isLive															AS '@IsL',
+									CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+									CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 							FOR XML PATH('R'), 
 							TYPE
 							)
@@ -619,18 +594,13 @@ BEGIN
 		IF @SettingLevel = 1			-- Product setting level
 		BEGIN
 			SET @xml = (
-						SELECT  @ProductID						AS '@ProductID',
-								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
-								@IP                             AS '@IP',
-								(
-									SELECT  @ProductID															AS '@ProductID',
-											cs.isLive															AS '@IsL',
-											CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
-											CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
-									FROM #PT_tmp cs
-									FOR XML PATH('C'), 
-									TYPE
-								)
+						SELECT  @ProductID															AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID)										AS '@SubAcc',
+								@IP																	AS '@IP',
+								cs.isLive															AS '@IsL',
+								CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPT',
+								CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPT'
+						FROM #PT_tmp cs
 						FOR XML PATH('R'), 
 						TYPE
 					)
