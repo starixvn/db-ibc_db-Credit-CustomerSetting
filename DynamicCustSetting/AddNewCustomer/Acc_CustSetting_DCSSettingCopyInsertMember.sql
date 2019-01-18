@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE CustDB
 GO
 
@@ -30,6 +30,7 @@ AS
 		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
+		- 20190114@Johnson: dont update bettype inactive for settingType = 7(Allbet) [Redmine: #106601]
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -525,7 +526,8 @@ BEGIN
 											,	nslt.StakeLevelList		AS '@StakeLevelList'
 										FROM	@NewStakeLevelTbl AS nslt
 										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
-										WHERE SettingType=7 AND  psd.ProductID=@ProductID7 
+										WHERE SettingType=7 AND  psd.ProductID=@ProductID7
+											AND settingStatus IN (0,1) --active bettype
 										FOR XML PATH('StakeLevel')
 									,	ROOT('ROOT')
 									,	TYPE
@@ -1019,8 +1021,3 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember] TO [bodbAdminNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember] TO [vnteam]

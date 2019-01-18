@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 					@CustID					INT
 				,	@AllowedFI				BIT = 1		OUTPUT --unused
@@ -49,6 +46,7 @@ Revisions:
 	- 20170808@Elodie: Lucky3 Product - [Redmine: #75521]
 	- 20171001@Elodie: BullFighting Product - [Redmine: #81664]
 	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
+	- 20190104@Johnson: config Allbet to show if any bettype is allowed [Redmine: #106601]
 */
 
 	SET NOCOUNT ON
@@ -202,13 +200,13 @@ Revisions:
 
 	-- For AllBet
 	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHideAllBet OUTPUT
-	SELECT	@AllowedAllBet =	CASE	WHEN @RoleID = 4 AND @IsHideAllBet = 0 THEN 1
+	SELECT	@AllowedAllBet =	MAX(CASE	WHEN @RoleID = 4 AND @IsHideAllBet = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, psp.bitmapOrder) = 1
 											AND @IsHideAllBet = 0 
 											THEN 1
 										ELSE 0
-								END
+								END)
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	CROSS JOIN	dbo.ProductStatusProfile AS psp WITH (NOLOCK)
 	INNER JOIN	dbo.ProductSettingDetail AS psd WITH (NOLOCK)

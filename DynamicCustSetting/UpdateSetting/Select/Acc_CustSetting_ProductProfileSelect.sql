@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 USE CustDB
 GO
 
@@ -15,7 +15,8 @@ AS
   
  Param's Explanation:  
 
-   
+ Revisions: 
+	- 20190116@Johnson: grant permission for bodbDownlineNetView [redmine:#106601]
  */  
 BEGIN   
 	SELECT * INTO #SportBettypeFilter
