@@ -127,7 +127,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 10041 AS '@MsgID'
-						, 'Max bet must be less than max bet per match.' AS '@Msg'
+						, 'Max bet must be less than max per match.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
