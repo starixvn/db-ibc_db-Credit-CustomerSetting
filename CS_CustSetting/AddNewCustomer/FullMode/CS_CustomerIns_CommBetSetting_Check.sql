@@ -258,7 +258,7 @@ BEGIN
 	BEGIN
 		--Check if new discount > default Max Discount
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT cs.SportType, cs.BetType, cs.IsLive, 405
+		SELECT DISTINCT cs.SportType, cs.BetType, cs.IsLive, 405
 		FROM #NewComm cs
 			INNER JOIN CS_ProductSettingDetail ps  WITH (NOLOCK) ON ps.SportType = cs.SportType AND ps.BetType = cs.BetType AND ps.IsLive = cs.IsLive AND ps.SettingType = 2
 			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cs.ValueId
@@ -292,7 +292,7 @@ BEGIN
 	ELSE IF @RoleId IN (2, 3)
 	BEGIN 
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT cm.SportType, cm.BetType, cm.IsLive, 406			
+		SELECT DISTINCT cm.SportType, cm.BetType, cm.IsLive, 406			
 		FROM #NewComm cm
 			INNER JOIN dbo.f_CS_GetDiscount_Agent(@CustId) uc ON cm.SportType = uc.SportType AND cm.BetType = uc.BetType AND cm.IsLive = uc.IsLive AND uc.groupID = cm.GroupId
 			INNER JOIN dbo.CS_CommTemplate ct WITH (NOLOCK) ON ct.ValueId = cm.ValueId
@@ -325,7 +325,7 @@ BEGIN
 	ELSE IF @RoleId = 1
 	BEGIN 
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT cm.SportType, cm.BetType, cm.IsLive, 407		
+		SELECT DISTINCT cm.SportType, cm.BetType, cm.IsLive, 407		
 		FROM #NewComm cm
 			INNER JOIN dbo.f_CS_GetDiscount_Agent(@CustId) uc ON cm.SportType = uc.SportType AND cm.BetType = uc.BetType AND cm.IsLive = uc.IsLive
 			INNER JOIN dbo.CS_GroupConfig gc ON gc.SportType = uc.sporttype AND gc.BetType = uc.bettype AND gc.IsLive = uc.isLive AND gc.GroupId = uc.groupID
