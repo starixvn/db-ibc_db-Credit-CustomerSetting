@@ -3,7 +3,8 @@
 ALTER PROC [dbo].[Acc_CustomerSelByUserName] 
 	@Custid int = null,
 	@UserName varchar(50) = null,
-	@System varchar(50) = 'ACCOUNTING'
+	@System varchar(50) = 'ACCOUNTING',
+	@IsExcludeCN88 bit = 0
 AS
 /*
 Created: 
@@ -21,6 +22,7 @@ Revisions:
 
 Param's Explanation:
 	@username: username want to get all info related
+	@IsExcludeCN88: Exclude customer belong to CN88 site
 */	
 BEGIN
 	SET NOCOUNT ON
@@ -46,7 +48,7 @@ BEGIN
 		Select	custid, isnull(fax,'') as fax, firstname, lastname, isnull(mobilephone,'') as mobilephone,
 				isnull(phone,'') as phone, srecommend, roleid, username
 			From Customer with (NOLOCK)
-			WHERE Custid = @Custid AND [site] <> 'CN88'
+			WHERE Custid = @Custid AND (@IsExcludeCN88 = 0 OR (@IsExcludeCN88 = 1 AND [site] <> 'CN88'))
 	END
 	ELSE
 	BEGIN	
