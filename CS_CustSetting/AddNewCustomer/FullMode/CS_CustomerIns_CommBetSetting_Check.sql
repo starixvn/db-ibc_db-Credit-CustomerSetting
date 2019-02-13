@@ -39,15 +39,15 @@ AS
 								...						
 							</ROOT>
 				@BetSetting: <ROOT>
-								<BetSetting SportType="1" BetType="1" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="1" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="9999" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="1" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="1" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
+								<BetSetting SportType="1" BetType="1" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="1" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="5" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="9999" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="1" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="1" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
 								...						
 							</ROOT>
 			= 1: Create member 
@@ -60,15 +60,15 @@ AS
 								...						
 							</ROOT>
 				@BetSetting: <ROOT>
-								<BetSetting SportType="1" BetType="1" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="1" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="9999" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="1" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="1" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
+								<BetSetting SportType="1" BetType="1" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="1" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="5" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="9999" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="1" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="1" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
 								...						
 							</ROOT>
 */
@@ -94,14 +94,14 @@ BEGIN
 		INNER JOIN #SportBettypeFilter2 ft ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
 	
 	--Check all bet setting >=0
-	--Check MaxBet<=MaxPerMatch	
+	--Check MaxBet<=MaxPerEvent	
 	INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 	SELECT cs.SportType, cs.BetType, cs.IsLive, 
-		CASE	WHEN cs.MaxBet < 0 OR cs.MaxPerMatch < 0 THEN 400
-				WHEN cs.MaxBet > cs.MaxPerMatch THEN 401 END
+		CASE	WHEN cs.MaxBet < 0 OR cs.MaxPerEvent < 0 THEN 400
+				WHEN cs.MaxBet > cs.MaxPerEvent THEN 401 END
 	FROM #NewBetSetting cs
-	WHERE cs.MaxBet < 0 OR cs.MaxPerMatch < 0
-		OR cs.MaxBet > cs.MaxPerMatch
+	WHERE cs.MaxBet < 0 OR cs.MaxPerEvent < 0
+		OR cs.MaxBet > cs.MaxPerEvent
 
 	IF @@ROWCOUNT <> 0
 	BEGIN
@@ -156,15 +156,15 @@ BEGIN
 	IF @RoleId <> 4
 	BEGIN
 		--Check MaxBet < upline's maxbet
-		--Check MaxPerMatch < upline's maxPerMatch
+		--Check MaxPerEvent < upline's MaxPerEvent
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT cs.SportType, cs.BetType, cs.IsLive, 
 			CASE	WHEN cs.MaxBet > ubs.MaxBet THEN 402
-					WHEN cs.MaxPerMatch > ubs.MaxPerMatch THEN 403 END
+					WHEN cs.MaxPerEvent > ubs.MaxPerEvent THEN 403 END
 		FROM #NewBetSetting cs
 			INNER JOIN dbo.CS_CustBetSetting_Agent ubs WITH (NOLOCK) ON ubs.SportType = cs.SportType AND ubs.BetType = cs.BetType AND ubs.IsLive = cs.IsLive
 		WHERE ubs.CustId = @CustId
-			AND (cs.MaxBet > ubs.MaxBet OR cs.MaxPerMatch > ubs.MaxPerMatch)
+			AND (cs.MaxBet > ubs.MaxBet OR cs.MaxPerEvent > ubs.MaxPerEvent)
 
 		IF @@ROWCOUNT <> 0
 		BEGIN

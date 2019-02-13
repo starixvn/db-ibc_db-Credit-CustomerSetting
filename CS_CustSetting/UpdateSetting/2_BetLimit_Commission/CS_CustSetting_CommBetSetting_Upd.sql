@@ -43,15 +43,15 @@ AS
 								...						
 							</ROOT>
 				@BetSetting: <ROOT>
-								<BetSetting SportType="1" BetType="1" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="1" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="9999" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="1" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="1" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
+								<BetSetting SportType="1" BetType="1" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="1" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="5" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="9999" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="1" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="1" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
 								...						
 							</ROOT>
 			= 1: Update member 
@@ -64,15 +64,15 @@ AS
 								...						
 							</ROOT>
 				@BetSetting: <ROOT>
-								<BetSetting SportType="1" BetType="1" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="1" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="1" BetType="9999" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="1" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="1" IsLive="1" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
-								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerMatch = "80000"/>
+								<BetSetting SportType="1" BetType="1" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="1" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="5" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="1" BetType="9999" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="1" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="1" IsLive="1" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="5" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
+								<BetSetting SportType="2" BetType="9999" IsLive="0" MaxBet = "8000" MaxPerEvent = "80000"/>
 								...						
 							</ROOT>		
 */
@@ -83,7 +83,7 @@ BEGIN
 	DECLARE @_CommSetting XML, @_BetSetting XML, @xml XML, @xml_Old XML, @IsGroupComm BIT, @uGroup VARCHAR(3)
 	DECLARE @Discount_XML XML, @PlayerDiscount_XML XML
 	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @SettingLevel TINYINT
-	DECLARE @OldBetLimitTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, MaxBet MONEY, MaxPerMatch MONEY)
+	DECLARE @OldBetLimitTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, MaxBet MONEY, MaxPerEvent MONEY)
 	DECLARE @OldCommSMATbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, GroupA DECIMAL(9,8), GroupB DECIMAL(9,8), GroupC DECIMAL(9,8), GroupD DECIMAL(9,8), Comm DECIMAL(9,8))
 	DECLARE @NewCommSMATbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, GroupA DECIMAL(9,8), GroupB DECIMAL(9,8), GroupC DECIMAL(9,8), GroupD DECIMAL(9,8), Comm DECIMAL(9,8))
 	DECLARE @OldCommMemberTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, Comm DECIMAL(9,8))
@@ -164,7 +164,7 @@ BEGIN
 			, bl.BetType
 			, bl.IsLive
 			, bl.MaxBet
-			, bl.MaxPerMatch
+			, bl.MaxPerEvent
 		FROM dbo.CS_CustBetSetting_Member bl WITH (NOLOCK)
 			INNER JOIN #BetSetting_tmp tmp ON tmp.SportType	= bl.sporttype AND tmp.BetType = bl.bettype AND tmp.IsLive = bl.IsLive
 		WHERE bl.custid = @CustID
@@ -172,11 +172,11 @@ BEGIN
 		--update bet settings
 		UPDATE main
 		SET main.maxbet			= tmp.MaxBet, 
-			main.maxpermatch	= tmp.MaxperMatch
+			main.MaxPerEvent	= tmp.MaxPerEvent
 		FROM dbo.CS_CustBetSetting_Member main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN #BetSetting_tmp tmp ON tmp.SportType	= main.sporttype AND tmp.BetType = main.bettype AND tmp.IsLive = main.IsLive
 		WHERE main.custid = @CustID
-			AND (main.maxbet <> tmp.MaxBet OR main.maxpermatch <> tmp.MaxperMatch)
+			AND (main.maxbet <> tmp.MaxBet OR main.MaxPerEvent <> tmp.MaxPerEvent)
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN
@@ -186,7 +186,7 @@ BEGIN
 			, bl.BetType
 			, bl.IsLive
 			, bl.MaxBet
-			, bl.MaxPerMatch
+			, bl.MaxPerEvent
 		FROM dbo.CS_CustBetSetting_Agent bl WITH (NOLOCK)
 			INNER JOIN #BetSetting_tmp tmp ON tmp.SportType	= bl.sporttype AND tmp.BetType = bl.bettype AND tmp.IsLive = bl.IsLive
 		WHERE bl.custid = @CustID
@@ -194,11 +194,11 @@ BEGIN
 		--update new settings
 		UPDATE main
 		SET main.maxbet			= tmp.MaxBet, 
-			main.maxpermatch	= tmp.MaxperMatch
+			main.MaxPerEvent	= tmp.MaxPerEvent
 		FROM dbo.CS_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN #BetSetting_tmp tmp ON tmp.SportType	= main.sporttype AND tmp.BetType = main.bettype AND tmp.IsLive = main.IsLive
 		WHERE main.custid = @CustID
-			AND (main.maxbet <> tmp.MaxBet OR main.maxpermatch <> tmp.MaxperMatch)		
+			AND (main.maxbet <> tmp.MaxBet OR main.MaxPerEvent <> tmp.MaxPerEvent)		
 	END
 	---------------------End BetSetting--------------------------------------
 
@@ -442,7 +442,7 @@ BEGIN
 									SELECT  @ProductID														AS '@ProductID'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
 									FROM @OldBetLimitTbl cs 
 									FOR XML PATH('C'), 
 									TYPE
@@ -460,7 +460,7 @@ BEGIN
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
 									FROM @OldBetLimitTbl cs
 									FOR XML PATH('C'), 
 									TYPE
@@ -478,7 +478,7 @@ BEGIN
 									SELECT  cs.bettype														AS '@BT'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
 									FROM @OldBetLimitTbl cs 
 									FOR XML PATH('C'), 
 									TYPE
@@ -497,7 +497,7 @@ BEGIN
 											, cs.bettype													AS '@BT'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
 									FROM @OldBetLimitTbl cs
 									FOR XML PATH('C'), 
 									TYPE
@@ -518,7 +518,7 @@ BEGIN
 									SELECT  @ProductID														AS '@ProductID'
 											, bs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
 									FROM #BetSetting_tmp bs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -536,7 +536,7 @@ BEGIN
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -554,7 +554,7 @@ BEGIN
 									SELECT  cs.bettype														AS '@BT'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -573,7 +573,7 @@ BEGIN
 											, cs.bettype													AS '@BT'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE

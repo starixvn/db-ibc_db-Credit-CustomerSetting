@@ -240,7 +240,7 @@ BEGIN
 									, BetType AS '@BT'
 									, IsLive AS '@IsL'
 									, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30)) AS '@Max'
-									, CAST(CONVERT(DOUBLE PRECISION,MaxPerMatch) AS VARCHAR(30)) AS '@MPM'
+									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPM'
 								FROM #BetSetting_tmp
 								FOR XML PATH('C'), TYPE)						
 						FOR XML PATH('R'), TYPE)		

@@ -41,7 +41,7 @@ BEGIN
 	IF @RoleId = 4
 	BEGIN
 		SELECT mb.sporttype, mb.bettype, mb.Islive, mc.GroupId,
-			MAX(mb.MaxBet) AS MaxMaxBetDownline, MAX(mb.MaxPerMatch) AS MaxMaxPerMatchDownline, MAX(mc.Discount) AS MaxCommDownline
+			MAX(mb.MaxBet) AS MaxMaxBetDownline, MAX(mb.MaxPerEvent) AS MaxMaxPerEventDownline, MAX(mc.Discount) AS MaxCommDownline
 		INTO #Downlines4
 		FROM dbo.custInfo ci WITH (NOLOCK) 	
 			CROSS APPLY dbo.f_CS_GetDiscount_Agent(ci.custid) mc
@@ -53,8 +53,8 @@ BEGIN
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
 			ISNULL(mb.MaxCommDownline,0) AS MinComm, CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS MaxComm,
 			sc.Discount AS Comm,
-			ISNULL(mb.MaxMaxBetDownline,0) AS MinMaxBet, ISNULL(mb.MaxMaxPerMatchDownline,0) AS MinMaxPerMatch,
-			sb.MaxBet AS MaxBet, sb.MaxPerMatch AS MaxPerMatch
+			ISNULL(mb.MaxMaxBetDownline,0) AS MinMaxBet, ISNULL(mb.MaxMaxPerEventDownline,0) AS MinMaxPerEvent,
+			sb.MaxBet AS MaxBet, sb.MaxPerEvent AS MaxPerEvent
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter2 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
 			INNER JOIN dbo.f_CS_GetDiscount_Agent (@CustID) sc ON sc.SportType = ft.SportType AND sc.BetType = ft.BetType AND sc.IsLive = ft.IsLive			
@@ -66,7 +66,7 @@ BEGIN
 	ELSE IF @RoleId = 3
 	BEGIN
 		SELECT ab.sporttype, ab.bettype, ab.Islive, ac.groupID, 
-			MAX(ab.MaxBet) AS MaxMaxBetDownline, MAX(ab.MaxPerMatch) AS MaxMaxPerMatchDownline, MAX(ac.Discount) AS MaxCommDownline
+			MAX(ab.MaxBet) AS MaxMaxBetDownline, MAX(ab.MaxPerEvent) AS MaxMaxPerEventDownline, MAX(ac.Discount) AS MaxCommDownline
 		INTO #Downlines3
 		FROM dbo.custInfo ci WITH (NOLOCK) 	
 			CROSS APPLY dbo.f_CS_GetDiscount_Agent(ci.custid) ac
@@ -78,8 +78,8 @@ BEGIN
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
 			ISNULL(ab.MaxCommDownline,0) AS MinComm, sc.Discount AS MaxComm, mc.Discount AS Comm,
 			ISNULL(ab.MaxMaxBetDownline,0) AS MinMaxBet, sb.MaxBet AS MaxMaxBet,
-			ISNULL(ab.MaxMaxPerMatchDownline,0) AS MinMaxPerMatch, sb.MaxPerMatch AS MaxMaxPerMatch,
-			mb.MaxBet AS MaxBet, mb.MaxPerMatch AS MaxPerMatch
+			ISNULL(ab.MaxMaxPerEventDownline,0) AS MinMaxPerEvent, sb.MaxPerEvent AS MaxMaxPerEvent,
+			mb.MaxBet AS MaxBet, mb.MaxPerEvent AS MaxPerEvent
 		FROM dbo.f_CS_GetDiscount_Agent (@SuperId) sc
 			INNER JOIN dbo.f_CS_GetDiscount_Agent (@CustID) mc ON mc.sporttype = sc.sporttype AND mc.bettype = sc.bettype AND mc.isLive = sc.isLive AND mc.groupID = sc.groupID
 			INNER JOIN #SportBettypeFilter2 ft ON sc.SportType = ft.SportType AND sc.BetType = ft.BetType AND sc.IsLive = ft.IsLive
@@ -92,7 +92,7 @@ BEGIN
 	ELSE IF @RoleId = 2
 	BEGIN
 		SELECT memb.sporttype, memb.bettype, memb.Islive, gc.GroupId,
-			MAX(memb.MaxBet) AS MaxMaxBetDownline, MAX(memb.MaxPerMatch) AS MaxMaxPerMatchDownline, MAX(memc.PlayerDiscount) AS MaxCommDownline
+			MAX(memb.MaxBet) AS MaxMaxBetDownline, MAX(memb.MaxPerEvent) AS MaxMaxPerEventDownline, MAX(memc.PlayerDiscount) AS MaxCommDownline
 		INTO #Downlines2
 		FROM dbo.customer c WITH (NOLOCK) 	
 			CROSS APPLY dbo.f_CS_GetDiscount_Member(c.custid) memc 
@@ -113,8 +113,8 @@ BEGIN
 			CASE WHEN ISNULL(memb.MaxCommDownline,0) > ISNULL(dlg.MaxCommDownline,0) THEN ISNULL(memb.MaxCommDownline,0) ELSE ISNULL(dlg.MaxCommDownline,0) END AS MinComm, 
 			mc.Discount AS MaxComm, ac.Discount AS Comm,
 			ISNULL(memb.MaxMaxBetDownline,0) AS MinMaxBet, mb.MaxBet AS MaxMaxBet, 
-			ISNULL(memb.MaxMaxPerMatchDownline,0) AS MinMaxPerMatch, mb.MaxPerMatch AS MaxMaxPerMatch,
-			ab.MaxBet AS MaxBet, ab.MaxPerMatch AS MaxPerMatch
+			ISNULL(memb.MaxMaxPerEventDownline,0) AS MinMaxPerEvent, mb.MaxPerEvent AS MaxMaxPerEvent,
+			ab.MaxBet AS MaxBet, ab.MaxPerEvent AS MaxPerEvent
 		FROM dbo.f_CS_GetDiscount_Agent (@MasterId) mc
 			INNER JOIN dbo.f_CS_GetDiscount_Agent (@CustID) ac ON ac.sporttype = mc.sporttype AND ac.bettype = mc.bettype AND ac.isLive = mc.isLive AND ac.groupID = mc.groupID
 			INNER JOIN #SportBettypeFilter2 ft ON mc.SportType = ft.SportType AND mc.BetType = ft.BetType AND mc.IsLive = ft.IsLive
@@ -135,8 +135,8 @@ BEGIN
 			SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
 				0 AS MinComm, ac.Discount AS MaxComm, memc.PlayerDiscount AS Comm,
 				0 AS MinMaxBet, ab.MaxBet AS MaxMaxBet,
-				0 AS MinMaxPerMatch, ab.MaxPerMatch AS MaxMaxPerMatch,
-				memb.MaxBet AS MaxBet, memb.MaxPerMatch AS MaxPerMatch
+				0 AS MinMaxPerEvent, ab.MaxPerEvent AS MaxMaxPerEvent,
+				memb.MaxBet AS MaxBet, memb.MaxPerEvent AS MaxPerEvent
 			FROM dbo.f_CS_GetDiscount_Agent (@AgentId) ac
 				INNER JOIN dbo.f_CS_GetGroupDiscount_Member(@AgentId) memc ON memc.sporttype = ac.sporttype AND memc.bettype = ac.bettype AND memc.isLive = ac.isLive
 				INNER JOIN #SportBettypeFilter2 ft ON ac.SportType = ft.SportType AND ac.BetType = ft.BetType AND ac.IsLive = ft.IsLive
@@ -150,8 +150,8 @@ BEGIN
 			SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
 				0 AS MinComm, ac.Discount AS MaxComm, memc.PlayerDiscount AS Comm,
 				0 AS MinMaxBet, ab.MaxBet AS MaxMaxBet,
-				0 AS MinMaxPerMatch, ab.MaxPerMatch AS MaxMaxPerMatch,
-				memb.MaxBet AS MaxBet, memb.MaxPerMatch AS MaxPerMatch
+				0 AS MinMaxPerEvent, ab.MaxPerEvent AS MaxMaxPerEvent,
+				memb.MaxBet AS MaxBet, memb.MaxPerEvent AS MaxPerEvent
 			FROM dbo.f_CS_GetDiscount_Agent (@AgentId) ac
 				INNER JOIN dbo.f_CS_GetDiscount_Member(@CustID) memc ON memc.sporttype = ac.sporttype AND memc.bettype = ac.bettype AND memc.isLive = ac.isLive
 				INNER JOIN #SportBettypeFilter2 ft ON ac.SportType = ft.SportType AND ac.BetType = ft.BetType AND ac.IsLive = ft.IsLive
