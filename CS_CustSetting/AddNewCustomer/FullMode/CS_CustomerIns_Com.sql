@@ -1,33 +1,34 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
-	@custid				INT OUTPUT,
-	@username			VARCHAR(30),
-	@userpwd			VARCHAR(40),
-	@firstname			NVARCHAR(50),
-	@lastname			NVARCHAR(50),
-	@phone				NVARCHAR(50),
-	@mobilephone		NVARCHAR(50),
-	@fax				NVARCHAR(50),
-	@currency			INT, 
-	@credit				MONEY,
+	@custid						INT OUTPUT,
+	@username					VARCHAR(30),
+	@MainShareholderUsername	VARCHAR(30),
+	@userpwd					VARCHAR(40),
+	@firstname					NVARCHAR(50),
+	@lastname					NVARCHAR(50),
+	@phone						NVARCHAR(50),
+	@mobilephone				NVARCHAR(50),
+	@fax						NVARCHAR(50),
+	@currency					INT, 
+	@credit						MONEY,
 
-	@PTSetting			VARCHAR(MAX),
-	@BetSetting			VARCHAR(MAX),
-	@CommSetting		VARCHAR(MAX),
-	@IsTest				BIT = 0,
-	@ProductId			TINYINT = 1,
+	@PTSetting					VARCHAR(MAX),
+	@BetSetting					VARCHAR(MAX),
+	@CommSetting				VARCHAR(MAX),
+	@IsTest						BIT = 0,
+	@ProductId					TINYINT = 1,
 
-	@creator			INT,
-	@site				NVARCHAR(50),	
-	@isinternal			BIT = 0,
+	@creator					INT,
+	@site						NVARCHAR(50),	
+	@isinternal					BIT = 0,
 
-	@SystemID			TINYINT = 1,	
-	@IP					VARCHAR(15)='',
-	@Language			VARCHAR(2)= 'E',	
-	@ErrCode			INT = 0 OUTPUT,
-	@ErrSettingType 	TINYINT = 0 OUTPUT,
-	@MsgType			INT	= 0 OUTPUT,
-	@ErrMsg				NVARCHAR(MAX) = '' OUTPUT
+	@SystemID					TINYINT = 1,	
+	@IP							VARCHAR(15)='',
+	@Language					VARCHAR(2)= 'E',	
+	@ErrCode					INT = 0 OUTPUT,
+	@ErrSettingType 			TINYINT = 0 OUTPUT,
+	@MsgType					INT	= 0 OUTPUT,
+	@ErrMsg						NVARCHAR(MAX) = '' OUTPUT
 AS
 /*
 	Created: 20181212@Elodie
@@ -65,6 +66,17 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
 						END
 		SELECT @ErrCode = 101
+		SELECT @ErrSettingType = 1, @MsgType = 200	
+		RETURN
+	END
+
+	IF NOT EXISTS(SELECT 1 FROM Customer WITH (NOLOCK) WHERE username= @MainShareholderUsername AND roleid = 0)
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							WHEN 'E' THEN 'Main Shareholder does not exist.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40039,@Language)
+						END
+		SELECT @ErrCode = 102
 		SELECT @ErrSettingType = 1, @MsgType = 200	
 		RETURN
 	END

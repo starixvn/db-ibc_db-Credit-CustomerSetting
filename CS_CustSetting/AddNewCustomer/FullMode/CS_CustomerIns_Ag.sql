@@ -316,40 +316,6 @@ BEGIN
 		RETURN
 	END
 
-     ---- Create balance for new customer   
-	EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT
-    IF @ErrCode <> 0
-    BEGIN
-	    --Error occurs
-	    SELECT @ErrMsg= CASE @Language 
-							WHEN 'E' THEN 'Create member fail. Please try again'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-						END	
-			    , @success = 0, @ErrCode=216
-    	SELECT @ErrSettingType = 1, @MsgType = 200	
-	    -- ROLLBACK MANUALLY
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    RETURN
-    END
-	
-	EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT 
-    IF @ErrCode <> 0
-    BEGIN
-	    --Error occurs
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create member fail. Please try again'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-						    END	
-			    , @success = 0, @ErrCode=216
-    	SELECT @ErrSettingType = 1, @MsgType = 200	
-	    -- ROLLBACK MANUALLY
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
-	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    RETURN
-    END
-	
 	EXEC dbo.CS_DynamicCustomerInfo_00
 		@CustID			= @custid,			
 		@BetSetting		= @BetSetting,
@@ -364,8 +330,6 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
 		SELECT @ErrSettingType = 1, @MsgType = 200	
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END	
