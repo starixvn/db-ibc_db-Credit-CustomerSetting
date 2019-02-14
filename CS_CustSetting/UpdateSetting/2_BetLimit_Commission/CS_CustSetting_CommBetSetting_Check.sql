@@ -104,7 +104,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 10040 AS '@MsgID'
-						, 'Wrong Max bet/ Max per match.' AS '@Msg'
+						, 'Wrong Max per Bet/ Max per Event.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
@@ -127,7 +127,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 10041 AS '@MsgID'
-						, 'Max bet must be less than max per match.' AS '@Msg'
+						, 'Max per Bet must be less than Max per Event.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
@@ -174,7 +174,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 10042 AS '@MsgID'
-							, 'Max bet is out of range.' AS '@Msg'
+							, 'Max per Bet is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -197,7 +197,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 10043 AS '@MsgID'
-							, 'Max bet per match is out of range.' AS '@Msg'
+							, 'Max per Event is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -247,7 +247,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 10042 AS '@MsgID'
-							, 'Max bet is out of range.' AS '@Msg'
+							, 'Max per Bet is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -270,7 +270,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 10043 AS '@MsgID'
-							, 'Max bet per match is out of range.' AS '@Msg'
+							, 'Max per Event is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -320,7 +320,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 10042 AS '@MsgID'
-							, 'Max bet is out of range.' AS '@Msg'
+							, 'Max per Bet is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -343,7 +343,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 10043 AS '@MsgID'
-							, 'Max bet per match is out of range.' AS '@Msg'
+							, 'Max per Event is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -380,7 +380,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 10042 AS '@MsgID'
-							, 'Max bet is out of range.' AS '@Msg'
+							, 'Max per Bet is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -403,7 +403,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 10043 AS '@MsgID'
-							, 'Max bet per match is out of range.' AS '@Msg'
+							, 'Max per Event is out of range.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'

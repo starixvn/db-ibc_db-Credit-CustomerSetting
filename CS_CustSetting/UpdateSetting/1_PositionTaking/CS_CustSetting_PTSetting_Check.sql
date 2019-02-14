@@ -92,8 +92,8 @@ BEGIN
 			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 400)
 			BEGIN
 				SET @ErrType = (
-						SELECT 20001 AS '@MsgID'
-							, 'Wrong position taking.' AS '@Msg'
+						SELECT 20041 AS '@MsgID'
+							, 'Wrong possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -116,7 +116,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 30009 AS '@MsgID'
-							, 'Super Min PT must be less than or equal to Super Max PT.' AS '@Msg'
+							, 'SMA Min Possess must be less than or equal to SMA Max Possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -156,7 +156,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 30008 AS '@MsgID'
-						, 'New Super Max PT is less than the Total PT Taken by some lines.' AS '@Msg'
+						, 'New SMA Max Possess is less than the Total Possess Taken by some lines.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
@@ -199,7 +199,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 30007 AS '@MsgID'
-							, 'New Super Min PT is greater than the Total PT Taken by some lines.' AS '@Msg'
+							, 'New SMA Min Possess is greater than the Total Possess Taken by some lines.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -222,7 +222,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 30008 AS '@MsgID'
-							, 'New Super Max PT is less than the Total PT Taken by some lines.' AS '@Msg'
+							, 'New SMA Max Possess is less than the Total Possess Taken by some lines.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -259,8 +259,8 @@ BEGIN
 			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 300)
 			BEGIN
 				SET @ErrType = (
-						SELECT 20001 AS '@MsgID'
-							, 'Wrong position taking.' AS '@Msg'
+						SELECT 20041 AS '@MsgID'
+							, 'Wrong possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -283,7 +283,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 20036 AS '@MsgID'
-							, 'New Super PT is too high. It makes some lines'' Total PT Taken become greater than Super Max PT' AS '@Msg'
+							, 'New SMA Possess is too high. It makes some lines'' Total Possess Taken become greater than SMA Max Possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -331,7 +331,7 @@ BEGIN
 				BEGIN
 					SET @ErrType = (
 							SELECT 20035 AS '@MsgID'
-								, 'New Super PT is too low. It makes some lines'' Total PT Taken become less than Super Min PT' AS '@Msg'
+								, 'New SMA Possess is too low. It makes some lines'' Total Possess Taken become less than SMA Min Possess.' AS '@Msg'
 								, (
 									SELECT tmp.SportType AS '@SportType'
 										, tmp.BetType AS '@BetType'
@@ -354,7 +354,7 @@ BEGIN
 				BEGIN
 					SET @ErrType = (
 							SELECT 20036 AS '@MsgID'
-								, 'New Super PT is too high. It makes some lines'' Total PT Taken become greater than Super Max PT' AS '@Msg'
+								, 'New SMA Possess is too high. It makes some lines'' Total Possess Taken become greater than SMA Max Possess' AS '@Msg'
 								, (
 									SELECT tmp.SportType AS '@SportType'
 										, tmp.BetType AS '@BetType'
@@ -393,8 +393,8 @@ BEGIN
 			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 200)
 			BEGIN
 				SET @ErrType = (
-						SELECT 20001 AS '@MsgID'
-							, 'Wrong position taking.' AS '@Msg'
+						SELECT 20041 AS '@MsgID'
+							, 'Wrong possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -417,7 +417,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 20039 AS '@MsgID'
-							, 'Master''s PT is too high. It makes the line''s Total PT greater than Super Max PT' AS '@Msg'
+							, 'Master Agent''s Possess is too high. It makes the line''s Total Possess greater than SMA Max Possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -440,7 +440,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 20040 AS '@MsgID'
-							, 'Agent''s PT is too high. It makes the line''s Total PT greater than Super Max PT' AS '@Msg'
+							, 'Agent''s Possess is too high. It makes the line''s Total Possess greater than SMA Max Possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -478,7 +478,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 20037 AS '@MsgID'
-							, 'Master & Agent''s Total PT is too low. It makes the line''s Total PT less than Super Min PT' AS '@Msg'
+							, 'Master Agent & Agent''s Total Possess is too low. It makes the line''s Total Possess less than SMA Min Possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -501,7 +501,7 @@ BEGIN
 			BEGIN
 				SET @ErrType = (
 						SELECT 20038 AS '@MsgID'
-							, 'Master & Agent''s Total PT is too high. It makes the line''s Total PT greater than Super Max PT' AS '@Msg'
+							, 'Master Agent & Agent''s Total Possess is too high. It makes the line''s Total Possess greater than SMA Max Possess.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'

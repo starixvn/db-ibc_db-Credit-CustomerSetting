@@ -179,9 +179,14 @@ BEGIN
 								FOR XML PATH('root')
 									, TYPE
 								)				
-			INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT)				       
+			INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT, SuperPT2, MasterPT2, AgentPT2, MinPT2, MaxPT2)				       
 			SELECT 
 				@Custid
+				,NULL
+				,NULL
+				,NULL
+				,minpt.binaryStr_new
+				,maxpt.binaryStr_new
 				,NULL
 				,NULL
 				,NULL
@@ -206,9 +211,14 @@ BEGIN
 									, TYPE
 								)
 
-			INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT)				       
+			INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT, SuperPT2, MasterPT2, AgentPT2, MinPT2, MaxPT2)				       
 			SELECT 
 				@Custid
+				,superpt.binaryStr_new
+				,NULL
+				,NULL
+				,NULL
+				,NULL
 				,superpt.binaryStr_new
 				,NULL
 				,NULL
@@ -247,9 +257,14 @@ BEGIN
 									, TYPE
 								)							
 
-			INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT)				       
+			INSERT INTO dbo.CS_CustPTSetting_Agent (CustId, SuperPT, MasterPT, AgentPT, MinPT, MaxPT, SuperPT2, MasterPT2, AgentPT2, MinPT2, MaxPT2)				       
 			SELECT 
 				@Custid
+				,NULL
+				,masterpt.binaryStr_new
+				,agentpt.binaryStr_new
+				,NULL
+				,NULL
 				,NULL
 				,masterpt.binaryStr_new
 				,agentpt.binaryStr_new
@@ -258,9 +273,12 @@ BEGIN
 			FROM dbo.f_SetBinaryValues(@DefautBytePT, @MasterPT_XML) masterpt
 				CROSS APPLY dbo.f_SetBinaryValues(@DefautBytePT, @AgentPT_XML) agentpt
 
-			INSERT INTO dbo.CS_CustPTGroupSetting_Member (AgentId, SuperPT, MasterPT, AgentPT)							       
+			INSERT INTO dbo.CS_CustPTGroupSetting_Member (AgentId, SuperPT, MasterPT, AgentPT, SuperPT2, MasterPT2, AgentPT2)							       
 			SELECT 
 				@CustID
+				,cs.SuperPT
+				,masterpt.binaryStr_new
+				,agentpt.binaryStr_new
 				,cs.SuperPT
 				,masterpt.binaryStr_new
 				,agentpt.binaryStr_new
