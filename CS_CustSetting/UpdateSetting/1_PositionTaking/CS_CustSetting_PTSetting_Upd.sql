@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE CS_CustSetting_PTSetting_Upd
 	@RoleId			TINYINT,
@@ -45,11 +45,22 @@ BEGIN
 	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML, @_PTSetting XML, @xml XML, @xml_Old XML  
 	DECLARE @MinPT_XML XML, @MaxPT_XML XML, @SuperPT_XML XML, @MasterPT_XML XML, @AgentPT_XML XML
 	DECLARE @SettingLevel	TINYINT
-	DECLARE @SuperId INT, @MasterId INT, @AgentId INT
+	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @IsEditablePT BIT
+	
 
-	IF @PTSetting = '' RETURN 
+	IF @PTSetting = '' OR @PTSetting IS NULL RETURN 
 
 	SELECT @ErrCode = 0, @_PTSetting = @PTSetting	
+	SELECT @IsEditablePT = IsEditablePT FROM f_CS_GetEditablePTDate(@ProductID)
+
+	IF @IsEditablePT = 0
+	BEGIN
+		SELECT	@ErrMsg = CASE @Language WHEN 'E' THEN 'You cannot update new possess value at this moment.'
+												ELSE [dbo].[f_Get_MsgNamebyMsgID](20042,@Language) END,
+				@ErrCode = 999, @MsgType = 200	
+		RETURN
+	END
+
 	SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID AND roleid = @RoleId	
 
 	---------------------------
