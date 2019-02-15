@@ -49,7 +49,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @startRun DATETIME , @endRun DATETIME , @duration INT
-	DECLARE @autosuspend BIT, @autosuspend2 BIT
+	DECLARE @autosuspend BIT, @autosuspend2 BIT, @MainShareholderId INT
 	
 	SET @startRun = GETDATE()
 	SELECT @ErrCode = 0
@@ -70,7 +70,8 @@ BEGIN
 		RETURN
 	END
 
-	IF NOT EXISTS(SELECT 1 FROM Customer WITH (NOLOCK) WHERE username= @MainShareholderUsername AND roleid = 0)
+	SELECT @MainShareholderId = custid FROM Customer WITH (NOLOCK) WHERE username= @MainShareholderUsername AND roleid = 0
+	IF @MainShareholderId IS NULL
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'Main Shareholder does not exist.'
@@ -106,6 +107,7 @@ BEGIN
 		@pwdexpiry = NULL,
 		@currency = @currency,
 		@site = @site,
+		@MainShareholderId = @MainShareholderId,
 		@srecommend = 0,
 		@mrecommend = 0,
 		@recommend = 0,
