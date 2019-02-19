@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 GO
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSelect]   
