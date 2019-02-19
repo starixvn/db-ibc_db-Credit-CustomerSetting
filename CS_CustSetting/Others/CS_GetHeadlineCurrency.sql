@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE CS_HeadlineUsernameCheck
+ALTER PROCEDURE CS_GetHeadlineCurrency
 	@Username NVARCHAR(50)
 AS
 /*
@@ -15,13 +15,13 @@ AS
 	Param's Explanation:
 		
 	Example: 
-		EXEC CS_HeadlineUsernameCheck @Username = 'MSHCN88'
+		EXEC CS_GetHeadlineCurrency @Username = 'MSHCN88'
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	SELECT ci.currency AS CurrencyId, e.currency AS CurrencyName
+	SELECT e.exchangeid AS exchangeid, e.currency AS CurrencyName
 	FROM dbo.custInfo ci WITH (NOLOCK)
 		INNER JOIN dbo.exchange e WITH (NOLOCK) ON e.exchangeid = ci.currency 
 	WHERE username = @Username AND roleid = 0  
