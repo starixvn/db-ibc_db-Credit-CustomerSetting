@@ -2,7 +2,7 @@
 ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
 	@custid						INT OUTPUT,
 	@username					VARCHAR(30),
-	@MainShareholderUsername	VARCHAR(30),
+	@HeadlineUsername			VARCHAR(30),
 	@userpwd					VARCHAR(40),
 	@firstname					NVARCHAR(50),
 	@lastname					NVARCHAR(50),
@@ -49,7 +49,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @startRun DATETIME , @endRun DATETIME , @duration INT
-	DECLARE @autosuspend BIT, @autosuspend2 BIT, @MainShareholderId INT
+	DECLARE @autosuspend BIT, @autosuspend2 BIT, @HeadlineId INT
 	
 	SET @startRun = GETDATE()
 	SELECT @ErrCode = 0
@@ -70,8 +70,8 @@ BEGIN
 		RETURN
 	END
 
-	SELECT @MainShareholderId = custid FROM Customer WITH (NOLOCK) WHERE username= @MainShareholderUsername AND roleid = 0
-	IF @MainShareholderId IS NULL
+	SELECT @HeadlineId = custid FROM Customer WITH (NOLOCK) WHERE username= @HeadlineUsername AND roleid = 0 AND currency = @currency
+	IF @HeadlineId IS NULL
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'Main Shareholder does not exist.'
@@ -107,7 +107,7 @@ BEGIN
 		@pwdexpiry = NULL,
 		@currency = @currency,
 		@site = @site,
-		@MainShareholderId = @MainShareholderId,
+		@HeadlineId = @HeadlineId,
 		@srecommend = 0,
 		@mrecommend = 0,
 		@recommend = 0,
