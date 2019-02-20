@@ -8,8 +8,7 @@ ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
 	@lastname					NVARCHAR(50),
 	@phone						NVARCHAR(50),
 	@mobilephone				NVARCHAR(50),
-	@fax						NVARCHAR(50),
-	@currency					INT, 
+	@fax						NVARCHAR(50),	
 	@credit						MONEY,
 
 	@PTSetting					VARCHAR(MAX),
@@ -49,7 +48,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @startRun DATETIME , @endRun DATETIME , @duration INT
-	DECLARE @autosuspend BIT, @autosuspend2 BIT, @HeadlineId INT
+	DECLARE @autosuspend BIT, @autosuspend2 BIT, @HeadlineId INT, @currency INT
 	
 	SET @startRun = GETDATE()
 	SELECT @ErrCode = 0
@@ -70,7 +69,7 @@ BEGIN
 		RETURN
 	END
 
-	SELECT @HeadlineId = custid FROM Customer WITH (NOLOCK) WHERE username= @HeadlineUsername AND roleid = 0 AND currency = @currency
+	SELECT @HeadlineId = custid, @currency = currency FROM Customer WITH (NOLOCK) WHERE username= @HeadlineUsername AND roleid = 0
 	IF @HeadlineId IS NULL
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
