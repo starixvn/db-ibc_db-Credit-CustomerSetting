@@ -28,9 +28,9 @@ AS
 */
 BEGIN  
 	SET NOCOUNT ON    
-	DECLARE	@apositiontaking SMALLMONEY, @mpositiontaking SMALLMONEY, @spositiontaking SMALLMONEY,
+	DECLARE	@apositiontaking SMALLMONEY, @mpositiontaking SMALLMONEY, @spositiontaking SMALLMONEY, @IsEditablePT BIT,	
 			@MaxPerEvent MONEY, @MaxBet MONEY,
-			@SuperID INT, @MasterID INT, @AgentID INT
+			@SuperID INT, @MasterID INT, @AgentID INT, @ProductID TINYINT
 
 	IF @isLicensee = 0  
 	BEGIN    
@@ -38,26 +38,45 @@ BEGIN
 		FROM custinfo WITH (NOLOCK)
 		WHERE custid = @CustID
 			
-		SELECT @apositiontaking = ISNULL(pt.AgentPT,0) / 100.0
-			, @mpositiontaking = ISNULL(pt.MasterPT,0) / 100.0
-			, @spositiontaking = CASE 
-									WHEN @SuperID <= 100 THEN 0 
-									ELSE ISNULL(pt.SuperPT,0) / 100.0
-								END
-		FROM f_CS_GetPTGroup_Member(@AgentID) pt
-		WHERE pt.SportType = @Sporttype 
-			AND pt.BetType = @bettype
-			AND pt.IsLive = @liveindicator
+		SELECT TOP 1 @ProductID = ProductID FROM dbo.CS_ProductSettingDetail WITH (NOLOCK) WHERE SportType = @Sporttype	 
+		SELECT @IsEditablePT = IsEditablePT FROM f_CS_GetEditablePTDate(@ProductID)
+
+		--PT
+		IF @IsEditablePT = 1
+		BEGIN
+			SELECT @apositiontaking = ISNULL(pt.AgentPT2,0) / 100.0
+				, @mpositiontaking = ISNULL(pt.MasterPT2,0) / 100.0
+				, @spositiontaking = CASE 
+										WHEN @SuperID <= 100 THEN 0 
+										ELSE ISNULL(pt.SuperPT2,0) / 100.0
+									END
+			FROM f_CS_GetPTGroup_Member(@AgentID) pt
+			WHERE pt.SportType = @Sporttype 
+				AND pt.BetType = @bettype
+				AND pt.IsLive = @liveindicator
+		END
+		ELSE
+		BEGIN
+			SELECT @apositiontaking = ISNULL(pt.AgentPT,0) / 100.0
+				, @mpositiontaking = ISNULL(pt.MasterPT,0) / 100.0
+				, @spositiontaking = CASE 
+										WHEN @SuperID <= 100 THEN 0 
+										ELSE ISNULL(pt.SuperPT,0) / 100.0
+									END
+			FROM f_CS_GetPTGroup_Member(@AgentID) pt
+			WHERE pt.SportType = @Sporttype 
+				AND pt.BetType = @bettype
+				AND pt.IsLive = @liveindicator
+		END
    
-	--Bet Limit
-	SELECT  @MaxPerEvent = ISNULL(bs.MaxPerEvent, 0), 
-			@MaxBet = ISNULL(bs.MaxBet, 0)
-	FROM dbo.CS_CustBetSetting_Member bs WITH (NOLOCK)
-	WHERE bs.custid = @CustID
-		AND bs.SportType = @Sporttype
-		AND bs.BetType = @bettype
-		AND bs.IsLive = @liveindicator
-		
+		--Bet Limit
+		SELECT  @MaxPerEvent = ISNULL(bs.MaxPerEvent, 0), 
+				@MaxBet = ISNULL(bs.MaxBet, 0)
+		FROM dbo.CS_CustBetSetting_Member bs WITH (NOLOCK)
+		WHERE bs.custid = @CustID
+			AND bs.SportType = @Sporttype
+			AND bs.BetType = @bettype
+			AND bs.IsLive = @liveindicator
 	END  
  
 	SELECT	@apositiontaking apositiontaking, @mpositiontaking mpositiontaking, @spositiontaking spositiontaking,

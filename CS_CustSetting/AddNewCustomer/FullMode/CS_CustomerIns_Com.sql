@@ -54,6 +54,18 @@ BEGIN
 	SELECT @ErrCode = 0
 	SELECT @autosuspend = 0, @autosuspend2 = 0
 
+	SELECT @HeadlineId = custid, @currency = currency FROM Customer WITH (NOLOCK) WHERE username= @HeadlineUsername AND roleid = 0
+	IF @HeadlineId IS NULL
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							WHEN 'E' THEN 'Invalid Headline.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40041,@Language)
+						END
+		SELECT @ErrCode = 101
+		SELECT @ErrSettingType = 1, @MsgType = 200	
+		RETURN
+	END
+
 	IF EXISTS(SELECT 1 FROM Customer WITH (NOLOCK) WHERE username= @username)
 		OR EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE username2 = @username)
 		OR EXISTS(SELECT 1 FROM custSub WITH (NOLOCK) WHERE username= @username)
@@ -63,18 +75,6 @@ BEGIN
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'This username is not available.'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
-						END
-		SELECT @ErrCode = 101
-		SELECT @ErrSettingType = 1, @MsgType = 200	
-		RETURN
-	END
-
-	SELECT @HeadlineId = custid, @currency = currency FROM Customer WITH (NOLOCK) WHERE username= @HeadlineUsername AND roleid = 0
-	IF @HeadlineId IS NULL
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Main Shareholder does not exist.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40039,@Language)
 						END
 		SELECT @ErrCode = 102
 		SELECT @ErrSettingType = 1, @MsgType = 200	
