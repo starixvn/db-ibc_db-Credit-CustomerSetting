@@ -197,6 +197,7 @@ BEGIN
 						'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)),SPACE(1))) + '" ' +
 						'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS VARCHAR(100)),SPACE(1))) + '" ' +
 						'username="'+ COALESCE(CAST(@username AS VARCHAR(30)),SPACE(1)) + '" ' +
+						'Headline="'+ COALESCE(CAST(@HeadlineUsername AS VARCHAR(30)),SPACE(1)) + '" ' +
 						'site="'+ COALESCE(CAST(@site AS VARCHAR(100)),SPACE(1)) + '" ' +								
 						'currency="'+ COALESCE(CAST(@currency AS VARCHAR(50)),SPACE(1)) + '" ' +
 						'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -323,7 +324,7 @@ BEGIN
 									, CAST(CONVERT(DOUBLE PRECISION,t.GroupA) AS VARCHAR(30)) AS '@GroupA'
 									, CAST(CONVERT(DOUBLE PRECISION,t.GroupB) AS VARCHAR(30)) AS '@GroupB'
 									, CAST(CONVERT(DOUBLE PRECISION,t.GroupC) AS VARCHAR(30)) AS '@GroupC'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupC) AS VARCHAR(30)) AS '@GroupD'
+									, CAST(CONVERT(DOUBLE PRECISION,t.GroupD) AS VARCHAR(30)) AS '@GroupD'
 									, CAST(CONVERT(DOUBLE PRECISION,t.Comm) AS VARCHAR(30))   AS '@Comm'
 								FROM #Com_Log t
 								FOR XML PATH('C'), TYPE)						
