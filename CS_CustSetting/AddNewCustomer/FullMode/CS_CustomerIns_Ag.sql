@@ -252,7 +252,7 @@ BEGIN
     END
 
     --Insert general data 
-	EXEC dbo.Acc_CustomerInsUserInfo
+	EXEC dbo.CS_CustomerInsUserInfo
 	    @custid = @custid OUTPUT,
 		@username = @username,
 	    @firstname = @firstname,
@@ -281,32 +281,10 @@ BEGIN
 		@lastname = '',
 	    @phone = '',
 	    @mobilephone = '',
-	    @email = '',
 	    @fax = '',
-	    @address = '',
-	    @city = '',
-	    @state = '',
-	    @country = '',
-	    @postal = '',
-	    @TransferOption = NULL,
 	    @DisableOutright = 1,	
-	    @DisableCasino = 1,
-		@DisableNumber = 1,	 
-	    @DoubleCommLosing = 1,-- off double comm losing WHEN create new member
-	    @DisableCasinoBonus = 1,
-		@MaxPerMatch = 0,
-		@MaxPerMatchv2 = 0,
-		@MaxPerMatchv3 = 0,
-		@MaxPerMatchv5 = 0,
-		@MaxPerMatchv8 = 0,
-		@MaxPerMatchv10 = 0,
-		@MaxPerMatchv11 = 0,
-		@MaxPerMatchv99 = 0,
-		@MaxPerMatchv99MP = 0,
-		@MaxPerMatchv161 = 0,		    	 
 	    
 	    @IP = @IP,
-	    @TransferOption_dec = NULL,
 	    @Language = @Language,
 	    @ErrCode = @ErrCode OUTPUT,
 	    @ErrMsg = @ErrMsg OUTPUT
@@ -330,7 +308,7 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
 		SELECT @ErrSettingType = 1, @MsgType = 200	
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC CS_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END	
 	
@@ -341,7 +319,7 @@ BEGIN
     DECLARE @LogSPData VARCHAR(MAX), @LogXML XML
 
     --Write general info
-	SELECT @LogSPData = '<R name="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)),SPACE(1))) + '" ' +
+	SELECT @LogSPData = '<R name="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS NVARCHAR(100)),SPACE(1))) + '" ' +
 						'username="'+ COALESCE(CAST(@username AS VARCHAR(30)),SPACE(1)) + '" ' +
 						'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +

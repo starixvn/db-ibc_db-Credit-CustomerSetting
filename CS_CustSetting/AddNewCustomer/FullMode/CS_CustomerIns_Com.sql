@@ -96,7 +96,7 @@ BEGIN
 		RETURN
 	
 	--Insert general info
-	EXEC dbo.Acc_CustomerInsUserInfo 
+	EXEC dbo.CS_CustomerInsUserInfo 
 		@custid = @custid OUTPUT,
 		@firstname = @firstname,
 		@lastname = @lastname,
@@ -113,14 +113,7 @@ BEGIN
 		@roleid = 4,
 		@phone = @phone,
 		@mobilephone = @mobilephone,
-		@email = '',
 		@fax = @fax,
-		@address = '',
-		@city = '',
-		@state = '',
-		@country = '',
-		@postal = '',
-		@TransferOption = NULL,
 		@suspended = 0,
 		@SystemID = @SystemID,
 		@autosuspend = @autosuspend,
@@ -129,33 +122,10 @@ BEGIN
 		--@Johnson: Disable virtual rate status as default
 		@virtualmultiplier = 0,	
 	
-		@DisableCasino = 1,
-		@DisableNumber = 1,
-		@DoubleCommLosing = 1,		
-		@DisableCasinoBonus = 1,		
-		@DisableGoldDeluxe = 1,
-		@HideGoldDeluxe = 1,
-		@DisableColossusBet = 1,
-		@HideColossusBet = 1,
-		@DisableSuperLive = 1,
-		@HideKeno = 1,
-
-		@MaxPerMatch = 0,
-		@MaxPerMatchv2 = 0,
-		@MaxPerMatchv3 = 0,
-		@MaxPerMatchv5 = 0,
-		@MaxPerMatchv8 = 0,
-		@MaxPerMatchv10 = 0,
-		@MaxPerMatchv11 = 0,
-		@MaxPerMatchv99 = 0,
-		@MaxPerMatchv99MP = 0,
-		@MaxPerMatchv161 = 0,	
-
 		@credit = @credit,
 		@maxcredit = NULL,
 		@IP = @IP,
 		@isinternal = @isinternal,
-		@TransferOption_dec = NULL,
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
@@ -180,7 +150,7 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
 		SELECT @ErrSettingType = 1, @MsgType = 200	
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC CS_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END	
 	
@@ -191,11 +161,11 @@ BEGIN
 	SELECT @MaxMemberLog = CASE WHEN @Site = '789y' THEN '20000' ELSE 'Unlimited' END
 
 	--Write general info
-	SELECT @LogSPData = '<R fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)),SPACE(1))) + '" ' +
-						'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)),SPACE(1))) + '" ' +
-						'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS VARCHAR(100)),SPACE(1))) + '" ' +
-						'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)),SPACE(1))) + '" ' +
-						'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS VARCHAR(100)),SPACE(1))) + '" ' +
+	SELECT @LogSPData = '<R fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS NVARCHAR(100)),SPACE(1))) + '" ' +
+						'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS NVARCHAR(100)),SPACE(1))) + '" ' +
+						'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS NVARCHAR(100)),SPACE(1))) + '" ' +
+						'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS NVARCHAR(100)),SPACE(1))) + '" ' +
+						'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS NVARCHAR(100)),SPACE(1))) + '" ' +
 						'username="'+ COALESCE(CAST(@username AS VARCHAR(30)),SPACE(1)) + '" ' +
 						'Headline="'+ COALESCE(CAST(@HeadlineUsername AS VARCHAR(30)),SPACE(1)) + '" ' +
 						'site="'+ COALESCE(CAST(@site AS VARCHAR(100)),SPACE(1)) + '" ' +								
