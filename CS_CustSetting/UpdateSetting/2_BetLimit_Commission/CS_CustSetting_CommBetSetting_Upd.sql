@@ -612,10 +612,10 @@ BEGIN
 									(
 										SELECT  @ProductID														AS '@ProductID'
 												, cs.isLive														AS '@IsL'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GroupA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GroupB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @OldCommSMATbl cs 
 										FOR XML PATH('C'), 
@@ -633,10 +633,10 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.isLive														AS '@IsL'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GroupA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GroupB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @OldCommSMATbl cs 
 										FOR XML PATH('C'), 
@@ -654,10 +654,10 @@ BEGIN
 									(
 										SELECT  cs.bettype														AS '@BT'
 												, cs.isLive														AS '@IsL'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GroupA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GroupB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @OldCommSMATbl cs 
 										FOR XML PATH('C'), 
@@ -676,10 +676,10 @@ BEGIN
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
 												, cs.isLive														AS '@IsL'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GroupA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GroupB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @OldCommSMATbl cs 
 										FOR XML PATH('C'), 
@@ -700,10 +700,10 @@ BEGIN
 									(
 										SELECT  @ProductID														AS '@ProductID'
 												, cs.isLive														AS '@IsL'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GroupA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GroupB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @NewCommSMATbl cs 
 										FOR XML PATH('C'), 
@@ -721,10 +721,10 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.isLive														AS '@IsL'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GroupA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GroupB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @NewCommSMATbl cs 
 										FOR XML PATH('C'), 
@@ -742,10 +742,10 @@ BEGIN
 									(
 										SELECT  cs.bettype														AS '@BT'
 												, cs.isLive														AS '@IsL'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GroupA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GroupB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @NewCommSMATbl cs 
 										FOR XML PATH('C'), 
@@ -764,10 +764,10 @@ BEGIN
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
 												, cs.isLive														AS '@IsL'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GroupA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GroupB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GroupD'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
+												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @NewCommSMATbl cs 
 										FOR XML PATH('C'), 
