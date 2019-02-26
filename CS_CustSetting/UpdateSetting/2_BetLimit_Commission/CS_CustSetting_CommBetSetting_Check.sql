@@ -518,7 +518,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 11 AS '@MsgID'
-						, 'Commission is out of range.' AS '@Msg'
+						, 'Please refresh the page and try again. Commission is out of range.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
@@ -551,7 +551,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 11 AS '@MsgID'
-						, 'Commission is out of range.' AS '@Msg'
+						, 'Please refresh the page and try again. Commission is out of range.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
@@ -592,7 +592,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 11 AS '@MsgID'
-						, 'Commission is out of range.' AS '@Msg'
+						, 'Please refresh the page and try again. Commission is out of range.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
@@ -625,7 +625,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 11 AS '@MsgID'
-						, 'Commission is out of range.' AS '@Msg'
+						, 'Please refresh the page and try again. Commission is out of range.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
@@ -675,7 +675,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 11 AS '@MsgID'
-						, 'Commission is out of range.' AS '@Msg'
+						, 'Please refresh the page and try again. Commission is out of range.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
@@ -712,7 +712,7 @@ BEGIN
 		BEGIN
 			SET @ErrType = (
 					SELECT 11 AS '@MsgID'
-						, 'Commission is out of range.' AS '@Msg'
+						, 'Please refresh the page and try again. Commission is out of range.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'

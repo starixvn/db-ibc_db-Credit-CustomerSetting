@@ -332,9 +332,9 @@ BEGIN
 	  , NULL
 	  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), @credit, ISNULL(@closed, 0), @username
 	  , @matchlimit, @virtualmultiplier
-	  , NULL, @DisableOutright, NULL, NULL,  NULL, NULL, NULL
+	  , 1, @DisableOutright, 1, 1,  0, 0, 0
 	  , @danger, @danger2, @danger3, @Abnormal
-	  , NULL,NULL, NULL, NULL, NULL, NULL, NULL,NULL,NULL, NULL, NULL
+	  , 1,1, 1, 1, 1, 1, 1,1,1, NULL, NULL
     )
 
     IF @@ERROR <> 0
