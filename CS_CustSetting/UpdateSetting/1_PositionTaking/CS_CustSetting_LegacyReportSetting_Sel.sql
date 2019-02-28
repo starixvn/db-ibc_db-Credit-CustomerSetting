@@ -7,7 +7,7 @@ ALTER PROCEDURE CS_CustSetting_LegacyReportSetting_Sel
 AS
 /*
 	Created: 20190227@Johnson
-	Task : Select PT info when update PT
+	Task : Select PT for Legacy report
 	DB: DBCUST/CustDB
 	Original:
 
