@@ -154,6 +154,15 @@ BEGIN
 		RETURN
 	END	
 	
+	DECLARE @EffectiveDate DATETIME = CONVERT(DATE,GETDATE())
+	EXEC dbo.Acc_GroupExtraPTSetting_Upd
+		@CustID = @custid,
+		@GroupName = 'CN88',
+		@EffectiveDate = @EffectiveDate,
+		@UserID = @Creator,
+		@ErrCode = @ErrCode OUTPUT,
+		@ErrMsg = @ErrMsg OUTPUT 
+
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
 
@@ -309,6 +318,16 @@ BEGIN
 			@TrackingValue = @LogSPData,
 			@duration = @duration	
 	
+	SELECT  @LogSPData = '<CS_CustomerIns_Com PrimaryGroup="CN88'
+						+ '" EffectiveDate="' + CONVERT(NVARCHAR(10), @EffectiveDate, 120)
+						+ '" IP="' + @IP + '" />'
+
+	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @creator,
+		@CustID = @CustID,
+		@ActionID = 662,
+		@TrackingValue = @LogSPData,
+		@Duration = @Duration
 END
 GO
 
