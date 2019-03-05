@@ -25,6 +25,7 @@ AS
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20190304@Winnie: NAP - Search & Copy Super - DCS: Product status of new super is Enabled when copy super from offered site to non-offered site [RedmineID: #108811]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -99,14 +100,16 @@ BEGIN
 			WHERE (ps.Currency = @_Currency OR ps.Currency = 0 ) AND ps.SiteID = @_SiteID
 
 			/********************************************* Product Status: SettingType = 4 ************************************/
+			
 			--Get sporttype/Bettype for this setting type	
 			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
 			INTO #SportBettypeFilter4
 			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
-				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
-			WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
+				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect_xtest(NULL,4) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
+			--WHERE ISNULL(op.IsHiddenSource,0) <> 0 OR ISNULL(op.IsHiddenDes,0) <> 0
+			WHERE psd.IsHidden=1 OR psd.IsDisabled=1
 		
 			IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter4)
 			BEGIN
@@ -115,14 +118,24 @@ BEGIN
 					main.IsHidden = stt.IsHidden
 				FROM #SportBettypeFilter4 main
 					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
-				WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0)
+				WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0)  AND (stt.IsHidden=1 OR stt.IsDisabled=1)
+				
+				DELETE main
+				FROM #SportBettypeFilter4 main
+				INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
+				WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0) AND (stt.IsHidden<>1 OR stt.IsDisabled<>1)
 			
 				UPDATE main
 				SET main.IsDisabled = stt.IsDisabled, 
 					main.IsHidden = stt.IsHidden
 				FROM #SportBettypeFilter4 main
 					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
-				WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID
+				WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID  AND (stt.IsHidden=1 OR stt.IsDisabled=1)
+				
+				DELETE main
+				FROM #SportBettypeFilter4 main
+					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
+				WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID AND (stt.IsHidden<>1 OR stt.IsDisabled<>1)		
 		
 				BEGIN TRY				
 					--Get from default status values
@@ -188,9 +201,9 @@ BEGIN
 			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
-				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
-			WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
-
+				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect_xtest(NULL,13) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType	
+			WHERE psd.IsHidden=1 OR psd.IsDisabled=1
+			
 			IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter13)
 			BEGIN							
 				UPDATE main
@@ -198,14 +211,24 @@ BEGIN
 					main.IsHidden = stt.IsHidden
 				FROM #SportBettypeFilter13 main
 					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
-				WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0)
+				WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0) AND (stt.IsHidden=1 OR stt.IsDisabled=1)
+				
+				DELETE main
+				FROM #SportBettypeFilter13 main
+				INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
+				WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0) AND (stt.IsHidden<>1 OR stt.IsDisabled<>1)
 			
 				UPDATE main
 				SET main.IsDisabled = stt.IsDisabled, 
 					main.IsHidden = stt.IsHidden
 				FROM #SportBettypeFilter13 main
 					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
-				WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID
+				WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID AND (stt.IsHidden=1 OR stt.IsDisabled=1)
+				
+				DELETE main
+				FROM #SportBettypeFilter13 main
+					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
+				WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID AND (stt.IsHidden<>1 OR stt.IsDisabled<>1)
 		
 				BEGIN TRY				
 					--Get from default status values
@@ -253,8 +276,7 @@ BEGIN
 						bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
 					FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
-					WHERE cs.CustID = @CustID     
-
+					WHERE cs.CustID = @CustID     					
 				END TRY
 				BEGIN CATCH
 					SELECT @ErrCode = 13
@@ -271,7 +293,7 @@ BEGIN
 		INTO #SportBettypeFilter11
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect_xtest(NULL,11) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
 		
 		IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)
 		BEGIN
@@ -726,4 +748,5 @@ BEGIN
 		END CATCH
 	END	
 END
+
 GO
