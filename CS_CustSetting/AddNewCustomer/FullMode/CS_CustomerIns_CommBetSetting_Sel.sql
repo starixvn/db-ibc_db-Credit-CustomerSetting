@@ -23,10 +23,10 @@ AS
 			= 2: Create agent 
 			= 1: Create member 
 	Example: 
-		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 4, @IsTest = 1
-		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
-		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1 
-		EXEC CS_CommBetSetting_CustomerIns_Sel @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
+		EXEC CS_CustomerIns_CommBetSetting_Sel @RoleId = 4, @IsTest = 1
+		EXEC CS_CustomerIns_CommBetSetting_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
+		EXEC CS_CustomerIns_CommBetSetting_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1 
+		EXEC CS_CustomerIns_CommBetSetting_Sel @RoleId = 1, @CustID = 33418960, @uGroup = 'cna', @IsTest = 1 
 		
 */
 
@@ -54,9 +54,9 @@ BEGIN
 			0 AS MinComm, sc.Discount AS MaxComm, sc.Discount AS Comm,
 			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet, bs.MaxBet, 
 			0 AS MinMaxPerEvent, bs.MaxPerEvent AS MaxMaxPerEvent, bs.MaxPerEvent
-		FROM dbo.f_CS_GetDiscount_Agent (@CustID) sc
-			INNER JOIN #SportBettypeFilter2 ft ON sc.SportType = ft.SportType AND sc.BetType = ft.BetType AND sc.IsLive = ft.IsLive
-			INNER JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
+		FROM dbo.f_CS_GetDiscount_Agent (@CustID) sc			
+			RIGHT JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = sc.SportType AND bs.BetType = sc.BetType AND bs.IsLive = sc.IsLive
+			INNER JOIN #SportBettypeFilter2 ft ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive  AND gc.GroupId = sc.GroupId
 		WHERE bs.CustId = @CustID
 	END
@@ -66,9 +66,9 @@ BEGIN
 			0 AS MinComm, mc.Discount AS MaxComm, mc.Discount AS Comm,
 			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet, bs.MaxBet, 
 			0 AS MinMaxPerEvent, bs.MaxPerEvent AS MaxMaxPerEvent, bs.MaxPerEvent
-		FROM dbo.f_CS_GetDiscount_Agent (@CustID) mc
-			INNER JOIN #SportBettypeFilter2 ft ON mc.SportType = ft.SportType AND mc.BetType = ft.BetType AND mc.IsLive = ft.IsLive
-			INNER JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
+		FROM dbo.f_CS_GetDiscount_Agent (@CustID) mc			
+			RIGHT JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = mc.SportType AND bs.BetType = mc.BetType AND bs.IsLive = mc.IsLive
+			INNER JOIN #SportBettypeFilter2 ft ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = mc.GroupId
 		WHERE bs.CustId = @CustID
 	END
@@ -78,9 +78,9 @@ BEGIN
 			0 AS MinComm, ac.Discount AS MaxComm, ac.Discount AS Comm,
 			0 AS MinMaxBet, bs.MaxBet AS MaxMaxBet, bs.MaxBet, 
 			0 AS MinMaxPerEvent, bs.MaxPerEvent AS MaxMaxPerEvent, bs.MaxPerEvent
-		FROM dbo.f_CS_GetDiscount_Agent (@CustID) ac
-			INNER JOIN #SportBettypeFilter2 ft ON ac.SportType = ft.SportType AND ac.BetType = ft.BetType AND ac.IsLive = ft.IsLive
-			INNER JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
+		FROM dbo.f_CS_GetDiscount_Agent (@CustID) ac			
+			RIGHT JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = ac.SportType AND bs.BetType = ac.BetType AND bs.IsLive = ac.IsLive
+			INNER JOIN #SportBettypeFilter2 ft ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = ac.GroupId 
 		WHERE bs.CustId = @CustID --AND (gc.uGroup = @uGroup OR gc.GroupId IS NULL)
 	END

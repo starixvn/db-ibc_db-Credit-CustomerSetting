@@ -318,14 +318,14 @@ BEGIN
 			@TrackingValue = @LogSPData,
 			@duration = @duration	
 	
-	SELECT  @LogSPData = '<CS_CustomerIns_Com PrimaryGroup="CN88'
+	SELECT  @LogSPData = '<R PrimaryGroup="CN88'
 						+ '" EffectiveDate="' + CONVERT(NVARCHAR(10), @EffectiveDate, 120)
 						+ '" IP="' + @IP + '" />'
 
 	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @creator,
 		@CustID = @CustID,
-		@ActionID = 662,
+		@ActionID = 160008,
 		@TrackingValue = @LogSPData,
 		@Duration = @Duration
 END

@@ -21,9 +21,9 @@ AS
 			= 3: Create master 
 			= 2: Create agent 			
 	Example: 
-		EXEC CS_PTSetting_CustomerIns_Sel @RoleId = 4, @IsTest = 1
-		EXEC CS_PTSetting_CustomerIns_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
-		EXEC CS_PTSetting_CustomerIns_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1
+		EXEC CS_CustomerIns_PTSetting_Sel @RoleId = 4, @IsTest = 1
+		EXEC CS_CustomerIns_PTSetting_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
+		EXEC CS_CustomerIns_PTSetting_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1
 */
 
 BEGIN
