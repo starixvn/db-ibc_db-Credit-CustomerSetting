@@ -44,7 +44,7 @@ AS
 			+ Roleid = 3:
 				- s3 >= 0
 				- s3 <= l4
-				- s3 >= n4 - MAX(m2+a2) if master has at least 1 agent
+				- s3 >= n4 - MIN(m2+a2) if master has at least 1 agent
 				- s3 <= l4 - MAX(m2+a2) if master has at least 1 agent
 			+ Roleid = 2:
 				- m2 >= 0, a2 >=0
@@ -304,7 +304,7 @@ BEGIN
 			END
 		END
 
-		SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.MasterPT + cs.AgentPT) AS MaxPTDownline 
+		SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.MasterPT + cs.AgentPT) AS MaxPTDownline, MIN(cs.MasterPT + cs.AgentPT) AS MinPTDownline 
 		INTO #PTDownlines3
 		FROM dbo.custInfo ci WITH (NOLOCK) 	
 			CROSS APPLY dbo.f_CS_GetPT_Agent(ci.custid) cs
@@ -316,13 +316,13 @@ BEGIN
 		BEGIN
 			INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 			SELECT ft.SportType, ft.Bettype, ft.IsLive,
-				CASE	WHEN mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 301
+				CASE	WHEN mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MinPTDownline,0) THEN spt.MinPT - ISNULL(dl.MinPTDownline,0) ELSE 0 END THEN 301
 						WHEN mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END THEN 302 END			
 			FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
 				INNER JOIN #NewPT mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 				LEFT JOIN #PTDownlines3 dl ON spt.SportType = dl.SportType AND spt.BetType = dl.BetType AND spt.IsLive = dl.IsLive
 				INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
-			WHERE mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 >= n4 - MAX(m2+a2)
+			WHERE mpt.SuperPT < CASE WHEN spt.MinPT > ISNULL(dl.MinPTDownline,0) THEN spt.MinPT - ISNULL(dl.MinPTDownline,0) ELSE 0 END --check s3 >= n4 - MIN(m2+a2)
 				OR mpt.SuperPT > CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END --check s3 <= l4 - MAX(m2+a2)
 
 			IF @@ROWCOUNT <> 0

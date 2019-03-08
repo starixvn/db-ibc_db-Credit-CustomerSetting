@@ -68,7 +68,7 @@ BEGIN
 		END
 		ELSE IF @RoleId = 3
 		BEGIN
-			SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.MasterPT + cs.AgentPT) AS MaxPTDownline 
+			SELECT cs.sporttype, cs.bettype, cs.Islive, MAX(cs.MasterPT + cs.AgentPT) AS MaxPTDownline, MIN(cs.MasterPT + cs.AgentPT) AS MinPTDownline  
 			INTO #PTDownlines3
 			FROM dbo.custInfo ci WITH (NOLOCK) 	
 				CROSS APPLY dbo.f_CS_GetPT_Agent(ci.custid) cs
@@ -79,7 +79,7 @@ BEGIN
 			IF @@ROWCOUNT <> 0 --If Master has at least 1 Agent: Range: [Max(0, Super Min PT - (Master PT + Agent PT)); Super Max PT - (Master PT + Agent PT)]
 			BEGIN
 				SELECT ft.SportType, ft.Bettype, ft.IsLive, mpt.SuperPT2 AS CurrentSuperPT, mpt.SuperPT AS SuperPT,
-					CASE WHEN spt.MinPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MinPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MinSuperPT, 
+					CASE WHEN spt.MinPT > ISNULL(dl.MinPTDownline,0) THEN spt.MinPT - ISNULL(dl.MinPTDownline,0) ELSE 0 END AS MinSuperPT, 
 					CASE WHEN spt.MaxPT > ISNULL(dl.MaxPTDownline,0) THEN spt.MaxPT - ISNULL(dl.MaxPTDownline,0) ELSE 0 END AS MaxSuperPT
 				FROM dbo.f_CS_GetPT_Agent(@SuperId) spt
 					INNER JOIN dbo.f_CS_GetPT_Agent(@CustID) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
