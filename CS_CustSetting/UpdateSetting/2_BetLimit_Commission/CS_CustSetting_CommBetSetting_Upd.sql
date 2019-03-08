@@ -80,7 +80,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML
-	DECLARE @_CommSetting XML, @_BetSetting XML, @xml XML, @xml_Old XML, @IsGroupComm BIT, @uGroup VARCHAR(3)
+	DECLARE @_CommSetting XML, @_BetSetting XML, @xml XML, @xml_Old XML, @IsGroupComm BIT, @uGroup VARCHAR(3), @MemCommGroup INT
 	DECLARE @Discount_XML XML, @PlayerDiscount_XML XML
 	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @SettingLevel TINYINT
 	DECLARE @OldBetLimitTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, MaxBet MONEY, MaxPerEvent MONEY)
@@ -239,28 +239,45 @@ BEGIN
 										FOR XML PATH('root')
 											, TYPE
 										)
-			IF EXISTS (SELECT 1 FROM dbo.CS_CustDiscount_Member WITH (NOLOCK) WHERE CustId = @CustID)
+			
+			SELECT @MemCommGroup = COUNT(1) 
+			FROM CS_CustSettingMode sm WITH (NOLOCK) 
+				INNER JOIN CustInfo ci WITH (NOLOCK) ON ci.custid = sm.CustID 
+			WHERE ci.recommend = @AgentId AND sm.IsGroupComm = 1
+
+			IF @MemCommGroup = 1 -- only one member is using group comm
 			BEGIN
 				UPDATE cm
 				SET cm.PlayerDiscount = playercomm.binaryStr_new
-				FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
-					CROSS JOIN dbo.CS_CustGroupDiscount_Member gm WITH (NOLOCK) 
-					CROSS APPLY dbo.f_SetBinaryValues(gm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
-				WHERE cm.CustId = @CustID AND gm.AgentId = @AgentId AND gm.uGroup = @uGroup				
+				FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
+					CROSS APPLY dbo.f_SetBinaryValues(cm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
+				WHERE cm.AgentId = @AgentId AND cm.uGroup = @uGroup
 			END
 			ELSE
 			BEGIN
-				INSERT INTO CS_CustDiscount_Member (CustId, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
-				SELECT @CustID, playercomm.binaryStr_new, gm.AgentDiscount, gm.MasterDiscount, gm.SuperDiscount
-				FROM dbo.CS_CustGroupDiscount_Member gm WITH (NOLOCK) 
-					CROSS APPLY dbo.f_SetBinaryValues(gm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
-				WHERE gm.AgentId = @AgentId AND gm.uGroup = @uGroup
-			END
+				IF EXISTS (SELECT 1 FROM dbo.CS_CustDiscount_Member WITH (NOLOCK) WHERE CustId = @CustID)
+				BEGIN
+					UPDATE cm
+					SET cm.PlayerDiscount = playercomm.binaryStr_new
+					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
+						CROSS JOIN dbo.CS_CustGroupDiscount_Member gm WITH (NOLOCK) 
+						CROSS APPLY dbo.f_SetBinaryValues(gm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
+					WHERE cm.CustId = @CustID AND gm.AgentId = @AgentId AND gm.uGroup = @uGroup				
+				END
+				ELSE
+				BEGIN
+					INSERT INTO CS_CustDiscount_Member (CustId, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
+					SELECT @CustID, playercomm.binaryStr_new, gm.AgentDiscount, gm.MasterDiscount, gm.SuperDiscount
+					FROM dbo.CS_CustGroupDiscount_Member gm WITH (NOLOCK) 
+						CROSS APPLY dbo.f_SetBinaryValues(gm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
+					WHERE gm.AgentId = @AgentId AND gm.uGroup = @uGroup
+				END
 
-			UPDATE cm
-			SET cm.IsGroupComm = 0
-			FROM dbo.CS_CustSettingMode cm WITH (ROWLOCK)
-			WHERE cm.CustId = @CustID
+				UPDATE cm
+				SET cm.IsGroupComm = 0
+				FROM dbo.CS_CustSettingMode cm WITH (ROWLOCK)
+				WHERE cm.CustId = @CustID
+			END
 		END
 		ELSE
 		BEGIN
@@ -442,7 +459,7 @@ BEGIN
 									SELECT  @ProductID														AS '@ProductID'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM @OldBetLimitTbl cs 
 									FOR XML PATH('C'), 
 									TYPE
@@ -460,7 +477,7 @@ BEGIN
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM @OldBetLimitTbl cs
 									FOR XML PATH('C'), 
 									TYPE
@@ -478,7 +495,7 @@ BEGIN
 									SELECT  cs.bettype														AS '@BT'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM @OldBetLimitTbl cs 
 									FOR XML PATH('C'), 
 									TYPE
@@ -497,7 +514,7 @@ BEGIN
 											, cs.bettype													AS '@BT'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM @OldBetLimitTbl cs
 									FOR XML PATH('C'), 
 									TYPE
@@ -518,7 +535,7 @@ BEGIN
 									SELECT  @ProductID														AS '@ProductID'
 											, bs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM #BetSetting_tmp bs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -536,7 +553,7 @@ BEGIN
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -554,7 +571,7 @@ BEGIN
 									SELECT  cs.bettype														AS '@BT'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -573,7 +590,7 @@ BEGIN
 											, cs.bettype													AS '@BT'
 											, cs.isLive														AS '@IsL'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPM'
+											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE

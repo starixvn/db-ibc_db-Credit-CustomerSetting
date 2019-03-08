@@ -23,7 +23,7 @@ AS
 			= 1: Update member 
 	Example: 
 		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 4, @CustId = 33554349, @IsTest = 1
-		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 3, @CustID = 33554352, @IsTest = 1
+		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 3, @CustID = 34239602, @IsTest = 1
 		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 2, @CustID = 33554414, @IsTest = 1 
 		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 1, @CustID = 33554405, @IsTest = 1 
 		
@@ -91,7 +91,7 @@ BEGIN
 		GROUP BY ac.sporttype, ac.bettype, ac.Islive, ac.groupID
 
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
-			ISNULL(ab.MaxCommDownline,0) AS MinComm, sc.Discount AS MaxComm, mc.Discount AS Comm,
+			ISNULL(ac.MaxCommDownline,0) AS MinComm, sc.Discount AS MaxComm, mc.Discount AS Comm,
 			ISNULL(ab.MaxMaxBetDownline,0) AS MinMaxBet, sb.MaxBet AS MaxMaxBet,
 			ISNULL(ab.MaxMaxPerEventDownline,0) AS MinMaxPerEvent, sb.MaxPerEvent AS MaxMaxPerEvent,
 			mb.MaxBet AS MaxBet, mb.MaxPerEvent AS MaxPerEvent

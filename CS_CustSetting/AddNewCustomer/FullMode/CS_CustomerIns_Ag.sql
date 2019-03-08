@@ -316,7 +316,7 @@ BEGIN
     SET @endRun = getdate()
 	SET @duration  = datediff (millisecond,@startRun,@endRun)
 
-    DECLARE @LogSPData VARCHAR(MAX), @LogXML XML
+    DECLARE @LogSPData NVARCHAR(MAX), @LogXML XML
 
     --Write general info
 	SELECT @LogSPData = '<R name="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS NVARCHAR(100)),SPACE(1))) + '" ' +
@@ -369,7 +369,7 @@ BEGIN
 									, BetType AS '@BT'
 									, IsLive AS '@IsL'
 									, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30)) AS '@Max'
-									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPM'
+									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPE'
 								FROM #BetSetting_tmp
 								FOR XML PATH('C'), TYPE)						
 						FOR XML PATH('R'), TYPE)		

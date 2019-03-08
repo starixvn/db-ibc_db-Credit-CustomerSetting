@@ -166,7 +166,7 @@ BEGIN
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
 
-	DECLARE @LogSPData VARCHAR(MAX), @MaxMemberLog VARCHAR(50), @LogXML XML
+	DECLARE @LogSPData NVARCHAR(MAX), @MaxMemberLog VARCHAR(50), @LogXML XML
 	SELECT @MaxMemberLog = CASE WHEN @Site = '789y' THEN '20000' ELSE 'Unlimited' END
 
 	--Write general info
@@ -233,7 +233,7 @@ BEGIN
 									, BetType AS '@BT'
 									, IsLive AS '@IsL'
 									, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30)) AS '@Max'
-									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPM'
+									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPE'
 								FROM #BetSetting_tmp
 								FOR XML PATH('C'), TYPE)						
 						FOR XML PATH('R'), TYPE)		

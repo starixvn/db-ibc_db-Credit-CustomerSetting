@@ -141,6 +141,13 @@ BEGIN
 
 	DECLARE @Credit_AllDownline MONEY, @UplineCredit MONEY
 
+	IF @Credit < 0
+	BEGIN
+		SELECT @ErrMsg = '<Root MsgID="70025" Msg="Credit is out of range."></Root>'		    
+		SELECT @ErrCode = 101, @ErrSettingType = 1, @MsgType = 100
+	    RETURN
+	END
+
 	SELECT @UplineCredit = isnull(credit, 0) FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID
 	
 	IF @RoleId = 3	
