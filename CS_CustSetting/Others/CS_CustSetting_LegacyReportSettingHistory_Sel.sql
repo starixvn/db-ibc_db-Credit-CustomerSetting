@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE CS_CustSetting_LegacyReportSettingHistory_Sel
 	@CustID INT,
@@ -25,6 +25,7 @@ BEGIN
 	SET NOCOUNT ON
 	CREATE TABLE #Log (LogId BIGINT, LogDate DATETIME, NewValue XML, OldValue XML)
 	
+	SELECT @ToDate = DATEADD(ss,86399,@ToDate)
 	--SELECT DISTINCT ProductID, SportType,Bettype,IsLive, SettingType 
 	--INTO #SportBettypeFilter1
 	--FROM DBACC.bodb02.dbo.CS_ProductSettingDetail WITH(NOLOCK)
@@ -54,12 +55,12 @@ BEGIN
 			, n.value('./@MasterPT','SMALLMONEY') AS MasterPT	
 	INTO #NewData
 	FROM #Log
-		CROSS APPLY NewValue.nodes('//R') AS RECORDS(n)
+		CROSS APPLY NewValue.nodes('//C') AS RECORDS(n)
 	
 	SELECT LogId, o.value('./@MasterPT','SMALLMONEY') AS MasterPT		
 	INTO #OldData
 	FROM #Log
-		CROSS APPLY OldValue.nodes('//R') AS RECORDS(o)
+		CROSS APPLY OldValue.nodes('//C') AS RECORDS(o)
 	
 	SELECT DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, n.LogDate) / 7) * 7 + 7, 0)) AS EffectiveDate,
 		n.SportType, n.BetType, n.ProductID, 
@@ -75,3 +76,4 @@ BEGIN
 	--DROP TABLE #SportBettypeFilter1
 END
 GO
+
