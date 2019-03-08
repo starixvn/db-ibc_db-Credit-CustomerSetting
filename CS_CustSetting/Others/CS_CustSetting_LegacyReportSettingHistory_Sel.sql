@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE CS_CustSetting_LegacyReportSettingHistory_Sel
 	@CustID INT,
@@ -18,7 +18,7 @@ AS
 	Param's Explanation:
 				
 	Example: 
-		EXEC CS_Rpt_PTSettingHistorySel @CustID = 34109850, @IsTest = 1, @FromDate = '2019-02-27 02:31:54.380', @ToDate = '2019-02-28 02:31:54.380'
+		EXEC CS_CustSetting_LegacyReportSettingHistory_Sel @CustID = 34109850, @IsTest = 1, @FromDate = '2019-02-27 02:31:54.380', @ToDate = '2019-02-28 02:31:54.380'
 */
 
 BEGIN
