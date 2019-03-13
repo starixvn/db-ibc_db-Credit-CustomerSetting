@@ -242,10 +242,10 @@ BEGIN
 			
 			SELECT @MemCommGroup = COUNT(1) 
 			FROM CS_CustSettingMode sm WITH (NOLOCK) 
-				INNER JOIN CustInfo ci WITH (NOLOCK) ON ci.custid = sm.CustID 
-			WHERE ci.recommend = @AgentId AND sm.IsGroupComm = 1
+				INNER JOIN customer c WITH (NOLOCK) ON c.custid = sm.CustID 
+			WHERE c.recommend = @AgentId AND c.roleid = 1 AND sm.IsGroupComm = 1 AND c.ugroup = @uGroup 
 
-			IF @MemCommGroup = 1 -- only one member is using group comm
+			IF @MemCommGroup = 1 -- only one member is using this group comm
 			BEGIN
 				UPDATE cm
 				SET cm.PlayerDiscount = playercomm.binaryStr_new

@@ -65,6 +65,9 @@ BEGIN
 				LEFT JOIN #PTMaster4 mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 				INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
 				INNER JOIN dbo.CS_ProductSettingDetail ps WITH (NOLOCK) ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType			
+
+			DROP TABLE #PTDownlines4
+			DROP TABLE #PTMaster4
 		END
 		ELSE IF @RoleId = 3
 		BEGIN
@@ -95,6 +98,8 @@ BEGIN
 					INNER JOIN dbo.f_CS_GetPT_Agent(@CustID) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
 					INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive		
 			END
+			
+			DROP TABLE #PTDownlines3
 		END	
 		ELSE IF @RoleId = 2
 		BEGIN
@@ -139,5 +144,7 @@ BEGIN
 				INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
 		END	
 	END
+
+	DROP TABLE #SportBettypeFilter1
 END
 GO

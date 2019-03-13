@@ -43,7 +43,7 @@ BEGIN
 		INNER JOIN dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
 		INNER JOIN #LogTmp ul WITH (NOLOCK) ON l.ActionID = ul.ActionID
 	WHERE l.SPName = 'CS_CustSetting_PTSetting_Upd' AND ld.Level = 2
-		--AND DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, LogDate) / 7) * 7 + 7, 0)) BETWEEN @FromDate AND @ToDate
+		--AND DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, DATEADD(HOUR, -7, LogDate)) / 7) * 7 + 7, 0)) BETWEEN @FromDate AND @ToDate
 
 	--SELECT * FROM #Log 
 
@@ -62,9 +62,9 @@ BEGIN
 	FROM #Log
 		CROSS APPLY OldValue.nodes('//C') AS RECORDS(o)
 	
-	SELECT DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, n.LogDate) / 7) * 7 + 7, 0)) AS EffectiveDate,
+	SELECT DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, DATEADD(HOUR, -7, n.LogDate)) / 7) * 7 + 7, 0)) AS EffectiveDate,
 		n.SportType, n.BetType, n.ProductID, 
-		n.MasterPT AS NewPT, o.MasterPT AS OldPT 
+		n.MasterPT * 100 AS NewPT, o.MasterPT * 100 AS OldPT 
 	FROM #NewData n 
 		INNER JOIN #OldData o ON o.LogId = n.LogId
 	WHERE n.MasterPT <> o.MasterPT

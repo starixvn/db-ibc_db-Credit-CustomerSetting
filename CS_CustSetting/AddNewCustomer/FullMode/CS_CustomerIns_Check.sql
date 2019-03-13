@@ -143,7 +143,7 @@ BEGIN
 
 	IF @Credit < 0
 	BEGIN
-		SELECT @ErrMsg = '<Root MsgID="70025" Msg="Credit is out of range."></Root>'		    
+		SELECT @ErrMsg = '<Root MsgID="70025" Msg="Credit must be positive."></Root>'		    
 		SELECT @ErrCode = 101, @ErrSettingType = 1, @MsgType = 100
 	    RETURN
 	END
