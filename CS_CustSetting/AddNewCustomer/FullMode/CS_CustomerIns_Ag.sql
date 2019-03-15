@@ -367,7 +367,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(SELECT SportType AS '@Sport'
 									, BetType AS '@BT'
-									, IsLive AS '@IsL'
+									, IsLive AS '@InPlay'
 									, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30)) AS '@Max'
 									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPE'
 								FROM #BetSetting_tmp
@@ -391,7 +391,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(SELECT t.SportType AS '@Sport'
 									, t.BetType AS '@BT'
-									, t.IsLive AS '@IsL'
+									, t.IsLive AS '@InPlay'
 									, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30)) AS '@Comm'
 								FROM #Comm_tmp t
 									INNER JOIN dbo.CS_CommTemplate ct ON ct.ValueId = t.ValueId

@@ -205,14 +205,20 @@ BEGIN
 	SELECT * INTO #PT_tmp
 	FROM dbo.f_CS_PTParse(CAST(@PTSetting AS XML))
 
-	SELECT @LogXML = (SELECT	@ProductId														AS '@ProductID',
-								@IP																AS '@IP',
-								cs.isLive														AS '@IsL',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPT',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPT'
-						FROM #PT_tmp cs
-						FOR XML PATH('R'), 
-						TYPE
+	SELECT @LogXML = (
+						SELECT  @ProductID						AS '@ProductID',
+								@IP                             AS '@IP',
+							(
+								SELECT  cs.sporttype													AS '@Sport',
+										cs.isLive														AS '@InPlay',
+										CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
+										CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+								FROM #PT_tmp cs
+								FOR XML PATH('C'), 
+								TYPE
+							)
+					FOR XML PATH('R'), 
+					TYPE
 					)
 	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
@@ -231,7 +237,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(SELECT SportType AS '@Sport'
 									, BetType AS '@BT'
-									, IsLive AS '@IsL'
+									, IsLive AS '@InPlay'
 									, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30)) AS '@Max'
 									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPE'
 								FROM #BetSetting_tmp
@@ -299,11 +305,11 @@ BEGIN
 								@IP                             AS '@IP',
 								(SELECT t.SportType AS '@Sport'
 									, t.BetType AS '@BT'
-									, t.IsLive AS '@IsL'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupA) AS VARCHAR(30)) AS '@GroupA'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupB) AS VARCHAR(30)) AS '@GroupB'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupC) AS VARCHAR(30)) AS '@GroupC'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupD) AS VARCHAR(30)) AS '@GroupD'
+									, t.IsLive AS '@InPlay'
+									, CAST(CONVERT(DOUBLE PRECISION,t.GroupA) AS VARCHAR(30)) AS '@GrA'
+									, CAST(CONVERT(DOUBLE PRECISION,t.GroupB) AS VARCHAR(30)) AS '@GrB'
+									, CAST(CONVERT(DOUBLE PRECISION,t.GroupC) AS VARCHAR(30)) AS '@GrC'
+									, CAST(CONVERT(DOUBLE PRECISION,t.GroupD) AS VARCHAR(30)) AS '@GrD'
 									, CAST(CONVERT(DOUBLE PRECISION,t.Comm) AS VARCHAR(30))   AS '@Comm'
 								FROM #Com_Log t
 								FOR XML PATH('C'), TYPE)						

@@ -24,7 +24,7 @@ AS
 	Example: 
 		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 4, @CustId = 33554349, @IsTest = 1
 		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 3, @CustID = 34239602, @IsTest = 1
-		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 2, @CustID = 34239861, @IsTest = 1 
+		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 2, @CustID = 34239985, @IsTest = 1 
 		EXEC CS_CustSetting_CommBetSetting_Sel @RoleId = 1, @CustID = 33554405, @IsTest = 1 
 		
 */
@@ -122,7 +122,7 @@ BEGIN
 		WHERE c.recommend = @CustId AND c.roleid = 1
 		GROUP BY memb.sporttype, memb.bettype, memb.Islive
 
-		SELECT memc.sporttype, memc.bettype, memc.Islive, gc.GroupId, MAX(memc.PlayerDiscount) AS MaxCommDownline
+		SELECT memc.sporttype, memc.bettype, memc.Islive, ISNULL(gc.GroupId,0) AS GroupId, MAX(memc.PlayerDiscount) AS MaxCommDownline
 		INTO #CommDownlines2
 		FROM dbo.customer c WITH (NOLOCK) 	
 			CROSS APPLY dbo.f_CS_GetDiscount_Member(c.custid) memc 
@@ -131,11 +131,11 @@ BEGIN
 		WHERE c.recommend = @CustId AND c.roleid = 1
 		GROUP BY memc.sporttype, memc.bettype, memc.Islive, gc.GroupId
 		
-		SELECT memc.sporttype, memc.bettype, memc.Islive, gc.GroupId, MAX(memc.PlayerDiscount) AS MaxCommDownline
+		SELECT memc.sporttype, memc.bettype, memc.Islive, ISNULL(gc.GroupId,0) AS GroupId, MAX(memc.PlayerDiscount) AS MaxCommDownline
 		INTO #GroupCommDownlines2
 		FROM dbo.f_CS_GetGroupDiscount_Member(@CustID) memc  
 			INNER JOIN #SportBettypeFilter2 ft ON memc.SportType = ft.SportType AND memc.BetType = ft.BetType AND memc.IsLive = ft.IsLive
-			INNER JOIN dbo.CS_GroupConfig gc ON memc.uGroup = gc.uGroup
+			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.Bettype AND gc.IsLive = ft.IsLive AND memc.uGroup = gc.uGroup
 		GROUP BY memc.sporttype, memc.bettype, memc.Islive, gc.GroupId
 
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,

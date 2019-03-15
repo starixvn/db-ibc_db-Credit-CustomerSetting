@@ -457,7 +457,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(
 									SELECT  @ProductID														AS '@ProductID'
-											, cs.isLive														AS '@IsL'
+											, cs.isLive														AS '@InPlay'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM @OldBetLimitTbl cs 
@@ -475,7 +475,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.sporttype													AS '@Sport'
-											, cs.isLive														AS '@IsL'
+											, cs.isLive														AS '@InPlay'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM @OldBetLimitTbl cs
@@ -493,7 +493,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.bettype														AS '@BT'
-											, cs.isLive														AS '@IsL'
+											, cs.isLive														AS '@InPlay'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM @OldBetLimitTbl cs 
@@ -512,7 +512,7 @@ BEGIN
 								(
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.bettype													AS '@BT'
-											, cs.isLive														AS '@IsL'
+											, cs.isLive														AS '@InPlay'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM @OldBetLimitTbl cs
@@ -533,7 +533,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(
 									SELECT  @ProductID														AS '@ProductID'
-											, bs.isLive														AS '@IsL'
+											, bs.isLive														AS '@InPlay'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM #BetSetting_tmp bs WITH (NOLOCK)
@@ -551,7 +551,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.sporttype													AS '@Sport'
-											, cs.isLive														AS '@IsL'
+											, cs.isLive														AS '@InPlay'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
@@ -569,7 +569,7 @@ BEGIN
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.bettype														AS '@BT'
-											, cs.isLive														AS '@IsL'
+											, cs.isLive														AS '@InPlay'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
@@ -588,7 +588,7 @@ BEGIN
 								(
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.bettype													AS '@BT'
-											, cs.isLive														AS '@IsL'
+											, cs.isLive														AS '@InPlay'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
 											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
@@ -628,7 +628,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  @ProductID														AS '@ProductID'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
@@ -649,7 +649,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
@@ -670,7 +670,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.bettype														AS '@BT'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
@@ -692,7 +692,7 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
@@ -716,7 +716,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  @ProductID														AS '@ProductID'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
@@ -737,7 +737,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
@@ -758,7 +758,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.bettype														AS '@BT'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
@@ -780,7 +780,7 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
@@ -804,7 +804,7 @@ BEGIN
 							SELECT  @ProductID														AS '@ProductID'
 									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAccName'
 									, @IP															AS '@IP'
-									, cs.isLive														AS '@IsL'
+									, cs.isLive														AS '@InPlay'
 									, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 							FROM @OldCommMemberTbl cs 
 							FOR XML PATH('R'), 
@@ -818,7 +818,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @OldCommMemberTbl cs 
 										FOR XML PATH('C'), 
@@ -835,7 +835,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.bettype														AS '@BT'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @OldCommMemberTbl cs 
 										FOR XML PATH('C'), 
@@ -853,7 +853,7 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
 										FROM @OldCommMemberTbl cs 
 										FOR XML PATH('C'), 
@@ -871,7 +871,7 @@ BEGIN
 							SELECT  @ProductID														AS '@ProductID'
 									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAccName'
 									, @IP															AS '@IP'
-									, cs.isLive														AS '@IsL'
+									, cs.isLive														AS '@InPlay'
 									, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
 							FROM #CommSetting_tmp cs 
 								INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
@@ -886,7 +886,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
 										FROM #CommSetting_tmp cs 
 											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId 
@@ -904,7 +904,7 @@ BEGIN
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.bettype														AS '@BT'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
 										FROM #CommSetting_tmp cs 
 											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
@@ -923,7 +923,7 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
-												, cs.isLive														AS '@IsL'
+												, cs.isLive														AS '@InPlay'
 												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
 										FROM #CommSetting_tmp cs 
 											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
