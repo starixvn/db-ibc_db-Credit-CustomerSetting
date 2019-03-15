@@ -30,7 +30,7 @@ BEGIN
 	SET NOCOUNT ON    
 	DECLARE	@apositiontaking SMALLMONEY, @mpositiontaking SMALLMONEY, @spositiontaking SMALLMONEY, @IsEditablePT BIT,	
 			@MaxPerEvent MONEY, @MaxBet MONEY,
-			@SuperID INT, @MasterID INT, @AgentID INT, @ProductID TINYINT
+			@SuperID INT, @MasterID INT, @AgentID INT
 
 	IF @isLicensee = 0  
 	BEGIN    
@@ -38,8 +38,7 @@ BEGIN
 		FROM custinfo WITH (NOLOCK)
 		WHERE custid = @CustID
 			
-		SELECT TOP 1 @ProductID = ProductID FROM dbo.CS_ProductSettingDetail WITH (NOLOCK) WHERE SportType = @Sporttype	 
-		SELECT @IsEditablePT = IsEditablePT FROM f_CS_GetEditablePTDate(@ProductID)
+		SELECT @IsEditablePT = IsEditablePT FROM f_CS_GetEditablePTDate(1)
 
 		--PT
 		IF @IsEditablePT = 1

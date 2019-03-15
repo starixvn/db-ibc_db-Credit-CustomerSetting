@@ -38,7 +38,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @UserName NVARCHAR(30), @uGroup VARCHAR(3), @SuperID INT, @MasterID INT, @AgentID INT, @ProductID TINYINT
+	DECLARE @UserName NVARCHAR(30), @uGroup VARCHAR(3), @SuperID INT, @MasterID INT, @AgentID INT
 		, @apos SMALLMONEY, @mpos SMALLMONEY, @spos SMALLMONEY, @tpos SMALLMONEY, @IsEditablePT BIT	
 		, @PlayerComm DECIMAL(9, 8), @AgentComm DECIMAL(9, 8), @MasterComm DECIMAL(9, 8), @SuperCommm DECIMAL(9, 8), @IsGroupComm BIT		
 		, @MaxBet MONEY, @MaxPerEvent MONEY
@@ -58,8 +58,7 @@ BEGIN
 		FROM custinfo WITH (NOLOCK)
 		WHERE custid = @custid		
 
-		SELECT TOP 1 @ProductID = ProductID FROM dbo.CS_ProductSettingDetail WITH (NOLOCK) WHERE SportType = @Sporttype	 
-		SELECT @IsEditablePT = IsEditablePT FROM f_CS_GetEditablePTDate(@ProductID)
+		SELECT @IsEditablePT = IsEditablePT FROM f_CS_GetEditablePTDate(1)
 
 		--Get PT Mode
 		SELECT @IsGroupComm = ISNULL(IsGroupComm,0)
