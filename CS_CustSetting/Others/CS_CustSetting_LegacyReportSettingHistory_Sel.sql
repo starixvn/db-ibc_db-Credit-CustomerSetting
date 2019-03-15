@@ -72,7 +72,7 @@ BEGIN
 	DROP TABLE #Log
 	DROP TABLE #LogTmp
 	DROP TABLE #OldData
-	DROP TABLE #NewData
+	DROP TABLE #NewData	
 	--DROP TABLE #SportBettypeFilter1
 END
 GO

@@ -356,5 +356,9 @@ BEGIN
 			RETURN
 		END	
 	END
+
+	DROP TABLE #NewBetSetting
+	DROP TABLE #NewComm
+	DROP TABLE #SportBettypeFilter2
 END
 GO

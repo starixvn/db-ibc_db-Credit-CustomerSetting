@@ -695,5 +695,8 @@ BEGIN
 		@TrackingValue = @LogSPData,
 		@TrackingValue2 = @logSPData_Old,
 		@duration = @duration
+
+	DROP TABLE #PT_tmp
+	DROP TABLE #SportBettypeFilter1 
 END
 GO

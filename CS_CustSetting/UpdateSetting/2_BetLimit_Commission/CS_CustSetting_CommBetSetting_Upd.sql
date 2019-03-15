@@ -278,6 +278,8 @@ BEGIN
 				FROM dbo.CS_CustSettingMode cm WITH (ROWLOCK)
 				WHERE cm.CustId = @CustID
 			END
+
+			DROP TABLE #CommGroupMem_tmp
 		END
 		ELSE
 		BEGIN
@@ -311,6 +313,8 @@ BEGIN
 			FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 				CROSS APPLY dbo.f_SetBinaryValues(cm.PlayerDiscount, @PlayerDiscount_XML) playercomm	
 			WHERE cm.CustId = @CustID
+
+			DROP TABLE #CommMem_tmp
 		END				
 	END
 	ELSE IF @RoleID IN (2,3,4)
@@ -430,6 +434,8 @@ BEGIN
 		FROM dbo.CS_CustDiscount_Agent ca WITH (ROWLOCK)
 			CROSS APPLY dbo.f_SetBinaryValues(ca.Discount, @Discount_XML) comm	
 		WHERE ca.CustId = @CustID		
+
+		DROP TABLE #CommSMA_tmp
 	END
 
 	SELECT @endRun = GETDATE()
@@ -951,5 +957,10 @@ BEGIN
 		@TrackingValue = @LogSPData,
 		@TrackingValue2 = @logSPData_Old,
 		@duration = @duration
+
+	DROP TABLE #BetSetting_tmp	
+	DROP TABLE #CommSetting_tmp	
+	DROP TABLE #SportBettypeFilter2
+	
 END
 GO

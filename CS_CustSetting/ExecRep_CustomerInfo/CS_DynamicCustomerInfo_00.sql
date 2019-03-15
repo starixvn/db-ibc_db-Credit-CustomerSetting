@@ -460,7 +460,11 @@ BEGIN
 				INSERT INTO dbo.CS_CustSettingMode (CustId, IsGroupPT, IsGroupComm)
 				SELECT @CustID, 1, 1
 			END
-		END			
+		END		
+		
+		DROP TABLE #AgentComm
+		DROP TABLE #MasterComm
+		DROP TABLE #SuperComm		
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 2
@@ -481,6 +485,9 @@ BEGIN
 
 	DROP TABLE #SportBettypeFilter1
 	DROP TABLE #SportBettypeFilter2		
+	DROP TABLE #Comm_tmp	
+	DROP TABLE #PT_tmp
+	
 END
 GO
 

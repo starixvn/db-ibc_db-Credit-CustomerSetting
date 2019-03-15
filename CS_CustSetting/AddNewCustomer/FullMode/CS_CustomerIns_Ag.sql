@@ -406,5 +406,8 @@ BEGIN
 			@ActionID = 139999,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
+
+	DROP TABLE #BetSetting_tmp
+	DROP TABLE #Comm_tmp	
 END
 GO

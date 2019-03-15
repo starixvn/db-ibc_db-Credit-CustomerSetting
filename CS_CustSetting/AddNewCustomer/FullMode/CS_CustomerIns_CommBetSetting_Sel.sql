@@ -84,5 +84,7 @@ BEGIN
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = ac.GroupId 
 		WHERE bs.CustId = @CustID --AND (gc.uGroup = @uGroup OR gc.GroupId IS NULL)
 	END
+	
+	DROP TABLE #SportBettypeFilter2
 END
 GO

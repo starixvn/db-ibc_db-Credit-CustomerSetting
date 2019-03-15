@@ -77,5 +77,8 @@ BEGIN
 		SELECT @MinID = @MaxID + 1
 		SELECT @MaxID = @MaxID + @Batch
 	END
+
+	DROP TABLE #UpdatedMem
+	DROP TABLE #UpdatedSMA
 END
 GO

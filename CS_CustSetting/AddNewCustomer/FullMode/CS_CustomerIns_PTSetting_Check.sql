@@ -255,5 +255,8 @@ BEGIN
 			END
 		END
 	END	
+
+	DROP TABLE #NewPT
+	DROP TABLE #SportBettypeFilter1
 END
 GO

@@ -195,6 +195,7 @@ BEGIN
 			WHERE (gc.uGroup = @uGroup OR gc.GroupId IS NULL) AND ab.CustId = @AgentId AND memb.CustId = @CustID
 		END
 	END
+	
 	DROP TABLE #SportBettypeFilter2
 END
 GO

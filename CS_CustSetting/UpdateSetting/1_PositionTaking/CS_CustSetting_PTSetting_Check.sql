@@ -241,7 +241,10 @@ BEGIN
 		
 				RETURN
 			END
-		END		
+		END
+		
+		DROP TABLE #PTDownlines4	
+		DROP TABLE #PTMaster4	
 	END
 	ELSE IF @RoleId = 3
 	BEGIN		
@@ -375,6 +378,8 @@ BEGIN
 				END
 			END
 		END	
+
+		DROP TABLE #PTDownlines3
 	END
 	ELSE IF @RoleId = 2
 	BEGIN
@@ -520,7 +525,10 @@ BEGIN
 		
 				RETURN
 			END
-		END
+		END		
 	END	
+	 
+	DROP TABLE #NewPT	
+	DROP TABLE #SportBettypeFilter1 
 END
 GO

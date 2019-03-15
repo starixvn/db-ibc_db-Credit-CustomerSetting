@@ -317,8 +317,17 @@ BEGIN
 				END
 			
 			END
+
+			DROP TABLE #CommSMA_tmp
 		END
+		
+		DROP TABLE #CommSetting_tmp	
+		DROP TABLE #SportBettypeFilter2
 	END
+
+	
 	---------------------End CommSetting--------------------------------------
+
+	
 END
 GO

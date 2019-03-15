@@ -92,4 +92,7 @@ BEGIN
 	END
 	
 	SELECT * FROM #PTResult
+
+	DROP TABLE #SportBettypeFilter1
+	DROP TABLE #PTResult
 END

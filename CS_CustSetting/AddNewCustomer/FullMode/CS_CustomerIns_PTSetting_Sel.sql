@@ -60,5 +60,7 @@ BEGIN
 			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive AND mpt.SportType = ft.SportType AND mpt.BetType = ft.BetType AND mpt.IsLive = ft.IsLive 
 		WHERE ci.custid = @CustId
 	END	
+
+	DROP TABLE #SportBettypeFilter1
 END
 GO

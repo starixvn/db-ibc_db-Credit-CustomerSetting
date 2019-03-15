@@ -217,6 +217,8 @@ BEGIN
 				RETURN
 			END
 		END		
+
+		DROP TABLE #BetDownlines4
 	END
 	ELSE IF @RoleId = 3
 	BEGIN		
@@ -290,6 +292,8 @@ BEGIN
 				RETURN
 			END
 		END		
+
+		DROP TABLE #BetDownlines3
 	END	
 	ELSE IF @RoleId = 2
 	BEGIN
@@ -362,7 +366,9 @@ BEGIN
 		
 				RETURN
 			END
-		END		
+		END
+		
+		DROP TABLE #BetDownlines2		
 	END	
 	ELSE IF @RoleId = 1
 	BEGIN
@@ -537,6 +543,8 @@ BEGIN
 		
 			RETURN
 		END
+
+		DROP TABLE #CommDownlines4		
 	END
 	ELSE IF @RoleId = 3
 	BEGIN 
@@ -611,6 +619,8 @@ BEGIN
 		
 			RETURN
 		END
+		
+		DROP TABLE #CommDownlines3
 	END
 	ELSE IF @RoleId = 2
 	BEGIN 
@@ -694,6 +704,8 @@ BEGIN
 		
 			RETURN
 		END
+
+		DROP TABLE #CommDownlines2
 	END
 	ELSE IF @RoleId = 1
 	BEGIN 
@@ -732,6 +744,10 @@ BEGIN
 			RETURN
 		END	
 	END
+
+	DROP TABLE #NewBetSetting
+	DROP TABLE #NewComm
+	DROP TABLE #SportBettypeFilter2
 	--End check CommSetting
 END
 GO
