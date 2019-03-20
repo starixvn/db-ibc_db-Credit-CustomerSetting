@@ -301,7 +301,7 @@ BEGIN
 			MAX(mb.MaxBet) AS MaxMaxBetDownline, MAX(mb.MaxPerEvent) AS MaxMaxPerEventDownline
 		INTO #BetDownlines2
 		FROM dbo.custInfo ci WITH (NOLOCK) 	
-			INNER JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.CustId = ci.custid
+			INNER JOIN dbo.CS_CustBetSetting_Member mb WITH (NOLOCK) ON mb.CustId = ci.custid
 			INNER JOIN #SportBettypeFilter2 ft ON mb.SportType = ft.SportType AND mb.BetType = ft.BetType AND mb.IsLive = ft.IsLive
 		WHERE ci.recommend = @CustId AND ci.roleid = 1
 		GROUP BY mb.sporttype, mb.bettype, mb.Islive

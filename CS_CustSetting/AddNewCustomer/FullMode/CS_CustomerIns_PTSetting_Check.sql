@@ -136,6 +136,7 @@ BEGIN
 			INNER JOIN dbo.f_CS_GetPT_Agent(@SuperId) spt ON cs.SportType = spt.Sporttype AND cs.BetType = spt.bettype AND cs.IsLive = spt.IsLive
 		WHERE cs.SuperPT < 0 --check s3 >= 0
 			OR cs.SuperPT > spt.MaxPT --check s3 <= l4
+			OR cs.SuperPT > spt.MaxPT2 --check s3 <= l4
 		
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -169,6 +170,7 @@ BEGIN
 			INNER JOIN dbo.f_CS_GetPT_Agent(@SuperId) spt ON cs.SportType = spt.Sporttype AND cs.BetType = spt.bettype AND cs.IsLive = spt.IsLive
 		WHERE cs.MasterPT < 0 OR cs.AgentPT < 0 --check m2 >= 0, a2 >=0
 			OR cs.MasterPT > spt.MaxPT OR cs.AgentPT > spt.MaxPT --check m2 <= l4, a2<=l4
+			OR cs.MasterPT > spt.MaxPT2 OR cs.AgentPT > spt.MaxPT2 --check m2 <= l4, a2<=l4
 		
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -194,16 +196,31 @@ BEGIN
 			RETURN
 		END
 
-		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, 
-			CASE	WHEN apt.MasterPT + apt.AgentPT < CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END THEN 201 
-					WHEN apt.MasterPT + apt.AgentPT > CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END THEN 202 END
+		SELECT	ft.SportType, ft.Bettype, ft.IsLive, 
+				CASE	WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) AND (spt.MinPT - mpt.SuperPT) >= (spt.MinPT2 - mpt.SuperPT2) THEN spt.MinPT - mpt.SuperPT 
+						WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) AND (spt.MinPT - mpt.SuperPT) < (spt.MinPT2 - mpt.SuperPT2) THEN spt.MinPT2 - mpt.SuperPT2
+						WHEN (spt.MinPT < mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) THEN spt.MinPT2 - mpt.SuperPT2
+						WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 < mpt.SuperPT2) THEN spt.MinPT - mpt.SuperPT
+						ELSE 0 END AS MinAllowedPT, 				
+				CASE	WHEN (spt.MaxPT >= mpt.SuperPT) AND (spt.MaxPT2 >= mpt.SuperPT2) AND (spt.MaxPT - mpt.SuperPT) <= (spt.MaxPT2 - mpt.SuperPT2) THEN spt.MaxPT - mpt.SuperPT 
+						WHEN (spt.MaxPT >= mpt.SuperPT) AND (spt.MaxPT2 >= mpt.SuperPT2) AND (spt.MaxPT - mpt.SuperPT) > (spt.MaxPT2 - mpt.SuperPT2) THEN spt.MaxPT2 - mpt.SuperPT2
+						ELSE 0 END AS MaxAllowedPT
+		INTO #tmpAllowedPT		 
 		FROM dbo.f_CS_GetPT_Agent (@SuperId) spt 			
 			INNER JOIN dbo.f_CS_GetPT_Agent (@MasterId) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
-			INNER JOIN #NewPT apt ON apt.SportType = mpt.SportType AND apt.BetType = mpt.BetType AND apt.IsLive = mpt.IsLive
 			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
-		WHERE apt.MasterPT + apt.AgentPT < CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END --check a2 + m2 >= n4 - s3
-			OR apt.MasterPT + apt.AgentPT > CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END --check a2 + m2 <= l4 - s3
+
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, 
+			CASE	WHEN MaxAllowedPT < MinAllowedPT THEN 203
+					WHEN apt.MasterPT + apt.AgentPT < MinAllowedPT THEN 201 
+					WHEN apt.MasterPT + apt.AgentPT > MaxAllowedPT THEN 202 END
+		FROM #NewPT apt 
+			INNER JOIN #tmpAllowedPT t ON apt.SportType = t.SportType AND apt.BetType = t.BetType AND apt.IsLive = t.IsLive
+			INNER JOIN #SportBettypeFilter1 ft ON apt.SportType = ft.SportType AND apt.BetType = ft.BetType AND apt.IsLive = ft.IsLive
+		WHERE apt.MasterPT + apt.AgentPT < MinAllowedPT --check a2 + m2 >= n4 - s3
+			OR apt.MasterPT + apt.AgentPT > MaxAllowedPT --check a2 + m2 <= l4 - s3
+			OR MaxAllowedPT < MinAllowedPT 
 
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -250,6 +267,29 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
 				SET @MsgType = 5
 				SET @ErrCode = 202
+		
+				RETURN
+			END
+			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 203)
+			BEGIN
+				SET @ErrType = (
+						SELECT 20043 AS '@MsgID'
+							, 'Conflict between current possess and new possess values. Please try again after the new possess value takes effect.' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, tmp.IsLive AS '@IsLive'
+								FROM @ErrorTbl tmp
+								WHERE	ErrCode = 203								
+								FOR XML PATH('Row')
+									, TYPE	
+								)						
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+				SET @MsgType = 5
+				SET @ErrCode = 203
 		
 				RETURN
 			END

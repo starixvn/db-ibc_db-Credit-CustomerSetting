@@ -23,7 +23,7 @@ AS
 	Example: 
 		EXEC CS_CustSetting_PTSetting_Sel @RoleId = 4, @CustID = 33418956, @IsTest = 1
 		EXEC CS_CustSetting_PTSetting_Sel @RoleId = 3, @CustID = 33418956, @IsTest = 1
-		EXEC CS_CustSetting_PTSetting_Sel @RoleId = 2, @CustID = 33418957, @IsTest = 1
+		EXEC CS_CustSetting_PTSetting_Sel @RoleId = 2, @CustID = 34240046, @IsTest = 1
 */
 
 BEGIN
@@ -135,8 +135,8 @@ BEGIN
 		ELSE IF @RoleId = 2
 		BEGIN
 			SELECT ft.SportType, ft.Bettype, ft.IsLive, 
-				CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END AS CurrentMinAllowedPT, 
-				CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS CurrentMaxAllowedPT, 
+				CASE WHEN spt.MinPT > mpt.SuperPT THEN spt.MinPT - mpt.SuperPT ELSE 0 END AS MinAllowedPT, 
+				CASE WHEN spt.MaxPT > mpt.SuperPT THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS MaxAllowedPT, 
 				apt.MasterPT AS CurrentMasterPT, apt.AgentPT AS CurrentAgentPT
 			FROM dbo.f_CS_GetPT_Agent (@SuperId) spt 			
 				INNER JOIN dbo.f_CS_GetPT_Agent (@MasterId) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive

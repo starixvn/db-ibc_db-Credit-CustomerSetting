@@ -91,7 +91,7 @@ BEGIN
 			INNER JOIN #SportBettypeFilter1 ft ON cs.SportType = ft.SportType AND cs.BetType = ft.BetType AND cs.IsLive = ft.IsLive			
 	END
 	
-	SELECT * FROM #PTResult
+	SELECT custid, sporttype, bettype, superPT/100 AS SuperPT, masterPT/100 AS MasterPT, agentPT/100 AS AgentPT, extraPT/100 AS ExtraPT FROM #PTResult
 
 	DROP TABLE #SportBettypeFilter1
 	DROP TABLE #PTResult

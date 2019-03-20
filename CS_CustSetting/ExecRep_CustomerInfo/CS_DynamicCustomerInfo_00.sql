@@ -460,11 +460,11 @@ BEGIN
 				INSERT INTO dbo.CS_CustSettingMode (CustId, IsGroupPT, IsGroupComm)
 				SELECT @CustID, 1, 1
 			END
-		END		
-		
-		DROP TABLE #AgentComm
-		DROP TABLE #MasterComm
-		DROP TABLE #SuperComm		
+
+			DROP TABLE #AgentComm
+			DROP TABLE #MasterComm
+			DROP TABLE #SuperComm	
+		END							
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 2

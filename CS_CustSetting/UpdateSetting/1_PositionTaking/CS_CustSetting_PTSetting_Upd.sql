@@ -145,6 +145,7 @@ BEGIN
 									CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
 									CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
 							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+								INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 							FOR XML PATH('R'), 
 							TYPE
 							)
@@ -160,6 +161,7 @@ BEGIN
 												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
 												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
 										TYPE
 									)
@@ -178,11 +180,12 @@ BEGIN
 												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
 												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-												FOR XML PATH('C'), 
-												TYPE
-											)
-									FOR XML PATH('R'), 
-									TYPE
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
 							)					
 		END
 		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
@@ -197,11 +200,12 @@ BEGIN
 												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
 												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-												FOR XML PATH('C'), 
-												TYPE
-											)
-									FOR XML PATH('R'), 
-									TYPE
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
 							)
 		END		
 				
@@ -323,6 +327,7 @@ BEGIN
 									cs.isLive														AS '@InPlay',
 									CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
 							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+								INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 							FOR XML PATH('R'), 
 							TYPE
 							)
@@ -338,6 +343,7 @@ BEGIN
 												cs.isLive														AS '@InPlay',
 												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
 										TYPE
 									)
@@ -356,11 +362,12 @@ BEGIN
 												cs.isLive														AS '@InPlay',
 												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-												FOR XML PATH('C'), 
-												TYPE
-											)
-									FOR XML PATH('R'), 
-									TYPE
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
 							)					
 		END
 		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
@@ -375,11 +382,12 @@ BEGIN
 												cs.isLive														AS '@InPlay',
 												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-												FOR XML PATH('C'), 
-												TYPE
-											)
-									FOR XML PATH('R'), 
-									TYPE
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
 							)
 		END	
 
@@ -494,6 +502,7 @@ BEGIN
 									CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
 									CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
 							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+								INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 							FOR XML PATH('R'), 
 							TYPE
 							)
@@ -510,6 +519,7 @@ BEGIN
 												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
 												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
 										TYPE
 									)
@@ -529,11 +539,12 @@ BEGIN
 												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
 												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-												FOR XML PATH('C'), 
-												TYPE
-											)
-									FOR XML PATH('R'), 
-									TYPE
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
 							)					
 		END
 		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
@@ -549,11 +560,12 @@ BEGIN
 												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
 												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
-												FOR XML PATH('C'), 
-												TYPE
-											)
-									FOR XML PATH('R'), 
-									TYPE
+											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
+										FOR XML PATH('C'), 
+										TYPE
+									)
+							FOR XML PATH('R'), 
+							TYPE
 							)
 		END	
 
