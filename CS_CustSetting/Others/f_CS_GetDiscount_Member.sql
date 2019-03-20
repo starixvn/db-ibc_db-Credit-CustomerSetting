@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="" isFunction="1"></info>*/
 
 CREATE FUNCTION [dbo].[f_CS_GetDiscount_Member] (@CustId INT)	       
 RETURNS TABLE
