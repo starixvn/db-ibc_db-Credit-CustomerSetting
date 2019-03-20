@@ -133,6 +133,19 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
+	
+	IF dbo.f_CheckRepTable('CS_CustPTSetting_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_CustPTGroupSetting_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_CustSettingMode') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_CustBetSetting_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_CustBetSetting_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_GroupConfig') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_CustDiscount_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_CustDiscount_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_CustGroupDiscount_Member') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_ProductSettingDetail') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_ByteSeq') = 0 RETURN
+
 	DECLARE @MinPT_XML XML, @MaxPT_XML XML, @SuperPT_XML XML, @MasterPT_XML XML, @AgentPT_XML XML
 	DECLARE @Discount_XML XML, @PlayerDiscount_XML XML, @AgentDiscount_XML XML, @MasterDiscount_XML XML, @SuperDiscount_XML XML
 	DECLARE @_PTSetting XML, @_BetSetting XML, @_CommSetting XML
