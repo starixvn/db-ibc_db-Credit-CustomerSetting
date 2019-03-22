@@ -43,7 +43,7 @@ BEGIN
 		INNER JOIN dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
 		INNER JOIN #LogTmp ul WITH (NOLOCK) ON l.ActionID = ul.ActionID
 	WHERE l.SPName = 'CS_CustSetting_PTSetting_Upd' AND ld.Level = 2
-		--AND DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, DATEADD(HOUR, -7, LogDate)) / 7) * 7 + 7, 0)) BETWEEN @FromDate AND @ToDate
+		AND DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, DATEADD(HOUR, -7, LogDate)) / 7) * 7 + 7, 0)) BETWEEN @FromDate AND @ToDate
 
 	--SELECT * FROM #Log 
 
