@@ -25,8 +25,6 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	-- Check permission
-
 	SELECT  @UpdCredit = ISNULL(@UpdCredit, 0)
 
 	DECLARE @srecommend INT, @mrecommend INT, @recommend INT
@@ -82,26 +80,6 @@ BEGIN
 		SELECT	@MinCredit = ISNULL(@UsedCredit, 0),
 				@MaxCredit = ISNULL(@UplineCredit, 0) - ISNULL(@UplineUsedCredit, 0) + ISNULL(@Credit, 0)
 	END
-	ELSE IF @RoleId = 1
-	BEGIN
-		-- Prevent user from decreasing given credit due to processing data
-		IF ISNULL(@Credit, 0) > ISNULL(@UpdCredit, 0)
-		BEGIN
-			EXEC DBTXN.bodb02.dbo.Acc_Core_IsMainProcessRunning
-				@CustId				= @CustId,
-				@UplineId			= @recommend,
-				@IsDepositMember	= 0,
-				@ErrCode			= @ErrCode OUTPUT,
-				@ErrMsg				= @ErrMsg OUTPUT
-
-			IF @ErrCode <> 0
-			BEGIN
-				-- Data processing is in progress, thus Given Credit cannot be reduced. Please try again in a few minutes.
-				SELECT @ErrCode = 102, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (70022, @Language)
-				RETURN
-			END
-		END
-	END
 
 	-- SP check on SMA/MA/Agent, web check Member
 	IF (@RoleId IN (2,3) AND @UpdCredit NOT BETWEEN @MinCredit AND @MaxCredit)
@@ -116,6 +94,7 @@ BEGIN
 	BEGIN TRY
 		UPDATE dbo.custInfo WITH (ROWLOCK, UPDLOCK)
 		SET credit = @UpdCredit
+			,CreditUpdatedDate = GETDATE()
 		WHERE custId = @custId
 	END TRY
 	BEGIN CATCH
