@@ -98,8 +98,8 @@ BEGIN
 		WHERE custId = @custId
 	END TRY
 	BEGIN CATCH
-		-- Credit update not successful.
-		SELECT @ErrCode = 104, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (70027, @Language)
+		-- Update process is unsuccessful.
+		SELECT @ErrCode = 104, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (90001, @Language)
 		RETURN
 	END CATCH
 
