@@ -12,12 +12,12 @@ CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdMasterGoldDeluxe_
 CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdAgentGoldDeluxe_All.sql
 CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdAgentGoldDeluxe_PositionTaking.sql
 
-CustSetting\UpdateSetting\Keno\Update\dbo.Acc_CustomerUpdSuperKeno.sql
-CustSetting\UpdateSetting\Keno\Update\dbo.Acc_CustomerUpdSuperKeno_Positiontaking.sql
-CustSetting\UpdateSetting\Keno\Update\dbo.Acc_CustomerUpdMasterKeno.sql
-CustSetting\UpdateSetting\Keno\Update\dbo.Acc_CustomerUpdMasterKeno_Positiontaking.sql
-CustSetting\UpdateSetting\Keno\Update\dbo.Acc_CustomerUpdAgentKeno.sql
-CustSetting\UpdateSetting\Keno\Update\dbo.Acc_CustomerUpdAgentKeno_PositionTaking.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno_Positiontaking.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno_Positiontaking.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno_PositionTaking.sql
 
 
 
