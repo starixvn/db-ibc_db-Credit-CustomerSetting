@@ -184,7 +184,7 @@ BEGIN
 	END
 
 	-- 2. Downlines
-	IF @UpdStatusId IN (2,3) AND @RoleId BETWEEN 2 AND 4
+	IF @RoleId BETWEEN 2 AND 4
 	BEGIN
 		EXEC dbo.CS_DynamicCustomerInfo_01
 			@CustId			= @CustId,

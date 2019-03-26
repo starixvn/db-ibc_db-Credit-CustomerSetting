@@ -47,9 +47,9 @@ BEGIN
 				WHERE srecommend = @CustId
 					AND roleId < 4
 					AND 1 = CASE
-						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1
-						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1
-						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1
+						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1 -- open to suspended
+						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1 -- open to closed
+						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1 -- suspended to open/closed
 						ELSE 0 END
 			END
 			ELSE IF @RoleId = 3
@@ -60,9 +60,9 @@ BEGIN
 				WHERE mrecommend = @CustId
 					AND roleId < 3
 					AND 1 = CASE
-						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1
-						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1
-						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1
+						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1 -- open to suspended
+						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1 -- open to closed
+						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1 -- suspended to open/closed
 						ELSE 0 END
 			END
 			ELSE IF @RoleId = 2
@@ -73,9 +73,9 @@ BEGIN
 				WHERE recommend = @CustId
 					AND roleId < 2
 					AND 1 = CASE
-						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1
-						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1
-						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1
+						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1 -- open to suspended
+						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1 -- open to closed
+						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1 -- suspended to open/closed
 						ELSE 0 END
 			END
 				
