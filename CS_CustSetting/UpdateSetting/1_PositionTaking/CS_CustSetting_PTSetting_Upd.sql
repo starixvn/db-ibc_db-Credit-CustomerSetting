@@ -42,7 +42,7 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML, @_PTSetting XML, @xml XML, @xml_Old XML  
+	DECLARE @startRun DATETIME,@endRun DATETIME, @duration INT, @ActionId INT, @SPName VARCHAR(50), @logSPData VARCHAR(MAX),@logSPData_Old VARCHAR(MAX), @ErrType XML, @_PTSetting XML, @xml XML, @xml_Old XML  
 	DECLARE @MinPT_XML XML, @MaxPT_XML XML, @SuperPT_XML XML, @MasterPT_XML XML, @AgentPT_XML XML
 	DECLARE @SettingLevel	TINYINT
 	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @IsEditablePT BIT
@@ -695,10 +695,12 @@ BEGIN
 	SET @logSPData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml_Old), '" />', '"/"')		
 	SET @logSPData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')				
 
+	SELECT @SPName = dbo.f_CS_GetOriginalNameSP('CS_CustSetting_PTSetting_Upd')
+
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
-	WHERE l.SPName = 'CS_CustSetting_PTSetting_Upd' AND ld.ProductID = @ProductID AND ld.Level = @RoleID			
+	WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID			
 			
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,
