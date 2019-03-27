@@ -52,7 +52,7 @@ BEGIN
 	
 	SET @startRun = GETDATE()
 	SELECT @ErrCode = 0
-	SELECT @autosuspend = 0, @autosuspend2 = 0
+	SELECT @autosuspend = 0, @autosuspend2 = 0, @credit = ISNULL(@credit,0)
 
 	SELECT @HeadlineId = custid, @currency = currency FROM Customer WITH (NOLOCK) WHERE username= @HeadlineUsername AND roleid = 0
 	IF @HeadlineId IS NULL

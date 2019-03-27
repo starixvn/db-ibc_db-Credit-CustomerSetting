@@ -52,6 +52,7 @@ BEGIN
 	SELECT @username = RTRIM(LTRIM(@username))
 	SELECT @pwdexpiry = dbo.f_CS_GetPwdExpiryDate (1)
 	SELECT @srecommend = srecommend, @mrecommend = mrecommend FROM dbo.customer WITH(NOLOCK) WHERE custid = @recommend AND roleid = 2
+	SELECT @credit = ISNULL(@credit,0)
 
 	-----BEGIN: 20180703@viet: normal agent can create up to 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute
 	DECLARE @RestrictedCredit money = 100
