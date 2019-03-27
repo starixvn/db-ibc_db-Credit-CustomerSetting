@@ -155,7 +155,7 @@ BEGIN
 	END	
 	
 	DECLARE @EffectiveDate DATETIME = CONVERT(DATE,GETDATE())
-	EXEC dbo.Acc_GroupExtraPTSetting_Upd
+	EXEC dbo.CS_GroupExtraPTSetting_Upd
 		@CustID = @custid,
 		@GroupName = 'CN88',
 		@EffectiveDate = @EffectiveDate,
