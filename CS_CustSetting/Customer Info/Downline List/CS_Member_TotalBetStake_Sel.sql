@@ -26,9 +26,13 @@ BEGIN
 	DELETE dbo.DailyBetStake WITH (ROWLOCK, UPDLOCK)
 	WHERE  CustId = @CustId AND Date = @today
 	*/
-
-	EXEC dbo.Dot_Member_CalcDailyBetStake_CN88_test @CustId = @CustId, @Date = @today, @Stake = 0
-
+	-- prevent violation of primary key when insert action
+	BEGIN TRY
+		EXEC dbo.Dot_Member_CalcDailyBetStake_CN88_test @CustId = @CustId, @Date = @today, @Stake = 0
+	END TRY
+	BEGIN CATCH
+		EXEC dbo.Dot_Member_CalcDailyBetStake_CN88_test @CustId = @CustId, @Date = @today, @Stake = 0
+	END CATCH
 	/*
 
 	DECLARE @today SMALLDATETIME
