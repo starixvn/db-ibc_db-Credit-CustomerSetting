@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="" isFunction="1"></info>*/
 
 ALTER FUNCTION [dbo].[f_CS_GetOriginalNameSP](@SPName VARCHAR(50)) 
 RETURNS VARCHAR(50) 
