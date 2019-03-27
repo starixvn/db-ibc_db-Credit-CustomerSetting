@@ -334,7 +334,7 @@ BEGIN
 	  , @matchlimit, @virtualmultiplier
 	  , 1, @DisableOutright, 1, 1,  0, 0, 0
 	  , @danger, @danger2, @danger3, @Abnormal
-	  , 1,1, 1, 1, 1, 1, 1,1,1, NULL, NULL
+	  , 0,1, 1, 1, 1, 1, 1,1,1, NULL, NULL
     )
 
     IF @@ERROR <> 0
