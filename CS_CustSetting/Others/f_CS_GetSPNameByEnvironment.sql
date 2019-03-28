@@ -1,6 +1,6 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="1"></info>*/
 
-ALTER FUNCTION [dbo].[f_CS_GetOriginalNameSP](@SPName VARCHAR(50)) 
+ALTER FUNCTION [dbo].[f_CS_GetSPNameByEnvironment](@SPName VARCHAR(50)) 
 RETURNS VARCHAR(50) 
 /*
     Created: Elodie
@@ -11,7 +11,7 @@ RETURNS VARCHAR(50)
     Revision:
 		- 20181212@Elodie: Initial SP [Redmine: #105338]
     Example:
-		SELECT dbo.f_CS_GetOriginalNameSP('CS_CustSetting_CommBetSetting_Upd_xpre')
+		SELECT dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_CommBetSetting_Upd_xpre')
 */
 AS
 BEGIN

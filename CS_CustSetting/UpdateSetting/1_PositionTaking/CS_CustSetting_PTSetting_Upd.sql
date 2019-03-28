@@ -695,19 +695,12 @@ BEGIN
 	SET @logSPData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml_Old), '" />', '"/"')		
 	SET @logSPData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')				
 
-	SELECT @SPName = dbo.f_CS_GetOriginalNameSP('CS_CustSetting_PTSetting_Upd')
-
-	;WITH CTE AS
-	(	SELECT 'CS_CustSetting_PTSetting_Upd' AS n
-	)
-	SELECT @SPName = f.SPName FROM cte CROSS APPLY dbo.f_CS_GetOriginalNameSP2(cte.n) AS f
-
-	SELECT @SPName = 'CS_CustSetting_PTSetting_Upd'
+	SELECT @SPName = dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_PTSetting_Upd')
 
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
-	WHERE l.SPName IN ('CS_CustSetting_PTSetting_Upd') AND ld.ProductID = @ProductID AND ld.Level = @RoleID			
+	WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID			
 			
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,

@@ -945,7 +945,7 @@ BEGIN
 	SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml_Old), '" />', '"/"')	
 	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')	
 
-	SELECT @SPName = dbo.f_CS_GetOriginalNameSP('CS_CustSetting_CommBetSetting_Upd')
+	SELECT @SPName = dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_CommBetSetting_Upd')
 
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
