@@ -697,10 +697,12 @@ BEGIN
 
 	SELECT @SPName = dbo.f_CS_GetOriginalNameSP('CS_CustSetting_PTSetting_Upd')
 
+	SELECT @SPName = SPName FROM dbo.f_CS_GetOriginalNameSP2('CS_CustSetting_PTSetting_Upd')
+
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
-	WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID			
+	WHERE l.SPName = 'CS_CustSetting_PTSetting_Upd' AND ld.ProductID = @ProductID AND ld.Level = @RoleID			
 			
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,

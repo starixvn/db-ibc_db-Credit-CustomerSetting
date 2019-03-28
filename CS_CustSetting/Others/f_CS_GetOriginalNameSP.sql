@@ -20,7 +20,7 @@ BEGIN
 							WHEN @SPName LIKE '%_UAT1' THEN REPLACE(@SPName,'_UAT1','') 
 							WHEN @SPName LIKE '%_UAT2' THEN REPLACE(@SPName,'_UAT2','') 
 							WHEN @SPName LIKE '%_UAT3' THEN REPLACE(@SPName,'_UAT3','') 
-							WHEN @SPName LIKE '%_UAT4' THEN REPLACE(@SPName,'_UAT4','') END
+							WHEN @SPName LIKE '%_UAT4' THEN REPLACE(@SPName,'_UAT4','') ELSE @SPName END
 	RETURN @SPName
 END
 
