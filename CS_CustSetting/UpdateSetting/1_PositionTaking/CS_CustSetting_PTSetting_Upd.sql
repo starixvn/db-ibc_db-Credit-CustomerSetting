@@ -695,7 +695,7 @@ BEGIN
 	SET @logSPData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml_Old), '" />', '"/"')		
 	SET @logSPData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')				
 
-	SELECT @SPName = dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_PTSetting_Upd')
+	SELECT @SPName = dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_PTSetting_Upd') --Use this tip to pass GOSQL deploy tool
 
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
