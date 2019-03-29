@@ -12,7 +12,7 @@ AS
     Revision:
 		- 20181212@Elodie: Initial SP [Redmine: #105338]
     Example:
-		SELECT dbo.f_CS_GetPwdExpiryDate (GETDATE(), 2)
+		SELECT dbo.f_CS_GetPwdExpiryDate (2)
 */
 BEGIN
 	DECLARE @Date DATETIME
