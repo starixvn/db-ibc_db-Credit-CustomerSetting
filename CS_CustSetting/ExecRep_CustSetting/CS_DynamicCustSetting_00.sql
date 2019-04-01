@@ -118,13 +118,13 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupADiscount_XML) acomm	
-					WHERE c.recommend = @CustID AND c.ugroup = 'CNA' AND c.roleid = 1
+					WHERE c.recommend = @CustID AND c.ugroup = 'A' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.AgentDiscount = acomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupADiscount_XML) acomm	
-					WHERE cm.AgentId = @CustID AND cm.uGroup = 'CNA'
+					WHERE cm.AgentId = @CustID AND cm.uGroup = 'A'
 				END
 			
 				IF @GroupBDiscount_XML IS NOT NULL
@@ -134,13 +134,13 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupBDiscount_XML) acomm	
-					WHERE c.recommend = @CustID AND c.ugroup = 'CNB' AND c.roleid = 1
+					WHERE c.recommend = @CustID AND c.ugroup = 'B' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.AgentDiscount = acomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupBDiscount_XML) acomm	
-					WHERE cm.AgentId = @CustID AND cm.uGroup = 'CNB'
+					WHERE cm.AgentId = @CustID AND cm.uGroup = 'B'
 				END
 
 				IF @GroupCDiscount_XML IS NOT NULL
@@ -150,13 +150,13 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupCDiscount_XML) acomm	
-					WHERE c.recommend = @CustID AND c.ugroup = 'CNC' AND c.roleid = 1
+					WHERE c.recommend = @CustID AND c.ugroup = 'C' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.AgentDiscount = acomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupCDiscount_XML) acomm	
-					WHERE cm.AgentId = @CustID AND cm.uGroup = 'CNC'
+					WHERE cm.AgentId = @CustID AND cm.uGroup = 'C'
 				END
 
 				IF @GroupDDiscount_XML IS NOT NULL
@@ -166,13 +166,13 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupDDiscount_XML) acomm	
-					WHERE c.recommend = @CustID AND c.ugroup = 'CND' AND c.roleid = 1
+					WHERE c.recommend = @CustID AND c.ugroup = 'D' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.AgentDiscount = acomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						CROSS APPLY dbo.f_SetBinaryValues(cm.AgentDiscount, @GroupDDiscount_XML) acomm	
-					WHERE cm.AgentId = @CustID AND cm.uGroup = 'CND'
+					WHERE cm.AgentId = @CustID AND cm.uGroup = 'D'
 				END
 			END
 			ELSE IF @RoleId = 3
@@ -184,14 +184,14 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.MasterDiscount, @GroupADiscount_XML) mcomm	
-					WHERE c.mrecommend = @CustID AND c.ugroup = 'CNA' AND c.roleid = 1
+					WHERE c.mrecommend = @CustID AND c.ugroup = 'A' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.MasterDiscount = mcomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.AgentId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.MasterDiscount, @GroupADiscount_XML) mcomm	
-					WHERE c.mrecommend = @CustID AND cm.uGroup = 'CNA' AND c.roleid = 2
+					WHERE c.mrecommend = @CustID AND cm.uGroup = 'A' AND c.roleid = 2
 				END
 			
 				IF @GroupBDiscount_XML IS NOT NULL
@@ -201,14 +201,14 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.MasterDiscount, @GroupBDiscount_XML) mcomm	
-					WHERE c.mrecommend = @CustID AND c.ugroup = 'CNB' AND c.roleid = 1
+					WHERE c.mrecommend = @CustID AND c.ugroup = 'B' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.MasterDiscount = mcomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.AgentId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.MasterDiscount, @GroupBDiscount_XML) mcomm	
-					WHERE c.mrecommend = @CustID AND cm.uGroup = 'CNB' AND c.roleid = 2
+					WHERE c.mrecommend = @CustID AND cm.uGroup = 'B' AND c.roleid = 2
 				END
 
 				IF @GroupCDiscount_XML IS NOT NULL
@@ -218,14 +218,14 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.MasterDiscount, @GroupCDiscount_XML) mcomm	
-					WHERE c.mrecommend = @CustID AND c.ugroup = 'CNC' AND c.roleid = 1
+					WHERE c.mrecommend = @CustID AND c.ugroup = 'C' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.MasterDiscount = mcomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.AgentId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.MasterDiscount, @GroupCDiscount_XML) mcomm	
-					WHERE c.mrecommend = @CustID AND cm.uGroup = 'CNC' AND c.roleid = 2
+					WHERE c.mrecommend = @CustID AND cm.uGroup = 'C' AND c.roleid = 2
 				END
 
 				IF @GroupDDiscount_XML IS NOT NULL
@@ -235,14 +235,14 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.MasterDiscount, @GroupDDiscount_XML) mcomm	
-					WHERE c.mrecommend = @CustID AND c.ugroup = 'CND' AND c.roleid = 1
+					WHERE c.mrecommend = @CustID AND c.ugroup = 'D' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.MasterDiscount = mcomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.AgentId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.MasterDiscount, @GroupDDiscount_XML) mcomm	
-					WHERE c.mrecommend = @CustID AND cm.uGroup = 'CND' AND c.roleid = 2
+					WHERE c.mrecommend = @CustID AND cm.uGroup = 'D' AND c.roleid = 2
 				END
 			
 			END
@@ -255,14 +255,14 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.SuperDiscount, @GroupADiscount_XML) scomm	
-					WHERE c.srecommend = @CustID AND c.ugroup = 'CNA' AND c.roleid = 1
+					WHERE c.srecommend = @CustID AND c.ugroup = 'A' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.SuperDiscount = scomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.AgentId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.SuperDiscount, @GroupADiscount_XML) scomm	
-					WHERE c.srecommend = @CustID AND cm.uGroup = 'CNA' AND c.roleid = 2
+					WHERE c.srecommend = @CustID AND cm.uGroup = 'A' AND c.roleid = 2
 				END
 			
 				IF @GroupBDiscount_XML IS NOT NULL
@@ -272,14 +272,14 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.SuperDiscount, @GroupBDiscount_XML) scomm	
-					WHERE c.srecommend = @CustID AND c.ugroup = 'CNB' AND c.roleid = 1
+					WHERE c.srecommend = @CustID AND c.ugroup = 'B' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.SuperDiscount = scomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.AgentId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.SuperDiscount, @GroupBDiscount_XML) scomm	
-					WHERE c.srecommend = @CustID AND cm.uGroup = 'CNB' AND c.roleid = 2
+					WHERE c.srecommend = @CustID AND cm.uGroup = 'B' AND c.roleid = 2
 				END
 
 				IF @GroupCDiscount_XML IS NOT NULL
@@ -289,14 +289,14 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.SuperDiscount, @GroupCDiscount_XML) scomm	
-					WHERE c.srecommend = @CustID AND c.ugroup = 'CNC' AND c.roleid = 1
+					WHERE c.srecommend = @CustID AND c.ugroup = 'C' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.SuperDiscount = scomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.AgentId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.SuperDiscount, @GroupCDiscount_XML) scomm	
-					WHERE c.srecommend = @CustID AND cm.uGroup = 'CNC' AND c.roleid = 2
+					WHERE c.srecommend = @CustID AND cm.uGroup = 'C' AND c.roleid = 2
 				END
 
 				IF @GroupDDiscount_XML IS NOT NULL
@@ -306,14 +306,14 @@ BEGIN
 					FROM dbo.CS_CustDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.CustId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.SuperDiscount, @GroupDDiscount_XML) scomm	
-					WHERE c.srecommend = @CustID AND c.ugroup = 'CND' AND c.roleid = 1
+					WHERE c.srecommend = @CustID AND c.ugroup = 'D' AND c.roleid = 1
 
 					UPDATE cm
 					SET cm.SuperDiscount = scomm.binaryStr_new
 					FROM dbo.CS_CustGroupDiscount_Member cm WITH (ROWLOCK)
 						INNER JOIN customer c WITH (NOLOCK) ON c.custid = cm.AgentId
 						CROSS APPLY dbo.f_SetBinaryValues(cm.SuperDiscount, @GroupDDiscount_XML) scomm	
-					WHERE c.srecommend = @CustID AND cm.uGroup = 'CND' AND c.roleid = 2
+					WHERE c.srecommend = @CustID AND cm.uGroup = 'D' AND c.roleid = 2
 				END
 			
 			END
