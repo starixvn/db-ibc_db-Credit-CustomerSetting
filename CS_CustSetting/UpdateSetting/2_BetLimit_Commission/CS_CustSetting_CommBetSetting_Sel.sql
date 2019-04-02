@@ -150,7 +150,7 @@ BEGIN
 			INNER JOIN dbo.CS_CustBetSetting_Agent ab WITH (NOLOCK) ON ab.SportType = mb.SportType AND ab.BetType = mb.BetType AND ab.IsLive = mb.IsLive
 			INNER JOIN #SportBettypeFilter2 ft ON ab.SportType = ft.SportType AND ab.BetType = ft.BetType AND ab.IsLive = ft.IsLive
 			LEFT JOIN #BetDownlines2 memb ON memb.SportType = ft.SportType AND memb.BetType = ft.BetType AND memb.IsLive = ft.IsLive
-			LEFT JOIN #CommDownlines2 memc ON memc.SportType = ft.SportType AND memc.BetType = ft.BetType AND memc.IsLive = ft.IsLive
+			LEFT JOIN #CommDownlines2 memc ON memc.SportType = ft.SportType AND memc.BetType = ft.BetType AND memc.IsLive = ft.IsLive AND mc.groupID = memc.GroupId
 			LEFT JOIN #GroupCommDownlines2 dlg ON dlg.SportType = ft.SportType AND dlg.BetType = ft.BetType AND dlg.IsLive = ft.IsLive AND mc.groupID = dlg.GroupId
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = mc.GroupId
 		WHERE ab.CustId = @CustID AND mb.CustId = @MasterId
