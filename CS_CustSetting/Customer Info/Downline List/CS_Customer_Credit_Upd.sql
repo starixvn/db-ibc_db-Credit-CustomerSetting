@@ -112,27 +112,13 @@ BEGIN
 		SELECT @LogData = @LogData + ' by Sub-Account ' + COALESCE(dbo.f_GetSubUsername(@SubAccId), SPACE(1))
 	END
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-			@UserId		= @UserId,
-			@CustId		= @CustId,
-			@Doing		= @LogData,
-			@OldValue	= @Credit,
-			@NewValue	= @UpdCredit,
-			@IP			= @IP,
-			@ActionId	= 1203
-	END TRY
-	BEGIN CATCH
-		SELECT @LogData = @LogData + ' ErrMsg=' + ERROR_MESSAGE()
-
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-			@UserId		= @UserId,
-			@CustId		= @CustId,
-			@Doing		= @LogData,
-			@OldValue	= @Credit,
-			@NewValue	= @UpdCredit,
-			@IP			= @IP,
-			@ActionId	= 1203
-	END CATCH
+	EXEC dbo.Acc_WriteLog_UserLog_Credit_Wrapper
+		@UserId		= @UserId,
+		@CustId		= @CustId,
+		@Doing		= @LogData,
+		@OldValue	= @Credit,
+		@NewValue	= @UpdCredit,
+		@IP			= @IP,
+		@ActionId	= 1203
 END
 GO
