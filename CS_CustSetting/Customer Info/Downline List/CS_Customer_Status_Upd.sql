@@ -199,13 +199,13 @@ BEGIN
 
 	-- Write log
 	DECLARE @LogDataOld VARCHAR(500), @LogDataNew VARCHAR(500)
-	SELECT  @LogDataOld = '<Age_CS_Customer_Status_Upd'
+	SELECT  @LogDataOld = '<CS_Customer_Status_Upd'
 						+ ' CustID="' + COALESCE(CONVERT(VARCHAR(50), @CustId), SPACE(1)) + '"'
 						+ ' Status="' + COALESCE(CASE @StatusId WHEN 1 THEN 'Open' WHEN 2 THEN 'Suspended' WHEN 3 THEN 'Closed' END, SPACE(1)) + '"'
 						+ ' SubAccName="' + COALESCE(dbo.f_GetSubUsername(@SubAccID), SPACE(1)) + '"'
 						+ ' IP="' + COALESCE(@IP, SPACE(1)) + '"'
 						+ ' />',
-			@LogDataNew = '<Age_CS_Customer_Status_Upd'
+			@LogDataNew = '<CS_Customer_Status_Upd'
 						+ ' CustID="' + COALESCE(CONVERT(VARCHAR(50), @CustId), SPACE(1)) + '"'
 						+ ' Status="' + COALESCE(CASE @UpdStatusId WHEN 1 THEN 'Open' WHEN 2 THEN 'Suspended' WHEN 3 THEN 'Closed' END, SPACE(1)) + '"'
 						+ ' SubAccName="' + COALESCE(dbo.f_GetSubUsername(@SubAccID), SPACE(1)) + '"'
