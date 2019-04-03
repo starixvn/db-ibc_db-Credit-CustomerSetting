@@ -58,6 +58,8 @@ BEGIN
 
 		SELECT @MinID = @MaxID + 1
 		SELECT @MaxID = @MaxID + @Batch
+
+		WAITFOR DELAY '00:00:0.200'
 	END
 
 	--------------Sync CS_CustPTGroupSetting_Member----------------
@@ -76,6 +78,8 @@ BEGIN
 
 		SELECT @MinID = @MaxID + 1
 		SELECT @MaxID = @MaxID + @Batch
+
+		WAITFOR DELAY '00:00:0.200'
 	END
 
 	DROP TABLE #UpdatedMem
