@@ -103,7 +103,7 @@ BEGIN
 		FROM dbo.custInfo WITH (NOLOCK)
 		WHERE custId = @UplineId
 
-	IF @UplineStatusId = 2 AND @UpdStatusId = 0
+	IF @UplineStatusId = 2 AND @UpdStatusId = 1
 	BEGIN
 		-- This user's upline was suspended. Cannot edit.
 		SELECT @ErrCode = 103, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (60002, @Language)
@@ -195,7 +195,7 @@ BEGIN
 			@UpdStatusId	= @UpdStatusId,
 			@SystemId		= @SystemId
 	END
-
+	
 	SELECT @Duration = DATEDIFF (MILLISECOND, @startRun, GETDATE())
 
 	-- Write log
@@ -211,23 +211,13 @@ BEGIN
 						+ ' IP="' + COALESCE(@IP, SPACE(1)) + '"'
 						+ ' />'
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-			@UserId			= @UserId,
-			@CustId			= @CustId,
-			@ActionId		= 165004,
-			@TrackingValue	= @LogDataNew,
-			@TrackingValue2	= @LogDataOld,
-			@Duration		= @Duration
-	END TRY
-	BEGIN CATCH	
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-			@UserId			= @UserId,
-			@CustId			= @CustId,
-			@ActionId		= 165004,
-			@TrackingValue	= @LogDataNew,
-			@TrackingValue2	= @LogDataOld,
-			@Duration		= @Duration
-	END CATCH
+	
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserId			= @UserId,
+		@CustId			= @CustId,
+		@ActionId		= 165004,
+		@TrackingValue	= @LogDataNew,
+		@TrackingValue2	= @LogDataOld,
+		@Duration		= @Duration
 END
 GO
