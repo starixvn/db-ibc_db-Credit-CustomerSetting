@@ -71,6 +71,12 @@ BEGIN
 		RETURN
 	END
 
+	IF @UpdStatusId = @StatusId
+	BEGIN
+		-- Data not change
+		RETURN
+	END
+
 	-- Check allowed downlines during peak hour at weekend
 	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines
 		@CustId		= @CustId,
@@ -97,22 +103,17 @@ BEGIN
 		FROM dbo.custInfo WITH (NOLOCK)
 		WHERE custId = @UplineId
 
-	IF @UplineStatusId = 2
+	IF @UplineStatusId = 2 AND @UpdStatusId = 0
 	BEGIN
 		-- This user's upline was suspended. Cannot edit.
 		SELECT @ErrCode = 103, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (60002, @Language)
 		RETURN
 	END
-	ELSE IF @UplineStatusId = 3
+	
+	IF @UplineStatusId = 3
 	BEGIN
 		-- This user's upline was closed. Cannot edit.
 		SELECT @ErrCode = 103, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (60003, @Language)
-		RETURN
-	END
-
-	IF @UpdStatusId = @StatusId
-	BEGIN
-		-- Data not change
 		RETURN
 	END
 
