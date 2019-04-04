@@ -104,8 +104,21 @@ BEGIN
 	END CATCH
 
 	-- Write log
-	DECLARE @LogData VARCHAR(500)
-	SELECT  @LogData = 'Update credit for member account ' + COALESCE(@username, SPACE(1))
+	DECLARE @ActionId INT, @levelName VARCHAR(20), @LogData VARCHAR(500)
+	SELECT  @ActionId = CASE @RoleId
+							WHEN 1 THEN 1217
+							WHEN 2 THEN 1218
+							WHEN 3 THEN 1219
+							WHEN 4 THEN 1220
+							END
+			,@levelName = CASE @RoleId
+							WHEN 1 THEN 'Member'
+							WHEN 2 THEN 'Agent'
+							WHEN 3 THEN 'Master Agent'
+							WHEN 4 THEN 'SMA'
+							END
+
+	SELECT  @LogData = 'Update Credit for ' + @levelName + ' Account ' + COALESCE(@username, SPACE(1))
 
 	IF @SubAccID > 0
 	BEGIN  
@@ -119,6 +132,6 @@ BEGIN
 		@OldValue	= @Credit,
 		@NewValue	= @UpdCredit,
 		@IP			= @IP,
-		@ActionId	= 1203
+		@ActionId	= @ActionId
 END
 GO
