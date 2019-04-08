@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT				
 				,	@roleid						TINYINT			
 				,	@action						VARCHAR(30)		= ''
+				,	@custlist					VARCHAR(MAX) 	= ''
 				,	@EnableVirtualrate			BIT				= 0
 				,	@virtualmultiplier			VARCHAR(MAX)	= ''
 				,	@EnableVirtualMultiplier	VARCHAR(MAX)	= ''
@@ -579,26 +580,17 @@ BEGIN
 END;
 ELSE IF	dbo.f_CheckRepTable('custinfo') = 1
 BEGIN
-    IF	@Action ='Suspended' 
+	IF	@Action ='Suspended' 
     BEGIN
-	    if @RoleID = 4 
-	    BEGIN
-		    UPDATE	CustInfo with (ROWLOCK, UPDLOCK) 
-		    SET		Reject = @Suspended 
-		    WHERE	SRecommend = @CustID;
-	    END;
-	    ELSE IF @RoleID = 3 
-	    BEGIN
-		    UPDATE	CustInfo with (ROWLOCK, UPDLOCK) 
-		    SET		Reject = @Suspended 
-		    WHERE	MRecommend = @CustID;
-	    END;
-	    ELSE IF @RoleID = 2 
-	    BEGIN
-		    UPDATE	CustInfo with (ROWLOCK, UPDLOCK) 
-		    SET		Reject = @Suspended 
-		    WHERE	Recommend = @CustID;
-	    END;
+		DECLARE @tmpCust TABLE(CustID INT)
+			    
+		INSERT INTO @tmpCust(custid)	
+		SELECT val
+		FROM dbo.strSplit(@custlist,',')
+		
+		UPDATE	CustInfo with (ROWLOCK, UPDLOCK) 
+		SET	Reject = @Suspended
+		WHERE custid IN (SELECT custid FROM @tmpCust)	    
     END;
     ELSE IF @Action='Closed'
     BEGIN

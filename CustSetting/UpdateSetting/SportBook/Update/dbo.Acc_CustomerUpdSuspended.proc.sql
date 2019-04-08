@@ -1,11 +1,4 @@
-﻿USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuspended]    Script Date: 06/10/2015 16:17:44 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuspended    Script Date: 11/27/2014 5:09:46 PM ******/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuspended]
 	@CustID int,
 	@Suspended bit,	
@@ -46,7 +39,7 @@ Revisions:
 	- 20141125@Jamie: Use Acc_CustomerInfo_Execrep_04 instead of Acc_ExecRep_Cust_04 [Redmine:#26497]
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216]                          
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
-	
+	- 20190404@Johnson: add suspendinfo [redmine: #105587]
 	
 Param's Explanation:
 • @ErrCode:
@@ -173,7 +166,11 @@ BEGIN
 
 	IF @Old_Suspended = @Suspended RETURN 
 	-------------
-
+	UPDATE	cs 
+	SET	SuspendInfo = dbo.f_GenerateSuspendInfo(@roleid,@Suspended,SuspendInfo)	
+	FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 		
+	WHERE	custid = @CustID;
+	
 	update CustInfo with (ROWLOCK, UPDLOCK) set Reject = @Suspended
 	where CustID = @CustID
 	if (@@error <> 0)
@@ -186,15 +183,48 @@ BEGIN
 						end	, @ErrCode = 101
 		return
 	end
-
+	
+	CREATE TABLE #tblCust (CustID INT)
+	DECLARE @tmpCust TABLE(custid INT) 
+	DECLARE @custlist VARCHAR(MAX)
+		
 	--20130709@Jamie: Apply ExecRep 
 	IF @RoleID BETWEEN 2 AND 4 
 	BEGIN
-		EXEC [Acc_CustomerInfo_Execrep_04]
-			 @CustID		= @CustID
-			,@RoleID		= @RoleID
-			,@Action		= 'Suspended'
-			,@Suspended		= @Suspended
+		--get custid affect after update custproductstatus
+		INSERT INTO #tblCust(custid)
+		EXEC Acc_DynamicCustomerInfo_04
+			@CustID		= @CustID
+			,@RoleID	= @RoleID
+			,@Action	= 'SuspendInfo'
+			,@Suspended	= @Suspended
+			
+		WHILE (1=1)
+		BEGIN 
+			SELECT @custlist = ''
+
+			DELETE TOP (2500) t
+			OUTPUT DELETED.custid INTO @tmpCust
+			FROM #tblCust t
+				
+			SELECT @custlist = @custlist + cast(custid AS VARCHAR(10)) + ','
+			FROM @tmpCust
+			
+			EXEC [Acc_CustomerInfo_Execrep_04]
+				 @CustID		= @CustID
+				,@custlist		= @custList
+				,@RoleID		= @RoleID
+				,@Action		= 'Suspended'
+				,@Suspended		= @Suspended
+			
+			DELETE @tmpCust
+	
+			IF @@rowcount < 2500
+				RETURN	
+			
+		END		
+		
+		DROP TABLE #tblCust
 	END
 
 
@@ -240,10 +270,3 @@ BEGIN
 	END CATCH
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuspended] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuspended] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuspended] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuspended] TO [vnteam] AS [dbo]

@@ -1,11 +1,9 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB 
-GO
-
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_04]
 	@custid int,
 	@roleid tinyint,
 	@IsDisabled_XML VARCHAR(MAX) = NULL,
+	@Suspended BIT = NULL,	
 	@Action	VARCHAR(30)	= 'ProductStatus'
 AS
 /*
@@ -19,6 +17,7 @@ AS
 		- 20170307@Elodie: Implement New Product status (setting type = 13) - [Redmine: #70722]    
 		- 20170919@Johnson: fix the unsynchronized setting (settingType = 13), do not update status for un-sync downlines [Redmine: #72973]							
 		- 20180118@Elodie: Update enable status on NAP & ExtNAP [RedmineID:#87328]
+		- 20190404@Johnson: add suspendinfo [redmine: #105587]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -27,7 +26,7 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustProductStatus') = 0 RETURN
 	
 	--Check if XML is null or empty
-	IF @IsDisabled_XML IS NULL OR @IsDisabled_XML='' RETURN
+	IF @Action <> 'SuspendInfo'AND ( @IsDisabled_XML IS NULL OR @IsDisabled_XML='') RETURN
 		
 	DECLARE @iDoc INT, 
 			@xmlStrDisabledMasters XML, 
@@ -38,7 +37,58 @@ BEGIN
 			@ProductID INT,
 			@BitmapOrder TINYINT
 	
-	IF @Action = 'ProductStatus' --Setting type = 4
+	IF @Action = 'SuspendInfo'
+	BEGIN
+		CREATE TABLE #tblCust (CustID INT, OldSuspendInfo TINYINT, NewSuspendInfo TINYINT)
+					
+		IF @roleid = 4
+		BEGIN			
+			UPDATE	cs 
+			SET	SuspendInfo = dbo.f_GenerateSuspendInfo(4,@Suspended,SuspendInfo)
+			OUTPUT DELETED.custid, DELETED.SuspendInfo, INSERTED.SuspendInfo
+			INTO #tblCust
+			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
+				INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+			WHERE	SRecommend = @CustID;
+			
+		END	
+		ELSE IF @roleid = 3
+		BEGIN			
+			UPDATE	cs 
+			SET	SuspendInfo = dbo.f_GenerateSuspendInfo(3,@Suspended,SuspendInfo)
+			OUTPUT DELETED.custid, DELETED.SuspendInfo, INSERTED.SuspendInfo
+			INTO #tblCust
+			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
+				INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+			WHERE	mRecommend = @CustID;
+								
+		END	
+		ELSE IF @roleid = 2
+		BEGIN			
+			UPDATE	cs 
+			SET	SuspendInfo = dbo.f_GenerateSuspendInfo(2,@Suspended,SuspendInfo)
+			OUTPUT DELETED.custid, DELETED.SuspendInfo, INSERTED.SuspendInfo
+			INTO #tblCust
+			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
+				INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+			WHERE	Recommend = @CustID;			
+		END	
+		
+		IF @suspended = 1
+		BEGIN
+			DELETE #tblCust 
+			WHERE (OldSuspendInfo > 0 AND NewSuspendInfo > 0) OR (OldSuspendInfo = NewSuspendInfo) 
+		END	
+		ELSE
+		BEGIN
+			DELETE #tblCust WHERE OldSuspendInfo > 0 AND NewSuspendInfo = 0
+		END
+		
+		SELECT custid FROM #tblCust
+		
+		DROP TABLE #tblCust
+	END	
+	ELSE IF @Action = 'ProductStatus' --Setting type = 4
 	BEGIN
 		CREATE TABLE #DisableStatTbl(
 				SportType SMALLINT,
