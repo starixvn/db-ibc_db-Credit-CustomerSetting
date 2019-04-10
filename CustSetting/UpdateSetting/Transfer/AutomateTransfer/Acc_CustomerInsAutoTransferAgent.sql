@@ -102,14 +102,16 @@ BEGIN
 	END
 
 	-- if @username includes super and @transfertype is transfer all downline --> Update transfer option daily for supers and all downlines (except members)
-	DECLARE @SuperIdList VARCHAR(MAX)
-	SELECT  @SuperIdList =
+	DECLARE @SuperIdXML XML, @SuperIdList VARCHAR(MAX)
+	SELECT  @SuperIdXML =
 						(SELECT tc.custid AS '@c'
 						FROM @tmpCust tc
 							INNER JOIN dbo.Customer c WITH (NOLOCK) ON tc.custid = c.custid
 						WHERE c.roleid = 4
 						FOR XML PATH('r'), TYPE)
 
+	SELECT  @SuperIdList = CAST(@SuperIdXML AS VARCHAR(MAX))
+	
 	IF ISNULL(@SuperIdList, '') <> ''
 	BEGIN
 		EXEC dbo.Acc_CustomerInfo_Execrep_08

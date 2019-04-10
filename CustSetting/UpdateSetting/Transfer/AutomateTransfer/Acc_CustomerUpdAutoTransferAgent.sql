@@ -73,11 +73,13 @@ BEGIN
 	DECLARE @roleid TINYINT
 	SELECT  @roleid = roleid FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @custid
 
-	DECLARE @SuperIdList VARCHAR(MAX)
+	DECLARE @SuperIdXML XML, @SuperIdList VARCHAR(MAX)
 
 	IF @roleid = 4 AND @TransferType = 2
 	BEGIN
-		SELECT @SuperIdList = (SELECT @custid AS '@c' FOR XML PATH('r'), TYPE)
+		SELECT @SuperIdXML = (SELECT @custid AS '@c' FOR XML PATH('r'), TYPE)
+		
+		SELECT @SuperIdList = CAST(@SuperIdXML AS VARCHAR(MAX))
 		
 		IF ISNULL(@SuperIdList, '') <> ''
 		BEGIN
