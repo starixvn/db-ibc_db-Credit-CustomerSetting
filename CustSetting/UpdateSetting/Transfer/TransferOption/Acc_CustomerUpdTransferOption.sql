@@ -1,7 +1,3 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0" isNested="0"></info>*/
-USE [CustDB]
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdTransferOption]
 	@CustId INT,
 	@TransferOption VARCHAR(8),
@@ -32,7 +28,6 @@ Revisions:
 					   Write more log on DBTXN server in case of DBLOG server failure
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID) [Redmine:#36216]
 	- 20180808@Helen: DB05.DBPOLICY migration - Move to DBCUST [Redmine:99462]
-	- 20190409@Percy: Check upline is in automate transfer list [RedmineID: #111365]
 						  
 Param's Explanation:
 */
@@ -48,7 +43,7 @@ BEGIN
 
 	--------------------------
 	-- ***Check Downline Belonging***
-	DECLARE @roleid TINYINT, @srecommend INT
+	DECLARE @roleid TINYINT
 	EXEC dbo.Age_CustomerSelCheckBelongingByCustID 
 	@SessionCustID = @UserID, 
 	@Custid = @CustId,
@@ -70,21 +65,10 @@ BEGIN
 	IF @ErrCode <>0 RETURN
 	--end
 
-	SELECT @roleid = roleid, @srecommend = srecommend FROM custinfo WITH (NOLOCK) WHERE custid = @custid
-
-	-- Check upline is in automate transfer list
-	DECLARE @IsAutoTransfer BIT
-	SELECT  @IsAutoTransfer = COUNT(1) FROM dbo.Acc_ClearBalanceList WITH (NOLOCK) WHERE custid = @srecommend
-
-	IF @IsAutoTransfer = 1
-	BEGIN
-		SELECT @ErrCode = 101, @ErrMsg = ''
-		RETURN
-	END
-	-- End Check upline is in automate transfer list
-
 	DECLARE @TransferOption_dec TINYINT
-	SELECT  @TransferOption_dec = dbo.F_Binary_Decimal(@TransferOption)
+
+	SELECT @roleid = roleid FROM custinfo WITH (NOLOCK) WHERE custid = @custid
+	SELECT @TransferOption_dec = dbo.F_Binary_Decimal(@TransferOption)
 	/*
 	--update himself:
 	IF (@roleid = 4 AND @Custid >= 100)--normal super
