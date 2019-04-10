@@ -157,7 +157,7 @@ BEGIN
 	DECLARE @EffectiveDate DATETIME = CONVERT(DATE,GETDATE())
 	EXEC dbo.CS_GroupExtraPTSetting_Upd
 		@CustID = @custid,
-		@GroupName = 'CN88',
+		@HeadlineId = @HeadlineId,
 		@EffectiveDate = @EffectiveDate,
 		@UserID = @Creator,
 		@ErrCode = @ErrCode OUTPUT,

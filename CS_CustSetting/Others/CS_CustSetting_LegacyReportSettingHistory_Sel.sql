@@ -18,14 +18,15 @@ AS
 	Param's Explanation:
 				
 	Example: 
-		EXEC CS_CustSetting_LegacyReportSettingHistory_Sel @CustID = 34109850, @IsTest = 1, @FromDate = '2019-02-27 02:31:54.380', @ToDate = '2019-02-28 02:31:54.380'
+		EXEC CS_CustSetting_LegacyReportSettingHistory_Sel @CustID = 34109850, @IsTest = 1, @FromDate = '2019-02-28', @ToDate = '2019-02-28'
 */
 
 BEGIN
 	SET NOCOUNT ON
 	CREATE TABLE #Log (LogId BIGINT, LogDate DATETIME, NewValue XML, OldValue XML)
 	
-	SELECT @ToDate = DATEADD(ss,86399,@ToDate)
+	SELECT @ToDate = DATEADD(ss,86399,@ToDate) --Change from @ToDate = '2019-02-28' -> '2019-02-28 23:59:59'
+
 	--SELECT DISTINCT ProductID, SportType,Bettype,IsLive, SettingType 
 	--INTO #SportBettypeFilter1
 	--FROM DBACC.bodb02.dbo.CS_ProductSettingDetail WITH(NOLOCK)
