@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" isFunction="0" isNested="0"></info>*/
+USE [CustDB]
+GO
+
 ALTER PROCEDURE [dbo].[Acc_CustomerInsAutoTransferAgent]
 	@username		VARCHAR(MAX),
 	@TransferType	TINYINT = 1,
@@ -5,45 +9,55 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsAutoTransferAgent]
 	@IP				VARCHAR(50) = '',
 	@ErrCode		INT = 0 OUTPUT,
 	@ErrMsg			VARCHAR(4000)= 0 OUTPUT
- AS
-	/*
-		Created: Johnson
-		Date: 2014-09-30
-		Task: Add manually agents into automate	transfer list
-		DB: DBTXN/CustDB
-		
-		Revisions:
-			- 20150406@Johnson: fix log format [Redmine: #25321]
-			- 20180808@Helen: DB05.DBPOLICY migration - Move to DBCUST [Redmine:99462]
-			
-		Parameter's Explanation:
-			- @TransferType = 1: Transfer all members
-							= 2: Transfer all downlines
-	*/
+AS
+
+/*
+	Created: Johnson
+	Date: 2014-09-30
+	Task: Add manually agents into automate	transfer list
+	DB: DBCUST/CustDB
+	
+	Revisions:
+		- 20150406@Johnson: fix log format [Redmine: #25321]
+		- 20180808@Helen: DB05.DBPOLICY migration - Move to DBCUST [Redmine:99462]
+		- 20190409@Percy: Set transfer option to daily if super is in automate transfer list [RedmineID: #111365]
+
+	Parameter's Explanation:
+		- @TransferType = 1: Transfer all members
+						= 2: Transfer all downlines
+*/
 BEGIN
 	SET NOCOUNT ON
+
 	DECLARE @startRun	DATETIME,
 			@endRun		DATETIME,
 			@duration	INT
-	SET	@startRun = GETDATE()
 	
-		--Check permission
-		EXEC NAP_UserControl.dbo.Acc_Con_CheckPermission @custid=@userid,@funcname='[OtherTrans]',@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+	SELECT  @startRun = GETDATE()
+	
+	-- Check permission
+	EXEC NAP_UserControl.dbo.Acc_Con_CheckPermission
+		@custid		= @userid
+		,@funcname	= '[OtherTrans]'
+		,@ErrCode	= @ErrCode OUTPUT
+		,@ErrMsg	= @ErrMsg OUTPUT
+	
 	IF @ErrCode <> 0
 		RETURN
+	-- End Check permission
 	
-	DECLARE @tmpUser TABLE (custid INT,username VARCHAR(50))
+	DECLARE @tmpUser TABLE (custid INT, username VARCHAR(50))
 	DECLARE @tmpCust TABLE (custid INT, islog BIT)
 	DECLARE @ErrType VARCHAR(4000)
 	
 	INSERT INTO @tmpUser(username)
 	SELECT DISTINCT val
-	FROM strSplit (@username,',')
+	FROM strSplit (@username, ',')
 	
 	UPDATE t
 	SET t.custid = c.custid
 	FROM @tmpUser t
-		LEFT JOIN customer c WITH(NOLOCK) ON t.username = c.username AND roleid > 1
+		LEFT JOIN dbo.Customer c WITH(NOLOCK) ON t.username = c.username AND roleid > 1
 	
 	IF EXISTS (SELECT 1 FROM @tmpUser WHERE custid IS NULL)
 	BEGIN		
@@ -85,7 +99,23 @@ BEGIN
 	BEGIN
 		SELECT @ErrMsg = 'Add agent unsuccessfully', @ErrCode = 102
 		RETURN
-	END	
+	END
+
+	-- if @username includes super and @transfertype is transfer all downline --> Update transfer option daily for supers and all downlines (except members)
+	DECLARE @SuperIdList VARCHAR(MAX)
+	SELECT  @SuperIdList =
+						(SELECT tc.custid AS '@c'
+						FROM @tmpCust tc
+							INNER JOIN dbo.Customer c WITH (NOLOCK) ON tc.custid = c.custid
+						WHERE c.roleid = 4
+						FOR XML PATH('r'), TYPE)
+
+	IF ISNULL(@SuperIdList, '') <> ''
+	BEGIN
+		EXEC dbo.Acc_CustomerInfo_Execrep_08
+			@SuperIdList		= @SuperIdList
+			,@TransferOption	= 0 -- Daily
+	END
 	
 	--write log
 	DECLARE @LogData VARCHAR(4000),	
@@ -101,41 +131,23 @@ BEGIN
 		SET @log_username = username,
 			@custid = t.custid,
 			islog = 1
-		FROM @tmpCust t 
+		FROM @tmpCust t
 			INNER JOIN @tmpUser u ON t.custid = u.custid
 		WHERE islog = 0
 		
 		IF @@ROWCOUNT = 0 BREAK;
-		
+
 		SELECT @LogData = '<Acc_CustomerInsAutoTransferAgent username="' + COALESCE(@log_username,SPACE(1)) + '" ' 
 								+ 'TransferType="' + COALESCE(CAST(@TransferType AS VARCHAR(10)),SPACE(1)) + '" '
 								+ 'ErrCode="' + COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" '
 								+ 'ErrMsg="' + COALESCE(@ErrMsg,SPACE(1))+'" '
-								+ 'IP="' + COALESCE(@IP,SPACE(1)) + '" />'																		
-		
-		BEGIN TRY
-			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-				@Userid = @userid,
-				@Custid = @CustID,
-				@ActionID = 653,
-				@TrackingValue = @LogData,				
-				@Duration = @duration
-		END TRY
-		BEGIN CATCH
-			SELECT @LogData = '<Acc_CustomerInsAutoTransferAgent username="' + COALESCE(@log_username,SPACE(1)) + '" ' 
-									+ 'TransferType="' + COALESCE(CAST(@TransferType AS VARCHAR(10)),SPACE(1)) + '" '
-									+ 'ErrCode="' + coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '
-									+ 'ErrMsg="' + coalesce(ERROR_MESSAGE(),space(1))+'" '
-									+ 'IP="' + COALESCE(@IP,SPACE(1)) + '" />'																		
-		
-			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-				@Userid = @userid,
-				@Custid = @CustID,
-				@ActionID = 653,
-				@TrackingValue = @LogData,
-				@Duration = @duration								
-		
-		END CATCH
+								+ 'IP="' + COALESCE(@IP,SPACE(1)) + '" />'
+
+		EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+			@Userid			= @userid
+			,@Custid		= @CustID
+			,@ActionID		= 653
+			,@TrackingValue	= @LogData
+			,@Duration		= @duration
 	END	
-	
 END
