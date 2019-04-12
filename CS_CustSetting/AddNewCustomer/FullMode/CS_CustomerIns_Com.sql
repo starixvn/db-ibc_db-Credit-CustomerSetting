@@ -324,7 +324,7 @@ BEGIN
 			@TrackingValue = @LogSPData,
 			@duration = @duration	
 	
-	SELECT  @LogSPData = '<R PrimaryGroup="CN88'
+	SELECT  @LogSPData = '<R Headline="'+ COALESCE(CAST(@HeadlineUsername AS VARCHAR(30)),SPACE(1))
 						+ '" EffectiveDate="' + CONVERT(NVARCHAR(10), @EffectiveDate, 120)
 						+ '" IP="' + @IP + '" />'
 
