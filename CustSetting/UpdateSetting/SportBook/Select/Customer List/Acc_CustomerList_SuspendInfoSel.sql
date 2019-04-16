@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE [dbo].[Acc_CustomerList_SuspendInfoSel_UAT1]
+ALTER PROCEDURE [dbo].[Acc_CustomerList_SuspendInfoSel]
 	@custidList VARCHAR(MAX),
 	@roleid TINYINT
 AS
