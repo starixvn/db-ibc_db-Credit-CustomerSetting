@@ -1,5 +1,6 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustomerList_SuspendInfoSel]
+
+ALTER PROCEDURE [dbo].[Acc_CustomerList_SuspendInfoSel_UAT1]
 	@custidList VARCHAR(MAX),
 	@roleid TINYINT
 AS
@@ -32,7 +33,7 @@ BEGIN
 		WHERE srecommend IN (SELECT custid FROM @tblCust)
 			AND roleid < 4
 		)
-		SELECT c.custid, c.username, c.reject, t.roleid, 
+		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
 			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
 			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
@@ -48,7 +49,7 @@ BEGIN
 		WHERE recommend IN (SELECT custid FROM @tblCust)
 			AND roleid < 3
 		)
-		SELECT c.custid, c.username, c.reject, t.roleid, 
+		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
 			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
 			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
@@ -64,7 +65,7 @@ BEGIN
 		WHERE recommend IN (SELECT custid FROM @tblCust)
 			AND roleid = 1
 		)
-		SELECT c.custid, c.username, c.reject, t.roleid, 
+		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
 			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
 			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
@@ -73,7 +74,7 @@ BEGIN
 	END
 	ELSE IF @roleid = 1
 	BEGIN		
-		SELECT ci.custid, ci.username, c.reject as suspended
+		SELECT ci.custid, ci.username, ci.reject as suspended
 		FROM custinfo ci WITH(NOLOCK)
 		WHERE ci.custid IN (SELECT custid FROM @tblCust)	
 	END	
