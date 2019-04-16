@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_Customer_SuspendInfoMatrixSel_UAT1]
+ALTER PROCEDURE [dbo].[Acc_Customer_SuspendInfoMatrixSel]
 	@custid INT
 AS
 /*
