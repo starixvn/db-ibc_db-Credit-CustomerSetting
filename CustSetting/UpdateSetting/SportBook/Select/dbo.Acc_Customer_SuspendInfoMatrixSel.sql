@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_Customer_SuspendInfoMaxtrixSel]
+ALTER PROCEDURE [dbo].[Acc_Customer_SuspendInfoMatrixSel_UAT1]
 	@custid INT
 AS
 /*
@@ -28,7 +28,7 @@ BEGIN
 	FROM custInfo WITH(NOLOCK)
 	WHERE custid = @custid
 	
-	SELECT ci.custid, ci.username, roleid, c.reject as suspended,
+	SELECT ci.custid, ci.username, roleid, ci.reject as suspended,
 		dbo.f_GetSuspendInfoStatus(4,SuspendInfo) as SuspendBySuper,
 		dbo.f_GetSuspendInfoStatus(3,SuspendInfo) as SuspendByMaster,
 		dbo.f_GetSuspendInfoStatus(2,SuspendInfo) as SuspendByAgent,
