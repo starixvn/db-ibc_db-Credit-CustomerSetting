@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" IsNested = "1"></info>*/
-USE [CustDB]
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0" IsNested = "1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_02] 
 	@CustID				INT		= 0
 	, @ExistingCustID	INT		= 0
@@ -25,6 +22,7 @@ AS
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20190409@Johnson: add suspendinfo [redmine: #105587]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -48,9 +46,10 @@ BEGIN
 		BEGIN TRY
 			IF EXISTS(SELECT 1 FROM [dbo].[CustProductStatus] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 			BEGIN
-				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced )
+				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,suspendinfo)
 				SELECT @CustID,cs.bitmapIsDisabled,cs.bitmapIsHidden,
-						CASE WHEN @RoleID = 4 THEN 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF ELSE bitmapHasSynced END
+						CASE WHEN @RoleID = 4 THEN 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF ELSE bitmapHasSynced END,
+						suspendinfo
 				FROM [dbo].[CustProductStatus] cs WITH(NOLOCK)
 				WHERE CustID = @ExistingCustID
 			END

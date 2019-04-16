@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER FUNCTION dbo.f_GetSuspendStatus(@bitOrder TINYINT,@suspendInfo TINYINT)
+ALTER FUNCTION dbo.f_GetSuspendInfoStatus(@bitOrder TINYINT,@suspendInfo TINYINT)
 RETURNS BIT
 AS 
 /*
