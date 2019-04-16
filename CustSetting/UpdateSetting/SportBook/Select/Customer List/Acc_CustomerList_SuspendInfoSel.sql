@@ -18,8 +18,7 @@ BEGIN
 	SET NOCOUNT ON;
 	
 	DECLARE @tblCust TABLE(custid INT)
-	DECLARE @Result (custid INT, roleid TINYINT, cntAffected INT, cntUnchanged INT)
-	
+		
 	INSERT INTO @tblCust(custid)
 	SELECT val 
 	FROM dbo.strSplit(@custidList,',')
