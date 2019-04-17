@@ -464,8 +464,8 @@ BEGIN
 								(
 									SELECT  @ProductID														AS '@ProductID'
 											, cs.isLive														AS '@InPlay'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
+											, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))			AS '@Max'
+											, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))		AS '@MPE'
 									FROM @OldBetLimitTbl cs 
 									FOR XML PATH('C'), 
 									TYPE
@@ -482,8 +482,8 @@ BEGIN
 								(
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.isLive														AS '@InPlay'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
+											, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))			AS '@Max'
+											, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))		AS '@MPE'
 									FROM @OldBetLimitTbl cs
 									FOR XML PATH('C'), 
 									TYPE
@@ -500,8 +500,8 @@ BEGIN
 								(
 									SELECT  cs.bettype														AS '@BT'
 											, cs.isLive														AS '@InPlay'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
+											, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))			AS '@Max'
+											, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))		AS '@MPE'
 									FROM @OldBetLimitTbl cs 
 									FOR XML PATH('C'), 
 									TYPE
@@ -519,8 +519,8 @@ BEGIN
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.bettype													AS '@BT'
 											, cs.isLive														AS '@InPlay'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
+											, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))			AS '@Max'
+											, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))		AS '@MPE'
 									FROM @OldBetLimitTbl cs
 									FOR XML PATH('C'), 
 									TYPE
@@ -540,8 +540,8 @@ BEGIN
 								(
 									SELECT  @ProductID														AS '@ProductID'
 											, bs.isLive														AS '@InPlay'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
+											, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))			AS '@Max'
+											, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))		AS '@MPE'
 									FROM #BetSetting_tmp bs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -558,8 +558,8 @@ BEGIN
 								(
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.isLive														AS '@InPlay'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
+											, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))			AS '@Max'
+											, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))		AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -576,8 +576,8 @@ BEGIN
 								(
 									SELECT  cs.bettype														AS '@BT'
 											, cs.isLive														AS '@InPlay'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
+											, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))			AS '@Max'
+											, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))		AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -595,8 +595,8 @@ BEGIN
 									SELECT  cs.sporttype													AS '@Sport'
 											, cs.bettype													AS '@BT'
 											, cs.isLive														AS '@InPlay'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30))			AS '@Max'
-											, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30))	AS '@MPE'
+											, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))			AS '@Max'
+											, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))		AS '@MPE'
 									FROM #BetSetting_tmp cs WITH (NOLOCK)
 									FOR XML PATH('C'), 
 									TYPE
@@ -635,11 +635,11 @@ BEGIN
 									(
 										SELECT  @ProductID														AS '@ProductID'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupA AS VARCHAR(50)))		AS '@GrA'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupB AS VARCHAR(50)))		AS '@GrB'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupC AS VARCHAR(50)))		AS '@GrC'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupD AS VARCHAR(50)))		AS '@GrD'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @OldCommSMATbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -656,11 +656,11 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupA AS VARCHAR(50)))		AS '@GrA'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupB AS VARCHAR(50)))		AS '@GrB'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupC AS VARCHAR(50)))		AS '@GrC'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupD AS VARCHAR(50)))		AS '@GrD'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @OldCommSMATbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -677,11 +677,11 @@ BEGIN
 									(
 										SELECT  cs.bettype														AS '@BT'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupA AS VARCHAR(50)))		AS '@GrA'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupB AS VARCHAR(50)))		AS '@GrB'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupC AS VARCHAR(50)))		AS '@GrC'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupD AS VARCHAR(50)))		AS '@GrD'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @OldCommSMATbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -699,11 +699,11 @@ BEGIN
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupA AS VARCHAR(50)))		AS '@GrA'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupB AS VARCHAR(50)))		AS '@GrB'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupC AS VARCHAR(50)))		AS '@GrC'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupD AS VARCHAR(50)))		AS '@GrD'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @OldCommSMATbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -723,11 +723,11 @@ BEGIN
 									(
 										SELECT  @ProductID														AS '@ProductID'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupA AS VARCHAR(50)))		AS '@GrA'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupB AS VARCHAR(50)))		AS '@GrB'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupC AS VARCHAR(50)))		AS '@GrC'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupD AS VARCHAR(50)))		AS '@GrD'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @NewCommSMATbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -744,11 +744,11 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupA AS VARCHAR(50)))		AS '@GrA'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupB AS VARCHAR(50)))		AS '@GrB'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupC AS VARCHAR(50)))		AS '@GrC'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupD AS VARCHAR(50)))		AS '@GrD'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @NewCommSMATbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -765,11 +765,11 @@ BEGIN
 									(
 										SELECT  cs.bettype														AS '@BT'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupA AS VARCHAR(50)))		AS '@GrA'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupB AS VARCHAR(50)))		AS '@GrB'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupC AS VARCHAR(50)))		AS '@GrC'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupD AS VARCHAR(50)))		AS '@GrD'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @NewCommSMATbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -787,11 +787,11 @@ BEGIN
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupA) AS VARCHAR(30))		AS '@GrA'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupB) AS VARCHAR(30))		AS '@GrB'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupC) AS VARCHAR(30))		AS '@GrC'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.GroupD) AS VARCHAR(30))		AS '@GrD'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupA AS VARCHAR(50)))		AS '@GrA'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupB AS VARCHAR(50)))		AS '@GrB'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupC AS VARCHAR(50)))		AS '@GrC'
+												, dbo.f_CS_FomatNumber (CAST (cs.GroupD AS VARCHAR(50)))		AS '@GrD'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @NewCommSMATbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -811,7 +811,7 @@ BEGIN
 									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAccName'
 									, @IP															AS '@IP'
 									, cs.isLive														AS '@InPlay'
-									, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+									, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 							FROM @OldCommMemberTbl cs 
 							FOR XML PATH('R'), 
 							TYPE
@@ -825,7 +825,7 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @OldCommMemberTbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -842,7 +842,7 @@ BEGIN
 									(
 										SELECT  cs.bettype														AS '@BT'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @OldCommMemberTbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -860,7 +860,7 @@ BEGIN
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,cs.Comm) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
 										FROM @OldCommMemberTbl cs 
 										FOR XML PATH('C'), 
 										TYPE
@@ -878,7 +878,7 @@ BEGIN
 									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAccName'
 									, @IP															AS '@IP'
 									, cs.isLive														AS '@InPlay'
-									, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
+									, dbo.f_CS_FomatNumber (CAST (ct.Value AS VARCHAR(50)))			AS '@Comm'
 							FROM #CommSetting_tmp cs 
 								INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
 							FOR XML PATH('R'), 
@@ -893,7 +893,7 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (ct.Value AS VARCHAR(50)))			AS '@Comm'
 										FROM #CommSetting_tmp cs 
 											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId 
 										FOR XML PATH('C'), 
@@ -911,7 +911,7 @@ BEGIN
 									(
 										SELECT  cs.bettype														AS '@BT'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (ct.Value AS VARCHAR(50)))			AS '@Comm'
 										FROM #CommSetting_tmp cs 
 											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
 										FOR XML PATH('C'), 
@@ -930,7 +930,7 @@ BEGIN
 										SELECT  cs.sporttype													AS '@Sport'
 												, cs.bettype													AS '@BT'
 												, cs.isLive														AS '@InPlay'
-												, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30))		AS '@Comm'
+												, dbo.f_CS_FomatNumber (CAST (ct.Value AS VARCHAR(50)))			AS '@Comm'
 										FROM #CommSetting_tmp cs 
 											INNER JOIN CS_CommTemplate ct ON cs.ValueId = ct.ValueId
 										FOR XML PATH('C'), 

@@ -142,8 +142,8 @@ BEGIN
 							SELECT  @ProductID														AS '@ProductID',
 									@IP																AS '@IP',
 									cs.isLive														AS '@InPlay',
-									CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-									CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+									dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+									dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 								INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 							FOR XML PATH('R'), 
@@ -158,8 +158,8 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport',
 												cs.isLive														AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+												dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -177,8 +177,8 @@ BEGIN
 									(
 										SELECT  cs.bettype														AS '@BT',
 												cs.isLive														AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+												dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -197,8 +197,8 @@ BEGIN
 										SELECT  cs.sporttype													AS '@Sport',
 												cs.bettype														AS '@BT',
 												cs.isLive														AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+												dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -252,8 +252,8 @@ BEGIN
 						SELECT  @ProductID														AS '@ProductID',
 								@IP																AS '@IP',
 								cs.isLive														AS '@InPlay',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+								dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+								dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 						FROM #PT_tmp cs								
 						FOR XML PATH('R'), 
 						TYPE
@@ -267,8 +267,8 @@ BEGIN
 							(
 								SELECT  cs.sporttype													AS '@Sport',
 										cs.isLive														AS '@InPlay',
-										CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-										CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+										dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+										dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 								FROM #PT_tmp cs
 								FOR XML PATH('C'), 
 								TYPE
@@ -285,8 +285,8 @@ BEGIN
 					(
 						SELECT  cs.bettype														AS '@BT',
 								cs.isLive														AS '@InPlay',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+								dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+								dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 						FROM #PT_tmp cs
 								FOR XML PATH('C'), 
 								TYPE
@@ -304,8 +304,8 @@ BEGIN
 						SELECT  cs.sporttype													AS '@Sport',
 								cs.bettype														AS '@BT',
 								cs.isLive														AS '@InPlay',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+								dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+								dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 						FROM #PT_tmp cs
 								FOR XML PATH('C'), 
 								TYPE
@@ -325,7 +325,7 @@ BEGIN
 									dbo.f_GetSubUsername(@SubAccID)									AS '@SubAcc',
 									@IP																AS '@IP',
 									cs.isLive														AS '@InPlay',
-									CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
+									dbo.f_CS_FomatNumber (CAST ((cs.SuperPT/100.0) AS VARCHAR(50)))	AS '@SuperPossess'
 							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 								INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 							FOR XML PATH('R'), 
@@ -341,7 +341,7 @@ BEGIN
 									(
 										SELECT  cs.sporttype													AS '@Sport',
 												cs.isLive														AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.SuperPT/100.0) AS VARCHAR(50)))	AS '@SuperPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -360,7 +360,7 @@ BEGIN
 									(
 										SELECT  cs.bettype														AS '@BT',
 												cs.isLive														AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.SuperPT/100.0) AS VARCHAR(50)))	AS '@SuperPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -380,7 +380,7 @@ BEGIN
 										SELECT  cs.sporttype													AS '@Sport',
 												cs.bettype														AS '@BT',
 												cs.isLive														AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.SuperPT/100.0) AS VARCHAR(50)))	AS '@SuperPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -427,7 +427,7 @@ BEGIN
 								dbo.f_GetSubUsername(@SubAccID)									AS '@SubAcc',
 								@IP																AS '@IP',
 								cs.isLive														AS '@InPlay',
-								CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
+								dbo.f_CS_FomatNumber (CAST ((cs.SuperPT/100.0) AS VARCHAR(50)))	AS '@SuperPossess'
 						FROM #PT_tmp cs
 						FOR XML PATH('R'), 
 						TYPE
@@ -442,7 +442,7 @@ BEGIN
 							(
 								SELECT  cs.sporttype													AS '@Sport',
 										cs.isLive														AS '@InPlay',
-										CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
+										dbo.f_CS_FomatNumber (CAST ((cs.SuperPT/100.0) AS VARCHAR(50)))	AS '@SuperPossess'
 								FROM #PT_tmp cs
 								FOR XML PATH('C'), 
 								TYPE
@@ -460,7 +460,7 @@ BEGIN
 					(
 						SELECT  cs.bettype														AS '@BT',
 								cs.isLive														AS '@InPlay',
-								CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
+								dbo.f_CS_FomatNumber (CAST ((cs.SuperPT/100.0) AS VARCHAR(50)))	AS '@SuperPossess'
 						FROM #PT_tmp cs
 								FOR XML PATH('C'), 
 								TYPE
@@ -479,7 +479,7 @@ BEGIN
 						SELECT  cs.sporttype													AS '@Sport',
 								cs.bettype														AS '@BT',
 								cs.isLive														AS '@InPlay',
-								CAST(CONVERT(DOUBLE PRECISION,cs.SuperPT/100.0) AS VARCHAR(30))	AS '@SuperPossess'
+								dbo.f_CS_FomatNumber (CAST ((cs.SuperPT/100.0) AS VARCHAR(50)))	AS '@SuperPossess'
 						FROM #PT_tmp cs
 								FOR XML PATH('C'), 
 								TYPE
@@ -499,8 +499,8 @@ BEGIN
 									dbo.f_GetSubUsername(@SubAccID)										AS '@SubAcc',
 									@IP																	AS '@IP',
 									cs.isLive															AS '@InPlay',
-									CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
-									CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
+									dbo.f_CS_FomatNumber (CAST ((cs.MasterPT/100.0) AS VARCHAR(50)))	AS '@MasterPossess',
+									dbo.f_CS_FomatNumber (CAST ((cs.AgentPT/100.0) AS VARCHAR(50)))		AS '@AgentPossess'
 							FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 								INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 							FOR XML PATH('R'), 
@@ -516,8 +516,8 @@ BEGIN
 									(
 										SELECT  cs.sporttype														AS '@Sport',
 												cs.isLive															AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
-												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.MasterPT/100.0) AS VARCHAR(50)))	AS '@MasterPossess',
+												dbo.f_CS_FomatNumber (CAST ((cs.AgentPT/100.0) AS VARCHAR(50)))		AS '@AgentPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -536,8 +536,8 @@ BEGIN
 									(
 										SELECT  cs.bettype															AS '@BT',
 												cs.isLive															AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
-												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.MasterPT/100.0) AS VARCHAR(50)))	AS '@MasterPossess',
+												dbo.f_CS_FomatNumber (CAST ((cs.AgentPT/100.0) AS VARCHAR(50)))		AS '@AgentPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -557,8 +557,8 @@ BEGIN
 										SELECT  cs.sporttype														AS '@Sport',
 												cs.bettype															AS '@BT',
 												cs.isLive															AS '@InPlay',
-												CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
-												CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
+												dbo.f_CS_FomatNumber (CAST ((cs.MasterPT/100.0) AS VARCHAR(50)))	AS '@MasterPossess',
+												dbo.f_CS_FomatNumber (CAST ((cs.AgentPT/100.0) AS VARCHAR(50)))		AS '@AgentPossess'
 										FROM dbo.f_CS_GetPT_Agent(@CustID) cs
 											INNER JOIN #PT_tmp newpt ON newpt.SportType = cs.sporttype AND newpt.BetType = cs.bettype AND newpt.IsLive = cs.isLive
 										FOR XML PATH('C'), 
@@ -621,8 +621,8 @@ BEGIN
 								dbo.f_GetSubUsername(@SubAccID)										AS '@SubAcc',
 								@IP																	AS '@IP',
 								cs.isLive															AS '@InPlay',
-								CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
-								CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
+								dbo.f_CS_FomatNumber (CAST ((cs.MasterPT/100.0) AS VARCHAR(50)))	AS '@MasterPossess',
+								dbo.f_CS_FomatNumber (CAST ((cs.AgentPT/100.0) AS VARCHAR(50)))		AS '@AgentPossess'
 						FROM #PT_tmp cs
 						FOR XML PATH('R'), 
 						TYPE
@@ -637,8 +637,8 @@ BEGIN
 							(
 								SELECT  cs.sporttype														AS '@Sport',
 										cs.isLive															AS '@InPlay',
-										CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
-										CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
+										dbo.f_CS_FomatNumber (CAST ((cs.MasterPT/100.0) AS VARCHAR(50)))	AS '@MasterPossess',
+										dbo.f_CS_FomatNumber (CAST ((cs.AgentPT/100.0) AS VARCHAR(50)))		AS '@AgentPossess'
 								FROM #PT_tmp cs
 								FOR XML PATH('C'), 
 								TYPE
@@ -656,8 +656,8 @@ BEGIN
 								(
 									SELECT  cs.bettype															AS '@BT',
 											cs.isLive															AS '@InPlay',
-											CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
-											CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
+											dbo.f_CS_FomatNumber (CAST ((cs.MasterPT/100.0) AS VARCHAR(50)))	AS '@MasterPossess',
+											dbo.f_CS_FomatNumber (CAST ((cs.AgentPT/100.0) AS VARCHAR(50)))		AS '@AgentPossess'
 									FROM #PT_tmp cs
 											FOR XML PATH('C'), 
 											TYPE
@@ -676,8 +676,8 @@ BEGIN
 									SELECT  cs.sporttype														AS '@Sport',
 											cs.bettype															AS '@BT',
 											cs.isLive															AS '@InPlay',
-											CAST(CONVERT(DOUBLE PRECISION,cs.MasterPT/100.0) AS VARCHAR(30))	AS '@MasterPossess',
-											CAST(CONVERT(DOUBLE PRECISION,cs.AgentPT/100.0) AS VARCHAR(30))		AS '@AgentPossess'
+											dbo.f_CS_FomatNumber (CAST ((cs.MasterPT/100.0) AS VARCHAR(50)))	AS '@MasterPossess',
+											dbo.f_CS_FomatNumber (CAST ((cs.AgentPT/100.0) AS VARCHAR(50)))		AS '@AgentPossess'
 									FROM #PT_tmp cs
 											FOR XML PATH('C'), 
 											TYPE

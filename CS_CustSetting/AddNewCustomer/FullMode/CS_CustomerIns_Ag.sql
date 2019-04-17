@@ -368,8 +368,8 @@ BEGIN
 								(SELECT SportType AS '@Sport'
 									, BetType AS '@BT'
 									, IsLive AS '@InPlay'
-									, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30)) AS '@Max'
-									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPE'
+									, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))	AS '@Max'
+									, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))	AS '@MPE'
 								FROM #BetSetting_tmp
 								FOR XML PATH('C'), TYPE)						
 						FOR XML PATH('R'), TYPE)		
@@ -392,7 +392,7 @@ BEGIN
 								(SELECT t.SportType AS '@Sport'
 									, t.BetType AS '@BT'
 									, t.IsLive AS '@InPlay'
-									, CAST(CONVERT(DOUBLE PRECISION,ct.Value) AS VARCHAR(30)) AS '@Comm'
+									, dbo.f_CS_FomatNumber (CAST (ct.Value AS VARCHAR(50)))	AS '@Comm'
 								FROM #Comm_tmp t
 									INNER JOIN dbo.CS_CommTemplate ct ON ct.ValueId = t.ValueId
 								FOR XML PATH('C'), TYPE)						

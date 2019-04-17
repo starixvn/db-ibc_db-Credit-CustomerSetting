@@ -211,8 +211,8 @@ BEGIN
 							(
 								SELECT  cs.sporttype													AS '@Sport',
 										cs.isLive														AS '@InPlay',
-										CAST(CONVERT(DOUBLE PRECISION,cs.MinPT/100.0) AS VARCHAR(30))	AS '@MinPossess',
-										CAST(CONVERT(DOUBLE PRECISION,cs.MaxPT/100.0) AS VARCHAR(30))	AS '@MaxPossess'
+										dbo.f_CS_FomatNumber (CAST ((cs.MinPT/100.0) AS VARCHAR(50)))	AS '@MinPossess',
+										dbo.f_CS_FomatNumber (CAST ((cs.MaxPT/100.0) AS VARCHAR(50)))	AS '@MaxPossess'
 								FROM #PT_tmp cs
 								FOR XML PATH('C'), 
 								TYPE
@@ -238,8 +238,8 @@ BEGIN
 								(SELECT SportType AS '@Sport'
 									, BetType AS '@BT'
 									, IsLive AS '@InPlay'
-									, CAST(CONVERT(DOUBLE PRECISION,MaxBet) AS VARCHAR(30)) AS '@Max'
-									, CAST(CONVERT(DOUBLE PRECISION,MaxPerEvent) AS VARCHAR(30)) AS '@MPE'
+									, dbo.f_CS_FomatNumber (CAST (MaxBet AS VARCHAR(50)))	AS '@Max'
+									, dbo.f_CS_FomatNumber (CAST (MaxPerEvent AS VARCHAR(50)))	AS '@MPE'
 								FROM #BetSetting_tmp
 								FOR XML PATH('C'), TYPE)						
 						FOR XML PATH('R'), TYPE)		
@@ -306,11 +306,11 @@ BEGIN
 								(SELECT t.SportType AS '@Sport'
 									, t.BetType AS '@BT'
 									, t.IsLive AS '@InPlay'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupA) AS VARCHAR(30)) AS '@GrA'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupB) AS VARCHAR(30)) AS '@GrB'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupC) AS VARCHAR(30)) AS '@GrC'
-									, CAST(CONVERT(DOUBLE PRECISION,t.GroupD) AS VARCHAR(30)) AS '@GrD'
-									, CAST(CONVERT(DOUBLE PRECISION,t.Comm) AS VARCHAR(30))   AS '@Comm'
+									, dbo.f_CS_FomatNumber (CAST (t.GroupA AS VARCHAR(50)))		AS '@GrA'
+									, dbo.f_CS_FomatNumber (CAST (t.GroupB AS VARCHAR(50)))		AS '@GrB'
+									, dbo.f_CS_FomatNumber (CAST (t.GroupC AS VARCHAR(50)))		AS '@GrC'
+									, dbo.f_CS_FomatNumber (CAST (t.GroupD AS VARCHAR(50)))		AS '@GrD'
+									, dbo.f_CS_FomatNumber (CAST (t.Comm AS VARCHAR(50)))		AS '@Comm'
 								FROM #Com_Log t
 								FOR XML PATH('C'), TYPE)						
 						FOR XML PATH('R'), TYPE)
