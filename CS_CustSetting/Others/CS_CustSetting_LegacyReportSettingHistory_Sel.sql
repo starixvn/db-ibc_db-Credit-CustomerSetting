@@ -1,0 +1,80 @@
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+
+ALTER PROCEDURE CS_CustSetting_LegacyReportSettingHistory_Sel
+	@CustID INT,
+	@FromDate DATETIME,
+	@ToDate DATETIME,
+	@IsTest BIT = 0
+AS
+/*
+	Created: 20181212@Elodie
+	Task : Get PT info history to show on legency report
+	DB: DBLOG/bodb_CustomerLog
+	Original:
+
+	Revisions:
+		- 20181212@Elodie: Initial SP [Redmine:#105338]
+		
+	Param's Explanation:
+				
+	Example: 
+		EXEC CS_CustSetting_LegacyReportSettingHistory_Sel @CustID = 34109850, @IsTest = 1, @FromDate = '2019-02-28', @ToDate = '2019-02-28'
+*/
+
+BEGIN
+	SET NOCOUNT ON
+	CREATE TABLE #Log (LogId BIGINT, LogDate DATETIME, NewValue XML, OldValue XML)
+	
+	SELECT @ToDate = DATEADD(ss,86399,@ToDate) --Change from @ToDate = '2019-02-28' -> '2019-02-28 23:59:59'
+
+	--SELECT DISTINCT ProductID, SportType,Bettype,IsLive, SettingType 
+	--INTO #SportBettypeFilter1
+	--FROM DBACC.bodb02.dbo.CS_ProductSettingDetail WITH(NOLOCK)
+	--WHERE SettingType = 1 AND SettingStatus <= @IsTest
+
+	--Expectation: Use Clustering Index IX_UserLog_RunSP
+	SELECT LogId, ActionID, LogDate, ul.TrackingValue, ul.TrackingValue2 INTO #LogTmp
+	FROM dbo.UserLog_RunSP ul WITH (NOLOCK)
+	WHERE ul.custid = @CustID
+		AND ul.logdate BETWEEN @FromDate AND @ToDate
+
+	INSERT INTO #Log (LogId, LogDate, NewValue, OldValue)
+	SELECT ul.LogId, ul.LogDate, ul.TrackingValue, ul.TrackingValue2
+	FROM dbo.LogAction l WITH (NOLOCK)
+		INNER JOIN dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
+		INNER JOIN #LogTmp ul WITH (NOLOCK) ON l.ActionID = ul.ActionID
+	WHERE l.SPName = 'CS_CustSetting_PTSetting_Upd' AND ld.Level = 2
+		AND DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, DATEADD(HOUR, -7, LogDate)) / 7) * 7 + 7, 0)) BETWEEN @FromDate AND @ToDate
+
+	--SELECT * FROM #Log 
+
+	SELECT LogId, LogDate
+			, n.value('./@Sport','SMALLINT') AS SportType
+			, n.value('./@BT','SMALLINT') AS BetType
+			, n.value('./@InPlay','BIT') AS IsLive									
+			, n.value('./@ProductID','TINYINT') AS ProductID
+			, n.value('./@MasterPossess','SMALLMONEY') AS MasterPT	
+	INTO #NewData
+	FROM #Log
+		CROSS APPLY NewValue.nodes('//C') AS RECORDS(n)
+	
+	SELECT LogId, o.value('./@MasterPossess','SMALLMONEY') AS MasterPT		
+	INTO #OldData
+	FROM #Log
+		CROSS APPLY OldValue.nodes('//C') AS RECORDS(o)
+	
+	SELECT DATEADD(HOUR,7,DATEADD(DAY, (DATEDIFF(DAY, 0, DATEADD(HOUR, -7, n.LogDate)) / 7) * 7 + 7, 0)) AS EffectiveDate,
+		n.SportType, n.BetType, n.ProductID, 
+		n.MasterPT * 100 AS NewPT, o.MasterPT * 100 AS OldPT 
+	FROM #NewData n 
+		INNER JOIN #OldData o ON o.LogId = n.LogId
+	WHERE n.MasterPT <> o.MasterPT
+
+	DROP TABLE #Log
+	DROP TABLE #LogTmp
+	DROP TABLE #OldData
+	DROP TABLE #NewData	
+	--DROP TABLE #SportBettypeFilter1
+END
+GO
+
