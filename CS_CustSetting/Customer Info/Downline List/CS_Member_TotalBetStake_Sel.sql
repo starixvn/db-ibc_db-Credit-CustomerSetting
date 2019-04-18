@@ -21,73 +21,20 @@ BEGIN
 	DECLARE @today SMALLDATETIME
 	SELECT  @today = CONVERT(DATE, GETDATE())
 
+	DECLARE @TotalBetStake MONEY = 0, @ErrCode INT = 0
+
 	/*
 	-- for local testing
 	DELETE dbo.DailyBetStake WITH (ROWLOCK, UPDLOCK)
 	WHERE  CustId = @CustId AND Date = @today
 	*/
-	-- prevent violation of primary key when insert action
-	BEGIN TRY
-		EXEC dbo.Dot_Member_CalcDailyBetStake_CN88_test @CustId = @CustId, @Date = @today, @Stake = 0
-	END TRY
-	BEGIN CATCH
-		EXEC dbo.Dot_Member_CalcDailyBetStake_CN88_test @CustId = @CustId, @Date = @today, @Stake = 0
-	END CATCH
-	/*
-
-	DECLARE @today SMALLDATETIME
-	SELECT  @today = CONVERT(DATE, GETDATE())
-
-	DECLARE @isTest BIT
-	SELECT  @isTest = dbo.f_CheckSPVersion(@@PROCID)
-
-	CREATE TABLE #BetType (BetType INT, RefTable TINYINT)
-	INSERT INTO #BetType (BetType, RefTable)
-	SELECT DISTINCT BetType, RefTable FROM dbo.CS_f_BettypeMatrix_Sel(0,0,0,@isTest)
-
-	SELECT ISNULL(SUM(stake), 0) AS UsedCredit
-	FROM
-	(
-	-- 1. bettrans
-		SELECT SUM(stake) AS stake
-		FROM dbo.bettrans b WITH (NOLOCK)
-			INNER JOIN #BetType bt ON b.bettype = bt.BetType
-		WHERE b.custid = @CustId
-			AND b.winlostdate >= @today
-			AND bt.RefTable = 0
-
-		UNION ALL
 	
-	-- 2. bettransRnG
-		SELECT SUM(stake) AS stake
-		FROM dbo.bettransRnG b WITH (NOLOCK)
-			INNER JOIN #BetType bt ON b.gameID = bt.BetType
-		WHERE b.custid = @CustId
-			AND b.winlostdate >= @today
-			AND bt.RefTable = 1
+	EXEC dbo.Dot_Member_CalcDailyBetStake_test @CustId = @CustId, @Date = @today, @Stake = 0, @TotalBetStake = @TotalBetStake OUTPUT, @ErrCode = @ErrCode OUTPUT
 
-		UNION ALL
-
-	-- 3. bettransLC
-		SELECT SUM(stake) AS stake
-		FROM dbo.bettransLC b WITH (NOLOCK)
-			INNER JOIN #BetType bt ON b.gameID = bt.BetType
-		WHERE b.custid = @CustId
-			AND b.winlostdate >= @today
-			AND bt.RefTable = 2
-
-		UNION ALL
+	-- try again for case violation of primary key when insert action
+	IF @ErrCode <> 0
+		EXEC dbo.Dot_Member_CalcDailyBetStake_test @CustId = @CustId, @Date = @today, @Stake = 0, @TotalBetStake = @TotalBetStake OUTPUT, @ErrCode = @ErrCode OUTPUT
 	
-	-- 4. translog
-		SELECT SUM(stake) AS stake
-		FROM dbo.translog t WITH (NOLOCK)
-			INNER JOIN #BetType bt ON t.gameID = bt.BetType
-		WHERE t.custid = @CustId
-			AND t.winlostdate >= @today
-			AND bt.RefTable = 3
-	) AS bt
-
-	DROP TABLE #BetType
-	*/
+	SELECT @TotalBetStake AS TotalBetStake
 END
 GO
