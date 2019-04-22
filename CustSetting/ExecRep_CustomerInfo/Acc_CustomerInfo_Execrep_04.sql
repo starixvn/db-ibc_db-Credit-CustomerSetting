@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT				
 				,	@roleid						TINYINT			
 				,	@action						VARCHAR(30)		= ''
@@ -101,8 +101,7 @@ BEGIN
 	CREATE TABLE #tblCustVR (custID INT)
 	CREATE TABLE #tmpCustBatchVR (CustID INT PRIMARY KEY)	
 	DECLARE @batchUpdate INT = 5000,
-			@maxcustid INT,
-			@dummy INT							
+			@maxcustid INT					
 	
 	IF	@virtualmultiplier <> ''
 	BEGIN			
@@ -417,15 +416,6 @@ BEGIN
 				
 				IF @@rowcount = 0 
 					BREAK;
-				
-				--Trick to load data into memory first in exchange for higher total reads
-				SELECT @dummy = cvs.custid
-				FROM CustVirtualSetting cvs WITH(NOLOCK)
-				WHERE EXISTS (
-						SELECT 1
-						FROM #tmpCustBatchVR c
-						WHERE cvs.custid = c.custid
-					)
 
 				UPDATE cvs
 				SET cvs.bitmapVirtual = bm.bitmap
@@ -483,15 +473,6 @@ BEGIN
 				
 				IF @@rowcount = 0 
 					BREAK;
-				
-				--Trick to load data into memory first in exchange for higher total reads
-				SELECT @dummy = cvs.custid
-				FROM CustVirtualSetting cvs WITH(NOLOCK)
-				WHERE EXISTS (
-						SELECT 1
-						FROM #tmpCustBatchVR c
-						WHERE cvs.custid = c.custid
-					)
 
 				UPDATE cvs
 				SET cvs.bitmapVirtual = bm.bitmap
@@ -549,15 +530,6 @@ BEGIN
 				
 				IF @@rowcount = 0 
 					BREAK;
-
-				--Trick to load data into memory first in exchange for higher total reads
-				SELECT @dummy = cvs.custid
-				FROM CustVirtualSetting cvs WITH(NOLOCK)
-				WHERE EXISTS (
-						SELECT 1
-						FROM #tmpCustBatchVR c
-						WHERE cvs.custid = c.custid
-					)
 				
 				UPDATE cvs
 				SET cvs.bitmapVirtual = bm.bitmap
