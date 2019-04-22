@@ -38,7 +38,7 @@ BEGIN
 	IF @roleid = 4
 	BEGIN
 		WITH t as(
-		SELECT roleid, username, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo))
+		SELECT roleid, username, (SELECT suspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo))as newSuspendInfo 
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE srecommend = @custid	
@@ -54,7 +54,7 @@ BEGIN
 	ELSE IF @roleid = 3
 	BEGIN
 		WITH t as(
-		SELECT roleid, username, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo))
+		SELECT roleid, username, (SELECT suspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo)) as newSuspendInfo 
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE srecommend = @custid	
@@ -70,7 +70,7 @@ BEGIN
 	ELSE IF @roleid = 2
 	BEGIN
 		WITH t as(
-		SELECT roleid, username, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo))
+		SELECT roleid, username, (SELECT suspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo)) as newSuspendInfo 
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE recommend = @custid	
