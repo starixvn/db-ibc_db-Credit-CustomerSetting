@@ -27,15 +27,15 @@ BEGIN
 	IF @roleid = 4
 	BEGIN
 		;WITH tmp AS(
-		SELECT ci.srecommend, roleid, dbo.f_GenerateSuspendInfo(4,1,SuspendInfo) as newSuspendInfo
+		SELECT ci.srecommend, roleid, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(4,1,SuspendInfo))
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE srecommend IN (SELECT custid FROM @tblCust)
 			AND roleid < 4
 		)
 		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
-			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
-			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
+			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
 			INNER JOIN custinfo c WITH(NOLOCK) ON t.srecommend = c.custid
 		GROUP BY c.custid, c.username,c.reject, t.roleid
@@ -43,15 +43,15 @@ BEGIN
 	ELSE IF @roleid = 3
 	BEGIN
 		;WITH tmp AS(
-		SELECT ci.mrecommend, roleid, dbo.f_GenerateSuspendInfo(3,1,SuspendInfo) as newSuspendInfo
+		SELECT ci.mrecommend, roleid, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(3,1,SuspendInfo))
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE recommend IN (SELECT custid FROM @tblCust)
 			AND roleid < 3
 		)
 		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
-			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
-			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
+			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
 			INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = t.mrecommend
 		GROUP BY c.custid, c.username, c.reject, t.roleid
@@ -59,15 +59,15 @@ BEGIN
 	ELSE IF @roleid = 2
 	BEGIN
 		;WITH tmp AS(
-		SELECT ci.recommend, roleid, dbo.f_GenerateSuspendInfo(2,1,SuspendInfo) as newSuspendInfo
+		SELECT ci.recommend, roleid, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(2,1,SuspendInfo))
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE recommend IN (SELECT custid FROM @tblCust)
 			AND roleid = 1
 		)
 		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
-			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
-			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
+			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
 			INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = t.recommend
 		GROUP BY c.custid, c.username, c.reject, t.roleid

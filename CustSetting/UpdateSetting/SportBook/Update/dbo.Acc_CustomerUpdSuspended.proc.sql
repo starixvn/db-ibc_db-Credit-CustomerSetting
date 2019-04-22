@@ -167,7 +167,7 @@ BEGIN
 	IF @Old_Suspended = @Suspended RETURN 
 	-------------
 	UPDATE	cs 
-	SET	SuspendInfo = dbo.f_GenerateSuspendInfo(@roleid,@Suspended,SuspendInfo)	
+	SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Suspended,SuspendInfo))	
 	FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 		
 	WHERE	custid = @CustID;
 	
@@ -184,7 +184,7 @@ BEGIN
 		return
 	end
 	
-	CREATE TABLE #tblCust (CustID INT)
+	CREATE TABLE #tblCustAffected (CustID INT)
 	DECLARE @tmpCust TABLE(custid INT) 
 	DECLARE @custlist VARCHAR(MAX)
 		
@@ -192,7 +192,7 @@ BEGIN
 	IF @RoleID BETWEEN 2 AND 4 
 	BEGIN
 		--get custid affect after update custproductstatus
-		INSERT INTO #tblCust(custid)
+		INSERT INTO #tblCustAffected(custid)
 		EXEC Acc_DynamicCustomerInfo_04
 			@CustID		= @CustID
 			,@RoleID	= @RoleID
@@ -205,7 +205,7 @@ BEGIN
 
 			DELETE TOP (2500) t
 			OUTPUT DELETED.custid INTO @tmpCust
-			FROM #tblCust t
+			FROM #tblCustAffected t
 				
 			SELECT @custlist = @custlist + cast(custid AS VARCHAR(10)) + ','
 			FROM @tmpCust
@@ -224,7 +224,7 @@ BEGIN
 			
 		END		
 		
-		DROP TABLE #tblCust
+		DROP TABLE #tblCustAffected
 	END
 
 

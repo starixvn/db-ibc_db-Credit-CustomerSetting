@@ -24,45 +24,45 @@ BEGIN
 	IF @roleid = 4
 	BEGIN
 		WITH t as(
-		SELECT roleid, dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo) as newSuspendInfo
+		SELECT roleid, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo))
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE srecommend = @custid	
 			AND ci.custid <> @custid
 		)
 		SELECT roleid, 
-			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
-			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
+			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM t
 		GROUP BY roleid
 	END
 	ELSE IF @roleid = 3
 	BEGIN
 		WITH t as(
-		SELECT roleid, dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo) as newSuspendInfo
+		SELECT roleid, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo))
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE mrecommend = @custid	
 			AND ci.custid <> @custid
 		)
 		SELECT roleid, 
-			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
-			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
+			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM t
 		GROUP BY roleid
 	END
 	ELSE IF @roleid = 2
 	BEGIN
 		WITH t as(
-		SELECT roleid, dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo) as newSuspendInfo
+		SELECT roleid, (SELECT suspendInfo as newSuspendInfo FROM dbo.f_GenerateSuspendInfo(@roleid,1,SuspendInfo))
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		WHERE recommend = @custid	
 			AND ci.custid <> @custid
 		)
 		SELECT roleid, 
-			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
-			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
+			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM t
 		GROUP BY roleid
 	END
