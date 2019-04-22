@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-custDB,DBACC-bodb02" executers="" viewers="" isFunction="1" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-custDB,DBACC-bodb02,DB042-bodb02,Db043-bodb02" executers="" viewers="" isFunction="1" isNested="0"></info>*/
 
 ALTER FUNCTION dbo.f_GenerateSuspendInfo(@bitOrder TINYINT,@suspend BIT,@SuspendInfo TINYINT)
 RETURNS TABLE
