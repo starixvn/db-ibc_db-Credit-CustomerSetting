@@ -46,7 +46,7 @@ BEGIN
 		SELECT ci.mrecommend, roleid, (SELECT suspendInfo FROM dbo.f_GenerateSuspendInfo(3,1,SuspendInfo)) as newSuspendInfo
 		FROM dbo.CustProductStatus cs WITH(NOLOCK)
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
-		WHERE recommend IN (SELECT custid FROM @tblCust)
+		WHERE mrecommend IN (SELECT custid FROM @tblCust)
 			AND roleid < 3
 		)
 		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
