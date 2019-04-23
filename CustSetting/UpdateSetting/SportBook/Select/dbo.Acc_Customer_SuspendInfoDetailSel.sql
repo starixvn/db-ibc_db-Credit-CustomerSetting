@@ -47,8 +47,8 @@ BEGIN
 		INSERT INTO #Result(roleid,username)
 		SELECT roleid, username 			
 		FROM t
-		WHERE 1 = CASE WHEN (@isAffected = 1 AND newSuspendInfo > 0) 
-						OR (@isAffected = 0 AND newSuspendInfo = 0) THEN 1 ELSE 0 END
+		WHERE 1 = CASE WHEN (@isAffected = 1 AND newSuspendInfo = 0) 
+						OR (@isAffected = 0 AND newSuspendInfo > 0) THEN 1 ELSE 0 END
 			AND roleid = CASE WHEN @DownlineRoleid = 0 THEN roleid ELSE @DownlineRoleid END		
 	END
 	ELSE IF @roleid = 3
@@ -63,8 +63,8 @@ BEGIN
 		INSERT INTO #Result(roleid,username)
 		SELECT roleid, username 			
 		FROM t
-		WHERE 1 = CASE WHEN (@isAffected = 1 AND newSuspendInfo > 0) 
-						OR (@isAffected = 0 AND newSuspendInfo = 0) THEN 1 ELSE 0 END
+		WHERE 1 = CASE WHEN (@isAffected = 1 AND newSuspendInfo = 0) 
+						OR (@isAffected = 0 AND newSuspendInfo > 0) THEN 1 ELSE 0 END
 			AND roleid = CASE WHEN @DownlineRoleid = 0 THEN roleid ELSE @DownlineRoleid END
 	END
 	ELSE IF @roleid = 2
@@ -79,8 +79,8 @@ BEGIN
 		INSERT INTO #Result(roleid,username)
 		SELECT roleid, username 			
 		FROM t
-		WHERE 1 = CASE WHEN (@isAffected = 1 AND newSuspendInfo > 0) 
-						OR (@isAffected = 0 AND newSuspendInfo = 0) THEN 1 ELSE 0 END
+		WHERE 1 = CASE WHEN (@isAffected = 1 AND newSuspendInfo = 0) 
+						OR (@isAffected = 0 AND newSuspendInfo > 0) THEN 1 ELSE 0 END
 			AND roleid = CASE WHEN @DownlineRoleid = 0 THEN roleid ELSE @DownlineRoleid END
 	END
 	
