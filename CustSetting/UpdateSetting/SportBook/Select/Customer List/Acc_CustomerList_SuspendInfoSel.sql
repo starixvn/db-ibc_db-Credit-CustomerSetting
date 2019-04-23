@@ -34,8 +34,8 @@ BEGIN
 			AND roleid < 4
 		)
 		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
-			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
-			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
+			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
 			INNER JOIN custinfo c WITH(NOLOCK) ON t.srecommend = c.custid
 		GROUP BY c.custid, c.username,c.reject, t.roleid
@@ -50,8 +50,8 @@ BEGIN
 			AND roleid < 3
 		)
 		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
-			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
-			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
+			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
 			INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = t.mrecommend
 		GROUP BY c.custid, c.username, c.reject, t.roleid
@@ -66,8 +66,8 @@ BEGIN
 			AND roleid = 1
 		)
 		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
-			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
-			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
+			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM tmp t
 			INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = t.recommend
 		GROUP BY c.custid, c.username, c.reject, t.roleid

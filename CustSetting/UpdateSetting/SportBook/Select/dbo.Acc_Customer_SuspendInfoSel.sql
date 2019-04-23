@@ -31,8 +31,8 @@ BEGIN
 			AND ci.custid <> @custid
 		)
 		SELECT roleid, 
-			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
-			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
+			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM t
 		GROUP BY roleid
 	END
@@ -46,8 +46,8 @@ BEGIN
 			AND ci.custid <> @custid
 		)
 		SELECT roleid, 
-			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
-			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
+			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM t
 		GROUP BY roleid
 	END
@@ -61,8 +61,8 @@ BEGIN
 			AND ci.custid <> @custid
 		)
 		SELECT roleid, 
-			COUNT(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
-			COUNT(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
+			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged, 
+			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
 		FROM t
 		GROUP BY roleid
 	END
