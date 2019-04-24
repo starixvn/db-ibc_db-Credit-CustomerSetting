@@ -81,7 +81,7 @@ BEGIN
 		END	
 		ELSE
 		BEGIN
-			DELETE #tblCust WHERE OldSuspendInfo > 0 AND NewSuspendInfo = 0
+			DELETE #tblCust WHERE OldSuspendInfo > 0 AND NewSuspendInfo > 0
 		END
 		
 		SELECT custid FROM #tblCust
