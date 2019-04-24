@@ -56,6 +56,7 @@ AS
 		- 20180808@Johnson: Enhance VirtualRate setting [Redmine:#99839]
 		- 20180823@Paul: Enhance VirtualRate setting [Redmine:#99839]
 		- 20190417@Paul: Enhance VirtualRate setting [Redmine:#110345]
+		- 20190424@Johnson: add suspendinfo [redmine: #105587]
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
