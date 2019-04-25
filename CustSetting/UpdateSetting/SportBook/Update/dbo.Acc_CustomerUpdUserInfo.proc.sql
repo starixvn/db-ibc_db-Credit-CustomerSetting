@@ -1,13 +1,4 @@
-﻿USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdUserInfo]    Script Date: 06/10/2015 16:25:19 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdUserInfo    Script Date: 6/2/2014 2:04:21 AM ******/
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdUserInfo    Script Date: 6/2/2014 12:38:18 PM ******/
-
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdUserInfo]
 	@CustID         int,	
@@ -63,6 +54,7 @@ Revisions:
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB) [Redmine:#36216]	                    
 	- 20160128@Elodie: Don't update and write log with the fiels don't show on Alpha site
 	- 20160903@Winnie: Fix bug #53634 [Log is still generated when Updating without any changed for a customer that does not have any log record for today]
+	- 20190425@Johnson: update info for headline cn88 [redmine: #105338]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -203,7 +195,7 @@ BEGIN
 		   important = case when @important is null then important else @important end
 	 where custID = @CustID
 	 
-    if @roleid = 1
+    if @roleid = 1 OR @roleid = 0--headline cn88
     begin
         update customer with(rowlock, updlock)
            set remark = case when @remark is null then remark else SUBSTRING(@remark, 1, 50) end
@@ -494,12 +486,4 @@ END
 
 ELSE RETURN
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdUserInfo] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdUserInfo] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdUserInfo] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdUserInfo] TO [vnteam] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdUserInfo] TO [vnteam] AS [dbo]
+
