@@ -1,8 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_PositionTaking]
 	@custid int, --agentID
 	
@@ -382,6 +378,7 @@ Revisions:
 	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
+	- 20190426@Johnson: hotfix for bettype Number game [redmine: #111931] 
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -2474,7 +2471,7 @@ BEGIN
 	INNER JOIN #tmp_Sports s on b.sporttype = s.ID
 	INNER JOIN #tmp_Bettype bt on b.bettype = bt.ID
 	where (b.apositiontaking+b.mpositiontaking>b.max_mapositiontaking) or 
-		  (b.sporttype in (1,161) and b.bettype in (1,3,7,8,85,86,87) and (b.alivepositiontaking+b.mlivepositiontaking>b.max_malivepositiontaking))
+		  (b.sporttype in (1,161) and b.bettype in (1,3,7,8,85,86,87,89,90) and (b.alivepositiontaking+b.mlivepositiontaking>b.max_malivepositiontaking))
 
 	if @ErrType <>''
 	BEGIN
