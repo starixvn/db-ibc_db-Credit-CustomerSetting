@@ -3,7 +3,6 @@ CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_PositionTaki
 CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_All.sql
 CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_PositionTaking.sql
 CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_All.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_PositionTaking.sql
 
 CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdSuperGoldDeluxe_All.sql
 CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdSuperGoldDeluxe_Positiontaking.sql
