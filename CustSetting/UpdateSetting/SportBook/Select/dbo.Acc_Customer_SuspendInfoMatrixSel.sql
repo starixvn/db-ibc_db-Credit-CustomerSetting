@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Customer_SuspendInfoMatrixSel]
-	@custid INT
+	@username VARCHAR(30)
 AS
 /*
 	Created by:Johnson
@@ -19,14 +19,16 @@ BEGIN
 	DECLARE @roleid TINYINT, 
 			@srecommend INT, 
 			@mrecommend INT, 
-			@recommend INT
+			@recommend INT,
+			@custid INT
 	
 	SELECT @roleid = roleid,
 		@srecommend = srecommend,
 		@mrecommend = mrecommend,
-		@recommend = recommend
+		@recommend = recommend,
+		@custid = custid
 	FROM custInfo WITH(NOLOCK)
-	WHERE custid = @custid
+	WHERE username = @username
 	
 	SELECT ci.custid, ci.username, roleid, ci.reject as suspended,
 		(SELECT suspendInfo FROM dbo.f_GetSuspendInfoStatus(4,SuspendInfo)) as SuspendBySuper,

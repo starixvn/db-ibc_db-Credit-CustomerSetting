@@ -220,7 +220,7 @@ BEGIN
 			DELETE @tmpCust
 	
 			IF @@rowcount < 2500
-				RETURN	
+				BREAK;	
 			
 		END		
 		
