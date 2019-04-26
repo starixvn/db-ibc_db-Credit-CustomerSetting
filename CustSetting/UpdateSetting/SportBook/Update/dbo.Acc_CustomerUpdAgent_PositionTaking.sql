@@ -378,7 +378,7 @@ Revisions:
 	- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
-	- 20190426@Johnson: hotfix for bettype Number game [redmine: #111931] 
+	- 20190426@Johnson: hotfix for bettype Number game [redmineID: #111931] 
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
