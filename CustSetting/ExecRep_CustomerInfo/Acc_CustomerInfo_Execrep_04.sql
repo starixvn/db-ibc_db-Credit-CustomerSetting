@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT				
 				,	@roleid						TINYINT			
 				,	@action						VARCHAR(30)		= ''
@@ -54,6 +54,7 @@ AS
 		--20180109@Johnson: new direction for status [redmine:#87328]
 		- 20180808@Johnson: Enhance VirtualRate setting [Redmine:#99839]
 		- 20180823@Paul: Enhance VirtualRate setting [Redmine:#99839]
+		- 20190417@Paul: Enhance VirtualRate setting [Redmine:#110345]
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -90,16 +91,17 @@ BEGIN
 
 	DECLARE	@virtualXML			TABLE (
 									seqNo				TINYINT PRIMARY KEY
-								,	virtualXML			VARCHAR(MAX)
+								,	Pos			VARBINARY(64)
+								,	Val			VARBINARY(64)
 								);
 
 	DECLARE	@lockedMembers		TABLE (
 									custID				INT
 								);
 	CREATE TABLE #tblCustVR (custID INT)
-	DECLARE @tmpCustBatchVR TABLE(CustID INT PRIMARY KEY)	
+	CREATE TABLE #tmpCustBatchVR (CustID INT PRIMARY KEY)	
 	DECLARE @batchUpdate INT = 5000,
-			@maxcustid INT							
+			@maxcustid INT					
 	
 	IF	@virtualmultiplier <> ''
 	BEGIN			
@@ -216,10 +218,10 @@ BEGIN
 			
 			WHILE(1=1)
 			BEGIN
-				DELETE @tmpCustBatchVR
+				TRUNCATE TABLE #tmpCustBatchVR
 				
 				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO @tmpCustBatchVR
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
 				FROM #tblCustVR t
 				
 				IF @@rowcount = 0 
@@ -228,7 +230,7 @@ BEGIN
 				UPDATE	ci
 				SET	ci.virtualmultiplier = @EnableVirtualrate
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE custID IN (SELECT custID FROM @tmpCustBatchVR)
+				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
 			END	
 			
 			--update newly customer if any
@@ -262,10 +264,10 @@ BEGIN
 			
 			WHILE(1=1)
 			BEGIN
-				DELETE @tmpCustBatchVR
+				TRUNCATE TABLE #tmpCustBatchVR
 				
 				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO @tmpCustBatchVR
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
 				FROM #tblCustVR t
 				
 				IF @@rowcount = 0 
@@ -274,7 +276,7 @@ BEGIN
 				UPDATE	ci
 				SET	ci.virtualmultiplier = @EnableVirtualrate
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE custID IN (SELECT custID FROM @tmpCustBatchVR)
+				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
 			END	
 			
 			UPDATE	ci
@@ -307,10 +309,10 @@ BEGIN
 			
 			WHILE(1=1)
 			BEGIN
-				DELETE @tmpCustBatchVR
+				TRUNCATE TABLE #tmpCustBatchVR
 				
 				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO @tmpCustBatchVR
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
 				FROM #tblCustVR t
 				
 				IF @@rowcount = 0 
@@ -319,7 +321,7 @@ BEGIN
 				UPDATE	ci
 				SET	ci.virtualmultiplier = @EnableVirtualrate
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE custID IN (SELECT custID FROM @tmpCustBatchVR)
+				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
 			END
 			
 			UPDATE	ci
@@ -345,30 +347,36 @@ BEGIN
 	IF	(@EnableVirtualrate = 1 AND dbo.f_CheckRepTable('CustVirtualSetting') = 1 AND (SELECT TOP 1 1 FROM @tblVirtualrate) IS NOT NULL)
 	BEGIN
 		INSERT INTO @virtualXML
-			(	seqNo, virtualXML                       )
-		SELECT	seqNo, CONVERT(VARCHAR(MAX), virtualXML)
+			(	seqNo, Pos, Val                       )
+		SELECT	seqNo, p1.Pos, p2.Val
 		FROM (
 			SELECT	DISTINCT seqNo
 			FROM	ProfileVirtualSetting WITH (NOLOCK)
 		) pvs
 		CROSS APPLY (
-			SELECT (
-				SELECT	(
-							SELECT	ipvs.profileID			AS '@p',
-									tmp.virtualMultiplier	AS '@v'
-							FROM		@tblVirtualrate			AS tmp
-							INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)
-									ON	tmp.sporttype	= ipvs.sporttype
-									AND	tmp.bettype		= ipvs.bettype
-									AND	tmp.isLive		= ipvs.islive
-							WHERE	ipvs.seqNo = pvs.seqNo
-							FOR XML PATH ('r')
-						,	TYPE
-						)
-				FOR XML PATH ('root')
-			,	TYPE
-			) AS virtualXML
-		) p;
+			SELECT CONVERT(VARBINARY(64), (
+				SELECT	CONVERT(VARCHAR, CAST(ipvs.profileID - 64 * (ipvs.seqNo - 1) AS BINARY(1)), 2)
+				FROM		@tblVirtualrate			AS tmp
+					INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)
+						ON	tmp.sporttype	= ipvs.sporttype
+							AND	tmp.bettype		= ipvs.bettype
+							AND	tmp.isLive		= ipvs.islive
+				WHERE	ipvs.seqNo = pvs.seqNo
+				FOR XML PATH ('')						
+			), 2) AS Pos
+		) p1
+		CROSS APPLY (
+			SELECT CONVERT(VARBINARY(64), (
+				SELECT	CONVERT(VARCHAR, CAST(CASE WHEN CAST(VirtualMultiplier * 100 AS INT) > 200 THEN ((CAST(VirtualMultiplier * 100 AS INT) - 200) / 5 + 200) ELSE CAST(VirtualMultiplier * 100 AS INT) END AS BINARY(1)), 2)
+				FROM		@tblVirtualrate			AS tmp
+					INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)
+						ON	tmp.sporttype	= ipvs.sporttype
+							AND	tmp.bettype		= ipvs.bettype
+							AND	tmp.isLive		= ipvs.islive
+				WHERE	ipvs.seqNo = pvs.seqNo
+				FOR XML PATH ('')						
+			), 2) AS Val
+		) p2;
 
 		-- READ locked VR members
 
@@ -400,18 +408,18 @@ BEGIN
 			
 			WHILE(1=1)
 			BEGIN
-				DELETE @tmpCustBatchVR
+				TRUNCATE TABLE #tmpCustBatchVR
 				
 				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO @tmpCustBatchVR
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
 				FROM #tblCustVR t
 				
 				IF @@rowcount = 0 
 					BREAK;
-				
+
 				UPDATE cvs
 				SET cvs.bitmapVirtual = bm.bitmap
-				FROM	@tmpCustBatchVR tmpCust
+				FROM	#tmpCustBatchVR tmpCust
 					CROSS APPLY (
 						SELECT TOP 3 cvs.seqNo, cvs.bitmapVirtual
 						FROM CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)
@@ -420,7 +428,7 @@ BEGIN
 					CROSS APPLY (
 						SELECT TOP 1 bm.bitmap
 						FROM @virtualXML			AS tmp
-							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.virtualXML) AS bm
+							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos) AS bm
 						WHERE cvs.seqNo = tmp.seqNo
 					) bm
 			END	
@@ -432,7 +440,7 @@ BEGIN
 					ON	ci.custid = cvs.custid
 			INNER JOIN	@virtualXML			AS tmp
 					ON	cvs.seqNo = tmp.seqNo
-			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.virtualXML)) AS bm
+			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
 			WHERE	ci.srecommend = @custid
 				AND ci.custID > @maxcustid
 				AND	NOT EXISTS (
@@ -457,18 +465,18 @@ BEGIN
 			
 			WHILE(1=1)
 			BEGIN
-				DELETE @tmpCustBatchVR
+				TRUNCATE TABLE #tmpCustBatchVR
 				
 				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO @tmpCustBatchVR
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
 				FROM #tblCustVR t
 				
 				IF @@rowcount = 0 
 					BREAK;
-				
+
 				UPDATE cvs
 				SET cvs.bitmapVirtual = bm.bitmap
-				FROM	@tmpCustBatchVR tmpCust
+				FROM	#tmpCustBatchVR tmpCust
 					CROSS APPLY (
 						SELECT TOP 3 cvs.seqNo, cvs.bitmapVirtual
 						FROM CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)
@@ -477,7 +485,7 @@ BEGIN
 					CROSS APPLY (
 						SELECT TOP 1 bm.bitmap
 						FROM @virtualXML			AS tmp
-							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.virtualXML) AS bm
+							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos) AS bm
 						WHERE cvs.seqNo = tmp.seqNo
 					) bm
 			END	
@@ -489,7 +497,7 @@ BEGIN
 					ON	ci.custid = cvs.custid
 			INNER JOIN	@virtualXML			AS tmp
 					ON	cvs.seqNo = tmp.seqNo
-			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.virtualXML)) AS bm
+			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
 			WHERE	ci.mrecommend = @custid
 				AND ci.custid > @maxcustid
 				AND	NOT EXISTS (
@@ -514,10 +522,10 @@ BEGIN
 			
 			WHILE(1=1)
 			BEGIN
-				DELETE @tmpCustBatchVR
+				TRUNCATE TABLE #tmpCustBatchVR
 				
 				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO @tmpCustBatchVR
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
 				FROM #tblCustVR t
 				
 				IF @@rowcount = 0 
@@ -525,7 +533,7 @@ BEGIN
 				
 				UPDATE cvs
 				SET cvs.bitmapVirtual = bm.bitmap
-				FROM	@tmpCustBatchVR tmpCust
+				FROM	#tmpCustBatchVR tmpCust
 					CROSS APPLY (
 						SELECT TOP 3 cvs.seqNo, cvs.bitmapVirtual
 						FROM CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)
@@ -534,7 +542,7 @@ BEGIN
 					CROSS APPLY (
 						SELECT TOP 1 bm.bitmap
 						FROM @virtualXML			AS tmp
-							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.virtualXML) AS bm
+							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos) AS bm
 						WHERE cvs.seqNo = tmp.seqNo
 					) bm
 			END	
@@ -546,7 +554,7 @@ BEGIN
 					ON	ci.custid = cvs.custid
 			INNER JOIN	@virtualXML			AS tmp
 					ON	cvs.seqNo = tmp.seqNo
-			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.virtualXML)) AS bm
+			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
 			WHERE	ci.recommend = @custid
 				AND ci.custid > @maxcustid
 				AND	NOT EXISTS (
@@ -564,7 +572,7 @@ BEGIN
 					ON	ci.custid = cvs.custid
 			INNER JOIN	@virtualXML			AS tmp
 					ON	cvs.seqNo = tmp.seqNo
-			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.virtualXML)) AS bm
+			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
 			WHERE	ci.custid = @custid;
 		END;
 	END;
