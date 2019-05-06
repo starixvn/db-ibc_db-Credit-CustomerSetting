@@ -31,10 +31,10 @@ BEGIN
 	WHERE username = @username
 	
 	SELECT ci.custid, ci.username, roleid, ci.reject as suspended,
-		(SELECT suspendInfo FROM dbo.f_GetSuspendInfoStatus(4,SuspendInfo)) as SuspendBySuper,
-		(SELECT suspendInfo FROM dbo.f_GetSuspendInfoStatus(3,SuspendInfo)) as SuspendByMaster,
-		(SELECT suspendInfo FROM dbo.f_GetSuspendInfoStatus(2,SuspendInfo)) as SuspendByAgent,
-		(SELECT suspendInfo FROM dbo.f_GetSuspendInfoStatus(1,SuspendInfo)) as SuspendMember
+		(SELECT CAST(suspendInfo as BIT) FROM dbo.f_GetSuspendInfoStatus(4,SuspendInfo)) as SuspendBySuper,
+		(SELECT CAST(suspendInfo as BIT) FROM dbo.f_GetSuspendInfoStatus(3,SuspendInfo)) as SuspendByMaster,
+		(SELECT CAST(suspendInfo as BIT) FROM dbo.f_GetSuspendInfoStatus(2,SuspendInfo)) as SuspendByAgent,
+		(SELECT CAST(suspendInfo as BIT) FROM dbo.f_GetSuspendInfoStatus(1,SuspendInfo)) as SuspendMember
 	FROM dbo.CustProductStatus cs WITH(NOLOCK)
 		INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 	WHERE ci.custid IN (@srecommend,@mrecommend,@recommend,@custid)	

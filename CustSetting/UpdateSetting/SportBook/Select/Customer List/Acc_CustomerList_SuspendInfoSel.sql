@@ -24,6 +24,14 @@ BEGIN
 	SELECT val 
 	FROM dbo.strSplit(@custidList,',')
 	
+	IF @roleid > 1
+	BEGIN
+		SELECT custid, username, reject as suspended
+		FROM custinfo ci WITH(NOLOCK)
+		WHERE custid IN (SELECT custid FROM @tblCust)
+		ORDER BY custid
+	END
+	
 	IF @roleid = 4
 	BEGIN
 		;WITH tmp AS(
@@ -33,12 +41,11 @@ BEGIN
 		WHERE srecommend IN (SELECT custid FROM @tblCust)
 			AND roleid < 4
 		)
-		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
+		SELECT srecommend custid, t.roleid, 
 			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
 			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
-		FROM tmp t
-			INNER JOIN custinfo c WITH(NOLOCK) ON t.srecommend = c.custid
-		GROUP BY c.custid, c.username,c.reject, t.roleid
+		FROM tmp t			
+		GROUP BY srecommend, roleid
 	END
 	ELSE IF @roleid = 3
 	BEGIN
@@ -49,12 +56,11 @@ BEGIN
 		WHERE mrecommend IN (SELECT custid FROM @tblCust)
 			AND roleid < 3
 		)
-		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
+		SELECT mrecommend as custid, roleid, 
 			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
 			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
-		FROM tmp t
-			INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = t.mrecommend
-		GROUP BY c.custid, c.username, c.reject, t.roleid
+		FROM tmp t			
+		GROUP BY mrecommend,roleid
 	END	
 	ELSE IF @roleid = 2
 	BEGIN
@@ -65,12 +71,11 @@ BEGIN
 		WHERE recommend IN (SELECT custid FROM @tblCust)
 			AND roleid = 1
 		)
-		SELECT c.custid, c.username, c.reject as suspended, t.roleid, 
+		SELECT recommend as custid, roleid, 
 			SUM(CASE WHEN newSuspendInfo > 0 THEN 1 ELSE 0 END) as cntUnchanged,
 			SUM(CASE WHEN newSuspendInfo = 0 THEN 1 ELSE 0 END) as cntAffected
-		FROM tmp t
-			INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = t.recommend
-		GROUP BY c.custid, c.username, c.reject, t.roleid
+		FROM tmp t			
+		GROUP BY recommend, t.roleid
 	END
 	ELSE IF @roleid = 1
 	BEGIN		
