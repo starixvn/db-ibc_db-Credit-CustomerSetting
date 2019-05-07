@@ -74,16 +74,16 @@ BEGIN
 	--SELECT * FROM #Log 
 
 	SELECT LogId, LogDate
-			, n.value('./@SportType','SMALLINT') AS SportType
-			, n.value('./@BetType','SMALLINT') AS BetType
-			, n.value('./@IsLive','BIT') AS IsLive									
-			, n.value('./@ProductID','SMALLINT') AS ProductID
-			, n.value('./@MasterPT','SMALLMONEY') AS MasterPT	
+			, n.value('./@Sport','SMALLINT') AS SportType
+			, n.value('./@BT','SMALLINT') AS BetType
+			, n.value('./@InPlay','BIT') AS IsLive									
+			, n.value('./@ProductID','TINYINT') AS ProductID
+			, n.value('./@MasterPossess','SMALLMONEY') AS MasterPT	
 	INTO #NewData
 	FROM #Log
 		CROSS APPLY NewValue.nodes('//C') AS RECORDS(n)
 	
-	SELECT LogId, o.value('./@MasterPT','SMALLMONEY') AS MasterPT		
+	SELECT LogId, o.value('./@MasterPossess','SMALLMONEY') AS MasterPT		
 	INTO #OldData
 	FROM #Log
 		CROSS APPLY OldValue.nodes('//C') AS RECORDS(o)
