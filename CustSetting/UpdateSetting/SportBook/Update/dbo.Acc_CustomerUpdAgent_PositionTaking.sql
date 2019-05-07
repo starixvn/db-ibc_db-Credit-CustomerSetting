@@ -1665,7 +1665,7 @@ BEGIN
 	where co3.custid = @mrecommend and (	
 						((b.isauto_mpositiontaking=0) and (b.mpositiontaking+b.apositiontaking>co3.maxpositiontaking or b.mpositiontaking+b.apositiontaking<co3.minpositiontaking)) or 
 						(b.isauto_mpositiontaking>0 and (b.apositiontaking>co3.maxpositiontaking or b.apositiontaking + b.auto_mpositiontaking<co3.minpositiontaking)) or 
-						((b.sporttype = 161 and b.bettype in (85,86,87,89,89) and b.isauto_mlivepositiontaking = 0) and (b.mlivepositiontaking+b.alivepositiontaking>co3.maxlivepositiontaking or b.mlivepositiontaking+b.alivepositiontaking < co3.minlivepositiontaking)) or
+						((b.sporttype = 161 and b.bettype in (85,86,87,89,90) and b.isauto_mlivepositiontaking = 0) and (b.mlivepositiontaking+b.alivepositiontaking>co3.maxlivepositiontaking or b.mlivepositiontaking+b.alivepositiontaking < co3.minlivepositiontaking)) or
 						((b.sporttype = 161 and b.bettype in (85,86,87,89,90) and b.isauto_mlivepositiontaking > 0) and (b.alivepositiontaking>co3.maxlivepositiontaking or b.alivepositiontaking + b.auto_mlivepositiontaking < co3.minlivepositiontaking))
 					)
 
