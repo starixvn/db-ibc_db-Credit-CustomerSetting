@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" isFunction="0" isNested="0"></info>*/
-USE [CustDB]
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustomerInsAutoTransferAgent]
 	@username		VARCHAR(MAX),
 	@TransferType	TINYINT = 1,
@@ -46,7 +43,7 @@ BEGIN
 		RETURN
 	-- End Check permission
 	
-	DECLARE @tmpUser TABLE (custid INT, username VARCHAR(50))
+	DECLARE @tmpUser TABLE (custid INT, username VARCHAR(50), roleid TINYINT, srecommend INT)
 	DECLARE @tmpCust TABLE (custid INT, islog BIT)
 	DECLARE @ErrType VARCHAR(4000)
 	
@@ -55,14 +52,14 @@ BEGIN
 	FROM strSplit (@username, ',')
 	
 	UPDATE t
-	SET t.custid = c.custid
+	SET t.custid = c.custid, t.roleid = c.roleid, t.srecommend = c.srecommend
 	FROM @tmpUser t
-		LEFT JOIN dbo.Customer c WITH(NOLOCK) ON t.username = c.username AND roleid > 1
+		LEFT JOIN dbo.Customer c WITH(NOLOCK) ON t.username = c.username AND c.roleid > 1
 	
 	IF EXISTS (SELECT 1 FROM @tmpUser WHERE custid IS NULL)
 	BEGIN		
-		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + username + ','
+		SELECT @ErrType = NULL
+		SELECT @ErrType = COALESCE(@ErrType + ',', '') + username
 		FROM @tmpUser
 		WHERE custid IS NULL
 		
@@ -70,16 +67,46 @@ BEGIN
 		RETURN
 	END
 	
-	IF EXISTS (SELECT TOP 1 1 FROM @tmpUser t 
-					INNER JOIN [dbo].[Acc_ClearBalanceList] ac WITH(NOLOCK) ON t.custid = ac.custid
-			)
+	IF EXISTS (
+		SELECT 1
+		FROM @tmpUser t
+			INNER JOIN [dbo].[Acc_ClearBalanceList] ac WITH(NOLOCK) ON t.custid = ac.custid
+	)
 	BEGIN
-		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + username + ','
+		SELECT @ErrType = NULL
+		SELECT @ErrType = COALESCE(@ErrType + ',', '') + t.username
 		FROM @tmpUser t
 			INNER JOIN [dbo].[Acc_ClearBalanceList] ac WITH(NOLOCK) ON t.custid = ac.custid
 				
 		SELECT @ErrMsg = 'Existing Username: ' + @ErrType, @ErrCode = 101
+		RETURN
+	END
+
+	IF EXISTS (
+		SELECT 1
+		FROM @tmpUser t
+			INNER JOIN [dbo].[Acc_ClearBalanceList] ac WITH(NOLOCK) ON t.srecommend = ac.custid
+		WHERE t.roleid IN (2, 3)
+	)
+	BEGIN
+		SELECT @ErrMsg = 'Super already exists on Automate Transfer list, you can not add donwlines to this list.', @ErrCode = 102
+		RETURN
+	END
+
+	IF EXISTS (
+		SELECT 1
+		FROM @tmpUser t
+			INNER JOIN [dbo].[Customer] c WITH (NOLOCK) ON t.custid = c.srecommend AND t.roleid = 4 AND c.roleid IN (2,3)
+			INNER JOIN [dbo].[Acc_ClearBalanceList] ac WITH(NOLOCK) ON c.custid = ac.custid
+	)
+	BEGIN
+		SELECT @ErrType = NULL
+		SELECT @ErrType = COALESCE(@ErrType + ',', '') + c.username
+		FROM @tmpUser t
+			INNER JOIN [dbo].[Customer] c WITH (NOLOCK) ON t.custid = c.srecommend AND t.roleid = 4 AND c.roleid IN (2,3)
+			INNER JOIN [dbo].[Acc_ClearBalanceList] ac WITH(NOLOCK) ON c.custid = ac.custid
+
+		SELECT @ErrMsg = 'Please remove all donwlines: ' + @ErrType + ' before you add this Super to Automate Transfer list.', @ErrCode = 103
 		RETURN
 	END
 	
@@ -97,7 +124,7 @@ BEGIN
 	
 	IF @@ERROR <> 0
 	BEGIN
-		SELECT @ErrMsg = 'Add agent unsuccessfully', @ErrCode = 102
+		SELECT @ErrMsg = 'Add agent unsuccessfully', @ErrCode = 110
 		RETURN
 	END
 
@@ -153,3 +180,4 @@ BEGIN
 			,@Duration		= @duration
 	END	
 END
+GO

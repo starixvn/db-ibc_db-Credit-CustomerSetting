@@ -54,9 +54,26 @@ BEGIN
 
 		-- Existing Super (case Master/Agent)
 		INSERT INTO @tmpResult (username, remark, isValid)
-		SELECT t.username, 'Existing Super.', 0
+		SELECT t.username, 'Super already exists on Automate Transfer list, you can not add donwlines to this list.', 0
 		FROM Acc_ClearBalanceList ac WITH (NOLOCK)
 			INNER JOIN @tmpUser t ON ac.custid = t.srecommend
+
+		-- Existing Downline (case Super)
+		;WITH CTE AS (
+			SELECT c.username, t.username AS downline_username
+			FROM dbo.Customer c WITH (NOLOCK)
+			INNER JOIN @tmpUser t ON t.srecommend = c.custid
+		)
+		INSERT INTO @tmpResult (username, remark, isValid)
+		SELECT t.username, 'Please remove all donwlines: '
+							+ STUFF((
+							SELECT ',' + c.downline_username FROM CTE c WITH (NOLOCK) WHERE t.username = c.username
+							FOR XML PATH('')), 1, 1, '') + ' before you add this Super to Automate Transfer list.'
+						, 0
+		FROM CTE t
+		GROUP BY t.username
+		
+			
 	END
 	
 	/* ===== Valid case ===== */
