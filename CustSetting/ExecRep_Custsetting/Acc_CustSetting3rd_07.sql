@@ -779,6 +779,7 @@ BEGIN
 			FROM custsetting3rd scs WITH(NOLOCK)
 				INNER JOIN custoverride3rd sco WITH(NOLOCK) ON scs.custid = sco.custid
 															AND scs.sporttype = sco.sporttype
+															AND scs.bettype = sco.bettype
 			WHERE scs.custid = @srecommend
 				AND scs.sporttype = 161
 				
@@ -1156,6 +1157,7 @@ BEGIN
 			FROM CustSettingGame scs WITH(NOLOCK)
 				INNER JOIN CustOverrideGame sco WITH(NOLOCK) ON scs.custid = sco.custid
 															AND scs.sporttype = sco.sporttype
+															AND scs.bettype = sco.bettype
 			WHERE scs.custid = @srecommend
 				AND scs.sporttype = @sporttype
 				AND scs.bettype = @bettype

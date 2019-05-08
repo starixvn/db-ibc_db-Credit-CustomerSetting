@@ -398,6 +398,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 	- 20181122@Johnson: remove redundant log status [redmine: #105164]
+	- 20190508@Johnson: fix bug for missing bettype of Number Game [redmine: #112318]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -3909,7 +3910,7 @@ BEGIN--Update Position Taking
 				INNER JOIN #tmp_Sports sports on b.sporttype = sports.ID
 				INNER JOIN #tmp_Bettype bettype on b.bettype = bettype.ID
 
-			where co3.custid = @srecommEND and ((b.isautopositiontaking>0 and b.autopositiontaking>co3.maxpositiontaking) or (b.isautolivepositiontaking>0 and b.sporttype=161 and b.bettype in (85,86,87) and b.autolivepositiontaking>co3.maxlivepositiontaking))
+			where co3.custid = @srecommEND and ((b.isautopositiontaking>0 and b.autopositiontaking>co3.maxpositiontaking) or (b.isautolivepositiontaking>0 and b.sporttype=161 and b.bettype in (85,86,87,89,90) and b.autolivepositiontaking>co3.maxlivepositiontaking))
 
 			if @ErrType <>''
 			BEGIN
