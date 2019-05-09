@@ -3980,7 +3980,7 @@ BEGIN--Update Position Taking
 					) AS b 
 			INNER JOIN #tmp_Sports sports on b.sporttype = sports.ID
 			INNER JOIN #tmp_Bettype bettype on b.bettype = bettype.ID
-			where ((b.isautopositiontaking = 1 and b.autopositiontaking < b.autopositiontaking_min) or (b.bettype in (1,3,7,8) and b.sporttype=1 and b.isautolivepositiontaking = 1 and b.autolivepositiontaking < b.autolivepositiontaking_min ))
+			where ((b.isautopositiontaking = 1 and b.autopositiontaking < b.autopositiontaking_min) or (b.bettype in (85,86,87,89,90) and b.sporttype=161 and b.isautolivepositiontaking = 1 and b.autolivepositiontaking < b.autolivepositiontaking_min ))
 				
 			if @ErrType <>''
 			BEGIN
