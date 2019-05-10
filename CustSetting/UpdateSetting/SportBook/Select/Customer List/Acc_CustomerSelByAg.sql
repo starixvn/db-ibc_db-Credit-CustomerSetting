@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO 
 
 ALTER PROCEDURE [dbo].[Acc_CustomerSelByAg]  
 	@Recommend int,  
@@ -74,6 +72,7 @@ BEGIN
 		- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
 		- 20180830@Elodie: Add new bettype of Poker Games Product - [Redmine: #97675]
 		- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526]
+		- 20190510@Elodie: Support search by nickname on customer list - [Redmine: #113044]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -377,10 +376,11 @@ BEGIN
 			IF @ProductUnSync = 0 
 			BEGIN
 				SELECT @TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-				FROM dbo.Custinfo ci WITH(nolock)   
+				FROM dbo.Custinfo ci WITH(NOLOCK)   
+					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 				WHERE ci.Recommend = @recommend   
 					AND ci.roleid=1   
-					AND ci.username LIKE '%' + @Username + '%'    
+					AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END  
 					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END     
@@ -390,9 +390,10 @@ BEGIN
 			BEGIN
 				SELECT @TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
 				FROM dbo.Custinfo ci WITH(nolock)   
+					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 				WHERE ci.Recommend = @recommend   
 					AND ci.roleid=1   
-					AND ci.username LIKE '%' + @Username + '%'    
+					AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END  
 					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END     
@@ -405,10 +406,11 @@ BEGIN
 			BEGIN
 				SELECT @TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
 				FROM dbo.Custinfo ci WITH(nolock)   
+					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 					INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid					
 				WHERE ci.Recommend = @recommend   
 					AND ci.roleid=1   
-					AND ci.username LIKE '%' + @Username + '%'    
+					AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END  
 					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END     
@@ -425,11 +427,12 @@ BEGIN
 			INSERT INTO #memberList (custid, rn)
 			SELECT custid, rn
 			FROM (
-					SELECT custid,
+					SELECT ci.custid,
 						ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ci.reject, ci.username) AS rn
 					FROM dbo.custInfo ci with(nolock)
-					WHERE Recommend = @Recommend  AND ci.RoleID = 1 	
-						AND ci.username LIKE '%' + @Username + '%'    
+						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+					WHERE ci.Recommend = @Recommend  AND ci.RoleID = 1 	
+						AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 						AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END  
 						AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END     
@@ -442,11 +445,12 @@ BEGIN
 			INSERT INTO #memberList (custid, rn)
 			SELECT custid, rn
 			FROM (
-					SELECT custid,
+					SELECT ci.custid,
 						ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ci.reject, ci.username) AS rn
 					FROM dbo.custInfo ci with(nolock)
-					WHERE Recommend = @Recommend  AND ci.RoleID = 1 	
-						AND ci.username LIKE '%' + @Username + '%'    
+						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+					WHERE ci.Recommend = @Recommend  AND ci.RoleID = 1 	
+						AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 						AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END  
 						AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END     
@@ -465,9 +469,10 @@ BEGIN
 					SELECT ci.custid,
 						ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ci.reject, ci.username) AS rn
 					FROM dbo.custInfo ci with(nolock)
+						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid					
-					WHERE Recommend = @Recommend  AND ci.RoleID = 1 	
-						AND ci.username LIKE '%' + @Username + '%'    
+					WHERE ci.Recommend = @Recommend  AND ci.RoleID = 1 	
+						AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 						AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END  
 						AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END     

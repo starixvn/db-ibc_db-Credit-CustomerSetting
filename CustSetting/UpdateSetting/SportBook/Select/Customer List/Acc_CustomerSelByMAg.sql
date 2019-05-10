@@ -71,6 +71,8 @@ AS
 		- 20180830@Elodie: Add new bettype of Poker Games Product - [Redmine: #97675]
 		- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
 		- 20180918@Winnie: Add new bettype of Esports - [Redmine: #101526]
+		- 20190510@Elodie: Support search by nickname on customer list - [Redmine: #113044]
+
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -379,9 +381,10 @@ BEGIN
 				SELECT 
 					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
 				FROM dbo.Custinfo AS ci WITH (NOLOCK)
+					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 				WHERE ci.MRecommend = @MRecommend 
 					AND ci.roleid=2 
-					AND ci.username LIKE '%' + @Username + '%'  
+					AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 					AND enabled = CASE WHEN coalesce(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
 					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
@@ -392,9 +395,10 @@ BEGIN
 				SELECT 
 					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
 				FROM dbo.Custinfo AS ci WITH (NOLOCK)
+					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 				WHERE ci.MRecommend = @MRecommend 
 					AND ci.roleid=2 
-					AND ci.username LIKE '%' + @Username + '%'  
+					AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 					AND enabled = CASE WHEN coalesce(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
 					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
@@ -408,10 +412,11 @@ BEGIN
 				SELECT 
 					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
 				FROM dbo.Custinfo AS ci WITH (NOLOCK)
+					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 					INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
 				WHERE ci.MRecommend = @MRecommend 
 					AND ci.roleid=2 
-					AND ci.username LIKE '%' + @Username + '%'  
+					AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 					AND enabled = CASE WHEN coalesce(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
 					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
@@ -428,11 +433,12 @@ BEGIN
 			INSERT INTO #customer(custid,RowNumber)
 			SELECT custid, RowNumber	
 			FROM (
-					SELECT custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
+					SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
 					FROM dbo.custinfo ci WITH(NOLOCK) 
-					WHERE MRecommend = @MRecommend 
-						AND roleid=2 
-						AND username LIKE '%' + @Username + '%'  
+						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+					WHERE ci.MRecommend = @MRecommend 
+						AND ci.roleid=2 
+						AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
 						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
 						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
@@ -445,11 +451,12 @@ BEGIN
 			INSERT INTO #customer(custid,RowNumber)
 			SELECT custid, RowNumber	
 			FROM (
-					SELECT custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
+					SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
 					FROM dbo.custinfo ci WITH(NOLOCK) 
-					WHERE MRecommend = @MRecommend 
-						AND roleid=2 
-						AND username LIKE '%' + @Username + '%'  
+						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+					WHERE ci.MRecommend = @MRecommend 
+						AND ci.roleid=2 
+						AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
 						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
 						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
@@ -467,10 +474,11 @@ BEGIN
 			FROM (
 					SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
 					FROM dbo.custinfo ci WITH(NOLOCK) 
+						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
-					WHERE MRecommend = @MRecommend 
-						AND roleid=2 
-						AND username LIKE '%' + @Username + '%'  
+					WHERE ci.MRecommend = @MRecommend 
+						AND ci.roleid=2 
+						AND (ci.username LIKE '%' + @Username + '%' OR c.username2 LIKE '%' + @Username + '%')
 						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
 						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
 						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
