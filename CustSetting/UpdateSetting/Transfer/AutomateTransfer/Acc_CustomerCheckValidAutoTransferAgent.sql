@@ -54,7 +54,7 @@ BEGIN
 
 		-- Existing Super (case Master/Agent)
 		INSERT INTO @tmpResult (username, remark, isValid)
-		SELECT t.username, 'Super already exists on Automate Transfer list, you can not add donwlines to this list.', 0
+		SELECT t.username, 'Super already exists on Automate Transfer list, you cannot add donwlines to this list.', 0
 		FROM Acc_ClearBalanceList ac WITH (NOLOCK)
 			INNER JOIN @tmpUser t ON ac.custid = t.srecommend
 
@@ -72,8 +72,6 @@ BEGIN
 						, 0
 		FROM CTE t
 		GROUP BY t.username
-		
-			
 	END
 	
 	/* ===== Valid case ===== */

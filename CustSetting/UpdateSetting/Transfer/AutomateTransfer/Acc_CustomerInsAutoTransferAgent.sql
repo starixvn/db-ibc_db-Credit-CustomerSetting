@@ -89,7 +89,7 @@ BEGIN
 		WHERE t.roleid IN (2, 3)
 	)
 	BEGIN
-		SELECT @ErrMsg = 'Super already exists on Automate Transfer list, you can not add donwlines to this list.', @ErrCode = 102
+		SELECT @ErrMsg = 'Super already exists on Automate Transfer list, you cannot add donwlines to this list.', @ErrCode = 102
 		RETURN
 	END
 
@@ -130,20 +130,24 @@ BEGIN
 
 	-- if @username includes super and @transfertype is transfer all downline --> Update transfer option daily for supers and all downlines (except members)
 	DECLARE @SuperIdXML XML, @SuperIdList VARCHAR(MAX)
-	SELECT  @SuperIdXML =
-						(SELECT tc.custid AS '@c'
-						FROM @tmpCust tc
-							INNER JOIN dbo.Customer c WITH (NOLOCK) ON tc.custid = c.custid
-						WHERE c.roleid = 4
-						FOR XML PATH('r'), TYPE)
-
-	SELECT  @SuperIdList = CAST(@SuperIdXML AS VARCHAR(MAX))
 	
-	IF ISNULL(@SuperIdList, '') <> ''
+	IF @TransferType = 2
 	BEGIN
-		EXEC dbo.Acc_CustomerInfo_Execrep_08
-			@SuperIdList		= @SuperIdList
-			,@TransferOption	= 0 -- Daily
+		SELECT  @SuperIdXML =
+							(SELECT tc.custid AS '@c'
+							FROM @tmpCust tc
+								INNER JOIN dbo.Customer c WITH (NOLOCK) ON tc.custid = c.custid
+							WHERE c.roleid = 4
+							FOR XML PATH('r'), TYPE)
+
+		SELECT  @SuperIdList = CAST(@SuperIdXML AS VARCHAR(MAX))
+	
+		IF ISNULL(@SuperIdList, '') <> ''
+		BEGIN
+			EXEC dbo.Acc_CustomerInfo_Execrep_08
+				@SuperIdList		= @SuperIdList
+				,@TransferOption	= 0 -- Daily
+		END
 	END
 	
 	--write log
