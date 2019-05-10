@@ -91,10 +91,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 
 	@credit MONEY,  
 
-	@closed BIT,  
-	@Suspended bit,   
-	@UpdateClosed BIT = 1,  
-	@UpdateSuspended BIT = 1,  
+	@closed BIT,  	
+	@UpdateClosed BIT = 1,  	
 	@disCasino bit = 0,  
 
 	@apositiontaking_1 SMALLMONEY,  
@@ -239,6 +237,7 @@ Revisions:
  - 20170628@Winnie: Appply color for closed account - [Redmine: 74494]
  - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
  - 20181107@Johnson: add Happy 5 [Redmine: #104006]
+ - 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -303,10 +302,9 @@ BEGIN
 	END  
 	  
 	----------------------------------------------  
-	DECLARE @Old_Suspended bit, @Old_Closed bit  
+	DECLARE @Old_Closed bit  
 
-	SELECT  @Old_Suspended = reject,  
-			@Old_Closed = closed
+	SELECT @Old_Closed = closed
 	FROM Custinfo WITH (NOLOCK)  
 	WHERE CustID = @CustID  
 
@@ -314,12 +312,7 @@ BEGIN
 	BEGIN
 		SET @UpdateClosed = 0
 	END
-		
-	IF @Old_Suspended = @Suspended
-	BEGIN
-		SET @UpdateSuspended = 0
-	END	
-			
+				
 	--Update Closed  
 	if @UpdateClosed = 1  
 	BEGIN  
@@ -347,37 +340,7 @@ BEGIN
 	  Select @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)  
 	 END  
 	END  
-	  
-	  
-	---------------------------------------------  
-	---update suspended   
-
-	IF @UpdateSuspended = 1  
-	BEGIN   
-	 Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''  
-	 EXEC Acc_CustomerUpdSuspended  
-		@CustID =@CustID,  
-		@Suspended =@Suspended,   
-		@disCasino = @disCasino,  
-		@SubAccID =@SubAccID ,   
-		@UserID =@UserID,  
-		@Language =@Language,  
-		@ErrCode =@ErrCode_Cur OUTPUT,  
-		@ErrMsg =@ErrMsg_Cur OUTPUT,  
-		@IP =@IP  
-	      
-	 IF @ErrCode_Cur > 0  
-	 BEGIN  
-	  select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7),   
-		@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)  
-	    
-	 END  
-	 ELSE  
-	 BEGIN  
-	  Select @ErrCode = @ErrCode + '-103'+char(7), @ErrMsg = @ErrMsg + char(7)  
-	 END  
-	END  
-	  
+	  	 
 	----------------------------------------------  
 	--Update credit  
 	IF @UpdateMultiple = 0  

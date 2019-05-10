@@ -8,8 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @email nvarchar(50)=NULL,
     @fax nvarchar(50),
     @disCasino bit = 0,
-    @closed bit,
-    @Suspended bit,
+    @closed bit,    
 
     @SubAccID int = 0,
     @MinBet money,
@@ -344,6 +343,7 @@ Revisions:
     - 20170628@Winnie: Apply color for closed account   - [Redmine: 74494]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
+	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -425,30 +425,7 @@ Revisions:
 	BEGIN
 		Select @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)
 	END
-
-	---------------------------------------------
-	---update suspended 
-	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-	EXEC Acc_CustomerUpdSuspended
-		@CustID =@CustID,
-		@Suspended =@Suspended,    
-		@SubAccID =@SubAccID , 
-		@UserID =@UserID,
-		@disCasino = @disCasino,
-		@Language =@Language,
-		@ErrCode =@ErrCode_cur OUTPUT,
-		@ErrMsg =@ErrMsg_Cur OUTPUT,
-		@IP =@IP
-	IF @ErrCode_Cur > 0
-	BEGIN
-		select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
-				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-	    
-	END
-	ELSE
-	BEGIN
-		Select @ErrCode = @ErrCode + '-103'+char(7), @ErrMsg = @ErrMsg + char(7)
-	END
+	
 	----------------------------------------------
 	--Update credit
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
