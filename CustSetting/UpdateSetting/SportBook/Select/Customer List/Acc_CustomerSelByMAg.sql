@@ -12,7 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerSelByMAg]
 	@PageIndex int = 1,
 	@TotalPages int = 1 output,
 	@TotalItems int=0 output,
-	@Userid		INT=NULL
+	@Userid		INT = NULL
 AS
 /*
 	Created by: []
@@ -515,12 +515,11 @@ BEGIN
 	END
 	
 	-- get data for filtered customers	
-	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
-	DECLARE @tmpUserid VARCHAR(50)
-	SELECT @tmpUserid=CAST(@Userid AS VARCHAR(50))
-	
-	INSERT INTO  @tmp (siteid , site,SpecialGroup)
-	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
+	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )	
+
+	IF EXISTS (SELECT 1 FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @Userid AND roleid > 4)
+		INSERT INTO  @tmp (siteid , site,SpecialGroup)
+		SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@Userid)
 	
 	;WITH customers AS
 	(
