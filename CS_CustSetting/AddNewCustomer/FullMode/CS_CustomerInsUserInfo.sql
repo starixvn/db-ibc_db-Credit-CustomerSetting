@@ -140,6 +140,11 @@ BEGIN
 			@HeadlineId
         )
 		
+		INSERT INTO dbo.custAccount (custid, creditgrade, installmentdate, installmentamount, preagreeamount, accountremark, accountremarkdate,groupid,isgroupheadline,checker)
+		SELECT @CustID, ca.creditgrade, ca.installmentdate, ca.installmentamount, ca.preagreeamount, ca.accountremark, ca.accountremarkdate, ca.groupID,0,0
+		FROM dbo.custAccount ca WITH (NOLOCK)
+		WHERE ca.custid = @HeadlineId AND ca.IsGroupHeadLine = 1
+
 			--Virtual rate
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
 		SELECT	@Custid, 
