@@ -1,4 +1,4 @@
-CustSetting\AddNewCustomer\FullMode\CS_CustomerInsMember_Com.sql
+CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_Com.sql
 
 
 
