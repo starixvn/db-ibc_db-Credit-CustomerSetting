@@ -18,7 +18,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @tmpUser TABLE (custid INT, username VARCHAR(50), srecommend INT)
+	DECLARE @tmpUser TABLE (custid INT, username VARCHAR(50), roleid TINYINT, srecommend INT)
 	DECLARE @tmpResult TABLE (username VARCHAR(50), remark VARCHAR(100), isValid bit)
 	
 	INSERT INTO @tmpUser(username)
@@ -26,7 +26,7 @@ BEGIN
 	FROM strSplit (@username,',')
 	
 	UPDATE t
-	SET t.custid = c.custid, t.srecommend = CASE WHEN c.roleid < 4 THEN c.srecommend END
+	SET t.custid = c.custid, t.roleid = c.roleid, t.srecommend = c.srecommend
 	FROM @tmpUser t
 		LEFT JOIN dbo.Customer c WITH (NOLOCK) ON t.username = c.username AND c.roleid > 1
 	
@@ -57,12 +57,15 @@ BEGIN
 		SELECT t.username, 'Super already exists on Automate Transfer list, you cannot add donwlines to this list.', 0
 		FROM Acc_ClearBalanceList ac WITH (NOLOCK)
 			INNER JOIN @tmpUser t ON ac.custid = t.srecommend
+		WHERE t.roleid IN (2, 3)
 
 		-- Existing Downline (case Super)
 		;WITH CTE AS (
-			SELECT c.username, t.username AS downline_username
+			SELECT t.username, c.username AS downline_username
 			FROM dbo.Customer c WITH (NOLOCK)
-			INNER JOIN @tmpUser t ON t.srecommend = c.custid
+				INNER JOIN Acc_ClearBalanceList ac WITH (NOLOCK) ON c.custid = ac.custid
+				INNER JOIN @tmpUser t ON t.custid = c.srecommend
+			WHERE t.roleid = 4 AND c.roleid IN (2, 3)
 		)
 		INSERT INTO @tmpResult (username, remark, isValid)
 		SELECT t.username, 'Please remove all donwlines: '
