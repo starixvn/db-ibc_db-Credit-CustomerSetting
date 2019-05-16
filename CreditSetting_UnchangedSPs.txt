@@ -1,6 +1,7 @@
-CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_Com.sql
-
-
-
+CustSetting\ExecRep_CustomerInfo\Acc_CustomerInfo_Execrep_00.sql
+CustSetting\AddNewCustomer\CloneSetting\Acc_CustomerInsMember_CloneSetting_Com.sql
+CustSetting\AddNewCustomer\CloneSetting\Acc_CustomerInsMember_CloneSetting_MAg.sql
+CustSetting\AddNewCustomer\CloneSetting\Acc_CustomerInsMember_CloneSetting_SAg.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
 
 
