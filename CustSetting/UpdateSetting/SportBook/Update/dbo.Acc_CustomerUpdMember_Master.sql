@@ -398,6 +398,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 	- 20181122@Johnson: remove redundant log status [redmine: #105164]
+	- 20190508@Johnson: fix bug for missing bettype of Number Game [redmine: #112318]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -5101,7 +5102,7 @@ if	@UpdatePositiontaking   = 1  or
 					) AS b ON co3.sporttype=b.sporttype AND co3.bettype=b.bettype
 				inner join #tmp_Sports sports ON b.sporttype = sports.ID
 				inner join #tmp_Bettype bettype ON b.bettype = bettype.ID
-			WHERE co3.custid = @mrecommend AND ((b.mpositiontaking>co3.maxpositiontaking) OR (b.sporttype=161 AND b.bettype IN (85,86,87) AND b.mlivepositiontaking>co3.maxlivepositiontaking))
+			WHERE co3.custid = @mrecommend AND ((b.mpositiontaking>co3.maxpositiontaking) OR (b.sporttype=161 AND b.bettype IN (85,86,87,89,90) AND b.mlivepositiontaking>co3.maxlivepositiontaking))
 			IF @ErrType <>''
 			BEGIN
 				SELECT @ErrCode_cur = 9,

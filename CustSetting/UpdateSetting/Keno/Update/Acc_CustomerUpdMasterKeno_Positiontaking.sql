@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMasterKeno_Positiontaking]
 (
     @CustId INT
@@ -364,13 +365,4 @@ INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
     END CATCH
 
 END
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMasterKeno_Positiontaking] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Positiontaking] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Positiontaking] TO [bodbDownlineNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Positiontaking] TO [bodbExtAccNet]
 GO 

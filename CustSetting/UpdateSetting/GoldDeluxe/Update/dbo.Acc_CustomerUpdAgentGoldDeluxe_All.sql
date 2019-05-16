@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentGoldDeluxe_All]	
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentGoldDeluxe_All]	
 	@custid								INT,
 	@mrecommend							INT,
 	@v255mpositiontaking_1701			SMALLMONEY,
@@ -163,10 +164,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_All] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_All] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_All] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_All] TO [vnteam] AS [dbo]

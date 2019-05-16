@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentKeno]
 (
 	@CustId INT --Agent
@@ -153,9 +154,3 @@ BEGIN
 END
 
 GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentKeno] TO [vnteam]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno] TO [bodbDownlineNet]
-

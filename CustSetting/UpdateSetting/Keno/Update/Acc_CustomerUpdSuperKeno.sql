@@ -1,12 +1,4 @@
-
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperKeno    Script Date: 8/21/2014 3:12:19 PM ******/
-
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperKeno    Script Date: 8/21/2014 2:58:11 PM ******/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperKeno]
     @custid INT,-- superid    
     @sporttype INT = 202,
@@ -160,22 +152,4 @@ BEGIN
             SELECT @ErrCode = @ErrCode + '-102' + CHAR(7), @ErrMsg = @ErrMsg + CHAR(7)        
     END
 END
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperKeno] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno] TO [bodbDownlineNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno] TO [bodbExtAccNet]
-GO 

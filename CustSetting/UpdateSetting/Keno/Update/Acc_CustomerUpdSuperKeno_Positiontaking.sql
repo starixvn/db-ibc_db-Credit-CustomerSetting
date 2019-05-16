@@ -1,14 +1,4 @@
-USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuperKeno_Positiontaking]    Script Date: 06/10/2015 15:53:48 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperKeno_Positiontaking    Script Date: 8/28/2014 2:05:46 AM ******/
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperKeno_Positiontaking    Script Date: 8/21/2014 3:12:20 PM ******/
-
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuperKeno_Positiontaking    Script Date: 8/21/2014 2:58:14 PM ******/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperKeno_Positiontaking]
     @custid INT,-- superid    
     @sporttype INT = 202,
@@ -239,12 +229,4 @@ INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
             @duration = @duration
     END CATCH
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Positiontaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Positiontaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Positiontaking] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperKeno_Positiontaking] TO [vnteam] AS [dbo]

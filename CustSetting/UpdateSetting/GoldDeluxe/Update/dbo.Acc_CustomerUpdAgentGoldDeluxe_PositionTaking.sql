@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentGoldDeluxe_PositionTaking]
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentGoldDeluxe_PositionTaking]
 (
 	@custid								INT,
 	
@@ -355,10 +356,3 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_PositionTaking] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_PositionTaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_PositionTaking] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_PositionTaking] TO [vnteam] AS [dbo]
