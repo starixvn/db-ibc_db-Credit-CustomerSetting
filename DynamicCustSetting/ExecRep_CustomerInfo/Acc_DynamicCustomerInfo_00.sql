@@ -4,8 +4,10 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00]
 	, @SuperID			INT
 	, @MasterID			INT
 	, @AgentID			INT
-	, @RoleID			TINYINT
+	, @RoleID			TINYINT	
 	, @ProductID		TINYINT = NULL
+	, @isSearchAndCopy 	BIT = 0
+	, @copyFromCustID 	INT = 0
 	, @ErrCode			INT	= 0 OUTPUT
 AS
 /*
@@ -33,6 +35,9 @@ AS
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 		- 20180206@Elodie: Fix bug "default status of new direct master does not take into ProductStatusSiteCurrency table" - [Redmine #90570]
 		- 20190408@Johnson: add suspendInfo [Redmine: #105587]
+	
+	Parameter's explanation:
+		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
 
 BEGIN
@@ -158,7 +163,9 @@ BEGIN
 				--Get from Super
 				--Sync: upline status
 				--Enable/Disable: upline status
-				DECLARE @UplineID INT
+				DECLARE @UplineID INT,
+						@CopySuspendInfo TINYINT
+						
 				IF @RoleID = 3
 					SET @UplineID = @SuperID
 				ELSE IF @RoleID = 2
@@ -171,6 +178,16 @@ BEGIN
 				FROM [dbo].[CustProductStatus] cs WITH (NOLOCK)
 				WHERE cs.CustID = @UplineID
 				
+				IF @isSearchAndCopy = 1
+				BEGIN
+					SELECT @CopySuspendInfo = SuspendInfo
+					FROM CustProductStatus WITH(NOLOCK)
+					WHERE custid = @copyFromCustID
+					
+					UPDATE CustProductStatus WITH(UPDLOCK,ROWLOCK)
+					SET suspendInfo = @CopySuspendInfo
+					WHERE custid = @custid
+				END
 			END
 		END TRY
 		BEGIN CATCH

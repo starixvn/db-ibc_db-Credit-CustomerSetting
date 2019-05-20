@@ -3202,6 +3202,8 @@ BEGIN
 	    @mrecommend = @mrecommend,
 	    @recommend = @recommend,
 	    @roleid = 1,--create member
+		@isSearchAndCopy = @isSearchAndCopy,
+		@copyFromCustID = @copyFromCustID,
     	
 	    @spositiontaking_1 = @spositiontaking_1,
 	    @spositiontaking_2 = @spositiontaking_2,
