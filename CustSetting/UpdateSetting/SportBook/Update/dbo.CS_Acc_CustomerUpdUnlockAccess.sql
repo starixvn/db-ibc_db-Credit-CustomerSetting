@@ -1,7 +1,8 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[CS_Acc_CustomerUpdUnlockAccess]
 	@CustID INT,
-	@Closed BIT,		
+	@Closed BIT,	
+	@SubAccID int = 0, --Sub-AccountID	
 	@UserID INT,	
 	@Language VARCHAR(2) = 'E',
 	@ErrCode INT = 0 OUTPUT,
@@ -62,6 +63,7 @@ BEGIN
 	Select @LogSPData = '<CS_Acc_CustomerUpdUnlockAccess CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +
 						'Closed="'+ coalesce(cast(@Closed as varchar(50)),space(1)) + '" ' +						
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
 						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" ' +						
@@ -82,6 +84,7 @@ BEGIN
 		Select @LogSPData = '<CS_Acc_CustomerUpdUnlockAccess CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +
 							'Closed="'+ coalesce(cast(@Closed as varchar(50)),space(1)) + '" ' +							
 							'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+							'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 							'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
 							'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
 							'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1))+'" ' +							
