@@ -167,7 +167,7 @@ BEGIN
 	IF @Old_Suspended = @Suspended RETURN 
 	-------------
 	UPDATE	cs 
-	SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Suspended,SuspendInfo))	
+	SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Suspended,ISNULL(SuspendInfo,0)))	
 	FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 		
 	WHERE	custid = @CustID;
 	

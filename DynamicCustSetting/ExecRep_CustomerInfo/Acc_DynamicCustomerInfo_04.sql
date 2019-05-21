@@ -44,7 +44,7 @@ BEGIN
 		IF @roleid = 4
 		BEGIN			
 			UPDATE	cs 
-			SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(4,@Suspended,SuspendInfo))
+			SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(4,@Suspended,ISNULL(SuspendInfo,0)))
 			OUTPUT DELETED.custid, DELETED.SuspendInfo, INSERTED.SuspendInfo
 			INTO #tblCust
 			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
@@ -55,7 +55,7 @@ BEGIN
 		ELSE IF @roleid = 3
 		BEGIN			
 			UPDATE	cs 
-			SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(3,@Suspended,SuspendInfo))
+			SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(3,@Suspended,ISNULL(SuspendInfo,0)))
 			OUTPUT DELETED.custid, DELETED.SuspendInfo, INSERTED.SuspendInfo
 			INTO #tblCust
 			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
@@ -66,7 +66,7 @@ BEGIN
 		ELSE IF @roleid = 2
 		BEGIN			
 			UPDATE	cs 
-			SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(2,@Suspended,SuspendInfo))
+			SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(2,@Suspended,ISNULL(SuspendInfo,0)))
 			OUTPUT DELETED.custid, DELETED.SuspendInfo, INSERTED.SuspendInfo
 			INTO #tblCust
 			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
