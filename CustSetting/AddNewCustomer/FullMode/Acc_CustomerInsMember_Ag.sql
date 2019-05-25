@@ -304,6 +304,7 @@ Revisions:
 	- 20181205@Kan: Write @SystemID param into log [Redmine:104431]
 	- 20181102@Johnson: Apply service broker for logging [Redmine: #103547]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
+	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -1786,22 +1787,19 @@ BEGIN
 	    END
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     SELECT @success = 0, @username = rtrim(ltrim(@username))
-    --@username = replace(@username, ' ', '')
-
     SELECT @site=CASE WHEN @ugroup like 'indo_' THEN 'INDO' ELSE '' END, @ugroup = CASE WHEN @ugroup like 'indo_' THEN right(@ugroup,1) ELSE @ugroup END
 
-    IF EXISTS(SELECT 1 FROM customer WITH(NOLOCK) WHERE username= @username)
-	    OR EXISTS (SELECT 1 FROM customer WITH(NOLOCK) WHERE username2 = @username)
-	    OR EXISTS (SELECT 1 FROM custsub WITH(NOLOCK) WHERE username= @username) 
-		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
+    DECLARE @IsExists BIT 
+	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
+
+	IF @IsExists = 1
     BEGIN
 	    SELECT @ErrMsg = CASE @Language 
 							    WHEN 'E' THEN 'This username is not available.'
 							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
 						    END		
 			    , @success = 0, @ErrCode = 201
-	    return
+	    RETURN
     END
 
     SELECT @ErrType = ''

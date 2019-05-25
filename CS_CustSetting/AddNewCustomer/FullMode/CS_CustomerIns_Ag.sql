@@ -33,7 +33,8 @@ AS
 
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
-		
+		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Create member successfully.
@@ -44,7 +45,7 @@ AS
 BEGIN
     SET NOCOUNT ON
 	
-	DECLARE @currency INT, @pwdexpiry DATETIME, @lastMINUTEMemberCount INT, @IsInternal BIT, @srecommend INT, @mrecommend INT,
+	DECLARE @currency INT, @pwdexpiry DATETIME, @lastMINUTEMemberCount INT, @IsInternal BIT, @srecommend INT, @mrecommend INT, @site VARCHAR(10),
 			@Credit_AllOtherMember MONEY, @Credit_Ag MONEY,
 			@matchlimit SMALLMONEY, @virtualmultiplier SMALLMONEY,
 			@Asuspended BIT, @UplineClosed BIT, @autosuspend BIT, @autosuspend2 BIT 
@@ -52,6 +53,7 @@ BEGIN
 	SELECT @username = RTRIM(LTRIM(@username))
 	SELECT @pwdexpiry = dbo.f_CS_GetPwdExpiryDate (1)
 	SELECT @srecommend = srecommend, @mrecommend = mrecommend FROM dbo.customer WITH(NOLOCK) WHERE custid = @recommend AND roleid = 2
+	SELECT @site = site FROM customer WITH(NOLOCK) WHERE CustID = @recommend
 	SELECT @credit = ISNULL(@credit,0)
 
 	-----BEGIN: 20180703@viet: normal agent can create up to 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute
@@ -182,11 +184,10 @@ BEGIN
 		RETURN 
 	END
 	
-	IF EXISTS(SELECT 1 FROM customer WITH(NOLOCK) WHERE username= @username)
-	    or EXISTS (SELECT 1 FROM customer WITH(NOLOCK) WHERE username2 = @username)
-	    or EXISTS(SELECT 1 FROM custsub WITH(NOLOCK) WHERE username= @username)
-		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
+	DECLARE @IsExists BIT 
+	EXEC CS_CustomerCheckExists @username = @username, @Mode = 0, @IsExists = @IsExists OUTPUT
+
+	IF @IsExists = 1
     BEGIN
 	    SELECT @ErrMsg = CASE @Language 
 						    WHEN 'E' THEN 'This username is not available.'
@@ -268,7 +269,7 @@ BEGIN
 
 	    @pwdexpiry = @pwdexpiry,
 	    @currency = @currency,
-	    @site = '',
+	    @site = @site,
 	    @ugroup = @ugroup,
 
 		@suspended = @Asuspended,

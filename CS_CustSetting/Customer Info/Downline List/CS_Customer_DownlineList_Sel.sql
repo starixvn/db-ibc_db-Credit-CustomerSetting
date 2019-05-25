@@ -21,6 +21,7 @@ AS
 
 	Revisions:
 		- 20181218@Percy: Initialize SP [RedmineID: #105338]
+		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 
 	Param's Explanation:
 		@CustId: SMA login
@@ -39,8 +40,10 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @RoleId TINYINT
+	DECLARE @RoleId TINYINT, @db_Username2 VARCHAR(50)
 	SELECT  @RoleId = roleId FROM dbo.custInfo WITH (NOLOCK) WHERE custId = @custId
+
+	SELECT @db_Username2 = Nickname FROM dbo.f_CS_GetNickName(@SearchUsername,1)
 
 	IF @RoleId = 4 AND @SearchRoleId < 3
 	BEGIN
@@ -75,6 +78,7 @@ BEGIN
 			AND ci.roleId = 3
 			AND (
 				ci.username LIKE '%' + ISNULL(@SearchUsername, '') + '%'
+				OR cu.username2 LIKE 'CN88$%' + ISNULL(@SearchUsername, '') + '%'
 				OR cu.firstname LIKE '%' + ISNULL(@SearchUsername, '') + '%'
 			)
 			AND (
@@ -102,6 +106,7 @@ BEGIN
 			AND ci.roleId = 2
 			AND (
 				ci.username LIKE '%' + ISNULL(@SearchUsername, '') + '%'
+				OR cu.username2 LIKE 'CN88$%' + ISNULL(@SearchUsername, '') + '%'
 				OR cu.firstname LIKE '%' + ISNULL(@SearchUsername, '') + '%'
 			)
 			AND (
@@ -129,6 +134,7 @@ BEGIN
 			AND ci.roleId = 1
 			AND (
 				ci.username LIKE '%' + ISNULL(@SearchUsername, '') + '%'
+				OR cu.username2 LIKE 'CN88$%' + ISNULL(@SearchUsername, '') + '%'
 				OR cu.firstname LIKE '%' + ISNULL(@SearchUsername, '') + '%'
 			)
 			AND (
@@ -146,7 +152,7 @@ BEGIN
 	SELECT  @RowStart	= (@PageIndex - 1) * @PageSize + 1,
 			@RowEnd		= @RowStart + @PageSize - 1
 
-	SELECT custid, username, username2 AS nickname, firstname, credit, [group], CreatedDate, Status, ClosedReason
+	SELECT custid, username, n.NickName AS nickname, firstname, credit, [group], CreatedDate, Status, ClosedReason
 	FROM (
 		SELECT	ci.custid, ci.username, cu.username2, cu.firstname, ci.credit, cu.ugroup AS [group],
 				cu.creatdate AS CreatedDate, ci.Status, ci.ClosedReason,
@@ -154,6 +160,7 @@ BEGIN
 		FROM #CustInfo ci
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
 	) AS Result
+		CROSS APPLY (SELECT NickName FROM dbo.f_CS_GetNickName(Result.username2,0)) n
 	WHERE RowId BETWEEN @RowStart AND @RowEnd
 
 	DROP TABLE #CustInfo

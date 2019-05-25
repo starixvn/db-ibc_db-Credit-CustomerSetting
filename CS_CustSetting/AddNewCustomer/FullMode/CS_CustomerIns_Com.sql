@@ -37,7 +37,8 @@ AS
 
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
-		
+		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Create super successfully.
@@ -66,11 +67,10 @@ BEGIN
 		RETURN
 	END
 
-	IF EXISTS(SELECT 1 FROM Customer WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE username2 = @username)
-		OR EXISTS(SELECT 1 FROM custSub WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
+	DECLARE @IsExists BIT 
+	EXEC CS_CustomerCheckExists @username = @username, @Mode = 0, @IsExists = @IsExists OUTPUT
+
+	IF @IsExists = 1
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'This username is not available.'

@@ -74,6 +74,7 @@ AS
 	- 20181205@Kan: Write @SystemID param into log [Redmine:104431]
 	- 20181105@Louis: Credit Collection Summary  [RedmineID: #98621]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
+	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -113,20 +114,17 @@ BEGIN
 		,@pwdexpiry DATETIME
 		,@mrecommend INT
 				
-	IF EXISTS (SELECT 1 FROM dbo.customer WITH(NOLOCK) WHERE username=@username OR username2=@username
-			UNION ALL
-				SELECT 1 FROM dbo.custsub WITH(NOLOCK) WHERE username= @username
-		)
-		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
+	DECLARE @IsExists BIT 
+	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
+
+	IF @IsExists = 1
 	BEGIN		
 		Select @ErrMsg = CASE @Language 
 								WHEN 'E' THEN 'This username is not available.'								
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
 							end		
 				,@ErrCode = 201
-		return		
-
+		RETURN		
 	END	
 
 

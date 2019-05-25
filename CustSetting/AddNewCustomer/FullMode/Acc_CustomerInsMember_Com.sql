@@ -411,6 +411,7 @@ Revisions:
 	- 20180918@Winnie: Add new bettype of Esports  - [Redmine: #101526] 	
 	- 20181102@Johnson: Apply service broker for logging [Redmine: #103547]  	
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
+	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -729,12 +730,10 @@ BEGIN
 		RETURN
 	END
 	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	DECLARE @IsExists BIT 
+	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
 
-	IF EXISTS(SELECT 1 FROM Customer WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE username2 = @username)
-		OR EXISTS(SELECT 1 FROM custSub WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
+	IF @IsExists = 1
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'This username is not available.'
