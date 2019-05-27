@@ -1,6 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" isFunction="0" isNested="0"></info>*/
-USE [CustDB]
-GO
+/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[CS_Customer_DownlineList_Sel]
 	@CustId				INT,
@@ -8,15 +6,16 @@ ALTER PROCEDURE [dbo].[CS_Customer_DownlineList_Sel]
 	@SearchRoleId		TINYINT,
 	@SearchUsername		NVARCHAR(50),
 	@SearchStatusId		TINYINT = 0,
-	@UplineId			INT = 0 OUTPUT,
-	@PageIndex			INT = 1,
-	@PageSize			INT = 500,
-	@TotalRows			INT = 0 OUTPUT
+	@UplineId		INT = 0 OUTPUT,
+	@UplineStatus		TINYINT = 4 OUTPUT,
+	@PageIndex		INT = 1,
+	@PageSize		INT = 500,
+	@TotalRows		INT = 0 OUTPUT
 AS
 
 /*
 	Created: 20181218@Percy
-	DB: DBCUST.CustDB
+	DB: DBAGE.bodb02
 	Task: Member Information >> Downline List
 
 	Revisions:
@@ -43,6 +42,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @RoleId TINYINT, @db_Username2 VARCHAR(50)
+
 	SELECT  @RoleId = roleId FROM dbo.custInfo WITH (NOLOCK) WHERE custId = @custId
 
 	SELECT @db_Username2 = Nickname FROM dbo.f_CS_GetNickName(@SearchUsername,1)
@@ -61,6 +61,14 @@ BEGIN
 	BEGIN
 		SELECT @UplineId = @CustId
 	END
+
+	SELECT @UplineStatus = CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 1 -- Active
+								WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 2 -- View Only
+								WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 3 -- Suspended
+								WHEN cs.InactiveInfo > 0 THEN 4 -- Inactive
+							END
+	FROM dbo.CS_CustomerStatus cs WITH(NOLOCK)
+	WHERE CustId = @UplineId
 
 	CREATE TABLE #CustInfo (custId INT, username NVARCHAR(50), credit MONEY, Status TINYINT)
 
