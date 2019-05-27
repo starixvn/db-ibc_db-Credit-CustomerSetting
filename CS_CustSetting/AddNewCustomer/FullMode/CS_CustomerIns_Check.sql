@@ -22,6 +22,7 @@ AS
 	
 	Revision
 		- 20181212@Elodie: Initial SP [Redmine: #105338]
+		- 20100527@Elodie: New account status [Redmine: #113198]
 
 	Param's Explanation:
 		@RoleID = 4:
@@ -139,7 +140,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @Credit_AllDownline MONEY, @UplineCredit MONEY
+	DECLARE @Credit_AllDownline MONEY, @UplineCredit MONEY, @IsActive BIT = 1
 
 	IF @Credit < 0
 	BEGIN
@@ -167,6 +168,15 @@ BEGIN
 	BEGIN
 		SELECT @ErrMsg = '<Root MsgID="70024" Msg="Insufficient credit."></Root>'		    
 		SELECT @ErrCode = 100, @ErrSettingType = 1, @MsgType = 100
+	    RETURN
+	END
+
+	SELECT @IsActive = 0 FROM dbo.CS_CustomerStatus WITH (NOLOCK) WHERE CustId = @CustId AND (InactiveInfo <> 0 OR SuspendedInfo <> 0 OR ViewOnlyInfo <> 0)
+
+	IF @IsActive = 0 
+	BEGIN
+		SELECT @ErrMsg = '<Root MsgID="40043" Msg="You cannot do this action because this account''s upline is not active."></Root>'		    
+		SELECT @ErrCode = 101, @ErrSettingType = 1, @MsgType = 100
 	    RETURN
 	END
 
