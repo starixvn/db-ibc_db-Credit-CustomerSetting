@@ -171,7 +171,7 @@ BEGIN
 	    RETURN
 	END
 
-	SELECT @IsActive = 0 FROM dbo.CS_CustomerStatus WITH (NOLOCK) WHERE CustId = @CustId AND (InactiveInfo <> 0 OR SuspendedInfo <> 0 OR ViewOnlyInfo <> 0)
+	SELECT @IsActive = 0 FROM dbo.CS_CustomerStatus WITH (NOLOCK) WHERE CustId = @CustId AND (InactiveInfo > 0 OR SuspendedInfo > 0 OR ViewOnlyInfo > 0)
 
 	IF @IsActive = 0 
 	BEGIN

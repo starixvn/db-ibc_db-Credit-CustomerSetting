@@ -34,6 +34,7 @@ AS
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+		- 20100527@Elodie: New account status [Redmine: #113198]
 
 	Param's Explanation:
 		• @ErrCode:

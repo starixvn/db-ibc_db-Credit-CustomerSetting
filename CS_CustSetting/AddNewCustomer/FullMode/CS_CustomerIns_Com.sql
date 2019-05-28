@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
 	@custid						INT OUTPUT,
 	@username					VARCHAR(30),
@@ -39,6 +38,7 @@ AS
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+		- 20100527@Elodie: New account status [Redmine: #113198]
 
 	Param's Explanation:
 		• @ErrCode:
@@ -189,7 +189,7 @@ BEGIN
 		@ActionID = 160000,
 		@TrackingValue = @LogSPData,
 		@duration = @duration	
-
+	
 	--Log status
     SELECT @LogSPData = '<R Status="A" IP="' + COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
