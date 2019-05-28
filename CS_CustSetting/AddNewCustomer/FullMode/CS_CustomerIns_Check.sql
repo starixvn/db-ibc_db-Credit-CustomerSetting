@@ -140,7 +140,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @Credit_AllDownline MONEY, @UplineCredit MONEY, @IsActive BIT = 1
+	DECLARE @Credit_AllDownline MONEY, @UplineCredit MONEY, @UplineStatus TINYINT
 
 	IF @Credit < 0
 	BEGIN
@@ -171,9 +171,9 @@ BEGIN
 	    RETURN
 	END
 
-	SELECT @IsActive = 0 FROM dbo.CS_CustomerStatus WITH (NOLOCK) WHERE CustId = @CustId AND (InactiveInfo > 0 OR SuspendedInfo > 0 OR ViewOnlyInfo > 0)
+	SELECT @UplineStatus = CustStatus FROM dbo.f_CS_GetCustomerStatus (@CustId)
 
-	IF @IsActive = 0 
+	IF @UplineStatus <> 4
 	BEGIN
 		SELECT @ErrMsg = '<Root MsgID="40043" Msg="You cannot do this action because this account''s upline is not active."></Root>'		    
 		SELECT @ErrCode = 101, @ErrSettingType = 1, @MsgType = 100
