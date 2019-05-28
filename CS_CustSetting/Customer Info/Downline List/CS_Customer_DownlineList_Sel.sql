@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].[CS_Customer_DownlineList_Sel]
 	@SearchStatusId		TINYINT = 0,
 	@UplineId		INT = 0 OUTPUT,
 	@UplineStatus		TINYINT = 4 OUTPUT,
+	@IsUplineClosed		BIT = 1 OUTPUT,
 	@PageIndex		INT = 1,
 	@PageSize		INT = 500,
 	@TotalRows		INT = 0 OUTPUT
@@ -32,10 +33,10 @@ AS
 			1: Member List (Super/Master/Agent Login)
 		@SearchStatusId:
 			0: All
-			1: Active
-			2: View Only
-			3: Suspended
-			4: Inactive
+			4: Active
+			3: View Only
+			2: Suspended
+			1: Inactive
 */
 
 BEGIN
@@ -62,25 +63,27 @@ BEGIN
 		SELECT @UplineId = @CustId
 	END
 
-	SELECT @UplineStatus = CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 1 -- Active
-								WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 2 -- View Only
-								WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 3 -- Suspended
-								WHEN cs.InactiveInfo > 0 THEN 4 -- Inactive
-							END
-	FROM dbo.CS_CustomerStatus cs WITH(NOLOCK)
-	WHERE CustId = @UplineId
+	SELECT @UplineStatus = CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 4 -- Active
+								WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 3 -- View Only
+								WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 2 -- Suspended
+								WHEN cs.InactiveInfo > 0 THEN 1 -- Inactive
+							END,
+			@IsUplineClosed = closed
+	FROM dbo.custInfo ci WITH (NOLOCK)
+		INNER JOIN dbo.CS_CustomerStatus cs WITH(NOLOCK) ON ci.custid = cs.CustID
+	WHERE ci.CustId = @UplineId
 
-	CREATE TABLE #CustInfo (custId INT, username NVARCHAR(50), credit MONEY, Status TINYINT)
+	CREATE TABLE #CustInfo (custId INT, username NVARCHAR(50), credit MONEY, Status TINYINT, IsClosed BIT)
 
 	IF @SearchRoleId = 3
 	BEGIN
-		INSERT INTO #CustInfo (custId, username, credit, Status)
+		INSERT INTO #CustInfo (custId, username, credit, Status, IsClosed)
 		SELECT ci.custid, ci.username, ISNULL(ci.credit, 0),
-				CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 1 -- Active
-						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 2 -- View Only
-						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 3 -- Suspended
-						WHEN cs.InactiveInfo > 0 THEN 4 -- Inactive
-				END
+				CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 4 -- Active
+						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 3 -- View Only
+						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 2 -- Suspended
+						WHEN cs.InactiveInfo > 0 THEN 1 -- Inactive
+				END, ci.closed
 		FROM dbo.custInfo ci WITH (NOLOCK)
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
 			INNER JOIN dbo.CS_CustomerStatus cs WITH(NOLOCK) ON ci.custid = cs.CustID
@@ -93,23 +96,23 @@ BEGIN
 			)
 			AND (
 				@SearchStatusId = 0
-				OR (@SearchStatusId = 1 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0)
-				OR (@SearchStatusId = 2 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0)
-				OR (@SearchStatusId = 3 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0)
-				OR (@SearchStatusId = 3 AND cs.InactiveInfo > 0)
+				OR (@SearchStatusId = 4 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0)
+				OR (@SearchStatusId = 3 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0)
+				OR (@SearchStatusId = 2 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0)
+				OR (@SearchStatusId = 1 AND cs.InactiveInfo > 0)
 			)
 
 		SELECT @TotalRows = @@ROWCOUNT
 	END
 	ELSE IF @SearchRoleId = 2
 	BEGIN
-		INSERT INTO #CustInfo (custId, username, credit, Status)
+		INSERT INTO #CustInfo (custId, username, credit, Status, IsClosed)
 		SELECT ci.custid, ci.username, ISNULL(ci.credit, 0),
-				CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 1 -- Active
-						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 2 -- View Only
-						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 3 -- Suspended
-						WHEN cs.InactiveInfo > 0 THEN 4 -- Inactive
-				END
+				CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 4 -- Active
+						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 3 -- View Only
+						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 2 -- Suspended
+						WHEN cs.InactiveInfo > 0 THEN 1 -- Inactive
+				END, ci.closed
 		FROM dbo.custInfo ci WITH (NOLOCK)
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
 			INNER JOIN dbo.CS_CustomerStatus cs WITH(NOLOCK) ON ci.custid = cs.CustID
@@ -122,23 +125,23 @@ BEGIN
 			)
 			AND (
 				@SearchStatusId = 0
-				OR (@SearchStatusId = 1 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0)
-				OR (@SearchStatusId = 2 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0)
-				OR (@SearchStatusId = 3 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0)
-				OR (@SearchStatusId = 3 AND cs.InactiveInfo > 0)
+				OR (@SearchStatusId = 4 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0)
+				OR (@SearchStatusId = 3 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0)
+				OR (@SearchStatusId = 2 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0)
+				OR (@SearchStatusId = 1 AND cs.InactiveInfo > 0)
 			)
 
 		SELECT @TotalRows = @@ROWCOUNT
 	END
 	ELSE IF @SearchRoleId = 1
 	BEGIN
-		INSERT INTO #CustInfo (custId, username, credit, Status)
+		INSERT INTO #CustInfo (custId, username, credit, Status, IsClosed)
 		SELECT ci.custid, ci.username, ISNULL(ci.credit, 0),
-				CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 1 -- Active
-						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 2 -- View Only
-						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 3 -- Suspended
-						WHEN cs.InactiveInfo > 0 THEN 4 -- Inactive
-				END
+				CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 4 -- Active
+						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 3 -- View Only
+						WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 2 -- Suspended
+						WHEN cs.InactiveInfo > 0 THEN 1 -- Inactive
+				END, ci.closed
 		FROM dbo.custInfo ci WITH (NOLOCK)
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
 			INNER JOIN dbo.CS_CustomerStatus cs WITH(NOLOCK) ON ci.custid = cs.CustID
@@ -151,10 +154,10 @@ BEGIN
 			)
 			AND (
 				@SearchStatusId = 0
-				OR (@SearchStatusId = 1 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0)
-				OR (@SearchStatusId = 2 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0)
-				OR (@SearchStatusId = 3 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0)
-				OR (@SearchStatusId = 3 AND cs.InactiveInfo > 0)
+				OR (@SearchStatusId = 4 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0)
+				OR (@SearchStatusId = 3 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0)
+				OR (@SearchStatusId = 2 AND cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0)
+				OR (@SearchStatusId = 1 AND cs.InactiveInfo > 0)
 			)
 
 		SELECT @TotalRows = @@ROWCOUNT
@@ -168,8 +171,8 @@ BEGIN
 	SELECT custid, username, n.NickName AS nickname, firstname, credit, [group], CreatedDate, Status, ClosedReason
 	FROM (
 		SELECT	ci.custid, ci.username, cu.username2, cu.firstname, ci.credit, cu.ugroup AS [group],
-				cu.creatdate AS CreatedDate, ci.Status,
-				ROW_NUMBER() OVER(ORDER BY ci.Status, ci.username) AS RowId
+				cu.creatdate AS CreatedDate, ci.Status, ci.IsClosed,
+				ROW_NUMBER() OVER(ORDER BY ci.Status DESC, ci.username) AS RowId
 		FROM #CustInfo ci
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
 	) AS Result
