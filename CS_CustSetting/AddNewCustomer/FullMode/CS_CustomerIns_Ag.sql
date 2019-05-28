@@ -334,16 +334,14 @@ BEGIN
 		@duration = @duration			
 
 	--Log status
-    SELECT @LogSPData = '<R Status="'+ CASE WHEN @Asuspended = 0 AND @UplineClosed = 0 THEN 'Open' 
-											WHEN @Asuspended = 1 AND @UplineClosed = 0 THEN 'Suspended' 
-											WHEN @UplineClosed = 1 THEN 'Closed' END + '" ' +
+    SELECT @LogSPData = '<R Status="A" ' + 
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
     EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 165002,
+		@ActionID = 165007,
 		@TrackingValue = @LogSPData,
 		@duration = @duration			
 

@@ -1,4 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
 	@custid						INT OUTPUT,
 	@username					VARCHAR(30),
@@ -186,6 +187,16 @@ BEGIN
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 160000,
+		@TrackingValue = @LogSPData,
+		@duration = @duration	
+
+	--Log status
+    SELECT @LogSPData = '<R Status="A" IP="' + COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
+
+    EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 165003,
 		@TrackingValue = @LogSPData,
 		@duration = @duration	
 
