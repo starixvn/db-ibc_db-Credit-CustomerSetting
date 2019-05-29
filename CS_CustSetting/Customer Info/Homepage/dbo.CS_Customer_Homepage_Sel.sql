@@ -84,12 +84,12 @@ BEGIN
 		BEGIN
 			INSERT INTO #tblStatus(roleid, cntActive, cntViewOnly, cntSuspended, cntInactive)
 			SELECT roleid, 
-				ISNULL(SUM(CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 1 ELSE 0 END), 0) AS cntActive,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 1 ELSE 0 END), 0) AS cntSuspended,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo > 0 THEN 1 ELSE 0 END), 0) AS cntInactive
+				ISNULL(SUM(CASE	WHEN cs.CustStatus = 4 THEN 1 ELSE 0 END), 0) AS cntActive,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 3 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 2 THEN 1 ELSE 0 END), 0) AS cntSuspended,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 1 THEN 1 ELSE 0 END), 0) AS cntInactive
 			FROM custinfo ci WITH(NOLOCK)
-				INNER JOIN CS_CustomerStatus cs WITH(NOLOCK) ON ci.custid = cs.CustId
+				CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
 			WHERE srecommend = @custid	
 				AND roleid IN (1,2,3)				
 			GROUP BY roleid	
@@ -98,12 +98,12 @@ BEGIN
 		BEGIN
 			INSERT INTO #tblStatus(roleid, cntActive, cntViewOnly, cntSuspended, cntInactive)
 			SELECT roleid, 
-				ISNULL(SUM(CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 1 ELSE 0 END), 0) AS cntActive,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 1 ELSE 0 END), 0) AS cntSuspended,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo > 0 THEN 1 ELSE 0 END), 0) AS cntInactive
+				ISNULL(SUM(CASE	WHEN cs.CustStatus = 4 THEN 1 ELSE 0 END), 0) AS cntActive,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 3 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 2 THEN 1 ELSE 0 END), 0) AS cntSuspended,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 1 THEN 1 ELSE 0 END), 0) AS cntInactive
 			FROM custinfo ci WITH(NOLOCK)
-				INNER JOIN CS_CustomerStatus cs WITH(NOLOCK) ON ci.custid = cs.CustId
+				CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
 			WHERE mrecommend = @custid	
 				AND roleid IN (1,2)
 			GROUP BY roleid	
@@ -112,12 +112,12 @@ BEGIN
 		BEGIN
 			INSERT INTO #tblStatus(roleid, cntActive, cntViewOnly, cntSuspended, cntInactive)
 			SELECT roleid, 
-				ISNULL(SUM(CASE	WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo = 0 THEN 1 ELSE 0 END), 0) AS cntActive,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo = 0 AND cs.ViewOnlyInfo > 0 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo = 0 AND cs.SuspendedInfo > 0 THEN 1 ELSE 0 END), 0) AS cntSuspended,
-				ISNULL(SUM(CASE WHEN cs.InactiveInfo > 0 THEN 1 ELSE 0 END), 0) AS cntInactive
+				ISNULL(SUM(CASE	WHEN cs.CustStatus = 4 THEN 1 ELSE 0 END), 0) AS cntActive,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 3 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 2 THEN 1 ELSE 0 END), 0) AS cntSuspended,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 1 THEN 1 ELSE 0 END), 0) AS cntInactive
 			FROM custinfo ci WITH(NOLOCK)
-				INNER JOIN CS_CustomerStatus cs WITH(NOLOCK) ON ci.custid = cs.CustId
+				CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
 			WHERE ci.recommend = @custid	
 				AND ci.roleid = 1
 			GROUP BY ci.roleid	
