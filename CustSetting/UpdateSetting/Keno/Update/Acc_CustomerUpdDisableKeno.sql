@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -30,6 +30,8 @@ AS
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 		- 20170303@Winnie: Change enable behavior & Allowed disable on EXT-NAP [Redmine: #72336]
 		- 20170115@Johnson: use this sp for update status on alpha and remove enableDownlines for new direction [redmine:#87328]				
+		- 20190517@Elodie: Change name of Keno to RNG Keno [Redmine: #113490]
+
 	Param's Explanation:
 		• @custid: customer id.   
 		• @Disable: status of HideKeno		
@@ -177,7 +179,7 @@ BEGIN
 	IF (@UplineDisable = 1)
 	BEGIN
 		SELECT @ErrMsg = CASE @Language
-				WHEN 'E' THEN 'Account was disabled Keno. Unable to edit downlines.'
+				WHEN 'E' THEN 'Account was disabled RNG Keno. Unable to edit downlines.'
 				ELSE [dbo].[f_Get_MsgNamebyMsgID](60030, @Language)
 				END
 			,@ErrCode = 101
