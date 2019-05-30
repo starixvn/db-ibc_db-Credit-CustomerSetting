@@ -24,6 +24,7 @@ AS
 		- 20180830@Elodie: Add Poker Games Product - [Redmine: #97675]
 		- 20181218@Johnson: Add Happy 5 [Redmine: #104006]
 		- 20181227@Johnson: Add range for VS Betradar(190-198) [Redmine: #104809]
+		- 20190530@Elodie: Exclude data of CN88 site
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -150,6 +151,7 @@ BEGIN
 			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HidePokerGames = 1 AND b.SportType = 163 THEN 0 ELSE 1 END
+			AND b.Site <> 'CN88'
 	ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
 END
 GO
