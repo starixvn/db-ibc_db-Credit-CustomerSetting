@@ -13,6 +13,7 @@ AS
 
 	Revisions:
 		- 20181218@Percy: Initialize SP [RedmineID: #105338]
+		- 20190531@Percy: Return IsTodayUpdatedCredit [RedmindID: #112225]
 */
 
 BEGIN
@@ -22,9 +23,13 @@ BEGIN
 	DECLARE @RoleId TINYINT, @Credit MONEY, @UsedCredit MONEY, @BetCredit MONEY
 	DECLARE @UplineCredit MONEY, @UplineUsedCredit MONEY
 	DECLARE @MinCredit MONEY, @MaxCredit MONEY
+	DECLARE @IsTodayUpdatedCredit BIT, @today SMALLDATETIME
+
+	SELECT  @today = CONVERT(DATE, GETDATE())
 
 	SELECT  @srecommend = srecommend, @mrecommend = mrecommend, @recommend = recommend,
-			@RoleId = roleId, @Credit = ISNULL(credit, 0)
+			@RoleId = roleId, @Credit = ISNULL(credit, 0),
+			@IsTodayUpdatedCredit = CASE WHEN CreditUpdatedDate >= @today THEN 1 ELSE 0 END
 	FROM dbo.custInfo WITH (NOLOCK) WHERE custId = @custId
 
 	IF @RoleId = 4
@@ -67,10 +72,11 @@ BEGIN
 	SELECT  @MinCredit = ISNULL(@UsedCredit, 0)
 			,@MaxCredit = ISNULL(@UplineCredit, 0) - ISNULL(@UplineUsedCredit, 0) + ISNULL(@Credit, 0)
 
-	SELECT	@Credit				AS GivenCredit
-			,@UsedCredit		AS UsedCredit -- for SMA/MA/Agent
-			,@MinCredit			AS MinCredit -- for SMA/MA/Agent
-			,@MaxCredit			AS MaxCredit --  -- for SMA/MA/Agent -- NULL for Super = unlimitted
+	SELECT	@Credit					AS GivenCredit
+			,@UsedCredit			AS UsedCredit -- for SMA/MA/Agent
+			,@MinCredit				AS MinCredit -- for SMA/MA/Agent
+			,@MaxCredit				AS MaxCredit --  -- for SMA/MA/Agent -- NULL for Super = unlimitted
+			,@IsTodayUpdatedCredit	AS IsTodayUpdatedCredit
 END
 GO
 
