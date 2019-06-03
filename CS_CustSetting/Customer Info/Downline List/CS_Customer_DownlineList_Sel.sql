@@ -153,7 +153,7 @@ BEGIN
 	SELECT  @RowStart	= (@PageIndex - 1) * @PageSize + 1,
 			@RowEnd		= @RowStart + @PageSize - 1
 
-	SELECT custid, username, n.NickName AS nickname, firstname, credit, [group], CreatedDate, Status, ClosedReason
+	SELECT custid, username, n.NickName AS nickname, firstname, credit, [group], CreatedDate, Status, IsClosed
 	FROM (
 		SELECT	ci.custid, ci.username, cu.username2, cu.firstname, ci.credit, cu.ugroup AS [group],
 				cu.creatdate AS CreatedDate, ci.Status, ci.IsClosed,
