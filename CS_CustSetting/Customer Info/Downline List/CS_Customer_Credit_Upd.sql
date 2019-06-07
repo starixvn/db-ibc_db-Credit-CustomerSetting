@@ -149,6 +149,7 @@ BEGIN
 	EXEC dbo.CS_WriteLog_UserLog_Credit_Wrapper
 		@UserId		= @UserId,
 		@CustId		= @CustId,
+		@SubAccId	= @SubAccId,
 		@Doing		= @LogData,
 		@OldValue	= @Credit,
 		@NewValue	= @UpdCredit,
