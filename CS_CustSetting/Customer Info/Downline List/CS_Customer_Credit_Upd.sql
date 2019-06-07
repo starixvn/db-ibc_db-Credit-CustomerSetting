@@ -146,7 +146,7 @@ BEGIN
 		SELECT @LogData = @LogData + ' by Sub-Account ' + COALESCE(dbo.f_GetSubUsername(@SubAccId), SPACE(1))
 	END
 
-	EXEC dbo.Acc_WriteLog_UserLog_Credit_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_Credit_Wrapper
 		@UserId		= @UserId,
 		@CustId		= @CustId,
 		@Doing		= @LogData,
