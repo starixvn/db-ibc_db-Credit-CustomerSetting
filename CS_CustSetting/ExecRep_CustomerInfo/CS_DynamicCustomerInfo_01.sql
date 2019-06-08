@@ -6,7 +6,8 @@ ALTER PROCEDURE [dbo].[CS_DynamicCustomerInfo_01]
 	@CustId			INT,
 	@RoleId			TINYINT,
 	@Action			VARCHAR(50),
-	@Mode			TINYINT = 0
+	@Mode			TINYINT = 0,
+	@AffectedList	VARCHAR(MAX) = '' OUTPUT
 AS
 
 /*
@@ -82,7 +83,34 @@ BEGIN
 				SELECT @CustID, 1
 			END
 
-			
+			IF @@SERVERNAME IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2')
+			BEGIN
+				--@Mode: 1: A to I, 2: I to A, 3: A to S, 4: S to A, 5: A to V, 6: V to A
+				IF @Mode = 1
+				BEGIN
+					SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+													FROM #TempCust
+														CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+													WHERE Custstatus <> 1 AND CustID <> @CustId
+													FOR XML PATH('')), 1, 1, '')
+				END
+				ELSE IF @Mode = 3
+				BEGIN
+					SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+													FROM #TempCust
+														CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+													WHERE Custstatus NOT IN (1,2) AND CustID <> @CustId
+													FOR XML PATH('')), 1, 1, '')
+				END				
+				ELSE IF @Mode = 5
+				BEGIN
+					SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+													FROM #TempCust
+														CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+													WHERE Custstatus = 4 AND CustID <> @CustId
+													FOR XML PATH('')), 1, 1, '')
+				END				
+			END				
 			IF @Mode = 1 --1: A to I
 			BEGIN
 				UPDATE cs WITH (ROWLOCK)
@@ -97,16 +125,18 @@ BEGIN
 				UPDATE cs WITH (ROWLOCK)
 				SET cs.InactiveInfo = cs.InactiveInfo & @SetBit0
 				FROM dbo.CS_CustomerStatus cs
-					INNER JOIN #TempCust tc ON cs.custid = tc.custid
-				WHERE tc.RoleID <> @RoleId - 1
+				WHERE cs.CustId = @CustId
 
-				UPDATE cs WITH (ROWLOCK)
-				SET cs.InactiveInfo = cs.InactiveInfo & @SetBit0 | @SetBit1Downline,
-					cs.SuspendedInfo = cs.SuspendedInfo & @SetBit0Downline,
-					cs.ViewOnlyInfo = cs.ViewOnlyInfo & @SetBit0Downline
-				FROM dbo.CS_CustomerStatus cs
-					INNER JOIN #TempCust tc ON cs.custid = tc.custid
-				WHERE tc.RoleID = @RoleId - 1
+				IF @RoleId <> 1
+				BEGIN
+					UPDATE cs WITH (ROWLOCK)
+					SET cs.InactiveInfo = cs.InactiveInfo & @SetBit0 | @SetBit1Downline,
+						cs.SuspendedInfo = cs.SuspendedInfo & @SetBit0Downline,
+						cs.ViewOnlyInfo = cs.ViewOnlyInfo & @SetBit0Downline
+					FROM dbo.CS_CustomerStatus cs
+						INNER JOIN #TempCust tc ON cs.custid = tc.custid
+					WHERE cs.CustId <> @CustId					
+				END				
 			END
 			ELSE IF @Mode = 3 --3: A to S
 			BEGIN
@@ -137,6 +167,17 @@ BEGIN
 					INNER JOIN #TempCust tc ON cs.custid = tc.custid
 			END
 
+			IF @@SERVERNAME IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2')
+			BEGIN
+				IF @Mode IN (4,6)
+				BEGIN
+					SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+													FROM #TempCust
+														CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+													WHERE CustStatus <> 4 AND CustID <> @CustId
+													FOR XML PATH('')), 1, 1, '')
+				END
+			END
 			DROP TABLE #TempCust
 		END
 	END
