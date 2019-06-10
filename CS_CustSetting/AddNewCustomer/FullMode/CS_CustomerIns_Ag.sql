@@ -327,7 +327,7 @@ BEGIN
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
-    EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+    EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 160003,
@@ -339,7 +339,7 @@ BEGIN
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
-    EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+    EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 165007,
@@ -375,7 +375,7 @@ BEGIN
 						FOR XML PATH('R'), TYPE)		
 	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 149999,
@@ -400,7 +400,7 @@ BEGIN
 
 	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 			@UserID = @Creator,
 			@CustID = @CustID,
 			@ActionID = 139999,

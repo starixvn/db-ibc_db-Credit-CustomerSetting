@@ -17,7 +17,7 @@ AS
 
 	Revisions:
 		- 20190520@Johnson: initial sp [redmine: #112225]
-		
+		- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 	Parameter's explanations:	
 */
 BEGIN
@@ -72,30 +72,11 @@ BEGIN
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-			@UserID = @UserID,
-			@CustID = @CustID,
-			@ActionID = 1169,
-			@TrackingValue = @LogSPData	,
-			@duration = @duration
-	END TRY
-	BEGIN CATCH
-		Select @LogSPData = '<CS_Acc_CustomerUpdUnlockAccess CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +
-							'Closed="'+ coalesce(cast(@Closed as varchar(50)),space(1)) + '" ' +							
-							'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-							'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
-							'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" ' +
-							'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
-							'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1))+'" ' +							
-							'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
-
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-			@UserID = @UserID,
-			@CustID = @CustID,
-			@ActionID = 1169,
-			@TrackingValue = @LogSPData	,
-			@duration = @duration
-	END CATCH
+	EXEC CS_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @UserID,
+		@CustID = @CustID,
+		@ActionID = 1169,
+		@TrackingValue = @LogSPData	,
+		@duration = @duration
 END
 GO

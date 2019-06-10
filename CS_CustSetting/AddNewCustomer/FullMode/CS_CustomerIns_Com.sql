@@ -183,7 +183,7 @@ BEGIN
 						'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
 						'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 160000,
@@ -193,7 +193,7 @@ BEGIN
 	--Log status
     SELECT @LogSPData = '<R Status="A" IP="' + COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
-    EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+    EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 165003,
@@ -233,7 +233,7 @@ BEGIN
 					)
 	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
-	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 119997,
@@ -256,7 +256,7 @@ BEGIN
 						FOR XML PATH('R'), TYPE)		
 	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 149996,
@@ -328,7 +328,7 @@ BEGIN
 
 	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 			@UserID = @Creator,
 			@CustID = @CustID,
 			@ActionID = 139996,
@@ -339,7 +339,7 @@ BEGIN
 						+ '" EffectiveDate="' + CONVERT(NVARCHAR(10), @EffectiveDate, 120)
 						+ '" IP="' + @IP + '" />'
 
-	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @creator,
 		@CustID = @CustID,
 		@ActionID = 160008,
