@@ -40,10 +40,10 @@ BEGIN
         WHERE tc.srecommend IS NULL AND ci.roleid IN (0,1,2,3,4)
 
 		UPDATE tc
-        SET Site = ci.Site
-        FROM @tblCust tc
+        SET Site = ci.Site        
+		FROM @tblCust tc
         	INNER JOIN dbo.Customer ci WITH (NOLOCK) ON ci.CustID = tc.srecommend
-        WHERE tc.srecommend IS NOT NULL AND tc.Site IS NULL 
+		WHERE tc.srecommend IS NOT NULL AND tc.Site =''
         
         SELECT tc.CustInfo, tc.Site,
             (CASE WHEN tc.srecommend IS NULL THEN 0 ELSE 1 END) AS IsValid
