@@ -43,7 +43,7 @@ BEGIN
         SET Site = ci.Site
         FROM @tblCust tc
         	INNER JOIN dbo.Customer ci WITH (NOLOCK) ON ci.CustID = tc.srecommend
-        WHERE tc.srecommend IS NOT NULL AND tc.Site IS NULL AND ci.roleid=1
+        WHERE tc.srecommend IS NOT NULL AND tc.Site IS NULL 
         
         SELECT tc.CustInfo, tc.Site,
             (CASE WHEN tc.srecommend IS NULL THEN 0 ELSE 1 END) AS IsValid
