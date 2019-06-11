@@ -20,7 +20,7 @@ AS
 
 	Revisions:
 		- 20181218@Percy: Initialize SP [RedmineID: #105338]
-		- 20190527@Elodie: New account status for CN88 [Redmine: 113198]
+		- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 */
 
 BEGIN
@@ -28,10 +28,10 @@ BEGIN
 
 	SELECT  @UpdCredit = ISNULL(@UpdCredit, 0)
 
-	DECLARE @srecommend INT, @mrecommend INT, @recommend INT, @HeadlineID INT
+	DECLARE @srecommend INT, @mrecommend INT, @recommend INT
 	DECLARE @username NVARCHAR(50), @RoleId TINYINT, @Credit MONEY, @UsedCredit MONEY, @BetCredit MONEY
 	DECLARE @UplineCredit MONEY, @UplineUsedCredit MONEY
-	DECLARE @MinCredit MONEY, @MaxCredit MONEY, @UplineStatus TINYINT
+	DECLARE @MinCredit MONEY, @MaxCredit MONEY
 
 	SELECT  @srecommend = srecommend, @mrecommend = mrecommend, @recommend = recommend,
 			@username = username, @RoleId = roleId, @Credit = ISNULL(credit, 0)
@@ -57,10 +57,6 @@ BEGIN
 		WHERE srecommend = @srecommend
 			AND roleId = 3
 		
-		SELECT @HeadlineID = UplineId FROM CustSuper WITH (NOLOCK) WHERE custid = @CustId
-
-		SELECT @UplineStatus = CustStatus FROM dbo.f_CS_GetCustomerStatus(@HeadlineID)
-
 		SELECT	@MinCredit = ISNULL(@UsedCredit, 0)
 	END
 	ELSE IF @RoleId = 3
@@ -70,8 +66,6 @@ BEGIN
 				@UsedCredit			= SUM(CASE WHEN mrecommend = @custId AND roleId = 2 THEN ISNULL(credit, 0) ELSE 0 END) 
 		FROM dbo.custInfo WITH (NOLOCK)
 		WHERE srecommend = @srecommend
-
-		SELECT @UplineStatus = CustStatus FROM dbo.f_CS_GetCustomerStatus(@srecommend)
 
 		SELECT	@MinCredit = ISNULL(@UsedCredit, 0),
 				@MaxCredit = ISNULL(@UplineCredit, 0) - ISNULL(@UplineUsedCredit, 0) + ISNULL(@Credit, 0)
@@ -84,24 +78,10 @@ BEGIN
 		FROM dbo.custInfo WITH (NOLOCK)
 		WHERE mrecommend = @mrecommend
 
-		SELECT @UplineStatus = CustStatus FROM dbo.f_CS_GetCustomerStatus(@mrecommend)
-
 		SELECT	@MinCredit = ISNULL(@UsedCredit, 0),
 				@MaxCredit = ISNULL(@UplineCredit, 0) - ISNULL(@UplineUsedCredit, 0) + ISNULL(@Credit, 0)
-	END
-	ELSE IF @RoleId = 1
-	BEGIN
-		SELECT @UplineStatus = CustStatus FROM dbo.f_CS_GetCustomerStatus(@recommend)
-	END
-
-	IF @UplineStatus <> 4
-	BEGIN
-		-- You cannot do this action because this account''s upline is not active.
-		SELECT @ErrCode = 102, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (70029, @Language)
-
-		RETURN
-	END
-
+	END	
+	
 	-- SP check on SMA/MA/Agent, web check Member
 	IF (@RoleId IN (2,3) AND @UpdCredit NOT BETWEEN @MinCredit AND @MaxCredit)
 		OR (@RoleId = 4 AND @UpdCredit < @MinCredit) -- SMA not have MaxCredit
