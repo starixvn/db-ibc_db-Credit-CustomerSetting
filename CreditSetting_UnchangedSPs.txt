@@ -1,22 +1,5 @@
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_All.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_PositionTaking.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_All.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_PositionTaking.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_All.sql
+CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_Com.sql
 
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdSuperGoldDeluxe_All.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdSuperGoldDeluxe_Positiontaking.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdMasterGoldDeluxe_All.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdMasterGoldDeluxe_Positiontaking.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdAgentGoldDeluxe_All.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdAgentGoldDeluxe_PositionTaking.sql
-
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno_Positiontaking.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno_Positiontaking.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno_PositionTaking.sql
 
 
 
