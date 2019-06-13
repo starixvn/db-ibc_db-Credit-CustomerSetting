@@ -191,7 +191,7 @@ BEGIN
 		@duration = @duration	
 	
 	--Log status
-    SELECT @LogSPData = '<R Status="A" IP="' + COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
+    SELECT @LogSPData = '<R Status="Active" IP="' + COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
     EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,

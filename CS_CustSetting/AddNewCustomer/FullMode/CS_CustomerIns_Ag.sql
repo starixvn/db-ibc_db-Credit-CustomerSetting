@@ -335,7 +335,7 @@ BEGIN
 		@duration = @duration			
 
 	--Log status
-    SELECT @LogSPData = '<R Status="A" ' + 
+    SELECT @LogSPData = '<R Status="Active" ' + 
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
