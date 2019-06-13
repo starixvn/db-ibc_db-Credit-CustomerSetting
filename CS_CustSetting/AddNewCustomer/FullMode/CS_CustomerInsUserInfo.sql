@@ -114,9 +114,9 @@ BEGIN
 			RETURN
 	END
 	
-    DECLARE	@UplineSecurityCode	VARCHAR(50), @IsUplineActive TINYINT, @isForcedChangeSecurityCode BIT
+    DECLARE	@UplineSecurityCode	VARCHAR(50), @isForcedChangeSecurityCode BIT
 
-    SELECT @UplineSecurityCode = NULL, @IsUplineActive = 1
+    SELECT @UplineSecurityCode = NULL
 	     , @isForcedChangeSecurityCode = 0
 
     IF @roleid = 4
@@ -182,11 +182,6 @@ BEGIN
 	    FROM dbo.CustLoginInfo WITH(NOLOCK)
 	    WHERE CustID = @srecommend
 
-		SELECT @IsUplineActive = 0 
-		FROM dbo.CS_CustomerStatus WITH (NOLOCK) 
-		WHERE CustId = @srecommend
-			AND (InactiveInfo <> 0 OR SuspendedInfo <> 0 OR ViewOnlyInfo <> 0)
-
 	    SET @mrecommend = @custid 
 	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET mrecommend = @custid WHERE custId = @CustID
 
@@ -206,11 +201,6 @@ BEGIN
 	    FROM dbo.CustLoginInfo WITH(NOLOCK)
 	    WHERE CustID = @mrecommend
 
-		SELECT @IsUplineActive = 0 
-		FROM dbo.CS_CustomerStatus WITH (NOLOCK) 
-		WHERE CustId = @mrecommend
-			AND (InactiveInfo <> 0 OR SuspendedInfo <> 0 OR ViewOnlyInfo <> 0)
-
 	    SET @recommend = @custid
 	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET recommend = @custid WHERE custId = @CustID
 
@@ -225,11 +215,6 @@ BEGIN
     END
 	ELSE IF @roleid = 1
 	BEGIN		
-		SELECT @IsUplineActive = 0 
-		FROM dbo.CS_CustomerStatus WITH (NOLOCK) 
-		WHERE CustId = @recommend
-			AND (InactiveInfo <> 0 OR SuspendedInfo <> 0 OR ViewOnlyInfo <> 0)
-
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
 		SELECT @Custid, seqNo, bitmapVirtual
 		FROM CustVirtualSetting WITH(NOLOCK)
