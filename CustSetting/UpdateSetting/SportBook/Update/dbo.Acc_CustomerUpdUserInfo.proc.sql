@@ -31,7 +31,7 @@ AS
 /*
 Created: 20090122@Phuc
 Task : Update customer's info
-DB: DBTXN/bodb02
+DB: DBCUST/CustDB
 Original:
 Revisions:
 	- 20090723@Phuc: Write log subaccname instead of subaccid.
