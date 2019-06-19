@@ -443,6 +443,8 @@ BEGIN
 	---------------------End CommSetting--------------------------------------
 	
 	------------------Write log
+	SELECT @SPName = dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_CommBetSetting_Upd') --Use this tip to pass GOSQL deploy tool
+
 	-- Select ProductID and SettingLevel
 	SELECT @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
@@ -612,7 +614,7 @@ BEGIN
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
-	WHERE l.SPName = 'CS_CustSetting_CommBetSetting_Upd' AND ld.ProductID = @ProductID AND ld.Level = @RoleID AND l.ActionTypeID = 3
+	WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID AND l.ActionTypeID = 3
 				
 	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,
@@ -943,9 +945,7 @@ BEGIN
 	END
 
 	SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml_Old), '" />', '"/"')	
-	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')	
-
-	SELECT @SPName = dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_CommBetSetting_Upd') --Use this tip to pass GOSQL deploy tool
+	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')		
 
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
