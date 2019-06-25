@@ -49,7 +49,7 @@ BEGIN
 	DECLARE @currency INT, @pwdexpiry DATETIME, @lastMINUTEMemberCount INT, @IsInternal BIT, @srecommend INT, @mrecommend INT, @site VARCHAR(10),
 			@Credit_AllOtherMember MONEY, @Credit_Ag MONEY,
 			@matchlimit SMALLMONEY, @virtualmultiplier SMALLMONEY,
-			@Asuspended BIT, @UplineClosed BIT, @autosuspend BIT, @autosuspend2 BIT 
+			@Asuspended BIT, @autosuspend BIT, @autosuspend2 BIT 
 	
 	SELECT @username = RTRIM(LTRIM(@username))
 	SELECT @pwdexpiry = dbo.f_CS_GetPwdExpiryDate (1)
@@ -233,7 +233,6 @@ BEGIN
          , @srecommend = srecommend
          , @Credit_Ag = ISNULL(Credit, 0)     
          , @Asuspended = reject
-         , @UplineClosed = closed
          , @matchlimit = matchlimit
          , @autosuspend = ISNULL(autosuspend, 0)
          , @autosuspend2 = ISNULL(autosuspend2, 0)
@@ -274,7 +273,7 @@ BEGIN
 	    @ugroup = @ugroup,
 
 		@suspended = @Asuspended,
-	    @closed = @UplineClosed,
+	    @closed = 0,
 		@SystemID=@SystemID,
 	    @autosuspend = @autosuspend,
 	    @autosuspend2 = @autosuspend2,
