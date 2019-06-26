@@ -31,8 +31,11 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @uGroup VARCHAR(3), @IsGroupComm BIT
-	SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID AND roleid = @RoleId
+	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @uGroup VARCHAR(3), @IsGroupComm BIT, @Currency INT
+	
+	SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend, @Currency = currency 
+	FROM dbo.custInfo WITH (NOLOCK) 
+	WHERE custid = @CustID AND roleid = @RoleId
 
 	/********************************************* Comm & BetSetting: SettingType = 2 ***********************************/
 	SELECT t.* INTO #SportBettypeFilter2
@@ -60,9 +63,11 @@ BEGIN
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,
 			ISNULL(mc.MaxCommDownline,0) AS MinComm, CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS MaxComm,
 			sc.Discount AS Comm,
-			ISNULL(mb.MaxMaxBetDownline,0) AS MinMaxBet, ISNULL(mb.MaxMaxPerEventDownline,0) AS MinMaxPerEvent,
+			CASE WHEN bs.MinBet > ISNULL(mb.MaxMaxBetDownline,0) THEN bs.MinBet ELSE ISNULL(mb.MaxMaxBetDownline,0) END AS MinMaxBet, 
+			CASE WHEN bs.MinBet > ISNULL(mb.MaxMaxPerEventDownline,0) THEN bs.MinBet ELSE ISNULL(mb.MaxMaxPerEventDownline,0) END AS MinMaxPerEvent, 
 			sb.MaxBet AS MaxBet, sb.MaxPerEvent AS MaxPerEvent
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
+			INNER JOIN dbo.CS_ProductBetSetting bs WITH (NOLOCK) ON bs.SportType = ps.SportType AND bs.BetType = ps.BetType AND bs.IsLive = ps.IsLive AND bs.Currency = @Currency
 			INNER JOIN #SportBettypeFilter2 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
 			INNER JOIN dbo.CS_CustBetSetting_Agent sb ON sb.SportType = ft.SportType AND sb.BetType = ft.BetType AND sb.IsLive = ft.IsLive 
 			LEFT JOIN #BetDownlines4 mb ON mb.SportType = ft.SportType AND mb.BetType = ft.BetType AND mb.IsLive = ft.IsLive

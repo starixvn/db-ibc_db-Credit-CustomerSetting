@@ -153,8 +153,42 @@ BEGIN
 		END
 	END	
 
-	IF @RoleId <> 4
+	--Check MaxBet > GlobalMinBet
+	INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+	SELECT cs.SportType, cs.BetType, cs.IsLive, 404		
+	FROM #NewBetSetting cs
+		INNER JOIN dbo.CS_ProductBetSetting bs WITH (NOLOCK) ON bs.SportType = cs.SportType AND bs.BetType = cs.BetType AND bs.IsLive = cs.IsLive
+	WHERE cs.MaxBet < bs.MinBet
+
+	IF @@ROWCOUNT <> 0
 	BEGIN
+		IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 404)
+		BEGIN
+			SET @ErrType = (
+					SELECT 10044 AS '@MsgID'
+						, 'The current Max Per Bet value is lower than Company Min Bet.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'									
+								, tmp.IsLive AS '@IsLive'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 404								
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 71
+			SET @ErrCode = 404
+		
+			RETURN
+		END		
+	END	
+
+	IF @RoleId <> 4
+	BEGIN		
 		--Check MaxBet < upline's maxbet
 		--Check MaxPerEvent < upline's MaxPerEvent
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
