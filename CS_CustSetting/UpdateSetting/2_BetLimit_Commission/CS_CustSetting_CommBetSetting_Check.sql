@@ -162,7 +162,7 @@ BEGIN
 		IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 404)
 		BEGIN
 			SET @ErrType = (
-					SELECT 10042 AS '@MsgID'
+					SELECT 10044 AS '@MsgID'
 						, 'The current Max Per Bet value is lower than Company Min Bet.' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
