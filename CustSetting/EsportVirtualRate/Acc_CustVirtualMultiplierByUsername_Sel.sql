@@ -23,6 +23,6 @@ BEGIN
 	FROM Customer c(NOLOCK)
 	WHERE username=@Username
 
-	EXEC Acc_CustVirtualMultiplier_Sel @CustID=1176092, @SportType=@SportType, @ErrCode=@ErrCode OUT, @ErrMsg=@ErrMsg OUT
+	EXEC Acc_CustVirtualMultiplier_Sel @CustID=@CustID, @SportType=@SportType, @ErrCode=@ErrCode OUT, @ErrMsg=@ErrMsg OUT
 
 END

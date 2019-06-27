@@ -19,8 +19,8 @@ AS
 BEGIN
 	SELECT @ErrCode = 0, @ErrMsg = ''
 
-	DECLARE @RoleID INT, @recommend INT, @mrecommend INT, @srecommend INT
-	DECLARE @ActualRate FLOAT, @Currency NVARCHAR(50)
+	DECLARE @RoleID INT, @recommend INT, @mrecommend INT, @srecommend INT, @Username NVARCHAR(50)
+	DECLARE @ActualRate FLOAT, @Currency NVARCHAR(50), @UplineUsername NVARCHAR(50)
 	DECLARE @UplineCustID INT
 	
 	SELECT @RoleID =roleid
@@ -28,12 +28,13 @@ BEGIN
 			, @srecommend = srecommend
 			, @ActualRate = e.actualrate
 			, @Currency = e.currency
+			, @Username = Username
 	FROM Customer c (NOLOCK)
 		INNER JOIN exchange e (NOLOCK) ON  e.exchangeid = c.currency  
 	WHERE CustID = @CustID
 		
 
-	IF @Currency IS NULL 
+	IF @CustID <> 0 AND @Currency IS NULL 
 	BEGIN
 		SELECT @ErrCode = 1
 		SELECT @ErrMsg = 'This account is not existing'
@@ -57,21 +58,25 @@ BEGIN
 	ELSE IF @RoleID = 2
 		SELECT @UplineCustID = @mrecommend
 	ELSE IF @RoleID = 3
-		SELECT @UplineCustID = @mrecommend
+		SELECT @UplineCustID = @srecommend
 	ELSE IF @RoleID = 4
 		SELECT @UplineCustID = 0
 
+	SELECT @UplineUsername = username
+	FROM customer (NOLOCK)
+	WHERE CustID = @UplineCustID
+
 	--1st Dataset: Cust/currency info
-	SELECT @Currency Currency,@ActualRate ActualRate, @UplineCustID UplineCustID
+	SELECT @Username Username, @Currency Currency,@ActualRate ActualRate, @UplineCustID UplineCustID, @UplineUsername UplineUsername
 
 	--2nd Dataset: Virtual Rate
 	SELECT h.SportType, s.SportName
 	, lg.GroupID LeagueGroupID, lg.GroupName LeagueGroup
 	, bg.GroupID BettypeGroupID, bg.GroupName BettypeGroup
-	, b.typenamee BetType
+	, b.typeid BetTypeID, b.typenamee BetType
 	, h.LevelID
 	,ISNULL(ValueIDLIVE,0) ValueIDLIVE, vlive.Value ValueLIVE
-	,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueLIVE
+	,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueNonLIVE
 	FROM VRSetttingHierarchy h 
 		LEFT JOIN DB06.bodb02.dbo.Sports s ON s.SportType=h.SportType
 		LEFT JOIN VRLeagueGroup lg ON h.LeagueGroupID = lg.GroupID
