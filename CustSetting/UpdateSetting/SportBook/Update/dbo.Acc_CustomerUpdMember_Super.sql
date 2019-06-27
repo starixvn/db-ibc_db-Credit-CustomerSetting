@@ -1,11 +1,10 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Super] 
 	@CustID INT,--memberid
 	@Closed BIT,
 	@disCasino BIT = 0,
 	@UpdateClosed BIT = 0,
-	@Suspended BIT = null,
-	@updatesuspended BIT = 0,
+	
 	@DisabledFI BIT = 0,
 	@spositiontaking_1 SMALLMONEY OUTPUT,
 	@spositiontaking_2 SMALLMONEY OUTPUT,
@@ -399,6 +398,7 @@ Revisions:
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 	- 20181122@Johnson: remove redundant log status [redmine: #105164]
 	- 20190508@Johnson: fix bug for missing bettype of Number Game [redmine: #112318]
+	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -486,20 +486,7 @@ IF @disCasino = 1 AND EXISTS(SELECT 1 FROM Custinfo WITH (NOLOCK) WHERE syncCasi
 			SELECT @ErrCode = @ErrCode + cast(@ErrCode_cur AS varchar(300)) + char(7), 
 				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
 		END
-		
-		SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-		IF @updatesuspended = 1
-		BEGIN
-			SELECT @ErrMsg_Cur = case @Language 
-								WHEN 'E' THEN 'This SUSPENDED function is temporarily unavailable, please update later.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](60001,@Language)
-							END	,
-				@ErrCode_Cur = 903
-				
-			SELECT @ErrCode = @ErrCode + cast(@ErrCode_cur AS varchar(300)) + char(7), 
-				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-		END
-		
+					
 		SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = ''
 	END
 ELSE
@@ -525,34 +512,7 @@ ELSE
 				RETURN
 			END
 		END
-		
-		--- update SuspENDed
-		IF @updatesuspended = 1 --OR @Suspended is not null
-		BEGIN
-			EXEC [dbo].[Acc_CustomerUpdSuspENDed] 
-				@CustID = @CustID, 
-				@Suspended = @Suspended, 
-				@SubAccID = @SubAccID, 
-				@UserID = @UserID, 
-				@disCasino = @disCasino, 
-				@Language = @language,
-				@ErrCode = @ErrCode_cur output, 
-				@ErrMsg = @ErrMsg_cur output, 
-				@IP = @IP
 				
-			IF @ErrCode_Cur > 0
-			BEGIN
-				SELECT @ErrCode = @ErrCode + cast(@ErrCode_cur AS varchar(300)) + char(7), 
-					@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-				RETURN
-			END
-		END
-		/*
-		UPDATE custinfo with (ROWLOCK, UPDLOCK) SET 
-			closed= CASE WHEN @closed is null or @UpdateClosed = 0 THEN closed ELSE @closed END,
-			reject = case  WHEN @Suspended is null or @updatesuspended = 0 THEN reject ELSE @Suspended END
-		WHERE custid=@CustID
-		*/
 		SELECT @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)
 		
 	END

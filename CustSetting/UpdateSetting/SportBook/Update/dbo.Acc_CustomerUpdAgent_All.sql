@@ -15,8 +15,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@discount1x2 decimal(9,8)=0,	
 	@discountnumber decimal(9,8), 
 	@discountMyanmarOdds DECIMAL(9,8)=0, -- MyanmarOdds
-	@closed bit,
-	@Suspended bit,
+	@closed bit,	
 	@disCasino bit = 0,	
 
 	@mrecommend int,
@@ -427,8 +426,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@updateallmembers bit = 0,
 	@newmpositiontaking smallmoney = 0,--equals max(m+a) - chosen(a)
 	
-	@UpdateClosed bit = 1,	
-	@UpdateSuspended BIT = 1,
+	@UpdateClosed bit = 1,		
 	@SubAccID int = 0, --Sub-AccountID
 	@UserID int,
 	@IP varchar(15)='',
@@ -480,6 +478,7 @@ Revisions:
 	- 20170628@Winnie: Color for closed account - [Redmine: 74494]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181107@Johnson: add Happy 5 [Redmine: #104006]
+	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 Param's Explanation:
 • @ErrCode:
     = 0: Update Agent successfully.
@@ -574,35 +573,7 @@ BEGIN
 		END
 	END
 
-
-	---------------------------------------------
-	---update suspended 
-	IF @UpdateSuspended = 1
-	BEGIN
-		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-		EXEC dbo.Acc_CustomerUpdSuspended
-					@CustID =@CustID,
-					@Suspended =@Suspended,	
-					@disCasino = @disCasino,				
-					@SubAccID =@SubAccID , 
-					@UserID =@UserID,
-					@Language =@Language,
-					@ErrCode =@ErrCode_cur OUTPUT,
-					@ErrMsg =@ErrMsg_Cur OUTPUT,
-					@IP =@IP
-					
-		IF @ErrCode_Cur > 0
-		BEGIN
-			select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
-					@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-			
-		END
-		ELSE
-		BEGIN
-			Select @ErrCode = @ErrCode + '-103'+char(7), @ErrMsg = @ErrMsg + char(7)
-		END
-	END
-
+	
 	--Update credit
 	IF @UpdateMultiple = 0
 	BEGIN

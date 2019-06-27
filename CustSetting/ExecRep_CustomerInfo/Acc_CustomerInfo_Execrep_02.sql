@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="0" IsNested = "1"></info>*/
-USE [CustDB]
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0" IsNested = "1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_02]
 	@custid INT =0,
 	@ExistingCustid INT = 0,

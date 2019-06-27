@@ -1,11 +1,4 @@
-﻿USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdSuspended]    Script Date: 06/10/2015 16:17:44 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdSuspended    Script Date: 11/27/2014 5:09:46 PM ******/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuspended]
 	@CustID int,
 	@Suspended bit,	
@@ -46,7 +39,7 @@ Revisions:
 	- 20141125@Jamie: Use Acc_CustomerInfo_Execrep_04 instead of Acc_ExecRep_Cust_04 [Redmine:#26497]
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216]                          
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
-	
+	- 20190404@Johnson: add suspendinfo [redmine: #105587]
 	
 Param's Explanation:
 • @ErrCode:
@@ -173,7 +166,11 @@ BEGIN
 
 	IF @Old_Suspended = @Suspended RETURN 
 	-------------
-
+	UPDATE	cs 
+	SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Suspended,ISNULL(SuspendInfo,0)))	
+	FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 		
+	WHERE	custid = @CustID;
+	
 	update CustInfo with (ROWLOCK, UPDLOCK) set Reject = @Suspended
 	where CustID = @CustID
 	if (@@error <> 0)
@@ -186,20 +183,54 @@ BEGIN
 						end	, @ErrCode = 101
 		return
 	end
-
+	
+	CREATE TABLE #tblCustAffected (CustID INT)
+	DECLARE @tmpCust TABLE(custid INT) 
+	DECLARE @custlist VARCHAR(MAX)
+		
 	--20130709@Jamie: Apply ExecRep 
 	IF @RoleID BETWEEN 2 AND 4 
 	BEGIN
-		EXEC [Acc_CustomerInfo_Execrep_04]
-			 @CustID		= @CustID
-			,@RoleID		= @RoleID
-			,@Action		= 'Suspended'
-			,@Suspended		= @Suspended
+		--get custid affect after update custproductstatus
+		INSERT INTO #tblCustAffected(custid)
+		EXEC Acc_DynamicCustomerInfo_04
+			@CustID		= @CustID
+			,@RoleID	= @RoleID
+			,@Action	= 'SuspendInfo'
+			,@Suspended	= @Suspended
+			
+		WHILE (1=1)
+		BEGIN 
+			SELECT @custlist = ''
+
+			DELETE TOP (2500) t
+			OUTPUT DELETED.custid INTO @tmpCust
+			FROM #tblCustAffected t
+				
+			SELECT @custlist = @custlist + cast(custid AS VARCHAR(10)) + ','
+			FROM @tmpCust
+			
+			EXEC [Acc_CustomerInfo_Execrep_04]
+				 @CustID		= @CustID
+				,@custlist		= @custList
+				,@RoleID		= @RoleID
+				,@Action		= 'Suspended'
+				,@Suspended		= @Suspended
+			
+			DELETE @tmpCust
+	
+			IF @@rowcount < 2500
+				BREAK;	
+			
+		END		
+		
+		DROP TABLE #tblCustAffected
 	END
 
 
 	---------------
-	declare @LogSPData varchar(8000)
+	declare @LogSPData varchar(8000),
+			@ActionID INT 
 
 	Select @LogSPData = '<Acc_CustomerUpdSuspended CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
 						'Suspended="'+ coalesce(cast(@Suspended as varchar(50)),space(1)) + '" '+
@@ -214,12 +245,65 @@ BEGIN
 	set @duration  = datediff (millisecond,@startRun,@endRun)
 
 	BEGIN TRY
+		--write log for themself
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @UserID,
 			@CustID = @CustID,
 			@ActionID = 1104,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
+		
+		--write log to support downlines view upline's actions
+		IF @roleid = 4
+		BEGIN
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 65018,--master view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 70027,--agent view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75036,--member view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END
+		
+		IF @roleid = 3
+		BEGIN	
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 70028,--agent view on master action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75037,--member view on master action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END
+		
+		IF @roleid = 2
+		BEGIN	
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75038,--member view on agent action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END								
 	END TRY
 	BEGIN CATCH	
 		Select @LogSPData = '<Acc_CustomerUpdSuspended CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
@@ -237,13 +321,58 @@ BEGIN
 			@ActionID = 1104,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
+		
+		--write log to support downlines view upline's actions
+		IF @roleid = 4
+		BEGIN
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 65018,--master view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 70027,--agent view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75036,--member view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END
+		
+		IF @roleid = 3
+		BEGIN	
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 70028,--agent view on master action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75037,--member view on master action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END
+		
+		IF @roleid = 2
+		BEGIN	
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75038,--member view on agent action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END	
 	END CATCH
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuspended] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuspended] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuspended] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuspended] TO [vnteam] AS [dbo]

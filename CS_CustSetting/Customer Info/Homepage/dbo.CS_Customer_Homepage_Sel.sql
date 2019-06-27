@@ -13,6 +13,7 @@ AS
 
 	Revisions:
 		- 20190304@Johnson: Initialize SP [RedmineID: #105338]
+		- 20190527@Paul: Apply new status [RedmineID: #113198]
 */
 
 BEGIN
@@ -25,7 +26,7 @@ BEGIN
 			@LastLogin SMALLDATETIME,
 			@LastChangePwd DATETIME
 	
-	CREATE TABLE #tblStatus (roleid TINYINT, cntActive INT, cntClosed INT, cntSuspend INT)
+	CREATE TABLE #tblStatus (roleid TINYINT, cntActive INT, cntViewOnly INT, cntSuspended INT, cntInactive INT)
 	
 	SELECT	@credit = credit, @roleid = roleid
 	FROM dbo.CustInfo WITH(NOLOCK)
@@ -81,40 +82,45 @@ BEGIN
 		
 		IF @roleid = 4
 		BEGIN
-			INSERT INTO #tblStatus(roleid, cntActive, cntClosed, cntSuspend)
+			INSERT INTO #tblStatus(roleid, cntActive, cntViewOnly, cntSuspended, cntInactive)
 			SELECT roleid, 
-				ISNULL(SUM(CASE WHEN Closed = 0 AND ISNULL(reject, 0) = 0 THEN 1 ELSE 0 END), 0) as cntActive,
-				ISNULL(SUM(CASE WHEN Closed = 1 THEN 1 ELSE 0 END), 0) as cntClosed,
-				ISNULL(SUM(CASE WHEN ISNULL(reject, 0) = 1 AND Closed = 0 THEN 1 ELSE 0 END), 0) as cntSuspend
-			FROM custinfo WITH(NOLOCK)
+				ISNULL(SUM(CASE	WHEN cs.CustStatus = 4 THEN 1 ELSE 0 END), 0) AS cntActive,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 3 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 2 THEN 1 ELSE 0 END), 0) AS cntSuspended,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 1 THEN 1 ELSE 0 END), 0) AS cntInactive
+			FROM custinfo ci WITH(NOLOCK)
+				CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
 			WHERE srecommend = @custid	
 				AND roleid IN (1,2,3)				
 			GROUP BY roleid	
 		END
 		ELSE IF @roleid = 3
 		BEGIN
-			INSERT INTO #tblStatus(roleid, cntActive, cntClosed, cntSuspend)
+			INSERT INTO #tblStatus(roleid, cntActive, cntViewOnly, cntSuspended, cntInactive)
 			SELECT roleid, 
-				ISNULL(SUM(CASE WHEN Closed = 0 AND ISNULL(reject, 0) = 0 THEN 1 ELSE 0 END), 0) as cntActive,
-				ISNULL(SUM(CASE WHEN Closed = 1 THEN 1 ELSE 0 END), 0) as cntClosed,
-				ISNULL(SUM(CASE WHEN ISNULL(reject, 0) = 1 AND Closed = 0 THEN 1 ELSE 0 END), 0) as cntSuspend
-			FROM custinfo WITH(NOLOCK)
+				ISNULL(SUM(CASE	WHEN cs.CustStatus = 4 THEN 1 ELSE 0 END), 0) AS cntActive,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 3 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 2 THEN 1 ELSE 0 END), 0) AS cntSuspended,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 1 THEN 1 ELSE 0 END), 0) AS cntInactive
+			FROM custinfo ci WITH(NOLOCK)
+				CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
 			WHERE mrecommend = @custid	
 				AND roleid IN (1,2)
 			GROUP BY roleid	
 		END
 		ELSE IF @roleid = 2
 		BEGIN
-			INSERT INTO #tblStatus(roleid, cntActive, cntClosed, cntSuspend)
-			SELECT c.roleid, 
-				ISNULL(SUM(CASE WHEN Closed = 0 AND ISNULL(reject, 0) = 0 THEN 1 ELSE 0 END), 0) as cntActive,
-				ISNULL(SUM(CASE WHEN Closed = 1 THEN 1 ELSE 0 END), 0) as cntClosed,
-				ISNULL(SUM(CASE WHEN ISNULL(reject, 0) = 1 AND Closed = 0 THEN 1 ELSE 0 END), 0) as cntSuspend
-			FROM dbo.Custinfo ci WITH(NOLOCK)
-				INNER JOIN Customer c WITH(NOLOCK) on c.custid = ci.custid
-			WHERE c.recommend = @custid	
-				AND c.roleid = 1
-			GROUP BY c.roleid	
+			INSERT INTO #tblStatus(roleid, cntActive, cntViewOnly, cntSuspended, cntInactive)
+			SELECT roleid, 
+				ISNULL(SUM(CASE	WHEN cs.CustStatus = 4 THEN 1 ELSE 0 END), 0) AS cntActive,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 3 THEN 1 ELSE 0 END), 0) AS cntViewOnly,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 2 THEN 1 ELSE 0 END), 0) AS cntSuspended,
+				ISNULL(SUM(CASE WHEN cs.CustStatus = 1 THEN 1 ELSE 0 END), 0) AS cntInactive
+			FROM custinfo ci WITH(NOLOCK)
+				CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
+			WHERE ci.recommend = @custid	
+				AND ci.roleid = 1
+			GROUP BY ci.roleid	
 		END
 	END
 	ELSE
@@ -131,6 +137,6 @@ BEGIN
 		@LastLogin as LastLogin,
 		@LastChangePwd as LastChangePwd
 	
-	SELECT *
+	SELECT roleid, cntActive, cntViewOnly, cntSuspended, cntInactive
 	FROM #tblStatus
 END	

@@ -23,7 +23,7 @@ AS
 
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
-		
+		- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 	Param's Explanation:
 		• @RoleId 
 			= 4: Update super 
@@ -702,7 +702,7 @@ BEGIN
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
 	WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID			
 			
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,
 		@CustID = @CustID,
 		@ActionID = @ActionId,

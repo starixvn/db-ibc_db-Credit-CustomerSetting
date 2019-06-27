@@ -34,6 +34,7 @@ AS
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+		- 20100527@Elodie: New account status [Redmine: #113198]
 
 	Param's Explanation:
 		• @ErrCode:
@@ -48,7 +49,7 @@ BEGIN
 	DECLARE @currency INT, @pwdexpiry DATETIME, @lastMINUTEMemberCount INT, @IsInternal BIT, @srecommend INT, @mrecommend INT, @site VARCHAR(10),
 			@Credit_AllOtherMember MONEY, @Credit_Ag MONEY,
 			@matchlimit SMALLMONEY, @virtualmultiplier SMALLMONEY,
-			@Asuspended BIT, @UplineClosed BIT, @autosuspend BIT, @autosuspend2 BIT 
+			@Asuspended BIT, @autosuspend BIT, @autosuspend2 BIT 
 	
 	SELECT @username = RTRIM(LTRIM(@username))
 	SELECT @pwdexpiry = dbo.f_CS_GetPwdExpiryDate (1)
@@ -232,7 +233,6 @@ BEGIN
          , @srecommend = srecommend
          , @Credit_Ag = ISNULL(Credit, 0)     
          , @Asuspended = reject
-         , @UplineClosed = closed
          , @matchlimit = matchlimit
          , @autosuspend = ISNULL(autosuspend, 0)
          , @autosuspend2 = ISNULL(autosuspend2, 0)
@@ -273,7 +273,7 @@ BEGIN
 	    @ugroup = @ugroup,
 
 		@suspended = @Asuspended,
-	    @closed = @UplineClosed,
+	    @closed = 0,
 		@SystemID=@SystemID,
 	    @autosuspend = @autosuspend,
 	    @autosuspend2 = @autosuspend2,
@@ -326,7 +326,7 @@ BEGIN
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
-    EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+    EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 160003,
@@ -334,16 +334,14 @@ BEGIN
 		@duration = @duration			
 
 	--Log status
-    SELECT @LogSPData = '<R Status="'+ CASE WHEN @Asuspended = 0 AND @UplineClosed = 0 THEN 'Open' 
-											WHEN @Asuspended = 1 AND @UplineClosed = 0 THEN 'Suspended' 
-											WHEN @UplineClosed = 1 THEN 'Closed' END + '" ' +
+    SELECT @LogSPData = '<R Status="Active" ' + 
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
-    EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+    EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 165002,
+		@ActionID = 165007,
 		@TrackingValue = @LogSPData,
 		@duration = @duration			
 
@@ -376,7 +374,7 @@ BEGIN
 						FOR XML PATH('R'), TYPE)		
 	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 149999,
@@ -401,7 +399,7 @@ BEGIN
 
 	SELECT @LogSPData = CONVERT(VARCHAR(MAX), @LogXML)
 
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 			@UserID = @Creator,
 			@CustID = @CustID,
 			@ActionID = 139999,

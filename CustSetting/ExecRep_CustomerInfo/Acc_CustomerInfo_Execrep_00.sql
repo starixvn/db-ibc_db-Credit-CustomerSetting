@@ -5,7 +5,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@mrecommend INT = 0,	
 	@recommend INT = 0,
 	@roleid INT,
- 
+	@isSearchAndCopy BIT = 0,
+	@copyFromCustID INT = 0,
 
 	@groupa DECIMAL(9,8) = 0, 
 	@groupb DECIMAL(9,8) = 0, 
@@ -788,8 +789,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 			- 20180327@Vicky: add header infomation [Redmine: #90422]
 			- 20181106@Johnson: add Happy 5 [Redmine: #104006]
-		Parameter's Explanation:
-		
+			- 20190520@Johnson: add @isSearchAndCopy & @copyFromCustID to support SC suspendInfo for member level [redmine: #105587]
+	Parameter's explanation:
+		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
 BEGIN
     SET NOCOUNT ON
@@ -2563,6 +2565,8 @@ BEGIN
 			, @AgentID			= @recommend
 			, @RoleID			= @roleid
 			, @ProductID		= NULL
+			, @isSearchAndCopy 	= @isSearchAndCopy
+			, @copyFromCustID 	= @copyFromCustID
 			, @ErrCode			= @DCSErrCode OUTPUT
 				
 	IF @DCSErrCode <> 0 

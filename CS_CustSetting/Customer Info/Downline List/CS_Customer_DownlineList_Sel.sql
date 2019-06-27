@@ -1,6 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" isFunction="0" isNested="0"></info>*/
-USE [CustDB]
-GO
+/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[CS_Customer_DownlineList_Sel]
 	@CustId				INT,
@@ -8,20 +6,23 @@ ALTER PROCEDURE [dbo].[CS_Customer_DownlineList_Sel]
 	@SearchRoleId		TINYINT,
 	@SearchUsername		NVARCHAR(50),
 	@SearchStatusId		TINYINT = 0,
-	@UplineId			INT = 0 OUTPUT,
-	@PageIndex			INT = 1,
-	@PageSize			INT = 500,
-	@TotalRows			INT = 0 OUTPUT
+	@UplineId		INT = 0 OUTPUT,
+	@UplineStatus		TINYINT = 4 OUTPUT,
+	@IsUplineClosed		BIT = 1 OUTPUT,
+	@PageIndex		INT = 1,
+	@PageSize		INT = 500,
+	@TotalRows		INT = 0 OUTPUT
 AS
 
 /*
 	Created: 20181218@Percy
-	DB: DBCUST.CustDB
+	DB: DBAGE.bodb02
 	Task: Member Information >> Downline List
 
 	Revisions:
 		- 20181218@Percy: Initialize SP [RedmineID: #105338]
 		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+		- 20190514@Paul: Apply new status [RedmineID: #113198]
 
 	Param's Explanation:
 		@CustId: SMA login
@@ -32,15 +33,17 @@ AS
 			1: Member List (Super/Master/Agent Login)
 		@SearchStatusId:
 			0: All
-			1: Open
+			4: Active
+			3: View Only
 			2: Suspended
-			3: Closed
+			1: Inactive
 */
 
 BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @RoleId TINYINT, @db_Username2 VARCHAR(50)
+
 	SELECT  @RoleId = roleId FROM dbo.custInfo WITH (NOLOCK) WHERE custId = @custId
 
 	SELECT @db_Username2 = Nickname FROM dbo.f_CS_GetNickName(@SearchUsername,1)
@@ -60,20 +63,23 @@ BEGIN
 		SELECT @UplineId = @CustId
 	END
 
-	CREATE TABLE #CustInfo (custId INT, username NVARCHAR(50), credit MONEY, Status TINYINT, ClosedReason TINYINT)
+	SELECT @IsUplineClosed = closed
+	FROM dbo.custInfo ci WITH (NOLOCK)
+	WHERE ci.CustId = @UplineId
+
+	SELECT @UplineStatus = CustStatus
+	FROM dbo.f_CS_GetCustomerStatus(@UplineId)
+
+	CREATE TABLE #CustInfo (custId INT, username NVARCHAR(50), credit MONEY, Status TINYINT, IsClosed BIT)
 
 	IF @SearchRoleId = 3
 	BEGIN
-		INSERT INTO #CustInfo (custId, username, credit, Status, ClosedReason)
+		INSERT INTO #CustInfo (custId, username, credit, Status, IsClosed)
 		SELECT ci.custid, ci.username, ISNULL(ci.credit, 0),
-				CASE	WHEN ISNULL(ci.reject, 0) = 0 AND ISNULL(ci.closed, 0) = 0 THEN 1 -- Open
-						WHEN ISNULL(ci.reject, 0) = 1 AND ISNULL(ci.closed, 0) = 0 THEN 2 -- Suspended
-						WHEN ISNULL(ci.closed, 0) = 1 THEN 3 -- Closed
-				END,
-				ISNULL(cl.ClosedReason, 0)
+				cs.CustStatus, ci.closed
 		FROM dbo.custInfo ci WITH (NOLOCK)
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
-			LEFT JOIN dbo.CustLoginInfo cl WITH (NOLOCK) ON ci.custid = cl.custid
+			CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
 		WHERE ci.srecommend = @UplineId
 			AND ci.roleId = 3
 			AND (
@@ -83,25 +89,22 @@ BEGIN
 			)
 			AND (
 				@SearchStatusId = 0
-				OR (@SearchStatusId = 1 AND ISNULL(ci.reject, 0) = 0 AND ISNULL(ci.closed, 0) = 0)
-				OR (@SearchStatusId = 2 AND ISNULL(ci.reject, 0) = 1 AND ISNULL(ci.closed, 0) = 0)
-				OR (@SearchStatusId = 3 AND ISNULL(ci.closed, 0) = 1)
+				OR (@SearchStatusId = 4 AND cs.CustStatus = 4)
+				OR (@SearchStatusId = 3 AND cs.CustStatus = 3)
+				OR (@SearchStatusId = 2 AND cs.CustStatus = 2)
+				OR (@SearchStatusId = 1 AND cs.CustStatus = 1)
 			)
 
 		SELECT @TotalRows = @@ROWCOUNT
 	END
 	ELSE IF @SearchRoleId = 2
 	BEGIN
-		INSERT INTO #CustInfo (custId, username, credit, Status, ClosedReason)
+		INSERT INTO #CustInfo (custId, username, credit, Status, IsClosed)
 		SELECT ci.custid, ci.username, ISNULL(ci.credit, 0),
-				CASE	WHEN ISNULL(ci.reject, 0) = 0 AND ISNULL(ci.closed, 0) = 0 THEN 1 -- Open
-						WHEN ISNULL(ci.reject, 0) = 1 AND ISNULL(ci.closed, 0) = 0 THEN 2 -- Suspended
-						WHEN ISNULL(ci.closed, 0) = 1 THEN 3 -- Closed
-				END,
-				ISNULL(cl.ClosedReason, 0)
+				cs.CustStatus, ci.closed
 		FROM dbo.custInfo ci WITH (NOLOCK)
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
-			LEFT JOIN dbo.CustLoginInfo cl WITH (NOLOCK) ON ci.custid = cl.custid
+			CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
 		WHERE ci.mrecommend = @UplineId
 			AND ci.roleId = 2
 			AND (
@@ -111,25 +114,22 @@ BEGIN
 			)
 			AND (
 				@SearchStatusId = 0
-				OR (@SearchStatusId = 1 AND ISNULL(ci.reject, 0) = 0 AND ISNULL(ci.closed, 0) = 0)
-				OR (@SearchStatusId = 2 AND ISNULL(ci.reject, 0) = 1 AND ISNULL(ci.closed, 0) = 0)
-				OR (@SearchStatusId = 3 AND ISNULL(ci.closed, 0) = 1)
+				OR (@SearchStatusId = 4 AND cs.CustStatus = 4)
+				OR (@SearchStatusId = 3 AND cs.CustStatus = 3)
+				OR (@SearchStatusId = 2 AND cs.CustStatus = 2)
+				OR (@SearchStatusId = 1 AND cs.CustStatus = 1)
 			)
 
 		SELECT @TotalRows = @@ROWCOUNT
 	END
 	ELSE IF @SearchRoleId = 1
 	BEGIN
-		INSERT INTO #CustInfo (custId, username, credit, Status, ClosedReason)
+		INSERT INTO #CustInfo (custId, username, credit, Status, IsClosed)
 		SELECT ci.custid, ci.username, ISNULL(ci.credit, 0),
-				CASE	WHEN ISNULL(ci.reject, 0) = 0 AND ISNULL(ci.closed, 0) = 0 THEN 1 -- Open
-						WHEN ISNULL(ci.reject, 0) = 1 AND ISNULL(ci.closed, 0) = 0 THEN 2 -- Suspended
-						WHEN ISNULL(ci.closed, 0) = 1 THEN 3 -- Closed
-				END,
-				ISNULL(cl.ClosedReason, 0)
+				cs.CustStatus, ci.closed
 		FROM dbo.custInfo ci WITH (NOLOCK)
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
-			LEFT JOIN dbo.CustLoginInfo_Member cl WITH (NOLOCK) ON ci.custid = cl.custid
+			CROSS APPLY dbo.f_CS_GetCustomerStatus(ci.custid) cs
 		WHERE ci.recommend = @UplineId
 			AND ci.roleId = 1
 			AND (
@@ -139,9 +139,10 @@ BEGIN
 			)
 			AND (
 				@SearchStatusId = 0
-				OR (@SearchStatusId = 1 AND ISNULL(ci.reject, 0) = 0 AND ISNULL(ci.closed, 0) = 0)
-				OR (@SearchStatusId = 2 AND ISNULL(ci.reject, 0) = 1 AND ISNULL(ci.closed, 0) = 0)
-				OR (@SearchStatusId = 3 AND ISNULL(ci.closed, 0) = 1)
+				OR (@SearchStatusId = 4 AND cs.CustStatus = 4)
+				OR (@SearchStatusId = 3 AND cs.CustStatus = 3)
+				OR (@SearchStatusId = 2 AND cs.CustStatus = 2)
+				OR (@SearchStatusId = 1 AND cs.CustStatus = 1)
 			)
 
 		SELECT @TotalRows = @@ROWCOUNT
@@ -152,11 +153,11 @@ BEGIN
 	SELECT  @RowStart	= (@PageIndex - 1) * @PageSize + 1,
 			@RowEnd		= @RowStart + @PageSize - 1
 
-	SELECT custid, username, n.NickName AS nickname, firstname, credit, [group], CreatedDate, Status, ClosedReason
+	SELECT custid, username, n.NickName AS nickname, firstname, credit, [group], CreatedDate, Status, IsClosed
 	FROM (
 		SELECT	ci.custid, ci.username, cu.username2, cu.firstname, ci.credit, cu.ugroup AS [group],
-				cu.creatdate AS CreatedDate, ci.Status, ci.ClosedReason,
-				ROW_NUMBER() OVER(ORDER BY ci.Status, ci.username) AS RowId
+				cu.creatdate AS CreatedDate, ci.Status, ci.IsClosed,
+				ROW_NUMBER() OVER(ORDER BY ci.Status DESC, ci.username) AS RowId
 		FROM #CustInfo ci
 			INNER JOIN dbo.Customer cu WITH (NOLOCK) ON ci.custid = cu.custid
 	) AS Result

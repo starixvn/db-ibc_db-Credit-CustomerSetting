@@ -5,114 +5,189 @@ GO
 ALTER PROCEDURE [dbo].[CS_DynamicCustomerInfo_01]
 	@CustId			INT,
 	@RoleId			TINYINT,
-	@Action			VARCHAR(50) = '',
-	@StatusId		TINYINT = 0,
-	@UpdStatusId	TINYINT = 0,
-	@SystemId		TINYINT = 1
+	@Action			VARCHAR(50),
+	@Mode			TINYINT = 0,
+	@AffectedList	VARCHAR(MAX) = '' OUTPUT
 AS
 
 /*
 	Created: 20181218@Percy
-	DB: DBCUST.CustDB
+	DB: DBCUST/CustDB
 	Task: Execrep SP
 
 	Revisions:
 		- 20181218@Percy: Initialize SP: Update status customer whole line [RedmineID: #105338]
+		- 20190527@Elodie: New account status for CN88 [Redmine: 113198]
 
 	Param's Explanation:
-		@UpdStatusId:
-			1: Open
-			2: Suspended
-			3: Closed
+		@Mode: 1: A to I, 2: I to A, 3: A to S, 4: S to A, 5: A to V, 6: V to A
+		
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	IF dbo.f_CheckRepTable('custInfo') = 1
+	DECLARE @SetBit0 INT, @SetBit1 INT, @SetBit0Downline INT, @SetBit1Downline INT, @Pos TINYINT
+	CREATE TABLE #TempCust (CustID INT PRIMARY KEY, RoleID TINYINT);
+
+	IF dbo.f_CheckRepTable('custInfo') = 0 RETURN
+	IF dbo.f_CheckRepTable('CS_CustomerStatus') = 0 RETURN
+	
+	IF @Action = 'UpdateStatus'
 	BEGIN
-		IF @Action = 'UpdateStatus'
+		SELECT	@Pos = CASE @RoleId WHEN 0 THEN 4
+									WHEN 4 THEN 3
+									WHEN 3 THEN 2
+									WHEN 2 THEN 1
+									WHEN 1 THEN 0 END 
+			
+		SELECT @SetBit1 = POWER(2, @Pos)			
+		SELECT @SetBit0 = (~POWER(2, @Pos))
+
+		SELECT @SetBit1Downline = POWER(2, @Pos-1)		 	
+		SELECT @SetBit0Downline = (~POWER(2, @Pos-1))
+
+		IF @RoleID = 0 --Headline
 		BEGIN
-			-- This account
-			CREATE TABLE #tmpCust (CustId INT PRIMARY KEY)
-			INSERT INTO #tmpCust (CustId)
-			VALUES (@CustId)
-
-			-- Downlines
-			IF @RoleId = 4
-			BEGIN
-				INSERT INTO #tmpCust (CustId)
-				SELECT CustId
-				FROM dbo.custInfo WITH (NOLOCK)
-				WHERE srecommend = @CustId
-					AND roleId < 4
-					AND 1 = CASE
-						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1 -- open to suspended
-						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1 -- open to closed
-						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1 -- suspended to open/closed
-						ELSE 0 END
-			END
-			ELSE IF @RoleId = 3
-			BEGIN
-				INSERT INTO #tmpCust (CustId)
-				SELECT CustId
-				FROM dbo.custInfo WITH (NOLOCK)
-				WHERE mrecommend = @CustId
-					AND roleId < 3
-					AND 1 = CASE
-						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1 -- open to suspended
-						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1 -- open to closed
-						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1 -- suspended to open/closed
-						ELSE 0 END
-			END
-			ELSE IF @RoleId = 2
-			BEGIN
-				INSERT INTO #tmpCust (CustId)
-				SELECT CustId
-				FROM dbo.custInfo WITH (NOLOCK)
-				WHERE recommend = @CustId
-					AND roleId < 2
-					AND 1 = CASE
-						WHEN @StatusId = 1 AND @UpdStatusId = 2 AND ISNULL(reject, 0) = 0 AND ISNULL(closed, 0) = 0 THEN 1 -- open to suspended
-						WHEN @StatusId = 1 AND @UpdStatusId = 3 AND ISNULL(closed, 0) = 0 THEN 1 -- open to closed
-						WHEN @StatusId = 2 AND ISNULL(reject, 0) = 1 AND ISNULL(closed, 0) = 0 THEN 1 -- suspended to open/closed
-						ELSE 0 END
-			END
-				
-			UPDATE ci WITH (ROWLOCK, UPDLOCK)
-			SET reject	= CASE @UpdStatusId WHEN 1 THEN 0 WHEN 2 THEN 1 ELSE reject END,
-				closed	= CASE @UpdStatusId WHEN 1 THEN 0 WHEN 2 THEN 0 ELSE 1 END
-			FROM dbo.custInfo ci
-				INNER JOIN #tmpCust tc ON ci.custid = tc.custid
-
-			IF @UpdStatusId = 3
-			BEGIN
-				IF dbo.f_CheckRepTable('CustLoginInfo') = 1 AND dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
-				BEGIN
-					DECLARE @ClosedReason TINYINT
-					SELECT  @ClosedReason = CASE WHEN @SystemId = 1 THEN 1 ELSE 2 END
-				
-					UPDATE cl
-					SET cl.ClosedReason = @ClosedReason
-					FROM dbo.CustLoginInfo cl with (ROWLOCK, UPDLOCK)
-						INNER JOIN #tmpCust tc ON cl.CustId = tc.CustId
-					
-					UPDATE cl
-					SET cl.ClosedReason = @ClosedReason
-					FROM dbo.CustLoginInfo_Member cl WITH (ROWLOCK, UPDLOCK)
-						INNER JOIN #tmpCust tc ON cl.CustId = tc.CustId
-
-					INSERT INTO dbo.CustLoginInfo_Member (CustId, SecurityCode, IP, LastChangedId, LastChangedDate, ClosedReason)
-					SELECT tc.CustId, NULL, NULL, NULL, GETDATE(), @ClosedReason
-					FROM #tmpCust tc
-						INNER JOIN custInfo ci ON tc.CustId = ci.CustId
-						LEFT JOIN dbo.CustLoginInfo_Member cl WITH (NOLOCK) ON tc.CustId = cl.CustId
-					WHERE ci.roleId = 1 AND cl.CustId IS NULL
-				END
-			END
-
-			DROP TABLE #tmpCust
+			INSERT INTO #TempCust (CustID, RoleID)
+			SELECT @CustID, 0
+			UNION ALL
+			SELECT c.custid, c.roleid
+			FROM custInfo c WITH(NOLOCK)
+				INNER JOIN CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
+			WHERE cs.UplineId = @CustID
 		END
+		ELSE IF @RoleID = 4 --Super			
+		BEGIN
+			INSERT INTO #TempCust (CustID, RoleID)
+			SELECT custid, roleid
+			FROM custInfo c WITH(NOLOCK)
+			WHERE srecommend = @CustID
+		END
+		ELSE IF @RoleID = 3 --Master
+		BEGIN
+			INSERT INTO #TempCust (CustID, RoleID)
+			SELECT custid, roleid
+			FROM custInfo c WITH(NOLOCK)
+			WHERE mrecommend = @CustID
+		END
+		ELSE IF @RoleID = 2 --Agent
+		BEGIN
+			INSERT INTO #TempCust (CustID, RoleID)
+			SELECT custid, roleid
+			FROM custInfo c WITH(NOLOCK)
+			WHERE recommend = @CustID
+		END
+		ELSE IF @RoleID = 1 --Member
+		BEGIN
+			INSERT INTO #TempCust (CustID, RoleID)
+			SELECT @CustID, 1
+		END
+
+		IF @@SERVERNAME IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2')
+		BEGIN
+			--@Mode: 1: A to I, 2: I to A, 3: A to S, 4: S to A, 5: A to V, 6: V to A
+			IF @Mode = 1
+			BEGIN
+				SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+												FROM #TempCust
+													CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+												WHERE Custstatus <> 1 AND CustID <> @CustId
+												FOR XML PATH('')), 1, 1, '')
+			END
+			ELSE IF @Mode = 3
+			BEGIN
+				SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+												FROM #TempCust
+													CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+												WHERE Custstatus NOT IN (1,2) AND CustID <> @CustId
+												FOR XML PATH('')), 1, 1, '')
+			END				
+			ELSE IF @Mode = 5
+			BEGIN
+				SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+												FROM #TempCust
+													CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+												WHERE Custstatus = 4 AND CustID <> @CustId
+												FOR XML PATH('')), 1, 1, '')
+			END				
+		END				
+		IF @Mode = 1 --1: A to I
+		BEGIN
+			UPDATE cs WITH (ROWLOCK)
+			SET cs.InactiveInfo = cs.InactiveInfo | @SetBit1, 
+				cs.SuspendedInfo = cs.SuspendedInfo & @SetBit0,
+				cs.ViewOnlyInfo = cs.ViewOnlyInfo & @SetBit0
+			FROM dbo.CS_CustomerStatus cs
+				INNER JOIN #TempCust tc ON cs.custid = tc.custid
+		END
+		ELSE IF @Mode = 2 --2: I to A
+		BEGIN
+			UPDATE cs WITH (ROWLOCK)
+			SET cs.InactiveInfo = cs.InactiveInfo & @SetBit0
+			FROM dbo.CS_CustomerStatus cs
+			WHERE cs.CustId = @CustId
+
+			IF @RoleId <> 1
+			BEGIN
+				UPDATE cs WITH (ROWLOCK)
+				SET cs.InactiveInfo = cs.InactiveInfo & @SetBit0 | @SetBit1Downline,
+					cs.SuspendedInfo = cs.SuspendedInfo & @SetBit0Downline,
+					cs.ViewOnlyInfo = cs.ViewOnlyInfo & @SetBit0Downline
+				FROM dbo.CS_CustomerStatus cs
+					INNER JOIN #TempCust tc ON cs.custid = tc.custid
+				WHERE cs.CustId <> @CustId					
+			END				
+		END
+		ELSE IF @Mode = 3 --3: A to S
+		BEGIN
+			UPDATE cs WITH (ROWLOCK)
+			SET cs.SuspendedInfo = cs.SuspendedInfo | @SetBit1
+			FROM dbo.CS_CustomerStatus cs
+				INNER JOIN #TempCust tc ON cs.custid = tc.custid
+		END
+		ELSE IF @Mode = 4 --4: S to A
+		BEGIN
+			UPDATE cs WITH (ROWLOCK)
+			SET cs.SuspendedInfo = cs.SuspendedInfo & @SetBit0
+			FROM dbo.CS_CustomerStatus cs
+				INNER JOIN #TempCust tc ON cs.custid = tc.custid
+		END
+		ELSE IF @Mode = 5 --5: A to V
+		BEGIN
+			UPDATE cs WITH (ROWLOCK)
+			SET cs.ViewOnlyInfo = cs.ViewOnlyInfo | @SetBit1
+			FROM dbo.CS_CustomerStatus cs
+				INNER JOIN #TempCust tc ON cs.custid = tc.custid
+		END
+		ELSE IF @Mode = 6 --6: V to A
+		BEGIN
+			UPDATE cs WITH (ROWLOCK)
+			SET cs.ViewOnlyInfo = cs.ViewOnlyInfo & @SetBit0
+			FROM dbo.CS_CustomerStatus cs
+				INNER JOIN #TempCust tc ON cs.custid = tc.custid
+		END
+
+		IF @@SERVERNAME IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2')
+		BEGIN
+			IF @Mode = 4 --4: S to A
+			BEGIN
+				SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+												FROM #TempCust
+													CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+												WHERE CustStatus IN (4,3) AND CustID <> @CustId
+												FOR XML PATH('')), 1, 1, '')
+			END
+			ELSE IF @Mode = 6 --6: V to A
+			BEGIN
+				SELECT @AffectedList = STUFF((	SELECT ',' + CAST(custid AS VARCHAR(20))
+												FROM #TempCust
+													CROSS APPLY dbo.f_CS_GetCustomerStatus(CustID)
+												WHERE CustStatus = 4 AND CustID <> @CustId
+												FOR XML PATH('')), 1, 1, '')
+			END
+		END
+		DROP TABLE #TempCust
 	END
 END
 GO

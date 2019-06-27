@@ -15,11 +15,12 @@ AS
 
 /*
 	Created: 20181218@Percy
-	DB: DBCUST.CustDB
+	DB: DBCUST/CustDB
 	Task: Member Information >> Downline List >> Update Given Credit
 
 	Revisions:
 		- 20181218@Percy: Initialize SP [RedmineID: #105338]
+		- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 */
 
 BEGIN
@@ -55,7 +56,7 @@ BEGIN
 		FROM dbo.custInfo WITH (NOLOCK)
 		WHERE srecommend = @srecommend
 			AND roleId = 3
-
+		
 		SELECT	@MinCredit = ISNULL(@UsedCredit, 0)
 	END
 	ELSE IF @RoleId = 3
@@ -79,8 +80,8 @@ BEGIN
 
 		SELECT	@MinCredit = ISNULL(@UsedCredit, 0),
 				@MaxCredit = ISNULL(@UplineCredit, 0) - ISNULL(@UplineUsedCredit, 0) + ISNULL(@Credit, 0)
-	END
-
+	END	
+	
 	-- SP check on SMA/MA/Agent, web check Member
 	IF (@RoleId IN (2,3) AND @UpdCredit NOT BETWEEN @MinCredit AND @MaxCredit)
 		OR (@RoleId = 4 AND @UpdCredit < @MinCredit) -- SMA not have MaxCredit
@@ -125,9 +126,10 @@ BEGIN
 		SELECT @LogData = @LogData + ' by Sub-Account ' + COALESCE(dbo.f_GetSubUsername(@SubAccId), SPACE(1))
 	END
 
-	EXEC dbo.Acc_WriteLog_UserLog_Credit_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_Credit_Wrapper
 		@UserId		= @UserId,
 		@CustId		= @CustId,
+		@SubAccId	= @SubAccId,
 		@Doing		= @LogData,
 		@OldValue	= @Credit,
 		@NewValue	= @UpdCredit,

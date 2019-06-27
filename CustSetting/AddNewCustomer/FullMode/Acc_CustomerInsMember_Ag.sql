@@ -71,8 +71,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@MaxPerMatchv164 MONEY=0,
 	
 	@credit MONEY,
-	@suspended BIT = NULL,	
-	
+		
 	@DisableCasino BIT = 0, 
 	@DisableNumber BIT = 0,	
 
@@ -81,9 +80,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@recommend INT,
 	@ugroup VARCHAR(5),
 	@closed BIT,
-	
-	@suspendedFlag VARCHAR(6) = NULL,
-		
+			
 	@apositiontaking_1 SMALLMONEY,
 	@apositiontaking_2 SMALLMONEY,
 	@apositiontaking_3 SMALLMONEY,
@@ -305,6 +302,7 @@ Revisions:
 	- 20181102@Johnson: Apply service broker for logging [Redmine: #103547]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -588,7 +586,8 @@ BEGIN
 	    @DisableOutright BIT,	   
 	    --@HideVirtualSports  BIT,
 	    @DisableCasinoBonus BIT,	  
-
+		@suspended BIT = 0,
+		
 	    @AgentDanger tinyint,
 	    @AgentDanger2 tinyint,
 	    @AgentDanger3 tinyint,
@@ -3067,7 +3066,7 @@ BEGIN
     IF @UplineClosed = 1 SELECT @Closed = 1 
 
     --check suspended of Agent 
-    IF @Asuspended =1 AND @suspendedFlag IS NULL
+    IF @Asuspended =1
     BEGIN
 	    set @suspended =1
     END
@@ -3203,6 +3202,8 @@ BEGIN
 	    @mrecommend = @mrecommend,
 	    @recommend = @recommend,
 	    @roleid = 1,--create member
+		@isSearchAndCopy = @isSearchAndCopy,
+		@copyFromCustID = @copyFromCustID,
     	
 	    @spositiontaking_1 = @spositiontaking_1,
 	    @spositiontaking_2 = @spositiontaking_2,

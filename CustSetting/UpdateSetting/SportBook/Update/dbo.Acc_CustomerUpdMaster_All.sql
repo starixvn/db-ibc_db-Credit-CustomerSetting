@@ -8,8 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @mobilephone nvarchar(50),
     @email nvarchar(50) = NULL,
     @fax nvarchar(50),
-    @closed bit,
-    @Suspended bit,
+    @closed bit,    
     @srecommend int,--superid
 
 
@@ -182,8 +181,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
 	@UpdatePositiontakingv164 bit = 1,
 	
     @UpdateClosed bit = 1,
-    @UpdateSuspended BIT = 1,
-
+    
     @auto_spositiontaking_1 smallmoney = 0,
     @auto_spositiontaking_2 smallmoney = 0,
     @auto_spositiontaking_3 smallmoney = 0,
@@ -473,6 +471,7 @@ Revisions:
 	- 20170628@Winnie: Apply color for closed account - [Redmine: 74494]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
+	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -567,33 +566,6 @@ BEGIN
 	END
 
 
-	---------------------------------------------
-	---update suspended
-	IF @UpdateSuspended = 1
-	BEGIN
-		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-		EXEC Acc_CustomerUpdSuspended
-					@CustID =@CustID,
-					@Suspended =@Suspended,    
-					@disCasino = @disCasino,                
-					@SubAccID =@SubAccID , 
-					@UserID =@UserID,
-					@Language =@Language,
-					@ErrCode =@ErrCode_Cur OUTPUT,
-					@ErrMsg =@ErrMsg_Cur OUTPUT,
-					@IP =@IP
-	                
-		IF @ErrCode_Cur > 0
-		BEGIN
-			select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
-					@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-	        
-		END
-		ELSE
-		BEGIN
-			Select @ErrCode = @ErrCode + '-103'+char(7), @ErrMsg = @ErrMsg + char(7)
-		END
-	END
 	----------------------------------------------
 	--Update credit
 	IF @UpdateMultiple = 0

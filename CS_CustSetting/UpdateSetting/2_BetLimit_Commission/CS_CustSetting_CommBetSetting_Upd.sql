@@ -24,7 +24,7 @@ AS
 
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
-		
+		- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 	Param's Explanation:
 		@RoleId 
 			= 4,3,2: Update super, master, agent
@@ -443,6 +443,8 @@ BEGIN
 	---------------------End CommSetting--------------------------------------
 	
 	------------------Write log
+	SELECT @SPName = dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_CommBetSetting_Upd') --Use this tip to pass GOSQL deploy tool
+
 	-- Select ProductID and SettingLevel
 	SELECT @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
@@ -612,9 +614,9 @@ BEGIN
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
-	WHERE l.SPName = 'CS_CustSetting_CommBetSetting_Upd' AND ld.ProductID = @ProductID AND ld.Level = @RoleID AND l.ActionTypeID = 3
+	WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID AND l.ActionTypeID = 3
 				
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,
 		@CustID = @CustID,
 		@ActionID = @ActionId,
@@ -943,16 +945,14 @@ BEGIN
 	END
 
 	SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml_Old), '" />', '"/"')	
-	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')	
-
-	SELECT @SPName = dbo.f_CS_GetSPNameByEnvironment('CS_CustSetting_CommBetSetting_Upd') --Use this tip to pass GOSQL deploy tool
+	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')		
 
 	SELECT @ActionId = l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
 	WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID AND l.ActionTypeID = 2
 				
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,
 		@CustID = @CustID,
 		@ActionID = @ActionId,
