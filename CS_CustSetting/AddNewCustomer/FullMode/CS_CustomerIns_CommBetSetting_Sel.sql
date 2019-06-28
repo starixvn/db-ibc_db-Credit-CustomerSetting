@@ -52,7 +52,7 @@ BEGIN
 			CASE WHEN ISNULL(@Currency,0) = 0 THEN 0 ELSE gb.MinBet END AS MinMaxBet, 0 AS MaxBet, 0 AS MaxPerEvent
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter2 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
-			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = ft.SportType AND gb.BetType = ft.Bettype AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
+			LEFT JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = ft.SportType AND gb.BetType = ft.Bettype AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive
 	END
 	ELSE IF @RoleId = 3
