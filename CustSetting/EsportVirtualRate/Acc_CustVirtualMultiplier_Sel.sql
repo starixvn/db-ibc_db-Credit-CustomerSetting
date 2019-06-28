@@ -34,7 +34,7 @@ BEGIN
 	WHERE CustID = @CustID
 		
 
-	IF @CustID <> 0 AND @Currency IS NULL 
+	IF @CustID IS NULL OR (@CustID <> 0 AND @Currency IS NULL) 
 	BEGIN
 		SELECT @ErrCode = 1
 		SELECT @ErrMsg = 'This account is not existing'
@@ -67,7 +67,7 @@ BEGIN
 	WHERE CustID = @UplineCustID
 
 	--1st Dataset: Cust/currency info
-	SELECT @Username Username, @Currency Currency,@ActualRate ActualRate, @UplineCustID UplineCustID, @UplineUsername UplineUsername
+	SELECT @CustID CustID,@Username Username, @Currency Currency,@ActualRate ActualRate, @UplineCustID UplineCustID, @UplineUsername UplineUsername
 
 	--2nd Dataset: Virtual Rate
 	SELECT h.SportType, s.SportName
