@@ -110,7 +110,7 @@ BEGIN
 			RIGHT JOIN dbo.CS_CustBetSetting_Agent mb ON mb.SportType = mc.SportType AND mb.BetType = mc.BetType AND mb.IsLive = mc.IsLive 
 			INNER JOIN dbo.CS_CustBetSetting_Agent sb ON sb.SportType = mb.SportType AND sb.BetType = mb.BetType AND sb.IsLive = mb.IsLive 
 			INNER JOIN #SportBettypeFilter2 ft ON sb.SportType = ft.SportType AND sb.BetType = ft.BetType AND sb.IsLive = ft.IsLive
-			INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = ps.SportType AND gb.BetType = ps.BetType AND gb.IsLive = ps.IsLive AND gb.Currency = @Currency
+			INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = ft.SportType AND gb.BetType = ft.BetType AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
 			LEFT JOIN #CommDownlines3 ac WITH (NOLOCK) ON ac.SportType = ft.SportType AND ac.BetType = ft.BetType AND ac.IsLive = ft.IsLive AND sc.groupID = ac.groupID
 			LEFT JOIN #BetDownlines3 ab WITH (NOLOCK) ON ab.SportType = ft.SportType AND ab.BetType = ft.BetType AND ab.IsLive = ft.IsLive
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive  AND gc.GroupId = sc.GroupId
@@ -158,7 +158,7 @@ BEGIN
 			RIGHT JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.SportType = mc.SportType AND mb.BetType = mc.BetType AND mb.IsLive = mc.IsLive
 			INNER JOIN dbo.CS_CustBetSetting_Agent ab WITH (NOLOCK) ON ab.SportType = mb.SportType AND ab.BetType = mb.BetType AND ab.IsLive = mb.IsLive
 			INNER JOIN #SportBettypeFilter2 ft ON ab.SportType = ft.SportType AND ab.BetType = ft.BetType AND ab.IsLive = ft.IsLive
-			INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = ps.SportType AND gb.BetType = ps.BetType AND gb.IsLive = ps.IsLive AND gb.Currency = @Currency
+			INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = ft.SportType AND gb.BetType = ft.BetType AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
 			LEFT JOIN #BetDownlines2 memb ON memb.SportType = ft.SportType AND memb.BetType = ft.BetType AND memb.IsLive = ft.IsLive
 			LEFT JOIN #CommDownlines2 memc ON memc.SportType = ft.SportType AND memc.BetType = ft.BetType AND memc.IsLive = ft.IsLive AND mc.groupID = memc.GroupId
 			LEFT JOIN #GroupCommDownlines2 dlg ON dlg.SportType = ft.SportType AND dlg.BetType = ft.BetType AND dlg.IsLive = ft.IsLive AND mc.groupID = dlg.GroupId
@@ -186,7 +186,7 @@ BEGIN
 				RIGHT JOIN dbo.CS_CustBetSetting_Agent ab WITH (NOLOCK) ON ab.SportType = ac.SportType AND ab.BetType = ac.BetType AND ab.IsLive = ac.IsLive
 				INNER JOIN dbo.CS_CustBetSetting_Member memb WITH (NOLOCK) ON memb.SportType = ab.SportType AND memb.BetType = ab.BetType AND memb.IsLive = ab.IsLive
 				INNER JOIN #SportBettypeFilter2 ft ON memb.SportType = ft.SportType AND memb.BetType = ft.BetType AND memb.IsLive = ft.IsLive
-				INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = ps.SportType AND gb.BetType = ps.BetType AND gb.IsLive = ps.IsLive AND gb.Currency = @Currency
+				INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = ft.SportType AND gb.BetType = ft.BetType AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
 				LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = ac.GroupId 
 			WHERE (gc.uGroup = @uGroup OR gc.GroupId IS NULL) AND ab.CustId = @AgentId AND memb.CustId = @CustID 
 		END
