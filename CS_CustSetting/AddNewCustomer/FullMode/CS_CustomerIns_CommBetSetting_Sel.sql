@@ -3,7 +3,7 @@
 ALTER PROCEDURE CS_CustomerIns_CommBetSetting_Sel
 	@RoleId TINYINT,
 	@CustID INT	= NULL,
-	@HeadlineID INT = NULL,
+	@Currency INT = NULL,
 	--@uGroup VARCHAR(3) = NULL,
 	@ProductID TINYINT = 1,
 	@IsTest BIT = 0
@@ -34,14 +34,11 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @Currency INT
 	
 	/********************************************* Comm & BetSetting: SettingType = 2 ***********************************/
 
 	IF @RoleId <> 4
 		SELECT @Currency = c.currency FROM dbo.Customer c WITH (NOLOCK) WHERE c.custid = @CustID
-	ELSE
-		SELECT @Currency = c.currency FROM dbo.Customer c WITH (NOLOCK) WHERE c.custid = @HeadlineID
 
 	SELECT t.* INTO #SportBettypeFilter2
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 2, @IsTest) t
@@ -52,7 +49,7 @@ BEGIN
 			0 AS MinComm, 
 			CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS MaxComm,
 			CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS Comm,
-			CASE WHEN @HeadlineID IS NULL THEN 0 ELSE gb.MinBet END AS MinMaxBet, 0 AS MaxBet, 0 AS MaxPerEvent
+			CASE WHEN @Currency IS NULL THEN 0 ELSE gb.MinBet END AS MinMaxBet, 0 AS MaxBet, 0 AS MaxPerEvent
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter2 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
 			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = ft.SportType AND gb.BetType = ft.Bettype AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency

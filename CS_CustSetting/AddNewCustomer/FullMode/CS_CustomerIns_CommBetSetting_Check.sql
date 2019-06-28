@@ -3,6 +3,7 @@
 ALTER PROCEDURE CS_CustomerIns_CommBetSetting_Check
 	@RoleId			TINYINT,
 	@CustId			INT = NULL,
+	@Currency		INT, 
 	@CommSetting	VARCHAR(MAX),
 	@BetSetting		VARCHAR(MAX),
 	@uGroup			VARCHAR(3) = NULL,
@@ -158,8 +159,8 @@ BEGIN
 	INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 	SELECT cs.SportType, cs.BetType, cs.IsLive, 404		
 	FROM #NewBetSetting cs
-		INNER JOIN dbo.CS_ProductBetSetting bs WITH (NOLOCK) ON bs.SportType = cs.SportType AND bs.BetType = cs.BetType AND bs.IsLive = cs.IsLive
-	WHERE cs.MaxBet < bs.MinBet
+		INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = cs.SportType AND gb.BetType = cs.BetType AND gb.IsLive = cs.IsLive AND gb.Currency = @Currency
+	WHERE cs.MaxBet < gb.MinBet
 
 	IF @@ROWCOUNT <> 0
 	BEGIN
