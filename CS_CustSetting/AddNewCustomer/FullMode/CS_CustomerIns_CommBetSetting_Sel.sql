@@ -49,7 +49,7 @@ BEGIN
 			0 AS MinComm, 
 			CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS MaxComm,
 			CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS Comm,
-			CASE WHEN @Currency IS NULL THEN 0 ELSE gb.MinBet END AS MinMaxBet, 0 AS MaxBet, 0 AS MaxPerEvent
+			CASE WHEN ISNULL(@Currency,0) = 0 THEN 0 ELSE gb.MinBet END AS MinMaxBet, 0 AS MaxBet, 0 AS MaxPerEvent
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter2 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
 			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = ft.SportType AND gb.BetType = ft.Bettype AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
