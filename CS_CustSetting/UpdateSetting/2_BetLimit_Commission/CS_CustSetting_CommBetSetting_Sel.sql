@@ -202,7 +202,7 @@ BEGIN
 				RIGHT JOIN dbo.CS_CustBetSetting_Agent ab WITH (NOLOCK) ON ab.SportType = ac.SportType AND ab.BetType = ac.BetType AND ab.IsLive = ac.IsLive
 				INNER JOIN dbo.CS_CustBetSetting_Member memb WITH (NOLOCK) ON memb.SportType = ab.SportType AND memb.BetType = ab.BetType AND memb.IsLive = ab.IsLive
 				INNER JOIN #SportBettypeFilter2 ft ON memb.SportType = ft.SportType AND memb.BetType = ft.BetType AND memb.IsLive = ft.IsLive
-				INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = ps.SportType AND gb.BetType = ps.BetType AND gb.IsLive = ps.IsLive AND gb.Currency = @Currency
+				INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = ft.SportType AND gb.BetType = ft.BetType AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
 				LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive AND gc.GroupId = ac.GroupId 
 			WHERE (gc.uGroup = @uGroup OR gc.GroupId IS NULL) AND ab.CustId = @AgentId AND memb.CustId = @CustID
 		END
