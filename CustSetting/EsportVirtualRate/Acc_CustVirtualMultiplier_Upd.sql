@@ -1,4 +1,3 @@
-
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustVirtualMultiplier_Upd]
