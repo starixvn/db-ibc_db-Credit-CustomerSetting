@@ -57,6 +57,7 @@ AS
 		- 20180823@Paul: Enhance VirtualRate setting [Redmine:#99839]
 		- 20190417@Paul: Enhance VirtualRate setting [Redmine:#110345]
 		- 20190424@Johnson: add suspendinfo [redmine: #105587]
+		- 20190701@Dominic: Update VR setting of an account for Esport  [Redmind: #114830]
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -75,11 +76,60 @@ AS
 			+ 'GoldDeluxe': Gold Deluxe status
 			+ 'SuperLive': Super Live status
 			+ 'EnableVirtualMultiplier': Enable Virtual Rate [@EnableVirtualMultiplier]
+			+ 'EsportVRUpd': Update VR setting of an account for Esport  [@virtualmultiplier] - Redmine: #114830
    
 */
 SET NOCOUNT ON; 
-	
-IF	@action = 'VirtualMultiplier'
+
+IF	@action = 'EsportVRUpd'
+BEGIN
+	CREATE TABLE #New_VRCustSetting (LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
+	DECLARE @DocHandlerEsport INT	
+
+	IF @VirtualMultiplier <> ''
+	BEGIN				
+		EXEC sp_xml_preparedocument @DocHandlerEsport OUTPUT, @virtualmultiplier
+
+		INSERT INTO #New_VRCustSetting(CustID, LevelID, ValueIDLive, ValueIDNonLive)
+		SELECT Data.LevelID,
+			Data.ValueIDLive,
+			Data.ValueIDNonLive
+		FROM OPENXML (@DocHandlerEsport, '/Root/Row',1) 
+		WITH (
+			LevelID	INT,
+			ValueIDLive TINYINT,
+			ValueIDNonLive TINYINT	
+		) AS Data
+
+		EXEC sp_xml_removedocument @DocHandlerEsport
+	END
+
+	IF(dbo.f_CheckRepTable('VRCustSetting') = 1)
+	BEGIN
+		UPDATE main
+		SET main.ValueIDLIVE = vr.ValueIDLive
+			, main.ValueIDNonLIVE = vr.ValueIDNonLIVE
+		FROM VRCustSetting main
+			INNER JOIN #New_VRCustSetting vr ON main.CustID = @custid AND vr.LevelID = main.LevelID
+
+		DELETE VRCustSetting
+		WHERE custid = @custid
+			AND LevelID NOT IN (SELECT LevelID FROM #New_VRCustSetting)
+
+		INSERT INTO [dbo].[VRCustSetting]
+           ([CustID]
+           ,[LevelID]
+           ,[ValueIDLIVE]
+           ,[ValueIDNonLIVE])
+		SELECT @custid [CustID]
+           ,[LevelID]
+           ,[ValueIDLIVE]
+           ,[ValueIDNonLIVE]
+		FROM #New_VRCustSetting
+		WHERE [LevelID] NOT IN (SELECT LevelID FROM [VRCustSetting] WHERE CustID=@custid)
+	END
+END
+ELSE IF	@action = 'VirtualMultiplier'
 BEGIN
 	DECLARE	@tblVirtualrate		TABLE (
 									SportType			INT

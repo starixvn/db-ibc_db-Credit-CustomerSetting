@@ -12,7 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustVirtualMultiplier_Upd]
 AS
 /*    
 	Created: 20190626@Dominic    
-	Task :  Update VR setting of an account for a specific sport  [Redmind: #114830]
+	Task :  Update VR setting of an account for a specific sport  [Redmine: #114830]
 	DB: DBCUST/CustDB    
 	Parameters:
 	Param's Explanation:  
@@ -187,11 +187,11 @@ BEGIN
 	FROM #VRLineCustID
 	WHERE custid = @custid
 
-	--EXECUTE	dbo.Acc_CustomerInfo_Execrep_04   
-	--			@custid = @CustID
-	--			, @roleid = @RoleID
-	--			, @action = 'EsportVRUpd'
-	--			, @virtualmultiplier = @virtualmultiplier
+	EXECUTE	dbo.Acc_CustomerInfo_Execrep_04   
+				@custid = @CustID
+				, @roleid = @RoleID
+				, @action = 'EsportVRUpd'
+				, @virtualmultiplier = @virtualmultiplier
 
 	SELECT @TrackingValue1 = (
 		SELECT l.LevelID as l
@@ -248,4 +248,4 @@ BEGIN
 	DROP TABLE #Old_VRCustSetting
 	DROP TABLE #VRLineCustID
 	DROP TABLE #Log
---END
+END
