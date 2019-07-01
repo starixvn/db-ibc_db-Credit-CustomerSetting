@@ -90,7 +90,7 @@ BEGIN
 	BEGIN				
 		EXEC sp_xml_preparedocument @DocHandlerEsport OUTPUT, @virtualmultiplier
 
-		INSERT INTO #New_VRCustSetting(CustID, LevelID, ValueIDLive, ValueIDNonLive)
+		INSERT INTO #New_VRCustSetting(LevelID, ValueIDLive, ValueIDNonLive)
 		SELECT Data.LevelID,
 			Data.ValueIDLive,
 			Data.ValueIDNonLive
