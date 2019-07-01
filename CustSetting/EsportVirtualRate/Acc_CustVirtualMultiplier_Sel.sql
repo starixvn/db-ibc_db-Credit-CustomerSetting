@@ -10,7 +10,7 @@ AS
 /*    
 	Created: 20190626@Dominic    
 	Task :  Retrieve VR setting of an account for a specific sport  [Redmind: #114830]
-	DB: DBCUST/CustDB    
+	DB: DBACC/bodb02    
 	    
 	Revisions:    
 		- 20190626@Dominic : First commit
@@ -78,7 +78,7 @@ BEGIN
 	,ISNULL(ValueIDLIVE,0) ValueIDLIVE, vlive.Value ValueLIVE
 	,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueNonLIVE
 	FROM VRSetttingHierarchy h 
-		LEFT JOIN DB06.bodb02.dbo.Sports s ON s.SportType=h.SportType
+		LEFT JOIN bodb02.dbo.Sports s ON s.SportType=h.SportType
 		LEFT JOIN VRLeagueGroup lg ON h.LeagueGroupID = lg.GroupID
 		LEFT JOIN VRBettypeGroup bg ON h.BetTypeGroupID = bg.GroupID
 		LEFT JOIN bettype b ON b.typeid=h.BetType
