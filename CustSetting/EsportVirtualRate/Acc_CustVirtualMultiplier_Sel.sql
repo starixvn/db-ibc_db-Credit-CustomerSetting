@@ -79,8 +79,8 @@ BEGIN
 	,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueNonLIVE
 	FROM VRSetttingHierarchy h 
 		LEFT JOIN bodb02.dbo.Sports s ON s.SportType=h.SportType
-		LEFT JOIN VRLeagueGroup lg ON h.LeagueGroupID = lg.GroupID
-		LEFT JOIN VRBettypeGroup bg ON h.BetTypeGroupID = bg.GroupID
+		LEFT JOIN VRLeagueGroup lg ON h.VRLeagueGroupID = lg.GroupID
+		LEFT JOIN VRBettypeGroup bg ON h.VRBetTypeGroupID = bg.GroupID
 		LEFT JOIN bettype b ON b.typeid=h.BetType
 		LEFT JOIN VRCustSetting vr (NOLOCK) 
 			ON vr.CustID = @CustID
