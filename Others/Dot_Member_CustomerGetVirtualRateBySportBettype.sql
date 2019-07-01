@@ -13,7 +13,7 @@ AS
         Task: Select Virtual Rate from new table structure
 
         Revisions:
-
+			- 20190701@VN-Dominic: Add a new input param @LeagueGroupID
         Parameter's Explanation:
     */
 BEGIN
