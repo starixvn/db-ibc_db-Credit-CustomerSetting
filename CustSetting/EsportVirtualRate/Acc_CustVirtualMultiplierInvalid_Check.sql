@@ -18,14 +18,14 @@ BEGIN
 	DECLARE @XML XML
 	SET @XML = N'<root><r>' + REPLACE(@UsernameLst, ',', '</r><r>') + '</r></root>'
 
-	CREATE TABLE #LstUsername(Username VARCHAR(50), IsValid BIT )
+	CREATE TABLE #LstUsername(Username VARCHAR(50), CustID INT, IsValid BIT )
 
-	INSERT INTO #LstUsername(Username, IsValid) 
-	SELECT r.value('.','VARCHAR(50)'), 0 IsValid
+	INSERT INTO #LstUsername(Username, CustID, IsValid) 
+	SELECT r.value('.','VARCHAR(50)'), NULL CustID, 0 IsValid
 	FROM @xml.nodes('//root/r') AS RECORDS(r)
 
 	UPDATE main
-	SET IsValid = 1
+	SET IsValid = 1, main.CustID = c.custid
 	FROM #LstUsername main
 		INNER JOIN Customer c (NOLOCK) ON c.username = main.Username
 
