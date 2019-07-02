@@ -16,6 +16,9 @@ AS
 */ 
 BEGIN
 	DECLARE @XML XML
+
+	SELECT @UsernameLst = replace(replace(@UsernameLst, '<', '&lt;'), '>', '&gt;')
+
 	SET @XML = N'<root><r>' + REPLACE(@UsernameLst, ',', '</r><r>') + '</r></root>'
 
 	CREATE TABLE #LstUsername(Username VARCHAR(50), CustID INT, IsValid BIT )
