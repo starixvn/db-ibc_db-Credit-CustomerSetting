@@ -106,7 +106,7 @@ BEGIN
 	--Capture current VR setting
 	INSERT INTO #Old_VRCustSetting(CustID, LevelID, ValueIDLive, ValueIDNonLive)
 	SELECT vr.CustID, vr.LevelID, ValueIDLive, ValueIDNonLive
-	FROM VRSetttingHierarchy h (NOLOCK)
+	FROM VRSettingHierarchy h (NOLOCK)
 	INNER JOIN VRCustSetting vr (NOLOCK)
 		ON h.LevelID = vr.LevelID
 	WHERE CustID IN (SELECT CustID FROM #VRLineCustID) 
@@ -121,11 +121,11 @@ BEGIN
 	--Prepare data to write logs - Old data
 	;WITH VR_Hierachy AS (
 	   SELECT LevelID SrcLevelID, LevelID, ParentLevelID, 1 LayerNo
-	   FROM VRSetttingHierarchy h
+	   FROM VRSettingHierarchy h
 	   WHERE SportType = @SportType 
 	   UNION ALL
 	   SELECT p.SrcLevelID, c.LevelID, c.ParentLevelID, p.LayerNo + 1  LayerNo
-	   FROM VRSetttingHierarchy c
+	   FROM VRSettingHierarchy c
 		 INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion
 	)
 	INSERT INTO #Log(IsNew, LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive)
@@ -151,11 +151,11 @@ BEGIN
 	--Prepare data to write logs - New data
 	;WITH VR_Hierachy AS (
 	   SELECT LevelID SrcLevelID, LevelID, ParentLevelID, 1 LayerNo
-	   FROM VRSetttingHierarchy h
+	   FROM VRSettingHierarchy h
 	   WHERE SportType = @SportType 
 	   UNION ALL
 	   SELECT p.SrcLevelID, c.LevelID, c.ParentLevelID, p.LayerNo + 1  LayerNo
-	   FROM VRSetttingHierarchy c
+	   FROM VRSettingHierarchy c
 		 INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion
 	)
 	INSERT INTO #Log(IsNew, LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive)

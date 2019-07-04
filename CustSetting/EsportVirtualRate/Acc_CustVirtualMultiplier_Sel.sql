@@ -43,7 +43,7 @@ BEGIN
 
 	IF NOT EXISTS(
 		SELECT 1 
-		FROM [dbo].[VRSetttingHierarchy] h (NOLOCK) 
+		FROM [dbo].[VRSettingHierarchy] h (NOLOCK) 
 			INNER JOIN [dbo].[VRCustSetting] vr ON vr.CustID = 0 AND vr.[LevelID] = h.[LevelID]
 		WHERE h.[SportType] = @SportType
 	)
@@ -77,7 +77,7 @@ BEGIN
 	, h.LevelID
 	,ISNULL(ValueIDLIVE,0) ValueIDLIVE, vlive.Value ValueLIVE
 	,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueNonLIVE
-	FROM VRSetttingHierarchy h 
+	FROM VRSettingHierarchy h 
 		LEFT JOIN VRLeagueGroup lg ON h.VRLeagueGroupID = lg.GroupID
 		LEFT JOIN VRBettypeGroup bg ON h.VRBetTypeGroupID = bg.GroupID
 		LEFT JOIN VRCustSetting vr (NOLOCK) 
