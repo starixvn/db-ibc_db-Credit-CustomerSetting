@@ -39,6 +39,7 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 		- 20100527@Elodie: New account status [Redmine: #113198]
+		- 20100627@Elodie: Different PT for Headline [Redmine: #114912]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
 
 	Param's Explanation:
@@ -139,6 +140,30 @@ BEGIN
 		RETURN	
 	END
 				
+	DECLARE @EffectiveDate DATETIME = CONVERT(DATE,GETDATE()), @GroupName VARCHAR(50)
+	
+	EXEC dbo.CS_GroupExtraPT_Ins
+		@CustID = @custid,
+		@HeadlineId = @HeadlineId,
+		@EffectiveDate = @EffectiveDate,
+		@UserID = @Creator,
+		@IP = @IP,
+		@GroupName = @GroupName OUTPUT,
+		@ErrCode = @ErrCode OUTPUT,
+		@ErrMsg = @ErrMsg OUTPUT 
+
+	IF @ErrCode > 0
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							WHEN 'E' THEN 'Create customer fail. Please try again'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+						END
+		SELECT @ErrSettingType = 1, @MsgType = 200	
+		EXEC CS_CustomerInsUserInfo_Rollback @CustID = @CustID		
+
+		RETURN
+	END	
+
 	EXEC dbo.CS_DynamicCustomerInfo_00
 		@CustID			= @custid,	
 		@PTSetting		= @PTSetting, 
@@ -154,18 +179,20 @@ BEGIN
 						END
 		SELECT @ErrSettingType = 1, @MsgType = 200	
 		EXEC CS_CustomerInsUserInfo_Rollback @CustID = @CustID
+
+		EXEC dbo.CS_GroupExtraPT_Ins
+			@CustID = @custid,
+			@HeadlineId = NULL,
+			@EffectiveDate = NULL,
+			@UserID = NULL,
+			@IP = NULL,
+			@IsRollBack = 1,
+			@GroupName = @GroupName OUTPUT,
+			@ErrCode = @ErrCode OUTPUT,
+			@ErrMsg = @ErrMsg OUTPUT 
 		RETURN
 	END	
-	
-	DECLARE @EffectiveDate DATETIME = CONVERT(DATE,GETDATE())
-	EXEC dbo.CS_GroupExtraPTSetting_Upd
-		@CustID = @custid,
-		@HeadlineId = @HeadlineId,
-		@EffectiveDate = @EffectiveDate,
-		@UserID = @Creator,
-		@ErrCode = @ErrCode OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT 
-
+		
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
 
@@ -335,9 +362,10 @@ BEGIN
 			@CustID = @CustID,
 			@ActionID = 139996,
 			@TrackingValue = @LogSPData,
-			@duration = @duration	
-	
+			@duration = @duration			
+
 	SELECT  @LogSPData = '<R Headline="'+ COALESCE(CAST(@HeadlineUsername AS VARCHAR(30)),SPACE(1))
+						+ '" GroupName="' + @GroupName 
 						+ '" EffectiveDate="' + CONVERT(NVARCHAR(10), @EffectiveDate, 120)
 						+ '" IP="' + @IP + '" />'
 

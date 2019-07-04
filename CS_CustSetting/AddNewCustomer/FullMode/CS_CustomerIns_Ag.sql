@@ -35,6 +35,7 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 		- 20100527@Elodie: New account status [Redmine: #113198]
+		- 20100627@Elodie: Write ugroup value into log [Redmine: #115353]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
 
 	Param's Explanation:
@@ -324,6 +325,7 @@ BEGIN
     --Write general info
 	SELECT @LogSPData = '<R name="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS NVARCHAR(100)),SPACE(1))) + '" ' +
 						'username="'+ COALESCE(CAST(@username AS VARCHAR(30)),SPACE(1)) + '" ' +
+						'uGroup="' + @ugroup + '" ' +
 						'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
