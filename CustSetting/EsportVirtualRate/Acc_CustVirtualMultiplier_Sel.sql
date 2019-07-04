@@ -1,5 +1,5 @@
 
-/*<info serverAlias="DBACC-bodb02" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustVirtualMultiplier_Sel]
 	@CustID INT
@@ -10,7 +10,7 @@ AS
 /*    
 	Created: 20190626@Dominic    
 	Task :  Retrieve VR setting of an account for a specific sport  [Redmind: #114830]
-	DB: DBACC/bodb02    
+	DB: CustDB@DBCUST
 	    
 	Revisions:    
 		- 20190626@Dominic : First commit
@@ -70,23 +70,21 @@ BEGIN
 	SELECT @CustID CustID,@Username Username, @Currency Currency,@ActualRate ActualRate, @UplineCustID UplineCustID, @UplineUsername UplineUsername
 
 	--2nd Dataset: Virtual Rate
-	SELECT h.SportType, s.SportName
+	SELECT h.SportType
 	, lg.GroupID LeagueGroupID, lg.GroupName LeagueGroup
 	, bg.GroupID BettypeGroupID, bg.GroupName BettypeGroup
-	, b.typeid BetTypeID, b.typenamee BetType
+	, h.BetType BetTypeID
 	, h.LevelID
 	,ISNULL(ValueIDLIVE,0) ValueIDLIVE, vlive.Value ValueLIVE
 	,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueNonLIVE
 	FROM VRSetttingHierarchy h 
-		LEFT JOIN bodb02.dbo.Sports s ON s.SportType=h.SportType
 		LEFT JOIN VRLeagueGroup lg ON h.VRLeagueGroupID = lg.GroupID
 		LEFT JOIN VRBettypeGroup bg ON h.VRBetTypeGroupID = bg.GroupID
-		LEFT JOIN bettype b ON b.typeid=h.BetType
 		LEFT JOIN VRCustSetting vr (NOLOCK) 
 			ON vr.CustID = @CustID
 				AND vr.LevelID = h.LevelID
 	LEFT JOIN VRValueMapping vlive ON vr.ValueIDLIVE = vlive.ValueID
 	LEFT JOIN VRValueMapping vnonlive ON vr.ValueIDNonLIVE = vnonlive.ValueID
 	WHERE h.SportType = @SportType
-	ORDER BY lg.GroupName,bg.GroupName, b.typenamee
+	ORDER BY lg.GroupName,bg.GroupName
 END
