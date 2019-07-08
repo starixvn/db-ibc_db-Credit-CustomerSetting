@@ -29,6 +29,7 @@ BEGIN
 	DECLARE @Duration INT 
 	DECLARE @ActionID INT = 1
 	DECLARE @RoleID TINYINT
+	DECLARE @ActualRate FLOAT
 	DECLARE @TrackingValue1 varchar(MAX) = '', @TrackingValue2 varchar(MAX)= ''
 
 	CREATE TABLE #New_VRCustSetting (CustID INT, LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
@@ -37,12 +38,15 @@ BEGIN
 
 	CREATE TABLE #Log (IsNew BIT, LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT
 						, FollowingCustID INT,FollowingValueIDLive TINYINT,FollowingValueIDNonLive TINYINT
+						, RowNo_Live INT, RowNo_NonLive INT
+						, FollowingLevelID INT
 					)
 	
-	SELECT @StartRun = GETUTCDATE()    
+	SELECT @StartRun = GETDATE()    
 
 	DECLARE @DocHandler INT	
 
+	--Parse input XML
 	IF @VirtualMultiplier <> ''
 	BEGIN				
 		EXEC sp_xml_preparedocument @DocHandler OUTPUT, @virtualmultiplier
@@ -63,8 +67,8 @@ BEGIN
 	END	
 
 	CREATE UNIQUE CLUSTERED INDEX PK_LevelID ON #New_VRCustSetting(CustID, LevelID)
-	CREATE UNIQUE CLUSTERED INDEX PK_LevelID ON #Old_VRCustSetting(CustID, LevelID)
 
+	--Check invalid ValueIDs
 	IF EXISTS (
 					SELECT 1 
 					FROM #New_VRCustSetting 
@@ -81,8 +85,8 @@ BEGIN
 		RETURN  
 	END  
 
-	--Get Upline's custid
-	IF @CustID > 0
+	--Get Upline's custIDs
+	IF @CustID > 0 --Not Global
 		INSERT INTO #VRLineCustID(CustID, RoleID)
 		SELECT CustID,MAX(RoleID) RoleID
 		FROM (
@@ -99,7 +103,7 @@ BEGIN
 			) upv
 		) tmp
 		GROUP BY CustID
-	ELSE
+	ELSE --Global
 		INSERT INTO #VRLineCustID(CustID, RoleID)
 		SELECT 0, 5
 
@@ -111,6 +115,8 @@ BEGIN
 		ON h.LevelID = vr.LevelID
 	WHERE CustID IN (SELECT CustID FROM #VRLineCustID) 
 		AND h.SportType = @SportType
+
+	CREATE UNIQUE CLUSTERED INDEX PK_LevelID ON #Old_VRCustSetting(CustID, LevelID)
 
 	--Capture new VR setting
 	INSERT INTO #New_VRCustSetting(CustID, LevelID, ValueIDLive, ValueIDNonLive)
@@ -128,19 +134,22 @@ BEGIN
 	   FROM VRSettingHierarchy c
 		 INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion
 	)
-	INSERT INTO #Log(IsNew, LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive)
-	SELECT 0 IsNew, LevelID,ValueIDLive,ValueIDNonLive,FollowingCustID,FollowingValueIDLive,FollowingValueIDNonLive
+	INSERT INTO #Log(IsNew, LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive,
+					RowNo_Live, RowNo_NonLive, FollowingLevelID)
+	SELECT 0 IsNew, LevelID,ValueIDLive,ValueIDNonLive,FollowingCustID,FollowingValueIDLive,FollowingValueIDNonLive,
+				RowNo_Live, RowNo_NonLive, FollowingLevelID
 	FROM (
 		SELECT h.SrcLevelID LevelID
 			, ISNULL(vrc.ValueIDLive, 0) ValueIDLive, ISNULL(vrc.ValueIDNonLive,0) ValueIDNonLive
 			, vr.CustID FollowingCustID
+			, vr.LevelID FollowingLevelID
 			, vr.ValueIDLive FollowingValueIDLive, vr.ValueIDNonLive FollowingValueIDNonLive
 			, ROW_NUMBER() OVER(PARTITION BY h.SrcLevelID ORDER BY CASE WHEN ISNULL(vr.ValueIDLive, 0) = 0 THEN 2 ELSE 1 END, RoleID, LayerNo) RowNo_Live
 			, ROW_NUMBER() OVER(PARTITION BY h.SrcLevelID ORDER BY CASE WHEN ISNULL(vr.ValueIDNonLive,0) = 0 THEN 2 ELSE 1 END, RoleID, LayerNo) RowNo_NonLive
 		FROM VR_Hierachy h
 		CROSS JOIN #VRLineCustID c
 		LEFT JOIN #Old_VRCustSetting vrc (NOLOCK) 
-			ON vrc.LevelID = h.LevelID
+			ON vrc.LevelID = h.SrcLevelID
 				AND vrc.CustID = @CustID
 		LEFT JOIN #Old_VRCustSetting vr (NOLOCK) 
 			ON vr.LevelID = h.LevelID
@@ -158,29 +167,28 @@ BEGIN
 	   FROM VRSettingHierarchy c
 		 INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion
 	)
-	INSERT INTO #Log(IsNew, LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive)
-	SELECT 1 IsNew, LevelID,ValueIDLive,ValueIDNonLive,FollowingCustID,FollowingValueIDLive,FollowingValueIDNonLive
+	INSERT INTO #Log(IsNew, LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive,
+					RowNo_Live, RowNo_NonLive, FollowingLevelID)
+	SELECT 1 IsNew, LevelID,ValueIDLive,ValueIDNonLive,FollowingCustID,FollowingValueIDLive,FollowingValueIDNonLive,
+			RowNo_Live, RowNo_NonLive, FollowingLevelID
 	FROM (
 		SELECT h.SrcLevelID LevelID
 			, ISNULL(vrc.ValueIDLive, 0) ValueIDLive, ISNULL(vrc.ValueIDNonLive,0) ValueIDNonLive
 			, vr.CustID FollowingCustID
+			, vr.LevelID FollowingLevelID
 			, vr.ValueIDLive FollowingValueIDLive, vr.ValueIDNonLive FollowingValueIDNonLive
 			, ROW_NUMBER() OVER(PARTITION BY h.SrcLevelID ORDER BY CASE WHEN ISNULL(vr.ValueIDLive, 0) = 0 THEN 2 ELSE 1 END, RoleID, LayerNo) RowNo_Live
 			, ROW_NUMBER() OVER(PARTITION BY h.SrcLevelID ORDER BY CASE WHEN ISNULL(vr.ValueIDNonLive,0) = 0 THEN 2 ELSE 1 END, RoleID, LayerNo) RowNo_NonLive
 		FROM VR_Hierachy h
 		CROSS JOIN #VRLineCustID c
 		LEFT JOIN #New_VRCustSetting vrc (NOLOCK) 
-			ON vrc.LevelID = h.LevelID
+			ON vrc.LevelID = h.SrcLevelID
 				AND vrc.CustID = @CustID
 		LEFT JOIN #New_VRCustSetting vr (NOLOCK) 
 			ON vr.LevelID = h.LevelID
 				AND vr.CustID = c.CustID
 	) as tmp
 	WHERE RowNo_Live=1 OR RowNo_NonLive=1
-
-
-	SELECT @EndRun = GETUTCDATE()    
-	SELECT @Duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)
 
 	SELECT @RoleID = roleid 
 	FROM #VRLineCustID
@@ -192,46 +200,74 @@ BEGIN
 				, @action = 'EsportVRUpd'
 				, @virtualmultiplier = @virtualmultiplier
 
+
+	SELECT @EndRun = GETDATE()    
+	SELECT @Duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)
+
 	SELECT @TrackingValue1 = (
-		SELECT l.LevelID as l
-			, CAST(CAST(ISNULL(vr1.Value,-1) AS FLOAT) AS VARCHAR(10)) a
-			, CAST(CAST(ISNULL(vr2.Value,-1) AS FLOAT) AS VARCHAR(10)) b
-			, l.FollowingCustID c
-			, CAST(CAST(ISNULL(vr3.Value,-1) AS FLOAT) AS VARCHAR(10)) d
-			, CAST(CAST(ISNULL(vr4.Value,-1) AS FLOAT) AS VARCHAR(10)) e
-		FROM #Log  l
-			INNER JOIN VRValueMapping  vr1 ON vr1.ValueID = l.ValueIDLive
-			INNER JOIN VRValueMapping  vr2 ON vr2.ValueID = l.ValueIDNonLive
-			INNER JOIN VRValueMapping  vr3 ON vr3.ValueID = l.FollowingValueIDLive
-			INNER JOIN VRValueMapping  vr4 ON vr4.ValueID = l.FollowingValueIDNonLive
-		WHERE l.IsNew = 0
-		ORDER BY l.LevelID
-		FOR XML  RAW('r')  
+		SELECT LevelID a
+			, ValueIDLive b
+			, ValueIDNonLive c  
+		FROM #New_VRCustSetting
+		WHERE CustID = @CustID
+		FOR XML  RAW('r')
 	)
 
-	SELECT @TrackingValue1 = REPLACE(@TrackingValue1,'<r l="','<') 
-	SELECT @TrackingValue1 = REPLACE(@TrackingValue1,'"/>','>')
-	SELECT @TrackingValue1 = REPLACE(@TrackingValue1,'" a="','a')
-	SELECT @TrackingValue1 = REPLACE(@TrackingValue1,'" b="','b')
-	SELECT @TrackingValue1 = REPLACE(@TrackingValue1,'" c="','c')
-	SELECT @TrackingValue1 = REPLACE(@TrackingValue1,'" d="','d')
-	SELECT @TrackingValue1 = REPLACE(@TrackingValue1,'" e="','e')
+	--Prepare XML log
+	SELECT @TrackingValue2 = (
+		SELECT vrl.IsNew a
+		, h.VRLeagueGroupID b
+		, h.VRBetTypeGroupID c
+		, h.BetType d
+		, h.LevelID e
+		, CAST(CAST(ISNULL(v1.Value,-1) AS FLOAT) AS VARCHAR(10)) f
+		, CAST(CAST(ISNULL(v2.Value,-1) AS FLOAT) AS VARCHAR(10)) g
+		--, vrl.ValueIDLive, vrl.FollowingValueIDLive
+		, vrl.FollowingCustID h, vrl.FollowingLevelID i
+		, CAST(CAST(ISNULL(v3.Value,-1) AS FLOAT) AS VARCHAR(10)) j
+		, CAST(CAST(ISNULL(v4.Value,-1) AS FLOAT) AS VARCHAR(10)) k
+		--, vrnl.ValueIDNonLive, vrnl.FollowingValueIDNonLive
+		, vrnl.FollowingCustID l
+		, vrnl.FollowingLevelID m
+		FROM VRSettingHierarchy h 
+			INNER JOIN #Log vrl (NOLOCK) 
+				ON vrl.LevelID = h.LevelID
+					AND vrl.RowNo_Live = 1
+			INNER JOIN #Log vrnl (NOLOCK) 
+				ON vrnl.LevelID = h.LevelID
+					AND vrnl.IsNew = vrl.IsNew
+					AND vrnl.RowNo_NonLive = 1
+			INNER JOIN VRValueMapping v1 ON v1.ValueID = vrl.ValueIDLive
+			INNER JOIN VRValueMapping v2 ON v2.ValueID = vrl.FollowingValueIDLive
+			INNER JOIN VRValueMapping v3 ON v3.ValueID = vrnl.ValueIDNonLive
+			INNER JOIN VRValueMapping v4 ON v4.ValueID = vrnl.FollowingValueIDNonLive
+		WHERE h.SportType = @SportType 
+		ORDER BY h.VRLeagueGroupID, h.VRBetTypeGroupID, h.BetType
+		FOR XML  RAW('r')
+	)
 
-	/*
-		SELECT ValueIDLive,ValueIDNonLive,FollowingCustID,FollowingValueIDLive,FollowingValueIDNonLive, LevelIDLst = 
-		STUFF((SELECT ',' + CAST(LevelID AS VARCHAR(15))
-			   FROM #Log b 
-			   WHERE b.IsNew=1
-					AND b.ValueIDLive = a.ValueIDLive 
-					AND b.ValueIDNonLive = a.ValueIDNonLive 
-					AND b.FollowingCustID = a.FollowingCustID 
-					AND b.FollowingValueIDLive = a.FollowingValueIDLive 
-					AND b.FollowingValueIDNonLive = a.FollowingValueIDNonLive 
-			  FOR XML PATH('')), 1, 1, '')
-		FROM #Log a
-		WHERE a.IsNew = 1
-		GROUP BY ValueIDLive,ValueIDNonLive,FollowingCustID,FollowingValueIDLive,FollowingValueIDNonLive
-	*/
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'<r a="','<a') 
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'"/>','>')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" b="','b')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" c="','c')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" d="','d')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" e="','e')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" f="','f')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" g="','g')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" h="','h')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" i="','i')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" j="','j')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" k="','k')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" l="','l')
+	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" m="','m')
+
+
+	SELECT @ActualRate = e.actualrate
+	FROM Customer c (NOLOCK)
+		INNER JOIN exchange e (NOLOCK) ON  e.exchangeid = c.currency  
+	WHERE CustID = @CustID
+
+	SELECT @TrackingValue2 = '<Root actualrate="' + CAST(@ActualRate AS VARCHAR(10)) + '" >' + @TrackingValue2  + '</Root>'
 
 	--EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
 	--				,@SportType=@SportType
