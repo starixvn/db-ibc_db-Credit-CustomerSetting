@@ -4,7 +4,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @SportType  SMALLINT,
                     @BetType    SMALLINT,
                     @isLive     BIT,
-					@LeagueGroupID INT = 0,
+					@LeagueGroupID SMALLINT = 0,
                     @virtualMultiplier Smallmoney out
                     
 AS
