@@ -246,8 +246,8 @@ BEGIN
 		FOR XML  RAW('r')
 	)
 
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'<r a="','<a') 
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'"/>','>')
+	--SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'<r a="','<a') 
+	--SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'"/>','>')
 	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" b="','b')
 	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" c="','c')
 	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" d="','d')
@@ -269,15 +269,15 @@ BEGIN
 
 	SELECT @TrackingValue2 = '<Root actualrate="' + CAST(@ActualRate AS VARCHAR(10)) + '" >' + @TrackingValue2  + '</Root>'
 
-	--EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
-	--				,@SportType=@SportType
-	--				,@ActionID=@ActionID
-	--				,@TrackingValue1=@TrackingValue1
-	--				,@TrackingValue2=@TrackingValue2
-	--				,@UserID=@UserID
-	--				,@LogTime=@StartRun
-	--				,@Duration=@Duration
-	--				,@IP=@IP
+	EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
+					,@SportType=@SportType
+					,@ActionID=@ActionID
+					,@TrackingValue1=@TrackingValue1
+					,@TrackingValue2=@TrackingValue2
+					,@UserID=@UserID
+					,@LogTime=@StartRun
+					,@Duration=@Duration
+					,@IP=@IP
 
 	DROP TABLE #New_VRCustSetting
 	DROP TABLE #Old_VRCustSetting
