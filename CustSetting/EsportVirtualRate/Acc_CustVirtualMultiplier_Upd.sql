@@ -267,7 +267,7 @@ BEGIN
 		INNER JOIN exchange e (NOLOCK) ON  e.exchangeid = c.currency  
 	WHERE CustID = @CustID
 
-	SELECT @TrackingValue2 = '<Root actualrate="' + CAST(@ActualRate AS VARCHAR(10)) + '" >' + @TrackingValue2  + '</Root>'
+	SELECT @TrackingValue2 = '<Root actualrate="' + CAST(ISNULL(@ActualRate,0) AS VARCHAR(10)) + '" >' + @TrackingValue2  + '</Root>'
 
 	EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
 					,@SportType=@SportType
