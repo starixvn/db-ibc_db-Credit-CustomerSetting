@@ -213,6 +213,8 @@ BEGIN
 		FOR XML  RAW('r')
 	)
 
+	SELECT @TrackingValue1 = ISNULL(@TrackingValue1,'')
+
 	--Prepare XML log
 	SELECT @TrackingValue2 = (
 		SELECT vrl.IsNew a
