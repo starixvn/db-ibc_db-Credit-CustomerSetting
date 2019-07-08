@@ -3,8 +3,8 @@ CREATE PROCEDURE Writelog_VirtualRate_UpdateSetting
 	@CustID INT
 	,@SportType INT
 	,@ActionID INT
-	,@TrackingValue1 NVARCHAR(MAX)
-	,@TrackingValue2 NVARCHAR(MAX)
+	,@TrackingValue1 VARCHAR(MAX)
+	,@TrackingValue2 VARCHAR(MAX)
 	,@UserID INT
 	,@LogTime DATETIME
 	,@Duration INT

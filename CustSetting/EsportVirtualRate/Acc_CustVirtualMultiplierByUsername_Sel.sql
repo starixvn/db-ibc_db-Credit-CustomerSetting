@@ -26,7 +26,7 @@ BEGIN
 	IF @CustID IS NULL
 	BEGIN
 		SELECT @ErrCode = 1
-		SELECT @ErrMsg = 'This username is not valid'
+		SELECT @ErrMsg = 'This username is not valid.'
 		RETURN
 	END
 

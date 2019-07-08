@@ -30,7 +30,7 @@ BEGIN
 	DECLARE @ActionID INT = 1
 	DECLARE @RoleID TINYINT
 	DECLARE @ActualRate FLOAT
-	DECLARE @TrackingValue1 varchar(MAX) = '', @TrackingValue2 varchar(MAX)= ''
+	DECLARE @TrackingValue1 VARCHAR(MAX) = '', @TrackingValue2 VARCHAR(MAX)= ''
 
 	CREATE TABLE #New_VRCustSetting (CustID INT, LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
 	CREATE TABLE #Old_VRCustSetting (CustID INT, LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
