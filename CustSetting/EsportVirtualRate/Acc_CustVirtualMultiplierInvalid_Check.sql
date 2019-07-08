@@ -17,6 +17,8 @@ AS
 BEGIN
 	DECLARE @XML XML
 
+	SELECT @UsernameLst = replace(replace(@UsernameLst, '&', '&amp;'), '"', '&quot;')
+	SELECT @UsernameLst = replace(@UsernameLst, '''', '&apos;')
 	SELECT @UsernameLst = replace(replace(@UsernameLst, '<', '&lt;'), '>', '&gt;')
 
 	SET @XML = N'<root><r>' + REPLACE(@UsernameLst, ',', '</r><r>') + '</r></root>'
