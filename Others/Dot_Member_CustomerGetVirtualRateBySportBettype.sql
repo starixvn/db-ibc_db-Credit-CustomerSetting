@@ -4,6 +4,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @SportType  SMALLINT,
                     @BetType    SMALLINT,
                     @isLive     BIT,
+					@LeagueGroupID INT = 0,
                     @virtualMultiplier Smallmoney out
                     
 AS
@@ -19,13 +20,20 @@ AS
 BEGIN
     SET NOCOUNT ON
 
-    SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
-    FROM        CustVirtualSetting    	AS cvs WITH(NOLOCK)
-    INNER JOIN  ProfileVirtualSetting   AS pvs WITH(NOLOCK)
-            ON  cvs.seqNo = pvs.seqNo
-    WHERE       cvs.custid = @CustID
-            AND pvs.sporttype = @SportType
-            AND pvs.bettype = @BetType
-            AND pvs.islive = @isLive   
-			AND pvs.isActive=1  
+	IF @SportType <> 43 --Not E-sports
+	BEGIN
+		SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
+		FROM        CustVirtualSetting    	AS cvs WITH(NOLOCK)
+		INNER JOIN  ProfileVirtualSetting   AS pvs WITH(NOLOCK)
+				ON  cvs.seqNo = pvs.seqNo
+		WHERE       cvs.custid = @CustID
+				AND pvs.sporttype = @SportType
+				AND pvs.bettype = @BetType
+				AND pvs.islive = @isLive   
+				AND pvs.isActive=1  
+	END
+	ELSE
+	BEGIN
+		SELECT @virtualMultiplier = 1
+	END
 END

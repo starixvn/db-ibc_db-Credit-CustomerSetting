@@ -23,6 +23,13 @@ BEGIN
 	FROM Customer c(NOLOCK)
 	WHERE username=@Username
 
+	IF @CustID IS NULL
+	BEGIN
+		SELECT @ErrCode = 1
+		SELECT @ErrMsg = 'This username is not valid'
+		RETURN
+	END
+
 	EXEC Acc_CustVirtualMultiplier_Sel @CustID=@CustID, @SportType=@SportType, @ErrCode=@ErrCode OUT, @ErrMsg=@ErrMsg OUT
 
 END
