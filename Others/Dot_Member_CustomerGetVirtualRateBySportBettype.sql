@@ -1,4 +1,3 @@
-/*<info serverAlias="DBCUST-CustDB" executers="Dot_Member" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @CustID     INT,
                     @SportType  SMALLINT,
@@ -90,7 +89,7 @@ BEGIN
 				AND vr.LevelID = h.LevelID
 		INNER JOIN VRValueMapping vlive ON vr.ValueIDLIVE = vlive.ValueID
 		INNER JOIN VRValueMapping vnonlive ON vr.ValueIDNonLIVE = vnonlive.ValueID
-		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END <> 0
+		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0
 		ORDER BY c.RoleID,h.OrderNo
 	END
 END
