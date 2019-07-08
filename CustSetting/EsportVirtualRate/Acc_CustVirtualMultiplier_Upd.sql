@@ -85,6 +85,12 @@ BEGIN
 		RETURN  
 	END  
 
+	IF @CustID = 0 AND NOT EXISTS (SELECT 1 FROM #New_VRCustSetting)
+	BEGIN
+		SELECT @ErrMsg = N'Can not configure all globall setting to ''Follow Parent'''
+				, @ErrCode = 2  
+		RETURN 
+	END
 	--Get Upline's custIDs
 	IF @CustID > 0 --Not Global
 		INSERT INTO #VRLineCustID(CustID, RoleID)
