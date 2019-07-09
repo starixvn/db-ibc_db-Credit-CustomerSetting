@@ -91,5 +91,8 @@ BEGIN
 		INNER JOIN VRValueMapping vnonlive ON vr.ValueIDNonLIVE = vnonlive.ValueID
 		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0
 		ORDER BY c.RoleID,h.OrderNo
+
+		IF @virtualMultiplier IS NULL
+			SELECT @virtualMultiplier = 1
 	END
 END

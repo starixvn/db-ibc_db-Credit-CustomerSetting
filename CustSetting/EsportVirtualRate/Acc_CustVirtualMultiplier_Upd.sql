@@ -30,6 +30,7 @@ BEGIN
 	DECLARE @ActionID INT = 1
 	DECLARE @RoleID TINYINT
 	DECLARE @ActualRate FLOAT
+	DECLARE @SportVRLevelID INT
 	DECLARE @TrackingValue1 VARCHAR(MAX) = '', @TrackingValue2 VARCHAR(MAX)= ''
 
 	CREATE TABLE #New_VRCustSetting (CustID INT, LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
@@ -92,9 +93,13 @@ BEGIN
 		RETURN  
 	END  
 
-	IF @CustID = 0 AND NOT EXISTS (SELECT 1 FROM #New_VRCustSetting)
+	SELECT @SportVRLevelID = LevelID
+	FROM VRSettingHierarchy h (NOLOCK)
+	WHERE SportType = @SportType AND VRLeagueGroupID=-1 
+
+	IF @CustID = 0 AND NOT EXISTS (SELECT 1 FROM #New_VRCustSetting WHERE LevelID = @SportVRLevelID)
 	BEGIN
-		SELECT @ErrMsg = N'Can not configure all global setting to ''Follow Parent'''
+		SELECT @ErrMsg = N'Global VR setting must have a value on sport level'
 				, @ErrCode = 2  
 		RETURN 
 	END
