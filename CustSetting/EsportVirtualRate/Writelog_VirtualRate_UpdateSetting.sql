@@ -37,8 +37,8 @@ BEGIN
            (@SportType
            ,@CustID
            ,@ActionID
-           ,@TrackingValue1
-           ,@TrackingValue2
+           ,dbo.CompressString(@TrackingValue1)
+           ,dbo.CompressString(@TrackingValue2)
            ,@UserID
            ,@LogTime
 		   ,@Duration

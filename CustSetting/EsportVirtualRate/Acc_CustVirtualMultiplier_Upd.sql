@@ -223,9 +223,9 @@ BEGIN
 	SELECT @Duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)
 
 	SELECT @TrackingValue1 = (
-		SELECT LevelID a
-			, ValueIDLive b
-			, ValueIDNonLive c  
+		SELECT LevelID
+			, ValueIDLive
+			, ValueIDNonLive 
 		FROM #New_VRCustSetting
 		WHERE CustID = @CustID
 		FOR XML  RAW('r')
@@ -235,20 +235,20 @@ BEGIN
 
 	--Prepare XML log
 	SELECT @TrackingValue2 = (
-		SELECT vrl.IsNew a
-		, h.VRLeagueGroupID b
-		, h.VRBetTypeGroupID c
-		, h.BetType d
-		, h.LevelID e
-		, CAST(CAST(ISNULL(v1.Value,-1) AS FLOAT) AS VARCHAR(10)) f
-		, CAST(CAST(ISNULL(v2.Value,-1) AS FLOAT) AS VARCHAR(10)) g
+		SELECT vrl.IsNew
+		, h.VRLeagueGroupID
+		, h.VRBetTypeGroupID
+		, h.BetType
+		, h.LevelID
+		, CAST(CAST(ISNULL(v1.Value,-1) AS FLOAT) AS VARCHAR(10)) ValueLive
+		, CAST(CAST(ISNULL(v2.Value,-1) AS FLOAT) AS VARCHAR(10)) FollowingValueLive
 		--, vrl.ValueIDLive, vrl.FollowingValueIDLive
-		, vrl.FollowingCustID h, vrl.FollowingLevelID i
-		, CAST(CAST(ISNULL(v3.Value,-1) AS FLOAT) AS VARCHAR(10)) j
-		, CAST(CAST(ISNULL(v4.Value,-1) AS FLOAT) AS VARCHAR(10)) k
+		, vrl.FollowingCustID FollowingCustIDLive, vrl.FollowingLevelID FollowingLevelIDLive
+		, CAST(CAST(ISNULL(v3.Value,-1) AS FLOAT) AS VARCHAR(10)) ValueNonLive
+		, CAST(CAST(ISNULL(v4.Value,-1) AS FLOAT) AS VARCHAR(10)) FollowingValueNonLive
 		--, vrnl.ValueIDNonLive, vrnl.FollowingValueIDNonLive
-		, vrnl.FollowingCustID l
-		, vrnl.FollowingLevelID m
+		, vrnl.FollowingCustID FollowingCustIDNonLive
+		, vrnl.FollowingLevelID FollowingLevelIDNonLive
 		FROM VRSettingHierarchy h 
 			INNER JOIN #Log vrl (NOLOCK) 
 				ON vrl.LevelID = h.LevelID
@@ -265,21 +265,6 @@ BEGIN
 		ORDER BY h.VRLeagueGroupID, h.VRBetTypeGroupID, h.BetType
 		FOR XML  RAW('r')
 	)
-
-	--SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'<r a="','<a') 
-	--SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'"/>','>')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" b="','b')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" c="','c')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" d="','d')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" e="','e')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" f="','f')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" g="','g')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" h="','h')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" i="','i')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" j="','j')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" k="','k')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" l="','l')
-	SELECT @TrackingValue2 = REPLACE(@TrackingValue2,'" m="','m')
 
 
 	SELECT @ActualRate = e.actualrate
