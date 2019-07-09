@@ -231,7 +231,7 @@ BEGIN
 		FOR XML  RAW('r')
 	)
 
-	SELECT @TrackingValue1 = ISNULL(@TrackingValue1,'')
+	SELECT @TrackingValue1 = '<Root>' + ISNULL(@TrackingValue1,'') + '</Root>'
 
 	--Prepare XML log
 	SELECT @TrackingValue2 = (
