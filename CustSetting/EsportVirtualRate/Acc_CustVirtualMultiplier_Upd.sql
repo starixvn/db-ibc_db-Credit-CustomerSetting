@@ -44,6 +44,13 @@ BEGIN
 	
 	SELECT @StartRun = GETDATE()    
 
+	 --Check disable user
+	 IF @CustID > 0    
+		EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output    
+	 
+	 IF @ErrCode <> 0 RETURN 
+
+
 	DECLARE @DocHandler INT	
 
 	--Parse input XML
