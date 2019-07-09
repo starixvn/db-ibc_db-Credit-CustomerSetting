@@ -6829,9 +6829,9 @@ if	@UpdatePositiontaking   = 1  or
 		@isauto_v8mpositiontaking_mem_3 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_isauto_v8mpositiontaking_mem_3 ELSE @isauto_v8mpositiontaking_mem_3 END,
 		@isauto_v8mpositiontaking_mem_20 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_isauto_v8mpositiontaking_mem_20 ELSE @isauto_v8mpositiontaking_mem_20 END,
 		
-		@auto_v8mpositiontaking_mem_1 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_v8mpositiontaking_mem_1 ELSE @v8mpositiontaking_mem_1 END,
-		@auto_v8mpositiontaking_mem_3 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_v8mpositiontaking_mem_3 ELSE @v8mpositiontaking_mem_3 END,
-		@auto_v8mpositiontaking_mem_20 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_v8mpositiontaking_mem_20 ELSE @v8mpositiontaking_mem_20 END,
+		@auto_v8mpositiontaking_mem_1 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_v8mpositiontaking_1 ELSE @v8mpositiontaking_1 END,
+		@auto_v8mpositiontaking_mem_3 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_v8mpositiontaking_3 ELSE @v8mpositiontaking_3 END,
+		@auto_v8mpositiontaking_mem_20 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_v8mpositiontaking_20 ELSE @v8mpositiontaking_20 END,
 				
 		@v10mpositiontaking_1 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv10 = 0 THEN @old_v10mpositiontaking_1 ELSE @v10mpositiontaking_1 END,
 		@v10mpositiontaking_2 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv10 = 0 THEN @old_v10mpositiontaking_2 ELSE @v10mpositiontaking_2 END,
