@@ -86,5 +86,5 @@ BEGIN
 	LEFT JOIN VRValueMapping vlive ON vr.ValueIDLIVE = vlive.ValueID
 	LEFT JOIN VRValueMapping vnonlive ON vr.ValueIDNonLIVE = vnonlive.ValueID
 	WHERE h.SportType = @SportType
-	ORDER BY lg.GroupName,h.BetType
+	ORDER BY h.SortOrder
 END
