@@ -146,7 +146,7 @@ BEGIN
 
 	IF @Credit < 0
 	BEGIN
-		SELECT @ErrMsg = '<Root MsgID="70025" Msg="Credit must be positive."></Root>'		    
+		SELECT @ErrMsg = '<Root MsgID="70025" Msg="Credits must be positive."></Root>'		    
 		SELECT @ErrCode = 101, @ErrSettingType = 1, @MsgType = 100
 	    RETURN
 	END
@@ -168,7 +168,7 @@ BEGIN
 
 	IF @Credit > @UplineCredit - @Credit_AllDownline
 	BEGIN
-		SELECT @ErrMsg = '<Root MsgID="70024" Msg="Insufficient credit."></Root>'		    
+		SELECT @ErrMsg = '<Root MsgID="70024" Msg="Insufficient credits."></Root>'		    
 		SELECT @ErrCode = 100, @ErrSettingType = 1, @MsgType = 100
 	    RETURN
 	END

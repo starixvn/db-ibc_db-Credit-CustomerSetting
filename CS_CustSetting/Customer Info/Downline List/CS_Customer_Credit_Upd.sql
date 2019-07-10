@@ -86,7 +86,7 @@ BEGIN
 	IF (@RoleId IN (2,3) AND @UpdCredit NOT BETWEEN @MinCredit AND @MaxCredit)
 		OR (@RoleId = 4 AND @UpdCredit < @MinCredit) -- SMA not have MaxCredit
 	BEGIN
-		-- New Credit is out of range, please refresh the form and try again.
+		-- New Credits is out of range, please refresh the form and try again.
 		SELECT @ErrCode = 103, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (70026, @Language)
 
 		RETURN
