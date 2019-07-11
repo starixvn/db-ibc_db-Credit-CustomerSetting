@@ -248,8 +248,8 @@ BEGIN
     IF @Credit + @Credit_AllOtherMember > @Credit_Ag
     BEGIN
 		SELECT @ErrMsg= CASE @Language 
-							WHEN 'E' THEN 'Sorry, credit increase unsuccessful. You have exceeded your agent credit.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](70003,@Language)
+							WHEN 'E' THEN 'Sorry, credit update is not successful, You have exceeded your agent credits.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](70029,@Language)
 						END	
 				,@success = 0, @ErrCode = 204
 		SELECT @ErrSettingType = 1, @MsgType = 200	
