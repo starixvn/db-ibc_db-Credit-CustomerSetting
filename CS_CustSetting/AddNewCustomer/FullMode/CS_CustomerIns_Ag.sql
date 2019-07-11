@@ -35,6 +35,8 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 		- 20100527@Elodie: New account status [Redmine: #113198]
+		- 20100627@Elodie: Write ugroup value into log [Redmine: #115353]
+		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
 
 	Param's Explanation:
 		• @ErrCode:
@@ -213,8 +215,21 @@ BEGIN
     DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT
     SET @startRun = GETDATE()
 
+	SELECT @currency = currency
+         , @mrecommend = mrecommend
+         , @srecommend = srecommend
+         , @Credit_Ag = ISNULL(Credit, 0)     
+         , @Asuspended = reject
+         , @matchlimit = matchlimit
+         , @autosuspend = ISNULL(autosuspend, 0)
+         , @autosuspend2 = ISNULL(autosuspend2, 0)
+         , @virtualmultiplier = ISNULL(virtualmultiplier, 1)           
+     FROM custinfo WITH(NOLOCK)
+     WHERE CustID = @recommend	
+
 	EXEC dbo.CS_CustomerIns_Check 
 		@RoleId			= 1,
+		@Currency		= @Currency,
 		@custid			= @recommend,
 		@BetSetting		= @BetSetting,
 		@CommSetting	= @CommSetting,
@@ -227,18 +242,6 @@ BEGIN
 		@ErrMsg			= @ErrMsg OUTPUT
 	IF @ErrCode <> 0
 		RETURN
-
-    SELECT @currency = currency
-         , @mrecommend = mrecommend
-         , @srecommend = srecommend
-         , @Credit_Ag = ISNULL(Credit, 0)     
-         , @Asuspended = reject
-         , @matchlimit = matchlimit
-         , @autosuspend = ISNULL(autosuspend, 0)
-         , @autosuspend2 = ISNULL(autosuspend2, 0)
-         , @virtualmultiplier = ISNULL(virtualmultiplier, 1)           
-     FROM custinfo WITH(NOLOCK)
-     WHERE CustID = @recommend	
 
     SELECT @Credit_AllOtherMember = ISNULL(SUM(Credit), 0) FROM custinfo WITH(NOLOCK) WHERE recommend = @recommend AND RoleID = 1
     
@@ -322,6 +325,7 @@ BEGIN
     --Write general info
 	SELECT @LogSPData = '<R name="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS NVARCHAR(100)),SPACE(1))) + '" ' +
 						'username="'+ COALESCE(CAST(@username AS VARCHAR(30)),SPACE(1)) + '" ' +
+						'uGroup="' + @ugroup + '" ' +
 						'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
 						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'

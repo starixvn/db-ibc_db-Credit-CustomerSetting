@@ -19,6 +19,7 @@ AS
 
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
+		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
 		
 	Param's Explanation:
 		• @RoleId 
@@ -74,13 +75,16 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @SuperId INT, @MasterId INT, @AgentId INT
+	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @Currency INT
 	DECLARE @ErrType XML, @_CommSetting XML, @_BetSetting XML, @uGroup VARCHAR(3)
 	DECLARE @ErrorTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, ErrCode INT)
 
 	SELECT @ErrCode = 0, @_CommSetting = @CommSetting, @_BetSetting = @BetSetting	
-	SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID AND roleid = @RoleId
 	
+	SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend, @Currency = currency 
+	FROM dbo.custInfo WITH (NOLOCK) 
+	WHERE custid = @CustID AND roleid = @RoleId
+
 	/********************************************* Commission & Bet Setting : SettingType = 2 ****************************************/	
 	SELECT t.* INTO #SportBettypeFilter2
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID,2, @IsTest) t
@@ -148,8 +152,41 @@ BEGIN
 		END
 	END	
 
+	INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+	SELECT cs.SportType, cs.BetType, cs.IsLive, 404
+	FROM #NewBetSetting cs
+		INNER JOIN dbo.CS_ProductBetSetting bs WITH(NOLOCK) ON cs.SportType = bs.Sporttype AND cs.BetType = bs.bettype AND cs.IsLive = bs.IsLive AND bs.Currency = @Currency
+	WHERE cs.MaxBet < bs.MinBet
+
+	IF @@ROWCOUNT <> 0
+	BEGIN
+		IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 404)
+		BEGIN
+			SET @ErrType = (
+					SELECT 10044 AS '@MsgID'
+						, 'The current Max Per Bet value is lower than Company Min Bet.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 404									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 71
+			SET @ErrCode = 404
+		
+			RETURN
+		END		
+	END		
+
 	IF @RoleId = 4
-	BEGIN	
+	BEGIN			
 		SELECT mb.sporttype, mb.bettype, mb.Islive,
 			MAX(mb.MaxBet) AS MaxMaxBetDownline, MAX(mb.MaxPerEvent) AS MaxMaxPerEventDownline
 		INTO #BetDownlines4

@@ -3,6 +3,7 @@
 ALTER PROCEDURE CS_CustomerIns_CommBetSetting_Check
 	@RoleId			TINYINT,
 	@CustId			INT = NULL,
+	@Currency		INT, 
 	@CommSetting	VARCHAR(MAX),
 	@BetSetting		VARCHAR(MAX),
 	@uGroup			VARCHAR(3) = NULL,
@@ -20,7 +21,8 @@ AS
 
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
-		
+		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
+				
 	Param's Explanation:
 		• @RoleId 
 			= 4,3,2: Create super, master, agent
@@ -153,8 +155,42 @@ BEGIN
 		END
 	END	
 
-	IF @RoleId <> 4
+	--Check MaxBet > GlobalMinBet
+	INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+	SELECT cs.SportType, cs.BetType, cs.IsLive, 404		
+	FROM #NewBetSetting cs
+		INNER JOIN dbo.CS_ProductBetSetting gb WITH (NOLOCK) ON gb.SportType = cs.SportType AND gb.BetType = cs.BetType AND gb.IsLive = cs.IsLive AND gb.Currency = @Currency
+	WHERE cs.MaxBet < gb.MinBet
+
+	IF @@ROWCOUNT <> 0
 	BEGIN
+		IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 404)
+		BEGIN
+			SET @ErrType = (
+					SELECT 10044 AS '@MsgID'
+						, 'The current Max Per Bet value is lower than Company Min Bet.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'									
+								, tmp.IsLive AS '@IsLive'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 404								
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 71
+			SET @ErrCode = 404
+		
+			RETURN
+		END		
+	END	
+
+	IF @RoleId <> 4
+	BEGIN		
 		--Check MaxBet < upline's maxbet
 		--Check MaxPerEvent < upline's MaxPerEvent
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
