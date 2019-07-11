@@ -249,6 +249,7 @@ BEGIN
 		--, vrnl.ValueIDNonLive, vrnl.FollowingValueIDNonLive
 		, vrnl.FollowingCustID FollowingCustIDNonLive
 		, vrnl.FollowingLevelID FollowingLevelIDNonLive
+		, h.SortOrder
 		FROM VRSettingHierarchy h 
 			INNER JOIN #Log vrl (NOLOCK) 
 				ON vrl.LevelID = h.LevelID
