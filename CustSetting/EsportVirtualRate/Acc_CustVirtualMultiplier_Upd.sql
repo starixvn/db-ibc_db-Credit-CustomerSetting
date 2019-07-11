@@ -263,7 +263,7 @@ BEGIN
 			INNER JOIN VRValueMapping v3 ON v3.ValueID = vrnl.ValueIDNonLive
 			INNER JOIN VRValueMapping v4 ON v4.ValueID = vrnl.FollowingValueIDNonLive
 		WHERE h.SportType = @SportType 
-		ORDER BY h.VRLeagueGroupID, h.VRBetTypeGroupID, h.BetType
+		ORDER BY h.SortOrder
 		FOR XML  RAW('r')
 	)
 
