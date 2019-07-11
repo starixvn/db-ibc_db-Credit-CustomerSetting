@@ -6,7 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustVirtualMultiplier_Upd]
 	, @VirtualMultiplier VARCHAR(MAX) = ''
 	, @UserID INT
 	, @IP VARCHAR(15) = ''
-	, @ErrCode TINYINT OUT
+	, @ErrCode INT OUT
 	, @ErrMsg NVARCHAR(200) OUT
 AS
 /*    
