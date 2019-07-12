@@ -176,7 +176,7 @@ BEGIN
 									, @LeagueGroupID = @LeagueGroupID
 									, @virtualMultiplier = @new_virtualrate out
 		END
-		ELSE IF @sporttype <> 43 AND @virtualrate=1
+		ELSE IF @virtualrate=1
 		BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
 									, @sporttype = @sporttype_vrate
