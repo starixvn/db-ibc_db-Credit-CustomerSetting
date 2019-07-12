@@ -1,7 +1,7 @@
 USE [CustDB]
 GO
 
-CREATE PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
+ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @CustID     INT,
                     @SportType  SMALLINT,
                     @BetType    SMALLINT,

@@ -1,7 +1,7 @@
 USE [CustDB]
 GO
 
-CREATE PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
+ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
 	@custid int,
 	@sporttype smallint,
 	@PartnerID smallint=null,
@@ -173,6 +173,7 @@ BEGIN
 									, @sporttype = @sporttype
 									, @bettype = @bettype
 									, @isLive = @liveindicator
+									, @LeagueGroupID = @LeagueGroupID
 									, @virtualMultiplier = @new_virtualrate out
 		END
 		ELSE IF @sporttype <> 43 AND @virtualrate=1
@@ -181,7 +182,6 @@ BEGIN
 									, @sporttype = @sporttype_vrate
 									, @bettype = @bettype_vrate
 									, @isLive = @liveindicator
-									, @LeagueGroupID = @LeagueGroupID
 									, @virtualMultiplier = @new_virtualrate out
 		END
 
