@@ -173,6 +173,7 @@ BEGIN
 									, @sporttype = @sporttype_vrate
 									, @bettype = @bettype_vrate
 									, @isLive = @liveindicator
+									, @LeagueGroupID = @LeagueGroupID
 									, @virtualMultiplier = @new_virtualrate out
 		END
 
