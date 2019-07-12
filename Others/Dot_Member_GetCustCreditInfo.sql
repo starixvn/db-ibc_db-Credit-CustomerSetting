@@ -167,16 +167,7 @@ BEGIN
 	declare @new_virtualrate float = 1
 	if @bettype<>0
 	begin
-		IF @sporttype = 43 --For Esports
-		BEGIN
-			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
-									, @sporttype = @sporttype
-									, @bettype = @bettype
-									, @isLive = @liveindicator
-									, @LeagueGroupID = @LeagueGroupID
-									, @virtualMultiplier = @new_virtualrate out
-		END
-		ELSE IF @virtualrate=1
+		IF @sporttype = 43 OR @virtualrate=1 --For Esports
 		BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
 									, @sporttype = @sporttype_vrate
