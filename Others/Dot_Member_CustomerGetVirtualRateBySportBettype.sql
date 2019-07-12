@@ -1,4 +1,7 @@
-ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
+USE [CustDB]
+GO
+
+CREATE PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @CustID     INT,
                     @SportType  SMALLINT,
                     @BetType    SMALLINT,
@@ -36,12 +39,13 @@ BEGIN
 	BEGIN --For E-sports
 		DECLARE @VRLeagueGroupID SMALLINT
 
+		--Base on @LeagueGroupID, get configured VRLeagueGroupID 
 		SELECT @VRLeagueGroupID = VRLeagueGroupID
 		FROM VRLeagueGroupMapping (NOLOCK)
 		WHERE LeagueGroupID = @LeagueGroupID
 
-		--If LeagueGroup is not configured for VR, then follow 'Other Games' VR group
-		--We temporarily hard-code, will do it dynamically if this apply for many sports
+		--If a LeagueGroup is not configured for VR yet, then follow 'Other Games' VR group
+		--We temporarily hard-code because we expect all LeagueGroups must be configured for VR before allowing members to place bet
 		IF @VRLeagueGroupID IS NULL
 			SELECT @VRLeagueGroupID = 5 --Other Games
 
@@ -49,12 +53,12 @@ BEGIN
 		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy(NOLOCK) WHERE BetType=@Bettype AND SportType=@SportType)
 			SELECT @Bettype = -1
 
-		--If Sport and Bettype are both not configured for VR, then follow E-sports setting level
+		--If VRLeagueGroupID and Bettype are both not configured for VR, then follow E-sports setting level
 		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy(NOLOCK) 
 				WHERE VRLeagueGroupID=@VRLeagueGroupID 
 				AND SportType=@SportType
 				AND BetType = @Bettype)
-			SELECT @VRLeagueGroupID = -1, @Bettype = -1
+			SELECT @VRLeagueGroupID = -1, @Bettype = -1 --Sport Level
 
 		--Get VR multiplier
 		;WITH VR_Hierachy AS (
@@ -66,7 +70,7 @@ BEGIN
 			UNION ALL
 			SELECT c.LevelID, c.ParentLevelID, p.OrderNo + 1  OrderNo
 			FROM VRSettingHierarchy c
-				INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion
+				INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion, recursion depth is always 3
 		) ,
 		CustIDs AS (
 			SELECT upv.Val CustID, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) RoleID
@@ -89,7 +93,7 @@ BEGIN
 				AND vr.LevelID = h.LevelID
 		INNER JOIN VRValueMapping vlive ON vr.ValueIDLIVE = vlive.ValueID
 		INNER JOIN VRValueMapping vnonlive ON vr.ValueIDNonLIVE = vnonlive.ValueID
-		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0
+		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0 --Exclude 'Follow parent'
 		ORDER BY c.RoleID,h.OrderNo
 
 		IF @virtualMultiplier IS NULL

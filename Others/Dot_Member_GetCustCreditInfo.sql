@@ -1,7 +1,7 @@
 USE [CustDB]
 GO
 
-ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
+CREATE PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
 	@custid int,
 	@sporttype smallint,
 	@PartnerID smallint=null,
@@ -21,9 +21,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
 	@LeagueGroupID SMALLINT =0
 AS
-BEGIN
-
-	--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 	-- !!!!!!!!!!!!!!! include UM function !!!!!!!!!!!!!!!!!!!!!!!!
 	-- durning UM time alert function [f_CheckUMStatus]
 	--------------------------------------------------------------------------------
@@ -48,7 +46,9 @@ BEGIN
 	-- 2019-03-05@TWJoe(CUSTDB):  DCS MaxPerMatch Change To Dot_Member_GetCustSetting
 	-- 2019-03-07@TWJoe(CUSTDB):  add @Date, @isCN88 Support CN88 Credit 
 	-- 2019-05-30@Vivi(CUSTDB): add UM control
+	-- 2019-06-12@TWJoe(CUSTDB): CN88 User Check reject,closed setting from CS_CustomerStatus
 	-- 2019-07-01@VN-Dominic(CUSTDB): Add a new input param @LeagueGroupID,and add a new different logic to get VR setting for E-sports
+BEGIN
 
 	SET NOCOUNT ON;
 
@@ -58,15 +58,25 @@ BEGIN
 			@credit money, @MaxWinLiveCasino smallmoney, @MaxPerBall161 money,
 			@actualrate float, @currencyname nvarchar(50), @virtualrate smallmoney,
 			@maxpermatch money, @autosuspend bit, @currency int,
-			@closed bit, @reject bit, @DisableBet_Race bit, @DisableBet bit,@MaxWinVendorGame smallmoney=0,@DisBetSetting bit,@DisBetSetting3rd bit = 0,@BonusWalletFlag bit,@False bit=0,@True bit=1,@Zero tinyint=0,@MaxWinLimit smallmoney=0 ,@MaxLossLimit money=0
+			@closed bit, @reject bit, @DisableBet_Race bit, @DisableBet bit,@MaxWinVendorGame smallmoney=0,
+            @DisBetSetting bit,@DisBetSetting3rd bit = 0,@BonusWalletFlag bit,@False bit=0,@True bit=1,@Zero tinyint=0,@MaxWinLimit smallmoney=0 ,
+            @MaxLossLimit money=0,@CN88_reject bit= 1,@CN88_closed bit=1
 	--set @WinMaxBetType=@bettype
     if @WinMaxSportType<>0 and @WinMaxBetType<>0
     begin
         select @MaxWinLimit=ISNULL(MaxWinLimit,@Zero),@MaxLossLimit=ISNULL(MaxLossLimit,@Zero) from CustWinLossLimit_Member with (nolock) where custid=@custid and sporttype=@WinMaxSportType and bettype=@WinMaxBetType
     end
-    if @usertype=2 and @Date is null
+    if @usertype=2
     begin
-        set @Date=CURRENT_TIMESTAMP
+        select @CN88_closed=CASE WHEN InactiveInfo>0 or SuspendedInfo>0 THEN 1 ELSE 0 END, 
+		       @CN88_reject=CASE WHEN ViewOnlyInfo>0 THEN 1 ELSE 0 END 
+		from CS_CustomerStatus with (nolock) 
+		where CustId=@custid
+        
+		if @Date is null
+        begin
+            set @Date=CURRENT_TIMESTAMP
+        end
     end
 	set @DisBetSetting=0
 	Declare @tmp TABLE(IsHidden bit, IsDisabled bit)
@@ -131,8 +141,8 @@ BEGIN
 										--when @sporttype>=180 and @sporttype<=186 then ci.DisableVirtualSports
 										when @sporttype=1 and @bettype in (801,802,803,804,805,806) then ci.DisableSuperLive
 										else @False end,@True) | @DisableSport,
-					@closed=isnull(ci.closed,@False),
-					@reject= case when @DisableBet=@False then isnull(ci.reject,@False) else @DisableBet end,
+					@closed=CASE WHEN @usertype=2 THEN isnull(ci.closed,@False) | @CN88_closed ELSE isnull(ci.closed,@False) END,
+					@reject= case when @DisableBet=@False then CASE WHEN @usertype=2 THEN @CN88_reject ELSE isnull(ci.reject,@False) END else @DisableBet end,
 					@DisableBet_Race=(case @sporttype when 151 then (case when @PartnerID in (2,3,4) then ci.DisableOpenTote when @PartnerID in (5,6) then ci.Disable151_AU else ci.DisableHorseRacing end)
 									when 152 THEN (case when @PartnerID in (101,102) then ci.Disable152_UK when @PartnerID in (103,104) then ci.Disable152_AU else @True end)
 									when 153 THEN (case when @PartnerID in (201,202) then ci.Disable153_AU else @True end) else @True end)
@@ -168,8 +178,8 @@ BEGIN
 		ELSE IF @sporttype <> 43 AND @virtualrate=1
 		BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
-									, @sporttype = @sporttype
-									, @bettype = @bettype
+									, @sporttype = @sporttype_vrate
+									, @bettype = @bettype_vrate
 									, @isLive = @liveindicator
 									, @LeagueGroupID = @LeagueGroupID
 									, @virtualMultiplier = @new_virtualrate out
@@ -210,3 +220,4 @@ BEGIN
 			@closed closed, @reject reject, @DisableBet_Race DisableBet_Race,@DisableBet disabledBet,@DisBetSetting3rd DisBetSetting3rd,@BonusWalletFlag BonusWalletFlag,
             @MaxWinLimit MaxWinLimit, @MaxLossLimit MaxLossLimit
 END
+
