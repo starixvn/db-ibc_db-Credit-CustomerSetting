@@ -20,7 +20,8 @@ AS
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
-		
+		- 20190712@Elodie: Remove currency min bet constrain for Bet Setting [Redmine:#116723]
+
 	Param's Explanation:
 		• @RoleId 
 			= 4,3,2: Update super, master, agent
@@ -150,39 +151,6 @@ BEGIN
 		
 			RETURN
 		END
-	END	
-
-	INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
-	SELECT cs.SportType, cs.BetType, cs.IsLive, 404
-	FROM #NewBetSetting cs
-		INNER JOIN dbo.CS_ProductBetSetting bs WITH(NOLOCK) ON cs.SportType = bs.Sporttype AND cs.BetType = bs.bettype AND cs.IsLive = bs.IsLive AND bs.Currency = @Currency
-	WHERE cs.MaxBet < bs.MinBet
-
-	IF @@ROWCOUNT <> 0
-	BEGIN
-		IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 404)
-		BEGIN
-			SET @ErrType = (
-					SELECT 10044 AS '@MsgID'
-						, 'The current Max Per Bet value is lower than Company Min Bet.' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, tmp.IsLive AS '@IsLive'
-							FROM @ErrorTbl tmp
-							WHERE	ErrCode = 404									
-							FOR XML PATH('Row')
-								, TYPE	
-							)						
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-			SET @MsgType = 71
-			SET @ErrCode = 404
-		
-			RETURN
-		END		
 	END		
 
 	IF @RoleId = 4
