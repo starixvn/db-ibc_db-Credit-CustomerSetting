@@ -86,7 +86,7 @@ BEGIN
 	IF (@RoleId IN (2,3) AND @UpdCredit NOT BETWEEN @MinCredit AND @MaxCredit)
 		OR (@RoleId = 4 AND @UpdCredit < @MinCredit) -- SMA not have MaxCredit
 	BEGIN
-		-- New Credits is out of range, please refresh the form and try again.
+		-- New Credit is out of range, please refresh the form and try again.
 		SELECT @ErrCode = 103, @ErrMsg = dbo.f_Get_MsgNamebyMsgID (70026, @Language)
 
 		RETURN
@@ -112,19 +112,12 @@ BEGIN
 							WHEN 3 THEN 1219
 							WHEN 4 THEN 1220
 							END
-			,@levelName = CASE @RoleId
-							WHEN 1 THEN 'Member'
-							WHEN 2 THEN 'Agent'
-							WHEN 3 THEN 'Master Agent'
-							WHEN 4 THEN 'SMA'
-							END
+			,@levelName = CASE @RoleID WHEN 1 THEN '{Member}:' WHEN 2 THEN '{Agent}:' WHEN 3 THEN '{MA}:' WHEN 4 THEN '{SMA}:' END  
+	
+	SELECT  @LogData = @levelName + @username + ' - {CreditUpdated}'
 
-	SELECT  @LogData = 'Update Credit for ' + @levelName + ' Account ' + COALESCE(@username, SPACE(1))
-
-	IF @SubAccID > 0
-	BEGIN  
-		SELECT @LogData = @LogData + ' by Sub-Account ' + COALESCE(dbo.f_GetSubUsername(@SubAccId), SPACE(1))
-	END
+	IF @SubAccId > 0
+		SELECT  @LogData = @levelName + @username + ' - {CreditUpdatedBySubAcc} ' + COALESCE(dbo.f_GetSubUsername(@SubAccId), SPACE(1))
 
 	EXEC dbo.CS_WriteLog_UserLog_Credit_Wrapper
 		@UserId		= @UserId,
