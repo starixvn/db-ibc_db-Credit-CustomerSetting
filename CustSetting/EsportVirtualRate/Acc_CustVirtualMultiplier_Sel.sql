@@ -31,7 +31,7 @@ BEGIN
 			, @Username = Username
 	FROM Customer c (NOLOCK)
 		INNER JOIN exchange e (NOLOCK) ON  e.exchangeid = c.currency  
-	WHERE CustID = @CustID
+	WHERE CustID = @CustID AND c.roleid IN (1,2,3,4)
 		
 
 	IF @CustID IS NULL OR (@CustID <> 0 AND @Currency IS NULL) 
