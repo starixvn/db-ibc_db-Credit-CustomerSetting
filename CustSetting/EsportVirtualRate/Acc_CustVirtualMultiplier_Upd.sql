@@ -275,15 +275,30 @@ BEGIN
 
 	SELECT @TrackingValue2 = '<Root actualrate="' + CAST(ISNULL(@ActualRate,0) AS VARCHAR(10)) + '" >' + @TrackingValue2  + '</Root>'
 
-	EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
-					,@SportType=@SportType
-					,@ActionID=@ActionID
-					,@TrackingValue1=@TrackingValue1
-					,@TrackingValue2=@TrackingValue2
-					,@UserID=@UserID
-					,@LogTime=@StartRun
-					,@Duration=@Duration
-					,@IP=@IP
+	BEGIN TRY
+		EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
+						,@SportType=@SportType
+						,@ActionID=@ActionID
+						,@TrackingValue1=@TrackingValue1
+						,@TrackingValue2=@TrackingValue2
+						,@WithCompression = 1
+						,@UserID=@UserID
+						,@LogTime=@StartRun
+						,@Duration=@Duration
+						,@IP=@IP
+	END TRY  
+	BEGIN CATCH
+		EXEC bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
+						,@SportType=@SportType
+						,@ActionID=@ActionID
+						,@TrackingValue1=@TrackingValue1
+						,@TrackingValue2=@TrackingValue2
+						,@WithCompression = 0
+						,@UserID=@UserID
+						,@LogTime=@StartRun
+						,@Duration=@Duration
+						,@IP=@IP
+	END CATCH
 
 	DROP TABLE #New_VRCustSetting
 	DROP TABLE #Old_VRCustSetting
