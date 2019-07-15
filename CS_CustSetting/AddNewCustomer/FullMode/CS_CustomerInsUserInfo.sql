@@ -44,6 +44,7 @@ ALTER PROCEDURE CS_CustomerInsUserInfo
 	@copyFromCustID INT = 0,
 	
 	@IP VARCHAR(15)='',
+	@SubAccID INT = 0,--Sub-AccountID,
 	@SystemID	TINYINT=1,
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
@@ -193,6 +194,15 @@ BEGIN
 		SELECT @Custid, seqNo, bitmapVirtual
 		FROM CustVirtualSetting WITH(NOLOCK)
 		WHERE custid = @srecommend
+
+		IF @SubAccID > 0
+		BEGIN
+			IF EXISTS (SELECT 1 FROM CustSub WITH (NOLOCK) WHERE subaccid = @SubAccID AND IsAllDownline = 0)
+			BEGIN
+				INSERT INTO dbo.CS_SubAccManagement (SubAccId, DownlineId)
+				SELECT @SubAccID, @custid
+			END
+		END
     END
     ELSE IF @roleid = 2
     BEGIN
@@ -232,7 +242,10 @@ BEGIN
 	    IF @RoleID = 4
 		    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 	    ELSE IF @RoleID = 3
+		BEGIN
 		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM dbo.CS_SubAccManagement WITH(ROWLOCK) WHERE SubAccId = @SubAccID AND DownlineId = @CustID
+		END
 	    ELSE IF @RoleID = 2
 		    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
 
@@ -257,7 +270,10 @@ BEGIN
 	    IF @RoleID = 4
 		    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 	    ELSE IF @RoleID = 3
+		BEGIN
 		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM dbo.CS_SubAccManagement WITH(ROWLOCK) WHERE SubAccId = @SubAccID AND DownlineId = @CustID
+		END
 	    ELSE IF @RoleID = 2
 		    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
 
@@ -303,7 +319,10 @@ BEGIN
 		    IF @RoleID = 4
 			    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 		    ELSE IF @RoleID = 3
-			    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+			BEGIN
+				DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+				DELETE FROM dbo.CS_SubAccManagement WITH(ROWLOCK) WHERE SubAccId = @SubAccID AND DownlineId = @CustID
+			END
 		    ELSE IF @RoleID = 2
 			    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
 
@@ -329,13 +348,6 @@ BEGIN
 									END
 						,@ErrCode = 115
 
-				IF @RoleID = 4
-					DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-				ELSE IF @RoleID = 3
-					DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-				ELSE IF @RoleID = 2
-					DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-
 				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM CS_CustomerStatus WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
@@ -344,6 +356,7 @@ BEGIN
 			END
 		END
 	END
+
     INSERT INTO [dbo].[custinfo]
     (
 	    custid, currency,Disable151_AU
@@ -387,6 +400,7 @@ BEGIN
 	    ELSE IF @RoleID = 3
 	    BEGIN
 		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM dbo.CS_SubAccManagement WITH(ROWLOCK) WHERE SubAccId = @SubAccID AND DownlineId = @CustID
 		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
 	    END
 	    ELSE IF @RoleID = 2
@@ -597,6 +611,7 @@ BEGIN
 			ELSE IF @RoleID = 3
 			BEGIN
 				DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+				DELETE FROM dbo.CS_SubAccManagement WITH(ROWLOCK) WHERE SubAccId = @SubAccID AND DownlineId = @CustID
 				DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
 				DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
 			END
