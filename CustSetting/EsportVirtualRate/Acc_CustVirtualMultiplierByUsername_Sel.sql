@@ -22,6 +22,7 @@ BEGIN
 	SELECT @CustID = CustID
 	FROM Customer c(NOLOCK)
 	WHERE username=@Username
+		AND roleid IN (1,2,3,4)
 
 	IF @CustID IS NULL
 	BEGIN
