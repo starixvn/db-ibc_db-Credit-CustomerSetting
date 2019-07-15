@@ -7,7 +7,8 @@ AS
     Task: Add a temporary prototype funtion to compress string,
 		it will be replaced with a CLR funtion later
     DB: bodb_CustomerLog
-
+	Revisions:    
+		- 20190715@Dominic : First commit
 */
 BEGIN
 	RETURN @Text
