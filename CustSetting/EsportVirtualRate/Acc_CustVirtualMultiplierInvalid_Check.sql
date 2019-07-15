@@ -32,7 +32,7 @@ BEGIN
 	UPDATE main
 	SET IsValid = 1, main.CustID = c.custid
 	FROM #LstUsername main
-		INNER JOIN Customer c (NOLOCK) ON c.username = main.Username
+		INNER JOIN Customer c (NOLOCK) ON c.username = main.Username AND c.roleid IN (1, 2, 3, 4)
 
 	SELECT * 
 	FROM #LstUsername
