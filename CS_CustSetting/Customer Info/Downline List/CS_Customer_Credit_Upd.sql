@@ -21,6 +21,8 @@ AS
 	Revisions:
 		- 20181218@Percy: Initialize SP [RedmineID: #105338]
 		- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
+		- 20190715@Elodie: Change content of error msg [Redmine:#115515]
+		- 20190715@Elodie: Support Chinese log [Redmine:#116317]
 */
 
 BEGIN

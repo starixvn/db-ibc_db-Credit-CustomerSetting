@@ -25,6 +25,7 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine: #105338]
 		- 20100527@Elodie: New account status [Redmine: #113198]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
+		- 20190715@Elodie: Change content of error msg [Redmine:#115515]
 
 	Param's Explanation:
 		@RoleID = 4:

@@ -37,6 +37,7 @@ AS
 		- 20100527@Elodie: New account status [Redmine: #113198]
 		- 20100627@Elodie: Write ugroup value into log [Redmine: #115353]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
+		- 20190715@Elodie: Change content of error msg [Redmine:#115515]
 
 	Param's Explanation:
 		• @ErrCode:
