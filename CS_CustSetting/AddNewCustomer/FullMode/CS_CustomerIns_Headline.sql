@@ -1,10 +1,10 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE CS_CustomerIns_Headline
-	@firstname NVARCHAR(50) = NULL,
-	@lastname NVARCHAR(50) = NULL,	
-	@phone NVARCHAR(50),
-	@mobilephone NVARCHAR(50),	
-	@fax NVARCHAR(50),	
+	@firstname NVARCHAR(50) = '',
+	@lastname NVARCHAR(50) = '',	
+	@phone NVARCHAR(50)='',
+	@mobilephone NVARCHAR(50)='',	
+	@fax NVARCHAR(50)='',	
 	@username VARCHAR(30),
 	@userpwd VARCHAR(40),	
 	@ExtraPTSetting	VARCHAR(MAX),
