@@ -1,5 +1,5 @@
 
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustVirtualMultiplier_Sel]
 	@CustID INT
