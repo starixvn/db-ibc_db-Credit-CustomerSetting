@@ -231,6 +231,28 @@ BEGIN
 		RETURN;
 	END	
 	
+	INSERT INTO dbo.CS_CustomerStatus (CustId, InactiveInfo, SuspendedInfo, ViewOnlyInfo)
+	SELECT @custid, 0, 0, 0
+	
+	IF @@ERROR > 0
+	BEGIN		
+		SELECT @ErrCode = 108,
+			@ErrMsg = 'Create customer failed. Please try again.'			
+				
+		DELETE customer WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid	
+		
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
+		
+		DELETE CustLoginInfo WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid	
+		
+		DELETE CS_HeadlineExtraPTGroup WITH(UPDLOCK,ROWLOCK)
+		WHERE HeadlineId = @custid
+		
+		RETURN;
+	END	
+	
 	INSERT INTO [dbo].[custinfo]
 		(
 			custid, currency,Disable151_AU
@@ -261,8 +283,12 @@ BEGIN
 
 	IF @@ERROR > 0
 	BEGIN		
+		SELECT @ErrCode = 109,
+			@ErrMsg = 'Create customer failed. Please try again.'			
+								
 		DELETE customer WITH(UPDLOCK,ROWLOCK)
 		WHERE custid = @custid	
+		
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 		
 		DELETE CustLoginInfo WITH(UPDLOCK,ROWLOCK)
