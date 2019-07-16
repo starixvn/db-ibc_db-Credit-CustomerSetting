@@ -398,6 +398,7 @@ Revisions:
 	- 20181122@Johnson: remove redundant log status [redmine: #105164]
 	- 20190508@Johnson: fix bug for missing bettype of Number Game [redmine: #112318]
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
+	- 20190716@Winnie: Hotfix view log [redmine: #116524]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
