@@ -36,7 +36,7 @@ BEGIN
 	SET @startRun = GETDATE()
 	
 	DECLARE 
-		@pwdexpiry DATETIME = NULL,
+		@pwdexpiry DATETIME = GETDATE()-1,
 		@roleid TINYINT  =0,
 		@srecommend INT =0, 
 		@mrecommend INT =0, 
@@ -109,13 +109,15 @@ BEGIN
 	
 	DECLARE @ExtraPTTmp	TABLE(ProductId INT, ExtraPT MONEY) 	
 		
-		
-	IF EXISTS(SELECT 1 FROM customer WITH(NOLOCK) WHERE username = @username)
-		BEGIN
-			SELECT @ErrCode = 100,
-					@ErrMsg = 'This username is not available.'
-			RETURN
-		END
+	DECLARE @IsExists BIT 
+	EXEC CS_CustomerCheckExists @username = @username, @Mode = 0, @IsExists = @IsExists OUTPUT
+
+	IF @IsExists = 1
+	BEGIN
+		SELECT @ErrCode = 100,
+				@ErrMsg = 'This username is not available.'
+		RETURN
+	END
 	
 	-- get Rate
 	DECLARE @DocHandler INT
