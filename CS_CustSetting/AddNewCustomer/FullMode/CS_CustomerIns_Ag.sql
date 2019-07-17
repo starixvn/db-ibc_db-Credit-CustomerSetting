@@ -37,6 +37,7 @@ AS
 		- 20100527@Elodie: New account status [Redmine: #113198]
 		- 20100627@Elodie: Write ugroup value into log [Redmine: #115353]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
+		- 20190715@Elodie: Change content of error msg [Redmine:#115515]
 
 	Param's Explanation:
 		• @ErrCode:
@@ -248,8 +249,8 @@ BEGIN
     IF @Credit + @Credit_AllOtherMember > @Credit_Ag
     BEGIN
 		SELECT @ErrMsg= CASE @Language 
-							WHEN 'E' THEN 'Sorry, credit increase unsuccessful. You have exceeded your agent credit.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](70003,@Language)
+							WHEN 'E' THEN 'Sorry, credit update is not successful, You have exceeded your agent credits.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](70029,@Language)
 						END	
 				,@success = 0, @ErrCode = 204
 		SELECT @ErrSettingType = 1, @MsgType = 200	

@@ -21,6 +21,8 @@ AS
 	Revisions:
 		- 20181218@Percy: Initialize SP [RedmineID: #105338]
 		- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
+		- 20190715@Elodie: Change content of error msg [Redmine:#115515]
+		- 20190715@Elodie: Support Chinese log [Redmine:#116317]
 */
 
 BEGIN
@@ -112,19 +114,12 @@ BEGIN
 							WHEN 3 THEN 1219
 							WHEN 4 THEN 1220
 							END
-			,@levelName = CASE @RoleId
-							WHEN 1 THEN 'Member'
-							WHEN 2 THEN 'Agent'
-							WHEN 3 THEN 'Master Agent'
-							WHEN 4 THEN 'SMA'
-							END
+			,@levelName = CASE @RoleID WHEN 1 THEN '{Member}:' WHEN 2 THEN '{Agent}:' WHEN 3 THEN '{MA}:' WHEN 4 THEN '{SMA}:' END  
+	
+	SELECT  @LogData = @levelName + @username + ' - {CreditUpdated}'
 
-	SELECT  @LogData = 'Update Credit for ' + @levelName + ' Account ' + COALESCE(@username, SPACE(1))
-
-	IF @SubAccID > 0
-	BEGIN  
-		SELECT @LogData = @LogData + ' by Sub-Account ' + COALESCE(dbo.f_GetSubUsername(@SubAccId), SPACE(1))
-	END
+	IF @SubAccId > 0
+		SELECT  @LogData = @levelName + @username + ' - {CreditUpdatedBySubAcc} ' + COALESCE(dbo.f_GetSubUsername(@SubAccId), SPACE(1))
 
 	EXEC dbo.CS_WriteLog_UserLog_Credit_Wrapper
 		@UserId		= @UserId,

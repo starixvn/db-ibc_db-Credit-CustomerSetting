@@ -25,6 +25,7 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine: #105338]
 		- 20100527@Elodie: New account status [Redmine: #113198]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
+		- 20190715@Elodie: Change content of error msg [Redmine:#115515]
 
 	Param's Explanation:
 		@RoleID = 4:
@@ -146,7 +147,7 @@ BEGIN
 
 	IF @Credit < 0
 	BEGIN
-		SELECT @ErrMsg = '<Root MsgID="70025" Msg="Credit must be positive."></Root>'		    
+		SELECT @ErrMsg = '<Root MsgID="70025" Msg="Credits must be positive."></Root>'		    
 		SELECT @ErrCode = 101, @ErrSettingType = 1, @MsgType = 100
 	    RETURN
 	END
@@ -168,7 +169,7 @@ BEGIN
 
 	IF @Credit > @UplineCredit - @Credit_AllDownline
 	BEGIN
-		SELECT @ErrMsg = '<Root MsgID="70024" Msg="Insufficient credit."></Root>'		    
+		SELECT @ErrMsg = '<Root MsgID="70024" Msg="Insufficient credits."></Root>'		    
 		SELECT @ErrCode = 100, @ErrSettingType = 1, @MsgType = 100
 	    RETURN
 	END
