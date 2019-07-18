@@ -1,6 +1,4 @@
-USE [CustDB]
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @CustID     INT,
                     @SportType  SMALLINT,
