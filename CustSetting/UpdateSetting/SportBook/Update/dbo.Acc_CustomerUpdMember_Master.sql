@@ -398,6 +398,7 @@ Revisions:
 	- 20181122@Johnson: remove redundant log status [redmine: #105164]
 	- 20190508@Johnson: fix bug for missing bettype of Number Game [redmine: #112318]
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
+	- 20190716@Winnie: Hotfix view log [redmine: #116524]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -6829,9 +6830,9 @@ if	@UpdatePositiontaking   = 1  or
 		@isauto_v8mpositiontaking_mem_3 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_isauto_v8mpositiontaking_mem_3 ELSE @isauto_v8mpositiontaking_mem_3 END,
 		@isauto_v8mpositiontaking_mem_20 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_isauto_v8mpositiontaking_mem_20 ELSE @isauto_v8mpositiontaking_mem_20 END,
 		
-		@auto_v8mpositiontaking_mem_1 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_isauto_v8mpositiontaking_mem_1 ELSE @isauto_v8mpositiontaking_mem_1 END,
-		@auto_v8mpositiontaking_mem_3 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_isauto_v8mpositiontaking_mem_3 ELSE @isauto_v8mpositiontaking_mem_3 END,
-		@auto_v8mpositiontaking_mem_20 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_isauto_v8mpositiontaking_mem_20 ELSE @isauto_v8mpositiontaking_mem_20 END,
+		@auto_v8mpositiontaking_mem_1 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_auto_v8mpositiontaking_mem_1 ELSE @auto_v8mpositiontaking_mem_1 END,
+		@auto_v8mpositiontaking_mem_3 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_auto_v8mpositiontaking_mem_3 ELSE @auto_v8mpositiontaking_mem_3 END,
+		@auto_v8mpositiontaking_mem_20 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv8 = 0 THEN @old_auto_v8mpositiontaking_mem_20 ELSE @auto_v8mpositiontaking_mem_20 END,
 				
 		@v10mpositiontaking_1 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv10 = 0 THEN @old_v10mpositiontaking_1 ELSE @v10mpositiontaking_1 END,
 		@v10mpositiontaking_2 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv10 = 0 THEN @old_v10mpositiontaking_2 ELSE @v10mpositiontaking_2 END,
