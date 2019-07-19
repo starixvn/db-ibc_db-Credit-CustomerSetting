@@ -49,7 +49,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @SuperId INT, @MasterId INT, @AgentId INT
+	DECLARE @SuperId INT, @MasterId INT, @AgentId INT, @IsEditablePT BIT	
 	DECLARE @ErrType XML, @_PTSetting XML  
 	DECLARE @ErrorTbl TABLE (SportType SMALLINT, BetType SMALLINT, IsLive BIT, ErrCode INT)
 
@@ -57,11 +57,13 @@ BEGIN
 
 	IF @RoleID <> 4	
 		SELECT @SuperId = srecommend, @MasterId = mrecommend, @AgentId = recommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID
-	
+		
 	/********************************************* Position Taking: SettingType = 1 ***********************************/
 	SELECT t.* INTO #SportBettypeFilter1
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID,1, @IsTest) t
 	
+	SELECT @IsEditablePT = IsEditablePT FROM f_CS_GetEditablePTDate(@ProductID)
+
 	SELECT pt.* INTO #NewPT
 	FROM dbo.f_CS_PTParse(@_PTSetting) pt
 		INNER JOIN #SportBettypeFilter1 ft ON pt.SportType = ft.SportType AND pt.BetType = ft.BetType AND pt.IsLive = ft.IsLive
@@ -136,7 +138,7 @@ BEGIN
 			INNER JOIN dbo.f_CS_GetPT_Agent(@SuperId) spt ON cs.SportType = spt.Sporttype AND cs.BetType = spt.bettype AND cs.IsLive = spt.IsLive
 		WHERE cs.SuperPT < 0 --check s3 >= 0
 			OR cs.SuperPT > spt.MaxPT --check s3 <= l4
-			OR cs.SuperPT > spt.MaxPT2 --check s3 <= l4
+			OR (@IsEditablePT = 1 AND cs.SuperPT > spt.MaxPT2) --check s3 <= l4
 		
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -170,7 +172,7 @@ BEGIN
 			INNER JOIN dbo.f_CS_GetPT_Agent(@SuperId) spt ON cs.SportType = spt.Sporttype AND cs.BetType = spt.bettype AND cs.IsLive = spt.IsLive
 		WHERE cs.MasterPT < 0 OR cs.AgentPT < 0 --check m2 >= 0, a2 >=0
 			OR cs.MasterPT > spt.MaxPT OR cs.AgentPT > spt.MaxPT --check m2 <= l4, a2<=l4
-			OR cs.MasterPT > spt.MaxPT2 OR cs.AgentPT > spt.MaxPT2 --check m2 <= l4, a2<=l4
+			OR (@IsEditablePT = 1 AND (cs.MasterPT > spt.MaxPT2 OR cs.AgentPT > spt.MaxPT2)) --check m2 <= l4, a2<=l4
 		
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -196,19 +198,34 @@ BEGIN
 			RETURN
 		END
 
-		SELECT	ft.SportType, ft.Bettype, ft.IsLive, 
-				CASE	WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) AND (spt.MinPT - mpt.SuperPT) >= (spt.MinPT2 - mpt.SuperPT2) THEN spt.MinPT - mpt.SuperPT 
-						WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) AND (spt.MinPT - mpt.SuperPT) < (spt.MinPT2 - mpt.SuperPT2) THEN spt.MinPT2 - mpt.SuperPT2
-						WHEN (spt.MinPT < mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) THEN spt.MinPT2 - mpt.SuperPT2
-						WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 < mpt.SuperPT2) THEN spt.MinPT - mpt.SuperPT
-						ELSE 0 END AS MinAllowedPT, 				
-				CASE	WHEN (spt.MaxPT >= mpt.SuperPT) AND (spt.MaxPT2 >= mpt.SuperPT2) AND (spt.MaxPT - mpt.SuperPT) <= (spt.MaxPT2 - mpt.SuperPT2) THEN spt.MaxPT - mpt.SuperPT 
-						WHEN (spt.MaxPT >= mpt.SuperPT) AND (spt.MaxPT2 >= mpt.SuperPT2) AND (spt.MaxPT - mpt.SuperPT) > (spt.MaxPT2 - mpt.SuperPT2) THEN spt.MaxPT2 - mpt.SuperPT2
-						ELSE 0 END AS MaxAllowedPT
-		INTO #tmpAllowedPT		 
-		FROM dbo.f_CS_GetPT_Agent (@SuperId) spt 			
-			INNER JOIN dbo.f_CS_GetPT_Agent (@MasterId) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
-			INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
+		CREATE TABLE #tmpAllowedPT (SportType SMALLINT, Bettype SMALLINT, IsLive BIT, MinAllowedPT TINYINT, MaxAllowedPT TINYINT)
+
+		IF @IsEditablePT = 1 
+		BEGIN
+			INSERT INTO #tmpAllowedPT (SportType, Bettype, IsLive, MinAllowedPT, MaxAllowedPT)
+			SELECT	ft.SportType, ft.Bettype, ft.IsLive, 
+					CASE	WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) AND (spt.MinPT - mpt.SuperPT) >= (spt.MinPT2 - mpt.SuperPT2) THEN spt.MinPT - mpt.SuperPT 
+							WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) AND (spt.MinPT - mpt.SuperPT) < (spt.MinPT2 - mpt.SuperPT2) THEN spt.MinPT2 - mpt.SuperPT2
+							WHEN (spt.MinPT < mpt.SuperPT) AND (spt.MinPT2 >= mpt.SuperPT2) THEN spt.MinPT2 - mpt.SuperPT2
+							WHEN (spt.MinPT >= mpt.SuperPT) AND (spt.MinPT2 < mpt.SuperPT2) THEN spt.MinPT - mpt.SuperPT
+							ELSE 0 END AS MinAllowedPT, 				
+					CASE	WHEN (spt.MaxPT >= mpt.SuperPT) AND (spt.MaxPT2 >= mpt.SuperPT2) AND (spt.MaxPT - mpt.SuperPT) <= (spt.MaxPT2 - mpt.SuperPT2) THEN spt.MaxPT - mpt.SuperPT 
+							WHEN (spt.MaxPT >= mpt.SuperPT) AND (spt.MaxPT2 >= mpt.SuperPT2) AND (spt.MaxPT - mpt.SuperPT) > (spt.MaxPT2 - mpt.SuperPT2) THEN spt.MaxPT2 - mpt.SuperPT2
+							ELSE 0 END AS MaxAllowedPT
+			FROM dbo.f_CS_GetPT_Agent (@SuperId) spt 			
+				INNER JOIN dbo.f_CS_GetPT_Agent (@MasterId) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
+				INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
+		END
+		ELSE
+		BEGIN
+			INSERT INTO #tmpAllowedPT (SportType, Bettype, IsLive, MinAllowedPT, MaxAllowedPT)
+			SELECT	ft.SportType, ft.Bettype, ft.IsLive, 
+					CASE	WHEN (spt.MinPT >= mpt.SuperPT) THEN spt.MinPT - mpt.SuperPT ELSE 0 END AS MinAllowedPT, 				
+					CASE	WHEN (spt.MaxPT >= mpt.SuperPT) THEN spt.MaxPT - mpt.SuperPT ELSE 0 END AS MaxAllowedPT
+			FROM dbo.f_CS_GetPT_Agent (@SuperId) spt 			
+				INNER JOIN dbo.f_CS_GetPT_Agent (@MasterId) mpt ON spt.SportType = mpt.SportType AND spt.BetType = mpt.BetType AND spt.IsLive = mpt.IsLive
+				INNER JOIN #SportBettypeFilter1 ft ON spt.SportType = ft.SportType AND spt.BetType = ft.BetType AND spt.IsLive = ft.IsLive
+		END
 
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, 
