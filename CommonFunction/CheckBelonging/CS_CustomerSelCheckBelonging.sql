@@ -18,7 +18,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @SessionRoleID TINYINT, @IsAllDownline BIT
+	DECLARE @SessionRoleID TINYINT, @IsAllDownline BIT, @UplineId INT
 
 	SELECT	@SessionRoleID = roleid
 	FROM custinfo WITH(NOLOCK)
@@ -26,13 +26,17 @@ BEGIN
 
 	IF ISNULL(@sessionRoleid ,0) = 0 RETURN
 
+	SELECT @UplineId = CASE WHEN @SessionRoleID = 4 THEN mrecommend WHEN @SessionRoleID = 3 THEN recommend ELSE custid END
+	FROM dbo.custInfo WITH (NOLOCK)
+	WHERE custid = @custid
+
 	if @SubAccountID <> 0
 	BEGIN
 		SELECT @IsAllDownline = IsAllDownline
 		FROM dbo.custSub WITH(NOLOCK) 
 		WHERE subaccID = @SubAccountID
 
-		IF NOT EXISTS (SELECT 1 FROM dbo.CS_SubAccManagement WITH (NOLOCK) WHERE SubAccId = @SubAccountID AND DownlineId = @custid) AND ISNULL(@IsAllDownline,0) = 0
+		IF NOT EXISTS (SELECT 1 FROM dbo.CS_SubAccManagement WITH (NOLOCK) WHERE SubAccId = @SubAccountID AND DownlineId = @UplineId) AND ISNULL(@IsAllDownline,0) = 0
 			RETURN
 	END
 
