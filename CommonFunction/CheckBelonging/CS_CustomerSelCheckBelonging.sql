@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB, DBAGE-bodb02" executers="bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[CS_CustomerSelCheckBelonging]
+ALTER PROCEDURE CS_CustomerSelCheckBelonging
 	@SessionCustID INT, --uplineID	
 	@custid INT = NULL,
 	@SubAccountID INT = 0,
@@ -45,6 +45,5 @@ BEGIN
 			OR @SessionRoleID >= 5)
 
 	SELECT @roleid = ISNULL(@roleid, 0)
-
 END
 GO
