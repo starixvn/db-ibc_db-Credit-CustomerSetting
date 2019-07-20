@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CustDB, DBAGE-bodb02" executers="bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[CS_CustomerSelCheckBelonging]
 	@SessionCustID INT, --uplineID	
-	@custid INT,
+	@custid INT = NULL,
 	@SubAccountID INT = 0,
 	@username VARCHAR(30) = '' OUTPUT,
 	@roleid TINYINT = 0 OUTPUT --0: not belonged to
@@ -13,7 +13,7 @@ AS
 	Original: Age_CustomerSelCheckBelonging
 	
 	Revisions:
-		- 20190715@Elodie: initial SP [Redmine: #116825]
+		- 20190715@Elodie: Initial SP [Redmine: #116825]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -47,3 +47,4 @@ BEGIN
 	SELECT @roleid = ISNULL(@roleid, 0)
 
 END
+GO
