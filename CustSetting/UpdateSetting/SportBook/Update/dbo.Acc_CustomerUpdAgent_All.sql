@@ -13,7 +13,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@groupd decimal(9,8),
 	@discountcs decimal(9,8),
 	@discount1x2 decimal(9,8)=0,	
-	@discountnumber decimal(9,8), 
+	@discountnumber decimal(9,8)=0 , 
 	@discountMyanmarOdds DECIMAL(9,8)=0, -- MyanmarOdds
 	@closed bit,	
 	@disCasino bit = 0,	
@@ -479,6 +479,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181107@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
+	- 20190722@Eden: set default value for @discountnumber = 0 [redmine: #105955]
 Param's Explanation:
 • @ErrCode:
     = 0: Update Agent successfully.
