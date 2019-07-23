@@ -41,7 +41,10 @@ BEGIN
 		WHERE subaccID = @SubAccountID
 
 		IF NOT EXISTS (SELECT 1 FROM dbo.CS_SubAccManagement WITH (NOLOCK) WHERE SubAccId = @SubAccountID AND DownlineId = @UplineId) AND ISNULL(@IsAllDownline,0) = 0
+		BEGIN
+			SELECT @custid = 0, @roleid = 0
 			RETURN
+		END
 	END
 
 	SELECT	@roleid = roleid, @username = username		
