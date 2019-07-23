@@ -1,8 +1,8 @@
 
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 
-ALTER PROCEDURE [dbo].[Acc_CustRealMultiplierByUsername_Sel]
-	@Username NVARCHAR(50)
+ALTER PROCEDURE [dbo].[Acc_CustRealMultiplier_Sel]
+	@CustID INT
 	, @SportType INT
 	, @ErrCode TINYINT OUT
 	, @ErrMsg NVARCHAR(200) OUT
@@ -17,7 +17,7 @@ AS
   
 */ 
 BEGIN
-	DECLARE @CustID INT
+	DECLARE @UserName VARCHAR(100)
 	DECLARE @ActualRate FLOAT, @Currency NVARCHAR(50)
 
 	CREATE TABLE #VRLineCustID (CustID INT, RoleID TINYINT)
@@ -28,18 +28,18 @@ BEGIN
 						, FollowingLevelID INT
 					)
 
-	SELECT @CustID = CustID
+	SELECT @Username = username
 			, @ActualRate = e.actualrate
 			, @Currency = e.currency
 	FROM Customer c(NOLOCK)
 		INNER JOIN exchange e (NOLOCK) ON  e.exchangeid = c.currency
-	WHERE username=@Username
+	WHERE CustID = @CustID 
 		AND roleid IN (1,2,3,4)	
 
-	IF @CustID IS NULL
+	IF @Username IS NULL
 	BEGIN
 		SELECT @ErrCode = 1
-		SELECT @ErrMsg = 'This username is not valid.'
+		SELECT @ErrMsg = 'This account is not valid.'
 		RETURN
 	END
 
@@ -116,7 +116,7 @@ BEGIN
 	) as tmp
 	WHERE RowNo_Live=1 OR RowNo_NonLive=1
 
-	SELECT @Currency Currency, @ActualRate ActualRate
+	SELECT @Username Username, @Currency Currency, @ActualRate ActualRate
 
 	;WITH Hierarchy AS (
 		SELECT h.LevelID,h.VRLeagueGroupID, h.VRBetTypeGroupID,CASE WHEN h.BetType = -1 THEN NULL ELSE h.BetType END BetType
