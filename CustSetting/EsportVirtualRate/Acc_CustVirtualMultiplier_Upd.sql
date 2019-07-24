@@ -56,22 +56,29 @@ BEGIN
 
 	--Parse input XML
 	IF @VirtualMultiplier <> ''
-	BEGIN				
-		EXEC sp_xml_preparedocument @DocHandler OUTPUT, @virtualmultiplier
+	BEGIN		
+		BEGIN TRY		
+			EXEC sp_xml_preparedocument @DocHandler OUTPUT, @virtualmultiplier
 
-		INSERT INTO #New_VRCustSetting(CustID, LevelID, ValueIDLive, ValueIDNonLive)
-		SELECT @CustID,
-			Data.LevelID,
-			Data.ValueIDLive,
-			Data.ValueIDNonLive
-		FROM OPENXML (@DocHandler, '/Root/Row',1) 
-		WITH (
-			LevelID	INT,
-			ValueIDLive TINYINT,
-			ValueIDNonLive TINYINT	
-		) AS Data
+			INSERT INTO #New_VRCustSetting(CustID, LevelID, ValueIDLive, ValueIDNonLive)
+			SELECT @CustID,
+				Data.LevelID,
+				Data.ValueIDLive,
+				Data.ValueIDNonLive
+			FROM OPENXML (@DocHandler, '/Root/Row',1) 
+			WITH (
+				LevelID	INT,
+				ValueIDLive TINYINT,
+				ValueIDNonLive TINYINT	
+			) AS Data
 
-		EXEC sp_xml_removedocument @DocHandler
+			EXEC sp_xml_removedocument @DocHandler
+		END TRY
+		BEGIN CATCH
+			SELECT @ErrMsg = N'Invalid XML format'
+				, @ErrCode = 3  
+			RETURN  
+		END CATCH
 	END	
 
 	CREATE UNIQUE CLUSTERED INDEX PK_LevelID ON #New_VRCustSetting(CustID, LevelID)
@@ -145,11 +152,11 @@ BEGIN
 	--Prepare data to write logs - Old data
 	;WITH VR_Hierachy AS (
 	   SELECT LevelID SrcLevelID, LevelID, ParentLevelID, 1 LayerNo
-	   FROM VRSettingHierarchy h
+	   FROM VRSettingHierarchy h (NOLOCK)
 	   WHERE SportType = @SportType 
 	   UNION ALL
 	   SELECT p.SrcLevelID, c.LevelID, c.ParentLevelID, p.LayerNo + 1  LayerNo
-	   FROM VRSettingHierarchy c
+	   FROM VRSettingHierarchy c (NOLOCK)
 		 INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion
 	)
 	INSERT INTO #Log(IsNew, LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive,
@@ -178,11 +185,11 @@ BEGIN
 	--Prepare data to write logs - New data
 	;WITH VR_Hierachy AS (
 	   SELECT LevelID SrcLevelID, LevelID, ParentLevelID, 1 LayerNo
-	   FROM VRSettingHierarchy h
+	   FROM VRSettingHierarchy h (NOLOCK)
 	   WHERE SportType = @SportType 
 	   UNION ALL
 	   SELECT p.SrcLevelID, c.LevelID, c.ParentLevelID, p.LayerNo + 1  LayerNo
-	   FROM VRSettingHierarchy c
+	   FROM VRSettingHierarchy c (NOLOCK)
 		 INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion
 	)
 	INSERT INTO #Log(IsNew, LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive,

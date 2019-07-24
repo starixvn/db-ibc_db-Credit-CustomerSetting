@@ -44,7 +44,7 @@ BEGIN
 	IF NOT EXISTS(
 		SELECT 1 
 		FROM [dbo].[VRSettingHierarchy] h (NOLOCK) 
-			INNER JOIN [dbo].[VRCustSetting] vr ON vr.CustID = 0 AND vr.[LevelID] = h.[LevelID]
+			INNER JOIN [dbo].[VRCustSetting] vr (NOLOCK) ON vr.CustID = 0 AND vr.[LevelID] = h.[LevelID]
 		WHERE h.[SportType] = @SportType
 	)
 	BEGIN
@@ -77,14 +77,14 @@ BEGIN
 	, h.LevelID
 	,ISNULL(ValueIDLIVE,0) ValueIDLIVE, vlive.Value ValueLIVE
 	,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueNonLIVE
-	FROM VRSettingHierarchy h 
-		LEFT JOIN VRLeagueGroup lg ON h.VRLeagueGroupID = lg.GroupID
-		LEFT JOIN VRBettypeGroup bg ON h.VRBetTypeGroupID = bg.GroupID
+	FROM VRSettingHierarchy h (NOLOCK)
+		LEFT JOIN VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
+		LEFT JOIN VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
 		LEFT JOIN VRCustSetting vr (NOLOCK) 
 			ON vr.CustID = @CustID
 				AND vr.LevelID = h.LevelID
-	LEFT JOIN VRValueMapping vlive ON vr.ValueIDLIVE = vlive.ValueID
-	LEFT JOIN VRValueMapping vnonlive ON vr.ValueIDNonLIVE = vnonlive.ValueID
+	LEFT JOIN VRValueMapping vlive (NOLOCK) ON vr.ValueIDLIVE = vlive.ValueID
+	LEFT JOIN VRValueMapping vnonlive (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
 	WHERE h.SportType = @SportType
 	ORDER BY h.SortOrder
 END
