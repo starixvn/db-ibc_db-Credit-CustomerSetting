@@ -153,9 +153,9 @@ BEGIN
 		, CASE 
 				WHEN vrnl.FollowingCustID = 0 THEN 'Global'
 				WHEN vrnl.FollowingCustID = @CustID THEN NULL
-				WHEN cl.roleid = 4 THEN 'Super'
-				WHEN cl.roleid = 3 THEN 'Master'
-				WHEN cl.roleid = 2 THEN 'Agent'
+				WHEN cnl.roleid = 4 THEN 'Super'
+				WHEN cnl.roleid = 3 THEN 'Master'
+				WHEN cnl.roleid = 2 THEN 'Agent'
 			END NonLive_FollowingRole
 		, hnl.BetType NonLive_FollowingBetTypeID
 		, hnl.VRBetTypeGroupName NonLive_FollowingBettypeGroup
