@@ -46,7 +46,7 @@ BEGIN
 	IF NOT EXISTS(
 		SELECT 1 
 		FROM [dbo].[VRSettingHierarchy] h (NOLOCK) 
-			INNER JOIN [dbo].[VRCustSetting] vr ON vr.CustID = 0 AND vr.[LevelID] = h.[LevelID]
+			INNER JOIN [dbo].[VRCustSetting] vr (NOLOCK) ON vr.CustID = 0 AND vr.[LevelID] = h.[LevelID]
 		WHERE h.[SportType] = @SportType
 	)
 	BEGIN
@@ -86,11 +86,11 @@ BEGIN
 
 	;WITH VR_Hierachy AS (
 	   SELECT LevelID SrcLevelID, LevelID, ParentLevelID, 1 LayerNo
-	   FROM VRSettingHierarchy h
+	   FROM VRSettingHierarchy h (NOLOCK)
 	   WHERE SportType = @SportType 
 	   UNION ALL
 	   SELECT p.SrcLevelID, c.LevelID, c.ParentLevelID, p.LayerNo + 1  LayerNo
-	   FROM VRSettingHierarchy c
+	   FROM VRSettingHierarchy c (NOLOCK)
 		 INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion
 	)
 	INSERT INTO #ResultData(LevelID, ValueIDLive, ValueIDNonLive, FollowingCustID, FollowingValueIDLive, FollowingValueIDNonLive,
@@ -105,7 +105,7 @@ BEGIN
 			, vr.ValueIDLive FollowingValueIDLive, vr.ValueIDNonLive FollowingValueIDNonLive
 			, ROW_NUMBER() OVER(PARTITION BY h.SrcLevelID ORDER BY CASE WHEN ISNULL(vr.ValueIDLive, 0) = 0 THEN 2 ELSE 1 END, RoleID, LayerNo) RowNo_Live
 			, ROW_NUMBER() OVER(PARTITION BY h.SrcLevelID ORDER BY CASE WHEN ISNULL(vr.ValueIDNonLive,0) = 0 THEN 2 ELSE 1 END, RoleID, LayerNo) RowNo_NonLive
-		FROM VR_Hierachy h
+		FROM VR_Hierachy h (NOLOCK)
 		CROSS JOIN #VRLineCustID c
 		LEFT JOIN #VRCustSetting vrc (NOLOCK) 
 			ON vrc.LevelID = h.SrcLevelID
