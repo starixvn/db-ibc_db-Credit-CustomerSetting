@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190724@Elodie: Apply default value for PT [Redmine:#117459]
+		
 	Param's Explanation:
 		• @RoleId:
 			= 4: Create super 
