@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLOG-bodb_CustomerLog,DBCUST-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE Acc_CustVirtualMultiplier_ViewLog 
 	@Username NVARCHAR(100)
 	, @SportType INT
