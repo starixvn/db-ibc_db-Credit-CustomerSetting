@@ -59,7 +59,8 @@ AS
 	Revisions:
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190527@Elodie: New account status [Redmine:#113198]
-		
+		- 20190715@Elodie: Sub account management [Redmine:#116825] 
+
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Create customer successfully.
