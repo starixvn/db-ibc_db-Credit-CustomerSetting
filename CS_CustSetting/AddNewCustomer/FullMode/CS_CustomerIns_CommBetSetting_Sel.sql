@@ -47,9 +47,10 @@ BEGIN
 			0 AS MinComm, 
 			CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS MaxComm,
 			CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END AS Comm,
-			0 AS MinMaxBet, 0 AS MaxBet, 0 AS MaxPerEvent
+			0 AS MinMaxBet, gb.MaxBet AS MaxBet, gb.MaxBet AS MaxMaxBet, gb.MaxPerEvent AS MaxPerEvent, gb.MaxPerEvent AS MaxMaxPerEvent
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter2 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
+			LEFT JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = ft.SportType AND gb.BetType = ft.Bettype AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive
 	END
 	ELSE IF @RoleId = 3
@@ -60,6 +61,7 @@ BEGIN
 			0 AS MinMaxPerEvent, bs.MaxPerEvent AS MaxMaxPerEvent, bs.MaxPerEvent
 		FROM dbo.f_CS_GetDiscount_Agent (@CustID) sc			
 			RIGHT JOIN dbo.CS_CustBetSetting_Agent bs WITH (NOLOCK) ON bs.SportType = sc.SportType AND bs.BetType = sc.BetType AND bs.IsLive = sc.IsLive
+			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = ft.SportType AND gb.BetType = ft.Bettype AND gb.IsLive = ft.IsLive AND gb.Currency = @Currency
 			INNER JOIN #SportBettypeFilter2 ft ON bs.SportType = ft.SportType AND bs.BetType = ft.BetType AND bs.IsLive = ft.IsLive
 			LEFT JOIN dbo.CS_GroupConfig gc ON gc.SportType = ft.SportType AND gc.BetType = ft.BetType AND gc.IsLive = ft.IsLive  AND gc.GroupId = sc.GroupId
 		WHERE bs.CustId = @CustID
