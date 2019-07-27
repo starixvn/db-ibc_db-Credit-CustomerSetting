@@ -21,6 +21,7 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
 		- 20190712@Elodie: Remove currency min bet constrain for Bet Setting [Redmine:#116723]
+		- 20190724@Elodie: Apply global max bet setting constrain [Redmine:#117459]
 
 	Param's Explanation:
 		• @RoleId 
@@ -166,12 +167,15 @@ BEGIN
 					
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT cs.SportType, cs.BetType, cs.IsLive, 
-			CASE	WHEN cs.MaxBet < dl.MaxMaxBetDownline THEN 402
-					WHEN cs.MaxPerEvent < dl.MaxMaxPerEventDownline THEN 403 END
+			CASE	WHEN cs.MaxBet < dl.MaxMaxBetDownline OR cs.MaxBet > gb.MaxBet THEN 402
+					WHEN cs.MaxPerEvent < dl.MaxMaxPerEventDownline OR cs.MaxPerEvent > gb.MaxPerEvent THEN 403 END
 		FROM #NewBetSetting cs
-			INNER JOIN #BetDownlines4 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
+			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = cs.SportType AND gb.BetType = cs.Bettype AND gb.IsLive = cs.IsLive AND gb.Currency = @Currency
+			LEFT JOIN #BetDownlines4 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
 		WHERE cs.MaxBet < dl.MaxMaxBetDownline
 			OR cs.MaxPerEvent < dl.MaxMaxPerEventDownline
+			OR cs.MaxBet > gb.MaxBet
+			OR cs.MaxPerEvent > gb.MaxPerEvent
 
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -238,15 +242,18 @@ BEGIN
 					
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT cs.SportType, cs.BetType, cs.IsLive, 
-			CASE	WHEN cs.MaxBet < ISNULL(dl.MaxMaxBetDownline,0) OR cs.MaxBet > sb.MaxBet THEN 302
-					WHEN cs.MaxPerEvent < ISNULL(dl.MaxMaxPerEventDownline,0) OR cs.MaxPerEvent > sb.MaxPerEvent THEN 303 END
+			CASE	WHEN cs.MaxBet < ISNULL(dl.MaxMaxBetDownline,0) OR cs.MaxBet > sb.MaxBet OR cs.MaxBet > gb.MaxBet THEN 302
+					WHEN cs.MaxPerEvent < ISNULL(dl.MaxMaxPerEventDownline,0) OR cs.MaxPerEvent > sb.MaxPerEvent  OR cs.MaxPerEvent > gb.MaxPerEvent THEN 303 END
 		FROM #NewBetSetting cs			
 			INNER JOIN dbo.CS_CustBetSetting_Agent sb WITH (NOLOCK) ON sb.SportType = cs.SportType AND sb.BetType = cs.BetType AND sb.IsLive = cs.IsLive
+			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = cs.SportType AND gb.BetType = cs.Bettype AND gb.IsLive = cs.IsLive AND gb.Currency = @Currency
 			LEFT JOIN #BetDownlines3 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
 		WHERE sb.CustId = @SuperId AND (cs.MaxBet < dl.MaxMaxBetDownline
 											OR cs.MaxPerEvent < dl.MaxMaxPerEventDownline
 											OR cs.MaxBet > sb.MaxBet
-											OR cs.MaxPerEvent > sb.MaxPerEvent)
+											OR cs.MaxPerEvent > sb.MaxPerEvent
+											OR cs.MaxBet > gb.MaxBet
+											OR cs.MaxPerEvent > gb.MaxPerEvent)
 
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -313,15 +320,18 @@ BEGIN
 					
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT cs.SportType, cs.BetType, cs.IsLive, 
-			CASE	WHEN cs.MaxBet < ISNULL(dl.MaxMaxBetDownline,0) OR cs.MaxBet > mb.MaxBet THEN 202
-					WHEN cs.MaxPerEvent < ISNULL(dl.MaxMaxPerEventDownline,0) OR cs.MaxPerEvent > mb.MaxPerEvent THEN 203 END
+			CASE	WHEN cs.MaxBet < ISNULL(dl.MaxMaxBetDownline,0) OR cs.MaxBet > mb.MaxBet OR cs.MaxBet > gb.MaxBet THEN 202
+					WHEN cs.MaxPerEvent < ISNULL(dl.MaxMaxPerEventDownline,0) OR cs.MaxPerEvent > mb.MaxPerEvent OR cs.MaxPerEvent > gb.MaxPerEvent THEN 203 END
 		FROM #NewBetSetting cs			
 			INNER JOIN dbo.CS_CustBetSetting_Agent mb WITH (NOLOCK) ON mb.SportType = cs.SportType AND mb.BetType = cs.BetType AND mb.IsLive = cs.IsLive
+			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = cs.SportType AND gb.BetType = cs.Bettype AND gb.IsLive = cs.IsLive AND gb.Currency = @Currency
 			LEFT JOIN #BetDownlines2 dl WITH(NOLOCK) ON cs.SportType = dl.Sporttype AND cs.BetType = dl.bettype AND cs.IsLive = dl.IsLive
 		WHERE mb.CustId = @MasterId AND (cs.MaxBet < dl.MaxMaxBetDownline
 											OR cs.MaxPerEvent < dl.MaxMaxPerEventDownline
 											OR cs.MaxBet > mb.MaxBet
-											OR cs.MaxPerEvent > mb.MaxPerEvent)
+											OR cs.MaxPerEvent > mb.MaxPerEvent
+											OR cs.MaxBet > gb.MaxBet
+											OR cs.MaxPerEvent > gb.MaxPerEvent)
 
 		IF @@ROWCOUNT <> 0
 		BEGIN
@@ -379,11 +389,12 @@ BEGIN
 	BEGIN
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT cs.SportType, cs.BetType, cs.IsLive, 
-			CASE	WHEN cs.MaxBet > ab.MaxBet THEN 102
-					WHEN cs.MaxPerEvent > ab.MaxPerEvent THEN 103 END
+			CASE	WHEN cs.MaxBet > ab.MaxBet OR cs.MaxBet > gb.MaxBet THEN 102
+					WHEN cs.MaxPerEvent > ab.MaxPerEvent OR cs.MaxPerEvent > gb.MaxPerEvent THEN 103 END
 		FROM #NewBetSetting cs			
 			INNER JOIN dbo.CS_CustBetSetting_Agent ab WITH (NOLOCK) ON ab.SportType = cs.SportType AND ab.BetType = cs.BetType AND ab.IsLive = cs.IsLive
-		WHERE ab.CustId = @AgentId AND (cs.MaxBet > ab.MaxBet OR cs.MaxPerEvent > ab.MaxPerEvent)
+			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = cs.SportType AND gb.BetType = cs.Bettype AND gb.IsLive = cs.IsLive AND gb.Currency = @Currency
+		WHERE ab.CustId = @AgentId AND (cs.MaxBet > ab.MaxBet OR cs.MaxPerEvent > ab.MaxPerEvent OR cs.MaxBet > gb.MaxBet OR cs.MaxPerEvent > gb.MaxPerEvent)
 
 		IF @@ROWCOUNT <> 0
 		BEGIN

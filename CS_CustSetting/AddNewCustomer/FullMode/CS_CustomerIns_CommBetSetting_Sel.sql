@@ -42,6 +42,11 @@ BEGIN
 	SELECT t.* INTO #SportBettypeFilter2
 	FROM dbo.f_CS_SportBetTypeSettingSelect(@ProductID, 2, @IsTest) t
 	
+	IF @RoleId <> 4
+	BEGIN 
+		SELECT @Currency =  ci.currency FROM dbo.custInfo ci WITH (NOLOCK) WHERE ci.custid = @CustID
+	END
+
 	IF @RoleId = 4
 	BEGIN
 		SELECT ft.SportType, ft.Bettype, ft.IsLive, gc.GroupId, gc.GroupName,

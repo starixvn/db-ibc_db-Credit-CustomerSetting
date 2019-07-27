@@ -159,66 +159,81 @@ BEGIN
 	
 	IF @RoleId <> 4
 	BEGIN		
-		--Check MaxBet < upline's maxbet
-		--Check MaxPerEvent < upline's MaxPerEvent
+		--Check MaxBet < upline's maxbet and MaxBet < global maxbet
+		--Check MaxPerEvent < upline's MaxPerEvent and MaxPerEvent < global MaxPerEvent
 		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
 		SELECT cs.SportType, cs.BetType, cs.IsLive, 
-			CASE	WHEN cs.MaxBet > ubs.MaxBet THEN 402
-					WHEN cs.MaxPerEvent > ubs.MaxPerEvent THEN 403 END
+			CASE	WHEN cs.MaxBet > ubs.MaxBet OR cs.MaxBet > gb.MaxBet THEN 402
+					WHEN cs.MaxPerEvent > ubs.MaxPerEvent OR cs.MaxPerEvent > gb.MaxPerEvent THEN 403 END
 		FROM #NewBetSetting cs
 			INNER JOIN dbo.CS_CustBetSetting_Agent ubs WITH (NOLOCK) ON ubs.SportType = cs.SportType AND ubs.BetType = cs.BetType AND ubs.IsLive = cs.IsLive
+			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = ubs.SportType AND gb.BetType = ubs.Bettype AND gb.IsLive = ubs.IsLive AND gb.Currency = @Currency
 		WHERE ubs.CustId = @CustId
-			AND (cs.MaxBet > ubs.MaxBet OR cs.MaxPerEvent > ubs.MaxPerEvent)
+			AND (cs.MaxBet > ubs.MaxBet OR cs.MaxBet > gb.MaxBet 
+				OR cs.MaxPerEvent > ubs.MaxPerEvent OR cs.MaxPerEvent > gb.MaxPerEvent)
+	END
+	ELSE 
+	BEGIN
+		--Check MaxBet < global maxbet
+		--Check MaxPerEvent < global MaxPerEvent
+		INSERT INTO @ErrorTbl (SportType, BetType, IsLive, ErrCode)
+		SELECT cs.SportType, cs.BetType, cs.IsLive, 
+			CASE	WHEN cs.MaxBet > gb.MaxBet THEN 402
+					WHEN cs.MaxPerEvent > gb.MaxPerEvent THEN 403 END
+		FROM #NewBetSetting cs
+			INNER JOIN dbo.CS_ProductBetSetting gb ON gb.SportType = cs.SportType AND gb.BetType = cs.Bettype AND gb.IsLive = cs.IsLive AND gb.Currency = @Currency
+		WHERE cs.MaxBet > gb.MaxBet OR cs.MaxPerEvent > gb.MaxPerEvent
+	END
 
-		IF @@ROWCOUNT <> 0
+	IF @@ROWCOUNT <> 0
+	BEGIN
+		IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 402)
 		BEGIN
-			IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 402)
-			BEGIN
-				SET @ErrType = (
-						SELECT 10042 AS '@MsgID'
-							, 'Max bet is out of range.' AS '@Msg'
-							, (
-								SELECT tmp.SportType AS '@SportType'
-									, tmp.BetType AS '@BetType'									
-									, tmp.IsLive AS '@IsLive'
-								FROM @ErrorTbl tmp
-								WHERE	ErrCode = 402									
-								FOR XML PATH('Row')
-									, TYPE	
-								)						
-						FOR XML PATH('Root')
-							, TYPE
-						)		
-				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-				SET @MsgType = 71
-				SET @ErrCode = 402
+			SET @ErrType = (
+					SELECT 10042 AS '@MsgID'
+						, 'Max bet is out of range.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'									
+								, tmp.IsLive AS '@IsLive'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 402									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 71
+			SET @ErrCode = 402
 		
-				RETURN
-			END
-			ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 403)
-			BEGIN
-				SET @ErrType = (
-						SELECT 10043 AS '@MsgID'
-							, 'Max bet per match is out of range.' AS '@Msg'
-							, (
-								SELECT tmp.SportType AS '@SportType'
-									, tmp.BetType AS '@BetType'
-									, tmp.IsLive AS '@IsLive'
-								FROM @ErrorTbl tmp
-								WHERE	ErrCode = 403									
-								FOR XML PATH('Row')
-									, TYPE	
-								)						
-						FOR XML PATH('Root')
-							, TYPE
-						)		
-				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
-				SET @MsgType = 71
-				SET @ErrCode = 403
+			RETURN
+		END
+		ELSE IF EXISTS(SELECT 1 FROM @ErrorTbl WHERE ErrCode = 403)
+		BEGIN
+			SET @ErrType = (
+					SELECT 10043 AS '@MsgID'
+						, 'Max bet per match is out of range.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+								, tmp.IsLive AS '@IsLive'
+							FROM @ErrorTbl tmp
+							WHERE	ErrCode = 403									
+							FOR XML PATH('Row')
+								, TYPE	
+							)						
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @ErrType), '" />', '"/"')
+			SET @MsgType = 71
+			SET @ErrCode = 403
 		
-				RETURN
-			END
-		END	
+			RETURN
+		END
+	END	
 	END
 	--End check BetSetting
 
