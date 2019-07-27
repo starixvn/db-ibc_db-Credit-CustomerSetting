@@ -234,8 +234,7 @@ BEGIN
 			RETURN
 		END
 	END	
-	END
-	--End check BetSetting
+	----End check BetSetting
 
 	--Check Comm
 	SELECT cs.* INTO #NewComm
