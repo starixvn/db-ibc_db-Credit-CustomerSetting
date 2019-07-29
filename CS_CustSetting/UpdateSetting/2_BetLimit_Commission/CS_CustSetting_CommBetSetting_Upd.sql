@@ -461,7 +461,7 @@ BEGIN
 	BEGIN
 		SET @xml_Old = (
 						SELECT  @ProductID						AS '@ProductID',
-								dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 								@IP                             AS '@IP',
 								(
 									SELECT  @ProductID														AS '@ProductID'
@@ -480,6 +480,7 @@ BEGIN
 	BEGIN
 		SET @xml_Old = (
 						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.sporttype													AS '@Sport'
@@ -498,6 +499,7 @@ BEGIN
 	BEGIN
 		SET @xml_Old = (
 						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.bettype														AS '@BT'
@@ -516,6 +518,7 @@ BEGIN
 	BEGIN
 		SET @xml_Old = (
 						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.sporttype													AS '@Sport'
@@ -537,7 +540,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 						SELECT  @ProductID						AS '@ProductID',
-								dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 								@IP                             AS '@IP',
 								(
 									SELECT  @ProductID														AS '@ProductID'
@@ -556,6 +559,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.sporttype													AS '@Sport'
@@ -574,6 +578,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.bettype														AS '@BT'
@@ -592,6 +597,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 						SELECT  @ProductID						AS '@ProductID',
+								dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 								@IP                             AS '@IP',
 								(
 									SELECT  cs.sporttype													AS '@Sport'
@@ -632,7 +638,7 @@ BEGIN
 		BEGIN
 			SET @xml_Old = (
 							SELECT  @ProductID						AS '@ProductID',
-									dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  @ProductID														AS '@ProductID'
@@ -654,6 +660,7 @@ BEGIN
 		BEGIN
 			SET @xml_Old = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
@@ -675,6 +682,7 @@ BEGIN
 		BEGIN
 			SET @xml_Old = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.bettype														AS '@BT'
@@ -696,6 +704,7 @@ BEGIN
 		BEGIN
 			SET @xml_Old = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
@@ -720,7 +729,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 							SELECT  @ProductID						AS '@ProductID',
-									dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  @ProductID														AS '@ProductID'
@@ -742,6 +751,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
@@ -763,6 +773,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.bettype														AS '@BT'
@@ -784,6 +795,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
@@ -810,7 +822,7 @@ BEGIN
 		BEGIN
 			SET @xml_Old = (
 							SELECT  @ProductID														AS '@ProductID'
-									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAccName'
+									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAcc'
 									, @IP															AS '@IP'
 									, cs.isLive														AS '@InPlay'
 									, dbo.f_CS_FomatNumber (CAST (cs.Comm AS VARCHAR(50)))			AS '@Comm'
@@ -823,6 +835,7 @@ BEGIN
 		BEGIN
 			SET @xml_Old = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
@@ -840,6 +853,7 @@ BEGIN
 		BEGIN
 			SET @xml_Old = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.bettype														AS '@BT'
@@ -857,6 +871,7 @@ BEGIN
 		BEGIN
 			SET @xml_Old = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
@@ -877,7 +892,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 							SELECT  @ProductID														AS '@ProductID'
-									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAccName'
+									, dbo.f_GetSubUsername(@SubAccID)								AS '@SubAcc'
 									, @IP															AS '@IP'
 									, cs.isLive														AS '@InPlay'
 									, dbo.f_CS_FomatNumber (CAST (ct.Value AS VARCHAR(50)))			AS '@Comm'
@@ -891,6 +906,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
@@ -909,6 +925,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.bettype														AS '@BT'
@@ -927,6 +944,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 							SELECT  @ProductID						AS '@ProductID',
+									dbo.f_GetSubUsername(@SubAccID) AS '@SubAcc',
 									@IP                             AS '@IP',
 									(
 										SELECT  cs.sporttype													AS '@Sport'
