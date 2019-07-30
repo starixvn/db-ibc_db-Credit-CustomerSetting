@@ -165,6 +165,14 @@ BEGIN
 		EXEC sp_xml_removedocument @LogDocHandler
 	END
 
+	SELECT currency
+	FROM bodb02..Exchange e (NOLOCK)
+	WHERE e.exchangeid IN (
+		SELECT currency
+		FROM bodb02..Customer c(NOLOCK)
+		WHERE custid = @CustID
+	)
+
 	SELECT *
 	INTO #Hierarchy
 	FROM 
