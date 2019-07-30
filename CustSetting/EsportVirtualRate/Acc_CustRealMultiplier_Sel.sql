@@ -148,7 +148,7 @@ BEGIN
 		, hl.VRBetTypeGroupName Live_FollowingBettypeGroup
 		, hl.VRLeagueGroupName Live_FollowingLeagueGroup
 		--NonLive
-		, vrnl.FollowingValueIDNonLive NonLive_FollowingLevelID
+		, vrnl.FollowingLevelID NonLive_FollowingLevelID
 		, v2.Value NonLive_FollowingValue
 		, CASE 
 				WHEN vrnl.FollowingCustID = 0 THEN 'Global'
