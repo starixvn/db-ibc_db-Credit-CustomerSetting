@@ -1,14 +1,13 @@
-
---CREATE PROCEDURE Acc_CustVirtualMultiplier_ViewLog 
-DECLARE
-	@Username NVARCHAR(100) = 'member01'
-	, @SportType INT = 43
-	, @IncludingUpline BIT = 1
-	, @StartLogTime DATETIME = '2019-07-28 21:47:42.723'
-	, @EndLogTime DATETIME = '2019-07-28 22:46:35.203'
-	, @ErrCode TINYINT --OUT
-	, @ErrMsg NVARCHAR(200) --OUT
---AS
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+CREATE PROCEDURE Acc_CustVirtualMultiplier_ViewLog 
+	@Username NVARCHAR(100)
+	, @SportType INT
+	, @IncludingUpline BIT
+	, @StartLogTime DATETIME
+	, @EndLogTime DATETIME
+	, @ErrCode TINYINT OUT
+	, @ErrMsg NVARCHAR(200) OUT
+AS
 /*
 	Creator : Dominic
 	Date : 2019-07-25
@@ -20,7 +19,7 @@ DECLARE
 
 	
 */
---BEGIN
+BEGIN
 	DECLARE @CustID INT
 	DECLARE @LogTrackingValue2 VARCHAR(MAX)
 	DECLARE @LogDocHandler INT	
@@ -32,6 +31,7 @@ DECLARE
 							, [TrackingValue2] varchar(max)
 							, [LogTime] DATETIME
 							, [UserID] INT
+							, CurrencyRate FLOAT
 							, IsExec BIT)
 
 	CREATE CLUSTERED INDEX IX_LogID ON #VRCustLog(LogID)
@@ -99,10 +99,9 @@ DECLARE
 		AND SportType = @SportType
 	
 	
+	UPDATE #VRCustLog
+	SET CurrencyRate = CAST(CAST(TrackingValue2 AS XML).value('(/Root/@actualrate)[1]', 'nvarchar(100)') AS FLOAT) 
 
-	--SELECT @LogTrackingValue2 = TrackingValue2
-	--,CAST(CAST(TrackingValue2 AS XML).value('(/Root/@actualrate)[1]', 'nvarchar(max)') AS FLOAT) 
-	--FROM #VRCustLog
 
 	WHILE(1=1)
 	BEGIN
@@ -166,14 +165,30 @@ DECLARE
 		EXEC sp_xml_removedocument @LogDocHandler
 	END
 
+	SELECT *
+	INTO #Hierarchy
+	FROM 
+	OPENQUERY(DBACC,'SELECT h.LevelID,h.VRLeagueGroupID, h.VRBetTypeGroupID,CASE WHEN h.BetType = -1 THEN NULL ELSE h.BetType END BetType
+			, bg.GroupName VRBetTypeGroupName
+			, lg.GroupName VRLeagueGroupName
+			, h.SportType
+			, SortOrder
+		FROM bodb02.dbo.VRSettingHierarchy h (NOLOCK)
+		LEFT JOIN bodb02.dbo.VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
+		LEFT JOIN bodb02.dbo.VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID')
 
-	SELECT m.LogID, m.LogTime UpdateTime, u.username UpdateBy
+	SELECT m.LogID
+		, c.username
+		, m.CurrencyRate
+		, m.LogTime UpdatedTime, u.username UpdatedBy
 		, @SportType SportType
-		, d.LevelID
 		, d.VRLeagueGroupID
 		, d.VRBetTypeGroupID
 		, d.BetType
+		, d.LevelID
 		, d.IsNew
+		--Live
+		, d.FollowingLevelIDLive Live_FollowingLevelID
 		, d.FollowingValueLive Live_FollowingValue
 		, CASE 
 				WHEN d.FollowingCustIDLive = 0 THEN 'Global'
@@ -182,16 +197,36 @@ DECLARE
 				WHEN cl.roleid = 3 THEN 'Master'
 				WHEN cl.roleid = 2 THEN 'Agent'
 			END Live_FollowingRole
+		, hl.BetType Live_FollowingBetTypeID
+		, hl.VRBetTypeGroupName Live_FollowingBettypeGroup
+		, hl.VRLeagueGroupName Live_FollowingLeagueGroup
+		--NonLive
+		, d.FollowingCustIDNonLive NonLive_FollowingLevelID
+		, d.FollowingValueNonLive NonLive_FollowingValue
+		, CASE 
+				WHEN d.FollowingCustIDNonLive = 0 THEN 'Global'
+				WHEN d.FollowingCustIDNonLive = @CustID THEN NULL
+				WHEN cnl.roleid = 4 THEN 'Super'
+				WHEN cnl.roleid = 3 THEN 'Master'
+				WHEN cnl.roleid = 2 THEN 'Agent'
+			END NonLive_FollowingRole
+		, hnl.BetType NonLive_FollowingBetTypeID
+		, hnl.VRBetTypeGroupName NonLive_FollowingBettypeGroup
+		, hnl.VRLeagueGroupName NonLive_FollowingLeagueGroup
 	FROM #VRCustLog m
 		INNER JOIN #Data d ON m.LogID = d.LogID
 		INNER JOIN bodb02..Customer u (NOLOCK) ON u.custid = m.UserID
+		INNER JOIN bodb02..Customer c (NOLOCK) ON c.custid = m.CustID
 		LEFT JOIN bodb02..Customer cl (NOLOCK) ON cl.custid = d.FollowingCustIDLive
 		LEFT JOIN bodb02..Customer cnl (NOLOCK) ON cnl.custid = d.FollowingValueNonLive
+		INNER JOIN #Hierarchy hl (NOLOCK) ON hl.LevelID = d.FollowingLevelIDLive
+		INNER JOIN #Hierarchy hnl (NOLOCK) ON hnl.LevelID = d.FollowingLevelIDNonLive
 	ORDER BY m.LogID, d.SortOrder, IsNew
 
 
 	DROP TABLE #VRCustLog
 	DROP TABLE #VRLineCustID
 	DROP TABLE #Data
+	DROP TABLE #Hierarchy
 	
---END
+END
