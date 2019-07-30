@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+
 --CREATE PROCEDURE Acc_CustVirtualMultiplier_ViewLog 
 DECLARE
 	@Username NVARCHAR(100) = 'member01'
