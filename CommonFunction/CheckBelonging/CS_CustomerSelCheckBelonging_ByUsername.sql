@@ -57,7 +57,7 @@ BEGIN
 			OR @SessionRoleID >= 5)
 	
 	IF @@ROWCOUNT = 0
-		SELECT @custid = 0
+		SELECT @custid = 0, @roleid = 0
 
 	SELECT @roleid = ISNULL(@roleid, 0)
 
