@@ -255,7 +255,7 @@ BEGIN
 		LEFT JOIN bodb02..Customer cnl (NOLOCK) ON cnl.custid = d.FollowingValueNonLive
 		INNER JOIN #Hierarchy hl (NOLOCK) ON hl.LevelID = d.FollowingLevelIDLive
 		INNER JOIN #Hierarchy hnl (NOLOCK) ON hnl.LevelID = d.FollowingLevelIDNonLive
-	ORDER BY m.LogID, d.SortOrder, IsNew
+	ORDER BY m.LogID DESC, d.SortOrder, IsNew
 
 
 	DROP TABLE #VRCustLog
