@@ -1,5 +1,5 @@
 /*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE Acc_CustVirtualMultiplier_ViewLog 
+ALTER PROCEDURE Acc_CustVirtualMultiplier_ViewLog 
 	@Username NVARCHAR(100)
 	, @SportType INT
 	, @IncludingUpline BIT
@@ -38,7 +38,7 @@ BEGIN
 	
 	CREATE TABLE #Data (
 			LogID BIGINT
-			, IsNew BIT --IsNew
+			, IsNew TINYINT --IsNew
 			, VRLeagueGroupID SMALLINT --VRLeagueGroupID
 			, VRBetTypeGroupID SMALLINT --VRBetTypeGroupID
 			, BetType SMALLINT --BetType
@@ -131,8 +131,8 @@ BEGIN
 						, FollowingLevelIDNonLive
 						, SortOrder
 			)
-		SELECT @LogID LogID
-				, tmp.IsNew
+		SELECT	@LogID LogID
+				, MIN(tmp.IsNew) IsNew
 				, tmp.VRLeagueGroupID
 				, tmp.VRBetTypeGroupID
 				, tmp.BetType
@@ -143,10 +143,10 @@ BEGIN
 				, tmp.FollowingValueNonLive
 				, tmp.FollowingCustIDNonLive
 				, tmp.FollowingLevelIDNonLive
-				, tmp.SortOrder
+				, MIN(tmp.SortOrder)
 		FROM OPENXML (@LogDocHandler, '/Root/r',1) 
 		WITH (
-			IsNew BIT --IsNew
+			IsNew TINYINT --IsNew
 			, VRLeagueGroupID SMALLINT --VRLeagueGroupID
 			, VRBetTypeGroupID SMALLINT --VRBetTypeGroupID
 			, BetType SMALLINT --BetType
@@ -161,6 +161,16 @@ BEGIN
 			, FollowingLevelIDNonLive INT --FollowingLevelID
 			, SortOrder SMALLINT
 		) AS tmp
+		GROUP BY tmp.VRLeagueGroupID
+				, tmp.VRBetTypeGroupID
+				, tmp.BetType
+				, tmp.LevelID
+				, tmp.FollowingValueLive
+				, tmp.FollowingCustIDLive
+				, tmp.FollowingLevelIDLive
+				, tmp.FollowingValueNonLive
+				, tmp.FollowingCustIDNonLive
+				, tmp.FollowingLevelIDNonLive
 
 		EXEC sp_xml_removedocument @LogDocHandler
 	END
