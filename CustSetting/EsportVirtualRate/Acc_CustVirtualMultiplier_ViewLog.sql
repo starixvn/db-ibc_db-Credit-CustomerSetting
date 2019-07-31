@@ -95,7 +95,7 @@ BEGIN
 	SELECT LogID, CustID, dbo.DecompressString(TrackingValue2), 0, UserID, LogTime
 	FROM VRCustLog (NOLOCK)
 	WHERE CustID IN (SELECT CustID FROM #VRLineCustID) 
-		AND LogTime BETWEEN @StartLogTime AND @EndLogTime
+		AND LogTime >= @StartLogTime AND LogTime < DATEADD(DAY,1,@EndLogTime)
 		AND SportType = @SportType
 	
 	
