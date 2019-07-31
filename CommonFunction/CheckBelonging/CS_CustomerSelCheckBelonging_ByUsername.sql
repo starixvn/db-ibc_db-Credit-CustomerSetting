@@ -55,6 +55,9 @@ BEGIN
 		(c.srecommend = @SessionCustID or c.mrecommend = @SessionCustID
 			OR c.recommend = @SessionCustID or c.custid = @SessionCustID
 			OR @SessionRoleID >= 5)
+	
+	IF @@ROWCOUNT = 0
+		SELECT @custid = 0
 
 	SELECT @roleid = ISNULL(@roleid, 0)
 
