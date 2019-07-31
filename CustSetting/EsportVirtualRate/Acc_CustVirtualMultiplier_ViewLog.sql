@@ -1,5 +1,5 @@
 /*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE Acc_CustVirtualMultiplier_ViewLog_xtest 
+ALTER PROCEDURE Acc_CustVirtualMultiplier_ViewLog 
 	@Username NVARCHAR(100)
 	, @SportType INT
 	, @IncludingUpline BIT
