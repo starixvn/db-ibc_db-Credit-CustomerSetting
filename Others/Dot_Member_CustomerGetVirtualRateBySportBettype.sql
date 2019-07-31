@@ -47,13 +47,6 @@ BEGIN
 		IF @VRLeagueGroupID IS NULL
 			SELECT @VRLeagueGroupID = 5 --Other Games
 
-		--If Original Bettype is not configured for VR, then follow 'Not Available' value (-1)
-		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy WITH (NOLOCK)
-				WHERE VRLeagueGroupID=@VRLeagueGroupID 
-				AND SportType=@SportType
-				AND BetType = @Bettype)
-			SELECT @Bettype = -1 --League Group Level
-
 		--If VRLeagueGroupID and Bettype are both not configured for VR, then follow E-sports setting level
 		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy WITH (NOLOCK)
 				WHERE VRLeagueGroupID=@VRLeagueGroupID 
