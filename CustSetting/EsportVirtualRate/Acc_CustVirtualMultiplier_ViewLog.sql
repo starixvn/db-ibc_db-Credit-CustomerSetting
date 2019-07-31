@@ -1,5 +1,5 @@
 /*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE Acc_CustVirtualMultiplier_ViewLog 
+ALTER PROCEDURE Acc_CustVirtualMultiplier_ViewLog_xtest 
 	@Username NVARCHAR(100)
 	, @SportType INT
 	, @IncludingUpline BIT
@@ -211,8 +211,8 @@ BEGIN
 	CREATE UNIQUE CLUSTERED INDEX PK_LevelID ON #Hierarchy(LevelID)
 
 	SELECT m.LogID
-		, c.username
-		, m.CurrencyRate
+		, CASE WHEN m.custid = 0 THEN 'Global Setting' ELSE c.username END username
+		, CASE WHEN m.custid = 0 THEN NULL ELSE m.CurrencyRate END CurrencyRate
 		, m.LogTime UpdatedTime, u.username UpdatedBy
 		, @SportType SportType
 		, h.VRLeagueGroupID LeagueGroupID , h.VRLeagueGroupName LeagueGroup
@@ -249,8 +249,8 @@ BEGIN
 	FROM #VRCustLog m
 		INNER JOIN #Data d ON m.LogID = d.LogID
 		INNER JOIN #Hierarchy h ON h.LevelID = d.LevelID
-		INNER JOIN bodb02..Customer u (NOLOCK) ON u.custid = m.UserID
-		INNER JOIN bodb02..Customer c (NOLOCK) ON c.custid = m.CustID
+		LEFT JOIN bodb02..Customer u (NOLOCK) ON u.custid = m.UserID
+		LEFT JOIN bodb02..Customer c (NOLOCK) ON c.custid = m.CustID
 		LEFT JOIN bodb02..Customer cl (NOLOCK) ON cl.custid = d.FollowingCustIDLive
 		LEFT JOIN bodb02..Customer cnl (NOLOCK) ON cnl.custid = d.FollowingValueNonLive
 		INNER JOIN #Hierarchy hl (NOLOCK) ON hl.LevelID = d.FollowingLevelIDLive
