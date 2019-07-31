@@ -184,24 +184,39 @@ BEGIN
 	)
 
 	SELECT *
-	INTO #Hierarchy
-	FROM 
-	OPENQUERY(DBACC,'SELECT h.LevelID,h.VRLeagueGroupID, h.VRBetTypeGroupID,CASE WHEN h.BetType = -1 THEN NULL ELSE h.BetType END BetType
+	INTO #VRLeagueGroup
+	FROM
+	OPENQUERY(DBACC,'SELECT * FROM bodb02.dbo.VRLeagueGroup lg (NOLOCK)') 
+
+	SELECT *
+	INTO #VRBettypeGroup
+	FROM
+	OPENQUERY(DBACC,'SELECT * FROM bodb02.dbo.VRBettypeGroup bg (NOLOCK)') 
+
+	
+
+
+	SELECT h.LevelID,h.VRLeagueGroupID, h.VRBetTypeGroupID,CASE WHEN h.BetType = -1 THEN NULL ELSE h.BetType END BetType
 			, bg.GroupName VRBetTypeGroupName
 			, lg.GroupName VRLeagueGroupName
-			, h.SportType
 			, SortOrder
-		FROM bodb02.dbo.VRSettingHierarchy h (NOLOCK)
-		LEFT JOIN bodb02.dbo.VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
-		LEFT JOIN bodb02.dbo.VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID')
+	INTO #Hierarchy
+	FROM (
+		SELECT DISTINCT VRLeagueGroupID, VRBetTypeGroupID, LevelID, CASE WHEN BetType = -1 THEN NULL ELSE BetType END BetType, SortOrder 
+		FROM #Data 
+	) as h
+	LEFT JOIN #VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
+	LEFT JOIN #VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
+
+	CREATE UNIQUE CLUSTERED INDEX PK_LevelID ON #Hierarchy(LevelID)
 
 	SELECT m.LogID
 		, c.username
 		, m.CurrencyRate
 		, m.LogTime UpdatedTime, u.username UpdatedBy
 		, @SportType SportType
-		, d.VRLeagueGroupID
-		, d.VRBetTypeGroupID
+		, h.VRLeagueGroupID LeagueGroupID , h.VRLeagueGroupName LeagueGroup
+		, h.VRBetTypeGroupID BettypeGroupID, h.VRBetTypeGroupName BettypeGroup
 		, d.BetType
 		, d.LevelID
 		, d.IsNew
@@ -233,6 +248,7 @@ BEGIN
 		, hnl.VRLeagueGroupName NonLive_FollowingLeagueGroup
 	FROM #VRCustLog m
 		INNER JOIN #Data d ON m.LogID = d.LogID
+		INNER JOIN #Hierarchy h ON h.LevelID = d.LevelID
 		INNER JOIN bodb02..Customer u (NOLOCK) ON u.custid = m.UserID
 		INNER JOIN bodb02..Customer c (NOLOCK) ON c.custid = m.CustID
 		LEFT JOIN bodb02..Customer cl (NOLOCK) ON cl.custid = d.FollowingCustIDLive
