@@ -42,8 +42,7 @@ BEGIN
 		FROM VRLeagueGroupMapping WITH (NOLOCK)
 		WHERE LeagueGroupID = @LeagueGroupID
 
-		--If LeagueGroupID is not mapped to any VRLeagueGroupID 
-		--or LeagueGroupID is mapped but bettype is not configured for that VRLeagueGroupID
+		--If LeagueGroupID and bettype are not configured for VR setting
 		--then get setting on sport level
 		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy WITH (NOLOCK)
 				WHERE VRLeagueGroupID=@VRLeagueGroupID 
