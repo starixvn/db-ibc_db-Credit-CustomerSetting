@@ -42,12 +42,9 @@ BEGIN
 		FROM VRLeagueGroupMapping WITH (NOLOCK)
 		WHERE LeagueGroupID = @LeagueGroupID
 
-		--If a LeagueGroup is not configured for VR yet, then follow 'Other Games' VR group
-		--We temporarily hard-code because we expect all LeagueGroups must be configured for VR before allowing members to place bet
-		IF @VRLeagueGroupID IS NULL
-			SELECT @VRLeagueGroupID = 5 --Other Games
-
-		--If VRLeagueGroupID and Bettype are both not configured for VR, then follow E-sports setting level
+		--If LeagueGroupID is not mapped to any VRLeagueGroupID 
+		--or LeagueGroupID is mapped but bettype is not configured for that VRLeagueGroupID
+		--then get setting on sport level
 		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy WITH (NOLOCK)
 				WHERE VRLeagueGroupID=@VRLeagueGroupID 
 				AND SportType=@SportType
