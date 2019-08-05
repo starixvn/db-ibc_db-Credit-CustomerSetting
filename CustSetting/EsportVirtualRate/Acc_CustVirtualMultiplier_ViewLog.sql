@@ -224,8 +224,8 @@ BEGIN
 		, d.FollowingLevelIDLive Live_FollowingLevelID
 		, d.FollowingValueLive Live_FollowingValue
 		, CASE 
-				WHEN d.FollowingCustIDLive = 0 THEN 'Global'
 				WHEN d.FollowingCustIDLive = m.CustID THEN NULL
+				WHEN d.FollowingCustIDLive = 0 THEN 'Global'
 				WHEN cl.roleid = 4 THEN 'Super'
 				WHEN cl.roleid = 3 THEN 'Master'
 				WHEN cl.roleid = 2 THEN 'Agent'
@@ -237,8 +237,8 @@ BEGIN
 		, d.FollowingCustIDNonLive NonLive_FollowingLevelID
 		, d.FollowingValueNonLive NonLive_FollowingValue
 		, CASE 
-				WHEN d.FollowingCustIDNonLive = 0 THEN 'Global'
 				WHEN d.FollowingCustIDNonLive = m.CustID THEN NULL
+				WHEN d.FollowingCustIDNonLive = 0 THEN 'Global'
 				WHEN cnl.roleid = 4 THEN 'Super'
 				WHEN cnl.roleid = 3 THEN 'Master'
 				WHEN cnl.roleid = 2 THEN 'Agent'
