@@ -234,7 +234,7 @@ BEGIN
 		, hl.VRBetTypeGroupName Live_FollowingBettypeGroup
 		, hl.VRLeagueGroupName Live_FollowingLeagueGroup
 		--NonLive
-		, d.FollowingCustIDNonLive NonLive_FollowingLevelID
+		, d.FollowingLevelIDNonLive NonLive_FollowingLevelID
 		, d.FollowingValueNonLive NonLive_FollowingValue
 		, CASE 
 				WHEN d.FollowingCustIDNonLive = m.CustID THEN NULL
