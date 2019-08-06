@@ -792,6 +792,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 			- 20190520@Johnson: add @isSearchAndCopy & @copyFromCustID to support SC suspendInfo for member level [redmine: #105587]
 			- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
+			- 20190805@Eden: Remove initial setting for inactive products (Colosus Bet)  [redmine: #117439]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
@@ -2433,33 +2434,7 @@ BEGIN
 			SET @DirectParentAgent = @mrecommend 
 		IF @roleid = 3 
 			SET @DirectParentAgent = @srecommend 
-		-- For Colossus Bet
-		IF @roleid = 4 OR EXISTS (SELECT 1 FROM AgentCommRate WITH (NOLOCK) WHERE CustID = @DirectParentAgent AND SportType = 204)
-		BEGIN
-			INSERT INTO dbo.AgentCommRate WITH (ROWLOCK) (CustID,SportType,BetType,CommRate) 
-			SELECT @custid,204,18001,0
-			UNION ALL 
-			SELECT @custid,204,18002,0
-		END	
 		
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-			
-			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
-			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid
-			
-			RETURN
-		END
 		-- For Myanma Odds
 		IF (@IsMyanmarOdds = 1 AND (@roleid = 4 OR EXISTS (SELECT 1 FROM AgentCommRate WITH (NOLOCK) WHERE CustID = @DirectParentAgent AND SportType = 1 AND Bettype = 301)))
 		BEGIN
@@ -2488,41 +2463,6 @@ BEGIN
 	END
 	IF @roleid = 1
 	BEGIN
-		-- For Colossus Bet
-		SELECT @CustID AS CustID,AC.SportType,AC.BetType,AC.CommRate,CI.roleid 
-		INTO #CustCommRate_temp
-		FROM AgentCommRate ac WITH (ROWLOCK)
-			JOIN custInfo ci WITH (ROWLOCK) ON ac.CustID = ci.custid
-		WHERE ac.CustID IN (@srecommend,@mrecommend,@recommend) AND ac.Sporttype = 204 
-		
-		INSERT INTO CustCommRate (CustID,SportType,BetType,sdiscount,adiscount,discount,playerdiscount)
-		SELECT CustID,SportType,BetType,T.[4],T.[3],T.[2],0
-		FROM #CustCommRate_temp
-		PIVOT(
-			SUM(CommRate)
-			FOR roleID IN ([2],[3],[4])
-		) AS T
-		
-			
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
-		
-			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
-			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  = @custid
-			DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
-			
-			RETURN
-		END
 		IF (@IsMyanmarOdds = 1)
 		BEGIN
 		
