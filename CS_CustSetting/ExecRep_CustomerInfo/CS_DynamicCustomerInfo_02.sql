@@ -3,8 +3,8 @@
 ALTER PROCEDURE [dbo].[CS_DynamicCustomerInfo_02]
 	@CustId					INT,
 	@RoleId					TINYINT,
-	@ReasonId				TINYINT,
-	@Comment				NVARCHAR(300),
+	@ReasonId				TINYINT = NULL,
+	@Comment				NVARCHAR(300) = NULL,
 
 	@Action					VARCHAR(50),
 	@IsSuccess				BIT = 1 OUTPUT,
@@ -19,13 +19,13 @@ AS
 		- 20190808@Elodie: Initial SP [Redmine:#116814]
 
 	Param's Explanation:
-		@Action: MarkProblem
+		@Action: MarkProblem, ReduceBetLimit
 		
 */
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @SetBit0 INT, @SetBit1 INT, @SetBit0Downline INT, @SetBit1Downline INT, @Pos TINYINT
+	DECLARE @SetBit1 INT, @Pos TINYINT
 	CREATE TABLE #TempCust (CustID INT PRIMARY KEY, RoleID TINYINT)
 	CREATE TABLE #DownlineSuccess (CustID INT)
 
@@ -39,11 +39,7 @@ BEGIN
 									WHEN 2 THEN 1
 									WHEN 1 THEN 0 END					
 			
-		SELECT @SetBit1 = POWER(2, @Pos)			
-		SELECT @SetBit0 = (~POWER(2, @Pos))
-
-		SELECT @SetBit1Downline = POWER(2, @Pos-1)		 	
-		SELECT @SetBit0Downline = (~POWER(2, @Pos-1))
+		SELECT @SetBit1 = POWER(2, @Pos)					
 
 		IF @RoleID = 4 --Super			
 		BEGIN
@@ -101,6 +97,36 @@ BEGIN
 											FOR XML PATH('')),1,1,'')
 
 		DROP TABLE #TempCust
+	END
+	ELSE IF @Action = 'ReduceBetLimit'
+	BEGIN
+		IF @RoleID = 4 --Super			
+		BEGIN
+			INSERT INTO #TempCust (CustID, RoleID)
+			SELECT custid, roleid
+			FROM custInfo c WITH(NOLOCK)
+			WHERE srecommend = @CustID AND c.custid <> @CustId
+		END
+		ELSE IF @RoleID = 3 --Master
+		BEGIN
+			INSERT INTO #TempCust (CustID, RoleID)
+			SELECT custid, roleid
+			FROM custInfo c WITH(NOLOCK)
+			WHERE mrecommend = @CustID AND c.custid <> @CustId
+		END
+		ELSE IF @RoleID = 2 --Agent
+		BEGIN
+			INSERT INTO #TempCust (CustID, RoleID)
+			SELECT custid, roleid
+			FROM custInfo c WITH(NOLOCK)
+			WHERE recommend = @CustID AND c.custid <> @CustId
+		END		
+
+		UPDATE pa 		
+		SET pa.IsReducedBetLimit = 1
+		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
+			INNER JOIN #TempCust t ON t.CustID = pa.CustId
+
 	END
 END
 GO
