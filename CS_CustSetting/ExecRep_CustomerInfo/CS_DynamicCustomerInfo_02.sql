@@ -32,6 +32,28 @@ BEGIN
 	IF dbo.f_CheckRepTable('custInfo') = 0 RETURN
 	IF dbo.f_CheckRepTable('CS_ProblemAccount') = 0 RETURN
 	
+	IF @RoleID = 4 --Super			
+	BEGIN
+		INSERT INTO #TempCust (CustID, RoleID)
+		SELECT custid, roleid
+		FROM custInfo c WITH(NOLOCK)
+		WHERE srecommend = @CustID AND c.custid <> @CustId
+	END
+	ELSE IF @RoleID = 3 --Master
+	BEGIN
+		INSERT INTO #TempCust (CustID, RoleID)
+		SELECT custid, roleid
+		FROM custInfo c WITH(NOLOCK)
+		WHERE mrecommend = @CustID AND c.custid <> @CustId
+	END
+	ELSE IF @RoleID = 2 --Agent
+	BEGIN
+		INSERT INTO #TempCust (CustID, RoleID)
+		SELECT custid, roleid
+		FROM custInfo c WITH(NOLOCK)
+		WHERE recommend = @CustID AND c.custid <> @CustId
+	END	
+
 	IF @Action = 'MarkProblem'
 	BEGIN
 		SELECT	@Pos = CASE @RoleId WHEN 4 THEN 3
@@ -39,29 +61,7 @@ BEGIN
 									WHEN 2 THEN 1
 									WHEN 1 THEN 0 END					
 			
-		SELECT @SetBit1 = POWER(2, @Pos)					
-
-		IF @RoleID = 4 --Super			
-		BEGIN
-			INSERT INTO #TempCust (CustID, RoleID)
-			SELECT custid, roleid
-			FROM custInfo c WITH(NOLOCK)
-			WHERE srecommend = @CustID AND c.custid <> @CustId
-		END
-		ELSE IF @RoleID = 3 --Master
-		BEGIN
-			INSERT INTO #TempCust (CustID, RoleID)
-			SELECT custid, roleid
-			FROM custInfo c WITH(NOLOCK)
-			WHERE mrecommend = @CustID AND c.custid <> @CustId
-		END
-		ELSE IF @RoleID = 2 --Agent
-		BEGIN
-			INSERT INTO #TempCust (CustID, RoleID)
-			SELECT custid, roleid
-			FROM custInfo c WITH(NOLOCK)
-			WHERE recommend = @CustID AND c.custid <> @CustId
-		END		
+		SELECT @SetBit1 = POWER(2, @Pos)								
 
 		BEGIN TRY
 			INSERT INTO dbo.CS_ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, IsReducedBetLimit, MaxBet, MaxPerEvent, CreatedDate, IsReviewed)
@@ -94,39 +94,16 @@ BEGIN
 
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
-											FOR XML PATH('')),1,1,'')
-
-		DROP TABLE #TempCust
+											FOR XML PATH('')),1,1,'')		
 	END
 	ELSE IF @Action = 'ReduceBetLimit'
-	BEGIN
-		IF @RoleID = 4 --Super			
-		BEGIN
-			INSERT INTO #TempCust (CustID, RoleID)
-			SELECT custid, roleid
-			FROM custInfo c WITH(NOLOCK)
-			WHERE srecommend = @CustID AND c.custid <> @CustId
-		END
-		ELSE IF @RoleID = 3 --Master
-		BEGIN
-			INSERT INTO #TempCust (CustID, RoleID)
-			SELECT custid, roleid
-			FROM custInfo c WITH(NOLOCK)
-			WHERE mrecommend = @CustID AND c.custid <> @CustId
-		END
-		ELSE IF @RoleID = 2 --Agent
-		BEGIN
-			INSERT INTO #TempCust (CustID, RoleID)
-			SELECT custid, roleid
-			FROM custInfo c WITH(NOLOCK)
-			WHERE recommend = @CustID AND c.custid <> @CustId
-		END		
-
+	BEGIN		
 		UPDATE pa 		
 		SET pa.IsReducedBetLimit = 1
 		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #TempCust t ON t.CustID = pa.CustId
-
 	END
+
+	DROP TABLE #TempCust
 END
 GO
