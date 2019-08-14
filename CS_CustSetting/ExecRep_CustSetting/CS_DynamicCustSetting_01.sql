@@ -1,14 +1,16 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[CS_DynamicCustSetting_01]
-	@CustId					INT,
-	@RoleId					TINYINT,
-	@ReasonId				TINYINT = NULL,
-	@Comment				NVARCHAR(300) = NULL,
+	@CustId						INT,
+	@RoleId						TINYINT,
+	@ReasonId					TINYINT = NULL,
+	@Comment					NVARCHAR(300) = NULL,
 
-	@Action					VARCHAR(50),
-	@IsSuccess				BIT = 1 OUTPUT,
-	@SuccessDownlineList	VARCHAR(MAX) = '' OUTPUT
+	@Action						VARCHAR(50),
+	@AbnomalBetMember			VARCHAR(MAX) = NULL,
+	@DirectMarkedCust			VARCHAR(MAX) = NULL,
+	@IsSuccess					BIT = 1 OUTPUT,
+	@SuccessDownlineList		VARCHAR(MAX) = '' OUTPUT
 AS
 /*
 	Created: 20190808@Elodie
@@ -19,7 +21,7 @@ AS
 		- 20190808@Elodie: Initial SP [Redmine:#116814]
 
 	Param's Explanation:
-		@Action: MarkProblem, ReduceBetLimit
+		@Action: MarkProblem, ReduceBetLimit, RemoveReduceBetLimit
 		
 */
 BEGIN
@@ -27,6 +29,7 @@ BEGIN
 
 	DECLARE @SetBit1 INT, @Pos TINYINT
 	CREATE TABLE #TempCust (CustID INT PRIMARY KEY, RoleID TINYINT)
+	CREATE TABLE #IgnoreCust (CustID INT PRIMARY KEY)
 	CREATE TABLE #DownlineSuccess (CustID INT)
 
 	IF dbo.f_CheckRepTable('custInfo') = 0 RETURN
@@ -102,6 +105,60 @@ BEGIN
 		SET pa.IsReducedBetLimit = 1
 		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #TempCust t ON t.CustID = pa.CustId
+	END
+	ELSE IF @Action = 'RemoveReduceBetLimit'
+	BEGIN
+		IF ISNULL(@DirectMarkedCust,'') <> ''
+		BEGIN
+			INSERT INTO #IgnoreCust (CustID)			
+			SELECT CAST(val AS INT)
+			FROM dbo.f_StringSplit(@DirectMarkedCust, ',') f
+
+			IF @RoleId = 4
+			BEGIN
+				DELETE t 
+				FROM #TempCust t
+					INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = t.CustID
+					INNER JOIN #IgnoreCust i ON ci.srecommend = i.CustID
+			END
+			ELSE IF @RoleId = 3
+			BEGIN
+				DELETE t 
+				FROM #TempCust t
+					INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = t.CustID
+					INNER JOIN #IgnoreCust i ON ci.mrecommend = i.CustID
+			END
+			ELSE IF @RoleId = 2
+			BEGIN
+				DELETE t 
+				FROM #TempCust t
+					INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = t.CustID
+					INNER JOIN #IgnoreCust i ON ci.recommend = i.CustID
+			END
+
+			DELETE FROM #IgnoreCust
+		END
+
+		IF ISNULL(@AbnomalBetMember,'') <> ''
+		BEGIN
+			INSERT INTO #IgnoreCust (CustID)			
+			SELECT CAST(val AS INT)
+			FROM dbo.f_StringSplit(@AbnomalBetMember, ',') f
+
+			DELETE t 
+			FROM #TempCust t
+				INNER JOIN #IgnoreCust i ON t.CustID = i.CustID
+
+			DELETE FROM #IgnoreCust
+		END
+
+		UPDATE pa 
+		SET pa.MaxBet = NULL,
+			pa.MaxPerEvent = NULL,
+			pa.IsReducedBetLimit = 0
+		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
+			INNER JOIN #TempCust t ON t.CustId = pa.CustId
+		
 	END
 
 	DROP TABLE #TempCust
