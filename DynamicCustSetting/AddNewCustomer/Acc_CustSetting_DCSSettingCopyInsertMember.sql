@@ -31,6 +31,7 @@ AS
 		- 20170530@Elodie: Implementing TicketCommission Plugin - [Redmine #75221]	
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 		- 20190114@Johnson: dont update bettype inactive for settingType = 7(Allbet) [Redmine: #106601]
+		- 20190814@Eden: Hide setting of inactive products [Redmine: #117439]
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -438,7 +439,8 @@ BEGIN
 			, wl.MaxWinLimit
 			, wl.MaxLossLimit
 			, wl.IsAutoReset
-		FROM dbo.CustWinLossLimit_Member wl WITH (NOLOCK)		
+		FROM dbo.CustWinLossLimit_Member wl WITH (NOLOCK)	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,6) fil ON fil.SportType = wl.SportType AND fil.BetType = wl.BetType	
 		WHERE wl.custid = @ExistingCustID
 		
 		INSERT INTO #TempWLLimit(ProductID)	
@@ -502,7 +504,8 @@ BEGIN
 		INSERT INTO @NewStakeLevelTbl
 			(	SportType     , BetType     , StakeLevelList)
 		SELECT	cslm.SportType, cslm.BetType, cslm.StakeLevelList
-		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)		
+		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType	
 		WHERE	cslm.CustID = @ExistingCustID
 		
 		INSERT INTO #TempStakeLevel(ProductID)	
@@ -560,7 +563,8 @@ BEGIN
 		INSERT INTO @NewStakeLevelTbl8
 			(	SportType     , BetType     , StakeLevelList)
 		SELECT	cslm.SportType, cslm.BetType, cslm.StakeLevelList
-		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)		
+		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType		
 		WHERE	cslm.CustID = @ExistingCustID
 		
 		INSERT INTO #TempStakeLevel8(ProductID)	
@@ -763,7 +767,8 @@ BEGIN
 			, wl.BetType			
 			, wl.MaxLossLimit
 			, wl.IsAutoReset
-		FROM dbo.CustWinLossLimit_Member wl WITH (NOLOCK)		
+		FROM dbo.CustWinLossLimit_Member wl WITH (NOLOCK)	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,12) fil ON fil.SportType = wl.SportType AND fil.BetType = wl.BetType		
 		WHERE wl.custid = @ExistingCustID
 		
 		INSERT INTO #TempLLimit(ProductID)	
