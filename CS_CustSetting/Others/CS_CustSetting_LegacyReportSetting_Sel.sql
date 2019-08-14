@@ -13,7 +13,7 @@ AS
 
 	Revisions:
 		- 20190227@Johnson: Initial SP [Redmine:#105338]
-		
+		- 20190812@Johnson: hotfix incorrect Headline Posses [redmine: #118205]
 	Param's Explanation:
 		• @RoleId: roleid of list custid			
 			
@@ -41,12 +41,15 @@ BEGIN
 	SELECT val FROM dbo.strSplit(@CustIDs,',')
 	
 	--get sport/bettype offer for cn88
-	SELECT t.* INTO #SportBettypeFilter1
+	SELECT CASE WHEN sporttype = 9998 THEN 3--non-sport
+					ELSE productID END AS productID,
+		t.sporttype, t.bettype, t.isLive
+	INTO #SportBettypeFilter1
 	FROM dbo.f_CS_SportBetTypeSettingSelect(NULL,1, @IsTest) t
 
 	IF @roleid = 4
 	BEGIN
-		SELECT @today = GETDATE()
+		SELECT @today = CONVERT(DATE, GETDATE())
 		
 		--get extra pt
 		INSERT INTO #PTResult(custid,sporttype,bettype,extraPT)
