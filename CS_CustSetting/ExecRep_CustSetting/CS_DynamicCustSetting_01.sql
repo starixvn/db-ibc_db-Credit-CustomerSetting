@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" isFunction="0" isNested="1"></info>*/
 
-ALTER PROCEDURE [dbo].[CS_DynamicCustomerInfo_02]
+ALTER PROCEDURE [dbo].[CS_DynamicCustSetting_01]
 	@CustId					INT,
 	@RoleId					TINYINT,
 	@ReasonId				TINYINT = NULL,
