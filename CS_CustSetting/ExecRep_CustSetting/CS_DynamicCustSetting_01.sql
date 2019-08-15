@@ -160,6 +160,18 @@ BEGIN
 			INNER JOIN #TempCust t ON t.CustId = pa.CustId
 		
 	END
+	ELSE IF @Action = 'UpdateReviewStatus'
+	BEGIN
+		UPDATE pa 		
+		SET pa.IsReviewed = 1
+		OUTPUT Inserted.CustId INTO #DownlineSuccess
+		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
+			INNER JOIN #TempCust t ON t.CustID = pa.CustId
+
+		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
+											FROM #DownlineSuccess l
+											FOR XML PATH('')),1,1,'')
+	END
 
 	DROP TABLE #TempCust
 END
