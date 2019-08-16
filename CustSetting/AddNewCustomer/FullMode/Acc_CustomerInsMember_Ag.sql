@@ -303,6 +303,7 @@ Revisions:
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
+	- 20190816@Johnson: copy reject status from source member for search & copy [redmine:#118736]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -1567,7 +1568,8 @@ BEGIN
         SELECT	
 				@DisableOutright = DisableOutright,
 				@DisableColossusBet = DisableColossusBet,
-				@DisableSuperLive = DisableSuperLive
+				@DisableSuperLive = DisableSuperLive,
+				@suspended = reject
 				--@virtualmultiplier = ISNULL(virtualmultiplier, 1)
           FROM custinfo WITH(NOLOCK)
          WHERE CustID = @copyFromCustID
