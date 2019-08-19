@@ -18,7 +18,6 @@ AS
 	Created: 20190715@Johnson	
 	Task: create headline account for cn88
 	DB: DBCUST/CUSTDB
-	
 	Revisions:
 		- 20190715@Johnson: initial sp [redmine: #116691]
 		- 20190819@Johnson: HF missing custAccount, CustGroupHeadline [redmine:#118868]
@@ -300,6 +299,10 @@ BEGIN
 		
 		DELETE CS_HeadlineExtraPTGroup WITH(UPDLOCK,ROWLOCK)
 		WHERE HeadlineId = @custid
+		
+		DELETE CS_CustomerStatus WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid
+		
 		RETURN;
 	END	
 	
@@ -328,6 +331,9 @@ BEGIN
 		DELETE CS_HeadlineExtraPTGroup WITH(UPDLOCK,ROWLOCK)
 		WHERE HeadlineId = @custid
 		
+		DELETE CS_CustomerStatus WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid
+		
 		DELETE CustGroupHeadline WITH(UPDLOCK,ROWLOCK)
 		WHERE CustID = @custid
 		RETURN;
@@ -355,9 +361,12 @@ BEGIN
 		DELETE CS_HeadlineExtraPTGroup WITH(UPDLOCK,ROWLOCK)
 		WHERE HeadlineId = @custid
 		
+		DELETE CS_CustomerStatus WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid
+		
 		DELETE CustGroupHeadline WITH(UPDLOCK,ROWLOCK)
 		WHERE CustID = @custid
-		
+				
 		DELETE custAccount WITH(UPDLOCK,ROWLOCK)
 		WHERE CustID = @custid
 		RETURN;
