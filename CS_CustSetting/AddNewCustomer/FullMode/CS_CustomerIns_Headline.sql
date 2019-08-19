@@ -18,9 +18,9 @@ AS
 	Created: 20190715@Johnson	
 	Task: create headline account for cn88
 	DB: DBCUST/CUSTDB
-	
 	Revisions:
 		- 20190715@Johnson: initial sp [redmine: #116691]
+		- 20190819@Johnson: HF missing custAccount, CustGroupHeadline [redmine:#118868]
 	
 	-Parameter's Explanations:
 		- @ExtraPTSetting:	<ROOT>
@@ -102,7 +102,8 @@ BEGIN
 		@credit MONEY = 0,
 		@groupid INT,
 		@GroupName VARCHAR(50),
-		@site VARCHAR(30) = 'CN88'
+		@site VARCHAR(30) = 'CN88',		
+		@GroupHeadlineId INT
 	
 	DECLARE @today DATETIME
 	SELECT  @today = CONVERT(DATE, GETDATE())
@@ -298,6 +299,76 @@ BEGIN
 		
 		DELETE CS_HeadlineExtraPTGroup WITH(UPDLOCK,ROWLOCK)
 		WHERE HeadlineId = @custid
+		
+		DELETE CS_CustomerStatus WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid
+		
+		RETURN;
+	END	
+	
+	--INSERT GroupHeadline
+	SELECT @GroupHeadlineId = MAX(groupid) + 1 FROM custaccount WITH(NOLOCK)
+
+	INSERT INTO dbo.CustGroupHeadline (CustID, GroupID, HeadlineType, OwnerName, OwnerID)
+	SELECT @custid, @GroupHeadlineId, 0, NULL, NULL	       
+	
+	IF @@ERROR > 0
+	BEGIN		
+		SELECT @ErrCode = 110,
+			@ErrMsg = 'Create customer failed. Please try again.'			
+								
+		DELETE customer WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid	
+		
+		DELETE custinfo WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid	
+		
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
+		
+		DELETE CustLoginInfo WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid
+		
+		DELETE CS_HeadlineExtraPTGroup WITH(UPDLOCK,ROWLOCK)
+		WHERE HeadlineId = @custid
+		
+		DELETE CS_CustomerStatus WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid
+		
+		DELETE CustGroupHeadline WITH(UPDLOCK,ROWLOCK)
+		WHERE CustID = @custid
+		RETURN;
+	END	
+	
+	INSERT INTO dbo.custAccount (custid, creditgrade, installmentdate, installmentamount, preagreeamount, accountremark, accountremarkdate,groupid,isgroupheadline,checker)
+	VALUES (@custid, N'A', N'1', 0, 0, '', CURRENT_TIMESTAMP, @GroupHeadlineId,1,0)
+
+	IF @@ERROR > 0
+	BEGIN		
+		SELECT @ErrCode = 111,
+			@ErrMsg = 'Create customer failed. Please try again.'			
+								
+		DELETE customer WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid	
+		
+		DELETE custinfo WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid	
+		
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
+		
+		DELETE CustLoginInfo WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid
+		
+		DELETE CS_HeadlineExtraPTGroup WITH(UPDLOCK,ROWLOCK)
+		WHERE HeadlineId = @custid
+		
+		DELETE CS_CustomerStatus WITH(UPDLOCK,ROWLOCK)
+		WHERE custid = @custid
+		
+		DELETE CustGroupHeadline WITH(UPDLOCK,ROWLOCK)
+		WHERE CustID = @custid
+				
+		DELETE custAccount WITH(UPDLOCK,ROWLOCK)
+		WHERE CustID = @custid
 		RETURN;
 	END	
 	
