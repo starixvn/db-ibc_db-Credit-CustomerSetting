@@ -28,7 +28,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @SetBit1 INT, @Pos TINYINT
-	CREATE TABLE #TempCust (CustID INT PRIMARY KEY, RoleID TINYINT)
+	CREATE TABLE #DownlineCust (CustID INT PRIMARY KEY, RoleID TINYINT)
 	CREATE TABLE #IgnoreCust (CustID INT PRIMARY KEY)
 	CREATE TABLE #DownlineSuccess (CustID INT)
 
@@ -37,21 +37,21 @@ BEGIN
 	
 	IF @RoleID = 4 --Super			
 	BEGIN
-		INSERT INTO #TempCust (CustID, RoleID)
+		INSERT INTO #DownlineCust (CustID, RoleID)
 		SELECT custid, roleid
 		FROM custInfo c WITH(NOLOCK)
 		WHERE srecommend = @CustID AND c.custid <> @CustId
 	END
 	ELSE IF @RoleID = 3 --Master
 	BEGIN
-		INSERT INTO #TempCust (CustID, RoleID)
+		INSERT INTO #DownlineCust (CustID, RoleID)
 		SELECT custid, roleid
 		FROM custInfo c WITH(NOLOCK)
 		WHERE mrecommend = @CustID AND c.custid <> @CustId
 	END
 	ELSE IF @RoleID = 2 --Agent
 	BEGIN
-		INSERT INTO #TempCust (CustID, RoleID)
+		INSERT INTO #DownlineCust (CustID, RoleID)
 		SELECT custid, roleid
 		FROM custInfo c WITH(NOLOCK)
 		WHERE recommend = @CustID AND c.custid <> @CustId
@@ -86,14 +86,14 @@ BEGIN
 		INSERT INTO dbo.CS_ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember)
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0
-		FROM #TempCust t
+		FROM #DownlineCust t
 		WHERE NOT EXISTS (SELECT 1 FROM CS_ProblemAccount WHERE CustId = t.CustId)
 
 		UPDATE pa 		
 		SET pa.ProblemStatus = ProblemStatus | @SetBit1
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
-			INNER JOIN #TempCust t ON t.CustID = pa.CustId
+			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
 
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
@@ -105,7 +105,7 @@ BEGIN
 		SET pa.MaxBet = NULL,
 			pa.MaxPerEvent = NULL
 		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
-			INNER JOIN #TempCust t ON t.CustId = pa.CustId		
+			INNER JOIN #DownlineCust t ON t.CustId = pa.CustId		
 	END
 	ELSE IF @Action = 'UpdateReviewStatus'
 	BEGIN
@@ -113,13 +113,13 @@ BEGIN
 		SET pa.IsReviewed = 1
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
-			INNER JOIN #TempCust t ON t.CustID = pa.CustId
+			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
 
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
 											FOR XML PATH('')),1,1,'')
 	END
 
-	DROP TABLE #TempCust
+	DROP TABLE #DownlineCust
 END
 GO
