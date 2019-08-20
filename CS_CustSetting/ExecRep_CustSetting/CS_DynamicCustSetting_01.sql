@@ -114,6 +114,7 @@ BEGIN
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
+		WHERE pa.IsReviewed = 0
 
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
