@@ -21,7 +21,7 @@ AS
 		- 20190808@Elodie: Initial SP [Redmine:#116814]
 
 	Param's Explanation:
-		@Action: MarkProblem, ReduceBetLimit, RemoveReduceBetLimit
+		@Action: MarkProblem, RemoveReduceBetLimit
 		
 */
 BEGIN
@@ -67,8 +67,8 @@ BEGIN
 		SELECT @SetBit1 = POWER(2, @Pos)								
 
 		BEGIN TRY
-			INSERT INTO dbo.CS_ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, IsReducedBetLimit, MaxBet, MaxPerEvent, CreatedDate, IsReviewed)
-			SELECT @CustId, @SetBit1, @ReasonId, @Comment, 0, NULL, NULL, GETDATE(), 0
+			INSERT INTO dbo.CS_ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember)
+			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0
 			WHERE NOT EXISTS (SELECT 1 FROM CS_ProblemAccount WHERE CustId = @CustId)
 
 			UPDATE pa 
@@ -83,9 +83,9 @@ BEGIN
 			RETURN			
 		END CATCH
 
-		INSERT INTO dbo.CS_ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, IsReducedBetLimit, MaxBet, MaxPerEvent, CreatedDate, IsReviewed)
+		INSERT INTO dbo.CS_ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember)
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
-		SELECT CustId, @SetBit1, NULL, NULL, 0, NULL, NULL, GETDATE(), 0 
+		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0
 		FROM #TempCust t
 		WHERE NOT EXISTS (SELECT 1 FROM CS_ProblemAccount WHERE CustId = t.CustId)
 
@@ -98,67 +98,14 @@ BEGIN
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
 											FOR XML PATH('')),1,1,'')		
-	END
-	ELSE IF @Action = 'ReduceBetLimit'
-	BEGIN		
-		UPDATE pa 		
-		SET pa.IsReducedBetLimit = 1
-		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
-			INNER JOIN #TempCust t ON t.CustID = pa.CustId
-	END
+	END	
 	ELSE IF @Action = 'RemoveReduceBetLimit'
 	BEGIN
-		IF ISNULL(@DirectMarkedCust,'') <> ''
-		BEGIN
-			INSERT INTO #IgnoreCust (CustID)			
-			SELECT CAST(val AS INT)
-			FROM dbo.f_StringSplit(@DirectMarkedCust, ',') f
-
-			IF @RoleId = 4
-			BEGIN
-				DELETE t 
-				FROM #TempCust t
-					INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = t.CustID
-					INNER JOIN #IgnoreCust i ON ci.srecommend = i.CustID
-			END
-			ELSE IF @RoleId = 3
-			BEGIN
-				DELETE t 
-				FROM #TempCust t
-					INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = t.CustID
-					INNER JOIN #IgnoreCust i ON ci.mrecommend = i.CustID
-			END
-			ELSE IF @RoleId = 2
-			BEGIN
-				DELETE t 
-				FROM #TempCust t
-					INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = t.CustID
-					INNER JOIN #IgnoreCust i ON ci.recommend = i.CustID
-			END
-
-			DELETE FROM #IgnoreCust
-		END
-
-		IF ISNULL(@AbnomalBetMember,'') <> ''
-		BEGIN
-			INSERT INTO #IgnoreCust (CustID)			
-			SELECT CAST(val AS INT)
-			FROM dbo.f_StringSplit(@AbnomalBetMember, ',') f
-
-			DELETE t 
-			FROM #TempCust t
-				INNER JOIN #IgnoreCust i ON t.CustID = i.CustID
-
-			DELETE FROM #IgnoreCust
-		END
-
 		UPDATE pa 
 		SET pa.MaxBet = NULL,
-			pa.MaxPerEvent = NULL,
-			pa.IsReducedBetLimit = 0
+			pa.MaxPerEvent = NULL
 		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
-			INNER JOIN #TempCust t ON t.CustId = pa.CustId
-		
+			INNER JOIN #TempCust t ON t.CustId = pa.CustId		
 	END
 	ELSE IF @Action = 'UpdateReviewStatus'
 	BEGIN
