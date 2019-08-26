@@ -1,6 +1,5 @@
 CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_Ag.sql
 CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_MAg.sql
 CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_SAg.sql
-CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_Com.sql
-CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_Check.sql
-CS_CustSetting\UpdateSetting\2_BetLimit_Commission\CS_CustSetting_CommBetSetting_Upd.sql
+
+

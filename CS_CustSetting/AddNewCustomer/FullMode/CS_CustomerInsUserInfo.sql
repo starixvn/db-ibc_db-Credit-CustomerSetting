@@ -417,6 +417,51 @@ BEGIN
 	    RETURN
     END
     
+	IF @roleid <> 4
+	BEGIN
+		INSERT INTO dbo.CS_ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember)
+		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0
+		FROM CS_ProblemAccount WITH (NOLOCK)
+		WHERE CustId = CASE WHEN @roleid = 3 THEN @srecommend 
+							WHEN @roleid = 2 THEN @mrecommend
+							WHEN @roleid = 1 THEN @recommend END
+	END
+
+	IF @@ERROR <> 0
+    BEGIN 
+    --	DELETE customer with (ROWLOCK) where custid =  @custid
+	    SELECT @ErrMsg = CASE @Language
+					       WHEN 'E' THEN 'Create customer failed. Please try again.'
+					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+					     END,
+		       @ErrCode = 113
+
+	    -- ROLLBACK MANUALLY
+	    IF @RoleID = 4
+	    BEGIN
+		    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
+	    END
+	    ELSE IF @RoleID = 3
+	    BEGIN
+		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM dbo.CS_SubAccManagement WITH(ROWLOCK) WHERE SubAccId = @SubAccID AND DownlineId = @CustID
+		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
+	    END
+	    ELSE IF @RoleID = 2
+	    BEGIN
+		    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
+		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
+	    END
+		
+		DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
+	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM CS_CustomerStatus WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
+	    RETURN
+    END
+
     -- For Extra Info Direct Account, FOR CREDIT ONLY
     IF NOT EXISTS (SELECT 1 FROM Dep_CustSuper WITH (NOLOCK) WHERE custid = @srecommend)
     BEGIN
@@ -607,22 +652,21 @@ BEGIN
 			BEGIN
 				DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
-				DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
 			END
 			ELSE IF @RoleID = 3
 			BEGIN
 				DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM dbo.CS_SubAccManagement WITH(ROWLOCK) WHERE SubAccId = @SubAccID AND DownlineId = @CustID
 				DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-				DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
 			END
 			ELSE IF @RoleID = 2
 			BEGIN
 				DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-				DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
 			END
-
+			
+			DELETE FROM CS_ProblemAccount WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CS_CustomerStatus WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
