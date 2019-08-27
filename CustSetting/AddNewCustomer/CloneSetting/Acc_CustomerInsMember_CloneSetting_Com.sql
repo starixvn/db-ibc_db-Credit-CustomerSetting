@@ -62,6 +62,7 @@ AS
 	- 20181105@Louis: Credit Collection Summary  [RedmineID: #98621]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -99,19 +100,19 @@ BEGIN
 	FROM dbo.CustInfo WITH(NOLOCK) 
 	WHERE custid = @ExistingCustid
 	
-	-- For Myanmar Odds
-	DECLARE @IsMyanmarOdds_destination BIT = 0
-	DECLARE @IsMyanmarOdds_source BIT = 0
+	---- For Myanmar Odds
+	--DECLARE @IsMyanmarOdds_destination BIT = 0
+	--DECLARE @IsMyanmarOdds_source BIT = 0
 	
-	IF @Site = '766666' 
-		SET @IsMyanmarOdds_destination = 1
+	--IF @Site = '766666' 
+	--	SET @IsMyanmarOdds_destination = 1
 	
-	SET @IsMyanmarOdds_source = dbo.fn_IsMyanmarOdds (@ExistingCustid)
+	--SET @IsMyanmarOdds_source = dbo.fn_IsMyanmarOdds (@ExistingCustid)
 		
-	IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source
-	BEGIN
-		SELECT @ErrMsg = 'Cannot copy super ' + @existingUsername + ' since amongs the new and old sites, one has % Odds.',@ErrCode = 200								
-		RETURN		
+	--IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source
+	--BEGIN
+	--	SELECT @ErrMsg = 'Cannot copy super ' + @existingUsername + ' since amongs the new and old sites, one has % Odds.',@ErrCode = 200								
+	--	RETURN		
 
 	END			
 	
@@ -309,7 +310,7 @@ BEGIN
 				,maxpermatch12
 				,maxpermatch99
 				,Enabled   
-				,maxpermatch201								
+				--,maxpermatch201								
 				,DisableCasino
 				,SyncCasino           
 				,DisableOutright				
@@ -329,7 +330,7 @@ BEGIN
 				--,maxpermatch184
 				--,maxpermatch186				
 				,DoubleCommLosing
-				,DisableCasinoBonus		
+				--,DisableCasinoBonus		
 				,HideKeno
 				
 				,HideGoldDeluxe
@@ -338,7 +339,7 @@ BEGIN
 				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
-				,Disable151_AU
+				--,Disable151_AU
 				)
 		 SELECT
 				@CustID
@@ -365,7 +366,7 @@ BEGIN
 				,maxpermatch12
 				,maxpermatch99
 				,Enabled  
-				,maxpermatch201							
+				--,maxpermatch201							
 				,DisableCasino
 				,0 as SyncCasino           
 				,DisableOutright				
@@ -386,7 +387,7 @@ BEGIN
 				--,maxpermatch184
 				--,maxpermatch186				
 				,doubleCommLosing
-				,DisableCasinoBonus		
+				--,DisableCasinoBonus		
 				,HideKeno
 				
 				,HideGoldDeluxe 
@@ -395,7 +396,7 @@ BEGIN
 				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
-				,1
+				--,1
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 	END TRY	

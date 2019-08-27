@@ -76,6 +76,7 @@ AS
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190923@Johnson: copy danger status from upline [redmine:#120056]
+	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -379,8 +380,8 @@ BEGIN
 			,maxpermatch12
 			,maxpermatch99
 			,Enabled   
-			,maxpermatch201
-			,DisableHorseRacing			
+			--,maxpermatch201
+			--,DisableHorseRacing			
 			,DisableCasino
 			,SyncCasino           
 			,DisableOutright		
@@ -401,7 +402,7 @@ BEGIN
 			--,maxpermatch184
 			--,maxpermatch186		
 			,DoubleCommLosing
-			,DisableCasinoBonus			
+			--,DisableCasinoBonus			
 			,HideKeno
 			
 			,HideGoldDeluxe
@@ -410,7 +411,7 @@ BEGIN
 			,DisableColossusBet
 			,DisableSuperLive
 			,MaxPerMatch1MP
-			,Disable151_AU
+			--,Disable151_AU
 			,Danger
 			,Danger2
 			,Danger3
@@ -441,8 +442,8 @@ BEGIN
 			,maxpermatch12
 			,maxpermatch99
 			,@enableUpline as Enabled 
-			,maxpermatch201
-			,DisableHorseRacing			
+			--,maxpermatch201
+			--,DisableHorseRacing			
 			,DisableCasino
 			,0 as SyncCasino           
 			,DisableOutright
@@ -463,7 +464,7 @@ BEGIN
 			--,maxpermatch184
 			--,maxpermatch186			
 			,@doubleCommLosingUpline as doubleCommLosing
-			,1			
+			--,1			
 			,HideKeno
 			
 			,HideGoldDeluxe
@@ -472,7 +473,7 @@ BEGIN
 			,DisableColossusBet
 			,DisableSuperLive
 			,MaxPerMatch1MP
-			,1
+			--,1
 			,@DangerSuper
 			,@DangerSuper2
 			,@DangerSuper3
