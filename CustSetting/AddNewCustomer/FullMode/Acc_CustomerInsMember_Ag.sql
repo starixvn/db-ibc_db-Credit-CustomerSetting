@@ -588,7 +588,7 @@ BEGIN
 	    @UplineClosed BIT,
 	    @DisableOutright BIT,	   
 	    --@HideVirtualSports  BIT,
-	    @DisableCasinoBonus BIT,	  
+	    --@DisableCasinoBonus BIT,	  
 		@suspended BIT = 0,
 		
 	    @AgentDanger tinyint,
@@ -1563,7 +1563,7 @@ BEGIN
          , @DisableNumber = CASE WHEN DisableNumber = 1 THEN 1 ELSE @DisableNumber END
          --, @Disable180_1201 = DisableVirtualSports
          --, @HideVirtualSports = HideVirtualSports
-         , @DisableCasinoBonus = 1
+         --, @DisableCasinoBonus = 1
          , @virtualmultiplier = ISNULL(virtualmultiplier, 1)           
          , @HideKeno = HideKeno      
 		 , @DisableGoldDeluxe = DisableGoldDeluxe
@@ -3137,7 +3137,7 @@ BEGIN
 	    --@Disable180_1201 = @Disable180_1201,
 	    --@HideVirtualSports = @HideVirtualSports,
 	    @DoubleCommLosing = 0,-- off double comm losing WHEN create new member
-	    @DisableCasinoBonus = @DisableCasinoBonus,	    	 
+	    --@DisableCasinoBonus = @DisableCasinoBonus,	    	 
 	  
 	    @MaxPerMatch = @MaxPerMatch,
 	    @MaxPerMatchv2 = @MaxPerMatchv2,

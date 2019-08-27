@@ -27,9 +27,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	--comm 1x2
 	@discount1x2 DECIMAL(9,8)=0,
 	
-	@discountnumber DECIMAL(9,8)=0,	
+	--@discountnumber DECIMAL(9,8)=0,	
 	-- MyanmarOdds
-	@discountMyanmarOdds DECIMAL(9,8)=0,
+	--@discountMyanmarOdds DECIMAL(9,8)=0,
 
 	@isinternal BIT = 0,
 
@@ -312,7 +312,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@DisableCasino BIT = 0, 
 	@DisableNumber BIT = 0,
 	@DoubleCommLosing BIT = 1,
-	@DisableCasinoBonus BIT = 1,
+	--@DisableCasinoBonus BIT = 1,
 	
 	@DisableGoldDeluxe BIT = 0,
 	@DisableSuperLive BIT = 1,
@@ -413,6 +413,7 @@ Revisions:
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
+	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -467,8 +468,8 @@ BEGIN
 				@groupd = @groupd,
 				@discountcs = @discountcs,	
 				@discount1x2 = @discount1x2, --1x2		
-				@discountnumber = @discountnumber, --Number Game			
-				@discountMyanmarOdds = @discountMyanmarOdds, -- MyanmarOdds
+				--@discountnumber = @discountnumber, --Number Game			
+				--@discountMyanmarOdds = @discountMyanmarOdds, -- MyanmarOdds
 				
 				@MinBet = @MinBet,
 				@MaxBet = @MaxBet,
@@ -803,7 +804,7 @@ BEGIN
 		--@Disable180_1201 = @Disable180_1201,
 		--@HideVirtualSports = @HideVirtualSports,
 		@DoubleCommLosing = @DoubleCommLosing,		
-		@DisableCasinoBonus = @DisableCasinoBonus,		
+		--@DisableCasinoBonus = @DisableCasinoBonus,		
 
 		
 		@DisableGoldDeluxe = @DisableGoldDeluxe,
@@ -860,10 +861,10 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		RETURN
 	END
 
-	DECLARE @IsMyanmarOdds BIT = 0
+	--DECLARE @IsMyanmarOdds BIT = 0
 
-	IF @Site = '766666'
-		SET @IsMyanmarOdds = 1
+	--IF @Site = '766666'
+	--	SET @IsMyanmarOdds = 1
 			
 	EXEC dbo.Acc_CustomerInfo_Execrep_00
 		@custid = @custid,
@@ -1131,10 +1132,10 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		--comm 1x2
 		@discount1x2 = @discount1x2,
 		-- Myanma Odds
-		@IsMyanmarOdds = @IsMyanmarOdds,
-		@discountMyanmarOdds = @discountMyanmarOdds,
+		--@IsMyanmarOdds = @IsMyanmarOdds,
+		--@discountMyanmarOdds = @discountMyanmarOdds,
 		
-		@discountnumber = @discountnumber,
+		--@discountnumber = @discountnumber,
 	
 		@ErrCode = @ErrCode OUTPUT
 
@@ -1228,19 +1229,19 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" '  +
 	'groupa="'+ COALESCE(CAST(@groupa AS VARCHAR(50)),SPACE(1)) + '" ' 
 
-	IF @IsMyanmarOdds = 0
-		SET @LogSPData = @LogSPData + 
-			'groupb="' + COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
-			'groupc="' + COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
-			'groupd="' + COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
+	--IF @IsMyanmarOdds = 0
+	SET @LogSPData = @LogSPData + 
+		'groupb="' + COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'groupc="' + COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'groupd="' + COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
 
 	SET @LogSPData = @LogSPData + 
 	'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)),SPACE(1)) + '" ' 
+	'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' 
+	--'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)),SPACE(1)) + '" ' 
 
-	IF @IsMyanmarOdds = 1
-		SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
+	--IF @IsMyanmarOdds = 1
+	--	SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
 
 	SET @LogSPData = @LogSPData + ' />'
 
@@ -1257,17 +1258,17 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'groupa="'+ COALESCE(CAST(@groupa AS VARCHAR(50)),SPACE(1)) + '" ' 
 		
-		IF @IsMyanmarOdds = 0
-			SET @LogSPData = @LogSPData +
+		--IF @IsMyanmarOdds = 0
+		SET @LogSPData = @LogSPData +
 		'groupb="'+ COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'groupc="'+ COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'groupd="'+ COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
 		SET @LogSPData = @LogSPData +
 		'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' +	
-		'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)),SPACE(1)) + '" ' 
-		IF @IsMyanmarOdds = 1
-			SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
+		'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' 	
+		--'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)),SPACE(1)) + '" ' 
+		--IF @IsMyanmarOdds = 1
+		--	SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
 
 		SET @LogSPData = @LogSPData + 'ErrMsg="'+ ERROR_MESSAGE() +	'" />'
 
