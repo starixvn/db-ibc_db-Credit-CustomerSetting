@@ -23,6 +23,7 @@ AS
 		- 20151016@Elodie: Add new product Colossus Bet and Myanmar Odds [Redmine: #41264, 41470]
 		- 20151119@Dominic: Fix bug when inserting setting into DCS structure Redmine Feature #26274
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	Parameter's Explanation:
 */ 
 BEGIN
@@ -281,19 +282,19 @@ BEGIN
 		--End Keno
 
 		--Colossus Bet, Myanmar Odds
-		DECLARE @IsMyanmarOdds BIT = 0
-		SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@ExistingCustid)
+		--DECLARE @IsMyanmarOdds BIT = 0
+		--SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@ExistingCustid)
 
-		IF @IsMyanmarOdds = 1
-			INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
-			SELECT @custid, SportType, Bettype, CommRate
-			FROM AgentCommRate WITH (NOLOCK)
-			WHERE CustId = @ExistingCustid
-		ELSE
-			INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
-			SELECT @custid, SportType, Bettype, CommRate
-			FROM AgentCommRate WITH (NOLOCK)
-			WHERE CustId = @ExistingCustid AND Sporttype <> 1 AND Bettype <> 301 
+		--IF @IsMyanmarOdds = 1
+		--	INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
+		--	SELECT @custid, SportType, Bettype, CommRate
+		--	FROM AgentCommRate WITH (NOLOCK)
+		--	WHERE CustId = @ExistingCustid
+		--ELSE
+		INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
+		SELECT @custid, SportType, Bettype, CommRate
+		FROM AgentCommRate WITH (NOLOCK)
+		WHERE CustId = @ExistingCustid AND Sporttype <> 1 AND Bettype <> 301 
 
 		IF @@ERROR <> 0
 		BEGIN
