@@ -14,9 +14,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	--1x2 
 	@playerdiscount1x2 DECIMAL(9, 8) = 0,
 	
-	@playerdiscountnumber DECIMAL(9, 8) = 0,
+	--@playerdiscountnumber DECIMAL(9, 8) = 0,
 	-- MyanmarOdds
-	@playerdiscountMyanmarOdds DECIMAL(9,8)=0,
+	--@playerdiscountMyanmarOdds DECIMAL(9,8)=0,
 	
 	@MinBet MONEY,
 	@MaxBet MONEY,
@@ -305,6 +305,7 @@ Revisions:
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 	- 20190816@Johnson: copy reject status from source member for search & copy [redmine:#118736]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
+	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -1607,37 +1608,37 @@ BEGIN
     
     -- MyanmarOdds
     
-	DECLARE @IsMyanmarOdds BIT = 0
-	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
+	--DECLARE @IsMyanmarOdds BIT = 0
+	--SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
 	
-	IF @IsMyanmarOdds = 1 AND @ugroup <> 'a'
-	BEGIN
-		 SELECT	@ErrMsg = CASE @Language
-						    WHEN 'E' THEN 'The selected group is not allowed for this site'
-						    END,
-			    @Success = 0, @ErrCode = 351
-	    RETURN	
-	END
+	--IF @IsMyanmarOdds = 1 AND @ugroup <> 'a'
+	--BEGIN
+	--	 SELECT	@ErrMsg = CASE @Language
+	--					    WHEN 'E' THEN 'The selected group is not allowed for this site'
+	--					    END,
+	--		    @Success = 0, @ErrCode = 351
+	--    RETURN	
+	--END
 	
 	-- Reset discount value in case its value > upline
-	IF @IsMyanmarOdds = 1
-	BEGIN
-		SELECT @playerdiscountMyanmarOdds = CASE 
-											WHEN @playerdiscountMyanmarOdds > commRate THEN commRate
-											ELSE @playerdiscountMyanmarOdds  
-										END  
-		FROM AgentCommRate WITH(NOLOCK)  
-		WHERE custid = @recommend
-			AND sporttype = 1   
-			AND bettype = 301  
-	END
+	--IF @IsMyanmarOdds = 1
+	--BEGIN
+	--	SELECT @playerdiscountMyanmarOdds = CASE 
+	--										WHEN @playerdiscountMyanmarOdds > commRate THEN commRate
+	--										ELSE @playerdiscountMyanmarOdds  
+	--									END  
+	--	FROM AgentCommRate WITH(NOLOCK)  
+	--	WHERE custid = @recommend
+	--		AND sporttype = 1   
+	--		AND bettype = 301  
+	--END
     
     EXEC dbo.Acc_CustomerInsMember_Ag_CheckParam
 	    @playerdiscount=@playerdiscount,
 	    @playerdiscountcs=@playerdiscountcs,
 	    @playerdiscount1x2 = @playerdiscount1x2,--1x2
-	    @playerdiscountnumber = @playerdiscountnumber,
-	    @discountMyanmarOdds = @playerdiscountMyanmarOdds,
+	    --@playerdiscountnumber = @playerdiscountnumber,
+	    --@discountMyanmarOdds = @playerdiscountMyanmarOdds,
 	    @MinBet=@MinBet,
 	    @MaxBet=@MaxBet,
 	    @MaxPerMatch=@MaxPerMatch,
@@ -2567,10 +2568,10 @@ BEGIN
 	    @playerdiscount = CASE WHEN @playerdiscount > @discount THEN @discount ELSE @playerdiscount END,
 	    @playerdiscountcs = CASE WHEN @playerdiscountcs > @discountcs THEN @discountcs ELSE @playerdiscountcs END,
 	    --1x2
-	    @playerdiscount1x2 = CASE WHEN @playerdiscount1x2 > @discount1x2 THEN @discount1x2 ELSE @playerdiscount1x2 END,   
+	    @playerdiscount1x2 = CASE WHEN @playerdiscount1x2 > @discount1x2 THEN @discount1x2 ELSE @playerdiscount1x2 END--,   
 
 	    --v161
-	    @playerdiscountnumber = CASE WHEN @playerdiscountnumber > @discountnumber THEN @discountnumber ELSE @playerdiscountnumber END
+	    --@playerdiscountnumber = CASE WHEN @playerdiscountnumber > @discountnumber THEN @discountnumber ELSE @playerdiscountnumber END
 
     --End check valid commission
     	
@@ -3540,10 +3541,10 @@ BEGIN
 	    --1x2 
 	    @playerdiscount1x2 = @playerdiscount1x2,	
     	
-	    @playerdiscountnumber = @playerdiscountnumber,
+	    --@playerdiscountnumber = @playerdiscountnumber,
 	    
-    	@IsMyanmarOdds = @IsMyanmarOdds,
-    	@discountMyanmarOdds = @playerdiscountMyanmarOdds,    	
+    	--@IsMyanmarOdds = @IsMyanmarOdds,
+    	--@discountMyanmarOdds = @playerdiscountMyanmarOdds,    	
     		
 	    @adiscount = @adiscount,
 	    @adiscountcs = @adiscountcs,
@@ -4752,11 +4753,11 @@ BEGIN
     'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)), SPACE(1)) + '" ' +
     'playerdiscount="'+ COALESCE(CAST(@playerdiscount AS VARCHAR(50)), SPACE(1)) + '" ' +
     'playerdiscountcs="'+ COALESCE(CAST(@playerdiscountcs AS VARCHAR(50)), SPACE(1)) + '" ' +
-    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +   
-    'playerdiscountnumber="'+ COALESCE(CAST(@playerdiscountnumber AS VARCHAR(50)), SPACE(1)) + '" '
+    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +  '" ' 
+    --'playerdiscountnumber="'+ COALESCE(CAST(@playerdiscountnumber AS VARCHAR(50)), SPACE(1)) + '" '
     
-    IF @IsMyanmarOdds = 1
-		SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ COALESCE(CAST(@playerdiscountMyanmarOdds AS VARCHAR(50)), SPACE(1)) + '" ' 
+  --  IF @IsMyanmarOdds = 1
+		--SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ COALESCE(CAST(@playerdiscountMyanmarOdds AS VARCHAR(50)), SPACE(1)) + '" ' 
 	SET @LogSPData = @LogSPData + ' />' 
 	
     BEGIN TRY
@@ -4776,11 +4777,11 @@ BEGIN
 	    'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'playerdiscount="'+ COALESCE(CAST(@playerdiscount AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'playerdiscountcs="'+ COALESCE(CAST(@playerdiscountcs AS VARCHAR(50)), SPACE(1)) + '" ' +
-	    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +	    
-	    'playerdiscountnumber="'+ COALESCE(CAST(@playerdiscountnumber AS VARCHAR(50)), SPACE(1)) + '" ' 
+	    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' + '" ' 	    
+	   -- 'playerdiscountnumber="'+ COALESCE(CAST(@playerdiscountnumber AS VARCHAR(50)), SPACE(1)) + '" ' 
 	    
-	    IF @IsMyanmarOdds = 1
-			SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ COALESCE(CAST(@playerdiscountMyanmarOdds AS VARCHAR(50)), SPACE(1)) + '" ' 
+	  --  IF @IsMyanmarOdds = 1
+			--SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ COALESCE(CAST(@playerdiscountMyanmarOdds AS VARCHAR(50)), SPACE(1)) + '" ' 
 		SET @LogSPData = @LogSPData + 'errCode="'+ COALESCE(CAST(ERROR_NUMBER() AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'errMsg="'+ COALESCE(CAST(ERROR_MESSAGE() AS VARCHAR(4000)), SPACE(1)) + '" />'
 	    

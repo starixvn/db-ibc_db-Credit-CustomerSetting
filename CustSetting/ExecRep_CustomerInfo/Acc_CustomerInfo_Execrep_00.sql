@@ -743,8 +743,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v255sdiscount_1701 decimal(9,8) = 0,
 
 	-- Myanma Odds
-	@discountMyanmarOdds DECIMAL(9,8) = 0,
-	@IsMyanmarOdds BIT = 0,
+	--@discountMyanmarOdds DECIMAL(9,8) = 0,
+	--@IsMyanmarOdds BIT = 0,
 
 	@ErrCode INT = 0 OUTPUT
 	
@@ -2435,72 +2435,72 @@ BEGIN
 		IF @roleid = 3 
 			SET @DirectParentAgent = @srecommend 
 		
-		-- For Myanma Odds
-		IF (@IsMyanmarOdds = 1 AND (@roleid = 4 OR EXISTS (SELECT 1 FROM AgentCommRate WITH (NOLOCK) WHERE CustID = @DirectParentAgent AND SportType = 1 AND Bettype = 301)))
-		BEGIN
-			INSERT INTO dbo.AgentCommRate WITH (ROWLOCK) (CustID,SportType,BetType,CommRate) 
-			SELECT @custid,1,301,@discountMyanmarOdds
-		END	
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
+		---- For Myanma Odds
+		--IF (@IsMyanmarOdds = 1 AND (@roleid = 4 OR EXISTS (SELECT 1 FROM AgentCommRate WITH (NOLOCK) WHERE CustID = @DirectParentAgent AND SportType = 1 AND Bettype = 301)))
+		--BEGIN
+		--	INSERT INTO dbo.AgentCommRate WITH (ROWLOCK) (CustID,SportType,BetType,CommRate) 
+		--	SELECT @custid,1,301,@discountMyanmarOdds
+		--END	
+		--IF @@ERROR <> 0
+		--BEGIN
+		--	--Error Occurs
+		--	SELECT @ErrCode=116
 			
-			-- ROLLBACK MANUALLY
-			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
+		--	-- ROLLBACK MANUALLY
+		--	DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
+		--	DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
+		--	DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
+		--	DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
 		
-			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
-			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid
+		--	DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
+		--	DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
+		--	DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
+		--	DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid
 			
-			RETURN
-		END
+		--	RETURN
+		--END
 	
 	END
 	IF @roleid = 1
 	BEGIN
-		IF (@IsMyanmarOdds = 1)
-		BEGIN
+		--IF (@IsMyanmarOdds = 1)
+		--BEGIN
 		
-			SELECT @CustID AS CustID,AC.SportType,AC.BetType,AC.CommRate,CI.roleid 
-			INTO #CustCommRate_MOtemp
-			FROM AgentCommRate ac WITH (ROWLOCK)
-				JOIN custInfo ci WITH (ROWLOCK) ON ac.CustID = ci.custid
-			WHERE ac.CustID IN (@srecommend,@mrecommend,@recommend) AND ac.Sporttype = 1 AND ac.Bettype = 301
+		--	SELECT @CustID AS CustID,AC.SportType,AC.BetType,AC.CommRate,CI.roleid 
+		--	INTO #CustCommRate_MOtemp
+		--	FROM AgentCommRate ac WITH (ROWLOCK)
+		--		JOIN custInfo ci WITH (ROWLOCK) ON ac.CustID = ci.custid
+		--	WHERE ac.CustID IN (@srecommend,@mrecommend,@recommend) AND ac.Sporttype = 1 AND ac.Bettype = 301
 			
-			INSERT INTO CustCommRate (CustID,SportType,BetType,sdiscount,adiscount,discount,playerdiscount)
-			SELECT CustID,SportType,BetType,T.[4],T.[3],T.[2],@discountMyanmarOdds
-			FROM #CustCommRate_MOtemp
-			PIVOT(
-				SUM(CommRate)
-				FOR roleID IN ([2],[3],[4])
-			) AS T
+		--	INSERT INTO CustCommRate (CustID,SportType,BetType,sdiscount,adiscount,discount,playerdiscount)
+		--	SELECT CustID,SportType,BetType,T.[4],T.[3],T.[2],@discountMyanmarOdds
+		--	FROM #CustCommRate_MOtemp
+		--	PIVOT(
+		--		SUM(CommRate)
+		--		FOR roleID IN ([2],[3],[4])
+		--	) AS T
 			
 				
-			IF @@ERROR <> 0
-			BEGIN
-				--Error Occurs
-				SELECT @ErrCode=116
+		--	IF @@ERROR <> 0
+		--	BEGIN
+		--		--Error Occurs
+		--		SELECT @ErrCode=116
 				
-				-- ROLLBACK MANUALLY
-				DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-				DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
-				DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
-				DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
+		--		-- ROLLBACK MANUALLY
+		--		DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
+		--		DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
+		--		DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
+		--		DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
 			
-				DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
-				DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
-				DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-				DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  = @custid
-				DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
+		--		DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
+		--		DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
+		--		DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
+		--		DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  = @custid
+		--		DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
 				
-				RETURN
-			END
-		END
+		--		RETURN
+		--	END
+		--END
 		
 	
 	END
