@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,Dot_Member" viewers="" isFunction="1"></info>*/
 
 ALTER FUNCTION f_CS_FomatNumber(@str VARCHAR(50)) 
 RETURNS VARCHAR(50) 
