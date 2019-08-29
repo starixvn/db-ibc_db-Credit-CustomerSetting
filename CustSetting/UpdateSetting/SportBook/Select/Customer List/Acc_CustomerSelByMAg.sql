@@ -642,15 +642,15 @@ BEGIN
 				ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_NG2), 0) AS SyncedNG2Upline,	
 
 				-- For VS
-				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_VS)) AS DisableVirtualSports,				
-				--CAST(	CASE	WHEN	@IsHidden_VS = 0 
-				--					AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VS), 1) = 0 
-				--					THEN 0
-				--				ELSE 1 
-				--		END AS BIT) AS HideVirtualSports,
-				--CAST(CASE	WHEN	@IsHidden_VS = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VS), 1)=0
-				--	THEN 0 ELSE 1
-				--	END AS BIT) AS HideVirtualSportsUpline,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_VS)) AS DisableVirtualSports,				
+				CAST(	CASE	WHEN	@IsHidden_VS = 0 
+									AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VS), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideVirtualSports,
+				CAST(CASE	WHEN	@IsHidden_VS = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VS), 1)=0
+					THEN 0 ELSE 1
+					END AS BIT) AS HideVirtualSportsUpline,
 
 				---- For BullFighting
 				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BullFighting)) AS DisableBullFighting,		
@@ -803,9 +803,9 @@ BEGIN
 			ctm.SyncedFishingWorldDownline,
 			
 			-- VS
-			--ctm.DisableVirtualSports,
-			--ctm.HideVirtualSports,
-			--ctm.HideVirtualSportsUpline,
+			ctm.DisableVirtualSports,
+			ctm.HideVirtualSports,
+			ctm.HideVirtualSportsUpline,
 
 			---- BullFighting
 			--ctm.DisableBullFighting,
