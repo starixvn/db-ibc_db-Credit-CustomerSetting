@@ -25,6 +25,7 @@ AS
 		- 20181218@Johnson: Add Happy 5 [Redmine: #104006]
 		- 20181227@Johnson: Add range for VS Betradar(190-198) [Redmine: #104809]
 		- 20190530@Elodie: Exclude data of CN88 site
+		- 20190729@Eden: Use new table Sport_Bettype_Reference_Setting instead of Sport_Bettype_Reference for keno [Redmine: #116466]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -111,7 +112,7 @@ BEGIN
 	FROM	dbo.Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE	Sporttype NOT IN (
 				 CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
-				,CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
+				--,CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
 				,CASE WHEN @IsMyanmarOdds = 0 AND Bettype IN (301,302,303,304) THEN 1 ELSE 0 END -- MyanmarOdds
 				,27, 50 -- Cricket
 			)
@@ -139,18 +140,20 @@ BEGIN
 			AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
 			AND (SportType<>SporttypeRefPT OR bettype <>BettypeRefPT)
 			AND NOT EXISTS (SELECT TOP 1 1 FROM Sport_Bettype_Reference a (NOLOCK) WHERE a.Sporttype=b.SportType AND a.Bettype=b.BetType)
-			AND (SportType<=99 -- Sportbook
-					
+			AND (SportType<=99 -- Sportbook	
 					OR b.SportType BETWEEN 213 AND 218 --NG2
 					OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) --Virtual Sport
 					OR b.SportType = 220 -- Lottery
 					OR b.sportType = 164--Happy 5
-					OR b.SportType = 163) -- PokerGames
+					OR b.SportType = 163 -- PokerGames
+					OR b.SportType = 202 --Keno
+					) 
 
 			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HidePokerGames = 1 AND b.SportType = 163 THEN 0 ELSE 1 END
+			AND 1 = CASE WHEN (@HideKeno = 1 OR @DisableKeno = 1) AND b.SportType = 202 THEN 0 ELSE 1 END
 			AND b.Site <> 'CN88'
 	ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
 END

@@ -72,6 +72,7 @@ AS
 		- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
 		- 20180918@Winnie: Add new bettype of Esports - [Redmine: #101526]
 		- 20190510@Elodie: Support search by nickname on customer list - [Redmine: #113044]
+		- 20190724@Eden: add bettype 1525,1526 for Keno gametype - [Redmine: #116466]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -703,9 +704,9 @@ BEGIN
 	keno AS
 	(
 		SELECT	cg.CustID
-				,min(CASE WHEN g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524) then cg.IsDisabled else 1 end) as DisableKeno
+				,min(CASE WHEN g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526) then cg.IsDisabled else 1 end) as DisableKeno
 		FROM dbo.CustGameType cg WITH(NOLOCK) 
-			INNER JOIN @tmp_GameType g ON cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524)		
+			INNER JOIN @tmp_GameType g ON cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526)		
 		WHERE CustID IN (SELECT CustID FROM #customer)
 		GROUP BY cg.CustID 
 	)
