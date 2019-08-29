@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_06]
     @CustId              INT
   , @RoleId              INT
@@ -8,8 +8,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_06]
   , @groupd              DECIMAL(9, 8) = 0
   , @discountcs          DECIMAL(9, 8) = 0
   , @discount1x2         DECIMAL(9, 8) = 0
-  , @discountMyanmarOdds DECIMAL(9,8)=0
-  ,	@IsMyanmarOdds BIT = 0
+  --, @discountMyanmarOdds DECIMAL(9,8)=0
+  --,	@IsMyanmarOdds BIT = 0
 
 AS
     /*
@@ -42,7 +42,8 @@ AS
 		- 20160621@Winnie: Add more customers not give commission [Redmine: #58999]		
 		- 20160901@Winnie: Add more customer ALHKD not give commission [Redmine: #58999]	
 		- 20160909@Winnie: Create the table CustNoComm to save customers not give commission [Redmine: #63736]
-		- 20180125@Winnie: Hide inactive products [RedmineID: #86086] 	
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
+		- 20190829@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]	
     Param's Explanation: 
 
     */
@@ -264,67 +265,67 @@ BEGIN
            AND cs.playerdiscount > cs.discount
         
        -- For Myanmar Odds
-        IF @IsMyanmarOdds = 1
-        BEGIN
+        --IF @IsMyanmarOdds = 1
+   --     BEGIN
         
-			UPDATE dbo.AgentCommRate WITH(UPDLOCK, ROWLOCK)
-               SET CommRate = @discountMyanmarOdds
-             WHERE custid = @CustId AND bettype = 301
-                AND sporttype = 1 AND CommRate <> @discountMyanmarOdds
+			--UPDATE dbo.AgentCommRate WITH(UPDLOCK, ROWLOCK)
+   --            SET CommRate = @discountMyanmarOdds
+   --          WHERE custid = @CustId AND bettype = 301
+   --             AND sporttype = 1 AND CommRate <> @discountMyanmarOdds
 
-            --Update g3=g4 if g3>g4
-            UPDATE ac
-               SET ac.CommRate = @discountMyanmarOdds
-              FROM dbo.AgentCommRate ac WITH(UPDLOCK, ROWLOCK)
-				JOIN dbo.CustInfo ci WITH(NOLOCK) ON ac.custid = ci.custid 
-             WHERE ci.srecommend = @custid AND ci.roleid = 3
-                 AND bettype = 301 AND ac.sporttype = 1
-                 AND ac.CommRate > @discountMyanmarOdds
+   --         --Update g3=g4 if g3>g4
+   --         UPDATE ac
+   --            SET ac.CommRate = @discountMyanmarOdds
+   --           FROM dbo.AgentCommRate ac WITH(UPDLOCK, ROWLOCK)
+			--	JOIN dbo.CustInfo ci WITH(NOLOCK) ON ac.custid = ci.custid 
+   --          WHERE ci.srecommend = @custid AND ci.roleid = 3
+   --              AND bettype = 301 AND ac.sporttype = 1
+   --              AND ac.CommRate > @discountMyanmarOdds
 
-            --Update g2=g4 if g2>g4
-            UPDATE ac
-               SET ac.CommRate = @discountMyanmarOdds
-              FROM dbo.AgentCommRate ac WITH(UPDLOCK, ROWLOCK)
-				JOIN dbo.CustInfo ci WITH(NOLOCK) ON ac.custid = ci.custid 
-             WHERE ci.srecommend = @custid
-               AND ci.roleid     = 2
-               AND ci.Enabled    = 1
-               AND bettype       = 301
-               AND ac.sporttype  = 1
-               AND ac.CommRate   > @discountMyanmarOdds
+   --         --Update g2=g4 if g2>g4
+   --         UPDATE ac
+   --            SET ac.CommRate = @discountMyanmarOdds
+   --           FROM dbo.AgentCommRate ac WITH(UPDLOCK, ROWLOCK)
+			--	JOIN dbo.CustInfo ci WITH(NOLOCK) ON ac.custid = ci.custid 
+   --          WHERE ci.srecommend = @custid
+   --            AND ci.roleid     = 2
+   --            AND ci.Enabled    = 1
+   --            AND bettype       = 301
+   --            AND ac.sporttype  = 1
+   --            AND ac.CommRate   > @discountMyanmarOdds
 
-			-- Update table CustCommRate 
-			IF EXISTS (SELECT 1 FROM CustInfo WITH(NOLOCK) WHERE srecommend = @CustId AND roleid = 1)
-			BEGIN
-				UPDATE cs
-					SET sdiscount = @discountMyanmarOdds,
-						adiscount = MasterComm.CommRate,
-						discount =  AgentComm.CommRate,
-						playerdiscount = CASE 
-												WHEN cs.playerdiscount > AgentComm.CommRate THEN AgentComm.CommRate 
-												ELSE cs.playerdiscount
-										 END	
-				 FROM dbo.CustCommRate cs WITH(UPDLOCK, ROWLOCK)
-					JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
+			---- Update table CustCommRate 
+			--IF EXISTS (SELECT 1 FROM CustInfo WITH(NOLOCK) WHERE srecommend = @CustId AND roleid = 1)
+			--BEGIN
+			--	UPDATE cs
+			--		SET sdiscount = @discountMyanmarOdds,
+			--			adiscount = MasterComm.CommRate,
+			--			discount =  AgentComm.CommRate,
+			--			playerdiscount = CASE 
+			--									WHEN cs.playerdiscount > AgentComm.CommRate THEN AgentComm.CommRate 
+			--									ELSE cs.playerdiscount
+			--							 END	
+			--	 FROM dbo.CustCommRate cs WITH(UPDLOCK, ROWLOCK)
+			--		JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
 					
-					CROSS APPLY (SELECT ac.CommRate
-								 FROM AgentCommRate AC WITH (NOLOCK)
-								 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.mrecommend
-								) AS MasterComm
+			--		CROSS APPLY (SELECT ac.CommRate
+			--					 FROM AgentCommRate AC WITH (NOLOCK)
+			--					 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.mrecommend
+			--					) AS MasterComm
 								
-					CROSS APPLY (SELECT ac.CommRate
-								 FROM AgentCommRate AC WITH (NOLOCK)
-								 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.recommend
-								) AS AgentComm				
-				 WHERE ci.srecommend = @custid
-					   AND ci.roleid = 1
-					   AND ci.Enabled = 1
-					   AND cs.Bettype = 301
-					   AND cs.Sporttype = 1
+			--		CROSS APPLY (SELECT ac.CommRate
+			--					 FROM AgentCommRate AC WITH (NOLOCK)
+			--					 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.recommend
+			--					) AS AgentComm				
+			--	 WHERE ci.srecommend = @custid
+			--		   AND ci.roleid = 1
+			--		   AND ci.Enabled = 1
+			--		   AND cs.Bettype = 301
+			--		   AND cs.Sporttype = 1
 				   
-			END   
+			--END   
 			
-        END  
+   --     END  
     END
     
     IF @RoleId = 3
@@ -459,56 +460,56 @@ BEGIN
        -- For MyanmarOdds     
        --Update @Master: g3, m3
         -- For Myanmar Odds
-        IF @IsMyanmarOdds = 1
-        BEGIN
+  --      IF @IsMyanmarOdds = 1
+  --      BEGIN
         
-			UPDATE dbo.AgentCommRate WITH (UPDLOCK, ROWLOCK)
-			   SET CommRate = @discountMyanmarOdds
-			 WHERE custid = @custid AND bettype = 301 AND sporttype = 1 AND CommRate <> @discountMyanmarOdds
+		--	UPDATE dbo.AgentCommRate WITH (UPDLOCK, ROWLOCK)
+		--	   SET CommRate = @discountMyanmarOdds
+		--	 WHERE custid = @custid AND bettype = 301 AND sporttype = 1 AND CommRate <> @discountMyanmarOdds
 
-			--Update g2 = g3 if g2>g3 at agent
-			UPDATE ac
-			   SET ac.CommRate = @discountMyanmarOdds
-			  FROM dbo.AgentCommRate ac WITH(UPDLOCK, ROWLOCK)
-				JOIN dbo.CustInfo ci WITH(NOLOCK) ON ac.custid = ci.custid
-			 WHERE ci.mrecommend = @custid
-			   AND ci.roleid     = 2
-			   AND ci.Enabled    = 1
-			   AND ac.sporttype  = 1
-			   AND ac.bettype    = 301
-			   AND ac.CommRate   > @discountMyanmarOdds
+		--	--Update g2 = g3 if g2>g3 at agent
+		--	UPDATE ac
+		--	   SET ac.CommRate = @discountMyanmarOdds
+		--	  FROM dbo.AgentCommRate ac WITH(UPDLOCK, ROWLOCK)
+		--		JOIN dbo.CustInfo ci WITH(NOLOCK) ON ac.custid = ci.custid
+		--	 WHERE ci.mrecommend = @custid
+		--	   AND ci.roleid     = 2
+		--	   AND ci.Enabled    = 1
+		--	   AND ac.sporttype  = 1
+		--	   AND ac.bettype    = 301
+		--	   AND ac.CommRate   > @discountMyanmarOdds
 
-			-- Update table CustCommRate
-			IF EXISTS (SELECT 1 FROM CustInfo WITH (NOLOCK) WHERE mrecommend = @CustId AND roleid = 1)
-			BEGIN
-				UPDATE cs
-					SET sdiscount = SuperComm.CommRate,
-						adiscount = @discountMyanmarOdds,
-						discount =  AgentComm.CommRate,
-						playerdiscount = (CASE 
-												WHEN cs.playerdiscount > AgentComm.CommRate THEN AgentComm.CommRate 
-												ELSE cs.playerdiscount
-										 END)	
+		--	-- Update table CustCommRate
+		--	IF EXISTS (SELECT 1 FROM CustInfo WITH (NOLOCK) WHERE mrecommend = @CustId AND roleid = 1)
+		--	BEGIN
+		--		UPDATE cs
+		--			SET sdiscount = SuperComm.CommRate,
+		--				adiscount = @discountMyanmarOdds,
+		--				discount =  AgentComm.CommRate,
+		--				playerdiscount = (CASE 
+		--										WHEN cs.playerdiscount > AgentComm.CommRate THEN AgentComm.CommRate 
+		--										ELSE cs.playerdiscount
+		--								 END)	
 										 
-				 FROM dbo.CustCommRate cs WITH(UPDLOCK, ROWLOCK)
-					JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
-					CROSS APPLY (SELECT ac.CommRate
-								 FROM AgentCommRate AC WITH (NOLOCK)
-								 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.srecommend
-								) AS SuperComm
+		--		 FROM dbo.CustCommRate cs WITH(UPDLOCK, ROWLOCK)
+		--			JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
+		--			CROSS APPLY (SELECT ac.CommRate
+		--						 FROM AgentCommRate AC WITH (NOLOCK)
+		--						 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.srecommend
+		--						) AS SuperComm
 								
-					CROSS APPLY (SELECT ac.CommRate
-								 FROM AgentCommRate AC WITH (NOLOCK)
-								 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.recommend
-								) AS AgentComm						
+		--			CROSS APPLY (SELECT ac.CommRate
+		--						 FROM AgentCommRate AC WITH (NOLOCK)
+		--						 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.recommend
+		--						) AS AgentComm						
 					
-				 WHERE ci.mrecommend = @custid
-					   AND ci.roleid = 1
-					   AND ci.Enabled = 1
-					   AND cs.Bettype = 301
-					   AND cs.Sporttype = 1
-			END
-		END			   
+		--		 WHERE ci.mrecommend = @custid
+		--			   AND ci.roleid = 1
+		--			   AND ci.Enabled = 1
+		--			   AND cs.Bettype = 301
+		--			   AND cs.Sporttype = 1
+		--	END
+		--END			   
            
 
     END
@@ -571,48 +572,48 @@ BEGIN
             AND custsetting.playerdiscount > custsetting.discount
         
         
-        -- For MyanmarOdds
-        IF @IsMyanmarOdds = 1
-        BEGIN
+  --      -- For MyanmarOdds
+  --      IF @IsMyanmarOdds = 1
+  --      BEGIN
         
-			 --Update @Agent: g2, a2
-            UPDATE dbo.AgentCommRate WITH (ROWLOCK, UPDLOCK)
-            SET    CommRate = @discountMyanmarOdds
-             WHERE custid = @custid AND bettype = 301 AND sporttype = 1 AND CommRate <> @discountMyanmarOdds
-				AND custid NOT IN (SELECT custid FROM @tblCustList WHERE roleid =2)
+		--	 --Update @Agent: g2, a2
+  --          UPDATE dbo.AgentCommRate WITH (ROWLOCK, UPDLOCK)
+  --          SET    CommRate = @discountMyanmarOdds
+  --           WHERE custid = @custid AND bettype = 301 AND sporttype = 1 AND CommRate <> @discountMyanmarOdds
+		--		AND custid NOT IN (SELECT custid FROM @tblCustList WHERE roleid =2)
 			
-			-- Update table CustCommRate
-			IF EXISTS (SELECT 1 FROM CustInfo WITH (NOLOCK) WHERE recommend = @CustId AND roleid = 1)
-			BEGIN
-				UPDATE cs
-					SET sdiscount = SuperComm.CommRate,
-						adiscount = MasterComm.CommRate,
-						discount =  @discountMyanmarOdds,
-						playerdiscount = (CASE 
-												WHEN cs.playerdiscount > @discountMyanmarOdds THEN @discountMyanmarOdds 
-												ELSE cs.playerdiscount
-										 END)	
-				 FROM dbo.CustCommRate cs WITH(UPDLOCK, ROWLOCK)
-					JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
-					CROSS APPLY (SELECT ac.CommRate
-								 FROM AgentCommRate AC WITH (NOLOCK)
-								 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.srecommend
-								) AS SuperComm
+		--	-- Update table CustCommRate
+		--	IF EXISTS (SELECT 1 FROM CustInfo WITH (NOLOCK) WHERE recommend = @CustId AND roleid = 1)
+		--	BEGIN
+		--		UPDATE cs
+		--			SET sdiscount = SuperComm.CommRate,
+		--				adiscount = MasterComm.CommRate,
+		--				discount =  @discountMyanmarOdds,
+		--				playerdiscount = (CASE 
+		--										WHEN cs.playerdiscount > @discountMyanmarOdds THEN @discountMyanmarOdds 
+		--										ELSE cs.playerdiscount
+		--								 END)	
+		--		 FROM dbo.CustCommRate cs WITH(UPDLOCK, ROWLOCK)
+		--			JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
+		--			CROSS APPLY (SELECT ac.CommRate
+		--						 FROM AgentCommRate AC WITH (NOLOCK)
+		--						 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.srecommend
+		--						) AS SuperComm
 								
-					CROSS APPLY (SELECT ac.CommRate
-								 FROM AgentCommRate AC WITH (NOLOCK)
-								 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.mrecommend
-								) AS MasterComm					
+		--			CROSS APPLY (SELECT ac.CommRate
+		--						 FROM AgentCommRate AC WITH (NOLOCK)
+		--						 WHERE CS.SportType = AC.SportType AND CS.BetType = AC.Bettype and ac.CustId = ci.mrecommend
+		--						) AS MasterComm					
 					
-				 WHERE ci.recommend = @custid
-					   AND ci.roleid = 1
-					   AND ci.Enabled = 1
-					   AND cs.Bettype = 301
-					   AND cs.Sporttype = 1
+		--		 WHERE ci.recommend = @custid
+		--			   AND ci.roleid = 1
+		--			   AND ci.Enabled = 1
+		--			   AND cs.Bettype = 301
+		--			   AND cs.Sporttype = 1
 				   
-			END    
+		--	END    
     
-		END
+		--END
     END
     
     IF @RoleId = 1
@@ -628,16 +629,16 @@ BEGIN
         WHERE custInfo.custid=@custid             
             AND custInfo.custid NOT IN (SELECT custid FROM @tblCustList WHERE roleid =1)
         
-        --For MyanmarOdds
-        IF @IsMyanmarOdds = 1
-        BEGIN
-			UPDATE cs
-					SET playerdiscount = @discountMyanmarOdds	
-			FROM dbo.CustCommRate cs WITH(UPDLOCK, ROWLOCK)
-			WHERE cs.CustId = @CustId
-				AND cs.SportType = 1
-				AND cs.BetType = 301
-        END
+   --     --For MyanmarOdds
+   --     IF @IsMyanmarOdds = 1
+   --     BEGIN
+			--UPDATE cs
+			--		SET playerdiscount = @discountMyanmarOdds	
+			--FROM dbo.CustCommRate cs WITH(UPDLOCK, ROWLOCK)
+			--WHERE cs.CustId = @CustId
+			--	AND cs.SportType = 1
+			--	AND cs.BetType = 301
+   --     END
     END
 END
 GO

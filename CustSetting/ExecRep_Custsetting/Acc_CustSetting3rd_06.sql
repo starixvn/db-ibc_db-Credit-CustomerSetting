@@ -1,8 +1,8 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting3rd_06]
     @CustId int,
     @RoleId int,
-    @discountNumber decimal(9,8)    = 0, -- Number game
+    --@discountNumber decimal(9,8)    = 0, -- Number game
     @mode varchar(30),
     @Sporttype INT = 202, 
     @Bettype INT = 1501, 
@@ -50,6 +50,7 @@ AS
 		- 20160608@Elodie: Add more customers not give commission [Redmine: #58999]	\
 		- 20160909@Winnie: Not apply CustNoComm for 3rd product [Redmine: #63736]	
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20190829@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
     Param's Explanation: 
         @mode: 
                 - 'Numbergame': Number game
@@ -77,180 +78,180 @@ BEGIN
     
 	--End customer list------------------------------------------
 	
-    IF @Mode = 'NumberGame'
-    BEGIN
-        IF @RoleId = 4
-        BEGIN
-            UPDATE custsetting3rd WITH (ROWLOCK, UPDLOCK)
-            SET
-                sdiscount = @discountNumber
-             WHERE custid = @custid and sporttype = 161
+    --IF @Mode = 'NumberGame'
+    --BEGIN
+    --    IF @RoleId = 4
+    --    BEGIN
+    --        UPDATE custsetting3rd WITH (ROWLOCK, UPDLOCK)
+    --        SET
+    --            sdiscount = @discountNumber
+    --         WHERE custid = @custid and sporttype = 161
 
-            --Update s4 to member level --number game
-            UPDATE cs WITH(ROWLOCK, UPDLOCK)
-               SET cs.sdiscount = @discountNumber
-              FROM custsetting3rd cs
-        INNER JOIN custInfo c WITH(NOLOCK) ON cs.custid = c.custid    
-             WHERE c.srecommend = @custid
+    --        --Update s4 to member level --number game
+    --        UPDATE cs WITH(ROWLOCK, UPDLOCK)
+    --           SET cs.sdiscount = @discountNumber
+    --          FROM custsetting3rd cs
+    --    INNER JOIN custInfo c WITH(NOLOCK) ON cs.custid = c.custid    
+    --         WHERE c.srecommend = @custid
                    
-               AND c.roleid = 1
-               AND c.Enabled = 1
-               AND cs.sporttype = 161
+    --           AND c.roleid = 1
+    --           AND c.Enabled = 1
+    --           AND cs.sporttype = 161
 
 
-            --Update m3=s4 if m3>s4  --number game
-            UPDATE cs WITH(ROWLOCK, UPDLOCK)
-               SET 
-                adiscount = @discountNumber
-              FROM custsetting3rd cs
-            INNER JOIN custinfo ci WITH(NOLOCK) 
-                ON cs.custid = ci.custid
-             WHERE ci.srecommend = @custid 
-                AND ci.roleid = 3 
-                AND cs.sporttype = 161 
-                AND cs.adiscount>@discountNumber
+    --        --Update m3=s4 if m3>s4  --number game
+    --        UPDATE cs WITH(ROWLOCK, UPDLOCK)
+    --           SET 
+    --            adiscount = @discountNumber
+    --          FROM custsetting3rd cs
+    --        INNER JOIN custinfo ci WITH(NOLOCK) 
+    --            ON cs.custid = ci.custid
+    --         WHERE ci.srecommend = @custid 
+    --            AND ci.roleid = 3 
+    --            AND cs.sporttype = 161 
+    --            AND cs.adiscount>@discountNumber
             
-            --Update a2=s4 if a2>s4  --number game
-            UPDATE c3d WITH(ROWLOCK, UPDLOCK) 
-               SET discount = @discountNumber
-              FROM custsetting3rd c3d
-        INNER JOIN custinfo ci WITH(NOLOCK) ON c3d.custid = ci.custid
-             WHERE ci.srecommend = @custid 
-               AND ci.roleid     = 2
-               AND ci.Enabled    = 1
-               AND sporttype     = 161
-               AND discount      > @discountNumber
+    --        --Update a2=s4 if a2>s4  --number game
+    --        UPDATE c3d WITH(ROWLOCK, UPDLOCK) 
+    --           SET discount = @discountNumber
+    --          FROM custsetting3rd c3d
+    --    INNER JOIN custinfo ci WITH(NOLOCK) ON c3d.custid = ci.custid
+    --         WHERE ci.srecommend = @custid 
+    --           AND ci.roleid     = 2
+    --           AND ci.Enabled    = 1
+    --           AND sporttype     = 161
+    --           AND discount      > @discountNumber
 
-            --At member level, update adiscount = sdiscount  if adiscount > sdiscount  (Number Game)
-            UPDATE c3d WITH(ROWLOCK, UPDLOCK) 
-               SET adiscount = sdiscount
-              FROM custsetting3rd c3d
-        INNER JOIN custInfo c WITH(NOLOCK) ON c3d.custid = c.custid
-             WHERE c.srecommend = @custid
-               AND c.roleid = 1
-               AND c.Enabled = 1
-               AND c3d.adiscount > c3d.sdiscount
-               AND c3d.sporttype = 161
+    --        --At member level, update adiscount = sdiscount  if adiscount > sdiscount  (Number Game)
+    --        UPDATE c3d WITH(ROWLOCK, UPDLOCK) 
+    --           SET adiscount = sdiscount
+    --          FROM custsetting3rd c3d
+    --    INNER JOIN custInfo c WITH(NOLOCK) ON c3d.custid = c.custid
+    --         WHERE c.srecommend = @custid
+    --           AND c.roleid = 1
+    --           AND c.Enabled = 1
+    --           AND c3d.adiscount > c3d.sdiscount
+    --           AND c3d.sporttype = 161
 
-            --At member level, update discount = adiscount  if discount > adiscount -- Number Game
-            UPDATE c3d WITH(ROWLOCK, UPDLOCK) 
-               SET discount = adiscount
-              FROM custsetting3rd c3d
-        INNER JOIN custInfo c WITH(NOLOCK) ON c3d.custid = c.custid
-             WHERE c.srecommend = @custid 
-               AND c.roleid = 1
-               AND c.Enabled = 1
-               AND c3d.discount > c3d.adiscount
-               AND c3d.sporttype = 161
-
-
-            --At member level, update playerdiscount = discount  if playerdiscount > discount --Number Game
-            UPDATE c3d WITH (ROWLOCK, UPDLOCK) 
-               SET playerdiscount = discount
-              FROM custsetting3rd c3d
-        INNER JOIN custInfo c WITH(NOLOCK) ON c3d.custid = c.custid
-             WHERE c.srecommend = @custid
-               AND c.roleid = 1
-               AND c.Enabled = 1
-               AND c3d.playerdiscount > c3d.discount
-               AND c3d.sporttype = 161
-        END
-
-        --Master
-        IF @RoleId = 3
-        BEGIN
-            -- number game commission - update master discount
-            UPDATE custsetting3rd WITH (ROWLOCK, UPDLOCK)
-            SET    adiscount = @discountNumber
-             WHERE custid=@custid 
-                and sporttype = 161
-
-            -- number game - update agent discount
-            UPDATE cs3 WITH(ROWLOCK, UPDLOCK) 
-               SET cs3.discount =
-                     CASE
-                       WHEN cs3.discount > @discountNumber THEN @discountNumber
-                       ELSE cs3.discount
-                     END 
-              FROM custsetting3rd cs3 
-        INNER JOIN custinfo ci WITH(NOLOCK) ON cs3.custid = ci.custid
-             WHERE ci.mrecommend = @custid 
-               AND ci.roleid     = 2
-               AND ci.Enabled    = 1
-               AND sporttype     = 161    
+    --        --At member level, update discount = adiscount  if discount > adiscount -- Number Game
+    --        UPDATE c3d WITH(ROWLOCK, UPDLOCK) 
+    --           SET discount = adiscount
+    --          FROM custsetting3rd c3d
+    --    INNER JOIN custInfo c WITH(NOLOCK) ON c3d.custid = c.custid
+    --         WHERE c.srecommend = @custid 
+    --           AND c.roleid = 1
+    --           AND c.Enabled = 1
+    --           AND c3d.discount > c3d.adiscount
+    --           AND c3d.sporttype = 161
 
 
-            -- number game - update master-discount on member
-            UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
-               SET cs3.adiscount = @discountNumber
-              FROM custsetting3rd cs3 
-        INNER JOIN custinfo c WITH(NOLOCK) ON cs3.custid = c.custid
-             WHERE c.mrecommend = @custid             
-               AND c.roleid = 1
-               AND c.Enabled = 1
-               AND cs3.sporttype = 161
+    --        --At member level, update playerdiscount = discount  if playerdiscount > discount --Number Game
+    --        UPDATE c3d WITH (ROWLOCK, UPDLOCK) 
+    --           SET playerdiscount = discount
+    --          FROM custsetting3rd c3d
+    --    INNER JOIN custInfo c WITH(NOLOCK) ON c3d.custid = c.custid
+    --         WHERE c.srecommend = @custid
+    --           AND c.roleid = 1
+    --           AND c.Enabled = 1
+    --           AND c3d.playerdiscount > c3d.discount
+    --           AND c3d.sporttype = 161
+    --    END
+
+    --    --Master
+    --    IF @RoleId = 3
+    --    BEGIN
+    --        -- number game commission - update master discount
+    --        UPDATE custsetting3rd WITH (ROWLOCK, UPDLOCK)
+    --        SET    adiscount = @discountNumber
+    --         WHERE custid=@custid 
+    --            and sporttype = 161
+
+    --        -- number game - update agent discount
+    --        UPDATE cs3 WITH(ROWLOCK, UPDLOCK) 
+    --           SET cs3.discount =
+    --                 CASE
+    --                   WHEN cs3.discount > @discountNumber THEN @discountNumber
+    --                   ELSE cs3.discount
+    --                 END 
+    --          FROM custsetting3rd cs3 
+    --    INNER JOIN custinfo ci WITH(NOLOCK) ON cs3.custid = ci.custid
+    --         WHERE ci.mrecommend = @custid 
+    --           AND ci.roleid     = 2
+    --           AND ci.Enabled    = 1
+    --           AND sporttype     = 161    
 
 
-            -- number game - update agent discount on member
-            UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
-               SET cs3.discount = cs3.adiscount
-              FROM custsetting3rd cs3
-        INNER JOIN custinfo c WITH(NOLOCK) ON cs3.custid = c.custid
-             WHERE c.mrecommend = @custid
-               AND c.roleid = 1
-               AND c.Enabled = 1
-               AND cs3.sporttype = 161
-               AND cs3.discount > cs3.adiscount
+    --        -- number game - update master-discount on member
+    --        UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
+    --           SET cs3.adiscount = @discountNumber
+    --          FROM custsetting3rd cs3 
+    --    INNER JOIN custinfo c WITH(NOLOCK) ON cs3.custid = c.custid
+    --         WHERE c.mrecommend = @custid             
+    --           AND c.roleid = 1
+    --           AND c.Enabled = 1
+    --           AND cs3.sporttype = 161
 
 
-            -- number game - update agent discount on member
-            UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
-               SET cs3.playerdiscount = cs3.discount
-              FROM custsetting3rd cs3 
-        INNER JOIN custinfo c WITH(NOLOCK) ON cs3.custid = c.custid
-             WHERE c.mrecommend = @custid
-               AND c.roleid = 1
-               AND c.Enabled = 1
-               AND cs3.sporttype = 161
-               AND cs3.playerdiscount > cs3.discount
-        END
+    --        -- number game - update agent discount on member
+    --        UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
+    --           SET cs3.discount = cs3.adiscount
+    --          FROM custsetting3rd cs3
+    --    INNER JOIN custinfo c WITH(NOLOCK) ON cs3.custid = c.custid
+    --         WHERE c.mrecommend = @custid
+    --           AND c.roleid = 1
+    --           AND c.Enabled = 1
+    --           AND cs3.sporttype = 161
+    --           AND cs3.discount > cs3.adiscount
 
-        IF @RoleId = 2
-        BEGIN
-            -- number game commission
-            Update custsetting3rd with(rowlock,updlock) 
-               SET discount = @discountNumber
-             WHERE custid = @custid 
-                AND sporttype = 161             
 
-            UPDATE cs3 WITH (ROWLOCK, UPDLOCK) 
-               SET     cs3.discount = @discountNumber
-              FROM custsetting3rd cs3 
-            INNER JOIN customer c WITH(NOLOCK) 
-                ON cs3.custid = c.custid
-             WHERE c.recommend = @custid                   
-                AND c.roleid = 1 
-                AND cs3.sporttype = 161
+    --        -- number game - update agent discount on member
+    --        UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
+    --           SET cs3.playerdiscount = cs3.discount
+    --          FROM custsetting3rd cs3 
+    --    INNER JOIN custinfo c WITH(NOLOCK) ON cs3.custid = c.custid
+    --         WHERE c.mrecommend = @custid
+    --           AND c.roleid = 1
+    --           AND c.Enabled = 1
+    --           AND cs3.sporttype = 161
+    --           AND cs3.playerdiscount > cs3.discount
+    --    END
 
-            UPDATE cs3 WITH (ROWLOCK, UPDLOCK)
-            SET
-                cs3.playerdiscount = cs3.discount 
-              FROM custsetting3rd cs3 
-            INNER JOIN customer AS c WITH(NOLOCK) 
-                ON cs3.custid = c.custid
-             WHERE c.recommend = @custid 
-                AND c.roleid = 1 
-                AND cs3.playerdiscount > cs3.discount
-        END
-        IF @RoleId = 1
-        BEGIN
-            UPDATE custsetting3rd WITH (ROWLOCK, UPDLOCK)
-            SET
-                playerdiscount = @discountNumber
-             WHERE custid = @custid AND Sporttype = 161
+    --    IF @RoleId = 2
+    --    BEGIN
+    --        -- number game commission
+    --        Update custsetting3rd with(rowlock,updlock) 
+    --           SET discount = @discountNumber
+    --         WHERE custid = @custid 
+    --            AND sporttype = 161             
+
+    --        UPDATE cs3 WITH (ROWLOCK, UPDLOCK) 
+    --           SET     cs3.discount = @discountNumber
+    --          FROM custsetting3rd cs3 
+    --        INNER JOIN customer c WITH(NOLOCK) 
+    --            ON cs3.custid = c.custid
+    --         WHERE c.recommend = @custid                   
+    --            AND c.roleid = 1 
+    --            AND cs3.sporttype = 161
+
+    --        UPDATE cs3 WITH (ROWLOCK, UPDLOCK)
+    --        SET
+    --            cs3.playerdiscount = cs3.discount 
+    --          FROM custsetting3rd cs3 
+    --        INNER JOIN customer AS c WITH(NOLOCK) 
+    --            ON cs3.custid = c.custid
+    --         WHERE c.recommend = @custid 
+    --            AND c.roleid = 1 
+    --            AND cs3.playerdiscount > cs3.discount
+    --    END
+    --    IF @RoleId = 1
+    --    BEGIN
+    --        UPDATE custsetting3rd WITH (ROWLOCK, UPDLOCK)
+    --        SET
+    --            playerdiscount = @discountNumber
+    --         WHERE custid = @custid AND Sporttype = 161
 			
-        END
-    END
+    --    END
+    --END
 
 	IF @mode = 'Keno' or @mode = 'GoldDeluxe' 
     BEGIN
