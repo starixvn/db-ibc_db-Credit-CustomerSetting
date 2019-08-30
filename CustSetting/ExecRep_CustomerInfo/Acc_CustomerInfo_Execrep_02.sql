@@ -279,40 +279,7 @@ BEGIN
 				
 			RETURN
 		END
-		--End Keno
-
-		--Colossus Bet, Myanmar Odds
-		--DECLARE @IsMyanmarOdds BIT = 0
-		--SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@ExistingCustid)
-
-		--IF @IsMyanmarOdds = 1
-		--	INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
-		--	SELECT @custid, SportType, Bettype, CommRate
-		--	FROM AgentCommRate WITH (NOLOCK)
-		--	WHERE CustId = @ExistingCustid
-		--ELSE
-		INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
-		SELECT @custid, SportType, Bettype, CommRate
-		FROM AgentCommRate WITH (NOLOCK)
-		WHERE CustId = @ExistingCustid AND Sporttype <> 1 AND Bettype <> 301 
-
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode = 157
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
-			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-			
-			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
-
-			RETURN
-		END
+		--End Keno		
 	END
 
 	DECLARE @DCSErrCode INT = 0
