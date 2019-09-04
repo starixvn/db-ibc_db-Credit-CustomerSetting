@@ -394,8 +394,7 @@ BEGIN
 			,maxpermatch11
 			,maxpermatch12
 			,maxpermatch99
-			,Enabled           			
-			--,maxpermatch201		
+			,Enabled           				
 		
 			,DisableCasino
 			,SyncCasino           
@@ -406,27 +405,14 @@ BEGIN
 			,maxpermatch161
 		
 			,MaxPerBall161			
-			,maxpermatch164
-			--,DisableVirtualSports
-			--,HideVirtualSports
-			--,maxpermatch180
-			--,maxpermatch181
-			--,maxpermatch183
-			--,maxpermatch185
-			--,maxpermatch182
-			--,maxpermatch184
-			--,maxpermatch186			
-			,DoubleCommLosing
-			--,DisableCasinoBonus				
+			,maxpermatch164		
+			,DoubleCommLosing				
 			,HideKeno
 			
 			,HideGoldDeluxe
 			,DisableGoldDeluxe
-			,HideColossusBet
-			,DisableColossusBet
 			,DisableSuperLive
 			,MaxPerMatch1MP
-			--,Disable151_AU
 			,Danger
 			,Danger2
 			,Danger3
@@ -456,8 +442,7 @@ BEGIN
 			,maxpermatch11
 			,maxpermatch12
 			,maxpermatch99
-			,@enableUpline as Enabled          
-			--,maxpermatch201		
+			,@enableUpline as Enabled          	
 			
 			,DisableCasino
 			,0 as SyncCasino           
@@ -468,24 +453,13 @@ BEGIN
 			,maxpermatch161
 			
 			,MaxPerBall161			
-			,maxpermatch164
-			--,DisableVirtualSports
-			--,HideVirtualSports
-			--,maxpermatch180
-			--,maxpermatch181
-			--,maxpermatch183
-			--,maxpermatch185
-			--,maxpermatch182
-			--,maxpermatch184
-			--,maxpermatch186			
+			,maxpermatch164	
 			,@doubleCommLosingUpline as DoubleCommLosing
 			--,1			
 			,HideKeno
 			
 			,HideGoldDeluxe
 			,DisableGoldDeluxe
-			,HideColossusBet
-			,DisableColossusBet
 			,DisableSuperLive
 			,MaxPerMatch1MP
 			--,1

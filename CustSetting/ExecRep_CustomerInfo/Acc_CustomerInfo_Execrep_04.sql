@@ -23,8 +23,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@DisableAllAgents  			BIT 			= NULL
 				,	@DisableAllMembers 			BIT 			= NULL
 				
-				,	@DisableSuperLive			BIT				= 0
-				,	@DisableColossusBet			BIT				= 0				
+				,	@DisableSuperLive			BIT				= 0		
 				,	@AutoSuspendSoccer			BIT				= 0
 				,	@AutoSuspendOtherSports		BIT				= 0
 				,	@rowcount					INT				= 0		OUTPUT
@@ -766,8 +765,8 @@ BEGIN
 				WHERE	SyncCasino=1 AND recommend=@custid AND roleid = 1;
 			END
 	    END;
+    END;
    
-    END;   
     ELSE IF @Action = 'DisableNumberGame'
     BEGIN
 	    IF @RoleID = 4 
@@ -1035,40 +1034,6 @@ BEGIN
 			    AND Recommend = @CustID;
 	    END;
     END;
-    
-    ELSE IF @Action = 'ColossusBet'  
-	BEGIN  
-		IF (@roleID = 4)  
-		BEGIN  			
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableColossusBet = @DisableColossusBet,  
-					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END    
-				WHERE CustID <> @CustID  
-					AND SRecommend = @CustID;  			
-		END;  
-
-		IF (@roleID = 3)  
-		BEGIN  
-			
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableColossusBet = @DisableColossusBet,  
-					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
-				WHERE CustID <> @CustID  
-					AND MRecommend = @CustID; 
-			
-		END;  
-
-		IF (@roleID = 2)  
-		BEGIN  
-			
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-					SET DisableColossusBet = @DisableColossusBet,  
-					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
-				WHERE CustID <> @CustID  
-					AND Recommend = @CustID;  
-			
-		END;  
-	END;    
 
 	ELSE IF	@action = 'EnableVirtualMultiplier'
 	BEGIN

@@ -99,20 +99,7 @@ BEGIN
 	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @Enabled = ISNULL(Enabled, 0), @currency = currency
 	FROM dbo.CustInfo WITH(NOLOCK) 
 	WHERE custid = @ExistingCustid
-	
-	---- For Myanmar Odds
-	--DECLARE @IsMyanmarOdds_destination BIT = 0
-	--DECLARE @IsMyanmarOdds_source BIT = 0
-	
-	--IF @Site = '766666' 
-	--	SET @IsMyanmarOdds_destination = 1
-	
-	--SET @IsMyanmarOdds_source = dbo.fn_IsMyanmarOdds (@ExistingCustid)
 		
-	--IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source
-	--BEGIN
-	--	SELECT @ErrMsg = 'Cannot copy super ' + @existingUsername + ' since amongs the new and old sites, one has % Odds.',@ErrCode = 200								
-	--	RETURN		
 
 	END			
 	
@@ -309,8 +296,7 @@ BEGIN
 				,maxpermatch11
 				,maxpermatch12
 				,maxpermatch99
-				,Enabled   
-				--,maxpermatch201								
+				,Enabled   							
 				,DisableCasino
 				,SyncCasino           
 				,DisableOutright				
@@ -319,27 +305,14 @@ BEGIN
 				,maxpermatch161
 				
 				,MaxPerBall161				
-				,maxpermatch164
-				--,DisableVirtualSports
-				--,HideVirtualSports
-				--,maxpermatch180
-				--,maxpermatch181
-				--,maxpermatch183--dom
-				--,maxpermatch185--dom
-				--,maxpermatch182
-				--,maxpermatch184
-				--,maxpermatch186				
-				,DoubleCommLosing
-				--,DisableCasinoBonus		
+				,maxpermatch164			
+				,DoubleCommLosing	
 				,HideKeno
 				
 				,HideGoldDeluxe
 				,DisableGoldDeluxe
-				,HideColossusBet
-				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
-				--,Disable151_AU
 				)
 		 SELECT
 				@CustID
@@ -365,8 +338,7 @@ BEGIN
 				,maxpermatch11
 				,maxpermatch12
 				,maxpermatch99
-				,Enabled  
-				--,maxpermatch201							
+				,Enabled  						
 				,DisableCasino
 				,0 as SyncCasino           
 				,DisableOutright				
@@ -376,24 +348,12 @@ BEGIN
 				,maxpermatch161
 				
 				,MaxPerBall161				
-				,maxpermatch164
-				--,DisableVirtualSports
-				--,HideVirtualSports
-				--,maxpermatch180
-				--,maxpermatch181
-				--,maxpermatch183--dom
-				--,maxpermatch185--dom
-				--,maxpermatch182
-				--,maxpermatch184
-				--,maxpermatch186				
-				,doubleCommLosing
-				--,DisableCasinoBonus		
+				,maxpermatch164				
+				,doubleCommLosing		
 				,HideKeno
 				
 				,HideGoldDeluxe 
 				,DisableGoldDeluxe
-				,HideColossusBet
-				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
 				--,1
