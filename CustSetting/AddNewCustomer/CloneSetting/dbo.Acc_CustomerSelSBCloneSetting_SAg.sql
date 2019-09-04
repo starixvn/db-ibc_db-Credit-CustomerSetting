@@ -21,14 +21,6 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
-	
-	--DECLARE @discountMyanmarOdds DECIMAL(9,8)=0
-	--DECLARE @IsMyanmarOdds BIT = 0, @srecommend INT = 0
-	
-	--SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@custid)
-	
-	--IF @IsMyanmarOdds = 1
-	--	SET @discountMyanmarOdds = (SELECT CommRate FROM AgentCommRate WITH (NOLOCK) WHERE CustId = @Custid AND Sporttype = 1 AND Bettype = 301)
 
 	SELECT 
 		ci.closed
@@ -51,11 +43,7 @@ BEGIN
 		,v1discount_5=MAX(CASE WHEN cs.bettype=5 AND cs.sporttype=1 THEN cs.adiscount ELSE 0 END)		
 	
 		--comm3: for other bettypes (on behalf=4)
-		,v1discount_4=MAX(CASE WHEN cs.bettype=4 AND cs.sporttype=1 THEN cs.adiscount ELSE 0 END)
-
-		--Number Game commission
-		--,v161discount_81=MAX(CASE WHEN cs3rd.bettype=81 AND cs3rd.sporttype=161 THEN cs3rd.adiscount ELSE 0 END)
-		
+		,v1discount_4=MAX(CASE WHEN cs.bettype=4 AND cs.sporttype=1 THEN cs.adiscount ELSE 0 END)	
 	
 		,dbo.F_Decimal_Binary(ISNULL(TransferOption,0))  as TransferOption
 			
@@ -108,8 +96,6 @@ BEGIN
 		
 		--min live PT of number game (on behalf of bettype=85)
 		,v161MinLivePT_85 = MAX(CASE WHEN csOv3rd.bettype=85 AND csOv3rd.sporttype=161 THEN csOv3rd.minlivepositiontaking END)
-		-- Myanmar Odds
-		--,ISNULL(@discountMyanmarOdds,0) AS discountMyanmarOdds
 
 	FROM dbo.CustInfo AS ci WITH(NOLOCK)
 		INNER JOIN dbo.CustSetting AS cs WITH(NOLOCK) ON cs.CustID=ci.CustID

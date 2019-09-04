@@ -14,6 +14,7 @@ AS
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20170504@Winnie: [Keno] - New 6 mini games - Customer Setting Development [RedmineID: #93796]
 		- 20190820@Eden: Hide setting of inactive products - Colossus Bet [RedmineID: #117439]
+		- 20190903@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	Parameters Explanation
 */ 
 
@@ -63,42 +64,7 @@ BEGIN
 		VALUES(@ProductID,204,18000,@IsDisabled,@IsDisabledDownline,@HasDownline,@IsSync,@isHidden,@IsDisabledUpline,@IsHiddenUpline,@IsSyncedUpline,@IsSyncedDownline)		
 	END 	
 	
-	--ELSE IF @ProductID=5 -- VS
-	--BEGIN
-	--	SELECT @RoleID=RoleID,@IsDisabled=DisableVirtualSports,@isHidden=HideVirtualSports,@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend FROM custInfo WITH(NOLOCK) WHERE custid=@custid
-	--	IF @RoleID=2
-	--	BEGIN
-	--		SELECT @IsHiddenUpline=HideVirtualSports,@IsDisabledUpline=DisableVirtualSports  FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@mrecommend
-	--		IF EXISTS(SELECT 1 FROM dbo.CustInfo WITH (NOLOCK)	WHERE recommend = @CustID AND roleid=1)
-	--			SELECT @HasDownline=1
-	--		IF @HasDownline=1
-	--			IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND DisableVirtualSports=1)
-	--				SELECT @IsDisabledDownline=1
-	--	END		
-	--	ELSE IF @RoleID=3	
-	--	BEGIN
-	--		SELECT @IsHiddenUpline=HideVirtualSports,@IsDisabledUpline=DisableVirtualSports FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@srecommend
-	--		IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)  WHERE mrecommend = @CustID AND roleid=2)
-	--			SELECT @HasDownline=1
-	--		IF @HasDownline=1
-	--			IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND DisableVirtualSports=1)
-	--				SELECT @IsDisabledDownline=1
-	--	END
-	--	ELSE IF @RoleID=4	
-	--	BEGIN
-	--		IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)  WHERE srecommend = @CustID AND roleid=3)
-	--			SELECT @HasDownline=1
-	--		IF @HasDownline=1
-	--			IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE srecommend=@custid AND DisableVirtualSports=1)
-	--					SELECT @IsDisabledDownline=1
-	--	END	
-	--	ELSE IF @RoleID=1
-	--	BEGIN
-	--		SELECT @IsHiddenUpline=HideVirtualSports,@IsDisabledUpline=DisableVirtualSports FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@recommend
-	--	END
-	--	INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline)	
-	--	VALUES(@ProductID,180,1201,@IsDisabled,@IsDisabledDownline,@HasDownline,@IsSync,@isHidden,@IsDisabledUpline,@IsHiddenUpline,@IsSyncedUpline,@IsSyncedDownline)				
-	--END 	
+	
 	ELSE IF @ProductID=6 -- Casino
 	BEGIN
 		SELECT @RoleID=RoleID,@IsDisabled=DisableCasino,@IsSync=ISNULL(SyncCasino,0),@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend FROM custInfo WITH(NOLOCK) WHERE custid=@custid

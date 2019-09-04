@@ -117,15 +117,8 @@ BEGIN
 		,	@bitmapOrder_VoidBridge		INT
 		,	@bitmapOrder_Lottery		INT
 		,	@bitmapOrder_NG2			INT
-		--,	@bitmapOrder_Lucky3			INT
 		,	@bitmapOrder_FishingWorld	INT
 		,	@bitmapOrder_VS				INT
-		--,	@bitmapOrder_BullFighting	INT
-		--,	@bitmapOrder_PokerGames1401	INT
-		--,	@bitmapOrder_PokerGames1402	INT
-		--,	@bitmapOrder_PokerGames1403	INT
-		--,	@bitmapOrder_PokerGames1404	INT
-		--,	@bitmapOrder_PokerGames1405	INT
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
@@ -133,18 +126,14 @@ BEGIN
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitmapOrder_Lottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
-	--SET @bitmapOrder_Lucky3 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 160 AND Bettype = 1600)
+
 	SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
-	--SET @bitmapOrder_BullFighting = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 207 AND Bettype = 1004)
+
 
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
-	--SELECT	@bitmapOrder_PokerGames1401 =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 163 AND	psp.Bettype = 1401)
- --   SELECT	@bitmapOrder_PokerGames1402 = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 163 AND	psp.Bettype = 1402)
-	--SELECT	@bitmapOrder_PokerGames1403 =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 163 AND	psp.Bettype = 1403)
- --   SELECT	@bitmapOrder_PokerGames1404 = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 163 AND	psp.Bettype = 1404)
-	--SELECT	@bitmapOrder_PokerGames1405 = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 163 AND	psp.Bettype = 1405)
+
     
     DECLARE	@IsHidden_MuayThai			INT = 1		
 		,	@IsHidden_ESports			INT = 1	
@@ -153,11 +142,10 @@ BEGIN
 		,	@IsHidden_VoidBridge		INT = 1
 		,	@IsHidden_Lottery			INT = 1
 		,	@IsHidden_NG2				INT = 1
-		--,	@IsHidden_Lucky3			INT = 1   
+
 		,	@IsHidden_FishingWorld		INT = 1
 		,	@IsHidden_VS				INT = 1
-		--,	@IsHidden_BullFighting		INT = 1
-		--,	@IsHidden_PokerGames	INT = 1
+
 		
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT	
@@ -165,10 +153,9 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHidden_VoidBridge OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHidden_Lottery OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHidden_NG2 OUTPUT
-	--EXEC Acc_CheckShowProduct @ProductID = 26, @IsHide = @IsHidden_Lucky3 OUTPUT
+
 	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHidden_FishingWorld OUTPUT
-	--EXEC Acc_CheckShowProduct @ProductID = 30, @IsHide = @IsHidden_BullFighting OUTPUT
-	--EXEC Acc_CheckShowProduct @ProductID = 33, @IsHide = @IsHidden_PokerGames OUTPUT
+
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_ESports OUTPUT	
 
 	IF @IsIMBC=0
@@ -178,7 +165,7 @@ BEGIN
 
 	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
 	
-	CREATE TABLE #customer(custid INT, RowNumber INT /*,discountMyanmarOdds DECIMAL (9,8),IsMyanmarOdds BIT*/, discountCricket DECIMAL (9,8))
+	CREATE TABLE #customer(custid INT, RowNumber INT , discountCricket DECIMAL (9,8))
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @DoubleCommLosing = 2
 	BEGIN
@@ -494,17 +481,6 @@ BEGIN
 		END
 	END
 	
-	--IF EXISTS (SELECT 1 FROM #customer c JOIN Customer cm WITH (NOLOCK) ON CM.custid = C.custid AND cm.site = '766666')
-	--BEGIN
-	--	UPDATE T
-	--		SET discountMyanmarOdds = ac.CommRate
-	--		, t.IsMyanmarOdds = 1
-	--	FROM #customer T
-	--		INNER JOIN AgentCommRate ac WITH (NOLOCK) ON T.custid = AC.CustId 
-	--	WHERE Sporttype = 1 AND Bettype = 301			
-		
-		
-	--END
 	
 	IF @IsIMBC = 1
 	BEGIN
@@ -527,7 +503,7 @@ BEGIN
 	(
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, reject, closed, MatchLimit, VirtualMultiplier, Enabled,
 				 DisableCasino, SyncCasino, DisableOutright,DisableNumber, 				
-				DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,HideColossusBet,DisableColossusBet,cm.IsInternal,
+				DoubleCommLosing,HideKeno, HideGoldDeluxe, DisableGoldDeluxe,cm.IsInternal,
 				-- For MuayThai
 				ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_MuayThai),1) AS DisableMuayThai,
 				CAST(CASE WHEN @IsHidden_MuayThai = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_MuayThai),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideMuayThai,
@@ -558,25 +534,6 @@ BEGIN
 						ELSE 1
 				END AS SyncedAllBetDownline,
 				
-				---- For Poker Games
-				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1401)) AS DisablePokerGames1401,
-				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1402)) AS DisablePokerGames1402,
-				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1403)) AS DisablePokerGames1403,
-				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1404)) AS DisablePokerGames1404,
-				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1405)) AS DisablePokerGames1405,
-				--CAST(CASE WHEN @IsHidden_PokerGames = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_PokerGames1401), 1) = 0 THEN 0 ELSE 1 END AS BIT) AS HidePokerGames,
-				--CAST(CASE WHEN @IsHidden_PokerGames = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_PokerGames1401), 1)=0 THEN 0 ELSE 1 END AS BIT) AS HidePokerGamesUpline,
-
-				---- For Lucky3
-				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_Lucky3)) AS DisableLucky3,		
-				--CAST(	CASE	WHEN	@IsHidden_Lucky3 = 0 						
-				--					AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Lucky3), 1) = 0 
-				--					THEN 0
-				--				ELSE 1 
-				--		END AS BIT) AS HideLucky3,
-				--CAST(CASE	WHEN	@IsHidden_Lucky3 = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_Lucky3), 1)=0
-				--		THEN 0 ELSE 1
-				--		END AS BIT) AS HideLucky3Upline,
 
 				-- For Fishing World
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,				
@@ -652,26 +609,11 @@ BEGIN
 					THEN 0 ELSE 1
 					END AS BIT) AS HideVirtualSportsUpline,
 
-				---- For BullFighting
-				--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BullFighting)) AS DisableBullFighting,		
-				--CAST(	CASE	WHEN	@IsHidden_BullFighting = 0 						
-				--					AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_BullFighting), 1) = 0 
-				--					THEN 0
-				--				ELSE 1 
-				--		END AS BIT) AS HideBullFighting,
-				--CAST(CASE	WHEN	@IsHidden_BullFighting = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_BullFighting), 1)=0
-				--		THEN 0 ELSE 1
-				--		END AS BIT) AS HideBullFightingUpline,
-
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate
 		FROM Customer c WITH(NOLOCK)
 			INNER JOIN custInfo ci WITH(NOLOCK) ON ci.custid = c.custid 
 			INNER JOIN CustAgent cm with(NOLOCK) on c.custid = cm.custid 
 			LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
-
-			-- Check isHidden AllBet
-			--OUTER APPLY	dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(c.custid, @AllBet) AS sbhsc
-		
 			-- Upline Status
 			INNER JOIN	dbo.CustProductStatus AS cpsUpline WITH (NOLOCK)
 					ON	cpsUpline.CustID =	CASE	WHEN c.roleid = 1 THEN c.recommend
@@ -680,13 +622,6 @@ BEGIN
 											END
 		   
 		WHERE c.custid IN (SELECT custid FROM #customer) AND (@Userid IS NULL OR (@Userid IS NOT NULL AND c.site NOT IN (SELECT site FROM @tmp )))
-	),
-	custsetting3rd AS
-	(
-		SELECT cs3.custid , cs3.discount discountnumber 
-		FROM dbo.CustSetting3rd cs3 WITH(NOLOCK) 
-		WHERE custid IN (SELECT custid FROM #customer)
-			AND sporttype = 161 AND bettype = 81 
 	),
 	custsetting AS
 	(
@@ -731,8 +666,7 @@ BEGIN
 			cs.groupc as groupc, 
 			cs.groupd as groupd, 
 			discountcs discountcs,	
-			discount1x2 discount1x2,	
-			discountnumber discountnumber,			
+			discount1x2 discount1x2,		
 			ctm.currency,	
 			ctm.matchlimit,
 			ctm.virtualmultiplier-1 as VirtualMultiplier,
@@ -745,15 +679,12 @@ BEGIN
 			ctm.isinternal,		
 			ctm.DisableNumber,
 			---- For VirtualSports
-			--ctm.DisableVirtualSports,
 			ctm.DoubleCommLosing,
   
 			ctm.HideKeno,
 			ISNULL(DisableKeno,0) DisableKeno,
 			ISNULL(ctm.HideGoldDeluxe,1) AS HideGoldDeluxe,
 			ISNULL(ctm.DisableGoldDeluxe,1) AS DisableGoldDeluxe,
-			ISNULL(ctm.HideColossusBet,1) AS HideColossusBet,
-			ISNULL(ctm.DisableColossusBet,1) AS DisableColossusBet,
 			
 			ctm.DisableMuayThai,
 			ctm.HideMuayThai,
@@ -768,16 +699,6 @@ BEGIN
 			ctm.SyncedAllBetUpline,
 			ctm.SyncedAllBetDownline,
 
-			--ctm.DisablePokerGames1401,
-			--ctm.DisablePokerGames1402,
-			--ctm.DisablePokerGames1403,
-			--ctm.DisablePokerGames1404,
-			--ctm.DisablePokerGames1405,
-			--ctm.HidePokerGames,
-			--ctm.HidePokerGamesUpline,
-
-			--ISNULL(t.IsMyanmarOdds,0) AS IsMyanmarOdds,
-			--ISNULL(t.discountMyanmarOdds,0) AS discountMyanmarOdds,
 			-- VoidBrigde
 			ctm.DisableVoidBridge,
 			ctm.HideVoidBridge,
@@ -789,10 +710,7 @@ BEGIN
 			ctm.DisableLottery,
 			ctm.HideLottery,
 			ctm.HideLotteryUpline,
-			---- Lucky3
-			--ctm.DisableLucky3,
-			--ctm.HideLucky3,
-			--ctm.HideLucky3Upline,
+		
 
 			-- FishingWorld
 			ctm.DisableFishingWorld,
@@ -806,11 +724,6 @@ BEGIN
 			ctm.DisableVirtualSports,
 			ctm.HideVirtualSports,
 			ctm.HideVirtualSportsUpline,
-
-			---- BullFighting
-			--ctm.DisableBullFighting,
-			--ctm.HideBullFighting,
-			--ctm.HideBullFightingUpline,
 
 			ctm.DisableNG2,
 			ctm.HideNG2,
@@ -828,7 +741,6 @@ BEGIN
 	FROM customers ctm 
 		INNER JOIN #customer t ON ctm.custid = t.custid 
 		LEFT JOIN custsetting cs WITH (NOLOCK) ON ctm.custid = cs.custid
-		LEFT JOIN custsetting3rd cs3 WITH (NOLOCK) ON ctm.custid = cs3.custid 
 		LEFT JOIN keno k ON ctm.custid = k.CustID	
 		LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON t.custid=cl.CustID
 		

@@ -1,14 +1,9 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Commission]
 	@custid INT,-- MemberId
 	@playerdiscount DECIMAL(9,8),
 	@playerdiscountcs DECIMAL(9,8),	
 	@playerdiscount1x2 DECIMAL(9,8)=0,
-	@playerdiscountnumber DECIMAL(9,8)=0,
-	
-	@IsMyanmarOdds BIT = 0,
-	@discountMyanmarOdds DECIMAL(9,8)=0,
-	@discountMyanmarOdds_old DECIMAL(9,8)=0,
 	
 	@updatecomm_old BIT = 1,
 	@SubAccID INT = 0, --Sub-AccountID
@@ -63,16 +58,12 @@ Param's Explanation:
 
 	DECLARE @Old_playerdiscount DECIMAL(9,8),
 			@Old_playerdiscountcs DECIMAL(9,8),	
-			@Old_playerdiscount1x2 DECIMAL(9,8),
-			
-			@Old_playerdiscountnumber DECIMAL(9,8)
+			@Old_playerdiscount1x2 DECIMAL(9,8)
 
 	--Check Param
 	IF	@playerdiscount<0 OR @playerdiscount>0.2
 		OR @playerdiscountcs<0 OR @playerdiscountcs>0.2
 		OR @playerdiscount1x2<0 OR @playerdiscount1x2>0.2
-		
-		OR @playerdiscountnumber<0 OR @playerdiscountnumber>0.2	
 	BEGIN	
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'Invalid commission rate.'
@@ -84,7 +75,7 @@ Param's Explanation:
 	
 	---------------------------------------
 	DECLARE @username VARCHAR(40), @recommend INT,
-			@discount DECIMAL(9,8), @discountcs DECIMAL(9,8), @discount1x2 DECIMAL(9,8),@discountnumber DECIMAL(9,8),@ugroup VARCHAR(10)
+			@discount DECIMAL(9,8), @discountcs DECIMAL(9,8), @discount1x2 DECIMAL(9,8),@ugroup VARCHAR(10)
 	declare @err1 int, @err2 int
 			
 	SELECT @UserName  = username,
@@ -97,8 +88,6 @@ Param's Explanation:
 		SELECT @Old_playerdiscount=playerdiscount FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND sporttype=1 AND bettype=1
 		SELECT @Old_playerdiscountcs=playerdiscount FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 4
 		SELECT @Old_playerdiscount1x2=playerdiscount FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 5
-	
-		SELECT @Old_playerdiscountnumber=playerdiscount FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND Sporttype = 161 AND bettype = 81	
 
 		--Get g2
 		SELECT 
@@ -118,20 +107,13 @@ Param's Explanation:
 		FROM custsetting WITH (NOLOCK)
 		WHERE custid = @recommend AND sporttype = 1 AND bettype = 5
 		
-	
-		--161
-		SELECT @discountnumber = discount
-		FROM custsetting3rd WITH (NOLOCK)
-		WHERE custid = @recommend AND Sporttype = 161 AND bettype = 81
 
 		--@playerdiscount>g2?g2:@playerdiscount 
 		--@playerdiscountcs>a2?a2:@playerdiscountcs
 		SELECT 
 			@playerdiscount = CASE WHEN @playerdiscount>@discount THEN @discount ELSE @playerdiscount END,
 			@playerdiscountcs = CASE WHEN @playerdiscountcs>@discountcs THEN @discountcs ELSE @playerdiscountcs END,
-			@playerdiscount1x2 = CASE WHEN @playerdiscount1x2>@discount1x2 THEN @discount1x2 ELSE @playerdiscount1x2 END,		
-				
-			@playerdiscountnumber = CASE WHEN @playerdiscountnumber>@discountnumber THEN @discountnumber ELSE @playerdiscountnumber END
+			@playerdiscount1x2 = CASE WHEN @playerdiscount1x2>@discount1x2 THEN @discount1x2 ELSE @playerdiscount1x2 END
 		---------------------------------------
 		Declare @RoleId int
 		Select
@@ -139,20 +121,6 @@ Param's Explanation:
 		from custInfo with(NOLOCK)
 		where custid = @custid
 
-		IF @IsMyanmarOdds = 1
-		BEGIN
-			-- Reset discount value in case its value > upline
-			SELECT @discountMyanmarOdds = CASE 
-												WHEN @discountMyanmarOdds > commRate THEN commRate
-												ELSE @discountMyanmarOdds   
-											END
-			FROM AgentCommRate WITH(NOLOCK)  
-			WHERE custid = @recommend   
-				AND sporttype = 1   
-				AND bettype = 301  
-		
-			
-		END	
 			
 		-- Apply exec rep
 		
@@ -161,15 +129,8 @@ Param's Explanation:
 			@RoleId = @RoleId,
 			@groupa = @playerdiscount ,
 			@discountcs = @playerdiscountcs,			
-			@discount1x2 = @playerdiscount1x2,
-			@discountMyanmarOdds = @discountMyanmarOdds,
-			@IsMyanmarOdds = @IsMyanmarOdds
+			@discount1x2 = @playerdiscount1x2
 
-		exec Acc_CustSetting3rd_06
-			@CustId = @custid,
-			@RoleId = @RoleId,
-			@discountNumber = @playerdiscountnumber,
-			@mode = 'NumberGame'
 
 	END
 
@@ -180,11 +141,7 @@ Param's Explanation:
 	Select @LogSPData = '<Acc_CustomerUpdMember_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'playerdiscount="'+ coalesce(cast(@playerdiscount as varchar(50)),space(1)) + '" ' +
 	'playerdiscountcs="'+ coalesce(cast(@playerdiscountcs as varchar(50)),space(1)) + '" ' +
-	'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' +	
-	'playerdiscountnumber="'+ coalesce(cast(@playerdiscountnumber as varchar(50)),space(1)) + '" '
-	
-	IF @IsMyanmarOdds = 1
-		SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds as varchar(50)),space(1)) + '" ' 
+	'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' 
 	
 	SET @LogSPData = @LogSPData +
 	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -197,12 +154,8 @@ Param's Explanation:
 	Select @TrackingValue2 = '<Acc_CustomerUpdMember_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'playerdiscount="'+ coalesce(cast(@Old_playerdiscount as varchar(50)),space(1)) + '" ' +
 	'playerdiscountcs="'+ coalesce(cast(@Old_playerdiscountcs as varchar(50)),space(1)) + '" ' +
-	'playerdiscount1x2="'+ coalesce(cast(@Old_playerdiscount1x2 as varchar(50)),space(1)) + '" ' +
+	'playerdiscount1x2="'+ coalesce(cast(@Old_playerdiscount1x2 as varchar(50)),space(1)) + '" ' 
 	
-	'playerdiscountnumber="'+ coalesce(cast(@Old_playerdiscountnumber as varchar(50)),space(1)) + '" ' 
-	
-	IF @IsMyanmarOdds = 1
-		SET @TrackingValue2 = @TrackingValue2 + 'playerdiscountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds_old as varchar(50)),space(1)) + '" ' 
 	
 	SET @TrackingValue2 = @TrackingValue2 + 
 	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -230,12 +183,8 @@ Param's Explanation:
 		Select @LogSPData = '<Acc_CustomerUpdMember_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 		'playerdiscount="'+ coalesce(cast(@playerdiscount as varchar(50)),space(1)) + '" ' +
 		'playerdiscountcs="'+ coalesce(cast(@playerdiscountcs as varchar(50)),space(1)) + '" ' +
-		'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' +
-	
-		'playerdiscountnumber="'+ coalesce(cast(@playerdiscountnumber as varchar(50)),space(1)) + '" ' 
+		'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' 
 		
-		IF @IsMyanmarOdds = 1 
-			SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds as varchar(50)),space(1)) + '" ' 
 			
 		SET @LogSPData = @LogSPData +
 		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -248,12 +197,8 @@ Param's Explanation:
 		Select @TrackingValue2 = '<Acc_CustomerUpdMember_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 		'playerdiscount="'+ coalesce(cast(@Old_playerdiscount as varchar(50)),space(1)) + '" ' +
 		'playerdiscountcs="'+ coalesce(cast(@Old_playerdiscountcs as varchar(50)),space(1)) + '" ' +
-		'playerdiscount1x2="'+ coalesce(cast(@Old_playerdiscount1x2 as varchar(50)),space(1)) + '" ' +
+		'playerdiscount1x2="'+ coalesce(cast(@Old_playerdiscount1x2 as varchar(50)),space(1)) + '" ' 
 		
-		'playerdiscountnumber="'+ coalesce(cast(@Old_playerdiscountnumber as varchar(50)),space(1)) + '" ' 
-		
-		IF @IsMyanmarOdds = 1 
-			SET @TrackingValue2 = @TrackingValue2 + 'playerdiscountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds_old as varchar(50)),space(1)) + '" ' 
 			
 		SET @TrackingValue2 = @TrackingValue2 +
 		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -275,8 +220,3 @@ Param's Explanation:
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_Commission] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_Commission] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMember_Commission] TO [vnteam] AS [dbo]

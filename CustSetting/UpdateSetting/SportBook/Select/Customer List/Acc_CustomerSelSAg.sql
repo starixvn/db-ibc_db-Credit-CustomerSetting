@@ -114,11 +114,8 @@ Pattern Explanation:
 		,	@bitmapOrder_VoidBridge		INT		
 		,	@bitmapOrder_Lottery		INT
 		,	@bitmapOrder_NG2			INT
-		--,	@bitmapOrder_Lucky3			INT
 		,	@bitmapOrder_FishingWorld	INT
 		,	@bitmapOrder_VS				INT
-		--,	@bitmapOrder_BullFighting	INT
-		--,	@bitmapOrder_PokerGames1401	INT		
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)  
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)  
@@ -126,13 +123,10 @@ Pattern Explanation:
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitmapOrder_Lottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
-	--SET @bitmapOrder_Lucky3 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 160 AND Bettype = 1600)
 	SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
-	--SET @bitmapOrder_BullFighting = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 207 AND Bettype = 1004)
 
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
-	--SELECT	@bitmapOrder_PokerGames1401 =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 163 AND	psp.Bettype = 1401)
     
     DECLARE	@IsHidden_MuayThai			INT = 1
 		,	@IsHidden_Esports			INT = 1
@@ -141,11 +135,10 @@ Pattern Explanation:
 		,	@IsHidden_VoidBridge		INT = 1
 		,	@IsHidden_Lottery			INT = 1
 		,	@IsHidden_NG2				INT = 1
-		--,	@IsHidden_Lucky3			INT = 1
+
 		,	@IsHidden_FishingWorld		INT = 1
 		,	@IsHidden_VS				INT = 1
-		--,	@IsHidden_BullFighting		INT = 1
-		--,	@IsHidden_PokerGames		INT = 1
+
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT	
 	EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHidden_Cricket OUTPUT
@@ -153,11 +146,11 @@ Pattern Explanation:
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHidden_VoidBridge OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHidden_Lottery OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHidden_NG2 OUTPUT
-	--EXEC Acc_CheckShowProduct @ProductID = 26, @IsHide = @IsHidden_Lucky3 OUTPUT
+
 	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHidden_FishingWorld OUTPUT
-	--EXEC Acc_CheckShowProduct @ProductID = 30, @IsHide = @IsHidden_BullFighting OUTPUT
+
 	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
-	--EXEC Acc_CheckShowProduct @ProductID = 33, @IsHide = @IsHidden_PokerGames OUTPUT
+
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_Esports OUTPUT
 		
 	IF(@System = 'ACCOUNTING')
@@ -223,8 +216,7 @@ Pattern Explanation:
 			groupd,
 			
 			discountcs,
-			discount1x2,	
-			--max(case when cs3rd.bettype = 81 and cs3rd.sporttype = 161 then cs3rd.sdiscount else 0 end) as discountNumber,			
+			discount1x2,				
 			ci.matchlimit,
 			ci.virtualmultiplier-1 as VirtualMultiplier,
 
@@ -260,17 +252,7 @@ Pattern Explanation:
 										AND	dbo.f_GetProductStatus(cpsDownline.bitmapHasSynced, @bitmapOrder_AllBet) = 0)
 						THEN 0
 					ELSE 1
-			END AS SyncedAllBetDownline,
-			---- For Poker Games
-			--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1401)) AS DisablePokerGames1401,
-			--CAST(CASE WHEN @IsHidden_PokerGames = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_PokerGames1401), 1) = 0 THEN 0 ELSE 1 END AS BIT) AS HidePokerGames,
-			---- For Lucky3
-			--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_Lucky3)) AS DisableLucky3,		
-			--CAST(	CASE	WHEN	@IsHidden_Lucky3 = 0 						
-			--					AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Lucky3), 1) = 0 
-			--					THEN 0
-			--				ELSE 1 
-			--		END AS BIT) AS HideLucky3,			
+			END AS SyncedAllBetDownline,		
 			 -- For FishingWorld
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,
 			CAST(	CASE	WHEN	@IsHidden_FishingWorld = 0 							
@@ -289,9 +271,6 @@ Pattern Explanation:
 						THEN 0
 					ELSE 1
 			END AS SyncedFishingWorldDownline,
-
-			--CASE WHEN ac.CustId IS NOT NULL THEN 1 ELSE 0 END AS IsMyanmarOdds,  
-			--ISNULL(AC.CommRate,0) AS discountMyanmarOdds,  
 
 			-- For VoidBridge
 			ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_VoidBridge), 1) AS DisableVoidBridge,
@@ -328,14 +307,7 @@ Pattern Explanation:
 								AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VS), 1) = 0 
 								THEN 0
 							ELSE 1 
-					END AS BIT) AS HideVirtualSports,
-			---- For BullFighting
-			--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BullFighting)) AS DisableBullFighting,		
-			--CAST(	CASE	WHEN	@IsHidden_BullFighting = 0 						
-			--					AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_BullFighting), 1) = 0 
-			--					THEN 0
-			--				ELSE 1 
-			--		END AS BIT) AS HideBullFighting,			
+					END AS BIT) AS HideVirtualSports,			
 
 			-- Cricket
 			CASE WHEN m.[site] = 'IMBC' THEN 1 ELSE 0 END AS IsIMBC,
@@ -367,12 +339,9 @@ Pattern Explanation:
 			LEFT JOIN CustGameType cg with(nolock) on m.custid = cg.custid
 			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526)			
 			INNER JOIN CustSuper as csuper with (NOLOCK) on m.custid = csuper.custid
-		   --LEFT JOIN AgentCommRate AC WITH (NOLOCK) ON AC.CustId = CI.custid AND AC.Sporttype = 1 AND AC.Bettype = 301 
 		   LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
 		   LEFT JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON  cda.CustID = ci.custid AND cda.SportType = 50 AND cda.BetType = 501
 		   LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON m.custid=cl.CustID
-		   -- Check isHidden AllBet
-		   --OUTER APPLY	dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(m.custid, @AllBet) AS sbhsc
 		   
 		WHERE m.currency = case when @Currency is null then m.currency else @Currency end
 			and ci.closed = case when @closed is null then ci.closed else @closed end
@@ -417,8 +386,6 @@ Pattern Explanation:
 			groupd,		
 			discountcs,
 			discount1x2,			
-			AC.CommRate	,
-			ac.CustId,
 			m.[site],cda.Discount	,
 			cl.ClosedReason	
 		--ORDER BY ci.closed, m.username
@@ -476,8 +443,7 @@ Pattern Explanation:
 			max(cs.groupd) as groupd, 
 
 			max(case when cs.bettype = 4 and cs.sporttype=1 then cs.sdiscount else 0 end) as discountcs,
-			max(case when cs.bettype = 5 and cs.sporttype=1 then cs.sdiscount else 0 end) as discount1x2,
-			--max(case when cs3rd.bettype = 81 and cs3rd.sporttype = 161 then cs3rd.sdiscount else 0 end) as discountNumber,			
+			max(case when cs.bettype = 5 and cs.sporttype=1 then cs.sdiscount else 0 end) as discount1x2,			
 			ci.matchlimit,
 			ci.virtualmultiplier-1 as VirtualMultiplier,
 
@@ -505,16 +471,6 @@ Pattern Explanation:
 							ELSE 1 
 					END AS BIT) AS HideAllBet,
 			ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_AllBet), 0) AS SyncedAllBet,
-			---- For Poker Games
-			--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_PokerGames1401)) AS DisablePokerGames1401,
-			--CAST(CASE WHEN @IsHidden_PokerGames = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_PokerGames1401), 1) = 0 THEN 0 ELSE 1 END AS BIT) AS HidePokerGames,
-			---- For Lucky3
-			--(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_Lucky3)) AS DisableLucky3,		
-			--CAST(	CASE	WHEN	@IsHidden_Lucky3 = 0 						
-			--					AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Lucky3), 1) = 0 
-			--					THEN 0
-			--				ELSE 1 
-			--		END AS BIT) AS HideLucky3,
 			
 			-- FishingWorld
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,		
@@ -524,9 +480,6 @@ Pattern Explanation:
 							ELSE 1 
 					END AS BIT) AS HideFishingWorld,
 			ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_FishingWorld), 0) AS SyncedFishingWorld,
-
-			--ISNULL(csuper.IsMyanmarOdds,0) AS IsMyanmarOdds,
-			--ISNULL(AC.CommRate,0) AS discountMyanmarOdds,
 			 -- For VoidBridge
 			ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_VoidBridge), 1) AS DisableVoidBridge,
 			CAST(CASE WHEN @IsHidden_VoidBridge = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VoidBridge), 1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideVoidBridge,
@@ -578,12 +531,9 @@ Pattern Explanation:
 			LEFT JOIN CustGameType cg with(nolock) on m.custid = cg.custid
 			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526)
 			INNER JOIN CustSuper as csuper with (NOLOCK) on m.custid = csuper.custid
-			--LEFT JOIN AgentCommRate AC WITH (NOLOCK) ON AC.CustId = CI.custid AND AC.Sporttype = 1 AND AC.Bettype = 301 AND csuper.IsMyanmarOdds = 1
 			LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
 			LEFT JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON  cda.CustID = ci.custid AND cda.SportType = 50 AND cda.BetType = 501
 			LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON m.custid=cl.CustID
-		   -- Check isHidden AllBet
-		   --OUTER APPLY	dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(m.custid, @AllBet) AS sbhsc
 		   
 			
 		WHERE	
@@ -622,8 +572,6 @@ Pattern Explanation:
 			cps.bitmapIsDisabled,
 			cps.bitmapIsHidden,
 			cps.bitmapHasSynced,
-			--csuper.IsMyanmarOdds,
-			--ac.CommRate,
 			m.[site],cda.Discount,
 			cl.ClosedReason	
 		) a

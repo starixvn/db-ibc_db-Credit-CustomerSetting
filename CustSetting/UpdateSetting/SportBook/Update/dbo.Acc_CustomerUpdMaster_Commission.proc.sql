@@ -7,11 +7,6 @@ alter PROCEDURE [dbo].[Acc_CustomerUpdMaster_Commission]
     @groupd DECIMAL(9,8),
     @discountcs DECIMAL(9,8),
     @discount1x2 DECIMAL(9,8)=0,
-    --@IsMyanmarOdds BIT = 0,
-    --@discountMyanmarOdds DECIMAL(9,8)=0,
-    --@discountMyanmarOdds_old DECIMAL(9,8)=0,    
-    --- number game commission
-    --@discountnumber decimal(9,8) = 0,
     @updatecomm_old BIT = 1,
     @SubAccID INT = 0, --Sub-AccountID    
     @UserID INT = 0,    
@@ -71,20 +66,16 @@ Param's Explanation:
 		@Old_groupc DECIMAL(9,8),
 		@Old_groupd DECIMAL(9,8),
 		@Old_discountcs DECIMAL(9,8),
-		@Old_discount1x2 DECIMAL(9,8)--,    	
-		--@Old_discountnumber decimal(9,8)
+		@Old_discount1x2 DECIMAL(9,8)
 	    
 	--Check Param
 	IF 
 		@discountcs<0 OR @discountcs>0.2
 		OR @discount1x2<0 OR @discount1x2>0.2
-	
-		--OR @discountnumber < 0 OR @discountnumber > 0.2
 		OR @groupa<0 OR @groupa>0.2
 		OR @groupb<0 OR @groupb>0.2
 		OR @groupc<0 OR @groupc>0.2
 		OR @groupd<0 OR @groupd>0.2
-		--OR @discountMyanmarOdds < 0 OR @discountMyanmarOdds > 0.01
 	BEGIN        
 		SELECT @ErrMsg =     CASE @Language 
 							WHEN 'E' THEN 'Invalid commission rate.'
@@ -127,7 +118,6 @@ Param's Explanation:
 	    
 		SELECT @Old_discountcs = adiscount FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 4
 		SELECT @Old_discount1x2 = adiscount    FROM custsetting AS cs WITH (NOLOCK) WHERE custid = @custid AND sporttype = 1 AND bettype = 5		
-		--SELECT @Old_discountnumber = adiscount FROM custsetting3rd AS cs3 WITH (NOLOCK) WHERE custid = @custid AND sporttype = 161 AND bettype = 81
 	    
 		--Get g3=g4 if g3>g4
 		SELECT 
@@ -147,27 +137,7 @@ Param's Explanation:
 		SELECT @discount1x2 = CASE WHEN @discount1x2 > sdiscount THEN sdiscount ELSE @discount1x2 END
 		FROM custsetting AS cs WITH (NOLOCK) 
 		WHERE custid = @srecommend AND bettype = 5 AND sporttype = 1
-	    
-		---------------------------------------
-		
-		---------------------------------------
-		--Get m3=s4 if m3>s4 --number game
-		--SELECT @discountnumber = case when @discountnumber > sdiscount then sdiscount else @discountnumber end
-		--FROM custsetting3rd as cs3 with(nolock)
-		--WHERE custid = @srecommend AND bettype = 81 AND sporttype = 161
-	    
-	 --   IF @IsMyanmarOdds = 1
-	 --   BEGIN
-		--	-- Reset discount value in case its value > upline
-		--	SELECT @discountMyanmarOdds = CASE 
-		--										WHEN @discountMyanmarOdds > commRate THEN commRate
-		--										ELSE @discountMyanmarOdds   
-		--									END
-		--	FROM AgentCommRate WITH(NOLOCK)  
-		--	WHERE custid = @srecommend   
-		--		AND sporttype = 1   
-		--		AND bettype = 301  
-		--END	
+	    	
 		-- Apply exec rep
 			exec Acc_CustSetting_06
 			@CustId = @custid,
@@ -177,16 +147,7 @@ Param's Explanation:
 			@groupc = @groupc,
 			@groupd = @groupd,
 			@discountcs = @discountcs,			
-			@discount1x2 = @discount1x2--,
-			--@discountMyanmarOdds = @discountMyanmarOdds,
-			--@IsMyanmarOdds = @IsMyanmarOdds
-	        
-
-			-- exec Acc_CustSetting3rd_06
-			--@CustId = @custid,
-			--@RoleId = @RoleId,
-			--@discountNumber = @discountnumber,
-			--@mode = 'NumberGame'
+			@discount1x2 = @discount1x2
 	END
 
 
@@ -196,19 +157,13 @@ Param's Explanation:
 
 	Select @LogSPData = '<Acc_CustomerUpdMaster_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'groupa="'+ coalesce(cast(@groupa as varchar(50)),space(1)) + '" ' 
-	--IF @IsMyanmarOdds = 0 
 	SET @LogSPData = @LogSPData +
 	'groupb="'+ coalesce(cast(@groupb as varchar(50)),space(1)) + '" ' +
 	'groupc="'+ coalesce(cast(@groupc as varchar(50)),space(1)) + '" ' +
 	'groupd="'+ coalesce(cast(@groupd as varchar(50)),space(1)) + '" ' 
 	SET @LogSPData = @LogSPData +
 	'discountcs="'+ coalesce(cast(@discountcs as varchar(50)),space(1)) + '" ' +
-	'discount1x2="'+ coalesce(cast(@discount1x2 as varchar(50)),space(1)) + '" ' --+
-	
-	--'discountnumber="'+ coalesce(cast(@discountnumber as varchar(50)),space(1)) + '" ' 
-
-	--IF @IsMyanmarOdds = 1
-	--	SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds as varchar(50)),space(1)) + '" ' 
+	'discount1x2="'+ coalesce(cast(@discount1x2 as varchar(50)),space(1)) + '" '
 
 	SET @LogSPData = @LogSPData +
 	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
@@ -220,19 +175,15 @@ Param's Explanation:
 
 	Select @TrackingValue2 = '<Acc_CustomerUpdMaster_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'groupa="'+ coalesce(cast(@Old_groupa as varchar(50)),space(1)) + '" ' 
-	--IF @IsMyanmarOdds = 0 
+
 	SET @TrackingValue2 = @TrackingValue2 +
 	'groupb="'+ coalesce(cast(@Old_groupb as varchar(50)),space(1)) + '" ' +
 	'groupc="'+ coalesce(cast(@Old_groupc as varchar(50)),space(1)) + '" ' +
 	'groupd="'+ coalesce(cast(@Old_groupd as varchar(50)),space(1)) + '" ' 
 	SET @TrackingValue2 = @TrackingValue2 +
 	'discountcs="'+ coalesce(cast(@Old_discountcs as varchar(50)),space(1)) + '" ' +
-	'discount1x2="'+ coalesce(cast(@Old_discount1x2 as varchar(50)),space(1)) + '" ' --+
-	
-	--'discountnumber="'+ coalesce(cast(@Old_discountnumber as varchar(50)),space(1)) + '" ' 
-
-	--IF @IsMyanmarOdds = 1
-	--	SET @TrackingValue2 = @TrackingValue2 + 'discountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds_old as varchar(50)),space(1)) + '" ' 
+	'discount1x2="'+ coalesce(cast(@Old_discount1x2 as varchar(50)),space(1)) + '" '
+	 
 	SET @TrackingValue2 = @TrackingValue2 +	
 	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -257,18 +208,14 @@ Param's Explanation:
 	BEGIN CATCH
 		Select @LogSPData = '<Acc_CustomerUpdMaster_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 		'groupa="'+ coalesce(cast(@groupa as varchar(50)),space(1)) + '" ' 
-		--IF @IsMyanmarOdds = 0 
+
 		SET @LogSPData = @LogSPData +
 		'groupb="'+ coalesce(cast(@groupb as varchar(50)),space(1)) + '" ' +
 		'groupc="'+ coalesce(cast(@groupc as varchar(50)),space(1)) + '" ' +
 		'groupd="'+ coalesce(cast(@groupd as varchar(50)),space(1)) + '" ' 
 		SET @LogSPData = @LogSPData +
 		'discountcs="'+ coalesce(cast(@discountcs as varchar(50)),space(1)) + '" ' +
-		'discount1x2="'+ coalesce(cast(@discount1x2 as varchar(50)),space(1)) + '" '-- +		
-		--'discountnumber="'+ coalesce(cast(@discountnumber as varchar(50)),space(1)) + '" ' 
-	    
-		--IF @IsMyanmarOdds = 1
-		--	SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds as varchar(50)),space(1)) + '" ' 
+		'discount1x2="'+ coalesce(cast(@discount1x2 as varchar(50)),space(1)) + '" '
 	    
 		SET @LogSPData = @LogSPData +
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
@@ -280,18 +227,14 @@ Param's Explanation:
 
 		Select @TrackingValue2 = '<Acc_CustomerUpdMaster_Commission custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 		'groupa="'+ coalesce(cast(@Old_groupa as varchar(50)),space(1)) + '" ' 
-		--IF @IsMyanmarOdds = 0 
+
 		SET @TrackingValue2 = @TrackingValue2 +
 		'groupb="'+ coalesce(cast(@Old_groupb as varchar(50)),space(1)) + '" ' +
 		'groupc="'+ coalesce(cast(@Old_groupc as varchar(50)),space(1)) + '" ' +
 		'groupd="'+ coalesce(cast(@Old_groupd as varchar(50)),space(1)) + '" ' 
 		SET @TrackingValue2 = @TrackingValue2 +
 		'discountcs="'+ coalesce(cast(@Old_discountcs as varchar(50)),space(1)) + '" ' +
-		'discount1x2="'+ coalesce(cast(@Old_discount1x2 as varchar(50)),space(1)) + '" '-- +		
-		--'discountnumber="'+ coalesce(cast(@Old_discountnumber as varchar(50)),space(1)) + '" ' 
-	    
-		--IF @IsMyanmarOdds = 1
-		--	SET @TrackingValue2 = @TrackingValue2 + 'discountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds_old as varchar(50)),space(1)) + '" ' 
+		'discount1x2="'+ coalesce(cast(@Old_discount1x2 as varchar(50)),space(1)) + '" '
 			
 		SET @TrackingValue2 = @TrackingValue2 + 
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
@@ -312,4 +255,3 @@ Param's Explanation:
 	END CATCH
 END
 GO 
--

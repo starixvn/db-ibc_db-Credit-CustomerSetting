@@ -286,16 +286,6 @@ BEGIN
 		c.MaxPerMatch99MP = c2.MaxPerMatch99MP,		
 		c.maxpermatch161 = c2.maxpermatch161,
 		c.MaxPerBall161 = c2.MaxPerBall161
-		
-		--c.maxpermatch180 = c2.maxpermatch180,
-		--c.maxpermatch181 = c2.maxpermatch181,
-		--c.maxpermatch182 = c2.maxpermatch182,
-		--c.maxpermatch183 = c2.maxpermatch183,
-		--c.maxpermatch184 = c2.maxpermatch184,
-		--c.maxpermatch185 = c2.maxpermatch185,
-		--c.maxpermatch186 = c2.maxpermatch186,
-		
-		--c.MaxPerMatch201 = c2.MaxPerMatch201
 	FROM @tmpUser t 
 		INNER JOIN CustInfo c WITH(UPDLOCK,ROWLOCK) ON c.custid = t.toCustID
 		INNER JOIN CustInfo c2 WITH(NOLOCK) ON c2.custid = t.fromCustID	

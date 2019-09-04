@@ -14,9 +14,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@playerdiscount DECIMAL(9,8),  
 	@playerdiscountcs DECIMAL(9,8),  
 	@playerdiscount1x2 DECIMAL(9,8)=0,  
-	@playerdiscountnumber DECIMAL(9,8)=0,  
-	
-	@playerdiscountMyanmarOdds DECIMAL(9,8)=0, -- MyanmarOdds
 	
 	@UpdateCommission BIT = 1,  
 
@@ -205,40 +202,41 @@ DB: DBCUST/CUSTDB
 Original: Acc_CustomerUpdEditCustomer_Ag  
   
 Revisions:  
-    - 20081023@Phuc: Add new sporttype 201, bettype 3, hard code copy min/max/maxperbet/PT for 201 from 2 sporttype   
+	- 20081023@Phuc: Add new sporttype 201, bettype 3, hard code copy min/max/maxperbet/PT for 201 from 2 sporttype   
     - 20090122@PhuongBich: add new sporttype 201, bettype 2.  
- - 20090317@Phuc: disable Financial.  
- - 20090320@PhuongDao: Remove the input param @IsUpdDownline  
-    - 20090424@Phuc:Separate finance sporttype(201).  
-    - 20090430@Kiwi: Add checking IF @UpdateSuspended = 1 for updating multiple customer.  
-    - 20090514@PhuongDao: Add 1x2 Commission  
- - 20090703@Phuc: enrich error message.(-101: general info, -102: closed, -103: suspended, -104: credit, -105: commission, -106: min/max bet, -107: positiontaking  
- - 20090801@Shifu: check disabled user  
- - 20091125@Terry: Check disabled casino  
- - 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]  
- - 20100830@Henry: Add Number Game + Mix Parlay Mixed Sports  
- - 20101028@Lukas: Add max per ball (number game)
- - 20110801@Lukas: (Number Game)
+	- 20090317@Phuc: disable Financial.  
+	- 20090320@PhuongDao: Remove the input param @IsUpdDownline  
+	- 20090424@Phuc:Separate finance sporttype(201).  
+	- 20090430@Kiwi: Add checking IF @UpdateSuspended = 1 for updating multiple customer.  
+	- 20090514@PhuongDao: Add 1x2 Commission  
+	- 20090703@Phuc: enrich error message.(-101: general info, -102: closed, -103: suspended, -104: credit, -105: commission, -106: min/max bet, -107: positiontaking  
+	- 20090801@Shifu: check disabled user  
+	- 20091125@Terry: Check disabled casino  
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]  
+	- 20100830@Henry: Add Number Game + Mix Parlay Mixed Sports  
+	- 20101028@Lukas: Add max per ball (number game)
+	- 20110801@Lukas: (Number Game)
 			- Add more bettypes: Warrior, Next Combo, Number Group
 			- Remove Dead ball Over/Under
- - 20110831@Lukas: Hardcode to fix bug ( set 0 for Number Group PT values)
- - 20110709@Johnson: Change to use new server BD053 instead DB052
- - 20120704@Johnson: Remove setting hard code of number group
- - 20130218@Dan: Change linked server DB053 to DBAGE
- - 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
- - 20140627@Johnson: Add bettype Others for soccer & tennis [Redmine: #16903]
- - 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)
- - 20150904@Helen: commission setting for MO [Redmine #41470]
- - 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]  
- - 20160310@Winnie: Fix bug #53736[Edit SB: Email is cleared when updating without any change in Edit SB page]
- - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
- - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
- - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
- - 20170628@Winnie: Appply color for closed account - [Redmine: 74494]
- - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
- - 20181107@Johnson: add Happy 5 [Redmine: #104006]
- - 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
+	- 20110831@Lukas: Hardcode to fix bug ( set 0 for Number Group PT values)
+	- 20110709@Johnson: Change to use new server BD053 instead DB052
+	- 20120704@Johnson: Remove setting hard code of number group
+	- 20130218@Dan: Change linked server DB053 to DBAGE
+	- 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
+	- 20140627@Johnson: Add bettype Others for soccer & tennis [Redmine: #16903]
+	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB, Change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID)
+	- 20150904@Helen: commission setting for MO [Redmine #41470]
+	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]  
+	- 20160310@Winnie: Fix bug #53736[Edit SB: Email is cleared when updating without any change in Edit SB page]
+	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
+	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
+	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
+	- 20170628@Winnie: Appply color for closed account - [Redmine: 74494]
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20181107@Johnson: add Happy 5 [Redmine: #104006]
+	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
  - 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
+	- 20190903@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -377,8 +375,6 @@ BEGIN
 	   @playerdiscountcs_old DECIMAL(9,8),  
 	   @playerdiscount1x2_old DECIMAL(9,8),  
 	
-	   @playerdiscountnumber_old DECIMAL(9,8),  
-	   @discountMyanmarOdds_old DECIMAL(9,8)=0,
 	   @updatecomm_old bit  
 	  
 		select @playerdiscount_old = playerdiscount  
@@ -390,29 +386,10 @@ BEGIN
 		select @playerdiscount1x2_old = playerdiscount  
 		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 5  
 
-		select @playerdiscountnumber_old = playerdiscount  
-		from custsetting3rd (nolock) where custid = @custid and sporttype = 161 and bettype = 81  
-
 		
-		-- For Myanmar Odds
-		DECLARE @IsMyanmarOdds BIT = 0
-		DECLARE @recommend INT = NULL
-		
-		SELECT @recommend = recommend
-		FROM custInfo WITH (NOLOCK)
-		WHERE custid = @custid
-
-		SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
-			
-		IF @IsMyanmarOdds = 1
-		BEGIN
-			-- Get old value
-			SET @discountMyanmarOdds_old = (SELECT playerdiscount FROM CustCommRate WITH (NOLOCK) WHERE CustId = @custid AND Sporttype = 1 AND Bettype = 301)
-		END
 			
 		if @playerdiscount_old <> @playerdiscount or @playerdiscountcs_old <> @playerdiscountcs   
-			or @playerdiscount1x2_old <> @playerdiscount1x2 or @playerdiscountnumber_old <> @playerdiscountnumber 
-			OR (@IsMyanmarOdds = 1 AND @playerdiscountMyanmarOdds <> @discountMyanmarOdds_old)
+			or @playerdiscount1x2_old <> @playerdiscount1x2 
 			set @updatecomm_old = 1  
 		else   
 			set @updatecomm_old = 0 
@@ -425,12 +402,7 @@ BEGIN
 	   @playerdiscountcs = @playerdiscountcs,  
 	   @playerdiscount1x2 = @playerdiscount1x2,  
 	  
-	   @playerdiscountnumber = @playerdiscountnumber,  
 	   -- For Myanmar Odds
-	   @IsMyanmarOdds = @IsMyanmarOdds,
-	   @discountMyanmarOdds = @playerdiscountMyanmarOdds,
-	   @discountMyanmarOdds_old = @discountMyanmarOdds_old,
-	   
 	   @updatecomm_old = @updatecomm_old,  
 	   @SubAccID = @SubAccID,  
 	   @UserID = @UserID,  
