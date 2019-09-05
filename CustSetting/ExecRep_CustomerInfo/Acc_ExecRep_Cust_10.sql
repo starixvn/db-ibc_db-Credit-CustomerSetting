@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_ExecRep_Cust_10]
 	@custid int,
 	@roleid tinyint,
@@ -28,6 +28,7 @@ Revisions:
 	  + Created, split update custinfo part in SP Acc_CustomerInfo_Execrep_04 into this SP for separate custDB to new server DBCUST
 	  + Improve medthod check table existing in subscribers
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
+	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 
 Param's Explanation:
 	@Action: 
@@ -162,43 +163,6 @@ BEGIN
 		set DisableNumber = @DisableNumberGame 
 		where Recommend = @CustID
 END
-ELSE IF (@Action = 'DisableVS' AND dbo.f_CheckRepTable('custinfo') = 1)
-BEGIN
-	if @RoleID = 4 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableVirtualSports = @DisableVS 
-		where SRecommend = @CustID
-
-	if @RoleID = 3 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableVirtualSports = @DisableVS 
-		where MRecommend = @CustID
-
-	if @RoleID = 2 
-		update CustInfo with (ROWLOCK, UPDLOCK) 
-		set DisableVirtualSports = @DisableVS 
-		where Recommend = @CustID
-END
-ELSE IF (@Action = 'EnableVS' AND dbo.f_CheckRepTable('custinfo') = 1)
-BEGIN
-	IF @roleid = 4
-		UPDATE custinfo WITH(UPDLOCK,ROWLOCK)  
-			SET DisableVirtualSports = @EnableVS,  
-				HideVirtualSports = CASE WHEN HideVirtualSports = 1 THEN 0 ELSE HideVirtualSports END 
-		WHERE srecommend = @custid  
-	
-	IF @roleid = 3
-		UPDATE custinfo WITH(UPDLOCK,ROWLOCK)  
-			SET DisableVirtualSports = @EnableVS,  
-				HideVirtualSports = CASE WHEN HideVirtualSports = 1 THEN 0 ELSE HideVirtualSports END
-		WHERE mrecommend = @custid 
-	IF @roleid = 2
-		UPDATE custinfo WITH(UPDLOCK,ROWLOCK)  
-			SET DisableVirtualSports = @EnableVS,  
-				HideVirtualSports = CASE WHEN HideVirtualSports = 1 THEN 0 ELSE HideVirtualSports END 
-		WHERE recommend = @custid 
-END
-
 
 else if (@Action = 'AutoSuspend' AND dbo.f_CheckRepTable('custinfo') = 1)
 BEGIN
