@@ -21,6 +21,7 @@ AS
 	Revisions:
 		- 20190715@Johnson: initial sp [redmine: #116691]
 		- 20190819@Johnson: HF missing custAccount, CustGroupHeadline [redmine:#118868]
+		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	
 	-Parameter's Explanations:
 		- @ExtraPTSetting:	<ROOT>
@@ -55,7 +56,6 @@ BEGIN
 		@DisableOutright BIT = 0,
 		@matchlimit SMALLMONEY = 0,
 		@virtualmultiplier SMALLMONEY = 0,
-		@DisableFinancial BIT = 0,
 		@DisableAutoMPT BIT = 1,
 		@IsInternal BIT = 0,
 		
@@ -69,9 +69,7 @@ BEGIN
 		@MaxPerMatchv8 MONEY=0,
 		@MaxPerMatchv10 MONEY=0,
 		@MaxPerMatchv11 MONEY=0,
-		@MaxPerMatchv44 MONEY=0,
-		--v201
-		@MaxPerMatchv201 MONEY = 0,
+		
 		@MaxPerMatchv99 MONEY = 0,
 		@MaxPerMatchv99MP MONEY = 0,	
 		
@@ -86,13 +84,10 @@ BEGIN
 		@DisableCasino BIT = 0,
 
 		@DoubleCommLosing BIT = 0,
-		@DisableCasinoBonus BIT = 0,	
+		
 		@DisableEsports BIT = 0,
 		@DisableGoldDeluxe BIT = 0,
 		@HideGoldDeluxe BIT = 0,
-		
-		@DisableColossusBet BIT = 1,
-		@HideColossusBet BIT = 1,
 		
 		@DisableSuperLive BIT = 0,
 		
@@ -258,29 +253,27 @@ BEGIN
 	
 	INSERT INTO [dbo].[custinfo]
 		(
-			custid, currency,Disable151_AU
-		  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11,MaxPerMatch44, maxpermatch201
+			custid, currency
+		  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11
 		  , maxpermatch99
 		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
 		  , MatchLimit, VirtualMultiplier
-		  , DisableFinancial, DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
-		  --, MaxPerMatch180, MaxPerMatch181, MaxPerMatch186, maxpermatch182, maxpermatch184, maxpermatch183, maxpermatch185 , DisableVirtualSports, HideVirtualSports
+		  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
 		  , danger, danger2, danger3, Abnormal
-		  ,  DoubleCommLosing, DisableCasinoBonus	 
-		  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive,DisableColossusBet,HideColossusBet
+		  ,  DoubleCommLosing	 
+		  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
 		  , MaxPerMatch1MP,maxpermatch164)
 		VALUES
 		(
-			@custid, @currency,1
-		  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11,@MaxPerMatchv44, @MaxPerMatchv201
+			@custid, @currency
+		  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11
 		  , @MaxPerMatchv99
 		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), @credit, ISNULL(@closed, 0), @username
 		  , @matchlimit, @virtualmultiplier
-		  , @DisableFinancial, @DisableOutright, @DisableCasino, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
-		  --, @MaxPerMatchv180, @MaxPerMatchv181, @MaxPerMatchv186, @maxpermatchv182, @maxpermatchv184, @maxpermatchv183, @maxpermatchv185, @Disable180_1201, @HideVirtualSports
+		  , @DisableOutright, @DisableCasino, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
 		  , @danger, @danger2, @danger3, @Abnormal
-		  ,  @DoubleCommLosing,@DisableCasinoBonus	
-		  , @HideKeno, @DisableEsports, @DisableGoldDeluxe, @HideGoldDeluxe, @DisableSuperLive,@DisableColossusBet,@HideColossusBet
+		  ,  @DoubleCommLosing	
+		  , @HideKeno, @DisableEsports, @DisableGoldDeluxe, @HideGoldDeluxe, @DisableSuperLive
 		  , @MaxPerMatchv1MP, @maxpermatchv164
 		)
 

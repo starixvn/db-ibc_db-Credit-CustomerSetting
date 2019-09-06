@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO 
-
 ALTER PROCEDURE [dbo].[Acc_CustomerSelMAgByCom]
     @Currency INT = NULL,
     @Closed bit = NULL,
@@ -226,8 +223,6 @@ BEGIN
 
             ISNULL(ci.DisableGoldDeluxe,1) AS DisableGoldDeluxe,
             ISNULL(ci.HideGoldDeluxe,1) AS HideGoldDeluxe,
-            ISNULL(ci.DisableColossusBet,1) AS DisableColossusBet,
-            ISNULL(ci.HideColossusBet,1) AS HideColossusBet,
             -- For MuayThai
             ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_MuayThai),1) AS DisableMuayThai,
             CAST(CASE WHEN @IsHidden_MuayThai = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_MuayThai),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideMuayThai,
@@ -380,8 +375,6 @@ BEGIN
             ci.HideKeno,
             ci.HideGoldDeluxe,
             ci.DisableGoldDeluxe,
-            ci.HideColossusBet,
-            ci.DisableColossusBet,
             cps.bitmapIsDisabled,
             cps.bitmapIsHidden,
             cps.bitmapHasSynced,

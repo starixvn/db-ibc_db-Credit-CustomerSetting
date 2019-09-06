@@ -1,5 +1,4 @@
-USE [CustDB]
-GO
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0"></info>*/ 
  
 ALTER PROCEDURE [dbo].[DBA_CustomerDel]
 	@username VARCHAR(30),
@@ -24,6 +23,7 @@ AS
 		- 20150622@Daniel: Separated custDB to server DBCUST
 		- 20170419@Helen: Hotfix Missing Setting 
 		- 20171225@Elodie: Delete customer from setting tables of DCS
+		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
@@ -107,13 +107,8 @@ BEGIN
 	DELETE CustOverride3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustOverrideGame WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
-	DELETE P2PGameSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE P2PGroupComm WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
 	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
 
-	DELETE dbo.CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	--DCS table
@@ -218,12 +213,8 @@ BEGIN
 	DELETE CustOverride3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustOverrideGame WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
-	DELETE P2PGameSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE P2PGroupComm WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
 
-	DELETE dbo.CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	--DCS table
@@ -325,13 +316,8 @@ BEGIN
 	DELETE CustOverride3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustOverrideGame WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
-	DELETE P2PGameSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE P2PGroupComm WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
 	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
 	
-	DELETE dbo.CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	--DCS table
@@ -430,12 +416,9 @@ BEGIN
 	DELETE CustSetting3rd WHERE custid = @custid
 	DELETE custsettingGame WHERE custid = @custid
 	
-	DELETE P2PGameSetting WHERE custid = @custid
-	DELETE P2PGroupComm WHERE custid = @custid
 	
 	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE custid = @custid
 	
-	DELETE dbo.CustCommRate WHERE custid = @custid
 	DELETE CustWinLimit WHERE custid = @custid
 	
 	--DCS table

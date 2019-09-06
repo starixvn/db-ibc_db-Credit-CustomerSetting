@@ -61,6 +61,7 @@ AS
 		- 20190527@Elodie: New account status [Redmine:#113198]
 		- 20190715@Elodie: Sub account management [Redmine:#116825] 
 		- 20190808@Elodie: Add problem account [Redmine:#116814]
+		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 
 	Param's Explanation:
 		• @ErrCode:
@@ -361,27 +362,26 @@ BEGIN
 
     INSERT INTO [dbo].[custinfo]
     (
-	    custid, currency,Disable151_AU
-	  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11,MaxPerMatch44, maxpermatch201
+	    custid, currency
+	  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11
 	  , maxpermatch99
 	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
 	  , MatchLimit, VirtualMultiplier
-	  , DisableFinancial, DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
-	  --, MaxPerMatch180, MaxPerMatch181, MaxPerMatch186, maxpermatch182, maxpermatch184, maxpermatch183, maxpermatch185 , DisableVirtualSports, HideVirtualSports
+	  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
 	  , danger, danger2, danger3, Abnormal
-	  ,  DoubleCommLosing, DisableCasinoBonus	 
-	  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive,DisableColossusBet,HideColossusBet
+	  ,  DoubleCommLosing	 
+	  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
 	  , MaxPerMatch1MP,maxpermatch164)
     VALUES
     (
-	    @custid, @currency,1
-	  , NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL, NULL
+	    @custid, @currency
+	  , NULL, NULL, NULL, NULL, NULL, NULL, NULL
 	  , NULL
 	  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), @credit, ISNULL(@closed, 0), @username
 	  , @matchlimit, @virtualmultiplier
-	  , 1, @DisableOutright, 1, 1,  0, 0, 0
+	  , @DisableOutright, 1, 1,  0, 0, 0
 	  , @danger, @danger2, @danger3, @Abnormal
-	  , 0,1, 1, 1, 1, 1, 1,1,1, NULL, NULL
+	  , 0, 1, 1, 1, 1, 1, NULL, NULL
     )
 
     IF @@ERROR <> 0
