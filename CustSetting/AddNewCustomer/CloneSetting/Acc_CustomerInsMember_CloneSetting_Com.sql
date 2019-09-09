@@ -99,9 +99,7 @@ BEGIN
 	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @Enabled = ISNULL(Enabled, 0), @currency = currency
 	FROM dbo.CustInfo WITH(NOLOCK) 
 	WHERE custid = @ExistingCustid
-		
-
-	END			
+					
 	
 	--Not allow to create a IMBC customer from MBC customer and and vice versa
 	DECLARE @_Site VARCHAR(10)
