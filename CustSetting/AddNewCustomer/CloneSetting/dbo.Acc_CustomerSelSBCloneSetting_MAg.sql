@@ -10,7 +10,7 @@ AS
 	("search and copy" feature of creating new agent) 
 	DB: DBCUST.CustDB
   
-	History:   
+	Revisions: 
 		- 20131018@Kathy: Add HR Fixed Odds (154) [Redmine:#6505]
 		- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB)
 		- 20150904@Helen: commission setting for MO [Redmine #41470]
