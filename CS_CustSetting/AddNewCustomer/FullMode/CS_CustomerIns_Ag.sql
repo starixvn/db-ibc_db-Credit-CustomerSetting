@@ -52,7 +52,8 @@ BEGIN
 	DECLARE @currency INT, @pwdexpiry DATETIME, @lastMINUTEMemberCount INT, @IsInternal BIT, @srecommend INT, @mrecommend INT, @site VARCHAR(10),
 			@Credit_AllOtherMember MONEY, @Credit_Ag MONEY,
 			@matchlimit SMALLMONEY, @virtualmultiplier SMALLMONEY,
-			@Asuspended BIT, @autosuspend BIT, @autosuspend2 BIT 
+			@Asuspended BIT, @autosuspend BIT, @autosuspend2 BIT,
+			@DangerAgent TINYINT = 0,@DangerAgent2 TINYINT = 0,@DangerAgent3 TINYINT = 0
 	
 	SELECT @username = RTRIM(LTRIM(@username))
 	SELECT @pwdexpiry = dbo.f_CS_GetPwdExpiryDate (1)
@@ -224,7 +225,10 @@ BEGIN
          , @matchlimit = matchlimit
          , @autosuspend = ISNULL(autosuspend, 0)
          , @autosuspend2 = ISNULL(autosuspend2, 0)
-         , @virtualmultiplier = ISNULL(virtualmultiplier, 1)           
+         , @virtualmultiplier = ISNULL(virtualmultiplier, 1)   
+		 , @DangerAgent = ISNULL(Danger,0)
+		 , @DangerAgent2 = ISNULL(Danger2,0)		 
+		 , @DangerAgent3 = ISNULL(Danger3,0)
      FROM custinfo WITH(NOLOCK)
      WHERE CustID = @recommend	
 
@@ -283,7 +287,10 @@ BEGIN
 	    @autosuspend2 = @autosuspend2,
 		@virtualmultiplier = @virtualmultiplier,
 		@matchlimit = @matchlimit,
-
+		@Danger = @DangerAgent,
+		@Danger2 = @DangerAgent2,
+		@Danger3 = @DangerAgent3,
+		
 		@lastname = '',
 	    @phone = '',
 	    @mobilephone = '',
