@@ -356,7 +356,25 @@ BEGIN
 		@ActionID = 165007,
 		@TrackingValue = @LogSPData,
 		@duration = @duration			
+	
+	--Log initial status for customer
+    SELECT @LogSPData = '<R autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'autosuspend2="'+ COALESCE(CAST(@autosuspend AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'matchlimit="'+ COALESCE(CAST(@matchlimit AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'Danger="'+ COALESCE(CAST(@DangerAgent AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'Danger2="'+ COALESCE(CAST(@DangerAgent2 AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'Danger3="'+ COALESCE(CAST(@DangerAgent3 AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
+						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
+    EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 165013,
+		@TrackingValue = @LogSPData,
+		@duration = @duration
+		
 	-- Write Log Credit	
     DECLARE @LogSPCredit VARCHAR(MAX)
     SELECT @LogSPCredit = 'UserName='+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + ', SubAccName='+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) 
