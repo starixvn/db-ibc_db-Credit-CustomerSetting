@@ -147,7 +147,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99spositiontaking_3 SMALLMONEY,
 	@v99spositiontaking_9 SMALLMONEY,
 	@v99spositiontaking_20 SMALLMONEY,
-
+	@v99spositiontaking_9999 SMALLMONEY,
 	--v161
 	@v161spositiontaking_81 SMALLMONEY,
 	@v161spositiontaking_83 SMALLMONEY,
@@ -222,7 +222,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99mpositiontaking_3 SMALLMONEY,
 	@v99mpositiontaking_9 SMALLMONEY,
 	@v99mpositiontaking_20 SMALLMONEY,	
-
+	@v99mpositiontaking_9999 SMALLMONEY,	
 	--v161
 	@v161mpositiontaking_81 SMALLMONEY,
 	@v161mpositiontaking_83 SMALLMONEY,
@@ -296,7 +296,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99apositiontaking_3 SMALLMONEY,
 	@v99apositiontaking_9 SMALLMONEY,
 	@v99apositiontaking_20 SMALLMONEY,
-
+	@v99apositiontaking_9999 SMALLMONEY,
 	--v161
 	@v161apositiontaking_81 SMALLMONEY,
 	@v161apositiontaking_83 SMALLMONEY,
@@ -412,6 +412,7 @@ Revisions:
 	- 20181102@Johnson: Apply service broker for logging [Redmine: #103547]  	
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -571,7 +572,7 @@ BEGIN
 				@v99spositiontaking_3 = @v99spositiontaking_3,
 				@v99spositiontaking_9 = @v99spositiontaking_9,
 				@v99spositiontaking_20 = @v99spositiontaking_20,
-
+				@v99spositiontaking_9999 = @v99spositiontaking_9999,
 				--v161
 				@v161spositiontaking_81 = @v161spositiontaking_81,
 				@v161spositiontaking_83 = @v161spositiontaking_83,
@@ -638,7 +639,8 @@ BEGIN
 				@v99mpositiontaking_2 = @v99mpositiontaking_2,
 				@v99mpositiontaking_3 = @v99mpositiontaking_3,
 				@v99mpositiontaking_9 = @v99mpositiontaking_9,
-				@v99mpositiontaking_20 = @v99mpositiontaking_20,		
+				@v99mpositiontaking_20 = @v99mpositiontaking_20,
+				@v99mpositiontaking_9999 = @v99mpositiontaking_9999,				
 				--v161
 				@v161mpositiontaking_81 = @v161mpositiontaking_81,
 				@v161mpositiontaking_83 = @v161mpositiontaking_83,
@@ -706,7 +708,7 @@ BEGIN
 				@v99apositiontaking_3 = @v99apositiontaking_3,
 				@v99apositiontaking_9 = @v99apositiontaking_9,
 				@v99apositiontaking_20 = @v99apositiontaking_20,
-
+				@v99apositiontaking_9999 = @v99apositiontaking_9999,
 				--v161
 				@v161apositiontaking_81 = @v161apositiontaking_81,
 				@v161apositiontaking_83 = @v161apositiontaking_83,
@@ -933,7 +935,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v99spositiontaking_3 = @v99spositiontaking_3,
 		@v99spositiontaking_9 = @v99spositiontaking_9,
 		@v99spositiontaking_20 = @v99spositiontaking_20,	
-		
+		@v99spositiontaking_9999 = @v99spositiontaking_9999,	
 		--v161
 		@v161spositiontaking_81 = @v161spositiontaking_81,
 		@v161spositiontaking_83 = @v161spositiontaking_83,
@@ -1007,7 +1009,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v99mpositiontaking_3 = @v99mpositiontaking_3,
 		@v99mpositiontaking_9 = @v99mpositiontaking_9,
 		@v99mpositiontaking_20 = @v99mpositiontaking_20,
-
+		@v99mpositiontaking_9999 = @v99mpositiontaking_9999,
 		--v161
 		@v161mpositiontaking_81 = @v161mpositiontaking_81,
 		@v161mpositiontaking_83 = @v161mpositiontaking_83,
@@ -1081,7 +1083,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v99apositiontaking_3 = @v99apositiontaking_3,
 		@v99apositiontaking_9 = @v99apositiontaking_9,
 		@v99apositiontaking_20 = @v99apositiontaking_20,
-
+		@v99apositiontaking_9999 = @v99apositiontaking_9999,
 		--v161
 		@v161apositiontaking_81 = @v161apositiontaking_81,
 		@v161apositiontaking_83 = @v161apositiontaking_83,
@@ -1613,6 +1615,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v99spt_3="'+ COALESCE(CAST(@v99spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_9="'+ COALESCE(CAST(@v99spositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_20="'+ COALESCE(CAST(@v99spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'v99spt_9999="'+ COALESCE(CAST(@v99spositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v161spt_81="'+ COALESCE(CAST(@v161spositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161spt_83="'+ COALESCE(CAST(@v161spositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1687,7 +1690,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v99mpt_3="'+ COALESCE(CAST(@v99mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_9="'+ COALESCE(CAST(@v99mpositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_20="'+ COALESCE(CAST(@v99mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	'v99mpt_9999="'+ COALESCE(CAST(@v99mpositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161mpt_81="'+ COALESCE(CAST(@v161mpositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161mpt_83="'+ COALESCE(CAST(@v161mpositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	--'v161mpt_85="'+ coalesce(cast(@v161mpositiontaking_85 as varchar(50)),space(1)) + '" ' +
@@ -1761,6 +1764,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v99apt_3="'+ COALESCE(CAST(@v99apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_9="'+ COALESCE(CAST(@v99apositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_20="'+ COALESCE(CAST(@v99apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'v99apt_9999="'+ COALESCE(CAST(@v99apositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v161apt_81="'+ COALESCE(CAST(@v161apositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161apt_83="'+ COALESCE(CAST(@v161apositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1844,6 +1848,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v99spt_3="'+ COALESCE(CAST(@v99spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99spt_9="'+ COALESCE(CAST(@v99spositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99spt_20="'+ COALESCE(CAST(@v99spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'v99spt_9999="'+ COALESCE(CAST(@v99spositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 		'v161spt_81="'+ COALESCE(CAST(@v161spositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161spt_83="'+ COALESCE(CAST(@v161spositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1918,6 +1923,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v99mpt_3="'+ COALESCE(CAST(@v99mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99mpt_9="'+ COALESCE(CAST(@v99mpositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99mpt_20="'+ COALESCE(CAST(@v99mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'v99mpt_9999="'+ COALESCE(CAST(@v99mpositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 		'v161mpt_81="'+ COALESCE(CAST(@v161mpositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161mpt_83="'+ COALESCE(CAST(@v161mpositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1992,6 +1998,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v99apt_3="'+ COALESCE(CAST(@v99apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99apt_9="'+ COALESCE(CAST(@v99apositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v99apt_20="'+ COALESCE(CAST(@v99apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'v99apt_9999="'+ COALESCE(CAST(@v99apositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 		'v161apt_81="'+ COALESCE(CAST(@v161apositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161apt_83="'+ COALESCE(CAST(@v161apositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
