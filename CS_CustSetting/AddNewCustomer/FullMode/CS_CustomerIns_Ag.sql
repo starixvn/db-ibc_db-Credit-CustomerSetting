@@ -38,7 +38,7 @@ AS
 		- 20100627@Elodie: Write ugroup value into log [Redmine: #115353]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
 		- 20190715@Elodie: Change content of error msg [Redmine:#115515]
-
+		- 20190909@Johnson: copy danger status from upline [redmine:#119889]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Create member successfully.
@@ -52,7 +52,8 @@ BEGIN
 	DECLARE @currency INT, @pwdexpiry DATETIME, @lastMINUTEMemberCount INT, @IsInternal BIT, @srecommend INT, @mrecommend INT, @site VARCHAR(10),
 			@Credit_AllOtherMember MONEY, @Credit_Ag MONEY,
 			@matchlimit SMALLMONEY, @virtualmultiplier SMALLMONEY,
-			@Asuspended BIT, @autosuspend BIT, @autosuspend2 BIT 
+			@Asuspended BIT, @autosuspend BIT, @autosuspend2 BIT,
+			@DangerAgent TINYINT = 0,@DangerAgent2 TINYINT = 0,@DangerAgent3 TINYINT = 0
 	
 	SELECT @username = RTRIM(LTRIM(@username))
 	SELECT @pwdexpiry = dbo.f_CS_GetPwdExpiryDate (1)
@@ -224,7 +225,10 @@ BEGIN
          , @matchlimit = matchlimit
          , @autosuspend = ISNULL(autosuspend, 0)
          , @autosuspend2 = ISNULL(autosuspend2, 0)
-         , @virtualmultiplier = ISNULL(virtualmultiplier, 1)           
+         , @virtualmultiplier = ISNULL(virtualmultiplier, 1)   
+		 , @DangerAgent = ISNULL(Danger,0)
+		 , @DangerAgent2 = ISNULL(Danger2,0)		 
+		 , @DangerAgent3 = ISNULL(Danger3,0)
      FROM custinfo WITH(NOLOCK)
      WHERE CustID = @recommend	
 
@@ -283,7 +287,10 @@ BEGIN
 	    @autosuspend2 = @autosuspend2,
 		@virtualmultiplier = @virtualmultiplier,
 		@matchlimit = @matchlimit,
-
+		@Danger = @DangerAgent,
+		@Danger2 = @DangerAgent2,
+		@Danger3 = @DangerAgent3,
+		
 		@lastname = '',
 	    @phone = '',
 	    @mobilephone = '',
@@ -349,7 +356,25 @@ BEGIN
 		@ActionID = 165007,
 		@TrackingValue = @LogSPData,
 		@duration = @duration			
+	
+	--Log initial status for customer
+    SELECT @LogSPData = '<R autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'autosuspend2="'+ COALESCE(CAST(@autosuspend AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'matchlimit="'+ COALESCE(CAST(@matchlimit AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'Danger="'+ COALESCE(CAST(@DangerAgent AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'Danger2="'+ COALESCE(CAST(@DangerAgent2 AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'Danger3="'+ COALESCE(CAST(@DangerAgent3 AS VARCHAR(10)),SPACE(1)) + '" ' +
+						'SubAcc="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
+						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" />'
 
+    EXEC dbo.CS_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 165013,
+		@TrackingValue = @LogSPData,
+		@duration = @duration
+		
 	-- Write Log Credit	
     DECLARE @LogSPCredit VARCHAR(MAX)
     SELECT @LogSPCredit = 'UserName='+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + ', SubAccName='+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) 
