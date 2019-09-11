@@ -23,7 +23,7 @@ AS
 		- 20151016@Elodie: Add new product Colossus Bet and Myanmar Odds [Redmine: #41264, 41470]
 		- 20151119@Dominic: Fix bug when inserting setting into DCS structure Redmine Feature #26274
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
-		- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2  [Redmine: #118699]
 	Parameter's Explanation:
 */ 
 BEGIN
