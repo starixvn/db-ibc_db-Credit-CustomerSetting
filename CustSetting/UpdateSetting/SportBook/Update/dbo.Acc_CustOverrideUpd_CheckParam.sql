@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam,ITVivi" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -60,6 +60,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam]
     @minv99positiontaking_3 smallmoney,
     @minv99positiontaking_9 smallmoney,
     @minv99positiontaking_20 smallmoney,
+	@minv99positiontaking_9999 smallmoney,
   
     @minv161positiontaking_81 smallmoney,
     @minv161positiontaking_83 smallmoney,
@@ -127,6 +128,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam]
     @maxv99positiontaking_3 smallmoney,
     @maxv99positiontaking_9 smallmoney,
     @maxv99positiontaking_20 smallmoney,
+	@maxv99positiontaking_9999 smallmoney,
   
     @maxv161positiontaking_81 smallmoney,
     @maxv161positiontaking_83 smallmoney,
@@ -186,6 +188,7 @@ Revisions:
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
     - 20180125@Winnie: Hide inactive products [RedmineID: #86086]	 
+	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 Param's Explanation:
 • @ErrCode:
     = 0: check parameters successfully.
@@ -257,7 +260,7 @@ EXEC dbo.Acc_CustOverrideUpd_CheckParam_V
             @minv99positiontaking_3 = @minv99positiontaking_3,
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
-         
+            @minv99positiontaking_9999 = @minv99positiontaking_9999,
             --v161
             @minv161positiontaking_81 = @minv161positiontaking_81,
             @minv161positiontaking_83 = @minv161positiontaking_83,
@@ -329,7 +332,7 @@ EXEC dbo.Acc_CustOverrideUpd_CheckParam_V
             @maxv99positiontaking_3 = @maxv99positiontaking_3,
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
-    
+			@maxv99positiontaking_9999 = @maxv99positiontaking_9999,
             --v161
             @maxv161positiontaking_81 = @maxv161positiontaking_81,
             @maxv161positiontaking_83 = @maxv161positiontaking_83,
@@ -421,6 +424,7 @@ BEGIN
             @minv99positiontaking_3 = @minv99positiontaking_3,
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
+			@minv99positiontaking_9999 = @minv99positiontaking_9999,
        
             --v161
             @minv161positiontaking_81 = @minv161positiontaking_81,
@@ -493,7 +497,7 @@ BEGIN
             @maxv99positiontaking_3 = @maxv99positiontaking_3,
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
-            
+            @maxv99positiontaking_9999 = @maxv99positiontaking_9999,
     
             --v161
             @maxv161positiontaking_81 = @maxv161positiontaking_81,
@@ -585,7 +589,7 @@ BEGIN
             @minv99positiontaking_3 = @minv99positiontaking_3,
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
-       
+			@minv99positiontaking_9999 = @minv99positiontaking_9999,
             --v161
             @minv161positiontaking_81 = @minv161positiontaking_81,
             @minv161positiontaking_83 = @minv161positiontaking_83,
@@ -657,6 +661,7 @@ BEGIN
             @maxv99positiontaking_3 = @maxv99positiontaking_3,
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
+			@maxv99positiontaking_9999 = @maxv99positiontaking_9999,
       
             --v161
             @maxv161positiontaking_81 = @maxv161positiontaking_81,
@@ -748,6 +753,7 @@ BEGIN
             @minv99positiontaking_3 = @minv99positiontaking_3,
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
+			@minv99positiontaking_9999 = @minv99positiontaking_9999,
      
             --v161
             @minv161positiontaking_81 = @minv161positiontaking_81,
@@ -821,6 +827,7 @@ BEGIN
             @maxv99positiontaking_3 = @maxv99positiontaking_3,
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
+			@maxv99positiontaking_9999 = @maxv99positiontaking_9999,
      
             --v161
             @maxv161positiontaking_81 = @maxv161positiontaking_81,
@@ -857,16 +864,5 @@ END
 
 GO
 
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpd_CheckParam] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpd_CheckParam] TO [ITVivi]
-GO 
  GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpd_CheckParam] TO [bodbAdminNet]
 GO 

@@ -149,7 +149,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@v99apositiontaking_3 SMALLMONEY,  
 	@v99apositiontaking_9 SMALLMONEY,  
 	@v99apositiontaking_20 SMALLMONEY,  
-
+	@v99apositiontaking_9999 SMALLMONEY,  
 
 	--v161  
 	@v161apositiontaking_81 smallmoney,   
@@ -238,6 +238,7 @@ Revisions:
  - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
  - 20181107@Johnson: add Happy 5 [Redmine: #104006]
  - 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
+ - 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -622,7 +623,7 @@ BEGIN
 	  @v99apositiontaking_3_old SMALLMONEY,  
 	  @v99apositiontaking_9_old SMALLMONEY,  
 	  @v99apositiontaking_20_old SMALLMONEY,  
-	    
+	  @v99apositiontaking_9999_old SMALLMONEY,  
 	
 	  @v161apositiontaking_81_old SMALLMONEY,   
 	  @v161apositiontaking_83_old SMALLMONEY,        
@@ -704,7 +705,7 @@ BEGIN
 	 select @v99apositiontaking_3_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=3 and sporttype=99  
 	 select @v99apositiontaking_9_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=99  
 	 select @v99apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=99  
-	   
+	 select @v99apositiontaking_9999_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9999 and sporttype=99  
 
 	 select @v161apositiontaking_81_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=81 and sporttype=161  
 	 select @v161apositiontaking_83_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=83 and sporttype=161  
@@ -765,7 +766,7 @@ BEGIN
 	   @v99apositiontaking_3 <> @v99apositiontaking_3_old or  
 	   @v99apositiontaking_9 <> @v99apositiontaking_9_old or  
 	   @v99apositiontaking_20 <> @v99apositiontaking_20_old or  
-
+	   @v99apositiontaking_9999 <> @v99apositiontaking_9999_old or  
 	     
 	   @v161apositiontaking_81 <> @v161apositiontaking_81_old or  
 	   @v161apositiontaking_83 <> @v161apositiontaking_83_old or    
@@ -838,6 +839,7 @@ BEGIN
 	   @v99apositiontaking_3 = @v99apositiontaking_3,  
 	   @v99apositiontaking_9 = @v99apositiontaking_9,  
 	   @v99apositiontaking_20 = @v99apositiontaking_20,  
+	   @v99apositiontaking_9999 = @v99apositiontaking_9999,  
 
 	   @v161apositiontaking_81 = @v161apositiontaking_81,  
 	   @v161apositiontaking_83 = @v161apositiontaking_83,  

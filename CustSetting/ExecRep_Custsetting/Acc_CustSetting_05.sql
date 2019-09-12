@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @srecommend INT = 0,
@@ -57,7 +57,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @isauto_v99spositiontaking_2 bit = 0,
     @isauto_v99spositiontaking_3 bit = 0,
     @isauto_v99spositiontaking_20 bit = 0,
-
+	@isauto_v99spositiontaking_9999 bit = 0,
     -- mixed sports
     @isauto_v99spositiontaking_9 bit = 0,
   
@@ -113,7 +113,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @old_isauto_v99spositiontaking_2 bit = 0,
     @old_isauto_v99spositiontaking_3 bit = 0,
     @old_isauto_v99spositiontaking_20 bit = 0,
-
+	@old_isauto_v99spositiontaking_9999 bit = 0,
     -- mixed sports
     @old_isauto_v99spositiontaking_9 bit = 0,
    
@@ -170,6 +170,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @auto_v99spositiontaking_2 smallmoney = 0,
     @auto_v99spositiontaking_3 smallmoney = 0,
     @auto_v99spositiontaking_20 smallmoney = 0,
+	@auto_v99spositiontaking_9999 smallmoney = 0,
 
     -- mixed sports
     @auto_v99spositiontaking_9 smallmoney = 0,
@@ -226,6 +227,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @old_auto_v99spositiontaking_2 smallmoney = 0,
     @old_auto_v99spositiontaking_3 smallmoney = 0,
     @old_auto_v99spositiontaking_20 smallmoney = 0,
+	@old_auto_v99spositiontaking_9999 smallmoney = 0,
 
     -- mixed sports
     @old_auto_v99spositiontaking_9 smallmoney = 0,
@@ -282,6 +284,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @isauto_v99mpositiontaking_2 bit = 0,
     @isauto_v99mpositiontaking_3 bit = 0,
     @isauto_v99mpositiontaking_20 bit = 0,
+	@isauto_v99mpositiontaking_9999 bit = 0,
 
     -- mixed sports
     @isauto_v99mpositiontaking_9 bit = 0,
@@ -338,6 +341,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @old_isauto_v99mpositiontaking_2 bit = 0,
     @old_isauto_v99mpositiontaking_3 bit = 0,
     @old_isauto_v99mpositiontaking_20 bit = 0,
+	@old_isauto_v99mpositiontaking_9999 bit = 0,
 
     -- mixed sports
     @old_isauto_v99mpositiontaking_9 bit = 0,
@@ -393,6 +397,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @auto_v99mpositiontaking_2 smallmoney = 0,
     @auto_v99mpositiontaking_3 smallmoney = 0,
     @auto_v99mpositiontaking_20 smallmoney = 0,
+	@auto_v99mpositiontaking_9999 smallmoney = 0,
     
     -- mixed sports
     @auto_v99mpositiontaking_9 smallmoney = 0,
@@ -448,6 +453,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
     @old_auto_v99mpositiontaking_2 smallmoney = 0,
     @old_auto_v99mpositiontaking_3 smallmoney = 0,
     @old_auto_v99mpositiontaking_20 smallmoney = 0,
+	@old_auto_v99mpositiontaking_9999 smallmoney = 0,
     
     -- mixed sports
     @old_auto_v99mpositiontaking_9 smallmoney = 0,
@@ -556,6 +562,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_05]
 		 - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]       
 		 - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 		 - 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
+		 - 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
         Parameter's Explanation:        
     */
 BEGIN
@@ -1104,10 +1111,10 @@ BEGIN
                  , 0 AS autov11positiontaking
                  , 0 AS old_autov11positiontaking
                  , 0 AS old_isautov11positiontaking
-                 , 0 AS isautov99positiontaking
-                 , 0 AS autov99positiontaking
-                 , 0 AS old_autov99positiontaking
-                 , 0 AS old_isautov99positiontaking
+				 , @isauto_v99spositiontaking_9999 AS isautov99positiontaking
+                 , @auto_v99spositiontaking_9999 AS autov99positiontaking
+                 , @old_auto_v99spositiontaking_9999 AS old_autov99positiontaking
+                 , @old_isauto_v99spositiontaking_9999 AS old_isautov99positiontaking
                  , 0 AS isautov99mppositiontaking
                  , 0 AS autov99mppositiontaking
                  , 0 AS old_isautov99mppositiontaking
@@ -2240,10 +2247,14 @@ BEGIN
                  , 0 AS autov11positiontaking
                  , 0 AS old_autov11positiontaking
                  ,   0 AS old_isautov11positiontaking
-                 , 0 AS isautov99positiontaking                            ,       0 AS autov99positiontaking
-                 ,                         0 AS old_autov99positiontaking
-                 ,     0 AS old_isautov99positiontaking                                ,                                0  AS isautov99mppositiontaking    ,                                0 AS autov99mppositiontaking    ,                                    0 AS old_autov99mppositiontaking
-                 ,                                         0 AS old_isautov99mppositiontaking  
+                 , @isauto_v99mpositiontaking_9999 AS isautov99positiontaking
+                 , @auto_v99mpositiontaking_9999 AS autov99positiontaking
+                 , @old_auto_v99mpositiontaking_9999 AS old_autov99positiontaking
+                 , @old_isauto_v99mpositiontaking_9999 AS old_isautov99positiontaking               
+				 , 0 AS isautov99mppositiontaking    
+				 , 0 AS autov99mppositiontaking    
+				 , 0 AS old_autov99mppositiontaking
+                 , 0 AS old_isautov99mppositiontaking  
       UNION ALL SELECT 20 AS bettype
                  , 0 AS isautopositiontaking
                  ,   0 AS isautolivepositiontaking

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -58,6 +58,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd]
     @minv99positiontaking_3 smallmoney,
     @minv99positiontaking_9 smallmoney,
     @minv99positiontaking_20 smallmoney,
+	@minv99positiontaking_9999 smallmoney,
    
     @minv161positiontaking_81 smallmoney,
     @minv161positiontaking_83 smallmoney,
@@ -126,6 +127,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd]
     @maxv99positiontaking_3 smallmoney,
     @maxv99positiontaking_9 smallmoney,
     @maxv99positiontaking_20 smallmoney,
+	@maxv99positiontaking_9999 smallmoney,
   
     @maxv161positiontaking_81 smallmoney,
     @maxv161positiontaking_83 smallmoney,
@@ -208,6 +210,7 @@ Revisions:
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	 
+	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -321,6 +324,7 @@ Declare     @old_minpositiontaking_1 smallmoney,
     @old_minv99positiontaking_3 smallmoney,
     @old_minv99positiontaking_9 smallmoney,
     @old_minv99positiontaking_20 smallmoney,
+	@old_minv99positiontaking_9999 smallmoney,
 
     @old_minv161positiontaking_81 smallmoney,
     @old_minv161positiontaking_83 smallmoney,
@@ -389,6 +393,7 @@ Declare     @old_minpositiontaking_1 smallmoney,
     @old_maxv99positiontaking_3 smallmoney,
     @old_maxv99positiontaking_9 smallmoney,
     @old_maxv99positiontaking_20 smallmoney,
+	@old_maxv99positiontaking_9999 smallmoney,
 
     @old_maxv161positiontaking_81 smallmoney,
     @old_maxv161positiontaking_83 smallmoney,
@@ -487,7 +492,7 @@ Declare     @old_minpositiontaking_1 smallmoney,
     select @old_minv99positiontaking_3 = minpositiontaking, @old_maxv99positiontaking_3 = maxpositiontaking from custoverride with (NOLOCK) where custid = @custid and sporttype=99 and bettype = 3
     select @old_minv99positiontaking_9 = minpositiontaking, @old_maxv99positiontaking_9 = maxpositiontaking from custoverride with (NOLOCK) where custid = @custid and sporttype=99 and bettype = 9
     select @old_minv99positiontaking_20 = minpositiontaking, @old_maxv99positiontaking_20 = maxpositiontaking from custoverride with (NOLOCK) where custid = @custid and sporttype=99 and bettype = 20
-    
+    select @old_minv99positiontaking_9999 = minpositiontaking, @old_maxv99positiontaking_9999 = maxpositiontaking from custoverride with (NOLOCK) where custid = @custid and sporttype=99 and bettype = 9999
   
     --v161
     select @old_minv161positiontaking_81 = minpositiontaking, @old_maxv161positiontaking_81 = maxpositiontaking from custoverride3rd with (NOLOCK) where custid = @custid and sporttype=161 and bettype = 81
@@ -570,7 +575,7 @@ IF (@UpdateMinPos = 0 or
             @minv99positiontaking_3 = @old_minv99positiontaking_3 and
             @minv99positiontaking_9 = @old_minv99positiontaking_9 and
             @minv99positiontaking_20 = @old_minv99positiontaking_20 and
-            
+            @minv99positiontaking_9999 = @old_minv99positiontaking_9999 and
 
             
             --v161
@@ -654,6 +659,7 @@ IF (@UpdateMinPos = 0 or
             @maxv99positiontaking_3 = @old_maxv99positiontaking_3 and
             @maxv99positiontaking_9 = @old_maxv99positiontaking_9 and
             @maxv99positiontaking_20 = @old_maxv99positiontaking_20 and
+			@maxv99positiontaking_9999 = @old_maxv99positiontaking_9999 and
             
             --v161
             @maxv161positiontaking_81 = @old_maxv161positiontaking_81 and
@@ -740,7 +746,7 @@ BEGIN
             @minv99positiontaking_3 = @old_minv99positiontaking_3,
             @minv99positiontaking_9 = @old_minv99positiontaking_9,
             @minv99positiontaking_20 = @old_minv99positiontaking_20,
-          
+            @minv99positiontaking_9999 = @old_minv99positiontaking_9999,
             --v161
             @minv161positiontaking_81 = @old_minv161positiontaking_81,
             @minv161positiontaking_83 = @old_minv161positiontaking_83,
@@ -819,7 +825,7 @@ IF @UpdateMaxPos = 0
             @maxv99positiontaking_3 = @old_maxv99positiontaking_3,
             @maxv99positiontaking_9 = @old_maxv99positiontaking_9,
             @maxv99positiontaking_20 = @old_maxv99positiontaking_20,
-            
+            @maxv99positiontaking_9999 = @old_maxv99positiontaking_9999,
            
             --v161
             @maxv161positiontaking_81 = @old_maxv161positiontaking_81,
@@ -896,7 +902,7 @@ EXEC dbo.Acc_CustOverrideUpd_CheckParam
             @minv99positiontaking_3 = @minv99positiontaking_3,
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
-            
+            @minv99positiontaking_9999 = @minv99positiontaking_9999,
            
             --v161
             @minv161positiontaking_81 = @minv161positiontaking_81,
@@ -968,7 +974,7 @@ EXEC dbo.Acc_CustOverrideUpd_CheckParam
             @maxv99positiontaking_3 = @maxv99positiontaking_3,
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
-          
+            @maxv99positiontaking_9999 = @maxv99positiontaking_9999,
             --v161
             @maxv161positiontaking_81 = @maxv161positiontaking_81,
             @maxv161positiontaking_83 = @maxv161positiontaking_83,
@@ -1066,7 +1072,7 @@ BEGIN
                 union all select     @custid as custid,  99 as sporttype, 3 as bettype, @minv99positiontaking_3 as minpositiontaking,  0 as minlivepositiontaking
                 union all select     @custid as custid,  99 as sporttype, 9 as bettype, @minv99positiontaking_9 as minpositiontaking,  0 as minlivepositiontaking
                 union all select     @custid as custid,  99 as sporttype, 20 as bettype, @minv99positiontaking_20 as minpositiontaking,  0 as minlivepositiontaking
-                
+                union all select     @custid as custid,  99 as sporttype, 9999 as bettype, @minv99positiontaking_9999 as minpositiontaking,  0 as minlivepositiontaking
            
                 
             ) as b on custoverride.custid = b.custid and custoverride.sporttype=b.sporttype and custoverride.bettype = b.bettype
@@ -1154,7 +1160,7 @@ BEGIN
                 union all select     @custid as custid,  99 as sporttype, 3 as bettype, @maxv99positiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
                 union all select     @custid as custid,  99 as sporttype, 9 as bettype, @maxv99positiontaking_9 as maxpositiontaking,  0 as maxlivepositiontaking            
                 union all select     @custid as custid,  99 as sporttype, 20 as bettype, @maxv99positiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking            
-                
+                union all select     @custid as custid,  99 as sporttype, 9999 as bettype, @maxv99positiontaking_9999 as maxpositiontaking,  0 as maxlivepositiontaking
                         
             ) as b on custoverride.custid = b.custid and custoverride.sporttype=b.sporttype and custoverride.bettype = b.bettype
     where custoverride.custid = @custid
@@ -1336,7 +1342,7 @@ BEGIN
     'maxv99pt_3="'+ coalesce(cast(@maxv99positiontaking_3 as varchar(50)),space(1)) + '" ' +
     'maxv99pt_9="'+ coalesce(cast(@maxv99positiontaking_9 as varchar(50)),space(1)) + '" ' +
     'maxv99pt_20="'+ coalesce(cast(@maxv99positiontaking_20 as varchar(50)),space(1)) + '" ' +
-    
+    'maxv99pt_9999="'+ coalesce(cast(@maxv99positiontaking_9999 as varchar(50)),space(1)) + '" ' +
  
     'minv161pt_81="'+ coalesce(cast(@minv161positiontaking_81 as varchar(50)),space(1)) + '" ' +
     'minv161pt_83="'+ coalesce(cast(@minv161positiontaking_83 as varchar(50)),space(1)) + '" ' +
@@ -1493,6 +1499,7 @@ BEGIN
     'maxv99pt_3="'+ coalesce(cast(@old_maxv99positiontaking_3 as varchar(50)),space(1)) + '" ' +
     'maxv99pt_9="'+ coalesce(cast(@old_maxv99positiontaking_9 as varchar(50)),space(1)) + '" ' +
     'maxv99pt_20="'+ coalesce(cast(@old_maxv99positiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'maxv99pt_9999="'+ coalesce(cast(@old_maxv99positiontaking_9999 as varchar(50)),space(1)) + '" ' +
     
  
     'minv161pt_81="'+ coalesce(cast(@old_minv161positiontaking_81 as varchar(50)),space(1)) + '" ' +
@@ -1664,7 +1671,7 @@ BEGIN
                             'maxv99pt_3="'+ coalesce(cast(@maxv99positiontaking_3 as varchar(50)),space(1)) + '" ' +
                             'maxv99pt_9="'+ coalesce(cast(@maxv99positiontaking_9 as varchar(50)),space(1)) + '" ' +
                             'maxv99pt_20="'+ coalesce(cast(@maxv99positiontaking_20 as varchar(50)),space(1)) + '" ' +
-                            
+                            'maxv99pt_9999="'+ coalesce(cast(@maxv99positiontaking_9999 as varchar(50)),space(1)) + '" ' +
                           
                             
                             'minv161pt_81="'+ coalesce(cast(@minv161positiontaking_81 as varchar(50)),space(1)) + '" ' +
@@ -1822,6 +1829,7 @@ BEGIN
                             'maxv99pt_3="'+ coalesce(cast(@old_maxv99positiontaking_3 as varchar(50)),space(1)) + '" ' +
                             'maxv99pt_9="'+ coalesce(cast(@old_maxv99positiontaking_9 as varchar(50)),space(1)) + '" ' +
                             'maxv99pt_20="'+ coalesce(cast(@old_maxv99positiontaking_20 as varchar(50)),space(1)) + '" ' +
+							'maxv99pt_9999="'+ coalesce(cast(@old_maxv99positiontaking_9999 as varchar(50)),space(1)) + '" ' +
                          
                             'minv161pt_81="'+ coalesce(cast(@old_minv161positiontaking_81 as varchar(50)),space(1)) + '" ' +
                             'minv161pt_83="'+ coalesce(cast(@old_minv161positiontaking_83 as varchar(50)),space(1)) + '" ' +
@@ -1865,5 +1873,3 @@ GO
 GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpd] TO [bodbDownlineNet] AS [dbo]
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpd] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpd] TO [vnteam] AS [dbo]

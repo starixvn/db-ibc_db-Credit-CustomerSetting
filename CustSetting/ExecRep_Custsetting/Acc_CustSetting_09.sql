@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Custsetting_09] 
 	@custid int,
 	@roleid INT,
@@ -56,6 +56,7 @@ ALTER PROCEDURE [dbo].[Acc_Custsetting_09]
 	@auto_v99spositiontaking_2 smallmoney = 0,
 	@auto_v99spositiontaking_3 smallmoney = 0,
 	@auto_v99spositiontaking_20 smallmoney = 0,
+	@auto_v99spositiontaking_9999 smallmoney = 0,
 	
 	-- mixed sports
 	@auto_v99spositiontaking_9 smallmoney = 0,
@@ -114,6 +115,7 @@ ALTER PROCEDURE [dbo].[Acc_Custsetting_09]
 	@isauto_v99spositiontaking_2 bit = 0,
 	@isauto_v99spositiontaking_3 bit = 0,
 	@isauto_v99spositiontaking_20 bit = 0,
+	@isauto_v99spositiontaking_9999 bit = 0,
 	
 	-- mixed sports
 	@isauto_v99spositiontaking_9 bit = 0,
@@ -185,7 +187,7 @@ ALTER PROCEDURE [dbo].[Acc_Custsetting_09]
 	@auto_v99mpositiontaking_mem_2 smallmoney = 0,
 	@auto_v99mpositiontaking_mem_3 smallmoney = 0,
 	@auto_v99mpositiontaking_mem_20 smallmoney = 0,
-
+	@auto_v99mpositiontaking_mem_9999 smallmoney = 0,
 	-- mixed sports
 	@auto_v99mpositiontaking_mem_9 smallmoney = 0,
 	@auto_v154mpositiontaking_mem_20 smallmoney = 0,
@@ -244,7 +246,7 @@ ALTER PROCEDURE [dbo].[Acc_Custsetting_09]
 	@isauto_v99mpositiontaking_mem_2 bit = 0,
 	@isauto_v99mpositiontaking_mem_3 bit = 0,
 	@isauto_v99mpositiontaking_mem_20 bit = 0,
-
+	@isauto_v99mpositiontaking_mem_9999 bit = 0,
 	-- mixed sports
 	@isauto_v99mpositiontaking_mem_9 bit = 0,
 	@isauto_v154mpositiontaking_mem_20 bit = 0,
@@ -303,6 +305,7 @@ AS
 		 - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]  			
 		 - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 		 - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		 - 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 		Parameter's Explanation:
 	*/
 BEGIN
@@ -497,6 +500,7 @@ BEGIN
 			@old_auto_v99spositiontaking_2 smallmoney,
 			@old_auto_v99spositiontaking_3 smallmoney,
 			@old_auto_v99spositiontaking_20 smallmoney,
+			@old_auto_v99spositiontaking_9999 smallmoney,
 
 			-- mixed sports
 			@old_auto_v99spositiontaking_9 smallmoney,
@@ -555,6 +559,7 @@ BEGIN
 			@old_isauto_v99spositiontaking_2 bit,
 			@old_isauto_v99spositiontaking_3 bit,
 			@old_isauto_v99spositiontaking_20 bit,
+			@old_isauto_v99spositiontaking_9999 bit,
 
 			-- mixed sports
 			@old_isauto_v99spositiontaking_9 bit,
@@ -613,6 +618,7 @@ BEGIN
 			@master_auto_v99spositiontaking_2 smallmoney,
 			@master_auto_v99spositiontaking_3 smallmoney,
 			@master_auto_v99spositiontaking_20 smallmoney,
+			@master_auto_v99spositiontaking_9999 smallmoney,
 
 			-- mixed sports
 			@master_auto_v99spositiontaking_9 smallmoney,
@@ -671,6 +677,7 @@ BEGIN
 			@master_isauto_v99spositiontaking_2 bit,
 			@master_isauto_v99spositiontaking_3 bit,
 			@master_isauto_v99spositiontaking_20 bit,
+			@master_isauto_v99spositiontaking_9999 bit,
 
 			-- mixed sports
 			@master_isauto_v99spositiontaking_9 bit,
@@ -794,6 +801,7 @@ BEGIN
 					select 	@old_auto_v99spositiontaking_3	=	autopositiontaking		,	@old_isauto_v99spositiontaking_3	=	isautopositiontaking		from custsetting with (nolock) where custid = @custid and sporttype=99	and bettype=3
 					select 	@old_auto_v99spositiontaking_10	=	autopositiontaking		,	@old_isauto_v99spositiontaking_10	=	isautopositiontaking		from custsetting with (nolock) where custid = @custid and sporttype=99	and bettype=10
 					select 	@old_auto_v99spositiontaking_20	=	autopositiontaking		,	@old_isauto_v99spositiontaking_20	=	isautopositiontaking		from custsetting with (nolock) where custid = @custid and sporttype=99	and bettype=20
+					select 	@old_auto_v99spositiontaking_9999	=	autopositiontaking		,	@old_isauto_v99spositiontaking_9999	=	isautopositiontaking		from custsetting with (nolock) where custid = @custid and sporttype=99	and bettype=9999
 				END  --UpdatePositiontakingv99
 
 		if (@UpdateMultiple = 0 or @UpdatePositiontakingv99MP = 1)
@@ -886,6 +894,7 @@ BEGIN
 					select @master_auto_v99spositiontaking_3 = autopositiontaking, @master_isauto_v99spositiontaking_3 = isautopositiontaking from custsetting with (NOLOCK) where custid = @mrecommend and bettype=3 and sporttype=99
 					select @master_auto_v99spositiontaking_10 = autopositiontaking, @master_isauto_v99spositiontaking_10 = isautopositiontaking from custsetting with (NOLOCK) where custid = @mrecommend and bettype=10 and sporttype=99
 					select @master_auto_v99spositiontaking_20 = autopositiontaking, @master_isauto_v99spositiontaking_20 = isautopositiontaking from custsetting with (NOLOCK) where custid = @mrecommend and bettype=20 and sporttype=99
+					select @master_auto_v99spositiontaking_9999 = autopositiontaking, @master_isauto_v99spositiontaking_9999 = isautopositiontaking from custsetting with (NOLOCK) where custid = @mrecommend and bettype=9999 and sporttype=99
 				END  --UpdatePositiontakingv99
 
 		-- mixed sports
@@ -961,6 +970,7 @@ BEGIN
 				union all 	select 2 as bettype, 99 as sporttype, @auto_v99spositiontaking_2 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99spositiontaking_2 as isautopositiontaking, 0	as isautolivepositiontaking WHERE @UpdateMultiple = 0 or @UpdatePositiontakingv99 = 1
 				union all 	select 3 as bettype, 99 as sporttype, @auto_v99spositiontaking_3 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99spositiontaking_3 as isautopositiontaking, 0	as isautolivepositiontaking WHERE @UpdateMultiple = 0 or @UpdatePositiontakingv99 = 1
 				union all 	select 20 as bettype, 99 as sporttype, @auto_v99spositiontaking_20 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99spositiontaking_20 as isautopositiontaking, 0	as isautolivepositiontaking WHERE @UpdateMultiple = 0 or @UpdatePositiontakingv99 = 1
+				union all 	select 9999 as bettype, 99 as sporttype, @auto_v99spositiontaking_9999 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99spositiontaking_9999 as isautopositiontaking, 0	as isautolivepositiontaking WHERE @UpdateMultiple = 0 or @UpdatePositiontakingv99 = 1
 
 				-- mixed sports
 				union all 	select 9 as bettype, 99 as sporttype, @auto_v99spositiontaking_9 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99spositiontaking_9 as isautopositiontaking, 0	as isautolivepositiontaking WHERE @UpdateMultiple = 0 or @UpdatePositiontakingv99MP = 1
@@ -1090,6 +1100,7 @@ BEGIN
 				@auto_v99spositiontaking_2 = case when @isauto_v99spositiontaking_2>0 then @auto_v99spositiontaking_2 else @master_auto_v99spositiontaking_2 end,
 				@auto_v99spositiontaking_3 = case when @isauto_v99spositiontaking_3>0 then @auto_v99spositiontaking_3 else @master_auto_v99spositiontaking_3 end,
 				@auto_v99spositiontaking_20 = case when @isauto_v99spositiontaking_20>0 then @auto_v99spositiontaking_20 else @master_auto_v99spositiontaking_20 end,
+				@auto_v99spositiontaking_9999 = case when @isauto_v99spositiontaking_9999>0 then @auto_v99spositiontaking_9999 else @master_auto_v99spositiontaking_9999 end,
 
 				-- mixed sports
 				@auto_v99spositiontaking_9 = case when @isauto_v99spositiontaking_9>0 then @auto_v99spositiontaking_9 else @master_auto_v99spositiontaking_9 end,
@@ -1158,6 +1169,7 @@ BEGIN
 				@isauto_v99spositiontaking_2 = case when @isauto_v99spositiontaking_2>0 then @isauto_v99spositiontaking_2 else @master_isauto_v99spositiontaking_2 end,
 				@isauto_v99spositiontaking_3 = case when @isauto_v99spositiontaking_3>0 then @isauto_v99spositiontaking_3 else @master_isauto_v99spositiontaking_3 end,
 				@isauto_v99spositiontaking_20 = case when @isauto_v99spositiontaking_20>0 then @isauto_v99spositiontaking_20 else @master_isauto_v99spositiontaking_20 end,
+				@isauto_v99spositiontaking_9999 = case when @isauto_v99spositiontaking_9999>0 then @isauto_v99spositiontaking_9999 else @master_isauto_v99spositiontaking_9999 end,
 
 				-- mixed sports
 				@isauto_v99spositiontaking_9 = case when @isauto_v99spositiontaking_9>0 then @isauto_v99spositiontaking_9 else @master_isauto_v99spositiontaking_9 end,
@@ -1542,6 +1554,7 @@ BEGIN
 			@auto_v99mpositiontaking_2 smallmoney,
 			@auto_v99mpositiontaking_3 smallmoney,
 			@auto_v99mpositiontaking_20 smallmoney,
+			@auto_v99mpositiontaking_9999 smallmoney,
 			
 			-- mixed sports
 			@auto_v99mpositiontaking_9 smallmoney,
@@ -1601,6 +1614,7 @@ BEGIN
 			@isauto_v99mpositiontaking_2 bit,
 			@isauto_v99mpositiontaking_3 bit,
 			@isauto_v99mpositiontaking_20 bit,
+			@isauto_v99mpositiontaking_9999 bit,
 
 			-- mixed sports
 			@isauto_v99mpositiontaking_9 bit,
@@ -1683,6 +1697,7 @@ BEGIN
 		select @auto_v99mpositiontaking_2 = autompositiontaking, @isauto_v99mpositiontaking_2 = isautompositiontaking from custsetting with (NOLOCK) where custid = @recommend and bettype=2 and sporttype=99
 		select @auto_v99mpositiontaking_3 = autompositiontaking, @isauto_v99mpositiontaking_3 = isautompositiontaking from custsetting with (NOLOCK) where custid = @recommend and bettype=3 and sporttype=99
 		select @auto_v99mpositiontaking_20 = autompositiontaking, @isauto_v99mpositiontaking_20 = isautompositiontaking from custsetting with (NOLOCK) where custid = @recommend and bettype=20 and sporttype=99
+		select @auto_v99mpositiontaking_9999 = autompositiontaking, @isauto_v99mpositiontaking_9999 = isautompositiontaking from custsetting with (NOLOCK) where custid = @recommend and bettype=9999 and sporttype=99
 
 		-- mixed sports
 		select @auto_v99mpositiontaking_9 = autompositiontaking, @isauto_v99mpositiontaking_9 = isautompositiontaking from custsetting with (NOLOCK) where custid = @recommend and bettype=9 and sporttype=99
@@ -1752,7 +1767,7 @@ BEGIN
 					union all 	select 2 as bettype, 99 as sporttype, @auto_v99mpositiontaking_mem_2 as autompositiontaking, 0	as autolivempositiontaking, @isauto_v99mpositiontaking_mem_2 as isautompositiontaking, 0	as isautolivempositiontaking
 					union all 	select 3 as bettype, 99 as sporttype, @auto_v99mpositiontaking_mem_3 as autompositiontaking, 0	as autolivempositiontaking, @isauto_v99mpositiontaking_mem_3 as isautompositiontaking, 0	as isautolivempositiontaking
 					union all 	select 20 as bettype, 99 as sporttype, @auto_v99mpositiontaking_mem_20 as autompositiontaking, 0	as autolivempositiontaking, @isauto_v99mpositiontaking_mem_20 as isautompositiontaking, 0	as isautolivempositiontaking
-
+					union all 	select 9999 as bettype, 99 as sporttype, @auto_v99mpositiontaking_mem_9999 as autompositiontaking, 0	as autolivempositiontaking, @isauto_v99mpositiontaking_mem_9999 as isautompositiontaking, 0	as isautolivempositiontaking
 					-- mixed sports
 					union all 	select 9 as bettype, 99 as sporttype, @auto_v99mpositiontaking_mem_9 as autompositiontaking, 0	as autolivempositiontaking, @isauto_v99mpositiontaking_mem_9 as isautompositiontaking, 0	as isautolivempositiontaking
 					union all 	select 20 as bettype, 154 as sporttype, @auto_v154mpositiontaking_mem_20 as autompositiontaking, 0	as autolivempositiontaking, @isauto_v154mpositiontaking_mem_20 as isautompositiontaking, 0	as isautolivempositiontaking
@@ -1882,6 +1897,7 @@ BEGIN
 			@auto_v99mpositiontaking_2 = case when @isauto_v99mpositiontaking_mem_2>0 then @auto_v99mpositiontaking_mem_2 else @auto_v99mpositiontaking_2 end,
 			@auto_v99mpositiontaking_3 = case when @isauto_v99mpositiontaking_mem_3>0 then @auto_v99mpositiontaking_mem_3 else @auto_v99mpositiontaking_3 end,
 			@auto_v99mpositiontaking_20 = case when @isauto_v99mpositiontaking_mem_20>0 then @auto_v99mpositiontaking_mem_20 else @auto_v99mpositiontaking_20 end,
+			@auto_v99mpositiontaking_9999 = case when @isauto_v99mpositiontaking_mem_9999>0 then @auto_v99mpositiontaking_mem_9999 else @auto_v99mpositiontaking_9999 end,
 
 			-- mixed sports
 			@auto_v99mpositiontaking_9 = case when @isauto_v99mpositiontaking_mem_9>0 then @auto_v99mpositiontaking_mem_9 else @auto_v99mpositiontaking_9 end,
@@ -1950,6 +1966,7 @@ BEGIN
 			@isauto_v99mpositiontaking_2 = case when @isauto_v99mpositiontaking_mem_2>0 then @isauto_v99mpositiontaking_mem_2 else @isauto_v99mpositiontaking_2 end,
 			@isauto_v99mpositiontaking_3 = case when @isauto_v99mpositiontaking_mem_3>0 then @isauto_v99mpositiontaking_mem_3 else @isauto_v99mpositiontaking_3 end,
 			@isauto_v99mpositiontaking_20 = case when @isauto_v99mpositiontaking_mem_20>0 then @isauto_v99mpositiontaking_mem_20 else @isauto_v99mpositiontaking_20 end,
+			@isauto_v99mpositiontaking_9999 = case when @isauto_v99mpositiontaking_mem_9999>0 then @isauto_v99mpositiontaking_mem_9999 else @isauto_v99mpositiontaking_9999 end,
 
 			-- mixed sports
 			@isauto_v99mpositiontaking_9 = case when @isauto_v99mpositiontaking_mem_9>0 then @isauto_v99mpositiontaking_mem_9 else @isauto_v99mpositiontaking_9 end,
