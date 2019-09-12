@@ -3261,7 +3261,7 @@ SELECT
 	@isauto_v99mpositiontaking_2 = CASE WHEN @UpdateMultiple = 1 AND @UpdatePositiontakingv99 = 0 THEN @old_isauto_v99mpositiontaking_2 ELSE @isauto_v99mpositiontaking_2 END,
 	@isauto_v99mpositiontaking_3 = CASE WHEN @UpdateMultiple = 1 AND @UpdatePositiontakingv99 = 0 THEN @old_isauto_v99mpositiontaking_3 ELSE @isauto_v99mpositiontaking_3 END,
 	@isauto_v99mpositiontaking_20 = CASE WHEN @UpdateMultiple = 1 AND @UpdatePositiontakingv99 = 0 THEN @old_isauto_v99mpositiontaking_20 ELSE @isauto_v99mpositiontaking_20 END,	
-	@isauto_v99mpositiontaking_99 = CASE WHEN @UpdateMultiple = 1 AND @UpdatePositiontakingv99 = 0 THEN @old_isauto_v99mpositiontaking_99 ELSE @isauto_v99mpositiontaking_99 END,	
+	@isauto_v99mpositiontaking_9999 = CASE WHEN @UpdateMultiple = 1 AND @UpdatePositiontakingv99 = 0 THEN @old_isauto_v99mpositiontaking_9999 ELSE @isauto_v99mpositiontaking_9999 END,	
 	-- mixed sports
 	@isauto_v99mpositiontaking_9 = CASE WHEN @UpdateMultiple = 1 AND @UpdatePositiontakingv99mp = 0 THEN @old_isauto_v99mpositiontaking_9 ELSE @isauto_v99mpositiontaking_9 END,
 
