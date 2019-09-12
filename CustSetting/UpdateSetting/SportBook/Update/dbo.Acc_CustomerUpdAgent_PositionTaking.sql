@@ -2674,7 +2674,7 @@ set
 					
 					when 11 then case bettype when 1 then @v11apositiontaking_1 when 20 then @v11apositiontaking_20 when 10 then @v11apositiontaking_10 else 0 end
 					
-					when 99 then case bettype when 1 then @v99apositiontaking_1 when 2 then @v99apositiontaking_2 when 3 then @v99apositiontaking_3 when 20 then @v99apositiontaking_20 when 9 then @v99apositiontaking_9 when 10 then @v99apositiontaking_10 else 0 end
+					when 99 then case bettype when 1 then @v99apositiontaking_1 when 2 then @v99apositiontaking_2 when 3 then @v99apositiontaking_3 when 20 then @v99apositiontaking_20 when 9 then @v99apositiontaking_9 when 10 then @v99apositiontaking_10 when 9999 then @v99apositiontaking_9999 else 0 end
 					
 					
 				else apositiontaking end end,
@@ -2696,7 +2696,7 @@ set
 						
 						when 11 then case bettype when 1 then @v11mpositiontaking_1 when 20 then @v11mpositiontaking_20 when 10 then @v11mpositiontaking_10 else 0 end
 						
-						when 99 then case bettype when 1 then @v99mpositiontaking_1 when 2 then @v99mpositiontaking_2 when 3 then @v99mpositiontaking_3 when 20 then @v99mpositiontaking_20 when 9 then @v99mpositiontaking_9 when 10 then @v99mpositiontaking_10 else 0 end
+						when 99 then case bettype when 1 then @v99mpositiontaking_1 when 2 then @v99mpositiontaking_2 when 3 then @v99mpositiontaking_3 when 20 then @v99mpositiontaking_20 when 9 then @v99mpositiontaking_9 when 10 then @v99mpositiontaking_10 when 9999 then @v99mpositiontaking_9999 else 0 end
 						
 										
 				else mpositiontaking end end,
