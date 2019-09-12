@@ -753,6 +753,7 @@ BEGIN
                 union all     select 3 as bettype, @auto_v99spositiontaking_3 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v99spositiontaking_3 as isautopositiontaking, 0    as isautolivepositiontaking
                 union all     select 20 as bettype, @auto_v99spositiontaking_20 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v99spositiontaking_20 as isautopositiontaking, 0    as isautolivepositiontaking
                 union all     select 10 as bettype, @auto_v99spositiontaking_10 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v99spositiontaking_10 as isautopositiontaking, 0    as isautolivepositiontaking
+				union all     select 9999 as bettype, @auto_v99spositiontaking_9999 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v99spositiontaking_9999 as isautopositiontaking, 0    as isautolivepositiontaking
             ) as b on b.bettype = custsetting.bettype
     where custsetting.custid = @mrecommend and custsetting.sporttype=99
     if @@Error <> 0
