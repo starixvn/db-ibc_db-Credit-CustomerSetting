@@ -1761,7 +1761,7 @@ BEGIN
 
 
             --UPDATE Other sports
-            IF @bettype IN (1, 2, 3, 20,10)
+            IF @bettype IN (1, 2, 3, 20,10,9999)
                AND (@autov99positiontaking <> @old_autov99positiontaking
                     OR @isautov99positiontaking <> @old_isautov99positiontaking
                    )
@@ -2711,7 +2711,7 @@ BEGIN
                         END
                     END    
                     --UPDATE Other sports
-                    if @bettype IN (1, 2, 3,10, 20) AND (@autov99positiontaking <> @old_autov99positiontaking OR @isautov99positiontaking <> @old_isautov99positiontaking ) AND (@updatepositiontakingv99 = 1 OR @updatemultiple=0)
+                    if @bettype IN (1, 2, 3,10, 20,9999) AND (@autov99positiontaking <> @old_autov99positiontaking OR @isautov99positiontaking <> @old_isautov99positiontaking ) AND (@updatepositiontakingv99 = 1 OR @updatemultiple=0)
                     BEGIN
                         if @isautov99positiontaking >0 --Use AUTO MPT
                         BEGIN 
