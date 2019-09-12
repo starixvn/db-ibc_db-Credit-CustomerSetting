@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelNGUpline]
 	@username		VARCHAR(30),
 	@userid			INT,							--Admin ID
@@ -21,7 +21,7 @@ AS
 		- 20130121@Dan: change linked server DB03 to DBPOLICY
 		- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB)
 		- 20180808@Helen: DB05.DBPOLICY migration - Move to DBCUST [Redmine:99462]
-		
+		- 20190827@Johnson: prevent CN88 customers [Redmine:#116691]
 	Param's Explanation:
 		- @isEnable = 1 : unlock checkbox Enable
 		- @isEnable = 0 : lock checkbox Enable
@@ -47,8 +47,9 @@ BEGIN
 										  ELSE CASE WHEN RoleID IN (3,4) THEN srecommend ELSE 0 END 
 									END 
 						  END 
-	FROM	custInfo WITH (NOLOCK)
+	FROM	customer WITH (NOLOCK)
 	WHERE	Username = @Username
+		AND site <> 'CN88'
 
 
 	---check valid username
@@ -101,8 +102,4 @@ BEGIN
 	END
 END
 	 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelNGUpline] TO [bodbAdminNet]
-GO 
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelNGUpline] TO [vnteam]
 GO
