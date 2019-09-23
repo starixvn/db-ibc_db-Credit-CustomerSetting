@@ -21,6 +21,7 @@ AS
 
 	Revisions:
 		- 20190808@Elodie: Initial SP [Redmine:#116814]
+		- 20190918@Alvin: Hide indirect marked on Problem Account
 
 	Param's Explanation:
 		@Action: MarkProblem, RemoveReduceBetLimit
