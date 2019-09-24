@@ -53,10 +53,7 @@ AS
     Param's Explanation: 
         @mode: 
                 - 'Numbergame': Number game
-                - 'HorseRacing': Horse Racing
-                - 'LiveCasino': Live Casino
                 - 'Keno': Keno
-                - 'LiveCasinoUpdAll': Update LC commision for super and downlines
 				- 'GoldDeluxe': Gold Deluxe
             
     */
