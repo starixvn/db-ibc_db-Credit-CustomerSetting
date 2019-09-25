@@ -75,6 +75,7 @@ AS
 	- 20181105@Louis: Credit Collection Summary  [RedmineID: #98621]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+	- 20190923@Johnson: copy danger status from upline [redmine:#120056]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -336,12 +337,18 @@ BEGIN
 	DECLARE @enableUpline bit, @doubleCommLosingUpline bit, @virtualmultiplier SMALLMONEY
 	-- get autosuspend's upline
 	DECLARE @autosuspend BIT,
-		@autosuspend2 BIT
+		@autosuspend2 BIT,
+		@DangerSuper TINYINT = 0,
+		@DangerSuper2 TINYINT = 0,
+		@DangerSuper3 TINYINT = 0
 
 	select @enableUpline = isnull(enabled,0), @doubleCommLosingUpline = DoubleCommLosing,
 		 @autosuspend = ISNULL(autosuspend, 0),
 		 @autosuspend2 = ISNULL(autosuspend2, 0),
-		 @virtualmultiplier = ISNULL(virtualmultiplier,1)
+		 @virtualmultiplier = ISNULL(virtualmultiplier,1),
+		 @DangerSuper = Danger,
+		 @DangerSuper2 = Danger2,
+		 @DangerSuper3 = Danger3
 	from custinfo with (nolock)
 	where custid = @srecommend
 
@@ -404,6 +411,9 @@ BEGIN
 			,DisableSuperLive
 			,MaxPerMatch1MP
 			,Disable151_AU
+			,Danger
+			,Danger2
+			,Danger3
 			)
      SELECT
 			@custid
@@ -463,6 +473,9 @@ BEGIN
 			,DisableSuperLive
 			,MaxPerMatch1MP
 			,1
+			,@DangerSuper
+			,@DangerSuper2
+			,@DangerSuper3
 	FROM dbo.custinfo WITH(NOLOCK)
 	WHERE custid=@ExistingCustid  
         
