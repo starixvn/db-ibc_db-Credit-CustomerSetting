@@ -904,7 +904,7 @@ BEGIN
 		UNION ALL	SELECT @custid, 3, 99, @v99apositiontaking_3, @v99mpositiontaking_3, @v99spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, @v99spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL	SELECT @custid, 10, 99, @v99apositiontaking_10, @v99mpositiontaking_10, @v99spositiontaking_10, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, @v99spositiontaking_9999, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0, 0, 0, 0, 0
+		UNION ALL	SELECT @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, @v99spositiontaking_9999, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0, 0, 0, 0, 0
 		--Mix Sports Parlay
 		UNION ALL	SELECT @custid, 9, 99, @v99apositiontaking_9, @v99mpositiontaking_9, @v99spositiontaking_9, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, @MinBetv99MP, @MaxBetv99MP, 0, 0, 0, 0, 0, 0, 0, 0
 		
@@ -1291,7 +1291,7 @@ BEGIN
 		UNION ALL
 		select @custid, 10, 99, @v99spositiontaking_10, @v99mpositiontaking_10, 0, 0, 0, 0, 0, @auto_v99spositiontaking_10,  @discountcs, 0, 0, 0, 0, 0, 0, 0, @minbetv99, @maxbetv99, 0, 0, @isauto_v99spositiontaking_10, 0, 0, 0, 0, 0
 		UNION ALL
-		select @custid, 9999, 99, @v99spositiontaking_9999, @v99mpositiontaking_9999, 0, 0, 0, 0, 0, @auto_v99spositiontaking_9999, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @minbetv99, @maxbetv99, 0, 0, @isauto_v99spositiontaking_9999, 0, 0, 0, 0, 0
+		select @custid, 9999, 99, @v99spositiontaking_9999, @v99mpositiontaking_9999, 0, 0, 0, 0, 0, @auto_v99spositiontaking_9999,  @discountcs, 0, 0, 0, 0, 0, 0, 0, @minbetv99, @maxbetv99, 0, 0, @isauto_v99spositiontaking_9999, 0, 0, 0, 0, 0
 		-- mix parlay of mixed sports
 		UNION ALL
 		select @custid, 9, 99, @v99spositiontaking_9, @v99mpositiontaking_9, 0, 0, 0, 0, 0, @auto_v99spositiontaking_9, @discountcs, 0, 0, 0, 0, 0, 0, 0, @minbetv99mp, @maxbetv99mp, 0, 0, @isauto_v99spositiontaking_9, 0, 0, 0, 0, 0
@@ -1709,7 +1709,7 @@ BEGIN
 		UNION ALL
 		select @custid, 10, 99, @v99apositiontaking_10, @v99mpositiontaking_10, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0,  @MinBetv99, @MaxBetv99, @auto_v99mpositiontaking_10, 0, @isauto_v99mpositiontaking_10, 0, 0 ,0 ,0 ,0
 		UNION ALL
-		select @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @MinBetv99, @MaxBetv99, @auto_v99mpositiontaking_9999, 0, @isauto_v99mpositiontaking_9999, 0, 0 ,0 ,0 ,0
+		select @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0,  @MinBetv99, @MaxBetv99, @auto_v99mpositiontaking_9999, 0, @isauto_v99mpositiontaking_9999, 0, 0 ,0 ,0 ,0
 		--- mix parlay of mixed sports
 		UNION ALL
 		select @custid, 9, 99, @v99apositiontaking_9, @v99mpositiontaking_9, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @MinBetv99mp, @MaxBetv99mp, @auto_v99mpositiontaking_9, 0, @isauto_v99mpositiontaking_9, 0, 0 ,0 ,0 ,0
@@ -2141,7 +2141,7 @@ BEGIN
 		UNION ALL
 		select @custid, 9, 99, @v99apositiontaking_9, isnull(@v99mpositiontaking_9,0), isnull(@v99spositiontaking_9,0), 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, @MinBetv99MP, @MaxBetv99MP, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL
-		select @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, @v99spositiontaking_9999, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0, 0, 0, 0, 0
+		select @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, @v99spositiontaking_9999, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL
 		select @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, @v99spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0, 0, 0, 0, 0, 0, 0, 0
 		UNION ALL
