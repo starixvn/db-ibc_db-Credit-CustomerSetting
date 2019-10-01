@@ -1,0 +1,236 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[CS_Customer_ChangeHeadline]
+	@UserId				INT
+	,@SuperId			INT
+	,@HeadlineUsername	VARCHAR(50)
+	,@ExtraPTSetting	VARCHAR(MAX)
+	,@EffectiveDate		DATETIME
+	,@IP				VARCHAR(15) = ''
+	,@ErrCode			INT = 0 OUTPUT
+	,@ErrMsg			NVARCHAR(4000) = '' OUTPUT
+AS
+
+/*
+	Created: 20190926@Percy
+	DB: DBCUST.CustDB
+	Task: CN88 - Change Headline of Super
+
+	Revisions:
+		- 20190926@Percy: Initialize SP [Redmine: #118962]
+*/
+
+BEGIN
+	SET NOCOUNT ON
+
+	DECLARE @startRun DATETIME, @Duration INT
+	SELECT  @startRun = CURRENT_TIMESTAMP
+
+	DECLARE @LogSPData VARCHAR(MAX), @LogSPData_Old VARCHAR(MAX), @XmlData XML, @XmlData_Old XML
+
+	SELECT @ErrCode = 0, @ErrMsg = ''
+
+	DECLARE @currentDate DATETIME = CONVERT(DATE, CURRENT_TIMESTAMP)
+
+	DECLARE @Old_HeadlineId INT, @Old_HeadlineUsername VARCHAR(50)
+	DECLARE @HeadlineId INT
+	DECLARE @NoOfMember INT
+
+	/* ===== Check Invalid Input Params ===== */
+	BEGIN
+		SELECT @HeadlineUsername = LTRIM(RTRIM(ISNULL(@HeadlineUsername, '')))
+		SELECT @HeadlineId = custid FROM dbo.Customer WITH (NOLOCK) WHERE username = @HeadlineUsername AND roleid = 0
+
+		IF @HeadlineId IS NULL
+		BEGIN
+			SELECT @ErrCode = 101, @ErrMsg = 'Invalid Headline Username'
+			RETURN
+		END
+		
+		SELECT @Old_HeadlineId = u.custid, @Old_HeadlineUsername = u.username
+		FROM dbo.Customer u WITH (NOLOCK)
+			INNER JOIN dbo.CustSuper cs WITH (NOLOCK) ON u.custid = cs.UplineId
+		WHERE cs.custid = @SuperId AND u.roleid = 0
+
+		IF ISNULL(@Old_HeadlineUsername , '') = ''
+		BEGIN
+			SELECT @ErrCode = 102, @ErrMsg = 'Invalid Super Username'
+			RETURN
+		END
+
+		IF @Old_HeadlineUsername = @HeadlineUsername
+		BEGIN
+			SELECT @ErrCode = 103, @ErrMsg = 'No change Headline Username'
+			RETURN
+		END
+
+		SELECT @NoOfMember = COUNT(1) FROM dbo.Customer WITH (NOLOCK) WHERE srecommend = @SuperId AND roleid = 1
+
+		IF (@NoOfMember = 0 AND @EffectiveDate <> @currentDate) OR (@NoOfMember <> 0 AND @EffectiveDate <> DATEADD(DAY, 1, @currentDate))
+		BEGIN
+			SELECT @ErrCode = 104, @ErrMsg = 'Invalid Effective Date'
+			RETURN
+		END
+	END
+	/* ===== End Check Invalid Input Params ===== */
+
+	/* ===== Update Extra PT Setting ===== */
+	BEGIN
+		DECLARE @GroupId INT, @GroupName VARCHAR(50), @Old_GroupId INT
+
+		DECLARE @ExtraPTSetting_XML XML
+		DECLARE @tblExtraPTSetting TABLE (ProductId INT, ExtraPT DECIMAL(9,8))
+
+		BEGIN TRY
+			SELECT @ExtraPTSetting_XML = CONVERT(XML, @ExtraPTSetting)
+
+			INSERT INTO @tblExtraPTSetting (ProductId, ExtraPT)
+			SELECT t.c.value('@ProductId', 'INT') AS ProductId, t.c.value('@ExtraPT', 'DECIMAL(9,8)') AS ExtraPT
+			FROM @ExtraPTSetting_XML.nodes('ROOT/ExtraPT') AS t(c)
+			OPTION (OPTIMIZE FOR (@ExtraPTSetting_XML = NULL))
+		END TRY
+		BEGIN CATCH
+			SELECT @ErrCode = 110, @ErrMsg = 'ExtraPT''s Paramter Invalid'
+			RETURN
+		END CATCH
+
+		SELECT @GroupId = s.GroupId, @GroupName = s.GroupName
+		FROM dbo.Acc_GroupExtraPT_Product s WITH (NOLOCK)
+			INNER JOIN @tblExtraPTSetting e ON s.ProductID = e.ProductID AND s.ExtraPT = e.ExtraPT
+		WHERE s.ProductID IN (1, 3)
+			AND s.Sporttype = 0 AND s.SubProduct = ''
+			AND s.GroupID BETWEEN 27 AND 42
+			AND @currentDate BETWEEN s.FromDate AND s.ToDate
+		GROUP BY s.GroupId, s.GroupName
+		HAVING COUNT(1) = 2
+
+		IF @GroupId IS NULL
+		BEGIN
+			SELECT @ErrCode = 111, @ErrMsg = N'Invalid rates.'
+			RETURN
+		END
+
+		SELECT TOP 1 @Old_GroupId = GroupId
+		FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+		WHERE SuperId = @SuperId
+			AND Sporttype = 0 AND SubProduct = ''
+			AND @currentDate BETWEEN FromDate AND ToDate
+
+		SELECT @XmlData_Old = (
+			SELECT	@Old_HeadlineId			AS '@HeadlineId'
+					,@Old_HeadlineUsername	AS '@Healine'
+					,[Sportsbook Possess]	AS '@SportsbookPossess'
+					,[Non-Sports Possess]	AS '@Non-SportsPossess'
+					,EffectiveDate			AS '@EffectiveDate'
+			FROM (
+				SELECT
+					CONVERT(VARCHAR(10), p.FromDate, 120) AS EffectiveDate
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Sportsbook Possess])) AS [Sportsbook Possess]
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Non-Sports Possess])) AS [Non-Sports Possess]
+				FROM (
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
+					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+					WHERE SuperId = @SuperId
+						AND ProductId IN (1, 3)
+						AND Sporttype = 0 AND SubProduct = ''
+						AND @currentDate BETWEEN FromDate AND ToDate
+				) AS s
+				PIVOT (
+					MAX(ExtraPT)
+					FOR Product IN ([Sportsbook Possess], [Non-Sports Possess])
+				) AS p
+			) AS t
+			FOR XML PATH ('R'), TYPE
+		)
+
+		EXEC dbo.CS_GroupExtraPT_Ins
+			@SuperId		= @SuperId
+			,@HeadlineId	= @HeadlineId
+			,@GroupId		= @GroupId
+			,@EffectiveDate = @EffectiveDate
+			,@ErrCode		= @ErrCode OUTPUT
+			,@ErrMsg		= @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			SELECT @ErrCode = 112, @ErrMsg = 'Update failed. Please try again'
+			RETURN
+		END
+	END
+	/* ===== End Update Extra PT Setting ===== */
+
+	/* ===== Update Customer Setting ===== */
+	BEGIN
+		DECLARE @GroupHeadlineId INT, @Old_GroupHeadlineId INT
+		SELECT  @GroupHeadlineId = GroupId FROM dbo.CustGroupHeadline WITH (NOLOCK) WHERE custid = @HeadlineId
+		SELECT  @Old_GroupHeadlineId = GroupId FROM dbo.CustGroupHeadline WITH (NOLOCK) WHERE custid = @Old_HeadlineId
+		
+		BEGIN TRY
+			-- CustSuper
+			UPDATE dbo.CustSuper WITH (ROWLOCK) SET UplineId = @HeadlineId WHERE custid = @SuperId
+			-- custAccount
+			UPDATE dbo.custAccount WITH (ROWLOCK) SET GroupId = @GroupHeadlineId WHERE custid = @SuperId
+		END TRY
+		BEGIN CATCH
+			SELECT @ErrCode = 113, @ErrMsg = 'Update failed. Please try again'
+
+			-- Rollback Extra PT Setting
+			EXEC dbo.CS_GroupExtraPT_Ins
+				@SuperId		= @SuperId
+				,@HeadlineId	= @Old_HeadlineId
+				,@GroupId		= @Old_GroupId
+				,@EffectiveDate = @currentDate
+				,@IsRollBack	= 1
+
+			-- Rollback CustSuper
+			UPDATE dbo.CustSuper WITH (ROWLOCK) SET UplineId = @Old_HeadlineId WHERE custid = @SuperId
+			-- Rollback custAccount
+			UPDATE dbo.custAccount WITH (ROWLOCK) SET GroupId = @Old_GroupHeadlineId WHERE custid = @SuperId
+
+			RETURN
+		END CATCH
+
+		SELECT @XmlData = (
+			SELECT	@HeadlineId				AS '@HeadlineId'
+					,@HeadlineUsername		AS '@Healine'
+					,[Sportsbook Possess]	AS '@SportsbookPossess'
+					,[Non-Sports Possess]	AS '@Non-SportsPossess'
+					,EffectiveDate			AS '@EffectiveDate'
+			FROM (
+				SELECT
+					CONVERT(VARCHAR(10), p.FromDate, 120) AS EffectiveDate
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Sportsbook Possess])) AS [Sportsbook Possess]
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Non-Sports Possess])) AS [Non-Sports Possess]
+				FROM (
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
+					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+					WHERE SuperId = @SuperId
+						AND ProductId IN (1, 3)
+						AND Sporttype = 0 AND SubProduct = ''
+						AND @currentDate BETWEEN FromDate AND ToDate
+				) AS s
+				PIVOT (
+					MAX(ExtraPT)
+					FOR Product IN ([Sportsbook Possess], [Non-Sports Possess])
+				) AS p
+			) AS t
+			FOR XML PATH ('R'), TYPE
+		)
+	END
+	/* ===== End Update Customer Setting ===== */
+
+	/* ===== Write log ===== */
+	BEGIN
+		SELECT @Duration = DATEDIFF(MILLISECOND, @startRun, CURRENT_TIMESTAMP)
+		SELECT @LogSPData = CONVERT(VARCHAR(MAX), @XmlData), @LogSPData_Old = CONVERT(VARCHAR(MAX), @XmlData_Old)
+	
+		EXEC CS_WriteLog_UserLog_RunSP_Wrapper
+			@UserId				= @UserId
+			,@CustID			= @SuperId
+			,@ActionID			= 160014
+			,@TrackingValue		= @LogSPData
+			,@TrackingValue2	= @logSPData_Old
+			,@Duration			= @Duration
+	END
+	/* ===== End Write log ===== */
+END
+GO

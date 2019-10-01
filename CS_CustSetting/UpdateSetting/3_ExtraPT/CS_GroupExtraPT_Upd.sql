@@ -15,7 +15,8 @@ AS
 	DB: DBCUST.CustDB 
 	
 	Revisions:
-		- 20190620@Sophia: initial SP[RedmineID: #114912] 
+		- 20190620@Sophia: initial SP[RedmineID: #114912]
+		- 20190926@Percy: Change log's format [Redmine: #118962]
 		 
 	Original: Acc_GroupExtraPTSetting_Upd
 	Param's Explanation:
@@ -30,8 +31,11 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @startRun DATETIME , @endRun DATETIME , @duration INT, @TrackingValue2 NVARCHAR(MAX), @TrackingValue NVARCHAR(MAX)	
-	SELECT @startRun = GETDATE()	
+	DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT
+	SELECT  @startRun = GETDATE()
+
+	DECLARE @TrackingValue2 NVARCHAR(MAX), @TrackingValue NVARCHAR(MAX)
+			,@TrackingValue2_XML XML, @TrackingValue_XML XML
 	
 	DECLARE @today DATETIME, @EndDate DATETIME, @FromDate DATETIME
 	SELECT  @today = CONVERT(DATE, GETDATE()), @EndDate = '9999-12-31'
@@ -128,13 +132,34 @@ BEGIN
 	
 	SELECT @HeadlineUsername = username FROM dbo.CustInfo WITH (NOLOCK) WHERE CustID = @HeadlineId AND roleid = 0
 
-	SELECT  TOP 1 @TrackingValue2 =  '<R Headline="'+ @HeadlineUsername
-					+ '" GroupName="' + GroupName 
-					+ '" EffectiveDate="' + CONVERT(NVARCHAR(10), FromDate, 120)
-					+ '" />'				
-	FROM dbo.Acc_GroupExtraPTSetting WITH(NOLOCK)
-	WHERE SuperId = @CustID AND @Today BETWEEN FromDate AND ToDate  
-	
+	SELECT @TrackingValue2_XML = (
+			SELECT	@HeadlineId				AS '@HeadlineId'
+					,@HeadlineUsername		AS '@Healine'
+					,[Sportsbook Possess]	AS '@SportsbookPossess'
+					,[Non-Sports Possess]	AS '@Non-SportsPossess'
+					,EffectiveDate			AS '@EffectiveDate'
+			FROM (
+				SELECT
+					CONVERT(VARCHAR(10), p.FromDate, 120) AS EffectiveDate
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Sportsbook Possess])) AS [Sportsbook Possess]
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Non-Sports Possess])) AS [Non-Sports Possess]
+				FROM (
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
+					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+					WHERE SuperId = @CustID
+						AND ProductId IN (1, 3)
+						AND Sporttype = 0 AND SubProduct = ''
+						AND @Today BETWEEN FromDate AND ToDate
+				) AS s
+				PIVOT (
+					MAX(ExtraPT)
+					FOR Product IN ([Sportsbook Possess], [Non-Sports Possess])
+				) AS p
+			) AS t
+			FOR XML PATH ('R'), TYPE
+		)
+
+	SELECT @TrackingValue2 = CONVERT(NVARCHAR(MAX), @TrackingValue2_XML)
 
 	---- delete and update lated rows if any
 	DELETE dbo.Acc_GroupExtraPTSetting WITH(ROWLOCK, UPDLOCK)
@@ -160,10 +185,34 @@ BEGIN
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)	
 		  
-	SELECT  @TrackingValue = '<R Headline="'+ @HeadlineUsername 
-					+ '" GroupName="' + @GroupName 
-					+ '" EffectiveDate="' + CONVERT(NVARCHAR(10), @EffectiveDate, 120)
-					+ '" IP="' + @IP + '" />'
+	SELECT @TrackingValue_XML = (
+			SELECT	@HeadlineId				AS '@HeadlineId'
+					,@HeadlineUsername		AS '@Healine'
+					,[Sportsbook Possess]	AS '@SportsbookPossess'
+					,[Non-Sports Possess]	AS '@Non-SportsPossess'
+					,EffectiveDate			AS '@EffectiveDate'
+			FROM (
+				SELECT
+					CONVERT(VARCHAR(10), p.FromDate, 120) AS EffectiveDate
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Sportsbook Possess])) AS [Sportsbook Possess]
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Non-Sports Possess])) AS [Non-Sports Possess]
+				FROM (
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
+					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+					WHERE SuperId = @CustID
+						AND ProductId IN (1, 3)
+						AND Sporttype = 0 AND SubProduct = ''
+						AND @Today BETWEEN FromDate AND ToDate
+				) AS s
+				PIVOT (
+					MAX(ExtraPT)
+					FOR Product IN ([Sportsbook Possess], [Non-Sports Possess])
+				) AS p
+			) AS t
+			FOR XML PATH ('R'), TYPE
+		)
+
+	SELECT @TrackingValue = CONVERT(NVARCHAR(MAX), @TrackingValue_XML)
 
 	EXEC CS_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,
@@ -172,6 +221,5 @@ BEGIN
 		@TrackingValue = @TrackingValue,
 		@TrackingValue2 = @TrackingValue2,
 		@Duration = @Duration
-	
 END
 GO
