@@ -464,8 +464,7 @@ BEGIN
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									 
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 							
 		RETURN	
@@ -521,8 +520,7 @@ BEGIN
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									 
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		RETURN	
@@ -592,8 +590,7 @@ BEGIN
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									   
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @Custid

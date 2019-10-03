@@ -586,7 +586,6 @@ BEGIN
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID		
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID = @CustID
 		
 		RETURN	
 	END 
@@ -618,8 +617,7 @@ BEGIN
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID = @CustID		
+		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID		
 		
 		RETURN	
 	END CATCH	
@@ -697,7 +695,6 @@ BEGIN
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
 							
 		RETURN	

@@ -556,8 +556,7 @@ BEGIN
 							end,
 			@ErrCode = 115
 			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID =@CustID		
+		-- ROLLBACK MANUALLY	
 		DELETE FROM dbo.CustGameType WITH(ROWLOCK) WHERE CustID =@CustID					
 		DELETE FROM dbo.Custoverridegame WITH(ROWLOCK) WHERE CustID =@CustID					
 		DELETE FROM custsettingGame WITH(ROWLOCK) where custid =  @custid
@@ -600,8 +599,7 @@ BEGIN
 	
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID =@CustID		
+		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID	
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
 							
@@ -678,8 +676,7 @@ BEGIN
 		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID =@CustID		
+		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  

@@ -36,7 +36,6 @@ BEGIN
 		  AND dbo.f_CheckRepTable('CustSettingGame') = 1 
 		  AND dbo.f_CheckRepTable('CustOverrideGame') = 1
 		  AND dbo.f_CheckRepTable('CustGameType') = 1		 
-		  AND dbo.f_CheckRepTable('AgentCommRate') = 1	
 	   )
 	BEGIN	
 		-- insert custSetting info
@@ -303,7 +302,6 @@ BEGIN
 	
 		IF(dbo.f_CheckRepTable('custsettingGame') = 1) DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		IF(dbo.f_CheckRepTable('CustGameType') = 1) DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-		IF(dbo.f_CheckRepTable('AgentCommRate') = 1) DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/
 END

@@ -734,9 +734,6 @@ BEGIN
 		  AND dbo.f_CheckRepTable('CustGameType') = 1
 		  AND dbo.f_CheckRepTable('ProductGlobalSetting') = 1 
 		  AND dbo.f_CheckRepTable('ProductBetSetting') = 1 
-		  AND dbo.f_CheckRepTable('AgentCommRate') = 1
-		 AND dbo.f_CheckRepTable('CustCommRate') = 1
-	
 	   )
 	BEGIN
 
@@ -2261,8 +2258,6 @@ BEGIN
 		IF(dbo.f_CheckRepTable('CustSettingGame') = 1) DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		IF(dbo.f_CheckRepTable('CustOverrideGame') = 1) DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 		IF(dbo.f_CheckRepTable('CustGameType') = 1) DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-		IF(dbo.f_CheckRepTable('AgentCommRate') = 1) DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid		
-		IF(dbo.f_CheckRepTable('CustCommRate') = 1) DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/	
 END
