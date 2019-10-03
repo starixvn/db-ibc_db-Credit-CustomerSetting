@@ -116,18 +116,19 @@ BEGIN
 			AND @currentDate BETWEEN FromDate AND ToDate
 
 		SELECT @XmlData_Old = (
-			SELECT	@Old_HeadlineId			AS '@HeadlineId'
+			SELECT	@Old_HeadlineId			AS '@HeadlineID'
 					,@Old_HeadlineUsername	AS '@Healine'
-					,[Sportsbook Possess]	AS '@SportsbookPossess'
-					,[Non-Sports Possess]	AS '@Non-SportsPossess'
+					,SportsbookPossess		AS '@SportsbookPossess'
+					,NonSportsPossess		AS '@NonSportsPossess'
 					,EffectiveDate			AS '@EffectiveDate'
+					,@IP					AS '@IP'
 			FROM (
 				SELECT
 					CONVERT(VARCHAR(10), p.FromDate, 120) AS EffectiveDate
-					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Sportsbook Possess])) AS [Sportsbook Possess]
-					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Non-Sports Possess])) AS [Non-Sports Possess]
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.SportsbookPossess)) AS SportsbookPossess
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.NonSportsPossess)) AS NonSportsPossess
 				FROM (
-					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'NonSports' END + 'Possess' AS Product, ExtraPT, FromDate
 					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
 					WHERE SuperId = @SuperId
 						AND ProductId IN (1, 3)
@@ -136,7 +137,7 @@ BEGIN
 				) AS s
 				PIVOT (
 					MAX(ExtraPT)
-					FOR Product IN ([Sportsbook Possess], [Non-Sports Possess])
+					FOR Product IN (SportsbookPossess, NonSportsPossess)
 				) AS p
 			) AS t
 			FOR XML PATH ('R'), TYPE
@@ -190,18 +191,19 @@ BEGIN
 		END CATCH
 
 		SELECT @XmlData = (
-			SELECT	@HeadlineId				AS '@HeadlineId'
+			SELECT	@HeadlineId				AS '@HeadlineID'
 					,@HeadlineUsername		AS '@Healine'
-					,[Sportsbook Possess]	AS '@SportsbookPossess'
-					,[Non-Sports Possess]	AS '@Non-SportsPossess'
+					,SportsbookPossess		AS '@SportsbookPossess'
+					,NonSportsPossess		AS '@NonSportsPossess'
 					,EffectiveDate			AS '@EffectiveDate'
+					,@IP					AS '@IP'
 			FROM (
 				SELECT
 					CONVERT(VARCHAR(10), p.FromDate, 120) AS EffectiveDate
-					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Sportsbook Possess])) AS [Sportsbook Possess]
-					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Non-Sports Possess])) AS [Non-Sports Possess]
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.SportsbookPossess)) AS SportsbookPossess
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.NonSportsPossess)) AS NonSportsPossess
 				FROM (
-					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'NonSports' END + 'Possess' AS Product, ExtraPT, FromDate
 					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
 					WHERE SuperId = @SuperId
 						AND ProductId IN (1, 3)
@@ -210,7 +212,7 @@ BEGIN
 				) AS s
 				PIVOT (
 					MAX(ExtraPT)
-					FOR Product IN ([Sportsbook Possess], [Non-Sports Possess])
+					FOR Product IN (SportsbookPossess, NonSportsPossess)
 				) AS p
 			) AS t
 			FOR XML PATH ('R'), TYPE
