@@ -1,19 +1,17 @@
-/*<info serverAlias="DBEXT-bodb02" executers="bodbadminNet" viewers="vnteam" isFunction="0"></info>*/
-USE [bodb02]
-GO
-
+/*<info serverAlias="DBEXT-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerNoCommSelBettypes] 
 
 AS
 /*
-Created: 20171025@Winnie
-Task : Select bettypes
-DB: DBEXT/bodb02
+	Created: 20171025@Winnie
+	Task : Select bettypes
+	DB: DBEXT/bodb02
 
-Revisions: 	
-- 20171025@Winnie: Select bettypes [RedmineID:#83334]
-- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
-Param's Explanation:
+	Revisions: 	
+		- 20171025@Winnie: Select bettypes [RedmineID:#83334]
+		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
+	
+	Param's Explanation:
 */
 
 SELECT 1 AS SportType,1 AS bettype,'Asian HDC, OU, OE' AS GroupBettype
