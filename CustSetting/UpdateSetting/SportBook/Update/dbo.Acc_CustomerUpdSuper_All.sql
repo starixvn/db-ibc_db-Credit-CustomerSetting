@@ -119,6 +119,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99spositiontaking_3 smallmoney,
     @v99spositiontaking_9 smallmoney,
     @v99spositiontaking_20 smallmoney,
+	@v99spositiontaking_9999 smallmoney,
 
     @v161spositiontaking_81 smallmoney,
     @v161spositiontaking_83 smallmoney,
@@ -187,6 +188,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99mpositiontaking_3 smallmoney = 0.7,
     @v99mpositiontaking_20 smallmoney = 0.7,
     @v99mpositiontaking_9 smallmoney = 0.7,
+	@v99mpositiontaking_9999 smallmoney = 0.7,
 
     @v161mpositiontaking_81 smallmoney = 0.7,
     @v161mpositiontaking_83 smallmoney = 0.7,
@@ -254,6 +256,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99apositiontaking_3 smallmoney = 0.7,
     @v99apositiontaking_9 smallmoney = 0.7,
     @v99apositiontaking_20 smallmoney = 0.7,
+	@v99apositiontaking_9999 smallmoney = 0.7,
 
     @v161apositiontaking_81 smallmoney = 0.7,
     @v161apositiontaking_83 smallmoney = 0.7,
@@ -344,6 +347,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
+	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -650,7 +654,7 @@ Revisions:
 		@v99spositiontaking_3_old smallmoney,
 		@v99spositiontaking_9_old smallmoney,
 		@v99spositiontaking_20_old smallmoney,
-	    
+	    @v99spositiontaking_9999_old smallmoney,
 	
 		@v161spositiontaking_81_old smallmoney,
 		@v161spositiontaking_83_old smallmoney,
@@ -713,6 +717,7 @@ Revisions:
 		@v99mpositiontaking_3_old smallmoney,
 		@v99mpositiontaking_9_old smallmoney,
 		@v99mpositiontaking_20_old smallmoney,
+		@v99mpositiontaking_9999_old smallmoney,
 	
 		@v161mpositiontaking_81_old smallmoney,
 		@v161mpositiontaking_83_old smallmoney,
@@ -774,6 +779,7 @@ Revisions:
 		@v99apositiontaking_3_old smallmoney,
 		@v99apositiontaking_9_old smallmoney,
 		@v99apositiontaking_20_old smallmoney,
+		@v99apositiontaking_9999_old smallmoney,
 	
 		@v161apositiontaking_81_old smallmoney,
 		@v161apositiontaking_83_old smallmoney,
@@ -873,6 +879,7 @@ Revisions:
 	select @v99spositiontaking_3_old = spositiontaking, @v99mpositiontaking_3_old = mpositiontaking, @v99apositiontaking_3_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=3 and sporttype=99
 	select @v99spositiontaking_9_old = spositiontaking, @v99mpositiontaking_9_old = mpositiontaking, @v99apositiontaking_9_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=99
 	select @v99spositiontaking_20_old = spositiontaking, @v99mpositiontaking_20_old = mpositiontaking, @v99apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=99
+	select @v99spositiontaking_9999_old = spositiontaking, @v99mpositiontaking_9999_old = mpositiontaking, @v99apositiontaking_9999_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9999 and sporttype=99
 
 	--v161
 	select @v161spositiontaking_81_old = spositiontaking, @v161mpositiontaking_81_old = mpositiontaking, @v161apositiontaking_81_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=81 and sporttype=161
@@ -933,7 +940,7 @@ Revisions:
 		@v99spositiontaking_3 <> @v99spositiontaking_3_old or
 		@v99spositiontaking_9 <> @v99spositiontaking_9_old or
 		@v99spositiontaking_20 <> @v99spositiontaking_20_old or
-	    
+	    @v99spositiontaking_9999 <> @v99spositiontaking_9999_old or
 	
 		@v161spositiontaking_81 <> @v161spositiontaking_81_old or
 		@v161spositiontaking_83 <> @v161spositiontaking_83_old or
@@ -996,6 +1003,7 @@ Revisions:
 		@v99mpositiontaking_3 <> @v99mpositiontaking_3_old or
 		@v99mpositiontaking_9 <> @v99mpositiontaking_9_old or
 		@v99mpositiontaking_20 <> @v99mpositiontaking_20_old or
+		@v99mpositiontaking_9999 <> @v99mpositiontaking_9999_old or
 	
 		@v161mpositiontaking_81 <> @v161mpositiontaking_81_old or
 		@v161mpositiontaking_83 <> @v161mpositiontaking_83_old or
@@ -1057,6 +1065,7 @@ Revisions:
 		@v99apositiontaking_3 <> @v99apositiontaking_3_old or
 		@v99apositiontaking_9 <> @v99apositiontaking_9_old or
 		@v99apositiontaking_20 <> @v99apositiontaking_20_old or
+		@v99apositiontaking_9999 <> @v99apositiontaking_9999_old or
 
 		@v161apositiontaking_81 <> @v161apositiontaking_81_old or
 		@v161apositiontaking_83 <> @v161apositiontaking_83_old or
@@ -1147,7 +1156,7 @@ Revisions:
 			@v99spositiontaking_3 = @v99spositiontaking_3,
 			@v99spositiontaking_9 = @v99spositiontaking_9,
 			@v99spositiontaking_20 = @v99spositiontaking_20,
-	
+			@v99spositiontaking_9999 = @v99spositiontaking_9999,
 	        
 			@v161spositiontaking_81 = @v161spositiontaking_81,
 			@v161spositiontaking_83 = @v161spositiontaking_83,
@@ -1209,7 +1218,7 @@ Revisions:
 			@v99mpositiontaking_3 = @v99mpositiontaking_3,
 			@v99mpositiontaking_9 = @v99mpositiontaking_9,
 			@v99mpositiontaking_20 = @v99mpositiontaking_20,
-	
+			@v99mpositiontaking_9999 = @v99mpositiontaking_9999,
 	        
 			@v161mpositiontaking_81 = @v161mpositiontaking_81,
 			@v161mpositiontaking_83 = @v161mpositiontaking_83,
@@ -1270,6 +1279,7 @@ Revisions:
 			@v99apositiontaking_3 = @v99apositiontaking_3,
 			@v99apositiontaking_9 = @v99apositiontaking_9,
 			@v99apositiontaking_20 = @v99apositiontaking_20,
+			@v99apositiontaking_9999 = @v99apositiontaking_9999,
 	
 			@v161apositiontaking_81 = @v161apositiontaking_81,
 			@v161apositiontaking_83 = @v161apositiontaking_83,

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -60,6 +60,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam_MAg]
     @minv99positiontaking_3 smallmoney,
     @minv99positiontaking_9 smallmoney,
     @minv99positiontaking_20 smallmoney,
+	@minv99positiontaking_9999 smallmoney,
 
     --v161
     @minv161positiontaking_81 smallmoney,
@@ -126,7 +127,7 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam_MAg]
     @maxv99positiontaking_3 smallmoney,
     @maxv99positiontaking_9 smallmoney,
     @maxv99positiontaking_20 smallmoney,
-
+	@maxv99positiontaking_9999 smallmoney,
     
     --v161
     @maxv161positiontaking_81 smallmoney,
@@ -190,6 +191,7 @@ Revisions:
     - 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]                  
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
+	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 Param's Explanation:
 • @ErrCode:
     = 0: check parameters successfully.
@@ -442,6 +444,10 @@ inner join (select 1 as sporttype --1
   union all select 99 as sporttype
                  , 20 as bettype
                  , @maxv99positiontaking_20 as maxpositiontaking
+                 , 0 as maxlivepositiontaking
+  union all select 99 as sporttype
+                 , 9999 as bettype
+                 , @maxv99positiontaking_9999 as maxpositiontaking
                  , 0 as maxlivepositiontaking
 
            ) as b on aco.sporttype = b.sporttype and aco.bettype = b.bettype
@@ -908,6 +914,10 @@ inner join (select 1 as sporttype
                  , 20 as bettype
                  , @minv99positiontaking_20 as minpositiontaking
                  , 0 as minlivepositiontaking
+  union all select 99 as sporttype
+                 , 9999 as bettype
+                 , @minv99positiontaking_9999 as minpositiontaking
+                 , 0 as minlivepositiontaking
 
            ) b on cs.sporttype = b.sporttype and cs.bettype = b.bettype
 inner join custsetting as scs with(NOLOCK) on c.srecommend = scs.custid and scs.sporttype = b.sporttype and scs.bettype = b.bettype
@@ -1085,7 +1095,6 @@ inner join custsetting3rd as scs with(NOLOCK) on scs.custid = c.srecommend and s
 
 END
 GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpd_CheckParam_MAg] TO [vnteam]
-GO 
+
  GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpd_CheckParam_MAg] TO [bodbAdminNet]
 GO 

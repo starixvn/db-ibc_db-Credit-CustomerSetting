@@ -119,7 +119,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @v99spositiontaking_2 smallmoney,
     @v99spositiontaking_3 smallmoney,    
     @v99spositiontaking_20 smallmoney,
-    
+    @v99spositiontaking_9999 smallmoney,
     -- mixed sports
     @v99spositiontaking_9 smallmoney = 0,    
 
@@ -234,7 +234,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @auto_v99spositiontaking_2 smallmoney = 0,
     @auto_v99spositiontaking_3 smallmoney = 0,
     @auto_v99spositiontaking_20 smallmoney = 0,
-    
+    @auto_v99spositiontaking_9999 smallmoney = 0,
     -- mixed sports
     @auto_v99spositiontaking_9 smallmoney = 0,
 
@@ -306,7 +306,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @isauto_v99spositiontaking_2 bit = 0,
     @isauto_v99spositiontaking_3 bit = 0,
     @isauto_v99spositiontaking_20 bit = 0,
-
+	@isauto_v99spositiontaking_9999 bit = 0,
     -- mixed sports
     @isauto_v99spositiontaking_9 bit = 0,
 
@@ -375,7 +375,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @v99mpositiontaking_2 smallmoney = 0.7,
     @v99mpositiontaking_3 smallmoney = 0.7,
     @v99mpositiontaking_20 smallmoney = 0.7,
-    
+    @v99mpositiontaking_9999 smallmoney = 0.7,
     -- mixed sports
     @v99mpositiontaking_9 smallmoney = 0.7,
 
@@ -472,6 +472,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
+	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -847,7 +848,7 @@ BEGIN
 			@v99spositiontaking_2_old smallmoney,
 			@v99spositiontaking_3_old smallmoney,    
 			@v99spositiontaking_20_old smallmoney,
-
+			@v99spositiontaking_9999_old smallmoney,
 			-- mixed sports
 			@v99spositiontaking_9_old smallmoney,    
 		
@@ -915,7 +916,7 @@ BEGIN
 			@auto_v99spositiontaking_2_old smallmoney ,
 			@auto_v99spositiontaking_3_old smallmoney ,
 			@auto_v99spositiontaking_20_old smallmoney ,
-
+			@auto_v99spositiontaking_9999_old smallmoney ,
 			-- mixed sports
 			@auto_v99spositiontaking_9_old smallmoney ,
 		
@@ -983,7 +984,7 @@ BEGIN
 			@isauto_v99spositiontaking_2_old bit ,
 			@isauto_v99spositiontaking_3_old bit ,
 			@isauto_v99spositiontaking_20_old bit ,
-
+			@isauto_v99spositiontaking_9999_old bit ,
 			-- mixed sports
 			@isauto_v99spositiontaking_9_old bit ,
 	
@@ -1051,7 +1052,7 @@ BEGIN
 			@v99mpositiontaking_2_old smallmoney ,
 			@v99mpositiontaking_3_old smallmoney ,
 			@v99mpositiontaking_20_old smallmoney,
-
+			@v99mpositiontaking_9999_old smallmoney,
 			-- mixed sports
 			@v99mpositiontaking_9_old smallmoney,
 
@@ -1160,7 +1161,7 @@ BEGIN
 		select @v99spositiontaking_2_old = spositiontaking, @v99mpositiontaking_2_old = mpositiontaking, @auto_v99spositiontaking_2_old = autopositiontaking, @isauto_v99spositiontaking_2_old = isautopositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=2 and sporttype=99
 		select @v99spositiontaking_3_old = spositiontaking, @v99mpositiontaking_3_old = mpositiontaking, @auto_v99spositiontaking_3_old = autopositiontaking, @isauto_v99spositiontaking_3_old = isautopositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=3 and sporttype=99
 		select @v99spositiontaking_20_old = spositiontaking, @v99mpositiontaking_20_old = mpositiontaking, @auto_v99spositiontaking_20_old = autopositiontaking, @isauto_v99spositiontaking_20_old = isautopositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=99
-
+		select @v99spositiontaking_9999_old = spositiontaking, @v99mpositiontaking_9999_old = mpositiontaking, @auto_v99spositiontaking_9999_old = autopositiontaking, @isauto_v99spositiontaking_9999_old = isautopositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9999 and sporttype=99
 		-- mixed sports
 		select @v99spositiontaking_9_old = spositiontaking, @v99mpositiontaking_9_old = mpositiontaking, @auto_v99spositiontaking_9_old = autopositiontaking, @isauto_v99spositiontaking_9_old = isautopositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=99
 
@@ -1228,7 +1229,7 @@ BEGIN
 			@v99spositiontaking_2 <> @v99spositiontaking_2_old or
 			@v99spositiontaking_3 <> @v99spositiontaking_3_old or
 			@v99spositiontaking_20 <> @v99spositiontaking_20_old or
-
+			@v99spositiontaking_9999 <> @v99spositiontaking_9999_old or
 			-- mixed sports
 			@v99spositiontaking_9 <> @v99spositiontaking_9_old or
 			
@@ -1295,7 +1296,7 @@ BEGIN
 			@auto_v99spositiontaking_2 <> @auto_v99spositiontaking_2_old or
 			@auto_v99spositiontaking_3 <> @auto_v99spositiontaking_3_old or
 			@auto_v99spositiontaking_20 <> @auto_v99spositiontaking_20_old or
-
+			@auto_v99spositiontaking_9999 <> @auto_v99spositiontaking_9999_old or
 			-- mixed sports
 			@auto_v99spositiontaking_9 <> @auto_v99spositiontaking_9_old or
 		
@@ -1363,7 +1364,7 @@ BEGIN
 			@isauto_v99spositiontaking_2 <> @isauto_v99spositiontaking_2_old or
 			@isauto_v99spositiontaking_3 <> @isauto_v99spositiontaking_3_old or
 			@isauto_v99spositiontaking_20 <> @isauto_v99spositiontaking_20_old or
-
+			@isauto_v99spositiontaking_9999 <> @isauto_v99spositiontaking_9999_old or
 			-- mixed sports
 			@isauto_v99spositiontaking_9 <> @isauto_v99spositiontaking_9_old or
 		
@@ -1431,7 +1432,7 @@ BEGIN
 			@v99mpositiontaking_2 <> @v99mpositiontaking_2_old or
 			@v99mpositiontaking_3 <> @v99mpositiontaking_3_old or
 			@v99mpositiontaking_20 <> @v99mpositiontaking_20_old or
-	        
+	        @v99mpositiontaking_9999 <> @v99mpositiontaking_9999_old or
 			-- mixed sports
 			@v99mpositiontaking_9 <> @v99mpositiontaking_9_old or
 		
@@ -1531,7 +1532,7 @@ BEGIN
 				@v99spositiontaking_2 = @v99spositiontaking_2,
 				@v99spositiontaking_3 = @v99spositiontaking_3,
 				@v99spositiontaking_20 = @v99spositiontaking_20,
-
+				@v99spositiontaking_9999 = @v99spositiontaking_9999,
 				-- mixed sports
 				@v99spositiontaking_9 = @v99spositiontaking_9,
 		
@@ -1613,7 +1614,7 @@ BEGIN
 				@auto_v99spositiontaking_2 = @auto_v99spositiontaking_2,
 				@auto_v99spositiontaking_3 = @auto_v99spositiontaking_3,
 				@auto_v99spositiontaking_20 = @auto_v99spositiontaking_20,
-
+				@auto_v99spositiontaking_9999 = @auto_v99spositiontaking_9999,
 				-- mixed sports
 				@auto_v99spositiontaking_9 = @auto_v99spositiontaking_9,
 			
@@ -1677,7 +1678,7 @@ BEGIN
 				@isauto_v99spositiontaking_2 = @isauto_v99spositiontaking_2,
 				@isauto_v99spositiontaking_3 = @isauto_v99spositiontaking_3,
 				@isauto_v99spositiontaking_20 = @isauto_v99spositiontaking_20,
-	        
+	            @isauto_v99spositiontaking_9999 = @isauto_v99spositiontaking_9999,
 				-- mixed sports
 				@isauto_v99spositiontaking_9 = @isauto_v99spositiontaking_9,
 		
@@ -1739,7 +1740,7 @@ BEGIN
 				@v99mpositiontaking_2 = @v99mpositiontaking_2,
 				@v99mpositiontaking_3 = @v99mpositiontaking_3,
 				@v99mpositiontaking_20 = @v99mpositiontaking_20,
-
+				@v99mpositiontaking_9999 = @v99mpositiontaking_9999,
 				-- mixed sports
 				@v99mpositiontaking_9 = @v99mpositiontaking_9,
 		

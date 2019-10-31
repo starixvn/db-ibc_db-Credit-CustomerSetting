@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -57,6 +57,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_AutoPositiontaking]
 	@auto_v99mpositiontaking_2 smallmoney = 0,
 	@auto_v99mpositiontaking_3 smallmoney = 0,
 	@auto_v99mpositiontaking_20 smallmoney = 0,
+	@auto_v99mpositiontaking_9999 smallmoney = 0,
 	
 	--- mixed sports
 	@auto_v99mpositiontaking_9 smallmoney = 0,
@@ -149,7 +150,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_AutoPositiontaking]
 	@isauto_v99mpositiontaking_2 bit = 0,
 	@isauto_v99mpositiontaking_3 bit = 0,
 	@isauto_v99mpositiontaking_20 bit = 0,
-
+	@isauto_v99mpositiontaking_9999 bit = 0,
 	-- mixed sports
 	@isauto_v99mpositiontaking_9 bit = 0,
 	
@@ -222,6 +223,7 @@ Revisions:
 	- 20160627@Helen: Provide dedicated Outright PT for each sport - [Redmine: 59438]
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 Param's Explanation:
 • @ErrCode:
     = 0: update successfully.
@@ -366,7 +368,7 @@ Declare
 	@old_auto_v99mpositiontaking_2 smallmoney,
 	@old_auto_v99mpositiontaking_3 smallmoney,
 	@old_auto_v99mpositiontaking_20 smallmoney,
-
+	@old_auto_v99mpositiontaking_9999 smallmoney,
 	-- mixed sports
 	@old_auto_v99mpositiontaking_9 smallmoney,
 	
@@ -436,7 +438,7 @@ Declare
 	@old_isauto_v99mpositiontaking_2 bit,
 	@old_isauto_v99mpositiontaking_3 bit,
 	@old_isauto_v99mpositiontaking_20 bit,
-
+	@old_isauto_v99mpositiontaking_9999 bit,
 	-- mixed sports
 	@old_isauto_v99mpositiontaking_9 bit,
 	-- number game
@@ -534,6 +536,7 @@ select 	@old_auto_v99mpositiontaking_1	=	autompositiontaking		,	@old_isauto_v99m
 select 	@old_auto_v99mpositiontaking_2	=	autompositiontaking		,	@old_isauto_v99mpositiontaking_2	=	isautompositiontaking		from custsetting with (nolock) where custid = @recommend and sporttype=99	and bettype=	2
 select 	@old_auto_v99mpositiontaking_3	=	autompositiontaking		,	@old_isauto_v99mpositiontaking_3	=	isautompositiontaking		from custsetting with (nolock) where custid = @recommend and sporttype=99	and bettype=	3
 select 	@old_auto_v99mpositiontaking_20	=	autompositiontaking		,	@old_isauto_v99mpositiontaking_20	=	isautompositiontaking		from custsetting with (nolock) where custid = @recommend and sporttype=99	and bettype=	20
+select 	@old_auto_v99mpositiontaking_9999	=	autompositiontaking		,	@old_isauto_v99mpositiontaking_9999	=	isautompositiontaking		from custsetting with (nolock) where custid = @recommend and sporttype=99	and bettype=	9999
 
 -- mixed sports
 select 	@old_auto_v99mpositiontaking_9	=	autompositiontaking		,	@old_isauto_v99mpositiontaking_9	=	isautompositiontaking		from custsetting with (nolock) where custid = @recommend and sporttype=99	and bettype=	9
@@ -766,6 +769,7 @@ BEGIN
 				union all 	select 3 as bettype, @auto_v99mpositiontaking_3 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99mpositiontaking_3 as isautopositiontaking, 0	as isautolivepositiontaking
 				union all 	select 20 as bettype, @auto_v99mpositiontaking_20 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99mpositiontaking_20 as isautopositiontaking, 0	as isautolivepositiontaking
 				union all 	select 10 as bettype, @auto_v99mpositiontaking_10 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99mpositiontaking_10 as isautopositiontaking, 0	as isautolivepositiontaking
+				union all 	select 9999 as bettype, @auto_v99mpositiontaking_9999 as autopositiontaking, 0	as autolivepositiontaking, @isauto_v99mpositiontaking_9999 as isautopositiontaking, 0	as isautolivepositiontaking
 				
 			) as b on b.bettype = custsetting.bettype
 	where custsetting.custid = @recommend and custsetting.sporttype=99
@@ -901,6 +905,7 @@ EXEC dbo.Acc_CustSetting_05
 	@isauto_v99mpositiontaking_2 = @isauto_v99mpositiontaking_2,
 	@isauto_v99mpositiontaking_3 = @isauto_v99mpositiontaking_3,
 	@isauto_v99mpositiontaking_20 = @isauto_v99mpositiontaking_20,
+	@isauto_v99mpositiontaking_9999 = @isauto_v99mpositiontaking_9999,
 
 	-- mixed sports
 	@isauto_v99mpositiontaking_9 = @isauto_v99mpositiontaking_9,
@@ -957,6 +962,7 @@ EXEC dbo.Acc_CustSetting_05
 	@old_isauto_v99mpositiontaking_2 = @old_isauto_v99mpositiontaking_2,
 	@old_isauto_v99mpositiontaking_3 = @old_isauto_v99mpositiontaking_3,
 	@old_isauto_v99mpositiontaking_20 = @old_isauto_v99mpositiontaking_20,
+	@old_isauto_v99mpositiontaking_9999 = @old_isauto_v99mpositiontaking_9999,
 
 	-- mixed sports
 	@old_isauto_v99mpositiontaking_9 = @old_isauto_v99mpositiontaking_9,
@@ -1013,6 +1019,7 @@ EXEC dbo.Acc_CustSetting_05
 	@auto_v99mpositiontaking_2 = @auto_v99mpositiontaking_2,
 	@auto_v99mpositiontaking_3 = @auto_v99mpositiontaking_3,
 	@auto_v99mpositiontaking_20 = @auto_v99mpositiontaking_20,
+	@auto_v99mpositiontaking_9999 = @auto_v99mpositiontaking_9999,
 	
 	--- mixed sports
 	@auto_v99mpositiontaking_9 = @auto_v99mpositiontaking_9,
@@ -1069,6 +1076,7 @@ EXEC dbo.Acc_CustSetting_05
 	@old_auto_v99mpositiontaking_2 = @old_auto_v99mpositiontaking_2,
 	@old_auto_v99mpositiontaking_3 = @old_auto_v99mpositiontaking_3,
 	@old_auto_v99mpositiontaking_20 = @old_auto_v99mpositiontaking_20,
+	@old_auto_v99mpositiontaking_9999 = @old_auto_v99mpositiontaking_9999,
 	
 	--- mixed sports
 	@old_auto_v99mpositiontaking_9 = @old_auto_v99mpositiontaking_9,
@@ -1189,5 +1197,3 @@ GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_AutoPositiontaking] TO [bodbDownlineNet] AS [dbo]
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_AutoPositiontaking] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgent_AutoPositiontaking] TO [vnteam] AS [dbo]
