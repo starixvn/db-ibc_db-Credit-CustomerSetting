@@ -109,7 +109,6 @@ Pattern Explanation:
 	 -- For DCS Product
     DECLARE	@bitmapOrder_MuayThai		INT		
 		,	@bitmapOrder_Esports		INT	
-		,	@bitmapOrder_Cricket		INT
 		,	@bitmapOrder_AllBet			INT		
 		,	@bitmapOrder_VoidBridge		INT		
 		,	@bitmapOrder_Lottery		INT
@@ -119,7 +118,6 @@ Pattern Explanation:
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)  
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)  
-    SET @bitmapOrder_Cricket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitmapOrder_Lottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
@@ -130,7 +128,6 @@ Pattern Explanation:
     
     DECLARE	@IsHidden_MuayThai			INT = 1
 		,	@IsHidden_Esports			INT = 1
-		,	@IsHidden_Cricket			INT = 1
 		,	@IsHidden_AllBet			INT = 1
 		,	@IsHidden_VoidBridge		INT = 1
 		,	@IsHidden_Lottery			INT = 1
@@ -141,7 +138,6 @@ Pattern Explanation:
 
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT	
-	EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHidden_Cricket OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHidden_AllBet OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHidden_VoidBridge OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHidden_Lottery OUTPUT
@@ -308,12 +304,6 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideVirtualSports,			
-
-			-- Cricket
-			CASE WHEN m.[site] = 'IMBC' THEN 1 ELSE 0 END AS IsIMBC,
-			ISNULL(cda.Discount,0) AS discountCricket,
-			ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_Cricket),1) AS DisableCricket,
-			CAST(CASE WHEN m.[site] = 'IMBC' AND @IsHidden_Cricket = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Cricket),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideCricket,
 			ISNULL(cl.ClosedReason,0) AS ClosedReason,
 			ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, m.username) as RowNumber
 			
@@ -340,7 +330,6 @@ Pattern Explanation:
 			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526)			
 			INNER JOIN CustSuper as csuper with (NOLOCK) on m.custid = csuper.custid
 		   LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
-		   LEFT JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON  cda.CustID = ci.custid AND cda.SportType = 50 AND cda.BetType = 501
 		   LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON m.custid=cl.CustID
 		   
 		WHERE m.currency = case when @Currency is null then m.currency else @Currency end
@@ -386,7 +375,7 @@ Pattern Explanation:
 			groupd,		
 			discountcs,
 			discount1x2,			
-			m.[site],cda.Discount	,
+			m.[site],
 			cl.ClosedReason	
 		--ORDER BY ci.closed, m.username
 		) a
@@ -514,12 +503,6 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideVirtualSports,
-
-			-- Cricket
-			CASE WHEN m.[site] = 'IMBC' THEN 1 ELSE 0 END AS IsIMBC,
-			ISNULL(cda.Discount,0) AS discountCricket,
-			ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_Cricket),1) AS DisableCricket,
-			CAST(CASE WHEN m.[site] = 'IMBC' AND @IsHidden_Cricket = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Cricket),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideCricket,
 			ISNULL(cl.ClosedReason,0) AS ClosedReason,
 			
 			ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, m.username) as RowNumber
@@ -532,7 +515,6 @@ Pattern Explanation:
 			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526)
 			INNER JOIN CustSuper as csuper with (NOLOCK) on m.custid = csuper.custid
 			LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
-			LEFT JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON  cda.CustID = ci.custid AND cda.SportType = 50 AND cda.BetType = 501
 			LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON m.custid=cl.CustID
 		   
 			
@@ -572,7 +554,7 @@ Pattern Explanation:
 			cps.bitmapIsDisabled,
 			cps.bitmapIsHidden,
 			cps.bitmapHasSynced,
-			m.[site],cda.Discount,
+			m.[site],
 			cl.ClosedReason	
 		) a
 		WHERE a.RowNumber BETWEEN @RowStart AND @RowEnd

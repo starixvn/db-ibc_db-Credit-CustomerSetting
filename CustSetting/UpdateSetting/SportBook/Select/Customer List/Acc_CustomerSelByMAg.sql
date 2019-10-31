@@ -102,16 +102,10 @@ BEGIN
 	DECLARE @RowCount int, @RowStart int, @RowEnd int
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1 
 	SET @Username = ISNULL(@Username, '')
-		
-	DECLARE @IsIMBC BIT = 0
-	
-	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @MRecommend AND [Site] = 'IMBC')
-		SET @IsIMBC = 1
 	
 	-- For DCS Product
     DECLARE	@bitmapOrder_MuayThai		INT
 		,	@bitmapOrder_Esports		INT
-		,	@bitmapOrder_Cricket		INT
 		,	@bitmapOrder_AllBet			INT
 		,	@bitmapOrder_AllBetVIP		INT
 		,	@bitmapOrder_VoidBridge		INT
@@ -122,7 +116,6 @@ BEGIN
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
-    SET @bitmapOrder_Cricket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitmapOrder_Lottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
@@ -137,12 +130,10 @@ BEGIN
     
     DECLARE	@IsHidden_MuayThai			INT = 1		
 		,	@IsHidden_ESports			INT = 1	
-		,	@IsHidden_Cricket			INT = 1
 		,	@IsHidden_AllBet			INT = 1
 		,	@IsHidden_VoidBridge		INT = 1
 		,	@IsHidden_Lottery			INT = 1
 		,	@IsHidden_NG2				INT = 1
-
 		,	@IsHidden_FishingWorld		INT = 1
 		,	@IsHidden_VS				INT = 1
 
@@ -158,14 +149,9 @@ BEGIN
 
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_ESports OUTPUT	
 
-	IF @IsIMBC=0
-		SELECT @IsHidden_Cricket=1
-	ELSE	
-		EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHidden_Cricket OUTPUT	
-
 	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
 	
-	CREATE TABLE #customer(custid INT, RowNumber INT , discountCricket DECIMAL (9,8))
+	CREATE TABLE #customer(custid INT, RowNumber INT )
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @DoubleCommLosing = 2
 	BEGIN
@@ -481,17 +467,6 @@ BEGIN
 		END
 	END
 	
-	
-	IF @IsIMBC = 1
-	BEGIN
-		UPDATE T
-			SET discountCricket = cda.Discount
-		FROM #customer T
-				INNER JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON T.custid = cda.CustId 
-		WHERE cda.Sporttype = 50 AND cda.Bettype = 501
-			
-	END
-	
 	-- get data for filtered customers	
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )	
 
@@ -556,10 +531,6 @@ BEGIN
 							THEN 0
 						ELSE 1
 				END AS SyncedFishingWorldDownline,
-
-				-- Cricket
-				ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_Cricket),1) AS DisableCricket,
-				CAST(CASE WHEN @IsHidden_Cricket = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Cricket),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideCricket,
 				
 				-- VoidBridge
 				ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_VoidBridge),1) AS DisableVoidBridge,
@@ -731,11 +702,6 @@ BEGIN
 			ctm.SyncedNG2,
 			ctm.SyncedNG2Upline,
 
-			--Cricket
-			@IsIMBC AS IsIMBC,
-			ctm.DisableCricket,
-			ctm.HideCricket,
-			ISNULL(t.discountCricket,0) AS discountCricket,
 			RowNumber,
 			ISNULL(cl.ClosedReason,0) AS ClosedReason
 	FROM customers ctm 

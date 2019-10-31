@@ -1278,7 +1278,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 																			AND psd.SettingType IN (4,11,13)		-- Product Status
 						INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
-					WHERE @_Site = 'IMBC' OR psd.ProductID <> 20 --iCricket
+					WHERE psd.ProductID <> 20 
 					GROUP BY psd.ProductID	
 					) iq ON iq.ProductID = p.ProductID
 
@@ -1293,7 +1293,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 			INNER JOIN	ProductStatusProfile AS psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype AND psd.BetType = psp.Bettype 
 			INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 			CROSS APPLY CustProductStatus WITH(NOLOCK)
-		WHERE CustID = @custid AND (@_Site = 'IMBC' OR psd.ProductID <> 20)--iCricket
+		WHERE CustID = @custid AND (psd.ProductID <> 20)
 			AND psd.SettingType IN (4,11,13)-- Product Status, Game Status
 	)iq
 

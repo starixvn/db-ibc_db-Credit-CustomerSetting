@@ -5,7 +5,6 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedCS				BIT = 0		OUTPUT
 				,	@AllowedVS				BIT = 0		OUTPUT
 				,	@AllowedCockfighting	BIT = 0		OUTPUT
-				,	@AllowedCricket			BIT = 0		OUTPUT
 				,	@AllowedAllBet			BIT = 0		OUTPUT
 				,	@AllowedVoidBridge		BIT = 0		OUTPUT
 				,	@AllowedNG2				BIT = 0		OUTPUT
@@ -48,7 +47,6 @@ Revisions:
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
 	Declare @srecommend int, @mrecommend int, @recommend int
 	DECLARE	@IsHideCockfighting		INT
-		,	@IsHideCricket			INT
 		,	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
@@ -61,11 +59,9 @@ Revisions:
 		,	@bitOrderNG2			INT 
 		,	@bitOrderLottery		INT 
 		,	@bitOrderCF				INT 
-		,	@bitOrderCriket			INT 
 		,   @bitOrderVS				INT 
 
     SET @bitOrderCF = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 206 AND Bettype = 1003)
-    SET @bitOrderCriket = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 50 AND Bettype = 501)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitOrderNG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
@@ -109,19 +105,6 @@ Revisions:
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT
 	SET @AllowedVoidBridge = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderVB) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideVoidBridge = 0 THEN 1 ELSE 0 END
-	
-	--For Cricket
-	EXEC Acc_CheckShowProduct @ProductID = 20, @IsHide = @IsHideCricket OUTPUT
-	IF @RoleID IN (2,3,4)
-	BEGIN
-		IF @IsHideCricket = 0 AND EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @CustID AND [Site] = 'IMBC')
-			SET @AllowedCricket = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderCriket) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 THEN 1 ELSE 0 END
-	END
-	ELSE IF @RoleID = 1
-	BEGIN
-		IF @IsHideCricket = 0 AND EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @recommend AND [Site] = 'IMBC')
-			SET @AllowedCricket = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderCriket) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 THEN 1 ELSE 0 END
-	END
 	
 	If @RoleID=4
 	BEGIN	
