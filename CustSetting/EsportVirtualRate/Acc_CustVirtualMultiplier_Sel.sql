@@ -103,8 +103,6 @@ BEGIN
 	WHERE h.SportType = @SportType
 
 	CREATE CLUSTERED INDEX PK_tempVR_LevelID ON #tempVR(LevelID)
-
-	DECLARE @GlobalValue SMALLMONEY = 1.00
 	
 	SELECT h.SportType, 
 		h.LeagueGroupID, 
@@ -134,7 +132,6 @@ BEGIN
 		LEFT JOIN #tempVR pr3 WITH(NOLOCK)
 			ON pr2.ParentLevelID = pr3.LevelID 
 	ORDER BY h.SortOrder
-	OPTION (FORCE ORDER)
 
 	DROP TABLE #tempVR
 END
