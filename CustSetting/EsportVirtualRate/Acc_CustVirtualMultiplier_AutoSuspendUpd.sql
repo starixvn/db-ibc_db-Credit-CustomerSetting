@@ -30,10 +30,12 @@ AS
 			@IP = '10.1.1.0',
 			@AutoSuspendXML = 
 			'<ROOT>
-						<AutoSuspend LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
-						<AutoSuspend LevelID = "17" IsLiveAutoSuspend="1" IsNonLiveAutoSuspend="1"/>
-						<AutoSuspend LevelID = "19" IsLiveAutoSuspend="1" IsNonLiveAutoSuspend="1"/>
-						<AutoSuspend LevelID = "20" IsLiveAutoSuspend="1" IsNonLiveAutoSuspend="1"/>
+						<AutoSuspend LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
+						<AutoSuspend LevelID = "17" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
+						<AutoSuspend LevelID = "21" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
+						<AutoSuspend LevelID = "22" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
+						<AutoSuspend LevelID = "24" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
+						<AutoSuspend LevelID = "25" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
 			</ROOT>'
 			,@ErrCode = @ErrCode OUTPUT
 			,@ErrMsg = @ErrMsg OUTPUT
@@ -45,7 +47,7 @@ BEGIN
 	DECLARE @StartRun DATETIME  
 	DECLARE @EndRun DATETIME  
 	DECLARE @Duration INT 
-	DECLARE @ActionID INT 
+	DECLARE @ActionID INT = 809
 	DECLARE @TrackingValue1 VARCHAR(MAX) = '' -- New values
 			,@TrackingValue2 VARCHAR(MAX)= '' -- Old values
 
@@ -101,9 +103,7 @@ BEGIN
 
 	IF NOT EXISTS( SELECT TOP 1 1 FROM #NewDisableStatTbl)
 	BEGIN
-		SELECT @ErrMsg = N'Nothing changed'
-			, @ErrCode = 4  
-		RETURN 
+		RETURN --no changed
 	END
 
 	DECLARE @xmlStrAutoSuspendLive XML
@@ -144,7 +144,7 @@ BEGIN
 			   h.BetType,
 			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsLiveAutoSuspend,
 			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendNonLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsNonLiveAutoSuspend,
-			   @IP AS IP
+			   h.SortOrder
 		FROM #NewDisableStatTbl tmp
 			 INNER JOIN VRSettingHierarchy h WITH(NOLOCK)
 			   ON tmp.LevelID = h.LevelID
@@ -187,7 +187,7 @@ BEGIN
 			   h.BetType,
 			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsLiveAutoSuspend,
 			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendNonLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsNonLiveAutoSuspend,
-			   @IP AS IP
+			   h.SortOrder
 		FROM #NewDisableStatTbl tmp
 			 INNER JOIN VRSettingHierarchy h WITH(NOLOCK)
 			   ON tmp.LevelID = h.LevelID
@@ -197,40 +197,30 @@ BEGIN
 
 	SELECT @TrackingValue1 = '<Root>' + ISNULL(@TrackingValue1,'') + '</Root>'
 
-	SELECT @TrackingValue1, @TrackingValue2
-
-	--EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
-	--	@UserId				= @UserId,
-	--	@CustId				= @CustId,
-	--	@ActionId			= @ActionID,
-	--	@TrackingValue		= @TrackingValue1,
-	--	@TrackingValue2		= @TrackingValue2,
-	--	@Duration			= @Duration   
-
-	--BEGIN TRY
-	--	EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
-	--					,@SportType=@SportType
-	--					,@ActionID=@ActionID
-	--					,@TrackingValue1=@TrackingValue1
-	--					,@TrackingValue2=@TrackingValue2
-	--					,@WithCompression = 1
-	--					,@UserID=@UserID
-	--					,@LogTime=@StartRun
-	--					,@Duration=@Duration
-	--					,@IP=@IP
-	--END TRY  
-	--BEGIN CATCH
-	--	EXEC bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
-	--					,@SportType=@SportType
-	--					,@ActionID=@ActionID
-	--					,@TrackingValue1=@TrackingValue1
-	--					,@TrackingValue2=@TrackingValue2
-	--					,@WithCompression = 0
-	--					,@UserID=@UserID
-	--					,@LogTime=@StartRun
-	--					,@Duration=@Duration
-	--					,@IP=@IP
-	--END CATCH
+	BEGIN TRY
+		EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
+						,@SportType=@SportType
+						,@ActionID=@ActionID
+						,@TrackingValue1=@TrackingValue1
+						,@TrackingValue2=@TrackingValue2
+						,@WithCompression = 1
+						,@UserID=@UserID
+						,@LogTime=@StartRun
+						,@Duration=@Duration
+						,@IP=@IP
+	END TRY  
+	BEGIN CATCH
+		EXEC bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
+						,@SportType=@SportType
+						,@ActionID=@ActionID
+						,@TrackingValue1=@TrackingValue1
+						,@TrackingValue2=@TrackingValue2
+						,@WithCompression = 0
+						,@UserID=@UserID
+						,@LogTime=@StartRun
+						,@Duration=@Duration
+						,@IP=@IP
+	END CATCH
 
 	DROP TABLE #NewDisableStatTbl
 	DROP TABLE #temp     
