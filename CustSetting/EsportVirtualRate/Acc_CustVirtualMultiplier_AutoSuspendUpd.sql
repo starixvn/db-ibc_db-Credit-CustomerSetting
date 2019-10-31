@@ -1,0 +1,237 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustVirtualMultiplier_AutoSuspendUpd]
+	  @CustID			INT
+	, @SportType		INT = 43
+	, @AutoSuspendXML	VARCHAR(MAX)
+	, @UserID			INT
+	, @IP				VARCHAR(50)		= ''
+	, @ErrCode			INT				= 0		OUTPUT
+	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
+AS
+/*    
+	Created: 20191025@Eden    
+	Task :  Update AutoSuspend status
+	DB: CustDB@DBCUST;;;
+	    
+	Revisions:    
+		- 20191025@Eden : First commit [Redmind: #121876]
+
+	Param's Explanation:
+	• @AutoSuspendXML
+		<ROOT>
+				<AutoSuspend LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
+		</ROOT>
+	
+	• Example :
+		DECLARE  @ErrCode INT = 0, @ErrMsg NVARCHAR(MAX) = ''	
+		EXEC Acc_CustVirtualMultiplier_AutoSuspendUpd
+			@CustID = 1176092,
+			@UserID = 8,
+			@IP = '10.1.1.0',
+			@AutoSuspendXML = 
+			'<ROOT>
+						<AutoSuspend LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
+						<AutoSuspend LevelID = "17" IsLiveAutoSuspend="1" IsNonLiveAutoSuspend="1"/>
+						<AutoSuspend LevelID = "19" IsLiveAutoSuspend="1" IsNonLiveAutoSuspend="1"/>
+						<AutoSuspend LevelID = "20" IsLiveAutoSuspend="1" IsNonLiveAutoSuspend="1"/>
+			</ROOT>'
+			,@ErrCode = @ErrCode OUTPUT
+			,@ErrMsg = @ErrMsg OUTPUT
+
+		SELECT @ErrCode,@ErrMsg
+  
+*/ 
+BEGIN
+	DECLARE @StartRun DATETIME  
+	DECLARE @EndRun DATETIME  
+	DECLARE @Duration INT 
+	DECLARE @ActionID INT 
+	DECLARE @TrackingValue1 VARCHAR(MAX) = '' -- New values
+			,@TrackingValue2 VARCHAR(MAX)= '' -- Old values
+
+	SELECT @ErrCode = 0, @ErrMsg = ''
+	
+	CREATE TABLE #NewDisableStatTbl (
+		  LevelID				SMALLINT
+		, IsLiveAutoSuspend		BIT
+		, IsNonLiveAutoSuspend	BIT
+		)
+
+	SELECT @StartRun = GETDATE()   
+
+	DECLARE @iDoc INT
+
+	BEGIN TRY
+		EXEC sp_xml_preparedocument @iDoc OUTPUT
+			, @AutoSuspendXML
+
+		INSERT INTO #NewDisableStatTbl
+		SELECT *
+		FROM OPENXML(@iDoc, '/ROOT/AutoSuspend', 1) WITH (
+				  LevelID					SMALLINT
+				, IsLiveAutoSuspend			BIT
+				, IsNonLiveAutoSuspend		BIT
+				)
+	
+		EXEC sp_xml_removedocument @iDoc
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = N'Invalid XML format'
+			, @ErrCode = 3  
+		RETURN  
+	END CATCH
+
+
+	SELECT DISTINCT h.LevelID
+		,h.BetType
+		,dbo.f_GetProductStatus(at.AutoSuspendLive,h.BitmapOrderAutoSuspend) as IsLiveAutoSuspend
+		,dbo.f_GetProductStatus(at.AutoSuspendNonLive,h.BitmapOrderAutoSuspend) as IsNonLiveAutoSuspend
+	INTO #temp
+	FROM #NewDisableStatTbl tmp 
+		INNER JOIN VRSettingHierarchy h WITH(NOLOCK) ON tmp.LevelID = h.LevelID
+			OUTER APPLY ( SELECT AutoSuspendLive, AutoSuspendNonLive FROM dbo.CustSettingAutoSuspend WITH(NOLOCK) WHERE custid = @CustID ) at
+
+	CREATE CLUSTERED INDEX PK_temp_LevelID ON #temp(LevelID)
+
+	DELETE a
+	FROM #NewDisableStatTbl a
+		INNER JOIN #temp tmp  ON a.LevelID = tmp.LevelID
+	WHERE tmp.BetType = -1 
+		OR (a.IsLiveAutoSuspend = tmp.IsLiveAutoSuspend AND a.IsNonLiveAutoSuspend = tmp.IsNonLiveAutoSuspend)
+
+	IF NOT EXISTS( SELECT TOP 1 1 FROM #NewDisableStatTbl)
+	BEGIN
+		SELECT @ErrMsg = N'Nothing changed'
+			, @ErrCode = 4  
+		RETURN 
+	END
+
+	DECLARE @xmlStrAutoSuspendLive XML
+	DECLARE @xmlStrAutoSuspendNonLive XML
+	DECLARE @InitialBitMap VARBINARY(20) = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+	
+	SET @xmlStrAutoSuspendLive =(
+			SELECT (
+					SELECT h.BitmapOrderAutoSuspend	AS '@b'
+						 , tmp.IsLiveAutoSuspend AS '@s'
+					FROM #NewDisableStatTbl tmp
+						INNER JOIN VRSettingHierarchy h WITH(NOLOCK) ON tmp.LevelID = h.LevelID
+					FOR XML PATH('r')
+						, TYPE
+					)
+			FOR XML PATH('root')
+				, TYPE
+			)
+
+	SET @xmlStrAutoSuspendNonLive =(
+			SELECT (
+					SELECT h.BitmapOrderAutoSuspend	AS '@b'
+						 , tmp.IsNonLiveAutoSuspend AS '@s'
+					FROM #NewDisableStatTbl tmp
+						INNER JOIN VRSettingHierarchy h WITH(NOLOCK) ON tmp.LevelID = h.LevelID
+					FOR XML PATH('r')
+						, TYPE
+					)
+			FOR XML PATH('root')
+				, TYPE
+			)
+
+	SELECT @TrackingValue2 = (
+		SELECT tmp.LevelID, 
+			   h.SportType, 
+			   h.VRLeagueGroupID,
+			   h.VRBetTypeGroupID, 
+			   h.BetType,
+			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsLiveAutoSuspend,
+			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendNonLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsNonLiveAutoSuspend,
+			   @IP AS IP
+		FROM #NewDisableStatTbl tmp
+			 INNER JOIN VRSettingHierarchy h WITH(NOLOCK)
+			   ON tmp.LevelID = h.LevelID
+			 OUTER APPLY ( SELECT AutoSuspendLive, AutoSuspendNonLive FROM dbo.CustSettingAutoSuspend WITH(NOLOCK) WHERE custid = @CustID ) at
+	FOR XML  RAW('r')
+	)
+
+	SELECT @TrackingValue2 = '<Root>' + ISNULL(@TrackingValue2,'') + '</Root>'
+
+	IF EXISTS ( SELECT TOP 1 1 FROM CustSettingAutoSuspend WITH(NOLOCK) WHERE CustID = @CustID)
+	BEGIN
+		UPDATE CustSettingAutoSuspend WITH(ROWLOCK, UPDLOCK)
+		SET AutoSuspendLive = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (AutoSuspendLive, CONVERT(VARCHAR(MAX),@xmlStrAutoSuspendLive))) ,
+			AutoSuspendNonLive = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (AutoSuspendNonLive, CONVERT(VARCHAR(MAX),@xmlStrAutoSuspendNonLive)))	
+		WHERE CustID = @CustID
+	END
+	ELSE
+	BEGIN
+		INSERT INTO CustSettingAutoSuspend (CustID,AutoSuspendLive,AutoSuspendNonLive)
+		SELECT @CustID
+			,a1.bitmap
+			,a2.bitmap
+		FROM dbo.f_GenerateProductStatus_multiple (@InitialBitMap, CONVERT(VARCHAR(MAX),@xmlStrAutoSuspendLive)) a1
+			,dbo.f_GenerateProductStatus_multiple (@InitialBitMap, CONVERT(VARCHAR(MAX),@xmlStrAutoSuspendNonLive)) a2
+	END
+	
+	DELETE FROM CustSettingAutoSuspend WITH(ROWLOCK, UPDLOCK)
+	WHERE CustID = @CustID
+		AND AutoSuspendLive = @InitialBitMap
+		AND AutoSuspendNonLive = @InitialBitMap
+
+	SELECT @EndRun = GETDATE()    
+	SELECT @Duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)
+
+	SELECT @TrackingValue1 = (
+		SELECT tmp.LevelID, 
+			   h.SportType, 
+			   h.VRLeagueGroupID,
+			   h.VRBetTypeGroupID, 
+			   h.BetType,
+			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsLiveAutoSuspend,
+			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendNonLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsNonLiveAutoSuspend,
+			   @IP AS IP
+		FROM #NewDisableStatTbl tmp
+			 INNER JOIN VRSettingHierarchy h WITH(NOLOCK)
+			   ON tmp.LevelID = h.LevelID
+			 OUTER APPLY ( SELECT AutoSuspendLive, AutoSuspendNonLive FROM dbo.CustSettingAutoSuspend WITH(NOLOCK) WHERE custid = @CustID ) at
+	FOR XML  RAW('r')
+	)
+
+	SELECT @TrackingValue1 = '<Root>' + ISNULL(@TrackingValue1,'') + '</Root>'
+
+	SELECT @TrackingValue1, @TrackingValue2
+
+	--EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	--	@UserId				= @UserId,
+	--	@CustId				= @CustId,
+	--	@ActionId			= @ActionID,
+	--	@TrackingValue		= @TrackingValue1,
+	--	@TrackingValue2		= @TrackingValue2,
+	--	@Duration			= @Duration   
+
+	--BEGIN TRY
+	--	EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
+	--					,@SportType=@SportType
+	--					,@ActionID=@ActionID
+	--					,@TrackingValue1=@TrackingValue1
+	--					,@TrackingValue2=@TrackingValue2
+	--					,@WithCompression = 1
+	--					,@UserID=@UserID
+	--					,@LogTime=@StartRun
+	--					,@Duration=@Duration
+	--					,@IP=@IP
+	--END TRY  
+	--BEGIN CATCH
+	--	EXEC bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID
+	--					,@SportType=@SportType
+	--					,@ActionID=@ActionID
+	--					,@TrackingValue1=@TrackingValue1
+	--					,@TrackingValue2=@TrackingValue2
+	--					,@WithCompression = 0
+	--					,@UserID=@UserID
+	--					,@LogTime=@StartRun
+	--					,@Duration=@Duration
+	--					,@IP=@IP
+	--END CATCH
+
+	DROP TABLE #NewDisableStatTbl
+	DROP TABLE #temp     
+END

@@ -1,4 +1,3 @@
-
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustVirtualMultiplier_Sel]
@@ -14,6 +13,7 @@ AS
 	    
 	Revisions:    
 		- 20190626@Dominic : First commit
+		- 20190626@Eden : Esport VR Phase 2 - Integrate Auto Suspend [Redmind: #121876]
   
 */ 
 BEGIN
@@ -69,22 +69,72 @@ BEGIN
 	--1st Dataset: Cust/currency info
 	SELECT @CustID CustID,@Username Username, @Currency Currency,@ActualRate ActualRate, @UplineCustID UplineCustID, @UplineUsername UplineUsername
 
+	DECLARE @InitialBitMap VARBINARY(20) = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+	DECLARE @AutoSuspendLive    VARBINARY(20) = @InitialBitMap, 
+			@AutoSuspendNonLive VARBINARY(20) = @InitialBitMap
+			
+	SELECT @AutoSuspendLive = AutoSuspendLive, 
+		   @AutoSuspendNonLive = AutoSuspendNonLive
+	FROM dbo.CustSettingAutoSuspend WITH(NOLOCK)
+	WHERE custid = @CustID
+
 	--2nd Dataset: Virtual Rate
 	SELECT h.SportType
-	, lg.GroupID LeagueGroupID, lg.GroupName LeagueGroup
-	, bg.GroupID BettypeGroupID, bg.GroupName BettypeGroup
-	, h.BetType BetTypeID
-	, h.LevelID
-	,ISNULL(ValueIDLIVE,0) ValueIDLIVE, vlive.Value ValueLIVE
-	,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueNonLIVE
+		,lg.GroupID LeagueGroupID, lg.GroupName LeagueGroup
+		,bg.GroupID BettypeGroupID, bg.GroupName BettypeGroup
+		,h.BetType BetTypeID
+		,h.LevelID
+		,ISNULL(ValueIDLIVE,0) ValueIDLIVE, vlive.Value ValueLIVE
+		,ISNULL(ValueIDNonLIVE,0) ValueIDNonLIVE, vnonlive.Value ValueNonLIVE
+		,dbo.f_GetProductStatus(@AutoSuspendLive,h.BitmapOrderAutoSuspend) as IsLiveAutoSuspend
+		,dbo.f_GetProductStatus(@AutoSuspendNonLive,h.BitmapOrderAutoSuspend) as IsNonLiveAutoSuspend
+		,h.ParentLevelID
+		,h.SortOrder
+		,h.VRAutoSuspendThreshold
+	INTO #tempVR
 	FROM VRSettingHierarchy h (NOLOCK)
 		LEFT JOIN VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
 		LEFT JOIN VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
 		LEFT JOIN VRCustSetting vr (NOLOCK) 
 			ON vr.CustID = @CustID
 				AND vr.LevelID = h.LevelID
-	LEFT JOIN VRValueMapping vlive (NOLOCK) ON vr.ValueIDLIVE = vlive.ValueID
-	LEFT JOIN VRValueMapping vnonlive (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
+		LEFT JOIN VRValueMapping vlive (NOLOCK) ON vr.ValueIDLIVE = vlive.ValueID
+		LEFT JOIN VRValueMapping vnonlive (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
 	WHERE h.SportType = @SportType
+
+	CREATE CLUSTERED INDEX PK_tempVR_LevelID ON #tempVR(LevelID)
+
+	DECLARE @GlobalValue SMALLMONEY = 1.00
+	
+	SELECT h.SportType, 
+		h.LeagueGroupID, 
+		h.LeagueGroup, 
+		h.BettypeGroupID, 
+		h.BettypeGroup, 
+		h.BetTypeID, 
+		h.LevelID, 
+		h.ValueIDLIVE, 
+		h.ValueLIVE, 
+		h.ValueIDNonLIVE, 
+		h.ValueNonLIVE, 
+		IsLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL ELSE h.IsLiveAutoSuspend END, 
+		IsNonLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL ELSE h.IsNonLiveAutoSuspend END,
+		IsDissableLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL
+										 WHEN COALESCE(h.ValueLIVE,pr1.ValueLIVE,pr2.ValueLIVE,pr3.ValueLIVE) > h.VRAutoSuspendThreshold THEN 0 
+									ELSE 1 END,
+		IsDissableNonLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL
+											WHEN COALESCE(h.ValueNonLIVE,pr1.ValueNonLIVE,pr2.ValueNonLIVE,pr3.ValueNonLIVE) > h.VRAutoSuspendThreshold THEN 0 
+									ELSE 1 END,
+		h.VRAutoSuspendThreshold
+	FROM #tempVR h
+		LEFT JOIN #tempVR pr1 WITH(NOLOCK)
+			ON h.ParentLevelID = pr1.LevelID
+		LEFT JOIN #tempVR pr2 WITH(NOLOCK)
+			ON pr1.ParentLevelID = pr2.LevelID 
+		LEFT JOIN #tempVR pr3 WITH(NOLOCK)
+			ON pr2.ParentLevelID = pr3.LevelID 
 	ORDER BY h.SortOrder
+	OPTION (FORCE ORDER)
+
+	DROP TABLE #tempVR
 END
