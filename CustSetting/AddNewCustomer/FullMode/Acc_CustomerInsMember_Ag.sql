@@ -3525,7 +3525,7 @@ BEGIN
     'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +
     'playerdiscount="'+ COALESCE(CAST(@playerdiscount AS VARCHAR(50)), SPACE(1)) + '" ' +
     'playerdiscountcs="'+ COALESCE(CAST(@playerdiscountcs AS VARCHAR(50)), SPACE(1)) + '" ' +
-    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +  '" ' 
+    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' 
     
 	SET @LogSPData = @LogSPData + ' />' 
 	
@@ -3545,7 +3545,7 @@ BEGIN
 	    'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'playerdiscount="'+ COALESCE(CAST(@playerdiscount AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'playerdiscountcs="'+ COALESCE(CAST(@playerdiscountcs AS VARCHAR(50)), SPACE(1)) + '" ' +
-	    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' + '" ' 	    
+	    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" '     
 
 		SET @LogSPData = @LogSPData + 'errCode="'+ COALESCE(CAST(ERROR_NUMBER() AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'errMsg="'+ COALESCE(CAST(ERROR_MESSAGE() AS VARCHAR(4000)), SPACE(1)) + '" />'
