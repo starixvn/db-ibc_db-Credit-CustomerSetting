@@ -21,6 +21,7 @@ AS
 
 	Revisions:
 		- 20190808@Elodie: Initial SP [Redmine:#116814]
+		- 20190918@Alvin: Hide indirect marked on Problem Account
 
 	Param's Explanation:
 		@Action: MarkProblem, RemoveReduceBetLimit
@@ -122,7 +123,8 @@ BEGIN
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.CS_ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
-		WHERE pa.IsReviewed = 0
+		WHERE pa.IsReviewed = 0 
+			AND (pa.ReasonId IS NOT NULL OR pa.IsAbnormalMember = 1)
 
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
