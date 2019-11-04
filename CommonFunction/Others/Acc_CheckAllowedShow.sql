@@ -56,10 +56,8 @@ Revisions:
 		,	@bitOrderFW				INT 
 		,	@bitOrderNG2			INT 
 		,	@bitOrderLottery		INT 
-		,	@bitOrderCF				INT 
 		,   @bitOrderVS				INT 
 
-    SET @bitOrderCF = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 206 AND Bettype = 1003)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitOrderNG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
