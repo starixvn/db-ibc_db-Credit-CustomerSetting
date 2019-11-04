@@ -1,7 +1,6 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 					@CustID					INT
-				,	@AllowedFI				BIT = 1		OUTPUT --unused
 				,	@AllowedCS				BIT = 0		OUTPUT
 				,	@AllowedVS				BIT = 0		OUTPUT
 				,	@AllowedAllBet			BIT = 0		OUTPUT
