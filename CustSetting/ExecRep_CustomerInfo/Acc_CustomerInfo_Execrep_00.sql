@@ -718,7 +718,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 			- 20190520@Johnson: add @isSearchAndCopy & @copyFromCustID to support SC suspendInfo for member level [redmine: #105587]
 			- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
-			- 20190805@Eden: Remove initial setting for inactive products (Colosus Bet)  [redmine: #117439]
+			- 20190805@Eden: Remove initial setting for inactive products (Colosus Bet)  [redmine: #118699]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
