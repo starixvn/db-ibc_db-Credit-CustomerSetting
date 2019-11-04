@@ -4,7 +4,6 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedFI				BIT = 1		OUTPUT --unused
 				,	@AllowedCS				BIT = 0		OUTPUT
 				,	@AllowedVS				BIT = 0		OUTPUT
-				,	@AllowedCockfighting	BIT = 0		OUTPUT
 				,	@AllowedAllBet			BIT = 0		OUTPUT
 				,	@AllowedVoidBridge		BIT = 0		OUTPUT
 				,	@AllowedNG2				BIT = 0		OUTPUT
@@ -46,8 +45,7 @@ Revisions:
 
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
 	Declare @srecommend int, @mrecommend int, @recommend int
-	DECLARE	@IsHideCockfighting		INT
-		,	@IsHideAllBet			INT
+	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
 		,	@IsHideNG2				INT
@@ -70,12 +68,6 @@ Revisions:
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
-	
-	--For Cockfighting
-	EXEC Acc_CheckShowProduct @ProductID = 19, @IsHide = @IsHideCockfighting OUTPUT
-	SET @AllowedCockfighting = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderCF) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
-										AND @IsHideCockfighting = 0 THEN 1 ELSE 0 END
-		
 	
 	--For FishingWorld
 	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHideFishingWorld OUTPUT
