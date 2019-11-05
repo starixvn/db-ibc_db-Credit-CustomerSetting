@@ -23,7 +23,7 @@ BEGIN
 	DECLARE @LogTrackingValue1 VARCHAR(MAX)
 	DECLARE @LogTrackingValue2 VARCHAR(MAX)
 	DECLARE @LogDocHandler1 INT, @LogDocHandler2 INT	
-	DECLARE @LogID BIGINT, @LogTime	DATETIME
+	DECLARE @LogID BIGINT, @LogTime	DATETIME, @UserID INT
 	DECLARE @ActionID INT = 809
 
 	CREATE TABLE #VRLineCustID (CustID INT)
@@ -40,6 +40,7 @@ BEGIN
 	
 	CREATE TABLE #DataOld (
 			  LogID BIGINT
+			, UserID INT
 			, Logtime DATETIME
 			, LeagueGroup NVARCHAR(200)
 			, BettypeGroup NVARCHAR(200)
@@ -48,9 +49,11 @@ BEGIN
 			, IsLiveAutoSuspend BIT 
 			, IsNonLiveAutoSuspend INT 
 			, SortOrder SMALLINT
+			, SportType SMALLINT
 	)
 	CREATE TABLE #DataNew (
 			  LogID BIGINT
+			, UserID INT
 			, Logtime DATETIME
 			, LeagueGroup NVARCHAR(200)
 			, BettypeGroup NVARCHAR(200)
@@ -59,6 +62,7 @@ BEGIN
 			, IsLiveAutoSuspend BIT 
 			, IsNonLiveAutoSuspend INT 
 			, SortOrder SMALLINT
+			, SportType SMALLINT
 	)
 
 	CREATE CLUSTERED INDEX IX_LogID2 ON #DataOld(LogID)
@@ -94,6 +98,7 @@ BEGIN
 		SET IsExec = 1
 			, @LogID = LogID
 			, @LogTime = LogTime
+			, @UserID = UserID
 			, @LogTrackingValue1 = TrackingValue1
 			, @LogTrackingValue2 = TrackingValue2
 		WHERE IsExec = 0 
@@ -113,6 +118,8 @@ BEGIN
 						, IsLiveAutoSuspend
 						, IsNonLiveAutoSuspend
 						, SortOrder
+						, SportType
+						, UserID
 			)
 		SELECT	@LogID LogID
 				, @LogTime AS Logtime
@@ -123,6 +130,8 @@ BEGIN
 				, tmp.IsLiveAutoSuspend
 				, tmp.IsNonLiveAutoSuspend
 				, MIN(tmp.SortOrder)
+				, tmp.SportType
+				, @UserID AS UserID
 		FROM OPENXML (@LogDocHandler1, '/Root/r',1) 
 		WITH (
 			  LeagueGroup NVARCHAR(200)
@@ -132,8 +141,10 @@ BEGIN
 			, IsLiveAutoSuspend BIT 
 			, IsNonLiveAutoSuspend INT 
 			, SortOrder SMALLINT
+			, SportType SMALLINT
 		) AS tmp
-		GROUP BY tmp.LeagueGroup
+		GROUP BY  tmp.SportType 
+				, tmp.LeagueGroup
 				, tmp.BettypeGroup
 				, tmp.BetType
 				, tmp.LevelID
@@ -149,6 +160,8 @@ BEGIN
 						, IsLiveAutoSuspend
 						, IsNonLiveAutoSuspend
 						, SortOrder
+						, SportType
+						, UserID
 			)
 		SELECT	@LogID LogID
 				, @LogTime AS Logtime
@@ -159,6 +172,8 @@ BEGIN
 				, tmp.IsLiveAutoSuspend
 				, tmp.IsNonLiveAutoSuspend
 				, MIN(tmp.SortOrder)
+				, tmp.SportType
+				, @UserID AS UserID
 		FROM OPENXML (@LogDocHandler2, '/Root/r',1) 
 		WITH (
 			  LeagueGroup NVARCHAR(200)
@@ -168,8 +183,10 @@ BEGIN
 			, IsLiveAutoSuspend BIT 
 			, IsNonLiveAutoSuspend INT 
 			, SortOrder SMALLINT
+			, SportType SMALLINT
 		) AS tmp
-		GROUP BY tmp.LeagueGroup
+		GROUP BY  tmp.SportType 
+				, tmp.LeagueGroup
 				, tmp.BettypeGroup
 				, tmp.BetType
 				, tmp.LevelID
@@ -183,7 +200,9 @@ BEGIN
 	
 	SELECT d1.LogID, 
 		   d1.Logtime,
+		   c.username AS UpdatedBy,
 		   d1.LevelID,
+		   d1.SportType,
 		   d1.LeagueGroup, 
 		   d1.BettypeGroup, 
 		   d1.BetType, 
@@ -195,6 +214,8 @@ BEGIN
 		 INNER JOIN #DataOld d2
 		   ON d1.LevelID = d2.LevelID
 		   AND d1.LogID = d2.LogID
+		 LEFT JOIN bodb02.dbo.Customer c(NOLOCK)
+			ON c.custid = d1.UserID
 	ORDER BY D1.LogID DESC, d1.SortOrder
 
 	DROP TABLE #VRCustLogAutoSuspend
