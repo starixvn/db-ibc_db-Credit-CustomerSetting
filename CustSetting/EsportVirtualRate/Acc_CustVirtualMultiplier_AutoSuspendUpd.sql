@@ -101,6 +101,12 @@ BEGIN
 	WHERE tmp.BetType = -1 
 		OR (ISNULL(a.IsLiveAutoSuspend,tmp.IsLiveAutoSuspend) = tmp.IsLiveAutoSuspend AND ISNULL(a.IsNonLiveAutoSuspend, tmp.IsNonLiveAutoSuspend)  = tmp.IsNonLiveAutoSuspend)
 
+	UPDATE a
+	SET  a.IsLiveAutoSuspend = ISNULL(a.IsLiveAutoSuspend,tmp.IsLiveAutoSuspend)
+		,a.IsNonLiveAutoSuspend = ISNULL(a.IsNonLiveAutoSuspend,tmp.IsNonLiveAutoSuspend)
+	FROM #NewDisableStatTbl a
+		INNER JOIN #temp tmp  ON a.LevelID = tmp.LevelID
+	
 	IF NOT EXISTS( SELECT TOP 1 1 FROM #NewDisableStatTbl)
 	BEGIN
 		RETURN --no changed
