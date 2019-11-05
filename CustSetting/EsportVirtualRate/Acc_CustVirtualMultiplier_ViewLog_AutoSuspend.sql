@@ -47,7 +47,7 @@ BEGIN
 			, BetType SMALLINT --BetType
 			, LevelID INT --LevelID
 			, IsLiveAutoSuspend BIT 
-			, IsNonLiveAutoSuspend INT 
+			, IsNonLiveAutoSuspend BIT 
 			, SortOrder SMALLINT
 			, SportType SMALLINT
 	)
@@ -60,7 +60,7 @@ BEGIN
 			, BetType SMALLINT --BetType
 			, LevelID INT --LevelID
 			, IsLiveAutoSuspend BIT 
-			, IsNonLiveAutoSuspend INT 
+			, IsNonLiveAutoSuspend BIT 
 			, SortOrder SMALLINT
 			, SportType SMALLINT
 	)
@@ -139,7 +139,7 @@ BEGIN
 			, BetType SMALLINT --BetType
 			, LevelID INT --LevelID
 			, IsLiveAutoSuspend BIT 
-			, IsNonLiveAutoSuspend INT 
+			, IsNonLiveAutoSuspend BIT 
 			, SortOrder SMALLINT
 			, SportType SMALLINT
 		) AS tmp
@@ -181,7 +181,7 @@ BEGIN
 			, BetType SMALLINT --BetType
 			, LevelID INT --LevelID
 			, IsLiveAutoSuspend BIT 
-			, IsNonLiveAutoSuspend INT 
+			, IsNonLiveAutoSuspend BIT 
 			, SortOrder SMALLINT
 			, SportType SMALLINT
 		) AS tmp
