@@ -20,6 +20,7 @@ AS
 								</Root>'		    
 	Revisions:    
 		- 20190626@Dominic : First commit
+		- 20191105@Eden : Esport VR Phase 2 - Integrate Auto Suspend [Redmind: #121876]
   
 */ 
 BEGIN

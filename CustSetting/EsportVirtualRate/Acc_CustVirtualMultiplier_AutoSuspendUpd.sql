@@ -19,7 +19,7 @@ AS
 	Param's Explanation:
 	• @AutoSuspendXML
 		<ROOT>
-				<AutoSuspend LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
+				<Row LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
 		</ROOT>
 	
 	• Example :
@@ -30,12 +30,12 @@ AS
 			@IP = '10.1.1.0',
 			@AutoSuspendXML = 
 			'<ROOT>
-						<AutoSuspend LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
-						<AutoSuspend LevelID = "17" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
-						<AutoSuspend LevelID = "21" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
-						<AutoSuspend LevelID = "22" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
-						<AutoSuspend LevelID = "24" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
-						<AutoSuspend LevelID = "25" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
+						<Row LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
+						<Row LevelID = "17" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
+						<Row LevelID = "21" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
+						<Row LevelID = "22" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
+						<Row LevelID = "24" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
+						<Row LevelID = "25" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
 			</ROOT>'
 			,@ErrCode = @ErrCode OUTPUT
 			,@ErrMsg = @ErrMsg OUTPUT
@@ -69,7 +69,7 @@ BEGIN
 
 		INSERT INTO #NewDisableStatTbl
 		SELECT *
-		FROM OPENXML(@iDoc, '/ROOT/AutoSuspend', 1) WITH (
+		FROM OPENXML(@iDoc, '/ROOT/Row', 1) WITH (
 				  LevelID					SMALLINT
 				, IsLiveAutoSuspend			BIT
 				, IsNonLiveAutoSuspend		BIT
