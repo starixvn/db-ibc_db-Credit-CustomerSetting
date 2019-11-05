@@ -1041,74 +1041,30 @@ BEGIN
 	BEGIN  
 		IF (@roleID = 4)  
 		BEGIN  
-			IF (@DisableColossusBet = 1)
-			BEGIN
 				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
 				SET DisableColossusBet = @DisableColossusBet,  
 					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END    
 				WHERE CustID <> @CustID  
 					AND SRecommend = @CustID;  
-			END
-			ELSE 
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableColossusBet = CASE WHEN @UpdateAllMasters = 1 AND roleID =3 THEN @DisableAllMasters
-											 WHEN @UpdateAllAgents = 1 AND roleID =2 THEN @DisableAllAgents
-											 WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-											 ELSE DisableColossusBet END,  
-					HideColossusBet = CASE WHEN (@UpdateAllMasters = 1 AND roleID =3 AND HideColossusBet = 1)
-												OR (@UpdateAllAgents = 1 AND roleID =2 AND HideColossusBet = 1)
-												OR (@UpdateAllMembers = 1 AND roleID =1 AND HideColossusBet = 1) 
-											THEN 0 ELSE HideColossusBet END    
-				WHERE CustID <> @CustID  
-					AND SRecommend = @CustID;
-			END
 		END;  
 
 		IF (@roleID = 3)  
 		BEGIN  
-			IF (@DisableColossusBet = 1)
-			BEGIN
 				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
 				SET DisableColossusBet = @DisableColossusBet,  
 					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
 				WHERE CustID <> @CustID  
 					AND MRecommend = @CustID; 
-			END
-			ELSE 
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableColossusBet = CASE WHEN @UpdateAllAgents = 1 AND roleID =2 THEN @DisableAllAgents
-											 WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-											 ELSE DisableColossusBet END,  
-					HideColossusBet = CASE WHEN (@UpdateAllAgents = 1 AND roleID =2 AND HideColossusBet = 1)
-												OR (@UpdateAllMembers = 1 AND roleID =1 AND HideColossusBet = 1) 
-											THEN 0 ELSE HideColossusBet END    
-				WHERE CustID <> @CustID  
-					AND MRecommend = @CustID;
 			END	
 		END;  
 
 		IF (@roleID = 2)  
 		BEGIN  
-			IF (@DisableColossusBet=1)
-			BEGIN
 				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
 					SET DisableColossusBet = @DisableColossusBet,  
 					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
 				WHERE CustID <> @CustID  
 					AND Recommend = @CustID;  
-			END
-			ELSE 
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableColossusBet = CASE WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-											 ELSE DisableColossusBet END,  
-					HideColossusBet = CASE WHEN (@UpdateAllMembers = 1 AND roleID =1 AND HideColossusBet = 1) 
-											THEN 0 ELSE HideColossusBet END    
-				WHERE CustID <> @CustID  
-					AND Recommend = @CustID;
-			END	
 		END;  
 	END;    
 
