@@ -18,9 +18,9 @@ AS
 
 	Param's Explanation:
 	• @AutoSuspendXML
-		<ROOT>
+		<Root>
 				<Row LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
-		</ROOT>
+		</Root>
 	
 	• Example :
 		DECLARE  @ErrCode INT = 0, @ErrMsg NVARCHAR(MAX) = ''	
@@ -29,14 +29,14 @@ AS
 			@UserID = 8,
 			@IP = '10.1.1.0',
 			@AutoSuspendXML = 
-			'<ROOT>
+			'<Root>
 						<Row LevelID = "15" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
 						<Row LevelID = "17" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
 						<Row LevelID = "21" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
 						<Row LevelID = "22" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
 						<Row LevelID = "24" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="0"/>
 						<Row LevelID = "25" IsLiveAutoSuspend="0" IsNonLiveAutoSuspend="1"/>
-			</ROOT>'
+			</Root>'
 			,@ErrCode = @ErrCode OUTPUT
 			,@ErrMsg = @ErrMsg OUTPUT
 
@@ -69,7 +69,7 @@ BEGIN
 
 		INSERT INTO #NewDisableStatTbl
 		SELECT *
-		FROM OPENXML(@iDoc, '/ROOT/Row', 1) WITH (
+		FROM OPENXML(@iDoc, '/Root/Row', 1) WITH (
 				  LevelID					SMALLINT
 				, IsLiveAutoSuspend			BIT
 				, IsNonLiveAutoSuspend		BIT
@@ -99,7 +99,7 @@ BEGIN
 	FROM #NewDisableStatTbl a
 		INNER JOIN #temp tmp  ON a.LevelID = tmp.LevelID
 	WHERE tmp.BetType = -1 
-		OR (a.IsLiveAutoSuspend = tmp.IsLiveAutoSuspend AND a.IsNonLiveAutoSuspend = tmp.IsNonLiveAutoSuspend)
+		OR (ISNULL(a.IsLiveAutoSuspend,tmp.IsLiveAutoSuspend) = tmp.IsLiveAutoSuspend AND ISNULL(a.IsNonLiveAutoSuspend, tmp.IsNonLiveAutoSuspend)  = tmp.IsNonLiveAutoSuspend)
 
 	IF NOT EXISTS( SELECT TOP 1 1 FROM #NewDisableStatTbl)
 	BEGIN
