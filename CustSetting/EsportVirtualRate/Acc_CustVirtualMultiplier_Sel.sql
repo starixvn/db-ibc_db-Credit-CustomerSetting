@@ -67,7 +67,7 @@ BEGIN
 	WHERE CustID = @UplineCustID
 
 	--1st Dataset: Cust/currency info
-	SELECT @CustID CustID,@Username Username, @Currency Currency,@ActualRate ActualRate, @UplineCustID UplineCustID, @UplineUsername UplineUsername
+	SELECT @CustID CustID,@Username Username, @Currency Currency,@ActualRate ActualRate, @UplineCustID UplineCustID, @UplineUsername UplineUsername , @RoleID AS RoleID
 
 	DECLARE @InitialBitMap VARBINARY(20) = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 	DECLARE @AutoSuspendLive    VARBINARY(20) = @InitialBitMap, 
