@@ -117,10 +117,10 @@ BEGIN
 		h.ValueNonLIVE, 
 		IsLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL ELSE h.IsLiveAutoSuspend END, 
 		IsNonLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL ELSE h.IsNonLiveAutoSuspend END,
-		IsDissableLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL
+		IsDisableLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL
 										 WHEN COALESCE(h.ValueLIVE,pr1.ValueLIVE,pr2.ValueLIVE,pr3.ValueLIVE) > h.VRAutoSuspendThreshold THEN 0 
 									ELSE 1 END,
-		IsDissableNonLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL
+		IsDisableNonLiveAutoSuspend = CASE WHEN h.BetTypeID = -1 THEN NULL
 											WHEN COALESCE(h.ValueNonLIVE,pr1.ValueNonLIVE,pr2.ValueNonLIVE,pr3.ValueNonLIVE) > h.VRAutoSuspendThreshold THEN 0 
 									ELSE 1 END,
 		h.VRAutoSuspendThreshold
