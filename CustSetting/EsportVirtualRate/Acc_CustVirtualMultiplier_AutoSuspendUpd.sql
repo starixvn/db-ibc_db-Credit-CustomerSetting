@@ -139,8 +139,8 @@ BEGIN
 	SELECT @TrackingValue2 = (
 		SELECT tmp.LevelID, 
 			   h.SportType, 
-			   h.VRLeagueGroupID,
-			   h.VRBetTypeGroupID, 
+			   lg.GroupName LeagueGroup,
+			   bg.GroupName BettypeGroup,
 			   h.BetType,
 			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsLiveAutoSuspend,
 			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendNonLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsNonLiveAutoSuspend,
@@ -148,6 +148,8 @@ BEGIN
 		FROM #NewDisableStatTbl tmp
 			 INNER JOIN VRSettingHierarchy h WITH(NOLOCK)
 			   ON tmp.LevelID = h.LevelID
+			 LEFT JOIN VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
+			 LEFT JOIN VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
 			 OUTER APPLY ( SELECT AutoSuspendLive, AutoSuspendNonLive FROM dbo.CustSettingAutoSuspend WITH(NOLOCK) WHERE custid = @CustID ) at
 	FOR XML  RAW('r')
 	)
@@ -182,8 +184,8 @@ BEGIN
 	SELECT @TrackingValue1 = (
 		SELECT tmp.LevelID, 
 			   h.SportType, 
-			   h.VRLeagueGroupID,
-			   h.VRBetTypeGroupID, 
+			   lg.GroupName LeagueGroup,
+			   bg.GroupName BettypeGroup,
 			   h.BetType,
 			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsLiveAutoSuspend,
 			   dbo.f_GetProductStatus(ISNULL(at.AutoSuspendNonLive,@InitialBitMap),h.BitmapOrderAutoSuspend) as IsNonLiveAutoSuspend,
@@ -191,6 +193,8 @@ BEGIN
 		FROM #NewDisableStatTbl tmp
 			 INNER JOIN VRSettingHierarchy h WITH(NOLOCK)
 			   ON tmp.LevelID = h.LevelID
+			 LEFT JOIN VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
+			 LEFT JOIN VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
 			 OUTER APPLY ( SELECT AutoSuspendLive, AutoSuspendNonLive FROM dbo.CustSettingAutoSuspend WITH(NOLOCK) WHERE custid = @CustID ) at
 	FOR XML  RAW('r')
 	)

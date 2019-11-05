@@ -41,8 +41,8 @@ BEGIN
 	CREATE TABLE #DataOld (
 			  LogID BIGINT
 			, Logtime DATETIME
-			, VRLeagueGroupID SMALLINT --VRLeagueGroupID
-			, VRBetTypeGroupID SMALLINT --VRBetTypeGroupID
+			, VRLeagueGroup NVARCHAR(200)
+			, VRBetTypeGroup NVARCHAR(200)
 			, BetType SMALLINT --BetType
 			, LevelID INT --LevelID
 			, IsLiveAutoSuspend BIT 
@@ -52,8 +52,8 @@ BEGIN
 	CREATE TABLE #DataNew (
 			  LogID BIGINT
 			, Logtime DATETIME
-			, VRLeagueGroupID SMALLINT --VRLeagueGroupID
-			, VRBetTypeGroupID SMALLINT --VRBetTypeGroupID
+			, VRLeagueGroup NVARCHAR(200)
+			, VRBetTypeGroup NVARCHAR(200)
 			, BetType SMALLINT --BetType
 			, LevelID INT --LevelID
 			, IsLiveAutoSuspend BIT 
@@ -106,8 +106,8 @@ BEGIN
 		--Insert data into temporary table after parsing
 		INSERT INTO #DataNew(LogID 
 						, Logtime
-						, VRLeagueGroupID
-						, VRBetTypeGroupID
+						, VRLeagueGroup
+						, VRBetTypeGroup
 						, BetType
 						, LevelID
 						, IsLiveAutoSuspend
@@ -116,8 +116,8 @@ BEGIN
 			)
 		SELECT	@LogID LogID
 				, @LogTime AS Logtime
-				, tmp.VRLeagueGroupID
-				, tmp.VRBetTypeGroupID
+				, tmp.VRLeagueGroup
+				, tmp.VRBetTypeGroup
 				, tmp.BetType
 				, tmp.LevelID
 				, tmp.IsLiveAutoSuspend
@@ -125,17 +125,16 @@ BEGIN
 				, MIN(tmp.SortOrder)
 		FROM OPENXML (@LogDocHandler1, '/Root/r',1) 
 		WITH (
-			IsNew TINYINT --IsNew
-			, VRLeagueGroupID SMALLINT --VRLeagueGroupID
-			, VRBetTypeGroupID SMALLINT --VRBetTypeGroupID
+			  VRLeagueGroup NVARCHAR(200)
+			, VRBetTypeGroup NVARCHAR(200)
 			, BetType SMALLINT --BetType
 			, LevelID INT --LevelID
 			, IsLiveAutoSuspend BIT 
 			, IsNonLiveAutoSuspend INT 
 			, SortOrder SMALLINT
 		) AS tmp
-		GROUP BY tmp.VRLeagueGroupID
-				, tmp.VRBetTypeGroupID
+		GROUP BY tmp.VRLeagueGroup
+				, tmp.VRBetTypeGroup
 				, tmp.BetType
 				, tmp.LevelID
 				, tmp.IsLiveAutoSuspend
@@ -143,8 +142,8 @@ BEGIN
 
 		INSERT INTO #DataOld(LogID 
 						, Logtime
-						, VRLeagueGroupID
-						, VRBetTypeGroupID
+						, VRLeagueGroup
+						, VRBetTypeGroup
 						, BetType
 						, LevelID
 						, IsLiveAutoSuspend
@@ -153,8 +152,8 @@ BEGIN
 			)
 		SELECT	@LogID LogID
 				, @LogTime AS Logtime
-				, tmp.VRLeagueGroupID
-				, tmp.VRBetTypeGroupID
+				, tmp.VRLeagueGroup
+				, tmp.VRBetTypeGroup
 				, tmp.BetType
 				, tmp.LevelID
 				, tmp.IsLiveAutoSuspend
@@ -162,17 +161,16 @@ BEGIN
 				, MIN(tmp.SortOrder)
 		FROM OPENXML (@LogDocHandler2, '/Root/r',1) 
 		WITH (
-			IsNew TINYINT --IsNew
-			, VRLeagueGroupID SMALLINT --VRLeagueGroupID
-			, VRBetTypeGroupID SMALLINT --VRBetTypeGroupID
+			  VRLeagueGroup NVARCHAR(200)
+			, VRBetTypeGroup NVARCHAR(200)
 			, BetType SMALLINT --BetType
 			, LevelID INT --LevelID
 			, IsLiveAutoSuspend BIT 
 			, IsNonLiveAutoSuspend INT 
 			, SortOrder SMALLINT
 		) AS tmp
-		GROUP BY tmp.VRLeagueGroupID
-				, tmp.VRBetTypeGroupID
+		GROUP BY tmp.VRLeagueGroup
+				, tmp.VRBetTypeGroup
 				, tmp.BetType
 				, tmp.LevelID
 				, tmp.IsLiveAutoSuspend
@@ -186,8 +184,8 @@ BEGIN
 	SELECT d1.LogID, 
 		   d1.Logtime,
 		   d1.LevelID,
-		   d1.VRLeagueGroupID, 
-		   d1.VRBetTypeGroupID, 
+		   d1.VRLeagueGroup, 
+		   d1.VRBetTypeGroup, 
 		   d1.BetType, 
 		   d1.IsLiveAutoSuspend AS IsLiveAutoSuspendNew, 
 		   d2.IsLiveAutoSuspend AS IsLiveAutoSuspendOld, 
