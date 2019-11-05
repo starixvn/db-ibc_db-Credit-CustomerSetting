@@ -1055,7 +1055,6 @@ BEGIN
 					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
 				WHERE CustID <> @CustID  
 					AND MRecommend = @CustID; 
-			END	
 		END;  
 
 		IF (@roleID = 2)  
