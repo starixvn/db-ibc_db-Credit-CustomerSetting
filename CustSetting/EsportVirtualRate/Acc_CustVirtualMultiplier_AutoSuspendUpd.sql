@@ -154,8 +154,8 @@ BEGIN
 		FROM #NewDisableStatTbl tmp
 			 INNER JOIN VRSettingHierarchy h WITH(NOLOCK)
 			   ON tmp.LevelID = h.LevelID
-			 LEFT JOIN VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
-			 LEFT JOIN VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
+			 LEFT JOIN VRLeagueGroup lg WITH(NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
+			 LEFT JOIN VRBettypeGroup bg WITH(NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
 			 OUTER APPLY ( SELECT AutoSuspendLive, AutoSuspendNonLive FROM dbo.CustSettingAutoSuspend WITH(NOLOCK) WHERE custid = @CustID ) at
 	FOR XML  RAW('r')
 	)
@@ -184,9 +184,6 @@ BEGIN
 		AND AutoSuspendLive = @InitialBitMap
 		AND AutoSuspendNonLive = @InitialBitMap
 
-	SELECT @EndRun = GETDATE()    
-	SELECT @Duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)
-
 	SELECT @TrackingValue1 = (
 		SELECT tmp.LevelID, 
 			   h.SportType, 
@@ -199,13 +196,16 @@ BEGIN
 		FROM #NewDisableStatTbl tmp
 			 INNER JOIN VRSettingHierarchy h WITH(NOLOCK)
 			   ON tmp.LevelID = h.LevelID
-			 LEFT JOIN VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
-			 LEFT JOIN VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
+			 LEFT JOIN VRLeagueGroup lg WITH(NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
+			 LEFT JOIN VRBettypeGroup bg WITH(NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
 			 OUTER APPLY ( SELECT AutoSuspendLive, AutoSuspendNonLive FROM dbo.CustSettingAutoSuspend WITH(NOLOCK) WHERE custid = @CustID ) at
 	FOR XML  RAW('r')
 	)
 
 	SELECT @TrackingValue1 = '<Root>' + ISNULL(@TrackingValue1,'') + '</Root>'
+
+	SELECT @EndRun = GETDATE()    
+	SELECT @Duration  = DATEDIFF (MILLISECOND,@startRun,@endRun)
 
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.[Writelog_VirtualRate_UpdateSetting] @CustID=@CustID

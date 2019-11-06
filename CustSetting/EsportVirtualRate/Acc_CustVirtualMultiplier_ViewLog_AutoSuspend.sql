@@ -33,7 +33,6 @@ BEGIN
 							, [TrackingValue2] varchar(max)
 							, [LogTime] DATETIME
 							, [UserID] INT
-							, CurrencyRate FLOAT
 							, IsExec BIT)
 
 	CREATE CLUSTERED INDEX IX_LogID ON #VRCustLogAutoSuspend(LogID)
@@ -69,7 +68,7 @@ BEGIN
 	CREATE CLUSTERED INDEX IX_LogID1 ON #DataNew(LogID)
 
 	SELECT @CustID = CustID
-	FROM bodb02.dbo.Customer c(NOLOCK)
+	FROM bodb02.dbo.Customer c WITH(NOLOCK)
 	WHERE username = @Username
 		AND roleid IN (1,2,3,4)
 
@@ -82,15 +81,10 @@ BEGIN
 	
 	INSERT INTO #VRCustLogAutoSuspend(LogID, CustID, TrackingValue1, TrackingValue2, IsExec, UserID, LogTime)
 	SELECT LogID, CustID, dbo.DecompressString(TrackingValue1),dbo.DecompressString(TrackingValue2), 0, UserID, LogTime
-	FROM VRCustLog (NOLOCK)
+	FROM VRCustLog WITH(NOLOCK)
 	WHERE LogTime >= @StartLogTime AND LogTime < DATEADD(DAY,1,@EndLogTime)
 		AND SportType = @SportType
 		AND ActionID = @ActionID 
-	
-	
-	UPDATE #VRCustLogAutoSuspend
-	SET CurrencyRate = CAST(CAST(TrackingValue2 AS XML).value('(/Root/@actualrate)[1]', 'nvarchar(100)') AS FLOAT) 
-
 
 	WHILE(1=1)
 	BEGIN
@@ -214,7 +208,7 @@ BEGIN
 		 INNER JOIN #DataOld d2
 		   ON d1.LevelID = d2.LevelID
 		   AND d1.LogID = d2.LogID
-		 LEFT JOIN bodb02.dbo.Customer c(NOLOCK)
+		 LEFT JOIN bodb02.dbo.Customer c WITH(NOLOCK)
 			ON c.custid = d1.UserID
 	ORDER BY D1.LogID DESC, d1.SortOrder
 

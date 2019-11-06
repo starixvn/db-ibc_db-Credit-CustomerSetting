@@ -29,8 +29,8 @@ BEGIN
 			, @ActualRate = e.actualrate
 			, @Currency = e.currency
 			, @Username = Username
-	FROM Customer c (NOLOCK)
-		INNER JOIN exchange e (NOLOCK) ON  e.exchangeid = c.currency  
+	FROM Customer c WITH(NOLOCK)
+		INNER JOIN exchange e WITH(NOLOCK) ON  e.exchangeid = c.currency  
 	WHERE CustID = @CustID AND c.roleid IN (1,2,3,4)
 		
 
@@ -43,8 +43,8 @@ BEGIN
 
 	IF NOT EXISTS(
 		SELECT 1 
-		FROM [dbo].[VRSettingHierarchy] h (NOLOCK) 
-			INNER JOIN [dbo].[VRCustSetting] vr (NOLOCK) ON vr.CustID = 0 AND vr.[LevelID] = h.[LevelID]
+		FROM [dbo].[VRSettingHierarchy] h WITH(NOLOCK) 
+			INNER JOIN [dbo].[VRCustSetting] vr WITH(NOLOCK) ON vr.CustID = 0 AND vr.[LevelID] = h.[LevelID]
 		WHERE h.[SportType] = @SportType
 	)
 	BEGIN
@@ -63,7 +63,7 @@ BEGIN
 		SELECT @UplineCustID = 0
 
 	SELECT @UplineUsername = username
-	FROM customer (NOLOCK)
+	FROM customer WITH(NOLOCK)
 	WHERE CustID = @UplineCustID
 
 	--1st Dataset: Cust/currency info
@@ -92,14 +92,14 @@ BEGIN
 		,h.SortOrder
 		,h.VRAutoSuspendThreshold
 	INTO #tempVR
-	FROM VRSettingHierarchy h (NOLOCK)
-		LEFT JOIN VRLeagueGroup lg (NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
-		LEFT JOIN VRBettypeGroup bg (NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
-		LEFT JOIN VRCustSetting vr (NOLOCK) 
+	FROM VRSettingHierarchy h WITH(NOLOCK)
+		LEFT JOIN VRLeagueGroup lg WITH(NOLOCK) ON h.VRLeagueGroupID = lg.GroupID
+		LEFT JOIN VRBettypeGroup bg WITH(NOLOCK) ON h.VRBetTypeGroupID = bg.GroupID
+		LEFT JOIN VRCustSetting vr WITH(NOLOCK) 
 			ON vr.CustID = @CustID
 				AND vr.LevelID = h.LevelID
-		LEFT JOIN VRValueMapping vlive (NOLOCK) ON vr.ValueIDLIVE = vlive.ValueID
-		LEFT JOIN VRValueMapping vnonlive (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
+		LEFT JOIN VRValueMapping vlive WITH(NOLOCK) ON vr.ValueIDLIVE = vlive.ValueID
+		LEFT JOIN VRValueMapping vnonlive WITH(NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
 	WHERE h.SportType = @SportType
 
 	CREATE CLUSTERED INDEX PK_tempVR_LevelID ON #tempVR(LevelID)
