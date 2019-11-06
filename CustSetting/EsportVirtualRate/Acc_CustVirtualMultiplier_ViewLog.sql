@@ -15,6 +15,7 @@ AS
 	DB: DBLOG/bodb_CustomerLog
 	Revisions:
 		- 20190725@Dominic: First commit
+		- 20191106@Eden : Esport VR Phase 2 - Integrate Auto Suspend [Redmind: #121876]
 	Parameter:
 
 	
@@ -97,6 +98,7 @@ BEGIN
 	WHERE CustID IN (SELECT CustID FROM #VRLineCustID) 
 		AND LogTime >= @StartLogTime AND LogTime < DATEADD(DAY,1,@EndLogTime)
 		AND SportType = @SportType
+		AND ActionID = 808
 	
 	
 	UPDATE #VRCustLog
