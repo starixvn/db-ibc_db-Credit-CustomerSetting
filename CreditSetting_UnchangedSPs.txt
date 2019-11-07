@@ -21,7 +21,6 @@ CustSetting\UpdateSetting\GoldDeluxe\Update\Acc_CustOverrideUpdGoldDeluxe.sql
 CustSetting\UpdateSetting\Keno\Update\Acc_CustOverrideUpdKeno.sql
 CustSetting\EsportVirtualRate\Acc_CustVirtualMultiplier_Upd.sql
 CustSetting\UpdateSetting\Keno\Update\Acc_Dep_CustomerUpdDisableKeno.sql
-CustSetting\UpdateSetting\RNGCS\Update\dbo.Acc_UpdCSStatus_Cust.sql
 CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_Ag.sql
 CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_Com.sql
 CS_CustSetting\AddNewCustomer\FullMode\CS_CustomerIns_MAg.sql
