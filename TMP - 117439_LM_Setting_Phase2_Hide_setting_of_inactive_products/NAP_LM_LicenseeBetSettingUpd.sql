@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
 CREATE PROCEDURE [dbo].[NAP_LM_LicenseeBetSettingUpd] 
 	@CustID INT
 	,@Sporttype INT

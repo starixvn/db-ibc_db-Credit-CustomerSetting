@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[NAP_LM_LicenseePositionTakingUpd] 
 	@CustID INT
 	,@Sporttype INT
@@ -121,8 +122,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[NAP_LM_LicenseePositionTakingUpd] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[NAP_LM_LicenseePositionTakingUpd] TO [bodbLicenseeNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[NAP_LM_LicenseePositionTakingUpd] TO [vnteam] AS [dbo]
