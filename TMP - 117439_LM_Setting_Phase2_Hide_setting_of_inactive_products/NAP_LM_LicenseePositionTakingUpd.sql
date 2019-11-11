@@ -17,7 +17,7 @@ AS
 	Original:
 
 	Revisions:
-
+			20150121@Elodie - Add revision
 	Param's Explanation:
 		@Product:	1: Sportbook
 					161: Number Game
