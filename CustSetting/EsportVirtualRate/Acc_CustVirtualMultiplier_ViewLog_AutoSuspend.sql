@@ -85,6 +85,7 @@ BEGIN
 	WHERE LogTime >= @StartLogTime AND LogTime < DATEADD(DAY,1,@EndLogTime)
 		AND SportType = @SportType
 		AND ActionID = @ActionID 
+		AND CustID = @CustID
 
 	WHILE(1=1)
 	BEGIN
