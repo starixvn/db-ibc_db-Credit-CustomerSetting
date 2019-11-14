@@ -13,8 +13,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@groupd decimal(9,8),
 	@discountcs decimal(9,8),
 	@discount1x2 decimal(9,8)=0,	
-	@discountnumber decimal(9,8)=0 , 
-	@discountMyanmarOdds DECIMAL(9,8)=0, -- MyanmarOdds
 	@closed bit,	
 	@disCasino bit = 0,	
 
@@ -481,6 +479,7 @@ Revisions:
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 	- 20190722@Eden: set default value for @discountnumber = 0 [redmine: #105955]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
+	- 20190829@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @ErrCode:
     = 0: Update Agent successfully.
@@ -613,9 +612,7 @@ BEGIN
 			@groupc_old decimal(9,8),
 			@groupd_old decimal(9,8),
 			@discountcs_old decimal(9,8),
-			@discount1x2_old decimal(9,8),		
-			@discountnumber_old decimal(9,8),
-			@discountMyanmarOdds_old DECIMAL(9,8) = 0
+			@discount1x2_old decimal(9,8)
 			
 		select @groupa_old = groupa, @groupb_old = groupb, @groupc_old = groupc, @groupd_old = groupd
 		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 1
@@ -626,23 +623,9 @@ BEGIN
 		select @discount1x2_old = discount
 		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 5
 		
-		-- discount number
-		select @discountnumber_old = discount
-		from custsetting3rd with(nolock) where custid = @custid and sporttype = 161 and bettype = 81
-
-		-- For Myanmar Odds
-		DECLARE @IsMyanmarOdds BIT = 0
-					
-		SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@custid)
-			
-		IF @IsMyanmarOdds = 1
-		BEGIN
-			-- Get old value
-			SET @discountMyanmarOdds_old = (SELECT CommRate FROM AgentCommRate WITH (NOLOCK) WHERE CustId = @custid AND Sporttype = 1 AND Bettype = 301)
-		END
 		if (@groupa_old <> @groupa) or (@groupb_old <> @groupb) or (@groupc_old <> @groupc) or (@groupd_old <> @groupd)
-			or (@discountcs_old <> @discountcs) or (@discount1x2_old <> @discount1x2) or (@discountnumber_old <> @discountnumber)
-			OR (@IsMyanmarOdds = 1 AND @discountMyanmarOdds <> @discountMyanmarOdds_old)
+			or (@discountcs_old <> @discountcs) or (@discount1x2_old <> @discount1x2) 
+
 			set @updatecomm_old = 1
 		else 
 			set @updatecomm_old = 0
@@ -659,12 +642,7 @@ BEGIN
 				@groupd = @groupd,
 				@discountcs = @discountcs,
 				@discount1x2 = @discount1x2, --1x2 			
-				@discountnumber = @discountnumber,
 				@updatecomm_old = @updatecomm_old,
-				-- For Myanmar Odds
-				@IsMyanmarOdds = @IsMyanmarOdds,
-				@discountMyanmarOdds=@discountMyanmarOdds,
-				@discountMyanmarOdds_old = @discountMyanmarOdds_old,
 				
 				@SubAccID = @SubAccID,
 				@UserID = @UserID,

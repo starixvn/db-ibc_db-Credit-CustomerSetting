@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
  USE CustDB 
  GO
 
@@ -19,6 +19,7 @@
 		Revisions:
 			- 20170601@Elodie: Migrate Inspired VS to DCS structure [Redmine: #77274]
 			- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+			- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		Parameter's Explantion:
 	*/
 BEGIN
@@ -284,17 +285,7 @@ BEGIN
 		c.maxpermatch99 = c2.maxpermatch99,
 		c.MaxPerMatch99MP = c2.MaxPerMatch99MP,		
 		c.maxpermatch161 = c2.maxpermatch161,
-		c.MaxPerBall161 = c2.MaxPerBall161,
-		
-		--c.maxpermatch180 = c2.maxpermatch180,
-		--c.maxpermatch181 = c2.maxpermatch181,
-		--c.maxpermatch182 = c2.maxpermatch182,
-		--c.maxpermatch183 = c2.maxpermatch183,
-		--c.maxpermatch184 = c2.maxpermatch184,
-		--c.maxpermatch185 = c2.maxpermatch185,
-		--c.maxpermatch186 = c2.maxpermatch186,
-		
-		c.MaxPerMatch201 = c2.MaxPerMatch201
+		c.MaxPerBall161 = c2.MaxPerBall161
 	FROM @tmpUser t 
 		INNER JOIN CustInfo c WITH(UPDLOCK,ROWLOCK) ON c.custid = t.toCustID
 		INNER JOIN CustInfo c2 WITH(NOLOCK) ON c2.custid = t.fromCustID	
@@ -308,4 +299,3 @@ BEGIN
 	
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSettingsCloneFromRealAccount] TO [bodbAdminNet]

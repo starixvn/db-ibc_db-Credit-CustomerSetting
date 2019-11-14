@@ -62,6 +62,7 @@ AS
 	- 20181105@Louis: Credit Collection Summary  [RedmineID: #98621]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -98,22 +99,7 @@ BEGIN
 	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @Enabled = ISNULL(Enabled, 0), @currency = currency
 	FROM dbo.CustInfo WITH(NOLOCK) 
 	WHERE custid = @ExistingCustid
-	
-	-- For Myanmar Odds
-	DECLARE @IsMyanmarOdds_destination BIT = 0
-	DECLARE @IsMyanmarOdds_source BIT = 0
-	
-	IF @Site = '766666' 
-		SET @IsMyanmarOdds_destination = 1
-	
-	SET @IsMyanmarOdds_source = dbo.fn_IsMyanmarOdds (@ExistingCustid)
-		
-	IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source
-	BEGIN
-		SELECT @ErrMsg = 'Cannot copy super ' + @existingUsername + ' since amongs the new and old sites, one has % Odds.',@ErrCode = 200								
-		RETURN		
-
-	END			
+					
 	
 	--Not allow to create a IMBC customer from MBC customer and and vice versa
 	DECLARE @_Site VARCHAR(10)
@@ -308,8 +294,7 @@ BEGIN
 				,maxpermatch11
 				,maxpermatch12
 				,maxpermatch99
-				,Enabled   
-				,maxpermatch201								
+				,Enabled   							
 				,DisableCasino
 				,SyncCasino           
 				,DisableOutright				
@@ -318,27 +303,14 @@ BEGIN
 				,maxpermatch161
 				
 				,MaxPerBall161				
-				,maxpermatch164
-				--,DisableVirtualSports
-				--,HideVirtualSports
-				--,maxpermatch180
-				--,maxpermatch181
-				--,maxpermatch183--dom
-				--,maxpermatch185--dom
-				--,maxpermatch182
-				--,maxpermatch184
-				--,maxpermatch186				
-				,DoubleCommLosing
-				,DisableCasinoBonus		
+				,maxpermatch164			
+				,DoubleCommLosing	
 				,HideKeno
 				
 				,HideGoldDeluxe
 				,DisableGoldDeluxe
-				,HideColossusBet
-				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
-				,Disable151_AU
 				)
 		 SELECT
 				@CustID
@@ -364,8 +336,7 @@ BEGIN
 				,maxpermatch11
 				,maxpermatch12
 				,maxpermatch99
-				,Enabled  
-				,maxpermatch201							
+				,Enabled  						
 				,DisableCasino
 				,0 as SyncCasino           
 				,DisableOutright				
@@ -375,27 +346,15 @@ BEGIN
 				,maxpermatch161
 				
 				,MaxPerBall161				
-				,maxpermatch164
-				--,DisableVirtualSports
-				--,HideVirtualSports
-				--,maxpermatch180
-				--,maxpermatch181
-				--,maxpermatch183--dom
-				--,maxpermatch185--dom
-				--,maxpermatch182
-				--,maxpermatch184
-				--,maxpermatch186				
-				,doubleCommLosing
-				,DisableCasinoBonus		
+				,maxpermatch164				
+				,doubleCommLosing		
 				,HideKeno
 				
 				,HideGoldDeluxe 
 				,DisableGoldDeluxe
-				,HideColossusBet
-				,DisableColossusBet
 				,DisableSuperLive
 				,MaxPerMatch1MP
-				,1
+				--,1
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 	END TRY	
@@ -505,8 +464,7 @@ BEGIN
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									 
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 							
 		RETURN	
@@ -562,8 +520,7 @@ BEGIN
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									 
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		RETURN	
@@ -633,8 +590,7 @@ BEGIN
 		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
 		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE custId = @CustID    
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									   
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @Custid

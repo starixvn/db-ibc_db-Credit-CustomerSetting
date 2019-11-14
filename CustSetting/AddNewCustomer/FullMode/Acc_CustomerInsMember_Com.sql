@@ -26,10 +26,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@discountcs DECIMAL(9,8)=0, 
 	--comm 1x2
 	@discount1x2 DECIMAL(9,8)=0,
-	
-	@discountnumber DECIMAL(9,8)=0,	
-	-- MyanmarOdds
-	@discountMyanmarOdds DECIMAL(9,8)=0,
 
 	@isinternal BIT = 0,
 
@@ -115,7 +111,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v2spositiontaking_3 SMALLMONEY,
 	@v2spositiontaking_7 SMALLMONEY,
 	@v2spositiontaking_8 SMALLMONEY,
-	--@v2spositiontaking_9 smallmoney,
 	@v2spositiontaking_20 SMALLMONEY,
 	@v2spositiontaking_9999 SMALLMONEY = 0,
 		
@@ -151,7 +146,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	--v161
 	@v161spositiontaking_81 SMALLMONEY,
 	@v161spositiontaking_83 SMALLMONEY,
-	--@v161spositiontaking_85 smallmoney,
 	@v161spositiontaking_86 SMALLMONEY,
 	@v161spositiontaking_88 SMALLMONEY = 0,
 	@v161slivepositiontaking_85 SMALLMONEY,
@@ -189,7 +183,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v2mpositiontaking_3 SMALLMONEY,
 	@v2mpositiontaking_7 SMALLMONEY,
 	@v2mpositiontaking_8 SMALLMONEY,
-	--@v2mpositiontaking_9 smallmoney,
 	@v2mpositiontaking_20 SMALLMONEY,
 	@v2mpositiontaking_9999 SMALLMONEY =0,
 	
@@ -226,7 +219,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	--v161
 	@v161mpositiontaking_81 SMALLMONEY,
 	@v161mpositiontaking_83 SMALLMONEY,
-	--@v161mpositiontaking_85 smallmoney,
 	@v161mpositiontaking_86 SMALLMONEY,
 	@v161mpositiontaking_88 SMALLMONEY,
 	@v161mlivepositiontaking_85 SMALLMONEY,
@@ -264,7 +256,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v2apositiontaking_3 SMALLMONEY,
 	@v2apositiontaking_7 SMALLMONEY,
 	@v2apositiontaking_8 SMALLMONEY,
-	--@v2apositiontaking_9 smallmoney,
 	@v2apositiontaking_20 SMALLMONEY,
 	@v2apositiontaking_9999 SMALLMONEY =0,
 	
@@ -300,7 +291,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	--v161
 	@v161apositiontaking_81 SMALLMONEY,
 	@v161apositiontaking_83 SMALLMONEY,
-	--@v161apositiontaking_85 smallmoney,
 	@v161apositiontaking_86 SMALLMONEY,
 	@v161apositiontaking_88 SMALLMONEY,
 	@v161alivepositiontaking_85 SMALLMONEY,
@@ -312,11 +302,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@DisableCasino BIT = 0, 
 	@DisableNumber BIT = 0,
 	@DoubleCommLosing BIT = 1,
-	@DisableCasinoBonus BIT = 1,
 	
 	@DisableGoldDeluxe BIT = 0,
 	@DisableSuperLive BIT = 1,
-	@DisableColossusBet BIT = 1,
 	@IP VARCHAR(15)='',
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
@@ -413,6 +401,7 @@ Revisions:
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
+	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -467,8 +456,6 @@ BEGIN
 				@groupd = @groupd,
 				@discountcs = @discountcs,	
 				@discount1x2 = @discount1x2, --1x2		
-				@discountnumber = @discountnumber, --Number Game			
-				@discountMyanmarOdds = @discountMyanmarOdds, -- MyanmarOdds
 				
 				@MinBet = @MinBet,
 				@MaxBet = @MaxBet,
@@ -544,7 +531,7 @@ BEGIN
 				@v2spositiontaking_3 = @v2spositiontaking_3,
 				@v2spositiontaking_7 = @v2spositiontaking_7,
 				@v2spositiontaking_8 = @v2spositiontaking_8,
-				--@v2spositiontaking_9 = @v2spositiontaking_9,
+				
 				@v2spositiontaking_20 = @v2spositiontaking_20,
 				@v2spositiontaking_9999 = @v2spositiontaking_9999,
 								
@@ -576,7 +563,7 @@ BEGIN
 				--v161
 				@v161spositiontaking_81 = @v161spositiontaking_81,
 				@v161spositiontaking_83 = @v161spositiontaking_83,
-				--@v161spositiontaking_85 = @v161spositiontaking_85,
+				
 				@v161spositiontaking_86 = @v161spositiontaking_86,
 				@v161spositiontaking_88 = @v161spositiontaking_88,
 				@v161slivepositiontaking_85 = @v161slivepositiontaking_85,
@@ -612,7 +599,7 @@ BEGIN
 				@v2mpositiontaking_3 = @v2mpositiontaking_3,
 				@v2mpositiontaking_7 = @v2mpositiontaking_7,
 				@v2mpositiontaking_8 = @v2mpositiontaking_8,
-				--@v2mpositiontaking_9 = @v2mpositiontaking_9,
+				
 				@v2mpositiontaking_20 = @v2mpositiontaking_20,
 				@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
 
@@ -644,7 +631,7 @@ BEGIN
 				--v161
 				@v161mpositiontaking_81 = @v161mpositiontaking_81,
 				@v161mpositiontaking_83 = @v161mpositiontaking_83,
-				--@v161mpositiontaking_85 = @v161mpositiontaking_85,
+				
 				@v161mpositiontaking_86 = @v161mpositiontaking_86,
 				@v161mpositiontaking_88 = @v161mpositiontaking_88,
 				@v161mlivepositiontaking_85 = @v161mlivepositiontaking_85,
@@ -680,7 +667,7 @@ BEGIN
 				@v2apositiontaking_3 = @v2apositiontaking_3,
 				@v2apositiontaking_7 = @v2apositiontaking_7,
 				@v2apositiontaking_8 = @v2apositiontaking_8,
-				--@v2apositiontaking_9 = @v2apositiontaking_9,
+				
 				@v2apositiontaking_20 = @v2apositiontaking_20,
 				@v2apositiontaking_9999 = @v2apositiontaking_9999,
 				
@@ -712,7 +699,7 @@ BEGIN
 				--v161
 				@v161apositiontaking_81 = @v161apositiontaking_81,
 				@v161apositiontaking_83 = @v161apositiontaking_83,
-				--@v161apositiontaking_85 = @v161apositiontaking_85,
+				
 				@v161apositiontaking_86 = @v161apositiontaking_86,
 				@v161apositiontaking_88 = @v161apositiontaking_88,
 				@v161alivepositiontaking_85 = @v161alivepositiontaking_85,
@@ -748,11 +735,9 @@ BEGIN
 	--check for allow play horseracing
 	
 
-	DECLARE --@Disable180_1201 BIT, @HideVirtualSports  BIT, 
-		@HideKeno BIT, @HideGoldDeluxe  BIT, @HideColossusBet BIT
+	DECLARE @HideKeno BIT, @HideGoldDeluxe  BIT
 
-	SELECT --@Disable180_1201 = 0, @HideVirtualSports = 1, 
-			@HideKeno = 1, @HideColossusBet = 1
+	SELECT @HideKeno = 1
 
 	SELECT @HideGoldDeluxe = 0 -- 20151001@Elodie: Set HideGoldDeluxe = 0, DisableGoldDeluxe = 0 for real super
 		
@@ -799,18 +784,10 @@ BEGIN
 	
 		@DisableCasino = @DisableCasino,
 		@DisableNumber = @DisableNumber,
-	
-		--@Disable180_1201 = @Disable180_1201,
-		--@HideVirtualSports = @HideVirtualSports,
 		@DoubleCommLosing = @DoubleCommLosing,		
-		@DisableCasinoBonus = @DisableCasinoBonus,		
-
 		
 		@DisableGoldDeluxe = @DisableGoldDeluxe,
 		@HideGoldDeluxe = @HideGoldDeluxe,
-		
-		@DisableColossusBet = @DisableColossusBet,
-		@HideColossusBet = @HideColossusBet,
 		
 		@DisableSuperLive = @DisableSuperLive,
 
@@ -859,11 +836,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END
-
-	DECLARE @IsMyanmarOdds BIT = 0
-
-	IF @Site = '766666'
-		SET @IsMyanmarOdds = 1
 			
 	EXEC dbo.Acc_CustomerInfo_Execrep_00
 		@custid = @custid,
@@ -903,7 +875,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v2spositiontaking_3 = @v2spositiontaking_3,
 		@v2spositiontaking_7 = @v2spositiontaking_7,
 		@v2spositiontaking_8 = @v2spositiontaking_8,
-		--@v2spositiontaking_9 = @v2spositiontaking_9,
+		
 		@v2spositiontaking_20 = @v2spositiontaking_20,
 		@v2spositiontaking_9999 = @v2spositiontaking_9999,
 				
@@ -939,7 +911,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		--v161
 		@v161spositiontaking_81 = @v161spositiontaking_81,
 		@v161spositiontaking_83 = @v161spositiontaking_83,
-		--@v161spositiontaking_85 = @v161spositiontaking_85,
+		
 		@v161spositiontaking_86 = @v161spositiontaking_86,
 		@v161spositiontaking_88 = @v161spositiontaking_88,
 		@v161slivepositiontaking_85 = @v161slivepositiontaking_85,
@@ -977,7 +949,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v2mpositiontaking_3 = @v2mpositiontaking_3,
 		@v2mpositiontaking_7 = @v2mpositiontaking_7,
 		@v2mpositiontaking_8 = @v2mpositiontaking_8,
-		--@v2mpositiontaking_9 = @v2mpositiontaking_9,
+		
 		@v2mpositiontaking_20 = @v2mpositiontaking_20,
 		@v2mpositiontaking_9999 = @v2mpositiontaking_9999,
 				
@@ -1013,7 +985,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		--v161
 		@v161mpositiontaking_81 = @v161mpositiontaking_81,
 		@v161mpositiontaking_83 = @v161mpositiontaking_83,
-		--@v161mpositiontaking_85 = @v161mpositiontaking_85,
+		
 		@v161mpositiontaking_86 = @v161mpositiontaking_86,
 		@v161mpositiontaking_88 = @v161mpositiontaking_88,
 		@v161mlivepositiontaking_85 = @v161mlivepositiontaking_85,
@@ -1051,7 +1023,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v2apositiontaking_3 = @v2apositiontaking_3,
 		@v2apositiontaking_7 = @v2apositiontaking_7,
 		@v2apositiontaking_8 = @v2apositiontaking_8,
-		--@v2apositiontaking_9 = @v2apositiontaking_9,
+		
 		@v2apositiontaking_20 = @v2apositiontaking_20,
 		@v2apositiontaking_9999 = @v2apositiontaking_9999,
 		
@@ -1087,7 +1059,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		--v161
 		@v161apositiontaking_81 = @v161apositiontaking_81,
 		@v161apositiontaking_83 = @v161apositiontaking_83,
-		--@v161apositiontaking_85 = @v161apositiontaking_85,
+		
 		@v161apositiontaking_86 = @v161apositiontaking_86,
 		@v161apositiontaking_88 = @v161apositiontaking_88,
 		@v161alivepositiontaking_85 = @v161alivepositiontaking_85,
@@ -1130,11 +1102,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@discountcs = @discountcs, 
 		--comm 1x2
 		@discount1x2 = @discount1x2,
-		-- Myanma Odds
-		@IsMyanmarOdds = @IsMyanmarOdds,
-		@discountMyanmarOdds = @discountMyanmarOdds,
-		
-		@discountnumber = @discountnumber,
 	
 		@ErrCode = @ErrCode OUTPUT
 
@@ -1228,19 +1195,14 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" '  +
 	'groupa="'+ COALESCE(CAST(@groupa AS VARCHAR(50)),SPACE(1)) + '" ' 
 
-	IF @IsMyanmarOdds = 0
-		SET @LogSPData = @LogSPData + 
-			'groupb="' + COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
-			'groupc="' + COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
-			'groupd="' + COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
+	SET @LogSPData = @LogSPData + 
+		'groupb="' + COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'groupc="' + COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'groupd="' + COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
 
 	SET @LogSPData = @LogSPData + 
 	'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)),SPACE(1)) + '" ' 
-
-	IF @IsMyanmarOdds = 1
-		SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
+	'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' 
 
 	SET @LogSPData = @LogSPData + ' />'
 
@@ -1257,17 +1219,13 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'groupa="'+ COALESCE(CAST(@groupa AS VARCHAR(50)),SPACE(1)) + '" ' 
 		
-		IF @IsMyanmarOdds = 0
-			SET @LogSPData = @LogSPData +
+		SET @LogSPData = @LogSPData +
 		'groupb="'+ COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'groupc="'+ COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'groupd="'+ COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
 		SET @LogSPData = @LogSPData +
 		'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' +	
-		'discountnumber="'+ COALESCE(CAST(@discountnumber AS VARCHAR(50)),SPACE(1)) + '" ' 
-		IF @IsMyanmarOdds = 1
-			SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
+		'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' 	
 
 		SET @LogSPData = @LogSPData + 'ErrMsg="'+ ERROR_MESSAGE() +	'" />'
 
@@ -1320,7 +1278,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 																			AND psd.SettingType IN (4,11,13)		-- Product Status
 						INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
-					WHERE @_Site = 'IMBC' OR psd.ProductID <> 20 --iCricket
+					WHERE psd.ProductID <> 20 
 					GROUP BY psd.ProductID	
 					) iq ON iq.ProductID = p.ProductID
 
@@ -1335,7 +1293,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 			INNER JOIN	ProductStatusProfile AS psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype AND psd.BetType = psp.Bettype 
 			INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 			CROSS APPLY CustProductStatus WITH(NOLOCK)
-		WHERE CustID = @custid AND (@_Site = 'IMBC' OR psd.ProductID <> 20)--iCricket
+		WHERE CustID = @custid AND (psd.ProductID <> 20)
 			AND psd.SettingType IN (4,11,13)-- Product Status, Game Status
 	)iq
 
@@ -1347,16 +1305,13 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
-	--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	
 	'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
 
 	
 	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-
-	'HideColossusBet="'+ COALESCE(CAST(@HideColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'DisableColossusBet="'+ COALESCE(CAST(@DisableColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
 
 	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +
 	 @LogDataKeno + @LogDataSP2 +
@@ -1380,15 +1335,11 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	
-		--'disableVirtualSports="'+ COALESCE(CAST(@Disable180_1201 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
 		
 		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-		
-		'HideColossusBet="'+ COALESCE(CAST(@HideColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'DisableColossusBet="'+ COALESCE(CAST(@DisableColossusBet AS VARCHAR(1)),SPACE(1)) + '" ' +
 		
 		'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +		
 		'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
@@ -1582,7 +1533,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v2spt_3="'+ COALESCE(CAST(@v2spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2spt_7="'+ COALESCE(CAST(@v2spositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2spt_8="'+ COALESCE(CAST(@v2spositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	--'v2spt_9="'+ coalesce(cast(@v2spositiontaking_9 as varchar(50)),space(1)) + '" ' +
+	
 	'v2spt_20="'+ COALESCE(CAST(@v2spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	--BAIO
 	'v2spt_9999="'+ COALESCE(CAST(@v2spositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1619,7 +1570,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 	'v161spt_81="'+ COALESCE(CAST(@v161spositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161spt_83="'+ COALESCE(CAST(@v161spositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	--'v161spt_85="'+ coalesce(cast(@v161spositiontaking_85 as varchar(50)),space(1)) + '" ' +
+	
 	'v161spt_86="'+ COALESCE(CAST(@v161spositiontaking_86 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161spt_88="'+ COALESCE(CAST(@v161spositiontaking_88 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161slivept_85="'+ COALESCE(CAST(@v161slivepositiontaking_85 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1657,7 +1608,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v2mpt_3="'+ COALESCE(CAST(@v2mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2mpt_7="'+ COALESCE(CAST(@v2mpositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2mpt_8="'+ COALESCE(CAST(@v2mpositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	--'v2mpt_9="'+ coalesce(cast(@v2mpositiontaking_9 as varchar(50)),space(1)) + '" ' +
+	
 	'v2mpt_20="'+ COALESCE(CAST(@v2mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	--BAIO 
 	'v2mpt_9999="'+ COALESCE(CAST(@v2mpositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1693,7 +1644,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v99mpt_9999="'+ COALESCE(CAST(@v99mpositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161mpt_81="'+ COALESCE(CAST(@v161mpositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161mpt_83="'+ COALESCE(CAST(@v161mpositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	--'v161mpt_85="'+ coalesce(cast(@v161mpositiontaking_85 as varchar(50)),space(1)) + '" ' +
+	
 	'v161mpt_86="'+ COALESCE(CAST(@v161mpositiontaking_86 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161mpt_88="'+ COALESCE(CAST(@v161mpositiontaking_88 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161mlivept_85="'+ COALESCE(CAST(@v161mlivepositiontaking_85 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1731,7 +1682,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'v2apt_3="'+ COALESCE(CAST(@v2apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2apt_7="'+ COALESCE(CAST(@v2apositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2apt_8="'+ COALESCE(CAST(@v2apositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	--'v2apt_9="'+ coalesce(cast(@v2apositiontaking_9 as varchar(50)),space(1)) + '" ' +
+	
 	'v2apt_20="'+ COALESCE(CAST(@v2apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	-- BAIO
 	'v2apt_9999="'+ COALESCE(CAST(@v2apositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1768,7 +1719,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 	'v161apt_81="'+ COALESCE(CAST(@v161apositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161apt_83="'+ COALESCE(CAST(@v161apositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	--'v161apt_85="'+ coalesce(cast(@v161apositiontaking_85 as varchar(50)),space(1)) + '" ' +
+	
 	'v161apt_86="'+ COALESCE(CAST(@v161apositiontaking_86 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161apt_88="'+ COALESCE(CAST(@v161apositiontaking_88 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v161alivept_85="'+ COALESCE(CAST(@v161alivepositiontaking_85 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1815,7 +1766,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v2spt_3="'+ COALESCE(CAST(@v2spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v2spt_7="'+ COALESCE(CAST(@v2spositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v2spt_8="'+ COALESCE(CAST(@v2spositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		--'v2spt_9="'+ coalesce(cast(@v2spositiontaking_9 as varchar(50)),space(1)) + '" ' +
+		
 		'v2spt_20="'+ COALESCE(CAST(@v2spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		-- BAIO
 		'v2spt_9999="'+ COALESCE(CAST(@v2spositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1852,7 +1803,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 		'v161spt_81="'+ COALESCE(CAST(@v161spositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161spt_83="'+ COALESCE(CAST(@v161spositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		--'v161spt_85="'+ coalesce(cast(@v161spositiontaking_85 as varchar(50)),space(1)) + '" ' +
+		
 		'v161spt_86="'+ COALESCE(CAST(@v161spositiontaking_86 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161spt_88="'+ COALESCE(CAST(@v161spositiontaking_88 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161slivept_85="'+ COALESCE(CAST(@v161slivepositiontaking_85 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1890,7 +1841,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v2mpt_3="'+ COALESCE(CAST(@v2mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v2mpt_7="'+ COALESCE(CAST(@v2mpositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v2mpt_8="'+ COALESCE(CAST(@v2mpositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		--'v2mpt_9="'+ coalesce(cast(@v2mpositiontaking_9 as varchar(50)),space(1)) + '" ' +
+		
 		'v2mpt_20="'+ COALESCE(CAST(@v2mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		--BAIO
 		'v2mpt_9999="'+ COALESCE(CAST(@v2mpositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1927,7 +1878,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 		'v161mpt_81="'+ COALESCE(CAST(@v161mpositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161mpt_83="'+ COALESCE(CAST(@v161mpositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		--'v161mpt_85="'+ coalesce(cast(@v161mpositiontaking_85 as varchar(50)),space(1)) + '" ' +
+		
 		'v161mpt_86="'+ COALESCE(CAST(@v161mpositiontaking_86 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161mpt_88="'+ COALESCE(CAST(@v161mpositiontaking_88 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161mlivept_85="'+ COALESCE(CAST(@v161mlivepositiontaking_85 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1965,7 +1916,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'v2apt_3="'+ COALESCE(CAST(@v2apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v2apt_7="'+ COALESCE(CAST(@v2apositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v2apt_8="'+ COALESCE(CAST(@v2apositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		--'v2apt_9="'+ coalesce(cast(@v2apositiontaking_9 as varchar(50)),space(1)) + '" ' +
+		
 		'v2apt_20="'+ COALESCE(CAST(@v2apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		--BAIO
 		'v2apt_9999="'+ COALESCE(CAST(@v2apositiontaking_9999 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2002,7 +1953,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 		'v161apt_81="'+ COALESCE(CAST(@v161apositiontaking_81 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161apt_83="'+ COALESCE(CAST(@v161apositiontaking_83 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		--'v161apt_85="'+ coalesce(cast(@v161apositiontaking_85 as varchar(50)),space(1)) + '" ' +
+		
 		'v161apt_86="'+ COALESCE(CAST(@v161apositiontaking_86 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161apt_88="'+ COALESCE(CAST(@v161apositiontaking_88 AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'v161alivept_85="'+ COALESCE(CAST(@v161alivepositiontaking_85 AS VARCHAR(50)),SPACE(1)) + '" ' +

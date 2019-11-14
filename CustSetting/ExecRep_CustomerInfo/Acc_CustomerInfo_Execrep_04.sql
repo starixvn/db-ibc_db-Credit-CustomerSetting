@@ -59,6 +59,7 @@ AS
 		- 20190424@Johnson: add suspendinfo [redmine: #105587]
 		- 20190701@Dominic: Update VR setting of an account for Esport  [Redmind: #114830]
 		- 20190906@Winnie: Colossus Bet - Miss enable product [Redmind: #119642]
+		- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -767,42 +768,7 @@ BEGIN
 	    END;
     END;
    
-    ELSE IF @Action = 'DisableVS'
-    BEGIN
-	    if @RoleID = 4 
-		    update CustInfo with (ROWLOCK, UPDLOCK) 
-		    set DisableVirtualSports = @DisableVS 
-		    where SRecommend = @CustID;
-
-	    if @RoleID = 3 
-		    update CustInfo with (ROWLOCK, UPDLOCK) 
-		    set DisableVirtualSports = @DisableVS 
-		    where MRecommend = @CustID;
-
-	    if @RoleID = 2 
-		    update CustInfo with (ROWLOCK, UPDLOCK) 
-		    set DisableVirtualSports = @DisableVS 
-		    where Recommend = @CustID;
-    END;
-    ELSE IF @Action = 'EnableVS'
-    BEGIN
-	    IF @roleid = 4
-		    UPDATE custinfo WITH(UPDLOCK,ROWLOCK)  
-			    SET DisableVirtualSports = @EnableVS,  
-				    HideVirtualSports = CASE WHEN HideVirtualSports = 1 THEN 0 ELSE HideVirtualSports END 
-		    WHERE srecommend = @custid;  
-    	
-	    IF @roleid = 3
-		    UPDATE custinfo WITH(UPDLOCK,ROWLOCK)  
-			    SET DisableVirtualSports = @EnableVS,  
-				    HideVirtualSports = CASE WHEN HideVirtualSports = 1 THEN 0 ELSE HideVirtualSports END
-		    WHERE mrecommend = @custid; 
-	    IF @roleid = 2
-		    UPDATE custinfo WITH(UPDLOCK,ROWLOCK)  
-			    SET DisableVirtualSports = @EnableVS,  
-				    HideVirtualSports = CASE WHEN HideVirtualSports = 1 THEN 0 ELSE HideVirtualSports END 
-		    WHERE recommend = @custid; 
-    END;
+    
     ELSE IF @Action = 'DisableNumberGame'
     BEGIN
 	    IF @RoleID = 4 
@@ -1074,34 +1040,30 @@ BEGIN
     ELSE IF @Action = 'ColossusBet'  
 	BEGIN  
 		IF (@roleID = 4)  
-		BEGIN  			
+		BEGIN  
 				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
 				SET DisableColossusBet = @DisableColossusBet,  
 					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END    
 				WHERE CustID <> @CustID  
-					AND SRecommend = @CustID;  			
+					AND SRecommend = @CustID;  
 		END;  
 
 		IF (@roleID = 3)  
 		BEGIN  
-			
 				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
 				SET DisableColossusBet = @DisableColossusBet,  
 					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
 				WHERE CustID <> @CustID  
 					AND MRecommend = @CustID; 
-			
 		END;  
 
 		IF (@roleID = 2)  
 		BEGIN  
-			
 				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
 					SET DisableColossusBet = @DisableColossusBet,  
 					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
 				WHERE CustID <> @CustID  
 					AND Recommend = @CustID;  
-			
 		END;  
 	END;    
 

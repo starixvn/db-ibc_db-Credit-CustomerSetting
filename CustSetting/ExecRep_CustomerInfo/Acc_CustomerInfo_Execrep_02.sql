@@ -23,6 +23,7 @@ AS
 		- 20151016@Elodie: Add new product Colossus Bet and Myanmar Odds [Redmine: #41264, 41470]
 		- 20151119@Dominic: Fix bug when inserting setting into DCS structure Redmine Feature #26274
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2  [Redmine: #118699]
 	Parameter's Explanation:
 */ 
 BEGIN
@@ -35,7 +36,6 @@ BEGIN
 		  AND dbo.f_CheckRepTable('CustSettingGame') = 1 
 		  AND dbo.f_CheckRepTable('CustOverrideGame') = 1
 		  AND dbo.f_CheckRepTable('CustGameType') = 1		 
-		  AND dbo.f_CheckRepTable('AgentCommRate') = 1	
 	   )
 	BEGIN	
 		-- insert custSetting info
@@ -278,40 +278,7 @@ BEGIN
 				
 			RETURN
 		END
-		--End Keno
-
-		--Colossus Bet, Myanmar Odds
-		DECLARE @IsMyanmarOdds BIT = 0
-		SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@ExistingCustid)
-
-		IF @IsMyanmarOdds = 1
-			INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
-			SELECT @custid, SportType, Bettype, CommRate
-			FROM AgentCommRate WITH (NOLOCK)
-			WHERE CustId = @ExistingCustid
-		ELSE
-			INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
-			SELECT @custid, SportType, Bettype, CommRate
-			FROM AgentCommRate WITH (NOLOCK)
-			WHERE CustId = @ExistingCustid AND Sporttype <> 1 AND Bettype <> 301 
-
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode = 157
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
-			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-			
-			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
-
-			RETURN
-		END
+		--End Keno		
 	END
 
 	DECLARE @DCSErrCode INT = 0
@@ -335,7 +302,6 @@ BEGIN
 	
 		IF(dbo.f_CheckRepTable('custsettingGame') = 1) DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		IF(dbo.f_CheckRepTable('CustGameType') = 1) DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-		IF(dbo.f_CheckRepTable('AgentCommRate') = 1) DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/
 END

@@ -77,6 +77,7 @@ AS
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190923@Johnson: copy danger status from upline [redmine:#120056]
+	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -393,8 +394,7 @@ BEGIN
 			,maxpermatch11
 			,maxpermatch12
 			,maxpermatch99
-			,Enabled           			
-			,maxpermatch201		
+			,Enabled           				
 		
 			,DisableCasino
 			,SyncCasino           
@@ -405,27 +405,14 @@ BEGIN
 			,maxpermatch161
 		
 			,MaxPerBall161			
-			,maxpermatch164
-			--,DisableVirtualSports
-			--,HideVirtualSports
-			--,maxpermatch180
-			--,maxpermatch181
-			--,maxpermatch183
-			--,maxpermatch185
-			--,maxpermatch182
-			--,maxpermatch184
-			--,maxpermatch186			
-			,DoubleCommLosing
-			,DisableCasinoBonus				
+			,maxpermatch164		
+			,DoubleCommLosing				
 			,HideKeno
 			
 			,HideGoldDeluxe
 			,DisableGoldDeluxe
-			,HideColossusBet
-			,DisableColossusBet
 			,DisableSuperLive
 			,MaxPerMatch1MP
-			,Disable151_AU
 			,Danger
 			,Danger2
 			,Danger3
@@ -455,8 +442,7 @@ BEGIN
 			,maxpermatch11
 			,maxpermatch12
 			,maxpermatch99
-			,@enableUpline as Enabled          
-			,maxpermatch201		
+			,@enableUpline as Enabled          	
 			
 			,DisableCasino
 			,0 as SyncCasino           
@@ -467,27 +453,16 @@ BEGIN
 			,maxpermatch161
 			
 			,MaxPerBall161			
-			,maxpermatch164
-			--,DisableVirtualSports
-			--,HideVirtualSports
-			--,maxpermatch180
-			--,maxpermatch181
-			--,maxpermatch183
-			--,maxpermatch185
-			--,maxpermatch182
-			--,maxpermatch184
-			--,maxpermatch186			
+			,maxpermatch164	
 			,@doubleCommLosingUpline as DoubleCommLosing
-			,1			
+			--,1			
 			,HideKeno
 			
 			,HideGoldDeluxe
 			,DisableGoldDeluxe
-			,HideColossusBet
-			,DisableColossusBet
 			,DisableSuperLive
 			,MaxPerMatch1MP
-			,1
+			--,1
 			,@DangerMaster
 			,@DangerMaster2
 			,@DangerMaster3
@@ -611,7 +586,6 @@ BEGIN
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID		
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID = @CustID
 		
 		RETURN	
 	END 
@@ -643,8 +617,7 @@ BEGIN
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID = @CustID		
+		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID		
 		
 		RETURN	
 	END CATCH	
@@ -722,7 +695,6 @@ BEGIN
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.AgentCommRate WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
 							
 		RETURN	
