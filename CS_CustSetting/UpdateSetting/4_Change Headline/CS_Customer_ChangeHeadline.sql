@@ -32,42 +32,56 @@ BEGIN
 	DECLARE @currentDate DATETIME = CONVERT(DATE, CURRENT_TIMESTAMP)
 
 	DECLARE @Old_HeadlineId INT, @Old_HeadlineUsername VARCHAR(50)
-	DECLARE @HeadlineId INT
+	DECLARE @HeadlineId INT, @HeadlineCurrency TINYINT, @SuperCurrency TINYINT
 	DECLARE @NoOfMember INT
 
 	/* ===== Check Invalid Input Params ===== */
 	BEGIN
 		SELECT @HeadlineUsername = LTRIM(RTRIM(ISNULL(@HeadlineUsername, '')))
-		SELECT @HeadlineId = custid FROM dbo.Customer WITH (NOLOCK) WHERE username = @HeadlineUsername AND roleid = 0
+		SELECT @HeadlineId = custid, @HeadlineCurrency = currency FROM dbo.Customer WITH (NOLOCK) WHERE username = @HeadlineUsername AND roleid = 0
 
 		IF @HeadlineId IS NULL
 		BEGIN
-			SELECT @ErrCode = 101, @ErrMsg = 'Invalid Headline Username'
+			SELECT @ErrCode = 101, @ErrMsg = 'Invalid Headline.'
 			RETURN
 		END
+
+		SELECT @SuperCurrency = currency FROM dbo.Customer WITH (NOLOCK) WHERE custid = @SuperId AND roleid = 4
 		
 		SELECT @Old_HeadlineId = u.custid, @Old_HeadlineUsername = u.username
 		FROM dbo.Customer u WITH (NOLOCK)
 			INNER JOIN dbo.CustSuper cs WITH (NOLOCK) ON u.custid = cs.UplineId
 		WHERE cs.custid = @SuperId AND u.roleid = 0
 
-		IF ISNULL(@Old_HeadlineUsername , '') = ''
+		IF @SuperCurrency IS NULL OR ISNULL(@Old_HeadlineUsername , '') = ''
 		BEGIN
-			SELECT @ErrCode = 102, @ErrMsg = 'Invalid Super Username'
+			SELECT @ErrCode = 102, @ErrMsg = 'Invalid Super.'
+			RETURN
+		END
+
+		IF @SuperCurrency <> @HeadlineCurrency
+		BEGIN
+			SELECT @ErrCode = 103, @ErrMsg = 'Currency of Super and new Headline does not match.'
 			RETURN
 		END
 
 		IF @Old_HeadlineUsername = @HeadlineUsername
 		BEGIN
-			SELECT @ErrCode = 103, @ErrMsg = 'No change Headline Username'
+			SELECT @ErrCode = 104, @ErrMsg = 'The new Headline must be different from old'
 			RETURN
 		END
 
 		SELECT @NoOfMember = COUNT(1) FROM dbo.Customer WITH (NOLOCK) WHERE srecommend = @SuperId AND roleid = 1
 
-		IF (@NoOfMember = 0 AND @EffectiveDate <> @currentDate) OR (@NoOfMember <> 0 AND @EffectiveDate <> DATEADD(DAY, 1, @currentDate))
+		IF @NoOfMember = 0 AND @EffectiveDate <> @currentDate
 		BEGIN
-			SELECT @ErrCode = 104, @ErrMsg = 'Invalid Effective Date'
+			SELECT @ErrCode = 105, @ErrMsg = 'Effective Date must be today'
+			RETURN
+		END
+
+		IF @NoOfMember <> 0 AND @EffectiveDate <> DATEADD(DAY, 1, @currentDate)
+		BEGIN
+			SELECT @ErrCode = 106, @ErrMsg = 'Effective Date must be tomorrow'
 			RETURN
 		END
 	END

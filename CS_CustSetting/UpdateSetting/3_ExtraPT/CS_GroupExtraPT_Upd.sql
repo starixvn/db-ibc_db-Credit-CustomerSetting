@@ -133,18 +133,18 @@ BEGIN
 	SELECT @HeadlineUsername = username FROM dbo.CustInfo WITH (NOLOCK) WHERE CustID = @HeadlineId AND roleid = 0
 
 	SELECT @TrackingValue2_XML = (
-			SELECT	@HeadlineId				AS '@HeadlineId'
-					,@HeadlineUsername		AS '@Healine'
-					,[Sportsbook Possess]	AS '@SportsbookPossess'
-					,[Non-Sports Possess]	AS '@Non-SportsPossess'
-					,EffectiveDate			AS '@EffectiveDate'
+			SELECT	@HeadlineId			AS '@HeadlineId'
+					,@HeadlineUsername	AS '@Healine'
+					,SportsbookPossess	AS '@SportsbookPossess'
+					,NonSportsPossess	AS '@NonSportsPossess'
+					,EffectiveDate		AS '@EffectiveDate'
 			FROM (
 				SELECT
 					CONVERT(VARCHAR(10), p.FromDate, 120) AS EffectiveDate
-					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Sportsbook Possess])) AS [Sportsbook Possess]
-					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Non-Sports Possess])) AS [Non-Sports Possess]
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.SportsbookPossess)) AS SportsbookPossess
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.NonSportsPossess)) AS NonSportsPossess
 				FROM (
-					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'NonSports' END + ' Possess' AS Product, ExtraPT, FromDate
 					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
 					WHERE SuperId = @CustID
 						AND ProductId IN (1, 3)
@@ -153,7 +153,7 @@ BEGIN
 				) AS s
 				PIVOT (
 					MAX(ExtraPT)
-					FOR Product IN ([Sportsbook Possess], [Non-Sports Possess])
+					FOR Product IN (SportsbookPossess, NonSportsPossess)
 				) AS p
 			) AS t
 			FOR XML PATH ('R'), TYPE
@@ -172,10 +172,11 @@ BEGIN
 		AND ToDate >= @today
 	 
 	----- Insert new setting PT		
-	INSERT INTO dbo.Acc_GroupExtraPTSetting (SuperId, GroupId, GroupName, ProductId, Sporttype, SubProduct, ExtraPT, FromDate, ToDate)
+	INSERT INTO dbo.Acc_GroupExtraPTSetting (SuperId, GroupId, GroupName, ProductId, Sporttype, SubProduct, ExtraPT, FromDate, ToDate, UplineId)
 	SELECT @CustId, @GroupId, @GroupName, ProductID, Sporttype, SubProduct, ExtraPT,
 		CASE WHEN @EffectiveDate < FromDate THEN FromDate ELSE @EffectiveDate END AS FromDate,
-		CASE WHEN @EndDate < ToDate THEN @EndDate ELSE ToDate END AS ToDate
+		CASE WHEN @EndDate < ToDate THEN @EndDate ELSE ToDate END AS ToDate,
+		@HeadlineId
 	FROM dbo.Acc_GroupExtraPT_Product WITH(NOLOCK)
 	WHERE GroupId = @GroupId
 		  AND @EffectiveDate <= ToDate	
@@ -186,16 +187,16 @@ BEGIN
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)	
 		  
 	SELECT @TrackingValue_XML = (
-			SELECT	@HeadlineId				AS '@HeadlineId'
-					,@HeadlineUsername		AS '@Healine'
-					,[Sportsbook Possess]	AS '@SportsbookPossess'
-					,[Non-Sports Possess]	AS '@Non-SportsPossess'
-					,EffectiveDate			AS '@EffectiveDate'
+			SELECT	@HeadlineId			AS '@HeadlineId'
+					,@HeadlineUsername	AS '@Healine'
+					,SportsbookPossess	AS '@SportsbookPossess'
+					,NonSportsPossess	AS '@NonSportsPossess'
+					,EffectiveDate		AS '@EffectiveDate'
 			FROM (
 				SELECT
 					CONVERT(VARCHAR(10), p.FromDate, 120) AS EffectiveDate
-					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Sportsbook Possess])) AS [Sportsbook Possess]
-					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.[Non-Sports Possess])) AS [Non-Sports Possess]
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.SportsbookPossess)) AS SportsbookPossess
+					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.NonSportsPossess)) AS NonSportsPossess
 				FROM (
 					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
 					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
@@ -206,7 +207,7 @@ BEGIN
 				) AS s
 				PIVOT (
 					MAX(ExtraPT)
-					FOR Product IN ([Sportsbook Possess], [Non-Sports Possess])
+					FOR Product IN (SportsbookPossess, NonSportsPossess)
 				) AS p
 			) AS t
 			FOR XML PATH ('R'), TYPE
