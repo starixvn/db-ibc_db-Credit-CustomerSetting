@@ -61,6 +61,10 @@ BEGIN
 
 	SELECT @StartRun = GETDATE()   
 
+
+	IF EXISTS(SELECT TOP 1 1 FROM Custinfo WITH(NOLOCK) WHERE custid = @CustID and roleid <> 1)
+		RETURN
+
 	DECLARE @iDoc INT
 
 	BEGIN TRY
