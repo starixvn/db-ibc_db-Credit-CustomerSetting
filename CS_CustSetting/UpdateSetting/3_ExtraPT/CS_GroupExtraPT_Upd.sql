@@ -144,7 +144,7 @@ BEGIN
 					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.SportsbookPossess)) AS SportsbookPossess
 					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.NonSportsPossess)) AS NonSportsPossess
 				FROM (
-					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'NonSports' END + ' Possess' AS Product, ExtraPT, FromDate
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'NonSports' END + 'Possess' AS Product, ExtraPT, FromDate
 					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
 					WHERE SuperId = @CustID
 						AND ProductId IN (1, 3)
@@ -198,7 +198,7 @@ BEGIN
 					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.SportsbookPossess)) AS SportsbookPossess
 					,dbo.f_CS_FomatNumber(CONVERT(VARCHAR(50), p.NonSportsPossess)) AS NonSportsPossess
 				FROM (
-					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'Non-Sports' END + ' Possess' AS Product, ExtraPT, FromDate
+					SELECT CASE ProductId WHEN 1 THEN 'Sportsbook' ELSE 'NonSports' END + 'Possess' AS Product, ExtraPT, FromDate
 					FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
 					WHERE SuperId = @CustID
 						AND ProductId IN (1, 3)
