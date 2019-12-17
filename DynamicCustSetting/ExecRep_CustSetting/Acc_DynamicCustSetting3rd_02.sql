@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_02]
 		@CustID		INT
 	,	@RoleID		INT

@@ -23,6 +23,7 @@ AS
 		- 20150622@Daniel: Separated custDB to server DBCUST
 		- 20170419@Helen: Hotfix Missing Setting 
 		- 20171225@Elodie: Delete customer from setting tables of DCS
+		- 20190327@Daniel: Migrate bodb_Licensee to DBCUST: Remove linked server DBLIC for deleting data in bodb_Licensee
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	
 	Param's Explanation:
@@ -373,21 +374,7 @@ BEGIN
 	BEGIN	
 		SELECT @ErrMsg = N'Delete customer failed.', @ErrCode = 103
 		RETURN
-	END
-	/*
-	--delete licensee customer on bodb_licensee
-	EXEC DBLIC.bodb_licensee.dbo.DBA_LicenseeCustomerDel 
-		@custid = @custid, 
-		@roleid = @roleid,
-		@ErrCode  = @ErrCode OUTPUT,
-		@ErrMsg  = @ErrMsg OUTPUT
-
-	IF @ErrCode <> 0 
-	BEGIN 
-		SELECT @ErrCode = @ErrCode, @ErrMsg = @ErrMsg
-		RETURN
-	END		
-	*/	
+	END	
 END
 
 IF @roleid = 1
@@ -461,7 +448,7 @@ BEGIN
 	END
 	
 	--delete licensee customer on bodb_licensee
-	EXEC DBLIC.bodb_licensee.dbo.DBA_LicenseeCustomerDel 
+	EXEC bodb_licensee.dbo.DBA_LicenseeCustomerDel 
 		@custid = @custid, 
 		@roleid = @roleid,
 		@ErrCode  = @ErrCode OUTPUT,
