@@ -41,7 +41,7 @@ AS
 		- 20100527@Elodie: New account status [Redmine: #113198]
 		- 20100627@Elodie: Different PT for Headline [Redmine: #114912]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
-
+		- 20190708@Johnson: set pwdexpiry = yesterday [redmine:#116088]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Create super successfully.
@@ -99,6 +99,10 @@ BEGIN
 	IF @ErrCode <> 0
 		RETURN
 	
+	DECLARE @pwdexpiry DATETIME 
+	
+	SELECT @pwdexpiry = dbo.f_CS_GetPwdExpiryDate (4)
+	
 	--Insert general info
 	EXEC dbo.CS_CustomerInsUserInfo 
 		@custid = @custid OUTPUT,
@@ -107,7 +111,7 @@ BEGIN
 		@creator = @creator,
 		@username = @username,
 		@userpwd = @userpwd,
-		@pwdexpiry = NULL,
+		@pwdexpiry = @pwdexpiry,
 		@currency = @currency,
 		@site = @site,
 		@HeadlineId = @HeadlineId,
