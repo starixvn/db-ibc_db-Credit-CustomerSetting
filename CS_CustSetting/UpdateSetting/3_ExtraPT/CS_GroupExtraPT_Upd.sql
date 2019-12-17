@@ -134,7 +134,7 @@ BEGIN
 
 	SELECT @TrackingValue2_XML = (
 			SELECT	@HeadlineId			AS '@HeadlineId'
-					,@HeadlineUsername	AS '@Healine'
+					,@HeadlineUsername	AS '@Headline'
 					,SportsbookPossess	AS '@SportsbookPossess'
 					,NonSportsPossess	AS '@NonSportsPossess'
 					,EffectiveDate		AS '@EffectiveDate'
@@ -188,7 +188,7 @@ BEGIN
 		  
 	SELECT @TrackingValue_XML = (
 			SELECT	@HeadlineId			AS '@HeadlineId'
-					,@HeadlineUsername	AS '@Healine'
+					,@HeadlineUsername	AS '@Headline'
 					,SportsbookPossess	AS '@SportsbookPossess'
 					,NonSportsPossess	AS '@NonSportsPossess'
 					,EffectiveDate		AS '@EffectiveDate'

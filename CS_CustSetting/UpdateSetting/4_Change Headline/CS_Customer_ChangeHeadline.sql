@@ -131,7 +131,7 @@ BEGIN
 
 		SELECT @XmlData_Old = (
 			SELECT	@Old_HeadlineId			AS '@HeadlineID'
-					,@Old_HeadlineUsername	AS '@Healine'
+					,@Old_HeadlineUsername	AS '@Headline'
 					,SportsbookPossess		AS '@SportsbookPossess'
 					,NonSportsPossess		AS '@NonSportsPossess'
 					,EffectiveDate			AS '@EffectiveDate'
@@ -206,7 +206,7 @@ BEGIN
 
 		SELECT @XmlData = (
 			SELECT	@HeadlineId				AS '@HeadlineID'
-					,@HeadlineUsername		AS '@Healine'
+					,@HeadlineUsername		AS '@Headline'
 					,SportsbookPossess		AS '@SportsbookPossess'
 					,NonSportsPossess		AS '@NonSportsPossess'
 					,EffectiveDate			AS '@EffectiveDate'
