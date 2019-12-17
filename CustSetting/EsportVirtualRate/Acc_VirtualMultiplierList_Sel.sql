@@ -10,6 +10,7 @@ AS
 	    
 	Revisions:    
 		- 20190626@Dominic : First commit
+		- 20191016@Louis : #121875 - Minor Changes
   
 */ 
 BEGIN
@@ -20,5 +21,8 @@ BEGIN
 					ELSE (Value - 1.0) * 100
 				END DisplayValue
 	FROM [dbo].[VRValueMapping] (NOLOCK)
-	ORDER BY CASE WHEN ValueID = 0 THEN 100000 ELSE Value END DESC
+	ORDER BY CASE 
+		WHEN ValueID = 0 THEN -100001 
+		WHEN Value = 1 THEN -100000 
+		ELSE Value END ASC
 END
