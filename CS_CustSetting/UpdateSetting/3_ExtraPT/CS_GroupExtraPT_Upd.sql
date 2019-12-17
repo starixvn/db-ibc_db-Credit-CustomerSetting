@@ -203,7 +203,7 @@ BEGIN
 					WHERE SuperId = @CustID
 						AND ProductId IN (1, 3)
 						AND Sporttype = 0 AND SubProduct = ''
-						AND @Today BETWEEN FromDate AND ToDate
+						AND @EffectiveDate BETWEEN FromDate AND ToDate
 				) AS s
 				PIVOT (
 					MAX(ExtraPT)
