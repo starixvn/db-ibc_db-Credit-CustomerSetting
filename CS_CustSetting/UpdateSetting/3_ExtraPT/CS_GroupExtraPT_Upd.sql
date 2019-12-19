@@ -15,7 +15,7 @@ AS
 	DB: DBCUST.CustDB 
 	
 	Revisions:
-		- 20190620@Sophia: initial SP[RedmineID: #114912]
+		- 20190620@Sophia: initial SP [RedmineID: #114912]
 		- 20190926@Percy: Change log's format [Redmine: #118962]
 		 
 	Original: Acc_GroupExtraPTSetting_Upd
@@ -39,9 +39,9 @@ BEGIN
 	
 	DECLARE @today DATETIME, @EndDate DATETIME, @FromDate DATETIME
 	SELECT  @today = CONVERT(DATE, GETDATE()), @EndDate = '9999-12-31'
-	DECLARE @GroupId INT, @GroupName VARCHAR(50), @HeadlineId INT,  @HeadlineUsername	VARCHAR(30)			
+	DECLARE @GroupId INT, @GroupName VARCHAR(50), @HeadlineId INT,  @HeadlineUsername VARCHAR(30)			
 
-	DECLARE @ExtraPTTmp	TABLE(ProductId INT, ExtraPT MONEY) 	
+	DECLARE @ExtraPTTmp	TABLE(ProductId INT, ExtraPT DECIMAL(9,8)) 	
 		
 	IF @EffectiveDate < @today
 	BEGIN			 
@@ -57,9 +57,7 @@ BEGIN
 			@ErrCode = 101,
 			@ErrMsg = N'This account has members already, new effective date cannot be today.'
 		RETURN	
-	
 	END
-	
 		
 	-- get Rate
 	DECLARE @DocHandler INT
@@ -68,7 +66,7 @@ BEGIN
 		
 		INSERT INTO @ExtraPTTmp (ProductId, ExtraPT)
 		SELECT ProductId, ExtraPT
-		FROM OPENXML(@DocHandler, '/ROOT/ExtraPT', 1) WITH (ProductId INT, ExtraPT MONEY) AS Data
+		FROM OPENXML(@DocHandler, '/ROOT/ExtraPT', 1) WITH (ProductId INT, ExtraPT DECIMAL(9,8)) AS Data
 
 		EXEC sp_xml_removedocument @DocHandler
 	END TRY
@@ -76,21 +74,20 @@ BEGIN
 		SELECT ErrCode = 102
 			,ErrMsg = N'Paramter invalid.'
 		RETURN
-		
-	END CATCH;
+	END CATCH
 	
 	--- get group extraPT			
 	SELECT @GroupName = GroupName, @GroupId = GroupId
-	FROM dbo.Acc_GroupExtraPT_Product a WITH (NOLOCK) 
-		INNER JOIN @ExtraPTTmp e 
-			ON  e.ProductID = a.ProductID
+	FROM dbo.Acc_GroupExtraPT_Product a WITH (NOLOCK)
+		INNER JOIN @ExtraPTTmp e
+			ON e.ProductID = a.ProductID
 				AND e.ExtraPT = a.ExtraPT
 	WHERE  	@today BETWEEN a.FromDate AND a.ToDate
 			AND a.ProductID IN (1, 3)
 			AND Sporttype = 0 AND SubProduct = ''
 			AND GroupID BETWEEN 27 AND 42
 	GROUP BY GroupName, GroupId
-	HAVING COUNT(GroupId) = 2 
+	HAVING COUNT(GroupId) = 2
 	
 	IF @GroupName IS NULL OR @GroupID IS NULL
 	BEGIN			 
@@ -99,36 +96,65 @@ BEGIN
 			@ErrMsg = N'Invalid rates.'
 		RETURN		 
 	END
-	 
-	---- Check already existed		
-	SELECT  @FromDate = MIN(FromDate) 
-	FROM dbo.Acc_GroupExtraPTSetting WITH(NOLOCK)
-	WHERE SuperId = @CustID 
-		AND GroupId = @GroupId 
-		AND @EffectiveDate BETWEEN FromDate AND ToDate 
-		AND FromDate <= @today
-	
-	IF @FromDate IS NOT NULL
+
+	-- Check if this super will be change Headline tomorrow --> setting will apply for new Headline
+	DECLARE @IsNewHeadline BIT = 0
+	DECLARE @ExtraPT TABLE (UplineId INT, ProductId INT, ExtraPT DECIMAL(9,8), IsCurrent BIT)
+
+	INSERT INTO @ExtraPT (UplineId, ProductId, ExtraPT, IsCurrent)
+	SELECT UplineId, ProductId, ExtraPT, CASE WHEN @today >= FromDate THEN 1 ELSE 0 END AS IsCurrent
+	FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+	WHERE SuperId = @CustID
+		AND ProductId IN (1, 3)
+		AND Sporttype = 0 AND SubProduct = ''
+		AND FromDate <= DATEADD(DAY, 1, @today) -- current and tomorrow
+		AND ToDate >= @today
+
+	IF EXISTS (SELECT 1 FROM @ExtraPT WHERE IsCurrent = 0) AND EXISTS (SELECT 1 FROM @ExtraPT HAVING COUNT(DISTINCT UplineId) = 2)
 	BEGIN
 		IF NOT EXISTS (
-			SELECT TOP 1 1 FROM dbo.Acc_GroupExtraPTSetting WITH(NOLOCK)
-			WHERE SuperId = @CustID 
-				AND GroupId <> @GroupId
-				AND FromDate > @today
+			SELECT 1
+			FROM @ExtraPT e
+				INNER JOIN @ExtraPTTmp t ON e.ProductId = t.ProductId 
+			WHERE e.IsCurrent = 0
+				AND e.ExtraPT <> t.ExtraPT
 		)
 		BEGIN
-			SELECT
-				@ErrCode = 104,
-				@ErrMsg = N'There is no change to be updated.'
-			RETURN
+			RETURN -- no need change
 		END
-	END	
-	
-	---- Log before update
-		
-	SELECT @HeadlineId = UplineId
-	FROM dbo.CustSuper WITH (NOLOCK) 
-	WHERE CustID = @CustID	
+
+		SELECT TOP 1 @HeadlineId = UplineId FROM @ExtraPT WHERE IsCurrent = 0
+		SELECT @IsNewHeadline = 1
+	END
+	ELSE
+	BEGIN
+		SELECT TOP 1 @FromDate = FromDate, @HeadlineId = UplineId
+		FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+		WHERE SuperId = @CustID
+			AND GroupId = @GroupId
+			AND @EffectiveDate BETWEEN FromDate AND ToDate
+			AND FromDate <= @today
+
+		IF @FromDate IS NOT NULL
+		BEGIN
+			IF NOT EXISTS (
+				SELECT TOP 1 1 FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+				WHERE SuperId = @CustID 
+					AND GroupId <> @GroupId
+					AND FromDate > @today
+			)
+			BEGIN
+				SELECT
+					@ErrCode = 104,
+					@ErrMsg = N'There is no change to be updated.'
+				RETURN
+			END
+		END
+		ELSE
+		BEGIN
+			SELECT @HeadlineId = UplineId FROM dbo.CustSuper WITH (NOLOCK) WHERE custid = @CustID
+		END
+	END
 	
 	SELECT @HeadlineUsername = username FROM dbo.CustInfo WITH (NOLOCK) WHERE CustID = @HeadlineId AND roleid = 0
 
@@ -149,7 +175,8 @@ BEGIN
 					WHERE SuperId = @CustID
 						AND ProductId IN (1, 3)
 						AND Sporttype = 0 AND SubProduct = ''
-						AND @Today BETWEEN FromDate AND ToDate
+						AND ToDate >= @today
+						AND ((@IsNewHeadline = 1 AND FromDate = DATEADD(DAY, 1, @today)) OR (@IsNewHeadline = 0 AND FromDate <= @today))
 				) AS s
 				PIVOT (
 					MAX(ExtraPT)
@@ -162,14 +189,39 @@ BEGIN
 	SELECT @TrackingValue2 = CONVERT(NVARCHAR(MAX), @TrackingValue2_XML)
 
 	---- delete and update lated rows if any
-	DELETE dbo.Acc_GroupExtraPTSetting WITH(ROWLOCK, UPDLOCK)
-	WHERE SuperId = @CustID AND (FromDate > @Today OR FromDate >= @EffectiveDate)
-		AND ToDate >= @today
+	IF @IsNewHeadline = 0
+	BEGIN
+		DELETE dbo.Acc_GroupExtraPTSetting WITH(ROWLOCK, UPDLOCK)
+		WHERE SuperId = @CustID
+			AND ToDate >= @today
+			AND (FromDate > @Today OR FromDate >= @EffectiveDate)
+	END
+	ELSE
+	BEGIN
+		DECLARE @tmpExtraPT TABLE (ProductId INT, Sporttype INT, SubProduct VARCHAR(500), FromDate DATETIME, ToDate DATETIME)
+		INSERT INTO @tmpExtraPT (ProductId, Sporttype, SubProduct, FromDate, ToDate)
+		SELECT ProductId, Sporttype, SubProduct, FromDate, ToDate
+		FROM (
+			SELECT ProductId, Sporttype, SubProduct, FromDate, ToDate
+					,ROW_NUMBER() OVER(PARTITION BY ProductId, Sporttype, SubProduct ORDER BY FromDate) AS RN
+			FROM dbo.Acc_GroupExtraPTSetting WITH (NOLOCK)
+			WHERE SuperId = @CustID
+				AND FromDate >= DATEADD(DAY, 1, @today)
+		) e
+		WHERE RN = 1
+
+		DELETE ag
+		FROM dbo.Acc_GroupExtraPTSetting ag WITH (ROWLOCK, UPDLOCK)
+			INNER JOIN @tmpExtraPT t ON ag.ProductId = t.ProductId AND ag.Sporttype = t.Sporttype AND ag.SubProduct = t.SubProduct
+		WHERE ag.SuperId = @CustID
+			AND (ag.FromDate > t.FromDate OR ag.FromDate = @EffectiveDate)
+	END
 
 	UPDATE dbo.Acc_GroupExtraPTSetting WITH(ROWLOCK, UPDLOCK)
 	SET ToDate = DATEADD(DAY, -1, @EffectiveDate)
-	WHERE SuperId = @CustID AND FromDate <= @EffectiveDate
+	WHERE SuperId = @CustID
 		AND ToDate >= @today
+		AND UplineId = @HeadlineId
 	 
 	----- Insert new setting PT		
 	INSERT INTO dbo.Acc_GroupExtraPTSetting (SuperId, GroupId, GroupName, ProductId, Sporttype, SubProduct, ExtraPT, FromDate, ToDate, UplineId)
@@ -179,8 +231,7 @@ BEGIN
 		@HeadlineId
 	FROM dbo.Acc_GroupExtraPT_Product WITH(NOLOCK)
 	WHERE GroupId = @GroupId
-		  AND @EffectiveDate <= ToDate	
-		  
+		  AND @EffectiveDate <= ToDate
 	
 	--- Log after update	
 	SET @endRun = GETDATE()
