@@ -20,6 +20,7 @@ AS
 								</Root>'		    
 	Revisions:    
 		- 20190626@Dominic : First commit
+		- 20191105@Eden : Esport VR Phase 2 - Integrate Auto Suspend [Redmind: #121876]
   
 */ 
 BEGIN
@@ -110,6 +111,19 @@ BEGIN
 				, @ErrCode = 2  
 		RETURN 
 	END
+
+	--> call sp process update auto suspend
+	EXEC Acc_CustVirtualMultiplier_AutoSuspendUpd
+			@CustID = @CustID,
+			@UserID = @UserID,
+			@IP = @IP,
+			@AutoSuspendXML = @virtualmultiplier,
+			@ErrCode = @ErrCode OUTPUT,
+			@ErrMsg = @ErrMsg OUTPUT
+
+	IF @ErrCode > 0
+		RETURN
+
 	--Get Upline's custIDs
 	IF @CustID > 0 --Not Global
 		INSERT INTO #VRLineCustID(CustID, RoleID)
