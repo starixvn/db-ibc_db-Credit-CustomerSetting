@@ -4,7 +4,9 @@ ALTER PROCEDURE [dbo].[CS_DynamicCustomerInfo_02]
 	@RoleId						TINYINT,
 	@ReasonId					TINYINT = NULL,
 	@Comment					NVARCHAR(300) = NULL,
-
+	@InformedType				TINYINT = 0,
+	@InformedBy					INT = 0,
+	
 	@Action						VARCHAR(50),
 	@AbnomalBetMember			VARCHAR(MAX) = NULL,
 	@DirectMarkedCust			VARCHAR(MAX) = NULL,
@@ -21,7 +23,7 @@ AS
 	Revisions:
 		- 20190808@Elodie: Initial SP [Redmine:#116814]
 		- 20190918@Alvin: Hide indirect marked on Problem Account
-
+		- 20191231@Johnson: update informing status [redmine:#121298]
 	Param's Explanation:
 		@Action: MarkProblem, RemoveReduceBetLimit
 		
@@ -58,7 +60,7 @@ BEGIN
 		FROM custInfo c WITH(NOLOCK)
 		WHERE recommend = @CustID AND c.custid <> @CustId
 	END	
-
+	
 	IF @Action = 'MarkProblem'
 	BEGIN
 		SELECT	@Pos = CASE @RoleId WHEN 4 THEN 3
@@ -165,6 +167,16 @@ BEGIN
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
 											FOR XML PATH('')),1,1,'')
+	END
+	ELSE IF @Action = 'UpdateInformStatus'
+	BEGIN
+		UPDATE cs
+		SET Informed1By = CASE WHEN @InformedType IN (1,3) THEN @InformedBy 	
+								WHEN @InformedType = 0 THEN NULL ELSE Informed1By END,
+			Informed2By = CASE WHEN @InformedType IN (2,3) THEN @InformedBy 
+								WHEN @InformedType = 0 THEN NULL ELSE Informed2By END							
+		FROM dbo.CS_ProblemAccount cs WITH(UPDLOCK,ROWLOCK)
+		WHERE custid IN (SELECT custid FROM #DownlineCust)
 	END
 	DROP TABLE #DownlineCust
 END
