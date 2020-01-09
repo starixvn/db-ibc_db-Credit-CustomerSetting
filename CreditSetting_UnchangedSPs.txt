@@ -1,1 +1,1 @@
-CustSetting\EsportVirtualRate\Acc_CustVirtualMultiplierByUsername_Sel.sql
+CustSetting\Others\CustSettingReference\Acc_CustomerSelRefSport_Bettype.sql
