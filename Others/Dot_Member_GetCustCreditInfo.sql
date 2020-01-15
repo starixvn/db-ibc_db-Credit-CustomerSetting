@@ -1,5 +1,4 @@
-USE [CustDB]
-GO
+/*<info serverAlias="DBCUST-CustDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
 	@custid int,
@@ -21,10 +20,12 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
 	@LeagueGroupID SMALLINT =0
 AS
+/*
 --------------------------------------------------------------------------------
 	-- !!!!!!!!!!!!!!! include UM function !!!!!!!!!!!!!!!!!!!!!!!!
 	-- durning UM time alert function [f_CheckUMStatus]
 	--------------------------------------------------------------------------------
+	Revision:
 	-- 2016-02-18@TWJoe(CUSTDB):  Create SP using mapping table
 	-- 2016-02-25@TWJoe(CUSTDB):  add retuen @DisableBet
 	-- 2016-04-16@TWJoe(CUSTDB):  support combo parlay
@@ -48,6 +49,10 @@ AS
 	-- 2019-05-30@Vivi(CUSTDB): add UM control
 	-- 2019-06-12@TWJoe(CUSTDB): CN88 User Check reject,closed setting from CS_CustomerStatus
 	-- 2019-07-01@VN-Dominic(CUSTDB): Add a new input param @LeagueGroupID,and add a new different logic to get VR setting for E-sports
+	-- 2019-09-10@TWJoe(CUSTDB): LicUser SportType=44 use MaxPerMatch99
+	-- 2019-09-11@TWJoe(CUSTDB): remove DisableOpenTote,Disable151_AU,DisableHorseRacing,Disable152_UK,Disable152_AU,Disable153_AU,DisableLiveCasino,MaxWinLiveCasino,MaxPerMatch44
+	-- 2019-12-13@TWJoe(CUSTDB): remove maxpermatch154,maxpermatch151_OT,MaxPerMatch151_AU,maxpermatch151,maxpermatch152_UK,MaxPerMatch152_AU,MaxPerMatch153_AU
+*/	
 BEGIN
 
 	SET NOCOUNT ON;
@@ -55,10 +60,10 @@ BEGIN
 	DECLARE @UMRejectFlag bit = 0
 
 	DECLARE @username nvarchar(50), @recommend int, @mrecommend int, @srecommend int,
-			@credit money, @MaxWinLiveCasino smallmoney, @MaxPerBall161 money,
+			@credit money, @MaxPerBall161 money,
 			@actualrate float, @currencyname nvarchar(50), @virtualrate smallmoney,
 			@maxpermatch money, @autosuspend bit, @currency int,
-			@closed bit, @reject bit, @DisableBet_Race bit, @DisableBet bit,@MaxWinVendorGame smallmoney=0,
+			@closed bit, @reject bit, @DisableBet bit,@MaxWinVendorGame smallmoney=0,
             @DisBetSetting bit,@DisBetSetting3rd bit = 0,@BonusWalletFlag bit,@False bit=0,@True bit=1,@Zero tinyint=0,@MaxWinLimit smallmoney=0 ,
             @MaxLossLimit money=0,@CN88_reject bit= 1,@CN88_closed bit=1
 	--set @WinMaxBetType=@bettype
@@ -97,7 +102,7 @@ BEGIN
 	select @DisableSport=dbo.f_DisableSport(@sporttype)
 	select @username=ci.username,@recommend=ci.recommend,@mrecommend=ci.mrecommend,@srecommend=ci.srecommend,
            @credit=CASE WHEN @usertype=2 THEN case when (ci.CreditUpdatedDate is null or @Date>=convert(date,ci.CreditUpdatedDate)) then ci.credit else @Zero end ELSE ci.credit END,
-           @MaxWinLiveCasino=ci.MaxWinLiveCasino, @MaxPerBall161=ci.MaxPerBall161,@actualrate=ex.actualrate,@currencyname=ex.currency,@virtualrate=ci.virtualmultiplier,@BonusWalletFlag=isNull(ci.BonusWalletFlag,@False),
+           @MaxPerBall161=ci.MaxPerBall161,@actualrate=ex.actualrate,@currencyname=ex.currency,@virtualrate=ci.virtualmultiplier,@BonusWalletFlag=isNull(ci.BonusWalletFlag,@False),
 					@maxpermatch=IsNull(CASE
 					WHEN @usertype=2 THEN @Zero 
 					WHEN @isparlay=0 and @sporttype=1 THEN maxpermatch 
@@ -107,22 +112,11 @@ BEGIN
 					WHEN @isparlay=0 and @sporttype=8 THEN maxpermatch8
 					WHEN @isparlay=0 and @sporttype=10 THEN maxpermatch10
 					WHEN @isparlay=0 and @sporttype=11 THEN maxpermatch11
-					WHEN @isparlay=0 and @sporttype=151 THEN (case when @PartnerID in (2,3,4) then ci.maxpermatch151_OT when @PartnerID in (5,6) then ci.MaxPerMatch151_AU else ci.maxpermatch151 end)
-					WHEN @isparlay=0 and @sporttype=152 THEN (case when @PartnerID in (101,102) then ci.maxpermatch152_UK when @PartnerID in (103,104) then ci.MaxPerMatch152_AU else @Zero end)
-					WHEN @isparlay=0 and @sporttype=153 THEN (case when @PartnerID in (201,202) then ci.MaxPerMatch153_AU else @Zero end)
 					WHEN @isparlay=0 and @sporttype=161 THEN maxpermatch161
 					WHEN @isparlay=0 and @sporttype=164 and @isLicensee=0 THEN maxpermatch164
 					WHEN @isparlay=0 and @sporttype=164 and @isLicensee=1 THEN maxpermatch161
 					WHEN @isparlay=0 and @sporttype=32 THEN maxpermatch2
-					WHEN @isparlay=0 and @sporttype=154 THEN maxpermatch154
-					--WHEN @isparlay=0 and @sporttype=180 THEN maxpermatch180 --20170719 VS change to use DCS
-					--WHEN @isparlay=0 and @sporttype=181 THEN maxpermatch181
-					--WHEN @isparlay=0 and @sporttype=182 THEN maxpermatch182
-					--WHEN @isparlay=0 and @sporttype=183 THEN maxpermatch183
-					--WHEN @isparlay=0 and @sporttype=184 THEN maxpermatch184
-					--WHEN @isparlay=0 and @sporttype=185 THEN maxpermatch185
-					--WHEN @isparlay=0 and @sporttype=186 THEN maxpermatch186
-					WHEN @isparlay=0 and @sporttype=44 THEN MaxPerMatch44
+					WHEN @isparlay=0 and @sporttype=44 THEN MaxPerMatch99
 					WHEN @isparlay=1 and @sporttype=1 and @isLicensee=0 THEN MaxPerMatch1MP
 					WHEN @isparlay=1 and @sporttype=1 and @isLicensee=1 THEN maxpermatch
 					WHEN @isparlay=1 and @sporttype=99 THEN MaxPerMatch99MP
@@ -136,16 +130,11 @@ BEGIN
 										when @bettype=10 then ci.DisableOutright
 										when @StructureVerBetSetting='DCS' then @DisBetSetting
 										when @sporttype in (161,164) then ci.DisableNumber
-										when @sporttype=162 then ci.DisableLiveCasino
 										when @sporttype=43 then ci.DisableEsports
-										--when @sporttype>=180 and @sporttype<=186 then ci.DisableVirtualSports
 										when @sporttype=1 and @bettype in (801,802,803,804,805,806) then ci.DisableSuperLive
 										else @False end,@True) | @DisableSport,
 					@closed=CASE WHEN @usertype=2 THEN isnull(ci.closed,@False) | @CN88_closed ELSE isnull(ci.closed,@False) END,
-					@reject= case when @DisableBet=@False then CASE WHEN @usertype=2 THEN @CN88_reject ELSE isnull(ci.reject,@False) END else @DisableBet end,
-					@DisableBet_Race=(case @sporttype when 151 then (case when @PartnerID in (2,3,4) then ci.DisableOpenTote when @PartnerID in (5,6) then ci.Disable151_AU else ci.DisableHorseRacing end)
-									when 152 THEN (case when @PartnerID in (101,102) then ci.Disable152_UK when @PartnerID in (103,104) then ci.Disable152_AU else @True end)
-									when 153 THEN (case when @PartnerID in (201,202) then ci.Disable153_AU else @True end) else @True end)
+					@reject= case when @DisableBet=@False then CASE WHEN @usertype=2 THEN @CN88_reject ELSE isnull(ci.reject,@False) END else @DisableBet end
 					from custinfo as ci with (nolock) join exchange as ex with (nolock)
 		on  ci.currency = ex.exchangeid where ci.custid=@custid 
 	
@@ -162,7 +151,14 @@ BEGIN
 		END
 	END
 	------------------------------------------------
-		
+	IF @sporttype IN (44) AND @isLicensee = 0 --MuayThai for Credit
+	BEGIN
+		SELECT  @MaxperMatch = ISNULL(MaxPerMatch, @Zero)
+		FROM dbo.CustBetSetting3rd_Member bs WITH (NOLOCK)
+		WHERE bs.custid = @custid
+		   AND bs.BetType = 3
+		   AND bs.SportType = @Sporttype
+	END		
 
 	declare @new_virtualrate float = 1
 	if @bettype<>0
@@ -206,10 +202,9 @@ BEGIN
 	--	end
 	--END
 	SELECT @username username, @recommend recommend, @mrecommend mrecommend, @srecommend srecommend,
-			@credit credit, @MaxWinLiveCasino MaxWinLiveCasino, @MaxPerBall161 MaxPerBall161,
+			@credit credit, @MaxPerBall161 MaxPerBall161,
 			@actualrate actualrate, @currencyname currencyname, @virtualrate virtualrate,
 			@maxpermatch maxpermatch, @autosuspend autosuspend, @currency currency,
-			@closed closed, @reject reject, @DisableBet_Race DisableBet_Race,@DisableBet disabledBet,@DisBetSetting3rd DisBetSetting3rd,@BonusWalletFlag BonusWalletFlag,
+			@closed closed, @reject reject, @DisableBet disabledBet,@DisBetSetting3rd DisBetSetting3rd,@BonusWalletFlag BonusWalletFlag,
             @MaxWinLimit MaxWinLimit, @MaxLossLimit MaxLossLimit
 END
-
