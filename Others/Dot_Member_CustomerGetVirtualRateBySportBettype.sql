@@ -4,6 +4,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @SportType			SMALLINT,
                     @BetType			SMALLINT,
                     @isLive				BIT,
+					@IsLicensee			BIT,
 					@LeagueGroupID		SMALLINT = 0,
 					@LeagueID			SMALLINT = 0,
                     @virtualMultiplier	SMALLMONEY	OUT
@@ -18,12 +19,13 @@ AS
 		- 20190701@VN-Dominic: Add a new input param @LeagueGroupID
 					, and add a new different logic to get VR setting for E-sports
 		- 20200116@VN-Elodie: Add a new different logic to get VR setting for Soccer
+		- 20200203@VN-Elodie: Apply Currency Modifier
 
     Parameter's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @VRLeagueGroupID SMALLINT
+	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY
 
 	IF @SportType NOT IN (43,1) --Not E-sports, Soccers
 	BEGIN
@@ -163,4 +165,16 @@ BEGIN
 
 	IF @virtualMultiplier IS NULL
 		SELECT @virtualMultiplier = 1
+
+	--Apply Currency Modifier
+	IF @IsLicensee = 0
+	BEGIN
+		SELECT @CurrencyModifier = CurrencyModifier FROM dbo.CustSuper WITH (NOLOCK) WHERE custid = @CustID
+	END
+	ELSE
+	BEGIN
+		SELECT @CurrencyModifier = CurrencyModifier FROM dbo.Dep_CustSuper WITH (NOLOCK) WHERE custid = @CustID
+	END
+
+	SELECT @virtualMultiplier = @virtualMultiplier * @CurrencyModifier
 END

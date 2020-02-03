@@ -18,7 +18,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @WinMaxBetType smallint = 0,
     @Date Date = null,
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
-	@LeagueGroupID SMALLINT =0
+	@LeagueGroupID SMALLINT =0,
+	@LeagueID SMALLINT =0
 AS
 /*
 --------------------------------------------------------------------------------
@@ -52,6 +53,10 @@ AS
 	-- 2019-09-10@TWJoe(CUSTDB): LicUser SportType=44 use MaxPerMatch99
 	-- 2019-09-11@TWJoe(CUSTDB): remove DisableOpenTote,Disable151_AU,DisableHorseRacing,Disable152_UK,Disable152_AU,Disable153_AU,DisableLiveCasino,MaxWinLiveCasino,MaxPerMatch44
 	-- 2019-12-13@TWJoe(CUSTDB): remove maxpermatch154,maxpermatch151_OT,MaxPerMatch151_AU,maxpermatch151,maxpermatch152_UK,MaxPerMatch152_AU,MaxPerMatch153_AU
+	-- 10191227@Eden: Integrate VR autosuspend [Redmine: #121876]
+	-- 20200116@VN-Elodie: Add a new different logic to get VR setting for Soccer
+	-- 20200203@VN-Elodie: Apply Currency Modifier
+
 */	
 BEGIN
 
@@ -135,8 +140,9 @@ BEGIN
 										else @False end,@True) | @DisableSport,
 					@closed=CASE WHEN @usertype=2 THEN isnull(ci.closed,@False) | @CN88_closed ELSE isnull(ci.closed,@False) END,
 					@reject= case when @DisableBet=@False then CASE WHEN @usertype=2 THEN @CN88_reject ELSE isnull(ci.reject,@False) END else @DisableBet end
-					from custinfo as ci with (nolock) join exchange as ex with (nolock)
-		on  ci.currency = ex.exchangeid where ci.custid=@custid 
+		from custinfo as ci with (nolock) 
+			join exchange as ex with (nolock) on  ci.currency = ex.exchangeid 
+		where ci.custid=@custid 
 	
 	
 	------------------------------------------------
@@ -160,21 +166,66 @@ BEGIN
 		   AND bs.SportType = @Sporttype
 	END		
 
-	declare @new_virtualrate float = 1
+	DECLARE @new_virtualrate FLOAT = 1	
+
 	if @bettype<>0
 	begin
-		IF @sporttype = 43 OR @virtualrate=1 --For Esports
+		IF @sporttype = 43 --For Esports, get VR2
 		BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
 									, @sporttype = @sporttype_vrate
 									, @bettype = @bettype_vrate
 									, @isLive = @liveindicator
-									, @LeagueGroupID = @LeagueGroupID
+									, @LeagueGroupID = @LeagueGroupID									
+									, @virtualMultiplier = @new_virtualrate out
+		END
+		ELSE IF @sporttype = 1 --For Soccer
+		BEGIN
+			DECLARE @IsApplyVR2 BIT
+			SELECT @IsApplyVR2 = ISNULL(IsApplied,0) FROM VRLeague WITH (NOLOCK) WHERE LeagueId = @LeagueID
+
+			IF @IsApplyVR2 = 1 --Get VR2
+			BEGIN
+				EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
+										, @sporttype = @sporttype
+										, @bettype = @bettype
+										, @isLive = @liveindicator
+										, @isLicensee = @isLicensee
+										, @LeagueGroupID = @LeagueGroupID
+										, @LeagueID = @LeagueID
+										, @virtualMultiplier = @new_virtualrate OUT
+            END
+			IF @IsApplyVR2 = 0 AND @virtualrate = 1 -- Get VR1
+			BEGIN
+				EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
+										, @sporttype = @sporttype_vrate
+										, @bettype = @bettype_vrate
+										, @isLive = @liveindicator
+										, @virtualMultiplier = @new_virtualrate out
+			END
+		END
+		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
+		BEGIN
+			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
+									, @sporttype = @sporttype_vrate
+									, @bettype = @bettype_vrate
+									, @isLive = @liveindicator																	
 									, @virtualMultiplier = @new_virtualrate out
 		END
 
 		set @virtualrate = isnull(@new_virtualrate,1)
 	end
+
+	--Get E-Sport Autosuspend 
+	IF @sporttype = 43 AND @isparlay = 0
+	BEGIN
+		SET @autosuspend = @False
+
+		SELECT @autosuspend = t.IsVRAutoSuspend 
+		FROM [dbo].[f_GetVRAutosuspendStatus_xtest](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
+
+		SET @autosuspend = ISNULL(@autosuspend,@False)
+	END
 	
 	--Get data from DCS structure
 	--IF (@StructureVerBetSetting='DCS')
