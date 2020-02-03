@@ -222,7 +222,7 @@ BEGIN
 		SET @autosuspend = @False
 
 		SELECT @autosuspend = t.IsVRAutoSuspend 
-		FROM [dbo].[f_GetVRAutosuspendStatus_xtest](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
+		FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
 
 		SET @autosuspend = ISNULL(@autosuspend,@False)
 	END
