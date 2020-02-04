@@ -25,7 +25,7 @@ AS
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY
+	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY, @srecommend INT
 
 	IF @SportType NOT IN (43,1) --Not E-sports, Soccers
 	BEGIN
@@ -166,14 +166,15 @@ BEGIN
 	IF @virtualMultiplier IS NULL
 		SELECT @virtualMultiplier = 1
 
+	SELECT @srecommend = srecommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID
 	--Apply Currency Modifier
 	IF @IsLicensee = 0
 	BEGIN
-		SELECT @CurrencyModifier = CurrencyModifier FROM dbo.CustSuper WITH (NOLOCK) WHERE custid = @CustID
+		SELECT @CurrencyModifier = CurrencyModifier FROM dbo.CustSuper WITH (NOLOCK) WHERE custid = @srecommend
 	END
 	ELSE
 	BEGIN
-		SELECT @CurrencyModifier = CurrencyModifier FROM dbo.Dep_CustSuper WITH (NOLOCK) WHERE custid = @CustID
+		SELECT @CurrencyModifier = CurrencyModifier FROM dbo.Dep_CustSuper WITH (NOLOCK) WHERE custid = @srecommend
 	END
 
 	SELECT @virtualMultiplier = @virtualMultiplier * @CurrencyModifier
