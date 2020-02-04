@@ -19,7 +19,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @Date Date = null,
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
 	@LeagueGroupID SMALLINT =0,
-	@LeagueID SMALLINT =0
+	@LeagueID INT =0
 AS
 /*
 --------------------------------------------------------------------------------
