@@ -192,7 +192,7 @@ BEGIN
 										, @isLive = @liveindicator
 										, @isLicensee = @isLicensee
 										, @LeagueGroupID = @LeagueGroupID
-										, @LeagueID = @LeagueID
+										, @IsApplyVR2 = @IsApplyVR2
 										, @virtualMultiplier = @new_virtualrate OUT
             END
 			IF @IsApplyVR2 = 0 AND @virtualrate = 1 -- Get VR1

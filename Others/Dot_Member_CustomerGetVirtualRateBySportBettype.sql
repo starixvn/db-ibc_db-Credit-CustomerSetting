@@ -6,7 +6,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @isLive				BIT,
 					@IsLicensee			BIT,
 					@LeagueGroupID		SMALLINT = 0,
-					@LeagueID			SMALLINT = 0,
+					@IsApplyVR2			BIT = 0,
                     @virtualMultiplier	SMALLMONEY	OUT
                     
 AS
@@ -95,9 +95,6 @@ BEGIN
 	END
 	ELSE IF @SportType = 1
 	BEGIN --For Soccer
-		DECLARE @IsApplyVR2 BIT
-		SELECT @IsApplyVR2 = ISNULL(IsApplied,0) FROM VRLeague WITH (NOLOCK) WHERE LeagueId = @LeagueID
-
 		IF @IsApplyVR2 = 0 --Get VR1
 		BEGIN
 			SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
