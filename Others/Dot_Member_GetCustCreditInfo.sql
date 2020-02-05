@@ -19,7 +19,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @Date Date = null,
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
 	@LeagueGroupID SMALLINT =0,
-	@IsApplyVR2 BIT =0
+	@IsApplyVR2 BIT = 0
 AS
 /*
 --------------------------------------------------------------------------------
@@ -177,8 +177,8 @@ BEGIN
 
 	DECLARE @new_virtualrate FLOAT = 1	
 
-	if @bettype<>0
-	begin
+	IF @bettype<>0
+	BEGIN
 		IF @sporttype = 43 --For Esports, get VR2
 		BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
@@ -186,7 +186,7 @@ BEGIN
 									, @bettype = @bettype_vrate
 									, @isLive = @liveindicator
 									, @LeagueGroupID = @LeagueGroupID									
-									, @virtualMultiplier = @new_virtualrate out
+									, @virtualMultiplier = @new_virtualrate OUT
 		END
 		ELSE IF @sporttype = 1 --For Soccer
 		BEGIN
@@ -207,7 +207,7 @@ BEGIN
 										, @sporttype = @sporttype_vrate
 										, @bettype = @bettype_vrate
 										, @isLive = @liveindicator
-										, @virtualMultiplier = @new_virtualrate out
+										, @virtualMultiplier = @new_virtualrate OUT
 			END
 		END
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
@@ -216,10 +216,10 @@ BEGIN
 									, @sporttype = @sporttype_vrate
 									, @bettype = @bettype_vrate
 									, @isLive = @liveindicator																	
-									, @virtualMultiplier = @new_virtualrate out
+									, @virtualMultiplier = @new_virtualrate OUT
 		END
 
-		set @virtualrate = isnull(@new_virtualrate,1)
+		SET @virtualrate = isnull(@new_virtualrate,1)
 	end
 
 	--Get E-Sport Autosuspend 
