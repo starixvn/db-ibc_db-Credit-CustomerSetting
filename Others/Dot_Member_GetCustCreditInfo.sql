@@ -188,11 +188,12 @@ BEGIN
 									, @LeagueGroupID = @LeagueGroupID									
 									, @virtualMultiplier = @new_virtualrate OUT
 		END
-		ELSE IF @sporttype = 1 --For Soccer
+		ELSE IF @sporttype = 1 AND @bettype NOT BETWEEN 801 AND 806 --For Soccer, exclude SuperLive
 		BEGIN
 			IF @IsApplyVR2 = 1 --Get VR2
+				OR (@IsApplyVR2 = 0 AND @virtualrate = 1) -- Get VR1 
 			BEGIN
-				EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
+				EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid									
 										, @sporttype = @sporttype_vrate
 										, @bettype = @bettype_vrate
 										, @OriginalSportType = @sporttype
@@ -202,15 +203,7 @@ BEGIN
 										, @LeagueGroupID = @LeagueGroupID
 										, @IsApplyVR2 = @IsApplyVR2
 										, @virtualMultiplier = @new_virtualrate OUT
-			END
-			IF @IsApplyVR2 = 0 AND @virtualrate = 1 -- Get VR1
-			BEGIN
-				EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
-										, @sporttype = @sporttype_vrate
-										, @bettype = @bettype_vrate
-										, @isLive = @liveindicator
-										, @virtualMultiplier = @new_virtualrate OUT
-			END
+			END			
 		END
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
 		BEGIN
