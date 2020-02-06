@@ -97,6 +97,7 @@ BEGIN
 	END
 	ELSE IF @SportType = 1
 	BEGIN --For Soccer
+		SELECT @virtualMultiplier = NULL
 		IF @IsApplyVR2 = 0 --Get VR1
 		BEGIN
 			SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
