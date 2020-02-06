@@ -3,6 +3,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @CustID				INT,
                     @SportType			SMALLINT,
                     @BetType			SMALLINT,
+					@OriginalSportType	SMALLINT,
+                    @OriginalBetType	SMALLINT,
                     @isLive				BIT,
 					@IsLicensee			BIT,
 					@LeagueGroupID		SMALLINT = 0,
@@ -118,16 +120,16 @@ BEGIN
 			--then get setting on sport level
 			IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy WITH (NOLOCK)
 					WHERE VRLeagueGroupID=@VRLeagueGroupID 
-					AND SportType=@SportType
-					AND BetType = @Bettype)
+					AND SportType=@OriginalSportType
+					AND BetType = @OriginalBetType)
 				SELECT @VRLeagueGroupID = -1, @Bettype = -1 --Sport Level
 
 			--Get VR multiplier
 			;WITH VR_Hierachy AS (
 				SELECT LevelID, ParentLevelID, 1 OrderNo
 				FROM VRSettingHierarchy h WITH (NOLOCK)
-				WHERE SportType = @SportType 
-					AND BetType = @Bettype
+				WHERE SportType = @OriginalSportType 
+					AND BetType = @OriginalBetType
 					AND VRLeagueGroupID = @VRLeagueGroupID
 				UNION ALL
 				SELECT c.LevelID, c.ParentLevelID, p.OrderNo + 1  OrderNo
@@ -157,6 +159,19 @@ BEGIN
 			INNER JOIN VRValueMapping vnonlive WITH (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
 			WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0 --Exclude 'Follow parent'
 			ORDER BY c.RoleID,h.OrderNo
+
+			IF @virtualMultiplier IS NULL --Get VR1
+			BEGIN
+				SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
+				FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
+				INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
+						ON  cvs.seqNo = pvs.seqNo
+				WHERE       cvs.custid = @CustID
+						AND pvs.sporttype = @SportType
+						AND pvs.bettype = @BetType
+						AND pvs.islive = @isLive   
+						AND pvs.isActive=1 
+			END
 		END		
 	END
 

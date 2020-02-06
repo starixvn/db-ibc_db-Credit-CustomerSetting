@@ -193,8 +193,10 @@ BEGIN
 			IF @IsApplyVR2 = 1 --Get VR2
 			BEGIN
 				EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
-										, @sporttype = @sporttype
-										, @bettype = @bettype
+										, @sporttype = @sporttype_vrate
+										, @bettype = @bettype_vrate
+										, @OriginalSportType = @sporttype
+										, @OriginalBetType = @bettype
 										, @isLive = @liveindicator
 										, @isLicensee = @isLicensee
 										, @LeagueGroupID = @LeagueGroupID
