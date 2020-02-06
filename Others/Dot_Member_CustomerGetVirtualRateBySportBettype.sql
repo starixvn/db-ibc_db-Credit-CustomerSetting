@@ -122,7 +122,7 @@ BEGIN
 					WHERE VRLeagueGroupID=@VRLeagueGroupID 
 					AND SportType=@OriginalSportType
 					AND BetType = @OriginalBetType)
-				SELECT @VRLeagueGroupID = -1, @Bettype = -1 --Sport Level
+				SELECT @VRLeagueGroupID = -1, @OriginalBetType = -1 --Sport Level
 
 			--Get VR multiplier
 			;WITH VR_Hierachy AS (
