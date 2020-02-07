@@ -29,6 +29,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@AutoSuspendOtherSports		BIT				= 0
 				,	@rowcount					INT				= 0		OUTPUT
 				,	@SystemID TINYINT=1
+				--20200206@Tiara: New VR structure for Soccer [Redmine: #126243]
+				,	@Sporttype					INT				= NULL 
 AS 
 /*
 	Created:	Jamie
@@ -60,6 +62,7 @@ AS
 		- 20190701@Dominic: Update VR setting of an account for Esport  [Redmind: #114830]
 		- 20190906@Winnie: Colossus Bet - Miss enable product [Redmind: #119642]
 		- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20200206@Tiara: New VR structure for Soccer [Redmine: #126243]
 		- 20200218@Eden : Web_pass_redundant_bettypes_when_updating_bettype_group_value_and_auto_suspend [Redmind: #128635]
 
 	Param's Explanation:
@@ -80,37 +83,45 @@ AS
 			+ 'GoldDeluxe': Gold Deluxe status
 			+ 'SuperLive': Super Live status
 			+ 'EnableVirtualMultiplier': Enable Virtual Rate [@EnableVirtualMultiplier]
-			+ 'EsportVRUpd': Update VR setting of an account for Esport  [@virtualmultiplier] - Redmine: #114830
+			+ 'NewVRUpd': Update VR setting of an account for Esport  [@virtualmultiplier] - Redmine: #114830 and for Soccer [Redmine: #126243]
    
 */
 SET NOCOUNT ON; 
 
-IF	@action = 'EsportVRUpd'
+IF	@action = 'NewVRUpd'
 BEGIN
 	CREATE TABLE #New_VRCustSetting (LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
-	DECLARE @DocHandlerEsport INT	
+	CREATE TABLE #Old_VRCustSetting (CustID INT, LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
+	
+	INSERT INTO #Old_VRCustSetting(CustID, LevelID, ValueIDLive, ValueIDNonLive)
+	SELECT VR.CustID, VR.LevelID, ValueIDLive, ValueIDNonLive
+	FROM VRSettingHierarchy H WITH (NOLOCK) INNER JOIN VRCustSetting VR WITH (NOLOCK) ON H.LevelID = VR.LevelID
+	WHERE CustID = @CustID
+		AND H.SportType = @Sporttype
+
+	DECLARE @DocHandlerSport INT	
 
 	IF @VirtualMultiplier <> ''
 	BEGIN				
-		EXEC sp_xml_preparedocument @DocHandlerEsport OUTPUT, @virtualmultiplier
+		EXEC sp_xml_preparedocument @DocHandlerSport OUTPUT, @virtualmultiplier
 
 		INSERT INTO #New_VRCustSetting(LevelID, ValueIDLive, ValueIDNonLive)
 		SELECT Data.LevelID,
 			Data.ValueIDLive,
 			Data.ValueIDNonLive
-		FROM OPENXML (@DocHandlerEsport, '/Root/Row',1) 
+		FROM OPENXML (@DocHandlerSport, '/Root/Row',1) 
 		WITH (
 			LevelID	INT,
 			ValueIDLive TINYINT,
 			ValueIDNonLive TINYINT	
 		) AS Data
 
-		EXEC sp_xml_removedocument @DocHandlerEsport
+		EXEC sp_xml_removedocument @DocHandlerSport
 	END
 
 	DELETE FROM #New_VRCustSetting WHERE ValueIDLive = 0 AND ValueIDNonLive = 0
 
-	IF(dbo.f_CheckRepTable('VRCustSetting') = 1)
+	IF(dbo.f_CheckRepTable('VRCustSetting') = 1 AND dbo.f_CheckRepTable('VRSettingHierarchy') = 1)
 	BEGIN
 		UPDATE main
 		SET main.ValueIDLIVE = vr.ValueIDLive
@@ -118,9 +129,14 @@ BEGIN
 		FROM VRCustSetting main
 			INNER JOIN #New_VRCustSetting vr ON main.CustID = @custid AND vr.LevelID = main.LevelID
 
-		DELETE VRCustSetting
+		DELETE V
+		FROM VRCustSetting V WITH (ROWLOCK) INNER JOIN VRSettingHierarchy H WITH (NOLOCK) ON V.LevelID = H.LevelID
 		WHERE custid = @custid
-			AND LevelID NOT IN (SELECT LevelID FROM #New_VRCustSetting)
+			AND V.LevelID NOT IN
+							(SELECT DISTINCT O.LEVELID
+							FROM #Old_VRCustSetting O WITH (NOLOCK) INNER JOIN #New_VRCustSetting N WITH (NOLOCK) ON O.LevelID =N.LevelID)
+			AND H.SportType = @Sporttype
+			
 
 		INSERT INTO [dbo].[VRCustSetting]
            ([CustID]
