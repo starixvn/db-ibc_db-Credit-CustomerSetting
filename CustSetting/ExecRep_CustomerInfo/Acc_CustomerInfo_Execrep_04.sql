@@ -91,14 +91,6 @@ SET NOCOUNT ON;
 IF	@action = 'NewVRUpd'
 BEGIN
 	CREATE TABLE #New_VRCustSetting (LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
-	CREATE TABLE #Old_VRCustSetting (CustID INT, LevelID INT, ValueIDLive TINYINT, ValueIDNonLive TINYINT)
-	
-	INSERT INTO #Old_VRCustSetting(CustID, LevelID, ValueIDLive, ValueIDNonLive)
-	SELECT VR.CustID, VR.LevelID, ValueIDLive, ValueIDNonLive
-	FROM VRSettingHierarchy H WITH (NOLOCK) INNER JOIN VRCustSetting VR WITH (NOLOCK) ON H.LevelID = VR.LevelID
-	WHERE CustID = @CustID
-		AND H.SportType = @Sporttype
-
 	DECLARE @DocHandlerSport INT	
 
 	IF @VirtualMultiplier <> ''
@@ -123,6 +115,7 @@ BEGIN
 
 	IF(dbo.f_CheckRepTable('VRCustSetting') = 1 AND dbo.f_CheckRepTable('VRSettingHierarchy') = 1)
 	BEGIN
+
 		UPDATE main
 		SET main.ValueIDLIVE = vr.ValueIDLive
 			, main.ValueIDNonLIVE = vr.ValueIDNonLIVE
@@ -133,11 +126,9 @@ BEGIN
 		FROM VRCustSetting V WITH (ROWLOCK) INNER JOIN VRSettingHierarchy H WITH (NOLOCK) ON V.LevelID = H.LevelID
 		WHERE custid = @custid
 			AND V.LevelID NOT IN
-							(SELECT DISTINCT O.LEVELID
-							FROM #Old_VRCustSetting O WITH (NOLOCK) INNER JOIN #New_VRCustSetting N WITH (NOLOCK) ON O.LevelID =N.LevelID)
+							(SELECT LevelID FROM #New_VRCustSetting)
 			AND H.SportType = @Sporttype
 			
-
 		INSERT INTO [dbo].[VRCustSetting]
            ([CustID]
            ,[LevelID]
