@@ -120,7 +120,9 @@ BEGIN
 		SET main.ValueIDLIVE = vr.ValueIDLive
 			, main.ValueIDNonLIVE = vr.ValueIDNonLIVE
 		FROM VRCustSetting main
-			INNER JOIN #New_VRCustSetting vr ON main.CustID = @custid AND vr.LevelID = main.LevelID
+			INNER JOIN #New_VRCustSetting VR ON main.CustID = @custid AND VR.LevelID = main.LevelID
+			INNER JOIN VRSettingHierarchy H WITH (NOLOCK) ON VR.LevelID = H.LevelID
+		WHERE H.SportType = @Sporttype
 
 		DELETE V
 		FROM VRCustSetting V WITH (ROWLOCK) INNER JOIN VRSettingHierarchy H WITH (NOLOCK) ON V.LevelID = H.LevelID
@@ -135,11 +137,13 @@ BEGIN
            ,[ValueIDLIVE]
            ,[ValueIDNonLIVE])
 		SELECT @custid [CustID]
-           ,[LevelID]
-           ,[ValueIDLIVE]
-           ,[ValueIDNonLIVE]
-		FROM #New_VRCustSetting
-		WHERE [LevelID] NOT IN (SELECT LevelID FROM [VRCustSetting] WHERE CustID=@custid)
+           ,VR.[LevelID]
+           ,VR.[ValueIDLIVE]
+           ,VR.[ValueIDNonLIVE]
+		FROM #New_VRCustSetting VR WITH (NOLOCK) INNER JOIN VRSettingHierarchy H WITH (NOLOCK) ON VR.LevelID = H.LevelID
+		WHERE VR.[LevelID] NOT IN (SELECT LevelID FROM [VRCustSetting] WITH (NOLOCK) WHERE CustID=@custid)
+			AND H.SportType = @Sporttype
+			
 	END
 END
 ELSE IF	@action = 'VirtualMultiplier'
