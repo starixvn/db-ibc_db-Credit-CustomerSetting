@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[CS_CustomerIns_Com]
 	@custid						INT OUTPUT,
 	@username					VARCHAR(30),
@@ -42,6 +42,7 @@ AS
 		- 20100627@Elodie: Different PT for Headline [Redmine: #114912]
 		- 20190627@Elodie: Apply currency min bet constrain for Bet Setting [Redmine:#115126]
 		- 20190708@Johnson: set pwdexpiry = yesterday [redmine:#116088]
+		- 20190926@Percy: Change Headline's Super [RedmineID: #118962]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Create super successfully.
@@ -147,14 +148,13 @@ BEGIN
 	DECLARE @EffectiveDate DATETIME = CONVERT(DATE,GETDATE()), @GroupName VARCHAR(50)
 	
 	EXEC dbo.CS_GroupExtraPT_Ins
-		@CustID = @custid,
-		@HeadlineId = @HeadlineId,
-		@EffectiveDate = @EffectiveDate,
-		@UserID = @Creator,
-		@IP = @IP,
-		@GroupName = @GroupName OUTPUT,
-		@ErrCode = @ErrCode OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT 
+		@SuperId		= @custid
+		,@HeadlineId	= @HeadlineId
+		,@EffectiveDate	= @EffectiveDate
+		,@GroupId		= 0
+		,@GroupName		= @GroupName OUTPUT
+		,@ErrCode		= @ErrCode OUTPUT
+		,@ErrMsg		= @ErrMsg OUTPUT
 
 	IF @ErrCode > 0
 	BEGIN
@@ -185,15 +185,11 @@ BEGIN
 		EXEC CS_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 		EXEC dbo.CS_GroupExtraPT_Ins
-			@CustID = @custid,
-			@HeadlineId = NULL,
-			@EffectiveDate = NULL,
-			@UserID = NULL,
-			@IP = NULL,
-			@IsRollBack = 1,
-			@GroupName = @GroupName OUTPUT,
-			@ErrCode = @ErrCode OUTPUT,
-			@ErrMsg = @ErrMsg OUTPUT 
+			@SuperId		= @custid
+			,@HeadlineId	= NULL
+			,@EffectiveDate	= NULL
+			,@GroupId		= NULL
+			,@IsRollBack	= 1
 		RETURN
 	END	
 		
