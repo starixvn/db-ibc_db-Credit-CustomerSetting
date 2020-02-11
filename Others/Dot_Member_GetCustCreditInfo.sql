@@ -179,16 +179,7 @@ BEGIN
 
 	IF @bettype<>0
 	BEGIN
-		IF @sporttype = 43 --For Esports, get VR2
-		BEGIN
-			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
-									, @sporttype = @sporttype_vrate
-									, @bettype = @bettype_vrate
-									, @isLive = @liveindicator
-									, @LeagueGroupID = @LeagueGroupID									
-									, @virtualMultiplier = @new_virtualrate OUT
-		END
-		ELSE IF @sporttype = 1 
+		IF @sporttype = 1 
 		BEGIN
 			IF @bettype NOT BETWEEN 801 AND 806 --For Soccer, exclude SuperLive
 			BEGIN
@@ -204,16 +195,31 @@ BEGIN
 											, @isLicensee = @isLicensee
 											, @LeagueGroupID = @LeagueGroupID
 											, @IsApplyVR2 = @IsApplyVR2
+											, @srecommend = @srecommend
 											, @virtualMultiplier = @new_virtualrate OUT
 				END
 			END			
 		END
+		ELSE IF @sporttype = 43 --For Esports, get VR2
+		BEGIN
+			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
+									, @sporttype = @sporttype_vrate
+									, @bettype = @bettype_vrate
+									, @isLive = @liveindicator
+									, @isLicensee = @isLicensee
+									, @LeagueGroupID = @LeagueGroupID
+									, @srecommend = @srecommend								
+									, @virtualMultiplier = @new_virtualrate OUT
+		END
+
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
 		BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
 									, @sporttype = @sporttype_vrate
 									, @bettype = @bettype_vrate
-									, @isLive = @liveindicator																	
+									, @isLive = @liveindicator	
+									, @isLicensee = @isLicensee	
+									, @srecommend = @srecommend															
 									, @virtualMultiplier = @new_virtualrate OUT
 		END
 

@@ -1,4 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @CustID				INT,
                     @SportType			SMALLINT,
@@ -6,9 +7,10 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@OriginalSportType	SMALLINT = 0,
                     @OriginalBetType	SMALLINT = 0,
                     @isLive				BIT,
-					@IsLicensee			BIT = 0,
+					@IsLicensee			BIT,
 					@LeagueGroupID		SMALLINT = 0,
 					@IsApplyVR2			BIT = 0,
+					@srecommend         INT = 0,
                     @virtualMultiplier	SMALLMONEY	OUT
                     
 AS
@@ -27,75 +29,9 @@ AS
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY, @srecommend INT
+	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00
 
-	IF @SportType NOT IN (43,1) --Not E-sports, Soccers
-	BEGIN
-		SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
-		FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
-		INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
-				ON  cvs.seqNo = pvs.seqNo
-		WHERE       cvs.custid = @CustID
-				AND pvs.sporttype = @SportType
-				AND pvs.bettype = @BetType
-				AND pvs.islive = @isLive   
-				AND pvs.isActive=1  
-	END
-	ELSE IF @SportType = 43
-	BEGIN --For E-sports
-		--Base on @LeagueGroupID, get configured VRLeagueGroupID 
-		SELECT @VRLeagueGroupID = VRLeagueGroupID
-		FROM VRLeagueGroupMapping WITH (NOLOCK)
-		WHERE LeagueGroupID = @LeagueGroupID
-
-		--If LeagueGroupID and bettype are not configured for VR setting
-		--then get setting on sport level
-		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy WITH (NOLOCK)
-				WHERE VRLeagueGroupID=@VRLeagueGroupID 
-				AND SportType=@SportType
-				AND BetType = @Bettype)
-			SELECT @VRLeagueGroupID = -1, @Bettype = -1 --Sport Level
-
-		--Get VR multiplier
-		;WITH VR_Hierachy AS (
-			SELECT LevelID, ParentLevelID, 1 OrderNo
-			FROM VRSettingHierarchy h WITH (NOLOCK)
-			WHERE SportType = @SportType 
-				AND BetType = @Bettype
-				AND VRLeagueGroupID = @VRLeagueGroupID
-			UNION ALL
-			SELECT c.LevelID, c.ParentLevelID, p.OrderNo + 1  OrderNo
-			FROM VRSettingHierarchy c WITH (NOLOCK)
-				INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion, recursion depth is always 3
-		) ,
-		CustIDs AS (
-			SELECT upv.Val CustID, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) RoleID
-			FROM (
-				SELECT custid,recommend,mrecommend,srecommend,0 [Global]
-				FROM Customer WITH (NOLOCK)
-				WHERE CustID=@CustID
-			) t
-			UNPIVOT
-			(
-				Val
-				FOR col IN (custid,recommend,mrecommend,srecommend,[Global])
-			) upv
-		)
-		SELECT TOP 1 @virtualMultiplier = CASE WHEN @IsLive = 1 THEN vlive.Value ELSE vnonlive.Value END
-		FROM VR_Hierachy h WITH (NOLOCK)
-		CROSS JOIN CustIDs c WITH (NOLOCK)
-		INNER JOIN VRCustSetting vr WITH (NOLOCK)
-			ON vr.CustID = c.CustID
-				AND vr.LevelID = h.LevelID
-		INNER JOIN VRValueMapping vlive WITH (NOLOCK) ON vr.ValueIDLIVE = vlive.ValueID
-		INNER JOIN VRValueMapping vnonlive WITH (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
-		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0 --Exclude 'Follow parent'
-		ORDER BY c.RoleID,h.OrderNo
-
-		IF @virtualMultiplier IS NULL
-			SELECT @virtualMultiplier = 1
-	END
-	ELSE IF @SportType = 1
+	IF @SportType = 1
 	BEGIN --For Soccer
 		SELECT @virtualMultiplier = NULL
 		IF @IsApplyVR2 = 0 --Get VR1
@@ -176,10 +112,76 @@ BEGIN
 		END		
 	END
 
+
+	ELSE IF @SportType NOT IN (43,1) --Not E-sports, Soccers
+	BEGIN
+		SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
+		FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
+		INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
+				ON  cvs.seqNo = pvs.seqNo
+		WHERE       cvs.custid = @CustID
+				AND pvs.sporttype = @SportType
+				AND pvs.bettype = @BetType
+				AND pvs.islive = @isLive   
+				AND pvs.isActive=1  
+	END
+
+	ELSE IF @SportType = 43
+	BEGIN --For E-sports
+		--Base on @LeagueGroupID, get configured VRLeagueGroupID 
+		SELECT @VRLeagueGroupID = VRLeagueGroupID
+		FROM VRLeagueGroupMapping WITH (NOLOCK)
+		WHERE LeagueGroupID = @LeagueGroupID
+
+		--If LeagueGroupID and bettype are not configured for VR setting
+		--then get setting on sport level
+		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy WITH (NOLOCK)
+				WHERE VRLeagueGroupID=@VRLeagueGroupID 
+				AND SportType=@SportType
+				AND BetType = @Bettype)
+			SELECT @VRLeagueGroupID = -1, @Bettype = -1 --Sport Level
+
+		--Get VR multiplier
+		;WITH VR_Hierachy AS (
+			SELECT LevelID, ParentLevelID, 1 OrderNo
+			FROM VRSettingHierarchy h WITH (NOLOCK)
+			WHERE SportType = @SportType 
+				AND BetType = @Bettype
+				AND VRLeagueGroupID = @VRLeagueGroupID
+			UNION ALL
+			SELECT c.LevelID, c.ParentLevelID, p.OrderNo + 1  OrderNo
+			FROM VRSettingHierarchy c WITH (NOLOCK)
+				INNER JOIN VR_Hierachy p on p.ParentLevelID = c.LevelID  -- this is the recursion, recursion depth is always 3
+		) ,
+		CustIDs AS (
+			SELECT upv.Val CustID, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) RoleID
+			FROM (
+				SELECT custid,recommend,mrecommend,srecommend,0 [Global]
+				FROM Customer WITH (NOLOCK)
+				WHERE CustID=@CustID
+			) t
+			UNPIVOT
+			(
+				Val
+				FOR col IN (custid,recommend,mrecommend,srecommend,[Global])
+			) upv
+		)
+		SELECT TOP 1 @virtualMultiplier = CASE WHEN @IsLive = 1 THEN vlive.Value ELSE vnonlive.Value END
+		FROM VR_Hierachy h WITH (NOLOCK)
+		CROSS JOIN CustIDs c WITH (NOLOCK)
+		INNER JOIN VRCustSetting vr WITH (NOLOCK)
+			ON vr.CustID = c.CustID
+				AND vr.LevelID = h.LevelID
+		INNER JOIN VRValueMapping vlive WITH (NOLOCK) ON vr.ValueIDLIVE = vlive.ValueID
+		INNER JOIN VRValueMapping vnonlive WITH (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
+		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0 --Exclude 'Follow parent'
+		ORDER BY c.RoleID,h.OrderNo
+
+	END
+	
 	IF @virtualMultiplier IS NULL
 		SELECT @virtualMultiplier = 1
 
-	SELECT @srecommend = srecommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID
 	--Apply Currency Modifier
 	IF @IsLicensee = 0
 	BEGIN
