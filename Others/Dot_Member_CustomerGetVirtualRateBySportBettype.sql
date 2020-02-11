@@ -10,7 +10,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@IsLicensee			BIT,
 					@LeagueGroupID		SMALLINT = 0,
 					@IsApplyVR2			BIT = 0,
-					@srecommend         INT = 0,
+					@srecommend         INT,
                     @virtualMultiplier	SMALLMONEY	OUT
                     
 AS
