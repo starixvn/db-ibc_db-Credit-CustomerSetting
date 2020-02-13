@@ -76,14 +76,14 @@ BEGIN
 			CustIDs AS (
 				SELECT upv.Val CustID, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) RoleID
 				FROM (
-					SELECT custid,recommend,mrecommend,srecommend--,0 [Global]
+					SELECT custid,recommend,mrecommend,srecommend,0 [Global]
 					FROM Customer WITH (NOLOCK)
 					WHERE CustID=@CustID
 				) t
 				UNPIVOT
 				(
 					Val
-					FOR col IN (custid,recommend,mrecommend,srecommend)--,[Global])
+					FOR col IN (custid,recommend,mrecommend,srecommend,[Global])
 				) upv
 			)
 			SELECT TOP 1 @virtualMultiplier = CASE WHEN @IsLive = 1 THEN vlive.Value ELSE vnonlive.Value END
@@ -97,18 +97,18 @@ BEGIN
 			WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0 --Exclude 'Follow parent'
 			ORDER BY c.RoleID,h.OrderNo
 
-			IF @virtualMultiplier IS NULL --Get VR1
-			BEGIN
-				SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
-				FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
-				INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
-						ON  cvs.seqNo = pvs.seqNo
-				WHERE       cvs.custid = @CustID
-						AND pvs.sporttype = @SportType
-						AND pvs.bettype = @BetType
-						AND pvs.islive = @isLive   
-						AND pvs.isActive=1 
-			END
+			--IF @virtualMultiplier IS NULL --Get VR1
+			--BEGIN
+			--	SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
+			--	FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
+			--	INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
+			--			ON  cvs.seqNo = pvs.seqNo
+			--	WHERE       cvs.custid = @CustID
+			--			AND pvs.sporttype = @SportType
+			--			AND pvs.bettype = @BetType
+			--			AND pvs.islive = @isLive   
+			--			AND pvs.isActive=1 
+			--END
 		END		
 	END
 
