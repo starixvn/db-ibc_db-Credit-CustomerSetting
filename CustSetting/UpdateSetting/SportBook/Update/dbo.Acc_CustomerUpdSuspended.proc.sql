@@ -40,6 +40,7 @@ Revisions:
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216]                          
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
 	- 20190404@Johnson: add suspendinfo [redmine: #105587]
+	- 20200216@Elodie: Lock suspend for some member [Redmine: #128541]
 	
 Param's Explanation:
 • @ErrCode:
@@ -75,7 +76,9 @@ BEGIN
 		END
 	END
 	
-	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' AND EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)
+	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' 
+	AND (EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)
+		OR (EXISTS (SELECT 1 FROM CustSuspendLockUpd WITH (NOLOCK) WHERE custid = @CustID)))
 	BEGIN
 		 SELECT  @ErrMsg = CASE @Language
                                 WHEN 'E' THEN 'You are currently not authorized to perform this action. Please contact the Customer Service Department for further assistance.'
