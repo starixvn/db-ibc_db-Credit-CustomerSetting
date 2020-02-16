@@ -78,7 +78,7 @@ BEGIN
 	
 	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' 
 	AND (EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)
-		OR (EXISTS (SELECT 1 FROM CustSuspendLockUpd WITH (NOLOCK) WHERE custid = @CustID)))
+		OR (EXISTS (SELECT 1 FROM CustSuspendLockUpd WITH (NOLOCK) WHERE custid = @CustID) AND @Suspended = 0))
 	BEGIN
 		 SELECT  @ErrMsg = CASE @Language
                                 WHEN 'E' THEN 'You are currently not authorized to perform this action. Please contact the Customer Service Department for further assistance.'
