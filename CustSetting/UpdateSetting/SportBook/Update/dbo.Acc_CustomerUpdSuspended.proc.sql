@@ -40,7 +40,7 @@ Revisions:
 	- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216]                          
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
 	- 20190404@Johnson: add suspendinfo [redmine: #105587]
-	- 20200216@Elodie: Lock suspend for some member [Redmine: #128541]
+	- 20200216@Elodie: Lock close/suspend for some member [Redmine: #128541]
 	
 Param's Explanation:
 • @ErrCode:

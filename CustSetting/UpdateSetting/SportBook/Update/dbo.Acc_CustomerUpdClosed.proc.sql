@@ -43,6 +43,8 @@ Revisions:
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
 	- 20170504@Winnie: Color for closed Accounts  - [Redmine:#74494]
+	- 20200216@Elodie: Lock close/suspend for some member [Redmine: #128541]
+
 Param's Explanation
 • @custid: custid that need to be viewed.   
 
@@ -127,7 +129,9 @@ BEGIN
 			END
 	END
 
-	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' AND EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)
+	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' 
+	AND (EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)
+		OR (EXISTS (SELECT 1 FROM CustSuspendLockUpd WITH (NOLOCK) WHERE custid = @CustID)))	
 	BEGIN
 		 SELECT  @ErrMsg = CASE @Language
                                 WHEN 'E' THEN 'You are currently not authorized to perform this action. Please contact the Customer Service Department for further assistance.'
