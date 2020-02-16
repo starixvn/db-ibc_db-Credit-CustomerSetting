@@ -1,1 +1,4 @@
-CustSetting\Others\CustSettingReference\Acc_CustomerSelRefSport_Bettype.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.dbo.Acc_CustomerUpdAgent_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.dbo.Acc_CustomerUpdSuper_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.dbo.Acc_CustomerUpdMember_All.sql
