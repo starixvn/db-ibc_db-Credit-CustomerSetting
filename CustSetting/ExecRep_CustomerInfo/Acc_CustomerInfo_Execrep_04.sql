@@ -60,6 +60,8 @@ AS
 		- 20190701@Dominic: Update VR setting of an account for Esport  [Redmind: #114830]
 		- 20190906@Winnie: Colossus Bet - Miss enable product [Redmind: #119642]
 		- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20200218@Eden : Web_pass_redundant_bettypes_when_updating_bettype_group_value_and_auto_suspend [Redmind: #128635]
+
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -105,6 +107,8 @@ BEGIN
 
 		EXEC sp_xml_removedocument @DocHandlerEsport
 	END
+
+	DELETE FROM #New_VRCustSetting WHERE ValueIDLive = 0 AND ValueIDNonLive = 0
 
 	IF(dbo.f_CheckRepTable('VRCustSetting') = 1)
 	BEGIN
