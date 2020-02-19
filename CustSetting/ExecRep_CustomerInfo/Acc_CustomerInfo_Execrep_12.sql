@@ -68,8 +68,8 @@ BEGIN
 		SELECT @SetBit1 = POWER(2, @Pos)								
 
 		BEGIN TRY			
-			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember)
-			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0
+			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
+			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0, 1
 			WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = @CustId)
 
 			IF @@ROWCOUNT = 0
@@ -96,9 +96,9 @@ BEGIN
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
 
-		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember)
+		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
-		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0
+		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, 1
 		FROM #DownlineCust t
 		WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = t.CustId)
 
