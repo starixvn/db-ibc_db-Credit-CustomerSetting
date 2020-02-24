@@ -3,6 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_12]
 	@CustId						INT,
 	@RoleId						TINYINT,
 	@ReasonId					TINYINT = NULL,
+	@PreventiveActionId			TINYINT = NULL,
 	@Comment					NVARCHAR(300) = NULL,
 
 	@Action						VARCHAR(50),
@@ -69,7 +70,7 @@ BEGIN
 
 		BEGIN TRY			
 			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
-			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0, 1
+			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0, @PreventiveActionId
 			WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = @CustId)
 
 			IF @@ROWCOUNT = 0
@@ -98,7 +99,7 @@ BEGIN
 
 		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
-		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, 1
+		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, @PreventiveActionId
 		FROM #DownlineCust t
 		WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = t.CustId)
 
