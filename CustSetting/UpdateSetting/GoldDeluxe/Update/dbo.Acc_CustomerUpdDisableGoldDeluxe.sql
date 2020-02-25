@@ -25,7 +25,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 			- 20170414@Winnie: Allowed disable on EXT-NAP [Redmine: #72336]
 			- 20171013@Johnson: Set @EnableDownlines = NULL as default when dont have downline 
 								and update sync for that customer if not sync yet incase no change status[Redmine: #72973]
-			- 20180112@Johnson:	use this sp for update status on alpha & setting page and remove enableDownlines for new direction [redmine:#87328]				
+			- 20180112@Johnson:	use this sp for update status on alpha & setting page and remove enableDownlines for new direction [redmine:#87328]
+			- 20200225@Tiara: Don't allow SMA under 789y headline to update status [Redmine: #124311]
+
 		Parameter's Explanation:	
 			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
@@ -34,9 +36,18 @@ BEGIN
 	DECLARE @startRun DATETIME
 	DECLARE @endRun DATETIME
 	DECLARE @duration INT
+	DECLARE @Site NVARCHAR (50)
 
 	SET @startRun = GETDATE()
-	
+
+	--Check if user is SMA under 789y headline and call update action from ALPHA/EXT 
+	SELECT @Site = C.site
+	FROM Customer C WITH (NOLOCK)
+	WHERE C.custid = @UserID
+
+	IF @SystemID != 1 AND @Site IN ('789y')
+		RETURN
+
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid
 		,@ErrCode = @ErrCode OUTPUT
