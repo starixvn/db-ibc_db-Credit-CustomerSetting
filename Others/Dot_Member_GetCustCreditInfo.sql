@@ -18,7 +18,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @WinMaxBetType smallint = 0,
     @Date Date = null,
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
-	@LeagueGroupID SMALLINT =0
+	@LeagueGroupID SMALLINT =0,
+	@IsApplyVR2 BIT = 0
 AS
 /*
 --------------------------------------------------------------------------------
@@ -52,57 +53,70 @@ AS
 	-- 2019-09-10@TWJoe(CUSTDB): LicUser SportType=44 use MaxPerMatch99
 	-- 2019-09-11@TWJoe(CUSTDB): remove DisableOpenTote,Disable151_AU,DisableHorseRacing,Disable152_UK,Disable152_AU,Disable153_AU,DisableLiveCasino,MaxWinLiveCasino,MaxPerMatch44
 	-- 2019-12-13@TWJoe(CUSTDB): remove maxpermatch154,maxpermatch151_OT,MaxPerMatch151_AU,maxpermatch151,maxpermatch152_UK,MaxPerMatch152_AU,MaxPerMatch153_AU
+	-- 10191227@Eden: Integrate VR autosuspend [Redmine: #121876]
+	-- 20200116@VN-Elodie: Add a new different logic to get VR setting for Soccer
+	-- 20200203@VN-Elodie: Apply Currency Modifier
+
 */	
 BEGIN
 
-	SET NOCOUNT ON;
+	SET NOCOUNT ON
 
-	DECLARE @UMRejectFlag bit = 0
+	DECLARE @UMRejectFlag BIT = 0
 
-	DECLARE @username nvarchar(50), @recommend int, @mrecommend int, @srecommend int,
-			@credit money, @MaxPerBall161 money,
-			@actualrate float, @currencyname nvarchar(50), @virtualrate smallmoney,
-			@maxpermatch money, @autosuspend bit, @currency int,
-			@closed bit, @reject bit, @DisableBet bit,@MaxWinVendorGame smallmoney=0,
-            @DisBetSetting bit,@DisBetSetting3rd bit = 0,@BonusWalletFlag bit,@False bit=0,@True bit=1,@Zero tinyint=0,@MaxWinLimit smallmoney=0 ,
-            @MaxLossLimit money=0,@CN88_reject bit= 1,@CN88_closed bit=1
+	DECLARE @username NVARCHAR(50), @recommend INT, @mrecommend INT, @srecommend INT,
+			@credit MONEY, @MaxPerBall161 MONEY,
+			@actualrate FLOAT, @currencyname NVARCHAR(50), @virtualrate SMALLMONEY,
+			@maxpermatch MONEY, @autosuspend BIT, @currency INT,
+			@closed BIT, @reject BIT, @DisableBet BIT,@MaxWinVendorGame SMALLMONEY=0,
+			@DisBetSetting BIT,@DisBetSetting3rd BIT = 0,@BonusWalletFlag BIT,@False BIT=0,@True BIT=1,@Zero TINYINT=0,@MaxWinLimit SMALLMONEY=0,
+			@MaxLossLimit MONEY=0,@CN88_reject BIT= 1,@CN88_closed BIT=1
+
 	--set @WinMaxBetType=@bettype
-    if @WinMaxSportType<>0 and @WinMaxBetType<>0
-    begin
-        select @MaxWinLimit=ISNULL(MaxWinLimit,@Zero),@MaxLossLimit=ISNULL(MaxLossLimit,@Zero) from CustWinLossLimit_Member with (nolock) where custid=@custid and sporttype=@WinMaxSportType and bettype=@WinMaxBetType
-    end
-    if @usertype=2
-    begin
-        select @CN88_closed=CASE WHEN InactiveInfo>0 or SuspendedInfo>0 THEN 1 ELSE 0 END, 
-		       @CN88_reject=CASE WHEN ViewOnlyInfo>0 THEN 1 ELSE 0 END 
-		from CS_CustomerStatus with (nolock) 
-		where CustId=@custid
+	IF @WinMaxSportType<>0 and @WinMaxBetType<>0
+	BEGIN
+		SELECT @MaxWinLimit=ISNULL(MaxWinLimit,@Zero),@MaxLossLimit=ISNULL(MaxLossLimit,@Zero)  
+		FROM CustWinLossLimit_Member  WITH (NOLOCK) 
+		WHERE custid=@custid and sporttype=@WinMaxSportType and bettype=@WinMaxBetType
+	END
+	
+	IF @usertype=2
+	BEGIN
+		SELECT @CN88_closed=CASE WHEN InactiveInfo>0 or SuspendedInfo>0 THEN 1 ELSE 0 END, 
+				@CN88_reject=CASE WHEN ViewOnlyInfo>0 THEN 1 ELSE 0 END 
+		FROM CS_CustomerStatus WITH (NOLOCK) 
+		WHERE CustId=@custid
         
-		if @Date is null
-        begin
-            set @Date=CURRENT_TIMESTAMP
-        end
-    end
-	set @DisBetSetting=0
-	Declare @tmp TABLE(IsHidden bit, IsDisabled bit)
-	if @StructureVerBetSetting='DCS' and @usertype<>2
-	begin
+		IF @Date is null
+		BEGIN
+			SET @Date=CURRENT_TIMESTAMP
+		END
+	END
+	
+	SET @DisBetSetting=0
+	DECLARE @tmp TABLE(IsHidden BIT, IsDisabled BIT)
+	
+	IF @StructureVerBetSetting='DCS' and @usertype<>2
+	BEGIN
 		INSERT INTO  @tmp (IsHidden, IsDisabled)
-			exec Dot_Member_ProductStatus_DCS
+		EXEC Dot_Member_ProductStatus_DCS
 				@custid=@custid,
 				@sporttype=@sporttype,
 				@isLicensee = @isLicensee				
-		select @DisBetSetting=IsDisabled from @tmp
-	end
-	if @CheckDisableBet3rd<>0
-	begin
-		select @DisBetSetting3rd=IsDisabled from DisableBetByProduct3rd with (nolock) where SportType = @sporttype
-	end
-	declare @DisableSport bit
-	select @DisableSport=dbo.f_DisableSport(@sporttype)
-	select @username=ci.username,@recommend=ci.recommend,@mrecommend=ci.mrecommend,@srecommend=ci.srecommend,
-           @credit=CASE WHEN @usertype=2 THEN case when (ci.CreditUpdatedDate is null or @Date>=convert(date,ci.CreditUpdatedDate)) then ci.credit else @Zero end ELSE ci.credit END,
-           @MaxPerBall161=ci.MaxPerBall161,@actualrate=ex.actualrate,@currencyname=ex.currency,@virtualrate=ci.virtualmultiplier,@BonusWalletFlag=isNull(ci.BonusWalletFlag,@False),
+			
+		SELECT @DisBetSetting=IsDisabled FROM @tmp
+	END
+
+	IF @CheckDisableBet3rd<>0
+	BEGIN
+		SELECT @DisBetSetting3rd=IsDisabled FROM DisableBetByProduct3rd WITH (NOLOCK) WHERE SportType = @sporttype
+	END
+    
+	DECLARE @DisableSport BIT
+	SELECT @DisableSport=dbo.f_DisableSport(@sporttype)
+	SELECT @username=ci.username,@recommend=ci.recommend,@mrecommend=ci.mrecommend,@srecommend=ci.srecommend,
+			@credit=CASE WHEN @usertype=2 THEN case when (ci.CreditUpdatedDate is null or @Date>=convert(date,ci.CreditUpdatedDate)) then ci.credit else @Zero end ELSE ci.credit END,
+			@MaxPerBall161=ci.MaxPerBall161,@actualrate=ex.actualrate,@currencyname=ex.currency,@virtualrate=ci.virtualmultiplier,@BonusWalletFlag=isNull(ci.BonusWalletFlag,@False),
 					@maxpermatch=IsNull(CASE
 					WHEN @usertype=2 THEN @Zero 
 					WHEN @isparlay=0 and @sporttype=1 THEN maxpermatch 
@@ -122,8 +136,8 @@ BEGIN
 					WHEN @isparlay=1 and @sporttype=99 THEN MaxPerMatch99MP
 					ELSE ci.maxpermatch99 END, 0),
 					@autosuspend=case when @sporttype=1 then ISNULL(ci.autosuspend,@False)
-									  when @isparlay=1 or @sporttype in (180,181,182,183,184,185,186,190,191,192,193,194) then @False
-									  else ISNULL(ci.autosuspend2,@False) end,
+										when @isparlay=1 or @sporttype in (180,181,182,183,184,185,186,190,191,192,193,194) then @False
+										else ISNULL(ci.autosuspend2,@False) end,
 					@currency=ci.currency,
 					@DisableBet= isnull(case 
 										when @usertype=2 then @False
@@ -135,8 +149,9 @@ BEGIN
 										else @False end,@True) | @DisableSport,
 					@closed=CASE WHEN @usertype=2 THEN isnull(ci.closed,@False) | @CN88_closed ELSE isnull(ci.closed,@False) END,
 					@reject= case when @DisableBet=@False then CASE WHEN @usertype=2 THEN @CN88_reject ELSE isnull(ci.reject,@False) END else @DisableBet end
-					from custinfo as ci with (nolock) join exchange as ex with (nolock)
-		on  ci.currency = ex.exchangeid where ci.custid=@custid 
+		from custinfo as ci with (nolock) 
+			join exchange as ex with (nolock) on  ci.currency = ex.exchangeid 
+		where ci.custid=@custid 
 	
 	
 	------------------------------------------------
@@ -156,25 +171,71 @@ BEGIN
 		SELECT  @MaxperMatch = ISNULL(MaxPerMatch, @Zero)
 		FROM dbo.CustBetSetting3rd_Member bs WITH (NOLOCK)
 		WHERE bs.custid = @custid
-		   AND bs.BetType = 3
-		   AND bs.SportType = @Sporttype
+			AND bs.BetType = 3
+			AND bs.SportType = @Sporttype
 	END		
 
-	declare @new_virtualrate float = 1
-	if @bettype<>0
-	begin
-		IF @sporttype = 43 OR @virtualrate=1 --For Esports
+	DECLARE @new_virtualrate FLOAT = 1	
+
+	IF @bettype<>0
+	BEGIN
+		IF @sporttype = 1 
+		BEGIN
+			IF @bettype NOT BETWEEN 801 AND 806 --For Soccer, exclude SuperLive
+			BEGIN
+				IF @IsApplyVR2 = 1 --Get VR2
+					OR (@IsApplyVR2 = 0 AND @virtualrate = 1) -- Get VR1 
+				BEGIN
+					EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid									
+											, @sporttype = @sporttype_vrate
+											, @bettype = @bettype_vrate
+											, @OriginalSportType = @sporttype
+											, @OriginalBetType = @bettype
+											, @isLive = @liveindicator
+											, @isLicensee = @isLicensee
+											, @LeagueGroupID = @LeagueGroupID
+											, @IsApplyVR2 = @IsApplyVR2
+											, @srecommend = @srecommend
+											, @virtualMultiplier = @new_virtualrate OUT
+				END
+			END			
+		END
+		ELSE IF @sporttype = 43 --For Esports, get VR2
 		BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
 									, @sporttype = @sporttype_vrate
 									, @bettype = @bettype_vrate
 									, @isLive = @liveindicator
+									, @isLicensee = @isLicensee
 									, @LeagueGroupID = @LeagueGroupID
-									, @virtualMultiplier = @new_virtualrate out
+									, @srecommend = @srecommend								
+									, @virtualMultiplier = @new_virtualrate OUT
 		END
 
-		set @virtualrate = isnull(@new_virtualrate,1)
+		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
+		BEGIN
+			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
+									, @sporttype = @sporttype_vrate
+									, @bettype = @bettype_vrate
+									, @isLive = @liveindicator	
+									, @isLicensee = @isLicensee	
+									, @srecommend = @srecommend															
+									, @virtualMultiplier = @new_virtualrate OUT
+		END
+
+		SET @virtualrate = isnull(@new_virtualrate,1)
 	end
+
+	--Get E-Sport Autosuspend 
+	IF @sporttype = 43 AND @isparlay = 0
+	BEGIN
+		SET @autosuspend = @False
+
+		SELECT @autosuspend = t.IsVRAutoSuspend 
+		FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
+
+		SET @autosuspend = ISNULL(@autosuspend,@False)
+	END
 	
 	--Get data from DCS structure
 	--IF (@StructureVerBetSetting='DCS')
@@ -206,5 +267,5 @@ BEGIN
 			@actualrate actualrate, @currencyname currencyname, @virtualrate virtualrate,
 			@maxpermatch maxpermatch, @autosuspend autosuspend, @currency currency,
 			@closed closed, @reject reject, @DisableBet disabledBet,@DisBetSetting3rd DisBetSetting3rd,@BonusWalletFlag BonusWalletFlag,
-            @MaxWinLimit MaxWinLimit, @MaxLossLimit MaxLossLimit
+			@MaxWinLimit MaxWinLimit, @MaxLossLimit MaxLossLimit
 END
