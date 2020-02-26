@@ -1068,7 +1068,7 @@ BEGIN
 
 		--Keno
 		INSERT INTO dbo.CustGameType(GameTypeID, Custid, MinBet, MaxBet, MaxPerGameType, IsDisabled, StakeLevelList)
-		SELECT	GameTypeID, @Custid, 0, 0, 0, 1, CAST(0 AS VARCHAR(100))
+		SELECT	GameTypeID, @Custid, 0, 0, 0, 0, CAST(0 AS VARCHAR(100))
 		FROM	@tmp_GameType
 		WHERE	IBCBetTypeID BETWEEN 1501 AND 1599
 		UNION ALL SELECT 1701, @custid, 0, 0, 0, 0, @StakeLevelList_1701
