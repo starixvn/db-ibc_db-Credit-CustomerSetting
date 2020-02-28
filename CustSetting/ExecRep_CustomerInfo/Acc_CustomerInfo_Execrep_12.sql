@@ -103,7 +103,7 @@ BEGIN
 		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, @PreventActionId,			
-			CASE WHEN @RoleId = 1 AND @ReasonId = 109 THEN 38 ELSE NULL END
+			CASE WHEN t.RoleID = 1 AND @ReasonId = 109 THEN 38 ELSE NULL END
 		FROM #DownlineCust t
 		WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = t.CustId)
 
