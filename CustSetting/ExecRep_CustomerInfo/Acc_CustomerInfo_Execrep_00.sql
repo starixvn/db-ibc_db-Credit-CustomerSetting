@@ -1067,10 +1067,7 @@ BEGIN
 		SELECT @StakeLevelList_1702 = @StakeLevelList_1702 + CASE WHEN @StakeLevelList_1702 = '' THEN '' ELSE ',' END + CAST(StakeLevelID AS VARCHAR(5)) FROM StakeLevel WHERE GameTypeID = 1702 AND ExchangeId = @currency
 
 		--Keno
-		DECLARE @isDisableKeno BIT = 1
-		SELECT @isDisableKeno = 0 --Enable Keno by default for 789y line
-		FROM Customer C WITH (NOLOCK)
-		WHERE C.custid = @custid AND C.site ='789y'
+		DECLARE @isDisableKeno BIT = 0 --Enable Keno by default for all sites
 
 		INSERT INTO dbo.CustGameType(GameTypeID, Custid, MinBet, MaxBet, MaxPerGameType, IsDisabled, StakeLevelList)
 		SELECT	GameTypeID, @Custid, 0, 0, 0, @isDisableKeno, CAST(0 AS VARCHAR(100))

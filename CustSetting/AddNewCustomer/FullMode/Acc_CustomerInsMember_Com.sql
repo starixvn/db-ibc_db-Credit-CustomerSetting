@@ -739,9 +739,7 @@ BEGIN
 	DECLARE @HideKeno BIT, @HideGoldDeluxe  BIT
 			
 
-	SELECT @HideKeno = CASE WHEN C.site = '789y' THEN 0 ELSE 1 END --Enable Keno by default for 789y headline
-	FROM Customer C WITH (NOLOCK)
-	WHERE C.custid = @custid 
+	SELECT @HideKeno = 0 --Enable Keno by default for all sites
 
 	SELECT @HideGoldDeluxe = 0 -- 20151001@Elodie: Set HideGoldDeluxe = 0, DisableGoldDeluxe = 0 for real super
 		
@@ -1245,9 +1243,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	--Get data prepare write log for Keno
 	DECLARE @LogDataKeno NVARCHAR(4000) = '', @isDisableKeno BIT
 
-	SELECT @isDisableKeno = CASE WHEN C.site = '789y' THEN 0 ELSE 1 END --Enable Keno by default for 789y headline
-	FROM Customer C WITH (NOLOCK)
-	WHERE C.custid = @custid
+	SELECT @isDisableKeno = 0 --Enable Keno by default for all sites
 
 	SELECT @LogDataKeno = COALESCE(@LogDataKeno + 'Disable202_' + CAST(IBCBetTypeID AS VARCHAR(10)) 
 		+ '=' + '"' + CAST(@isDisableKeno AS VARCHAR(1)) + '"' + SPACE(1), + 'Disable202_' + CAST(IBCBetTypeID AS VARCHAR(10)) 
