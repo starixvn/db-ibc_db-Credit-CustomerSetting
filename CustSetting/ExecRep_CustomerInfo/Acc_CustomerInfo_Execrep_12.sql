@@ -114,7 +114,8 @@ BEGIN
 	IF @Action = 'UpdateProblemAcc'
 	BEGIN
 		UPDATE pa 		
-		SET pa.ActionId = @PreventActionId
+		SET pa.ActionId = @PreventActionId,
+			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 AND @ReasonId = 109 THEN 38 ELSE pa.SubIssueTypeId END
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
