@@ -69,8 +69,9 @@ BEGIN
 		SELECT @SetBit1 = POWER(2, @Pos)								
 
 		BEGIN TRY			
-			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
-			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0, @PreventActionId 
+			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
+			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0, @PreventActionId, 
+				CASE WHEN @RoleId = 1 AND @ReasonId = 109 THEN 38 ELSE NULL END
 			WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = @CustId)
 
 			IF @@ROWCOUNT = 0
@@ -99,9 +100,10 @@ BEGIN
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
 
-		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
+		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
-		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, @PreventActionId 
+		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, @PreventActionId,			
+			CASE WHEN @RoleId = 1 AND @ReasonId = 109 THEN 38 ELSE NULL END
 		FROM #DownlineCust t
 		WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = t.CustId)
 
