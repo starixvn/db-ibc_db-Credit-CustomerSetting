@@ -402,6 +402,7 @@ Revisions:
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200228@Tiara: Enable Keno product by default for 789y Headline [Redmine: 124311]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -736,8 +737,11 @@ BEGIN
 	
 
 	DECLARE @HideKeno BIT, @HideGoldDeluxe  BIT
+			
 
-	SELECT @HideKeno = 1
+	SELECT @HideKeno = CASE WHEN C.site = '789y' THEN 0 ELSE 1 END --Enable Keno by default for 789y headline
+	FROM Customer C WITH (NOLOCK)
+	WHERE C.custid = @custid 
 
 	SELECT @HideGoldDeluxe = 0 -- 20151001@Elodie: Set HideGoldDeluxe = 0, DisableGoldDeluxe = 0 for real super
 		
@@ -1239,10 +1243,15 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 	--Write status log
 	--Get data prepare write log for Keno
-	DECLARE @LogDataKeno NVARCHAR(4000) = ''
+	DECLARE @LogDataKeno NVARCHAR(4000) = '', @isDisableKeno BIT
+
+	SELECT @isDisableKeno = CASE WHEN C.site = '789y' THEN 0 ELSE 1 END --Enable Keno by default for 789y headline
+	FROM Customer C WITH (NOLOCK)
+	WHERE C.custid = @custid
+
 	SELECT @LogDataKeno = COALESCE(@LogDataKeno + 'Disable202_' + CAST(IBCBetTypeID AS VARCHAR(10)) 
-		+ '=' + '"' + CAST(1 AS VARCHAR(1)) + '"' + SPACE(1), + 'Disable202_' + CAST(IBCBetTypeID AS VARCHAR(10)) 
-		+ '=' + '"' + CAST(1 AS VARCHAR(1)) + '"' + SPACE(1))
+		+ '=' + '"' + CAST(@isDisableKeno AS VARCHAR(1)) + '"' + SPACE(1), + 'Disable202_' + CAST(IBCBetTypeID AS VARCHAR(10)) 
+		+ '=' + '"' + CAST(@isDisableKeno AS VARCHAR(1)) + '"' + SPACE(1))
 	FROM @tmp_GameType gt
 	WHERE IBCBetTypeID BETWEEN 1501 AND 1599 AND gt.IsDisabled = 0
 
