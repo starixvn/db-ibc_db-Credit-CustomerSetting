@@ -29,13 +29,14 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @SetBit1 INT, @Pos TINYINT
+	DECLARE @SetBit1 INT, @Pos TINYINT, @SubIssueTypeId TINYINT
 	CREATE TABLE #DownlineCust (CustID INT PRIMARY KEY, RoleID TINYINT)
 	CREATE TABLE #DownlineSuccess (CustID INT)
 	CREATE TABLE #DirectMarkCust (CustID INT, RoleID TINYINT)
 
 	IF dbo.f_CheckRepTable('custInfo') = 0 RETURN
 	IF dbo.f_CheckRepTable('ProblemAccount') = 0 RETURN
+	IF dbo.f_CheckRepTable('ProblemAccountAction') = 0 RETURN
 	
 	IF @RoleID = 4 --Super			
 	BEGIN
@@ -59,6 +60,10 @@ BEGIN
 		WHERE recommend = @CustID AND c.custid <> @CustId
 	END	
 
+	SELECT @SubIssueTypeId = SubIssueTypeId 
+	FROM dbo.ProblemAccountAction WITH (NOLOCK)
+	WHERE ActionId = @PreventActionId
+
 	IF @Action = 'MarkProblem'
 	BEGIN
 		SELECT	@Pos = CASE @RoleId WHEN 4 THEN 3
@@ -71,7 +76,7 @@ BEGIN
 		BEGIN TRY			
 			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
 			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0, @PreventActionId, 
-				CASE WHEN @RoleId = 1 AND @ReasonId = 109 THEN 38 ELSE NULL END
+				CASE WHEN @RoleId = 1 THEN @SubIssueTypeId ELSE NULL END
 			WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = @CustId)
 
 			IF @@ROWCOUNT = 0
@@ -81,7 +86,8 @@ BEGIN
 					pa.CreatedDate = GETDATE(),
 					pa.ReasonId = @ReasonId,
 					pa.Comment = @Comment,
-					pa.ActionId = @PreventActionId
+					pa.ActionId = @PreventActionId,
+					pa.SubIssueTypeId = CASE WHEN @RoleId = 1 THEN @SubIssueTypeId ELSE NULL END
 				FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 				WHERE CustId = @CustId
 			END
@@ -95,7 +101,8 @@ BEGIN
 
 		UPDATE pa 		
 		SET pa.ProblemStatus = ProblemStatus | @SetBit1,
-			pa.ActionId = @PreventActionId
+			pa.ActionId = @PreventActionId,
+			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
@@ -103,7 +110,7 @@ BEGIN
 		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, @PreventActionId,			
-			CASE WHEN t.RoleID = 1 AND @ReasonId = 109 THEN 38 ELSE NULL END
+			CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END
 		FROM #DownlineCust t
 		WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = t.CustId)
 
@@ -115,7 +122,7 @@ BEGIN
 	BEGIN
 		UPDATE pa 		
 		SET pa.ActionId = @PreventActionId,
-			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 AND @ReasonId = 109 THEN 38 ELSE pa.SubIssueTypeId END
+			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
