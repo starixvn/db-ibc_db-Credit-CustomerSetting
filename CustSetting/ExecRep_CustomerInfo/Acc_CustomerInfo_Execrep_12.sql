@@ -79,7 +79,8 @@ BEGIN
 				SET pa.ProblemStatus = ProblemStatus | @SetBit1,
 					pa.CreatedDate = GETDATE(),
 					pa.ReasonId = @ReasonId,
-					pa.Comment = @Comment
+					pa.Comment = @Comment,
+					pa.ActionId = @PreventActionId
 				FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 				WHERE CustId = @CustId
 			END
@@ -92,7 +93,8 @@ BEGIN
 		END CATCH
 
 		UPDATE pa 		
-		SET pa.ProblemStatus = ProblemStatus | @SetBit1
+		SET pa.ProblemStatus = ProblemStatus | @SetBit1,
+			pa.ActionId = @PreventActionId
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
@@ -110,8 +112,7 @@ BEGIN
 	IF @Action = 'UpdateProblemAcc'
 	BEGIN
 		UPDATE pa 		
-		SET pa.ActionId = @PreventActionId--,
-			--pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 AND @ReasonId = 109 THEN 38 ELSE pa.SubIssueTypeId END
+		SET pa.ActionId = @PreventActionId
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
