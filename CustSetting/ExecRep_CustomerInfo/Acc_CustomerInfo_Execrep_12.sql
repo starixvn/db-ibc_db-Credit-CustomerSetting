@@ -163,8 +163,8 @@ BEGIN
 			DELETE c 
 			FROM #DownlineCust c
 				INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.CustId = c.CustID
-				INNER JOIN #DirectMarkCust dm WITH (NOLOCK) ON dm.CustId = CASE WHEN c.RoleID = 3 THEN ci.mrecommend
-																				WHEN c.RoleID = 2 THEN ci.recommend END
+				INNER JOIN #DirectMarkCust dm WITH (NOLOCK) ON dm.CustId = CASE WHEN dm.RoleID = 3 THEN ci.mrecommend
+																				WHEN dm.RoleID = 2 THEN ci.recommend END
 				
 			DELETE c 
 			FROM #DownlineCust c
