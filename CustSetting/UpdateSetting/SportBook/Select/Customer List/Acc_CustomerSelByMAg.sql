@@ -76,6 +76,7 @@ AS
 		- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20191206@Eden: Add Virtual Games [Redmine: #122743]
 		- 20200318@Elodie: Add Saba.club [Redmine: #130636]
+		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -84,7 +85,7 @@ AS
 			2: All
 		- @ProductUnSync:
 			0: not filter by product
-			6: casino,12: GD, 21: Allbet, 22: Macau Games
+			6: casino,12: GD, 41: Allbet + SA Gaming, 22: Macau Games
 */   
 BEGIN
 
@@ -117,16 +118,20 @@ BEGIN
 		,	@bitmapOrder_VS				INT
 		,	@bitmapOrder_VG				INT
 		,	@bitmapOrder_SabaClub		INT
+		,	@bitmapOrder_SAGaming		INT 
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitmapOrder_Lottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
+
 	SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
 	SET @bitmapOrder_SabaClub = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
+	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
+
 
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
@@ -142,10 +147,14 @@ BEGIN
 		,	@IsHidden_VS				INT = 1
 		,	@IsHidden_VG				INT = 1
 		,	@IsHidden_SabaClub			INT = 1
+		,	@IsHidden_SAGaming			INT = 1
+		
+
+
 		
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT	
-	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHidden_AllBet OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_AllBet OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHidden_VoidBridge OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHidden_Lottery OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHidden_NG2 OUTPUT
@@ -157,6 +166,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHidden_VG OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_SabaClub OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_SAGaming OUTPUT
 
 	CREATE TABLE #customer(custid INT, RowNumber INT )
 
@@ -183,7 +193,7 @@ BEGIN
 										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
 							)
 			END
-			ELSE IF @ProductUnSync IN (21,22)
+			ELSE IF @ProductUnSync IN (41,22)
 			BEGIN
 				SELECT 
 					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
@@ -191,7 +201,8 @@ BEGIN
 					INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid					
 				WHERE ci.MRecommend = @MRecommend 
 					AND ci.roleid=2
-					AND 1 =(CASE WHEN (@ProductUnSync = 21 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -227,7 +238,7 @@ BEGIN
 				) t
 			WHERE rownumber BETWEEN @rowstart AND @rowend
 		END
-		ELSE IF @ProductUnSync IN (21,22)
+		ELSE IF @ProductUnSync IN (41,22)
 		BEGIN
 			INSERT INTO #customer (custid, RowNumber)
 			SELECT custid, RowNumber 
@@ -238,7 +249,8 @@ BEGIN
 					WHERE	MRecommend = @MRecommend 
 						AND roleid=2 
 						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
-						AND 1 =(CASE WHEN (@ProductUnSync = 21 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -278,7 +290,7 @@ BEGIN
 										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
 							) 
 			END			
-			ELSE IF @ProductUnSync IN (21,22)  
+			ELSE IF @ProductUnSync IN (41,22)  
 			BEGIN
 				SELECT 
 					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
@@ -290,7 +302,8 @@ BEGIN
 					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END			
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
 					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
-					AND 1 =(CASE WHEN (@ProductUnSync = 21 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -332,7 +345,7 @@ BEGIN
 				) t
 			WHERE rownumber BETWEEN @rowstart AND @rowend
 		END	
-		ELSE IF @ProductUnSync IN (21,22)
+		ELSE IF @ProductUnSync IN (41,22)
 		BEGIN
 			INSERT INTO #customer(custid, RowNumber)
 			SELECT custid, RowNumber
@@ -346,7 +359,8 @@ BEGIN
 						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
 						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END	
 						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
-						AND 1 =(CASE WHEN (@ProductUnSync = 21 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -389,7 +403,7 @@ BEGIN
 										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
 							)
 			END			
-			ELSE IF @ProductUnSync IN (21,22)
+			ELSE IF @ProductUnSync IN (41,22)
 			BEGIN
 				SELECT 
 					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
@@ -403,7 +417,8 @@ BEGIN
 					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
 					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
-					AND 1 =(CASE WHEN (@ProductUnSync = 21 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+								OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -449,7 +464,7 @@ BEGIN
 				) t 
 			WHERE rownumber BETWEEN @rowstart AND @rowend
 		END	
-		ELSE IF @ProductUnSync IN (21,22)
+		ELSE IF @ProductUnSync IN (41,22)
 		BEGIN
 			INSERT INTO #customer(custid,RowNumber)
 			SELECT custid, RowNumber	
@@ -465,7 +480,8 @@ BEGIN
 						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
 						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
 						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END		
-						AND 1 =(CASE WHEN (@ProductUnSync = 21 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
+								OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -515,7 +531,27 @@ BEGIN
 							THEN 0
 						ELSE 1
 				END AS SyncedAllBetDownline,
-				
+				-- For AllBet
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SAGaming)) AS DisableSAGaming,
+				CAST(	CASE	WHEN	@IsHidden_SAGaming = 0 
+									AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_SAGaming), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideSAGaming,
+				CAST(CASE	WHEN	@IsHidden_SAGaming = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_SAGaming), 1)=0
+					THEN 0 ELSE 1
+					END AS BIT) AS HideSAGamingUpline,
+				ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SAGaming), 0) AS SyncedSAGaming,
+				ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_SAGaming), 0) AS SyncedSAGamingUpline,
+				CASE	WHEN EXISTS	(	SELECT	1
+										FROM		dbo.CustProductStatus AS cpsDownline WITH (NOLOCK)
+										INNER JOIN	dbo.custInfo AS ciDownline WITH (NOLOCK)
+												ON	ciDownline.custid = cpsDownline.CustID
+										WHERE	ciDownline.recommend = c.custid
+											AND	dbo.f_GetProductStatus(cpsDownline.bitmapHasSynced, @bitmapOrder_SAGaming) = 0)
+							THEN 0
+						ELSE 1
+				END AS SyncedSAGamingDownline,
 
 				-- For Fishing World
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,				
@@ -697,7 +733,13 @@ BEGIN
 			ctm.SyncedAllBet,
 			ctm.SyncedAllBetUpline,
 			ctm.SyncedAllBetDownline,
-
+			--SA Gaming
+			ctm.DisableSAGaming,
+			ctm.HideSAGaming,
+			ctm.HideSAGamingUpline,
+			ctm.SyncedSAGaming,
+			ctm.SyncedSAGamingUpline,
+			ctm.SyncedSAGamingDownline,
 			-- VoidBrigde
 			ctm.DisableVoidBridge,
 			ctm.HideVoidBridge,

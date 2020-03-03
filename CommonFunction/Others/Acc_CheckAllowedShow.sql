@@ -10,6 +10,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedLottery			BIT = 0		OUTPUT
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
 				,	@AllowedSabaClub		BIT = 0		OUTPUT
+				,	@AllowedSAGaming		BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -42,6 +43,7 @@ Revisions:
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20191206@Eden: Add Virtual Games [Redmine: #122743]
 	- 20200318@Elodie: Add Saba.club [Redmine: #130636]
+	- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
 
 */
 
@@ -57,14 +59,16 @@ Revisions:
 		,	@IsHideVS				INT
 		,	@IsHideVG				INT
 		,	@IsHideSaba				INT
+		,	@IsHideSAGaming			INT
 
 	DECLARE @bitOrderVB				INT 
 		,	@bitOrderFW				INT 
 		,	@bitOrderNG2			INT 
 		,	@bitOrderLottery		INT 
-		,   @bitOrderVS				INT 
+		,   @bitOrderVS				INT
 		,	@bitmapOrder_VG			INT
 		,	@bitmapOrder_Saba		INT
+		,	@bitmapOrder_SAGaming	INT 
 
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
@@ -73,6 +77,7 @@ Revisions:
 	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
 	SET @bitmapOrder_Saba = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
+	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -136,7 +141,7 @@ Revisions:
 	End
 
 	-- For AllBet
-	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHideAllBet OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHideAllBet OUTPUT
 	SELECT	@AllowedAllBet =	MAX(CASE	WHEN @RoleID = 4 AND @IsHideAllBet = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, psp.bitmapOrder) = 1
@@ -151,7 +156,25 @@ Revisions:
 			AND	psd.BetType = psp.Bettype
 			AND	psd.SettingType = 13
 	WHERE	cps.CustID = @CustID
-		AND	psd.ProductID = 21
+		AND	psd.ProductID = 41
+
+	-- For SA Gaming
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHideSAGaming OUTPUT
+	SELECT	@AllowedSAGaming =	MAX(CASE	WHEN @RoleID = 4 AND @IsHideSAGaming = 0 THEN 1
+										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) = 0
+											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, psp.bitmapOrder) = 1
+											AND @IsHideAllBet = 0 
+											THEN 1
+										ELSE 0
+								END)
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	CROSS JOIN	dbo.ProductStatusProfile AS psp WITH (NOLOCK)
+	INNER JOIN	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
+			ON	psd.SportType = psp.Sporttype
+			AND	psd.BetType = psp.Bettype
+			AND	psd.SettingType = 13
+	WHERE	cps.CustID = @CustID
+		AND	psd.ProductID = 41
 
 	-- For NG2
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHideNG2 OUTPUT
