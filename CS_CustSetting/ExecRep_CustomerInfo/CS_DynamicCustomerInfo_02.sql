@@ -24,6 +24,7 @@ AS
 		- 20190808@Elodie: Initial SP [Redmine:#116814]
 		- 20190918@Alvin: Hide indirect marked on Problem Account
 		- 20191231@Johnson: update informing status [redmine:#121298]
+		- 20200303@Elodie: Unmarking Problem accounts hot fix [Redmine:#129660]
 	Param's Explanation:
 		@Action: MarkProblem, RemoveReduceBetLimit
 		
@@ -151,8 +152,8 @@ BEGIN
 			DELETE c 
 			FROM #DownlineCust c
 				INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.CustId = c.CustID
-				INNER JOIN #DirectMarkCust dm WITH (NOLOCK) ON dm.CustId = CASE WHEN c.RoleID = 3 THEN ci.mrecommend
-																				WHEN c.RoleID = 2 THEN ci.recommend END
+				INNER JOIN #DirectMarkCust dm WITH (NOLOCK) ON dm.CustId = CASE WHEN dm.RoleID = 3 THEN ci.mrecommend
+																				WHEN dm.RoleID = 2 THEN ci.recommend END
 				
 			DELETE c 
 			FROM #DownlineCust c

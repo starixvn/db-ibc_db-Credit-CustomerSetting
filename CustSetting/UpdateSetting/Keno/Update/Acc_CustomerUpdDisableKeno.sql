@@ -31,6 +31,7 @@ AS
 		- 20170303@Winnie: Change enable behavior & Allowed disable on EXT-NAP [Redmine: #72336]
 		- 20170115@Johnson: use this sp for update status on alpha and remove enableDownlines for new direction [redmine:#87328]				
 		- 20190517@Elodie: Change name of Keno to RNG Keno [Redmine: #113490]
+		- 20200225@Tiara: Don't allow SMA under 789y headline to update status [Redmine: #124311]
 
 	Param's Explanation:
 		• @custid: customer id.   
@@ -43,9 +44,17 @@ BEGIN
 	DECLARE @startRun DATETIME
 	DECLARE @endRun DATETIME
 	DECLARE @duration INT
+	DECLARE @Site NVARCHAR (50)
 
 	SET @startRun = GETDATE()
 
+	--Check if user is SMA under 789y headline and call update action from ALPHA/EXT - 20200225@Tiara
+	SELECT @Site = C.site
+	FROM Customer C WITH (NOLOCK)
+	WHERE C.custid = @UserID
+
+	IF @SystemID != 1 AND @Site IN ('789y')
+		RETURN
 	
 	DECLARE @RoleID TINYINT
 		,@RoleID_Ck TINYINT

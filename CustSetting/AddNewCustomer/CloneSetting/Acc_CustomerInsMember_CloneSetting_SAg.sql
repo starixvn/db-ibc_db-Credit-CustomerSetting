@@ -77,6 +77,8 @@ AS
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190923@Johnson: copy danger status from upline [redmine:#120056]
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200210@Elodie: Problem account for credit [Redmine:#127446]
+
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -353,107 +355,112 @@ BEGIN
 	from custinfo with (nolock)
 	where custid = @srecommend
 
-	-- insert CustInfo info
-	INSERT INTO dbo.custInfo
-			(custid
-			,username
-			,currency
-			,roleid
-			,srecommend
-			,mrecommend
-			,recommend
-			,dangercust
-			,autosuspend
-			,autosuspend2
-			,reject
-			,credit
-			,closed
-			,MatchLimit
-			,VirtualMultiplier
-			,maxpermatch
-			,maxpermatch2
-			,maxpermatch3
-			,maxpermatch5
-			,maxpermatch8
-			,maxpermatch10
-			,maxpermatch11
-			,maxpermatch12
-			,maxpermatch99
-			,Enabled   		
-			,DisableCasino
-			,SyncCasino           
-			,DisableOutright		
-			,MaxPerMatch99MP
-			,DisableNumber
+	BEGIN TRY
+		-- insert CustInfo info
+		INSERT INTO dbo.custInfo
+				(custid
+				,username
+				,currency
+				,roleid
+				,srecommend
+				,mrecommend
+				,recommend
+				,dangercust
+				,autosuspend
+				,autosuspend2
+				,reject
+				,credit
+				,closed
+				,MatchLimit
+				,VirtualMultiplier
+				,maxpermatch
+				,maxpermatch2
+				,maxpermatch3
+				,maxpermatch5
+				,maxpermatch8
+				,maxpermatch10
+				,maxpermatch11
+				,maxpermatch12
+				,maxpermatch99
+				,Enabled   		
+				,DisableCasino
+				,SyncCasino           
+				,DisableOutright		
+				,MaxPerMatch99MP
+				,DisableNumber
 			
-			,maxpermatch161
+				,maxpermatch161
 		
-			,MaxPerBall161
-			,maxpermatch164	
-			,DoubleCommLosing		
-			,HideKeno
+				,MaxPerBall161
+				,maxpermatch164	
+				,DoubleCommLosing		
+				,HideKeno
 			
-			,HideGoldDeluxe
-			,DisableGoldDeluxe
-			,DisableSuperLive
-			,MaxPerMatch1MP
-			,Danger
-			,Danger2
-			,Danger3
-			)
-     SELECT
-			@custid
-			,@username
-			,currency
-			,3 AS roleid
-			,srecommend
-			,@mrecommend
-			,0 as recommend
-			,0 AS dangercust
-			,@autosuspend AS autosuspend
-			,@autosuspend2 as autosuspend2
-			,reject
-			,@Credit AS Credit
-			,closed
-			,MatchLimit
-			,@virtualmultiplier
-			,maxpermatch
-			,maxpermatch2
-			,maxpermatch3
-			,maxpermatch5
-			,maxpermatch8
-			,maxpermatch10
-			,maxpermatch11
-			,maxpermatch12
-			,maxpermatch99
-			,@enableUpline as Enabled 		
-			,DisableCasino
-			,0 as SyncCasino           
-			,DisableOutright
-			,MaxPerMatch99MP
-			,DisableNumber
+				,HideGoldDeluxe
+				,DisableGoldDeluxe
+				,DisableSuperLive
+				,MaxPerMatch1MP
+				,Danger
+				,Danger2
+				,Danger3
+				)
+		 SELECT
+				@custid
+				,@username
+				,currency
+				,3 AS roleid
+				,srecommend
+				,@mrecommend
+				,0 as recommend
+				,0 AS dangercust
+				,@autosuspend AS autosuspend
+				,@autosuspend2 as autosuspend2
+				,reject
+				,@Credit AS Credit
+				,closed
+				,MatchLimit
+				,@virtualmultiplier
+				,maxpermatch
+				,maxpermatch2
+				,maxpermatch3
+				,maxpermatch5
+				,maxpermatch8
+				,maxpermatch10
+				,maxpermatch11
+				,maxpermatch12
+				,maxpermatch99
+				,@enableUpline as Enabled 		
+				,DisableCasino
+				,0 as SyncCasino           
+				,DisableOutright
+				,MaxPerMatch99MP
+				,DisableNumber
 		
-			,maxpermatch161
+				,maxpermatch161
 			
-			,MaxPerBall161
-			,maxpermatch164			
-			,@doubleCommLosingUpline as doubleCommLosing
-			--,1			
-			,HideKeno
+				,MaxPerBall161
+				,maxpermatch164			
+				,@doubleCommLosingUpline as doubleCommLosing
+				--,1			
+				,HideKeno
 			
-			,HideGoldDeluxe
-			,DisableGoldDeluxe
-			,DisableSuperLive
-			,MaxPerMatch1MP
-			--,1
-			,@DangerSuper
-			,@DangerSuper2
-			,@DangerSuper3
-	FROM dbo.custinfo WITH(NOLOCK)
-	WHERE custid=@ExistingCustid  
-        
-	IF @@error <> 0
-	BEGIN 	
+				,HideGoldDeluxe
+				,DisableGoldDeluxe
+				,DisableSuperLive
+				,MaxPerMatch1MP
+				--,1
+				,@DangerSuper
+				,@DangerSuper2
+				,@DangerSuper3
+		FROM dbo.custinfo WITH(NOLOCK)
+		WHERE custid=@ExistingCustid  
+
+		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
+		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, ActionId
+		FROM ProblemAccount WITH (NOLOCK)
+		WHERE CustId = @srecommend
+	END TRY
+	BEGIN CATCH     
 		SELECT @ErrMsg = CASE @Language 
 								WHEN 'E' THEN 'Create customer failed. Please try again.'
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
@@ -463,10 +470,12 @@ BEGIN
 		-- ROLLBACK MANUALLY			
 		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
+		DELETE FROM dbo.custInfo WITH(ROWLOCK) WHERE custId = @CustID  
+		DELETE FROM ProblemAccount WITH(ROWLOCK) WHERE custId = @CustID  
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		
 		RETURN
-	END
+	END CATCH
 
 	--insert default value from upline
 	EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
