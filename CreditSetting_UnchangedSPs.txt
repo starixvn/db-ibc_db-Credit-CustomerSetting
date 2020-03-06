@@ -1,7 +1,3 @@
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMemberKeno_BetSetting.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno_BetSetting.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno_BetSetting.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno_BetSetting.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
