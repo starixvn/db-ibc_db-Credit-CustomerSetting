@@ -56,7 +56,7 @@ AS
 	-- 10191227@Eden: Integrate VR autosuspend [Redmine: #121876]
 	-- 20200116@VN-Elodie: Add a new different logic to get VR setting for Soccer
 	-- 20200203@VN-Elodie: Apply Currency Modifier
-
+	-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
 */	
 BEGIN
 
@@ -175,7 +175,8 @@ BEGIN
 			AND bs.SportType = @Sporttype
 	END		
 
-	DECLARE @new_virtualrate FLOAT = 1	
+	DECLARE @new_virtualrate FLOAT = 1, @CurrentTime TIME
+	SELECT @CurrentTime = CONVERT(VARCHAR(12),GETDATE(),114)	
 
 	IF @bettype<>0
 	BEGIN
@@ -197,6 +198,10 @@ BEGIN
 											, @IsApplyVR2 = @IsApplyVR2
 											, @srecommend = @srecommend
 											, @virtualMultiplier = @new_virtualrate OUT
+
+					IF  (@CurrentTime BETWEEN '18:00:00' AND '24:00:00' OR @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
+						AND @liveindicator = 1 AND @new_virtualrate < 1
+						SELECT @new_virtualrate = @new_virtualrate - 0.02
 				END
 			END			
 		END
