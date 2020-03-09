@@ -175,8 +175,7 @@ BEGIN
 			AND bs.SportType = @Sporttype
 	END		
 
-	DECLARE @new_virtualrate FLOAT = 1, @CurrentTime TIME
-	SELECT @CurrentTime = CONVERT(VARCHAR(12),GETDATE(),114)	
+	DECLARE @new_virtualrate FLOAT = 1
 
 	IF @bettype<>0
 	BEGIN
@@ -197,11 +196,8 @@ BEGIN
 											, @LeagueGroupID = @LeagueGroupID
 											, @IsApplyVR2 = @IsApplyVR2
 											, @srecommend = @srecommend
+											, @usertype = @usertype
 											, @virtualMultiplier = @new_virtualrate OUT
-
-					IF  (@CurrentTime BETWEEN '18:00:00' AND '23:59:59.999' OR @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
-						AND @liveindicator = 1 AND @new_virtualrate < 1 AND @IsApplyVR2 = 0 AND @usertype <> 2
-						SELECT @new_virtualrate = @new_virtualrate - 0.02
 				END
 			END			
 		END
