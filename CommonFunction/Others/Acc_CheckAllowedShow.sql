@@ -158,7 +158,7 @@ Revisions:
 			AND	psd.SettingType = 13
 	WHERE	cps.CustID = @CustID
 		AND	psd.ProductID = 41
-
+		AND psd.SportType = 211
 	-- For SA Gaming
 	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHideSAGaming OUTPUT
 	SELECT	@AllowedSAGaming =	MAX(CASE	WHEN @RoleID = 4 AND @IsHideSAGaming = 0 THEN 1
@@ -176,6 +176,7 @@ Revisions:
 			AND	psd.SettingType = 13
 	WHERE	cps.CustID = @CustID
 		AND	psd.ProductID = 41
+		AND psd.SportType = 244
 	--For Live Casino (Allbet + SA Gaming)
 	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 THEN 1
 									ELSE 0 END
