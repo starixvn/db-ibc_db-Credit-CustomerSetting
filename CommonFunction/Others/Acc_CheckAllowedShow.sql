@@ -3,14 +3,14 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 					@CustID					INT
 				,	@AllowedCS				BIT = 0		OUTPUT
 				,	@AllowedVS				BIT = 0		OUTPUT
-				,	@AllowedAllBet			BIT = 0		OUTPUT
+				,	@AllowedLiveCasino		BIT = 0		OUTPUT
 				,	@AllowedVoidBridge		BIT = 0		OUTPUT
 				,	@AllowedNG2				BIT = 0		OUTPUT
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedLottery			BIT = 0		OUTPUT
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
+
 				,	@AllowedSabaClub		BIT = 0		OUTPUT
-				,	@AllowedSAGaming		BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -51,6 +51,7 @@ Revisions:
 
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
 	Declare @srecommend int, @mrecommend int, @recommend int
+	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT 
 	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
@@ -163,7 +164,7 @@ Revisions:
 	SELECT	@AllowedSAGaming =	MAX(CASE	WHEN @RoleID = 4 AND @IsHideSAGaming = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, psp.bitmapOrder) = 1
-											AND @IsHideAllBet = 0 
+											AND @IsHideSAGaming = 0 
 											THEN 1
 										ELSE 0
 								END)
@@ -175,7 +176,9 @@ Revisions:
 			AND	psd.SettingType = 13
 	WHERE	cps.CustID = @CustID
 		AND	psd.ProductID = 41
-
+	--For Live Casino (Allbet + SA Gaming)
+	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 THEN 1
+									ELSE 0 END
 	-- For NG2
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHideNG2 OUTPUT
 	IF @RoleID = 4
