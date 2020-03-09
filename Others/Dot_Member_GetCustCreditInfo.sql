@@ -200,7 +200,7 @@ BEGIN
 											, @virtualMultiplier = @new_virtualrate OUT
 
 					IF  (@CurrentTime BETWEEN '18:00:00' AND '24:00:00' OR @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
-						AND @liveindicator = 1 AND @new_virtualrate < 1
+						AND @liveindicator = 1 AND @new_virtualrate < 1 AND @IsApplyVR2 = 0 AND @usertype <> 2
 						SELECT @new_virtualrate = @new_virtualrate - 0.02
 				END
 			END			
