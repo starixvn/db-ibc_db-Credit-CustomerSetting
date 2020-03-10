@@ -17,6 +17,7 @@ AS
 	Revisions:
 		- 20190620@Sophia: initial SP [RedmineID: #114912]
 		- 20190926@Percy: Change log's format [Redmine: #118962]
+		- 20200309@Sophia: Allow to set Headline PT up to 5% [Redmine: #129665]
 		 
 	Original: Acc_GroupExtraPTSetting_Upd
 	Param's Explanation:
@@ -85,7 +86,7 @@ BEGIN
 	WHERE  	@today BETWEEN a.FromDate AND a.ToDate
 			AND a.ProductID IN (1, 3)
 			AND Sporttype = 0 AND SubProduct = ''
-			AND GroupID BETWEEN 27 AND 42
+			AND a.GroupName LIKE 'CN88_%'
 	GROUP BY GroupName, GroupId
 	HAVING COUNT(GroupId) = 2
 	
