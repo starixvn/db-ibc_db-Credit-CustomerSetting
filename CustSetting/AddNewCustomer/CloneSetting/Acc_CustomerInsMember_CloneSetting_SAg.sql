@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 	@Custid INT OUTPUT
 	,@UserName VARCHAR(30)
@@ -78,6 +78,7 @@ AS
 	- 20190923@Johnson: copy danger status from upline [redmine:#120056]
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200210@Elodie: Problem account for credit [Redmine:#127446]
+	- 20200310@Percy: Add column IsAllDayBalTransfer on CustMaster [RedmineID: #130091]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -93,7 +94,7 @@ BEGIN
 --20140619@Johnson: Check IP to create downline-----------------
 	DECLARE @isValidIP bit
 	
-	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME
+	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT
 	
 	SET @CreateDate = GETDATE()
 	
@@ -312,11 +313,16 @@ BEGIN
 	END	
 			
 	-- insert CustMaster info
-	INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption)  
+	SELECT @IsAllDayBalTransfer = IsAllDayBalTransfer
+	FROM dbo.CustSuper WITH (NOLOCK)
+	WHERE CustId = @srecommend
+
+	INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer)  
 	SELECT @CustID,
 			DisableAutoMPT,
 			IsInternal,
-			TransferOption
+			TransferOption,
+			ISNULL(@IsAllDayBalTransfer, 0)
 	FROM dbo.CustMaster WITH(NOLOCK)
 	WHERE custid=@ExistingCustid		
 

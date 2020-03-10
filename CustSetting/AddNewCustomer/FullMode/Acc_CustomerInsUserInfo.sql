@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -151,6 +151,7 @@ Revisions:
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200210@Elodie: Problem account for credit [Redmine:#127446]
+	- 20200310@Percy: Add column IsAllDayBalTransfer on CustMaster [RedmineID: #130091]
 
 Param's Explanation:
 • @ErrCode:
@@ -161,7 +162,7 @@ Param's Explanation:
 */
 BEGIN
     SET NOCOUNT ON 
-	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME
+	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT
 	
 	SET @CreateDate = GETDATE()
 	
@@ -284,11 +285,15 @@ BEGIN
 	      FROM dbo.CustLoginInfo WITH(NOLOCK)
 	     WHERE CustID = @srecommend
 
+		SELECT @IsAllDayBalTransfer = IsAllDayBalTransfer
+		FROM dbo.CustSuper WITH (NOLOCK)
+		WHERE CustId = @srecommend
+
 	    SET @mrecommend = @custid 
 	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET mrecommend = @custid WHERE custId = @CustID
 
-	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption)
-	    VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
+	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer)
+	    VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, ISNULL(@IsAllDayBalTransfer, 0))
 	
 		--Virtual rate
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
