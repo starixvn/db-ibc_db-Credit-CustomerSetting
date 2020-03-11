@@ -25,6 +25,7 @@ AS
 		- 20200116@VN-Elodie: Add a new different logic to get VR setting for Soccer
 		- 20200203@VN-Elodie: Apply Currency Modifier
 		-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
+		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours ( Weekends 6am - 8pm HK time and WEEKDAYS 6am - 1am HK time)
 
     Parameter's Explanation:
 */
