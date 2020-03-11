@@ -53,8 +53,9 @@ BEGIN
 			IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
 			BEGIN
 				IF @CurrentTime BETWEEN '18:00:00' AND '23:59:59.999'
-				OR (DATENAME(DW,GETDATE()) IN ('Friday') AND @CurrentTime BETWEEN '00:00:00'AND '11:59:59.999')		
-				OR (DATENAME(DW,GETDATE()) IN ('Saturday','Sunday')	AND @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
+				OR (DATENAME(DW,GETDATE()) IN ('Friday')	AND @CurrentTime BETWEEN '00:00:00'AND '11:59:59.999')		
+				OR (DATENAME(DW,GETDATE()) IN ('Saturday')	AND @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
+				OR (DATENAME(DW,GETDATE()) IN ('Sunday')	AND (@CurrentTime BETWEEN '00:00:00'AND '08:00:00' OR @CurrentTime BETWEEN '12:00:00'AND '13:00:00'))
 				OR (DATENAME(DW,GETDATE()) NOT IN ('Friday','Saturday','Sunday') AND @CurrentTime BETWEEN '00:00:00'AND '13:00:00')
 				BEGIN
 					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
