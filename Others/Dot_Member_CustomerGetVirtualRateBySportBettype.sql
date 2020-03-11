@@ -49,9 +49,20 @@ BEGIN
 
 			SELECT @CurrentTime = CONVERT(VARCHAR(12),GETDATE(),114)	
 
-			IF  (@CurrentTime BETWEEN '18:00:00' AND '23:59:59.999' OR @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
+			
 				AND @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
-				SELECT @virtualMultiplier = @virtualMultiplier - 0.02
+				
+
+			IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
+			BEGIN
+				IF (DATENAME(DW,GETDATE()) IN ('Saturday','Sunday')
+					AND (@CurrentTime BETWEEN '18:00:00' AND '23:59:59.999' OR @CurrentTime BETWEEN '00:00:00'AND '08:00:00')) --6am - 8pm GMT+8
+				OR (DATENAME(DW,GETDATE()) NOT IN ('Saturday','Sunday')
+					AND (@CurrentTime BETWEEN '18:00:00' AND '23:59:59.999' OR @CurrentTime BETWEEN '00:00:00'AND '13:00:00')) --6am - 1am GMT+8
+				BEGIN
+					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
+				END
+			END
 		END
 		ELSE --Get VR2
 		BEGIN
