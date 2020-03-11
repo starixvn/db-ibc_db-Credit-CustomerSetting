@@ -25,6 +25,7 @@ AS
 		- 20200116@VN-Elodie: Add a new different logic to get VR setting for Soccer
 		- 20200203@VN-Elodie: Apply Currency Modifier
 		-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
+		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours ( Weekends 6am - 8pm HK time and WEEKDAYS 6am - 1am HK time)
 
     Parameter's Explanation:
 */
@@ -48,10 +49,18 @@ BEGIN
 					AND pvs.isActive=1 
 
 			SELECT @CurrentTime = CONVERT(VARCHAR(12),GETDATE(),114)	
-
-			IF  (@CurrentTime BETWEEN '18:00:00' AND '23:59:59.999' OR @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
-				AND @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
-				SELECT @virtualMultiplier = @virtualMultiplier - 0.02
+			
+			IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
+			BEGIN
+				IF @CurrentTime BETWEEN '18:00:00' AND '23:59:59.999'
+				OR (DATENAME(DW,GETDATE()) IN ('Friday')	AND @CurrentTime BETWEEN '00:00:00'AND '11:59:59.999')		
+				OR (DATENAME(DW,GETDATE()) IN ('Saturday')	AND @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
+				OR (DATENAME(DW,GETDATE()) IN ('Sunday')	AND (@CurrentTime BETWEEN '00:00:00'AND '08:00:00' OR @CurrentTime BETWEEN '12:00:00'AND '13:00:00'))
+				OR (DATENAME(DW,GETDATE()) NOT IN ('Friday','Saturday','Sunday') AND @CurrentTime BETWEEN '00:00:00'AND '13:00:00')
+				BEGIN
+					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
+				END
+			END
 		END
 		ELSE --Get VR2
 		BEGIN
