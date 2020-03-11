@@ -48,11 +48,7 @@ BEGIN
 					AND pvs.isActive=1 
 
 			SELECT @CurrentTime = CONVERT(VARCHAR(12),GETDATE(),114)	
-
 			
-				AND @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
-				
-
 			IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
 			BEGIN
 				IF (DATENAME(DW,GETDATE()) IN ('Saturday','Sunday')
