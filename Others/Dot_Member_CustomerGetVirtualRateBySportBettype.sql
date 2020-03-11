@@ -11,8 +11,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@LeagueGroupID		SMALLINT = 0,
 					@IsApplyVR2			BIT = 0,
 					@srecommend         INT,
-                    @virtualMultiplier	SMALLMONEY	OUT
-                    
+					@usertype			INT = 0, --0:default(MBC) 1:IMBC 2:CN88
+                    @virtualMultiplier	SMALLMONEY	OUT                    
 AS
 /*
     Created: 20151019@joy
@@ -24,13 +24,14 @@ AS
 					, and add a new different logic to get VR setting for E-sports
 		- 20200116@VN-Elodie: Add a new different logic to get VR setting for Soccer
 		- 20200203@VN-Elodie: Apply Currency Modifier
+		-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
 
     Parameter's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00
-
+	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00, @CurrentTime TIME
+	
 	IF @SportType = 1
 	BEGIN --For Soccer
 		SELECT @virtualMultiplier = NULL
@@ -45,6 +46,12 @@ BEGIN
 					AND pvs.bettype = @BetType
 					AND pvs.islive = @isLive   
 					AND pvs.isActive=1 
+
+			SELECT @CurrentTime = CONVERT(VARCHAR(12),GETDATE(),114)	
+
+			IF  (@CurrentTime BETWEEN '18:00:00' AND '23:59:59.999' OR @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
+				AND @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
+				SELECT @virtualMultiplier = @virtualMultiplier - 0.02
 		END
 		ELSE --Get VR2
 		BEGIN
