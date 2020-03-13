@@ -26,12 +26,13 @@ AS
 		- 20200203@VN-Elodie: Apply Currency Modifier
 		-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
 		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours ( Weekends 6am - 8pm HK time and WEEKDAYS 6am - 1am HK time)
+		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours (WEEKENDS 6am - 8pm HK time, X=-3%, WEEKDAYS 6am - 8pm HK time, X = -3%, WEEKDAYS 8pm - 1am HK time, X = -2%)
 
     Parameter's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00, @CurrentTime TIME
+	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00, @CurrentHKDate DATETIME, @CurrentHKTime TIME
 	
 	IF @SportType = 1
 	BEGIN --For Soccer
@@ -48,15 +49,17 @@ BEGIN
 					AND pvs.islive = @isLive   
 					AND pvs.isActive=1 
 
-			SELECT @CurrentTime = CONVERT(VARCHAR(12),GETDATE(),114)	
+			SELECT @CurrentHKDate = DATEADD(HOUR, 12, GETDATE())
+			SELECT @CurrentHKTime = CONVERT(VARCHAR(12),@CurrentHKDate,114)	
 			
 			IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
 			BEGIN
-				IF @CurrentTime BETWEEN '18:00:00' AND '23:59:59.999'
-				OR (DATENAME(DW,GETDATE()) IN ('Friday')	AND @CurrentTime BETWEEN '00:00:00'AND '11:59:59.999')		
-				OR (DATENAME(DW,GETDATE()) IN ('Saturday')	AND @CurrentTime BETWEEN '00:00:00'AND '08:00:00') 
-				OR (DATENAME(DW,GETDATE()) IN ('Sunday')	AND (@CurrentTime BETWEEN '00:00:00'AND '08:00:00' OR @CurrentTime BETWEEN '12:00:00'AND '13:00:00'))
-				OR (DATENAME(DW,GETDATE()) NOT IN ('Friday','Saturday','Sunday') AND @CurrentTime BETWEEN '00:00:00'AND '13:00:00')
+				IF @CurrentHKTime BETWEEN '06:00:00' AND '20:00:00'
+				BEGIN
+					SELECT @virtualMultiplier = @virtualMultiplier - 0.03
+				END	
+
+				IF DATENAME(DW,@CurrentHKDate) NOT IN ('Saturday','Sunday') AND (@CurrentHKTime BETWEEN '00:00:00' AND '01:00:00' OR @CurrentHKTime BETWEEN '20:00:00.001' AND '23:59:59.999')
 				BEGIN
 					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
 				END
