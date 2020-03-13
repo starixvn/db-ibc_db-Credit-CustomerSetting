@@ -54,12 +54,12 @@ BEGIN
 			
 			IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
 			BEGIN
-				IF @CurrentHKTime BETWEEN '06:00:00'AND '20:00:00'
+				IF @CurrentHKTime BETWEEN '06:00:00' AND '20:00:00'
 				BEGIN
 					SELECT @virtualMultiplier = @virtualMultiplier - 0.03
 				END	
 
-				IF DATENAME(DW,@CurrentHKDate) NOT IN ('Saturday','Sunday') AND (@CurrentHKTime BETWEEN '00:00:00'AND '01:00:00' OR @CurrentHKTime BETWEEN '20:00:00'AND '23:59:59.999')
+				IF DATENAME(DW,@CurrentHKDate) NOT IN ('Saturday','Sunday') AND (@CurrentHKTime BETWEEN '00:00:00' AND '01:00:00' OR @CurrentHKTime BETWEEN '20:00:00.001' AND '23:59:59.999')
 				BEGIN
 					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
 				END
