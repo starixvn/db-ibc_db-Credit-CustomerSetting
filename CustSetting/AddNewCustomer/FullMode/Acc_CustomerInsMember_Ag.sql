@@ -302,6 +302,8 @@ Revisions:
 	- 20190816@Johnson: copy reject status from source member for search & copy [redmine:#118736]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -1462,6 +1464,7 @@ BEGIN
     DECLARE @IsValid BIT
     
     EXEC dbo.Acc_CustomerInsMember_Ag_CheckParam
+		@custid = @custid OUTPUT,
 	    @playerdiscount=@playerdiscount,
 	    @playerdiscountcs=@playerdiscountcs,
 	    @playerdiscount1x2 = @playerdiscount1x2,--1x2
@@ -1596,7 +1599,9 @@ BEGIN
 	    @isvalid=@isvalid OUTPUT,
 	    @errmsg=@ErrMsg OUTPUT,
 	    @errcode=@errcode OUTPUT,
-	    @language=@language
+	    @language=@language,
+		@SystemID = @SystemID,
+		@creator = @creator
 
     IF @IsValid = 0
     BEGIN

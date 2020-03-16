@@ -1,9 +1,11 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Acc_CustSetting_StakeLevelUpd 
 		@CustID			INT
 	,	@StakeLevel		VARCHAR(MAX)
 	,	@SubAccID		INT				= 0
 	,	@UserID			INT
 	,	@IP				VARCHAR(50)		= ''
+	,	@SystemID TINYINT = 1 --20200305@Tiara
 	,	@ErrCode		INT				= 0		OUTPUT
 	,	@MsgType		INT				= 0		OUTPUT
 	,	@ErrMsg			NVARCHAR(200)	= ''	OUTPUT
@@ -18,6 +20,8 @@ AS
 		- 20160404@Billy: Integrate Group Stake Level Setting for DCS - [Redmine: #54994]
 		- 20160704@Winnie: Fix bug copy member settting type =7 & =8
 		- 20161005@Elodie: Update LastUpdated field - [Redmine: #54994]
+		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -159,6 +163,8 @@ BEGIN
 			,	@MasterID	= @MasterID
 			,	@SuperID	= @SuperID
 			,	@StakeLevel	= @StakeLevel
+			,   @SystemID	= @SystemID
+			,   @ProductID  = @ProductID
 			,	@ErrCode	= @ErrCode		OUTPUT
 			,	@MsgType	= @MsgType		OUTPUT
 			,	@ErrMsg		= @ErrMsg		OUTPUT;

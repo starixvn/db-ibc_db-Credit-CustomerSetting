@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperKeno_MinMaxBet]  
  @CustID   INT,  
  @Sporttype  INT = 202,  
@@ -7,10 +8,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperKeno_MinMaxBet]
  @MaxBet   MONEY,  
  @MaxPerMatch MONEY,  
   
-@SubAccID       INT = 0,  
+ @SubAccID       INT = 0,  
  @UserID   INT = 0,   
  @Language  VARCHAR(2) = 'E',  
- @IP    VARCHAR(15)='',  
+ @IP    VARCHAR(15)='',
+ @SystemID TINYINT, --20200310@Tiara
  @ErrCode  INT  = 0  OUTPUT,  
  @ErrMsg   NVARCHAR(4000) = '' OUTPUT  
 AS  
@@ -22,7 +24,9 @@ AS
  Revisions:  
     - 20141027@Logan:   Add currency when selecting Min Bet Global [Redmine: #25040]
     - 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)   
-    - 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+    - 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+	- 20200310@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+
  Param's Explanation:  
  * @ErrCode:  
   = 0: Update successfully.  
@@ -52,7 +56,7 @@ BEGIN
           , @maxbet_old MONEY
           , @maxpermatch_old MONEY
           , @currency   SMALLINT
-
+	
     SET @startRun = GETDATE()
 
     SELECT @currency = currency
@@ -68,11 +72,24 @@ BEGIN
 			   @ErrCode = 103	
 		RETURN
 	END
-
+	
+	--Get site info
+	DECLARE @Site NVARCHAR (50), @RoleID TINYINT, @recommend INT
+	SELECT @RoleID=RoleID  FROM custinfo(NOLOCK) WHERE custid=@custid
+	IF @RoleID IN (2,3,4)
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @custid
+	ELSE IF @RoleID = 1
+	BEGIN
+		SELECT @recommend = recommend FROM custinfo (NOLOCK) WHERE custid=@custid
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @recommend
+	END
 
     IF @MinBet < 0  
         OR @MaxBet < 0  
-        OR @MaxPerMatch <0   
+        OR @MaxPerMatch <0 
+		OR (@MinBet < 1 AND @SystemID!=1 AND @Site IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
+		OR (@MaxBet < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+		OR (@MaxPerMatch < 1 AND @SystemID!=1 AND @Site IN ('789y'))
     BEGIN  
         SELECT @ErrMsg =
                  CASE @Language   

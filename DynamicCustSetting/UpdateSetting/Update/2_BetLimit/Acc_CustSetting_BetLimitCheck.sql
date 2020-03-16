@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 USE CustDB
 GO
 
@@ -9,6 +9,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_BetLimitCheck]
 	, @MasterID		INT
 	, @SuperID		INT
 	, @BetLimit VARCHAR(MAX)
+	, @SystemID TINYINT --20200305@Tiara
+	, @ProductID TINYINT
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
@@ -18,6 +20,8 @@ AS
 	Task : Check Customer's Bet Limits
 	DB: DBCUST/CustDB
 	Original:
+	Revisions:
+		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 
 	Param's Explanation:
 	• @BetLimit:
@@ -34,7 +38,6 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
-
 	DECLARE @ErrorSportTypeTbl TABLE (
 			SportType			SMALLINT
 			, BetType			SMALLINT
@@ -65,14 +68,14 @@ BEGIN
 	IF @BetLimit IS NULL
 		OR @BetLimit = ''
 		RETURN
-
+	
 	SELECT	@ErrCode	= 0
 		,	@MsgType	= 0
 		,	@ErrMsg		= ''
-
+	
 	--Parse XML data
 	DECLARE @iDoc INT
-
+	
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @BetLimit
 
@@ -183,216 +186,225 @@ BEGIN
 		GROUP BY bl.SportType
 			, bl.BetType
 	END
-	
+
 	--Get 1 error row
 	INSERT INTO @ErrorSportTypeTbl
 	SELECT tmp.SportType
-		, tmp.BetType
-		, tmp.MinBet
-		, tmp.MaxBet
-		, tmp.MaxPerMatch
-		, ISNULL(ubl.MinBet, 0)
-		, ISNULL(ubl.MaxBet, 0)
-		, ISNULL(ubl.MaxPerMatch, 0)
+			, tmp.BetType
+			, tmp.MinBet
+			, tmp.MaxBet
+			, tmp.MaxPerMatch
+			, ISNULL(ubl.MinBet, 0)
+			, ISNULL(ubl.MaxBet, 0)
+			, ISNULL(ubl.MaxPerMatch, 0)
 	FROM @NewBetLimitTbl tmp
-	LEFT JOIN @UplineLimitTbl ubl
-		ON tmp.SportType	= ubl.SportType
-			AND tmp.BetType = ubl.BetType
-	LEFT JOIN dbo.ProductBetSetting pb
-		ON pb.Sporttype = tmp.SportType
-			AND pb.Bettype = tmp.BetType
-			AND pb.Currency = @Currency
+		LEFT JOIN @UplineLimitTbl ubl
+			ON tmp.SportType	= ubl.SportType
+				AND tmp.BetType = ubl.BetType
+		LEFT JOIN dbo.ProductBetSetting pb
+			ON pb.Sporttype = tmp.SportType
+				AND pb.Bettype = tmp.BetType
+				AND pb.Currency = @Currency
 	WHERE	tmp.MinBet		< 0
-		OR tmp.MaxBet		< 0
-		OR tmp.MaxPerMatch	< 0
-		OR (
+			OR tmp.MaxBet		< 0
+			OR tmp.MaxPerMatch	< 0
+			OR (tmp.MinBet		< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+			OR (tmp.MaxBet		< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+			OR (tmp.MaxPerMatch	< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+			OR (
+					(
+						tmp.MinBet	<> 0
+						OR tmp.MaxBet	<> 0
+						OR tmp.MaxPerMatch	<> 0
+					)
+					AND
+					(
+						tmp.MinBet		< ISNULL(pb.MinBet,0)
+						OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
+						OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
+					)
+				)
+			OR (
 				(
-					tmp.MinBet	<> 0
+						tmp.MinBet	<> 0
 					OR tmp.MaxBet	<> 0
-					OR tmp.MaxPerMatch	<> 0
+					)
+				AND tmp.MinBet > tmp.MaxBet
 				)
-				AND
+			OR (
 				(
-					tmp.MinBet		< ISNULL(pb.MinBet,0)
-					OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
-					OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
+						tmp.MaxBet		<> 0
+					OR tmp.MaxPerMatch	<> 0
+					)
+				AND tmp.MaxBet > tmp.MaxPerMatch
 				)
-			)
-		OR (
-			(
-					tmp.MinBet	<> 0
-				OR tmp.MaxBet	<> 0
+			OR (
+				(
+						tmp.MinBet		<> 0
+					OR tmp.MaxPerMatch	<> 0
+					)
+				AND tmp.MinBet > tmp.MaxPerMatch
 				)
-			AND tmp.MinBet > tmp.MaxBet
-			)
-		OR (
-			(
-					tmp.MaxBet		<> 0
-				OR tmp.MaxPerMatch	<> 0
+			OR (
+				ubl.MinBet		> 0
+				AND tmp.MinBet	> 0
+				AND tmp.MinBet	< ubl.MinBet
 				)
-			AND tmp.MaxBet > tmp.MaxPerMatch
-			)
-		OR (
-			(
-					tmp.MinBet		<> 0
-				OR tmp.MaxPerMatch	<> 0
+			OR (
+				ubl.MaxBet		> 0
+				AND tmp.MaxBet	> 0
+				AND tmp.MaxBet	> ubl.MaxBet
 				)
-			AND tmp.MinBet > tmp.MaxPerMatch
-			)
-		OR (
-			ubl.MinBet		> 0
-			AND tmp.MinBet	> 0
-			AND tmp.MinBet	< ubl.MinBet
-			)
-		OR (
-			ubl.MaxBet		> 0
-			AND tmp.MaxBet	> 0
-			AND tmp.MaxBet	> ubl.MaxBet
-			)
-		OR (
-			ubl.MaxPerMatch		> 0
-			AND tmp.MaxPerMatch > 0
-			AND tmp.MaxPerMatch > ubl.MaxPerMatch
-			)
-
+			OR (
+				ubl.MaxPerMatch		> 0
+				AND tmp.MaxPerMatch > 0
+				AND tmp.MaxPerMatch > ubl.MaxPerMatch
+				)
+	
 	--IF there's no error data then return
 	IF NOT EXISTS (
 			SELECT TOP 1 1
 			FROM @ErrorSportTypeTbl
 			)
 		RETURN
+	
 
 	--Check all setting >=0
 	IF EXISTS(SELECT TOP 1 1 
 			FROM @ErrorSportTypeTbl tmp
-			LEFT JOIN dbo.ProductBetSetting pb
-				ON pb.Sporttype = tmp.SportType
-					AND pb.Bettype = tmp.BetType
-					AND pb.Currency = @Currency
+				LEFT JOIN dbo.ProductBetSetting pb
+					ON pb.Sporttype = tmp.SportType
+						AND pb.Bettype = tmp.BetType
+						AND pb.Currency = @Currency
 			WHERE	tmp.MinBet		< 0
-				OR tmp.MaxBet		< 0
-				OR tmp.MaxPerMatch	< 0
-				OR (
-						(
-							tmp.MinBet	<> 0
-							OR tmp.MaxBet	<> 0
-							OR tmp.MaxPerMatch	<> 0
-						)
-						AND
-						(
-							tmp.MinBet		< ISNULL(pb.MinBet,0)
-							OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
-							OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
-						)
-					))
+					OR tmp.MaxBet		< 0
+					OR tmp.MaxPerMatch	< 0
+					OR (tmp.MinBet		< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+					OR (tmp.MaxBet		< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+					OR (tmp.MaxPerMatch	< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+					OR (
+							(
+								tmp.MinBet	<> 0
+								OR tmp.MaxBet	<> 0
+								OR tmp.MaxPerMatch	<> 0
+							)
+							AND
+							(
+								tmp.MinBet		< ISNULL(pb.MinBet,0)
+								OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
+								OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
+							)
+						))
 	BEGIN
 		SET @xml = (
 				SELECT 10003 AS '@MsgID'
-					, 'Wrong Min bet/ Max bet/ Max per match.' AS '@Msg'
-					, (
-						SELECT tmp.SportType AS '@SportType'
-							, tmp.BetType AS '@BetType'
-						FROM @ErrorSportTypeTbl tmp
-						LEFT JOIN dbo.ProductBetSetting pb
-							ON pb.Sporttype = tmp.SportType
-								AND pb.Bettype = tmp.BetType
-								AND pb.Currency = @Currency
-						WHERE	tmp.MinBet		< 0
-							OR tmp.MaxBet		< 0
-							OR tmp.MaxPerMatch	< 0
-							OR (
-									(
-										tmp.MinBet	<> 0
-										OR tmp.MaxBet	<> 0
-										OR tmp.MaxPerMatch	<> 0
+						, 'Wrong Min bet/ Max bet/ Max per match.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorSportTypeTbl tmp
+							LEFT JOIN dbo.ProductBetSetting pb
+								ON pb.Sporttype = tmp.SportType
+									AND pb.Bettype = tmp.BetType
+									AND pb.Currency = @Currency
+							WHERE	tmp.MinBet		< 0
+								OR tmp.MaxBet		< 0
+								OR tmp.MaxPerMatch	< 0
+								OR (tmp.MinBet		< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+								OR (tmp.MaxBet		< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+								OR (tmp.MaxPerMatch	< 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+								OR (
+										(
+											tmp.MinBet	<> 0
+											OR tmp.MaxBet	<> 0
+											OR tmp.MaxPerMatch	<> 0
+										)
+										AND
+										(
+											tmp.MinBet		< ISNULL(pb.MinBet,0)
+											OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
+											OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
+										)
 									)
-									AND
-									(
-										tmp.MinBet		< ISNULL(pb.MinBet,0)
-										OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
-										OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
-									)
-								)
-						FOR XML PATH('Row')
-							, TYPE
-						)
-				FOR XML PATH('Root')
-					, TYPE
-				)		
+							FOR XML PATH('Row')
+								, TYPE
+							)
+					FOR XML PATH('Root')
+						, TYPE
+					)		
 		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 		SET @MsgType = 71
 		SET @ErrCode = 101
 		
 		RETURN
 	END
-	
 
 	--Check MinBet<=MaxBet<=MaxPerMatch	
 	IF EXISTS(SELECT TOP 1 1
 			FROM @ErrorSportTypeTbl tmp
 			WHERE (
-					(
-							tmp.MinBet	<> 0
-						OR tmp.MaxBet	<> 0
+						(
+								tmp.MinBet	<> 0
+							OR tmp.MaxBet	<> 0
+							)
+						AND tmp.MinBet > tmp.MaxBet
 						)
-					AND tmp.MinBet > tmp.MaxBet
-					)
-				OR (
-					(
-							tmp.MaxBet		<> 0
-						OR tmp.MaxPerMatch	<> 0
+					OR (
+						(
+								tmp.MaxBet		<> 0
+							OR tmp.MaxPerMatch	<> 0
+							)
+						AND tmp.MaxBet > tmp.MaxPerMatch
 						)
-					AND tmp.MaxBet > tmp.MaxPerMatch
-					)
-				OR (
-					(
-							tmp.MinBet		<> 0
-						OR tmp.MaxPerMatch	<> 0
-						)
-					AND tmp.MinBet > tmp.MaxPerMatch
-					))
+					OR (
+						(
+								tmp.MinBet		<> 0
+							OR tmp.MaxPerMatch	<> 0
+							)
+						AND tmp.MinBet > tmp.MaxPerMatch
+						))
 	BEGIN
-		SET @xml = (
-				SELECT 10005 AS '@MsgID'
-					, 'Min bet must be less than max bet and max bet must be less than max bet per match.' AS '@Msg'
-					, (
-						SELECT tmp.SportType AS '@SportType'
-							, tmp.BetType AS '@BetType'
-						FROM @ErrorSportTypeTbl tmp
-						WHERE (
-								(
-										tmp.MinBet	<> 0
-									OR tmp.MaxBet	<> 0
+			SET @xml = (
+					SELECT 10005 AS '@MsgID'
+						, 'Min bet must be less than max bet and max bet must be less than max bet per match.' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+							FROM @ErrorSportTypeTbl tmp
+							WHERE (
+									(
+											tmp.MinBet	<> 0
+										OR tmp.MaxBet	<> 0
+										)
+									AND tmp.MinBet > tmp.MaxBet
 									)
-								AND tmp.MinBet > tmp.MaxBet
-								)
-							OR (
-								(
-										tmp.MaxBet		<> 0
-									OR tmp.MaxPerMatch	<> 0
+								OR (
+									(
+											tmp.MaxBet		<> 0
+										OR tmp.MaxPerMatch	<> 0
+										)
+									AND tmp.MaxBet > tmp.MaxPerMatch
 									)
-								AND tmp.MaxBet > tmp.MaxPerMatch
-								)
-							OR (
-								(
-										tmp.MinBet		<> 0
-									OR tmp.MaxPerMatch	<> 0
+								OR (
+									(
+											tmp.MinBet		<> 0
+										OR tmp.MaxPerMatch	<> 0
+										)
+									AND tmp.MinBet > tmp.MaxPerMatch
 									)
-								AND tmp.MinBet > tmp.MaxPerMatch
-								)
-						FOR XML PATH('Row')
-							, TYPE
-						)
-				FOR XML PATH('Root')
-					, TYPE
-				)		
-		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-		SET @MsgType = 71
-		SET @ErrCode = 102
+							FOR XML PATH('Row')
+								, TYPE
+							)
+					FOR XML PATH('Root')
+						, TYPE
+					)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 71
+			SET @ErrCode = 102
 		
 		RETURN
 	END
-
+	
 	IF @RoleID IN (1, 2, 3)
 	BEGIN
 		--Check if MAX(upper.minbet) > 0 and minbet>0 then minbet>=MAX(upper.minbet)

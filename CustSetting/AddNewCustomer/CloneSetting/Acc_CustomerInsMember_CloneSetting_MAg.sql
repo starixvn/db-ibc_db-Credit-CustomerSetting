@@ -1,5 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_MAg]
+(
 	@Custid int output
 	,@UserName varchar(30)
 	,@Userpwd varchar(40)
@@ -19,6 +20,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_MAg]
 	,@ErrCode int = 0 output
 	,@ErrMsg nvarchar(4000) = '' output
 	,@SystemID TINYINT=1
+)
 AS
 /*  
  Created by: Dan  
@@ -78,6 +80,7 @@ AS
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190923@Johnson: copy danger status from upline [redmine:#120056]
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200102@Malcolm: Separate setting and notification into Live/Non-Live and bettypes [Redmine : 125076]
 	- 20200210@Elodie: Problem account for credit [Redmine:#127446]
 
  Explanation's Param:  
@@ -117,7 +120,8 @@ BEGIN
 		,@duration int
 		,@pwdexpiry datetime
 		,@recommend int		
-	
+		,@CreditRM MONEY
+
 	DECLARE @IsExists BIT 
 	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
 
@@ -493,6 +497,16 @@ BEGIN
 		RETURN
 	END CATCH
 
+	SELECT @CreditRM = @credit * actualrate
+	FROM dbo.exchange WITH (NOLOCK) 
+	WHERE exchangeid = @currency
+
+	IF @CreditRM > 300000
+	BEGIN
+		INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2)
+		SELECT @CustId, 1, 0
+	END
+
 	--insert default value from upline
 	EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		, @UplineId = @ExistingCustid
@@ -644,7 +658,7 @@ BEGIN
 			SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" />'
 			EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 602,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 			
-			INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+			INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
             SELECT @custid
                     -- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
                     , CASE 
@@ -653,18 +667,18 @@ BEGIN
                             -- NOT currency RM in default Setting
                             ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
                     END AS MaxTurnOver
-                    , TO_tmp.Sporttype, 0
+                    , TO_tmp.Sporttype, 0, TO_tmp.ProfileID
             
             FROM (        
 					-- Soccer 
-					SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+					SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
 					FROM dbo.f_TOControl_GlobalSettingSel () f1                
 					WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
 					ORDER BY f1.site DESC, f1.ExchangeID DESC                
 	                
 					UNION ALL
 					-- Others sport
-					SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+					SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
 					FROM dbo.f_TOControl_GlobalSettingSel () f2                
 					WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
 					ORDER BY f2.site DESC, f2.ExchangeID DESC

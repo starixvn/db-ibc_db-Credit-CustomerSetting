@@ -1,9 +1,4 @@
-SET ANSI_NULLS ON;
-GO
-
-SET QUOTED_IDENTIFIER ON;
-GO
-
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_StakeLevelCheck] 
 	  @CustID			INT
 	, @RoleID			INT
@@ -11,6 +6,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_StakeLevelCheck]
 	, @MasterID			INT
 	, @SuperID			INT
 	, @StakeLevel		VARCHAR(MAX)
+	, @SystemID INT --20200305@Tiara
+	, @ProductID TINYINT 
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
@@ -20,6 +17,8 @@ AS
 	Task : Check Customer's Stake Level Settings
 	DB: DBCUST/CustDB
 	Original:
+	Revisions:
+		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -60,7 +59,7 @@ BEGIN
 	SELECT	@ErrCode	= 0
 		,	@MsgType	= 0
 		,	@ErrMsg		= '';
-		
+
 	-- Stake Level Member Single Selection
 	SELECT	@SettingType = 7;
 
@@ -77,7 +76,38 @@ BEGIN
 	) AS ox;
 
 	EXEC sys.sp_xml_removedocument @iDoc;
-
+	--Prevent users under 789y uncheck all Stakelevel
+	IF @SystemID IN (6,7,8,9) AND @ProductID != 16 --789y Alpha, 789y ExtNAP (Exclude SprotBook2)
+	BEGIN
+		IF EXISTS (SELECT 1 
+					FROM #tmpStakeCheck WITH (NOLOCK)
+					WHERE StakeLevelList IS NULL OR StakeLevelList='')
+		BEGIN
+			SELECT	@xml =	(
+										SELECT	10035												AS '@MsgID'
+											,	'Each bet type must have at least one Bet Limit value to be selected'	AS '@Msg'
+											,	(
+													SELECT	psd.SportType							AS '@SportType'
+														,	psd.BetType								AS '@BetType'
+													FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
+													INNER JOIN	#tmpStakeCheck AS ts
+															ON	ts.BetType = sl.GameTypeID
+													INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+															ON	psd.SportType = ts.SportType
+															AND	psd.BetType = ts.BetType
+															AND	psd.SettingType = @SettingType
+													FOR XML PATH ('Row')
+												,	TYPE
+												)
+										FOR XML PATH ('Root')
+									,	TYPE
+									);
+			SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+					,	@MsgType = 131
+					,	@ErrCode = 10035;
+			RETURN;   
+		END
+	END 
 	IF @RoleID < 4
 	BEGIN
 	    WHILE (0 = 0)
@@ -153,9 +183,8 @@ BEGIN
 	DROP TABLE #tmpStakeCheck;
 END;
 GO
-
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelCheck TO [bodbAdminNet];
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbadminNet]
 GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelCheck TO [bodbDownlineNet];
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbDownlineNet]
 GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelCheck TO [bodbExtAccNet];
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbExtAccNet]

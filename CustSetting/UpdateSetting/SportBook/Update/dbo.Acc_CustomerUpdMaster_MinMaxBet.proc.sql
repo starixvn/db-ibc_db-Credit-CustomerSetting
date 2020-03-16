@@ -78,6 +78,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_MinMaxBet]
 	@UserID int = 0,	
 	@Language varchar(2) = 'E',
 	@IP varchar(15)='',
+	@SystemID TINYINT,
 	@ErrCode int = 0 OUTPUT,
 	@ErrMsg nvarchar(4000) = '' OUTPUT
 as
@@ -107,6 +108,7 @@ Revisions:
 	- 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
+	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -121,7 +123,7 @@ BEGIN
 	declare @endRun datetime
 	declare @duration int
 	set @startRun = getdate()
-
+	DECLARE @Site NVARCHAR (50), @RoleID TINYINT, @recommend INT
 	Declare 
 		@MinMinBet money, @MaxMaxBet money,	@MaxMaxPerMatch money,
 		@MinMinBetv2 money, @MaxMaxBetv2 money, @MaxMaxPerMatchv2 money,
@@ -166,6 +168,16 @@ BEGIN
 	Select @UserName = username, @srecommend = srecommend
 	from customer with (NOLOCK)
 	where CustID = @CustID
+	
+	--Get site info
+	SELECT @RoleID=RoleID  FROM custinfo(NOLOCK) WHERE custid=@custid
+	IF @RoleID IN (2,3,4)
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @custid
+	ELSE IF @RoleID = 1
+	BEGIN
+		SELECT @recommend = recommend FROM custinfo (NOLOCK) WHERE custid=@custid
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @recommend
+	END
 	   
 	EXEC Acc_CustomerSelMinMax @custid,
 		@MinBet = @old_MinBet output, @MaxBet = @old_MaxBet output, @MaxPerMatch =@old_MaxPerMatch output,
@@ -373,6 +385,10 @@ BEGIN
 			@minbetv161 < 0
 			or @maxbetv161 < 0
 			or @maxpermatchv161 < 0
+			
+			or (@MinBetv161 < 1 AND @SystemID!=1 AND @Site IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
+			or (@MaxBetv161 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+			or (@MaxPerMatchv161 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
 		BEGIN
 			Select @ErrMsg = 	case @Language 
 								when 'E' then 'Wrong Min bet/ Max bet/ Max per match (for Number game).'
@@ -382,7 +398,7 @@ BEGIN
 		END
 
 		--- max per ball
-		if @MaxPerBallv161 < 0
+		if @MaxPerBallv161 < 0 OR (@MaxPerBallv161 < 1 AND @SystemID!=1 AND @Site IN ('789y'))-- Bet Limit Restriction for 789y on Alpha/ExtNAP
 		begin
 			Select @ErrMsg = 	case @Language 
 						when 'E' then 'Wrong Max Per Ball (Number Game).'
@@ -398,6 +414,9 @@ BEGIN
 			@minbetv164 < 0
 			or @maxbetv164 < 0
 			or @maxpermatchv164 < 0
+			or (@MinBetv164 < 1 AND @SystemID!=1 AND @Site IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
+			or (@MaxBetv164 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+			or (@MaxPerMatchv164 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
 		BEGIN
 			Select @ErrMsg = 	case @Language 
 								when 'E' then 'Wrong Min bet/ Max bet/ Max per match (for Happy 5).'

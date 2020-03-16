@@ -1,15 +1,11 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_BetLimitUpd] 
 	  @CustID		INT
 	, @BetLimit VARCHAR(MAX)
 	, @SubAccID		INT				= 0
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
+	, @SystemID INT = 1 --20200305@Tiara
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(200)	= ''	OUTPUT
@@ -22,7 +18,7 @@ AS
 
 	Revisions:
 		- 20151104@Billy: Update log structure - [Redmine: #46788]
-
+		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -155,6 +151,8 @@ BEGIN
 						, @MasterID		= @MasterID
 						, @SuperID		= @SuperID
 						, @BetLimit		= @BetLimit
+						, @SystemID		= @SystemID
+						, @ProductID    = @ProductID
 						, @ErrCode		= @ErrCode	OUTPUT
 						, @MsgType		= @MsgType  OUTPUT
 						, @ErrMsg		= @ErrMsg	OUTPUT

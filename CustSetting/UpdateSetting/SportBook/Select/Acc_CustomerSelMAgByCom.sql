@@ -69,6 +69,8 @@ BEGIN
 		- 20180808@Helen: DB05.DBPOLICY migration  [Redmine:99462]
 		- 20180918@Winnie: Esports Product - [Redmine: #101526]
 		- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20191206@Eden: Add Virtual Games [Redmine: #122743]
+
     Pattern Explanation:
     Search keyword: '%keyword%'
     First char
@@ -144,6 +146,7 @@ BEGIN
         ,   @bitmapOrder_FishingWorld   INT
         ,   @bitmapOrder_VS             INT
 		,	@bitmapOrder_Esports		INT
+		,	@bitmapOrder_VG				INT
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
     SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
@@ -152,6 +155,7 @@ BEGIN
     SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
     SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
+	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
 
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
@@ -164,6 +168,7 @@ BEGIN
         ,   @IsHidden_FishingWorld      INT = 1
         ,   @IsHidden_VS                INT = 1
 		,	@IsHidden_Esports			INT = 1
+		,	@IsHidden_VG				INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
     EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHidden_AllBet OUTPUT
@@ -173,6 +178,7 @@ BEGIN
     EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHidden_FishingWorld OUTPUT
     EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_Esports OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHidden_VG OUTPUT
 
     Select * From 
     (
@@ -310,7 +316,17 @@ BEGIN
                                 THEN 0
                             ELSE 1 
                     END AS BIT) AS HideVirtualSports,
-            CAST(CASE WHEN @IsHidden_VS = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VS), 1)=0 THEN 0 ELSE 1 END AS BIT) AS HideVirtualSportsUpline    
+            CAST(CASE WHEN @IsHidden_VS = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VS), 1)=0 THEN 0 ELSE 1 END AS BIT) AS HideVirtualSportsUpline ,
+			-- For VG
+			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_VG)) AS DisableVirtualGames,			
+			CAST(	CASE	WHEN	@IsHidden_VG = 0 								
+								AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VG), 1) = 0 
+								THEN 0
+							ELSE 1 
+					END AS BIT) AS HideVirtualGames,
+			CAST(CASE	WHEN	@IsHidden_VG = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VG), 1)=0
+					THEN 0 ELSE 1
+					END AS BIT) AS HideVirtualGamesUpline 
         FROM 
             #TempMaster AS m with (NOLOCK)
             INNER JOIN custInfo as ci with (NOLOCK) on m.custid = ci.custid

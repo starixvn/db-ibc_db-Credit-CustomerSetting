@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_BetSettingUpd]
 	, @SubAccID		INT				= 0
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
+	, @SystemID		TINYINT --20200305@Tiara
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT				= 0		OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
@@ -20,6 +21,7 @@ AS
 
 	Revisions: 
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]
+		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP
 
 	Param's Explanation:
 	• @BetLimit:
@@ -153,6 +155,8 @@ BEGIN
 						, @MasterID		= @MasterID
 						, @SuperID		= @SuperID
 						, @BetLimit		= @BetLimit
+						, @SystemID     = @SystemID
+						, @ProductID    = @ProductID
 						, @ErrCode		= @ErrCode	OUTPUT
 						, @MsgType		= @MsgType  OUTPUT
 						, @ErrMsg		= @ErrMsg	OUTPUT

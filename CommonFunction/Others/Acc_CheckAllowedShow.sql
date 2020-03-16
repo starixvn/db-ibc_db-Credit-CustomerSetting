@@ -8,6 +8,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedNG2				BIT = 0		OUTPUT
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedLottery			BIT = 0		OUTPUT
+				,	@AllowedVirtualGames	BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -38,6 +39,7 @@ Revisions:
 	- 20180703@Elodie: Poker Games Product - [Redmine: #97675]
 	- 20190104@Johnson: config Allbet to show if any bettype is allowed [Redmine: #106601]
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20191206@Eden: Add Virtual Games [Redmine: #122743]
 */
 
 	SET NOCOUNT ON
@@ -50,18 +52,21 @@ Revisions:
 		,	@IsHideNG2				INT
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
+		,	@IsHideVG				INT
 
 	DECLARE @bitOrderVB				INT 
 		,	@bitOrderFW				INT 
 		,	@bitOrderNG2			INT 
 		,	@bitOrderLottery		INT 
 		,   @bitOrderVS				INT 
+		,	@bitmapOrder_VG			INT
 
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitOrderNG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
 	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
+	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -171,5 +176,13 @@ Revisions:
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
 
+	-- For Virtual games
+	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHideVG OUTPUT
+	SELECT	@AllowedVirtualGames = CASE	WHEN @RoleID = 4 AND @IsHideVG = 0 THEN 1
+								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VG) = 0 AND @IsHideVG = 0 THEN 1
+								ELSE 0
+						END
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	WHERE	cps.CustID = @CustID
 END
 GO

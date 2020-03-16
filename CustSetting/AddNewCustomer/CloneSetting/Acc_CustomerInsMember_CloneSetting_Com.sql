@@ -1,5 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_Com]
+(
 	@Custid INT OUTPUT
 	,@UserName VARCHAR(30)
 	,@Userpwd VARCHAR(40)
@@ -18,6 +19,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_Com]
 	,@ErrCode INT = 0 OUTPUT
 	,@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	,@SystemID TINYINT=1
+)
 AS
 /*  
  Created by: Elodie  
@@ -63,6 +65,7 @@ AS
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200102@Malcolm: Separate setting and notification into Live/Non-Live and bettypes [Redmine : 125076]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -77,6 +80,7 @@ BEGIN
 			,@endRun DATETIME
 			,@duration INT
 			,@srecommend INT	
+			,@CreditRM MONEY
 	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME	
 	SET @CreateDate = GETDATE()		
 	
@@ -268,6 +272,10 @@ BEGIN
 		RETURN  
 	END CATCH
 	
+	SELECT @CreditRM = @credit * actualrate
+	FROM dbo.exchange WITH (NOLOCK) 
+	WHERE exchangeid = @currency
+
 	BEGIN TRY
 		-- insert CustInfo info
 		INSERT INTO dbo.custInfo
@@ -357,6 +365,13 @@ BEGIN
 				--,1
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
+		
+		IF @CreditRM > 300000
+		BEGIN
+			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2)
+			SELECT @CustId, 1, 0
+		END
+
 	END TRY	
 	BEGIN CATCH	
 		SELECT @ErrMsg = CASE @Language 
@@ -368,8 +383,9 @@ BEGIN
 		-- ROLLBACK MANUALLY			
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		
+		DELETE FROM SuspiciousCust WITH(ROWLOCK) WHERE custId = @CustID 
+
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid		
 		RETURN
 	END CATCH
 
@@ -539,7 +555,7 @@ BEGIN
 				SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" />'
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 600,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -548,18 +564,18 @@ BEGIN
 								-- NOT currency RM in default Setting
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
-						, TO_tmp.Sporttype, 0
+						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
 	            
 				FROM (        
 						-- Soccer 
-						SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f1                
 						WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
 						ORDER BY f1.site DESC, f1.ExchangeID DESC                
 		                
 						UNION ALL
 						-- Others sport
-						SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+						SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f2                
 						WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
 						ORDER BY f2.site DESC, f2.ExchangeID DESC

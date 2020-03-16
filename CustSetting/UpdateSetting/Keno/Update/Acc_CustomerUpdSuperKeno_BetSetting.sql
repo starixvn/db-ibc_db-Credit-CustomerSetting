@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -33,6 +33,7 @@ AS
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 		- 20180312@Johnson: remove @DisableDownLines for new product status direction [redmine: #87328]
+		- 20200310@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	Parameters Explanation:
 		+ @ErrCode <0 : update successfully 
 			-100: status
@@ -120,6 +121,7 @@ BEGIN
 			@UserID = @UserID,
 			@Language = @Language,
 			@IP = @IP,
+			@SystemID = @SystemID,
 			@ErrCode = @ErrCode_Cur OUTPUT, 
 			@ErrMsg	= @ErrMsg_Cur OUTPUT
 		

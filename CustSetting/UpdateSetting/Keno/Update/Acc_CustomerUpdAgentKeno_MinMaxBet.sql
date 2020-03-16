@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentKeno_MinMaxBet] 
 (
 	@CustId INT --agentID
@@ -13,6 +13,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgentKeno_MinMaxBet]
 	, @UserID INT = 0
 	, @Language VARCHAR(2) = 'E'
 	, @IP VARCHAR(15) = ''
+	, @SystemID TINYINT --20200309@Tiara
 	, @ErrCode INT = 0 OUTPUT
 	, @ErrMsg NVARCHAR(4000) = '' OUTPUT
 )
@@ -30,6 +31,7 @@ AS
 		- 20160413@Dominic: HotFix - Alpha - Update Keno setting - No error alert when update minbet=0 and minbet <upline minbet [Redmine: #55596]
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
 		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
+		- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	Param's Explanation:
 	• @ErrCode:
 		= 0: Update successfully.
@@ -66,9 +68,22 @@ BEGIN
 			   @ErrCode = 103	
 		RETURN
 	END
-	
 	IF (@UserName IS NULL) RETURN
-	IF (@MinBet < 0 OR @MaxBet < 0 OR @MaxPerMatch < 0)
+	--Get site info
+	DECLARE @Site NVARCHAR (50), @RoleID TINYINT, @recommend INT
+	SELECT @RoleID=RoleID  FROM custinfo(NOLOCK) WHERE custid=@custid
+	IF @RoleID IN (2,3,4)
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @custid
+	ELSE IF @RoleID = 1
+	BEGIN
+		SELECT @recommend = recommend FROM custinfo (NOLOCK) WHERE custid=@custid
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @recommend
+	END
+
+	IF (@MinBet < 0 OR @MaxBet < 0 OR @MaxPerMatch < 0
+		OR (@MinBet < 1 AND @SystemID!=1 AND @Site IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
+		OR (@MaxBet < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+		OR (@MaxPerMatch < 1 AND @SystemID!=1 AND @Site IN ('789y')))
 	BEGIN
 		SELECT @ErrCode = 101
 		SELECT @ErrMsg = CASE @Language

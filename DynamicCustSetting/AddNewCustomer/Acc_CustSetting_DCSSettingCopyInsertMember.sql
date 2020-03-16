@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember]
 	, @SubAccID			INT				= 0
 	, @IP				VARCHAR(50)		= ''
 	, @UserID			INT				= 0
+	, @SystemID TINYINT = 1 --20200305@Tiara
 	, @ErrCode			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
 AS
@@ -32,6 +33,7 @@ AS
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 		- 20190114@Johnson: dont update bettype inactive for settingType = 7(Allbet) [Redmine: #106601]
 		- 20190814@Eden: Hide setting of inactive products [Redmine: #117439]
+		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -215,6 +217,7 @@ BEGIN
 				, @SubAccID = @SubAccID
 				, @IP = @IP
 				, @UserID = @UserID
+				, @SystemID = @SystemID --20200305@Tiara
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
@@ -544,6 +547,7 @@ BEGIN
 				,	@SubAccID	= @SubAccID
 				,	@UserID		= @UserID
 				,	@IP			= @IP
+				,   @SystemID = @SystemID --20200305@Tiara
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
 		DELETE FROM	#TempStakeLevel WHERE ProductID=@ProductID7			
@@ -602,6 +606,7 @@ BEGIN
 				,	@SubAccID	= @SubAccID
 				,	@UserID		= @UserID
 				,	@IP			= @IP
+				,   @SystemID   =  @SystemID --20200305@Tiara
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
 				
@@ -673,6 +678,7 @@ BEGIN
 					, @SubAccID = @SubAccID
 					, @IP = @IP
 					, @UserID = @UserID
+					, @SystemID = @SystemID --20200305@Tiara
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
 			END
@@ -1016,6 +1022,7 @@ BEGIN
 					, @SubAccID = @SubAccID
 					, @IP = @IP
 					, @UserID = @UserID
+					, @SystemID = @SystemID --20200305@Tiara
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
 			END
