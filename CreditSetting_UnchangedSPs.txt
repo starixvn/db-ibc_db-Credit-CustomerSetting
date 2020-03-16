@@ -1,5 +1,1 @@
-Others\Dot_Member_GetCustCreditInfo.sql
-DynamicCustSetting\Others\PlaceBet\Dot_Member_CustCreditInfo_Cust_DCS.sql
-
-
-
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
