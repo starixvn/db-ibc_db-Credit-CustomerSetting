@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAllDayBalTransfer]
 	@UserId					INT = 0
 	,@CustId				INT
@@ -53,6 +53,29 @@ BEGIN
 			SELECT @ErrCode = 101, @ErrMsg = dbo.f_Get_MsgNamebyMsgID(40049, @Language)
 			RETURN
 		END CATCH
+
+		-- Uncheck super --> uncheck all masters
+		IF @IsAllDayBalTransfer = 0
+		BEGIN
+			BEGIN TRY
+				UPDATE m WITH (ROWLOCK)
+				SET IsAllDayBalTransfer = @IsAllDayBalTransfer
+				FROM dbo.CustMaster m
+					INNER JOIN dbo.Customer c WITH (NOLOCK) ON m.custid = c.custid
+				WHERE c.srecommend = @CustId
+					AND c.roleid = 3
+			END TRY
+			BEGIN CATCH
+				-- Rollback manually
+				UPDATE dbo.CustSuper
+				SET IsAllDayBalTransfer = @IsAllDayBalTransfer_Old
+				WHERE custid = @CustId
+
+				-- Action failed. Please try again.
+				SELECT @ErrCode = 101, @ErrMsg = dbo.f_Get_MsgNamebyMsgID(40049, @Language)
+				RETURN
+			END CATCH
+		END
 	END
 	ELSE IF @roleId = 3
 	BEGIN
