@@ -91,6 +91,9 @@ BEGIN
 			SELECT @ErrCode = 102, @ErrMsg = dbo.f_Get_MsgNamebyMsgID(40049, @Language)
 			RETURN
 		END CATCH
+
+		IF SUSER_NAME() = 'bodbDownlineNet'
+			SELECT @ActionID = 706
 	END
 	
 	DECLARE @LogSPData VARCHAR(MAX),  
