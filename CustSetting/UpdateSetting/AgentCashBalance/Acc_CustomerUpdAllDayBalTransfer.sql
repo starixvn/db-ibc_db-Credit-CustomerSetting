@@ -72,13 +72,25 @@ BEGIN
 				WHERE custid = @CustId
 
 				-- Action failed. Please try again.
-				SELECT @ErrCode = 101, @ErrMsg = dbo.f_Get_MsgNamebyMsgID(40049, @Language)
+				SELECT @ErrCode = 102, @ErrMsg = dbo.f_Get_MsgNamebyMsgID(40049, @Language)
 				RETURN
 			END CATCH
 		END
 	END
 	ELSE IF @roleId = 3
 	BEGIN
+		IF SUSER_NAME() = 'bodbDownlineNet'
+		BEGIN
+			SELECT @ActionID = 706
+
+			IF NOT EXISTS (SELECT 1 FROM dbo.CustSuper WITH (NOLOCK) WHERE custid = @UserId AND IsAllDayBalTransfer = 1)
+			BEGIN
+				-- You are not authorized on this function.
+				SELECT @ErrCode = 103, @ErrMsg = dbo.f_Get_MsgNamebyMsgID(40028, @Language)
+				RETURN
+			END
+		END
+
 		SELECT @IsAllDayBalTransfer_Old = IsAllDayBalTransfer FROM dbo.CustMaster WITH (NOLOCK) WHERE custid = @Custid
 
 		BEGIN TRY
@@ -88,12 +100,9 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			-- Action failed. Please try again.
-			SELECT @ErrCode = 102, @ErrMsg = dbo.f_Get_MsgNamebyMsgID(40049, @Language)
+			SELECT @ErrCode = 104, @ErrMsg = dbo.f_Get_MsgNamebyMsgID(40049, @Language)
 			RETURN
 		END CATCH
-
-		IF SUSER_NAME() = 'bodbDownlineNet'
-			SELECT @ActionID = 706
 	END
 	
 	DECLARE @LogSPData VARCHAR(MAX),  
