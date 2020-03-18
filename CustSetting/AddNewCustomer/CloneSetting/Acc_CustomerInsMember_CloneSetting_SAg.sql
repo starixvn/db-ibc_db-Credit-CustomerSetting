@@ -649,34 +649,34 @@ BEGIN
 			SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" />'
 			EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 601,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 			
-			--INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
-     --       SELECT @custid
-     --               -- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
-     --               , CASE 
-     --                       -- currency RM in default Setting
-     --                       WHEN TO_tmp.TOCurrency = 2 THEN CONVERT(MONEY,TO_tmp.MaxTurnOver / E1.actualrate) 
-     --                       -- NOT currency RM in default Setting
-     --                       ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
-     --               END AS MaxTurnOver
-     --               , TO_tmp.Sporttype, 0, TO_tmp.ProfileID
+			INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
+            SELECT @custid
+                    -- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
+                    , CASE 
+                            -- currency RM in default Setting
+                            WHEN TO_tmp.TOCurrency = 2 THEN CONVERT(MONEY,TO_tmp.MaxTurnOver / E1.actualrate) 
+                            -- NOT currency RM in default Setting
+                            ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
+                    END AS MaxTurnOver
+                    , TO_tmp.Sporttype, 0, TO_tmp.ProfileID
             
-     --       FROM (        
-					---- Soccer 
-					--SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
-					--FROM dbo.f_TOControl_GlobalSettingSel () f1                
-					--WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
-					--ORDER BY f1.site DESC, f1.ExchangeID DESC                
+            FROM (        
+					-- Soccer 
+					SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
+					FROM dbo.f_TOControl_GlobalSettingSel () f1                
+					WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
+					ORDER BY f1.site DESC, f1.ExchangeID DESC                
 	                
-					--UNION ALL
-					---- Others sport
-					--SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
-					--FROM dbo.f_TOControl_GlobalSettingSel () f2                
-					--WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
-					--ORDER BY f2.site DESC, f2.ExchangeID DESC
-					--) AS TO_tmp
+					UNION ALL
+					-- Others sport
+					SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
+					FROM dbo.f_TOControl_GlobalSettingSel () f2                
+					WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
+					ORDER BY f2.site DESC, f2.ExchangeID DESC
+					) AS TO_tmp
                             
-     --           INNER JOIN dbo.Exchange e WITH (NOLOCK) ON e.ExchangeID = TO_tmp.TOCurrency
-     --           INNER JOIN dbo.Exchange e1 WITH (NOLOCK) ON e1.ExchangeID = @currency
+                INNER JOIN dbo.Exchange e WITH (NOLOCK) ON e.ExchangeID = TO_tmp.TOCurrency
+                INNER JOIN dbo.Exchange e1 WITH (NOLOCK) ON e1.ExchangeID = @currency
 		
 			DELETE dbo.TOControl_GlobalSetting
 			WHERE CustID = @srecommend
