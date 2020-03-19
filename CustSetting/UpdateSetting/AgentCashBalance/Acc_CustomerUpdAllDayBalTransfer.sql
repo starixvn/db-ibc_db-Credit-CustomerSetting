@@ -3,6 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAllDayBalTransfer]
 	@UserId					INT = 0
 	,@CustId				INT
 	,@IsAllDayBalTransfer	BIT = NULL
+	,@IsIncludedDownline	BIT = NULL
 	,@IP					VARCHAR(50) = ''
 	,@Language				VARCHAR(20) = 'E'
 	,@ErrCode				VARCHAR(300) = '' OUTPUT
@@ -16,6 +17,7 @@ AS
 
 	Revisions:
 		- 20200310@Percy: Add master level [RedmineID: #130091]
+		- 20200319@Percy: Add option enable downline if enable super [RedmineID: #130741]
 */
 
 BEGIN  
@@ -54,8 +56,8 @@ BEGIN
 			RETURN
 		END CATCH
 
-		-- Uncheck super --> uncheck all masters
-		IF @IsAllDayBalTransfer = 0
+		IF @IsAllDayBalTransfer = 0 -- Uncheck super --> uncheck all masters
+			OR (@IsAllDayBalTransfer = 1 AND @IsIncludedDownline = 1) -- Check super and include downline --> check all masters
 		BEGIN
 			BEGIN TRY
 				UPDATE m WITH (ROWLOCK)
