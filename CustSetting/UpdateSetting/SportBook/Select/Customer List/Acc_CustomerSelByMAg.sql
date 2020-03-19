@@ -75,6 +75,7 @@ AS
 		- 20190724@Eden: add bettype 1525,1526 for Keno gametype - [Redmine: #116466]
 		- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20191206@Eden: Add Virtual Games [Redmine: #122743]
+		- 20200318@Elodie: Add Saba.club [Redmine: #130636]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -115,17 +116,17 @@ BEGIN
 		,	@bitmapOrder_FishingWorld	INT
 		,	@bitmapOrder_VS				INT
 		,	@bitmapOrder_VG				INT
+		,	@bitmapOrder_Saba			INT
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitmapOrder_Lottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
-
 	SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
-
+	SET @bitmapOrder_Saba = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
@@ -140,7 +141,7 @@ BEGIN
 		,	@IsHidden_FishingWorld		INT = 1
 		,	@IsHidden_VS				INT = 1
 		,	@IsHidden_VG				INT = 1
-
+		,	@IsHidden_Saba				INT = 1
 		
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT	
@@ -155,7 +156,8 @@ BEGIN
 
 	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHidden_VG OUTPUT
-	
+	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_Saba OUTPUT
+
 	CREATE TABLE #customer(custid INT, RowNumber INT )
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @DoubleCommLosing = 2
@@ -595,6 +597,17 @@ BEGIN
 				CAST(CASE	WHEN	@IsHidden_VG = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VG), 1)=0
 						THEN 0 ELSE 1
 						END AS BIT) AS HideVirtualGamesUpline,
+				-- For Saba
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_Saba)) AS DisableSaba,			
+				CAST(	CASE	WHEN	@IsHidden_Saba = 0 								
+									AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Saba), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideSaba,
+				CAST(CASE	WHEN	@IsHidden_Saba = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_Saba), 1)=0
+						THEN 0 ELSE 1
+						END AS BIT) AS HideSabaUpline,
+
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate
 		FROM Customer c WITH(NOLOCK)
 			INNER JOIN custInfo ci WITH(NOLOCK) ON ci.custid = c.custid 
@@ -714,6 +727,10 @@ BEGIN
 			ctm.DisableVirtualGames,
 			ctm.HideVirtualGames,
 			ctm.HideVirtualGamesUpline,
+			--Saba
+			ctm.DisableSaba,
+			ctm.HideSaba,
+			ctm.HideSabaUpline,
 
 			ctm.DisableNG2,
 			ctm.HideNG2,
