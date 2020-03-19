@@ -9,6 +9,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetLimitCheck]
 	, @MasterID		INT
 	, @SuperID		INT
 	, @GameBetLimit	VARCHAR(MAX)
+	, @SystemID    TINYINT --20200305@Tiara
+	, @ProductID   TINYINT
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT				= 0		OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
@@ -21,6 +23,7 @@ AS
 
 	Revision: 
 		- 20171109@Elodie: Cannot update Bet Setting of Super with value <> 0 when global setting = 0 [RedmineID:#86041]
+		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 
 	Param's Explanation:
 	• @GameBetLimit:
@@ -208,88 +211,95 @@ BEGIN
 		GROUP BY bl.SportType
 			, bl.BetType
 	END
-	
-	--Get 1 error row
+
+--Get 1 error row
 	INSERT INTO @ErrorSportTypeTbl
 	SELECT tmp.SportType
-		, tmp.BetType
-		, tmp.MinBet
-		, tmp.MaxBet
-		, tmp.MaxPerNumber
-		, ISNULL(ubl.MinBet, 0)
-		, ISNULL(ubl.MaxBet, 0)
-		, ISNULL(ubl.MaxPerNumber, 0)
+			, tmp.BetType
+			, tmp.MinBet
+			, tmp.MaxBet
+			, tmp.MaxPerNumber
+			, ISNULL(ubl.MinBet, 0)
+			, ISNULL(ubl.MaxBet, 0)
+			, ISNULL(ubl.MaxPerNumber, 0)
 	FROM @NewBetLimitTbl tmp
-		INNER JOIN @BetGameUnlimit s ON s.SportType = tmp.SportType AND s.Bettype = tmp.BetType
-		LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-		LEFT JOIN dbo.ProductBetSetting pb ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+			INNER JOIN @BetGameUnlimit s ON s.SportType = tmp.SportType AND s.Bettype = tmp.BetType
+			LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+			LEFT JOIN dbo.ProductBetSetting pb ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
 	WHERE	tmp.MinBet		< 0
-		OR tmp.MaxBet		< 0
-		OR tmp.MaxPerNumber	< 0
-		OR (
-				s.IsAllowUnlimit = 0
-				AND
-				((tmp.MinBet <> 0 AND tmp.MinBet < ISNULL(pb.MinBet,0))
-					OR (tmp.MaxBet <> 0 AND tmp.MaxBet	> ISNULL(pb.MaxBet,0))
-					OR (tmp.MaxPerNumber <> 0 AND tmp.MaxPerNumber > ISNULL(pb.MaxPerMatch,0)))
-			)
-		OR ((tmp.MinBet	<> 0 OR tmp.MaxBet <> 0) AND tmp.MinBet > tmp.MaxBet)
-		OR ((tmp.MaxBet	<> 0 OR tmp.MaxPerNumber <> 0) AND tmp.MaxBet > tmp.MaxPerNumber)
-		OR ((tmp.MinBet	<> 0 OR tmp.MaxPerNumber <> 0) AND tmp.MinBet > tmp.MaxPerNumber)
-		OR (ubl.MinBet	> 0 AND tmp.MinBet > 0 AND tmp.MinBet < ubl.MinBet)
-		OR (ubl.MaxBet	> 0 AND tmp.MaxBet > 0 AND tmp.MaxBet > ubl.MaxBet)
-		OR (ubl.MaxPerNumber > 0 AND tmp.MaxPerNumber > 0 AND tmp.MaxPerNumber > ubl.MaxPerNumber)
-
+			OR tmp.MaxBet		< 0
+			OR tmp.MaxPerNumber	< 0 	
+			OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+			OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+			OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)					
+			OR (
+					s.IsAllowUnlimit = 0
+					AND
+					((tmp.MinBet <> 0 AND tmp.MinBet < ISNULL(pb.MinBet,0))
+						OR (tmp.MaxBet <> 0 AND tmp.MaxBet	> ISNULL(pb.MaxBet,0))
+						OR (tmp.MaxPerNumber <> 0 AND tmp.MaxPerNumber > ISNULL(pb.MaxPerMatch,0)))
+				)
+			OR ((tmp.MinBet	<> 0 OR tmp.MaxBet <> 0) AND tmp.MinBet > tmp.MaxBet)
+			OR ((tmp.MaxBet	<> 0 OR tmp.MaxPerNumber <> 0) AND tmp.MaxBet > tmp.MaxPerNumber)
+			OR ((tmp.MinBet	<> 0 OR tmp.MaxPerNumber <> 0) AND tmp.MinBet > tmp.MaxPerNumber)
+			OR (ubl.MinBet	> 0 AND tmp.MinBet > 0 AND tmp.MinBet < ubl.MinBet)
+			OR (ubl.MaxBet	> 0 AND tmp.MaxBet > 0 AND tmp.MaxBet > ubl.MaxBet)
+			OR (ubl.MaxPerNumber > 0 AND tmp.MaxPerNumber > 0 AND tmp.MaxPerNumber > ubl.MaxPerNumber)
 	--IF there's no error data then return
 	IF NOT EXISTS (
 			SELECT TOP 1 1
 			FROM @ErrorSportTypeTbl
 			)
 		RETURN
-
-	--Check all setting >=0
+			--Check all setting >=0
 	IF EXISTS(SELECT TOP 1 1 
 			FROM @ErrorSportTypeTbl tmp
-				INNER JOIN @BetGameUnlimit s ON s.SportType = tmp.SportType AND s.Bettype = tmp.BetType
-				LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType	= ubl.SportType AND tmp.BetType = ubl.BetType
-				LEFT JOIN dbo.ProductBetSetting pb ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+					INNER JOIN @BetGameUnlimit s ON s.SportType = tmp.SportType AND s.Bettype = tmp.BetType
+					LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType	= ubl.SportType AND tmp.BetType = ubl.BetType
+					LEFT JOIN dbo.ProductBetSetting pb ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
 			WHERE	tmp.MinBet		< 0
-				OR tmp.MaxBet		< 0
-				OR tmp.MaxPerNumber	< 0
-				OR (
-					s.IsAllowUnlimit = 0 
-					AND
-					((tmp.MinBet <> 0 AND tmp.MinBet < ISNULL(pb.MinBet,0))
-						OR (tmp.MaxBet <> 0 AND tmp.MaxBet	> ISNULL(pb.MaxBet,0))
-						OR (tmp.MaxPerNumber <> 0 AND tmp.MaxPerNumber > ISNULL(pb.MaxPerMatch,0)))
-					))
+					OR tmp.MaxBet		< 0
+					OR tmp.MaxPerNumber	< 0
+				OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+				OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+				OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+					OR (
+						s.IsAllowUnlimit = 0 
+						AND
+						((tmp.MinBet <> 0 AND tmp.MinBet < ISNULL(pb.MinBet,0))
+							OR (tmp.MaxBet <> 0 AND tmp.MaxBet	> ISNULL(pb.MaxBet,0))
+							OR (tmp.MaxPerNumber <> 0 AND tmp.MaxPerNumber > ISNULL(pb.MaxPerMatch,0)))
+						))
 	BEGIN
 		SET @xml = (
 				SELECT 10035 AS '@MsgID'
-					, 'Wrong Min bet/ Max bet/ Max per number.' AS '@Msg'
-					, (
+						, 'Wrong Min bet/ Max bet/ Max per number.' AS '@Msg'
+						, (
 						SELECT tmp.SportType AS '@SportType'
-							, tmp.BetType AS '@BetType'
+								, tmp.BetType AS '@BetType'
 						FROM @ErrorSportTypeTbl tmp
-							INNER JOIN @BetGameUnlimit s ON s.SportType = tmp.SportType AND s.Bettype = tmp.BetType
-							LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType	= ubl.SportType AND tmp.BetType = ubl.BetType
-							LEFT JOIN dbo.ProductBetSetting pb ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+								INNER JOIN @BetGameUnlimit s ON s.SportType = tmp.SportType AND s.Bettype = tmp.BetType
+								LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType	= ubl.SportType AND tmp.BetType = ubl.BetType
+								LEFT JOIN dbo.ProductBetSetting pb ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
 						WHERE	tmp.MinBet		< 0
-							OR tmp.MaxBet		< 0
-							OR tmp.MaxPerNumber	< 0
-							OR (
-									s.IsAllowUnlimit = 0
-									AND
-									((tmp.MinBet <> 0 AND tmp.MinBet < ISNULL(pb.MinBet,0))
-										OR (tmp.MaxBet <> 0 AND tmp.MaxBet	> ISNULL(pb.MaxBet,0))
-										OR (tmp.MaxPerNumber <> 0 AND tmp.MaxPerNumber > ISNULL(pb.MaxPerMatch,0)))
-								)
+								OR tmp.MaxBet		< 0
+								OR tmp.MaxPerNumber	< 0
+								OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+								OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+								OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+								OR (
+										s.IsAllowUnlimit = 0
+										AND
+										((tmp.MinBet <> 0 AND tmp.MinBet < ISNULL(pb.MinBet,0))
+											OR (tmp.MaxBet <> 0 AND tmp.MaxBet	> ISNULL(pb.MaxBet,0))
+											OR (tmp.MaxPerNumber <> 0 AND tmp.MaxPerNumber > ISNULL(pb.MaxPerMatch,0)))
+									)
 						FOR XML PATH('Row')
-							, TYPE
-						)
+								, TYPE
+							)
 				FOR XML PATH('Root')
-					, TYPE
-				)		
+						, TYPE
+					)		
 		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 		SET @MsgType = 71
 		SET @ErrCode = 101

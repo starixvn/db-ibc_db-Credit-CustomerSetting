@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -150,18 +150,22 @@ Revisions:
 	- 20181107@Louis: Credit Collection [Redmine: #98621]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
-	- 20200210@Elodie: Problem account for credit [Redmine:#127446]
-
-Param's Explanation:
-• @ErrCode:
-    = 0: Insert successfully.
-    > 0: Specific Error.
+	- 20200114@Malcolm: Separate setting and notification into Live/Non-Live and bettypes [Redmine : 125076]
+	- 20200120@Max: Support Separate setting and notification into Live/Non-Live major and minor bettypes [Redmine: #126841]
+	- 20200210@Elodie: Problem account for credit [Redmine:#127446]	
+	- 20200310@Percy: Add column IsAllDayBalTransfer on CustMaster [RedmineID: #130091]
+	- 20200311@Elodie: Suspicious account [Redmine:#129119]
+	
+	Param's Explanation:
+	• @ErrCode:
+		= 0: Insert successfully.
+		> 0: Specific Error.
   
-• @ErrMsg: Error description.
+	• @ErrMsg: Error description.
 */
 BEGIN
     SET NOCOUNT ON 
-	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME
+	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @CreditRM MONEY
 	
 	SET @CreateDate = GETDATE()
 	
@@ -284,11 +288,15 @@ BEGIN
 	      FROM dbo.CustLoginInfo WITH(NOLOCK)
 	     WHERE CustID = @srecommend
 
+		SELECT @IsAllDayBalTransfer = IsAllDayBalTransfer
+		FROM dbo.CustSuper WITH (NOLOCK)
+		WHERE CustId = @srecommend
+
 	    SET @mrecommend = @custid 
 	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET mrecommend = @custid WHERE custId = @CustID
 
-	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption)
-	    VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
+	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer)
+	    VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, ISNULL(@IsAllDayBalTransfer, 0))
 	
 		--Virtual rate
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
@@ -419,109 +427,89 @@ BEGIN
 			END
 		END
 	END
-    INSERT INTO [dbo].[custinfo]
-    (
-	    custid, currency
-	  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11
-	  , maxpermatch99
-	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
-	  , MatchLimit, VirtualMultiplier
-	  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
-	  , danger, danger2, danger3, Abnormal
-	  ,  DoubleCommLosing
-	  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
-	  , MaxPerMatch1MP,maxpermatch164)
-    VALUES
-    (
-	    @custid, @currency--,1
-	  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11
-	  , @MaxPerMatchv99
-	  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), @credit, ISNULL(@closed, 0), @username
-	  , @matchlimit, @virtualmultiplier
-	  , @DisableOutright, @DisableCasino, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
-	  , @danger, @danger2, @danger3, @Abnormal
-	  ,  @DoubleCommLosing	
-	  , @HideKeno, @DisableEsports, @DisableGoldDeluxe, @HideGoldDeluxe, @DisableSuperLive
-	  , @MaxPerMatchv1MP, @maxpermatchv164
-    )
-	
-    IF @@ERROR <> 0
-    BEGIN 
-    --	DELETE customer with (ROWLOCK) where custid =  @custid
-	    SELECT @ErrMsg = CASE @Language
-					       WHEN 'E' THEN 'Create customer failed. Please try again.'
-					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-					     END,
-		       @ErrCode = 113
 
-	    -- ROLLBACK MANUALLY
-	    IF @RoleID = 4
-	    BEGIN
-		    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
-	    END
-	    ELSE IF @RoleID = 3
-	    BEGIN
-		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-	    END
-	    ELSE IF @RoleID = 2
-	    BEGIN
-		    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-	    END
+	BEGIN TRY
+		INSERT INTO [dbo].[custinfo]
+		(
+			custid, currency
+		  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11
+		  , maxpermatch99
+		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
+		  , MatchLimit, VirtualMultiplier
+		  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
+		  , danger, danger2, danger3, Abnormal
+		  ,  DoubleCommLosing
+		  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
+		  , MaxPerMatch1MP,maxpermatch164)
+		VALUES
+		(
+			@custid, @currency--,1
+		  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11
+		  , @MaxPerMatchv99
+		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), @credit, ISNULL(@closed, 0), @username
+		  , @matchlimit, @virtualmultiplier
+		  , @DisableOutright, @DisableCasino, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
+		  , @danger, @danger2, @danger3, @Abnormal
+		  ,  @DoubleCommLosing	
+		  , @HideKeno, @DisableEsports, @DisableGoldDeluxe, @HideGoldDeluxe, @DisableSuperLive
+		  , @MaxPerMatchv1MP, @maxpermatchv164
+		)
 
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
-	    RETURN
-    END
-    
-	IF @roleid <> 4
-	BEGIN
-		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
-		SELECT @CustId, pa.ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, pa.ActionId,
-			CASE WHEN @roleid = 1 THEN a.SubIssueTypeId ELSE NULL END
-		FROM ProblemAccount pa WITH (NOLOCK)	
-			INNER JOIN ProblemAccountAction a WITH (NOLOCK) ON a.ActionID = pa.ActionId 		
-		WHERE CustId = CASE WHEN @roleid = 3 THEN @srecommend 
-							WHEN @roleid = 2 THEN @mrecommend
-							WHEN @roleid = 1 THEN @recommend END
-	END
+		IF @roleid <> 4
+		BEGIN
+			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
+			SELECT @CustId, pa.ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, pa.ActionId,
+				CASE WHEN @roleid = 1 THEN a.SubIssueTypeId ELSE NULL END
+			FROM ProblemAccount pa WITH (NOLOCK)	
+				INNER JOIN ProblemAccountAction a WITH (NOLOCK) ON a.ActionID = pa.ActionId 		
+			WHERE CustId = CASE WHEN @roleid = 3 THEN @srecommend 
+								WHEN @roleid = 2 THEN @mrecommend
+								WHEN @roleid = 1 THEN @recommend END
+		END
 
-	IF @@ERROR <> 0
-    BEGIN 
-    --	DELETE customer with (ROWLOCK) where custid =  @custid
-	    SELECT @ErrMsg = CASE @Language
-					       WHEN 'E' THEN 'Create customer failed. Please try again.'
-					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-					     END,
-		       @ErrCode = 120
+		SELECT @CreditRM = @credit * actualrate
+		FROM dbo.exchange WITH (NOLOCK) 
+		WHERE exchangeid = @currency
 
-	    -- ROLLBACK MANUALLY
-	    IF @RoleID = 4
-	    BEGIN
-		    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
-	    END
-	    ELSE IF @RoleID = 3
-	    BEGIN
-		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-	    END
-	    ELSE IF @RoleID = 2
-	    BEGIN
-		    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-		    DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-	    END
+		IF @CreditRM > 300000 AND @roleid <> 1
+		BEGIN
+			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2)
+			SELECT @CustId, 1, 0
+		END
+	END TRY
+	BEGIN CATCH		
+		SELECT @ErrMsg = CASE @Language
+							WHEN 'E' THEN 'Create customer failed. Please try again.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END,
+				@ErrCode = 113
+
+		-- ROLLBACK MANUALLY
+		IF @RoleID = 4
+		BEGIN
+			DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
+		END
+		ELSE IF @RoleID = 3
+		BEGIN
+			DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
+		END
+		ELSE IF @RoleID = 2
+		BEGIN
+			DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
+		END
 
 		DELETE FROM ProblemAccount WITH (ROWLOCK) WHERE CustId = @custid
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM SuspiciousCust WITH (ROWLOCK) WHERE CustId = @custid
+		DELETE FROM custInfo WITH (ROWLOCK) WHERE CustId = @custid
+		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
-	    RETURN
-    END
-
+		RETURN
+    END CATCH
+	
     -- For Extra Info Direct Account, FOR CREDIT ONLY
     IF NOT EXISTS (SELECT 1 FROM Dep_CustSuper WITH (NOLOCK) WHERE custid = @srecommend)
     BEGIN
@@ -559,7 +547,7 @@ BEGIN
 				SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" />'
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 602,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -568,18 +556,18 @@ BEGIN
 								-- NOT currency RM in default Setting
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
-						, TO_tmp.Sporttype, 0
+						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
 	            
 				FROM (        
 						-- Soccer 
-						SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f1                
 						WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
 						ORDER BY f1.site DESC, f1.ExchangeID DESC                
 		                
 						UNION ALL
 						-- Others sport
-						SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+						SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f2                
 						WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
 						ORDER BY f2.site DESC, f2.ExchangeID DESC
@@ -613,7 +601,7 @@ BEGIN
 	    
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 601,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -622,18 +610,18 @@ BEGIN
 								-- NOT currency RM in default Setting
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
-						, TO_tmp.Sporttype, 0
+						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
 	            
 				FROM (        
 						-- Soccer 
-						SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f1                
 						WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
 						ORDER BY f1.site DESC, f1.ExchangeID DESC                
 		                
 						UNION ALL
 						-- Others sport
-						SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+						SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f2                
 						WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
 						ORDER BY f2.site DESC, f2.ExchangeID DESC
@@ -666,7 +654,7 @@ BEGIN
 	    
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 600,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -675,18 +663,18 @@ BEGIN
 								-- NOT currency RM in default Setting
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
-						, TO_tmp.Sporttype, 0
+						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
 	            
 				FROM (        
 						-- Soccer 
-						SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f1                
 						WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
 						ORDER BY f1.site DESC, f1.ExchangeID DESC                
 		                
 						UNION ALL
 						-- Others sport
-						SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+						SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f2                
 						WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
 						ORDER BY f2.site DESC, f2.ExchangeID DESC
@@ -737,6 +725,5 @@ BEGIN
 		END
     END
 END
-
 
 GO

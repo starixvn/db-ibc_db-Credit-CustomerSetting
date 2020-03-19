@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetLimitUpd]
 	, @SubAccID		INT				= 0
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
+	, @SystemID     TINYINT = 1 --20200305@Tiara
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT				= 0		OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
@@ -20,6 +21,7 @@ AS
 
 	Revisions:
 		- 20160801@Elodie: Initial SP
+		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 
 	Param's Explanation:
 	• @GameBetLimit:
@@ -153,6 +155,8 @@ BEGIN
 						, @MasterID		= @MasterID
 						, @SuperID		= @SuperID
 						, @GameBetLimit	= @GameBetLimit
+						, @SystemID		= @SystemID
+						, @ProductID    = @ProductID
 						, @ErrCode		= @ErrCode	OUTPUT
 						, @MsgType		= @MsgType  OUTPUT
 						, @ErrMsg		= @ErrMsg	OUTPUT

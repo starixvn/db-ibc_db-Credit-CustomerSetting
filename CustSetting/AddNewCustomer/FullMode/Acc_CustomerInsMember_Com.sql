@@ -403,6 +403,8 @@ Revisions:
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200228@Tiara: Enable Keno product by default for 789y Headline [Redmine: 124311]
+	- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -713,7 +715,9 @@ BEGIN
 				@isvalid = @isvalid OUTPUT,
 				@errmsg = @errmsg OUTPUT,
 				@errcode = @errcode OUTPUT,
-				@language = @language
+				@language = @language,
+				@SystemID = @SystemID,
+				@creator = @creator
 
 	IF @ErrCode <> 0
 	BEGIN	

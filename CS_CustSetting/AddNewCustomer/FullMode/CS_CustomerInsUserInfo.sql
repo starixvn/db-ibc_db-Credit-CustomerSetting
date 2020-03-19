@@ -62,6 +62,7 @@ AS
 		- 20190715@Elodie: Sub account management [Redmine:#116825] 
 		- 20190808@Elodie: Add problem account [Redmine:#116814]
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20200219@Max: Support Separate setting and notification into Live/Non-Live major and minor bettypes [Redmine: #126841]
 
 	Param's Explanation:
 		• @ErrCode:
@@ -500,7 +501,7 @@ BEGIN
 				SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" />'
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 602,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -509,18 +510,18 @@ BEGIN
 								-- NOT currency RM in default Setting
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
-						, TO_tmp.Sporttype, 0
+						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
 	            
 				FROM (        
 						-- Soccer 
-						SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f1                
 						WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
 						ORDER BY f1.site DESC, f1.ExchangeID DESC                
 		                
 						UNION ALL
 						-- Others sport
-						SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+						SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f2                
 						WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
 						ORDER BY f2.site DESC, f2.ExchangeID DESC
@@ -554,7 +555,7 @@ BEGIN
 	    
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 601,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -563,18 +564,18 @@ BEGIN
 								-- NOT currency RM in default Setting
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
-						, TO_tmp.Sporttype, 0
+						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
 	            
 				FROM (        
 						-- Soccer 
-						SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f1                
 						WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
 						ORDER BY f1.site DESC, f1.ExchangeID DESC                
 		                
 						UNION ALL
 						-- Others sport
-						SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+						SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f2                
 						WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
 						ORDER BY f2.site DESC, f2.ExchangeID DESC
@@ -607,7 +608,7 @@ BEGIN
 	    
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 600,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -616,18 +617,18 @@ BEGIN
 								-- NOT currency RM in default Setting
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
-						, TO_tmp.Sporttype, 0
+						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
 	            
 				FROM (        
 						-- Soccer 
-						SELECT TOP 1 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency
+						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f1                
 						WHERE f1.site IN (@site,'') AND f1.ExchangeID IN (@currency,0) AND f1.sporttype = 1        
 						ORDER BY f1.site DESC, f1.ExchangeID DESC                
 		                
 						UNION ALL
 						-- Others sport
-						SELECT TOP 1 sporttype, MaxTurnOver,TOCurrency
+						SELECT TOP 10 sporttype, MaxTurnOver,TOCurrency, f2.ProfileID
 						FROM dbo.f_TOControl_GlobalSettingSel () f2                
 						WHERE f2.site IN (@site,'') AND f2.ExchangeID IN (@currency,0) AND f2.sporttype = 99
 						ORDER BY f2.site DESC, f2.ExchangeID DESC

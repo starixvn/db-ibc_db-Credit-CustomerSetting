@@ -1,10 +1,12 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdGoldDeluxe_MinMaxBet]
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdGoldDeluxe_MinMaxBet]
 	@custid		INT,
 	@userid		INT,
 	@SubAccID	INT = 0, --Sub-AccountID	
 	@StakeLevel	VARCHAR(4000),
 	@Language	VARCHAR(2) = 'E',
 	@IP			VARCHAR(15)='',
+	@SystemID	TINYINT = 1, --20200305@Tiara
 	@ErrCode	INT = 0 OUTPUT,
 	@ErrMsg		NVARCHAR(500) = '' OUTPUT 
 AS 
@@ -19,6 +21,8 @@ AS
 			- 20151001@Johnson: check limit downlines before updating 
 			- 20151120@Helen: Improve the performance of the setting [Redmine: 45056] 
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+			- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+
 		Parameter's Explanation:
 			* @StakeLevel = <ROOT>
 								<Row ID="1701" Stake="1,2,3,4"/>
@@ -123,13 +127,34 @@ BEGIN
 	
 	EXEC sp_xml_removedocument @DocHandler
 	-- end read xml
-	
+
 	SELECT @srecommend = srecommend
 			,@mrecommend = mrecommend
 			,@recommend = recommend
 	FROM CustInfo WITH(NOLOCK)
 	WHERE custid = @custid
-			
+	--Get site info
+	DECLARE @Site NVARCHAR (50)
+	IF @RoleID IN (2,3,4)
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @custid
+	ELSE IF @RoleID = 1
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @recommend
+
+	--Prevent users under 789y uncheck all Stakelevel
+	IF @SystemID != 1 AND @Site IN ('789y')
+	BEGIN
+		IF EXISTS (SELECT 1 
+					FROM #tmpStake WITH (NOLOCK)
+					WHERE StakeLevelList IS NULL OR StakeLevelList='')
+		BEGIN
+		SELECT @ErrCode = 1001  
+		SELECT @ErrMsg = CASE @Language   
+						WHEN 'E' THEN 'Each bet type must have at least one Bet Limit value to be selected '   
+						ELSE [dbo].[f_Get_MsgNamebyMsgID](10031,@Language)  
+						END  
+		RETURN   
+		END
+	END
 	--validate stake level
 	SELECT @roleid
 	  

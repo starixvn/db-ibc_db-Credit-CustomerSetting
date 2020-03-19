@@ -55,6 +55,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_MinMaxBet]
 	@UserID int = 0,	
 	@Language varchar(2) = 'E',
 	@IP varchar(15)='',
+	@SystemID TINYINT, --20200309@Tiara
 	@ErrCode int = 0 OUTPUT,
 	@ErrMsg nvarchar(4000) = '' OUTPUT
 AS
@@ -81,6 +82,8 @@ Revisions:
 	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	 
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
+	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -92,7 +95,7 @@ BEGIN
 	SET NOCOUNT ON
 	----- David @ 09 JUN 2015 -------------------
 	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
-	
+	DECLARE @Site NVARCHAR (50), @RoleID TINYINT, @recommend INT
 	BEGIN TRY
 		INSERT INTO @tmp_Sports (SportType, SportName)
 		SELECT SportType, SportName FROM DBAGE.bodb02.dbo.Sports WITH (NOLOCK)		
@@ -158,6 +161,15 @@ BEGIN
 		@Old_MinBetv161 = @MinBetv161 AND @Old_MaxBetv161 = @MaxBetv161 AND @Old_MaxPerMatchv161 = @MaxPerMatchv161 AND
 		@Old_MaxPerBallv161 = @MaxPerBallv161 RETURN
 
+	--Get site info
+	SELECT @RoleID=RoleID  FROM custinfo(NOLOCK) WHERE custid=@custid
+	IF @RoleID IN (2,3,4)
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @custid
+	ELSE IF @RoleID = 1
+	BEGIN
+		SELECT @recommend = recommend FROM custinfo (NOLOCK) WHERE custid=@custid
+		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @recommend
+	END
 	if 
 		@MinBet<0
 		or @MaxBet < 0
@@ -206,6 +218,14 @@ BEGIN
 		or @MinBetv164 <0
 		or @MaxBetv164 <0
 		or @MaxPerMatchv164 <0
+
+		or (@MinBetv161 < 1 AND @SystemID!=1 AND @Site IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
+		or (@MaxBetv161 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+		or (@MaxPerMatchv161 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+		
+		or (@MinBetv164 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+		or (@MaxBetv164 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+		or (@MaxPerMatchv164 < 1 AND @SystemID!=1 AND @Site IN ('789y'))
 	BEGIN
 		 
 		Select @ErrMsg = case @Language 
@@ -215,7 +235,7 @@ BEGIN
 		return
 	END
 
-	if @MaxPerBallv161 < 0
+	if @MaxPerBallv161 < 0 OR (@MaxPerBallv161 < 1 AND @SystemID!=1 AND @Site IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
 	begin
 		Select @ErrMsg = case @Language 
 							when 'E' then 'Wrong Max Per Ball (Number Game).'
