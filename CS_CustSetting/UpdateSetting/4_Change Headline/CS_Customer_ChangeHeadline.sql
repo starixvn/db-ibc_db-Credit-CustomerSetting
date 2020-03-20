@@ -17,6 +17,7 @@ AS
 
 	Revisions:
 		- 20190926@Percy: Initialize SP [Redmine: #118962]
+		- 20200309@Sophia: Allow to set Headline PT up to 5% [Redmine: #129665]
 */
 
 BEGIN
@@ -112,7 +113,7 @@ BEGIN
 			INNER JOIN @tblExtraPTSetting e ON s.ProductID = e.ProductID AND s.ExtraPT = e.ExtraPT
 		WHERE s.ProductID IN (1, 3)
 			AND s.Sporttype = 0 AND s.SubProduct = ''
-			AND s.GroupID BETWEEN 27 AND 42
+			AND s.GroupName LIKE 'CN88_%'
 			AND @currentDate BETWEEN s.FromDate AND s.ToDate
 		GROUP BY s.GroupId, s.GroupName
 		HAVING COUNT(1) = 2

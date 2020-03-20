@@ -22,6 +22,7 @@ AS
 		- 20190715@Johnson: initial sp [redmine: #116691]
 		- 20190819@Johnson: HF missing custAccount, CustGroupHeadline [redmine:#118868]
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20200309@Sophia: Allow to set Headline PT up to 5% [Redmine: #129665]
 	
 	-Parameter's Explanations:
 		- @ExtraPTSetting:	<ROOT>
@@ -142,7 +143,7 @@ BEGIN
 	WHERE  	@today BETWEEN a.FromDate AND a.ToDate
 			AND a.ProductID IN (1, 3)
 			AND Sporttype = 0 AND SubProduct = ''
-			AND GroupID BETWEEN 27 AND 42
+			AND GroupName LIKE 'CN88_%'
 	GROUP BY GroupName, GroupId
 	HAVING COUNT(GroupId) = 2 
 	
