@@ -327,9 +327,6 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideSaba,
-			CAST(CASE	WHEN	@IsHidden_Saba = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_Saba), 1)=0
-					THEN 0 ELSE 1
-					END AS BIT) AS HideSabaUpline,
 
 			ISNULL(cl.ClosedReason,0) AS ClosedReason,
 			ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, m.username) as RowNumber			
