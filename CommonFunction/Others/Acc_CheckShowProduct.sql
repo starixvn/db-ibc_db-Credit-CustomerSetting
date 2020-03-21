@@ -16,6 +16,7 @@ AS
 		- 20170331@Winnie: Change to IsHide
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
+
 	Explanation's Param:
 		
 */   

@@ -72,6 +72,7 @@ BEGIN
 		- 20191206@Eden: Add Virtual Games [Redmine: #122743]
 		- 20200318@Elodie: Add Saba.club [Redmine: #130636]
 		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
+		- 20200321@Tiara: Add Sexy Gaming Product [Redmine: #130678]
 
     Pattern Explanation:
     Search keyword: '%keyword%'
@@ -151,6 +152,7 @@ BEGIN
 		,	@bitmapOrder_VG				INT
 		,	@bitmapOrder_SabaClub		INT
 		,	@bitmapOrder_SAGaming		INT 
+		,	@bitmapOrder_SexyGaming		INT 
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
     SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
@@ -162,6 +164,7 @@ BEGIN
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
 	SET @bitmapOrder_SabaClub = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
+	SET @bitmapOrder_SexyGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 243 AND Bettype = 3101)
 
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
@@ -177,6 +180,7 @@ BEGIN
 		,	@IsHidden_VG				INT = 1
 		,	@IsHidden_SabaClub			INT = 1
 		,	@IsHidden_SAGaming			INT = 1
+		,	@IsHidden_SexyGaming		INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
     EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_AllBet OUTPUT
@@ -189,6 +193,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHidden_VG OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_SabaClub OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_SAGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_SexyGaming OUTPUT
 
     Select * From 
     (
@@ -281,7 +286,27 @@ BEGIN
                         THEN 0
                     ELSE 1
             END AS SyncedSAGamingDownline,
-
+			-- For Sexy Gaming
+            (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SexyGaming)) AS DisableSexyGaming,
+            CAST(   CASE    WHEN    @IsHidden_SexyGaming = 0 
+                                AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_SexyGaming), 1) = 0 
+                                THEN 0
+                            ELSE 1 
+                    END AS BIT) AS HideSexyGaming,
+            CAST(CASE   WHEN    @IsHidden_SexyGaming = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_SexyGaming), 1)=0
+            THEN 0 ELSE 1
+            END AS BIT) AS HideSexyGamingUpline,
+            ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SexyGaming), 0) AS SyncedSexyGaming,
+            ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_SexyGaming), 0) AS SyncedSexyGamingUpline,
+            CASE    WHEN EXISTS (   SELECT  1
+                                    FROM        dbo.CustProductStatus AS cpsDownline WITH (NOLOCK)
+                                    INNER JOIN  dbo.custInfo AS ciDownline WITH (NOLOCK)
+                                            ON  ciDownline.custid = cpsDownline.CustID
+                                    WHERE   ciDownline.mrecommend = m.custid
+                                        AND dbo.f_GetProductStatus(cpsDownline.bitmapHasSynced, @bitmapOrder_SexyGaming) = 0)
+                        THEN 0
+                    ELSE 1
+            END AS SyncedSexyGamingDownline,
             -- For FishingWorld
             (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,
             CAST(   CASE    WHEN    @IsHidden_FishingWorld = 0                          

@@ -79,6 +79,7 @@ BEGIN
 		- 20191206@Eden: Add Virtual Games [Redmine: #122743]
 		- 20200318@Elodie: Add Saba.club [Redmine: #130636]
 		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
+		- 20200321@Tiara: Add Sexy Gaming Product [Redmine: #130678]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -116,6 +117,7 @@ BEGIN
 		,	@bitmapOrder_Esports		INT 
 		,	@bitmapOrder_VG				INT
 		,	@bitmapOrder_SabaClub		INT
+		,	@bitmapOrder_SexyGaming		INT 
     
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
@@ -126,7 +128,7 @@ BEGIN
 	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitmapOrder_SabaClub = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
-
+	SET @bitmapOrder_SexyGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 243 AND Bettype = 3101)
     
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
@@ -142,6 +144,7 @@ BEGIN
 		,	@IsHidden_VG			INT = 1
 		,	@IsHidden_SabaClub		INT = 1
 		,	@IsHidden_SAGaming			INT = 1
+		,	@IsHidden_SexyGaming			INT = 1
 
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
 
@@ -155,6 +158,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHidden_VG OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_SabaClub OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_SAGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_SexyGaming OUTPUT
 
 	DECLARE @RowCount int, @RowStart int, @RowEnd int  
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1   
@@ -221,6 +225,7 @@ BEGIN
 					AND ci.roleid=1  
 					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
 									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)	
@@ -237,6 +242,7 @@ BEGIN
 						AND ci.RoleID = 1
 						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
 									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)		
@@ -283,6 +289,7 @@ BEGIN
 					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
 									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -343,6 +350,7 @@ BEGIN
 						AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
 									OR	(@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
+									OR	(@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -398,6 +406,7 @@ BEGIN
 					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END					 
 					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
 									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -461,6 +470,7 @@ BEGIN
 						AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
 									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
+									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -562,6 +572,19 @@ BEGIN
 		ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SAGaming), 0) AS SyncedSAGaming,
 		ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_SAGaming), 0) AS SyncedSAGamingUpline,
 		1 AS SyncedSAGamingDownline,
+		-- For Sexy Gaming
+		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SexyGaming)) AS DisableSexyGaming,
+		CAST(	CASE	WHEN	@IsHidden_SexyGaming = 0 
+							AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_SexyGaming), 1) = 0 
+							THEN 0
+						ELSE 1 
+				END AS BIT) AS HideSexyGaming,
+		CAST(CASE	WHEN	@IsHidden_SexyGaming = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_SexyGaming), 1) = 0
+				THEN 0 ELSE 1
+				END AS BIT) AS HideSexyGamingUpline,
+		ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SexyGaming), 0) AS SyncedSexyGaming,
+		ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_SexyGaming), 0) AS SyncedSexyGamingUpline,
+		1 AS SyncedSexyGamingDownline,
 		-- For Lottery
 		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_Lottery)) AS DisableLottery,		
 		CAST(	CASE	WHEN	@IsHidden_Lottery = 0 						
