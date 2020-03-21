@@ -9,7 +9,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedLottery			BIT = 0		OUTPUT
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
-				,	@AllowedSaba			BIT = 0		OUTPUT
+				,	@AllowedSabaClub		BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -193,7 +193,7 @@ Revisions:
 
 	-- For Saba
 	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHideSaba OUTPUT
-	SELECT	@AllowedSaba = CASE	WHEN @RoleID = 4 AND @IsHideSaba = 0 THEN 1
+	SELECT	@AllowedSabaClub = CASE	WHEN @RoleID = 4 AND @IsHideSaba = 0 THEN 1
 								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Saba) = 0 AND @IsHideSaba = 0 THEN 1
 								ELSE 0
 						END

@@ -114,7 +114,7 @@ BEGIN
 		,	@bitmapOrder_VS				INT
 		,	@bitmapOrder_Esports		INT 
 		,	@bitmapOrder_VG				INT
-		,	@bitmapOrder_Saba			INT
+		,	@bitmapOrder_SabaClub		INT
     
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
@@ -123,7 +123,7 @@ BEGIN
 	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
 	SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
-	SET @bitmapOrder_Saba = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
+	SET @bitmapOrder_SabaClub = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 
     
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
@@ -138,7 +138,7 @@ BEGIN
 		,	@IsHidden_FishingWorld	INT = 1 
 		,	@IsHidden_VS			INT = 1
 		,	@IsHidden_VG			INT = 1
-		,	@IsHidden_Saba			INT = 1
+		,	@IsHidden_SabaClub		INT = 1
 
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHidden_AllBet OUTPUT
@@ -149,7 +149,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_Esports OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHidden_VG OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_Saba OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_SabaClub OUTPUT
 
 	DECLARE @RowCount int, @RowStart int, @RowEnd int  
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1   
@@ -591,16 +591,16 @@ BEGIN
 		CAST(CASE	WHEN	@IsHidden_VG = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_VG), 1)=0
 				THEN 0 ELSE 1
 				END AS BIT) AS HideVirtualGamesUpline,
-		-- For Saba
-		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_Saba)) AS DisableSaba,			
-		CAST(	CASE	WHEN	@IsHidden_Saba = 0 								
-							AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Saba), 1) = 0 
+		-- For SabaClub
+		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SabaClub)) AS DisableSabaClub,			
+		CAST(	CASE	WHEN	@IsHidden_SabaClub = 0 								
+							AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_SabaClub), 1) = 0 
 							THEN 0
 						ELSE 1 
-				END AS BIT) AS HideSaba,
-		CAST(CASE	WHEN	@IsHidden_Saba = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_Saba), 1)=0
+				END AS BIT) AS HideSabaClub,
+		CAST(CASE	WHEN	@IsHidden_SabaClub = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_SabaClub), 1)=0
 				THEN 0 ELSE 1
-				END AS BIT) AS HideSabaUpline
+				END AS BIT) AS HideSabaClubUpline
 	FROM src m  
 		INNER JOIN customer c (nolock) on m.custid = c.custid  
 		INNER JOIN Custinfo ci (nolock) on m.custid = ci.custid      	  
