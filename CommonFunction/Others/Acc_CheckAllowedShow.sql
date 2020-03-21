@@ -193,11 +193,22 @@ Revisions:
 
 	-- For Saba
 	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHideSaba OUTPUT
-	SELECT	@AllowedSabaClub = CASE	WHEN @RoleID = 4 AND @IsHideSaba = 0 THEN 1
-								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_Saba) = 0 AND @IsHideSaba = 0 THEN 1
-								ELSE 0
-						END
-	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
-	WHERE	cps.CustID = @CustID
+	IF @RoleID = 4
+		SELECT	@AllowedSabaClub =	CASE	WHEN @IsHideSaba = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Saba)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedSabaClub =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Saba)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_Saba)) = 1
+											AND @IsHideSaba = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END
 END
 GO
