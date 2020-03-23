@@ -82,6 +82,7 @@ AS
 	- 20200114@Malcolm: Separate setting and notification into Live/Non-Live and bettypes [Redmine : 125076]
 	- 20200210@Elodie: Problem account for credit [Redmine:#127446]
 	- 20200310@Percy: Add column IsAllDayBalTransfer on CustMaster [RedmineID: #130091]
+	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -146,6 +147,17 @@ BEGIN
 	
 	SET @site = (SELECT Site FROM dbo.Customer WITH (NOLOCK) WHERE custid = @ExistingCustid)
 	
+	DECLARE @BlockNewCusti7 BIT, @UnblockTime VARCHAR(50)
+	SELECT @BlockNewCusti7 = BlockNewCusti7, @UnblockTime = UnblockTime FROM dbo.SettingSystem WITH (NOLOCK) WHERE SystemID = 1
+	IF @BlockNewCusti7 = 1 AND @site = '789y'
+	BEGIN
+		SELECT @ErrMsg = CASE @Language WHEN 'VI' THEN N'Chúng tôi đang xử lý việc ra mắt sản phẩm mới, vui lòng tạo tài khoản cấp dưới sau ' + @UnblockTime + N'. Vui lòng liên hệ với cấp trên hoặc bộ phận Chăm Sóc Khách Hàng để biết thêm thông tin.'
+							ELSE 'We are in processing for new product offering, please try to create downline account after ' + @UnblockTime + '. Please contact your upline or CSD for further information.'
+						END	
+				,@ErrCode = 101	
+		RETURN
+	END
+
 	IF ( NOT (@roleid = 3 AND @existingSrecommend = @srecommend))
 	BEGIN		
 		 SELECT @ErrMsg = CASE @Language 
