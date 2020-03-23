@@ -153,7 +153,7 @@ BEGIN
 		SELECT @ErrMsg = CASE @Language WHEN 'VI' THEN N'Chúng tôi đang xử lý việc ra mắt sản phẩm mới, vui lòng tạo tài khoản cấp dưới sau ' + @UnblockTime + N'. Vui lòng liên hệ với cấp trên hoặc bộ phận Chăm Sóc Khách Hàng để biết thêm thông tin.'
 							ELSE 'We are in processing for new product offering, please try to create downline account after ' + @UnblockTime + '. Please contact your upline or CSD for further information.'
 						END	
-				,@ErrCode = 101	
+				,@ErrCode = 200	
 		RETURN
 	END
 
