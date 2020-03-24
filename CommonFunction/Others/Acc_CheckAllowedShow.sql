@@ -183,11 +183,11 @@ Revisions:
 		AND	psd.ProductID = 41
 		AND psd.SportType = 244
 	-- For Sexy Gaming
-	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHideSAGaming OUTPUT
-	SELECT	@AllowedSexyGaming =	MAX(CASE	WHEN @RoleID = 4 AND @IsHideSAGaming = 0 THEN 1
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHideSexyGaming OUTPUT
+	SELECT	@AllowedSexyGaming =	MAX(CASE	WHEN @RoleID = 4 AND @IsHideSexyGaming = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, psp.bitmapOrder) = 1
-											AND @IsHideSAGaming = 0 
+											AND @IsHideSexyGaming = 0 
 											THEN 1
 										ELSE 0
 								END)
