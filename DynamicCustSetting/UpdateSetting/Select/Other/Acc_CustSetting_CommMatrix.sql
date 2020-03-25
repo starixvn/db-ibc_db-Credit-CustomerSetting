@@ -15,11 +15,31 @@ AS
 	Param's Explanation:  
 		- 20160219@Dominic: Implement charge commission #49689
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
+		- 20200325@Tiara: Handle dummy Product [Redmine: #130678]
    
  */  
 BEGIN  
+	SET NOCOUNT ON
+	--Handle dummy product
+	CREATE TABLE #SportBettypeFilter 
+	(ProductID TINYINT, 
+	SportType SMALLINT, 
+	Bettype SMALLINT, 
+	IsLive BIT, 
+	SettingType SMALLINT)
 
-	SELECT * INTO #SportBettypeFilter
+	INSERT INTO #SportBettypeFilter (ProductID, SportType, Bettype, IsLive, SettingType)
+	SELECT 21, 211, 2401, 0, 3
+	WHERE @ProductID = 21
+	UNION
+	SELECT 39, 244, 3001, 0, 3
+	WHERE @ProductID = 39
+	UNION 
+	SELECT 45, 243, 3101, 0, 3
+	WHERE @ProductID = 45
+
+	INSERT INTO #SportBettypeFilter (ProductID, SportType, Bettype, IsLive, SettingType)
+	SELECT * 
 	FROM (
 	SELECT *
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3) -- comm
@@ -30,7 +50,6 @@ BEGIN
 	SELECT *
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) ) tmp
 	
-	SET NOCOUNT ON
 	DECLARE @CustID INT
 		, @RoleID INT
 		, @SRecommend INT
