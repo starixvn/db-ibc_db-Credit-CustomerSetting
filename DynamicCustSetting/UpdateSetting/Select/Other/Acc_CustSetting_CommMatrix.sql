@@ -11,11 +11,14 @@ AS
 	Task : Get Comm Matrix
 	DB:  DBCUST/CustDB   
 	Original:  
-  
-	Param's Explanation:  
+
+  	Revisions: 
 		- 20160219@Dominic: Implement charge commission #49689
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
 		- 20200325@Tiara: Handle dummy Product [Redmine: #130678]
+
+	Param's Explanation: 
+
    
  */  
 BEGIN  
