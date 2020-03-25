@@ -9,6 +9,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedLottery			BIT = 0		OUTPUT
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
+				,	@AllowedSabaClub		BIT = 0		OUTPUT
 
 AS
 BEGIN
@@ -40,6 +41,8 @@ Revisions:
 	- 20190104@Johnson: config Allbet to show if any bettype is allowed [Redmine: #106601]
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20191206@Eden: Add Virtual Games [Redmine: #122743]
+	- 20200318@Elodie: Add Saba.club [Redmine: #130636]
+
 */
 
 	SET NOCOUNT ON
@@ -53,6 +56,7 @@ Revisions:
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
 		,	@IsHideVG				INT
+		,	@IsHideSaba				INT
 
 	DECLARE @bitOrderVB				INT 
 		,	@bitOrderFW				INT 
@@ -60,6 +64,7 @@ Revisions:
 		,	@bitOrderLottery		INT 
 		,   @bitOrderVS				INT 
 		,	@bitmapOrder_VG			INT
+		,	@bitmapOrder_Saba		INT
 
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
@@ -67,6 +72,7 @@ Revisions:
 	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
+	SET @bitmapOrder_Saba = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -184,5 +190,25 @@ Revisions:
 						END
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
+
+	-- For Saba
+	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHideSaba OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedSabaClub =	CASE	WHEN @IsHideSaba = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Saba)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedSabaClub =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Saba)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_Saba)) = 1
+											AND @IsHideSaba = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END
 END
 GO

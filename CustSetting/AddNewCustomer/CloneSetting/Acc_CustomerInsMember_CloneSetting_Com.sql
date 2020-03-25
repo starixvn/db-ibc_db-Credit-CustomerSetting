@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_Com]
 (
 	@Custid INT OUTPUT
@@ -66,6 +66,7 @@ AS
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200102@Malcolm: Separate setting and notification into Live/Non-Live and bettypes [Redmine : 125076]
+	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -84,6 +85,17 @@ BEGIN
 	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME	
 	SET @CreateDate = GETDATE()		
 	
+	DECLARE @BlockNewCusti7 BIT, @UnblockTime VARCHAR(50)
+	SELECT @BlockNewCusti7 = BlockNewCusti7, @UnblockTime = UnblockTime FROM dbo.SettingSystem WITH (NOLOCK) WHERE SystemID = 1
+	IF @BlockNewCusti7 = 1 AND @site = '789y'
+	BEGIN
+		SELECT @ErrMsg = CASE @Language WHEN 'VI' THEN N'Chúng tôi đang xử lý việc ra mắt sản phẩm mới, vui lòng tạo tài khoản cấp dưới sau ' + @UnblockTime + N'. Vui lòng liên hệ với cấp trên hoặc bộ phận Chăm Sóc Khách Hàng để biết thêm thông tin.'
+							ELSE 'We are in processing for new product offering, please try to create downline account after ' + @UnblockTime + '. Please contact your upline or CSD for further information.'
+						END	
+				,@ErrCode = 200	
+		RETURN
+	END
+
 	DECLARE @IsExists BIT 
 	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
 

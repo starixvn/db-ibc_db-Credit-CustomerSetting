@@ -303,6 +303,7 @@ Revisions:
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 	- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 
 Param's Explanation:	
 • @ErrCode:
@@ -313,6 +314,18 @@ Param's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
+	DECLARE @BlockNewCusti7 BIT, @UnblockTime VARCHAR(50), @SiteAgent VARCHAR(10)
+	SELECT @SiteAgent = site FROM customer WITH(NOLOCK) WHERE CustID = @recommend
+	
+	SELECT @BlockNewCusti7 = BlockNewCusti7, @UnblockTime = UnblockTime FROM dbo.SettingSystem WITH (NOLOCK) WHERE SystemID = 1
+	IF @BlockNewCusti7 = 1 AND @SiteAgent = '789y'
+	BEGIN
+		SELECT @ErrMsg = CASE @Language WHEN 'VI' THEN N'Chúng tôi đang xử lý việc ra mắt sản phẩm mới, vui lòng tạo tài khoản cấp dưới sau ' + @UnblockTime + N'. Vui lòng liên hệ với cấp trên hoặc bộ phận Chăm Sóc Khách Hàng để biết thêm thông tin.'
+							ELSE 'We are in processing for new product offering, please try to create downline account after ' + @UnblockTime + '. Please contact your upline or CSD for further information.'
+						END	
+				,@ErrCode = 200	
+		RETURN
+	END
 ----- Elodie @ 01 JUN 2015 -------------------	
 	BEGIN TRY
 		SELECT *

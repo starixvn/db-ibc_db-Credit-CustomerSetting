@@ -1,1 +1,0 @@
-Others\Dot_Member_GetCustCreditInfo.sql
