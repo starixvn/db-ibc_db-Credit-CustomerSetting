@@ -35,7 +35,8 @@ AS
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 		- 20180206@Elodie: Fix bug "default status of new direct master does not take into ProductStatusSiteCurrency table" - [Redmine #90570]
 		- 20190408@Johnson: add suspendInfo [Redmine: #105587]
-	
+		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
+
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
@@ -350,7 +351,17 @@ BEGIN
 				  ,ps.BetType
 				  ,IsLive
 			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
-				INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.ProductID = op.ProductID
+				INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK) WHERE ProductID <> 41) op ON ps.ProductID = op.ProductID
+			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
+
+			--Live Casino
+			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive)
+			SELECT SettingType
+				  ,ps.SportType
+				  ,ps.BetType
+				  ,IsLive
+			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
+				INNER JOIN (SELECT ProductID, SportType, BetType, IsHidden FROM #OfferedProductList WITH (NOLOCK) WHERE ProductID = 41) op ON ps.ProductID = op.ProductID AND ps.SportType = op.SportType
 			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
 		END
 
