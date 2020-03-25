@@ -17,15 +17,45 @@ AS
 					4: ProductStatus
  Revision:
     - add new parameter @SettingType
+	- 20200321@Tiara: Handle dummy product for Sexy Gaming/Allbet/SA Gaming [Redmine: #130678]
    
  */  
 BEGIN  
 	DECLARE @DCSProducts TABLE(ProductID TINYINT)
+	CREATE TABLE #TmpProductSettingDetail
+	(
+		SettingType SMALLINT,
+		SportType SMALLINT,
+		ProductID TINYINT
+	)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(1,211,21)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(3,211,21)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(6,211,21)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(7,211,21)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(13,211,21)
+
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(1,244,39)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(3,244,39)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(6,244,39)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(7,244,39)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(13,244,39)
+	
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(1,243,45)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(3,243,45)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(6,243,45)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(7,243,45)
+	INSERT INTO #TmpProductSettingDetail ([SettingType],[SportType],[ProductID]) VALUES(13,243,45)
+	
 	INSERT @DCSProducts
 	SELECT DISTINCT ProductID
 	FROM dbo.ProductSettingDetail
 	WHERE SettingStatus < 2 AND (@SettingType IS NULL OR SettingType = @SettingType)
-
+		AND ProductID <> 41
+	UNION ALL
+	SELECT DISTINCT T.ProductID
+	FROM #TmpProductSettingDetail T WITH (NOLOCK) INNER JOIN dbo.ProductSettingDetail P WITH (NOLOCK) ON T.SportType = P.SportType AND T.SettingType = P.SettingType
+	WHERE P.SettingStatus < 2 AND (@SettingType IS NULL OR T.SettingType = @SettingType) 
+	
 	SELECT [ProductID], CASE WHEN SUBSTRING([Language],12,LEN([Language]) - 11) = '' THEN 'EN' ELSE UPPER(SUBSTRING([Language],12,LEN([Language]) - 11)) END [Language], Name
 	FROM 
 	   (SELECT p.[ProductID]  
@@ -61,6 +91,7 @@ BEGIN
 	WHERE SUBSTRING([Language],12,LEN([Language]) - 11) = @LanguageKey
 		OR (SUBSTRING([Language],12,LEN([Language]) - 11) = '' AND @LanguageKey='EN')
 	;
+	DROP TABLE #TmpProductSettingDetail
 END  
   
 
