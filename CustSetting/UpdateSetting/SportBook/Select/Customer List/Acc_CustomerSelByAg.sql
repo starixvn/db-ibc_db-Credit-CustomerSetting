@@ -117,6 +117,7 @@ BEGIN
 		,	@bitmapOrder_Esports		INT 
 		,	@bitmapOrder_VG				INT
 		,	@bitmapOrder_SabaClub		INT
+		,	@bitmapOrder_SAGaming		INT 
 		,	@bitmapOrder_SexyGaming		INT 
     
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
