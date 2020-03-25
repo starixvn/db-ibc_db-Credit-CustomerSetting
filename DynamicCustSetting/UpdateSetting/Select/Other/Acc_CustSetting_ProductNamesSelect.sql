@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAGE-bodb02" selecters="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet, bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_ProductNamesSelect]   
    @ProductID TINYINT = NULL,
    @SettingType SMALLINT = NULL,
@@ -97,8 +97,3 @@ END
   
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductNamesSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductNamesSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductNamesSelect] TO [bodbExtAccNet]
