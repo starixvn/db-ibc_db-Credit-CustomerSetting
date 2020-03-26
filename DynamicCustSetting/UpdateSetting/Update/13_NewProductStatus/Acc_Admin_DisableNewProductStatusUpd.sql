@@ -264,7 +264,14 @@ BEGIN
 						, 0	AS '@s'
 					FROM ProductStatusProfile psp (NOLOCK)
 						INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
-					WHERE ps.ProductID = @ProductID AND ps.SettingType = 13
+					WHERE ps.ProductID = @ProductID AND ps.SettingType = 13 AND ps.ProductID <> 41
+					UNION ALL
+					SELECT psp.bitmapOrder	AS '@b'
+						, 0	AS '@s'
+					FROM ProductStatusProfile psp (NOLOCK)
+						INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
+						INNER JOIN #NewDisableStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
+					WHERE ps.ProductID = 41 AND ps.SettingType = 13 AND ns.IsDisabled = 0
 					FOR XML PATH('r')
 						, TYPE
 					)
