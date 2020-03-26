@@ -205,8 +205,6 @@ BEGIN
 				WHERE ci.MRecommend = @MRecommend 
 					AND ci.roleid=2
 					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
-									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -254,8 +252,6 @@ BEGIN
 						AND roleid=2 
 						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
 						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
-										OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -308,8 +304,6 @@ BEGIN
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
 					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
-										OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -366,8 +360,6 @@ BEGIN
 						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END	
 						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
 						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
-										OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -425,8 +417,6 @@ BEGIN
 					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
 					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-								OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
-								OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -489,8 +479,6 @@ BEGIN
 						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
 						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END		
 						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-								OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SAGaming) = 0)
-									OR (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_SexyGaming) = 0)
 								OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
 								THEN 1 ELSE 0 END	
 							)
@@ -550,17 +538,6 @@ BEGIN
 				CAST(CASE	WHEN	@IsHidden_SAGaming = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_SAGaming), 1)=0
 					THEN 0 ELSE 1
 					END AS BIT) AS HideSAGamingUpline,
-				ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SAGaming), 0) AS SyncedSAGaming,
-				ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_SAGaming), 0) AS SyncedSAGamingUpline,
-				CASE	WHEN EXISTS	(	SELECT	1
-										FROM		dbo.CustProductStatus AS cpsDownline WITH (NOLOCK)
-										INNER JOIN	dbo.custInfo AS ciDownline WITH (NOLOCK)
-												ON	ciDownline.custid = cpsDownline.CustID
-										WHERE	ciDownline.recommend = c.custid
-											AND	dbo.f_GetProductStatus(cpsDownline.bitmapHasSynced, @bitmapOrder_SAGaming) = 0)
-							THEN 0
-						ELSE 1
-				END AS SyncedSAGamingDownline,
 				-- For Sexy Gaming
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SexyGaming)) AS DisableSexyGaming,
 				CAST(	CASE	WHEN	@IsHidden_SexyGaming = 0 
@@ -571,9 +548,6 @@ BEGIN
 				CAST(CASE	WHEN	@IsHidden_SexyGaming = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_SexyGaming), 1) = 0
 						THEN 0 ELSE 1
 						END AS BIT) AS HideSexyGamingUpline,
-				ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SexyGaming), 0) AS SyncedSexyGaming,
-				ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapHasSynced, @bitmapOrder_SexyGaming), 0) AS SyncedSexyGamingUpline,
-				1 AS SyncedSexyGamingDownline,
 				-- For Fishing World
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,				
 				CAST(	CASE	WHEN	@IsHidden_FishingWorld = 0 
@@ -758,16 +732,10 @@ BEGIN
 			ctm.DisableSAGaming,
 			ctm.HideSAGaming,
 			ctm.HideSAGamingUpline,
-			ctm.SyncedSAGaming,
-			ctm.SyncedSAGamingUpline,
-			ctm.SyncedSAGamingDownline,
 			--Sexy Gaming
 			ctm.DisableSexyGaming,
 			ctm.HideSexyGaming,
 			ctm.HideSexyGamingUpline,
-			ctm.SyncedSexyGaming,
-			ctm.SyncedSexyGamingUpline,
-			ctm.SyncedSexyGamingDownline,
 			-- VoidBrigde
 			ctm.DisableVoidBridge,
 			ctm.HideVoidBridge,

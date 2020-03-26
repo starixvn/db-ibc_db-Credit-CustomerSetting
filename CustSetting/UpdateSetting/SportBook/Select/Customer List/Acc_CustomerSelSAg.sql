@@ -277,17 +277,6 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideSAGaming,
-			ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SAGaming), 0) AS SyncedSAGaming,
-			1 AS SyncedSAGamingUpline,
-			CASE	WHEN EXISTS	(	SELECT	1
-									FROM		dbo.CustProductStatus AS cpsDownline WITH (NOLOCK)
-									INNER JOIN	dbo.custInfo AS ciDownline WITH (NOLOCK)
-											ON	ciDownline.custid = cpsDownline.CustID
-									WHERE	ciDownline.srecommend = m.custid
-										AND	dbo.f_GetProductStatus(cpsDownline.bitmapHasSynced, @bitmapOrder_SAGaming) = 0)
-						THEN 0
-					ELSE 1
-			END AS SyncedSAGamingDownline,
 
 			-- For Sexy Gaming
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SexyGaming)) AS DisableSexyGaming,			
@@ -296,17 +285,6 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideSexyGaming,
-			ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SexyGaming), 0) AS SyncedSexyGaming,
-			1 AS SyncedSexyGamingUpline,
-			CASE	WHEN EXISTS	(	SELECT	1
-									FROM		dbo.CustProductStatus AS cpsDownline WITH (NOLOCK)
-									INNER JOIN	dbo.custInfo AS ciDownline WITH (NOLOCK)
-											ON	ciDownline.custid = cpsDownline.CustID
-									WHERE	ciDownline.srecommend = m.custid
-										AND	dbo.f_GetProductStatus(cpsDownline.bitmapHasSynced, @bitmapOrder_SexyGaming) = 0)
-						THEN 0
-					ELSE 1
-			END AS SyncedSexyGamingDownline,
 			 -- For FishingWorld
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,
 			CAST(	CASE	WHEN	@IsHidden_FishingWorld = 0 							
@@ -541,8 +519,7 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideSAGaming,
-			ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SAGaming), 0) AS SyncedSAGaming,
-			
+		
 			-- For Sexy Gaming
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SexyGaming)) AS DisableSexyGaming,			
 			CAST(	CASE	WHEN	@IsHidden_SexyGaming = 0 
@@ -551,7 +528,6 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideSexyGaming,
-			ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_SexyGaming), 0) AS SyncedSexyGaming,
 			
 			-- FishingWorld
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,		
