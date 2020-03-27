@@ -12,18 +12,19 @@ AS
  Original:  
   
  Revisions:  
-  - 20160114@Helen: Cricket - [Redmine: #50027]  
-  - 20160330@Elodie: Get more IsSyncedUpline, IsSyncedDownline infomation [Redmine: #49606]  
-  - 20160413@Billy: Remove Site Currency check - [Redmine: #54672]  
-  - 20160429@Winnie: Return column IsHiddenUpline for AllBet, VoidBridge  
-  - 20160801@Elodie: Get Game status (setting type = 11) - [Redmine: #60809]   
-  - 20170307@Elodie: Get New product status (setting type = 13) - [Redmine: #70722]   
-  - 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
-  - 20170803@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
-  - 20170919@Johnson: fix the unsynchronized setting, remove IsDownlineSynced 
+	- 20160114@Helen: Cricket - [Redmine: #50027]  
+	- 20160330@Elodie: Get more IsSyncedUpline, IsSyncedDownline infomation [Redmine: #49606]  
+	- 20160413@Billy: Remove Site Currency check - [Redmine: #54672]  
+	- 20160429@Winnie: Return column IsHiddenUpline for AllBet, VoidBridge  
+	- 20160801@Elodie: Get Game status (setting type = 11) - [Redmine: #60809]   
+	- 20170307@Elodie: Get New product status (setting type = 13) - [Redmine: #70722]   
+	- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+	- 20170803@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
+	- 20170919@Johnson: fix the unsynchronized setting, remove IsDownlineSynced 
 					and fix hasDownline status to show checkbox enable downline [Redmine: #72973]
 						+hasDownline = 1: has at least one customer has sync status
 									=0 : all downlines not sync	
+	- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
  Param's Explanation:  
  - @CustID: 
  Example: EXEC Acc_CustSetting_StatusSettingSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
@@ -100,6 +101,7 @@ BEGIN
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
+			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
     
 	END  
 	ELSE IF @RoleID = 3  
@@ -139,6 +141,7 @@ BEGIN
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @SuperID  
 		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
+			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 	END     
 	ELSE IF @RoleID = 2  
 	BEGIN  
@@ -176,6 +179,7 @@ BEGIN
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @MasterID  
 		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
+			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 	END   
 	ELSE IF @RoleID = 1  
 	BEGIN  
@@ -195,6 +199,7 @@ BEGIN
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @AgentID  
 		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
+			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 	END   
 END
 
