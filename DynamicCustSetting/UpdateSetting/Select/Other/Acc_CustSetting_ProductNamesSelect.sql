@@ -17,7 +17,7 @@ AS
 					3: Comm
 					4: ProductStatus
  Revision:
-    - add new parameter @SettingType
+    - 20150226@Dominic: add new parameter @SettingType
    
  */  
 BEGIN  
