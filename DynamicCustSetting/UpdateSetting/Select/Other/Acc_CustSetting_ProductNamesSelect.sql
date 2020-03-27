@@ -1,3 +1,4 @@
+/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_ProductNamesSelect]   
    @ProductID TINYINT = NULL,
    @SettingType SMALLINT = NULL,
