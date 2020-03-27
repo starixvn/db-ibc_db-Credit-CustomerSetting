@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE CustDB
 GO
 
@@ -11,26 +11,15 @@ AS
 	Task : Get Comm Matrix
 	DB:  DBCUST/CustDB   
 	Original:  
-
-  	Revisions: 
+  
+	Param's Explanation:  
 		- 20160219@Dominic: Implement charge commission #49689
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
-
-	Param's Explanation: 
-
    
  */  
 BEGIN  
-	SET NOCOUNT ON
-	CREATE TABLE #SportBettypeFilter 
-	(ProductID TINYINT, 
-	SportType SMALLINT, 
-	Bettype SMALLINT, 
-	IsLive BIT, 
-	SettingType SMALLINT)
 
-	INSERT INTO #SportBettypeFilter (ProductID, SportType, Bettype, IsLive, SettingType)
-	SELECT * 
+	SELECT * INTO #SportBettypeFilter
 	FROM (
 	SELECT *
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3) -- comm
@@ -41,6 +30,7 @@ BEGIN
 	SELECT *
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) ) tmp
 	
+	SET NOCOUNT ON
 	DECLARE @CustID INT
 		, @RoleID INT
 		, @SRecommend INT

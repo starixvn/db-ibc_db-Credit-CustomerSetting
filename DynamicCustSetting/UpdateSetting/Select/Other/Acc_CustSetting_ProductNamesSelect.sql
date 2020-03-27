@@ -1,4 +1,3 @@
-/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet, bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_ProductNamesSelect]   
    @ProductID TINYINT = NULL,
    @SettingType SMALLINT = NULL,
@@ -22,12 +21,11 @@ AS
  */  
 BEGIN  
 	DECLARE @DCSProducts TABLE(ProductID TINYINT)
-	
 	INSERT @DCSProducts
 	SELECT DISTINCT ProductID
 	FROM dbo.ProductSettingDetail
 	WHERE SettingStatus < 2 AND (@SettingType IS NULL OR SettingType = @SettingType)
-		
+
 	SELECT [ProductID], CASE WHEN SUBSTRING([Language],12,LEN([Language]) - 11) = '' THEN 'EN' ELSE UPPER(SUBSTRING([Language],12,LEN([Language]) - 11)) END [Language], Name
 	FROM 
 	   (SELECT p.[ProductID]  
@@ -63,8 +61,12 @@ BEGIN
 	WHERE SUBSTRING([Language],12,LEN([Language]) - 11) = @LanguageKey
 		OR (SUBSTRING([Language],12,LEN([Language]) - 11) = '' AND @LanguageKey='EN')
 	;
-
 END  
   
 
 GO
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductNamesSelect] TO [bodbadminNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductNamesSelect] TO [bodbDownlineNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductNamesSelect] TO [bodbExtAccNet]
