@@ -19,6 +19,7 @@ AS
 	Original:
 	Revisions:
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+		- 20200330@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP applied for SB2 [Redmine: #131163]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -77,7 +78,7 @@ BEGIN
 
 	EXEC sys.sp_xml_removedocument @iDoc;
 	--Prevent users under 789y uncheck all Stakelevel
-	IF @SystemID IN (6,7,8,9) AND @ProductID != 16 --789y Alpha, 789y ExtNAP (Exclude SprotBook2)
+	IF @SystemID IN (6,7,8,9) --789y Alpha, 789y ExtNAP 
 	BEGIN
 		IF EXISTS (SELECT 1 
 					FROM #tmpStakeCheck WITH (NOLOCK)
