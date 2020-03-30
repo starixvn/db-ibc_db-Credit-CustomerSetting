@@ -1,3 +1,4 @@
+/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_ProductNamesSelect]   
    @ProductID TINYINT = NULL,
    @SettingType SMALLINT = NULL,
@@ -16,7 +17,7 @@ AS
 					3: Comm
 					4: ProductStatus
  Revision:
-    - add new parameter @SettingType
+    - 20150226@Dominic: add new parameter @SettingType
    
  */  
 BEGIN  

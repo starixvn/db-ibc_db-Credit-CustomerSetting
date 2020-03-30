@@ -3,7 +3,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 					@CustID					INT
 				,	@AllowedCS				BIT = 0		OUTPUT
 				,	@AllowedVS				BIT = 0		OUTPUT
-				,	@AllowedAllBet			BIT = 0		OUTPUT
+				,	@AllowedLiveCasino		BIT = 0		OUTPUT
 				,	@AllowedVoidBridge		BIT = 0		OUTPUT
 				,	@AllowedNG2				BIT = 0		OUTPUT
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
@@ -42,13 +42,15 @@ Revisions:
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20191206@Eden: Add Virtual Games [Redmine: #122743]
 	- 20200318@Elodie: Add Saba.club [Redmine: #130636]
-
+	- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
+	- 20200321@Tiara: Add Sexy Gaming Product [Redmine: #130678]
 */
 
 	SET NOCOUNT ON
 
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
 	Declare @srecommend int, @mrecommend int, @recommend int
+	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT 
 	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
@@ -57,15 +59,21 @@ Revisions:
 		,	@IsHideVS				INT
 		,	@IsHideVG				INT
 		,	@IsHideSaba				INT
+		,	@IsHideSAGaming			INT
+		,	@IsHideSexyGaming		INT
 
-	DECLARE @bitOrderVB				INT 
+	DECLARE @bitmapOrder_Allbet		INT
+		,	@bitOrderVB				INT 
 		,	@bitOrderFW				INT 
 		,	@bitOrderNG2			INT 
 		,	@bitOrderLottery		INT 
-		,   @bitOrderVS				INT 
+		,   @bitOrderVS				INT
 		,	@bitmapOrder_VG			INT
 		,	@bitmapOrder_Saba		INT
+		,	@bitmapOrder_SAGaming	INT
+		,	@bitmapOrder_SexyGaming	INT 
 
+	SET @bitmapOrder_Allbet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 211 AND Bettype = 2401)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitOrderNG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
@@ -73,6 +81,9 @@ Revisions:
 	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
 	SET @bitmapOrder_Saba = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
+	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
+	SET @bitmapOrder_SexyGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 243 AND Bettype = 3101)
+
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -136,23 +147,65 @@ Revisions:
 	End
 
 	-- For AllBet
-	EXEC Acc_CheckShowProduct @ProductID = 21, @IsHide = @IsHideAllBet OUTPUT
-	SELECT	@AllowedAllBet =	MAX(CASE	WHEN @RoleID = 4 AND @IsHideAllBet = 0 THEN 1
-										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) = 0
-											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, psp.bitmapOrder) = 1
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHideAllBet OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedAllBet =	CASE	WHEN @IsHideAllBet = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_AllBet)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedAllBet =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_AllBet)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_AllBet)) = 1
 											AND @IsHideAllBet = 0 
 											THEN 1
-										ELSE 0
-								END)
-	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
-	CROSS JOIN	dbo.ProductStatusProfile AS psp WITH (NOLOCK)
-	INNER JOIN	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
-			ON	psd.SportType = psp.Sporttype
-			AND	psd.BetType = psp.Bettype
-			AND	psd.SettingType = 13
-	WHERE	cps.CustID = @CustID
-		AND	psd.ProductID = 21
-
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END
+	-- For SA Gaming
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHideSAGaming OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedSAGaming =	CASE	WHEN @IsHideSAGaming = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SAGaming)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedSAGaming =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SAGaming)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_SAGaming)) = 1
+											AND @IsHideSAGaming = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END
+	-- For Sexy Gaming
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHideSexyGaming OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedSexyGaming =	CASE WHEN @IsHideSexyGaming = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SexyGaming)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedSexyGaming =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SexyGaming)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_SexyGaming)) = 1
+											AND @IsHideSexyGaming = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END
+	--For Live Casino (Allbet + SA Gaming + SexyGaming)
+	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 OR @AllowedSexyGaming = 1 THEN 1
+									ELSE 0 END
 	-- For NG2
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHideNG2 OUTPUT
 	IF @RoleID = 4

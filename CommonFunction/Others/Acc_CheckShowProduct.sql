@@ -15,6 +15,8 @@ AS
 	Revisions:
 		- 20170331@Winnie: Change to IsHide
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
+		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
+
 	Explanation's Param:
 		
 */   
@@ -33,6 +35,10 @@ BEGIN
 	--ELSE IF @ProductID IN(21,22,23,24,5)
 	--	SELECT @SettingType = 13
 	
+	--SA Gaming and Allbet (under dummy product 41)
+	IF @ProductID = 41
+	SELECT @SettingType = 13
+	ELSE
 	SELECT @SettingType = SettingType FROM dbo.ProductSettingDetail WITH (NOLOCK) WHERE ProductID = @ProductID AND SettingType IN (4,11,13)
 
 	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType))

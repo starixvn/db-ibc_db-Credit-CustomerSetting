@@ -245,7 +245,10 @@ BEGIN
 							, 0	AS '@s'
 						FROM dbo.ProductStatusProfile psp (NOLOCK)
 							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
-						WHERE ps.ProductID = @ProductID AND ps.SettingType = 13
+							LEFT JOIN #NewStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
+						WHERE ps.SettingType = 13 AND
+							((ps.ProductID = @ProductID AND ps.ProductID <> 41)
+								OR (ps.ProductID = 41 AND ns.IsDisabled = 0))
 						FOR XML PATH('r')
 							, TYPE
 						)

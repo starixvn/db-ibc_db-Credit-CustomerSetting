@@ -157,11 +157,11 @@ Revisions:
 	- 20200311@Elodie: Suspicious account [Redmine:#129119]
 	
 	Param's Explanation:
-	â€¢ @ErrCode:
+• @ErrCode:
 		= 0: Insert successfully.
 		> 0: Specific Error.
   
-	â€¢ @ErrMsg: Error description.
+• @ErrMsg: Error description.
 */
 BEGIN
     SET NOCOUNT ON 
@@ -725,5 +725,6 @@ BEGIN
 		END
     END
 END
+
 
 GO
