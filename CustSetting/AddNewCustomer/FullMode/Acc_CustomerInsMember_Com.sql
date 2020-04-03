@@ -418,7 +418,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
-	DECLARE @tmpUserid VARCHAR(50), @BlockNewCusti7 BIT, @UnblockTime VARCHAR(50)
+	DECLARE @tmpUserid VARCHAR(50)
 	
 	SELECT @tmpUserid=CAST(@creator AS VARCHAR(50))
 		
