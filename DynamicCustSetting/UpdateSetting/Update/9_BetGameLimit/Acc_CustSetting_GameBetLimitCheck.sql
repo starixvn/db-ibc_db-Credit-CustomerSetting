@@ -24,6 +24,7 @@ AS
 	Revision: 
 		- 20171109@Elodie: Cannot update Bet Setting of Super with value <> 0 when global setting = 0 [RedmineID:#86041]
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+		- 20200330@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP applied for SB2 [Redmine: #131163]
 
 	Param's Explanation:
 	• @GameBetLimit:
@@ -229,9 +230,9 @@ BEGIN
 	WHERE	tmp.MinBet		< 0
 			OR tmp.MaxBet		< 0
 			OR tmp.MaxPerNumber	< 0 	
-			OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
-			OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
-			OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)					
+			OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha
+			OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha
+			OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha					
 			OR (
 					s.IsAllowUnlimit = 0
 					AND
@@ -260,9 +261,9 @@ BEGIN
 			WHERE	tmp.MinBet		< 0
 					OR tmp.MaxBet		< 0
 					OR tmp.MaxPerNumber	< 0
-				OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
-				OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
-				OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+				OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha
+				OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha 
+				OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha 
 					OR (
 						s.IsAllowUnlimit = 0 
 						AND
@@ -284,9 +285,9 @@ BEGIN
 						WHERE	tmp.MinBet		< 0
 								OR tmp.MaxBet		< 0
 								OR tmp.MaxPerNumber	< 0
-								OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
-								OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
-								OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9 AND @ProductID !=16) --789y ExtNAP and Alpha (Exclude SB2)
+								OR (tmp.MinBet		 < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha 
+								OR (tmp.MaxBet		 < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha 
+								OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha 
 								OR (
 										s.IsAllowUnlimit = 0
 										AND
