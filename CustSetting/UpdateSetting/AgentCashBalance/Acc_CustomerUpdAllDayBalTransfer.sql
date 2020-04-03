@@ -147,5 +147,28 @@ BEGIN
 			,@TrackingValue2	= @LogSPData_old
 			,@duration			= @duration
 	END CATCH
+
+	-- Write log to support downlines view upline's actions
+	IF @RoleId = 4
+	BEGIN
+		BEGIN TRY
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+				@UserID				= @UserID
+				,@CustID			= @CustID
+				,@ActionID			= 65019 -- master view on super action
+				,@TrackingValue		= @LogSPData
+				,@TrackingValue2	= @LogSPData_old
+				,@duration			= @duration
+		END TRY 
+		BEGIN CATCH
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
+				@UserID				= @UserID
+				,@CustID			= @CustID
+				,@ActionID			= 65019 -- master view on super action
+				,@TrackingValue		= @LogSPData
+				,@TrackingValue2	= @LogSPData_old
+				,@duration			= @duration
+		END CATCH
+	END
 END
 GO
