@@ -150,6 +150,10 @@ BEGIN
 
 	-- Write log to support downlines view upline's actions
 	IF @RoleId = 4
+		AND (
+			@IsAllDayBalTransfer = 0
+			OR (@IsAllDayBalTransfer = 1 AND @IsIncludedDownline = 1)
+		)
 	BEGIN
 		BEGIN TRY
 			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP  
