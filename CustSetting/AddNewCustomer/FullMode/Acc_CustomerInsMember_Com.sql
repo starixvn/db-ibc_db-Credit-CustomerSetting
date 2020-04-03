@@ -405,6 +405,7 @@ Revisions:
 	- 20200228@Tiara: Enable Keno product by default for 789y Headline [Redmine: 124311]
 	- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
+	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 
 Param's Explanation:
 • @ErrCode:
@@ -430,8 +431,11 @@ BEGIN
 		RETURN
 	END
 	
-	SELECT @BlockNewCusti7 = BlockNewCusti7, @UnblockTime = UnblockTime FROM dbo.SettingSystem WITH (NOLOCK) WHERE SystemID = 1
-	IF @BlockNewCusti7 = 1 AND @site = '789y'
+	DECLARE @BlockNewCust BIT, @UnblockTime VARCHAR(50)
+
+	SELECT @BlockNewCust = BlockNewCust, @UnblockTime = UnblockTime FROM dbo.Site WITH (NOLOCK) WHERE site = @Site
+
+	IF @BlockNewCust = 1
 	BEGIN
 		SELECT @ErrMsg = CASE @Language WHEN 'VI' THEN N'Chúng tôi đang xử lý việc ra mắt sản phẩm mới, vui lòng tạo tài khoản cấp dưới sau ' + @UnblockTime + N'. Vui lòng liên hệ với cấp trên hoặc bộ phận Chăm Sóc Khách Hàng để biết thêm thông tin.'
 							ELSE 'We are in processing for new product offering, please try to create downline account after ' + @UnblockTime + '. Please contact your upline or CSD for further information.'
