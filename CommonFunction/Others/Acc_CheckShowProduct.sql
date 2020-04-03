@@ -3,6 +3,7 @@
 
 ALTER PROCEDURE [dbo].[Acc_CheckShowProduct]
 	@ProductID	TINYINT,
+	@Sporttype	SMALLINT = NULL,
 	@IsHide		BIT OUTPUT 
 AS
 /*
@@ -16,6 +17,7 @@ AS
 		- 20170331@Winnie: Change to IsHide
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
+		- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 
 	Explanation's Param:
 		
@@ -27,19 +29,12 @@ BEGIN
 
 	-- For DCS Product
     DECLARE	@SettingType INT
-
-	--IF @ProductID IN (16,19,20)
-	--	SELECT @SettingType = 4
-	--ELSE IF @ProductID = 23
-	--	SELECT @SettingType = 11
-	--ELSE IF @ProductID IN(21,22,23,24,5)
-	--	SELECT @SettingType = 13
 	
-	--SA Gaming and Allbet (under dummy product 41)
-	IF @ProductID = 41
-	SELECT @SettingType = 13
-	ELSE
-	SELECT @SettingType = SettingType FROM dbo.ProductSettingDetail WITH (NOLOCK) WHERE ProductID = @ProductID AND SettingType IN (4,11,13)
+	SELECT @SettingType = SettingType 
+	FROM dbo.ProductSettingDetail WITH (NOLOCK) 
+	WHERE ProductID = @ProductID 
+		AND SettingType IN (4,11,13)
+		AND SportType = CASE WHEN @Sporttype IS NULL THEN SportType ELSE @Sporttype END
 
 	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType))
 	BEGIN
