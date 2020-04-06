@@ -22,5 +22,3 @@ DynamicCustSetting\UpdateSetting\Select\Acc_CustSetting_StatusSelect.sql
 DynamicCustSetting\UpdateSetting\Select\Other\Acc_CustSetting_CommMatrix.sql
 DynamicCustSetting\UpdateSetting\Update\16_BetSetting\Acc_CustSetting_BetSettingSelect.sql
 DynamicCustSetting\UpdateSetting\Update\13_NewProductStatus\Acc_CustSetting_DisableNewProductStatusSelect.sql
-
-

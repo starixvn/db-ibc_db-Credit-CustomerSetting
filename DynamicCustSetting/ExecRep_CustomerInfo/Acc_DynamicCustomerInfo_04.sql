@@ -18,6 +18,7 @@ AS
 		- 20170919@Johnson: fix the unsynchronized setting (settingType = 13), do not update status for un-sync downlines [Redmine: #72973]							
 		- 20180118@Elodie: Update enable status on NAP & ExtNAP [RedmineID:#87328]
 		- 20190404@Johnson: add suspendinfo [redmine: #105587]
+		- 20200406@Elodie: Update unhide by RealProductID [RedmineID:#129440]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -219,7 +220,8 @@ BEGIN
 				UpdateAllMembers	BIT,
 				DisableAllMasters	BIT,
 				DisableAllAgents	BIT,
-				DisableAllMembers	BIT
+				DisableAllMembers	BIT,
+				RealProductId		TINYINT
 			)
 
 		--Parse XML				
@@ -232,13 +234,13 @@ BEGIN
 		
 		EXEC sp_xml_removedocument @iDoc
 		
+		UPDATE ns 
+		SET ns.RealProductId = ps.RealProductId
+		FROM #NewStatTbl ns
+			INNER JOIN ProductSettingDetail ps ON ns.Sporttype = ps.SportType AND ns.Bettype = ps.BetType
+
 		IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
 		BEGIN
-			SELECT TOP 1 @ProductID = ps.ProductID
-			FROM #NewStatTbl dis 
-				INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
-			WHERE dis.IsDisabled = 0 AND ps.SettingType = 13
-
 			SET @xmlStrHidden = (
 				SELECT (
 						SELECT psp.bitmapOrder	AS '@b'
@@ -246,9 +248,7 @@ BEGIN
 						FROM dbo.ProductStatusProfile psp (NOLOCK)
 							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 							LEFT JOIN #NewStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
-						WHERE ps.SettingType = 13 AND
-							((ps.ProductID = @ProductID AND ps.ProductID <> 41)
-								OR (ps.ProductID = 41 AND ns.IsDisabled = 0))
+						WHERE ps.SettingType = 13 AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewStatTbl WHERE IsDisabled = 0)
 						FOR XML PATH('r')
 							, TYPE
 						)

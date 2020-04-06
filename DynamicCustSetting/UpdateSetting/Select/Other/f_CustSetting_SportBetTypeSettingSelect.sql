@@ -10,6 +10,7 @@ RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Betty
 	
 	Revisions:
 		- 20170317@Elodie: Get setting of product
+		- 20200403@Elodie: Get RealProductID [Redmine: #129440]
 	Explanation's Param:
 		
 */   

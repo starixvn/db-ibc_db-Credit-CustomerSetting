@@ -159,6 +159,7 @@ BEGIN
 			, DisableAllMasters		BIT
 			, DisableAllAgents		BIT
 			, DisableAllMembers		BIT
+			, RealProductId			TINYINT
 			)
 	
 	EXEC sp_xml_removedocument @iDoc
@@ -251,6 +252,11 @@ BEGIN
 		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
 	WHERE CustID = @CustID
 	
+	UPDATE ns 
+	SET ns.RealProductId = ps.RealProductId
+	FROM #NewDisableStatTbl ns
+		INNER JOIN ProductSettingDetail ps ON ns.Sporttype = ps.SportType AND ns.Bettype = ps.BetType
+
 	SELECT TOP 1 @ProductID = ps.ProductID
 	FROM #NewDisableStatTbl dis 
 		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
@@ -265,9 +271,7 @@ BEGIN
 					FROM ProductStatusProfile psp (NOLOCK)
 						INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 						LEFT JOIN #NewDisableStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
-					WHERE ps.SettingType = 13 AND
-						((ps.ProductID = @ProductID AND ps.ProductID <> 41)
-							OR (ps.ProductID = 41 AND ns.IsDisabled = 0))
+					WHERE ps.SettingType = 13 AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 					FOR XML PATH('r')
 						, TYPE
 					)
