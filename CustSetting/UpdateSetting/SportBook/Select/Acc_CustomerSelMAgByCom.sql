@@ -73,6 +73,7 @@ BEGIN
 		- 20200318@Elodie: Add Saba.club [Redmine: #130636]
 		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
 		- 20200321@Tiara: Add Sexy Gaming Product [Redmine: #130678]
+		- 20200406@Elodie: Add BBIN Product [Redmine: #131363]
 
     Pattern Explanation:
     Search keyword: '%keyword%'
@@ -153,6 +154,7 @@ BEGIN
 		,	@bitmapOrder_SabaClub		INT
 		,	@bitmapOrder_SAGaming		INT 
 		,	@bitmapOrder_SexyGaming		INT 
+		,	@bitmapOrder_BBIN			INT 
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
     SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
@@ -165,6 +167,7 @@ BEGIN
 	SET @bitmapOrder_SabaClub = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
 	SET @bitmapOrder_SexyGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 243 AND Bettype = 3101)
+	SET @bitmapOrder_BBIN = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 241 AND Bettype = 3300)
 
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
@@ -181,6 +184,7 @@ BEGIN
 		,	@IsHidden_SabaClub			INT = 1
 		,	@IsHidden_SAGaming			INT = 1
 		,	@IsHidden_SexyGaming		INT = 1
+		,	@IsHidden_BBIN				INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
     EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_AllBet OUTPUT
@@ -194,6 +198,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_SabaClub OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_SAGaming OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_SexyGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_BBIN OUTPUT
 
     Select * From 
     (
@@ -285,6 +290,16 @@ BEGIN
             CAST(CASE   WHEN    @IsHidden_SexyGaming = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_SexyGaming), 1)=0
             THEN 0 ELSE 1
             END AS BIT) AS HideSexyGamingUpline,
+			-- For BBIN
+			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BBIN)) AS DisableBBIN,
+			CAST(	CASE	WHEN	@IsHidden_BBIN = 0 
+								AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_BBIN), 1) = 0 
+								THEN 0
+							ELSE 1 
+					END AS BIT) AS HideBBIN,
+			CAST(CASE	WHEN	@IsHidden_SexyGaming = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_BBIN), 1) = 0
+					THEN 0 ELSE 1
+					END AS BIT) AS HideBBINUpline,
             -- For FishingWorld
             (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,
             CAST(   CASE    WHEN    @IsHidden_FishingWorld = 0                          
