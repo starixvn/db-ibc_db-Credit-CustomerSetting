@@ -10,6 +10,7 @@ AS
 	Database: DBCUST/CustDB
 	Original:
 	
+	Revisions:
 		- 20160812@Helen: NAP - Bet Limit - Stake level does not order by Max then Min Stake [Redmine: 62429]
 		- 20180327@Vicky: add header infomation [Redmine: #90422]
 		- 20200407@Elodie: Sort by sport, bettype, stakelevelID [Redmine: #131363]
