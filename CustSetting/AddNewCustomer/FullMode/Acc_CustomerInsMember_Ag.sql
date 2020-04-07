@@ -315,22 +315,16 @@ Param's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @BlockNewCust BIT, @UnblockTime VARCHAR(50), @SiteAgent NVARCHAR(50)
+	DECLARE @SiteAgent NVARCHAR(50)
 	SELECT @SiteAgent = site FROM customer WITH(NOLOCK) WHERE CustID = @recommend
 
 	EXEC [dbo].[Acc_BlockNewCust_Check]
 		@Site  = @SiteAgent,
-		@BlockNewCust = @BlockNewCust OUTPUT , 
-		@UnblockTime = @UnblockTime OUTPUT
+		@ErrCode = @ErrCode OUTPUT , 
+		@ErrMsg = @ErrMsg OUTPUT
 
-	IF @BlockNewCust = 1
-	BEGIN
-		SELECT @ErrMsg = CASE @Language WHEN 'VI' THEN N'Chúng tôi đang xử lý việc ra mắt sản phẩm mới, vui lòng tạo tài khoản cấp dưới sau ' + @UnblockTime + N'. Vui lòng liên hệ với cấp trên hoặc bộ phận Chăm Sóc Khách Hàng để biết thêm thông tin.'
-							ELSE 'We are in processing for new product offering, please try to create downline account after ' + @UnblockTime + '. Please contact your upline or CSD for further information.'
-						END	
-				,@ErrCode = 200	
-		RETURN
-	END
+	IF @ErrCode <> 0 RETURN
+
 ----- Elodie @ 01 JUN 2015 -------------------	
 	BEGIN TRY
 		SELECT *
