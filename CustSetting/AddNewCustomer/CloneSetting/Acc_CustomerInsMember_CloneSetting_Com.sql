@@ -88,7 +88,10 @@ BEGIN
 	
 	DECLARE @BlockNewCust BIT, @UnblockTime VARCHAR(50)
 
-	SELECT @BlockNewCust = BlockNewCust, @UnblockTime = UnblockTime FROM dbo.Site WITH (NOLOCK) WHERE site = @Site
+	EXEC [dbo].[Acc_BlockNewCust_Check]
+		@Site  = @Site,
+		@BlockNewCust = @BlockNewCust OUTPUT , 
+		@UnblockTime = @UnblockTime OUTPUT
 
 	IF @BlockNewCust = 1
 	BEGIN

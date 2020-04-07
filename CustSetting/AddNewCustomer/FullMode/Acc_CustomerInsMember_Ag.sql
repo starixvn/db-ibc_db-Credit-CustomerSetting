@@ -318,7 +318,11 @@ BEGIN
 	DECLARE @BlockNewCust BIT, @UnblockTime VARCHAR(50), @SiteAgent NVARCHAR(50)
 	SELECT @SiteAgent = site FROM customer WITH(NOLOCK) WHERE CustID = @recommend
 
-	SELECT @BlockNewCust = BlockNewCust, @UnblockTime = UnblockTime FROM dbo.Site WITH (NOLOCK) WHERE site = @SiteAgent
+	EXEC [dbo].[Acc_BlockNewCust_Check]
+		@Site  = @SiteAgent,
+		@BlockNewCust = @BlockNewCust OUTPUT , 
+		@UnblockTime = @UnblockTime OUTPUT
+
 	IF @BlockNewCust = 1
 	BEGIN
 		SELECT @ErrMsg = CASE @Language WHEN 'VI' THEN N'Chúng tôi đang xử lý việc ra mắt sản phẩm mới, vui lòng tạo tài khoản cấp dưới sau ' + @UnblockTime + N'. Vui lòng liên hệ với cấp trên hoặc bộ phận Chăm Sóc Khách Hàng để biết thêm thông tin.'
