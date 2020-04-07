@@ -88,6 +88,7 @@ BEGIN
 	
 	EXEC [dbo].[Acc_BlockNewCust_Check]
 		@Site  = @site,
+		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT , 
 		@ErrMsg = @ErrMsg OUTPUT
 
