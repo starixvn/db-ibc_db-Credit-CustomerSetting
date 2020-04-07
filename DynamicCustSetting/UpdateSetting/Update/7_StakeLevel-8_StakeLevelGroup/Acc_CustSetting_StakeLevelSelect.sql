@@ -133,7 +133,8 @@ BEGIN
 		,	csl.StakeLevelID
 		,	csl.StakeLevelName
 		,	csl.isChecked
-	FROM	#CustStakeLevel AS csl;
+	FROM	#CustStakeLevel AS csl
+	ORDER BY csl.SportType, csl.BetType, csl.StakeLevelID
 
 	-- Cleanup
 	DROP TABLE #CustStakeLevel;
