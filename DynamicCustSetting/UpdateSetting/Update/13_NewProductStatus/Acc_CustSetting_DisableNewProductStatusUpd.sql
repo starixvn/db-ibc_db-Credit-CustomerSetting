@@ -131,8 +131,8 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @IsDisabled
 
-	INSERT INTO #NewDisableStatTbl
-	SELECT *
+	INSERT INTO #NewDisableStatTbl (SportType, BetType, IsDisabled)
+	SELECT SportType, BetType, IsDisabled
 	FROM OPENXML(@iDoc, '/ROOT/ProductStatus', 1) WITH (
 			SportType				SMALLINT
 			, BetType				SMALLINT
