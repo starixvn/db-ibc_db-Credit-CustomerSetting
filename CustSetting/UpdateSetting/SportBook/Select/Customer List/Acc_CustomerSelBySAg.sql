@@ -159,7 +159,7 @@ BEGIN
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT	
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHidden_VoidBridge OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 28, @Sporttype = 220, @IsHide = @IsHidden_Lottery OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 220, @IsHide = @IsHidden_Lottery OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHidden_NG2 OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHidden_FishingWorld OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_Esports OUTPUT	
@@ -169,8 +169,8 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_SabaClub OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 244, @IsHide = @IsHidden_SAGaming OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @IsHide = @IsHidden_SexyGaming OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @IsHide = @IsHidden_BBIN OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 28, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHidden_BBIN OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
 
 	CREATE TABLE #customer(custid INT primary key, RowNumber INT)
 							
