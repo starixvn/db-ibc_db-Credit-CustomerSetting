@@ -405,6 +405,7 @@ Revisions:
 	- 20200228@Tiara: Enable Keno product by default for 789y Headline [Redmine: 124311]
 	- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
+	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 
 Param's Explanation:
 • @ErrCode:
@@ -417,7 +418,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
-	DECLARE @tmpUserid VARCHAR(50), @BlockNewCusti7 BIT, @UnblockTime VARCHAR(50)
+	DECLARE @tmpUserid VARCHAR(50)
 	
 	SELECT @tmpUserid=CAST(@creator AS VARCHAR(50))
 		
@@ -430,15 +431,13 @@ BEGIN
 		RETURN
 	END
 	
-	SELECT @BlockNewCusti7 = BlockNewCusti7, @UnblockTime = UnblockTime FROM dbo.SettingSystem WITH (NOLOCK) WHERE SystemID = 1
-	IF @BlockNewCusti7 = 1 AND @site = '789y'
-	BEGIN
-		SELECT @ErrMsg = CASE @Language WHEN 'VI' THEN N'Chúng tôi đang xử lý việc ra mắt sản phẩm mới, vui lòng tạo tài khoản cấp dưới sau ' + @UnblockTime + N'. Vui lòng liên hệ với cấp trên hoặc bộ phận Chăm Sóc Khách Hàng để biết thêm thông tin.'
-							ELSE 'We are in processing for new product offering, please try to create downline account after ' + @UnblockTime + '. Please contact your upline or CSD for further information.'
-						END	
-				,@ErrCode = 101	
-		RETURN
-	END
+	EXEC [dbo].[Acc_BlockNewCust_Check]
+		@Site  = @site,
+		@Language = @Language,
+		@ErrCode = @ErrCode OUTPUT , 
+		@ErrMsg = @ErrMsg OUTPUT
+
+	IF @ErrCode <> 0 RETURN
 
 	----- Elodie @ 01 JUN 2015 -------------------
 		DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
