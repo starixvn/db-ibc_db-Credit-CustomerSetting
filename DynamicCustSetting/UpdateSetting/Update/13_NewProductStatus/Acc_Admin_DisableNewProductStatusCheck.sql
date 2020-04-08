@@ -41,7 +41,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	CREATE TABLE #NewDisableStatTbl 
+	CREATE TABLE #NewDisableStatTblCheck
 	(
 			SportType				SMALLINT
 			, BetType				SMALLINT
@@ -79,7 +79,7 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @IsDisabled
 
-	INSERT INTO #NewDisableStatTbl
+	INSERT INTO #NewDisableStatTblCheck
 	SELECT *
 	FROM OPENXML(@iDoc, '/ROOT/ProductStatus', 1) WITH (
 			SportType				SMALLINT
@@ -97,7 +97,7 @@ BEGIN
 
 	--Get error data
 	--60033: Account disabled for this product. Unable to edit downlines.
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE IsDisabled = 0)
 	BEGIN
 	
 		IF @RoleID = 3
@@ -106,7 +106,7 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 60033 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @SuperID
 			WHERE dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) = 1
@@ -118,7 +118,7 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 60033 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @MasterID
 			WHERE dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) = 1
@@ -131,7 +131,7 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 60033 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @AgentID
 			WHERE dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) = 1
@@ -141,18 +141,18 @@ BEGIN
 
 	--90012: You are not allowed to perform this action.
 	--Update disable of upline and not update for downline
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1 AND ((UpdateAllMasters = 0 AND @RoleID = 4) OR (UpdateAllAgents = 0 AND @RoleID IN (4,3)) OR (UpdateAllMembers = 0 AND @RoleID IN (4,3,2))))
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE IsDisabled = 1 AND ((UpdateAllMasters = 0 AND @RoleID = 4) OR (UpdateAllAgents = 0 AND @RoleID IN (4,3)) OR (UpdateAllMembers = 0 AND @RoleID IN (4,3,2))))
 	BEGIN
 		INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 		SELECT tmp.SportType
 			, tmp.BetType
 			, 90012 AS MsgID
-		FROM #NewDisableStatTbl tmp
+		FROM #NewDisableStatTblCheck tmp
 		WHERE IsDisabled = 1 AND ((UpdateAllMasters = 0 AND @RoleID = 4) OR (UpdateAllAgents = 0 AND @RoleID IN (4,3)) OR (UpdateAllMembers = 0 AND @RoleID IN (4,3,2)))
 	END
 
 	--90012: You are not allowed to perform this action.
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 AND DisableAllMasters = 0 AND IsDisabled = 1) 
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE UpdateAllMasters = 1 AND DisableAllMasters = 0 AND IsDisabled = 1) 
 	BEGIN
 		IF @RoleID = 4--disable super and enable master
 		BEGIN
@@ -160,14 +160,14 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 90012 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @SuperID
 			WHERE UpdateAllMasters = 1 AND DisableAllMasters = 0 AND IsDisabled = 1
 		END
 	END
 
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1 AND DisableAllAgents = 0) 
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE UpdateAllAgents = 1 AND DisableAllAgents = 0) 
 	BEGIN
 	
 		IF @RoleID = 4--(disable super/disable master) and enable agent
@@ -176,7 +176,7 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 90012 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 			WHERE UpdateAllAgents = 1 AND DisableAllAgents = 0
 				AND (IsDisabled = 1
@@ -193,14 +193,14 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 90012 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 			WHERE UpdateAllAgents = 1 AND DisableAllAgents = 0 AND IsDisabled = 1
 				
 		END
 	END
 
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1 AND DisableAllMembers = 0)
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE UpdateAllMembers = 1 AND DisableAllMembers = 0)
 	BEGIN
 	
 		IF @RoleID = 4 --(disable super/disable master/disable agent) and enable member
@@ -209,7 +209,7 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 90012 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 			WHERE UpdateAllMembers = 1 AND DisableAllMembers = 0
 				AND (IsDisabled = 1
@@ -235,7 +235,7 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 90012 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stMaster WITH (NOLOCK) ON  stMaster.CustID	= @MasterID
 			WHERE UpdateAllMembers = 1 AND DisableAllMembers = 0
@@ -256,7 +256,7 @@ BEGIN
 			SELECT PSP.SportType
 				, psp.BetType
 				, 90012 AS MsgID
-			FROM #NewDisableStatTbl tmp
+			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 			WHERE UpdateAllMembers = 1 AND DisableAllMembers = 0 AND IsDisabled = 1
 		END
@@ -314,7 +314,7 @@ BEGIN
 		RETURN
 	END
 	DROP TABLE #ErrorSportTypeTbl
-	DROP TABLE #NewDisableStatTbl
+	DROP TABLE #NewDisableStatTblCheck
 	
 END
 GO
