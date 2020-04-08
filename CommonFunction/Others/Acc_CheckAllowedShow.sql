@@ -109,8 +109,8 @@ Revisions:
 	WHERE	cps.CustID = @CustID
 
 	--For RNGLottery
-	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHiddenLottery OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 28, @IsHide = @IsHideTableGames OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @IsHide = @IsHiddenLottery OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @IsHide = @IsHideTableGames OUTPUT
 	SELECT	@AllowedLottery =	CASE	WHEN @RoleID = 4 AND @IsHiddenLottery = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderLottery) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderLottery) = 1
