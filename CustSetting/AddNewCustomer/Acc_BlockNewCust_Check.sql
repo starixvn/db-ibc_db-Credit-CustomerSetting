@@ -12,11 +12,12 @@ DB: DBCUST/CustDB
 Original:  
 Revisions:
     - 20200407@Eden: Block to add new customer by site [Redmine: #131758]
+	- 20200407@Eden: Block to add new customer by site --> Switch to Site table [Redmine: #131758]
 */
 BEGIN
 	DECLARE @BlockNewCust BIT = 0  ,@UnblockTime VARCHAR(50) = ''
 
-	SELECT @BlockNewCust = BlockNewCust, @UnblockTime = UnblockTime FROM dbo.[Site_BlockNewCust] WITH (NOLOCK) WHERE site = @Site
+	SELECT @BlockNewCust = BlockNewCust, @UnblockTime = UnblockTime FROM dbo.[Site] WITH (NOLOCK) WHERE site = @Site
 
 	IF @BlockNewCust = 1
 	BEGIN
