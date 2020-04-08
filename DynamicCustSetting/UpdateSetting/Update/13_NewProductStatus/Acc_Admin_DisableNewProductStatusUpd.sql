@@ -84,6 +84,7 @@ BEGIN
 		, DisableAllMasters		BIT
 		, DisableAllAgents		BIT
 		, DisableAllMembers		BIT
+		, RealProductId			TINYINT
 		)
 	CREATE TABLE #OldDisableStatTbl  (
 		SportType				SMALLINT
@@ -159,7 +160,6 @@ BEGIN
 			, DisableAllMasters		BIT
 			, DisableAllAgents		BIT
 			, DisableAllMembers		BIT
-			, RealProductId			TINYINT
 			)
 	
 	EXEC sp_xml_removedocument @iDoc
