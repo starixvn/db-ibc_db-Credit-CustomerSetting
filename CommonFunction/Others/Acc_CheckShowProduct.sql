@@ -1,8 +1,8 @@
 /*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
-
 ALTER PROCEDURE [dbo].[Acc_CheckShowProduct]
 	@ProductID	TINYINT,
+	@Sporttype	SMALLINT = NULL,
 	@IsHide		BIT OUTPUT 
 AS
 /*
@@ -29,10 +29,11 @@ BEGIN
 	-- For DCS Product
     DECLARE	@SettingType INT
 	
-	SELECT TOP 1 @SettingType = SettingType 
+	SELECT @SettingType = SettingType 
 	FROM dbo.ProductSettingDetail WITH (NOLOCK) 
 	WHERE ProductID = @ProductID 
 		AND SettingType IN (4,11,13)
+		AND SportType = CASE WHEN @Sporttype IS NULL THEN SportType ELSE @Sporttype END
 
 	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType))
 	BEGIN
