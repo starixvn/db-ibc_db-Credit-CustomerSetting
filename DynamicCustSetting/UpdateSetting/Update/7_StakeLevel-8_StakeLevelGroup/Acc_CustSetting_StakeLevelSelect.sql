@@ -1,4 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
+
 ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevelSelect
 					@CustID			INT
 				,	@ProductID		TINYINT
@@ -9,9 +10,10 @@ AS
 	Database: DBCUST/CustDB
 	Original:
 	
+	Revisions:
 		- 20160812@Helen: NAP - Bet Limit - Stake level does not order by Max then Min Stake [Redmine: 62429]
 		- 20180327@Vicky: add header infomation [Redmine: #90422]
-
+		- 20200407@Elodie: Sort by sport, bettype, stakelevelID [Redmine: #131363]
 	Param's Explanation:
 */
 BEGIN
@@ -22,7 +24,7 @@ BEGIN
 		,	@RoleID						TINYINT
 		,	@srecommend					INT
 		,	@mrecommend					INT
-		,	@recommend					INT;
+		,	@recommend					INT
 
 	CREATE TABLE	#SportBetTypeFilter (
 						SportType		SMALLINT
@@ -35,10 +37,10 @@ BEGIN
 					,	StakeLevelID	INT
 					,	StakeLevelName	NVARCHAR(100)
 					,	isChecked		BIT
-					);
+					)
 
 	-- Stake Level Member Single Selection
-	SELECT	@SettingType = 7;
+	SELECT	@SettingType = 7
 
 	-- Select SportType & BetType of current ProductID
 	INSERT INTO #SportBetTypeFilter
@@ -53,7 +55,7 @@ BEGIN
 		,	@mrecommend = c.mrecommend
 		,	@recommend  = c.recommend
 	FROM	dbo.Customer AS c WITH(NOLOCK)
-	WHERE	c.custid = @CustID;
+	WHERE	c.custid = @CustID
 
 	-- Select available stake levels
 	IF	@RoleID = 4
@@ -108,7 +110,7 @@ BEGIN
 		INNER JOIN	ccsl
 				ON	ccsl.SportType = csl.SportType
 				AND	ccsl.BetType = csl.BetType
-				AND	ccsl.StakeLevelID = csl.StakeLevelID;
+				AND	ccsl.StakeLevelID = csl.StakeLevelID
 	END;
 	ELSE IF @RoleID = 1
 	BEGIN
@@ -124,7 +126,7 @@ BEGIN
 		INNER JOIN	ccsl
 				ON	ccsl.SportType = csl.SportType
 				AND	ccsl.BetType = csl.BetType
-				AND	ccsl.StakeLevelID = csl.StakeLevelID;
+				AND	ccsl.StakeLevelID = csl.StakeLevelID
 	END;
 
 	-- View result
@@ -133,10 +135,11 @@ BEGIN
 		,	csl.StakeLevelID
 		,	csl.StakeLevelName
 		,	csl.isChecked
-	FROM	#CustStakeLevel AS csl;
+	FROM	#CustStakeLevel AS csl
+	ORDER BY csl.SportType, csl.BetType, csl.StakeLevelID
 
 	-- Cleanup
-	DROP TABLE #CustStakeLevel;
-	DROP TABLE #SportBetTypeFilter;
-END;
-GO
+	DROP TABLE #CustStakeLevel
+	DROP TABLE #SportBetTypeFilter
+END
+
