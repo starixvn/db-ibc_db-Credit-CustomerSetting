@@ -109,27 +109,21 @@ Revisions:
 	WHERE	cps.CustID = @CustID
 
 	--For RNGLottery
-	EXEC Acc_CheckShowProduct @ProductID = 44, @IsHide = @IsHiddenLottery OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 44, @IsHide = @IsHideTableGames OUTPUT
-	SELECT	@AllowedLottery =	CASE	WHEN @RoleID = 4 AND @IsHiddenLottery = 0 THEN 1
-										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderLottery) = 0
-											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderLottery) = 1
+	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 220, @IsHide = @IsHiddenLottery OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 222, @IsHide = @IsHideTableGames OUTPUT
+	SELECT	@AllowedLottery =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderLottery)) = 0
 											AND @IsHiddenLottery = 0 
 											THEN 1
-										ELSE 0
-								END,
-			@AllowedTableGames =CASE	WHEN @RoleID = 4 AND @IsHideTableGames = 0 THEN 1
-										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_TableGames) = 0
-											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrder_TableGames) = 1
+										ELSE 0 END,
+			@AllowedTableGames =CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_TableGames)) = 0
 											AND @IsHideTableGames = 0 
 											THEN 1
-										ELSE 0
-								END
-	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+										ELSE 0 END
+	FROM	CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
+
 	--For RNGLottery (Lottery + TableGames)
-	SELECT @AllowedRNGLottery = CASE WHEN @AllowedLottery = 1 OR @AllowedTableGames = 1 THEN 1
-									ELSE 0 END
+	SELECT @AllowedRNGLottery = CASE WHEN @AllowedLottery = 1 OR @AllowedTableGames = 1 THEN 1 ELSE 0 END
 
 	--For VoidBridge
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT
