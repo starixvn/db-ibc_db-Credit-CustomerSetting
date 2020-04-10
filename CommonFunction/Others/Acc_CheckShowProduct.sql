@@ -27,15 +27,15 @@ BEGIN
 	SELECT @IsHide = 1
 
 	-- For DCS Product
-    DECLARE	@SettingType INT
+    DECLARE	@SettingType INT, @RealProductID TINYINT
 	
-	SELECT @SettingType = SettingType 
+	SELECT @SettingType = SettingType, @RealProductID = RealProductId
 	FROM dbo.ProductSettingDetail WITH (NOLOCK) 
 	WHERE ProductID = @ProductID 
 		AND SettingType IN (4,11,13)
 		AND SportType = CASE WHEN @Sporttype IS NULL THEN SportType ELSE @Sporttype END
 
-	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType))
+	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType) WHERE RealProductId = @RealProductID)
 	BEGIN
 		SELECT @IsHide = 0
 	END
