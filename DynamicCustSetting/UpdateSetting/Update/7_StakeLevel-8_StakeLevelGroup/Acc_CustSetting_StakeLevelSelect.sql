@@ -68,7 +68,7 @@ BEGIN
 				ON	sbtf.BetType = sl.GameTypeID
 		WHERE	sl.ExchangeId = @Currency
 		
-		ORDER BY sl.GameTypeID, sl.MaxStake,sl.MinStake	
+		ORDER BY sbtf.SportType, sbtf.BetType, sl.MaxStake,sl.MinStake	
 		
 		
 	END
@@ -90,7 +90,7 @@ BEGIN
 										WHEN @RoleID = 2 THEN @mrecommend
 										WHEN @RoleID = 1 THEN @recommend
 								END
-		ORDER BY sl.GameTypeID, sl.MaxStake,sl.MinStake	
+		ORDER BY csla.SportType, csla.BetType, sl.MaxStake,sl.MinStake	
 		
 									
 	END
