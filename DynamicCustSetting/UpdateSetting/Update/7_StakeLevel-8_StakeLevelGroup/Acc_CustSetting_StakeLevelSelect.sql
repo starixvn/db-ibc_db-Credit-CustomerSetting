@@ -135,7 +135,7 @@ BEGIN
 		,	csl.StakeLevelID
 		,	csl.StakeLevelName
 		,	csl.isChecked
-	FROM	#CustStakeLevel AS csls
+	FROM	#CustStakeLevel AS csl
 
 	-- Cleanup
 	DROP TABLE #CustStakeLevel
