@@ -6,6 +6,7 @@ ALTER PROCEDURE dbo.Acc_CustSetting_StakeLevelUpd
 	,	@UserID			INT
 	,	@IP				VARCHAR(50)		= ''
 	,	@SystemID TINYINT = 1 --20200305@Tiara
+	,   @SettingType SMALLINT --20200414@Tiara
 	,	@ErrCode		INT				= 0		OUTPUT
 	,	@MsgType		INT				= 0		OUTPUT
 	,	@ErrMsg			NVARCHAR(200)	= ''	OUTPUT
@@ -21,6 +22,7 @@ AS
 		- 20160704@Winnie: Fix bug copy member settting type =7 & =8
 		- 20161005@Elodie: Update LastUpdated field - [Redmine: #54994]
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -164,6 +166,7 @@ BEGIN
 			,	@SuperID	= @SuperID
 			,	@StakeLevel	= @StakeLevel
 			,   @SystemID	= @SystemID
+			,   @SettingType = @SettingType
 			,   @ProductID  = @ProductID
 			,	@ErrCode	= @ErrCode		OUTPUT
 			,	@MsgType	= @MsgType		OUTPUT
@@ -565,7 +568,7 @@ BEGIN
 					AND	ts.BetType = psd.BetType
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType=7 )
+				AND psd.SettingType= @SettingType )
 	BEGIN
 		UPDATE #StakeLevelList_Excluded
 		SET	StakeLevelList_old = REPLACE(StakeLevelList_old, ',', ';');

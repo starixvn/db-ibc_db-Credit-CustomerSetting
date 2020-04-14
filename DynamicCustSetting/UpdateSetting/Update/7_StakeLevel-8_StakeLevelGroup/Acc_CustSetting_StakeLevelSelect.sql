@@ -3,6 +3,7 @@
 ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevelSelect
 					@CustID			INT
 				,	@ProductID		TINYINT
+				,   @SettingType	SMALLINT --20200414@Tiara
 AS
 /*
 	Created: 20160121@Billy
@@ -14,13 +15,13 @@ AS
 		- 20160812@Helen: NAP - Bet Limit - Stake level does not order by Max then Min Stake [Redmine: 62429]
 		- 20180327@Vicky: add header infomation [Redmine: #90422]
 		- 20200407@Elodie: Sort by sport, bettype, stakelevelID [Redmine: #131363]
+		- 20200414@Tiara: Add input param Setting type [Redmine: #131171]
 	Param's Explanation:
 */
 BEGIN
     SET NOCOUNT ON;
 
-	DECLARE	@SettingType				SMALLINT
-		,	@Currency					TINYINT
+	DECLARE	@Currency					TINYINT
 		,	@RoleID						TINYINT
 		,	@srecommend					INT
 		,	@mrecommend					INT
@@ -39,8 +40,6 @@ BEGIN
 					,	isChecked		BIT
 					)
 
-	-- Stake Level Member Single Selection
-	SELECT	@SettingType = 7
 
 	-- Select SportType & BetType of current ProductID
 	INSERT INTO #SportBetTypeFilter

@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_StakeLevelCheck]
 	, @SuperID			INT
 	, @StakeLevel		VARCHAR(MAX)
 	, @SystemID INT --20200305@Tiara
+	, @SettingType SMALLINT --20200414@Tiara
 	, @ProductID TINYINT 
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
@@ -20,6 +21,7 @@ AS
 	Revisions:
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200330@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP applied for SB2 [Redmine: #131163]
+		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -52,7 +54,7 @@ BEGIN
 		,	@invalidStakeLevelID	VARCHAR(100);
 
 	DECLARE	@xml					XML
-		,	@SettingType			SMALLINT;
+	
 
 	IF @StakeLevel IS NULL OR @StakeLevel = ''
 		RETURN;
@@ -61,8 +63,6 @@ BEGIN
 		,	@MsgType	= 0
 		,	@ErrMsg		= '';
 
-	-- Stake Level Member Single Selection
-	SELECT	@SettingType = 7;
 
 	EXEC sys.sp_xml_preparedocument @iDoc OUTPUT, @StakeLevel;
 
@@ -78,7 +78,8 @@ BEGIN
 
 	EXEC sys.sp_xml_removedocument @iDoc;
 	--Prevent users under 789y uncheck all Stakelevel
-	IF @SystemID IN (6,7,8,9) --789y Alpha, 789y ExtNAP 
+	--Prevent uncheck all Stakelevel of member level for setting type 17
+	IF @SystemID IN (6,7,8,9) OR (@RoleID = 1 AND @SettingType = 17)--789y Alpha, 789y ExtNAP OR Member level at Setting type 17
 	BEGIN
 		IF EXISTS (SELECT 1 
 					FROM #tmpStakeCheck WITH (NOLOCK)

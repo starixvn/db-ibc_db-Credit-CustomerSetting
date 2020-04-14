@@ -36,6 +36,7 @@ AS
 		- 20180206@Elodie: Fix bug "default status of new direct master does not take into ProductStatusSiteCurrency table" - [Redmine #90570]
 		- 20190408@Johnson: add suspendInfo [Redmine: #105587]
 		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
+		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
@@ -1276,7 +1277,9 @@ BEGIN
 
 		
 		/****************************** Stake Level Member Single Selection : SettingType = 7 ******************************/
+		/****************************** Stake Level Member Multiple Selection : SettingType = 17 ******************************/
 		/*************************** Group Stake Level Member Single Selection : SettingType = 8 ***************************/
+
 		SELECT * INTO #SportBettypeFilter7
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7)
 		INSERT INTO #SportBettypeFilter7
@@ -1337,6 +1340,25 @@ BEGIN
 						ORDER BY	sl.MaxStake, sl.MinStake, sl.GameGroupID
 					) sr
 				WHERE	csla.CustID = @AgentID
+					AND f.SettingType IN (7,8)
+				--Insert all stake level from agent for member with Setting Type = 17
+				INSERT INTO	dbo.CustStakeLevel_Member
+					(	CustID , SportType     , BetType     , StakeLevelList                 , LastUpdated)
+				SELECT	@CustID, csla.SportType, csla.BetType, ISNULL(sr.StakeLevel, ''), GETDATE()
+				FROM	dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
+					INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
+					OUTER APPLY (
+						SELECT ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS StakeLevel
+						FROM (
+							SELECT	CAST(val AS INT) AS val
+							FROM	dbo.strSplit(csla.StakeLevelList, ',')
+						) AS ss
+						INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
+								ON	ss.val = sl.StakeLevelID
+						ORDER BY	sl.MaxStake, sl.MinStake, sl.GameGroupID
+					) sr
+				WHERE	csla.CustID = @AgentID
+					AND f.SettingType = 17
 			END
 		END TRY
 		BEGIN CATCH
