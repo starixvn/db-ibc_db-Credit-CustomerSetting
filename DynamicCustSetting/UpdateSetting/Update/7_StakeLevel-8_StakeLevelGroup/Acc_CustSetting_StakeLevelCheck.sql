@@ -79,7 +79,7 @@ BEGIN
 	EXEC sys.sp_xml_removedocument @iDoc;
 	--Prevent users under 789y uncheck all Stakelevel
 	--Prevent uncheck all Stakelevel of member level for setting type 17
-	IF @SystemID IN (6,7,8,9) OR (@RoleID = 1 AND @SettingType = 17)--789y Alpha, 789y ExtNAP OR Member level at Setting type 17
+	IF @SystemID IN (6,7,8,9) OR (@SystemID != 1 AND @RoleID = 1 AND @SettingType = 17)--789y Alpha, 789y ExtNAP OR Member level at Setting type 17
 	BEGIN
 		IF EXISTS (SELECT 1 
 					FROM #tmpStakeCheck WITH (NOLOCK)

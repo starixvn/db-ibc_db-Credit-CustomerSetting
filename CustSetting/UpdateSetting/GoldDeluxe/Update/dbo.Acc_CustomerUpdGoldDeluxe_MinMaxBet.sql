@@ -22,6 +22,8 @@ AS
 			- 20151120@Helen: Improve the performance of the setting [Redmine: 45056] 
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 			- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+			- 20200414@Tiara: Offer Allbet/GD multiple stakelevels for member [Redmine: #131171]
+
 
 		Parameter's Explanation:
 			* @StakeLevel = <ROOT>
@@ -141,20 +143,22 @@ BEGIN
 		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @recommend
 
 	--Prevent users under 789y uncheck all Stakelevel
-	IF @SystemID != 1 AND @Site IN ('789y')
-	BEGIN
-		IF EXISTS (SELECT 1 
-					FROM #tmpStake WITH (NOLOCK)
-					WHERE StakeLevelList IS NULL OR StakeLevelList='')
+	--Prevent from uncheck all stakelevel of member
+	IF @SystemID != 1 
+		IF @Site IN ('789y') OR  @roleid = 1 
 		BEGIN
-		SELECT @ErrCode = 1001  
-		SELECT @ErrMsg = CASE @Language   
-						WHEN 'E' THEN 'Each bet type must have at least one Bet Limit value to be selected '   
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](10031,@Language)  
-						END  
-		RETURN   
+			IF EXISTS (SELECT 1 
+						FROM #tmpStake WITH (NOLOCK)
+						WHERE StakeLevelList IS NULL OR StakeLevelList='')
+			BEGIN
+			SELECT @ErrCode = 1001  
+			SELECT @ErrMsg = CASE @Language   
+							WHEN 'E' THEN 'Each bet type must have at least one Bet Limit value to be selected '   
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10031,@Language)  
+							END  
+			RETURN   
+			END
 		END
-	END
 	--validate stake level
 	SELECT @roleid
 	  
