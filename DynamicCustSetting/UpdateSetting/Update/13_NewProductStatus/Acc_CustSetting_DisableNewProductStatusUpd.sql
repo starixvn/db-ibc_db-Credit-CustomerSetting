@@ -24,7 +24,7 @@ AS
 		- 20170417@Elodie: Notify downline when upline enable FW's status [RedmineID: #73073]
 		- 20170613@Elodie: Change logic to get HasDownlines and IsDisableDownline value [RedmineID:#78225]
 		- 20180112@Elodie: Remove IsDisableDownline value [RedmineID:#87328]
-
+		- 20200406@Elodie: Update unhide by RealProductID [RedmineID:#129440]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -65,6 +65,7 @@ BEGIN
 		, @RoleID		INT
 	
 	DECLARE @ProductID		TINYINT,
+			@RealProductID	TINYINT,
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
 
@@ -72,6 +73,7 @@ BEGIN
 		SportType				SMALLINT
 		, BetType				SMALLINT
 		, IsDisabled			BIT
+		, RealProductId			TINYINT
 		)
 	CREATE TABLE #OldDisableStatTbl  (
 		SportType		SMALLINT
@@ -129,8 +131,8 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @IsDisabled
 
-	INSERT INTO #NewDisableStatTbl
-	SELECT *
+	INSERT INTO #NewDisableStatTbl (SportType, BetType, IsDisabled)
+	SELECT SportType, BetType, IsDisabled
 	FROM OPENXML(@iDoc, '/ROOT/ProductStatus', 1) WITH (
 			SportType				SMALLINT
 			, BetType				SMALLINT
@@ -213,6 +215,11 @@ BEGIN
 		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
 	WHERE CustID = @CustID
 	
+	UPDATE ns 
+	SET ns.RealProductId = ps.RealProductId
+	FROM #NewDisableStatTbl ns
+		INNER JOIN ProductSettingDetail ps ON ns.Sporttype = ps.SportType AND ns.Bettype = ps.BetType
+
 	SELECT TOP 1 @ProductID = ps.ProductID
 	FROM #NewDisableStatTbl dis 
 		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
@@ -227,9 +234,7 @@ BEGIN
 					FROM ProductStatusProfile psp (NOLOCK)
 						INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 						LEFT JOIN #NewDisableStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
-					WHERE ps.SettingType = 13 AND
-						((ps.ProductID = @ProductID AND ps.ProductID <> 41)
-							OR (ps.ProductID = 41 AND ns.IsDisabled = 0))
+					WHERE ps.SettingType = 13 AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 					FOR XML PATH('r')
 						, TYPE
 					)

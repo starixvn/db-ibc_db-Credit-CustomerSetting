@@ -23,6 +23,7 @@ AS
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]	
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20190409@Johnson: add suspendinfo [redmine: #105587]
+		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -390,13 +391,13 @@ BEGIN
 		SELECT @_SourceSiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_SourceSite
 
 		INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden, IsHiddenSource,HasSyncSource)
-		SELECT ProductID, ps.SportType, ps.BetType, IsHidden, IsHidden, st.value
+		SELECT ps.RealProductId, ps.SportType, ps.BetType, IsHidden, IsHidden, st.value
 		FROM dbo.ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ps.BetType AND psp.Sporttype = ps.SportType
 			CROSS APPLY dbo.CustProductStatus cps WITH (NOLOCK) 
 			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(cps.bitmapHasSynced, psp.bitmapOrder) st
 		WHERE SettingType IN (4,11,13) AND cps.CustID = @ExistingCustID
-		AND ProductID<>19
+			--AND RealProductId <> 19
 		
 		UPDATE op
 		SET op.IsHidden = stt.IsHidden
@@ -434,7 +435,7 @@ BEGIN
 
 		INSERT #ProductSettingDetail(SettingType,ProductID,SportType,BetType,IsLive,IsHiddenSource,HasSyncSource)
 		SELECT SettingType
-				,ps.ProductID
+				,ps.RealProductId
 				,ps.SportType
 				,ps.BetType
 				,IsLive
@@ -442,7 +443,7 @@ BEGIN
 				,op.HasSyncSource
 		FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource 
-						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.ProductID = op.ProductID			
+						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
 		BEGIN TRY

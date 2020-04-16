@@ -14,7 +14,7 @@ AS
 
 	Revision:
 		- 20180118@Elodie: Get New product Status setting values of a product on NAP & ExtNAP [RedmineID:#87328]
-
+		- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
 	Param's Explanation: 
 
 	Example: EXEC Acc_Admin_DisableNewProductStatusSelect @CustID = 1275, @ProductID = 23
