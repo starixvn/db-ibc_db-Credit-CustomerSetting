@@ -51,7 +51,8 @@ BEGIN
 	DECLARE	@BetType				INT
 		,	@StakeLevelList			VARCHAR(100)
 		,	@UplineStakeLevelList	VARCHAR(100)
-		,	@invalidStakeLevelID	VARCHAR(100);
+		,	@invalidStakeLevelID	VARCHAR(100)
+		,	@wrongStakeLevelList	VARCHAR(100) 
 
 	DECLARE	@xml					XML
 	
@@ -109,6 +110,40 @@ BEGIN
 					,	@ErrCode = 10035;
 			RETURN;   
 		END
+			IF EXISTS (SELECT 1 
+					FROM  #tmpStakeCheck T WITH (NOLOCK)
+					INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON T.SportType = P.SportType AND T.BetType = P.SportType
+					CROSS APPLY dbo.strSplit(@StakeLevelList,',') 
+					WHERE P.SettingType = @SettingType AND COUNT(VAL) > P.MaxChoice
+					)
+			BEGIN
+			SELECT	@xml =	(
+										SELECT	10036												AS '@MsgID'
+											,	'You can only assign maximum <x> bet limits to member level for'	AS '@Msg'
+											,	(
+													SELECT	psd.SportType							AS '@SportType'
+														,	psd.BetType								AS '@BetType'
+														,  psd.MaxChoice							AS '@MaxChoice'
+													FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
+													INNER JOIN	#tmpStakeCheck AS ts
+															ON	ts.BetType = sl.GameTypeID
+													INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+															ON	psd.SportType = ts.SportType
+															AND	psd.BetType = ts.BetType
+															AND	psd.SettingType = @SettingType
+													FOR XML PATH ('Row')
+												,	TYPE
+												)
+										FOR XML PATH ('Root')
+									,	TYPE
+									);
+			SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+					,	@MsgType = 131
+					,	@ErrCode = 10036;
+			RETURN;   
+
+			END
+
 	END 
 	IF @RoleID < 4
 	BEGIN
@@ -141,8 +176,8 @@ BEGIN
 				SELECT	@UplineStakeLevelList = StakeLevelList
 				FROM	dbo.CustStakeLevel_Agent WITH(NOLOCK)
 				WHERE	CustID = @AgentID
-					AND	BetType = @BetType;
-			END;
+					AND	BetType = @BetType;			
+			END
 
 			SELECT TOP(1) @invalidStakeLevelID = ISNULL(val,0)    
 			FROM dbo.strSplit(@StakeLevelList,',')  

@@ -310,7 +310,8 @@ BEGIN
 			[SettingType] [smallint] NOT NULL,
 			[SportType] [smallint] NOT NULL,
 			[BetType] [smallint] NOT NULL,
-			[IsLive] [bit] NOT NULL
+			[IsLive] [bit] NOT NULL,
+			[MaxChoice] [tinyint] --20200420@Tiara: Add MaxChoice column to restrict stakelevelid assigned to member
 		)
 		CREATE TABLE #OfferedProductList(
 			[ProductID] [tinyint] NOT NULL,
@@ -346,13 +347,25 @@ BEGIN
 			FROM #OfferedProductList op
 			WHERE ProductID = 20
 
-			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive)
+			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive, MaxChoice)
 			SELECT SettingType
 				  ,ps.SportType
 				  ,ps.BetType
 				  ,IsLive
+				  ,MaxChoice
 			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 				INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
+			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
+
+			--Live Casino
+			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive, MaxChoice)
+			SELECT SettingType
+				  ,ps.SportType
+				  ,ps.BetType
+				  ,IsLive
+				  ,MaxChoice
+			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
+				INNER JOIN (SELECT ProductID, SportType, BetType, IsHidden FROM #OfferedProductList WITH (NOLOCK) WHERE ProductID = 41) op ON ps.ProductID = op.ProductID AND ps.SportType = op.SportType
 			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
 		END
 
@@ -1284,8 +1297,11 @@ BEGIN
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7)
 		INSERT INTO #SportBettypeFilter7
 		SELECT * 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,17)
+		UNION ALL
+		SELECT * 
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8)
-		
+
 		BEGIN TRY
 			IF	@RoleID = 4
 			BEGIN
@@ -1344,9 +1360,18 @@ BEGIN
 				--Insert all stake level from agent for member with Setting Type = 17
 				INSERT INTO	dbo.CustStakeLevel_Member
 					(	CustID , SportType     , BetType     , StakeLevelList                 , LastUpdated)
-				SELECT	@CustID, csla.SportType, csla.BetType, csla.StakeLevelList, GETDATE()
+				SELECT	@CustID, csla.SportType, csla.BetType, CAST (STUFF (STL, 1,1, '')AS VARCHAR(500)) as StakeLevelList, GETDATE()
 				FROM	dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
-					INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
+						INNER JOIN custInfo C WITH (NOLOCK) ON C.custid = CSLA.CustID
+						INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
+						CROSS APPLY
+						(SELECT TOP (SELECT  P.MaxChoice
+									FROM #ProductSettingDetail P WITH (NOLOCK)
+									WHERE P.SettingType = 17 AND P.BetType = CSLA.BetType) ',' + CAST(StakeLevelID AS VARCHAR(10))
+						FROM StakeLevel S WITH (NOLOCK)
+						INNER JOIN #ProductSettingDetail P WITH (NOLOCK) ON S.GameTypeID = P.BetType
+						WHERE  S.GameTypeID =csla.BetType AND S.ExchangeId = C.currency
+						FOR XML PATH ('') ) AS A(STL)
 				WHERE	csla.CustID = @AgentID
 					AND f.SettingType = 17
 			END
