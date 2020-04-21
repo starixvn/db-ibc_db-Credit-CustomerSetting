@@ -1357,14 +1357,14 @@ BEGIN
 				--Insert all stake level from agent for member with Setting Type = 17
 				INSERT INTO	dbo.CustStakeLevel_Member
 					(	CustID , SportType     , BetType     , StakeLevelList                 , LastUpdated)
-				SELECT	@CustID, csla.SportType, csla.BetType, CAST (STUFF (STL, 1,1, '')AS VARCHAR(500)) as StakeLevelList, GETDATE()
+				SELECT	@CustID, csla.SportType, csla.BetType, ISNULL(CAST (STUFF (STL, 1,1, '')AS VARCHAR(500)),'') as StakeLevelList, GETDATE()
 				FROM	dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
 						INNER JOIN custInfo C WITH (NOLOCK) ON C.custid = CSLA.CustID
 						INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
 						CROSS APPLY
 						(SELECT DISTINCT TOP (SELECT  P.MaxChoice
 									FROM ProductSettingDetail P WITH (NOLOCK)
-									WHERE P.SettingType = 17 AND P.BetType = CSLA.BetType) ',' + CAST(StakeLevelID AS VARCHAR(10))
+									WHERE P.SettingType = 17 AND P.BetType = CSLA.BetType) ',' + ISNULL(CAST(StakeLevelID AS VARCHAR(10)),'')
 						FROM StakeLevel S WITH (NOLOCK)
 						INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON S.GameTypeID = P.BetType
 						WHERE  S.GameTypeID =csla.BetType AND S.ExchangeId = C.currency
