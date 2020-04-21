@@ -139,7 +139,7 @@ BEGIN
 		,	csl.StakeLevelID
 		,	csl.StakeLevelName
 		,	csl.isChecked
-		, ISNULL(S.MaxChoice,'')
+		, ISNULL(S.MaxChoice,'') AS MaxChoice
 	FROM	#CustStakeLevel AS csl WITH (NOLOCK)
 		INNER JOIN #SportBetTypeFilter S WITH (NOLOCK) ON S.SportType = CSL.SportType AND S.BetType = CSL.BetType
 
