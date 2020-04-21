@@ -558,7 +558,15 @@ BEGIN
 						THEN 0 ELSE 1
 						END AS BIT) AS HideSexyGamingUpline,
 				-- For GTCasino
-S
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_GTCasino)) AS DisableGTCasino,
+				CAST(	CASE	WHEN	@IsHidden_GTCasino = 0 
+									AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_GTCasino), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideGTCasino,
+				CAST(CASE	WHEN	@IsHidden_GTCasino = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_GTCasino), 1) = 0
+						THEN 0 ELSE 1
+						END AS BIT) AS HideGTCasinoUpline,
 				-- For BBIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BBIN)) AS DisableBBIN,
 				CAST(	CASE	WHEN	@IsHidden_BBIN = 0 
