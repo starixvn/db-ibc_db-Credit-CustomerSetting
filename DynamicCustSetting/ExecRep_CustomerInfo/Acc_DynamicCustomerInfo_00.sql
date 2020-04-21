@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00_UAT2] 
+ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00] 
 	@CustID				INT
 	, @SuperID			INT
 	, @MasterID			INT
