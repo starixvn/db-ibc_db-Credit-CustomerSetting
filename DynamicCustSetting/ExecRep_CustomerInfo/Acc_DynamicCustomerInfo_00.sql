@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00] 
+ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00_UAT2] 
 	@CustID				INT
 	, @SuperID			INT
 	, @MasterID			INT
@@ -310,8 +310,7 @@ BEGIN
 			[SettingType] [smallint] NOT NULL,
 			[SportType] [smallint] NOT NULL,
 			[BetType] [smallint] NOT NULL,
-			[IsLive] [bit] NOT NULL,
-			[MaxChoice] [tinyint] --20200420@Tiara: Add MaxChoice column to restrict stakelevelid assigned to member
+			[IsLive] [bit] NOT NULL
 		)
 		CREATE TABLE #OfferedProductList(
 			[ProductID] [tinyint] NOT NULL,
@@ -347,23 +346,21 @@ BEGIN
 			FROM #OfferedProductList op
 			WHERE ProductID = 20
 
-			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive, MaxChoice)
+			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive)
 			SELECT SettingType
 				  ,ps.SportType
 				  ,ps.BetType
 				  ,IsLive
-				  ,MaxChoice
 			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 				INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
 			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
 
 			--Live Casino
-			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive, MaxChoice)
+			INSERT #ProductSettingDetail(SettingType,SportType,BetType,IsLive)
 			SELECT SettingType
 				  ,ps.SportType
 				  ,ps.BetType
 				  ,IsLive
-				  ,MaxChoice
 			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 				INNER JOIN (SELECT ProductID, SportType, BetType, IsHidden FROM #OfferedProductList WITH (NOLOCK) WHERE ProductID = 41) op ON ps.ProductID = op.ProductID AND ps.SportType = op.SportType
 			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
@@ -1366,10 +1363,10 @@ BEGIN
 						INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
 						CROSS APPLY
 						(SELECT TOP (SELECT  P.MaxChoice
-									FROM #ProductSettingDetail P WITH (NOLOCK)
+									FROM ProductSettingDetail P WITH (NOLOCK)
 									WHERE P.SettingType = 17 AND P.BetType = CSLA.BetType) ',' + CAST(StakeLevelID AS VARCHAR(10))
 						FROM StakeLevel S WITH (NOLOCK)
-						INNER JOIN #ProductSettingDetail P WITH (NOLOCK) ON S.GameTypeID = P.BetType
+						INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON S.GameTypeID = P.BetType
 						WHERE  S.GameTypeID =csla.BetType AND S.ExchangeId = C.currency
 						ORDER BY	S.MaxStake, S.MinStake, S.GameGroupID
 						FOR XML PATH ('') ) AS A(STL)
