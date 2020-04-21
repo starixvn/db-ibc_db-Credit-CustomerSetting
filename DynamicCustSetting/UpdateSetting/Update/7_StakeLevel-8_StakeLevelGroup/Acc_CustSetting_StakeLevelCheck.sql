@@ -90,7 +90,7 @@ BEGIN
 										SELECT	10035												AS '@MsgID'
 											,	'Each bet type must have at least one Bet Limit value to be selected'	AS '@Msg'
 											,	(
-													SELECT	psd.SportType							AS '@SportType'
+													SELECT	DISTINCT psd.SportType							AS '@SportType'
 														,	psd.BetType								AS '@BetType'
 													FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
 													INNER JOIN	#tmpStakeCheck AS ts
@@ -111,17 +111,26 @@ BEGIN
 			RETURN;   
 		END
 			IF EXISTS (SELECT 1 
-					FROM  #tmpStakeCheck T WITH (NOLOCK)
-					INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON T.SportType = P.SportType AND T.BetType = P.SportType
-					CROSS APPLY dbo.strSplit(@StakeLevelList,',') 
-					WHERE P.SettingType = @SettingType AND COUNT(VAL) > P.MaxChoice
+						FROM  #tmpStakeCheck T WITH (NOLOCK)
+							INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON T.SportType = P.SportType AND T.BetType = P.BetType
+							CROSS APPLY dbo.strSplit(T.StakeLevelList,',') 
+						WHERE P.SettingType = @SettingType
+						GROUP BY P.MaxChoice
+						HAVING COUNT(VAL) > P.MaxChoice
 					)
 			BEGIN
+			--Select Product Name
+			DECLARE @ProductName VARCHAR (50)
+				
+			SELECT	@ProductName = p.ProductName
+			FROM	DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
+			WHERE	p.ProductID = @ProductID;
+
 			SELECT	@xml =	(
 										SELECT	10036												AS '@MsgID'
-											,	'You can only assign maximum <x> bet limits to member level for'	AS '@Msg'
 											,	(
-													SELECT	psd.SportType							AS '@SportType'
+													SELECT	DISTINCT 'You can only assign maximum '+CAST(PSD.MaxChoice AS VARCHAR)+ ' bet limits to member level for '+@ProductName	AS '@Msg'
+														,	psd.SportType							AS '@SportType'
 														,	psd.BetType								AS '@BetType'
 														,  psd.MaxChoice							AS '@MaxChoice'
 													FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
@@ -133,7 +142,7 @@ BEGIN
 															AND	psd.SettingType = @SettingType
 													FOR XML PATH ('Row')
 												,	TYPE
-												)
+												) 
 										FOR XML PATH ('Root')
 									,	TYPE
 									);

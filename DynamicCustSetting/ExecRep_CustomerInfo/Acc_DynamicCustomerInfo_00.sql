@@ -1371,6 +1371,7 @@ BEGIN
 						FROM StakeLevel S WITH (NOLOCK)
 						INNER JOIN #ProductSettingDetail P WITH (NOLOCK) ON S.GameTypeID = P.BetType
 						WHERE  S.GameTypeID =csla.BetType AND S.ExchangeId = C.currency
+						ORDER BY	S.MaxStake, S.MinStake, S.GameGroupID
 						FOR XML PATH ('') ) AS A(STL)
 				WHERE	csla.CustID = @AgentID
 					AND f.SettingType = 17
