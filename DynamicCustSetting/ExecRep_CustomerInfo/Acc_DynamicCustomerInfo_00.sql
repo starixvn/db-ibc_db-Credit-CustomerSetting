@@ -1362,13 +1362,12 @@ BEGIN
 						INNER JOIN custInfo C WITH (NOLOCK) ON C.custid = CSLA.CustID
 						INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
 						CROSS APPLY
-						(SELECT TOP (SELECT  P.MaxChoice
+						(SELECT DISTINCT TOP (SELECT  P.MaxChoice
 									FROM ProductSettingDetail P WITH (NOLOCK)
 									WHERE P.SettingType = 17 AND P.BetType = CSLA.BetType) ',' + CAST(StakeLevelID AS VARCHAR(10))
 						FROM StakeLevel S WITH (NOLOCK)
 						INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON S.GameTypeID = P.BetType
 						WHERE  S.GameTypeID =csla.BetType AND S.ExchangeId = C.currency
-						ORDER BY	S.MaxStake, S.MinStake, S.GameGroupID
 						FOR XML PATH ('') ) AS A(STL)
 				WHERE	csla.CustID = @AgentID
 					AND f.SettingType = 17
