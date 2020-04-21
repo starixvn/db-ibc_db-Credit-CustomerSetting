@@ -164,7 +164,7 @@ Revisions:
 	End
 
 	-- For AllBet
-	EXEC Acc_CheckShowProduct_UAT4 @ProductID = 41, @Sporttype = 211, @IsHide = @IsHideAllBet OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 211, @IsHide = @IsHideAllBet OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedAllBet =	CASE	WHEN @IsHideAllBet = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_AllBet)) = 0 THEN 1
 										ELSE 0 END
@@ -183,7 +183,7 @@ Revisions:
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
 	-- For SA Gaming
-	EXEC Acc_CheckShowProduct_UAT4 @ProductID = 41, @Sporttype = 244, @IsHide = @IsHideSAGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 244, @IsHide = @IsHideSAGaming OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedSAGaming =	CASE	WHEN @IsHideSAGaming = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SAGaming)) = 0 THEN 1
 										ELSE 0 END
@@ -202,8 +202,8 @@ Revisions:
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
 	-- For Sexy Gaming
-	EXEC Acc_CheckShowProduct_UAT4 @ProductID = 41, @Sporttype = 243, @IsHide = @IsHideSexyGaming OUTPUT
-	EXEC Acc_CheckShowProduct_UAT4 @ProductID = 41, @Sporttype = 242, @IsHide = @IsHideGTCasino OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @IsHide = @IsHideSexyGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 242, @IsHide = @IsHideGTCasino OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedSexyGaming =	CASE WHEN @IsHideSexyGaming = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SexyGaming)) = 0 THEN 1
 										ELSE 0 END,
@@ -229,7 +229,7 @@ Revisions:
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
 	-- For BBIN
-	EXEC Acc_CheckShowProduct_UAT4 @ProductID = 41, @Sporttype = 241, @IsHide = @IsHideBBIN OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHideBBIN OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedBBIN =	CASE WHEN @IsHideBBIN = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_BBIN)) = 0 THEN 1
 										ELSE 0 END
