@@ -15,7 +15,7 @@ AS
 		- 20160812@Helen: NAP - Bet Limit - Stake level does not order by Max then Min Stake [Redmine: 62429]
 		- 20180327@Vicky: add header infomation [Redmine: #90422]
 		- 20200407@Elodie: Sort by sport, bettype, stakelevelID [Redmine: #131363]
-		- 20200414@Tiara: Add input param Setting type [Redmine: #131171]
+		- 20200414@Tiara: Add input param Setting type, add MaxChoice column [Redmine: #131171]
 	Param's Explanation:
 */
 BEGIN
@@ -30,6 +30,7 @@ BEGIN
 	CREATE TABLE	#SportBetTypeFilter (
 						SportType		SMALLINT
 					,	BetType			INT
+					,	MaxChoice		TINYINT
 					);
 
 	CREATE TABLE	#CustStakeLevel (
@@ -47,6 +48,10 @@ BEGIN
 	SELECT	fcssbtss.SportType, fcssbtss.Bettype
 	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType) AS fcssbtss;
 
+	UPDATE S
+	SET S.MaxChoice = CASE WHEN @SettingType = 17 THEN P.MaxChoice ELSE 0 END
+	FROM #SportBetTypeFilter S WITH (ROWLOCK,UPDLOCK)
+	INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON P.SportType = S.SportType AND P.BetType = S.BetType
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
 		,	@RoleID     = c.roleid
@@ -129,12 +134,14 @@ BEGIN
 	END;
 
 	-- View result
-	SELECT	csl.SportType
+	SELECT DISTINCT	csl.SportType
 		,	csl.BetType
 		,	csl.StakeLevelID
 		,	csl.StakeLevelName
 		,	csl.isChecked
-	FROM	#CustStakeLevel AS csl
+		, ISNULL(S.MaxChoice,'')
+	FROM	#CustStakeLevel AS csl WITH (NOLOCK)
+		INNER JOIN #SportBetTypeFilter S WITH (NOLOCK) ON S.SportType = CSL.SportType AND S.BetType = CSL.BetType
 
 	-- Cleanup
 	DROP TABLE #CustStakeLevel
