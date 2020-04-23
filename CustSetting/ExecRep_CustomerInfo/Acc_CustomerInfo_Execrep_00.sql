@@ -865,6 +865,8 @@ BEGIN
 		--v164
 		UNION ALL	SELECT @custid, 8101, 164, 0, 0, 0, 0, 0, 0, 0, @MinBetv164, @MaxBetv164, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
+		
+
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
@@ -2170,13 +2172,8 @@ BEGIN
 														AND NOT (mcg.MinBet = 0 AND mcg.MaxBet = 0 AND mcg.MaxPerGameType = 0)
 		 WHERE pbs.Currency = @currency
            AND acg.CustID = @recommend
-           AND gt.IBCBetTypeID BETWEEN 1501 AND 1599
-		 --End Keno
-		--Gold Deluxe
-		UNION ALL 
-		SELECT GameTypeID, @custid, StakeLevelList, 0, 0, 0, 0 FROM CustGameType WITH (NOLOCK) WHERE CustID = @recommend AND GameTypeID IN (1701,1702)
-		--End Gold Deluxe
-
+           AND gt.IBCBetTypeID BETWEEN 1501 AND 1599		
+		
 		IF @@error <> 0
 		BEGIN
 			--Error occur
@@ -2191,7 +2188,48 @@ BEGIN
 				
 			RETURN
 		END
-	
+		--End Keno
+
+		--Gold Deluxe
+		DECLARE @StakeLevelListAg_1701 VARCHAR(50), @StakeLevelListAg_1702 VARCHAR(50), @StakeLevelID_1701 VARCHAR(50),  @StakeLevelID_1702 VARCHAR(50)
+		SELECT @StakeLevelListAg_1701 = StakeLevelList FROM CustGameType WITH (NOLOCK) WHERE custid = @recommend AND GameTypeID = 1701
+		SELECT @StakeLevelListAg_1702 = StakeLevelList FROM CustGameType WITH (NOLOCK) WHERE custid = @recommend AND GameTypeID = 1702
+
+		IF @StakeLevelListAg_1701 IS NOT NULL AND @StakeLevelListAg_1702 IS NOT NULL
+		BEGIN
+			SELECT TOP 1 @StakeLevelID_1701 = StakeLevelID FROM dbo.strSplit(@StakeLevelListAg_1701,',') a INNER JOIN StakeLevel s WITH (NOLOCK) ON s.StakeLevelID = a.val ORDER BY MinStake, MaxStake ASC
+			SELECT TOP 1 @StakeLevelID_1702 = StakeLevelID FROM dbo.strSplit(@StakeLevelListAg_1702,',') a INNER JOIN StakeLevel s WITH (NOLOCK) ON s.StakeLevelID = a.val ORDER BY MinStake, MaxStake ASC
+		END
+
+		INSERT INTO dbo.CustGameType
+        (
+            GameTypeID
+          , CustID
+          , StakeLevelList
+          , MinBet
+          , MaxBet
+          , MaxPerGameType
+          , IsDisabled
+        )		
+		SELECT 1701, @custid, ISNULL(@StakeLevelID_1701,''), 0, 0, 0, 0
+		UNION ALL 
+		SELECT 1702, @custid, ISNULL(@StakeLevelID_1702,''), 0, 0, 0, 0
+		
+		IF @@error <> 0
+		BEGIN
+			--Error occur
+			SET @ErrCode = 156
+				
+			-- ROLLBACK MANUALLY
+			Delete dbo.custsetting with (ROWLOCK) where custid = @custid
+			Delete dbo.CustSetting3rd with (ROWLOCK) where custid = @custid
+			
+			DELETE dbo.custsettingGame WITH (ROWLOCK) WHERE custId = @custid
+			DELETE dbo.CustGameType WITH (ROWLOCK) WHERE custId = @custid			
+				
+			RETURN
+		END
+		--End Gold Deluxe
 	END
 	
 	END
