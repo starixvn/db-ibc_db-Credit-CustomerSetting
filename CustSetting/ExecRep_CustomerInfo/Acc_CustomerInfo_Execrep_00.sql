@@ -719,7 +719,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20190520@Johnson: add @isSearchAndCopy & @copyFromCustID to support SC suspendInfo for member level [redmine: #105587]
 			- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 			- 20190805@Eden: Remove initial setting for inactive products (Colosus Bet)  [redmine: #118699]
-			- 20200415@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
