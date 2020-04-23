@@ -110,7 +110,9 @@ BEGIN
 					,	@ErrCode = 10035;
 			RETURN;   
 		END
-			IF EXISTS (SELECT 1 
+			IF @RoleID = 1
+			BEGIN
+				IF EXISTS (SELECT 1 
 						FROM  #tmpStakeCheck T WITH (NOLOCK)
 							INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON T.SportType = P.SportType AND T.BetType = P.BetType
 							CROSS APPLY dbo.strSplit(T.StakeLevelList,',') 
@@ -118,40 +120,41 @@ BEGIN
 						GROUP BY P.MaxChoice
 						HAVING COUNT(VAL) > P.MaxChoice
 					)
-			BEGIN
-			--Select Product Name
-			DECLARE @ProductName VARCHAR (50)
+				BEGIN
+				--Select Product Name
+				DECLARE @ProductName VARCHAR (50)
 				
-			SELECT	@ProductName = p.ProductName
-			FROM	DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
-			WHERE	p.ProductID = @ProductID;
+				SELECT	@ProductName = p.ProductName
+				FROM	DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
+				WHERE	p.ProductID = @ProductID;
 
-			SELECT	@xml =	(
-										SELECT	10036												AS '@MsgID'
-											,	(
-													SELECT	DISTINCT 'You can only assign maximum '+CAST(PSD.MaxChoice AS VARCHAR)+ ' bet limits to member level for '+@ProductName	AS '@Msg'
-														,	psd.SportType							AS '@SportType'
-														,	psd.BetType								AS '@BetType'
-														,  psd.MaxChoice							AS '@MaxChoice'
-													FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
-													INNER JOIN	#tmpStakeCheck AS ts
-															ON	ts.BetType = sl.GameTypeID
-													INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
-															ON	psd.SportType = ts.SportType
-															AND	psd.BetType = ts.BetType
-															AND	psd.SettingType = @SettingType
-													FOR XML PATH ('Row')
-												,	TYPE
-												) 
-										FOR XML PATH ('Root')
-									,	TYPE
-									);
-			SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-					,	@MsgType = 131
-					,	@ErrCode = 10036;
-			RETURN;   
+				SELECT	@xml =	(
+											SELECT	10036												AS '@MsgID'
+												,	(
+														SELECT	DISTINCT 'You can only assign maximum '+CAST(PSD.MaxChoice AS VARCHAR)+ ' bet limits to member level for '+@ProductName	AS '@Msg'
+															,	psd.SportType							AS '@SportType'
+															,	psd.BetType								AS '@BetType'
+															,  psd.MaxChoice							AS '@MaxChoice'
+														FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
+														INNER JOIN	#tmpStakeCheck AS ts
+																ON	ts.BetType = sl.GameTypeID
+														INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+																ON	psd.SportType = ts.SportType
+																AND	psd.BetType = ts.BetType
+																AND	psd.SettingType = @SettingType
+														FOR XML PATH ('Row')
+													,	TYPE
+													) 
+											FOR XML PATH ('Root')
+										,	TYPE
+										);
+				SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+						,	@MsgType = 131
+						,	@ErrCode = 10036;
+				RETURN;   
 
-			END
+				END
+		END
 
 	END 
 	IF @RoleID < 4
