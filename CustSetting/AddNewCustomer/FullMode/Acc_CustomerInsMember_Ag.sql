@@ -1475,6 +1475,23 @@ BEGIN
     SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) FROM custAgent WITH(NOLOCK)  WHERE CustID = @recommend
 
     SELECT @ErrCode = 0
+
+	--Agent can only create up to 200 new members every day by QR.
+	IF @IsQRCode = 1
+	BEGIN
+		DECLARE @QRMemberCount INT
+
+		SELECT @QRMemberCount = COUNT(1) FROM Customer WITH(NOLOCK) WHERE recommend = @recommend AND roleid = 1 AND creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+		IF @QRMemberCount >= 200
+		BEGIN
+			SELECT @ErrCode = 40051
+					,@ErrMsg = CASE @Language WHEN 'E' THEN 'You can only create up to 200 new members every day by this function.'
+									ELSE [dbo].[f_Get_MsgNamebyMsgID](40051,@Language)
+								END
+			RETURN
+		END
+	END
+
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     DECLARE @IsValid BIT
     
