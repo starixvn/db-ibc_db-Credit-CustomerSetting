@@ -11,6 +11,7 @@ RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Betty
 	Revisions:
 		- 20170317@Elodie: Get setting of product
 		- 20200403@Elodie: Get RealProductID [Redmine: #129440]
+		- 20200427@Tiara: Allbet/GD multiple stakelevels for member [#131171]
 	Explanation's Param:
 		
 */   
@@ -30,12 +31,74 @@ BEGIN
 	BEGIN
 		SELECT @isTest = 0
 	END
-	
+
+		
 	INSERT @SportBetTypeSetting
 	SELECT DISTINCT ProductID, SportType,Bettype,IsLive, SettingType, RealProductId FROM dbo.ProductSettingDetail WITH(NOLOCK)
 	WHERE (@ProductID IS NULL OR ProductID = @ProductID ) AND (@SettingType IS NULL OR SettingType = @SettingType) 
 			AND SettingStatus <= CASE WHEN @isTest = 1 THEN 1 ELSE 0 END
-	
+			AND SportType NOT IN (211,243,244)
+	UNION ALL
+	--Allbet
+	SELECT DISTINCT 41,211, 2401, 0, @SettingType, 21
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IN (1,3,6,17,13) 
+	UNION ALL
+	--SA Gaming
+	SELECT DISTINCT 41,244, 3001, 0, @SettingType, 39 
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IN (1,3,6,17,13) 
+	UNION ALL
+	--Sexy Gaming
+	SELECT DISTINCT 41,243, 3101, 0, @SettingType, 45 
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IN (1,3,6,17,13) 
+	UNION ALL
+	--Allbet
+	SELECT DISTINCT 41,211, 2401, 0, 1, 21 
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,211, 2401, 0, 3, 21 
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL		
+	SELECT DISTINCT 41,211, 2401, 0, 13, 21 
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL		
+	SELECT DISTINCT 41,211, 2401, 0, 6, 21 
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL	
+	SELECT DISTINCT 41,211, 2401, 0, 17, 21 
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL		
+	--SA Gaming
+	SELECT DISTINCT 41,244, 3001, 0, 1, 39
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,244, 3001, 0, 3, 39
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,244, 3001, 0, 13, 39
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,244, 3001, 0, 6, 39
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,244, 3001, 0, 17, 39
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	 --Sexy Gaming
+	SELECT DISTINCT 41,243, 3101, 0, 1, 45
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,243, 3101, 0, 3, 45
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,243, 3101, 0, 13, 45
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,243, 3101, 0, 6, 45
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+	UNION ALL
+	SELECT DISTINCT 41,243, 3101, 0, 17, 45
+	WHERE (@ProductID IS NULL OR @ProductID = 41) AND @SettingType IS NULL
+
 	RETURN
 END
 GO
