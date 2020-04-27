@@ -2544,7 +2544,7 @@ BEGIN
 	    RETURN
     END
 
-    SELECT @pwdexpiry = CASE WHEN @IsQRCode = 1 THEN '01/01/1900' ELSE DATEADD(dd, 30, GETDATE()) END
+    SELECT @pwdexpiry = CASE WHEN @IsQRCode = 1 THEN '01/01/1900' ELSE DATEADD(dd, -1, GETDATE()) END
 
     IF @UplineClosed = 1 SELECT @Closed = 1 
 
