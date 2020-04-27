@@ -552,7 +552,7 @@ BEGIN
 					AND	ts.BetType = psd.BetType
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType IN (7, 8)
+				AND psd.SettingType IN (7, 8, 17)
 		 ) iq;
 
 	-- Select ProductName
@@ -568,7 +568,7 @@ BEGIN
 					AND	ts.BetType = psd.BetType
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType= @SettingType )
+				AND psd.SettingType IN (7,17) )
 	BEGIN
 		UPDATE #StakeLevelList_Excluded
 		SET	StakeLevelList_old = REPLACE(StakeLevelList_old, ',', ';');
