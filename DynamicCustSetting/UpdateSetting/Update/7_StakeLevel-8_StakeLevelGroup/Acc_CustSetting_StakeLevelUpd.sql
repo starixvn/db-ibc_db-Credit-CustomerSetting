@@ -560,9 +560,37 @@ BEGIN
 	FROM	DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 	WHERE	p.ProductID = @ProductID;
 
+	--Use tmp table to store value of Setting Type 7 and 17
+
+	CREATE TABLE #TmpProductSettingDetail
+	(
+		SettingType SMALLINT,
+		SportType SMALLINT,
+		BetType SMALLINT,
+		IsLive BIT,
+		ProductID TINYINT,
+		MaxPT TINYINT,
+		MaxDiscount DECIMAL (9, 8),
+		IsSync BIT,
+		IsHidden BIT,
+		IsDisabled BIT,
+		SettingLevel TINYINT,
+		DisplayOrder TINYINT,
+		SettingStatus TINYINT,
+		IntervalValue DECIMAL (19, 8),
+		RealProductID TINYINT,
+		MaxChoice TINYINT
+	)
+
+	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(17,211,2401,0,41,NULL,NULL,NULL,NULL,NULL,2,5,0,NULL,21,3)
+	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(17,243,3101,0,41,NULL,NULL,NULL,NULL,NULL,2,5,0,NULL,45,6)
+	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(17,244,3001,0,41,NULL,NULL,NULL,NULL,NULL,2,5,0,NULL,39,5)
+	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(7,241,3300,0,41,NULL,NULL,NULL,NULL,NULL,2,6,0,NULL,47,NULL)
+	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(7,242,3201,0,41,NULL,NULL,NULL,NULL,NULL,2,6,0,NULL,46,NULL)
+	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(7,245,4601,0,38,NULL,NULL,NULL,NULL,NULL,4,4,0,NULL,38,NULL)
 	-- Update log value
 	IF	EXISTS (SELECT TOP 1 1
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#TmpProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	#tmpStake AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
