@@ -48,13 +48,10 @@ BEGIN
 	SELECT	fcssbtss.SportType, fcssbtss.Bettype
 	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType) AS fcssbtss;
 
-
 	UPDATE S
-	SET S.MaxChoice = CASE	WHEN @SettingType = 17 AND S.SportType = 211 THEN 3 
-							WHEN @SettingType = 17 AND S.SportType = 244 THEN 5 
-							WHEN @SettingType = 17 AND S.SportType = 243 THEN 6 ELSE 0 END
+	SET S.MaxChoice = CASE WHEN @SettingType = 17 THEN P.MaxChoice ELSE 0 END
 	FROM #SportBetTypeFilter S WITH (ROWLOCK,UPDLOCK)
-
+	INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON P.SportType = S.SportType AND P.BetType = S.BetType
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
 		,	@RoleID     = c.roleid

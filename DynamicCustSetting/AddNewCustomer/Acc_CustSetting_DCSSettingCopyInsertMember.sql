@@ -511,39 +511,12 @@ BEGIN
 		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)	
 			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType	
 		WHERE	cslm.CustID = @ExistingCustID
-
-		CREATE TABLE #TmpProductSettingDetail
-	(
-		SettingType SMALLINT,
-		SportType SMALLINT,
-		BetType SMALLINT,
-		IsLive BIT,
-		ProductID TINYINT,
-		MaxPT TINYINT,
-		MaxDiscount DECIMAL (9, 8),
-		IsSync BIT,
-		IsHidden BIT,
-		IsDisabled BIT,
-		SettingLevel TINYINT,
-		DisplayOrder TINYINT,
-		SettingStatus TINYINT,
-		IntervalValue DECIMAL (19, 8),
-		RealProductID TINYINT,
-		MaxChoice TINYINT
-	)
-
-	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(17,211,2401,0,41,NULL,NULL,NULL,NULL,NULL,2,5,0,NULL,21,3)
-	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(17,243,3101,0,41,NULL,NULL,NULL,NULL,NULL,2,5,0,NULL,45,6)
-	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(17,244,3001,0,41,NULL,NULL,NULL,NULL,NULL,2,5,0,NULL,39,5)
-	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(7,241,3300,0,41,NULL,NULL,NULL,NULL,NULL,2,6,0,NULL,47,NULL)
-	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(7,242,3201,0,41,NULL,NULL,NULL,NULL,NULL,2,6,0,NULL,46,NULL)
-	INSERT INTO #TmpProductSettingDetail ([SettingType] ,[SportType],[BetType],[IsLive],[ProductID],[MaxPT],[MaxDiscount],[IsSync],[IsHidden],[IsDisabled],[SettingLevel],[DisplayOrder],[SettingStatus],[IntervalValue],[RealProductID],[MaxChoice]) VALUES(7,245,4601,0,38,NULL,NULL,NULL,NULL,NULL,4,4,0,NULL,38,NULL)
 		
 		INSERT INTO #TempStakeLevel(ProductID)	
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	#TmpProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	@NewStakeLevelTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -559,7 +532,7 @@ BEGIN
 											,	nslt.BetType			AS '@BetType'
 											,	nslt.StakeLevelList		AS '@StakeLevelList'
 										FROM	@NewStakeLevelTbl AS nslt
-										INNER JOIN #TmpProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE SettingType=7 AND  psd.ProductID=@ProductID7
 											AND settingStatus IN (0,1) --active bettype
 										FOR XML PATH('StakeLevel')
@@ -605,7 +578,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	#TmpProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	@NewStakeLevelTbl17 AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -621,7 +594,7 @@ BEGIN
 											,	nslt.BetType			AS '@BetType'
 											,	nslt.StakeLevelList		AS '@StakeLevelList'
 										FROM	@NewStakeLevelTbl AS nslt
-										INNER JOIN #TmpProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE SettingType=17 AND  psd.ProductID=@ProductID17
 											AND settingStatus IN (0,1) --active bettype
 										FOR XML PATH('StakeLevel')
