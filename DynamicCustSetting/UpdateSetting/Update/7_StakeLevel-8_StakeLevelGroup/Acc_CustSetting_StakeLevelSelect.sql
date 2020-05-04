@@ -49,7 +49,7 @@ BEGIN
 	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType) AS fcssbtss;
 
 	UPDATE S
-	SET S.MaxChoice = CASE WHEN @SettingType = 17 THEN P.MaxChoice ELSE 0 END
+	SET S.MaxChoice = CASE WHEN @SettingType = 17 THEN P.MaxChoice ELSE 0 END --MaxChoice = 0: unlimit selected stake level
 	FROM #SportBetTypeFilter S WITH (ROWLOCK,UPDLOCK)
 	INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON P.SportType = S.SportType AND P.BetType = S.BetType
 	-- Select customer's information
