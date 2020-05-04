@@ -865,8 +865,3 @@ BEGIN
 END;
 
 GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelUpd TO bodbadminNet;
-GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelUpd TO bodbDownlineNet;
-GO
-GRANT EXECUTE ON dbo.Acc_CustSetting_StakeLevelUpd TO bodbExtAccNet;
