@@ -144,21 +144,20 @@ BEGIN
 
 	--Prevent users under 789y uncheck all Stakelevel
 	--Prevent from uncheck all stakelevel of member
-	IF @SystemID != 1 
-		IF @Site IN ('789y') OR  @roleid = 1 
+	IF (@SystemID != 1 AND @Site IN ('789y')) OR  @roleid = 1 
+	BEGIN
+		IF EXISTS (SELECT 1 
+					FROM #tmpStake WITH (NOLOCK)
+					WHERE StakeLevelList IS NULL OR StakeLevelList='')
 		BEGIN
-			IF EXISTS (SELECT 1 
-						FROM #tmpStake WITH (NOLOCK)
-						WHERE StakeLevelList IS NULL OR StakeLevelList='')
-			BEGIN
 			SELECT @ErrCode = 1001  
 			SELECT @ErrMsg = CASE @Language   
 							WHEN 'E' THEN 'Each bet type must have at least one Bet Limit value to be selected '   
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](10031,@Language)  
 							END  
-			RETURN   
-			END
+		RETURN   
 		END
+	END
 	--validate stake level
 	SELECT @roleid
 	  

@@ -546,10 +546,4 @@ BEGIN
 		END
 	END
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbExtAccNet]
