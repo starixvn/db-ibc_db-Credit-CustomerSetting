@@ -81,6 +81,7 @@ Revisions:
 	- 20200406@Elodie: Add BBIN Product [Redmine: #131363]
 	- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 	- 20200421@Elodie: Add GTCasino Product [Redmine: #130689]
+	- 20200504@Eden: ION Live casino [Redmine: #132323]
 
 Pattern Explanation:
 		Search keyword: '%keyword%'
@@ -126,6 +127,7 @@ Pattern Explanation:
 		,	@bitmapOrder_SabaClub		INT
 		,	@bitmapOrder_SAGaming		INT 
 		,	@bitmapOrder_SexyGaming		INT 
+		,	@bitmapOrder_ION		INT 
 		,	@bitmapOrder_BBIN			INT 
 		,	@bitmapOrder_TableGames		INT 
 		,	@bitmapOrder_GTCasino		INT
@@ -141,6 +143,7 @@ Pattern Explanation:
 	SET @bitmapOrder_SabaClub = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
 	SET @bitmapOrder_SexyGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 243 AND Bettype = 3101)
+	SET @bitmapOrder_ION = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 225 AND Bettype = 5601)
 	SET @bitmapOrder_BBIN = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 241 AND Bettype = 3300)
 	SET @bitmapOrder_TableGames = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 222 AND Bettype = 4901)
 	SET @bitmapOrder_GTCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 242 AND Bettype = 3201)
@@ -160,6 +163,7 @@ Pattern Explanation:
 		,	@IsHidden_SabaClub			INT = 1
 		,	@IsHidden_SAGaming			INT = 1
 		,	@IsHidden_SexyGaming		INT = 1
+		,	@IsHidden_ION		INT = 1
 		,	@IsHidden_BBIN				INT = 1
 		,	@IsHidden_TableGames		INT = 1
 		,	@IsHidden_GTCasino			INT = 1
@@ -181,6 +185,7 @@ Pattern Explanation:
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 244, @IsHide = @IsHidden_SAGaming OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @IsHide = @IsHidden_SexyGaming OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 242, @IsHide = @IsHidden_GTCasino OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 225, @IsHide = @IsHidden_ION OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHidden_BBIN OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
 
@@ -307,6 +312,13 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideGTCasino,
+			-- For ION
+			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_ION)) AS DisableION,			
+			CAST(	CASE	WHEN	@IsHidden_ION = 0 								
+								AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_ION), 1) = 0 
+								THEN 0
+							ELSE 1 
+					END AS BIT) AS HideION,
 			-- For BBIN
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BBIN)) AS DisableBBIN,
 			CAST(	CASE	WHEN	@IsHidden_BBIN = 0 
@@ -570,6 +582,13 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideGTCasino,
+			-- For ION
+			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_ION)) AS DisableION,			
+			CAST(	CASE	WHEN	@IsHidden_ION = 0 								
+								AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_ION), 1) = 0 
+								THEN 0
+							ELSE 1 
+					END AS BIT) AS HideION,
 			-- For BBIN
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BBIN)) AS DisableBBIN,
 			CAST(	CASE	WHEN	@IsHidden_BBIN = 0 
