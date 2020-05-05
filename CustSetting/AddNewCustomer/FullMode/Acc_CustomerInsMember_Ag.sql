@@ -1481,7 +1481,11 @@ BEGIN
 	BEGIN
 		DECLARE @QRMemberCount INT
 
-		SELECT @QRMemberCount = COUNT(1) FROM Customer WITH(NOLOCK) WHERE recommend = @recommend AND roleid = 1 AND creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+		SELECT @QRMemberCount = COUNT(1) 
+		FROM Customer a WITH(NOLOCK) 
+			INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
+		WHERE a.recommend = @recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+
 		IF @QRMemberCount >= 200
 		BEGIN
 			SELECT @ErrCode = 40051
