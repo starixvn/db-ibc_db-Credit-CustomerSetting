@@ -144,7 +144,7 @@ BEGIN
 
 	--Prevent users under 789y uncheck all Stakelevel
 	--Prevent from uncheck all stakelevel of member
-	IF @Site IN ('789y') OR  @roleid = 1 
+	IF (@SystemID != 1 AND @Site IN ('789y')) OR  @roleid = 1 
 	BEGIN
 		IF EXISTS (SELECT 1 
 					FROM #tmpStake WITH (NOLOCK)
