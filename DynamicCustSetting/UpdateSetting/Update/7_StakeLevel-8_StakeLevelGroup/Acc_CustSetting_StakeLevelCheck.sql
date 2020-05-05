@@ -79,37 +79,37 @@ BEGIN
 
 	EXEC sys.sp_xml_removedocument @iDoc;
 	--Prevent users under 789y uncheck all Stakelevel
-	--Prevent uncheck all Stakelevel of member level for setting type 17
-	IF @SystemID IN (6,7,8,9) OR (@RoleID = 1 AND @SettingType = 17)--789y OR Member level at Setting type 17
-	BEGIN
+	--Prevent uncheck all Stakelevel of member level for setting type 17,7
+	IF (((@RoleID = 1 OR @SystemID IN (1,6,7,8,9)) AND @SettingType = 17)) OR (@SystemID IN (6,7,8,9) AND @SettingType = 7) --Restrict for Member Level of all sites for setting type 17 or 789y all level 
+		BEGIN
 		IF EXISTS (SELECT 1 
 					FROM #tmpStakeCheck WITH (NOLOCK)
 					WHERE StakeLevelList IS NULL OR StakeLevelList='')
 		BEGIN
-			SELECT	@xml =	(
-										SELECT	10035												AS '@MsgID'
-											,	'Each bet type must have at least one Bet Limit value to be selected'	AS '@Msg'
-											,	(
-													SELECT	DISTINCT psd.SportType							AS '@SportType'
-														,	psd.BetType								AS '@BetType'
-													FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
-													INNER JOIN	#tmpStakeCheck AS ts
-															ON	ts.BetType = sl.GameTypeID
-													INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
-															ON	psd.SportType = ts.SportType
-															AND	psd.BetType = ts.BetType
-															AND	psd.SettingType = @SettingType
-													FOR XML PATH ('Row')
-												,	TYPE
-												)
-										FOR XML PATH ('Root')
-									,	TYPE
-									);
-			SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-					,	@MsgType = 131
-					,	@ErrCode = 10035;
-			RETURN;   
-		END
+				SELECT	@xml =	(
+											SELECT	10035												AS '@MsgID'
+												,	'Each bet type must have at least one Bet Limit value to be selected'	AS '@Msg'
+												,	(
+														SELECT	DISTINCT psd.SportType							AS '@SportType'
+															,	psd.BetType								AS '@BetType'
+														FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
+														INNER JOIN	#tmpStakeCheck AS ts
+																ON	ts.BetType = sl.GameTypeID
+														INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+																ON	psd.SportType = ts.SportType
+																AND	psd.BetType = ts.BetType
+																AND	psd.SettingType = @SettingType
+														FOR XML PATH ('Row')
+													,	TYPE
+													)
+											FOR XML PATH ('Root')
+										,	TYPE
+										);
+				SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+						,	@MsgType = 131
+						,	@ErrCode = 10035;
+				RETURN;   
+			END
 			IF @RoleID = 1
 			BEGIN
 				IF EXISTS (SELECT 1 
