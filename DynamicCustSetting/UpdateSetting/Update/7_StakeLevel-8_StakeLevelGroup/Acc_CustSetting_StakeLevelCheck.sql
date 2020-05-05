@@ -77,10 +77,15 @@ BEGIN
 	,	StakeLevelList	VARCHAR(200)	
 	) AS ox;
 
+	DECLARE @Site VARCHAR (10)
+	SELECT @Site = C.site
+	FROM Customer C WITH (NOLOCK)
+	WHERE C.custid = @SuperID
+
 	EXEC sys.sp_xml_removedocument @iDoc;
 	--Prevent users under 789y uncheck all Stakelevel
 	--Prevent uncheck all Stakelevel of member level for setting type 17,7
-	IF (((@RoleID = 1 OR @SystemID IN (1,6,7,8,9)) AND @SettingType = 17)) OR (@SystemID IN (6,7,8,9) AND @SettingType = 7) --Restrict for Member Level of all sites for setting type 17 or 789y all level 
+	IF (((@RoleID = 1 OR @Site='789y') AND @SettingType = 17)) OR (@SystemID IN (6,7,8,9) AND @SettingType = 7) --Restrict for Member Level of all sites for setting type 17 or 789y all level 
 		BEGIN
 		IF EXISTS (SELECT 1 
 					FROM #tmpStakeCheck WITH (NOLOCK)
