@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [DBA_ArchiveAccount_GenMasterSuperGroupLevel]
+ALTER PROCEDURE [DBA_ArchiveAccount_GenMasterSuperGroupLevel]
 (
 	@StageId	TINYINT
 )
@@ -29,9 +29,10 @@ BEGIN
 	INSERT INTO #tmpMaster (username, custid)
 	SELECT DISTINCT ag.username, ag.mrecommend
 	FROM dbo.tmpCustArchived t WITH (NOLOCK)
-		INNER JOIN Customer ag WITH (NOLOCK) ON ag.custid = t.recommend
+		INNER JOIN dbo.custInfo ag WITH (NOLOCK) ON ag.custid = t.recommend
+	WHERE t.ErrMsg = ''
+
 	
-	-- get all transid that not belong to any abnormal request
 	SELECT  @query = N''		
 	SELECT	@query = @query + N'SELECT custid FROM dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK)'
 	SELECT	@ExecuteSQL = N'EXECUTE DBACC.bodb_report.dbo.sp_executesql @query'
@@ -45,8 +46,9 @@ BEGIN
 			- Count total in Custinfo, all conditions except for no tickets and no new member 
 	*/
 	INSERT INTO dbo.tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
-	SELECT c.custid, c.roleid, @StageId
+	SELECT DISTINCT c.custid, c.roleid
 		,CASE WHEN mem.AgentCount = mem2.AgentCount THEN 'M1' ELSE 'M2' END AS GroupLevelName /*Match -> M1, Not Match -> M2*/
+		,@StageId
 	FROM customer c WITH (NOLOCK)
 		INNER JOIN #tmpMaster t ON t.custid = c.custid
 		OUTER APPLY (
@@ -80,8 +82,9 @@ BEGIN
 
 	
 	INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
-	SELECT c.custid, c.roleid, @StageId
+	SELECT DISTINCT c.custid, c.roleid
 		,CASE WHEN mem.AgentCount = mem2.AgentCount THEN 'S1' ELSE 'S2' END AS GroupLevelName /*Match -> S1, Not Match -> S2*/
+		,@StageId
 	FROM customer c WITH (NOLOCK)
 		INNER JOIN #tmpSuper t ON t.custid = c.custid
 		OUTER APPLY (
@@ -100,7 +103,7 @@ BEGIN
 				AND agci.closed = 0 
 				AND agci.enabled = 1
 				AND ca.isInternal = 0
-				AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
+				AND ag.srecommend NOT IN (SELECT custid FROM #Cust_ArchiveAcc_Exception)
 				AND ag.custid NOT IN(SELECT custid FROM #Cust_ArchiveAcc_Exception)
 				AND ag.srecommend = t.custid
 				AND agci.credit >= 0
