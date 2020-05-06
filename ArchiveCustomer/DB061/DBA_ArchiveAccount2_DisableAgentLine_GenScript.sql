@@ -9,11 +9,11 @@ AS
 	Original: DBA_ArchiveAccount1_DisableAgentLine_GenScript
 
 	Revisions:
-		20180305@Daniel: clone fro old SP:
-		 + Rename sp for stage No 2- start from 1 instead of 0
+		- 20180305@Daniel: clone fro old SP:
+			+ Rename sp for stage No 2- start from 1 instead of 0
 
-	20190327@Daniel: Add custom scan start date and use permanent preloaded tempCustID table
-
+		- 20190327@Daniel: Add custom scan start date and use permanent preloaded tempCustID table
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		
 	Param's Explanation:
 */
@@ -84,6 +84,7 @@ WHERE ag.isFinished = 1
 		WHERE --roleid = 1 AND
 			creatdate >= @startdate
 		)
+	AND agci.credit >= 0
 
 --Get more other cust based on s2 condition
 INSERT INTO #tmpAg
@@ -120,6 +121,7 @@ WHERE ag.roleid = 2
 			creatdate >= @startdate
 		)
 	AND agci.custid NOT IN (SELECT recommend FROM bodb_report.dbo.tmpCustArchived)
+	AND agci.credit >= 0
 		
 
 SELECT sag.username Super

@@ -9,7 +9,7 @@ AS
 
 	Revisions:
 		- 20190519@Daniel: Created
-
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 	Param:
 		+ @stage: input stage to run archive
 */
@@ -52,6 +52,8 @@ BEGIN
 			WAITFOR DELAY '00:00:00.120'
 			--IF (@ErrMsg <> '') BREAK
 		END
+		--Gen List Super Master into tmpCustGroupLevelArchived
+		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 	END
 	else if(@stage = 2)
 	BEGIN
@@ -73,6 +75,8 @@ BEGIN
 			WAITFOR DELAY '00:00:00.120'
 			--IF (@ErrMsg <> '') BREAK
 		END
+		--Gen List Super Master into tmpCustGroupLevelArchived
+		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 	END
 	else if(@stage = 3)
 	BEGIN
@@ -94,6 +98,8 @@ BEGIN
 			WAITFOR DELAY '00:00:00.280'
 			--IF (@ErrMsg <> '') BREAK
 		END
+		--Gen List Super Master into tmpCustGroupLevelArchived
+		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 	END
 	else if(@stage = 4)
 	BEGIN

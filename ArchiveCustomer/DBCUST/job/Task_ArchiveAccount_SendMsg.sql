@@ -8,10 +8,11 @@ AS
 	Database: DBCUST.CustDB
 
 	Revisions:
-	- 20190519@Daniel: Created
+		- 20190519@Daniel: Created
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 
 	Param:
-		+ @stage: input stage 1 or 2 to send message
+		+ @stage: input stage 1 or 2, 3 to send message
 */
 BEGIN
 
@@ -19,24 +20,34 @@ BEGIN
 	
 	DECLARE @status varchar(200)
 
-	CREATE TABLE #tmpMaster(MasterID INT, Username VARCHAR(30))
+	CREATE TABLE #tmpMasterSuper(CustId INT, Username VARCHAR(30), GroupLevelName VARCHAR(10), RoleId INT) --Include Super
 
-	INSERT #tmpMaster
-	SELECT DISTINCT NULL MasterID, master Username FROM tmpCustArchived WHERE ErrMsg = ''
-
-	UPDATE b SET b.MasterID = c.custid
-	FROM #tmpMaster b INNER JOIN dbo.custinfo c with (nolock) on b.username = c.username
-	WHERE c.roleid = 3
+	INSERT #tmpMasterSuper (CustId, Username, GroupLevelName, RoleId)
+	SELECT t.custid, c.username, t.GroupLevelName, t.RoleId
+	FROM dbo.tmpCustGroupLevelArchived t WITH (NOLOCK)
+		INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.custid = t.custid
+	WHERE StageID = @stage
 
 	DECLARE @MasterList VARCHAR(MAX)
+	DECLARE @SMList VARCHAR(MAX)
 
 	-- assign elements into XML format
 	SET @MasterList = (
 		SELECT 	
-			MasterID	AS '@MasterID'
+			CustId	AS '@MasterID'
 			,Username AS '@UserName'
-		FROM #tmpMaster
+		FROM #tmpMasterSuper
+		WHERE RoleId = 3
 		FOR XML PATH ('Master'),root ('ROOT')
+		)
+
+	SET @SMList = (
+		SELECT 	
+			CustId	AS '@CustId'
+			,Username AS '@UserName'
+			,GroupLevelName  AS '@GroupLevelName'
+		FROM #tmpMasterSuper
+		FOR XML PATH ('SM'),root ('ROOT')
 		)
 	
 	if (@stage is null)
@@ -45,5 +56,7 @@ BEGIN
 		select @stage = case @status when 'Stage 1 - Running' then 1 when 'Stage 2 - Running' then 2 else 0 end
 	end
 	
-	if (@stage in(1, 2, 11)) EXEC DBMSG.bodb_message.dbo.DBA_Archive_PrivateMessageForMasterAcc @MasterList = @MasterList, @stage = @stage
+	if (@stage in(11)) EXEC DBMSG.bodb_message.dbo.DBA_Archive_PrivateMessageForMasterAcc @MasterList = @MasterList, @stage = @stage
+	if (@stage in(1,2,3)) EXEC DBMSG.bodb_message.dbo.DBA_Archive_PrivateMessageForSuperMaster @SMList = @SMList, @stage = @stage
+
 END

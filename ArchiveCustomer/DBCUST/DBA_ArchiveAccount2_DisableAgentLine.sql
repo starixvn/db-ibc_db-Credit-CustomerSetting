@@ -12,14 +12,14 @@ AS
 	DB: DBCUST/CustDB
 	
 	Revisions:
-		20180305@Daniel: clone fro old SP DBA_ArchiveAccount1_DisableAgentLine:
-		 + Rename sp for stage No 2- start from 1 instead of 0
-		 + support new custinfo columns
+		- 20180305@Daniel: clone fro old SP DBA_ArchiveAccount1_DisableAgentLine:
+			+ Rename sp for stage No 2- start from 1 instead of 0
+			+ support new custinfo columns
 
-		20180822: Remove table custVirtuaRate
-		20190917@Daniel: Remove inactive products - unused custinfo columns (#117439 - P2)
-		20190929@Daniel: Involve more setting tables
-
+		- 20180822: Remove table custVirtuaRate
+		- 20190917@Daniel: Remove inactive products - unused custinfo columns (#117439 - P2)
+		- 20190929@Daniel: Involve more setting tables
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 
 */
    
@@ -31,9 +31,9 @@ declare @endRun datetime
 declare @duration int, @Now datetime
 set @startRun = getdate()
 
-Declare @roleid int, @AgentID int, @Enabled bit
+Declare @roleid int, @AgentID int, @Enabled bit, @srecommend INT, @mrecommend INT, @AgentCredit MONEY
 
-SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled
+SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @srecommend = srecommend, @mrecommend = mrecommend, @AgentCredit = credit
 FROM custinfo (nolock)
 WHERE username = @AccName
 
@@ -411,6 +411,11 @@ WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and 
 
 -- update enable = 0, credit = 0 for whole agent line (use new execRep SP)
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 0
+
+--Update credit for Master, Super of Agent
+UPDATE dbo.custInfo WITH (ROWLOCK, UPDLOCK)
+	SET credit = credit - @AgentCredit
+WHERE custid IN (@srecommend, @mrecommend)
 ----------------------------------------------------------------
 print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 

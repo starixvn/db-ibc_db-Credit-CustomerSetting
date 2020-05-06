@@ -8,9 +8,9 @@ AS
 	Original:
 
 	Revisions:
-		20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
-
-		
+		- 20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
+	
 	Param's Explanation:
 */
 IF (1 = 0)-- dummy code to trick ssis load result set
@@ -90,6 +90,7 @@ WHERE ag.isFinished = 1
 		WHERE --roleid = 1 AND
 			creatdate >= @DDiff
 		)
+	AND agci.credit >= 0
 
 
 --Get more other cust based on s4 condition
@@ -133,6 +134,7 @@ WHERE ag.roleid = 2
 			creatdate >= @DDiff
 		)
 	AND agci.custid NOT IN (SELECT recommend FROM bodb_report.dbo.tmpCustArchived)
+	AND agci.credit >= 0
 		
 
 SELECT sag.username Super

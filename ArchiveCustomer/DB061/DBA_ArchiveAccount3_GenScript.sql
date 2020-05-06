@@ -8,10 +8,10 @@ AS
 	Original:
 
 	Revisions:
-		20180305@Daniel: clone from old SP: DBA_ArchiveAccount2_GenScript
-		 + rename SP to count stage from 1 => No. 3 for this stage
-
-		
+		- 20180305@Daniel: clone from old SP: DBA_ArchiveAccount2_GenScript
+			+ rename SP to count stage from 1 => No. 3 for this stage
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
+	
 	Param's Explanation:
 */
 IF (1 = 0)-- dummy code to trick ssis load result set
@@ -89,6 +89,7 @@ WHERE ag.roleid = 2
 		WHERE --roleid = 1 AND
 			creatdate >= DATEADD(mm, -7, GETDATE())
 		)
+	AND agci.credit >= 0
 		
 
 SELECT sag.username Super
