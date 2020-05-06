@@ -16,6 +16,7 @@ AS
 		- 20200314@Elodie: Offer Midas Game for 789y site only [Redmine: #129032]
 		- 20200414@Elodie: Offer XocDia for 789y site only [Redmine: #131283]
 		- 20200420@Elodie: Offer 3DGame for 789y site only [Redmine: #132254]
+		- 20200506@Elodie: Offer HILO for 789y site only [Redmine: #133597]
 
 	Param's Explanation:
 */
@@ -74,7 +75,7 @@ BEGIN
 		INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.StakeLevelID = sll.StakeLevelID
 		INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK) ON gg.GameGroupID = sl.GameGroupID
 		INNER JOIN	dbo.StakeLevelGroupDetail AS sd WITH (NOLOCK) ON sd.StakeLevelID = sl.StakeLevelID
-	WHERE 1 = CASE WHEN (sd.GameTypeID IN (1902, 1903, 1904) AND (@Site = '789y' OR (@Site = 'BEST-ODDS' AND @ExchangeID = 20))) OR sd.GameTypeID NOT IN (1902, 1903, 1904) THEN 1 ELSE 0 END 
+	WHERE 1 = CASE WHEN (sd.GameTypeID IN (1902, 1903, 1904, 1905) AND (@Site = '789y' OR (@Site = 'BEST-ODDS' AND @ExchangeID = 20))) OR sd.GameTypeID NOT IN (1902, 1903, 1904, 1905) THEN 1 ELSE 0 END 
 
 	SELECT	TOP(CASE WHEN @ShowAll = 1 THEN @TotalRows ELSE CASE WHEN @NoOfRows = 0 THEN 0 ELSE @TotalRows / @NoOfRows * 10 END END) 
 			gg.RefSportType							SportType
@@ -85,7 +86,7 @@ BEGIN
 		INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.StakeLevelID = sll.StakeLevelID
 		INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK) ON gg.GameGroupID = sl.GameGroupID
 		INNER JOIN	dbo.StakeLevelGroupDetail AS sd WITH (NOLOCK) ON sd.StakeLevelID = sl.StakeLevelID
-	WHERE 1 = CASE WHEN (sd.GameTypeID IN (1902, 1903, 1904) AND (@Site = '789y' OR (@Site = 'BEST-ODDS' AND @ExchangeID = 20))) OR sd.GameTypeID NOT IN (1902, 1903, 1904) THEN 1 ELSE 0 END 
+	WHERE 1 = CASE WHEN (sd.GameTypeID IN (1902, 1903, 1904, 1905) AND (@Site = '789y' OR (@Site = 'BEST-ODDS' AND @ExchangeID = 20))) OR sd.GameTypeID NOT IN (1902, 1903, 1904, 1905) THEN 1 ELSE 0 END 
 	ORDER BY	SportType, BetType, StakeLevelGroupID
 
 END
