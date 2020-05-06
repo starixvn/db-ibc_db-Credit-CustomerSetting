@@ -1,0 +1,17 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{D183A3D8-5FD8-494B-B014-37F57B35E655}") = "ArchiveCreditAcc", "ArchiveCreditAcc\ArchiveCreditAcc.dtproj", "{A4D6B68E-2579-4065-960D-3497A6372E49}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Development|Default = Development|Default
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A4D6B68E-2579-4065-960D-3497A6372E49}.Development|Default.ActiveCfg = Development
+		{A4D6B68E-2579-4065-960D-3497A6372E49}.Development|Default.Build.0 = Development
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

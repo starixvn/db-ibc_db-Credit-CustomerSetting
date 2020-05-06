@@ -1,0 +1,146 @@
+/*<info serverAlias="DBCUST-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
+ALTER PROCEDURE [DBA_ArchiveAccount1_CloseAgentLine]
+	@AccName varchar(50),
+	@UserID int = 360418,
+	@ErrMsg nvarchar(200) = '' OUTPUT,
+	@ErrCode int = 0 OUTPUT
+AS
+    
+SET NOCOUNT ON
+
+/*Description: Close an Agent
+Create date: 20180126
+Original SP: 
+DB: DBCUST/CustDB
+Revisions:    
+	- 20180126@Daniel: cloned from DBA_ArchiveAccount0_CloseAgent & change:
+	  + add close all downline members (use execRep)
+	  
+	
+*/
+
+declare @startRun datetime
+declare @endRun datetime
+declare @duration int
+set @startRun = getdate()
+
+Declare @roleid int, @AgentID int, @Enabled bit, @Closed bit
+
+SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @Closed = Closed
+FROM custinfo (nolock)
+WHERE username = @AccName
+
+if isnull(@AgentID,0) = 0 or @roleid NOT in (2)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'Invalid Agent User Name', @ErrCode = 101
+	print @ErrMsg
+	return
+END
+
+if @Enabled = 0
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent has been archived!!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 	
+	print @ErrMsg
+	return
+END
+
+if @Closed = 1
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent has already been CLOSED!!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 	
+	print @ErrMsg
+	return
+END
+
+
+--== Check new created members ==========================
+
+IF EXISTS(select 1 from dbo.customer with (nolock) where recommend = @AgentID AND roleid = 1 AND creatdate >= DATEADD(mm, -3, GETDATE()))
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just created new members while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	print @ErrMsg
+	return
+END
+
+--== Check new active trans ==========================
+
+IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	print @ErrMsg
+	return
+END
+
+IF EXISTS(select 1 from DBTXN.bodb02.dbo.translog with (nolock) where recommend = @AgentID)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	print @ErrMsg
+	return
+END
+
+IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransLC with (nolock) where recommend = @AgentID)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	print @ErrMsg
+	return
+END
+
+IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransRNG with (nolock) where recommend = @AgentID)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	print @ErrMsg
+	return
+END
+
+
+--backup data for later rollback for this stage
+insert into DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+	[ArchiveDate],
+	[custid],
+	[closed],
+	[reject],
+	[credit]
+)
+select	
+	GetDate(), 
+	[custid],
+	[closed],
+	[reject],
+	[credit]
+from	custinfo c with (nolock)
+where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
+	and NOT EXISTS (select top 1 1 from DBARCCUST.bodb_Customer.dbo.CustBackupClosed with (nolock) where custid = c.custid)
+
+
+--close whole line using ExecRep
+
+EXEC dbo.Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = -1
+
+------------------
+declare @LogSPData varchar(5000)
+
+Select @LogSPData = '<DBA_ArchiveAccount1_CloseAgentLine AccName="'+ coalesce(cast(@AccName as varchar(50)),space(1)) + '" ' +
+'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1)) + '" ' +
+'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" />'
+
+set @endRun = getdate()
+set @duration  = datediff (millisecond,@startRun,@endRun)
+
+EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+	@UserID = @UserID,
+	@CustID = @AgentID,
+	@ActionID = 1115,
+	@TrackingValue = @LogSPData,
+	@duration = @duration
+
+
+
+GO
+
