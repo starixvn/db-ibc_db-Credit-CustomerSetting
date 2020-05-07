@@ -27,6 +27,10 @@ BEGIN
 	FROM dbo.tmpCustGroupLevelArchived t WITH (NOLOCK)
 		INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.custid = t.custid
 	WHERE StageID = @stage
+		AND 1 =  CASE WHEN StageID = 1 AND GroupLevelName IN ('M1','S1','M2','S2','S3') THEN 1
+				WHEN StageID = 2 AND GroupLevelName IN ('M1','S1','M2','S2','S3') THEN 1
+				WHEN StageID = 3 AND GroupLevelName IN ('M1','M2') THEN 1
+			ELSE 0 END
 
 	DECLARE @MasterList VARCHAR(MAX)
 	DECLARE @SMList VARCHAR(MAX)
