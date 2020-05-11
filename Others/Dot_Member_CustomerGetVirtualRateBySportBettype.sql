@@ -11,7 +11,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@IsApplyVR2			BIT = 0,
 					@srecommend         INT,
 					@usertype			INT = 0, --0:default(MBC) 1:IMBC 2:CN88
-                    @virtualMultiplier	SMALLMONEY	OUT                    
+                    @virtualMultiplier	SMALLMONEY	OUT,
+					@RefLevelID			INT = NULL                    
 AS
 /*
     Created: 20151019@joy
@@ -27,6 +28,7 @@ AS
 		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours ( Weekends 6am - 8pm HK time and WEEKDAYS 6am - 1am HK time)
 		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours (WEEKENDS 6am - 8pm HK time, X=-3%, WEEKDAYS 6am - 8pm HK time, X = -3%, WEEKDAYS 8pm - 1am HK time, X = -2%)
 		-- 20200512@VN-Eden: Disable VR setting of CN88 Customers [#133976]
+		-- 20200511@VN-Eden: E-sport VR for Map X Overtime [#132517]
 
     Parameter's Explanation:
 */
@@ -152,21 +154,24 @@ BEGIN
 		FROM VRLeagueGroupMapping WITH (NOLOCK)
 		WHERE LeagueGroupID = @LeagueGroupID
 
-		--If LeagueGroupID and bettype are not configured for VR setting
-		--then get setting on sport level
-		IF NOT EXISTS(SELECT 1 FROM VRSettingHierarchy WITH (NOLOCK)
-				WHERE VRLeagueGroupID=@VRLeagueGroupID 
+		IF ISNULL(@RefLevelID,0) = 0
+		BEGIN
+			SELECT @RefLevelID = LevelID 
+			FROM VRSettingHierarchy WITH (NOLOCK)
+			WHERE VRLeagueGroupID=@VRLeagueGroupID 
+				AND BetType = @Bettype
 				AND SportType=@SportType
-				AND BetType = @Bettype)
-			SELECT @VRLeagueGroupID = -1, @Bettype = -1 --Sport Level
 
+			IF ISNULL(@RefLevelID,0) = 0 
+				SELECT @RefLevelID = 1	--Esport level	
+		END
+  
 		--Get VR multiplier
 		;WITH VR_Hierachy AS (
 			SELECT LevelID, ParentLevelID, 1 OrderNo
 			FROM VRSettingHierarchy h WITH (NOLOCK)
 			WHERE SportType = @SportType 
-				AND BetType = @Bettype
-				AND VRLeagueGroupID = @VRLeagueGroupID
+				AND LevelID = @RefLevelID
 			UNION ALL
 			SELECT c.LevelID, c.ParentLevelID, p.OrderNo + 1  OrderNo
 			FROM VRSettingHierarchy c WITH (NOLOCK)
