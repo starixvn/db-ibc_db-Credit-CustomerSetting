@@ -3484,7 +3484,7 @@ BEGIN
 	    return
     END
 	
-	IF ISNULL(@IsQRCode,0) = 0
+	IF ISNULL(@IsQRCode,0) = 1
 	BEGIN
 		INSERT INTO [dbo].[CustQRCode] (CustID)
 		SELECT @custid
