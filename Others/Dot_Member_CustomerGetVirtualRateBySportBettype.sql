@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @CustID				INT,
                     @SportType			SMALLINT,
@@ -27,6 +26,7 @@ AS
 		-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
 		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours ( Weekends 6am - 8pm HK time and WEEKDAYS 6am - 1am HK time)
 		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours (WEEKENDS 6am - 8pm HK time, X=-3%, WEEKDAYS 6am - 8pm HK time, X = -3%, WEEKDAYS 8pm - 1am HK time, X = -2%)
+		-- 20200512@VN-Eden: Disable VR setting of CN88 Customers [#133976]
 
     Parameter's Explanation:
 */
@@ -198,7 +198,7 @@ BEGIN
 
 	END
 	
-	IF @virtualMultiplier IS NULL
+	IF @virtualMultiplier IS NULL OR @usertype = 2 --CN88
 		SELECT @virtualMultiplier = 1
 
 	--Apply Currency Modifier
