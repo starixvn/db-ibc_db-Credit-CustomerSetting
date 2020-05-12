@@ -35,6 +35,21 @@ BEGIN
 
 END
 
+CREATE TABLE #SuperHeadLine (custId INT)
+CREATE TABLE #SuperPhoneBetting (custId INT)
+
+INSERT INTO #SuperHeadLine (custId)
+SELECT DISTINCT ci.srecommend		
+FROM CustGroupHeadline gl (nolock)		
+	INNER JOIN Customer ci (nolock) ON gl.CustID = ci.custid		
+WHERE GroupID > 0 and ci.roleid in (1,2,3,4)
+
+INSERT INTO #SuperPhoneBetting (custId)
+SELECT DISTINCT ag.custid
+FROM phonebettingCustomerList p WITH(NOLOCK)
+	INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
+	INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
+
 DECLARE @startdate smalldatetime
 SET @startdate = DATEADD(mm, - 4, GETDATE())
 
@@ -84,7 +99,46 @@ WHERE ag.isFinished = 1
 		WHERE --roleid = 1 AND
 			creatdate >= @startdate
 		)
-	AND agci.credit >= 0
+	AND agci.srecommend NOT IN (SELECT custid FROM #SuperHeadLine)
+	AND agci.srecommend NOT IN (SELECT custid FROM #SuperPhoneBetting)
+	AND agci.srecommend NOT IN (1584511--	SMON
+								,17131340	--	RG2
+								,20505414	--	HG81
+								,31381376	--	L1
+								,31890071	--	RG33
+								,32506252	--	RG37
+								,32546605	--	AMH5
+								,34176539	--	KW19
+								,39428597	--	RG81
+								,40906204	--	RG83
+								,859594	--	S99H
+								,2953285	--	HPV
+								,5044097	--	HPMM
+								,18119949	--	A3
+								,25256329	--	S99BE
+								,26979533	--	B60T
+								,28182257	--	JYZ
+								,28969062	--	B59T
+								,1687347	--	S222TH
+								,29680156	--	B62T
+								,39583203	--	B70T
+								,39583632	--	B65T
+								,1528414	--	B6T
+								,1538175	--	B14T
+								,20060537	--	SSD72
+								,16731414	--	CG34
+								,31556024	--	QZ9Q
+								,21127993	--	DT25
+								,2198456	--	TV71
+								,5362687	--	BC9
+								,25174645	--	TVA9C
+								,22765105	--	MBO
+								,5453438	--	K9
+								,9735627	--	S6KW
+								,24400636--	S68H
+								,14182461--	supertest3 
+								,1176070	--	SuperTest1
+							)
 
 --Get more other cust based on s2 condition
 INSERT INTO #tmpAg
@@ -121,7 +175,46 @@ WHERE ag.roleid = 2
 			creatdate >= @startdate
 		)
 	AND agci.custid NOT IN (SELECT recommend FROM bodb_report.dbo.tmpCustArchived)
-	AND agci.credit >= 0
+	AND agci.srecommend NOT IN (SELECT custid FROM #SuperHeadLine)
+	AND agci.srecommend NOT IN (SELECT custid FROM #SuperPhoneBetting)
+	AND agci.srecommend NOT IN (1584511--	SMON
+								,17131340	--	RG2
+								,20505414	--	HG81
+								,31381376	--	L1
+								,31890071	--	RG33
+								,32506252	--	RG37
+								,32546605	--	AMH5
+								,34176539	--	KW19
+								,39428597	--	RG81
+								,40906204	--	RG83
+								,859594	--	S99H
+								,2953285	--	HPV
+								,5044097	--	HPMM
+								,18119949	--	A3
+								,25256329	--	S99BE
+								,26979533	--	B60T
+								,28182257	--	JYZ
+								,28969062	--	B59T
+								,1687347	--	S222TH
+								,29680156	--	B62T
+								,39583203	--	B70T
+								,39583632	--	B65T
+								,1528414	--	B6T
+								,1538175	--	B14T
+								,20060537	--	SSD72
+								,16731414	--	CG34
+								,31556024	--	QZ9Q
+								,21127993	--	DT25
+								,2198456	--	TV71
+								,5362687	--	BC9
+								,25174645	--	TVA9C
+								,22765105	--	MBO
+								,5453438	--	K9
+								,9735627	--	S6KW
+								,24400636--	S68H
+								,14182461--	supertest3 
+								,1176070	--	SuperTest1
+							)
 		
 
 SELECT sag.username Super
@@ -136,6 +229,8 @@ FROM customer ag WITH (NOLOCK)
 ORDER BY [Member Count] DESC
 
 DROP TABLE #tmpAg
+DROP TABLE #SuperHeadLine
+DROP TABLE #SuperPhoneBetting
 
 
 
