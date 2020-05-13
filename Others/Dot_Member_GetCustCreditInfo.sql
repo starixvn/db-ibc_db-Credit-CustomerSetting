@@ -57,6 +57,7 @@ AS
 	-- 20200116@VN-Elodie: Add a new different logic to get VR setting for Soccer
 	-- 20200203@VN-Elodie: Apply Currency Modifier
 	-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
+	-- 20200512@VN-Eden: Disable VR setting of CN88 Customers [#133976]
 */	
 BEGIN
 
@@ -211,6 +212,7 @@ BEGIN
 									, @LeagueGroupID = @LeagueGroupID
 									, @srecommend = @srecommend								
 									, @virtualMultiplier = @new_virtualrate OUT
+									, @usertype = @usertype
 		END
 
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
@@ -222,20 +224,24 @@ BEGIN
 									, @isLicensee = @isLicensee	
 									, @srecommend = @srecommend															
 									, @virtualMultiplier = @new_virtualrate OUT
+									, @usertype = @usertype
 		END
 
 		SET @virtualrate = isnull(@new_virtualrate,1)
 	end
 
 	--Get E-Sport Autosuspend 
-	IF @sporttype = 43 AND @isparlay = 0
+	IF @sporttype = 43 AND @isparlay = 0 
 	BEGIN
 		SET @autosuspend = @False
 
-		SELECT @autosuspend = t.IsVRAutoSuspend 
-		FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
+		IF ISNULL(@usertype,0) <> 2 -- not CN88
+		BEGIN
+			SELECT @autosuspend = t.IsVRAutoSuspend 
+			FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
 
-		SET @autosuspend = ISNULL(@autosuspend,@False)
+			SET @autosuspend = ISNULL(@autosuspend,@False)
+		END
 	END
 	
 	--Get data from DCS structure
