@@ -34,10 +34,11 @@ AS
 		- 20190114@Johnson: dont update bettype inactive for settingType = 7(Allbet) [Redmine: #106601]
 		- 20190814@Eden: Hide setting of inactive products [Redmine: #117439]
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 	*/
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @xmlPT XML, @xmlBetLimit XML, @xmlDiscount XML, @xmlStatus XML, @xmlWinLossLimit XML, @xmlStakeLevel XML,@xmlStakeLevel8 XML, @xmlLossLimit XML
+	DECLARE @xmlPT XML, @xmlBetLimit XML, @xmlDiscount XML, @xmlStatus XML, @xmlWinLossLimit XML, @xmlStakeLevel XML,@xmlStakeLevel17 XML,@xmlStakeLevel8 XML, @xmlLossLimit XML
 	DECLARE @xmlStr VARCHAR(MAX)
 	SELECT @ErrCode = 0		
 	
@@ -548,9 +549,72 @@ BEGIN
 				,	@UserID		= @UserID
 				,	@IP			= @IP
 				,   @SystemID = @SystemID --20200305@Tiara
+				,   @SettingType = 7 
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
 		DELETE FROM	#TempStakeLevel WHERE ProductID=@ProductID7			
+	END
+	END
+
+	/****************************** Stake Level Member Multiple Selection : SettingType = 17 ******************************/
+	
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 17))
+	BEGIN
+		DECLARE @ProductID17 INT
+		CREATE TABLE #TempStakeLevel17 (ProductID INT)
+		DECLARE	@NewStakeLevelTbl17 TABLE (
+					SportType		SMALLINT
+				,	BetType			SMALLINT
+				,	StakeLevelList	VARCHAR(200)
+				)
+		INSERT INTO @NewStakeLevelTbl17
+			(	SportType     , BetType     , StakeLevelList)
+		SELECT	cslm.SportType, cslm.BetType, cslm.StakeLevelList
+		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,17) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType	
+		WHERE	cslm.CustID = @ExistingCustID
+		
+		INSERT INTO #TempStakeLevel17(ProductID)	
+			SELECT 
+					DISTINCT
+					psd.ProductID				
+			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			INNER JOIN	@NewStakeLevelTbl17 AS ts
+					ON	ts.SportType = psd.SportType
+					AND	ts.BetType = psd.BetType
+			WHERE	psd.SettingType = 17
+				AND psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+				
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempStakeLevel17)
+		BEGIN
+		SELECT TOP 1 @ProductID17=ProductID FROM #TempStakeLevel17
+		SELECT	@xmlStakeLevel17 =	(
+										SELECT	nslt.SportType			AS '@SportType'
+											,	nslt.BetType			AS '@BetType'
+											,	nslt.StakeLevelList		AS '@StakeLevelList'
+										FROM	@NewStakeLevelTbl AS nslt
+										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										WHERE SettingType=17 AND  psd.ProductID=@ProductID17
+											AND settingStatus IN (0,1) --active bettype
+										FOR XML PATH('StakeLevel')
+									,	ROOT('ROOT')
+									,	TYPE
+									)
+	
+		SELECT	@xmlStr = CONVERT(VARCHAR(MAX), @xmlStakeLevel17)
+
+		EXEC	dbo.Acc_CustSetting_StakeLevelUpd 
+					@CustID		= @CustID
+				,	@StakeLevel	= @xmlStr
+				,	@SubAccID	= @SubAccID
+				,	@UserID		= @UserID
+				,	@IP			= @IP
+				,   @SystemID = @SystemID --20200305@Tiara
+				,   @SettingType = 17 
+				,	@ErrCode	= @ErrCode		OUTPUT
+				,	@ErrMsg		= @ErrMsg		OUTPUT	
+		DELETE FROM	#TempStakeLevel17 WHERE ProductID=@ProductID17			
 	END
 	END
 	/****************************** Stake Level Member Single Selection : SettingType = 8 ******************************/
@@ -607,6 +671,7 @@ BEGIN
 				,	@UserID		= @UserID
 				,	@IP			= @IP
 				,   @SystemID   =  @SystemID --20200305@Tiara
+				,   @SettingType = 8
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
 				

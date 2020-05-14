@@ -36,6 +36,7 @@ AS
 		- 20180206@Elodie: Fix bug "default status of new direct master does not take into ProductStatusSiteCurrency table" - [Redmine #90570]
 		- 20190408@Johnson: add suspendInfo [Redmine: #105587]
 		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
+		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
@@ -1276,13 +1277,18 @@ BEGIN
 
 		
 		/****************************** Stake Level Member Single Selection : SettingType = 7 ******************************/
+		/****************************** Stake Level Member Multiple Selection : SettingType = 17 ******************************/
 		/*************************** Group Stake Level Member Single Selection : SettingType = 8 ***************************/
+
 		SELECT * INTO #SportBettypeFilter7
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7)
 		INSERT INTO #SportBettypeFilter7
 		SELECT * 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,17)
+		UNION ALL
+		SELECT * 
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8)
-		
+
 		BEGIN TRY
 			IF	@RoleID = 4
 			BEGIN

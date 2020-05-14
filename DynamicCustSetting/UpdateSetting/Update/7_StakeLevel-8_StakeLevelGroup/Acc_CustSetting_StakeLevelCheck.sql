@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_StakeLevelCheck]
 	, @SuperID			INT
 	, @StakeLevel		VARCHAR(MAX)
 	, @SystemID INT --20200305@Tiara
+	, @SettingType SMALLINT --20200414@Tiara
 	, @ProductID TINYINT 
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
@@ -20,6 +21,7 @@ AS
 	Revisions:
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200330@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP applied for SB2 [Redmine: #131163]
+		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -49,10 +51,11 @@ BEGIN
 	DECLARE	@BetType				INT
 		,	@StakeLevelList			VARCHAR(100)
 		,	@UplineStakeLevelList	VARCHAR(100)
-		,	@invalidStakeLevelID	VARCHAR(100);
+		,	@invalidStakeLevelID	VARCHAR(100)
+		,	@wrongStakeLevelList	VARCHAR(100) 
 
 	DECLARE	@xml					XML
-		,	@SettingType			SMALLINT;
+	
 
 	IF @StakeLevel IS NULL OR @StakeLevel = ''
 		RETURN;
@@ -61,8 +64,6 @@ BEGIN
 		,	@MsgType	= 0
 		,	@ErrMsg		= '';
 
-	-- Stake Level Member Single Selection
-	SELECT	@SettingType = 7;
 
 	EXEC sys.sp_xml_preparedocument @iDoc OUTPUT, @StakeLevel;
 
@@ -76,38 +77,90 @@ BEGIN
 	,	StakeLevelList	VARCHAR(200)	
 	) AS ox;
 
+	DECLARE @Site VARCHAR (10)
+	SELECT @Site = C.site
+	FROM Customer C WITH (NOLOCK)
+	WHERE C.custid = @SuperID
+
 	EXEC sys.sp_xml_removedocument @iDoc;
 	--Prevent users under 789y uncheck all Stakelevel
-	IF @SystemID IN (6,7,8,9) --789y Alpha, 789y ExtNAP 
-	BEGIN
+	--Prevent uncheck all Stakelevel of member level for setting type 17,7
+	IF (@RoleID = 1 AND @SettingType = 17) OR @SystemID IN (6,7,8,9) --Restrict for Member Level of all sites for setting type 17 or 789y all level 
+		BEGIN
 		IF EXISTS (SELECT 1 
 					FROM #tmpStakeCheck WITH (NOLOCK)
 					WHERE StakeLevelList IS NULL OR StakeLevelList='')
 		BEGIN
-			SELECT	@xml =	(
-										SELECT	10035												AS '@MsgID'
-											,	'Each bet type must have at least one Bet Limit value to be selected'	AS '@Msg'
-											,	(
-													SELECT	psd.SportType							AS '@SportType'
-														,	psd.BetType								AS '@BetType'
-													FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
-													INNER JOIN	#tmpStakeCheck AS ts
-															ON	ts.BetType = sl.GameTypeID
-													INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
-															ON	psd.SportType = ts.SportType
-															AND	psd.BetType = ts.BetType
-															AND	psd.SettingType = @SettingType
-													FOR XML PATH ('Row')
-												,	TYPE
-												)
-										FOR XML PATH ('Root')
-									,	TYPE
-									);
-			SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-					,	@MsgType = 131
-					,	@ErrCode = 10035;
-			RETURN;   
+				SELECT	@xml =	(
+											SELECT	10035												AS '@MsgID'
+												,	'Each bet type must have at least one Bet Limit value to be selected'	AS '@Msg'
+												,	(
+														SELECT	DISTINCT psd.SportType							AS '@SportType'
+															,	psd.BetType								AS '@BetType'
+														FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
+														INNER JOIN	#tmpStakeCheck AS ts
+																ON	ts.BetType = sl.GameTypeID
+														INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+																ON	psd.SportType = ts.SportType
+																AND	psd.BetType = ts.BetType
+																AND	psd.SettingType = @SettingType
+														FOR XML PATH ('Row')
+													,	TYPE
+													)
+											FOR XML PATH ('Root')
+										,	TYPE
+										);
+				SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+						,	@MsgType = 131
+						,	@ErrCode = 10035;
+				RETURN;   
+			END
+			IF @RoleID = 1
+			BEGIN
+				IF EXISTS (SELECT 1 
+						FROM  #tmpStakeCheck T WITH (NOLOCK)
+							INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON T.SportType = P.SportType AND T.BetType = P.BetType
+							CROSS APPLY dbo.strSplit(T.StakeLevelList,',') 
+						WHERE P.SettingType = @SettingType AND P.ProductID = @ProductID
+						GROUP BY P.SportType, P.BetType, P.MaxChoice
+						HAVING COUNT(VAL) > P.MaxChoice
+					)
+				BEGIN
+				--Select Product Name
+				DECLARE @ProductName VARCHAR (50)
+				
+				SELECT	@ProductName = p.ProductName
+				FROM	DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
+				WHERE	p.ProductID = @ProductID;
+
+				SELECT	@xml =	(
+											SELECT	10036												AS '@MsgID'
+												,	(
+														SELECT	DISTINCT 'You can only assign maximum '+CAST(PSD.MaxChoice AS VARCHAR)+ ' bet limits to member level for '+@ProductName	AS '@Msg'
+															,	psd.SportType							AS '@SportType'
+															,	psd.BetType								AS '@BetType'
+															,  psd.MaxChoice							AS '@MaxChoice'
+														FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
+														INNER JOIN	#tmpStakeCheck AS ts
+																ON	ts.BetType = sl.GameTypeID
+														INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+																ON	psd.SportType = ts.SportType
+																AND	psd.BetType = ts.BetType
+																AND	psd.SettingType = @SettingType
+														FOR XML PATH ('Row')
+													,	TYPE
+													) 
+											FOR XML PATH ('Root')
+										,	TYPE
+										);
+				SELECT	@ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+						,	@MsgType = 131
+						,	@ErrCode = 10036;
+				RETURN;   
+
+				END
 		END
+
 	END 
 	IF @RoleID < 4
 	BEGIN
@@ -140,8 +193,8 @@ BEGIN
 				SELECT	@UplineStakeLevelList = StakeLevelList
 				FROM	dbo.CustStakeLevel_Agent WITH(NOLOCK)
 				WHERE	CustID = @AgentID
-					AND	BetType = @BetType;
-			END;
+					AND	BetType = @BetType;			
+			END
 
 			SELECT TOP(1) @invalidStakeLevelID = ISNULL(val,0)    
 			FROM dbo.strSplit(@StakeLevelList,',')  
@@ -184,8 +237,3 @@ BEGIN
 	DROP TABLE #tmpStakeCheck;
 END;
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbExtAccNet]
