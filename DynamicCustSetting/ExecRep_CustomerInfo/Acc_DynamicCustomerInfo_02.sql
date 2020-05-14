@@ -24,6 +24,7 @@ AS
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20190409@Johnson: add suspendinfo [redmine: #105587]
 		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
+		- 20200514@Elodie: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -680,6 +681,7 @@ BEGIN
 
 		
 		/****************************** Stake Level Member Single Selection : SettingType = 7, Group Stake Level = 8 ******************************/
+		/*************************** Group Stake Level Member Single Selection : SettingType = 8 ***************************/
 		BEGIN TRY
 			IF EXISTS(SELECT TOP 1 1 FROM dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 				INSERT INTO dbo.CustStakeLevel_Agent
@@ -693,7 +695,7 @@ BEGIN
 					,	cs.StakeLevelList
 				FROM dbo.CustStakeLevel_Agent AS cs
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (7,8) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (7,17,8) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF	@RoleID = 4
 			BEGIN
@@ -710,7 +712,7 @@ BEGIN
 							AND	sl.GameTypeID = ps.Bettype
 						FOR XML PATH ('')
 					) sl(list)
-				WHERE ps.SettingType IN (7,8) AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
+				WHERE ps.SettingType IN (7,17,8) AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
