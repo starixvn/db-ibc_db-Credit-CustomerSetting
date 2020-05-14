@@ -32,20 +32,56 @@ BEGIN
 
 END
 
-CREATE TABLE #SuperHeadLine (custId INT)
-CREATE TABLE #SuperPhoneBetting (custId INT)
+CREATE TABLE #Super_Exception (srecommend INT)
 
-INSERT INTO #SuperHeadLine (custId)
+INSERT INTO #Super_Exception (srecommend)
 SELECT DISTINCT ci.srecommend		
 FROM CustGroupHeadline gl (nolock)		
 	INNER JOIN Customer ci (nolock) ON gl.CustID = ci.custid		
 WHERE GroupID > 0 and ci.roleid in (1,2,3,4)
-
-INSERT INTO #SuperPhoneBetting (custId)
+UNION
 SELECT DISTINCT ag.custid
 FROM phonebettingCustomerList p WITH(NOLOCK)
 	INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
 	INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
+
+UNION  SELECT	1584511	--SMON
+UNION  SELECT	17131340	--	RG2
+UNION  SELECT	20505414	--	HG81
+UNION  SELECT	31381376	--	L1
+UNION  SELECT	31890071	--	RG33
+UNION  SELECT	32506252	--	RG37
+UNION  SELECT	32546605	--	AMH5
+UNION  SELECT	34176539	--	KW19
+UNION  SELECT	39428597	--	RG81
+UNION  SELECT	40906204	--	RG83
+UNION  SELECT	859594	--	S99H
+UNION  SELECT	2953285	--	HPV
+UNION  SELECT	5044097	--	HPMM
+UNION  SELECT	18119949	--	A3
+UNION  SELECT	25256329	--	S99BE
+UNION  SELECT	26979533	--	B60T
+UNION  SELECT	28182257	--	JYZ
+UNION  SELECT	28969062	--	B59T
+UNION  SELECT	1687347	--	S222TH
+UNION  SELECT	29680156	--	B62T
+UNION  SELECT	39583203	--	B70T
+UNION  SELECT	39583632	--	B65T
+UNION  SELECT	1528414	--	B6T
+UNION  SELECT	1538175	--	B14T
+UNION  SELECT	20060537	--	SSD72
+UNION  SELECT	16731414	--	CG34
+UNION  SELECT	31556024	--	QZ9Q
+UNION  SELECT	21127993	--	DT25
+UNION  SELECT	2198456	--	TV71
+UNION  SELECT	5362687	--	BC9
+UNION  SELECT	25174645	--	TVA9C
+UNION  SELECT	22765105	--	MBO
+UNION  SELECT	5453438	--	K9
+UNION  SELECT	9735627	--	S6KW
+UNION  SELECT	24400636--	S68H
+UNION  SELECT 	14182461--	supertest3 
+UNION  SELECT 	1176070	--	SuperTest1
 
 INSERT INTO bodb_report.dbo.tempCustID
 SELECT custid
@@ -84,7 +120,8 @@ FROM customer ag WITH (NOLOCK)
 		FROM bettrans b WITH (NOLOCK)
 		WHERE custid <> recommend
 		GROUP BY recommend
-		) b ON b.recommend = agci.custid		
+		) b ON b.recommend = agci.custid
+	LEFT JOIN #Super_Exception se ON se.srecommend = ag.srecommend
 WHERE ag.roleid = 2
 	AND isnull(MemCount, 0) > 0-- AND isnull(TransCount, 0) > 0
 	AND (ag.creatdate < DATEADD(mm, -7, GETDATE()))
@@ -104,46 +141,8 @@ WHERE ag.roleid = 2
 		WHERE --roleid = 1 AND
 			creatdate >= DATEADD(mm, -7, GETDATE())
 		)
-	AND agci.srecommend NOT IN (SELECT custid FROM #SuperHeadLine)
-	AND agci.srecommend NOT IN (SELECT custid FROM #SuperPhoneBetting)
-	AND agci.srecommend NOT IN (1584511--	SMON
-								,17131340	--	RG2
-								,20505414	--	HG81
-								,31381376	--	L1
-								,31890071	--	RG33
-								,32506252	--	RG37
-								,32546605	--	AMH5
-								,34176539	--	KW19
-								,39428597	--	RG81
-								,40906204	--	RG83
-								,859594	--	S99H
-								,2953285	--	HPV
-								,5044097	--	HPMM
-								,18119949	--	A3
-								,25256329	--	S99BE
-								,26979533	--	B60T
-								,28182257	--	JYZ
-								,28969062	--	B59T
-								,1687347	--	S222TH
-								,29680156	--	B62T
-								,39583203	--	B70T
-								,39583632	--	B65T
-								,1528414	--	B6T
-								,1538175	--	B14T
-								,20060537	--	SSD72
-								,16731414	--	CG34
-								,31556024	--	QZ9Q
-								,21127993	--	DT25
-								,2198456	--	TV71
-								,5362687	--	BC9
-								,25174645	--	TVA9C
-								,22765105	--	MBO
-								,5453438	--	K9
-								,9735627	--	S6KW
-								,24400636--	S68H
-								,14182461--	supertest3 
-								,1176070	--	SuperTest1
-							)
+	AND se.srecommend IS NULL
+	
 		
 
 SELECT sag.username Super
@@ -161,5 +160,4 @@ FROM customer ag WITH (NOLOCK)
 ORDER BY [Member Count] DESC
 
 DROP TABLE #tmpAg
-DROP TABLE #SuperHeadLine
-DROP TABLE #SuperPhoneBetting
+DROP TABLE #Super_Exception
