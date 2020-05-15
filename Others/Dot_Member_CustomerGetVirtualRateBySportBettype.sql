@@ -170,8 +170,7 @@ BEGIN
 		;WITH VR_Hierachy AS (
 			SELECT LevelID, ParentLevelID, 1 OrderNo
 			FROM VRSettingHierarchy h WITH (NOLOCK)
-			WHERE SportType = @SportType 
-				AND LevelID = @RefLevelID
+			WHERE LevelID = @RefLevelID
 			UNION ALL
 			SELECT c.LevelID, c.ParentLevelID, p.OrderNo + 1  OrderNo
 			FROM VRSettingHierarchy c WITH (NOLOCK)
