@@ -111,7 +111,7 @@ BEGIN
 
 	/*Get list Super from list M2 into S3*/
 	INSERT INTO dbo.tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
-	SELECT DISTINCT srecommend, c.roleid, 'S3', @StageId
+	SELECT DISTINCT srecommend, 4, 'S3', @StageId
 	FROM dbo.tmpCustGroupLevelArchived t WITH (NOLOCK)
 		INNER JOIN dbo.Customer c WITH (NOLOCK) ON c.custid =  t.custid
 	WHERE GroupLevelName = 'M2'
