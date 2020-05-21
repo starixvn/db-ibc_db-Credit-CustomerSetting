@@ -266,92 +266,94 @@ BEGIN
 					RETURN
 				END CATCH
 			END
-		END
-
-		/********************************************* Game Status: SettingType = 11 ************************************/
-		--Get sporttype/Bettype for this setting type	
-		SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-		INTO #SportBettypeFilter11
-		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
-			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
-			INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
-		WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
-
-		IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)
-		BEGIN						
-			UPDATE main
-			SET main.IsDisabled = stt.IsDisabled, 
-				main.IsHidden = stt.IsHidden
-			FROM #SportBettypeFilter11 main
-				INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
-			WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0)
 			
-			UPDATE main
-			SET main.IsDisabled = stt.IsDisabled, 
-				main.IsHidden = stt.IsHidden
-			FROM #SportBettypeFilter11 main
-				INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
-			WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID
+			/********************************************* Game Status: SettingType = 11 ************************************/
+			--Get sporttype/Bettype for this setting type	
+			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
+			INTO #SportBettypeFilter11
+			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
+				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
+				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
+				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
+			WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
+
+			IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)
+			BEGIN						
+				UPDATE main
+				SET main.IsDisabled = stt.IsDisabled, 
+					main.IsHidden = stt.IsHidden
+				FROM #SportBettypeFilter11 main
+					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
+				WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0)
+			
+				UPDATE main
+				SET main.IsDisabled = stt.IsDisabled, 
+					main.IsHidden = stt.IsHidden
+				FROM #SportBettypeFilter11 main
+					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
+				WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID
 		
-			BEGIN TRY				
-				--Get from default status values
-				--Sync: default status setting
-				--Hide: default status setting
-				--Enable/Disable: default status setting
-				SET @xmlStrDisabled = (
-						SELECT (
-								SELECT ft.bitmapOrder	AS '@b'
-									, ft.IsDisabled	AS '@s'
-								FROM #SportBettypeFilter11 ft 	
-								FOR XML PATH('r')
-									, TYPE
-								)
-						FOR XML PATH('root')
-							, TYPE
-						)
-						
-				SET @xmlStrHidden = (
-						SELECT (
-								SELECT ft.bitmapOrder	AS '@b'
-									, ft.IsHidden	AS '@s'
-								FROM #SportBettypeFilter11 ft 	
-								FOR XML PATH('r')
-									, TYPE
-								)
-						FOR XML PATH('root')
-							, TYPE
-						)
-						
-				SET @xmlStrSync = (
-					SELECT (
-							SELECT ft.bitmapOrder	AS '@b'
-								, ft.IsSync	AS '@s'
-							FROM #SportBettypeFilter11 ft 	
-							FOR XML PATH('r')
+				BEGIN TRY				
+					--Get from default status values
+					--Sync: default status setting
+					--Hide: default status setting
+					--Enable/Disable: default status setting
+					SET @xmlStrDisabled = (
+							SELECT (
+									SELECT ft.bitmapOrder	AS '@b'
+										, ft.IsDisabled	AS '@s'
+									FROM #SportBettypeFilter11 ft 	
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
 								, TYPE
 							)
-					FOR XML PATH('root')
-						, TYPE
-					)
+						
+					SET @xmlStrHidden = (
+							SELECT (
+									SELECT ft.bitmapOrder	AS '@b'
+										, ft.IsHidden	AS '@s'
+									FROM #SportBettypeFilter11 ft 	
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
+								, TYPE
+							)
+						
+					SET @xmlStrSync = (
+						SELECT (
+								SELECT ft.bitmapOrder	AS '@b'
+									, ft.IsSync	AS '@s'
+								FROM #SportBettypeFilter11 ft 	
+								FOR XML PATH('r')
+									, TYPE
+								)
+						FOR XML PATH('root')
+							, TYPE
+						)
 				
-				UPDATE cs
-				SET bitmapIsDisabled = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
-					bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-					bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
-				FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
-				WHERE cs.CustID = @CustID     
+					UPDATE cs
+					SET bitmapIsDisabled = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
+						bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
+						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
+					FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
+					WHERE cs.CustID = @CustID     
 
-			END TRY
-			BEGIN CATCH
-				SELECT @ErrCode = 11
+				END TRY
+				BEGIN CATCH
+					SELECT @ErrCode = 11
 
-				DELETE FROM CustProductStatus WHERE CustID = @CustID
-				RETURN
-			END CATCH
+					DELETE FROM CustProductStatus WHERE CustID = @CustID
+					RETURN
+				END CATCH
+			END
 		END
 
+		DROP TABLE #SportBettypeFilter4
 		DROP TABLE #SportBettypeFilter11
+		DROP TABLE #SportBettypeFilter13
 	END
 
 	if (dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1
