@@ -25,6 +25,7 @@ AS
 		- 20190409@Johnson: add suspendinfo [redmine: #105587]
 		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
 		- 20200514@Elodie: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
+		- 20200521@Elodie: NAP - Search & Copy Super - DCS: Product status of new super is Enabled when copy super from offered site to non-offered site [RedmineID: #108811]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -72,8 +73,9 @@ BEGIN
 			DECLARE @OfferedProduct TABLE (Sporttype SMALLINT, Bettype INT, IsHiddenSource BIT, IsHiddenDes BIT)
 
 			INSERT INTO @OfferedProduct (Sporttype, Bettype, IsHiddenSource, IsHiddenDes)
-			SELECT Sporttype, Bettype, 0, 0
-			FROM ProductStatusProfile WITH (NOLOCK)
+			SELECT Sporttype, Bettype, IsHidden, IsHidden
+			FROM ProductSettingDetail WITH (NOLOCK)
+			WHERE SettingType IN (4,11,13)
 
 			UPDATE op
 			SET IsHiddenSource = ps.IsHidden
@@ -272,16 +274,12 @@ BEGIN
 		INTO #SportBettypeFilter11
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
+			INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
 			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
-		
-		IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)
-		BEGIN
-			SELECT @AgentID = recommend, @RoleID = roleid, @_Site = Site, @_Currency = currency FROM Customer WITH (NOLOCK) WHERE custid = @CustID
-			IF @RoleID = 1
-				SELECT @_Site = Site FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @AgentID 			
+		WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
 
-			SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
-			
+		IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)
+		BEGIN						
 			UPDATE main
 			SET main.IsDisabled = stt.IsDisabled, 
 				main.IsHidden = stt.IsHidden
@@ -397,8 +395,7 @@ BEGIN
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ps.BetType AND psp.Sporttype = ps.SportType
 			CROSS APPLY dbo.CustProductStatus cps WITH (NOLOCK) 
 			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(cps.bitmapHasSynced, psp.bitmapOrder) st
-		WHERE SettingType IN (4,11,13) AND cps.CustID = @ExistingCustID
-			--AND RealProductId <> 19
+		WHERE SettingType IN (4,11,13) AND cps.CustID = @ExistingCustID	
 		
 		UPDATE op
 		SET op.IsHidden = stt.IsHidden
