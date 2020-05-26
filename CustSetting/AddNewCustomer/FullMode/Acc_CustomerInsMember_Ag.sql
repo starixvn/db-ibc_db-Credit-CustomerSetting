@@ -162,7 +162,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@isSearchAndCopy BIT = 0,
 	@copyFromCustID INT = 0,
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT	
+	@ErrMsg NVARCHAR(4000) = '' OUTPUT	,
+	@IsQRCode BIT  = 0
 AS
 --@Source Control
 /*
@@ -305,6 +306,7 @@ Revisions:
 	- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
+	- 20200309@Eden: Alpha - New function to let new member sign in via QR Code [Redmine: #129373]
 
 Param's Explanation:	
 • @ErrCode:
@@ -1473,6 +1475,27 @@ BEGIN
     SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) FROM custAgent WITH(NOLOCK)  WHERE CustID = @recommend
 
     SELECT @ErrCode = 0
+
+	--Agent can only create up to 200 new members every day by QR.
+	IF @IsQRCode = 1
+	BEGIN
+		DECLARE @QRMemberCount INT
+
+		SELECT @QRMemberCount = COUNT(1) 
+		FROM Customer a WITH(NOLOCK) 
+			INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
+		WHERE a.recommend = @recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+
+		IF @QRMemberCount >= 200
+		BEGIN
+			SELECT @ErrCode = 40051
+					,@ErrMsg = CASE @Language WHEN 'E' THEN 'You can only create up to 200 new members every day by this function.'
+									ELSE [dbo].[f_Get_MsgNamebyMsgID](40051,@Language)
+								END
+			RETURN
+		END
+	END
+
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     DECLARE @IsValid BIT
     
@@ -2525,7 +2548,7 @@ BEGIN
 	    RETURN
     END
 
-    SELECT @pwdexpiry = DATEADD(dd, 30, GETDATE())
+    SELECT @pwdexpiry = CASE WHEN @IsQRCode = 1 THEN '01/01/1900' ELSE DATEADD(dd, -1, GETDATE()) END
 
     IF @UplineClosed = 1 SELECT @Closed = 1 
 
@@ -3461,6 +3484,38 @@ BEGIN
 	    return
     END
 	
+	IF ISNULL(@IsQRCode,0) = 1
+	BEGIN
+		INSERT INTO [dbo].[CustQRCode] (CustID)
+		SELECT @custid
+	END
+
+	IF @@ERROR <> 0
+	BEGIN
+	    --Error occurs
+	    SELECT @ErrMsg = CASE @Language 
+							    WHEN 'E' THEN 'Create member fail. Please try again'
+							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
+						    END	
+			    , @success = 0, @ErrCode=216
+    	
+	    -- ROLLBACK MANUALLY
+	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
+	    Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid	  
+	    DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
+	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
+	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
+	    DELETE custOverrideGame WITH (ROWLOCK) WHERE custId = @custid		
+	    DELETE CustGameType WITH (ROWLOCK) WHERE custId = @custid
+				EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
+				EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
+
+		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE dbo.[CustQRCode] WITH(ROWLOCK) WHERE CustID = @CustID
+
+	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+	    return
+    END
 	
     SELECT @Success = 1
 
