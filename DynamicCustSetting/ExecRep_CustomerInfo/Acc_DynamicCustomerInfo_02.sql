@@ -349,11 +349,7 @@ BEGIN
 					RETURN
 				END CATCH
 			END
-		END
-
-		DROP TABLE #SportBettypeFilter4
-		DROP TABLE #SportBettypeFilter11
-		DROP TABLE #SportBettypeFilter13
+		END		
 	END
 
 	if (dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1
