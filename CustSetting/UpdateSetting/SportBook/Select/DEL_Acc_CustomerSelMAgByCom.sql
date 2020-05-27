@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustomerSelMAgByCom]
+ALTER PROCEDURE [dbo].[DEL_Acc_CustomerSelMAgByCom]
     @Currency INT = NULL,
     @Closed bit = NULL,
     @DoubleCommLosing bit = NULL,
