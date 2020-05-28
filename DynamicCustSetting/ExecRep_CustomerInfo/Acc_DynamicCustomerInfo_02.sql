@@ -26,6 +26,7 @@ AS
 		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
 		- 20200514@Elodie: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 		- 20200521@Elodie: NAP - Search & Copy Super - DCS: Product status of new super is Enabled when copy super from offered site to non-offered site [RedmineID: #108811]
+		- 20200528@Elodie: NAP - Search & Copy Super - DCS: Win Loss limit is not insert for offer supers when search and copy non-offered to offer site [RedmineID: #134949]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -431,7 +432,7 @@ BEGIN
 
 		INSERT #ProductSettingDetail(SettingType,ProductID,SportType,BetType,IsLive,IsHiddenSource,HasSyncSource)
 		SELECT SettingType
-				,ps.RealProductId
+				,ps.ProductId
 				,ps.SportType
 				,ps.BetType
 				,IsLive
