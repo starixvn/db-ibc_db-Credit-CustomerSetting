@@ -84,6 +84,7 @@ AS
 	- 20200310@Percy: Add column IsAllDayBalTransfer on CustMaster [RedmineID: #130091]
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
+	- 20200602@Sol: Check IsAutoEnableADBMaster to enable ADB on Mater or not[Redmine: #134242]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -99,7 +100,7 @@ BEGIN
 --20140619@Johnson: Check IP to create downline-----------------
 	DECLARE @isValidIP bit
 	
-	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT
+	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @IsAutoEnableADBMaster BIT
 	
 	SET @CreateDate = GETDATE()
 	
@@ -328,6 +329,7 @@ BEGIN
 			
 	-- insert CustMaster info
 	SELECT @IsAllDayBalTransfer = IsAllDayBalTransfer
+			, @IsAutoEnableADBMaster = IsAutoEnableADBMaster
 	FROM dbo.CustSuper WITH (NOLOCK)
 	WHERE CustId = @srecommend
 
@@ -336,7 +338,7 @@ BEGIN
 			DisableAutoMPT,
 			IsInternal,
 			TransferOption,
-			ISNULL(@IsAllDayBalTransfer, 0)
+			CASE WHEN @IsAutoEnableADBMaster = 1 THEN ISNULL(@IsAllDayBalTransfer, 0) ELSE 0 END
 	FROM dbo.CustMaster WITH(NOLOCK)
 	WHERE custid=@ExistingCustid		
 
