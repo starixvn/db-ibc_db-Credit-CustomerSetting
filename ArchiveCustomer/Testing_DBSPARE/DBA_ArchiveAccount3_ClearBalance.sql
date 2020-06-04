@@ -262,7 +262,7 @@ Select @LogSPData = '<DBA_ArchiveAccount3_ClearBalance AccName="'+ coalesce(cast
 set @endRun = getdate()
 set @duration  = datediff (millisecond,@startRun,@endRun)
 					
-EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
+EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 	@UserID = @UserID,
 	@CustID = @AgentID,
 	@ActionID = 1502,
