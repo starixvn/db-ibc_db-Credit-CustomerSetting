@@ -27,9 +27,10 @@ BEGIN
 
 	/*Get master from TmpCustArchived*/
 	INSERT INTO #tmpMaster (username, custid)
-	SELECT DISTINCT ag.username, ag.mrecommend
+	SELECT DISTINCT m.username, ag.mrecommend
 	FROM dbo.tmpCustArchived t WITH (NOLOCK)
 		INNER JOIN dbo.custInfo ag WITH (NOLOCK) ON ag.custid = t.recommend
+		INNER JOIN dbo.custInfo m WITH (NOLOCK) ON m.custid = ag.mrecommend
 	WHERE t.ErrMsg = ''
 
 	
