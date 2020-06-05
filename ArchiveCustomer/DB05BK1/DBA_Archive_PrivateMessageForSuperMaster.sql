@@ -1,5 +1,5 @@
 /*<info serverAlias="DBMSG-bodb_Message" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [DBA_Archive_PrivateMessageForSuperMaster]
+ALTER PROCEDURE [DBA_Archive_PrivateMessageForSuperMaster]
 (
 	@SMList			VARCHAR(MAX) = NULL,	
 	@Stage				TINYINT = 1
@@ -68,6 +68,7 @@ BEGIN
 
 	WHILE @i <= @Max
 	BEGIN
+		SET @MessageID = 0
 		SELECT @CustID = custid, @UserName = username, @GroupLevelName = GroupLevelName FROM @TempMember WHERE ID = @i
 
 		SELECT @Content_en = cm.Content_en,
