@@ -15,7 +15,7 @@ AS
     Task: Update IsAutoEnableADBMaster value
 
 	Revisions:
-		- - 20200602@Sol: Update IsAutoEnableADBMaster [Redmine: #134242]
+		- 20200602@Sol: Update IsAutoEnableADBMaster [Redmine: #134242]
 */
 
 BEGIN  

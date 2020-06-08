@@ -18,6 +18,7 @@ AS
 	Revisions:
 		- 20200310@Percy: Add master level [RedmineID: #130091]
 		- 20200319@Percy: Add option enable downline if enable super [RedmineID: #130741]
+		- 20200602@Sol: Update IsAutoEnableADBMaster [Redmine: #134242]
 */
 
 BEGIN  
@@ -27,7 +28,7 @@ BEGIN
 	DECLARE @endRun		DATETIME
 	DECLARE @duration	INT
 	DECLARE @ActionID	INT = 705
-	DECLARE @IsAllDayBalTransfer_Old BIT, @roleId TINYINT
+	DECLARE @IsAllDayBalTransfer_Old BIT, @roleId TINYINT, @IsAutoEnableADBMaster_Old BIT
 
 	SET @startRun = GETDATE()
 	SELECT @ErrCode = 0, @ErrMsg = ''
@@ -43,11 +44,15 @@ BEGIN
 
 	IF @roleId = 4
 	BEGIN
-		SELECT @IsAllDayBalTransfer_Old = IsAllDayBalTransfer FROM dbo.CustSuper WITH (NOLOCK) WHERE custid = @Custid
+		SELECT 
+			@IsAllDayBalTransfer_Old = IsAllDayBalTransfer,
+			@IsAutoEnableADBMaster_Old = IsAutoEnableADBMaster
+		FROM dbo.CustSuper WITH (NOLOCK) WHERE custid = @Custid
 
 		BEGIN TRY
 			UPDATE dbo.CustSuper WITH (ROWLOCK)
-			SET IsAllDayBalTransfer = @IsAllDayBalTransfer
+			SET IsAllDayBalTransfer = @IsAllDayBalTransfer,
+				IsAutoEnableADBMaster = CASE WHEN @IsAllDayBalTransfer = 0 THEN 0 ELSE IsAutoEnableADBMaster END
 			WHERE custid = @CustId
 		END TRY
 		BEGIN CATCH
@@ -112,6 +117,7 @@ BEGIN
 	  
 	Select @LogSPData = '<Acc_CustomerUpdAllDayBalTransfer CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		  'IsAllDayBalTransfer="'+ coalesce(cast(@IsAllDayBalTransfer as varchar(50)),space(1)) + '" '+  
+		  CASE WHEN @roleId = 4 THEN 'IsAutoEnableADBMaster="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '  ELSE '' END +
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  	
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
 		  'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+  
@@ -120,6 +126,7 @@ BEGIN
 	  
 	SELECT @LogSPData_Old = '<Acc_CustomerUpdAllDayBalTransfer CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		  'IsAllDayBalTransfer="'+ coalesce(cast(@IsAllDayBalTransfer_Old as varchar(50)),space(1)) + '" '+ 	
+		  CASE WHEN @roleId = 4 THEN 'IsAutoEnableADBMaster="'+ coalesce(cast(@IsAutoEnableADBMaster_Old as varchar(50)),space(1)) + '" ' ELSE '' END + 	
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+	
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
 		  'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+  
