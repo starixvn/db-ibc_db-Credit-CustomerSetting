@@ -1,9 +1,12 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [DBA_ArchiveAccount2_DisableAgentLine]
-	@AccName varchar(50),
-	@UserID int = 360418,
-	@ErrMsg nvarchar(200) = '' OUTPUT,
-	@ErrCode int = 0 OUTPUT
+	@AccName VARCHAR(50),
+	@UserID INT = 360418,
+	@ErrMsg NVARCHAR(200) = '' OUTPUT,
+	@ErrCode INT = 0 OUTPUT,
+	@srecommend INT = 0 OUTPUT,
+	@mrecommend INT = 0 OUTPUT,
+	@ReduceCredit MONEY = 0 OUTPUT
 AS
 /*
 	Created: Daniel
@@ -31,9 +34,9 @@ declare @endRun datetime
 declare @duration int, @Now datetime
 set @startRun = getdate()
 
-Declare @roleid int, @AgentID int, @Enabled bit, @srecommend INT, @mrecommend INT, @AgentCredit MONEY
+Declare @roleid int, @AgentID int, @Enabled bit
 
-SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @srecommend = srecommend, @mrecommend = mrecommend, @AgentCredit = credit
+SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @srecommend = srecommend, @mrecommend = mrecommend, @ReduceCredit = credit
 FROM custinfo (nolock)
 WHERE username = @AccName
 
@@ -412,10 +415,6 @@ WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and 
 -- update enable = 0, credit = 0 for whole agent line (use new execRep SP)
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 0
 
---Update credit for Master, Super of Agent
-UPDATE dbo.custInfo WITH (ROWLOCK, UPDLOCK)
-	SET credit = credit - @AgentCredit
-WHERE custid IN (@srecommend, @mrecommend)
 ----------------------------------------------------------------
 print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 
