@@ -84,6 +84,8 @@ BEGIN
 		- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 		- 20200421@Elodie: Add GTCasino Product [Redmine: #130689]
 		- 20200428@Eden: HotFix_-_The_status_Virtual_game_show_grey_color [Redmine: #133328]
+		
+		- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -126,6 +128,7 @@ BEGIN
 		,	@bitmapOrder_BBIN			INT 
 		,	@bitmapOrder_TableGames		INT 
 		,	@bitmapOrder_GTCasino		INT 
+		,	@bitmapOrder_RNGWar		INT
     
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
@@ -141,7 +144,7 @@ BEGIN
     SET @bitmapOrder_BBIN = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 241 AND Bettype = 3300)
 	SET @bitmapOrder_TableGames = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 222 AND Bettype = 4901)
 	SET @bitmapOrder_GTCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 242 AND Bettype = 3201)
-
+	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
     
@@ -160,6 +163,7 @@ BEGIN
 		,	@IsHidden_BBIN			INT = 1
 		,	@IsHidden_TableGames	INT = 1
 		,	@IsHidden_GTCasino		INT = 1
+		,	@IsHidden_RNGWar		INT = 1
 
 	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
 
@@ -177,6 +181,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 242, @IsHide = @IsHidden_GTCasino OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHidden_BBIN OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 224, @IsHide = @IsHidden_RNGWar OUTPUT
 
 	DECLARE @RowCount int, @RowStart int, @RowEnd int  
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1   
@@ -677,23 +682,33 @@ BEGIN
 				END AS BIT) AS HideTableGames,
 		CAST(CASE	WHEN	@IsHidden_TableGames = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_TableGames), 1)=0
 				THEN 0 ELSE 1
-				END AS BIT) AS HideTableGamesUpline
-	FROM src m  
-		INNER JOIN customer c (nolock) on m.custid = c.custid  
-		INNER JOIN Custinfo ci (nolock) on m.custid = ci.custid      	  
-		LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid
-		LEFT JOIN CustLoginInfo_Member cl WITH(NOLOCK) ON c.custid=cl.CustID
+				END AS BIT) AS HideTableGamesUpline,
+		-- For RNG War
+		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_RNGWar)) AS DisableRNGWar,			
+		CAST(	CASE	WHEN	@IsHidden_RNGWar = 0 								
+							AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_RNGWar), 1) = 0 
+							THEN 0
+						ELSE 1 
+				END AS BIT) AS HideRNGWar,
+		CAST(CASE	WHEN	@IsHidden_RNGWar = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_RNGWar), 1)=0
+				THEN 0 ELSE 1
+				END AS BIT) AS HideRNGWarUpline
+		FROM src m  
+			INNER JOIN customer c (nolock) on m.custid = c.custid  
+			INNER JOIN Custinfo ci (nolock) on m.custid = ci.custid      	  
+			LEFT JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid
+			LEFT JOIN CustLoginInfo_Member cl WITH(NOLOCK) ON c.custid=cl.CustID
 		-- Check isHidden AllBet
 		--OUTER APPLY	dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(c.custid, @AllBet) AS sbhsc
 		
 		-- Upline Status
-		INNER JOIN	dbo.CustProductStatus AS cpsUpline WITH (NOLOCK)
-				ON	cpsUpline.CustID =	CASE	WHEN c.roleid = 1 THEN c.recommend
-												WHEN c.roleid = 2 THEN c.mrecommend
-												ELSE c.srecommend
-										END
+			INNER JOIN	dbo.CustProductStatus AS cpsUpline WITH (NOLOCK)
+					ON	cpsUpline.CustID =	CASE	WHEN c.roleid = 1 THEN c.recommend
+													WHEN c.roleid = 2 THEN c.mrecommend
+													ELSE c.srecommend
+											END
 		   
-	ORDER BY rn
+		ORDER BY rn
 
 	DROP TABLE #memberList
 END

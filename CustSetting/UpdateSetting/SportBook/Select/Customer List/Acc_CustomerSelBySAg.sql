@@ -80,6 +80,8 @@ AS
 		- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 		- 20200421@Elodie: Add GTCasino Product [Redmine: #130689]
 
+		- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
+
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -125,6 +127,7 @@ BEGIN
 		,	@bitmapOrder_BBIN			INT 
 		,	@bitmapOrder_TableGames		INT 
 		,	@bitmapOrder_GTCasino		INT
+		,	@bitmapOrder_RNGWar		INT 
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)   
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)   
@@ -140,7 +143,7 @@ BEGIN
 	SET @bitmapOrder_BBIN = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 241 AND Bettype = 3300)
 	SET @bitmapOrder_TableGames = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 222 AND Bettype = 4901)
 	SET @bitmapOrder_GTCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 242 AND Bettype = 3201)
-
+	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
     
@@ -159,6 +162,7 @@ BEGIN
 		,	@IsHidden_BBIN			INT = 1
 		,	@IsHidden_TableGames	INT = 1
 		,	@IsHidden_GTCasino		INT = 1
+		,	@IsHidden_RNGWar		INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT	
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
@@ -176,6 +180,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 242, @IsHide = @IsHidden_GTCasino OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHidden_BBIN OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 224, @IsHide = @IsHidden_RNGWar OUTPUT
 
 	CREATE TABLE #customer(custid INT primary key, RowNumber INT)
 							
@@ -676,6 +681,17 @@ BEGIN
 				CAST(CASE	WHEN	@IsHidden_TableGames = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_TableGames), 1)=0
 						THEN 0 ELSE 1
 						END AS BIT) AS HideTableGamesUpline,
+
+				-- For RNG War
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_RNGWar)) AS DisableRNGWar,			
+				CAST(	CASE	WHEN	@IsHidden_RNGWar = 0 								
+									AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_RNGWar), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideRNGWar,
+				CAST(CASE	WHEN	@IsHidden_RNGWar = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_RNGWar), 1)=0
+						THEN 0 ELSE 1
+						END AS BIT) AS HideRNGWarUpline,
 				cm.IsInternal, cm.DisableAutoMPT,
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate
 		FROM dbo.Customer c WITH(NOLOCK)
@@ -822,6 +838,10 @@ BEGIN
 			ctm.DisableTableGames,
 			ctm.HideTableGames,
 			ctm.HideTableGamesUpline,
+			--RNG War
+			ctm.DisableRNGWar,
+			ctm.HideRNGWar,
+			ctm.HideRNGWarUpline,
 			ISNULL(cl.ClosedReason,0)  AS ClosedReason,
 			RowNumber
 			
