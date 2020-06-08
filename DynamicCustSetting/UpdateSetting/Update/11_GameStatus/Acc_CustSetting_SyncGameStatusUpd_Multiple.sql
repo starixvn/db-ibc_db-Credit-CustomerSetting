@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE	[dbo].[Acc_CustSetting_SyncGameStatusUpd_Multiple] 
+ALTER PROCEDURE	Acc_CustSetting_SyncGameStatusUpd_Multiple 
 	@CustIDs		VARCHAR(MAX)	= NULL
 ,	@IsSynced		BIT				= 1
 ,	@ProductID		TINYINT
@@ -103,7 +103,7 @@ BEGIN
 				, TYPE
 			)
 	FROM #CustList c
-		INNER JOIN CustProductStatus stt WITH(NOLOCK) c.uplineID = stt.custid
+		INNER JOIN CustProductStatus stt WITH(NOLOCK) ON c.uplineID = stt.custid
 	
 	SET @xmlStrSynced =(
 			SELECT (
@@ -120,7 +120,7 @@ BEGIN
 		UPDATE cs 
 		SET bitmapHasSynced = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSynced))),
 			bitmapIsDisabled = CASE WHEN @IsSynced = 1 THEN (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),xmlStrDisabled)))
-									ELSE bitmapIsDisabled END,
+									ELSE bitmapIsDisabled END
 		FROM CustProductStatus cs WITH (UPDLOCK,ROWLOCK)
 			INNER JOIN #CustList c ON c.CustID = cs.CustID
 	END TRY
