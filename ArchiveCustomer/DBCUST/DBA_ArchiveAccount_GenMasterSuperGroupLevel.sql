@@ -64,13 +64,13 @@ BEGIN
 				INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
 				INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
 			WHERE ag.roleid = 2
+				AND ag.mrecommend = t.custid
 				--AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
 				--AND agci.closed = 0 
 				--AND agci.enabled = 1
 				--AND ca.isInternal = 0
 				--AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
 				--AND ag.custid NOT IN (SELECT custid FROM #Cust_ArchiveAcc_Exception) --change link server
-				--AND ag.mrecommend = t.custid
 				--AND agci.credit >= 0
 		)mem2
 
@@ -101,13 +101,13 @@ BEGIN
 				INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
 				INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
 			WHERE ag.roleid = 2
+				AND ag.srecommend = t.custid
 				--AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
 				--AND agci.closed = 0 
 				--AND agci.enabled = 1
 				--AND ca.isInternal = 0
 				--AND ag.srecommend NOT IN (SELECT custid FROM #Cust_ArchiveAcc_Exception)
 				--AND ag.custid NOT IN(SELECT custid FROM #Cust_ArchiveAcc_Exception)
-				--AND ag.srecommend = t.custid
 				--AND agci.credit >= 0
 		)mem2
 
