@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	[dbo].[Acc_CustSetting_SyncGameStatusUpd_Multiple] 
 	@CustIDs		VARCHAR(MAX)	= NULL
 ,	@IsSynced		BIT				= 1
@@ -15,7 +16,7 @@ AS
 	Task: Update synchronize status multiple on a game 
     
 	Revisions:
-			
+		- 20200608@Johnson: enable product NG2 when update sync [redmine:#135489] 	
 	Parameters Explanation:  
 
 	Example: 
@@ -37,8 +38,8 @@ BEGIN
 		,	@SettingLevel	TINYINT
 		,	@CustID			INT
 
-	CREATE TABLE	#CustList (CustID INT PRIMARY KEY, IsFinished BIT DEFAULT(0))
-
+	CREATE TABLE	#CustList (CustID INT PRIMARY KEY, roleid TINYINT, uplineID INT, xmlStrDisabled XML,  IsFinished BIT DEFAULT(0))
+		
 	CREATE TABLE	#NewSyncStatTbl (
 						SportType	SMALLINT
 					,	BetType		SMALLINT
@@ -78,6 +79,32 @@ BEGIN
 	
 	DECLARE @xmlStrSynced XML
 	
+	UPDATE c
+	SET UplineID = CASE WHEN ci.roleid = 1 THEN ci.recommend
+						WHEN ci.roleid = 2 THEN ci.mrecommend
+						WHEN ci.roleid = 3 THEN ci.srecommend
+						ELSE ci.custid END,
+		roleid = ci.roleid				
+	FROM #CustList c
+		INNER JOIN custinfo ci WITH(NOLOCK) ON c.custid = ci.custid
+	
+	UPDATE c
+	SET xmlStrDisabled = (
+			SELECT (
+					SELECT psp.bitmapOrder	AS '@b', 
+						CASE WHEN c.roleid = 4 THEN 0 ELSE upline.isDisabled END AS '@s'
+					FROM ProductStatusProfile psp WITH (NOLOCK)
+						JOIN #NewSyncStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+						CROSS APPLY (SELECT value as isDisabled FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder))upline							
+					FOR XML PATH('r')
+						, TYPE
+					)
+			FOR XML PATH('root')
+				, TYPE
+			)
+	FROM #CustList c
+		INNER JOIN CustProductStatus stt WITH(NOLOCK) c.uplineID = stt.custid
+	
 	SET @xmlStrSynced =(
 			SELECT (
 					SELECT psp.bitmapOrder	AS '@b', @IsSynced	AS '@s'
@@ -91,8 +118,10 @@ BEGIN
 			)
 	BEGIN TRY
 		UPDATE cs 
-		SET bitmapHasSynced = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSynced)))	
-		FROM CustProductStatus cs WITH (NOLOCK)
+		SET bitmapHasSynced = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSynced))),
+			bitmapIsDisabled = CASE WHEN @IsSynced = 1 THEN (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),xmlStrDisabled)))
+									ELSE bitmapIsDisabled END,
+		FROM CustProductStatus cs WITH (UPDLOCK,ROWLOCK)
 			INNER JOIN #CustList c ON c.CustID = cs.CustID
 	END TRY
 	BEGIN CATCH
@@ -414,6 +443,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncGameStatusUpd_Multiple] TO [bodbadminNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_SyncGameStatusUpd_Multiple] TO [vnteam]
