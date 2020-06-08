@@ -82,8 +82,6 @@ Revisions:
 	- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 	- 20200421@Elodie: Add GTCasino Product [Redmine: #130689]
 
-	- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
-
 Pattern Explanation:
 		Search keyword: '%keyword%'
 		First char
@@ -131,7 +129,6 @@ Pattern Explanation:
 		,	@bitmapOrder_BBIN			INT 
 		,	@bitmapOrder_TableGames		INT 
 		,	@bitmapOrder_GTCasino		INT
-		,	@bitmapOrder_RNGWar		INT 
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)  
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)  
@@ -147,7 +144,6 @@ Pattern Explanation:
 	SET @bitmapOrder_BBIN = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 241 AND Bettype = 3300)
 	SET @bitmapOrder_TableGames = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 222 AND Bettype = 4901)
 	SET @bitmapOrder_GTCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 242 AND Bettype = 3201)
-	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
 
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     
@@ -167,7 +163,6 @@ Pattern Explanation:
 		,	@IsHidden_BBIN				INT = 1
 		,	@IsHidden_TableGames		INT = 1
 		,	@IsHidden_GTCasino			INT = 1
-		,	@IsHidden_RNGWar			INT = 1
 
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT	
@@ -188,7 +183,6 @@ Pattern Explanation:
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 242, @IsHide = @IsHidden_GTCasino OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHidden_BBIN OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 224, @IsHide = @IsHidden_RNGWar OUTPUT
 
 	IF(@System = 'ACCOUNTING')
 	BEGIN
@@ -396,15 +390,6 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideTableGames,
-
-			-- For RNG War
-			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_RNGWar)) AS DisableRNGWar,			
-			CAST(	CASE	WHEN	@IsHidden_RNGWar = 0 								
-								AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_RNGWar), 1) = 0 
-								THEN 0
-							ELSE 1 
-					END AS BIT) AS HideRNGWar,
-
 			ISNULL(cl.ClosedReason,0) AS ClosedReason,
 			ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, m.username) as RowNumber			
 		FROM 
@@ -655,15 +640,6 @@ Pattern Explanation:
 								THEN 0
 							ELSE 1 
 					END AS BIT) AS HideTableGames,
-		
-
-			-- For RNG War
-			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_RNGWar)) AS DisableRNGWar,			
-			CAST(	CASE	WHEN	@IsHidden_RNGWar = 0 								
-								AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_RNGWar), 1) = 0 
-								THEN 0
-							ELSE 1 
-					END AS BIT) AS HideRNGWar,
 			ISNULL(cl.ClosedReason,0) AS ClosedReason,
 			
 			ROW_NUMBER() OVER (ORDER BY CASE when isnull(ci.enabled,0) = 0 then 3 WHEN isnull(ci.closed,0) = 1 THEN 2 WHEN isnull(ci.reject,0) = 1 THEN 1 ELSE 0 end, m.username) as RowNumber
