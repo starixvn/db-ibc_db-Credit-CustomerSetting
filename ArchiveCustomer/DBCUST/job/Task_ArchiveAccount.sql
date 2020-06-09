@@ -79,7 +79,7 @@ BEGIN
 			SET ErrMsg = @ErrMsg, IsFinished = 1
 			WHERE Agent = @agent
 
-			IF @ErrMsg <> ''
+			IF @ErrMsg = ''
 			BEGIN
 				IF EXISTS(SELECT 1 FROM #ReduceCredit WHERE CustId = @mrecommend)
 				BEGIN
