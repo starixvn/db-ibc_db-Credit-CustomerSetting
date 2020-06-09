@@ -79,17 +79,20 @@ BEGIN
 			SET ErrMsg = @ErrMsg, IsFinished = 1
 			WHERE Agent = @agent
 
-			IF EXISTS(SELECT 1 FROM #ReduceCredit WHERE CustId = @mrecommend)
+			IF @ErrMsg <> ''
 			BEGIN
-				UPDATE #ReduceCredit
-				SET ReduceCredit = ReduceCredit + @ReduceCredit
-				WHERE CustId IN (@srecommend, @mrecommend)
-			END
-			ELSE
-			BEGIN
-				INSERT INTO #ReduceCredit (CustId, ReduceCredit)
-				VALUES (@srecommend, @ReduceCredit)
-					,(@mrecommend, @ReduceCredit)
+				IF EXISTS(SELECT 1 FROM #ReduceCredit WHERE CustId = @mrecommend)
+				BEGIN
+					UPDATE #ReduceCredit
+					SET ReduceCredit = ReduceCredit + @ReduceCredit
+					WHERE CustId IN (@srecommend, @mrecommend)
+				END
+				ELSE
+				BEGIN
+					INSERT INTO #ReduceCredit (CustId, ReduceCredit)
+					VALUES (@srecommend, @ReduceCredit)
+						,(@mrecommend, @ReduceCredit)
+				END
 			END
 	
 			SET @msg = 'Done agent ' + @agent + CHAR(13)
