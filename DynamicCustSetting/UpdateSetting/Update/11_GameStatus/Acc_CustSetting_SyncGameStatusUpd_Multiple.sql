@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE	Acc_CustSetting_SyncGameStatusUpd_Multiple 
+ALTER PROCEDURE	Acc_CustSetting_SyncGameStatusUpd_Multiple
 	@CustIDs		VARCHAR(MAX)	= NULL
 ,	@IsSynced		BIT				= 1
 ,	@ProductID		TINYINT
@@ -38,7 +38,7 @@ BEGIN
 		,	@SettingLevel	TINYINT
 		,	@CustID			INT
 
-	CREATE TABLE	#CustList (CustID INT PRIMARY KEY, roleid TINYINT, uplineID INT, xmlStrDisabled XML,  IsFinished BIT DEFAULT(0))
+	CREATE TABLE	#CustList (CustID INT PRIMARY KEY, roleid TINYINT, srecommend INT, mrecommend INT, recommend INT, xmlStrDisabled XML,  IsFinished BIT DEFAULT(0))
 		
 	CREATE TABLE	#NewSyncStatTbl (
 						SportType	SMALLINT
@@ -49,6 +49,8 @@ BEGIN
 					,	SportType	SMALLINT
 					,	BetType		SMALLINT
 					,	IsSynced	BIT
+					,	isDisabled 	BIT
+					,	IsDisabled_new BIT 
 					)
 
 	SET	@startRun = GETDATE()
@@ -67,43 +69,99 @@ BEGIN
 	WHERE	psd.ProductID = @ProductID
 		AND	psd.SettingType = 11
 
-	INSERT INTO #OldSyncStatTbl (CustID,SportType,BetType,IsSynced)
+	INSERT INTO #OldSyncStatTbl (CustID,SportType,BetType,IsSynced,isDisabled)
 	SELECT	stt.CustID
 		,	psp.SportType
 		,	psp.BetType
 		,	(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) AS IsSynced
+		,	(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 	FROM	#NewSyncStatTbl tmp
 		INNER JOIN	ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND	tmp.BetType = psp.Bettype
 		CROSS APPLY	dbo.CustProductStatus stt WITH (NOLOCK) 
 	WHERE EXISTS (SELECT 1 FROM #CustList WHERE CustID = stt.CustID)
-	
+		
 	DECLARE @xmlStrSynced XML
 	
 	UPDATE c
-	SET UplineID = CASE WHEN ci.roleid = 1 THEN ci.recommend
-						WHEN ci.roleid = 2 THEN ci.mrecommend
-						WHEN ci.roleid = 3 THEN ci.srecommend
-						ELSE ci.custid END,
+	SET recommend = ci.recommend,
+		mrecommend = ci.mrecommend,
+		srecommend = ci.srecommend,				
 		roleid = ci.roleid				
 	FROM #CustList c
 		INNER JOIN custinfo ci WITH(NOLOCK) ON c.custid = ci.custid
+	
+	--roleid = 4
+	IF EXISTS (SELECT 1 FROM #CustList WHERE roleid = 4)
+	BEGIN
+		UPDATE stt
+		SET isDisabled_new = 0
+		FROM #OldSyncStatTbl stt
+			INNER JOIN #CustList c ON stt.custid = c.custid
+		WHERE c.roleid = 4	
+	END
+	
+	--roleid = 3
+	IF EXISTS (SELECT 1 FROM #CustList WHERE roleid = 3)
+	BEGIN
+		UPDATE stt
+		SET isDisabled_new = CASE WHEN uplineNew.custid IS NOT NULL THEN uplineNew.isDisabled_new 
+								ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(upline.bitmapIsDisabled, PSP.bitmapOrder)) END
+		FROM #OldSyncStatTbl stt
+			INNER JOIN #CustList c ON stt.custid = c.custid
+			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON stt.SportType = psp.Sporttype AND	stt.BetType = psp.Bettype
+			INNER JOIN dbo.CustProductStatus upline WITH (NOLOCK) ON upline.custid = c.srecommend
+			LEFT JOIN #OldSyncStatTbl UplineNew ON UplineNew.custid = c.srecommend
+		WHERE c.roleid = 3	
+	END
+	
+	--roleid = 2
+	IF EXISTS (SELECT 1 FROM #CustList WHERE roleid = 2)
+	BEGIN
+		UPDATE stt
+		SET isDisabled_new = CASE WHEN uplineNew.custid IS NOT NULL THEN uplineNew.isDisabled_new 
+								ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(upline.bitmapIsDisabled, PSP.bitmapOrder)) END
+		FROM #OldSyncStatTbl stt
+			INNER JOIN #CustList c ON stt.custid = c.custid
+			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON stt.SportType = psp.Sporttype AND	stt.BetType = psp.Bettype
+			INNER JOIN dbo.CustProductStatus upline WITH (NOLOCK) ON upline.custid = c.mrecommend
+			LEFT JOIN #OldSyncStatTbl UplineNew ON UplineNew.custid = c.mrecommend
+		WHERE c.roleid = 2
+	END
+	
+	--roleid = 1
+	IF EXISTS (SELECT 1 FROM #CustList WHERE roleid = 1)
+	BEGIN
+		UPDATE stt
+		SET isDisabled_new = CASE WHEN uplineNew.custid IS NOT NULL THEN uplineNew.isDisabled_new 
+								ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(upline.bitmapIsDisabled, PSP.bitmapOrder)) END
+		FROM #OldSyncStatTbl stt
+			INNER JOIN #CustList c ON stt.custid = c.custid
+			INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON stt.SportType = psp.Sporttype AND	stt.BetType = psp.Bettype
+			INNER JOIN dbo.CustProductStatus upline WITH (NOLOCK) ON upline.custid = c.recommend
+			LEFT JOIN #OldSyncStatTbl UplineNew ON UplineNew.custid = c.recommend
+		WHERE c.roleid = 1
+	END
 	
 	UPDATE c
 	SET xmlStrDisabled = (
 			SELECT (
 					SELECT psp.bitmapOrder	AS '@b', 
-						CASE WHEN c.roleid = 4 THEN 0 ELSE upline.isDisabled END AS '@s'
+						t.isDisabled AS '@s'
 					FROM ProductStatusProfile psp WITH (NOLOCK)
 						JOIN #NewSyncStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
-						CROSS APPLY (SELECT value as isDisabled FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder))upline							
+						CROSS APPLY (SELECT isDisabled_new as isDisabled 
+									FROM #OldSyncStatTbl stt 
+									WHERE stt.custid = c.custid
+										AND stt.SportType = tmp.SportType 
+										AND stt.Bettype = tmp.Bettype
+									)t							
 					FOR XML PATH('r')
 						, TYPE
 					)
 			FOR XML PATH('root')
 				, TYPE
 			)
-	FROM #CustList c
-		INNER JOIN CustProductStatus stt WITH(NOLOCK) ON c.uplineID = stt.custid
+	FROM #CustList c		
 	
 	SET @xmlStrSynced =(
 			SELECT (
