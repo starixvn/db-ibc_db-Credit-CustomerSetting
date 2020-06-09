@@ -60,18 +60,8 @@ BEGIN
 		OUTER APPLY (
 			SELECT COUNT(*) AgentCount
 			FROM customer ag WITH (NOLOCK)
-				INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
-				INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
-				INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
 			WHERE ag.roleid = 2
 				AND ag.mrecommend = t.custid
-				--AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
-				--AND agci.closed = 0 
-				--AND agci.enabled = 1
-				--AND ca.isInternal = 0
-				--AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
-				--AND ag.custid NOT IN (SELECT custid FROM #Cust_ArchiveAcc_Exception) --change link server
-				--AND agci.credit >= 0
 		)mem2
 
 	/*Detect S1, S2 from list M1*/
@@ -97,18 +87,8 @@ BEGIN
 		OUTER APPLY (
 			SELECT COUNT(*) AgentCount
 			FROM customer ag WITH (NOLOCK)
-				INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
-				INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
-				INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
 			WHERE ag.roleid = 2
 				AND ag.srecommend = t.custid
-				--AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
-				--AND agci.closed = 0 
-				--AND agci.enabled = 1
-				--AND ca.isInternal = 0
-				--AND ag.srecommend NOT IN (SELECT custid FROM #Cust_ArchiveAcc_Exception)
-				--AND ag.custid NOT IN(SELECT custid FROM #Cust_ArchiveAcc_Exception)
-				--AND agci.credit >= 0
 		)mem2
 
 	/*Get list Super from list M2 into S3*/
