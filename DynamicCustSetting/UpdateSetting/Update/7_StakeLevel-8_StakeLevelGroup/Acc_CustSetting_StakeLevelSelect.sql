@@ -16,7 +16,7 @@ AS
 		- 20180327@Vicky: add header infomation [Redmine: #90422]
 		- 20200407@Elodie: Sort by sport, bettype, stakelevelID [Redmine: #131363]
 		- 20200414@Tiara: Add input param Setting type, add MaxChoice column [Redmine: #131171]
-		- 20200610@Elodie: Done't show stake level of super don't offer the product [Redmine: #135510]
+		- 20200610@Elodie: Don't show stake level of super don't offer the product [Redmine: #135510]
 	Param's Explanation:
 */
 BEGIN
