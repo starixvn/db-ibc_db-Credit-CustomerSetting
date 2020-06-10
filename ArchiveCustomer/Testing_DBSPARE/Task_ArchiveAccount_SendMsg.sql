@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-custDB" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [Task_ArchiveAccount_SendMsg]
+ALTER PROCEDURE [Task_ArchiveAccount_SendMsg]
 	@stage tinyint = NULL
 AS
 /*

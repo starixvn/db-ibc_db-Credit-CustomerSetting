@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-custDB" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [Task_ArchiveAccount]
+ALTER PROCEDURE [Task_ArchiveAccount]
 	@stage tinyint = NULL
 AS
 /*
@@ -19,6 +19,7 @@ BEGIN
 
 	DECLARE @status varchar(200)
 	DECLARE @agent varchar(50), @ErrMsg VARCHAR(150), @msg VARCHAR(100)
+	CREATE TABLE #ReduceCredit (CustId INT, ReduceCredit MONEY, IsFinished BIT DEFAULT(0))
 
 	if (@stage is null)
 	begin
@@ -57,17 +58,39 @@ BEGIN
 	END
 	else if(@stage = 2)
 	BEGIN
+		DECLARE @srecommend INT
+			, @mrecommend INT
+			, @ReduceCredit MONEY = 0
+			, @OldCredit MONEY = 0
+			, @LogData VARCHAR(500)
+			, @custid INT
+			, @NewCredit MONEY = 0
+			, @username NVARCHAR(MAX)
+
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
 			SELECT TOP 1 @agent = Agent FROM tmpCustArchived WHERE IsFinished = 0	
 			IF (@@ROWCOUNT = 0) BREAK
 	
-			EXEC dbo.DBA_ArchiveAccount2_DisableAgentLine @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT
+			EXEC dbo.DBA_ArchiveAccount2_DisableAgentLine @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT, @srecommend = @srecommend OUTPUT, @mrecommend = @mrecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT
 	
 			UPDATE tmpCustArchived 
 			SET ErrMsg = @ErrMsg, IsFinished = 1
 			WHERE Agent = @agent
+
+			IF EXISTS(SELECT 1 FROM #ReduceCredit WHERE CustId = @mrecommend)
+			BEGIN
+				UPDATE #ReduceCredit
+				SET ReduceCredit = ReduceCredit + @ReduceCredit
+				WHERE CustId IN (@srecommend, @mrecommend)
+			END
+			ELSE
+			BEGIN
+				INSERT INTO #ReduceCredit (CustId, ReduceCredit)
+				VALUES (@srecommend, @ReduceCredit)
+					,(@mrecommend, @ReduceCredit)
+			END
 	
 			SET @msg = 'Done agent ' + @agent + CHAR(13)
 			RAISERROR(@msg, 0, 0) WITH NOWAIT	
@@ -75,8 +98,61 @@ BEGIN
 			WAITFOR DELAY '00:00:00.120'
 			--IF (@ErrMsg <> '') BREAK
 		END
+
+		--Reduce SMA Credit
+		WHILE(1=1)
+		BEGIN
+			UPDATE TOP (1) t
+			SET t.IsFinished = 1
+				, @custid = t.CustId
+				, @ReduceCredit = t.ReduceCredit
+			FROM #ReduceCredit t
+			WHERE IsFinished = 0 
+		
+			IF @@ROWCOUNT = 0 
+				BREAK
+			
+			SELECT	@username = username,
+				@OldCredit = Credit
+			FROM	dbo.custInfo WITH (NOLOCK)
+			WHERE	custid = @custid
+
+			SET @NewCredit = @OldCredit - @ReduceCredit
+
+			UPDATE c
+			SET c.credit = @NewCredit
+			FROM dbo.custInfo c WITH (ROWLOCK, UPDLOCK)
+			WHERE c.custid = @custid	
+
+			--Writelog
+			SELECT  @LogData = 'Update Credits for SMA Account '+ COALESCE(@username, SPACE(1))  
+
+			BEGIN TRY
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+					@UserID = 360418,
+					@CustID = @CustID,
+					@Doing = @LogData,
+					@OldValue = @OldCredit,
+					@NewValue = @NewCredit,
+					@IP = '100.100.100.100',
+					@ActionID = 1222
+			END TRY
+			BEGIN CATCH
+				SELECT @LogData = @LogData + ' ErrMsg:' + ERROR_MESSAGE()
+
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+					@UserID = 360418,
+					@CustID = @CustID,
+					@Doing = @LogData,
+					@OldValue = @OldCredit,
+					@NewValue = @NewCredit,
+					@IP = '100.100.100.100',
+					@ActionID = 1222
+			END CATCH
+		END
 		--Gen List Super Master into tmpCustGroupLevelArchived
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
+		
 	END
 	else if(@stage = 3)
 	BEGIN
@@ -122,4 +198,6 @@ BEGIN
 			--IF (@ErrMsg <> '') BREAK
 		END
 	END
+
+	DROP TABLE #ReduceCredit
 END

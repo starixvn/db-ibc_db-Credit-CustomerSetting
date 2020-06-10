@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-custdb" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [DBA_ArchiveAccount_GenMasterSuperGroupLevel]
+ALTER PROCEDURE [DBA_ArchiveAccount_GenMasterSuperGroupLevel]
 (
 	@StageId	TINYINT
 )
@@ -27,9 +27,10 @@ BEGIN
 
 	/*Get master from TmpCustArchived*/
 	INSERT INTO #tmpMaster (username, custid)
-	SELECT DISTINCT ag.username, ag.mrecommend
+	SELECT DISTINCT m.username, ag.mrecommend
 	FROM dbo.tmpCustArchived t WITH (NOLOCK)
-		INNER JOIN dbo.custInfo ag WITH (NOLOCK) ON ag.custid = t.recommend
+		INNER JOIN dbo.Customer ag WITH (NOLOCK) ON ag.custid = t.recommend
+		INNER JOIN dbo.Customer m WITH (NOLOCK) ON m.custid = ag.mrecommend
 	WHERE t.ErrMsg = ''
 
 	
@@ -59,25 +60,16 @@ BEGIN
 		OUTER APPLY (
 			SELECT COUNT(*) AgentCount
 			FROM customer ag WITH (NOLOCK)
-				INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
-				INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
-				INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
 			WHERE ag.roleid = 2
-				AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
-				AND agci.closed = 0 
-				AND agci.enabled = 1
-				AND ca.isInternal = 0
-				AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
-				AND ag.custid NOT IN (SELECT custid FROM #Cust_ArchiveAcc_Exception) --change link server
 				AND ag.mrecommend = t.custid
-				AND agci.credit >= 0
 		)mem2
 
 	/*Detect S1, S2 from list M1*/
 	INSERT INTO #tmpSuper (username, custid)
-	SELECT DISTINCT username, srecommend
+	SELECT DISTINCT s.username, c.srecommend
 	FROM dbo.tmpCustGroupLevelArchived t WITH (NOLOCK)
-		INNER JOIN Customer c WITH (NOLOCK) ON c.custid = t.custid
+		INNER JOIN dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+		INNER JOIN dbo.Customer s WITH (NOLOCK) ON c.srecommend = s.custid
 	WHERE GroupLevelName = 'M1'
 
 	
@@ -95,18 +87,8 @@ BEGIN
 		OUTER APPLY (
 			SELECT COUNT(*) AgentCount
 			FROM customer ag WITH (NOLOCK)
-				INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
-				INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
-				INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
 			WHERE ag.roleid = 2
-				AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
-				AND agci.closed = 0 
-				AND agci.enabled = 1
-				AND ca.isInternal = 0
-				AND ag.srecommend NOT IN (SELECT custid FROM #Cust_ArchiveAcc_Exception)
-				AND ag.custid NOT IN(SELECT custid FROM #Cust_ArchiveAcc_Exception)
 				AND ag.srecommend = t.custid
-				AND agci.credit >= 0
 		)mem2
 
 	/*Get list Super from list M2 into S3*/
