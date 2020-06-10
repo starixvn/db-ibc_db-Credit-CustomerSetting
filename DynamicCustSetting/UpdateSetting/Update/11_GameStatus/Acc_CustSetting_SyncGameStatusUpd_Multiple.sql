@@ -324,7 +324,8 @@ BEGIN
 						@IP								AS '@IP',
 						(
 							SELECT	@ProductID			AS '@ProductID',
-									IsSynced			AS '@IsSynced'
+									IsSynced			AS '@IsSynced',
+									isDisabled			AS '@IsDisabled'
 							FROM #OldSyncStatTbl
 							WHERE CustID = @CustID
 							FOR XML PATH('ProductStatus'),
@@ -344,7 +345,8 @@ BEGIN
 						@IP								AS '@IP',
 						(
 							SELECT	SportType			AS '@SportType',
-									IsSynced			AS '@IsSynced'
+									IsSynced			AS '@IsSynced',
+									isDisabled			AS '@IsDisabled'
 							FROM #OldSyncStatTbl
 							WHERE CustID = @CustID
 							FOR XML PATH('ProductStatus'),
@@ -364,7 +366,8 @@ BEGIN
 						@IP								AS '@IP',
 						(
 							SELECT	BetType				AS '@BetType',
-									IsSynced			AS '@IsSynced'
+									IsSynced			AS '@IsSynced',
+									isDisabled			AS '@IsDisabled'
 							FROM #OldSyncStatTbl
 							WHERE CustID = @CustID
 							FOR XML PATH('ProductStatus'),
@@ -385,7 +388,8 @@ BEGIN
 						(
 							SELECT	SportType			AS '@SportType',
 									BetType				AS '@BetType',
-									IsSynced			AS '@IsSynced'
+									IsSynced			AS '@IsSynced',
+									isDisabled			AS '@IsDisabled'									
 							FROM #OldSyncStatTbl
 							WHERE CustID = @CustID
 							FOR XML PATH('ProductStatus'),
@@ -408,8 +412,10 @@ BEGIN
 						@IP								AS '@IP',
 						(
 							SELECT	@ProductID			AS '@ProductID',
-									@IsSynced			AS '@IsSynced'
-							FROM #NewSyncStatTbl
+									@IsSynced			AS '@IsSynced',
+									isDisabled_new		AS '@IsDisabled'
+							FROM #OldSyncStatTbl
+							WHERE CustID = @CustID
 							FOR XML PATH('ProductStatus'),
 							TYPE
 						)
@@ -427,8 +433,10 @@ BEGIN
 						@IP								AS '@IP',
 						(
 							SELECT	SportType			AS '@SportType',
-									@IsSynced			AS '@IsSynced'
-							FROM #NewSyncStatTbl
+									@IsSynced			AS '@IsSynced',
+									isDisabled_new		AS '@IsDisabled'
+							FROM #OldSyncStatTbl
+							WHERE CustID = @CustID
 							FOR XML PATH('ProductStatus'),
 							TYPE
 						)
@@ -446,8 +454,10 @@ BEGIN
 						@IP								AS '@IP',
 						(
 							SELECT	BetType				AS '@BetType',
-									@IsSynced			AS '@IsSynced'
-							FROM #NewSyncStatTbl
+									@IsSynced			AS '@IsSynced',
+									isDisabled_new		AS '@IsDisabled'
+							FROM #OldSyncStatTbl
+							WHERE CustID = @CustID
 							FOR XML PATH('ProductStatus'),
 							TYPE
 						)
@@ -466,8 +476,10 @@ BEGIN
 						(
 							SELECT	SportType			AS '@SportType',
 									BetType				AS '@BetType',
-									@IsSynced			AS '@IsSynced'
-							FROM #NewSyncStatTbl
+									@IsSynced			AS '@IsSynced',
+									isDisabled_new		AS '@IsDisabled'
+							FROM #OldSyncStatTbl
+							WHERE CustID = @CustID
 							FOR XML PATH('ProductStatus'),
 							TYPE
 						)
