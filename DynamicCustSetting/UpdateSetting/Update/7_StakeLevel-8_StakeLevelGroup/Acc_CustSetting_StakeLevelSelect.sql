@@ -16,6 +16,7 @@ AS
 		- 20180327@Vicky: add header infomation [Redmine: #90422]
 		- 20200407@Elodie: Sort by sport, bettype, stakelevelID [Redmine: #131363]
 		- 20200414@Tiara: Add input param Setting type, add MaxChoice column [Redmine: #131171]
+		- 20200610@Elodie: Done't show stake level of super don't offer the product [Redmine: #135510]
 	Param's Explanation:
 */
 BEGIN
@@ -68,10 +69,9 @@ BEGIN
 			(	SportType     , BetType     , StakeLevelID   , StakeLevelName                  , isChecked)
 		SELECT	sbtf.SportType, sbtf.BetType, sl.StakeLevelID, sl.MinLabel + N' - ' + sl.MaxLabel, 0
 		FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
-		INNER JOIN	#SportBetTypeFilter AS sbtf
-				ON	sbtf.BetType = sl.GameTypeID
-		WHERE	sl.ExchangeId = @Currency
-		
+			INNER JOIN	#SportBetTypeFilter AS sbtf ON	sbtf.BetType = sl.GameTypeID
+			INNER JOIN CustStakeLevel_Agent cs ON sbtf.SportType = cs.SportType AND sbtf.BetType = cs.BetType
+		WHERE	sl.ExchangeId = @Currency AND cs.custid = @CustID
 		ORDER BY sbtf.SportType, sbtf.BetType, sl.MaxStake,sl.MinStake	
 		
 		
