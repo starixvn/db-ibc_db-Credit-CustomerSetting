@@ -1,12 +1,9 @@
 ﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableKeno] 
 	@CustID INT
 	,@Bettype INT
-	,@Disable BIT			
+	,@Disable BIT	
+	,@IsSC BIT = 0
 	,@SystemID	TINYINT = 1
 	,@SubAccID INT = 0
 	,@UserID INT
@@ -32,7 +29,7 @@ AS
 		- 20170115@Johnson: use this sp for update status on alpha and remove enableDownlines for new direction [redmine:#87328]				
 		- 20190517@Elodie: Change name of Keno to RNG Keno [Redmine: #113490]
 		- 20200225@Tiara: Don't allow SMA under 789y headline to update status [Redmine: #124311]
-
+		- 20200610@Johnson: add param isSC to allow SC status from i7 [redmine:#135489]
 	Param's Explanation:
 		• @custid: customer id.   
 		• @Disable: status of HideKeno		
@@ -53,7 +50,7 @@ BEGIN
 	FROM Customer C WITH (NOLOCK)
 	WHERE C.custid = @UserID
 
-	IF @SystemID != 1 AND @Site IN ('789y')
+	IF @SystemID != 1 AND @Site IN ('789y') AND @IsSC = 0
 		RETURN
 	
 	DECLARE @RoleID TINYINT
@@ -278,6 +275,7 @@ BEGIN
 	SELECT @LogSPData = '<Acc_CustomerUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Bettype="' + coalesce(cast(@Bettype AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Disable="' + coalesce(cast(@Disable AS VARCHAR(50)), space(1)) + '" ' 		
+		+ 'IsSC="' + coalesce(cast(@IsSC AS VARCHAR(1)), space(1)) + '" ' 		
 		+ 'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' 
 		+ 'UserID="' + coalesce(cast(@UserID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'UplineID="' + coalesce(cast(@UplineID AS VARCHAR(50)), space(1)) + '" ' 
@@ -289,6 +287,7 @@ BEGIN
 		,@TrackingValue = '<Acc_CustomerUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Bettype="' + coalesce(cast(@Bettype AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'Disable="' + coalesce(cast(@Old_DisableBetType AS VARCHAR(50)), space(1)) + '" ' 		
+		+ 'IsSC="' + coalesce(cast(@IsSC AS VARCHAR(1)), space(1)) + '" ' 		
 		+ 'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' 
 		+ 'UserID="' + coalesce(cast(@UserID AS VARCHAR(50)), space(1)) + '" ' 
 		+ 'UplineID="' + coalesce(cast(@UplineID AS VARCHAR(50)), space(1)) + '" ' 
@@ -373,6 +372,7 @@ BEGIN
 		SELECT @LogSPData = '<Acc_CustomerUpdDisableKeno CustID="' + coalesce(cast(@CustID AS VARCHAR(50)), space(1)) + '" ' 
 			+ 'Bettype="' + coalesce(cast(@Bettype AS VARCHAR(50)), space(1)) + '" ' 
 			+ 'Disable="' + coalesce(cast(@Disable AS VARCHAR(50)), space(1)) + '" ' 			
+			+ 'IsSC="' + coalesce(cast(@IsSC AS VARCHAR(1)), space(1)) + '" ' 		
 			+ 'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' 
 			+ 'UserID="' + coalesce(cast(@UserID AS VARCHAR(50)), space(1)) + '" ' 
 			+ 'UplineID="' + coalesce(cast(@UplineID AS VARCHAR(50)), space(1)) + '" ' 
