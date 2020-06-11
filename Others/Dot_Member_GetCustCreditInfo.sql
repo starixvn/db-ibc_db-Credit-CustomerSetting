@@ -63,6 +63,7 @@ AS
 	-- 20200511@VN-Eden: E-sport VR for Map X Overtime [#132517]
 	-- 20200612@TWAdam(CUSTDB): LicUser Soccer Parlay use MaxPerMatch1MP & Add BetRadar new virtual sports (195,196,197)
 	-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
+	-- 20200610@VN-Eden: Virtual Rate for Basketball [Redmine: #134978]
 */	
 BEGIN
 
@@ -207,7 +208,7 @@ BEGIN
 				END
 			END			
 		END
-		ELSE IF @sporttype = 43 --For Esports, get VR2
+		ELSE IF @sporttype IN(2, 43) --For Esports/BasketBall, get VR2
 		BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
 									, @sporttype = @sporttype_vrate
@@ -238,7 +239,7 @@ BEGIN
 	end
 
 	--Get E-Sport Autosuspend 
-	IF @sporttype = 43 AND @isparlay = 0 
+	IF @sporttype IN(2, 43) AND @isparlay = 0 
 	BEGIN
 		SET @autosuspend = @False
 

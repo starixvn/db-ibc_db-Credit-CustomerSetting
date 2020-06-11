@@ -34,6 +34,7 @@ AS
 		-- 20200702@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8) - Credit Only (exclude CN88) [#136378]
 		-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
 		-- 20200713@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8) - Credit Only (exclude CN88) - REVOKE [#136378]
+		-- 20200610@VN-Eden: Virtual Rate for Basketball [Redmine: #134978]
 
     Parameter's Explanation:
 */
@@ -150,22 +151,8 @@ BEGIN
 		END		
 	END
 
-
-	ELSE IF @SportType NOT IN (43,1) --Not E-sports, Soccers
-	BEGIN
-		SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
-		FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
-		INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
-				ON  cvs.seqNo = pvs.seqNo
-		WHERE       cvs.custid = @CustID
-				AND pvs.sporttype = @SportType
-				AND pvs.bettype = @BetType
-				AND pvs.islive = @isLive   
-				AND pvs.isActive=1  
-	END
-
-	ELSE IF @SportType = 43
-	BEGIN --For E-sports
+	ELSE IF @SportType IN(2,43)
+	BEGIN --For E-sports, BasketBall
 		--Base on @LeagueGroupID, get configured VRLeagueGroupID 
 		SELECT @VRLeagueGroupID = VRLeagueGroupID
 		FROM VRLeagueGroupMapping WITH (NOLOCK)
@@ -180,7 +167,12 @@ BEGIN
 				AND SportType=@SportType
 
 			IF ISNULL(@RefLevelID,0) = 0 
-				SELECT @RefLevelID = 1	--Esport level	
+				SELECT @RefLevelID = LevelID
+				FROM VRSettingHierarchy c WITH(NOLOCK)
+				WHERE c.SportType = @SportType 
+					AND VRLeagueGroupID = -1 
+					AND VRBetTypeGroupID = -1 
+					AND BetType = -1 --Sporttype Level
 		END
   
 		--Get VR multiplier
@@ -219,6 +211,19 @@ BEGIN
 
 	END
 	
+	ELSE --Not E-sports, Soccers,BasketBall
+	BEGIN
+		SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
+		FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
+		INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
+				ON  cvs.seqNo = pvs.seqNo
+		WHERE       cvs.custid = @CustID
+				AND pvs.sporttype = @SportType
+				AND pvs.bettype = @BetType
+				AND pvs.islive = @isLive   
+				AND pvs.isActive=1  
+	END
+
 	IF @virtualMultiplier IS NULL OR @usertype = 2 --CN88
 		SELECT @virtualMultiplier = 1
 
