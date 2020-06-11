@@ -19,7 +19,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @Date Date = null,
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
 	@LeagueGroupID SMALLINT =0,
-	@IsApplyVR2 BIT = 0
+	@IsApplyVR2 BIT = 0,
+	@RefLevelID INT = NULL
 AS
 /*
 --------------------------------------------------------------------------------
@@ -58,6 +59,7 @@ AS
 	-- 20200203@VN-Elodie: Apply Currency Modifier
 	-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
 	-- 20200512@VN-Eden: Disable VR setting of CN88 Customers [#133976]
+	-- 20200511@VN-Eden: E-sport VR for Map X Overtime [#132517]
 */	
 BEGIN
 
@@ -213,6 +215,7 @@ BEGIN
 									, @srecommend = @srecommend								
 									, @virtualMultiplier = @new_virtualrate OUT
 									, @usertype = @usertype
+									, @RefLevelID = @RefLevelID
 		END
 
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
