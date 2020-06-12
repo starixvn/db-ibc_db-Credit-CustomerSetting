@@ -47,14 +47,17 @@ Revisions:
 	- 20200406@Elodie: Add BBIN Product [Redmine: #131363]
 	- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 	- 20200421@Elodie: Add GTCasino Product [Redmine: #130689]
+	- 20200504@Eden: ION Live casino [Redmine: #132323]
+
+	- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
 
 */
 
 	SET NOCOUNT ON
 
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
-	Declare @srecommend int, @mrecommend int, @recommend int
-	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT, @AllowedGTCasino BIT, @AllowedBBIN BIT, @AllowedLottery BIT, @AllowedTableGames BIT  
+	Declare @srecommend int, @mrecommend int, @recommend int 
+	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT, @AllowedGTCasino BIT, @AllowedBBIN BIT, @AllowedLottery BIT, @AllowedTableGames BIT, @AllowedRNGWar BIT, @AllowedION BIT   
 	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
@@ -65,9 +68,11 @@ Revisions:
 		,	@IsHideSaba				INT
 		,	@IsHideSAGaming			INT
 		,	@IsHideSexyGaming		INT
+		,	@IsHide_ION		INT = 1
 		,	@IsHideBBIN				INT
 		,	@IsHideTableGames		INT
 		,	@IsHideGTCasino			INT
+		,	@IsHideRNGWar		INT
 
 	DECLARE @bitmapOrder_Allbet		INT
 		,	@bitOrderVB				INT 
@@ -79,9 +84,11 @@ Revisions:
 		,	@bitmapOrder_Saba		INT
 		,	@bitmapOrder_SAGaming	INT
 		,	@bitmapOrder_SexyGaming	INT 
+		,	@bitmapOrder_ION		INT 
 		,	@bitmapOrder_BBIN		INT 
 		,	@bitmapOrder_TableGames	INT 
 		,	@bitmapOrder_GTCasino	INT 
+		,	@bitmapOrder_RNGWar		INT 
 
 	SET @bitmapOrder_Allbet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 211 AND Bettype = 2401)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
@@ -93,9 +100,11 @@ Revisions:
 	SET @bitmapOrder_Saba = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
 	SET @bitmapOrder_SexyGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 243 AND Bettype = 3101)
+	SET @bitmapOrder_ION = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 225 AND Bettype = 5601)
 	SET @bitmapOrder_BBIN = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 241 AND Bettype = 3300)
 	SET @bitmapOrder_TableGames = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 222 AND Bettype = 4901)
 	SET @bitmapOrder_GTCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 242 AND Bettype = 3201)
+	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -115,6 +124,7 @@ Revisions:
 	--For RNGLottery
 	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 220, @IsHide = @IsHiddenLottery OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 222, @IsHide = @IsHideTableGames OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 224, @IsHide = @IsHideRNGWar OUTPUT
 	SELECT	@AllowedLottery =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderLottery)) = 0
 											AND @IsHiddenLottery = 0 
 											THEN 1
@@ -122,12 +132,16 @@ Revisions:
 			@AllowedTableGames =CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_TableGames)) = 0
 											AND @IsHideTableGames = 0 
 											THEN 1
+										ELSE 0 END,
+			@AllowedRNGWar =CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_RNGWar)) = 0
+											AND @IsHideRNGWar = 0 
+											THEN 1
 										ELSE 0 END
 	FROM	CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
 
-	--For RNGLottery (Lottery + TableGames)
-	SELECT @AllowedRNGLottery = CASE WHEN @AllowedLottery = 1 OR @AllowedTableGames = 1 THEN 1 ELSE 0 END
+	--For RNGLottery (Lottery + TableGames + RNG War)
+	SELECT @AllowedRNGLottery = CASE WHEN @AllowedLottery = 1 OR @AllowedTableGames = 1  OR @AllowedRNGWar = 1 THEN 1 ELSE 0 END
 
 	--For VoidBridge
 	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT
@@ -228,6 +242,26 @@ Revisions:
 			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
+	
+	-- For ION
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @IsHide = @IsHide_ION OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedION =	CASE WHEN @IsHide_ION = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_ION)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedION =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_ION)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_ION)) = 1
+											AND @IsHide_ION = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END
 	-- For BBIN
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHideBBIN OUTPUT
 	IF @RoleID = 4
@@ -248,9 +282,9 @@ Revisions:
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
 
-	--For Live Casino (Allbet + SA Gaming + SexyGaming + BBIN + GTCasino)
-	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 OR @AllowedSexyGaming = 1 OR @AllowedBBIN = 1 OR @AllowedGTCasino = 1 THEN 1
-									ELSE 0 END
+	--For Live Casino (Allbet + SA Gaming + SexyGaming + BBIN + GTCasino + ION)
+	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 OR @AllowedSexyGaming = 1 OR @AllowedBBIN = 1 OR @AllowedGTCasino = 1 OR @AllowedION = 1 THEN 1
+								ELSE 0 END
 	-- For NG2
 	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHideNG2 OUTPUT
 	IF @RoleID = 4

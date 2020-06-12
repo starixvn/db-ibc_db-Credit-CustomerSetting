@@ -155,6 +155,7 @@ Revisions:
 	- 20200210@Elodie: Problem account for credit [Redmine:#127446]	
 	- 20200310@Percy: Add column IsAllDayBalTransfer on CustMaster [RedmineID: #130091]
 	- 20200311@Elodie: Suspicious account [Redmine:#129119]
+	- 20200602@Sol: Check IsAutoEnableADBMaster to enable ADB on Mater or not[Redmine: #134242]
 	
 	Param's Explanation:
 • @ErrCode:
@@ -166,6 +167,7 @@ Revisions:
 BEGIN
     SET NOCOUNT ON 
 	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @CreditRM MONEY
+			, @IsAutoEnableADBMaster BIT
 	
 	SET @CreateDate = GETDATE()
 	
@@ -288,7 +290,9 @@ BEGIN
 	      FROM dbo.CustLoginInfo WITH(NOLOCK)
 	     WHERE CustID = @srecommend
 
-		SELECT @IsAllDayBalTransfer = IsAllDayBalTransfer
+		SELECT 
+			@IsAllDayBalTransfer = IsAllDayBalTransfer
+			, @IsAutoEnableADBMaster = IsAutoEnableADBMaster
 		FROM dbo.CustSuper WITH (NOLOCK)
 		WHERE CustId = @srecommend
 
@@ -296,7 +300,14 @@ BEGIN
 	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET mrecommend = @custid WHERE custId = @CustID
 
 	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer)
-	    VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, ISNULL(@IsAllDayBalTransfer, 0))
+	    VALUES
+		(
+			@CustID,
+			@DisableAutoMPT, 
+			@IsInternal, 
+			CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, 
+			CASE WHEN @IsAutoEnableADBMaster = 1 THEN ISNULL(@IsAllDayBalTransfer, 0) ELSE 0 END
+		)
 	
 		--Virtual rate
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
