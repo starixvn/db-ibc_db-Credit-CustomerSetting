@@ -37,6 +37,7 @@ AS
 		- 20190408@Johnson: add suspendInfo [Redmine: #105587]
 		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
 		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
+		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
