@@ -499,7 +499,7 @@ BEGIN
 					,dtl.BetType
 					,dtl.IsLive
 					,0,0,0,0,0,0,0,0
-					,dtl.MaxPT
+					,100 --dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive  AND ps.SettingType = dtl.SettingType
 				WHERE ps.SettingType = 1 AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)

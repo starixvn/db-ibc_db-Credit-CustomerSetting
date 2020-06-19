@@ -388,7 +388,7 @@ BEGIN
 					,dtl.BetType
 					,dtl.IsLive
 					,0,0,0,0,0,0,0,0
-					,dtl.MaxPT
+					,100 --dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
 					INNER JOIN #ProductSettingDetail fil ON ft.SettingType = fil.SettingType AND ft.SportType = fil.SportType AND ft.BetType = fil.BetType AND ft.IsLive = fil.IsLive
@@ -421,7 +421,7 @@ BEGIN
 					,dtl.BetType
 					,dtl.IsLive
 					,spt.SuperPT,0,0,0,0,0,0,0
-					,dtl.MaxPT
+					,100 --dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
 					INNER JOIN CustPTSetting3rd_Agent spt ON dtl.SportType = spt.SportType AND dtl.BetType = spt.BetType AND dtl.IsLive = spt.IsLive
@@ -452,7 +452,7 @@ BEGIN
 				SELECT 
 				@custid,dtl.SportType,dtl.BetType,dtl.IsLive,
 					0,mpt.MasterPT,0,0,0,0,0,0
-					,dtl.MaxPT
+					,100 --dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
 					INNER JOIN CustPTSetting3rd_Agent mpt ON dtl.SportType = mpt.SportType AND dtl.BetType = mpt.BetType AND dtl.IsLive = mpt.IsLive
