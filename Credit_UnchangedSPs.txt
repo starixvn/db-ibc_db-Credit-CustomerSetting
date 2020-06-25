@@ -1,1 +1,1 @@
-D:\Working\Source\db-Credit-CustomerSetting\DynamicCustSetting\UpdateSetting\Select\Other\f_CustSetting_SportBetTypeSettingSelect.sql
+DynamicCustSetting\UpdateSetting\Select\Other\f_CustSetting_SportBetTypeSettingSelect.sql
