@@ -1,0 +1,2 @@
+DynamicCustSetting\Others\PlaceBet\Dot_Member_CustCreditInfo_Cust_DCS.sql
+Others\Dot_Member_GetCustCreditInfo.sql
