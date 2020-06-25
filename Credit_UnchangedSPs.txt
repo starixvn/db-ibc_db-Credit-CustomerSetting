@@ -1,2 +1,1 @@
-DynamicCustSetting\Others\PlaceBet\Dot_Member_CustCreditInfo_Cust_DCS.sql
-Others\Dot_Member_GetCustCreditInfo.sql
+D:\Working\Source\db-Credit-CustomerSetting\DynamicCustSetting\UpdateSetting\Select\Other\f_CustSetting_SportBetTypeSettingSelect.sql
