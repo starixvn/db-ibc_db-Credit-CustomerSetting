@@ -312,7 +312,7 @@ BEGIN
 		,cs.MasterPT = b.MasterPT
 		,cs.AgentPT = b.AgentPT
 		,cs.MinPT = b.SuperMinPT
-		,cs.MaxPT = b.SuperPT	
+		--,cs.MaxPT = b.SuperPT	
 	FROM CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK)
 		INNER JOIN @tblPT b ON cs.Sporttype = b.SportType
 								AND cs.bettype = b.BetType
