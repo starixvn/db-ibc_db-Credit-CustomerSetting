@@ -1,4 +1,6 @@
-﻿ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTUpd]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
+ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTUpd]
 	@custid		INT,
 	@PT			VARCHAR(MAX),
 	@UserID		INT = 0,       
