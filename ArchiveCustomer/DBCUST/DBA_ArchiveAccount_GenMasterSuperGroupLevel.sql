@@ -22,7 +22,7 @@ BEGIN
 		, @ExecuteSQL NVARCHAR(MAX) = ''
 
 	CREATE TABLE #tmpMaster (username VARCHAR(100), custid INT)
-	CREATE TABLE #tmpSuper (username VARCHAR(100), custid INT)
+	CREATE TABLE #tmpSuper (custid INT, MasterArchivedCount INT)
 	CREATE TABLE #Cust_ArchiveAcc_Exception (CustId INT)
 
 	/*Get master from TmpCustArchived*/
@@ -65,31 +65,26 @@ BEGIN
 		)mem2
 
 	/*Detect S1, S2 from list M1*/
-	INSERT INTO #tmpSuper (username, custid)
-	SELECT DISTINCT s.username, c.srecommend
+	INSERT INTO #tmpSuper (custid, MasterArchivedCount)
+	SELECT c.srecommend, COUNT(t.custid)
 	FROM dbo.tmpCustGroupLevelArchived t WITH (NOLOCK)
 		INNER JOIN dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
-		INNER JOIN dbo.Customer s WITH (NOLOCK) ON c.srecommend = s.custid
 	WHERE GroupLevelName = 'M1'
+	GROUP BY c.srecommend
 
 	
 	INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
 	SELECT DISTINCT c.custid, c.roleid
-		,CASE WHEN mem.AgentCount = mem2.AgentCount THEN 'S1' ELSE 'S2' END AS GroupLevelName /*Match -> S1, Not Match -> S2*/
+		,CASE WHEN m.MasterCount = t.MasterArchivedCount THEN 'S1' ELSE 'S2' END AS GroupLevelName /*Match -> S1, Not Match -> S2*/
 		,@StageId
 	FROM customer c WITH (NOLOCK)
 		INNER JOIN #tmpSuper t ON t.custid = c.custid
 		OUTER APPLY (
-			SELECT COUNT(*) AgentCount
-			FROM tmpCustArchived mem WITH (NOLOCK)
-			WHERE mem.Super = t.username
-		) mem 
-		OUTER APPLY (
-			SELECT COUNT(*) AgentCount
-			FROM customer ag WITH (NOLOCK)
-			WHERE ag.roleid = 2
-				AND ag.srecommend = t.custid
-		)mem2
+			SELECT COUNT(*) MasterCount
+			FROM customer WITH (NOLOCK)
+			WHERE roleid = 3
+				AND srecommend = t.custid
+		)m
 
 	/*Get list Super from list M2 into S3*/
 	INSERT INTO dbo.tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
