@@ -23,7 +23,6 @@ BEGIN
 
 	CREATE TABLE #tmpMaster (username VARCHAR(100), custid INT)
 	CREATE TABLE #tmpSuper (custid INT, MasterArchivedCount INT)
-	CREATE TABLE #Cust_ArchiveAcc_Exception (CustId INT)
 
 	/*Get master from TmpCustArchived*/
 	INSERT INTO #tmpMaster (username, custid)
@@ -32,14 +31,6 @@ BEGIN
 		INNER JOIN dbo.Customer ag WITH (NOLOCK) ON ag.custid = t.recommend
 		INNER JOIN dbo.Customer m WITH (NOLOCK) ON m.custid = ag.mrecommend
 	WHERE t.ErrMsg = ''
-
-	
-	SELECT  @query = N''		
-	SELECT	@query = @query + N'SELECT custid FROM dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK)'
-	SELECT	@ExecuteSQL = N'EXECUTE DBACC.bodb_report.dbo.sp_executesql @query'
-
-	INSERT INTO #Cust_ArchiveAcc_Exception (CustID)
-	EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX)', @query
 
 	/*
 		Count number of agents for each master
@@ -96,7 +87,6 @@ BEGIN
 
 	DROP TABLE #tmpMaster
 	DROP TABLE #tmpSuper
-	DROP TABLE #Cust_ArchiveAcc_Exception
 
 END
 GO
