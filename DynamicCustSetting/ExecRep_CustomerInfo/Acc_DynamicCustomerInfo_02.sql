@@ -473,7 +473,7 @@ BEGIN
 						,[IsAutoSuperPT]
 						,[AutoSuperPT]
 						,[MinPT]
-						,[MaxPT]
+						,100 --[MaxPT]
 					FROM [dbo].[CustPTSetting3rd_Agent] cs WITH(NOLOCK)
 						INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive
 					WHERE CustID = @ExistingCustID AND ps.SettingType = 1 AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
