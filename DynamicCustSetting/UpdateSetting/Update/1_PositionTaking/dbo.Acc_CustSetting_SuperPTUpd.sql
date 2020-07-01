@@ -1,4 +1,6 @@
-﻿ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTUpd]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
+ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTUpd]
 	@custid		INT,
 	@PT			VARCHAR(MAX),
 	@UserID		INT = 0,       
@@ -18,6 +20,7 @@ AS
 			- 20151103@Billy: Change log PT value range from [0,90] to [0,0.9] and update log structure - [Redmine: #46781, #46788]
 			- 20160122@Helen: AllBet - always correct PT for Allbet
 			- 20160408@Winnie: VoidBridge - always correct PT for VoidBridge [RedmineID: #55532]
+			- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 		Parameter's Explanation:
 			@PT = <ROOT>
 					<PT SportType="1" BetType="1" IsLive="0" SuperPT="90" MasterPT ="90" AgentPT = "90" MinPT="0"/>
@@ -312,7 +315,7 @@ BEGIN
 		,cs.MasterPT = b.MasterPT
 		,cs.AgentPT = b.AgentPT
 		,cs.MinPT = b.SuperMinPT
-		,cs.MaxPT = b.SuperPT	
+		--,cs.MaxPT = b.SuperPT	
 	FROM CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK)
 		INNER JOIN @tblPT b ON cs.Sporttype = b.SportType
 								AND cs.bettype = b.BetType

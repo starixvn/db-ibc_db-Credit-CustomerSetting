@@ -27,6 +27,7 @@ AS
 		- 20200514@Elodie: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 		- 20200521@Elodie: NAP - Search & Copy Super - DCS: Product status of new super is Enabled when copy super from offered site to non-offered site [RedmineID: #108811]
 		- 20200528@Elodie: NAP - Search & Copy Super - DCS: Win Loss limit is not insert for offer supers when search and copy non-offered to offer site [RedmineID: #134949]
+		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -472,7 +473,7 @@ BEGIN
 						,[IsAutoSuperPT]
 						,[AutoSuperPT]
 						,[MinPT]
-						,[MaxPT]
+						,100 --[MaxPT]
 					FROM [dbo].[CustPTSetting3rd_Agent] cs WITH(NOLOCK)
 						INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive
 					WHERE CustID = @ExistingCustID AND ps.SettingType = 1 AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
@@ -499,7 +500,7 @@ BEGIN
 					,dtl.BetType
 					,dtl.IsLive
 					,0,0,0,0,0,0,0,0
-					,dtl.MaxPT
+					,100 --dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive  AND ps.SettingType = dtl.SettingType
 				WHERE ps.SettingType = 1 AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
