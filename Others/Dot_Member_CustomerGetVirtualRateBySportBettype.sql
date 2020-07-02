@@ -29,7 +29,8 @@ AS
 		-- 20200311@VN-Elodie: VR Setting for Soccer By Hours (WEEKENDS 6am - 8pm HK time, X=-3%, WEEKDAYS 6am - 8pm HK time, X = -3%, WEEKDAYS 8pm - 1am HK time, X = -2%)
 		-- 20200512@VN-Eden: Disable VR setting of CN88 Customers [#133976]
 		-- 20200511@VN-Eden: E-sport VR for Map X Overtime [#132517]
-		-- 20200625@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8)
+		-- 20200625@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8)[#136378]
+		-- 20200702@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8) - Credit Only (exclude CN88) [#136378]
 
     Parameter's Explanation:
 */
@@ -67,7 +68,7 @@ BEGIN
 					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
 				END
 
-				IF @CurrentHKTime >= '03:00:00' AND @CurrentHKTime <'06:00:00'
+				IF @CurrentHKTime >= '03:00:00' AND @CurrentHKTime <'06:00:00' AND @IsLicensee = 0
 				BEGIN
 					SELECT @virtualMultiplier = @virtualMultiplier + 0.05
 				END	
