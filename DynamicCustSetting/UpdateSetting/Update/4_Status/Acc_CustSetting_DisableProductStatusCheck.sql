@@ -15,7 +15,10 @@ AS
 	Task : Validate enabled status
 	DB: DBCUST/CustDB
 	Original:
-
+	
+	Revision:
+		- 20200702@Winfred: Validate enabled status of a product saba [RedmineID:#136210]
+	
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
