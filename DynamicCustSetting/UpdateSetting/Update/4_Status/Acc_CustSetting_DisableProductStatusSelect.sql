@@ -8,12 +8,12 @@ CREATE PROCEDURE [dbo].[Acc_CustSetting_DisableProductStatusSelect]
 AS
 /*
 	Created: 20200702@Winfred
-	Task : Get product status setting values of a product saba
+	Task : Get enabled status of Cust when SettingType = 4 
 	DB: DBCUST/CustDB
 	Original:
 
 	Revision:
-		- 20200702@Winfred: Get product status setting values of a product saba [RedmineID:#136210]
+		- 20200702@Winfred: Get enabled status of Cust when SettingType = 4 (ProductStatus)  (ProductStatus) [RedmineID:#136210]
 	Param's Explanation: 
 
 	Example: EXEC Acc_CustSetting_DisableProductStatusSelect @CustID = 4215992, @ProductID = 54

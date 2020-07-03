@@ -17,7 +17,7 @@ AS
 	Original:
 	
 	Revision:
-		- 20200702@Winfred: Validate enabled status of a product saba [RedmineID:#136210]
+		- 20200702@Winfred: Validate enabled status of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]
 	
 	Param's Explanation:
 	• @IsDisabled
@@ -84,7 +84,7 @@ BEGIN
 			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @SuperID
-			WHERE dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) = 1
+			WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 1
 				AND tmp.IsDisabled	= 0
 		END
 		ELSE IF @RoleID = 2
@@ -96,7 +96,7 @@ BEGIN
 			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @MasterID
-			WHERE dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) = 1
+			WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 1
 				AND tmp.IsDisabled	= 0
 				
 		END
@@ -109,7 +109,7 @@ BEGIN
 			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @AgentID
-			WHERE dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) = 1
+			WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 1
 				AND tmp.IsDisabled	= 0
 		END
 	END

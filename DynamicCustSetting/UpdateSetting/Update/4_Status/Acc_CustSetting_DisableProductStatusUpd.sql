@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableProductStatusUpd] 
 	@CustID			INT
 	, @IsDisabled		VARCHAR(MAX)
@@ -14,12 +12,12 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableProductStatusUpd]
 AS
 /*
 	Created: 20200702@Winfred
-	Task : Update enabled status of a product saba VS
+	Task : Update enabled status of Cust when SettingType = 4
 	DB: DBCUST/CustDB
 	Original:
 
 	Revisions:
-		- 20200702@Winfred: Get product status setting values of a product saba VS [RedmineID:#136210]  
+		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -31,14 +29,16 @@ AS
 		</ROOT>
 	• @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT	
 	Example: 
-		DECLARE @p3 int
-		SET @p3=0
-		DECLARE @p4 nvarchar(200)
-		SET @p4=N''
-		DECLARE @p5 int
-		SET @p5=0
-		EXEC Acc_CustSetting_DisableNewProductStatusUpd @UserID=4215992,@IP='202.78.231.34',@MsgType=@p3 output,@ErrMsg=@p4 output,@ErrCode=@p5 output,@IsDisabled='<ROOT><ProductStatus SportType="212" BetType="4001" IsDisabled="1"/></ROOT>',@CustID=1176070, @SystemID = 2
-		SELECT @p3, @p4, @p5
+		declare @p7 int
+		set @p7=0
+		declare @p8 int
+		set @p8=0
+		declare @p9 nvarchar(max)
+		set @p9=N''
+		exec Acc_CustSetting_DisableProductStatusUpd
+				@IsDisabled='<ROOT><ProductStatus SportType="98" BetType="1" IsDisabled="1"/></ROOT>',
+				@CustID=1353265,@SubAccID=0,@UserID=1349398,@IP='10.18.200.125',@SystemID=2,@ErrCode=@p7 output,@MsgType=@p8 output,@ErrMsg=@p9 output
+		select @p7, @p8, @p9
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -138,7 +138,7 @@ BEGIN
 	EXEC sp_xml_removedocument @iDoc
 
 	--Check Allowed downlines	
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) AND @SystemID = 2 AND @RoleID <> 1
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) AND @RoleID <> 1
 	BEGIN
 		EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
 				@custid		= @custid
@@ -200,7 +200,7 @@ BEGIN
 					FROM ProductStatusProfile psp WITH (NOLOCK)
 						JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 	
-					FOR XML PATH('r')
+					FOR XML PATH('R')
 						, TYPE
 					)
 			FOR XML PATH('root')
@@ -246,7 +246,7 @@ BEGIN
 	END
 	
 	--call execrept to update downline when disable status
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) AND @SystemID = 2 AND @RoleID <> 1
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) AND @RoleID <> 1
 	BEGIN		
 		DECLARE @IsDisabled_Downline XML
 	
@@ -280,7 +280,7 @@ BEGIN
 			EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID
 							, @RoleID			= @RoleID
 							, @IsDisabled_XML	= @IsDisabled_Downline_tmp
-							, @Action			= 'ProductStatus'
+							, @Action			= 'NewProductStatus' 
 		END
 	END
 
@@ -333,7 +333,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableProductStatusUpd'),
+			FOR XML PATH('R'),
 			TYPE
 		)
 	END
@@ -353,7 +353,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableProductStatusUpd'),
+			FOR XML PATH('R'),
 			TYPE
 		)
 	END
@@ -373,7 +373,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableProductStatusUpd'),
+			FOR XML PATH('R'),
 			TYPE
 		)
 	END
@@ -394,7 +394,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableProductStatusUpd'),
+			FOR XML PATH('R'),
 			TYPE
 		)
 	END
@@ -417,7 +417,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableProductStatusUpd'),
+			FOR XML PATH('R'),
 			TYPE
 		)
 	END
@@ -437,7 +437,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableProductStatusUpd'),
+			FOR XML PATH('R'),
 			TYPE
 		)
 	END
@@ -457,7 +457,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableProductStatusUpd'),
+			FOR XML PATH('R'),
 			TYPE
 		)
 	END
@@ -478,7 +478,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('Acc_CustSetting_DisableProductStatusUpd'),
+			FOR XML PATH('R'),
 			TYPE
 		)
 	END
@@ -496,7 +496,7 @@ BEGIN
 		IF @@ROWCOUNT = 0 BREAK
 
 		BEGIN TRY
-			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+			EXEC Acc_WriteLog_UserLog_RunSP_Wrapper @UserID = @UserID
 				, @CustID			= @CustID
 				, @ActionID			= @ActionID
 				, @TrackingValue	= @logSpData
@@ -505,7 +505,7 @@ BEGIN
 		END TRY
 
 		BEGIN CATCH
-			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+			EXEC Acc_WriteLog_UserLog_RunSP_Wrapper @UserID = @UserID
 				, @CustID			= @CustID
 				, @ActionID			= @ActionID
 				, @TrackingValue	= @logSpData
