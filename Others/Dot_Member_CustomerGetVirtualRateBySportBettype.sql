@@ -12,7 +12,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@srecommend         INT,
 					@usertype			INT = 0, --0:default(MBC) 1:IMBC 2:CN88
                     @virtualMultiplier	SMALLMONEY	OUT,
-					@RefLevelID			INT = NULL                    
+					@RefLevelID			INT = NULL,
+					@IsLowVR			BIT = 0                   
 AS
 /*
     Created: 20151019@joy
@@ -31,6 +32,7 @@ AS
 		-- 20200511@VN-Eden: E-sport VR for Map X Overtime [#132517]
 		-- 20200625@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8)[#136378]
 		-- 20200702@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8) - Credit Only (exclude CN88) [#136378]
+		-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
 
     Parameter's Explanation:
 */
@@ -43,35 +45,42 @@ BEGIN
 		SELECT @virtualMultiplier = NULL
 		IF @IsApplyVR2 = 0 --Get VR1
 		BEGIN
-			SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
-			FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
-			INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
-					ON  cvs.seqNo = pvs.seqNo
-			WHERE       cvs.custid = @CustID
-					AND pvs.sporttype = @SportType
-					AND pvs.bettype = @BetType
-					AND pvs.islive = @isLive   
-					AND pvs.isActive=1 
-
-			SELECT @CurrentHKDate = DATEADD(HOUR, 12, GETDATE())
-			SELECT @CurrentHKTime = CONVERT(VARCHAR(12),@CurrentHKDate,114)	
-			
-			IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
+			IF @IsLowVR = 1
 			BEGIN
-				IF @CurrentHKTime BETWEEN '06:00:00' AND '20:00:00'
-				BEGIN
-					SELECT @virtualMultiplier = @virtualMultiplier - 0.03
-				END	
+				SET @virtualMultiplier = 0.01
+			END
+			ELSE
+			BEGIN
+				SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
+				FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
+				INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
+						ON  cvs.seqNo = pvs.seqNo
+				WHERE       cvs.custid = @CustID
+						AND pvs.sporttype = @SportType
+						AND pvs.bettype = @BetType
+						AND pvs.islive = @isLive   
+						AND pvs.isActive=1 
 
-				IF DATENAME(DW,@CurrentHKDate) NOT IN ('Saturday','Sunday') AND (@CurrentHKTime BETWEEN '00:00:00' AND '01:00:00' OR @CurrentHKTime BETWEEN '20:00:00.001' AND '23:59:59.999')
+				SELECT @CurrentHKDate = DATEADD(HOUR, 12, GETDATE())
+				SELECT @CurrentHKTime = CONVERT(VARCHAR(12),@CurrentHKDate,114)	
+			
+				IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
 				BEGIN
-					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
+					IF @CurrentHKTime BETWEEN '06:00:00' AND '20:00:00'
+					BEGIN
+						SELECT @virtualMultiplier = @virtualMultiplier - 0.03
+					END	
+
+					IF DATENAME(DW,@CurrentHKDate) NOT IN ('Saturday','Sunday') AND (@CurrentHKTime BETWEEN '00:00:00' AND '01:00:00' OR @CurrentHKTime BETWEEN '20:00:00.001' AND '23:59:59.999')
+					BEGIN
+						SELECT @virtualMultiplier = @virtualMultiplier - 0.02
+					END
+
+					IF @CurrentHKTime >= '03:00:00' AND @CurrentHKTime <'06:00:00' AND @IsLicensee = 0
+					BEGIN
+						SELECT @virtualMultiplier = @virtualMultiplier + 0.05
+					END	
 				END
-
-				IF @CurrentHKTime >= '03:00:00' AND @CurrentHKTime <'06:00:00' AND @IsLicensee = 0
-				BEGIN
-					SELECT @virtualMultiplier = @virtualMultiplier + 0.05
-				END	
 			END
 		END
 		ELSE --Get VR2
