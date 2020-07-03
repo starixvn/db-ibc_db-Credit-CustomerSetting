@@ -45,7 +45,7 @@ BEGIN
 		SELECT @virtualMultiplier = NULL
 		IF @IsApplyVR2 = 0 --Get VR1
 		BEGIN
-			IF @IsLowVR = 1
+			IF @IsLowVR = 1 AND @virtualMultiplier < 1
 			BEGIN
 				SET @virtualMultiplier = 0.01
 			END
