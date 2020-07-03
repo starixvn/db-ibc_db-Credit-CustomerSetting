@@ -1,3 +1,4 @@
 DynamicCustSetting\UpdateSetting\Select\Other\f_CustSetting_SportBetTypeSettingSelect.sql
 DynamicCustSetting\UpdateSetting\Select\Acc_CustSetting_StatusSettingSelect.sql
 DynamicCustSetting\UpdateSetting\Select\Acc_CustSetting_ProductProfileSelect.sql
+DynamicCustSetting\UpdateSetting\Select\Acc_CustSetting_StatusSelect.sql
