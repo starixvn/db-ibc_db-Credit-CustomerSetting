@@ -200,7 +200,7 @@ BEGIN
 					FROM ProductStatusProfile psp WITH (NOLOCK)
 						JOIN #NewDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
 	
-					FOR XML PATH('R')
+					FOR XML PATH('r')
 						, TYPE
 					)
 			FOR XML PATH('root')
