@@ -45,22 +45,22 @@ BEGIN
 		SELECT @virtualMultiplier = NULL
 		IF @IsApplyVR2 = 0 --Get VR1
 		BEGIN
+			SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
+			FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
+			INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
+					ON  cvs.seqNo = pvs.seqNo
+			WHERE       cvs.custid = @CustID
+					AND pvs.sporttype = @SportType
+					AND pvs.bettype = @BetType
+					AND pvs.islive = @isLive   
+					AND pvs.isActive=1 
+
 			IF @IsLowVR = 1 AND @virtualMultiplier < 1
 			BEGIN
 				SET @virtualMultiplier = 0.01
 			END
 			ELSE
 			BEGIN
-				SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
-				FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
-				INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
-						ON  cvs.seqNo = pvs.seqNo
-				WHERE       cvs.custid = @CustID
-						AND pvs.sporttype = @SportType
-						AND pvs.bettype = @BetType
-						AND pvs.islive = @isLive   
-						AND pvs.isActive=1 
-
 				SELECT @CurrentHKDate = DATEADD(HOUR, 12, GETDATE())
 				SELECT @CurrentHKTime = CONVERT(VARCHAR(12),@CurrentHKDate,114)	
 			
