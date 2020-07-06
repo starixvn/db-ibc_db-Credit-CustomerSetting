@@ -409,7 +409,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('R'),
+			FOR XML PATH('Acc_Admin_DisableNewProductStatusUpd'),
 			TYPE
 		)
 	END
@@ -434,7 +434,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('R'),
+			FOR XML PATH('Acc_Admin_DisableNewProductStatusUpd'),
 			TYPE
 		)
 	END
@@ -459,7 +459,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('R'),
+			FOR XML PATH('Acc_Admin_DisableNewProductStatusUpd'),
 			TYPE
 		)
 	END
@@ -485,7 +485,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('R'),
+			FOR XML PATH('Acc_Admin_DisableNewProductStatusUpd'),
 			TYPE
 		)
 	END
@@ -513,7 +513,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('R'),
+			FOR XML PATH('Acc_Admin_DisableNewProductStatusUpd'),
 			TYPE
 		)
 	END
@@ -538,7 +538,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('R'),
+			FOR XML PATH('Acc_Admin_DisableNewProductStatusUpd'),
 			TYPE
 		)
 	END
@@ -563,7 +563,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('R'),
+			FOR XML PATH('Acc_Admin_DisableNewProductStatusUpd'),
 			TYPE
 		)
 	END
@@ -589,7 +589,7 @@ BEGIN
 						FOR XML PATH('ProductStatus'),
 						TYPE
 					)
-			FOR XML PATH('R'),
+			FOR XML PATH('Acc_Admin_DisableNewProductStatusUpd'),
 			TYPE
 		)
 	END
