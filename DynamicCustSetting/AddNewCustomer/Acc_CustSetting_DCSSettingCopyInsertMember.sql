@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember] 
 	@CustID				INT
 	, @ProductID		TINYINT = NULL
@@ -35,6 +32,7 @@ AS
 		- 20190814@Eden: Hide setting of inactive products [Redmine: #117439]
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
+		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -364,14 +362,14 @@ BEGIN
 			SportType				SMALLINT
 			, BetType				SMALLINT
 			, IsDisabled			BIT
-			, IsDisabledDownline	BIT
+			--, IsDisabledDownline	BIT
 			)
 	
-		INSERT INTO @NewDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
+		INSERT INTO @NewDisableStatTbl (SportType,BetType,IsDisabled)--,IsDisabledDownline)
 		SELECT psp.SportType
 			, psp.BetType		
 			, dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
-			, 0 AS IsDisabledDownline
+			--, 0 AS IsDisabledDownline
 		FROM dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN ProductStatusProfile PSP WITH (NOLOCK)
 			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
@@ -396,7 +394,7 @@ BEGIN
 								SELECT nslt.SportType	AS '@SportType'
 									, nslt.BetType		AS '@BetType'
 									, nslt.IsDisabled	AS '@IsDisabled'
-									, nslt.IsDisabledDownline AS '@IsDisabledDownline'
+									--, nslt.IsDisabledDownline AS '@IsDisabledDownline'
 								FROM @NewDisableStatTbl nslt								
 									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE psd.SettingType =4 AND psd.ProductID=@ProductID4
@@ -411,11 +409,12 @@ BEGIN
 
 		IF EXISTS(SELECT TOP 1 1 FROM @NewDisableStatTbl)
 		BEGIN
-			EXEC Acc_CustSetting_DisableStatUpd
+			EXEC Acc_CustSetting_DisableProductStatusUpd
 				  @CustID = @CustID
 				, @IsDisabled = @xmlStr
 				, @SubAccID = @SubAccID
 				, @IP = @IP
+				, @SystemID = @SystemID
 				, @UserID = @UserID
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT			

@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableProductStatusUpd] 
+CREATE PROCEDURE [dbo].[Acc_CustSetting_DisableProductStatusUpd] 
 	@CustID			INT
 	, @IsDisabled		VARCHAR(MAX)
 	, @SubAccID			INT				= 0
