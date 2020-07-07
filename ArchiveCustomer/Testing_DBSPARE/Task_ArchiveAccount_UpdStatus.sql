@@ -16,6 +16,10 @@ BEGIN
 
 	SET NOCOUNT ON
 
+	-- simulate run date based on test data version
+	declare @currentDate smalldatetime 
+	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
+
 	DECLARE @status varchar(200), @LastRunDate VARCHAR(200)
 
 	select @status = VValue from bodb02.dbo.SystemSettings with(nolock) where VName = 'aa_Status'
@@ -35,7 +39,7 @@ BEGIN
 
 	if (@status like '%Done')
 	begin
-		select @LastRunDate = CONVERT(varchar(10), getdate(),120)	
+		select @LastRunDate = CONVERT(varchar(10), @CurrentDate,120)	
 		EXEC bodb02.dbo.Task_UpdSystemSetting @VValue = @LastRunDate, @VName = 'aa_LastRunDate'
 	end
 END

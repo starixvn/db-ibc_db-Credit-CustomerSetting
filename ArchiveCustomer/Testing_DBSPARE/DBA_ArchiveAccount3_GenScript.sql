@@ -25,6 +25,10 @@ END
 
 SET NOCOUNT ON
 
+-- simulate run date based on test data version
+declare @currentDate smalldatetime 
+select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
+
 if NOT EXISTS(SELECT 1 FROM dbo.SystemSettings WITH(NOLOCK) WHERE VValue = 'Stage 3 - Done' AND VName = 'aa_Stmt_Status')
 BEGIN
 	raisError ('Statement data for this stage not loaded yet!', 16, 1)
@@ -124,7 +128,7 @@ FROM customer ag WITH (NOLOCK)
 	LEFT JOIN #Super_Exception se ON se.srecommend = ag.srecommend
 WHERE ag.roleid = 2
 	AND isnull(MemCount, 0) > 0-- AND isnull(TransCount, 0) > 0
-	AND (ag.creatdate < DATEADD(mm, -7, GETDATE()))
+	AND (ag.creatdate < DATEADD(mm, -7, @CurrentDate))
 	AND agci.enabled = 0
 	AND ca.isInternal = 0
 	AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
@@ -139,7 +143,7 @@ WHERE ag.roleid = 2
 		SELECT DISTINCT recommend
 		FROM customer c WITH (NOLOCK)
 		WHERE --roleid = 1 AND
-			creatdate >= DATEADD(mm, -7, GETDATE())
+			creatdate >= DATEADD(mm, -7, @CurrentDate)
 		)
 	AND se.srecommend IS NULL
 	

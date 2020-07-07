@@ -19,6 +19,10 @@ Revisions:
 	
 */
 
+-- simulate run date based on test data version
+declare @currentDate smalldatetime 
+select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
+
 declare @startRun datetime
 declare @endRun datetime
 declare @duration int
@@ -56,7 +60,7 @@ END
 
 --== Check new created members ==========================
 
-IF EXISTS(select 1 from dbo.customer with (nolock) where recommend = @AgentID AND roleid = 1 AND creatdate >= DATEADD(mm, -3, GETDATE()))
+IF EXISTS(select 1 from dbo.customer with (nolock) where recommend = @AgentID AND roleid = 1 AND creatdate >= DATEADD(mm, -3, @currentDate))
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just created new members while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
