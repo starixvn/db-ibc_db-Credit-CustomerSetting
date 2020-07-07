@@ -20,7 +20,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
 	@LeagueGroupID SMALLINT =0,
 	@IsApplyVR2 BIT = 0,
-	@RefLevelID INT = NULL
+	@RefLevelID INT = NULL,
+	@IsLowVR BIT = 0 
 AS
 /*
 --------------------------------------------------------------------------------
@@ -60,6 +61,7 @@ AS
 	-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
 	-- 20200512@VN-Eden: Disable VR setting of CN88 Customers [#133976]
 	-- 20200511@VN-Eden: E-sport VR for Map X Overtime [#132517]
+	-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
 */	
 BEGIN
 
@@ -201,6 +203,7 @@ BEGIN
 											, @srecommend = @srecommend
 											, @usertype = @usertype
 											, @virtualMultiplier = @new_virtualrate OUT
+											, @IsLowVR = @IsLowVR
 				END
 			END			
 		END
@@ -228,6 +231,7 @@ BEGIN
 									, @srecommend = @srecommend															
 									, @virtualMultiplier = @new_virtualrate OUT
 									, @usertype = @usertype
+									, @IsLowVR = @IsLowVR
 		END
 
 		SET @virtualrate = isnull(@new_virtualrate,1)
