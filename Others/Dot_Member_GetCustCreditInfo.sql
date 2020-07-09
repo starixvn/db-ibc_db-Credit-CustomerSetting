@@ -61,6 +61,7 @@ AS
 	-- 20200308@VN-Elodie: VR Setting for Soccer By Hours (6AM - 8PM GMT+8)
 	-- 20200512@VN-Eden: Disable VR setting of CN88 Customers [#133976]
 	-- 20200511@VN-Eden: E-sport VR for Map X Overtime [#132517]
+	-- 20200612@TWAdam(CUSTDB): LicUser Soccer Parlay use MaxPerMatch1MP & Add BetRadar new virtual sports (195,196,197)
 	-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
 */	
 BEGIN
@@ -136,12 +137,11 @@ BEGIN
 					WHEN @isparlay=0 and @sporttype=164 and @isLicensee=1 THEN maxpermatch161
 					WHEN @isparlay=0 and @sporttype=32 THEN maxpermatch2
 					WHEN @isparlay=0 and @sporttype=44 THEN MaxPerMatch99
-					WHEN @isparlay=1 and @sporttype=1 and @isLicensee=0 THEN MaxPerMatch1MP
-					WHEN @isparlay=1 and @sporttype=1 and @isLicensee=1 THEN maxpermatch
+					WHEN @isparlay=1 and @sporttype=1 THEN MaxPerMatch1MP
 					WHEN @isparlay=1 and @sporttype=99 THEN MaxPerMatch99MP
 					ELSE ci.maxpermatch99 END, 0),
 					@autosuspend=case when @sporttype=1 then ISNULL(ci.autosuspend,@False)
-										when @isparlay=1 or @sporttype in (180,181,182,183,184,185,186,190,191,192,193,194) then @False
+										when @isparlay=1 or @sporttype in (180,181,182,183,184,185,186,190,191,192,193,194,195,196,197) then @False
 										else ISNULL(ci.autosuspend2,@False) end,
 					@currency=ci.currency,
 					@DisableBet= isnull(case 
