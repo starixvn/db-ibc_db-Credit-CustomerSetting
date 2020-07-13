@@ -86,6 +86,7 @@ BEGIN
 		- 20200428@Eden: HotFix_-_The_status_Virtual_game_show_grey_color [Redmine: #133328]
 		- 20200504@Eden: ION Live casino [Redmine: #132323]		
 		- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
+		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -104,11 +105,11 @@ BEGIN
 
 	BEGIN TRY		
 		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK)
+		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0 AND IBCBetTypeID BETWEEN 1501 AND 1599
 	END TRY
 	BEGIN CATCH		
 		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
+		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0 AND IBCBetTypeID BETWEEN 1501 AND 1599
 	END CATCH
 	----- /Elodie @ 01 JUN 2015 -------------------
 	-- For DCS Product
@@ -505,13 +506,13 @@ BEGIN
 			,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.playerdiscount else 0 end) as playerdiscountcs
 			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.playerdiscount else 0 end) as playerdiscount1x2		
 
-			,min(case when g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526) then cg.IsDisabled else 1 end) as DisableKeno
+			,min(case when g.IBCBetTypeID IS NOT NULL then cg.IsDisabled else 1 end) as DisableKeno
 		FROM #memberList c
 			LEFT JOIN CustSetting cs with(nolock) 
 				on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) )
 			LEFT JOIN CustSetting3rd cs3 with(nolock) on c.custid = cs3.custid and cs3.sporttype = 161 and cs3.bettype = 81
 			LEFT JOIN CustGameType cg with(nolock) on c.custid = cg.custid
-			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526)
+			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID
 		WHERE rn between @rowstart and @rowend
 		GROUP BY c.custid, rn
 	)

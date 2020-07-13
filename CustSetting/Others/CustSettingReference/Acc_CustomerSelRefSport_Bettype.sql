@@ -27,6 +27,7 @@ AS
 		- 20190530@Elodie: Exclude data of CN88 site
 		- 20190729@Eden: Use new table Sport_Bettype_Reference_Setting instead of Sport_Bettype_Reference for keno [Redmine: #116466]
 		- 20190910@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -75,9 +76,9 @@ BEGIN
 
 			SELECT	@DisableKeno = MIN(CAST(cg.IsDisabled AS INT))
 			FROM	DBCUST.CustDB.dbo.CustGameType cg WITH (NOLOCK) 
-					LEFT JOIN dbo.GameType g WITH (NOLOCK) ON cg.GameTypeID = g.GameTypeID 
+					INNER JOIN dbo.GameType g WITH (NOLOCK) ON cg.GameTypeID = g.GameTypeID 
 			WHERE	cg.CustID = @CustID
-					AND g.IBCBetTypeID IN (1501,1503,1504,1505,1507,1508,1509,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524)	--Keno Bettype 
+					AND g.IsDisabled = 0
 			
 
 			SELECT @HideNG2 = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,4))
@@ -103,7 +104,7 @@ BEGIN
 	FROM	dbo.Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE	Sporttype NOT IN (
 				 CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
-				--,CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
+				,CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
 				,27, 50 -- Cricket
 			)
 			AND bettype NOT IN(SELECT Bettype FROM #tempRef)

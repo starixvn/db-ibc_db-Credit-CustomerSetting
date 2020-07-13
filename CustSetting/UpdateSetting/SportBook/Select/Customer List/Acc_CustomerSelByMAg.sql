@@ -82,8 +82,8 @@ AS
 		- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 		- 20200421@Elodie: Add GTCasino Product [Redmine: #130689]
 		- 20200504@Eden: ION Live casino [Redmine: #132323]
-
 		- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
+		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -102,11 +102,11 @@ BEGIN
 
 	BEGIN TRY		
 		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK)
+		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0 AND IBCBetTypeID BETWEEN 1501 AND 1599
 	END TRY
 	BEGIN CATCH		
 		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
+		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0 AND IBCBetTypeID BETWEEN 1501 AND 1599
 	END CATCH
 	----- /Elodie @ 01 JUN 2015 -------------------
 	DECLARE @RowCount int, @RowStart int, @RowEnd int
@@ -739,9 +739,9 @@ BEGIN
 	keno AS
 	(
 		SELECT	cg.CustID
-				,min(CASE WHEN g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526) then cg.IsDisabled else 1 end) as DisableKeno
+				,MIN(CAST(cg.IsDisabled AS TINYINT)) as DisableKeno
 		FROM dbo.CustGameType cg WITH(NOLOCK) 
-			INNER JOIN @tmp_GameType g ON cg.GameTypeID = g.GameTypeID and g.IBCBetTypeID in (1501,1503,1504,1505,1508,1511,1513,1514,1515,1516,1517,1519,1520,1521,1522,1524,1525,1526)		
+			INNER JOIN @tmp_GameType g ON cg.GameTypeID = g.GameTypeID	
 		WHERE CustID IN (SELECT CustID FROM #customer)
 		GROUP BY cg.CustID 
 	)
