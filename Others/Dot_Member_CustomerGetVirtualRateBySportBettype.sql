@@ -33,6 +33,7 @@ AS
 		-- 20200625@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8)[#136378]
 		-- 20200702@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8) - Credit Only (exclude CN88) [#136378]
 		-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
+		-- 20200713@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8) - Credit Only (exclude CN88) - REVOKE [#136378]
 
     Parameter's Explanation:
 */
@@ -76,10 +77,10 @@ BEGIN
 						SELECT @virtualMultiplier = @virtualMultiplier - 0.02
 					END
 
-					IF @CurrentHKTime >= '03:00:00' AND @CurrentHKTime <'06:00:00' AND @IsLicensee = 0
-					BEGIN
-						SELECT @virtualMultiplier = @virtualMultiplier + 0.05
-					END	
+					--IF @CurrentHKTime >= '03:00:00' AND @CurrentHKTime <'06:00:00' AND @IsLicensee = 0
+					--BEGIN
+					--	SELECT @virtualMultiplier = @virtualMultiplier + 0.05
+					--END	
 				END
 			END
 		END
