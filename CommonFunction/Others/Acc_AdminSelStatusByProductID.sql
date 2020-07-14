@@ -265,7 +265,7 @@ BEGIN
 		FROM @SportBettype s 
 		INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
 		WHERE ct.CustID=@custid 
-
+		
 		IF @Roleid = 4
 		BEGIN
 			;WITH t as 

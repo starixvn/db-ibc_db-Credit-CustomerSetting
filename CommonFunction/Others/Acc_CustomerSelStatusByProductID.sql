@@ -15,7 +15,6 @@ AS
 		- 20170504@Winnie: [Keno] - New 6 mini games - Customer Setting Development [RedmineID: #93796]
 		- 20190820@Eden: Hide setting of inactive products - Colossus Bet [RedmineID: #117439]
 		- 20190903@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
-		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
 	Parameters Explanation
 */ 
 
@@ -133,8 +132,6 @@ BEGIN
 		FROM @SportBettype s 
 		INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
 		WHERE ct.CustID=@custid
-
-		DELETE FROM @SportBettype WHERE IsDisabled IS NULL -- Games is not offered yet for this customer
 		
 		IF @RoleID=4		
 		BEGIN				 
