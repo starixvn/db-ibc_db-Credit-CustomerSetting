@@ -19,6 +19,7 @@ AS
 		- 20180118@Elodie: Update enable status on NAP & ExtNAP [RedmineID:#87328]
 		- 20190404@Johnson: add suspendinfo [redmine: #105587]
 		- 20200406@Elodie: Update unhide by RealProductID [RedmineID:#129440]
+		- 20200702@Winfred: Update enable status of Cust when SettingType = 4[RedmineID:#136210]  
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -209,7 +210,7 @@ BEGIN
 			END
 		END
 	END
-	IF @Action = 'NewProductStatus' --Setting type = 13
+	IF @Action = 'NewProductStatus' --Setting type in (4,13)
 	BEGIN
 		CREATE TABLE #NewStatTbl(
 				SportType			SMALLINT,
@@ -248,7 +249,7 @@ BEGIN
 						FROM dbo.ProductStatusProfile psp (NOLOCK)
 							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 							LEFT JOIN #NewStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
-						WHERE ps.SettingType = 13 AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewStatTbl WHERE IsDisabled = 0)
+						WHERE ps.SettingType  IN ( 13, 4) AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewStatTbl WHERE IsDisabled = 0)
 						FOR XML PATH('r')
 							, TYPE
 						)
@@ -261,7 +262,7 @@ BEGIN
 		FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 			INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType		
 			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
-		WHERE ps.SettingType = 13
+		WHERE ps.SettingType IN ( 13, 4)
 		
 		IF @RoleID=4
 		BEGIN			

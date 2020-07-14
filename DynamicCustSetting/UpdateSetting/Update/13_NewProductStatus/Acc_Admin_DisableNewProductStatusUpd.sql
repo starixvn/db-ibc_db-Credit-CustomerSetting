@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusUpd] 
 	  @CustID			INT
 	, @IsDisabled		VARCHAR(MAX)
@@ -19,7 +16,7 @@ AS
 
 	Revisions:
 		- 20180118@Elodie: Update enable status on NAP & ExtNAP [RedmineID:#87328]
-
+		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -261,7 +258,7 @@ BEGIN
 	SELECT TOP 1 @ProductID = ps.ProductID
 	FROM #NewDisableStatTbl dis 
 		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
-	WHERE ps.SettingType = 13
+	WHERE ps.SettingType IN ( 13, 4)
 
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 	BEGIN
@@ -272,7 +269,7 @@ BEGIN
 					FROM ProductStatusProfile psp (NOLOCK)
 						INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 						LEFT JOIN #NewDisableStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
-					WHERE ps.SettingType = 13 AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+					WHERE ps.SettingType IN ( 13, 4) AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 					FOR XML PATH('r')
 						, TYPE
 					)
@@ -360,7 +357,7 @@ BEGIN
 					AND	psd.BetType = tmp.BetType
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType = 13	
+				AND psd.SettingType IN ( 13, 4)	
 		 ) iq
 
 	-- Select ProductName
@@ -610,7 +607,7 @@ BEGIN
 		IF @@ROWCOUNT = 0 BREAK
 
 		BEGIN TRY
-			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+			EXEC Acc_WriteLog_UserLog_RunSP_Wrapper @UserID = @UserID
 				, @CustID			= @CustID
 				, @ActionID			= @ActionID
 				, @TrackingValue	= @logSpData
@@ -619,7 +616,7 @@ BEGIN
 		END TRY
 
 		BEGIN CATCH
-			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+			EXEC Acc_WriteLog_UserLog_RunSP_Wrapper @UserID = @UserID
 				, @CustID			= @CustID
 				, @ActionID			= @ActionID
 				, @TrackingValue	= @logSpData
