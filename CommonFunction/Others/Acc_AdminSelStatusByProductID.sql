@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_AdminSelStatusByProductID]  
 (
 	 @custid  INT
@@ -15,6 +14,7 @@ AS
 	Revisions:	
 		- 20180228@Johnson: new direction for status[RedmineID: #87328]
 		- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
 	Parameters Explanation
 */ 
 
@@ -259,18 +259,12 @@ BEGIN
 								TotalEnabledMasters,TotalDisabledMasters,TotalEnabledAgents,TotalDisabledAgents,TotalEnabledMembers,TotalDisabledMembers)
 		SELECT 8,202,IBCBetTypeID,NULL,0,0,0,0,1,GameTypeID,0,0,0,0,0,0
 		FROM DBACC.bodb02.dbo.Gametype WHERE  IBCBetTypeID BETWEEN 1501 AND 1599 AND IBCBetTypeID NOT IN(1502,1507,1509) AND IsDisabled = 0 
-		
+
 		UPDATE s
 		SET s.IsDisabled=ct.IsDisabled
 		FROM @SportBettype s 
 		INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
 		WHERE ct.CustID=@custid 
-		
-		UPDATE s
-		SET s.IsDisabled=ct.IsDisabled
-		FROM @SportBettype s 
-		INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
-		WHERE ct.CustID=@custid
 		
 		IF @Roleid = 4
 		BEGIN
@@ -368,6 +362,8 @@ BEGIN
 		UPDATE s
 		SET s.IsHiddenUpline=@IsHiddenUpline
 		FROM @SportBettype s	
+
+		DELETE FROM @SportBettype WHERE IsDisabled IS NULL -- Games is not offered yet for this customer
 			
 	END 
 	IF @ProductID=12 -- GD
