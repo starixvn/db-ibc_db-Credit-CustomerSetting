@@ -19,7 +19,7 @@ BEGIN
 
 	DECLARE @status varchar(200)
 	DECLARE @agent varchar(50), @ErrMsg VARCHAR(150), @msg VARCHAR(100)
-	CREATE TABLE #ReduceCredit (CustId INT, ReduceCredit MONEY, IsFinished BIT DEFAULT(0))
+	CREATE TABLE #ReduceCredit (CustId INT, ReduceCredit MONEY DEFAULT(0), IsFinished BIT DEFAULT(0))
 
 	if (@stage is null)
 	begin
@@ -67,6 +67,17 @@ BEGIN
 			, @NewCredit MONEY = 0
 			, @username NVARCHAR(MAX)
 
+		INSERT INTO #ReduceCredit (CustId)
+		SELECT DISTINCT c.custid
+		FROM dbo.tmpCustArchived t WITH (NOLOCK)
+			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.username= t.Master
+		WHERE t.IsFinished = 0
+		UNION ALL
+		SELECT DISTINCT c.custid
+		FROM dbo.tmpCustArchived t WITH (NOLOCK)
+			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.username= t.Super
+		WHERE t.IsFinished = 0
+		
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
@@ -81,18 +92,10 @@ BEGIN
 
 			IF @ErrMsg = ''
 			BEGIN
-				IF EXISTS(SELECT 1 FROM #ReduceCredit WHERE CustId = @mrecommend)
-				BEGIN
-					UPDATE #ReduceCredit
-					SET ReduceCredit = ReduceCredit + @ReduceCredit
-					WHERE CustId IN (@srecommend, @mrecommend)
-				END
-				ELSE
-				BEGIN
-					INSERT INTO #ReduceCredit (CustId, ReduceCredit)
-					VALUES (@srecommend, @ReduceCredit)
-						,(@mrecommend, @ReduceCredit)
-				END
+				UPDATE #ReduceCredit
+				SET ReduceCredit = ReduceCredit + @ReduceCredit
+				WHERE CustId IN (@srecommend, @mrecommend)
+
 			END
 	
 			SET @msg = 'Done agent ' + @agent + CHAR(13)
@@ -103,55 +106,59 @@ BEGIN
 		END
 
 		--Reduce SMA Credit
-		WHILE(1=1)
+		IF EXISTS (SELECT TOP(1) 1 FROM #ReduceCredit WHERE ReduceCredit <> 0)
 		BEGIN
-			UPDATE TOP (1) t
-			SET t.IsFinished = 1
-				, @custid = t.CustId
-				, @ReduceCredit = t.ReduceCredit
-			FROM #ReduceCredit t
-			WHERE IsFinished = 0 
+			WHILE(1=1)
+			BEGIN
+				UPDATE TOP (1) t
+				SET t.IsFinished = 1
+					, @custid = t.CustId
+					, @ReduceCredit = t.ReduceCredit
+				FROM #ReduceCredit t
+				WHERE IsFinished = 0
+					AND ReduceCredit <> 0
 		
-			IF @@ROWCOUNT = 0 
-				BREAK
+				IF @@ROWCOUNT = 0 
+					BREAK
 			
-			SELECT	@username = username,
-				@OldCredit = Credit
-			FROM	dbo.custInfo WITH (NOLOCK)
-			WHERE	custid = @custid
+				SELECT	@username = username,
+					@OldCredit = Credit
+				FROM	dbo.custInfo WITH (NOLOCK)
+				WHERE	custid = @custid
 
-			SET @NewCredit = @OldCredit - @ReduceCredit
+				SET @NewCredit = @OldCredit - @ReduceCredit
 
-			UPDATE c
-			SET c.credit = @NewCredit
-			FROM dbo.custInfo c WITH (ROWLOCK, UPDLOCK)
-			WHERE c.custid = @custid	
+				UPDATE c
+				SET c.credit = @NewCredit
+				FROM dbo.custInfo c WITH (ROWLOCK, UPDLOCK)
+				WHERE c.custid = @custid	
 
-			--Writelog
-			SELECT  @LogData = 'Update Credits for SMA Account '+ COALESCE(@username, SPACE(1))  
+				--Writelog
+				SELECT  @LogData = 'Update Credits for SMA Account '+ COALESCE(@username, SPACE(1))  
 
-			BEGIN TRY
-				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-					@UserID = 360418,
-					@CustID = @CustID,
-					@Doing = @LogData,
-					@OldValue = @OldCredit,
-					@NewValue = @NewCredit,
-					@IP = '100.100.100.100',
-					@ActionID = 1222
-			END TRY
-			BEGIN CATCH
-				SELECT @LogData = @LogData + ' ErrMsg:' + ERROR_MESSAGE()
+				BEGIN TRY
+					EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+						@UserID = 360418,
+						@CustID = @CustID,
+						@Doing = @LogData,
+						@OldValue = @OldCredit,
+						@NewValue = @NewCredit,
+						@IP = '100.100.100.100',
+						@ActionID = 1222
+				END TRY
+				BEGIN CATCH
+					SELECT @LogData = @LogData + ' ErrMsg:' + ERROR_MESSAGE()
 
-				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-					@UserID = 360418,
-					@CustID = @CustID,
-					@Doing = @LogData,
-					@OldValue = @OldCredit,
-					@NewValue = @NewCredit,
-					@IP = '100.100.100.100',
-					@ActionID = 1222
-			END CATCH
+					EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+						@UserID = 360418,
+						@CustID = @CustID,
+						@Doing = @LogData,
+						@OldValue = @OldCredit,
+						@NewValue = @NewCredit,
+						@IP = '100.100.100.100',
+						@ActionID = 1222
+				END CATCH
+			END
 		END
 		--Gen List Super Master into tmpCustGroupLevelArchived
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
