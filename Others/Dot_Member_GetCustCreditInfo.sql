@@ -79,12 +79,6 @@ BEGIN
 			@DisBetSetting BIT,@DisBetSetting3rd BIT = 0,@BonusWalletFlag BIT,@False BIT=0,@True BIT=1,@Zero TINYINT=0,@MaxWinLimit SMALLMONEY=0,
 			@MaxLossLimit MONEY=0,@CN88_reject BIT= 1,@CN88_closed BIT=1
 
-	IF @sporttype = 2 --BasketBal
-	BEGIN
-		SET @sporttype_vrate = @sporttype
-		SET @bettype_vrate = @bettype
-	END
-
 	--set @WinMaxBetType=@bettype
 	IF @WinMaxSportType<>0 and @WinMaxBetType<>0
 	BEGIN
