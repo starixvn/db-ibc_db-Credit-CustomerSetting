@@ -485,8 +485,8 @@ BEGIN
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 		
-		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
-		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, ActionId
+		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, VoidTime, LimitAmount)
+		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, ActionId, VoidTime, 0
 		FROM ProblemAccount WITH (NOLOCK)
 		WHERE CustId = @mrecommend
 	END TRY

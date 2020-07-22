@@ -85,6 +85,7 @@ AS
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200602@Sol: Check IsAutoEnableADBMaster to enable ADB on Mater or not[Redmine: #134242]
+	- 20200722@Johnson: add void time & limit amount for problem account [redmine:#135253]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -477,8 +478,8 @@ BEGIN
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 
-		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId)
-		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, ActionId
+		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, VoidTime, LimitAmount)
+		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, ActionId, pa.VoidTime,  0
 		FROM ProblemAccount WITH (NOLOCK)
 		WHERE CustId = @srecommend
 	END TRY

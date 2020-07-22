@@ -5,7 +5,10 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_12]
 	@ReasonId					TINYINT = NULL,
 	@PreventActionId 			TINYINT = NULL,
 	@Comment					NVARCHAR(300) = NULL,
-
+	@VoidTime					VARCHAR(50) = '',
+	@LimitAmount 				MONEY = 0,
+	@UpdateTime					BIT = 0,	
+	
 	@Action						VARCHAR(50),
 	@AbnomalBetMember			VARCHAR(MAX) = NULL,
 	@DirectMarkedCust			VARCHAR(MAX) = NULL,
@@ -21,7 +24,7 @@ AS
 
 	Revisions:
 		- 20200210@Elodie: Initial SP [Redmine:#116814]
-
+		- 20200720@Johnson: Add void time & Limit amount [redmine:#135253]
 	Param's Explanation:
 		@Action: MarkProblem, RemoveReduceBetLimit
 		
@@ -74,9 +77,10 @@ BEGIN
 		SELECT @SetBit1 = POWER(2, @Pos)								
 
 		BEGIN TRY			
-			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
+			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId, VoidTime, LimitAmount)
 			SELECT @CustId, @SetBit1, @ReasonId, @Comment, NULL, NULL, GETDATE(), 0, 0, @PreventActionId, 
-				CASE WHEN @RoleId = 1 THEN @SubIssueTypeId ELSE NULL END
+				CASE WHEN @RoleId = 1 THEN @SubIssueTypeId ELSE NULL END,
+				@VoidTime, @LimitAmount
 			WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = @CustId)
 
 			IF @@ROWCOUNT = 0
@@ -87,7 +91,9 @@ BEGIN
 					pa.ReasonId = @ReasonId,
 					pa.Comment = @Comment,
 					pa.ActionId = @PreventActionId,
-					pa.SubIssueTypeId = CASE WHEN @RoleId = 1 THEN @SubIssueTypeId ELSE NULL END
+					pa.SubIssueTypeId = CASE WHEN @RoleId = 1 THEN @SubIssueTypeId ELSE NULL END,
+					pa.VoidTime = @VoidTime,
+					pa.LimitAmount = @LimitAmount
 				FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 				WHERE CustId = @CustId
 			END
@@ -102,15 +108,17 @@ BEGIN
 		UPDATE pa 		
 		SET pa.ProblemStatus = ProblemStatus | @SetBit1,
 			pa.ActionId = @PreventActionId,
-			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END
+			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END,
+			pa.VoidTime = @VoidTime
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
 
-		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
+		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId, VoidTime, LimitAmount)
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		SELECT CustId, @SetBit1, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, @PreventActionId,			
-			CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END
+			CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END,
+			@VoidTime, 0
 		FROM #DownlineCust t
 		WHERE NOT EXISTS (SELECT 1 FROM ProblemAccount WHERE CustId = t.CustId)
 
@@ -122,7 +130,8 @@ BEGIN
 	BEGIN
 		UPDATE pa 		
 		SET pa.ActionId = @PreventActionId,
-			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END
+			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END,
+			pa.VoidTime = CASE WHEN @UpdateTime = 1 THEN @VoidTime ELSE pa.VoidTime END			
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
