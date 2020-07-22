@@ -479,7 +479,7 @@ BEGIN
 		WHERE custid=@ExistingCustid  
 
 		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, VoidTime, LimitAmount)
-		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, ActionId, pa.VoidTime,  0
+		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, ActionId, VoidTime,  0
 		FROM ProblemAccount WITH (NOLOCK)
 		WHERE CustId = @srecommend
 	END TRY
