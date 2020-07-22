@@ -64,6 +64,7 @@ AS
 	-- 20200612@TWAdam(CUSTDB): LicUser Soccer Parlay use MaxPerMatch1MP & Add BetRadar new virtual sports (195,196,197)
 	-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
 	-- 20200610@VN-Eden: Virtual Rate for Basketball [Redmine: #134978]
+	-- 20200722@VN-Eden: VR setting for Basketball by member stake [Redmine: #138089]
 */	
 BEGIN
 
@@ -220,6 +221,7 @@ BEGIN
 									, @virtualMultiplier = @new_virtualrate OUT
 									, @usertype = @usertype
 									, @RefLevelID = @RefLevelID
+									, @IsLowVR = @IsLowVR
 		END
 
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
@@ -244,6 +246,7 @@ BEGIN
 		SET @autosuspend = @False
 
 		IF ISNULL(@usertype,0) <> 2 -- not CN88
+			AND ISNULL( @IsLowVR,0) <> 1
 		BEGIN
 			SELECT @autosuspend = t.IsVRAutoSuspend 
 			FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
