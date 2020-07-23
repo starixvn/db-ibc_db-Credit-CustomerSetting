@@ -245,6 +245,9 @@ BEGIN
 	BEGIN
 		SET @autosuspend = @False
 
+		IF @sporttype = 2 AND @IsLowVR = 1 AND @virtualrate < 1.00 
+			SET @autosuspend = @False
+		ELSE
 		IF ISNULL(@usertype,0) <> 2 -- not CN88
 		BEGIN
 			SELECT @autosuspend = t.IsVRAutoSuspend 
@@ -252,9 +255,6 @@ BEGIN
 
 			SET @autosuspend = ISNULL(@autosuspend,@False)
 		END
-
-		IF @sporttype = 2 AND ISNULL( @IsLowVR,0) = 1 AND @virtualrate < 1.00 
-			SET @autosuspend = @False
 	END
 	
 	--Get data from DCS structure
