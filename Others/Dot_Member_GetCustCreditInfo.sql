@@ -253,7 +253,7 @@ BEGIN
 			SET @autosuspend = ISNULL(@autosuspend,@False)
 		END
 
-		IF @sporttype = 2 AND ISNULL( @IsLowVR,0) = 1 AND @virtualrate < 0 
+		IF @sporttype = 2 AND ISNULL( @IsLowVR,0) = 1 AND @virtualrate < 1.00 
 			SET @autosuspend = @False
 	END
 	
