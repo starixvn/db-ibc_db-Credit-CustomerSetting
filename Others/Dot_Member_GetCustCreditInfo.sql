@@ -246,13 +246,15 @@ BEGIN
 		SET @autosuspend = @False
 
 		IF ISNULL(@usertype,0) <> 2 -- not CN88
-			AND ISNULL( @IsLowVR,0) <> 1
 		BEGIN
 			SELECT @autosuspend = t.IsVRAutoSuspend 
 			FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
 
 			SET @autosuspend = ISNULL(@autosuspend,@False)
 		END
+
+		IF @sporttype = 2 AND ISNULL( @IsLowVR,0) = 1 AND @virtualrate < 0 
+			SET @autosuspend = @False
 	END
 	
 	--Get data from DCS structure
