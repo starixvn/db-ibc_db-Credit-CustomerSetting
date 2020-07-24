@@ -432,4 +432,5 @@ EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@CustID = @AgentID,
 	@ActionID = 1500,
 	@TrackingValue = @LogSPData	,
+	@TrackingValue2 = @ReduceCredit,
 	@duration = @duration
