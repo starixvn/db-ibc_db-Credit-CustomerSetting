@@ -105,7 +105,7 @@ BEGIN
 				BEGIN TRY
 					EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
 						@UserID = 360418,
-						@CustID = @CustID,
+						@CustID = @recommend,
 						@Doing = @LogData,
 						@OldValue = @ReduceCredit,
 						@NewValue = 0,
@@ -117,7 +117,7 @@ BEGIN
 
 					EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
 						@UserID = 360418,
-						@CustID = @CustID,
+						@CustID = @recommend,
 						@Doing = @LogData,
 						@OldValue = @ReduceCredit,
 						@NewValue = 0,
