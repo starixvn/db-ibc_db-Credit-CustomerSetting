@@ -35,6 +35,7 @@ AS
 		-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
 		-- 20200713@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8) - Credit Only (exclude CN88) - REVOKE [#136378]
 		-- 20200610@VN-Eden: Virtual Rate for Basketball [Redmine: #134978]
+		-- 20200722@VN-Eden: VR setting for Basketball by member stake [Redmine: #138089]
 
     Parameter's Explanation:
 */
@@ -208,6 +209,11 @@ BEGIN
 		INNER JOIN VRValueMapping vnonlive WITH (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
 		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0 --Exclude 'Follow parent'
 		ORDER BY c.RoleID,h.OrderNo
+
+		IF @SportType = 2 AND @IsLowVR = 1 AND @virtualMultiplier < 1
+		BEGIN
+			SET @virtualMultiplier = 0.01
+		END
 
 	END
 	
