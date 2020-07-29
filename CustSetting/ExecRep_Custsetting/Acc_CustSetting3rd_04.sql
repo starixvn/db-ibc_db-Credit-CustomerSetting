@@ -35,6 +35,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting3rd_04]
 			- 20170601@Elodie: Migrate Inspired VS to DCS structure [Redmine: #77274]
 			- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 			- 20190924@Elodie: 3rd party products - Remove Inactive Products Phase 2 [Redmine: #118699]
+			- 20200729@Johnson: hot fix Number Game wrong bettype [redmine:#138441]
         Parameter's Explanation:        
     */ 
 BEGIN
@@ -397,7 +398,7 @@ BEGIN
                AND c.roleid = 1
                AND c.Enabled = 1
                AND cs3.sporttype = 161
-               AND cs3.bettype IN (81, 83, 89, 88)
+               AND cs3.bettype IN (81, 83, 86, 88)
                AND (cs3.isautopositiontaking = 1
                     OR mcs.isautopositiontaking = 1
                    )

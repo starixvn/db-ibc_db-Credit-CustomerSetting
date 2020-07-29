@@ -1,0 +1,3 @@
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustOverrideUpd.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_PositionTaking.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_All.sql
