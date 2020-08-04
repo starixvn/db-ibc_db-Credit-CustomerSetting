@@ -103,7 +103,7 @@ BEGIN
 				SELECT  @LogData = 'Update Credits for SMA Account '+ COALESCE(@agent, SPACE(1))  
 
 				BEGIN TRY
-					EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+					EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
 						@UserID = 360418,
 						@CustID = @recommend,
 						@Doing = @LogData,
