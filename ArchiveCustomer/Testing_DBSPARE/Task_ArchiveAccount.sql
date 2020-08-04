@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-custDB" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [Task_ArchiveAccount]
+ALTER PROCEDURE [dbo].[Task_ArchiveAccount]
 	@stage tinyint = NULL
 AS
 /*
@@ -66,22 +66,25 @@ BEGIN
 			, @custid INT
 			, @NewCredit MONEY = 0
 			, @username NVARCHAR(MAX)
+			, @recommend INT
 
 		INSERT INTO #ReduceCredit (CustId)
 		SELECT DISTINCT c.custid
 		FROM dbo.tmpCustArchived t WITH (NOLOCK)
 			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.username= t.Master
 		WHERE t.IsFinished = 0
+			AND c.roleid = 3
 		UNION ALL
 		SELECT DISTINCT c.custid
 		FROM dbo.tmpCustArchived t WITH (NOLOCK)
 			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.username= t.Super
 		WHERE t.IsFinished = 0
+			AND c.roleid = 4
 		
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
-			SELECT TOP 1 @agent = Agent FROM tmpCustArchived WHERE IsFinished = 0	
+			SELECT TOP 1 @agent = Agent, @recommend = recommend FROM tmpCustArchived WHERE IsFinished = 0	
 			IF (@@ROWCOUNT = 0) BREAK
 	
 			EXEC dbo.DBA_ArchiveAccount2_DisableAgentLine @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT, @srecommend = @srecommend OUTPUT, @mrecommend = @mrecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT
@@ -95,6 +98,32 @@ BEGIN
 				UPDATE #ReduceCredit
 				SET ReduceCredit = ReduceCredit + @ReduceCredit
 				WHERE CustId IN (@srecommend, @mrecommend)
+
+				--Writelog clear given credit for Agent
+				SELECT  @LogData = 'Update Credits for SMA Account '+ COALESCE(@agent, SPACE(1))  
+
+				BEGIN TRY
+					EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+						@UserID = 360418,
+						@CustID = @recommend,
+						@Doing = @LogData,
+						@OldValue = @ReduceCredit,
+						@NewValue = 0,
+						@IP = '100.100.100.100',
+						@ActionID = 1222
+				END TRY
+				BEGIN CATCH
+					SELECT @LogData = @LogData + ' ErrMsg:' + ERROR_MESSAGE()
+
+					EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+						@UserID = 360418,
+						@CustID = @recommend,
+						@Doing = @LogData,
+						@OldValue = @ReduceCredit,
+						@NewValue = 0,
+						@IP = '100.100.100.100',
+						@ActionID = 1222
+				END CATCH
 
 			END
 	
@@ -181,7 +210,7 @@ BEGIN
 			SET @msg = 'Done agent ' + @agent + CHAR(13)
 			RAISERROR(@msg, 0, 0) WITH NOWAIT	
 			
-			WAITFOR DELAY '00:00:00.280'
+			--WAITFOR DELAY '00:00:00.280'
 			--IF (@ErrMsg <> '') BREAK
 		END
 		--Gen List Super Master into tmpCustGroupLevelArchived
