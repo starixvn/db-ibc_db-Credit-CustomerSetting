@@ -260,7 +260,7 @@ BEGIN
 	END
 
 	IF @sporttype_vrate = 2 AND @BetFrom = 'a' --Desktop/ChinaView
-		AND @isLicensee = 1 AND @currencyname = 'RMB'
+		AND @isLicensee = 1 AND @currencyname IN( 'RMB','UUS')
 	BEGIN
 		IF EXISTS (	SELECT TOP 1 1 
 					FROM VRCustAutoAdjustment v WITH(NOLOCK) 
