@@ -21,7 +21,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
 	@LeagueGroupID SMALLINT =0,
 	@IsApplyVR2 BIT = 0,
 	@RefLevelID INT = NULL,
-	@IsLowVR BIT = 0 
+	@IsLowVR BIT = 0,
+	@BetFrom NVARCHAR(1) = ''
 AS
 /*
 --------------------------------------------------------------------------------
@@ -65,6 +66,7 @@ AS
 	-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
 	-- 20200610@VN-Eden: Virtual Rate for Basketball [Redmine: #134978]
 	-- 20200722@VN-Eden: VR setting for Basketball by member stake [Redmine: #138089]
+	-- 20200805@VN-Eden: VR setting for Basketball on some licensees from Desktop/China View [redmine: #138168]
 */	
 BEGIN
 
@@ -255,6 +257,48 @@ BEGIN
 
 			SET @autosuspend = ISNULL(@autosuspend,@False)
 		END
+	END
+
+	IF @sporttype_vrate = 2 AND @BetFrom = 'a' --Desktop/ChinaView
+	BEGIN
+		IF EXISTS (	SELECT TOP 1 1 
+					FROM VRCustAutoAdjustment v WITH(NOLOCK) 
+					WHERE v.SportType = @sporttype_vrate 
+						AND v.CustID = @custid
+						AND v.[Status] = 1
+						AND FirstBetDate IS NULL
+				)
+			BEGIN
+				UPDATE v
+				SET v.[Status] = 2 
+				FROM VRCustAutoAdjustment v WITH(ROWLOCK) 
+					WHERE v.SportType = @sporttype_vrate 
+						AND v.CustID = @custid
+						AND v.[Status] = 1
+						AND FirstBetDate IS NULL
+
+				DECLARE @NewVirtualMultiplier VARCHAR(MAX)
+
+				SELECT @NewVirtualMultiplier = CONVERT(VARCHAR(MAX),(   SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
+																		FROM VRSettingHierarchy b WITH(NOLOCK) 
+																			CROSS APPLY VRValueMapping vr (NOLOCK)
+																		WHERE b.SportType = 2 
+																			AND b.VRLeagueGroupID = -1 
+																			AND b.BetType = -1 
+																			AND vr.Value = 1
+																		FOR XML RAW('Row'), ROOT ('Root'))
+														)
+
+				EXEC [Acc_CustVirtualMultiplier_Upd]
+					  @CustID = @CustID
+					, @SportType = @sporttype_vrate
+					, @VirtualMultiplier = @NewVirtualMultiplier
+					, @UserID  = 0
+					, @IP  = ''
+					, @ErrCode = 0 
+					, @ErrMsg = ''
+			END
+		
 	END
 	
 	--Get data from DCS structure
