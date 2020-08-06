@@ -283,7 +283,7 @@ BEGIN
 
 				SELECT @SportLevelID = levelID
 				FROM VRSettingHierarchy  WITH(NOLOCK)
-				WHERE SportType = @Sporttype
+				WHERE SportType = @sporttype_vrate
 					AND VRLeagueGroupID = -1
 					AND BetType = -1
 
