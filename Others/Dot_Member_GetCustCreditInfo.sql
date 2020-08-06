@@ -278,26 +278,34 @@ BEGIN
 						AND v.[Status] = 1
 						AND FirstBetDate IS NULL
 
-				DECLARE @NewVirtualMultiplier VARCHAR(MAX)
+				DECLARE @SportLevelID INT
+					, @ValueID_0 INT
 
-				SELECT @NewVirtualMultiplier = CONVERT(VARCHAR(MAX),(   SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
-																		FROM VRSettingHierarchy b WITH(NOLOCK) 
-																			CROSS APPLY VRValueMapping vr (NOLOCK)
-																		WHERE b.SportType = 2 
-																			AND b.VRLeagueGroupID = -1 
-																			AND b.BetType = -1 
-																			AND vr.Value = 1
-																		FOR XML RAW('Row'), ROOT ('Root'))
-														)
+				SELECT @SportLevelID = levelID
+				FROM VRSettingHierarchy  WITH(NOLOCK)
+				WHERE SportType = @Sporttype
+					AND VRLeagueGroupID = -1
+					AND BetType = -1
 
-				EXEC [Acc_CustVirtualMultiplier_Upd]
-					  @CustID = @CustID
-					, @SportType = @sporttype_vrate
-					, @VirtualMultiplier = @NewVirtualMultiplier
-					, @UserID  = 0
-					, @IP  = ''
-					, @ErrCode = 0 
-					, @ErrMsg = ''
+				SELECT @ValueID_0 = ValueID
+				FROM VRValueMapping WITH(NOLOCK)
+				WHERE Value = 1.00 
+
+				IF EXISTS (	SELECT 1 
+							FROM VRCustSetting WITH(NOLOCK) 
+							WHERE custid = @custid AND LevelID = @SportLevelID) 
+				BEGIN
+					UPDATE v
+					SET v.ValueIDLIVE = @ValueID_0
+						,v.ValueIDNonLIVE = @ValueID_0
+					FROM VRCustSetting v WITH(ROWLOCK) 
+					WHERE custid = @custid AND LevelID = @SportLevelID
+						AND (v.ValueIDLIVE != @ValueID_0 OR v.ValueIDNonLIVE != @ValueID_0)
+				END
+				ELSE
+				BEGIN
+					INSERT INTO VRCustSetting( CustID,LevelID,ValueIDLIVE,ValueIDNonLIVE) VALUES ( @custid,@SportLevelID,@ValueID_0,@ValueID_0)
+				END
 			END
 		
 	END
