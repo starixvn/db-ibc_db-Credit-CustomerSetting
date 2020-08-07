@@ -15,9 +15,9 @@ BEGIN
 	DECLARE @PGEnable BIT  = 0 
 	SELECT	@PGEnable = 1 WHERE	@site IN ('755555','IBCIndo','Indo','KORIBC','789y')
 	
-	SELECT ProductID, SportType, BetType,IsSync,IsHidden,IsDisabled
+	SELECT ProductID, SportType, BetType
 	FROM ProductSettingDetail WITH(NOLOCK)
 	WHERE ProductID = 22 AND SettingType = 8
-	AND (@PGEnable = 0 OR (@PGEnable = 1 AND BetType =  6001))
+	AND ((@PGEnable = 0 AND BetType <> 6001) OR @PGEnable = 1 )
 END
 GO
