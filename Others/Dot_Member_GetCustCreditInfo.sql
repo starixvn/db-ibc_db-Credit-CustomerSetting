@@ -21,7 +21,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
 	@LeagueGroupID SMALLINT =0,
 	@IsApplyVR2 BIT = 0,
 	@RefLevelID INT = NULL,
-	@IsLowVR BIT = 0 
+	@IsLowVR BIT = 0,
+	@BetFrom NVARCHAR(1) = ''
 AS
 /*
 --------------------------------------------------------------------------------
@@ -65,6 +66,7 @@ AS
 	-- 20200703@VN-Eden: Control Virtual Rate for Soccer SET = -99% for member stake less than or equal to RM125 [#136990]
 	-- 20200610@VN-Eden: Virtual Rate for Basketball [Redmine: #134978]
 	-- 20200722@VN-Eden: VR setting for Basketball by member stake [Redmine: #138089]
+	-- 20200805@VN-Eden: VR setting for Basketball on some licensees from Desktop/China View [redmine: #138168]
 */	
 BEGIN
 
@@ -255,6 +257,57 @@ BEGIN
 
 			SET @autosuspend = ISNULL(@autosuspend,@False)
 		END
+	END
+
+	IF @sporttype_vrate = 2 AND @BetFrom = 'a' --Desktop/ChinaView
+		AND @isLicensee = 1 AND @currencyname IN( 'RMB','UUS')
+	BEGIN
+		IF EXISTS (	SELECT TOP 1 1 
+					FROM VRCustAutoAdjustment v WITH(NOLOCK) 
+					WHERE v.SportType = @sporttype_vrate 
+						AND v.CustID = @custid
+						AND v.[Status] = 1
+						AND FirstBetDate IS NULL
+				)
+			BEGIN
+				UPDATE v
+				SET v.[Status] = 2 
+				FROM VRCustAutoAdjustment v WITH(ROWLOCK) 
+					WHERE v.SportType = @sporttype_vrate 
+						AND v.CustID = @custid
+						AND v.[Status] = 1
+						AND FirstBetDate IS NULL
+
+				DECLARE @SportLevelID INT
+					, @ValueID_0 INT
+
+				SELECT @SportLevelID = levelID
+				FROM VRSettingHierarchy  WITH(NOLOCK)
+				WHERE SportType = @sporttype_vrate
+					AND VRLeagueGroupID = -1
+					AND BetType = -1
+
+				SELECT @ValueID_0 = ValueID
+				FROM VRValueMapping WITH(NOLOCK)
+				WHERE Value = 1.00 
+
+				IF EXISTS (	SELECT 1 
+							FROM VRCustSetting WITH(NOLOCK) 
+							WHERE custid = @custid AND LevelID = @SportLevelID) 
+				BEGIN
+					UPDATE v
+					SET v.ValueIDLIVE = @ValueID_0
+						,v.ValueIDNonLIVE = @ValueID_0
+					FROM VRCustSetting v WITH(ROWLOCK) 
+					WHERE custid = @custid AND LevelID = @SportLevelID
+						AND (v.ValueIDLIVE != @ValueID_0 OR v.ValueIDNonLIVE != @ValueID_0)
+				END
+				ELSE
+				BEGIN
+					INSERT INTO VRCustSetting( CustID,LevelID,ValueIDLIVE,ValueIDNonLIVE) VALUES ( @custid,@SportLevelID,@ValueID_0,@ValueID_0)
+				END
+			END
+		
 	END
 	
 	--Get data from DCS structure
