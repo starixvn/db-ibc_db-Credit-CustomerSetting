@@ -16,9 +16,9 @@ BEGIN
 	SELECT	@PGEnable = 1 WHERE	@site IN ('755555','IBCIndo','Indo','KORIBC','789y')
 	
 	SELECT 
-		CASE SportType WHEN  212  THEN 14 -- Macau Game
-					   WHEN  165  THEN 14 -- Card Club
-					   WHEN  247  THEN 34 -- SG
+		CASE SportType WHEN  212  THEN 22 -- Macau Game
+					   WHEN  165  THEN 34 -- Card Club
+					   WHEN  247  THEN 36 -- SG
 					   WHEN  248  THEN 32 -- PP
 					   ELSE 55 END as ProductID, -- PGSofft
 		SportType, BetType
