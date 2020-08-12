@@ -2,3 +2,4 @@ CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
+DynamicCustSetting\AddNewCustomer\Acc_CustSetting_DCSSettingCopyInsertMember.sql
