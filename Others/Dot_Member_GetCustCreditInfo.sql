@@ -187,79 +187,6 @@ BEGIN
 
 	DECLARE @new_virtualrate FLOAT = 1
 
-	IF @bettype<>0
-	BEGIN
-		IF @sporttype = 1 
-		BEGIN
-			IF @bettype NOT BETWEEN 801 AND 806 --For Soccer, exclude SuperLive
-			BEGIN
-				IF @IsApplyVR2 = 1 --Get VR2
-					OR (@IsApplyVR2 = 0 AND @virtualrate = 1) -- Get VR1 
-				BEGIN
-					EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid									
-											, @sporttype = @sporttype_vrate
-											, @bettype = @bettype_vrate
-											, @OriginalSportType = @sporttype
-											, @OriginalBetType = @bettype
-											, @isLive = @liveindicator
-											, @isLicensee = @isLicensee
-											, @LeagueGroupID = @LeagueGroupID
-											, @IsApplyVR2 = @IsApplyVR2
-											, @srecommend = @srecommend
-											, @usertype = @usertype
-											, @virtualMultiplier = @new_virtualrate OUT
-											, @IsLowVR = @IsLowVR
-				END
-			END			
-		END
-		ELSE IF @sporttype IN(2, 43) --For Esports/BasketBall, get VR2
-		BEGIN
-			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
-									, @sporttype = @sporttype_vrate
-									, @bettype = @bettype_vrate
-									, @isLive = @liveindicator
-									, @isLicensee = @isLicensee
-									, @LeagueGroupID = @LeagueGroupID
-									, @srecommend = @srecommend								
-									, @virtualMultiplier = @new_virtualrate OUT
-									, @usertype = @usertype
-									, @RefLevelID = @RefLevelID
-									, @IsLowVR = @IsLowVR
-		END
-
-		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
-		BEGIN
-			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
-									, @sporttype = @sporttype_vrate
-									, @bettype = @bettype_vrate
-									, @isLive = @liveindicator	
-									, @isLicensee = @isLicensee	
-									, @srecommend = @srecommend															
-									, @virtualMultiplier = @new_virtualrate OUT
-									, @usertype = @usertype
-									, @IsLowVR = @IsLowVR
-		END
-
-		SET @virtualrate = isnull(@new_virtualrate,1)
-	end
-
-	--Get E-Sport Autosuspend 
-	IF @sporttype IN(2, 43) AND @isparlay = 0 
-	BEGIN
-		SET @autosuspend = @False
-
-		IF @sporttype = 2 AND @IsLowVR = 1 AND @virtualrate < 1.00 
-			SET @autosuspend = @False
-		ELSE
-		IF ISNULL(@usertype,0) <> 2 -- not CN88
-		BEGIN
-			SELECT @autosuspend = t.IsVRAutoSuspend 
-			FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
-
-			SET @autosuspend = ISNULL(@autosuspend,@False)
-		END
-	END
-
 	IF @sporttype_vrate <= 99 AND @sporttype_vrate NOT IN (1, 43) --Other sports
 		AND @BetFrom = 'a' --Desktop/ChinaView
 		AND @isLicensee = 1 AND @currencyname IN( 'RMB','UUS')
@@ -373,6 +300,79 @@ BEGIN
 					CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
 				WHERE	cvs.custid = @custid
 			END
+	END
+
+	IF @bettype<>0
+	BEGIN
+		IF @sporttype = 1 
+		BEGIN
+			IF @bettype NOT BETWEEN 801 AND 806 --For Soccer, exclude SuperLive
+			BEGIN
+				IF @IsApplyVR2 = 1 --Get VR2
+					OR (@IsApplyVR2 = 0 AND @virtualrate = 1) -- Get VR1 
+				BEGIN
+					EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid									
+											, @sporttype = @sporttype_vrate
+											, @bettype = @bettype_vrate
+											, @OriginalSportType = @sporttype
+											, @OriginalBetType = @bettype
+											, @isLive = @liveindicator
+											, @isLicensee = @isLicensee
+											, @LeagueGroupID = @LeagueGroupID
+											, @IsApplyVR2 = @IsApplyVR2
+											, @srecommend = @srecommend
+											, @usertype = @usertype
+											, @virtualMultiplier = @new_virtualrate OUT
+											, @IsLowVR = @IsLowVR
+				END
+			END			
+		END
+		ELSE IF @sporttype IN(2, 43) --For Esports/BasketBall, get VR2
+		BEGIN
+			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
+									, @sporttype = @sporttype_vrate
+									, @bettype = @bettype_vrate
+									, @isLive = @liveindicator
+									, @isLicensee = @isLicensee
+									, @LeagueGroupID = @LeagueGroupID
+									, @srecommend = @srecommend								
+									, @virtualMultiplier = @new_virtualrate OUT
+									, @usertype = @usertype
+									, @RefLevelID = @RefLevelID
+									, @IsLowVR = @IsLowVR
+		END
+
+		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
+		BEGIN
+			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
+									, @sporttype = @sporttype_vrate
+									, @bettype = @bettype_vrate
+									, @isLive = @liveindicator	
+									, @isLicensee = @isLicensee	
+									, @srecommend = @srecommend															
+									, @virtualMultiplier = @new_virtualrate OUT
+									, @usertype = @usertype
+									, @IsLowVR = @IsLowVR
+		END
+
+		SET @virtualrate = isnull(@new_virtualrate,1)
+	end
+
+	--Get E-Sport Autosuspend 
+	IF @sporttype IN(2, 43) AND @isparlay = 0 
+	BEGIN
+		SET @autosuspend = @False
+
+		IF @sporttype = 2 AND @IsLowVR = 1 AND @virtualrate < 1.00 
+			SET @autosuspend = @False
+		ELSE
+		IF ISNULL(@usertype,0) <> 2 -- not CN88
+		BEGIN
+			SELECT @autosuspend = t.IsVRAutoSuspend 
+			FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
+
+			SET @autosuspend = ISNULL(@autosuspend,@False)
+		END
 	END
 	
 	--Get data from DCS structure
