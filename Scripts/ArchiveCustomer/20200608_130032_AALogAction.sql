@@ -1,7 +1,8 @@
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
 /*
 	Created: 20200608@Max
 	Task: [NAP CM] Archiving credit accounts process for Master & Agent levels - [Redmine: #130032]
-	DB: dblog/bodb_CustomerLog
+	DB: DBLOG/bodb_CustomerLog
 */
 USE bodb_CustomerLog
 GO

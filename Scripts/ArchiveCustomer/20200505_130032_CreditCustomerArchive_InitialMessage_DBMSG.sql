@@ -1,4 +1,5 @@
-﻿/*
+﻿/*<info serverAlias="DBMSG-bodb_message" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
+/*
 	Created: 20200505@Helen
 	Task: https://nexdev.net/issues/130032
 	DB: DBMSG.bodb_message
