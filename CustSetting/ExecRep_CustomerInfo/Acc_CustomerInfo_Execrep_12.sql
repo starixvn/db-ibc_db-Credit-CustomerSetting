@@ -131,7 +131,13 @@ BEGIN
 		UPDATE pa 		
 		SET pa.ActionId = @PreventActionId,
 			pa.SubIssueTypeId = CASE WHEN t.RoleID = 1 THEN @SubIssueTypeId ELSE NULL END,
-			pa.VoidTime = CASE WHEN @UpdateTime = 1 THEN @VoidTime ELSE pa.VoidTime END			
+			pa.VoidTime = CASE WHEN @UpdateTime = 1 THEN @VoidTime 
+							WHEN @UpdateTime = 0 AND (@PreventActionId <> 2 
+													OR (@PreventActionId =2 AND pa.ActionId <> 2)
+													)
+							THEN 'At Settlement'
+							ELSE pa.VoidTime END,
+			pa.LimitAmount = CASE WHEN @PreventActionId <> 2 THEN 0 ELSE pa.LimitAmount END
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
 		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
