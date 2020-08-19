@@ -1,4 +1,6 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTCheck]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
+ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTCheck]
 	@custid		INT,	
 	@srecommend INT,
 	
@@ -17,7 +19,8 @@ AS
 		DB: DBCUST/CustDB
 		
 		Revisions:
-		
+			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
+
 		Parameter's Explanations:
 			@PT = <ROOT>
 					<PT SportType="1" BetType="1" IsLive="0" SuperPT="30" IsAutoSuperPT = "0" AutoSuperPT = "0" MasterPT ="60" MinPT="0" IsUpdAllMems="1" UpdAllMems_Value="20"/>
@@ -96,7 +99,7 @@ BEGIN
 	FROM dbo.CustPTSetting3rd_Agent s WITH (NOLOCK) 
 		INNER JOIN @tblPT m ON s.sporttype = m.sporttype AND s.bettype = m.bettype AND s.IsLive = m.IsLive
 		INNER JOIN ProductSettingDetail ps WITH(NOLOCK) ON m.SportType = ps.Sporttype AND m.BetType = ps.bettype AND m.IsLive = ps.IsLive
-	WHERE s.custid = @SuperID AND ps.SettingType = 1
+	WHERE s.custid = @SuperID AND ps.SettingType IN (1,18)
 	
 	SELECT @ErrCode = ISNULL(@ErrCode,0)
 				
@@ -109,7 +112,7 @@ BEGIN
 					INNER JOIN ProductSettingDetail ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																		AND t.BetType = ps.bettype 
 																		AND t.IsLive = ps.IsLive
-				WHERE ps.SettingType = 1--PT
+				WHERE ps.SettingType IN (1,18)--PT
 					AND (t.SuperPT < 0 OR t.MasterPT < 0 
 						OR t.SuperPT + t.MasterPT > ps.MaxPT
 						OR t.AutoSuperPT < 0 

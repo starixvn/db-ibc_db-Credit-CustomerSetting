@@ -1,4 +1,6 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTCheck]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
+ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTCheck]
 	@custid			INT,
 	@srecommend		INT,
 	@mrecommend		INT,
@@ -18,7 +20,7 @@ AS
 		DB: DBCUST/CustDB
 		
 		Revisions:
-		
+			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 		Parameter's Explanations:
 		
 	*/
@@ -79,7 +81,7 @@ BEGIN
 				INNER JOIN ProductSettingDetail ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																	AND t.BetType = ps.bettype 
 																	AND t.IsLive = ps.IsLive		
-			WHERE ps.SettingType = 1--PT
+			WHERE ps.SettingType IN (1,18) --PT
 				AND (t.AgentPT < 0 OR t.MasterPT < 0 
 					OR t.AgentPT + t.MasterPT > ps.MaxPT
 					OR t.MasterPT > ps.MaxPT			

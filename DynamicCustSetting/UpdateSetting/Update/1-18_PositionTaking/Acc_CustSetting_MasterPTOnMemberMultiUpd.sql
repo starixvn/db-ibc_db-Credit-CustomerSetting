@@ -1,28 +1,25 @@
-SET ANSI_NULLS ON
-GO
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
-SET QUOTED_IDENTIFIER ON
-GO
-
-ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTOnMemberMultiUpd] 
-	  @CustIDList	VARCHAR(MAX)
-	, @PT			VARCHAR(MAX)
-	, @SubAccID		INT				= 0
-	, @IP			VARCHAR(50)		= ''
-	, @UserID		INT				= 0
-	, @ErrCode		INT				= 0		OUTPUT
-	, @MsgType		INT = 0 OUTPUT
-	, @ErrMsg		NVARCHAR(4000)	= ''	OUTPUT
+ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMemberMultiUpd] 
+	  @CustIDList		VARCHAR(MAX)
+	, @PT				VARCHAR(MAX)
+	, @SubAccID			INT				= 0
+	, @IP				VARCHAR(50)		= ''
+	, @UserID			INT				= 0
+	, @ErrCode			INT				= 0		OUTPUT
+	, @MsgType			INT				= 0		OUTPUT
+	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
 AS
 /*
 		Created: Dominic
-		Date: 2014-12-10
-		Task: Super multiple update grouped member's PT
+		Date: 2014-12-09
+		Task: master multiple update grouped member's PT
 		DB: DBCUST/CustDB
         
         Revisions:
             - 20151016@Billy: Fix log xml structure and naming
 			- 20151104@Billy: Change log PT value range from [0,90] to [0,0.9] and update log structure - [Redmine: #46781, #46788]
+			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 
 		Parameter's Explanation:	
 		• @PT:
@@ -31,27 +28,24 @@ AS
 							SportType="1" 
 							BetType="1" 
 							IsLive="1" 
-							SuperPT="10" 
-							IsAutoSuperPT="1" 
-							AutoSuperPT="10" 
+							MasterPT="10" 
+							IsAutoMasterPT="1" 
+							AutoMasterPT="10" 
 						/>
 					</ROOT>
 	*/
 BEGIN
 	SET NOCOUNT ON
-	
+
 --******************************************VARIABLE DECLARATION*************************************** 	
 	--Logs
-	DECLARE @StartRun DATETIME
-		, @EndRun DATETIME
-		, @Duration INT
-	    , @Old_PT_XML VARCHAR(MAX)
-	    , @New_PT_XML VARCHAR(MAX)
-	
-	--List of customers
-	DECLARE @tblCust TABLE (CustID INT)		
-	
-	--Get line info, get SMA accounts
+	DECLARE @StartRun	DATETIME
+		, @EndRun		DATETIME
+		, @Duration		INT
+	    , @Old_PT_XML	VARCHAR(MAX)
+        , @New_PT_XML   VARCHAR(MAX)
+		
+	--Temp variables for PT adjustment	
 	DECLARE @_AgentID		INT
 		, @_MasterID		INT
 		, @_SuperID			INT
@@ -60,31 +54,33 @@ BEGIN
 		, @NoMember			INT = 0
 		, @NoGroupedMember	INT = 0
 	
+	--List of customers	
+	DECLARE @tblCust TABLE (CustID INT)
+	
 	--Temp table variables being used for calculation
 	DECLARE @NewPTTble TABLE (
-		SportType			SMALLINT
-		, BetType			SMALLINT
-		, IsLive			BIT
-		, SuperPT			TINYINT
-		, MasterPT			TINYINT
-		, AgentPT			TINYINT
-		, IsAutoMasterPT	BIT
-		, AutoMasterPT		TINYINT
-		, IsAutoSuperPT		BIT
-		, AutoSuperPT		TINYINT
+			SportType			SMALLINT
+			, BetType			SMALLINT
+			, IsLive			BIT
+			, SuperPT			TINYINT
+			, MasterPT			TINYINT
+			, AgentPT			TINYINT
+			, IsAutoMasterPT	BIT
+			, AutoMasterPT		TINYINT
+			, IsAutoSuperPT		BIT
+			, AutoSuperPT		TINYINT
 		)
-		
 	DECLARE @OldPTTble TABLE (
-		SportType			SMALLINT
-		, BetType			SMALLINT
-		, IsLive			BIT
-		, SuperPT			TINYINT
-		, MasterPT			TINYINT
-		, AgentPT			TINYINT
-		, IsAutoMasterPT	BIT
-		, AutoMasterPT		TINYINT
-		, IsAutoSuperPT		BIT
-		, AutoSuperPT		TINYINT
+		   SportType			SMALLINT
+			, BetType			SMALLINT
+			, IsLive			BIT
+			, SuperPT			TINYINT
+			, MasterPT			TINYINT
+			, AgentPT			TINYINT
+			, IsAutoMasterPT	BIT
+			, AutoMasterPT		TINYINT
+			, IsAutoSuperPT		BIT
+			, AutoSuperPT		TINYINT
 		)
 		
 	--Super PT Setting Values		
@@ -142,7 +138,8 @@ BEGIN
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
 
---******************************************PERMISSION CHECKING*************************************** 		
+--******************************************PERMISSION CHECKING*************************************** 	
+			
 	--Check if XML is null or empty
 	IF @PT IS NULL
 		OR @PT = ''
@@ -150,7 +147,7 @@ BEGIN
 		OR @CustIDList = ''
 		RETURN
 
-	SET @startRun = GETDATE()
+	SET @StartRun = GETDATE()
 
 	SELECT @ErrCode = 0
 		, @MsgType = 0
@@ -180,7 +177,7 @@ BEGIN
 	END
 
 			
-	--Check disabled user
+	--Check disable user
 	EXEC dbo.Acc_CustSetting_MultiCustEnableCheck @CustIDList = @CustIDList
 		, @ErrCode = @ErrCode OUTPUT
 		, @ErrMsg = @ErrMsg OUTPUT
@@ -188,22 +185,21 @@ BEGIN
 	IF @ErrCode > 0
 		RETURN
 	
-	
---******************************************PREPARE SETTING FOR UPDATE*************************************** 
-	--Parse XML	for PT settings
+--******************************************PREPARE SETTING FOR UPDATE*************************************** 	
+	--Parse XML
 	INSERT @NewPTTble
 	SELECT SportType
 			,BetType
 			,IsLive
-			,SuperPT
 			,0
+			,MasterPT
 			,0
+			,IsAutoMasterPT
+			,AutoMasterPT
 			,0
-			,0
-			,IsAutoSuperPT
-			,AutoSuperPT
+			,0	
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
-			
+		
 	--Get line infor : SMA accounts
 	SELECT TOP 1 @RepresentCustID=CustID
 	FROM @tblCust
@@ -216,18 +212,18 @@ BEGIN
 	
 	--Get another member settings used for PT calcualtion
 	UPDATE main
-	SET  main.MasterPT = cs.MasterPT
+	SET main.SuperPT = cs.SuperPT
 		, main.AgentPT = cs.AgentPT
-		, main.IsAutoMasterPT =cs.IsAutoMasterPT
-		, main.AutoMasterPT = cs.AutoMasterPT
+		, main.IsAutoSuperPT = cs.IsAutoSuperPT
+		, main.AutoSuperPT = cs.AutoSuperPT
 	FROM @NewPTTble main
 		INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK)
-			ON cs.SportType=main.SportType
-					AND cs.BetType=main.BetType
-					AND cs.IsLive=main.IsLive
-					AND cs.AgentID=@_AgentID
+			ON cs.SportType = main.SportType
+				AND cs.BetType = main.BetType
+				AND cs.IsLive = main.IsLive
+				AND cs.AgentID = @_AgentID
 			
-	--Backup old settings for writing logs
+	--Backup old settings for logs
 	INSERT @OldPTTble
 	SELECT 
 			cs.SportType 
@@ -242,10 +238,10 @@ BEGIN
 			, cs.AutoSuperPT 
 	FROM @NewPTTble main
 		INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK)
-					ON cs.SportType=main.SportType
-							AND cs.BetType=main.BetType
-							AND cs.IsLive=main.IsLive
-							AND cs.AgentID=@_AgentID	
+			ON cs.SportType=main.SportType
+					AND cs.BetType=main.BetType
+					AND cs.IsLive=main.IsLive
+					AND cs.AgentID=@_AgentID	
 	
 	--Get Super PT Setting Values
 	INSERT @_SuperPTTbl(SportType,BetType,IsLive,S4,M4,A4
@@ -281,24 +277,26 @@ BEGIN
 			ON mt.SportType = acs.SportType
 				AND mt.BetType = acs.BetType
 				AND mt.IsLive = acs.IsLive
-	WHERE acs.CustID = @_AgentID				
+	WHERE acs.CustID = @_AgentID			
 --******************************************VALIDATE PT VALUES*************************************** 			
-	--Check input PT settings		
+	--Check error		
 	EXEC [dbo].Acc_CustSetting_MemberPTCheck 
 						@CustID = @RepresentCustID
-						, @RoleID		= 4
+						, @RoleID		= 3
 						, @AgentID		= @_AgentID
-						, @MasterID		= @_MasterID
+						, @MasterID	= @_MasterID
 						, @SuperID		= @_SuperID
 						, @PT			= @PT
 						, @ErrCode		= @ErrCode	OUTPUT
-						, @MsgType		= @MsgType	OUTPUT
+						, @MsgType		= @MsgType  OUTPUT
 						, @ErrMsg		= @ErrMsg	OUTPUT
 	IF @ErrCode <> 0
 		RETURN		
 
---******************************************ADJUST PT SETTINGS*************************************** 
-	DECLARE @n2 SMALLMONEY
+--******************************************ADJUST PT SETTINGS*************************************** 	
+	DECLARE @m3 SMALLMONEY,@us3 SMALLMONEY, @s4 SMALLMONEY
+	DECLARE @n2 SMALLMONEY, @l2 SMALLMONEY
+	DECLARE @im2 BIT, @um2 SMALLMONEY
 	DECLARE @a1 SMALLMONEY, @m1 SMALLMONEY, @s1 SMALLMONEY, @i1 BIT, @u1 SMALLMONEY, @im1 BIT, @um1 SMALLMONEY
 	DECLARE @temp1 SMALLMONEY, @temp2 SMALLMONEY, @temp3 SMALLMONEY
 	DECLARE @s_new SMALLMONEY, @m_new SMALLMONEY, @a_new SMALLMONEY
@@ -311,12 +309,55 @@ BEGIN
 			,@u1 = cs.AutoSuperPT
 			,@im1 = cs.IsAutoMasterPT
 			,@um1 = cs.AutoMasterPT
+			,@um2 = acs.UM2
+			,@im2 = acs.IM2
 			,@n2 = acs.N2
-			--Adjust PT : s1= s1+m1+ a1> s4?s4-m1-a1:s1
-			,@s1 = CASE WHEN @s1 > S4 - @m1 - @a1 THEN S4 - @m1 - @a1 ELSE @s1 END
-			--Adjust PT : s1=s1<0?:0:s1
-			,@s1 = CASE WHEN @s1 < 0 THEN 0 ELSE @s1 END
-			-- rule #1 s1 = min(s4-m1-a1, i1?u1:u3) --Recalculate auto pt
+			,@l2 = acs.L2
+			,@m3 = mcs.M3
+			,@s4 = scs.S4
+			--Adjust: m1=m1+a1>min(m3,m4)?min(m3,m4)-a1:m1
+			,@temp1 = CASE WHEN M3 < M4 THEN M3 ELSE M4 END
+			,@m1 = CASE WHEN @m1 > @temp1 - @a1 THEN @temp1 - @a1 ELSE @m1 END
+			--Adjust: m1=m1+a1<n3?n3-a1:m1
+			,@m1 = CASE WHEN N3 - @a1 > @m1 THEN N3 - @a1 ELSE @m1 END
+			--Adjust : m1=m1>0?m1:0
+			,@m1 = CASE WHEN @m1 > 0 THEN @m1 ELSE 0 END
+			-- rule #1: a1 = max(a1,n2); m1 = (a1<n2) ? m3-n2 : m1 -- agent min
+			,@a_new = CASE WHEN @a1 < @n2 THEN @n2 ELSE @a1 END
+			,@m_new = CASE WHEN @a1 < @n2 AND @m1 +@n2 > mcs.m3 THEN mcs.m3-@n2 ELSE @m1 END
+			,@a1 = @a_new
+			,@m1 = @m_new
+			-- rule #2: a1 = min(a1,l2) -- agent max                        
+			,@a1 = CASE WHEN @a1 > @l2 THEN @l2 ELSE @a1 END			
+            -- rule #3: m1 = min(m3-a1,u2) -- Recal AUTO MPT
+			,@temp1 = CASE WHEN @im1 = 1 THEN @um1 ELSE @um2 END
+			,@m1 = CASE 
+						WHEN @im2 = 1 OR @im1 = 1 
+						THEN CASE WHEN mcs.m3-@a1 > @temp1 THEN @temp1 ELSE mcs.m3-@a1 END 
+						ELSE @m1 
+					END
+			-- rule #4: m1 = n3-a1 -- check master min/max
+			,@m1 = CASE WHEN @a1+@m1 < mcs.n3 THEN mcs.n3-@a1 ELSE @m1 END			
+            -- rule #5: UPDATE m1,a1 WHEN m1+a1>l3
+			/*	@x1 = min(m3,l3) -- mpt max
+				@x2 = max(@x1-a1,0) --mpt
+				m1 = (a1+m1>l3) ? @x2 : m1
+				@x3 = (a1+@x2 > @x1) ? @x1-@x2 : a1
+				a1 = (a1+m1>l1) ? max(@x3, n2) : a1
+			*/
+			,@temp1 = CASE WHEN mcs.m3 > mcs.l3 THEN mcs.l3 ELSE mcs.m3 END
+			,@temp2 = CASE WHEN @temp1-@a1 < 0 THEN 0 ELSE @temp1-@a1 END
+			,@m_new = CASE WHEN @a1+@m1 > mcs.l3 THEN @temp2 ELSE @m1 END
+			,@temp3 = CASE WHEN @a1+@temp2 > @temp1 THEN @temp1-@temp2 ELSE @a1 END
+			,@a_new = CASE 
+						WHEN @a1+@m1 > mcs.l3 
+						THEN CASE WHEN @temp3 < @n2 THEN @n2 ELSE @temp3 END
+						ELSE @a1 
+					END	
+			,@m1 = @m_new
+			,@a1 = @a_new
+
+			-- rule #6 s1 = min(s4-m1-a1, i1?u1:u3) --Recalculate auto pt
 			/*
 				@x1 = (i1=1) ? u1 : u3
 				s1 = (s4-m1-a1 > @x1) ? @x1 : s4-m1-a1 
@@ -328,9 +369,9 @@ BEGIN
 						ELSE @s1
 					END
 
-            -- rule #2: s1 = max(n4-m1-a1,s1) --super min
+            -- rule #7: s1 = max(n4-m1-a1,s1) --super min
 			,@s1 = CASE WHEN @a1+@m1+@s1 < scs.n4 THEN scs.n4-@m1-@a1 ELSE @s1 END
-            -- rule #3: UPDATE s1,m1,a1 IN case s1+m1+a1>s4
+            -- rule #8: UPDATE s1,m1,a1 IN case s1+m1+a1>s4
 			/* -- explanation
 				@x1 = (s4-m1-a1 < 0) ? 0 : s4-m1-a1
 				s1 = (s1+a1+m1 > s4) ? @x1 : s1
@@ -385,24 +426,24 @@ BEGIN
 			AND acs.BetType = cs.BetType
 			AND acs.IsLive = cs.IsLive	
 	
---***************************************UPDATE PT SETTINGS*******************************************
-	--If there are not any changes then return
-	IF NOT EXISTS (
-		SELECT TOP 1 1
-		FROM @NewPTTble npt
-			INNER JOIN @OldPTTble opt
-					ON npt.SportType=opt.SportType
-					AND npt.BetType=opt.BetType
-					AND npt.IsLive=opt.IsLive
-		WHERE (
-				opt.SuperPT <> npt.SuperPT
-				OR opt.MasterPT <> npt.MasterPT
-				OR opt.AgentPT <> npt.AgentPT
-				OR opt.IsAutoSuperPT <> npt.IsAutoSuperPT
-				OR opt.AutoSuperPT <> npt.AutoSuperPT
+--***************************************UPDATE PT SETTINGS*******************************************		
+	--**START UPDATING DB**--		
+	--Get total members that are different from group
+	IF NOT EXISTS (SELECT TOP 1 1
+	FROM @NewPTTble npt
+		INNER JOIN @OldPTTble opt
+			ON npt.SportType=opt.SportType
+			AND npt.BetType=opt.BetType
+			AND npt.IsLive=opt.IsLive
+	WHERE (
+		npt.SuperPT <> opt.SuperPT
+		OR npt.MasterPT <> opt.MasterPT
+		OR npt.AgentPT <> opt.AgentPT
+		OR npt.IsAutoMasterPT <> opt.IsAutoMasterPT
+		OR npt.AutoMasterPT <> opt.AutoMasterPT
 	))
 		RETURN
-	
+		
 	SELECT @NoMember = COUNT(1)
 	FROM @tblCust
 	
@@ -418,24 +459,24 @@ BEGIN
 		SET grpt.SuperPT=npt.SuperPT,
 			grpt.MasterPT=npt.MasterPT,
 			grpt.AgentPT=npt.AgentPT,
-			grpt.IsAutoSuperPT=npt.IsAutoSuperPT,
-			grpt.AutoSuperPT=npt.AutoSuperPT
+			grpt.IsAutoMasterPT=npt.IsAutoMasterPT,
+			grpt.AutoMasterPT=npt.AutoMasterPT
 		FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewPTTble npt ON  npt.SportType=grpt.SportType
-									AND npt.BetType=grpt.BetType
-									AND npt.IsLive=grpt.IsLive
+						AND npt.BetType=grpt.BetType
+						AND npt.IsLive=grpt.IsLive
 		WHERE grpt.AgentID=@_AgentID 
 			AND (
-				grpt.SuperPT <> npt.SuperPT
-				OR grpt.MasterPT <> npt.MasterPT
-				OR grpt.AgentPT <> npt.AgentPT
-				OR grpt.IsAutoSuperPT <> npt.IsAutoSuperPT
-				OR grpt.AutoSuperPT <> npt.AutoSuperPT
+				npt.SuperPT <> grpt.SuperPT
+				OR npt.MasterPT <> grpt.MasterPT
+				OR npt.AgentPT <> grpt.AgentPT
+				OR npt.IsAutoMasterPT <> grpt.IsAutoMasterPT
+				OR npt.AutoMasterPT <> grpt.AutoMasterPT
 			)
 	END
 	ELSE
 	BEGIN
-		--Insert Individual Setting for affected custIDs using Group PT setting values
+		--Insert Individual Setting for affected custIDs
 		INSERT INTO dbo.CustPTSetting3rd_Member
 		SELECT
 				cust.CustID,
@@ -451,11 +492,11 @@ BEGIN
 				grpt.AutoSuperPT
 		FROM @tblCust cust
 			CROSS JOIN dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
-			LEFT JOIN dbo.CustPTSetting3rd_Member mempt WITH (NOLOCK)
-						ON cust.CustID=mempt.CustID
-						AND grpt.SportType=mempt.SportType
-						AND grpt.BetType=mempt.BetType
-						AND grpt.IsLive=mempt.IsLive
+			LEFT JOIN dbo.CustPTSetting3rd_Member mempt WITH(NOLOCK)
+				ON cust.CustID=mempt.CustID
+					AND grpt.SportType=mempt.SportType
+					AND grpt.BetType=mempt.BetType
+					AND grpt.IsLive=mempt.IsLive
 		WHERE grpt.AgentID=@_AgentID AND mempt.CustID IS NULL
 		
 		--Update Adjusted PT for indiviual setting
@@ -463,19 +504,19 @@ BEGIN
 		SET main.SuperPT=npt.SuperPT,
 			main.MasterPT=npt.MasterPT,
 			main.AgentPT=npt.AgentPT,
-			main.IsAutoSuperPT=npt.IsAutoSuperPT,
-			main.AutoSuperPT=npt.AutoSuperPT
+			main.IsAutoMasterPT=npt.IsAutoMasterPT,
+			main.AutoMasterPT=npt.AutoMasterPT
 		FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @tblCust cust ON main.CustID=cust.CustID
 			INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
-									AND npt.BetType=main.BetType
-									AND npt.IsLive=main.IsLive
+						AND npt.BetType=main.BetType
+						AND npt.IsLive=main.IsLive
 		WHERE 
-				main.SuperPT <> npt.SuperPT
-				OR main.MasterPT <> npt.MasterPT
-				OR main.AgentPT <> npt.AgentPT
-				OR main.IsAutoSuperPT <> npt.IsAutoSuperPT
-				OR main.AutoSuperPT <> npt.AutoSuperPT
+			npt.SuperPT <> main.SuperPT
+			OR npt.MasterPT <> main.MasterPT
+			OR npt.AgentPT <> main.AgentPT
+			OR npt.IsAutoMasterPT <> main.IsAutoMasterPT
+			OR npt.AutoMasterPT <> main.AutoMasterPT
 		
 		
 		--Update setting mode for affected CustIDs
@@ -485,10 +526,9 @@ BEGIN
 			INNER JOIN @tblCust cust
 				ON cust.CustID=main.CustID
 	END
-		
---***************************************WRITE LOGS*******************************************
-		
-	--**START LOGGING**--	
+	
+--***************************************WRITE LOGS*******************************************		
+	--**START LOGGING**--
 	
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
@@ -500,7 +540,7 @@ BEGIN
 					AND psd.IsLive = tmp.IsLive
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType = 1	-- Position Taking
+				AND psd.SettingType IN (1,18)	-- Position Taking
 		 ) iq
 
 	-- Select ProductName
@@ -521,14 +561,14 @@ BEGIN
 				(
 					SELECT	@ProductID									AS '@ProductID',
 							isLive										AS '@isLive',
-							CONVERT(DECIMAL(10,2), SuperPT		/100.0)	AS '@SuperPT',
-							IsAutoSuperPT								AS '@IsAutoSuperPT',
-							CONVERT(DECIMAL(10,2), AutoSuperPT	/100.0)	AS '@AutoSuperPT'
+							CONVERT(DECIMAL(10,2), MasterPT		/100.0)	AS '@MasterPT',
+							IsAutoMasterPT								AS '@IsAutoMasterPT',
+							CONVERT(DECIMAL(10,2), AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_SuperPTOnMemberMultiUpd'),
+		FOR XML PATH('Acc_CustSetting_MasterPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -544,14 +584,14 @@ BEGIN
 				(
 					SELECT	SportType									AS '@SportType',
 							isLive										AS '@isLive',
-							CONVERT(DECIMAL(10,2), SuperPT		/100.0)	AS '@SuperPT',
-							IsAutoSuperPT								AS '@IsAutoSuperPT',
-							CONVERT(DECIMAL(10,2), AutoSuperPT	/100.0)	AS '@AutoSuperPT'
+							CONVERT(DECIMAL(10,2), MasterPT		/100.0)	AS '@MasterPT',
+							IsAutoMasterPT								AS '@IsAutoMasterPT',
+							CONVERT(DECIMAL(10,2), AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_SuperPTOnMemberMultiUpd'),
+		FOR XML PATH('Acc_CustSetting_MasterPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -567,14 +607,14 @@ BEGIN
 				(
 					SELECT	BetType										AS '@BetType',
 							isLive										AS '@isLive',
-							CONVERT(DECIMAL(10,2), SuperPT		/100.0)	AS '@SuperPT',
-							IsAutoSuperPT								AS '@IsAutoSuperPT',
-							CONVERT(DECIMAL(10,2), AutoSuperPT	/100.0)	AS '@AutoSuperPT'
+							CONVERT(DECIMAL(10,2), MasterPT		/100.0)	AS '@MasterPT',
+							IsAutoMasterPT								AS '@IsAutoMasterPT',
+							CONVERT(DECIMAL(10,2), AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_SuperPTOnMemberMultiUpd'),
+		FOR XML PATH('Acc_CustSetting_MasterPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -591,14 +631,14 @@ BEGIN
 					SELECT	SportType									AS '@SportType',
 							BetType										AS '@BetType',
 							isLive										AS '@isLive',
-							CONVERT(DECIMAL(10,2), SuperPT		/100.0)	AS '@SuperPT',
-							IsAutoSuperPT								AS '@IsAutoSuperPT',
-							CONVERT(DECIMAL(10,2), AutoSuperPT	/100.0)	AS '@AutoSuperPT'
+							CONVERT(DECIMAL(10,2), MasterPT		/100.0)	AS '@MasterPT',
+							IsAutoMasterPT								AS '@IsAutoMasterPT',
+							CONVERT(DECIMAL(10,2), AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_SuperPTOnMemberMultiUpd'),
+		FOR XML PATH('Acc_CustSetting_MasterPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -617,14 +657,14 @@ BEGIN
 				(
 					SELECT	@ProductID									AS '@ProductID',
 							isLive										AS '@isLive',
-							CONVERT(DECIMAL(10,2), SuperPT		/100.0)	AS '@SuperPT',
-							IsAutoSuperPT								AS '@IsAutoSuperPT',
-							CONVERT(DECIMAL(10,2), AutoSuperPT	/100.0)	AS '@AutoSuperPT'
+							CONVERT(DECIMAL(10,2), MasterPT		/100.0)	AS '@MasterPT',
+							IsAutoMasterPT								AS '@IsAutoMasterPT',
+							CONVERT(DECIMAL(10,2), AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM dbo.f_DCS_PT_XMLParse(@PT)
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_SuperPTOnMemberMultiUpd'),
+		FOR XML PATH('Acc_CustSetting_MasterPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -640,14 +680,14 @@ BEGIN
 				(
 					SELECT	SportType									AS '@SportType',
 							isLive										AS '@isLive',
-							CONVERT(DECIMAL(10,2), SuperPT		/100.0)	AS '@SuperPT',
-							IsAutoSuperPT								AS '@IsAutoSuperPT',
-							CONVERT(DECIMAL(10,2), AutoSuperPT	/100.0)	AS '@AutoSuperPT'
+							CONVERT(DECIMAL(10,2), MasterPT		/100.0)	AS '@MasterPT',
+							IsAutoMasterPT								AS '@IsAutoMasterPT',
+							CONVERT(DECIMAL(10,2), AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM dbo.f_DCS_PT_XMLParse(@PT)
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_SuperPTOnMemberMultiUpd'),
+		FOR XML PATH('Acc_CustSetting_MasterPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -663,14 +703,14 @@ BEGIN
 				(
 					SELECT	BetType										AS '@BetType',
 							isLive										AS '@isLive',
-							CONVERT(DECIMAL(10,2), SuperPT		/100.0)	AS '@SuperPT',
-							IsAutoSuperPT								AS '@IsAutoSuperPT',
-							CONVERT(DECIMAL(10,2), AutoSuperPT	/100.0)	AS '@AutoSuperPT'
+							CONVERT(DECIMAL(10,2), MasterPT		/100.0)	AS '@MasterPT',
+							IsAutoMasterPT								AS '@IsAutoMasterPT',
+							CONVERT(DECIMAL(10,2), AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM dbo.f_DCS_PT_XMLParse(@PT)
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_SuperPTOnMemberMultiUpd'),
+		FOR XML PATH('Acc_CustSetting_MasterPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -687,18 +727,23 @@ BEGIN
 					SELECT	SportType									AS '@SportType',
 							BetType										AS '@BetType',
 							isLive										AS '@isLive',
-							CONVERT(DECIMAL(10,2), SuperPT		/100.0)	AS '@SuperPT',
-							IsAutoSuperPT								AS '@IsAutoSuperPT',
-							CONVERT(DECIMAL(10,2), AutoSuperPT	/100.0)	AS '@AutoSuperPT'
+							CONVERT(DECIMAL(10,2), MasterPT		/100.0)	AS '@MasterPT',
+							IsAutoMasterPT								AS '@IsAutoMasterPT',
+							CONVERT(DECIMAL(10,2), AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM dbo.f_DCS_PT_XMLParse(@PT)
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_SuperPTOnMemberMultiUpd'),
+		FOR XML PATH('Acc_CustSetting_MasterPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
-	SET @New_PT_XML = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')	
+    SET @New_PT_XML = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+	SELECT @Old_PT_XML = LogStr 
+	FROM f_CustSetting_FormatLog (@Old_PT_XML)
+	SELECT @New_PT_XML = LogStr 
+	FROM f_CustSetting_FormatLog (@New_PT_XML)
 
 	SELECT @EndRun	= GETDATE()
 		, @Duration = DATEDIFF(MILLISECOND, @StartRun, @EndRun)
@@ -708,7 +753,7 @@ BEGIN
 			@UserID				= @UserID
 			, @CustIDList		= @CustIDList
 			, @SubAccID			= @SubAccID
-			, @ActionID			= 452
+			, @ActionID			= 451
 			, @NewPT_XML		= @New_PT_XML
 			, @OldPT_XML		= @Old_PT_XML
 			, @duration			= @duration
@@ -719,16 +764,10 @@ BEGIN
 			@UserID				= @UserID
 			, @CustIDList		= @CustIDList
 			, @SubAccID			= @SubAccID
-			, @ActionID			= 452
+			, @ActionID			= 451
 			, @NewPT_XML		= @New_PT_XML
 			, @OldPT_XML		= @Old_PT_XML
 			, @duration			= @duration
 	END CATCH
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SuperPTOnMemberMultiUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SuperPTOnMemberMultiUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SuperPTOnMemberMultiUpd] TO [bodbExtAccNet]

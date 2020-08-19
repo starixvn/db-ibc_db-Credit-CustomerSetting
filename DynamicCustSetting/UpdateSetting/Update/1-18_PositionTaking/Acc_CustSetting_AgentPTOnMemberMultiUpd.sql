@@ -1,28 +1,25 @@
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdMemberVS_Positiontaking]    Script Date: 11/28/2013 14:47:11 ******/
-SET ANSI_NULLS ON
-GO
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
-SET QUOTED_IDENTIFIER ON
-GO
-
-ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMemberUpd] 
-	  @CustID			INT
-	, @PT				VARCHAR(MAX)
-	, @SubAccID			INT				= 0
-	, @IP				VARCHAR(50)		= ''
-	, @UserID			INT				= 0
-	, @ErrCode			INT				= 0		OUTPUT
-	, @MsgType			INT				= 0		OUTPUT
-	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
+ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMemberMultiUpd] 
+	  @CustIDList	VARCHAR(MAX)
+	, @PT			VARCHAR(MAX)
+	, @SubAccID		INT				= 0
+	, @IP			VARCHAR(50)		= ''
+	, @UserID		INT				= 0
+	, @ErrCode		INT				= 0		OUTPUT
+	, @MsgType		INT				= 0		OUTPUT
+	, @ErrMsg		NVARCHAR(4000)	= ''	OUTPUT
 AS
 /*
 		Created: Dominic
-		Date: 2014-12-15
-		Task: Agent update member's PT
+		Date: 2014-12-08
+		Task: Agent multiple update member's PT
 		DB: DBCUST/CustDB
-
-		Revisions:
+        
+        Revisions:
+            - 20151016@Billy: Fix log xml structure and naming
 			- 20151104@Billy: Change log PT value range from [0,90] to [0,0.9] and update log structure - [Redmine: #46781, #46788]
+			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 
 		Parameter's Explanation:	
 		• @PT:
@@ -38,51 +35,55 @@ AS
 BEGIN
 	SET NOCOUNT ON
 --******************************************VARIABLE DECLARATION*************************************** 
-	--Log
+	--Logs
 	DECLARE @StartRun	DATETIME
 		, @EndRun		DATETIME
 		, @Duration		INT
-		
-	DECLARE @logSpData		NVARCHAR(MAX)
-		, @logSpData_Old	NVARCHAR(MAX)
-		, @xml				XML
-		
-	DECLARE @_AgentID			INT
-			, @_MasterID		INT
-			, @_SuperID			INT
-			, @_RoleID			INT
-			, @MemGroup			INT
+		, @Old_PT_XML	VARCHAR(MAX)
+		, @New_PT_XML	VARCHAR(MAX)
 	
-	--Temp table variables being used for calculation	
+	--Temp variables for PT adjustment		
+	DECLARE @_AgentID			INT
+		, @_MasterID			INT
+		, @_SuperID			INT
+		, @RepresentCustID	INT
+		, @RoleID			INT
+		, @NoMember INT = 0
+		, @NoGroupedMember INT = 0
+	
+	--List of customers		
+	DECLARE @tblCust TABLE (CustID INT)
+	
+	--Temp table variables being used for calculation
 	DECLARE @NewPTTble TABLE (
-			  SportType			SMALLINT
-			, BetType			SMALLINT
-			, IsLive			BIT
-			, SuperPT			TINYINT
-			, MasterPT			TINYINT
-			, AgentPT			TINYINT
-			, AgentPT_Max		TINYINT
-			, AgentAPT_Max		TINYINT
-			, IsAutoMasterPT	BIT
-			, AutoMasterPT		TINYINT
-			, IsAutoSuperPT		BIT
-			, AutoSuperPT		TINYINT
-			UNIQUE CLUSTERED (SportType, BetType, IsLive)
-		)
+					  SportType			SMALLINT
+					, BetType			SMALLINT
+					, IsLive			BIT
+					, SuperPT			TINYINT
+					, MasterPT			TINYINT
+					, AgentPT			TINYINT
+					, AgentPT_Max		TINYINT
+					, AgentAPT_Max		TINYINT
+					, IsAutoMasterPT	BIT
+					, AutoMasterPT		TINYINT
+					, IsAutoSuperPT		BIT
+					, AutoSuperPT		TINYINT
+					UNIQUE CLUSTERED (SportType, BetType, IsLive)
+				)
 	DECLARE @OldPTTble TABLE (
-			SportType			SMALLINT
-			, BetType			SMALLINT
-			, IsLive			BIT
-			, SuperPT			TINYINT
-			, MasterPT			TINYINT
-			, AgentPT			TINYINT
-			, IsAutoMasterPT	BIT
-			, AutoMasterPT		TINYINT
-			, IsAutoSuperPT		BIT
-			, AutoSuperPT		TINYINT
-			UNIQUE CLUSTERED (SportType, BetType, IsLive)
-		)
-		
+					SportType			SMALLINT
+					, BetType			SMALLINT
+					, IsLive			BIT
+					, SuperPT			TINYINT
+					, MasterPT			TINYINT
+					, AgentPT			TINYINT
+					, IsAutoMasterPT	BIT
+					, AutoMasterPT		TINYINT
+					, IsAutoSuperPT		BIT
+					, AutoSuperPT		TINYINT
+					UNIQUE CLUSTERED (SportType, BetType, IsLive)
+				)
+
 	--Super PT Setting Values		
 	DECLARE @_SuperPTTbl TABLE(
 					SportType		SMALLINT  ,
@@ -133,52 +134,40 @@ BEGIN
 					L2				TINYINT  
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
-	
-	DECLARE @SettingMode BIT = 0
 
 	DECLARE @ProductID		TINYINT,
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
-    
 
---******************************************PERMISSION CHECKING*************************************** 		
+--******************************************PERMISSION CHECKING*************************************** 			
 	--Check if XML is null or empty
 	IF @PT IS NULL
 		OR @PT = ''
+		OR @CustIDList IS NULL
+		OR @CustIDList = ''
 		RETURN
 
-	SET @startRun = GETDATE()
+	SET @StartRun = GETDATE()
 
 	SELECT @ErrCode = 0
 		, @MsgType = 0
 		, @ErrMsg = ''
 
-	--Check disable user
-	EXEC dbo.Acc_CustomerSelCheckEnable 
-										@custid		= @custid
-									,	@ErrCode	= @ErrCode OUTPUT
-									,	@ErrMsg		= @ErrMsg OUTPUT
 
-	IF @ErrCode > 0
-	BEGIN
-		SET @MsgType = 101
-		RETURN
-	END
+	--Parse affected Customer
+	DECLARE @XML XML
+	SET @XML = N'<root><r>' + REPLACE(@CustIDList, ',', '</r><r>') + '</r></root>'
+	
+	INSERT INTO @tblCust (CustID)
+	SELECT r.value('.','INT')
+	FROM @xml.nodes('//root/r') AS RECORDS(r)
 
-	--Get line information
-	SELECT @_AgentID = recommend
-		, @_MasterID = mrecommend
-		, @_SuperID	= srecommend
-		, @_RoleID	= RoleID
-	FROM dbo.custInfo WITH (NOLOCK)
-	WHERE custid = @CustID
+	-- ***Check Downline Belonging***
+	EXEC dbo.Acc_CustSetting_BelongingMultiCustCheck @SessionCustID = @Userid
+		, @Custid = @CustIDList
+		, @roleid = @roleid OUTPUT
 
-	--Check belonging
-	EXEC dbo.Age_CustomerSelCheckBelongingByCustID 
-		@SessionCustID	= @Userid 
-		,@Custid		= @custid		
-		,@RoleID		= @_RoleID OUTPUT
-	IF (@_RoleID = 0)
+	IF (@roleid = 0)
 	BEGIN
 		SET @MsgType = 101
 		SET @ErrCode = 101
@@ -186,29 +175,69 @@ BEGIN
 		RETURN
 	END
 
---******************************************PREPARE SETTING FOR UPDATE*************************************** 	
+			
+	--Check disable user
+	EXEC dbo.Acc_CustSetting_MultiCustEnableCheck @CustIDList = @CustIDList
+		, @ErrCode = @ErrCode OUTPUT
+		, @ErrMsg = @ErrMsg OUTPUT
+
+	IF @ErrCode > 0
+		RETURN
+	
+--******************************************PREPARE SETTING FOR UPDATE*************************************** 		
 	--Parse XML	
 	INSERT @NewPTTble
 	SELECT SportType
-			, BetType
-			, IsLive
-			, 0
-			, 0
-			, AgentPT
-			, 0
-			, 0
-			, 0
-			, 0
-			, 0
-			, 0
+			,BetType
+			,IsLive
+			,0,0,AgentPT,0,0,0,0,0,0
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
-
+			
+	--Get line infor : SMA accounts
+	SELECT TOP 1 @RepresentCustID=CustID
+	FROM @tblCust
 	
-	--Get setting mode
-	SELECT @SettingMode = IsGrouped
-	FROM dbo.CustSettingMode3rd
-	WHERE CustID= @CustID
+	SELECT @_SuperID = srecommend
+			, @_MasterID = mrecommend
+			, @_AgentID = recommend
+	FROM custinfo ci WITH(NOLOCK)
+	WHERE ci.custid = @RepresentCustID
 	
+	--Get another member settings used for PT calcualtion
+	UPDATE main
+	SET  main.SuperPT = cs.SuperPT
+		, main.MasterPT = cs.MasterPT
+		, main.IsAutoSuperPT =cs.IsAutoSuperPT
+		, main.AutoSuperPT = cs.AutoSuperPT
+		, main.IsAutoMasterPT = cs.IsAutoMasterPT
+		, main.AutoMasterPT = cs.AutoMasterPT
+	FROM @NewPTTble main
+		INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK)
+			ON cs.SportType=main.SportType
+					AND cs.BetType=main.BetType
+					AND cs.IsLive=main.IsLive
+					AND cs.AgentID=@_AgentID
+	
+	--Backup old settings for logs
+	INSERT @OldPTTble
+	SELECT 
+			cs.SportType 
+			, cs.BetType 
+			, cs.IsLive 
+			, cs.SuperPT 
+			, cs.MasterPT
+			, cs.AgentPT  
+			, cs.IsAutoMasterPT 
+			, cs.AutoMasterPT 
+			, cs.IsAutoSuperPT 
+			, cs.AutoSuperPT
+	FROM @NewPTTble main
+		INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK)
+			ON cs.SportType=main.SportType
+					AND cs.BetType=main.BetType
+					AND cs.IsLive=main.IsLive
+					AND cs.AgentID=@_AgentID	
+				
 	--Get Super PT Setting Values
 	INSERT @_SuperPTTbl(SportType,BetType,IsLive,S4,M4,A4
 							,IM4,UM4,IS4,US4,N4,L4)	
@@ -243,106 +272,24 @@ BEGIN
 			ON mt.SportType = acs.SportType
 				AND mt.BetType = acs.BetType
 				AND mt.IsLive = acs.IsLive
-	WHERE acs.CustID = @_AgentID
-		
-	--Get member's setting to be adjusted
-	IF ISNULL(@SettingMode,0)=0
-	BEGIN
-		--individual setting
-		UPDATE main
-		SET  main.SuperPT = cs.SuperPT
-			, main.MasterPT = cs.MasterPT
-			, main.IsAutoSuperPT =cs.IsAutoSuperPT
-			, main.AutoSuperPT = cs.AutoSuperPT
-			, main.IsAutoMasterPT = cs.IsAutoMasterPT
-			, main.AutoMasterPT = cs.AutoMasterPT
-		FROM @NewPTTble main
-			INNER JOIN dbo.CustPTSetting3rd_Member cs WITH (NOLOCK)
-				ON cs.SportType=main.SportType
-						AND cs.BetType=main.BetType
-						AND cs.IsLive=main.IsLive
-						AND cs.CustID=@CustID
-	END
-	ELSE
-	BEGIN
-		--individual setting
-		UPDATE main
-		SET  main.SuperPT = cs.SuperPT
-			, main.MasterPT = cs.MasterPT
-			, main.IsAutoSuperPT =cs.IsAutoSuperPT
-			, main.AutoSuperPT = cs.AutoSuperPT
-			, main.IsAutoMasterPT = cs.IsAutoMasterPT
-			, main.AutoMasterPT = cs.AutoMasterPT
-		FROM @NewPTTble main
-			INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK)
-				ON cs.SportType=main.SportType
-						AND cs.BetType=main.BetType
-						AND cs.IsLive=main.IsLive
-						AND cs.AgentID=@_AgentID
-	END
-			
-	--Get old settings for logs
-	IF ISNULL(@SettingMode,0)=0
-	BEGIN
-		--Individual Setting
-		INSERT @OldPTTble
-		SELECT 
-				cs.SportType 
-				, cs.BetType 
-				, cs.IsLive 
-				, cs.SuperPT 
-				, cs.MasterPT
-				, cs.AgentPT  
-				, cs.IsAutoMasterPT 
-				, cs.AutoMasterPT 
-				, cs.IsAutoSuperPT 
-				, cs.AutoSuperPT 
-		FROM @NewPTTble main
-		JOIN dbo.CustPTSetting3rd_Member cs WITH (NOLOCK)
-		ON cs.SportType=main.SportType
-				AND cs.BetType=main.BetType
-				AND cs.IsLive=main.IsLive
-				AND cs.CustID=@CustID	
-	END
-	ELSE
-	BEGIN
-		--Group setting
-		INSERT @OldPTTble
-		SELECT 
-				cs.SportType 
-				, cs.BetType 
-				, cs.IsLive 
-				, cs.SuperPT 
-				, cs.MasterPT
-				, cs.AgentPT  
-				, cs.IsAutoMasterPT 
-				, cs.AutoMasterPT 
-				, cs.IsAutoSuperPT 
-				, cs.AutoSuperPT 
-		FROM @NewPTTble main
-		JOIN dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK)
-		ON cs.SportType=main.SportType
-				AND cs.BetType=main.BetType
-				AND cs.IsLive=main.IsLive
-				AND cs.AgentID=@_AgentID	
-	END
+	WHERE acs.CustID = @_AgentID	
+	
 
---******************************************VALIDATE PT VALUES*************************************** 				
+--******************************************VALIDATE PT VALUES*************************************** 					
 	--Check error		
 	EXEC [dbo].Acc_CustSetting_MemberPTCheck 
-						@CustID			= @CustID
+						@CustID = @RepresentCustID
 						, @RoleID		= 2
 						, @AgentID		= @_AgentID
 						, @MasterID		= @_MasterID
 						, @SuperID		= @_SuperID
 						, @PT			= @PT
-						, @MsgType		= @MsgType	OUT
-						, @ErrCode		= @ErrCode	OUT
-						, @ErrMsg		= @ErrMsg	OUT
+						, @ErrCode		= @ErrCode	OUTPUT
+						, @MsgType		= @MsgType	OUTPUT
+						, @ErrMsg		= @ErrMsg	OUTPUT
 
 	IF @ErrCode <> 0
-		RETURN
-	
+		RETURN		
 	
 --******************************************Correct PT SETTINGS*************************************** 	
 	DECLARE @m3 SMALLMONEY,@us3 SMALLMONEY, @s4 SMALLMONEY
@@ -449,7 +396,6 @@ BEGIN
 			,@s1 = @s_new
 			,@m1 = @m_new
 			,@a1 = @a_new     
-
 			--PT values must be in [0,100]
 			,@s1 = CASE WHEN @s1 < 0 THEN 0 ELSE @s1 END
 			,@s1 = CASE WHEN @s1 > 100 THEN 100 ELSE @s1 END
@@ -476,120 +422,113 @@ BEGIN
 				AND acs.BetType = cs.BetType
 				AND acs.IsLive = cs.IsLive	
 	
---***************************************UPDATE PT SETTINGS*******************************************
-		
-		
+--***************************************UPDATE PT SETTINGS*******************************************	
 	--**START UPDATING DB**--	
-	--if no changes then return
-	IF NOT EXISTS (SELECT TOP 1 1
-	FROM @NewPTTble npt
-		INNER JOIN @OldPTTble opt
-			ON npt.SportType=opt.SportType
-			AND npt.BetType=opt.BetType
-			AND npt.IsLive=opt.IsLive
-	WHERE (
-		npt.SuperPT <> opt.SuperPT
-		OR npt.MasterPT <> opt.MasterPT
-		OR npt.AgentPT <> opt.AgentPT
+	--Get total members that are different from group
+	IF NOT EXISTS (
+		SELECT TOP 1 1
+		FROM @NewPTTble npt
+			INNER JOIN @OldPTTble opt
+				ON npt.SportType=opt.SportType
+				AND npt.BetType=opt.BetType
+				AND npt.IsLive=opt.IsLive
+		WHERE (
+				npt.SuperPT <> opt.SuperPT
+				OR npt.MasterPT <> opt.MasterPT
+				OR npt.AgentPT <> opt.AgentPT
 	))
 		RETURN
-		
-	IF ISNULL(@SettingMode,0)=0
+	
+	SELECT @NoMember = COUNT(1)
+	FROM @tblCust
+	
+	SELECT @NoGroupedMember = COUNT(1)
+	FROM dbo.CustSettingMode3rd m WITH(NOLOCK)
+		INNER JOIN dbo.custinfo  ci WITH(NOLOCK)
+			ON ci.CustID = m.CustID AND ci.RoleID = 1
+	WHERE ci.recommend = @_AgentID AND m.Isgrouped = 1
+	
+	IF 	@NoMember = @NoGroupedMember
 	BEGIN
+		UPDATE grpt
+		SET grpt.SuperPT=npt.SuperPT,
+			grpt.MasterPT=npt.MasterPT,
+			grpt.AgentPT=npt.AgentPT
+		FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN @NewPTTble npt 
+				ON  npt.SportType=grpt.SportType
+				AND npt.BetType=grpt.BetType
+				AND npt.IsLive=grpt.IsLive
+		WHERE grpt.AgentID=@_AgentID 
+			AND (
+				npt.SuperPT <> grpt.SuperPT
+				OR npt.MasterPT <> grpt.MasterPT
+				OR npt.AgentPT <> grpt.AgentPT
+			)
+	END
+	ELSE
+	BEGIN
+		--Insert Individual Setting for affected custIDs
+		INSERT INTO dbo.CustPTSetting3rd_Member
+		SELECT
+				cust.CustID,
+				grpt.SportType,
+				grpt.BetType,
+				grpt.IsLive,
+				grpt.SuperPT,
+				grpt.MasterPT,
+				grpt.AgentPT,
+				grpt.IsAutoMasterPT,
+				grpt.AutoMasterPT,
+				grpt.IsAutoSuperPT,
+				grpt.AutoSuperPT
+		FROM @tblCust cust
+			CROSS JOIN dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
+			LEFT JOIN dbo.CustPTSetting3rd_Member mempt
+				ON cust.CustID=mempt.CustID
+					AND grpt.SportType=mempt.SportType
+					AND grpt.BetType=mempt.BetType
+					AND grpt.IsLive=mempt.IsLive
+		WHERE grpt.AgentID=@_AgentID AND mempt.CustID IS NULL
+		
 		--Update Adjusted PT for indiviual setting
 		UPDATE main
 		SET main.SuperPT=npt.SuperPT,
 			main.MasterPT=npt.MasterPT,
 			main.AgentPT=npt.AgentPT
 		FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN @tblCust cust ON main.CustID=cust.CustID
 			INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
 				AND npt.BetType=main.BetType
 				AND npt.IsLive=main.IsLive
-		WHERE main.CustID = @CustID AND
-			(npt.SuperPT <> main.SuperPT
-				OR npt.MasterPT <> main.MasterPT
-				OR npt.AgentPT <> main.AgentPT)
+		WHERE 
+			npt.SuperPT <> main.SuperPT
+			OR npt.MasterPT <> main.MasterPT
+			OR npt.AgentPT <> main.AgentPT
+		
+		
+		--Update setting mode for affected CustIDs
+		UPDATE main
+		SET main.IsGrouped=0
+		FROM dbo.CustSettingMode3rd main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN @tblCust cust
+				ON cust.CustID=main.CustID
 	END
-	ELSE
-	BEGIN			
-		SELECT @MemGroup = count(1) 
-		FROM CustSettingMode3rd sm WITH (NOLOCK) 
-			INNER JOIN CustInfo ci WITH (NOLOCK) ON ci.custid = sm.CustID 
-		WHERE ci.recommend = @_AgentID AND sm.IsGrouped = 1
-		
-		IF @MemGroup = 1
-		BEGIN
-			UPDATE main
-			SET main.SuperPT=npt.SuperPT,
-				main.MasterPT=npt.MasterPT,
-				main.AgentPT=npt.AgentPT
-			FROM dbo.CustPTGroupSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
-					AND npt.BetType=main.BetType
-					AND npt.IsLive=main.IsLive
-			WHERE main.AgentID = @_AgentID AND
-				(npt.SuperPT <> main.SuperPT
-				OR npt.MasterPT <> main.MasterPT
-				OR npt.AgentPT <> main.AgentPT)
-		END
-		ELSE
-		BEGIN
-			--Move to Individual Setting
-			INSERT INTO dbo.CustPTSetting3rd_Member
-			SELECT
-					@CustID,
-					grpt.SportType,
-					grpt.BetType,
-					grpt.IsLive,
-					grpt.SuperPT,
-					grpt.MasterPT,
-					grpt.AgentPT,
-					grpt.IsAutoMasterPT,
-					grpt.AutoMasterPT,
-					grpt.IsAutoSuperPT,
-					grpt.AutoSuperPT
-			FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
-				LEFT JOIN dbo.CustPTSetting3rd_Member mempt
-					ON mempt.CustID = @CustID
-					AND grpt.SportType=mempt.SportType
-					AND grpt.BetType=mempt.BetType
-					AND grpt.IsLive=mempt.IsLive
-			WHERE grpt.AgentID=@_AgentID AND mempt.CustID IS NULL
-		
-			--Update Adjusted PT for indiviual setting
-			UPDATE main
-			SET main.SuperPT=npt.SuperPT,
-				main.MasterPT=npt.MasterPT,
-				main.AgentPT=npt.AgentPT
-			FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
-					AND npt.BetType=main.BetType
-					AND npt.IsLive=main.IsLive
-			WHERE main.CustID = @CustID AND
-				(npt.SuperPT <> main.SuperPT
-				OR npt.MasterPT <> main.MasterPT
-				OR npt.AgentPT <> main.AgentPT)
-		
-			---Update setting mode
-			UPDATE dbo.CustSettingMode3rd WITH(ROWLOCK,UPDLOCK)
-			SET IsGrouped = 0
-			WHERE CustID = @CustID
-		END
-	END
-				
-	--**START LOGGING**		
 	
+--***************************************WRITE LOGS*******************************************			
+	--**START LOGGING**--
+
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
 			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
-			INNER JOIN	@NewPTTble AS tmp
+			INNER JOIN	@OldPTTble AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
 					AND psd.IsLive = tmp.IsLive
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType = 1	-- Position Taking
+				AND psd.SettingType IN (1,18)	-- Position Taking
 		 ) iq
 
 	-- Select ProductName
@@ -603,19 +542,19 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@CustIDList						AS '@CustIDList',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	@ProductID								AS '@ProductID',
-							IsLive									AS '@IsLive',
+							isLive									AS '@isLive',
 							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberUpd'),
+		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -624,19 +563,19 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@CustIDList						AS '@CustIDList',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType								AS '@SportType',
-							IsLive									AS '@IsLive',
+							isLive									AS '@isLive',
 							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberUpd'),
+		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -645,19 +584,19 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@CustIDList						AS '@CustIDList',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	BetType									AS '@BetType',
-							IsLive									AS '@IsLive',
+							isLive									AS '@isLive',
 							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberUpd'),
+		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -666,24 +605,24 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@CustIDList						AS '@CustIDList',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType								AS '@SportType',
 							BetType									AS '@BetType',
-							IsLive									AS '@IsLive',
+							isLive									AS '@isLive',
 							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberUpd'),
+		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
-	SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+	SET @Old_PT_XML = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
 	-- Log new updated data
 	IF @SettingLevel = 1			-- Product setting level
@@ -691,19 +630,19 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@CustIDList						AS '@CustIDList',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	@ProductID								AS '@ProductID',
-							IsLive									AS '@IsLive',
+							isLive									AS '@isLive',
 							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
-					FROM @NewPTTble
+					FROM dbo.f_DCS_PT_XMLParse(@PT)
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberUpd'),
+		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -712,19 +651,19 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@CustIDList						AS '@CustIDList',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType								AS '@SportType',
-							IsLive									AS '@IsLive',
+							isLive									AS '@isLive',
 							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
-					FROM @NewPTTble
+					FROM dbo.f_DCS_PT_XMLParse(@PT)
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberUpd'),
+		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -733,19 +672,19 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@CustIDList						AS '@CustIDList',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	BetType									AS '@BetType',
-							IsLive									AS '@IsLive',
+							isLive									AS '@isLive',
 							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
-					FROM @NewPTTble
+					FROM dbo.f_DCS_PT_XMLParse(@PT)
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberUpd'),
+		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
@@ -754,49 +693,53 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@CustIDList						AS '@CustIDList',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType								AS '@SportType',
 							BetType									AS '@BetType',
-							IsLive									AS '@IsLive',
+							isLive									AS '@isLive',
 							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
-					FROM @NewPTTble
+					FROM dbo.f_DCS_PT_XMLParse(@PT)
 					FOR XML PATH('PT'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberUpd'),
+		FOR XML PATH('Acc_CustSetting_AgentPTOnMemberMultiUpd'),
 		TYPE
 	)
 	END
-	SET @logSpData	= REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-	
-	SELECT @endRun = GETDATE()
-		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
+    SET @New_PT_XML = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')	
+
+	SELECT @Old_PT_XML = LogStr 
+	FROM f_CustSetting_FormatLog (@Old_PT_XML)
+	SELECT @New_PT_XML = LogStr 
+	FROM f_CustSetting_FormatLog (@New_PT_XML)
+
+	SELECT @EndRun	= GETDATE()
+		, @Duration = DATEDIFF(MILLISECOND, @StartRun, @EndRun)
 
 	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @CustID
-						, @ActionID			= 453
-						, @TrackingValue	= @logSpData
-						, @TrackingValue2	= @logSpData_Old
-						, @duration			= @duration
+		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
+			@UserID				= @UserID
+			, @CustIDList		= @CustIDList
+			, @SubAccID			= @SubAccID
+			, @ActionID			= 450
+			, @NewPT_XML		= @New_PT_XML
+			, @OldPT_XML		= @Old_PT_XML
+			, @duration			= @duration
 	END TRY
+
 	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @CustID
-						, @ActionID			= 453
-						, @TrackingValue	= @logSpData
-						, @TrackingValue2	= @logSpData_Old
-						, @duration			= @duration
+		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
+			@UserID				= @UserID
+			, @CustIDList		= @CustIDList
+			, @SubAccID			= @SubAccID
+			, @ActionID			= 450
+			, @NewPT_XML		= @New_PT_XML
+			, @OldPT_XML		= @Old_PT_XML
+			, @duration			= @duration
 	END CATCH
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AgentPTOnMemberUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AgentPTOnMemberUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AgentPTOnMemberUpd] TO [bodbExtAccNet]

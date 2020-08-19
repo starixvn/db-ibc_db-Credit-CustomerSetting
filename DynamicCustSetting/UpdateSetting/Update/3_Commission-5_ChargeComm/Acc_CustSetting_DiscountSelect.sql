@@ -1,6 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountSelect] 
 	  @CustID		INT
@@ -14,7 +12,7 @@ AS
 	Original:
 
 	Revision:
-	
+		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 	Param's Explanation:
 	
 	*/
@@ -28,6 +26,10 @@ BEGIN
 	INTO #SportBettypeFilter
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3) --Commission
 	
+	INSERT #SportBettypeFilter (SportType,Bettype,SettingType)
+	SELECT SportType,Bettype,SettingType
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19) --Commission
+
 	INSERT #SportBettypeFilter (SportType,Bettype,SettingType)
 	SELECT SportType,Bettype,SettingType
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5) --Charge Commission
