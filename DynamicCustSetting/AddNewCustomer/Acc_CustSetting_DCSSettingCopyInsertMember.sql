@@ -33,11 +33,13 @@ AS
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
+		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 	*/
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @xmlPT XML, @xmlBetLimit XML, @xmlDiscount XML, @xmlStatus XML, @xmlWinLossLimit XML, @xmlStakeLevel XML,@xmlStakeLevel17 XML,@xmlStakeLevel8 XML, @xmlLossLimit XML
 	DECLARE @xmlStr VARCHAR(MAX)
+	DECLARE @SettingMode BIT, @AgentID INT
 	SELECT @ErrCode = 0		
 	
 	/********************************************* Position Taking: SettingType = 1 ***********************************/
@@ -53,7 +55,6 @@ BEGIN
 				UNIQUE CLUSTERED (SportType, BetType, IsLive)
 			)
 	
-		DECLARE @SettingMode BIT, @AgentID INT
 		--Get setting mode
 		SELECT @SettingMode = IsGrouped
 		FROM dbo.CustSettingMode3rd
@@ -111,7 +112,7 @@ BEGIN
 		INNER JOIN	@NewPTTble AS ts
 				ON	ts.SportType = psd.SportType
 				AND	ts.BetType = psd.BetType
-		WHERE	psd.SettingType =1
+		WHERE	psd.SettingType = 1
 			AND psd.ProductID IS NOT NULL
 			AND	psd.SettingLevel IS NOT NULL
 			
@@ -127,7 +128,7 @@ BEGIN
 								, AgentPT		AS '@AgentPT'
 							FROM @NewPTTble nslt
 							INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType AND nslt.IsLive=psd.IsLive
-										WHERE psd.SettingType=1 AND psd.ProductID=@ProductID1
+										WHERE psd.SettingType = 1 AND psd.ProductID=@ProductID1
 							FOR XML PATH('PT')
 								, TYPE
 							)
@@ -150,6 +151,117 @@ BEGIN
 		END
 		
 		DELETE FROM	#TempPT WHERE ProductID=@ProductID1
+		END
+	END
+
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18))
+	BEGIN
+		DECLARE @ProductID18 INT
+		CREATE TABLE #TempPT18 (ProductID INT)
+		DECLARE @NewPTTble18 TABLE (
+				  SportType			SMALLINT
+				, BetType			SMALLINT
+				, IsLive			BIT
+				, AgentPT			TINYINT
+				UNIQUE CLUSTERED (SportType, BetType, IsLive)
+			)
+	
+		--Get setting mode
+		SELECT @SettingMode = IsGrouped
+		FROM dbo.CustSettingMode3rd
+		WHERE CustID= @ExistingCustID
+
+		SELECT @AgentID = recommend FROM CustInfo WITH (NOLOCK) WHERE custid = @CustID
+
+		IF @SettingMode = 0
+		BEGIN
+			INSERT INTO @NewPTTble18 (
+						SportType
+						, BetType
+						, Islive
+						, AgentPT
+						)
+					SELECT mcs.SportType
+						, mcs.BetType
+						, mcs.IsLive
+						, CASE WHEN mcs.agentPT > acs.agentPT THEN acs.agentPT ELSE mcs.agentPT END
+					FROM dbo.CustPTSetting3rd_Member mcs WITH (NOLOCK)
+						INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND acs.islive = mcs.islive
+						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
+					WHERE mcs.custid = @ExistingCustID AND acs.custid = @AgentID
+		END
+		ELSE
+		BEGIN
+			----check a1<a2
+			--IF EXISTS (SELECT 1
+			--		FROM dbo.CustPTGroupSetting3rd_Member mcs WITH (NOLOCK)
+			--			INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND acs.islive = mcs.islive
+			--		WHERE mcs.AgentID = @AgentID AND acs.custid = @AgentID AND mcs.agentPT > acs.agentPT)
+			--	SET @SettingMode = 0
+
+			INSERT INTO @NewPTTble18 (
+						SportType
+						, BetType
+						, Islive
+						, AgentPT
+						)
+					SELECT mcs.SportType
+						, mcs.BetType
+						, mcs.IsLive
+						, CASE WHEN mcs.agentPT > acs.agentPT THEN acs.agentPT ELSE mcs.agentPT END
+					FROM dbo.CustPTGroupSetting3rd_Member mcs WITH (NOLOCK)
+						INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND acs.islive = mcs.islive
+						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
+					WHERE mcs.AgentID = @AgentID AND acs.custid = @AgentID		
+		END
+		
+		INSERT INTO #TempPT18(ProductID)	
+		SELECT 
+				DISTINCT
+				psd.ProductID				
+		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		INNER JOIN	@NewPTTble18 AS ts
+				ON	ts.SportType = psd.SportType
+				AND	ts.BetType = psd.BetType
+		WHERE	psd.SettingType = 18
+			AND psd.ProductID IS NOT NULL
+			AND	psd.SettingLevel IS NOT NULL
+			
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempPT18)
+		BEGIN
+		SELECT TOP 1 @ProductID18=ProductID FROM #TempPT18
+		
+		SET @xmlPT = ( SELECT
+							(
+							SELECT nslt.SportType	AS '@SportType'
+								, nslt.BetType		AS '@BetType'
+								, nslt.IsLive		AS '@IsLive'
+								, AgentPT		AS '@AgentPT'
+							FROM @NewPTTble18 nslt
+							INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType AND nslt.IsLive=psd.IsLive
+										WHERE psd.SettingType = 18 AND psd.ProductID=@ProductID18
+							FOR XML PATH('PT')
+								, TYPE
+							)
+						FOR XML PATH('ROOT')
+							, TYPE
+						)
+	
+		SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlPT)	
+		
+		IF EXISTS (SELECT TOP 1 1 FROM @NewPTTble18)
+		BEGIN
+			EXEC Acc_CustSetting_AgentPTOnMemberUpd
+				@CustID = @CustID
+				, @PT = @xmlStr
+				, @SubAccID = @SubAccID
+				, @IP = @IP
+				, @UserID = @UserID
+				, @ErrCode = @ErrCode OUTPUT
+				, @ErrMsg = @ErrMsg OUTPUT
+		END
+		
+		DELETE FROM	#TempPT18 WHERE ProductID=@ProductID18
 		END
 	END
 	/********************************************* Bet Limit : SettingType = 2 ****************************************/
@@ -241,7 +353,7 @@ BEGIN
 		FROM dbo.CustDiscount3rd_Member dc WITH(NOLOCK)
 			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
 		WHERE dc.CustID	= @ExistingCustID
-		
+
 		INSERT INTO #TempComm(ProductID)	
 			SELECT 
 					DISTINCT
@@ -250,7 +362,7 @@ BEGIN
 			INNER JOIN	@NewDiscountTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
-			WHERE	psd.SettingType =3
+			WHERE	psd.SettingType = 3
 				AND psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
 			
@@ -263,7 +375,7 @@ BEGIN
 										, Discount AS '@Discount'
 									FROM @NewDiscountTbl nslt
 									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
-										WHERE psd.SettingType =3 AND psd.ProductID=@ProductID3
+										WHERE psd.SettingType = 3 AND psd.ProductID=@ProductID3
 									FOR XML PATH('Discount')
 										, TYPE
 									)
@@ -285,6 +397,72 @@ BEGIN
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
 		DELETE FROM	#TempComm WHERE ProductID=@ProductID3
+		END
+	END
+
+	/********************************************* Commision : SettingType = 19 ****************************************/
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,19))
+	BEGIN
+		DECLARE @ProductID19 INT
+		CREATE TABLE #TempComm19 (ProductID INT)
+		DECLARE @NewDiscountTbl19 TABLE (
+					SportType	SMALLINT
+				,	BetType		SMALLINT
+				,	Discount	DECIMAL(9, 8)
+			)
+	
+		INSERT INTO @NewDiscountTbl19
+		SELECT dc.SportType
+			, dc.BetType
+			, dc.PlayerDiscount
+		FROM dbo.CustDiscount3rd_Member dc WITH(NOLOCK)
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
+		WHERE dc.CustID	= @ExistingCustID
+
+		INSERT INTO #TempComm19(ProductID)	
+			SELECT 
+					DISTINCT
+					psd.ProductID				
+			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			INNER JOIN	@NewDiscountTbl19 AS ts
+					ON	ts.SportType = psd.SportType
+					AND	ts.BetType = psd.BetType
+			WHERE	psd.SettingType = 19
+				AND psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+			
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempComm19)
+		BEGIN
+		SELECT TOP 1 @ProductID19=ProductID FROM #TempComm19		
+		SET @xmlDiscount = ( SELECT (
+									SELECT nslt.SportType AS '@SportType'
+										, nslt.BetType AS '@BetType'
+										, Discount AS '@Discount'
+									FROM @NewDiscountTbl19 nslt
+									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										WHERE psd.SettingType = 19 AND psd.ProductID=@ProductID19
+									FOR XML PATH('Discount')
+										, TYPE
+									)
+							FOR XML PATH('ROOT')
+								, TYPE
+							)
+
+		SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlDiscount)
+
+		IF EXISTS(SELECT TOP 1 1 FROM @NewDiscountTbl19)
+		BEGIN
+			EXEC Acc_CustSetting_DiscountUpd 		
+				  @CustID = @CustID
+				, @Discount = @xmlStr
+				, @SettingType = 19
+				, @SubAccID = @SubAccID
+				, @IP = @IP
+				, @UserID = @UserID
+				, @ErrCode = @ErrCode OUTPUT
+				, @ErrMsg = @ErrMsg OUTPUT
+		END
+		DELETE FROM	#TempComm19 WHERE ProductID=@ProductID19
 		END
 	END
 	/*********************************************Charge Commision : SettingType = 5 ****************************************/
@@ -592,7 +770,7 @@ BEGIN
 										SELECT	nslt.SportType			AS '@SportType'
 											,	nslt.BetType			AS '@BetType'
 											,	nslt.StakeLevelList		AS '@StakeLevelList'
-										FROM	@NewStakeLevelTbl AS nslt
+										FROM	@NewStakeLevelTbl17 AS nslt
 										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE SettingType=17 AND  psd.ProductID=@ProductID17
 											AND settingStatus IN (0,1) --active bettype

@@ -1,8 +1,4 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountCheck] 
 	  @CustID			INT
@@ -21,16 +17,18 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 
-	Param's Explanation:
-	• @Discount:
-		<ROOT>
-				<Discount 
-						SportType="1" 
-						BetType="1" 
-						Discount="0.0025"
-				/>
-		</ROOT>
+	Revision:
+		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 
+	Param's Explanation:
+		• @Discount:
+			<ROOT>
+					<Discount 
+							SportType="1" 
+							BetType="1" 
+							Discount="0.0025"
+					/>
+			</ROOT>
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -73,7 +71,7 @@ BEGIN
 					INNER JOIN dbo.ProductSettingDetail pdt WITH (NOLOCK)
 						ON pdt.SportType	= tmp.SportType
 							AND pdt.BetType = tmp.BetType
-							AND pdt.SettingType = 3
+							AND pdt.SettingType IN (3,19)
 							AND pdt.IsLive		= 0
 					WHERE 
 						(	tmp.Discount		< 0
@@ -90,7 +88,7 @@ BEGIN
 						INNER JOIN dbo.ProductSettingDetail pdt WITH (NOLOCK)
 							ON pdt.SportType	= tmp.SportType
 								AND pdt.BetType = tmp.BetType
-								AND pdt.SettingType = 3
+								AND pdt.SettingType IN (3,19)
 								AND pdt.IsLive		= 0
 						WHERE 
 							(	tmp.Discount		< 0
@@ -109,10 +107,4 @@ BEGIN
 		RETURN
 	END
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DiscountCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DiscountCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DiscountCheck] TO [bodbExtAccNet]

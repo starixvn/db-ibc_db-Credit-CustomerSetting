@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountUpd] 
 	  @CustID				INT
 	, @Discount			VARCHAR(MAX)
@@ -18,6 +20,7 @@ AS
 	Revisions:
 		- 20151104@Billy: Update log structure - [Redmine: #46788]
 		- 20160104@Dominic: Implementing Charge Commission Plugin - [Redmine: #49689]
+		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 
 	Param's Explanation:
 		• @Discount:
@@ -214,7 +217,7 @@ BEGIN
 				AND tmp.BetType = dcm.BetType
 				AND dcm.custid	= @MasterID
 	END
-	ELSE IF @RoleID = 1 AND @SettingType = 3
+	ELSE IF @RoleID = 1 AND @SettingType IN (3,19)
 	BEGIN
 		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, agent_discount)
 		UPDATE tmp
@@ -442,6 +445,11 @@ BEGIN
 	END
 	SET @logSpData	= REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
+
 	SELECT @endRun	= GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
@@ -450,30 +458,12 @@ BEGIN
 	IF @SettingType = 5
 		SELECT @ActionID = 248
 	
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 			@UserID				= @UserID
 			, @CustID			= @CustID
 			, @ActionID			= @ActionID
 			, @TrackingValue	= @logSpData
 			, @TrackingValue2	= @logSpData_Old
 			, @duration			= @duration
-	END TRY
-
-	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-			@UserID				= @UserID
-			, @CustID			= @CustID
-			, @ActionID			= @ActionID
-			, @TrackingValue	= @logSpData
-			, @TrackingValue2	= @logSpData_Old
-			, @duration			= @duration
-	END CATCH
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DiscountUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DiscountUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DiscountUpd] TO [bodbExtAccNet]

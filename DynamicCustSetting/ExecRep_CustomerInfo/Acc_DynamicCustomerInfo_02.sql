@@ -28,6 +28,7 @@ AS
 		- 20200521@Elodie: NAP - Search & Copy Super - DCS: Product status of new super is Enabled when copy super from offered site to non-offered site [RedmineID: #108811]
 		- 20200528@Elodie: NAP - Search & Copy Super - DCS: Win Loss limit is not insert for offer supers when search and copy non-offered to offer site [RedmineID: #134949]
 		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
+		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -443,7 +444,7 @@ BEGIN
 			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource 
 						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
-		/********************************************* Position Taking: SettingType = 1 ***********************************/
+		/********************************************* Position Taking: SettingType IN (1,18) ***********************************/
 		BEGIN TRY
 			IF EXISTS(SELECT TOP 1 1 FROM [dbo].[CustPTSetting3rd_Agent] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 				INSERT INTO [dbo].[CustPTSetting3rd_Agent]
@@ -476,7 +477,7 @@ BEGIN
 						,100 --[MaxPT]
 					FROM [dbo].[CustPTSetting3rd_Agent] cs WITH(NOLOCK)
 						INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive
-					WHERE CustID = @ExistingCustID AND ps.SettingType = 1 AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+					WHERE CustID = @ExistingCustID AND ps.SettingType IN (1,18) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -503,7 +504,7 @@ BEGIN
 					,100 --dtl.MaxPT
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive  AND ps.SettingType = dtl.SettingType
-				WHERE ps.SettingType = 1 AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
+				WHERE ps.SettingType IN (1,18) AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
@@ -581,7 +582,7 @@ BEGIN
 			RETURN
 		END CATCH
 	
-		/************************* Commision : SettingType = 3, Charge comm: Setting Type = 5, Ticket comm: Setting Type = 14*****************/
+		/************************* Commision : SettingType = 3,19, Charge comm: Setting Type = 5, Ticket comm: Setting Type = 14*****************/
 		BEGIN TRY
 			IF EXISTS(SELECT TOP 1 1 FROM [dbo].[CustDiscount3rd_Agent] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 				INSERT INTO [dbo].[CustDiscount3rd_Agent]
@@ -595,7 +596,7 @@ BEGIN
 						   ,[Discount]
 				FROM [dbo].[CustDiscount3rd_Agent] cs WITH(NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (3,5,14) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (3,5,14,19) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -610,7 +611,7 @@ BEGIN
 					,t.BetType
 					,0 -- 0 zero by default
 				FROM #ProductSettingDetail t 
-				WHERE t.SettingType IN (3,5,14) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
+				WHERE t.SettingType IN (3,5,14,19) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH

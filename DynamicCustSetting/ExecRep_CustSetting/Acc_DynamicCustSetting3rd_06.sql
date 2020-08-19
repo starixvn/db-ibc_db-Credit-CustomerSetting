@@ -1,6 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-USE CustDB
-GO
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_06]
     @CustId int,
@@ -18,11 +16,13 @@ AS
 		- 20160219@Dominic: Remove commission on C981RMB - [Redmine: #51057]  
 		- 20160909@Winnie: Not apply CustNoComm for 3rd product [Redmine: #63736]	
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
+		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 
 	Param's Explanation:
 		 @SettingType: 3 - Given Comm
 						5 - Charge Comm
 						14 - Ticket Comm
+						19 - Given Comm
 */
 BEGIN
     SET NOCOUNT ON;
@@ -256,18 +256,8 @@ BEGIN
 			INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype
 												AND dcs.bettype = dcmem.bettype
 												AND dcs.custid=@SuperID
-		WHERE dcmem.CustID=@CustID AND @SettingType = 3    
+		WHERE dcmem.CustID=@CustID AND @SettingType IN (3,19)
 	END
 END
-
 GO
 
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_DynamicCustSetting3rd_06] TO [vnteam]
-GO 

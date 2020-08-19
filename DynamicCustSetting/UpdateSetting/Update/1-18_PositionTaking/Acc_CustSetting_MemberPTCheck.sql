@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MemberPTCheck] 
 	  @CustID			INT 
 	, @RoleID			INT
@@ -36,6 +38,7 @@ AS
 	Revision:
 		- 20151218@Dominic: Fix bug when checking PT setting on members #49586
 		- 20151221@Dominic: Fix Max value in error message when updating A1>A2 #49593
+		- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 
 	*/
 BEGIN
@@ -136,7 +139,7 @@ BEGIN
 									ON pdt.SportType=mempt.SportType
 										AND pdt.BetType=mempt.BetType
 										AND pdt.IsLive=mempt.IsLive
-										AND pdt.SettingType = 1
+										AND pdt.SettingType IN (1,18)
 							WHERE mempt.AgentPT < 0 OR mempt.AgentPT > pdt.MaxPT
 							FOR XML RAW('Row'), TYPE
 						)	
@@ -163,7 +166,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1	
+										AND pdt.SettingType IN (1,18)
 							WHERE mempt.AgentPT > apt.AgentPT OR mempt.AgentPT < apt.MinPT
 							FOR XML RAW('Row'), TYPE
 		)
@@ -198,7 +201,7 @@ BEGIN
 								ON pdt.SportType = mempt.SportType
 									AND pdt.BetType = mempt.BetType
 									AND pdt.IsLive = mempt.IsLive
-									AND pdt.SettingType = 1		
+									AND pdt.SettingType IN (1,18)
 						WHERE  mempt.AgentPT > CASE WHEN spt.AgentPT > apt.AgentPT THEN apt.AgentPT
 													ELSE spt.AgentPT
 												END
@@ -285,7 +288,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1		
+										AND pdt.SettingType IN (1,18)
 							WHERE mempt.AgentPT > mempt.AgentPT_Max
 							FOR XML RAW('Row'), TYPE)
 		
@@ -341,7 +344,7 @@ BEGIN
 							ON pdt.SportType = mempt.SportType
 								AND pdt.BetType = mempt.BetType
 								AND pdt.IsLive = mempt.IsLive
-								AND pdt.SettingType = 1
+								AND pdt.SettingType IN (1,18)
 					WHERE mempt.MasterPT < 0 OR mempt.MasterPT > pdt.MaxPT
 						OR mempt.AutoMasterPT < 0 OR mempt.AutoMasterPT > pdt.MaxPT
 					FOR XML RAW('Row'), TYPE)	
@@ -369,7 +372,7 @@ BEGIN
 							ON pdt.SportType = mempt.SportType
 								AND pdt.BetType = mempt.BetType
 								AND pdt.IsLive = mempt.IsLive
-								AND pdt.SettingType = 1		
+								AND pdt.SettingType IN (1,18)
 					WHERE mempt.IsAutoMasterPT = 1
 							AND mempt.AutoMasterPT > mpt.MaxPT
 					FOR XML RAW('Row'), TYPE)
@@ -402,7 +405,7 @@ BEGIN
 						ON pdt.SportType = mempt.SportType
 							AND pdt.BetType = mempt.BetType
 							AND pdt.IsLive = mempt.IsLive
-							AND pdt.SettingType = 1	
+							AND pdt.SettingType IN (1,18)
 				WHERE mempt.IsAutoMasterPT = 1 
 					AND mempt.AutoMasterPT > CASE WHEN mpt.MasterPT < spt.MasterPT THEN mpt.MasterPT ELSE spt.MasterPT END
 				FOR XML RAW('Row'), TYPE)	
@@ -430,7 +433,7 @@ BEGIN
 					ON pdt.SportType = mempt.SportType
 						AND pdt.BetType = mempt.BetType
 						AND pdt.IsLive = mempt.IsLive
-						AND pdt.SettingType = 1
+						AND pdt.SettingType IN (1,18)
 			WHERE mempt.IsAutoMasterPT=1 
 				AND mempt.AutoMasterPT<CASE WHEN mpt.MinPT + (-1)*mempt.AgentPT < 0 THEN 0 ELSE mpt.MinPT - mempt.AgentPT END
 			FOR XML RAW('Row'), TYPE)
@@ -463,7 +466,7 @@ BEGIN
 						ON pdt.SportType = mempt.SportType
 							AND pdt.BetType = mempt.BetType
 							AND pdt.IsLive = mempt.IsLive
-							AND pdt.SettingType = 1		
+							AND pdt.SettingType IN (1,18)	
 				WHERE mempt.MasterPT>CASE WHEN mpt.MasterPT < spt.MasterPT THEN mpt.MasterPT ELSE spt.MasterPT END
 				FOR XML RAW('Row'), TYPE)
 		
@@ -490,7 +493,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1		
+										AND pdt.SettingType IN (1,18)	
 							WHERE mempt.MasterPT>mpt.MaxPT
 							FOR XML RAW('Row'), TYPE)
 		
@@ -523,7 +526,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1		
+										AND pdt.SettingType IN (1,18)	
 							WHERE mempt.MasterPT > mpt.MasterPT - mempt.AgentPT 
 									AND mempt.IsAutoMasterPT = 0 
 									AND apt.IsAutoMasterPT = 0
@@ -557,7 +560,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1		
+										AND pdt.SettingType IN (1,18)	
 							WHERE mempt.MasterPT < CASE WHEN mpt.MinPT + (-1)*mempt.AgentPT < 0 THEN 0 ELSE mpt.MinPT - mempt.AgentPT END 
 								AND mempt.IsAutoMasterPT = 0 and apt.IsAutoMasterPT = 0	
 							FOR XML RAW('Row'), TYPE)
@@ -614,7 +617,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1		
+										AND pdt.SettingType IN (1,18)	
 							WHERE mempt.SuperPT < 0 OR mempt.SuperPT > pdt.MaxPT
 								OR mempt.AutoSuperPT < 0 OR mempt.AutoSuperPT > pdt.MaxPT
 							FOR XML RAW('Row'), TYPE)
@@ -642,7 +645,7 @@ BEGIN
 					ON pdt.SportType = mempt.SportType
 						AND pdt.BetType = mempt.BetType
 						AND pdt.IsLive = mempt.IsLive
-						AND pdt.SettingType = 1	
+						AND pdt.SettingType IN (1,18)
 			WHERE mempt.IsAutoSuperPT = 1 AND mempt.AutoSuperPT > spt.MaxPT
 			FOR XML RAW('Row'), TYPE)
 		
@@ -668,7 +671,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1
+										AND pdt.SettingType IN (1,18)
 							WHERE mempt.IsAutoSuperPT = 1 AND mempt.AutoSuperPT > spt.SuperPT 
 							FOR XML RAW('Row'), TYPE)
 		
@@ -698,7 +701,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1	
+										AND pdt.SettingType IN (1,18)
 							WHERE mempt.IsAutoSuperPT = 1 
 								AND mempt.AutoSuperPT < CASE WHEN spt.MinPT > mempt.MasterPT+mempt.AgentPT 
 																THEN spt.MinPT-mempt.MasterPT-mempt.AgentPT 
@@ -729,7 +732,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1	
+										AND pdt.SettingType IN (1,18)
 							WHERE mempt.SuperPT > spt.SuperPT
 							FOR XML RAW('Row'), TYPE)
 		
@@ -781,7 +784,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1	
+										AND pdt.SettingType IN (1,18)
 							WHERE mempt.IsAutoSuperPT = 0 AND mpt.IsAutoSuperPT = 0
 								AND mempt.SuperPT >  
 									CASE 
@@ -839,7 +842,7 @@ BEGIN
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
-										AND pdt.SettingType = 1	
+										AND pdt.SettingType IN (1,18)
 							WHERE mempt.IsAutoSuperPT = 0 AND mpt.IsAutoSuperPT = 0
 								AND mempt.SuperPT < CASE 
 														WHEN spt.MinPT > mempt.MasterPT + mempt.AgentPT
@@ -858,11 +861,4 @@ BEGIN
         END	
 	END
 END
-
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MemberPTCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MemberPTCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MemberPTCheck] TO [bodbExtAccNet]

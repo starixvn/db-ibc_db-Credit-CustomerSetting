@@ -38,6 +38,7 @@ AS
 		- 20200325@Elodie: Only insert sport is unhided [RedmineID:#128058]
 		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
+		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
@@ -360,6 +361,10 @@ BEGIN
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
 		SELECT t.* INTO #SportBettypeFilter1
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1) t
+
+		INSERT INTO #SportBettypeFilter1
+		SELECT * 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18)
 		
 		BEGIN TRY
 			IF @RoleID = 4
@@ -426,7 +431,7 @@ BEGIN
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
 					INNER JOIN CustPTSetting3rd_Agent spt ON dtl.SportType = spt.SportType AND dtl.BetType = spt.BetType AND dtl.IsLive = spt.IsLive
-				WHERE dtl.SettingType = 1 AND spt.CustID = @SuperID
+				WHERE spt.CustID = @SuperID
 			END
 			ELSE IF @RoleID = 2
 			BEGIN
@@ -457,7 +462,7 @@ BEGIN
 				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
 					INNER JOIN CustPTSetting3rd_Agent mpt ON dtl.SportType = mpt.SportType AND dtl.BetType = mpt.BetType AND dtl.IsLive = mpt.IsLive
-				WHERE dtl.SettingType = 1 AND mpt.custid = @MasterID
+				WHERE mpt.custid = @MasterID
 			END
 			ELSE
 			BEGIN --RoleID = 1
@@ -936,6 +941,9 @@ BEGIN
 		INSERT INTO #SportBettypeFilter3
 		SELECT * 
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14)
+		INSERT INTO #SportBettypeFilter3
+		SELECT * 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19)
 
 		BEGIN TRY
 			IF @RoleID = 4
