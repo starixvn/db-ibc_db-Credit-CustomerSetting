@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE Acc_CustSetting_ViewMatrixInfo
-   @ProductID TINYINT,
+   @ProductID TINYINT = NULL,
    @Sporttype SMALLINT = NULL,
    @Mode TINYINT
 AS  
@@ -24,7 +24,7 @@ BEGIN
 	BEGIN
 		SELECT DISTINCT SettingType 
 		FROM ProductSettingDetail ps WITH (NOLOCK)
-		WHERE ProductId = @ProductID
+		WHERE ProductId = ISNULL(@ProductID, ProductId)
 			AND sporttype = ISNULL(@Sporttype, Sporttype)
 			AND SettingType IN (1,18)
 	END
