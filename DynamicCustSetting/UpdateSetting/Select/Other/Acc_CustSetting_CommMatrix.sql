@@ -10,10 +10,11 @@ AS
 	DB:  DBCUST/CustDB   
 	Original:  
   
-	Param's Explanation:  
+	Revision:
 		- 20160219@Dominic: Implement charge commission #49689
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
+	Param's Explanation:  		
    
  */  
 BEGIN  
