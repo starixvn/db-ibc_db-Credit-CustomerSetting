@@ -17,7 +17,7 @@ AS
 
 	Param's Explanation:  
 		@Mode: 1: PT
-		       2: Comm		
+		       3: Comm		
    
  */  
 BEGIN  
@@ -29,7 +29,7 @@ BEGIN
 			AND sporttype = ISNULL(@Sporttype, Sporttype)
 			AND SettingType IN (1,18)
 	END
-	ELSE IF @Mode = 2
+	ELSE IF @Mode = 3
 	BEGIN
 		SELECT TOP 1 @SettingType = SettingType 
 		FROM ProductSettingDetail ps WITH (NOLOCK)
