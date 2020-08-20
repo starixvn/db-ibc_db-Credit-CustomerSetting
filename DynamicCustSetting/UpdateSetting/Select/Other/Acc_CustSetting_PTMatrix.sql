@@ -16,6 +16,7 @@ AS
     - 20151021@Billy: Change parameter from (@ProductID, @UserName) to (@SportType, @BetType, @isLive, @UserName)
 	- 20160912@Elodie: Support view PT by product - [Redmine: #60809]
 	- 20171214@Vicky: NAP - System show duplicate data when viewing PT of Cricket - [Redmine: #87939]
+	- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 
  Param's Explanation:  
 
@@ -55,11 +56,10 @@ BEGIN
 	SELECT ProductID, SportType, BetType, IsLive
 	INTO #SportList
 	FROM dbo.ProductSettingDetail
-	WHERE SettingType = 1 
+	WHERE SettingType IN (1, 18)
 		AND ProductID = CASE WHEN @ProductID = 0 THEN ProductID ELSE @ProductID END
 		AND IsLive <= @isLive
 		
-
 	INSERT @PTMatrix
 	SELECT
 		spt.CustID
