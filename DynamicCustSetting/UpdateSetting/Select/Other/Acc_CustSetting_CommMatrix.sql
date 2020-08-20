@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-USE CustDB
-GO
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_CommMatrix]   
    @ProductID TINYINT = NULL,
@@ -15,6 +13,7 @@ AS
 	Param's Explanation:  
 		- 20160219@Dominic: Implement charge commission #49689
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
+		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
    
  */  
 BEGIN  
@@ -28,7 +27,10 @@ BEGIN
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5)  
 	UNION
 	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) ) tmp
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) 
+	UNION
+	SELECT *
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19)) tmp
 	
 	SET NOCOUNT ON
 	DECLARE @CustID INT
