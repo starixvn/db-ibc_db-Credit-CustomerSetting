@@ -3,7 +3,8 @@
 ALTER PROCEDURE Acc_CustSetting_ViewMatrixInfo
    @ProductID TINYINT = NULL,
    @Sporttype SMALLINT = NULL,
-   @Mode TINYINT
+   @Mode TINYINT, 
+   @SettingType SMALLINT OUTPUT
 AS  
 /*  
 	Created: 20200820@Elodie  
@@ -22,7 +23,7 @@ AS
 BEGIN  
 	IF @Mode = 1 
 	BEGIN
-		SELECT DISTINCT SettingType 
+		SELECT TOP 1 @SettingType = SettingType 
 		FROM ProductSettingDetail ps WITH (NOLOCK)
 		WHERE ProductId = ISNULL(@ProductID, ProductId)
 			AND sporttype = ISNULL(@Sporttype, Sporttype)
@@ -30,9 +31,9 @@ BEGIN
 	END
 	ELSE IF @Mode = 2
 	BEGIN
-		SELECT DISTINCT SettingType 
+		SELECT TOP 1 @SettingType = SettingType 
 		FROM ProductSettingDetail ps WITH (NOLOCK)
-		WHERE ProductId = @ProductID
+		WHERE ProductId = ISNULL(@ProductID, ProductId)
 			AND sporttype = ISNULL(@Sporttype, Sporttype)
 			AND SettingType IN (3,5,14,19)
 	END
