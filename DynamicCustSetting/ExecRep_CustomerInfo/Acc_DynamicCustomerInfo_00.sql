@@ -1298,6 +1298,16 @@ BEGIN
 		SELECT * 
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8)
 
+		DELETE sb		
+		FROM #SportBettypeFilter7 sb
+			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+		WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0)
+			
+		DELETE sb		
+		FROM #SportBettypeFilter7 sb
+			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+		WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID		
+
 		BEGIN TRY
 			IF	@RoleID = 4
 			BEGIN
