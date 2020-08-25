@@ -66,12 +66,12 @@ BEGIN
 		DELETE sb		
 		FROM @StakeLevelList sb
 			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.GameTypeID = ssc.Bettype
-		WHERE ssc.Currency = @ExchangeID AND (ssc.SiteID = @_SiteID OR ssc.SiteID = 0)
+		WHERE ssc.Currency = @ExchangeID AND (ssc.SiteID = @SiteID OR ssc.SiteID = 0)
 			
 		DELETE sb		
 		FROM @StakeLevelList sb
 			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.GameTypeID = ssc.Bettype
-		WHERE (ssc.Currency = @ExchangeID OR ssc.Currency = 0 ) AND ssc.SiteID = @_SiteID	
+		WHERE (ssc.Currency = @ExchangeID OR ssc.Currency = 0 ) AND ssc.SiteID = @SiteID	
 
 	END
 	ELSE
