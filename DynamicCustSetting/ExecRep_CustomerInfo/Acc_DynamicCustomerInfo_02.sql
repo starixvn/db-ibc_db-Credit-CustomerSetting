@@ -444,6 +444,17 @@ BEGIN
 			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource 
 						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
+
+		DELETE sb		
+		FROM #ProductSettingDetail sb
+			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+		WHERE ssc.Currency = @_Currency AND (ssc.SiteID = @_SiteID OR ssc.SiteID = 0)
+			
+		DELETE sb		
+		FROM #ProductSettingDetail sb
+			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+		WHERE (ssc.Currency = @_Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @_SiteID
+
 		/********************************************* Position Taking: SettingType IN (1,18) ***********************************/
 		BEGIN TRY
 			IF EXISTS(SELECT TOP 1 1 FROM [dbo].[CustPTSetting3rd_Agent] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
