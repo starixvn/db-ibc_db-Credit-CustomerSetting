@@ -8,8 +8,10 @@ AS
 	Original: DBA_ArchiveAccount0_CloseAgent_GenScript
 
 	Revisions:
-		20180222@Daniel: cloned & renamed from old sp DBA_ArchiveAccount0_CloseAgent_GenScript, get masterID for send message to masters
-		20190218@Daniel: use permanent temp table bodb_report.dbo.tempCustID instead, the table need to be prepared outside, this avoid sp timeout when exec via linked server
+		- 20180222@Daniel: cloned & renamed from old sp DBA_ArchiveAccount0_CloseAgent_GenScript, get masterID for send message to masters
+		- 20190218@Daniel: use permanent temp table bodb_report.dbo.tempCustID instead, the table need to be prepared outside, this avoid sp timeout when exec via linked server
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
+		- 20200807@Helen: Remove hardcode supers (allow negative given credit for members) since fixed already in Alpha Site [Redmine: #130032]
 
 		
 	Param's Explanation:
@@ -32,6 +34,18 @@ BEGIN
 
 END
 
+CREATE TABLE #Super_Exception (srecommend INT)
+
+INSERT INTO #Super_Exception (srecommend)
+SELECT DISTINCT ci.srecommend		
+FROM CustGroupHeadline gl (nolock)		
+	INNER JOIN Customer ci (nolock) ON gl.CustID = ci.custid		
+WHERE GroupID > 0 and ci.roleid in (1,2,3,4)
+UNION
+SELECT DISTINCT ag.custid
+FROM phonebettingCustomerList p WITH(NOLOCK)
+	INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
+	INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
 
 INSERT INTO bodb_report.dbo.tempCustID
 SELECT custid
@@ -64,6 +78,7 @@ FROM customer ag WITH (NOLOCK)
 		WHERE roleid = 1
 		GROUP BY recommend
 		) mem ON mem.recommend = agci.custid
+	LEFT JOIN #Super_Exception se ON se.srecommend = ag.srecommend
 WHERE ag.roleid = 2
 	AND isnull(MemCount, 0) > 0
 	AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
@@ -84,8 +99,8 @@ WHERE ag.roleid = 2
 		WHERE --roleid = 1 AND
 			creatdate >= DATEADD(mm, -3, GETDATE())
 		)
-		
-
+	AND se.srecommend IS NULL
+	
 
 SELECT sag.username Super
 	,mag.username Master
@@ -100,3 +115,4 @@ FROM customer ag WITH (NOLOCK)
 ORDER BY [Member Count] DESC
 
 DROP TABLE #tmpAg
+DROP TABLE #Super_Exception

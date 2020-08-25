@@ -8,8 +8,9 @@ AS
 	Original:
 
 	Revisions:
-		20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
-
+		- 20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
+		- 20200807@Helen: Remove hardcode supers (allow negative given credit for members) since fixed already in Alpha Site [Redmine: #130032]
 		
 	Param's Explanation:
 */
@@ -30,6 +31,19 @@ BEGIN
 	RETURN
 
 END
+
+CREATE TABLE #Super_Exception (srecommend INT)
+
+INSERT INTO #Super_Exception (srecommend)
+SELECT DISTINCT ci.srecommend		
+FROM CustGroupHeadline gl (nolock)		
+	INNER JOIN Customer ci (nolock) ON gl.CustID = ci.custid		
+WHERE GroupID > 0 and ci.roleid in (1,2,3,4)
+UNION
+SELECT DISTINCT ag.custid
+FROM phonebettingCustomerList p WITH(NOLOCK)
+	INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
+	INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
 
 DECLARE @DDiff DATETIME
 
@@ -73,7 +87,8 @@ FROM bodb_report.dbo.tmpCustArchived ag WITH (NOLOCK)
 		FROM bettrans b WITH (NOLOCK)
 		WHERE custid <> recommend
 		GROUP BY recommend
-		) b ON b.recommend = agci.custid		
+		) b ON b.recommend = agci.custid	
+	LEFT JOIN #Super_Exception se ON se.srecommend = agci.srecommend
 WHERE ag.isFinished = 1
 	AND isnull(MemCount, 0) > 0 AND isnull(TransCount, 0) = 0
 	AND agci.enabled = 0
@@ -90,6 +105,8 @@ WHERE ag.isFinished = 1
 		WHERE --roleid = 1 AND
 			creatdate >= @DDiff
 		)
+	AND se.srecommend IS NULL
+	
 
 
 --Get more other cust based on s4 condition
@@ -112,7 +129,8 @@ FROM customer ag WITH (NOLOCK)
 		FROM bettrans b WITH (NOLOCK)
 		WHERE custid <> recommend
 		GROUP BY recommend
-		) b ON b.recommend = agci.custid		
+		) b ON b.recommend = agci.custid	
+	LEFT JOIN #Super_Exception se ON se.srecommend = agci.srecommend
 WHERE ag.roleid = 2
 	AND isnull(MemCount, 0) > 0 AND isnull(TransCount, 0) = 0
 	AND (ag.creatdate < @DDiff)
@@ -133,6 +151,8 @@ WHERE ag.roleid = 2
 			creatdate >= @DDiff
 		)
 	AND agci.custid NOT IN (SELECT recommend FROM bodb_report.dbo.tmpCustArchived)
+	AND se.srecommend IS NULL
+	
 		
 
 SELECT sag.username Super
@@ -149,3 +169,4 @@ FROM customer ag WITH (NOLOCK)
 ORDER BY [Member Count] DESC
 
 DROP TABLE #tmpAg
+DROP TABLE #Super_Exception

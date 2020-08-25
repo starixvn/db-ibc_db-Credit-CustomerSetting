@@ -9,6 +9,7 @@ AS
 
 	Revisions:
 		- 20190708@Daniel: Created
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 
 */
 BEGIN
@@ -17,7 +18,7 @@ BEGIN
 
 	DECLARE @agent varchar(50), @ErrMsg VARCHAR(150), @msg VARCHAR(100)
 
-	if exists(select 1 from DBACC.bodb02.dbo.SystemSettings with(nolock) where VName = 'aa_Status' AND VValue = 'Stage 3 - Running')
+	if exists(select 1 from DBACC.bodb02.dbo.SystemSettings with(nolock) where VName = 'aa_Status' AND VValue IN ('Stage 3 - Running','Stage 3 - Done'))
 	BEGIN
 		WHILE(1=1)
 		BEGIN

@@ -7,7 +7,8 @@ AS
 	Database: DBRPT.bodb_Report
 
 	Revisions:
-	- 20190519@Daniel: Created
+		- 20190519@Daniel: Created
+		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 
 */
 BEGIN
@@ -76,12 +77,13 @@ BEGIN
 		if (@_to > @to) SET @_to = dateadd(dd, 1, @to)
 
 		insert into tempCustID
-		SELECT distinct custid
-		FROM dbo.STATEMENT WITH (NOLOCK)
+		SELECT distinct s.custid
+		FROM dbo.STATEMENT s WITH (NOLOCK)
+			LEFT JOIN tempCustID c WITH (NOLOCK) On c.CustID = s.custid
 		WHERE TransType <> 'bal' 
 			AND transdesc NOT LIKE 'For Delete Account%' --exclude clear balance trans inserted by Archive process
 			AND accDate >= @_from and accdate < @_to
-			AND custid NOT IN(select custid from tempCustID)
+			AND c.custid IS NULL
 
 		SET @msg = 'Statement loaded from ' + CONVERT(varchar(10), @_from, 120) + ' to ' + CONVERT(VARCHAR(10), dateadd(dd, -1, @_to), 120)
 		RAISERROR(@msg, 0, 0) WITH NOWAIT
@@ -105,12 +107,13 @@ BEGIN
 			if (@_to > @ToEx) SET @_to = dateadd(dd, 1, @ToEx)
 
 			insert into tempCustID
-			SELECT distinct custid
-			FROM dbo.STATEMENT WITH (NOLOCK)
+			SELECT distinct s.custid
+			FROM dbo.STATEMENT s WITH (NOLOCK)
+				LEFT JOIN tempCustID c WITH (NOLOCK) ON c.CustID = s.custid
 			WHERE TransType <> 'bal' 
 				AND transdesc NOT LIKE 'For Delete Account%' --exclude clear balance trans inserted by Archive process
 				AND accDate >= @_from and accdate < @_to
-				AND custid NOT IN(select custid from tempCustID)
+				AND c.custid IS NULL
 
 			SET @msg = 'Statement loaded from ' + CONVERT(varchar(10), @_from, 120) + ' to ' + CONVERT(VARCHAR(10), dateadd(dd, -1, @_to), 120)
 			RAISERROR(@msg, 0, 0) WITH NOWAIT
