@@ -10,7 +10,8 @@ AS
 	Original:
 
     Revision:
-            - 20180327@Vicky: add header infomation [Redmine: #90422]
+        - 20180327@Vicky: add header infomation [Redmine: #90422]
+		- 20200819@Elodie: Only show stake level setting if site and currency of customer is offered [Redmine: #137768]
     
 	Param's Explanation:
 */
@@ -19,6 +20,7 @@ BEGIN
 
 	DECLARE	@SettingType					SMALLINT
 		,	@Currency						TINYINT
+		,	@Site							VARCHAR(10)
 		,	@RoleID							TINYINT
 		,	@srecommend						INT
 		,	@mrecommend						INT
@@ -49,12 +51,23 @@ BEGIN
 
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
+		,	@Site		= c.site
 		,	@RoleID     = c.roleid
 		,	@srecommend = c.srecommend
 		,	@mrecommend = c.mrecommend
 		,	@recommend  = c.recommend
 	FROM	dbo.Customer AS c WITH(NOLOCK)
 	WHERE	c.custid = @CustID;
+
+	DELETE sb		
+	FROM #SportBetTypeFilter sb
+		INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+	WHERE ssc.Currency = @Currency AND (ssc.SiteID = @Site OR ssc.SiteID = 0)
+			
+	DELETE sb		
+	FROM #SportBetTypeFilter sb
+		INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+	WHERE (ssc.Currency = @Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @Site	
 
 	-- Select available stake levels
 	IF	@RoleID = 4

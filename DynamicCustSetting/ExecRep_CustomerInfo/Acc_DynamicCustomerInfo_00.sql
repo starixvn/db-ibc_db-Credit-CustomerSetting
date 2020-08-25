@@ -39,7 +39,7 @@ AS
 		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
-		- 20200819@Winfred: Fix bug "default stake of new customer when not offer currency and offer site Null " [Redmine: #137768]
+		- 20200819@Winfred: Only insert stake level setting if site and currency of customer is offered [Redmine: #137768]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/

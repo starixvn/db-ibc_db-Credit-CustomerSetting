@@ -17,6 +17,7 @@ AS
 		- 20200414@Elodie: Offer XocDia for 789y site only [Redmine: #131283]
 		- 20200420@Elodie: Offer 3DGame for 789y site only [Redmine: #132254]
 		- 20200506@Elodie: Offer HILO for 789y site only [Redmine: #133597]
+		- 20200819@Elodie: Only show stake level setting if site and currency of customer is offered [Redmine: #137768]
 
 	Param's Explanation:
 */
@@ -27,9 +28,10 @@ BEGIN
 	DECLARE	@UplineID		INT
 		,	@ExchangeID		INT
 		,	@Site			VARCHAR(10)
+		,	@SiteID			INT
 		,	@RoleID			TINYINT
 
-	DECLARE	@StakeLevelList	TABLE (StakeLevelID	INT)
+	DECLARE	@StakeLevelList	TABLE (StakeLevelID	INT, GameTypeID INT)
 
 	SELECT	@UplineID =	CASE	WHEN c.roleid = 1 THEN c.recommend
 								WHEN c.roleid = 2 THEN c.mrecommend
@@ -42,6 +44,8 @@ BEGIN
 	FROM	dbo.customer AS c WITH (NOLOCK)
 	WHERE	c.custid = @CustID
 
+	SELECT @SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @Site
+
 	IF @RoleID = 1
 	BEGIN
 		SELECT	@Site = c.site
@@ -51,18 +55,29 @@ BEGIN
 
 	IF	@UplineID = -1
 	BEGIN
-	    INSERT INTO	@StakeLevelList (StakeLevelID)
-	    SELECT sl.StakeLevelID
+	    INSERT INTO	@StakeLevelList (StakeLevelID, GameTypeID)
+	    SELECT sl.StakeLevelID, sl.GameTypeID
 		FROM dbo.GameGroup AS gg WITH (NOLOCK)
 			INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.GameGroupID = gg.GameGroupID
 		WHERE	gg.RefSportType = @SportType
 			AND	sl.ExchangeId = @ExchangeID
 			AND	gg.IsDeposit = 0
+
+		DELETE sb		
+		FROM @StakeLevelList sb
+			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.GameTypeID = ssc.Bettype
+		WHERE ssc.Currency = @ExchangeID AND (ssc.SiteID = @_SiteID OR ssc.SiteID = 0)
+			
+		DELETE sb		
+		FROM @StakeLevelList sb
+			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.GameTypeID = ssc.Bettype
+		WHERE (ssc.Currency = @ExchangeID OR ssc.Currency = 0 ) AND ssc.SiteID = @_SiteID	
+
 	END
 	ELSE
 	BEGIN
-	    INSERT INTO	@StakeLevelList (StakeLevelID)
-	    SELECT	CAST(ss.val AS INT)
+	    INSERT INTO	@StakeLevelList (StakeLevelID, GameTypeID)
+	    SELECT	CAST(ss.val AS INT), Bettype
 		FROM	dbo.CustStakeLevel_Agent AS csla WITH (NOLOCK)
 		CROSS APPLY	dbo.strSplit(csla.StakeLevelList, ',') AS ss
 		WHERE	csla.CustID = @UplineID
