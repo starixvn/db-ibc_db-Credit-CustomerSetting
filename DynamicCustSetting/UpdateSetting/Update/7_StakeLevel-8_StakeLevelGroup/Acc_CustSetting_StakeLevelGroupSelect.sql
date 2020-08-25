@@ -21,6 +21,7 @@ BEGIN
 	DECLARE	@SettingType					SMALLINT
 		,	@Currency						TINYINT
 		,	@Site							VARCHAR(10)
+		,	@SiteID							INT
 		,	@RoleID							TINYINT
 		,	@srecommend						INT
 		,	@mrecommend						INT
@@ -59,15 +60,17 @@ BEGIN
 	FROM	dbo.Customer AS c WITH(NOLOCK)
 	WHERE	c.custid = @CustID;
 
+	SELECT @SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @Site
+
 	DELETE sb		
 	FROM #SportBetTypeFilter sb
 		INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
-	WHERE ssc.Currency = @Currency AND (ssc.SiteID = @Site OR ssc.SiteID = 0)
+	WHERE ssc.Currency = @Currency AND (ssc.SiteID = @SiteID OR ssc.SiteID = 0)
 			
 	DELETE sb		
 	FROM #SportBetTypeFilter sb
 		INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
-	WHERE (ssc.Currency = @Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @Site	
+	WHERE (ssc.Currency = @Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @SiteID	
 
 	-- Select available stake levels
 	IF	@RoleID = 4
