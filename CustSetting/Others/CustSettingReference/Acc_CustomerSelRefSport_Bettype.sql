@@ -28,6 +28,7 @@ AS
 		- 20190729@Eden: Use new table Sport_Bettype_Reference_Setting instead of Sport_Bettype_Reference for keno [Redmine: #116466]
 		- 20190910@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
+		- 20200826@Elodie: Add NG Color Ball - [Redmine: #128220]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -103,8 +104,8 @@ BEGIN
 	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef
 	FROM	dbo.Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE	Sporttype NOT IN (
-				 CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
-				,CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
+				 --CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
+				CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
 				,27, 50 -- Cricket
 			)
 			AND bettype NOT IN(SELECT Bettype FROM #tempRef)
@@ -138,7 +139,7 @@ BEGIN
 					OR b.sportType = 164--Happy 5
 					OR b.SportType = 202 --Keno
 					) 
-
+			AND 1 = CASE WHEN @DisableNumber = 1 AND b.SportType = 161 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
