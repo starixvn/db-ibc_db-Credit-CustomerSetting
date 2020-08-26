@@ -138,6 +138,7 @@ BEGIN
 					OR b.SportType = 220 -- Lottery
 					OR b.sportType = 164--Happy 5
 					OR b.SportType = 202 --Keno
+					OR b.SportType = 161 -- Number Game
 					) 
 			AND 1 = CASE WHEN @DisableNumber = 1 AND b.SportType = 161 THEN 0 ELSE 1 END
 			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
