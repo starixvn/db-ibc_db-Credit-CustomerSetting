@@ -156,6 +156,7 @@ Revisions:
 	- 20200310@Percy: Add column IsAllDayBalTransfer on CustMaster [RedmineID: #130091]
 	- 20200311@Elodie: Suspicious account [Redmine:#129119]
 	- 20200602@Sol: Check IsAutoEnableADBMaster to enable ADB on Mater or not[Redmine: #134242]
+	- 20200722@Johnson: add void time & limit amount for problem account [redmine: #135253]
 	
 	Param's Explanation:
 • @ErrCode:
@@ -468,9 +469,10 @@ BEGIN
 
 		IF @roleid <> 4
 		BEGIN
-			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId)
+			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId,VoidTime,LimitAmount)
 			SELECT @CustId, pa.ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, pa.ActionId,
-				CASE WHEN @roleid = 1 THEN a.SubIssueTypeId ELSE NULL END
+				CASE WHEN @roleid = 1 THEN a.SubIssueTypeId ELSE NULL END, 
+				pa.VoidTime, 0
 			FROM ProblemAccount pa WITH (NOLOCK)	
 				INNER JOIN ProblemAccountAction a WITH (NOLOCK) ON a.ActionID = pa.ActionId 		
 			WHERE CustId = CASE WHEN @roleid = 3 THEN @srecommend 
