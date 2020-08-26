@@ -446,12 +446,12 @@ BEGIN
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
 
 		UPDATE op
-		SET op.IsHiddenSource = 1, HasSyncSource = 0
+		SET op.IsHiddenSource = 1, HasSyncSource = 0  
 		FROM #ProductSettingDetail op
 			INNER JOIN dbo.SportNonOfferedSiteCurrency stt WITH(NOLOCK) ON op.SportType = stt.SportType AND op.Bettype = stt.Bettype
 		WHERE stt.Currency = @_SourceCurrency AND (stt.SiteID = @_SourceSiteID OR stt.SiteID = 0)
 			
-		UPDATE op
+		UPDATE op 
 		SET op.IsHiddenSource = 1, HasSyncSource = 0
 		FROM #ProductSettingDetail op
 			INNER JOIN dbo.SportNonOfferedSiteCurrency stt WITH(NOLOCK) ON op.SportType = stt.SportType AND op.Bettype = stt.Bettype
