@@ -445,6 +445,18 @@ BEGIN
 						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
 
+		UPDATE op
+		SET op.IsHiddenSource = 1, HasSyncSource = 0
+		FROM #ProductSettingDetail op
+			INNER JOIN dbo.SportNonOfferedSiteCurrency stt WITH(NOLOCK) ON op.SportType = stt.SportType AND op.Bettype = stt.Bettype
+		WHERE stt.Currency = @_SourceCurrency AND (stt.SiteID = @_SourceSiteID OR stt.SiteID = 0)
+			
+		UPDATE op
+		SET op.IsHiddenSource = 1, HasSyncSource = 0
+		FROM #ProductSettingDetail op
+			INNER JOIN dbo.SportNonOfferedSiteCurrency stt WITH(NOLOCK) ON op.SportType = stt.SportType AND op.Bettype = stt.Bettype
+		WHERE (stt.Currency = @_SourceCurrency OR stt.Currency = 0 ) AND stt.SiteID = @_SourceSiteID
+
 		DELETE sb		
 		FROM #ProductSettingDetail sb
 			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
