@@ -3,6 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 	@custid		INT,
 	@Disable	BIT = NULL,	
 	@SystemID	TINYINT = 1,	
+	@isSC		BIT = 0,
 	@UserID		INT = 0,
 	@SubAccID	INT = 0, --Sub-AccountID
 	@IP			VARCHAR(20)= '',
@@ -27,7 +28,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 								and update sync for that customer if not sync yet incase no change status[Redmine: #72973]
 			- 20180112@Johnson:	use this sp for update status on alpha & setting page and remove enableDownlines for new direction [redmine:#87328]
 			- 20200225@Tiara: Don't allow SMA under 789y headline to update status [Redmine: #124311]
-
+			- 20200610@Johnson: add param isSC to allow SC status from i7 [redmine:#135489]
 		Parameter's Explanation:	
 			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
@@ -45,7 +46,7 @@ BEGIN
 	FROM Customer C WITH (NOLOCK)
 	WHERE C.custid = @UserID
 
-	IF @SystemID != 1 AND @Site IN ('789y')
+	IF @SystemID != 1 AND @Site IN ('789y') AND @isSC = 0
 		RETURN
 
 	--Check disable user
@@ -202,7 +203,8 @@ BEGIN
 	 Select @LogSPData = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
-		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  		 
+		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  		
+		  'IsSC="'+ coalesce(cast(@isSC as varchar(1)),space(1)) + '" '+   		
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +		  
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
@@ -214,6 +216,7 @@ BEGIN
 		 
 		 'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+  
 		  'HideGD="'+ coalesce(cast(@HideGoldDeluxe_Old as varchar(50)),space(1)) + '" '+  		 
+		  'IsSC="'+ coalesce(cast(@isSC as varchar(1)),space(1)) + '" '+   		
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +		 
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
@@ -291,6 +294,7 @@ BEGIN
 		Select @LogSPData = '<Acc_CustomerUpdDisableGoldDeluxe CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+  
 		  'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+  
 		  'HideGD="'+ coalesce(cast(0 as varchar(50)),space(1)) + '" '+  		 
+		  'IsSC="'+ coalesce(cast(@isSC as varchar(1)),space(1)) + '" '+   		
 		  'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+  
 		  'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +
 		  'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+  
