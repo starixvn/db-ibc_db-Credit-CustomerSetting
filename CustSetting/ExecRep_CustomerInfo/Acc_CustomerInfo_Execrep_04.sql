@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@virtualmultiplier			VARCHAR(MAX)	= ''
 				,	@EnableVirtualMultiplier	VARCHAR(MAX)	= ''
 				,	@lockedVRmembers			VARCHAR(MAX)	= ''
+				,	@AutoAdjustVRAgents			VARCHAR(MAX)	= ''
 				,   @AutoAdjustVRmembers		VARCHAR(MAX)	= ''
 				,	@Suspended					BIT				= 0
 				,	@Closed						BIT				= 0
@@ -66,6 +67,7 @@ AS
 		- 20200206@Tiara: New VR structure for Soccer [Redmine: #126243]
 		- 20200218@Eden : Web_pass_redundant_bettypes_when_updating_bettype_group_value_and_auto_suspend [Redmind: #128635]
 		- 20200811@Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
+		- 20200827@Eden: VR Adjustment by Agent profile [#140421]
 
 	Param's Explanation:
 		@Action: 
@@ -173,11 +175,15 @@ BEGIN
 								);
 
 	DECLARE	@lockedMembers		TABLE (
-									custID				INT
+									custID				INT PRIMARY KEY
 								);
 
+	DECLARE	@AdjustVRAgents		TABLE (
+									custID				INT PRIMARY KEY
+								);
+	
 	DECLARE	@AdjustVRmembers		TABLE (
-									custID				INT
+									custID				INT PRIMARY KEY
 								);
 	CREATE TABLE #tblCustVR (custID INT)
 	CREATE TABLE #tmpCustBatchVR (CustID INT PRIMARY KEY)	
@@ -503,6 +509,16 @@ BEGIN
 
 		EXECUTE sp_xml_removedocument @DocHandler;
 
+		EXECUTE sp_xml_preparedocument @DocHandler OUTPUT, @AutoAdjustVRAgents;
+
+		INSERT INTO	@AdjustVRAgents
+			(	CustID     )
+		SELECT	Data.CustID
+		FROM OPENXML (@DocHandler, '/ROOT/AutoAdjustVR', 1) 
+		WITH (	CustID			INT) AS Data;
+
+		EXECUTE sp_xml_removedocument @DocHandler;
+
 		EXECUTE sp_xml_preparedocument @DocHandler OUTPUT, @AutoAdjustVRmembers;
 
 		INSERT INTO	@AdjustVRmembers
@@ -525,6 +541,12 @@ BEGIN
 				RIGHT HASH JOIN dbo.custInfo ci WITH (NOLOCK) ON lm.custID = ci.custid
 			WHERE	ci.srecommend = @custid
 				AND	lm.custID IS NULL
+
+			DELETE t
+			FROM #tblCustVR t
+				INNER JOIN Custinfo c WITH(NOLOCK)
+					ON c.custid = t.custID
+			WHERE c.recommend IN ( SELECT custID FROM @AdjustVRAgents)
 
 			SELECT @maxcustid = ISNULL(MAX(custID),0)
 			FROM #tblCustVR
@@ -585,6 +607,11 @@ BEGIN
 				AND ci.custID > @maxcustid
 				AND	NOT EXISTS (
 						SELECT	1
+						FROM	@AdjustVRAgents AS lm
+						WHERE	lm.custID = ci.recommend
+					)
+				AND	NOT EXISTS (
+						SELECT	1
 						FROM	@lockedMembers AS lm
 						WHERE	lm.custID = ci.custid
 					)
@@ -606,6 +633,11 @@ BEGIN
 				AND ci.custID > @maxcustid
 				AND	NOT EXISTS (
 						SELECT	1
+						FROM	@AdjustVRAgents AS lm
+						WHERE	lm.custID = ci.recommend
+					)
+				AND	NOT EXISTS (
+						SELECT	1
 						FROM	@lockedMembers AS lm
 						WHERE	lm.custID = ci.custid
 					)
@@ -625,7 +657,13 @@ BEGIN
 				RIGHT HASH JOIN dbo.custInfo ci WITH (NOLOCK) ON lm.custID = ci.custid
 			WHERE	ci.mrecommend = @custid
 				AND	lm.custID IS NULL
-			
+
+			DELETE t
+			FROM #tblCustVR t
+				INNER JOIN Custinfo c WITH(NOLOCK)
+					ON c.custid = t.custID
+			WHERE c.recommend IN ( SELECT custID FROM @AdjustVRAgents)
+
 			SELECT @maxcustid = ISNULL(MAX(custID),0)
 			FROM #tblCustVR
 			
@@ -686,6 +724,11 @@ BEGIN
 				AND ci.custid > @maxcustid
 				AND	NOT EXISTS (
 						SELECT	1
+						FROM	@AdjustVRAgents AS lm
+						WHERE	lm.custID = ci.recommend
+					)
+				AND	NOT EXISTS (
+						SELECT	1
 						FROM	@lockedMembers AS lm
 						WHERE	lm.custID = ci.custid
 					)
@@ -705,6 +748,11 @@ BEGIN
 			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
 			WHERE	ci.mrecommend = @custid
 				AND ci.custid > @maxcustid
+				AND	NOT EXISTS (
+						SELECT	1
+						FROM	@AdjustVRAgents AS lm
+						WHERE	lm.custID = ci.recommend
+					)
 				AND	NOT EXISTS (
 						SELECT	1
 						FROM	@lockedMembers AS lm
