@@ -39,7 +39,7 @@ AS
 		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
-
+		- 20200819@Winfred: Only insert stake level setting if site and currency of customer is offered [Redmine: #137768]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
@@ -1298,6 +1298,16 @@ BEGIN
 		SELECT * 
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8)
 
+		DELETE sb		
+		FROM #SportBettypeFilter7 sb
+			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+		WHERE ssc.Currency = @_Currency AND (ssc.SiteID = @_SiteID OR ssc.SiteID = 0)
+			
+		DELETE sb		
+		FROM #SportBettypeFilter7 sb
+			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+		WHERE (ssc.Currency = @_Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @_SiteID		
+
 		BEGIN TRY
 			IF	@RoleID = 4
 			BEGIN
@@ -1315,6 +1325,7 @@ BEGIN
 							AND	sl.GameTypeID = sbf.Bettype
 						FOR XML PATH ('')
 					) sl(list)
+				WHERE sl.list IS NOT NULL	
 			END
 			ELSE IF	@RoleID = 3
 			BEGIN

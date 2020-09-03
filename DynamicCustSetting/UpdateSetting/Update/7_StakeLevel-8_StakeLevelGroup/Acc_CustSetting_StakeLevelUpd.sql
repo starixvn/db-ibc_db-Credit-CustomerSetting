@@ -23,7 +23,7 @@ AS
 		- 20161005@Elodie: Update LastUpdated field - [Redmine: #54994]
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
-
+		- 20200827@Winfred: Update log on SP version [Redmine: #137763]
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -839,7 +839,12 @@ BEGIN
 	);
 	END;
 	SET	@logSpData	= REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"');
-
+	
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
+	
 	SELECT	@endRun	= GETDATE()
 		,	@duration = DATEDIFF(MILLISECOND, @startRun, @endRun);
 
