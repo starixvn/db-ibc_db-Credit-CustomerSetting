@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@lockedVRmembers			VARCHAR(MAX)	= ''
 				,	@AutoAdjustVRAgents			VARCHAR(MAX)	= ''
 				,   @AutoAdjustVRmembers		VARCHAR(MAX)	= ''
+				,   @AutoAdjustVRmembers_All	VARCHAR(MAX)	= ''
 				,	@Suspended					BIT				= 0
 				,	@Closed						BIT				= 0
 				,	@disabledCS					BIT				= 0				
@@ -68,6 +69,7 @@ AS
 		- 20200218@Eden : Web_pass_redundant_bettypes_when_updating_bettype_group_value_and_auto_suspend [Redmind: #128635]
 		- 20200811@Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
 		- 20200827@Eden: VR Adjustment by Agent profile [#140421]
+		- 20200826@Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
 
 	Param's Explanation:
 		@Action: 
@@ -183,6 +185,10 @@ BEGIN
 								);
 	
 	DECLARE	@AdjustVRmembers		TABLE (
+									custID				INT PRIMARY KEY
+								);
+
+	DECLARE	@AdjustVRmembers_All	TABLE (
 									custID				INT PRIMARY KEY
 								);
 	CREATE TABLE #tblCustVR (custID INT)
@@ -528,6 +534,16 @@ BEGIN
 		WITH (	CustID			INT) AS Data;
 
 		EXECUTE sp_xml_removedocument @DocHandler;
+
+		EXECUTE sp_xml_preparedocument @DocHandler OUTPUT, @AutoAdjustVRmembers_All;
+
+		INSERT INTO	@AdjustVRmembers_All
+			(	CustID     )
+		SELECT	Data.CustID
+		FROM OPENXML (@DocHandler, '/ROOT/AutoAdjustVR', 1) 
+		WITH (	CustID			INT) AS Data;
+
+		EXECUTE sp_xml_removedocument @DocHandler;
 	
 		--update batch 2k cust for CustVirtualSetting coz each customer has 3 seqNo
 		SET @batchUpdate = 2000	
@@ -544,9 +560,14 @@ BEGIN
 
 			DELETE t
 			FROM #tblCustVR t
+			WHERE t.custID IN ( SELECT custID FROM @AdjustVRmembers_All)
+
+			DELETE t
+			FROM #tblCustVR t
 				INNER JOIN Custinfo c WITH(NOLOCK)
 					ON c.custid = t.custID
 			WHERE c.recommend IN ( SELECT custID FROM @AdjustVRAgents)
+
 
 			SELECT @maxcustid = ISNULL(MAX(custID),0)
 			FROM #tblCustVR
@@ -617,6 +638,11 @@ BEGIN
 					)
 				AND	NOT EXISTS (
 						SELECT	1
+						FROM	@AdjustVRmembers_All AS lm
+						WHERE	lm.custID = ci.custid
+					)
+				AND	NOT EXISTS (
+						SELECT	1
 						FROM	@AdjustVRmembers AS lm
 						WHERE	lm.custID = ci.custid
 					)
@@ -641,6 +667,11 @@ BEGIN
 						FROM	@lockedMembers AS lm
 						WHERE	lm.custID = ci.custid
 					)
+				AND	NOT EXISTS (
+						SELECT	1
+						FROM	@AdjustVRmembers_All AS lm
+						WHERE	lm.custID = ci.custid
+					)
 				AND EXISTS (
 						SELECT	1
 						FROM	@AdjustVRmembers AS lm
@@ -660,9 +691,14 @@ BEGIN
 
 			DELETE t
 			FROM #tblCustVR t
+			WHERE t.custID IN ( SELECT custID FROM @AdjustVRmembers_All)
+			
+			DELETE t
+			FROM #tblCustVR t
 				INNER JOIN Custinfo c WITH(NOLOCK)
 					ON c.custid = t.custID
 			WHERE c.recommend IN ( SELECT custID FROM @AdjustVRAgents)
+
 
 			SELECT @maxcustid = ISNULL(MAX(custID),0)
 			FROM #tblCustVR
@@ -732,6 +768,11 @@ BEGIN
 						FROM	@lockedMembers AS lm
 						WHERE	lm.custID = ci.custid
 					)
+				AND	NOT EXISTS (
+						SELECT	1
+						FROM	@AdjustVRmembers_All AS lm
+						WHERE	lm.custID = ci.custid
+					)
 				AND NOT EXISTS (
 						SELECT	1
 						FROM	@AdjustVRmembers AS lm
@@ -758,6 +799,11 @@ BEGIN
 						FROM	@lockedMembers AS lm
 						WHERE	lm.custID = ci.custid
 					)
+				AND	NOT EXISTS (
+						SELECT	1
+						FROM	@AdjustVRmembers_All AS lm
+						WHERE	lm.custID = ci.custid
+					)
 				AND EXISTS (
 						SELECT	1
 						FROM	@AdjustVRmembers AS lm
@@ -775,6 +821,10 @@ BEGIN
 			WHERE	ci.recommend = @custid
 				AND	lm.custID IS NULL
 			
+			DELETE t
+			FROM #tblCustVR t
+			WHERE t.custID IN ( SELECT custID FROM @AdjustVRmembers_All)
+
 			SELECT @maxcustid = ISNULL(MAX(custID),0)
 			FROM #tblCustVR
 			
@@ -837,6 +887,11 @@ BEGIN
 						FROM	@lockedMembers AS lm
 						WHERE	lm.custID = ci.custid
 					)
+				AND	NOT EXISTS (
+						SELECT	1
+						FROM	@AdjustVRmembers_All AS lm
+						WHERE	lm.custID = ci.custid
+					)
 				AND NOT EXISTS (
 						SELECT	1
 						FROM	@AdjustVRmembers AS lm
@@ -856,6 +911,11 @@ BEGIN
 				AND	NOT EXISTS (
 						SELECT	1
 						FROM	@lockedMembers AS lm
+						WHERE	lm.custID = ci.custid
+					)
+				AND	NOT EXISTS (
+						SELECT	1
+						FROM	@AdjustVRmembers_All AS lm
 						WHERE	lm.custID = ci.custid
 					)
 				AND EXISTS (
