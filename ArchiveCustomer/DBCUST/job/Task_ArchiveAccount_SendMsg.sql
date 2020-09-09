@@ -20,7 +20,8 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @status varchar(200)
-
+	DECLARE @SMList VARCHAR(MAX)
+	
 	CREATE TABLE #tmpMasterSuper(CustId INT, Username VARCHAR(30), GroupLevelName VARCHAR(10), RoleId INT) --Include Super
 
 	IF (@stage IS NULL)
@@ -34,7 +35,7 @@ BEGIN
 						END
 	END
 	
-	IF @stage IN (1,2,3,11)
+	IF @stage IN (1,2,3)
 	BEGIN
 		INSERT #tmpMasterSuper (CustId, Username, GroupLevelName, RoleId)
 		SELECT t.custid, c.username, t.GroupLevelName, t.RoleId
@@ -46,19 +47,6 @@ BEGIN
 					WHEN StageID = 3 AND GroupLevelName IN ('M1','M2') THEN 1
 				ELSE 0 END
 
-		DECLARE @MasterList VARCHAR(MAX)
-		DECLARE @SMList VARCHAR(MAX)
-
-		-- assign elements into XML format
-		SET @MasterList = (
-			SELECT 	
-				CustId	AS '@MasterID'
-				,Username AS '@UserName'
-			FROM #tmpMasterSuper
-			WHERE RoleId = 3
-			FOR XML PATH ('Master'),root ('ROOT')
-			)
-
 		SET @SMList = (
 			SELECT 	
 				CustId	AS '@CustId'
@@ -68,7 +56,9 @@ BEGIN
 			FOR XML PATH ('SM'),root ('ROOT')
 			)
 		
-		IF (@stage in(11)) EXEC DBMSG.bodb_message.dbo.DBA_Archive_PrivateMessageForMasterAcc @MasterList = @MasterList, @stage = @stage
-		IF (@stage in(1,2,3)) EXEC DBMSG.bodb_message.dbo.DBA_Archive_PrivateMessageForSuperMaster @SMList = @SMList, @stage = @stage
+		EXEC DBMSG.bodb_message.dbo.DBA_Archive_PrivateMessageForSuperMaster @SMList = @SMList, @stage = @stage
 	END
+	
+	DROP TABLE #tmpMasterSuper
+	
 END
