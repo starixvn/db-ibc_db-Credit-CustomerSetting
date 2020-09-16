@@ -48,6 +48,9 @@ BEGIN
 			@MsgType	= @MsgType OUTPUT,		
 			@ErrCode	= @ErrCode OUTPUT,
 			@ErrMsg		= @ErrMsg OUTPUT
+
+			IF @ErrCode > 0	
+				RETURN
 	END
 	
 	IF @PT IS NOT NULL AND @PT <> '' AND @PT <> '<ROOT></ROOT>'
