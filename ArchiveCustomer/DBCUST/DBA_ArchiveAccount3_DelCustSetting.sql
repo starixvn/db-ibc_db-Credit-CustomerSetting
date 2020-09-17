@@ -45,11 +45,11 @@ print  @AccName +':'+ 'START:' + convert(varchar(50), getdate(), 113)
 --Pre-check: Make sure cust setting data already backed-up in DBRACCUST
 IF NOT EXISTS(
 	SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsetting_old WITH(NOLOCK) 
-	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID AND roleid = 1)
+	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
 	)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'Cust setting data of this agent have not been backed-up yet. Auto backup activated', @ErrCode = 10
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg, Roleid) VALUES(@AgentID,@ErrMsg, 2) 
 	print @ErrMsg
 	select @ErrMsg = ''
 	EXEC dbo.DBA_ArchiveAccount3_BackupCustSetting @AccName=@AccName, @ErrMsg = @ErrMsg

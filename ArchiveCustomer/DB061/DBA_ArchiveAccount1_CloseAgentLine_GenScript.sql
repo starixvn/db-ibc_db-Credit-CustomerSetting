@@ -80,7 +80,7 @@ FROM customer ag WITH (NOLOCK)
 		) mem ON mem.recommend = agci.custid
 	LEFT JOIN #Super_Exception se ON se.srecommend = ag.srecommend
 WHERE ag.roleid = 2
-	AND isnull(MemCount, 0) > 0
+	--AND isnull(MemCount, 0) > 0
 	AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
 	AND agci.closed = 0 
 	AND agci.enabled = 1

@@ -16,6 +16,7 @@ AS
 			+support more columns custinfo
 		20190917@Daniel: Remove inactive products - unused custinfo columns (#117439 - P2)
 		20190929@Daniel: Involve more setting tables
+		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 
 */
     
@@ -42,11 +43,11 @@ END
 --Pre-check: Make sure cust info data not exist in DBRACCUST before backup
 IF EXISTS(
 	SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) 
-	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID AND roleid = 1)
+	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
 	)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'Backup data of this agent already exist. Please check!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID, @ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg, Roleid) VALUES(@AgentID, @ErrMsg, 2) 
 	print @ErrMsg
 	return
 END
@@ -114,6 +115,5 @@ SELECT CustID, SecurityCode, IP, LastChangedID, LastChangedDate, OddsType, Layou
      ShowScoreMap, ShowBanner, AutoRefresh, MarketType, AutoRefreshMatch, MobileOthersType, gesture, failedcount, lastlogged, OddsColorStyle, ClosedReason, notify, recommendation
 FROM	CustLoginInfo_Member WITH (NOLOCK)
 WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
-
 
 print  @AccName +':'+ 'END Backup cust info:' + convert(varchar(50), getdate(), 113) 
