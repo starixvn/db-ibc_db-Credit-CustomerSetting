@@ -49,16 +49,16 @@ BEGIN
 		END
 		
 		-- from agent to master
-		CREATE TABLE #AgentToMaster_Transfer (recommend INT, mrecommend INT, agentName VARCHAR (50), masterName VARCHAR(50)
+		CREATE TABLE #AgentToMaster_Transfer (recommend INT, mrecommend INT,srecommend INT, agentName VARCHAR (50), masterName VARCHAR(50)
 					, currency INT,currencyName nvarchar(10), actualrate float, Isfinished BIT DEFAULT 0
 					)
 		
-		CREATE TABLE #MasterToSuper_Transfer (srecommend INT, mrecommend INT, superName VARCHAR (50), masterName VARCHAR(50)
+		CREATE TABLE #MasterToSuper_Transfer (srecommend INT, mrecommend INT,superName VARCHAR (50), masterName VARCHAR(50)
 					, currency INT,currencyName nvarchar(10), actualrate float, Isfinished BIT DEFAULT 0
 					)
 		
-		INSERT INTO #AgentToMaster_Transfer (recommend, mrecommend,agentName, masterName, currency,currencyName, actualrate)
-		SELECT ci.custid,ci.mrecommend, ci.username, t.Master, ci.currency, e.currency,e.actualrate 
+		INSERT INTO #AgentToMaster_Transfer (recommend, mrecommend,srecommend,agentName, masterName, currency,currencyName, actualrate)
+		SELECT ci.custid,ci.mrecommend,ci.srecommend, ci.username, t.Master, ci.currency, e.currency,e.actualrate 
 		FROM dbo.tmpCustArchived t WITH (NOLOCK)
 			INNER JOIN dbo.CustInfo CI WITH (NOLOCK) ON t.recommend = CI.custid
 			INNER JOIN dbo.exchange e ON e.exchangeid = ci.currency
@@ -71,6 +71,7 @@ BEGIN
 				SET  IsFinished = 1
 					, @recommend = recommend
 					, @mrecommend = mrecommend
+					, @srecommend  = srecommend
 					, @agentName = agentName
 					, @masterName = masterName
 					, @currency = currency
@@ -91,12 +92,13 @@ BEGIN
 				@currency  = @currency,
 				@ErrMsg = @ErrMsg OUTPUT
 			
-			SET @msg = 'Stage 3 - Done transfer agent to master ' + @agentName + CHAR(13)
+			SET @msg = 'Stage 3 - Done transfer agent to master: ' + @agentName + CHAR(13)
 			RAISERROR(@msg, 0, 0) WITH NOWAIT	
 			
 			WAITFOR DELAY '00:00:00.010'
 			
 		END
+		return
 		-- Master transfer to Super
 		INSERT INTO #MasterToSuper_Transfer (srecommend, mrecommend,superName, masterName, currency,currencyName, actualrate)
 		SELECT super.custid,ar.custid, super.username,ci.username, ci.currency, e.currency,e.actualrate 
@@ -135,7 +137,7 @@ BEGIN
 					@currency  = @currency,
 					@ErrMsg = @ErrMsg OUTPUT
 				
-				SET @msg = 'Stage 3 - Done transfer master to super ' + @mastername + CHAR(13)
+				SET @msg = 'Stage 3 - Done transfer master to super: ' + @mastername + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
 				
 				WAITFOR DELAY '00:00:00.010'

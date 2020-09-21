@@ -15,3 +15,17 @@ CREATE TABLE [dbo].[tmpCustGroupLevelArchived]
 ) ON [PRIMARY]
 
 GO
+
+USE bodb02
+go
+sp_rename 'CustArc_NewActive.AgentID', 'CustID', 'COLUMN';
+ALTER TABLE CustArc_NewActive
+ADD Roleid INT
+
+-- update roleid
+UPDATE c
+	SET RoleID = ci.roleid
+FROM CustArc_NewActive c
+	INNER JOIN Custdb.dbo.custinfo ci WITH (NOLOCK) ON c.CustID = ci.custid
+
+GO

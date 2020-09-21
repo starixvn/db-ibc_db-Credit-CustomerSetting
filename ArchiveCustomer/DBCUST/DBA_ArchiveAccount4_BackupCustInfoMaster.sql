@@ -29,7 +29,7 @@ WHERE username = @AccName
 
 if isnull(@custid,0) = 0 or @roleid NOT in (3)
 BEGIN
-	Select @ErrMsg = @AccName +':'+ 'Invalid Agent User Name', @ErrCode = 101
+	Select @ErrMsg = @AccName +':'+ 'Invalid Master User Name', @ErrCode = 101
 	print @ErrMsg
 	return
 END

@@ -18,7 +18,16 @@ AS
 BEGIN
 
 	SET NOCOUNT ON
-
+	
+	DECLARE @srecommend INT
+			, @mrecommend INT
+			, @ReduceCredit MONEY = 0
+			, @OldCredit MONEY = 0
+			, @LogData VARCHAR(500)
+			, @custid INT
+			, @NewCredit MONEY = 0
+			, @username NVARCHAR(MAX)
+			, @recommend INT
 	DECLARE @status varchar(200), @GroupLevelName VARCHAR(10) = '' 
 	DECLARE @agent varchar(50), @ErrMsg VARCHAR(150), @msg VARCHAR(100), @roleid_tmp INT, @S1M1_username NVARCHAR(100)
 	CREATE TABLE #ReduceCredit (CustId INT,RoleID TINYINT,GroupLevelName VARCHAR(10), srecommend INT,Credit MONEY, ReduceCredit MONEY DEFAULT(0), IsFinished BIT DEFAULT(0))
@@ -81,6 +90,7 @@ BEGIN
 					SET  IsFinished = 1
 						, @S1M1_username = username
 						, @roleid_tmp = roleid
+						, @GroupLevelName = GroupLevelName
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
 				
@@ -95,7 +105,7 @@ BEGIN
 					EXEC dbo.DBA_ArchiveAccount1_CloseSuper @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
 				END
 				
-				SET @msg = 'Stage 1 - Done Close M0,M1,S1: ' + @S1M1_username + CHAR(13)
+				SET @msg = 'Stage 1 - Done Close ' + @GroupLevelName + ':' + @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
 				
 				WAITFOR DELAY '00:00:00.010'
@@ -109,17 +119,7 @@ BEGIN
 	END
 	ELSE IF(@stage = 2)
 	BEGIN
-		
-		DECLARE @srecommend INT
-			, @mrecommend INT
-			, @ReduceCredit MONEY = 0
-			, @OldCredit MONEY = 0
-			, @LogData VARCHAR(500)
-			, @custid INT
-			, @NewCredit MONEY = 0
-			, @username NVARCHAR(MAX)
-			, @recommend INT
-
+			
 		INSERT INTO #ReduceCredit (CustId,srecommend,RoleID,Credit)
 		SELECT DISTINCT c.custid, c.srecommend, 3,credit
 		FROM dbo.tmpCustArchived t WITH (NOLOCK)
@@ -140,7 +140,7 @@ BEGIN
 			IF (@@ROWCOUNT = 0) BREAK
 	
 			EXEC dbo.DBA_ArchiveAccount2_DisableAgentLine @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT, @srecommend = @srecommend OUTPUT, @mrecommend = @mrecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT
-	
+			
 			UPDATE tmpCustArchived 
 			SET ErrMsg = @ErrMsg, IsFinished = 1
 			WHERE Agent = @agent
@@ -178,7 +178,7 @@ BEGIN
 				END CATCH
 			END
 	
-			SET @msg = 'Done agent ' + @agent + CHAR(13)
+			SET @msg = 'Stage 2 - Done Agent Level ' + @agent + CHAR(13)
 			RAISERROR(@msg, 0, 0) WITH NOWAIT	
 			
 			WAITFOR DELAY '00:00:00.120'
@@ -206,41 +206,38 @@ BEGIN
 					SET  IsFinished = 1
 						, @S1M1_username = username
 						, @roleid_tmp = roleid
+						, @GroupLevelName = GroupLevelName
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
 				
 				IF (@@ROWCOUNT = 0) BREAK
 				
-				IF @roleid_tmp = 3
+				EXEC dbo.DBA_ArchiveAccount2_DisableMasterSuper @AccName = @S1M1_username,@srecommend = @srecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+				
+				PRINT 'DBA_ArchiveAccount2_DisableMasterSuper' + @ErrMsg
+				IF @ErrMsg = ''
 				BEGIN
-					EXEC dbo.DBA_ArchiveAccount2_DisableMaster @AccName = @S1M1_username,@srecommend = @srecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-					
-					IF @ErrMsg = ''
+					IF @roleid_tmp = 3
 					BEGIN
 						UPDATE #ReduceCredit
 							SET ReduceCredit = ReduceCredit + @ReduceCredit
 						WHERE CustId = @srecommend
 					END
-					
-				END
-				ELSE IF @roleid_tmp = 4
-				BEGIN
-					EXEC dbo.DBA_ArchiveAccount2_DisableSuper @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
-				END
+				END	
 				
-				SET @msg = 'Stage 1 - Done Disable M0, M1,S1: ' + @S1M1_username + CHAR(13)
+				SET @msg = 'Stage 2 - Done Disable ' + @GroupLevelName + ':'+ @S1M1_username +   CHAR(13) 
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
 				
 				WAITFOR DELAY '00:00:00.010'
 				
 			END
 		END
-		--Reduce SMA Credit
-		UPDATE R
-			SET GroupLevelName = a.GroupLevelName
+		--Reduce SMA Credit, remove M0, M1, S1
+		DELETE r
 		FROM #ReduceCredit r
-			INNER JOIN tmpCustGroupLevelArchived a WITH (NOLOCK) ON r.CustId = a.custid	
-			
+			INNER JOIN dbo.tmpCustGroupLevelArchived a WITH (NOLOCK) ON r.CustId = a.custid	
+		WHERE a.GroupLevelName IN ('M0','M1','S1')	
+		
 		IF EXISTS (SELECT TOP(1) 1 FROM #ReduceCredit WHERE ReduceCredit <> 0)
 		BEGIN
 			
@@ -263,7 +260,7 @@ BEGIN
 				FROM	dbo.custInfo WITH (NOLOCK)
 				WHERE	custid = @custid
 
-				SET @NewCredit = CASE WHEN @GroupLevelName IN ('M0','M1','S1') THEN 0 ELSE @OldCredit - @ReduceCredit END
+				SET @NewCredit = @OldCredit - @ReduceCredit
 				
 				UPDATE c
 					SET c.credit = @NewCredit
@@ -313,7 +310,7 @@ BEGIN
 			SET ErrMsg = @ErrMsg, IsFinished = 1
 			WHERE Agent = @agent
 
-			SET @msg = 'Done agent ' + @agent + CHAR(13)
+			SET @msg = 'Stage 3 - Done Agent Level: ' + @agent + CHAR(13)
 			RAISERROR(@msg, 0, 0) WITH NOWAIT	
 			
 			WAITFOR DELAY '00:00:00.280'
@@ -322,7 +319,7 @@ BEGIN
 		--Gen List Super Master into tmpCustGroupLevelArchived
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
-		-- Delete M1
+		-- Delete M1, M0
 		INSERT INTO #ArchiveMasterSuper_tmp (CustID, GroupLevelName, RoleID, username)
 		SELECT ar.custid, ar.GroupLevelName, ar.Roleid, ci.username
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
@@ -340,6 +337,7 @@ BEGIN
 					SET  IsFinished = 1
 						, @S1M1_username = username
 						, @roleid_tmp = roleid
+						, @GroupLevelName = GroupLevelName
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
 				
@@ -347,7 +345,7 @@ BEGIN
 				
 				EXEC dbo.DBA_ArchiveAccount3_DelCustSettingMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
 				
-				SET @msg = 'Stage 1 - Done Delete Setting M0,M1 ' + @S1M1_username + CHAR(13)
+				SET @msg = 'Stage 3 - Done Delete Setting for '+ @GroupLevelName + ':' + @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
 				
 				WAITFOR DELAY '00:00:00.010'
@@ -372,7 +370,7 @@ BEGIN
 			SET ErrMsg = @ErrMsg, IsFinished = 1
 			WHERE Agent = @agent
 	
-			SET @msg = 'Done agent ' + @agent + CHAR(13)
+			SET @msg = 'Stage 4 - Done Delete Customer Information for Agents: ' + @agent + CHAR(13)
 			RAISERROR(@msg, 0, 0) WITH NOWAIT	
 			
 			WAITFOR DELAY '00:00:00.180'
@@ -382,7 +380,7 @@ BEGIN
 		--Gen List Super Master into tmpCustGroupLevelArchived
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
-		-- Delete M1
+		-- Delete Setting for M1, M0
 		INSERT INTO #ArchiveMasterSuper_tmp (CustID, GroupLevelName, RoleID, username)
 		SELECT ar.custid, ar.GroupLevelName, ar.Roleid, ci.username
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
@@ -400,6 +398,7 @@ BEGIN
 					SET  IsFinished = 1
 						, @S1M1_username = username
 						, @roleid_tmp = roleid
+						, @GroupLevelName = GroupLevelName
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
 				
@@ -407,7 +406,7 @@ BEGIN
 				
 				EXEC dbo.DBA_ArchiveAccount4_DelCustInfoMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
 				
-				SET @msg = 'Stage 1 - Done Delete Setting M0,M1 ' + @S1M1_username + CHAR(13)
+				SET @msg = 'Stage 4 - Done Delete Customer Information for ' + @GroupLevelName +':'+  @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
 				
 				WAITFOR DELAY '00:00:00.010'

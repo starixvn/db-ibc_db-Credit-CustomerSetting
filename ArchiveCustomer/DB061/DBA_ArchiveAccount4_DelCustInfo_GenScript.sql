@@ -11,6 +11,7 @@ AS
 		- 20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200807@Helen: Remove hardcode supers (allow negative given credit for members) since fixed already in Alpha Site [Redmine: #130032]
+		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		
 	Param's Explanation:
 */
@@ -133,7 +134,8 @@ FROM customer ag WITH (NOLOCK)
 		) b ON b.recommend = agci.custid	
 	LEFT JOIN #Super_Exception se ON se.srecommend = agci.srecommend
 WHERE ag.roleid = 2
-	AND isnull(MemCount, 0) > 0 AND isnull(TransCount, 0) = 0
+	--AND isnull(MemCount, 0) > 0 
+	AND isnull(TransCount, 0) = 0
 	AND (ag.creatdate < @DDiff)
 	AND agci.enabled = 0
 	AND ca.isInternal = 0

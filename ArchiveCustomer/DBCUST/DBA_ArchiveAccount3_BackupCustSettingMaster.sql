@@ -40,25 +40,12 @@ BEGIN
 		WHERE custid = @CustID
 		)
 	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'Backup data of this agent already exist. Please check!', @ErrCode = 101
+		Select @ErrMsg = @AccName +':'+ 'Backup data of this Master already exist. Please check!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg, Roleid) VALUES(@CustID, @ErrMsg,3) 
 		PRINT @ErrMsg
 		RETURN
 	END
 
-	/*
-	IF EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustVirtualSetting_Old WITH(NOLOCK) 
-		WHERE custid = @CustID
-		)
-	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'Backup data - Virtual Settings of this agent already exist.', @ErrCode = 101
-		print @ErrMsg
-		SELECT @ErrMsg = '' 
-		--RETURN
-		EXEC DBARCCUST.bodb_Customer.dbo.DBA_ArchiveAccount2_BackupCustSetting_DelVR @AgentID
-		
-	END
-	*/
 	print  @AccName +':'+ 'START:' + convert(varchar(50), getdate(), 113)
 
 	--=============================

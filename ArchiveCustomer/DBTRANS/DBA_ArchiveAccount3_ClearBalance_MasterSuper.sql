@@ -136,7 +136,7 @@ BEGIN
 		
 		
 	--------------------------END:Master-Super-------------------------------	
-	print @mastername +':'+ 'Master cursor Done:' + convert(varchar(50), getdate(), 113)
+	print @mastername +':'+ 'Master Done:' + convert(varchar(50), getdate(), 113)
 	------------------
 	declare @LogSPData varchar(5000)
 

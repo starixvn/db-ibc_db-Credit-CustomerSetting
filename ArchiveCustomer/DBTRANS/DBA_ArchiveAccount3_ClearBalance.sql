@@ -65,7 +65,7 @@ END
 IF EXISTS(select 1 from dbo.bettrans with (nolock) where recommend = @AgentID AND bettype < 20000)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID) VALUES(@AgentID) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2) 
 	print @ErrMsg
 	return
 END
@@ -73,7 +73,7 @@ END
 IF EXISTS(select 1 from dbo.translog with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID) VALUES(@AgentID) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2) 
 	print @ErrMsg
 	return
 END
@@ -81,7 +81,7 @@ END
 IF EXISTS(select 1 from dbo.bettransLC with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID) VALUES(@AgentID) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2)
 	print @ErrMsg
 	return
 END
@@ -89,7 +89,7 @@ END
 IF EXISTS(select 1 from dbo.bettransRNG with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID) VALUES(@AgentID) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2) 
 	print @ErrMsg
 	return
 END

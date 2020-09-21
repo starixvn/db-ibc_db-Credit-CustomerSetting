@@ -12,7 +12,7 @@ AS
 		- 20190218@Daniel: use permanent temp table bodb_report.dbo.tempCustID instead, the table need to be prepared outside, this avoid sp timeout when exec via linked server
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200807@Helen: Remove hardcode supers (allow negative given credit for members) since fixed already in Alpha Site [Redmine: #130032]
-
+		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		
 	Param's Explanation:
 */

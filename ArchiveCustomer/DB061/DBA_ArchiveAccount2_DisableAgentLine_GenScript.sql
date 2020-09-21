@@ -119,7 +119,7 @@ FROM customer ag WITH (NOLOCK)
 		GROUP BY recommend
 		) mem ON mem.recommend = agci.custid
 WHERE ag.roleid = 2
-	AND isnull(MemCount, 0) > 0
+	--AND isnull(MemCount, 0) > 0
 	AND (ag.creatdate < @startdate)
 	AND agci.closed = 1
 	AND agci.enabled = 1

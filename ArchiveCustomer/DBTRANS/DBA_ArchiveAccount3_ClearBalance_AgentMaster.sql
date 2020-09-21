@@ -42,7 +42,6 @@ BEGIN
 							FROM bettrans WITH (NOLOCK)
 							WHERE recommend = @recommend
 							)  
-
 	IF @AgentBalance = 0 
 		RETURN
 		 

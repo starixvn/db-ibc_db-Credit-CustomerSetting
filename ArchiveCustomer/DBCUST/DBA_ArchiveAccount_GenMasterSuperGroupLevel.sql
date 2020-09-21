@@ -33,7 +33,7 @@ BEGIN
 	FROM dbo.tmpCustArchived t WITH (NOLOCK)
 		INNER JOIN dbo.Customer ag WITH (NOLOCK) ON ag.custid = t.recommend
 		INNER JOIN dbo.Customer m WITH (NOLOCK) ON m.custid = ag.mrecommend
-	WHERE t.ErrMsg = ''
+	WHERE ISNULL(t.ErrMsg,'') = ''
 
 	/*
 		Count number of agents for each master
@@ -60,7 +60,7 @@ BEGIN
 
 	/*Detect S1, S2 from list M1*/
 	INSERT INTO #tmpSuper (custid, MasterArchivedCount)
-	SELECT c.srecommend, COUNT(t.custid)
+	SELECT c.srecommend, ISNULL(COUNT(t.custid),0)
 	FROM dbo.tmpCustGroupLevelArchived t WITH (NOLOCK)
 		INNER JOIN dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
 	WHERE GroupLevelName = 'M1'
@@ -79,7 +79,7 @@ BEGIN
 					WHERE c.custid = c1.mrecommend AND c1.roleid = 1
 						
 					) AS M0
-	WHERE c.roleid = 3 AND M0.MO_total = 0
+	WHERE c.roleid = 3 AND M0.MO_total IS NULL 
 		AND 1 = CASE WHEN @StageId = 1 AND c.creatdate < DATEADD(mm, -3, GETDATE()) THEN 1
 						 WHEN @StageId = 2 AND c.creatdate < DATEADD(mm, - 4, GETDATE()) THEN 1
 						 WHEN @StageId = 3 AND c.creatdate < DATEADD(mm, -7, GETDATE()) THEN 1
@@ -89,7 +89,7 @@ BEGIN
 	
 	INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
 	SELECT DISTINCT c.custid, c.roleid
-		,CASE WHEN m.MasterCount = (t.MasterArchivedCount + m0.MasterCount_M0) THEN 'S1' ELSE 'S2' END AS GroupLevelName /*Match -> S1, Not Match -> S2*/
+		,CASE WHEN m.MasterCount = (ISNULL(t.MasterArchivedCount,0) + ISNULL(m0.MasterCount_M0,0)) THEN 'S1' ELSE 'S2' END AS GroupLevelName /*Match -> S1, Not Match -> S2*/
 		,@StageId
 	FROM customer c WITH (NOLOCK)
 		INNER JOIN #tmpSuper t ON t.custid = c.custid
@@ -112,7 +112,6 @@ BEGIN
 		INNER JOIN dbo.Customer c WITH (NOLOCK) ON c.custid =  t.custid
 	WHERE GroupLevelName = 'M2'
 		AND srecommend NOT IN (SELECT custid FROM #tmpSuper)
-
 	-- Remove A0 (tmpCustArchived) if NOT M1
 	DELETE t
 	FROM tmpCustArchived t WITH (NOLOCK)
@@ -123,7 +122,7 @@ BEGIN
 			FROM custinfo ci WITH (NOLOCK)
 			WHERE ci.roleid = 1 AND ci.recommend = t.recommend
 			)AS tmp
-	WHERE tmp.MemCount = 0 AND ar.GroupLevelName NOT IN ('M1')
+	WHERE ISNULL(tmp.MemCount,0) = 0 AND ar.GroupLevelName NOT IN ('M1')
 	
 	-- INSERT M0 IF S1
 	INSERT INTO tmpCustGroupLevelArchived (custid, roleid, GroupLevelName, StageID)
