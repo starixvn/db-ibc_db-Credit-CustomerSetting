@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_BetSettingUpd] 
 	  @CustID		INT
 	, @BetLimit		VARCHAR(MAX)
@@ -22,6 +19,7 @@ AS
 	Revisions: 
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Param's Explanation:
 	• @BetLimit:
@@ -148,6 +146,26 @@ BEGIN
 
 	EXEC sp_xml_removedocument @iDoc
 
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewBetSettingTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 16
+		AND u.FunctionType = 1 --Edit Customer
+
+	IF NOT EXISTS( SELECT 1 FROM @NewBetSettingTbl)
+	BEGIN
+		SELECT @ErrCode = 90017,
+				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+		RETURN
+	END
+	
 	--Validate new bet settings
 	EXEC [dbo].[Acc_CustSetting_BetSettingCheck] @CustID	= @CustID
 						, @RoleID		= @RoleID
@@ -429,6 +447,11 @@ BEGIN
 	)
 	END
 	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
 
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)

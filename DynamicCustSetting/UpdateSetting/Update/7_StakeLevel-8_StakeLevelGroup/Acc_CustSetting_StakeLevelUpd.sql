@@ -24,6 +24,7 @@ AS
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 		- 20200827@Winfred: Update log on SP version [Redmine: #137763]
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -158,6 +159,26 @@ BEGIN
 
 	EXECUTE sp_xml_removedocument @iDoc;
 
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM #tmpStake t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = @SettingType
+		AND u.FunctionType = 1 --Edit Customer
+
+	IF NOT EXISTS( SELECT 1 FROM #tmpStake)
+	BEGIN
+		SELECT @ErrCode = 90017,
+				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+		RETURN
+	END
+	
 	EXECUTE dbo.Acc_CustSetting_StakeLevelCheck 
 				@CustID		= @CustID
 			,	@RoleID		= @RoleID

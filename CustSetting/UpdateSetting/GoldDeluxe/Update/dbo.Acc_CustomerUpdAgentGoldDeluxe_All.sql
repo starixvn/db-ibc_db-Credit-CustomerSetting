@@ -28,12 +28,13 @@ AS
 /*
 	Created: 20150422@Elodie
 	Task: master edit Gold Deluxe PT setting on agent
-	DB: DBTXN/CustDB
+	DB: DBCUST/CustDB
 	
 	Revisions:
 		- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST, Change Age_CustomerSelCheckBelonging to Age_CustomerSelCheckBelongingByCustID)
 		- 20151008@Elodie: Hot fix n2 is updated although a2 is not updated [Redmine:#45208]
-		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]			            
+		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]		
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]	            
 	Parameters Explanation:
 */
 BEGIN
@@ -47,6 +48,16 @@ BEGIN
 			
 	SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = '', @ErrCode = '', @ErrMsg = ''
 
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 12
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
+	SET @ErrCode = ''
 	---------------------------
 	-- ***Check Downline Belonging***
 	EXEC Age_CustomerSelCheckBelonging 

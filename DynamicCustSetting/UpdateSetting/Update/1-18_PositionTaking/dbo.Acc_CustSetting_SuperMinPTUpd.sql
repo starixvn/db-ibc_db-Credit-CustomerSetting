@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE Acc_CustSetting_SuperMinPTUpd
 	@custid		INT,
 	@PT			VARCHAR(MAX),
@@ -17,6 +16,7 @@ AS
 		
 	Revisions:
         - 20200626@Elodie: Initial SP [Redmine:#135363]
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -110,8 +110,27 @@ BEGIN
 		IsLive,
 		MinPT
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
+	-- end read xml
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @tblPT t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType IN(1,18)
+		AND u.FunctionType = 1 --Edit Customer
 	
-	-- end read xml	
+	IF NOT EXISTS( SELECT 1 FROM @tblPT)
+	BEGIN
+		SELECT @ErrCode = 90017,
+				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+		RETURN
+	END	
 
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
@@ -367,6 +386,11 @@ BEGIN
 	END
 	
 	SET @logSPData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
 	
 	-- end write log
 	SET @endRun		= GETDATE()  

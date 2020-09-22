@@ -29,6 +29,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableGoldDeluxe]
 			- 20180112@Johnson:	use this sp for update status on alpha & setting page and remove enableDownlines for new direction [redmine:#87328]
 			- 20200225@Tiara: Don't allow SMA under 789y headline to update status [Redmine: #124311]
 			- 20200610@Johnson: add param isSC to allow SC status from i7 [redmine:#135489]
+			- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		Parameter's Explanation:	
 			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
@@ -40,6 +41,15 @@ BEGIN
 	DECLARE @Site NVARCHAR (50)
 
 	SET @startRun = GETDATE()
+
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 12
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
 
 	--Check if user is SMA under 789y headline and call update action from ALPHA/EXT 
 	SELECT @Site = C.site

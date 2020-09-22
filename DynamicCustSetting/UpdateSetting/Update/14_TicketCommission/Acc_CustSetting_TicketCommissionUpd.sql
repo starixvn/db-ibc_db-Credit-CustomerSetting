@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionUpd] 
 	  @CustID				INT
 	, @Commission			VARCHAR(MAX)
@@ -20,6 +17,7 @@ AS
 
 	Revisions:
 		- 20170424@Elodie: Update Customer's Ticket Commission [Redmine: #75221]
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Param's Explanation:
 		• @Commission:
@@ -145,6 +143,26 @@ BEGIN
 
 	EXEC sp_xml_removedocument @iDoc
 
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewCommTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 14
+		AND u.FunctionType = 1 --Edit Customer
+
+	IF NOT EXISTS( SELECT 1 FROM @NewCommTbl)
+	BEGIN
+		SELECT @ErrCode = 90017,
+				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+		RETURN
+	END
+	
 	EXEC [dbo].[Acc_CustSetting_TicketCommissionCheck] 
 						@CustID				= @CustID
 						, @RoleID			= @RoleID
@@ -420,6 +438,11 @@ BEGIN
 	END
 	SET @logSpData	= REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
+
 	SELECT @endRun	= GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
@@ -445,10 +468,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionUpd] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_TicketCommissionUpd] TO [vnteam]

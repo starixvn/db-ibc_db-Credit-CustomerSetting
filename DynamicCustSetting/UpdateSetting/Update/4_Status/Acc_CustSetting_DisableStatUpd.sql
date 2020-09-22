@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableStatUpd] 
 	  @CustID			INT
 	, @IsDisabled	VARCHAR(MAX)
@@ -18,6 +19,7 @@ AS
 		- 20151104@Billy: Update log structure - [Redmine: #46788]
 		- 20160808@Helen: Product Status Issue for multiple bettypes [Redmine: 61875]
 		- 20170103@Elodie: Unhide all bettype although 1 bettype is enabled - [Redmine: #69679]   
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -141,7 +143,27 @@ BEGIN
 	
 	EXEC sp_xml_removedocument @iDoc
 
-	
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM #NewDisableStatTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 4
+		AND u.FunctionType = 1 --Edit Customer
+
+	IF NOT EXISTS( SELECT 1 FROM #NewDisableStatTbl)
+	BEGIN
+		SELECT @ErrCode = 90017,
+				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+		RETURN
+	END
+
+
 	--Validate new disabled status
 	EXEC [dbo].[Acc_CustSetting_DisableStatCheck] @IsDisabled = @IsDisabled
 		, @RoleID	= @RoleID
@@ -555,6 +577,11 @@ BEGIN
 	END
 	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
+
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
@@ -580,8 +607,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableStatUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableStatUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableStatUpd] TO [bodbExtAccNet]

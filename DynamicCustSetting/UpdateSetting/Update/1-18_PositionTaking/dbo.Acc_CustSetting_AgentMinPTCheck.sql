@@ -17,6 +17,7 @@ AS
 		
 	Revisions:
 		- 20200615@Elodie: Initial SP [Redmine: #135363]
+		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Parameter's Explanations:
 		
 */
@@ -54,7 +55,19 @@ BEGIN
 		INNER JOIN CustPTSetting3rd_Agent AS acs WITH (NOLOCK) ON acs.sporttype = b.sporttype AND acs.bettype = b.bettype AND acs.isLive = b.IsLive					
 	WHERE acs.custid = @AgentID
 	-- end read xml	
-	
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @tblPT t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType IN(1,18)
+		AND u.FunctionType = 1 --Edit Customer
+
 	select @ErrType = '' 	
     
 	SELECT @ErrCode = MAX (CASE	WHEN m.MaxPT < a.AgentMinPT THEN 199 --check l3 >= n2 

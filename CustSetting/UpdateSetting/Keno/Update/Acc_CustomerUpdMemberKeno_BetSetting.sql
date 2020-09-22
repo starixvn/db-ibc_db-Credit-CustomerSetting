@@ -34,6 +34,7 @@ AS
 		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 		- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200610@Johnson: add param isSC to allow SC status from i7 [redmine:#135489]
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Parameters Explanation:
 		+@Disable: Status of bettype (0: enable,1: disable, NULL:nothing)
 		+@IsUpdateMinMaxBet: check to update min/max (0:nothing, 1:update)
@@ -52,6 +53,17 @@ BEGIN
 		,@ErrMsg_Cur = ''
 		,@ErrCode = ''
 		,@ErrMsg = ''
+
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 8
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
+	SET @ErrCode = ''
 
 	---------------------------
 	-- ***Check Downline Belonging***

@@ -25,7 +25,8 @@ AS
     DB: DBCUST/CustDB
     
     Revisions:
-		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]			            
+		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]		            
     Param's Explanation:
     • @ErrCode is:
             -101 update success commission
@@ -39,6 +40,16 @@ BEGIN
     DECLARE @roleid TINYINT, @ErrCode_Cur INT, @ErrMsg_Cur NVARCHAR(4000), @ErrAcc NVARCHAR(4000)
     SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = '', @ErrCode = '', @ErrMsg = ''
 
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 8
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
+	SET @ErrCode = ''
     ---------------------------
     -- ***Check Downline Belonging***
     EXEC Age_CustomerSelCheckBelonging 

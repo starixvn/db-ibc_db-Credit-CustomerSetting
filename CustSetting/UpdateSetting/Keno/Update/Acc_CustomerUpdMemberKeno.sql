@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberKeno] 
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberKeno] 
 	@custid				INT
 	,@sporttype			INT = 202
 	,@bettype			INT
@@ -24,7 +25,9 @@ AS
 	DB: DBCUST/CustDB
 		
 	Revisions:
-		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]			
+		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+				
 	Parameters Explanation:
 		+@UpdatePT: check to update PT (0:nothing, 1:update)
 		+@UpdateComm: check to update Comm (0:nothing, 1:update)
@@ -42,6 +45,16 @@ BEGIN
 		,@ErrCode = ''
 		,@ErrMsg = ''
 
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 8
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
+	SET @ErrCode = ''
 	---------------------------
 	-- ***Check Downline Belonging***
 	EXEC dbo.Age_CustomerSelCheckBelonging @SessionCustID = @Userid
@@ -128,10 +141,4 @@ BEGIN
 	END
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberKeno] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberKeno] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberKeno] TO [vnteam] AS [dbo]
 GO

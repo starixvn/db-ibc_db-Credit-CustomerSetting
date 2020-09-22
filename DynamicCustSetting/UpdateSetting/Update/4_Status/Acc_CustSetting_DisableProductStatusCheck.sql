@@ -18,6 +18,7 @@ AS
 	
 	Revision:
 		- 20200702@Winfred: Validate enabled status of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]
+		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	
 	Param's Explanation:
 	• @IsDisabled
@@ -69,6 +70,25 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
+
+	DECLARE @custID INT 
+	IF @RoleID = 4
+		SET @custID = @SuperID
+	IF @RoleID = 3
+		SET @custID = @MasterID
+	IF @RoleID = 2
+		SET @custID = @AgentID
+
+	DELETE t
+	FROM #NewDisableStatTblCheck t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 4
+		AND u.FunctionType = 1 --Edit Customer
 
 	--Get error data
 	--60033: Account disabled for this product. Unable to edit downlines.

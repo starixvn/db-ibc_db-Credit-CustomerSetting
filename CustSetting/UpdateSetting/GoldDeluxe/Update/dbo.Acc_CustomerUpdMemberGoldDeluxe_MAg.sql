@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberGoldDeluxe_MAg]
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberGoldDeluxe_MAg]
 	@custid									INT,		
 
 	@v255mpositiontaking_1701				SMALLMONEY,	
@@ -21,11 +22,12 @@ AS
 /*
 	Created: 20150422@Elodie
 	Task: Master edit Gold Deluxe PT setting on member
-	DB: DBTXN/CustDB
+	DB: DBCUST/CustDB
 	
 	Revisions:
 		- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST, change Age_CustomerSelCheckBelonging to Age_CustomerSelCheckBelongingByCustID)
 		- 20151007@Elodie: Remove code to check old and new value
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Parameters Explanation:
 */
 BEGIN
@@ -37,6 +39,17 @@ BEGIN
 			@duration int
 
 	set @startRun = getdate()
+
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 12
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
+	SET @ErrCode = ''
 
 	DECLARE @ErrType varchar(1000), @roleid TINYINT, @ErrCode_Cur INT, @ErrMsg_Cur NVARCHAR(4000), @ErrAcc NVARCHAR(4000),
 			@recommend INT,	@srecommend INT, @mrecommend INT
@@ -579,12 +592,4 @@ BEGIN
 	Select @ErrCode = @ErrCode + '-103'+char(7), @ErrMsg = @ErrMsg + char(7)
 
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_MAg] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_MAg] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_MAg] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_MAg] TO [vnteam] AS [dbo]

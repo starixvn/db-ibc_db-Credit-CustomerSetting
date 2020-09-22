@@ -23,6 +23,7 @@ AS
 			- 20160408@Winnie: VoidBridge - always correct PT for VoidBridge [RedmineID: #55532]
 			- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
+			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -49,12 +50,15 @@ BEGIN
 			@ErrCode	= @ErrCode OUTPUT,
 			@ErrMsg		= @ErrMsg OUTPUT
 
-			IF @ErrCode > 0	
+			IF @ErrCode > 0	AND @ErrCode <> 90017
 				RETURN
 	END
-	
+
 	IF @PT IS NOT NULL AND @PT <> '' AND @PT <> '<ROOT></ROOT>'
 	BEGIN
+		IF @ErrCode = 90017
+			SELECT @ErrCode = 0 , @ErrMsg = ''
+		
 		DECLARE @roleid			TINYINT			
 				,@startRun		DATETIME
 				,@endRun		DATETIME
@@ -149,6 +153,26 @@ BEGIN
 	
 		-- end read xml	
 
+		--Exclude Update for Sport is having UM
+		DELETE t
+		FROM @tblPT t
+			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+				ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+			INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+				ON u.SportType IN( t.SportType,0)
+				AND u.SettingType IN (ps.SettingType,0)
+				AND u.ProductID  IN (ps.ProductID, 0)
+		WHERE ps.SettingType IN(1,18)
+			AND u.FunctionType = 1 --Edit Customer
+
+		IF NOT EXISTS( SELECT 1 FROM @tblPT)
+		BEGIN
+			SELECT @ErrCode = 90017,
+					@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+			RETURN
+		END
+		
 		-- Select ProductID and SettingLevel
 		SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 		FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
