@@ -105,6 +105,8 @@ IF EXISTS(
 	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID AND roleid = 1)
 	)
 BEGIN
+	-- agent disabled before but some tables not backup in phase 1 yet
+	EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
 	Select @ErrMsg = @AccName +':'+ 'Backup data of this agent already exist. Please check!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
@@ -353,14 +355,7 @@ SELECT	CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch
 FROM	CustBetSetting3rd_Member WITH (NOLOCK)
 WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)			
 
---insert into DBARCCUST.bodb_Customer.dbo.CustCommRate_old(
---	CustID, SportType, BetType, sdiscount, adiscount, discount, playerdiscount
---) 
---SELECT	CustID, SportType, BetType, sdiscount, adiscount, discount, playerdiscount
---FROM	CustCommRate WITH (NOLOCK)
---WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
-
-insert into DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Member_old(
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Member_old(
 	CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount
 ) 
 SELECT	CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount

@@ -286,30 +286,32 @@ BEGIN
 		@duration = @duration
 	
 	--Writelog clear given credit for Master
+	
 	DECLARE @LogData VARCHAR(500) = ''
 	SELECT  @LogData = 'Update Credits for SMA Account '+ COALESCE(@AccName, SPACE(1))  
+	IF @ReduceCredit <> 0
+	BEGIN
+		BEGIN TRY
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+				@UserID = 360418,
+				@CustID = @CustID,
+				@Doing = @LogData,
+				@OldValue = @ReduceCredit,
+				@NewValue = 0,
+				@IP = '100.100.100.100',
+				@ActionID = 1222
+		END TRY
+		BEGIN CATCH
+			SELECT @LogData = @LogData + ' ErrMsg:' + ERROR_MESSAGE()
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-			@UserID = 360418,
-			@CustID = @CustID,
-			@Doing = @LogData,
-			@OldValue = @ReduceCredit,
-			@NewValue = 0,
-			@IP = '100.100.100.100',
-			@ActionID = 1222
-	END TRY
-	BEGIN CATCH
-		SELECT @LogData = @LogData + ' ErrMsg:' + ERROR_MESSAGE()
-
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-			@UserID = 360418,
-			@CustID = @CustID,
-			@Doing = @LogData,
-			@OldValue = @ReduceCredit,
-			@NewValue = 0,
-			@IP = '100.100.100.100',
-			@ActionID = 1222
-	END CATCH
-		
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+				@UserID = 360418,
+				@CustID = @CustID,
+				@Doing = @LogData,
+				@OldValue = @ReduceCredit,
+				@NewValue = 0,
+				@IP = '100.100.100.100',
+				@ActionID = 1222
+		END CATCH
+	END	
 END

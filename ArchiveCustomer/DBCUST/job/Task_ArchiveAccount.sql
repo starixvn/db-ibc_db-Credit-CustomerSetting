@@ -99,6 +99,7 @@ BEGIN
 				IF @roleid_tmp = 3
 				BEGIN
 					EXEC dbo.DBA_ArchiveAccount1_CloseMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
+					
 				END
 				ELSE IF @roleid_tmp = 4
 				BEGIN
@@ -113,8 +114,6 @@ BEGIN
 			END
 			
 		END
-		--Step 1.5 Re-Gen List Super Master into tmpCustGroupLevelArchived
-		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
 	END
 	ELSE IF(@stage = 2)
@@ -147,35 +146,38 @@ BEGIN
 			
 			IF @ErrMsg = ''
 			BEGIN
-				UPDATE #ReduceCredit
-					SET ReduceCredit = ReduceCredit + @ReduceCredit
-				WHERE CustId IN (@srecommend, @mrecommend)
+				IF @ReduceCredit <>  0
+				BEGIN
+					UPDATE #ReduceCredit
+						SET ReduceCredit = ReduceCredit + @ReduceCredit
+					WHERE CustId IN (@srecommend, @mrecommend)
 
-				--Writelog clear given credit for Agent
-				SELECT  @LogData = 'Update Credits for SMA Account '+ COALESCE(@agent, SPACE(1))  
+					--Writelog clear given credit for Agent
+					SELECT  @LogData = 'Update Credits for SMA Account '+ COALESCE(@agent, SPACE(1))  
 
-				BEGIN TRY
-					EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-						@UserID = 360418,
-						@CustID = @recommend,
-						@Doing = @LogData,
-						@OldValue = @ReduceCredit,
-						@NewValue = 0,
-						@IP = '100.100.100.100',
-						@ActionID = 1222
-				END TRY
-				BEGIN CATCH
-					SELECT @LogData = @LogData + ' ErrMsg:' + ERROR_MESSAGE()
+					BEGIN TRY
+						EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+							@UserID = 360418,
+							@CustID = @recommend,
+							@Doing = @LogData,
+							@OldValue = @ReduceCredit,
+							@NewValue = 0,
+							@IP = '100.100.100.100',
+							@ActionID = 1222
+					END TRY
+					BEGIN CATCH
+						SELECT @LogData = @LogData + ' ErrMsg:' + ERROR_MESSAGE()
 
-					EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
-						@UserID = 360418,
-						@CustID = @recommend,
-						@Doing = @LogData,
-						@OldValue = @ReduceCredit,
-						@NewValue = 0,
-						@IP = '100.100.100.100',
-						@ActionID = 1222
-				END CATCH
+						EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+							@UserID = 360418,
+							@CustID = @recommend,
+							@Doing = @LogData,
+							@OldValue = @ReduceCredit,
+							@NewValue = 0,
+							@IP = '100.100.100.100',
+							@ActionID = 1222
+					END CATCH
+				END	
 			END
 	
 			SET @msg = 'Stage 2 - Done Agent Level ' + @agent + CHAR(13)
@@ -188,7 +190,7 @@ BEGIN
 		--Gen List Super Master into tmpCustGroupLevelArchived
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
-		-- Disable M0, M1, S1
+		-- Processing for M0, M1, S1
 		INSERT INTO #ArchiveMasterSuper_tmp (CustID, GroupLevelName, RoleID, username)
 		SELECT ar.custid, ar.GroupLevelName, ar.Roleid, ci.username
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
@@ -215,14 +217,18 @@ BEGIN
 				EXEC dbo.DBA_ArchiveAccount2_DisableMasterSuper @AccName = @S1M1_username,@srecommend = @srecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 				
 				PRINT 'DBA_ArchiveAccount2_DisableMasterSuper' + @ErrMsg
+				
 				IF @ErrMsg = ''
 				BEGIN
-					IF @roleid_tmp = 3
+					IF @ReduceCredit <> 0
 					BEGIN
-						UPDATE #ReduceCredit
-							SET ReduceCredit = ReduceCredit + @ReduceCredit
-						WHERE CustId = @srecommend
-					END
+						IF @roleid_tmp = 3
+						BEGIN
+							UPDATE #ReduceCredit
+								SET ReduceCredit = ReduceCredit + @ReduceCredit
+							WHERE CustId = @srecommend
+						END
+					END	
 				END	
 				
 				SET @msg = 'Stage 2 - Done Disable ' + @GroupLevelName + ':'+ @S1M1_username +   CHAR(13) 
@@ -336,7 +342,6 @@ BEGIN
 				UPDATE TOP (1) t
 					SET  IsFinished = 1
 						, @S1M1_username = username
-						, @roleid_tmp = roleid
 						, @GroupLevelName = GroupLevelName
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
@@ -397,7 +402,6 @@ BEGIN
 				UPDATE TOP (1) t
 					SET  IsFinished = 1
 						, @S1M1_username = username
-						, @roleid_tmp = roleid
 						, @GroupLevelName = GroupLevelName
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	

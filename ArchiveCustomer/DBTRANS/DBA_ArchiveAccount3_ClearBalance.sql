@@ -18,7 +18,7 @@ Revisions:
 	- 20131108@Elodie: Splitting bodb02 into CustDB (call CustInfo, Exchange by link database)
 	- 20160211@Daniel: Add more check for any active transaction & use new SPs update balance
     - 20180320@Daniel: rename SP to count stage from 1 => No. 3 for this stage
-	
+	- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 	
 Note:
 --Pre-check needed:
@@ -122,6 +122,8 @@ BEGIN
 		inner join CustDB.dbo.exchange e  (nolock) on c.currency = e.exchangeid 
 	WHERE  c.recommend = @AgentID AND c.roleid = 1
 	
+	IF @@ROWCOUNT = 0
+		RETURN
 END	
 
 print @AccName +':'+ 'Temp Table Done:' + convert(varchar(50), getdate(), 113)	
