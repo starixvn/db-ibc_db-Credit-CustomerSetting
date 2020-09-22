@@ -15,6 +15,7 @@ AS
 		20190917@Daniel: Remove unused tables P2PGameSetting, P2PGroupComm for clean up inactive product (#117439 - P2)
 		20190925@Daniel: Remove SP Recompile & involve more setting tables
 		20191217@Daniel: Remove delete custsearch due to perf issue
+		20200922@Helen: Remove old table [Redmine:130032]
 
 	Param's Explanation:
 		@Type: 
@@ -142,17 +143,17 @@ BEGIN
 				BREAK
 		END
 
-		IF dbo.f_CheckRepTable('CustCommRate') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(10000) dbo.CustCommRate WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 10000 
-				BREAK
-		END
+		--IF dbo.f_CheckRepTable('CustCommRate') = 1 		
+		--WHILE(1=1)
+		--BEGIN
+		--	DELETE TOP(10000) dbo.CustCommRate WITH (ROWLOCK)
+		--	WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
+		--						WHERE roleid = 1 
+		--							AND recommend = @AgentID
+		--							)
+		--	IF @@ROWCOUNT < 10000 
+		--		BREAK
+		--END
 
 		IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1 		
 		WHILE(1=1)

@@ -23,6 +23,7 @@ AS
 		- 20190917@Daniel: Remove inactive products - unused custinfo columns (#117439 - P2)
 		- 20190929@Daniel: Involve more setting tables
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
+		- 20200922@Helen: Remove old table [Redmine:130032]
 
 */
    
@@ -352,12 +353,12 @@ SELECT	CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch
 FROM	CustBetSetting3rd_Member WITH (NOLOCK)
 WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)			
 
-insert into DBARCCUST.bodb_Customer.dbo.CustCommRate_old(
-	CustID, SportType, BetType, sdiscount, adiscount, discount, playerdiscount
-) 
-SELECT	CustID, SportType, BetType, sdiscount, adiscount, discount, playerdiscount
-FROM	CustCommRate WITH (NOLOCK)
-WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
+--insert into DBARCCUST.bodb_Customer.dbo.CustCommRate_old(
+--	CustID, SportType, BetType, sdiscount, adiscount, discount, playerdiscount
+--) 
+--SELECT	CustID, SportType, BetType, sdiscount, adiscount, discount, playerdiscount
+--FROM	CustCommRate WITH (NOLOCK)
+--WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
 
 insert into DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Member_old(
 	CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount
