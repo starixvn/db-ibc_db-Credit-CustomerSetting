@@ -1,8 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-
-USE CustDB
-GO
-
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	[dbo].[Acc_CustSetting_DisableNewProductSyncStatusUpd] 
 	@CustID			INT
 ,	@IsSynced		BIT				= 1
@@ -18,7 +14,8 @@ AS
 	Task: Update synchronize status on a product (Setting Type 13)
     
 	Revisions:
-		- 20170919@Johnson: fix the unsynchronized setting (settingType = 13), do not update sync for downlines [Redmine: #72973]							 	
+		- 20170919@Johnson: fix the unsynchronized setting (settingType = 13), do not update sync for downlines [Redmine: #72973]	
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]						 	
 	Parameters Explanation:  
 	
  */
@@ -58,6 +55,23 @@ BEGIN
 	WHERE	psd.ProductID = @ProductID
 		AND	psd.SettingType = 13
 
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM #NewSyncStatTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 13
+		AND u.FunctionType = 1 --Edit Customer
+
+	IF NOT EXISTS( SELECT 1 FROM #NewSyncStatTbl)
+	BEGIN
+		RETURN
+	END
+	
 	--Get old disabled status			
 	INSERT INTO #OldSyncStatTbl (SportType,BetType,IsSynced)
 	SELECT	psp.SportType
@@ -283,6 +297,11 @@ BEGIN
 		)
 	END
 	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
 
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)

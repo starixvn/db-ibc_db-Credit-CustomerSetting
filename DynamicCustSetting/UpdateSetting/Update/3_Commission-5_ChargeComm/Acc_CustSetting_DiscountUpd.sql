@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountUpd] 
 	  @CustID				INT
@@ -21,6 +21,7 @@ AS
 		- 20151104@Billy: Update log structure - [Redmine: #46788]
 		- 20160104@Dominic: Implementing Charge Commission Plugin - [Redmine: #49689]
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
+		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Param's Explanation:
 		• @Discount:
@@ -146,6 +147,26 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewDiscountTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = @SettingType
+		AND u.FunctionType = 1 --Edit Customer
+	
+	IF NOT EXISTS( SELECT 1 FROM @NewDiscountTbl)
+	BEGIN
+		SELECT @ErrCode = 90017,
+				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+		RETURN
+	END
 
 	EXEC [dbo].[Acc_CustSetting_DiscountCheck] 
 						@CustID			= @CustID
@@ -466,4 +487,3 @@ BEGIN
 			, @TrackingValue2	= @logSpData_Old
 			, @duration			= @duration
 END
-GO

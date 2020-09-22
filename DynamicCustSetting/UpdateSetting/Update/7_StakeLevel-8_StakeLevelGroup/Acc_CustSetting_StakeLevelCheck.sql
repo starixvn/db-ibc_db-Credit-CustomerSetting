@@ -22,6 +22,7 @@ AS
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200330@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP applied for SB2 [Redmine: #131163]
 		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
+		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -83,6 +84,19 @@ BEGIN
 	WHERE C.custid = @SuperID
 
 	EXEC sys.sp_xml_removedocument @iDoc;
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM #tmpStakeCheck t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = @SettingType
+		AND u.FunctionType = 1 --Edit Customer
+
 	--Prevent users under 789y uncheck all Stakelevel
 	--Prevent uncheck all Stakelevel of member level for setting type 17,7
 	IF (@RoleID = 1 AND @SettingType = 17) OR @SystemID IN (6,7,8,9) --Restrict for Member Level of all sites for setting type 17 or 789y all level 

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusUpd] 
 	  @CustID			INT
 	, @IsDisabled		VARCHAR(MAX)
@@ -17,6 +17,7 @@ AS
 	Revisions:
 		- 20180118@Elodie: Update enable status on NAP & ExtNAP [RedmineID:#87328]
 		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
+		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -162,6 +163,27 @@ BEGIN
 	
 	EXEC sp_xml_removedocument @iDoc
 
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM #NewDisableStatTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType IN( 13, 4)
+		AND u.FunctionType = 1 --Edit Customer
+
+	IF NOT EXISTS( SELECT 1 FROM #NewDisableStatTbl)
+	BEGIN
+		SELECT @ErrCode = 90017,
+				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+		RETURN
+	END
+	
 	SELECT TOP 1 @UpdateAllMasters =  1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1
 	SELECT TOP 1 @UpdateAllAgents =  1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1
 	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1
@@ -378,11 +400,16 @@ BEGIN
 	FROM #NewDisableStatTbl
 	WHERE UpdateAllMembers= 1
 
+	DECLARE @SPName varchar(100) = 'Acc_Admin_DisableNewProductStatusUpd'
+
+	SELECT @SPName = LogStr 
+	FROM f_CustSetting_FormatLog (@SPName)
+
 	INSERT INTO @LogAction (ActionID)
 	SELECT l.ActionID
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
-	WHERE l.SPName = 'Acc_Admin_DisableNewProductStatusUpd' AND ld.ProductID = @ProductID AND ld.Level = @RoleID
+	WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID
 		AND ((l.ActionID BETWEEN 60500 AND 64999 AND @RoleID = 4)
 			OR (l.ActionID BETWEEN 65500 AND 69999 AND ((@RoleID = 4 AND @WriteLogMaster = 1) OR @RoleID = 3))
 			OR (l.ActionID BETWEEN 70500 AND 74999 AND ((@RoleID IN (4,3) AND @WriteLogAgent = 1) OR @RoleID = 2))
@@ -594,6 +621,11 @@ BEGIN
 		)
 	END
 	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
 
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)

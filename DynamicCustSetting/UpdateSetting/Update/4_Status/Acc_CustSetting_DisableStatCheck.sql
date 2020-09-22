@@ -1,9 +1,4 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableStatCheck] 
 	  @IsDisabled	VARCHAR(MAX)
 	, @RoleID			INT
@@ -19,6 +14,10 @@ AS
 	Task : Validate enabled status
 	DB: DBCUST/CustDB
 	Original:
+
+	Revisions:
+		- 20141110@Dominic: First Commit
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -67,6 +66,27 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
+
+	DECLARE @custID INT 
+	IF @RoleID = 4
+		SET @custID = @SuperID
+	IF @RoleID = 3
+		SET @custID = @MasterID
+	IF @RoleID = 2
+		SET @custID = @AgentID
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM #NewDisableStatTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 4
+		AND u.FunctionType = 1 --Edit Customer
+	
 	--Get error data
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 	BEGIN
@@ -140,8 +160,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableStatCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableStatCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DisableStatCheck] TO [bodbExtAccNet]

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_AdminUpdCSStatus_Cust]
 	@custid INT,
 	@disabledCS BIT=NULL,
@@ -30,6 +30,7 @@ Original: Acc_UpdCSStatus_Cust
 
    Revisions:
 	- 20180117@Johnson: launch new sp from Acc_UpdCSStatus_Cust for new direction change [Redmine:#87328]
+	- 20200717@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -38,6 +39,14 @@ BEGIN
 	declare @duration int
 	set @startRun = getdate()
 
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 6
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
 
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_AdminUpdDisableGoldDeluxe]
 	@custid		INT,
 	@Disable	BIT = NULL,	
@@ -26,7 +26,8 @@ ALTER PROCEDURE [dbo].[Acc_AdminUpdDisableGoldDeluxe]
 		DB: DBCUST/CustDB
 		
 		Revisions:			
-			- 20180104@Johnson: launch new sp for new direction update status[Redmine:#87328]					
+			- 20180104@Johnson: launch new sp for new direction update status[Redmine:#87328]
+			- 20200717@Eden: Minimize UM Time - Lock updating customer settings [#136464]					
 		Parameter's Explanation:			
 	*/
 BEGIN
@@ -37,6 +38,15 @@ BEGIN
 
 	SET @startRun = GETDATE()
 	
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 12
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid
 		,@ErrCode = @ErrCode OUTPUT

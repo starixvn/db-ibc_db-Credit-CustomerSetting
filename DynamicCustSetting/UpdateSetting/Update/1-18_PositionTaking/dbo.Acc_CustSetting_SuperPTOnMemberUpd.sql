@@ -20,6 +20,7 @@ AS
             - 20151015@Billy: Fix log xml structure and naming
 			- 20151104@Billy: Change log PT value range from [0,90] to [0,0.9] and update log structure - [Redmine: #46781, #46788]
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
+			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 		Parameter's Explanation:
 			@PT =<Root>
@@ -176,6 +177,26 @@ BEGIN
 			,0
 			,0
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @tblPT t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType IN(1,18)
+		AND u.FunctionType = 1 --Edit Customer
+
+	IF NOT EXISTS( SELECT 1 FROM @tblPT)
+	BEGIN
+		SELECT @ErrCode = 90017,
+				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
+
+		RETURN
+	END
 		
 	SELECT @SettingMode = IsGrouped
 	FROM dbo.CustSettingMode3rd

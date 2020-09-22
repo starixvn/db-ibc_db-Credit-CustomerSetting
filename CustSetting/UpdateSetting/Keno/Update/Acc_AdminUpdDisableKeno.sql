@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_AdminUpdDisableKeno] 
 	@CustID INT
 	,@Bettype INT
@@ -27,6 +27,7 @@ AS
 	Original: Acc_CustomerUpdDisableKeno
 	Revisions:
 		- 20180110@Johnson: launch new sp from [Acc_CustomerUpdDisableKeno] for new direction status[Redmine:#87328]
+		- 20200717@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Param's Explanation:
 		• @custid: customer id.   
 		• @Disable: status of HideKeno		
@@ -53,6 +54,15 @@ BEGIN
 		,@HasUpdatedDisable BIT = 0
 		,@HasDownline BIT = 0	
 		,@Allow2Udpate BIT = 1
+
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 8
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
 			
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid

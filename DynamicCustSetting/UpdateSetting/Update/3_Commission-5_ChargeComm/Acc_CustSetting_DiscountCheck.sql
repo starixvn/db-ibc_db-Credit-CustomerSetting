@@ -19,6 +19,7 @@ AS
 
 	Revision:
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
+		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Param's Explanation:
 		• @Discount:
@@ -64,6 +65,18 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewDiscountTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType IN(3, 19)
+		AND u.FunctionType = 1 --Edit Customer
 
 	--Check if new discount <0 or > default Max Discount
 	IF EXISTS (select TOP 1 1 

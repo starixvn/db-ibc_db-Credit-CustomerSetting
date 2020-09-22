@@ -14,7 +14,7 @@ AS
 		Created: Johnson
 		Date: 2015-04-23
 		Task: Update bet settings for Gold Deluxe
-		DB: DBTXN/CustDB
+		DB: DBCust/CustDB
 		
 		Revisions:
 			- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST, Change Age_CustomerSelCheckBelonging to Age_CustomerSelCheckBelongingByCustID, call bettype by link server)
@@ -23,7 +23,7 @@ AS
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 			- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 			- 20200414@Tiara: Offer Allbet/GD multiple stakelevels for member [Redmine: #131171]
-
+			- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 		Parameter's Explanation:
 			* @StakeLevel = <ROOT>
@@ -68,6 +68,15 @@ BEGIN
 		)
 		
 	SET @startRun = GETDATE()
+
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 12
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
 	
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid
@@ -523,8 +532,3 @@ BEGIN
 	END	
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdGoldDeluxe_MinMaxBet] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdGoldDeluxe_MinMaxBet] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdGoldDeluxe_MinMaxBet] TO [bodbExtAccNet] AS [dbo]

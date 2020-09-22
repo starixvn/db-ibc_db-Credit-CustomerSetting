@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="1"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_BetSettingCheck] 
 	  @CustID		INT
 	, @RoleID		INT
@@ -25,6 +22,8 @@ AS
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200330@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP applied for SB2 [Redmine: #131163]
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -94,6 +93,19 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc	
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewBetSettingTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 16
+		AND u.FunctionType = 1 --Edit Customer
+
 	--Get currency of member
 	SELECT @Currency = ci.currency
 	FROM dbo.custInfo ci WITH(NOLOCK)

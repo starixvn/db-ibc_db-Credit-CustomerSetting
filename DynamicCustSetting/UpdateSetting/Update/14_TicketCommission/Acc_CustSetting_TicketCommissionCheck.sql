@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="1"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionCheck] 
 	  @CustID			INT
 	, @RoleID			INT
@@ -18,6 +15,11 @@ AS
 	Task : Check Customer's Ticket Commission
 	DB: DBCUST/CustDB
 	Original:
+
+	Revisions:
+		- 20170424@Elodie: First commit
+		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+
 
 	Param's Explanation:
 		• @Commission:
@@ -69,6 +71,18 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewCommTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 14
+		AND u.FunctionType = 1 --Edit Customer
 
 	IF @RoleID = 3
 	BEGIN

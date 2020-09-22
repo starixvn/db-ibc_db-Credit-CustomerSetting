@@ -1,10 +1,4 @@
-﻿USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustomerUpdMemberGoldDeluxe_All]    Script Date: 05/12/2015 13:22:47 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberGoldDeluxe_All]
 	@custid		INT,
 	@recommend	INT,
@@ -25,11 +19,12 @@ AS
 	Created: Elodie
 	Date: 20150422
 	Task: Admin/Agent update setting Gold Deluxe on member
-	DB: DBTXN/CustDB
+	DB: DBCUST/CustDB
 		
 	Revisions:
 		- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST, Change Age_CustomerSelCheckBelonging to Age_CustomerSelCheckBelongingByCustID)
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Parameters Explanation:
 */
@@ -39,6 +34,16 @@ BEGIN
 	DECLARE @roleid TINYINT, @ErrCode_Cur INT, @ErrMsg_Cur NVARCHAR(4000), @ErrAcc NVARCHAR(4000)
 	SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = '', @ErrCode = '', @ErrMsg = ''
 
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 12
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
+	SET @ErrCode = ''
 	---------------------------
 	-- ***Check Downline Belonging***
 	EXEC Age_CustomerSelCheckBelonging 
@@ -96,10 +101,3 @@ BEGIN
 	END
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_All] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_All] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_All] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_All] TO [vnteam] AS [dbo]

@@ -1,8 +1,4 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperKeno_BetSetting]
 	@CustId INT,
 	@Sporttype INT = 202,
@@ -34,6 +30,8 @@ AS
 		- 20170303@Winnie: Change enable behavior [Redmine: #72336]
 		- 20180312@Johnson: remove @DisableDownLines for new product status direction [redmine: #87328]
 		- 20200310@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+
 	Parameters Explanation:
 		+ @ErrCode <0 : update successfully 
 			-100: status
@@ -47,6 +45,16 @@ BEGIN
 	DECLARE @roleid TINYINT, @ErrCode_Cur INT, @ErrMsg_Cur NVARCHAR(4000)
 	SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = '', @ErrCode = '', @ErrMsg = ''
 
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 8
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
+	SET @ErrCode = ''
 	---------------------------
 	-- ***Check Downline Belonging***
 	EXEC Age_CustomerSelCheckBelonging 

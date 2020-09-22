@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberKeno_MAg]
 	@custid INT
 	, @SportType INT = 202 
@@ -22,11 +22,12 @@ AS
 /*
 	Created: 20140318@Patrick
 	Task: Master edit Keno PT setting on member
-	DB: DBTXN/CustDB
+	DB: DBCust/CustDB
 	Revisions:
 		- 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)
 		- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Parameters Explanation:
 	• @ErrCode:  
 		<= 0: Update successfully.  
@@ -35,6 +36,17 @@ AS
 BEGIN
 
 	SET NOCOUNT ON 
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 8
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
+
+	SET @ErrCode = ''
+
 	----- David @ 09 JUN 2015 -------------------
 	BEGIN TRY
 		SELECT *

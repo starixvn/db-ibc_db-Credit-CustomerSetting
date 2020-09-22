@@ -1,5 +1,4 @@
-USE CustDB
-GO
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbExtAccNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Acc_CustomerWinLimitUpd @CustId INT
 	, @MaxWinLimit SMALLMONEY
 	, @IsAutoReset BIT
@@ -22,6 +21,7 @@ AS
   Revisions:  
 	- 20151223@Patrick: Add Max/Loss limit for RnG Casino [Redmine: #49528]
 	- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+	- 20200720@Eden: Minimize UM Time - Lock updating customer settings [#136464]
   Parameters Explanation:    
  */
 BEGIN
@@ -29,6 +29,18 @@ BEGIN
 	DECLARE @StartRun DATETIME, @EndRun DATETIME, @Duration INT
 		, @RoleId TINYINT, @ErrAcc NVARCHAR(4000), @Currency INT
 	SET @StartRun = GETDATE()
+
+	DECLARE @ProductID TINYINT
+	SELECT @ProductID = ProductID FROM [dbo].[f_CustSetting_UM_GetProductBySportype](@Sporttype)
+
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = @ProductID
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
 
 	SELECT @ErrCode = 0, @ErrMsg = ''
 	EXEC Age_CustomerSelCheckBelongingByCustID
@@ -288,15 +300,4 @@ BEGIN
 			, @duration = @Duration
 	END CATCH
 END
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitUpd] TO [bodbAdminNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitUpd] TO [bodbDownlineNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitUpd] TO [bodbExtAccNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerWinLimitUpd] TO [vnteam] AS [dbo]
 GO

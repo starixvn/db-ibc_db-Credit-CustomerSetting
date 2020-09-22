@@ -23,6 +23,8 @@ AS
 	Revisions:
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200330@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP applied for SB2 [Redmine: #131163]
+		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -90,6 +92,18 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewBetLimitTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 2
+		AND u.FunctionType = 1 --Edit Customer
 
 	--Get currency of member
 	SELECT @Currency = ci.currency

@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO 
-
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableGameStatusCheck] 
 	  @IsDisabled	VARCHAR(MAX)
 	, @RoleID			INT
@@ -22,6 +19,7 @@ AS
 	Revision: 
 		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 		- 20180112@Elodie: Remove IsDisableDownline value [RedmineID:#87328]
+		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -72,6 +70,26 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
+
+	DECLARE @custID INT 
+	IF @RoleID = 4
+		SET @custID = @SuperID
+	IF @RoleID = 3
+		SET @custID = @MasterID
+	IF @RoleID = 2
+		SET @custID = @AgentID
+
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM #NewDisableStatTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 11
+		AND u.FunctionType = 1 --Edit Customer
 
 	--Get error data
 	--60033: Account disabled for this product. Unable to edit downlines.

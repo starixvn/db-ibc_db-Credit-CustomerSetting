@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE	[dbo].[Acc_CustSetting_SyncStatusUpd] 
 	@CustID			INT
 ,	@IsSynced		BIT				= 1
@@ -14,6 +15,7 @@ AS
     
 	Revisions:
 			- 20160425@Winnie: Fix bug #56577 [NAP] Log IsSyncedDownline is not changed
+			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Parameters Explanation:  
 	
  */
@@ -67,6 +69,23 @@ BEGIN
 	WHERE	psd.ProductID = @ProductID
 		AND	psd.SettingType = 4
 
+	--Exclude Update for Sport is having UM
+	DELETE t
+	FROM #NewSyncStatTbl t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 4
+		AND u.FunctionType = 1 --Edit Customer
+
+	IF NOT EXISTS( SELECT 1 FROM #NewSyncStatTbl)
+	BEGIN
+		RETURN
+	END
+	
 	--Get old disabled status
 	DECLARE @downlines BIT  = 0
 	
@@ -408,6 +427,11 @@ BEGIN
 	END
 	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
+	SELECT @logSpData_Old = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old)
+	SELECT @logSpData = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData)
+
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
@@ -432,11 +456,4 @@ BEGIN
 	DROP TABLE #NewSyncStatTbl
 	DROP TABLE #OldSyncStatTbl
 END
-
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusUpd] TO [bodbExtAccNet]

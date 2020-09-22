@@ -1,8 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd]
     @custid int,
     @minpositiontaking_1 smallmoney,
@@ -211,6 +207,8 @@ Revisions:
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	 
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
+	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -224,6 +222,15 @@ declare @startRun datetime
 declare @endRun datetime
 declare @duration int
 set @startRun = getdate()
+
+--> Check UM config
+EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 1
+	, @Language = @Language, @FunctionType = 1
+	, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+	, @ReturnUMData = 0
+		
+IF @ErrCode <>0 
+	RETURN
 
 --Check disable user
 EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output
@@ -1872,8 +1879,4 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpd] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpd] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpd] TO [bodbExtAccNet] AS [dbo]
+

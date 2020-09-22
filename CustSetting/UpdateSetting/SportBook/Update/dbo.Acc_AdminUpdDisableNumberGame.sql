@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_AdminUpdDisableNumberGame]
 	@CustID INT,
 	@Disable BIT,
@@ -34,6 +34,7 @@ Revisions:
 	- 20141125@Jamie: Use Acc_CustomerInfo_Execrep_04 instead of Acc_ExecRep_Cust_04 [Redmine:#26497]
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20180202@Johnson: remove @DisableDownline for new direction for status [redmine: #87328]
+	- 20200717@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 Param's Explanation:
 • @custid: customer id.   
 • @Disable: status
@@ -45,6 +46,15 @@ BEGIN
 	DECLARE @endRun DATETIME
 	DECLARE @duration INT
 	SET @startRun = GETDATE()
+
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 1
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+
+	IF @ErrCode <>0 
+		RETURN
 
 	--Check disable user
 	EXEC Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output

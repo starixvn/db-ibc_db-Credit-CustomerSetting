@@ -30,6 +30,7 @@ AS
 		- 20190517@Elodie: Change name of Keno to RNG Keno [Redmine: #113490]
 		- 20200225@Tiara: Don't allow SMA under 789y headline to update status [Redmine: #124311]
 		- 20200610@Johnson: add param isSC to allow SC status from i7 [redmine:#135489]
+		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	Param's Explanation:
 		• @custid: customer id.   
 		• @Disable: status of HideKeno		
@@ -44,6 +45,15 @@ BEGIN
 	DECLARE @Site NVARCHAR (50)
 
 	SET @startRun = GETDATE()
+
+	--> Check UM config
+	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 8
+		, @Language = @Language, @FunctionType = 1
+		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
+		, @ReturnUMData = 0
+		
+	IF @ErrCode <>0 
+		RETURN
 
 	--Check if user is SMA under 789y headline and call update action from ALPHA/EXT - 20200225@Tiara
 	SELECT @Site = C.site
