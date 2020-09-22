@@ -39,10 +39,6 @@ Examples :
 
 
 SET NOCOUNT ON	
-	IF NOT EXISTS (SELECT TOP 1 1 FROM [dbo].UMConfig c WITH(NOLOCK) )
-		RETURN
-
-
 	DECLARE @UMProduct TABLE(
 		 ProductID    TINYINT, 
 		 SportType    SMALLINT, 
@@ -55,6 +51,20 @@ SET NOCOUNT ON
 		 SiteID       INT
 		);
 
+	IF NOT EXISTS (SELECT TOP 1 1 FROM [dbo].UMConfig c WITH(NOLOCK) )
+	BEGIN
+		IF @ReturnUMData = 1
+			SELECT ProductID
+				,SportType
+				,SettingType
+				,Functiontype
+				,BeginTime
+				,EndTime
+				,Time_Stamp 
+			FROM @UMProduct
+		RETURN
+	END
+
 	INSERT INTO @UMProduct(
 		 ProductID
 		,SportType
@@ -66,7 +76,6 @@ SET NOCOUNT ON
 		,Currency
 		,SiteID
 	)
-
 	SELECT c.ProductID, 
 		   c.Sporttype, 
 		   c.SettingType, 
