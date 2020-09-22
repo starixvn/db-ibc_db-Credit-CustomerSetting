@@ -26,10 +26,10 @@ BEGIN
 	if exists(select 1 from DBACC.bodb02.dbo.SystemSettings with(nolock) where VName = 'aa_Status' AND VValue IN ('Stage 3 - Running','Stage 3 - Done'))
 	BEGIN
 		-- from member to agent
+		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = 3
+		
 		WHILE(1=1)
 		BEGIN
-			
-			EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = 3
 			
 			SELECT @ErrMsg = ''
 			SELECT TOP 1 @agent = Agent FROM tmpCustArchived WHERE IsFinished = 0	
@@ -98,7 +98,7 @@ BEGIN
 			WAITFOR DELAY '00:00:00.010'
 			
 		END
-		return
+		
 		-- Master transfer to Super
 		INSERT INTO #MasterToSuper_Transfer (srecommend, mrecommend,superName, masterName, currency,currencyName, actualrate)
 		SELECT super.custid,ar.custid, super.username,ci.username, ci.currency, e.currency,e.actualrate 
