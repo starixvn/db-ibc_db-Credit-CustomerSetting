@@ -28,25 +28,17 @@ VALUES
 		,0
 		,'Close Super to Archive by IT Admin'
 		)
-,(1177,5, 'DBA_ArchiveAccount2_DisableMaster'
-		,'Disable Master to Archive by IT Admin'
-		,'Disable Master to Archive by IT Admin'
-		,'Disable Master to Archive by IT Admin'
-		,'Disable Master to Archive by IT Admin'
-		,'Disable Master to Archive by IT Admin'
-		,'Disable Master to Archive by IT Admin'
+,(1177,5, 'DBA_ArchiveAccount2_DisableMasterSuper'
+		,'Disable Account to Archive by IT Admin'
+		,'Disable Account to Archive by IT Admin'
+		,'Disable Account to Archive by IT Admin'
+		,'Disable Account to Archive by IT Admin'
+		,'Disable Account to Archive by IT Admin'
+		,'Disable Account to Archive by IT Admin'
 		,0
-		,'Disable Master to Archive by IT Admin'
+		,'Disable Account to Archive by IT Admin'
 		)
-,(1178,5, 'DBA_ArchiveAccount2_DisableSuper'
-		,'Disable Super to Archive by IT Admin'
-		,'Disable Super to Archive by IT Admin'
-		,'Disable Super to Archive by IT Admin'
-		,'Disable Super to Archive by IT Admin'
-		,'Disable Super to Archive by IT Admin'
-		,'Disable Super to Archive by IT Admin'
-		,0
-		,'Disable Super to Archive by IT Admin'
-		)		
+
+
 
 
