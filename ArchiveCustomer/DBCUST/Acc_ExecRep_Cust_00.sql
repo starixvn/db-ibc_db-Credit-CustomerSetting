@@ -141,18 +141,6 @@ BEGIN
 				BREAK
 		END
 
-		--IF dbo.f_CheckRepTable('CustCommRate') = 1 		
-		--WHILE(1=1)
-		--BEGIN
-		--	DELETE TOP(10000) dbo.CustCommRate WITH (ROWLOCK)
-		--	WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-		--						WHERE roleid = 1 
-		--							AND recommend = @AgentID
-		--							)
-		--	IF @@ROWCOUNT < 10000 
-		--		BREAK
-		--END
-
 		IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1 		
 		WHILE(1=1)
 		BEGIN

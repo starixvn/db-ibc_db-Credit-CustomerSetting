@@ -362,6 +362,8 @@ BEGIN
 	END
 	ELSE IF(@stage = 4)
 	BEGIN
+		--Gen List Super Master into tmpCustGroupLevelArchived
+		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
 		WHILE(1=1)
 		BEGIN
@@ -381,9 +383,6 @@ BEGIN
 			WAITFOR DELAY '00:00:00.180'
 			--IF (@ErrMsg <> '') BREAK
 		END
-		
-		--Gen List Super Master into tmpCustGroupLevelArchived
-		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
 		-- Delete Setting for M1, M0
 		INSERT INTO #ArchiveMasterSuper_tmp (CustID, GroupLevelName, RoleID, username)
