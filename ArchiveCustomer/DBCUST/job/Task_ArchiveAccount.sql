@@ -50,6 +50,12 @@ BEGIN
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
 		--Step 1.2. Loop through list to execute sp for each agent
+		UPDATE t
+			SET ErrMsg = '', IsFinished = 1
+		FROM tmpCustArchived t (ROWLOCK)
+			INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
+		WHERE ci.closed = 1
+			
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
@@ -118,7 +124,7 @@ BEGIN
 	END
 	ELSE IF(@stage = 2)
 	BEGIN
-			
+							
 		INSERT INTO #ReduceCredit (CustId,srecommend,RoleID,Credit)
 		SELECT DISTINCT c.custid, c.srecommend, 3,credit
 		FROM dbo.tmpCustArchived t WITH (NOLOCK)
@@ -131,6 +137,12 @@ BEGIN
 			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.username= t.Super
 		WHERE t.IsFinished = 0
 			AND c.roleid = 4
+		
+		UPDATE t
+			SET ErrMsg = '', IsFinished = 1
+		FROM tmpCustArchived t (ROWLOCK)
+			INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
+		WHERE ci.Enabled = 0
 		
 		WHILE(1=1)
 		BEGIN

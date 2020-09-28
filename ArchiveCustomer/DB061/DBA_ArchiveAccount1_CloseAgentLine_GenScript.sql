@@ -82,8 +82,8 @@ FROM customer ag WITH (NOLOCK)
 WHERE ag.roleid = 2
 	--AND isnull(MemCount, 0) > 0
 	AND (ag.creatdate < DATEADD(mm, -3, GETDATE()))
-	AND agci.closed = 0 
-	AND agci.enabled = 1
+	--AND agci.closed = 0 
+	--AND agci.enabled = 1
 	AND ca.isInternal = 0
 	AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
 	AND ag.custid NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
