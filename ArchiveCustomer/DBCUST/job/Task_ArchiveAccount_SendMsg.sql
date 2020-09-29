@@ -10,7 +10,8 @@ AS
 	Revisions:
 		- 20190519@Daniel: Created
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
-		- 20200907@Helen: Fix bug on sending message [Redmine: #141027]
+		- 20200907@Helen: Fix bug on sending message [Redmine: #130032]
+		- 20200929@Helen: Phase 1 - Stage 3 - No Sending message [Redmine: #130032]
 
 	Param:
 		+ @stage: input stage 1 or 2, 3 to send message
@@ -35,7 +36,7 @@ BEGIN
 						END
 	END
 	
-	IF @stage IN (1,2,3)
+	IF @stage IN (1,2)
 	BEGIN
 		INSERT #tmpMasterSuper (CustId, Username, GroupLevelName, RoleId)
 		SELECT t.custid, c.username, t.GroupLevelName, t.RoleId
