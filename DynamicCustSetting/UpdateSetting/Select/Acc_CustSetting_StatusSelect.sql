@@ -6,6 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSelect]
  , @ProductID TINYINT = NULL  
  , @RoleID INT = NULL  
  , @SettingType TINYINT = NULL
+ , @SettingStatus TINYINT = 0
 AS  
 /*  
  Created: 20180611@Elodie 
@@ -15,6 +16,7 @@ AS
   
  Revisions:  
 	- 20180611@Elodie: Setting status of a product [Redmine: #58776]
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
  
  Param's Explanation:  
  
@@ -37,17 +39,17 @@ BEGIN
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 4
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 11
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 13	
 
 	IF @RoleID = 4  

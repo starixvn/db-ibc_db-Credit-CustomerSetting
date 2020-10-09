@@ -6,6 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionSelect]
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @UplineRoleID TINYINT = NULL
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20170424@Elodie
@@ -13,7 +14,8 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 
-	Revision:
+	Revisions:
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	
 	Param's Explanation:
 	
@@ -26,7 +28,7 @@ BEGIN
 
 	SELECT SportType,Bettype,SettingType
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) --Commission
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus) --Commission
 	
 	-- Select customer's information
 	SELECT	@RoleID     = c.roleid
@@ -100,12 +102,5 @@ BEGIN
 	DROP TABLE #SportBettypeFilter
 END
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_TicketCommissionSelect] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_TicketCommissionSelect] TO [vnteam]
+
 

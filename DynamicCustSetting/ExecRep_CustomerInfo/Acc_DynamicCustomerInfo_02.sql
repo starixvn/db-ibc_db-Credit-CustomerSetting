@@ -3,6 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_02]
 	@CustID				INT		= 0
 	, @ExistingCustID	INT		= 0
 	, @ErrCode			INT		= 0		OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20150928@Dominic
@@ -30,6 +31,7 @@ AS
 		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -112,7 +114,7 @@ BEGIN
 			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
-				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
+				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
 			WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
 		
 			IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter4)
@@ -195,7 +197,7 @@ BEGIN
 			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
-				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
+				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13,@SettingStatus) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
 			WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
 
 			IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter13)
@@ -278,7 +280,7 @@ BEGIN
 			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
-				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
+				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11,@SettingStatus) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
 			WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
 
 			IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)

@@ -5,6 +5,7 @@ GO
 ALTER PROCEDURE [dbo].[Acc_CustSetting_WinningShareCommissionSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20170424@Elodie
@@ -14,6 +15,7 @@ AS
 
 	Revision:
 		- 20170424@Elodie: Get Winning Share commission values of a product [Redmine: #75221]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	Param's Explanation:
 	
 	Example: EXEC Acc_CustSetting_WinningShareCommissionSelect @CustID = 1176070, @ProductID = 26
@@ -29,7 +31,7 @@ BEGIN
 	DECLARE @WinningShare TABLE (sporttype SMALLINT, bettype SMALLINT, NumberValue1 DECIMAL(19,8), NumberValue2 DECIMAL(19,8))
 	SELECT SportType,Bettype,SettingType
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,15) --Commission
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,15,@SettingStatus) --Commission
 
 	-- Select customer's information
 	SELECT	@RoleID     = c.roleid

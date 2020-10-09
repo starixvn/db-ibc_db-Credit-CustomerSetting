@@ -1,11 +1,9 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="0"></info>*/
 GO
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_SettingDetailSelect] 
 	  @ProductID TINYINT
+	  , @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20150304@Dominic
@@ -13,13 +11,16 @@ AS
 	DB:  DBCUST/CustDB
 	Original:
 
+	Revisions: 
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
 	Param's Explanation:
 	- @ProductID: ID of a product
 	
 	*/
 BEGIN
 	SELECT * INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL) -- comm
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus) -- comm
 	
 	SELECT pdt.[SettingType]
 	  ,pdt.[SportType]
@@ -34,10 +35,3 @@ BEGIN
 
 	DROP TABLE #SportBettypeFilter
 END
-
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingDetailSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingDetailSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingDetailSelect] TO [bodbExtAccNet]
