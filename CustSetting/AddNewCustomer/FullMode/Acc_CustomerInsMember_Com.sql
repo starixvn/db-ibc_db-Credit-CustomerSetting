@@ -311,7 +311,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@IP VARCHAR(15)='',
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(2000) = '' OUTPUT
+	@ErrMsg NVARCHAR(2000) = '' OUTPUT,
+	@SettingStatus TINYINT = 0
 AS
 
 --@Source Control
@@ -410,9 +411,13 @@ Revisions:
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
-	- 20201008@Winfred : New Super - Prefix Warning [Redmine: #142239]
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	- 20201027@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20201008@Winfred : New Super - Prefix Warning [Redmine: #142239]
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	
+
+
 	
 Param's Explanation:
 • @ErrCode:
@@ -1345,15 +1350,15 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
 	INTO #temSportbettypeSetting
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus)
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11,@SettingStatus)
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13,@SettingStatus)
 	
 	DECLARE @_Site VARCHAR(10)
 	SELECT @_Site = site

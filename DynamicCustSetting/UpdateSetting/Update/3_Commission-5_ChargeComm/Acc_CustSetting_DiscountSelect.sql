@@ -4,6 +4,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountSelect]
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @UplineRoleID	TINYINT = NULL
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160801@Elodie
@@ -13,6 +14,7 @@ AS
 
 	Revision:
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	Param's Explanation:
 	
 	*/
@@ -24,15 +26,15 @@ BEGIN
 
 	SELECT SportType,Bettype,SettingType
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3) --Commission
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) --Commission
 	
 	INSERT #SportBettypeFilter (SportType,Bettype,SettingType)
 	SELECT SportType,Bettype,SettingType
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19) --Commission
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus) --Commission
 
 	INSERT #SportBettypeFilter (SportType,Bettype,SettingType)
 	SELECT SportType,Bettype,SettingType
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5) --Charge Commission
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus) --Charge Commission
 
 	-- Select customer's information
 	SELECT	@RoleID     = c.roleid

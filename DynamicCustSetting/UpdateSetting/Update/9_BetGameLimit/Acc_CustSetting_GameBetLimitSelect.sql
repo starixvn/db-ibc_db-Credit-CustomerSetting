@@ -5,6 +5,7 @@ GO
 ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetLimitSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160108@Elodie
@@ -14,6 +15,7 @@ AS
 
 	Revision: 
 		- 20171109@Elodie: Cannot update Bet Setting of Super with value <> 0 when global setting = 0 [RedmineID:#86041]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 	Param's Explanation:
 		
@@ -28,7 +30,7 @@ BEGIN
 
 	SELECT SportType,Bettype 
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9,@SettingStatus)
 	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency

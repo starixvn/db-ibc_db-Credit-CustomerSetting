@@ -4,6 +4,7 @@ ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevelSelect
 					@CustID			INT
 				,	@ProductID		TINYINT
 				,   @SettingType	SMALLINT --20200414@Tiara
+				,   @SettingStatus  TINYINT = 0
 AS
 /*
 	Created: 20160121@Billy
@@ -18,6 +19,7 @@ AS
 		- 20200414@Tiara: Add input param Setting type, add MaxChoice column [Redmine: #131171]
 		- 20200610@Elodie: Don't show stake level of super don't offer the product [Redmine: #135510]
 		- 20200909@Winfred: Sort by sport, bettype, MaxStake [Redmine: #131589]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	Param's Explanation:
 */
 BEGIN
@@ -49,7 +51,7 @@ BEGIN
 	INSERT INTO #SportBetTypeFilter
 		(	SportType         , BetType)
 	SELECT	fcssbtss.SportType, fcssbtss.Bettype
-	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType) AS fcssbtss;
+	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType,@SettingStatus) AS fcssbtss;
 
 	UPDATE S
 	SET S.MaxChoice = CASE WHEN @SettingType = 17 THEN P.MaxChoice ELSE 0 END --MaxChoice = 0: unlimit selected stake level

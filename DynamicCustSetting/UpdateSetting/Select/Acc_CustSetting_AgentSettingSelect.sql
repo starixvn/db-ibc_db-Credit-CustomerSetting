@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentSettingSelect]
 	, @ProductID	TINYINT = NULL 
 	, @SettingType	SMALLINT = NULL
 	, @DisableAutoMPT BIT = 0 OUTPUT
+	, @SettingStatus TINYINT = 0
 AS  
 /*  
  Created: 20141104@Dominic  
@@ -17,6 +18,7 @@ AS
  Revision:
 	- 20160104@Dominic: Implementing Charge Commission Plugin Redmine #49689
 	- 20160801@Elodie: Move commission part to Acc_CustSetting_DiscountSelect [Redmine: #60809]
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	 
  Param's Explanation:  
  • @CustID: Agent's ID  
@@ -27,7 +29,7 @@ BEGIN
    
 	SELECT SportType,Bettype,IsLive, SettingType 
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
 		
 	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend  
 	FROM dbo.custInfo ci WITH(NOLOCK)  

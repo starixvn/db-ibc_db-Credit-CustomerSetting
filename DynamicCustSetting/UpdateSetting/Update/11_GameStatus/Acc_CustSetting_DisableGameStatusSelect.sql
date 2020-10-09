@@ -5,6 +5,7 @@ GO
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableGameStatusSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160801@Elodie
@@ -15,6 +16,7 @@ AS
 	Revision:
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 		- 20180112@Elodie: Remove HasDownlines and IsDisableDownline value [RedmineID:#87328]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 	Param's Explanation: 
 
@@ -31,7 +33,7 @@ BEGIN
 
 	SELECT SportType,Bettype
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
 	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency

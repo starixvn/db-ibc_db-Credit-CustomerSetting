@@ -3,7 +3,8 @@
 ALTER PROCEDURE [dbo].[Acc_CheckShowProduct]
 	@ProductID	TINYINT,
 	@Sporttype	SMALLINT = NULL,
-	@IsHide		BIT OUTPUT 
+	@IsHide		BIT OUTPUT,
+	@SettingStatus TINYINT = 0 
 AS
 /*
 	Created by: Elodie
@@ -17,6 +18,7 @@ AS
 		- 20170601@Elodie: Migrate Inspired VS to DCS structure, add BetRadar VS product [Redmine: #77274]
 		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
 		- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 	Explanation's Param:
 		
@@ -35,7 +37,7 @@ BEGIN
 		AND SettingType IN (4,11,13)
 		AND SportType = CASE WHEN @Sporttype IS NULL THEN SportType ELSE @Sporttype END
 
-	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType) WHERE RealProductId = @RealProductID)
+	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus) WHERE RealProductId = @RealProductID)
 	BEGIN
 		SELECT @IsHide = 0
 	END

@@ -15,7 +15,7 @@ AS
 
 	Revision:
 		- 20180118@Elodie: Get Game Status setting values of a product on NAP & ExtNAP [RedmineID:#87328]
-		- 20201009@Tina: Add new para @SettingStatus [Redmine: #143077]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 	Param's Explanation: 
 

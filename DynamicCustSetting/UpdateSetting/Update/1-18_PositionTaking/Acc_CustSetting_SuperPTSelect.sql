@@ -3,6 +3,7 @@
 ALTER PROCEDURE Acc_CustSetting_SuperPTSelect
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20200612@Elodie
@@ -12,6 +13,7 @@ AS
 
 	Revision:
 		- 20200612@Elodie: Initial SP for setting type 18 [Redmine: #135363]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		
 	Param's Explanation:
 		- @CustID: Super's ID
@@ -21,7 +23,7 @@ BEGIN
 	
 	SELECT SportType, Bettype, IsLive, SettingType 
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
 	
 	SELECT pdt.SportType
 		, pdt.BetType
