@@ -2189,6 +2189,7 @@ BEGIN
 	    -- MyanmarOdds
     	@IsMyanmarOdds = @IsMyanmarOdds,
     	@discountMyanmarOdds = @discountMyanmarOdds,
+    	@SettingStatus = @SettingStatus,
 	    @ErrCode = @ErrCode OUTPUT
 
     IF @ErrCode > 0

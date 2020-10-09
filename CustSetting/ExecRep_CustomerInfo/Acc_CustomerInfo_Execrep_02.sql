@@ -4,7 +4,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_02]
 	@ExistingCustid INT = 0,
 	@Language VARCHAR(3) = 'E',
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(500) = '' OUTPUT
+	@ErrMsg NVARCHAR(500) = '' OUTPUT,
+	@SettingStatus TINYINT = 0
 AS
 /*
 	Created: Johnson
@@ -25,6 +26,7 @@ AS
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2  [Redmine: #118699]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	Parameter's Explanation:
 */ 
 BEGIN
@@ -322,6 +324,7 @@ BEGIN
 				EXEC dbo.Acc_DynamicCustomerInfo_02
 			@CustID				= @CustID
 			, @ExistingCustid	= @ExistingCustid
+			, @SettingStatus    = @SettingStatus
 			, @ErrCode			= @DCSErrCode OUTPUT
 			
 	IF @DCSErrCode <> 0 

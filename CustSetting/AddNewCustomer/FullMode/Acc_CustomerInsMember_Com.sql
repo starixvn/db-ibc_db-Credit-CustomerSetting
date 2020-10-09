@@ -1189,6 +1189,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@discountcs = @discountcs, 
 		--comm 1x2
 		@discount1x2 = @discount1x2,
+
+		@SettingStatus = @SettingStatus,
 	
 		-- Myanma Odds
 		@IsMyanmarOdds = @IsMyanmarOdds,

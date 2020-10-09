@@ -3037,9 +3037,9 @@ BEGIN
 		@MinBetv164 = @MinBetv164,
 	    @MaxBetv164 = @MaxBetv164,
 		-- MyanmarOdds
-		@IsMyanmarOdds = @IsMyanmarOdds,
+		@IsMyanmarOdds = @IsMyanmarOdds,		
     	@discountMyanmarOdds = @playerdiscountMyanmarOdds,
-
+		@SettingStatus = @SettingStatus,
 	    @ErrCode = @ErrCode OUTPUT
 
     IF @ErrCode > 0
