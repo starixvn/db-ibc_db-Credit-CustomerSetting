@@ -12,7 +12,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerSelByAg]
 	@PageIndex int = 1,  
 	@TotalPages int = 1 output,
 	@TotalItems int=0 OUTPUT,
-	@Userid		INT=NULL 
+	@Userid		INT=NULL,
+	@SettingStatus TINYINT = 0 
 AS 
 BEGIN 
 /*  
@@ -90,6 +91,7 @@ BEGIN
 		- 20200828@Winfred: Add WM Live casino [Redmine: #131589]
 		- 20201124@Helen: Alpha - Master Agent List - Member level shows the Site and commission group in Group column [Redmine: #145963]
 		- 20201130@Tina: Add GDG (Gold Diamond Gaming) Live casino [Redmine: #144105]
+		- 20201012@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -181,26 +183,26 @@ BEGIN
 		,	@IsHidden_WM			INT = 1
 		,	@IsHidden_GDG			INT = 1
 
-	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_MuayThai OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_MuayThai OUTPUT
 
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHidden_VoidBridge OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 220, @IsHide = @IsHidden_Lottery OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHidden_NG2 OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHidden_FishingWorld OUTPUT	
-	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHidden_VS OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 16, @IsHide = @IsHidden_Esports OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHidden_VG OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHidden_SabaClub OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 244, @IsHide = @IsHidden_SAGaming OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @IsHide = @IsHidden_SexyGaming OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 242, @IsHide = @IsHidden_GTCasino OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 225, @IsHide = @IsHidden_ION OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHidden_BBIN OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 224, @IsHide = @IsHidden_RNGWar OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 233, @IsHide = @IsHidden_WM OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 236, @IsHide = @IsHidden_GDG OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 22, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_VoidBridge OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 220, @IsHide = @IsHidden_Lottery OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 23, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_NG2 OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 24, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_FishingWorld OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 5, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_VS OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_Esports OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 38, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_VG OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 42, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_SabaClub OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 244, @IsHide = @IsHidden_SAGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 243, @IsHide = @IsHidden_SexyGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 242, @IsHide = @IsHidden_GTCasino OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 225, @IsHide = @IsHidden_ION OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 241, @IsHide = @IsHidden_BBIN OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 224, @IsHide = @IsHidden_RNGWar OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 233, @IsHide = @IsHidden_WM OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 236, @IsHide = @IsHidden_GDG OUTPUT
 
 	DECLARE @RowCount int, @RowStart int, @RowEnd int  
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1   

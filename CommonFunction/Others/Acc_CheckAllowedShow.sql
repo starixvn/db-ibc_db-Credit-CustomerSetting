@@ -10,6 +10,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedRNGLottery		BIT = 0		OUTPUT
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
 				,	@AllowedSabaClub		BIT = 0		OUTPUT
+				,   @SettingStatus          TINYINT = 0
 
 AS
 BEGIN
@@ -50,6 +51,7 @@ Revisions:
 	- 20200504@Eden: ION Live casino [Redmine: #132323]
 
 	- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
+	- 20201012@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 */
 
@@ -110,7 +112,7 @@ Revisions:
 	from custinfo with (nolock) where CustID=@CustID
 	
 	--For FishingWorld
-	EXEC Acc_CheckShowProduct @ProductID = 24, @IsHide = @IsHideFishingWorld OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 24, @SettingStatus = @SettingStatus, @IsHide = @IsHideFishingWorld OUTPUT
 	SELECT	@AllowedFishingWorld =	CASE	WHEN @RoleID = 4 AND @IsHideFishingWorld = 0 THEN 1
 										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderFW) = 0
 											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderFW) = 1
@@ -122,9 +124,9 @@ Revisions:
 	WHERE	cps.CustID = @CustID
 
 	--For RNGLottery
-	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 220, @IsHide = @IsHiddenLottery OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 222, @IsHide = @IsHideTableGames OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 224, @IsHide = @IsHideRNGWar OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 220, @SettingStatus = @SettingStatus, @IsHide = @IsHiddenLottery OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 222, @SettingStatus = @SettingStatus, @IsHide = @IsHideTableGames OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 224, @SettingStatus = @SettingStatus, @IsHide = @IsHideRNGWar OUTPUT
 	SELECT	@AllowedLottery =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderLottery)) = 0
 											AND @IsHiddenLottery = 0 
 											THEN 1
@@ -144,7 +146,7 @@ Revisions:
 	SELECT @AllowedRNGLottery = CASE WHEN @AllowedLottery = 1 OR @AllowedTableGames = 1  OR @AllowedRNGWar = 1 THEN 1 ELSE 0 END
 
 	--For VoidBridge
-	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT, @SettingStatus = @SettingStatus
 	SET @AllowedVoidBridge = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderVB) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideVoidBridge = 0 THEN 1 ELSE 0 END
 	
@@ -178,7 +180,7 @@ Revisions:
 	End
 
 	-- For AllBet
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 211, @IsHide = @IsHideAllBet OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 211, @SettingStatus = @SettingStatus, @IsHide = @IsHideAllBet OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedAllBet =	CASE	WHEN @IsHideAllBet = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_AllBet)) = 0 THEN 1
 										ELSE 0 END
@@ -197,7 +199,7 @@ Revisions:
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
 	-- For SA Gaming
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 244, @IsHide = @IsHideSAGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 244, @SettingStatus = @SettingStatus, @IsHide = @IsHideSAGaming OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedSAGaming =	CASE	WHEN @IsHideSAGaming = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SAGaming)) = 0 THEN 1
 										ELSE 0 END
@@ -216,8 +218,8 @@ Revisions:
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
 	-- For Sexy Gaming
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @IsHide = @IsHideSexyGaming OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 242, @IsHide = @IsHideGTCasino OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @SettingStatus = @SettingStatus, @IsHide = @IsHideSexyGaming OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 242, @SettingStatus = @SettingStatus, @IsHide = @IsHideGTCasino OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedSexyGaming =	CASE WHEN @IsHideSexyGaming = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SexyGaming)) = 0 THEN 1
 										ELSE 0 END,
@@ -244,7 +246,7 @@ Revisions:
 									ELSE @recommend END
 	
 	-- For ION
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @IsHide = @IsHide_ION OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 243, @SettingStatus = @SettingStatus, @IsHide = @IsHide_ION OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedION =	CASE WHEN @IsHide_ION = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_ION)) = 0 THEN 1
 										ELSE 0 END
@@ -263,7 +265,7 @@ Revisions:
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
 	-- For BBIN
-	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @IsHide = @IsHideBBIN OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 241, @SettingStatus = @SettingStatus, @IsHide = @IsHideBBIN OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedBBIN =	CASE WHEN @IsHideBBIN = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_BBIN)) = 0 THEN 1
 										ELSE 0 END
@@ -286,7 +288,7 @@ Revisions:
 	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 OR @AllowedSexyGaming = 1 OR @AllowedBBIN = 1 OR @AllowedGTCasino = 1 OR @AllowedION = 1 THEN 1
 								ELSE 0 END
 	-- For NG2
-	EXEC Acc_CheckShowProduct @ProductID = 23, @IsHide = @IsHideNG2 OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 23, @SettingStatus = @SettingStatus, @IsHide = @IsHideNG2 OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedNG2 =	CASE	WHEN @IsHideNG2 = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderNG2)) = 0 THEN 1
 										ELSE 0 END
@@ -306,7 +308,7 @@ Revisions:
 									ELSE @recommend END
 
 	-- For VS
-	EXEC Acc_CheckShowProduct @ProductID = 5, @IsHide = @IsHideVS OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 5, @SettingStatus = @SettingStatus, @IsHide = @IsHideVS OUTPUT
 	SELECT	@AllowedVS = CASE	WHEN @RoleID = 4 AND @IsHideVS = 0 THEN 1
 								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderVS) = 0 AND @IsHideVS = 0 THEN 1
 								ELSE 0
@@ -315,7 +317,7 @@ Revisions:
 	WHERE	cps.CustID = @CustID
 
 	-- For Virtual games
-	EXEC Acc_CheckShowProduct @ProductID = 38, @IsHide = @IsHideVG OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 38, @SettingStatus = @SettingStatus, @IsHide = @IsHideVG OUTPUT
 	SELECT	@AllowedVirtualGames = CASE	WHEN @RoleID = 4 AND @IsHideVG = 0 THEN 1
 								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VG) = 0 AND @IsHideVG = 0 THEN 1
 								ELSE 0
@@ -324,7 +326,7 @@ Revisions:
 	WHERE	cps.CustID = @CustID
 
 	-- For Saba
-	EXEC Acc_CheckShowProduct @ProductID = 42, @IsHide = @IsHideSaba OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 42, @SettingStatus = @SettingStatus, @IsHide = @IsHideSaba OUTPUT
 	IF @RoleID = 4
 		SELECT	@AllowedSabaClub =	CASE	WHEN @IsHideSaba = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Saba)) = 0 THEN 1
 										ELSE 0 END
