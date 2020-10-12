@@ -410,7 +410,8 @@ Revisions:
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
-
+	- 20201008@Winfred : New Super - Prefix Warning [Redmine: #142239]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -739,6 +740,7 @@ BEGIN
 		RETURN
 	END
 	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 	DECLARE @IsExists BIT 
 	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
 
@@ -751,7 +753,20 @@ BEGIN
 		SELECT @ErrCode = 101		
 		RETURN
 	END
-
+	
+	IF @Site  = '789y'	
+	BEGIN
+		IF EXISTS(SELECT 1 FROM Acc_SuperPrefix WITH(NOLOCK)
+			WHERE GroupName IN ('ACCUT','ACCYEN789','ACCYEN889')
+				AND Prefix = LEFT(@username,2)
+				AND AllowNewSuper = 0
+			)
+		BEGIN
+			SELECT @ErrMsg =  'The selected username prefix is not allowed for new supers anymore.',
+				@ErrCode = 205
+			RETURN		
+		END	
+	END
 	--check for allow play horseracing
 	
 
