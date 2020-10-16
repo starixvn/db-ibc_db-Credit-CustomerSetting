@@ -757,7 +757,7 @@ BEGIN
 	IF @Site  = '789y'	
 	BEGIN
 		IF EXISTS(SELECT 1 FROM Acc_SuperPrefix WITH(NOLOCK)
-			WHERE GroupName IN ('ACCUT','ACCYEN789','ACCYEN889')
+			WHERE GroupName IN ('ACCUT','ACCYEN789','ACCYEN889','ACCTEST')
 				AND Prefix = LEFT(@username,2)
 				AND AllowNewSuper = 0
 			)
