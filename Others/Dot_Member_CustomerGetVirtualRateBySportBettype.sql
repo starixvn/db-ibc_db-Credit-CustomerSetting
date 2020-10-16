@@ -13,7 +13,10 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@usertype			INT = 0, --0:default(MBC) 1:IMBC 2:CN88
                     @virtualMultiplier	SMALLMONEY	OUT,
 					@RefLevelID			INT = NULL,
-					@IsLowVR			BIT = 0                   
+					@IsLowVR			BIT = 0,
+					@CustomerClass		SMALLINT = NULL,         
+					@StakeRM			MONEY = NULL,
+					@virtualrate		SMALLMONEY = NULL
 AS
 /*
     Created: 20151019@joy
@@ -36,6 +39,7 @@ AS
 		-- 20200713@VN-Eden: VR Setting for Soccer By Hours from 3AM to 6AM (GMT+8) - Credit Only (exclude CN88) - REVOKE [#136378]
 		-- 20200610@VN-Eden: Virtual Rate for Basketball [Redmine: #134978]
 		-- 20200722@VN-Eden: VR setting for Basketball by member stake [Redmine: #138089]
+		-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
 
     Parameter's Explanation:
 */
@@ -43,11 +47,44 @@ BEGIN
     SET NOCOUNT ON
 	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00, @CurrentHKDate DATETIME, @CurrentHKTime TIME
 	
+	IF @usertype = 2 --CN88 : Not apply VR
+		GOTO ReturnVR;
+
+	SELECT @StakeRM = ISNULL(@StakeRM,0),
+		@CustomerClass = ISNULL(@CustomerClass,0)
+
 	IF @SportType = 1
 	BEGIN --For Soccer
 		SELECT @virtualMultiplier = NULL
+
 		IF @IsApplyVR2 = 0 --Get VR1
 		BEGIN
+			IF @IsLicensee = 0 
+				AND @StakeRM <= 80
+			BEGIN
+				IF @CustomerClass BETWEEN 8 AND 10
+				BEGIN
+					IF @virtualrate = 1
+					BEGIN
+						SELECT @virtualMultiplier = 1
+						GOTO ReturnVR; -- Apply CM
+					END
+					ELSE
+					BEGIN
+						SELECT @virtualMultiplier = 1
+						RETURN 
+					END
+				END
+				ELSE
+				BEGIN
+					SET @virtualMultiplier = 0.01
+					GOTO ReturnVR;
+				END 
+			END
+
+			IF ISNULL(@virtualrate,0) <> 1
+				RETURN
+
 			SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
 			FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
 			INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
@@ -58,9 +95,15 @@ BEGIN
 					AND pvs.islive = @isLive   
 					AND pvs.isActive=1 
 
-			IF @IsLowVR = 1 AND @virtualMultiplier < 1
+			IF @StakeRM < 500 AND @virtualMultiplier < 1 AND @IsLicensee = 1
 			BEGIN
 				SET @virtualMultiplier = 0.01
+				GOTO ReturnVR;
+			END
+			ELSE IF @StakeRM < 500 AND @StakeRM > 80 AND @virtualMultiplier < 1 AND @IsLicensee = 0
+			BEGIN
+				SET @virtualMultiplier = 0.01
+				GOTO ReturnVR;
 			END
 			ELSE
 			BEGIN
@@ -229,6 +272,8 @@ BEGIN
 				AND pvs.islive = @isLive   
 				AND pvs.isActive=1  
 	END
+
+	ReturnVR:
 
 	IF @virtualMultiplier IS NULL OR @usertype = 2 --CN88
 		SELECT @virtualMultiplier = 1
