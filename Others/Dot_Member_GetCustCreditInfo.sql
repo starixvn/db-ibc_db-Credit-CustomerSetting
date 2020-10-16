@@ -21,7 +21,9 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
 	@IsApplyVR2 BIT = 0,
 	@RefLevelID INT = NULL,
 	@IsLowVR BIT = 0,
-	@BetFrom NVARCHAR(1) = ''
+	@BetFrom NVARCHAR(1) = '',
+	@CustomerClass SMALLINT = NULL,     
+	@StakeRM MONEY = NULL
 AS
 /*
 --------------------------------------------------------------------------------
@@ -68,6 +70,7 @@ AS
 	-- 20200805@VN-Eden: VR setting for Basketball on some licensees from Desktop/China View [redmine: #138168]
 	-- 20200811@VN-Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
 	-- 20200826@VN-Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
+	-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
 */	
 BEGIN
 
@@ -162,7 +165,6 @@ BEGIN
 		from custinfo as ci with (nolock) 
 			join exchange as ex with (nolock) on  ci.currency = ex.exchangeid 
 		where ci.custid=@custid 
-	
 	
 	------------------------------------------------
 	-- 20181219@Vivi: add get UM flag
@@ -323,23 +325,22 @@ BEGIN
 		BEGIN
 			IF @bettype NOT BETWEEN 801 AND 806 --For Soccer, exclude SuperLive
 			BEGIN
-				IF @IsApplyVR2 = 1 --Get VR2
-					OR (@IsApplyVR2 = 0 AND @virtualrate = 1) -- Get VR1 
-				BEGIN
-					EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid									
-											, @sporttype = @sporttype_vrate
-											, @bettype = @bettype_vrate
-											, @OriginalSportType = @sporttype
-											, @OriginalBetType = @bettype
-											, @isLive = @liveindicator
-											, @isLicensee = @isLicensee
-											, @LeagueGroupID = @LeagueGroupID
-											, @IsApplyVR2 = @IsApplyVR2
-											, @srecommend = @srecommend
-											, @usertype = @usertype
-											, @virtualMultiplier = @new_virtualrate OUT
-											, @IsLowVR = @IsLowVR
-				END
+				EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid									
+										, @sporttype = @sporttype_vrate
+										, @bettype = @bettype_vrate
+										, @OriginalSportType = @sporttype
+										, @OriginalBetType = @bettype
+										, @isLive = @liveindicator
+										, @isLicensee = @isLicensee
+										, @LeagueGroupID = @LeagueGroupID
+										, @IsApplyVR2 = @IsApplyVR2
+										, @srecommend = @srecommend
+										, @usertype = @usertype
+										, @virtualMultiplier = @new_virtualrate OUT
+										, @IsLowVR = @IsLowVR
+										, @CustomerClass = @CustomerClass
+										, @StakeRM = @StakeRM
+										, @virtualrate = @virtualrate
 			END			
 		END
 		ELSE IF @sporttype IN(2, 43) --For Esports/BasketBall, get VR2
