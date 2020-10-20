@@ -74,12 +74,14 @@ BEGIN
 	SELECT c.custid,s.custid 
 	FROM #tmpSuper s
 		INNER JOIN dbo.customer c WITH (NOLOCK) ON s.custid = c.srecommend
+		LEFT JOIN #tmpMaster ma ON ma.custid = c.custid
 		OUTER APPLY (SELECT TOP 1 1 AS MO_total
 					FROM dbo.customer c1 WITH (NOLOCK)
 					WHERE c.custid = c1.mrecommend AND c1.roleid = 1
 						
 					) AS M0
-	WHERE c.roleid = 3 AND M0.MO_total IS NULL 
+	WHERE c.roleid = 3 AND M0.MO_total IS NULL
+		AND ma.custid IS NULL 
 		AND 1 = CASE WHEN @StageId = 1 AND c.creatdate < DATEADD(mm, -3, GETDATE()) THEN 1
 						 WHEN @StageId = 2 AND c.creatdate < DATEADD(mm, - 4, GETDATE()) THEN 1
 						 WHEN @StageId = 3 AND c.creatdate < DATEADD(mm, -7, GETDATE()) THEN 1
