@@ -4,6 +4,10 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Commission]
 	@playerdiscount DECIMAL(9,8),
 	@playerdiscountcs DECIMAL(9,8),	
 	@playerdiscount1x2 DECIMAL(9,8)=0,
+	-- Myanmar Odds
+	@IsMyanmarOdds BIT = 0,
+	@discountMyanmarOdds DECIMAL(9,8)=0,
+	@discountMyanmarOdds_old DECIMAL(9,8)=0,
 	
 	@updatecomm_old BIT = 1,
 	@SubAccID INT = 0, --Sub-AccountID
@@ -40,7 +44,9 @@ Revisions:
 	- 20131011@Elodie: Add HR Fixed Odds [Redmine:#6505]
 	- 20131029@Kathy: Apply exec rep to update commission [Redmine:#3244]
 	- 20150904@Helen: commission setting for MO [Redmine #41470]
-	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]		
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
+	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]		
+		
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -121,6 +127,19 @@ Param's Explanation:
 		from custInfo with(NOLOCK)
 		where custid = @custid
 
+		IF @IsMyanmarOdds = 1
+		BEGIN
+			-- Reset discount value in case its value > upline
+			SELECT @discountMyanmarOdds = CASE 
+												WHEN @discountMyanmarOdds > commRate THEN commRate
+												ELSE @discountMyanmarOdds   
+											END
+			FROM AgentCommRate WITH(NOLOCK)  
+			WHERE custid = @recommend   
+				AND sporttype = 1   
+				AND bettype = 1  
+		
+		END	
 			
 		-- Apply exec rep
 		
@@ -129,8 +148,9 @@ Param's Explanation:
 			@RoleId = @RoleId,
 			@groupa = @playerdiscount ,
 			@discountcs = @playerdiscountcs,			
-			@discount1x2 = @playerdiscount1x2
-
+			@discount1x2 = @playerdiscount1x2,
+			@discountMyanmarOdds = @discountMyanmarOdds,
+			@IsMyanmarOdds = @IsMyanmarOdds
 
 	END
 
@@ -143,6 +163,9 @@ Param's Explanation:
 	'playerdiscountcs="'+ coalesce(cast(@playerdiscountcs as varchar(50)),space(1)) + '" ' +
 	'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' 
 	
+	IF @IsMyanmarOdds = 1
+		SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds as varchar(50)),space(1)) + '" ' 
+		
 	SET @LogSPData = @LogSPData +
 	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
@@ -156,6 +179,8 @@ Param's Explanation:
 	'playerdiscountcs="'+ coalesce(cast(@Old_playerdiscountcs as varchar(50)),space(1)) + '" ' +
 	'playerdiscount1x2="'+ coalesce(cast(@Old_playerdiscount1x2 as varchar(50)),space(1)) + '" ' 
 	
+	IF @IsMyanmarOdds = 1
+		SET @TrackingValue2 = @TrackingValue2 + 'playerdiscountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds_old as varchar(50)),space(1)) + '" ' 
 	
 	SET @TrackingValue2 = @TrackingValue2 + 
 	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -185,7 +210,9 @@ Param's Explanation:
 		'playerdiscountcs="'+ coalesce(cast(@playerdiscountcs as varchar(50)),space(1)) + '" ' +
 		'playerdiscount1x2="'+ coalesce(cast(@playerdiscount1x2 as varchar(50)),space(1)) + '" ' 
 		
-			
+		IF @IsMyanmarOdds = 1 
+			SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds as varchar(50)),space(1)) + '" ' 
+						
 		SET @LogSPData = @LogSPData +
 		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
@@ -199,6 +226,8 @@ Param's Explanation:
 		'playerdiscountcs="'+ coalesce(cast(@Old_playerdiscountcs as varchar(50)),space(1)) + '" ' +
 		'playerdiscount1x2="'+ coalesce(cast(@Old_playerdiscount1x2 as varchar(50)),space(1)) + '" ' 
 		
+		IF @IsMyanmarOdds = 1 
+			SET @TrackingValue2 = @TrackingValue2 + 'playerdiscountMyanmarOdds="'+ coalesce(cast(@discountMyanmarOdds_old as varchar(50)),space(1)) + '" ' 		
 			
 		SET @TrackingValue2 = @TrackingValue2 +
 		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +

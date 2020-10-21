@@ -269,6 +269,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v161alivepositiontaking_89 smallmoney = 0.7,
     @v161alivepositiontaking_90 smallmoney = 0.7,
     
+    @discountMyanmarOdds DECIMAL(9,8)=0, -- Myanmar Odds
     
     @groupa decimal(9,8),
     @groupb decimal(9,8),
@@ -348,7 +349,8 @@ Revisions:
 	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
-
+	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
+	
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -472,7 +474,8 @@ Revisions:
 			@groupc_old decimal(9,8),
 			@groupd_old decimal(9,8),
 			@discountcs_old decimal(9,8),
-			@discount1x2_old decimal(9,8)
+			@discount1x2_old decimal(9,8),
+			@discountMyanmarOdds_old DECIMAL(9,8)
 
 	
 	select @groupa_old = groupa, @groupb_old = groupb, @groupc_old = groupc, @groupd_old = groupd
@@ -485,9 +488,20 @@ Revisions:
 	select @discount1x2_old = sdiscount
 	from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 5
 
+	-- For Myanmar Odds
+	DECLARE @IsMyanmarOdds BIT = 0
+	
+	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@custid)
+	
+	IF @IsMyanmarOdds = 1
+	BEGIN
+		-- Get old value
+		SET @discountMyanmarOdds_old = (SELECT CommRate FROM AgentCommRate WITH (NOLOCK) WHERE CustId = @custid AND Sporttype = 1 AND Bettype = 1)
+	END
 	
 	if (@groupa_old <> @groupa) or (@groupb_old <> @groupb) or (@groupc_old <> @groupc) or (@groupd_old <> @groupd)
 		or (@discountcs_old <> @discountcs) or (@discount1x2_old <> @discount1x2) 
+		or (@IsMyanmarOdds = 1 AND @discountMyanmarOdds <> @discountMyanmarOdds_old)
 		set @updatecomm_old = 1
 	else 
 		set @updatecomm_old = 0
@@ -504,6 +518,11 @@ Revisions:
 			@groupd = @groupd,
 			@discountcs = @discountcs,
 			@discount1x2 = @discount1x2,
+	        	        
+	        -- For Myanmar Odds
+	        @IsMyanmarOdds = @IsMyanmarOdds,
+	        @discountMyanmarOdds = @discountMyanmarOdds,
+	        @discountMyanmarOdds_old = @discountMyanmarOdds_old,
 	        
 			@updatecomm_old = @updatecomm_old,
 			@UserID = @UserID,

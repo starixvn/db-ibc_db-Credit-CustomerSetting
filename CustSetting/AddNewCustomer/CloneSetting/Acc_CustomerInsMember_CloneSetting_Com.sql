@@ -68,6 +68,8 @@ AS
 	- 20200102@Malcolm: Separate setting and notification into Live/Non-Live and bettypes [Redmine : 125076]
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
+	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+	
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -113,7 +115,6 @@ BEGIN
 	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @Enabled = ISNULL(Enabled, 0), @currency = currency
 	FROM dbo.CustInfo WITH(NOLOCK) 
 	WHERE custid = @ExistingCustid
-					
 	
 	--Not allow to create a IMBC customer from MBC customer and and vice versa
 	DECLARE @_Site VARCHAR(10)
@@ -126,7 +127,27 @@ BEGIN
 		SELECT @ErrMsg = 'Not allow to copy IMBC super setting to others and vice versa!',@ErrCode = 204								
 		RETURN	
 	END
+	
+-- For Myanmar Odds
+	DECLARE @IsMyanmarOdds_destination BIT = 0
+	DECLARE @IsMyanmarOdds_source BIT = 0
+	
+	SET @IsMyanmarOdds_destination = dbo.fn_IsMyanmarOddsBySite(@Site)
+	
+	SET @IsMyanmarOdds_source = dbo.fn_IsMyanmarOdds (@ExistingCustid)
 		
+	IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source and @IsMyanmarOdds_source = 1
+	BEGIN
+		SELECT @ErrMsg = 'Cannot copy Super from Myanmar Odds site(s) to ' + @Site +'.',@ErrCode = 200								
+		RETURN		
+	END	
+
+	IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source and @IsMyanmarOdds_destination = 1
+	BEGIN
+		SELECT @ErrMsg = 'Cannot copy Super from ' + @_Site +' to Myanmar Odds site(s).',@ErrCode = 201								
+		RETURN		
+	END
+	
 	IF @roleid <> 4
 	BEGIN		
 		 SELECT @ErrMsg = CASE @Language 

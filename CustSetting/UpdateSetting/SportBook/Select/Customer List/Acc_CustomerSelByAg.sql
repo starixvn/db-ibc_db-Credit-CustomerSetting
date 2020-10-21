@@ -87,6 +87,7 @@ BEGIN
 		- 20200504@Eden: ION Live casino [Redmine: #132323]		
 		- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
 		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
+		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]		
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -112,6 +113,9 @@ BEGIN
 		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0 AND IBCBetTypeID BETWEEN 1501 AND 1599
 	END CATCH
 	----- /Elodie @ 01 JUN 2015 -------------------
+	DECLARE @IsMyanmarOdds BIT = 0
+	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
+	
 	-- For DCS Product
     DECLARE	@bitmapOrder_MuayThai		INT 
 		,	@bitmapOrder_AllBet			INT
@@ -192,7 +196,7 @@ BEGIN
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1   
 	SET @Username = isnull(@Username, '')  
 	  
-	CREATE TABLE #memberList (custid int, rn int)
+	CREATE TABLE #memberList (custid int, rn int,playerdiscountMyanmarOdds DECIMAL (9,8), adiscountMyanmarOdds DECIMAL (9,8))
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL  AND @DoubleCommLosing =2 -- default condition: get all
 	BEGIN
@@ -494,7 +498,18 @@ BEGIN
 			WHERE rn BETWEEN @rowstart AND @rowend
 		END
 	END
-
+	-- For Myanmar Odds
+	IF @IsMyanmarOdds = 1
+	BEGIN
+		UPDATE T
+		SET playerdiscountMyanmarOdds = cc.playerdiscount,
+			adiscountMyanmarOdds = ac.CommRate
+		FROM #memberList T
+			INNER JOIN CustCommRate cc WITH (NOLOCK) ON T.custid = cc.CustId 
+			INNER JOIN AgentCommRate ac WITH (NOLOCK) ON ac.custid = @recommend AND cc.sporttype = ac.sporttype AND cc.bettype = ac.bettype
+		WHERE ac.Sporttype = 1 AND ac.Bettype = 1	
+	
+	END
 	;WITH src AS (
 		SELECT c.custid as custid
 			,rn
@@ -507,6 +522,8 @@ BEGIN
 			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.playerdiscount else 0 end) as playerdiscount1x2		
 
 			,min(case when g.IBCBetTypeID IS NOT NULL then cg.IsDisabled else 1 end) as DisableKeno
+			,ISNULL(C.playerdiscountMyanmarOdds,0) AS playerdiscountMyanmarOdds
+			,ISNULL(C.adiscountMyanmarOdds,0) AS adiscountMyanmarOdds
 		FROM #memberList c
 			LEFT JOIN CustSetting cs with(nolock) 
 				on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) )
@@ -514,7 +531,7 @@ BEGIN
 			LEFT JOIN CustGameType cg with(nolock) on c.custid = cg.custid
 			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID
 		WHERE rn between @rowstart and @rowend
-		GROUP BY c.custid, rn
+		GROUP BY c.custid, rn,c.playerdiscountMyanmarOdds,c.adiscountMyanmarOdds
 	)
 	
 	
@@ -541,7 +558,11 @@ BEGIN
 		ISNULL(m.DisableKeno,0) AS DisableKeno,	
 		ISNULL(ci.DisableGoldDeluxe,1) AS DisableGoldDeluxe,
 		ISNULL(ci.HideGoldDeluxe,1) AS HideGoldDeluxe,
-	
+		
+		-- MyanmarOdds
+		ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds,
+		ISNULL(m.playerdiscountMyanmarOdds,0) playerdiscountMyanmarOdds,
+		ISNULL(m.adiscountMyanmarOdds,0) adiscountMyanmarOdds,
 		-- For MuayThai
 		ISNULL(dbo.f_GetProductStatus(cps.bitmapIsDisabled, @bitmapOrder_MuayThai),1) AS DisableMuayThai,
 		CAST(CASE WHEN @IsHidden_MuayThai = 0 AND ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_MuayThai),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideMuayThai,
