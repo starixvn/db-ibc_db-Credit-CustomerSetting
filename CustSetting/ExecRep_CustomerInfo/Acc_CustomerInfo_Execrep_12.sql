@@ -25,6 +25,7 @@ AS
 	Revisions:
 		- 20200210@Elodie: Initial SP [Redmine:#116814]
 		- 20200720@Johnson: Add void time & Limit amount [redmine:#135253]
+		- 20201016@Elodie: Output all downline list is removed PA [Redmine:#141756]
 	Param's Explanation:
 		@Action: MarkProblem, RemoveReduceBetLimit
 		
@@ -204,6 +205,8 @@ BEGIN
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
 											FOR XML PATH('')),1,1,'')
+
+		SELECT @SuccessDownlineList = ISNULL(@SuccessDownlineList,'')
 	END
 	DROP TABLE #DownlineCust
 END
