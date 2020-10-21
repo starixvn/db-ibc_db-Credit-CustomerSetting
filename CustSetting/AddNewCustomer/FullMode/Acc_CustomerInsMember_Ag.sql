@@ -154,6 +154,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@v161alivepositiontaking_89 SMALLMONEY = 0,
 	@v161alivepositiontaking_90 SMALLMONEY = 0,
 
+	-- MyanmarOdds
+	@playerdiscountMyanmarOdds DECIMAL(9,8)=0,
+	
 	@IP VARCHAR(15)='',
 	@SystemID		TINYINT=1,
 	@success BIT = 1 OUTPUT,
@@ -307,6 +310,7 @@ Revisions:
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200309@Eden: Alpha - New function to let new member sign in via QR Code [Redmine: #129373]
+	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 
 Param's Explanation:	
 • @ErrCode:
@@ -1498,7 +1502,36 @@ BEGIN
 
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     DECLARE @IsValid BIT
+     -- MyanmarOdds
     
+	DECLARE @IsMyanmarOdds BIT = 0,@MyanmarOddsAgent decimal(9,8) = 0 
+	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
+	
+	IF @IsMyanmarOdds = 1 AND @ugroup <> 'a'
+	BEGIN
+	   SELECT	@ErrMsg = CASE @Language
+						    WHEN 'E' THEN 'The selected group is not allowed for this site'
+						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40055,@Language)
+						    END,
+			    @Success = 0, @ErrCode = 40055
+			    
+		
+	    RETURN	
+	END
+	
+	-- Reset discount value in case its value > upline
+	IF @IsMyanmarOdds = 1
+	BEGIN
+		SELECT @playerdiscountMyanmarOdds = CASE 
+											WHEN @playerdiscountMyanmarOdds > commRate THEN commRate
+											ELSE @playerdiscountMyanmarOdds  
+										END, @MyanmarOddsAgent = commRate  
+		FROM AgentCommRate WITH(NOLOCK)  
+		WHERE custid = @recommend
+			AND sporttype = 1   
+			AND bettype = 1 
+	END
+	
     EXEC dbo.Acc_CustomerInsMember_Ag_CheckParam
 		@custid = @custid OUTPUT,
 	    @playerdiscount=@playerdiscount,
@@ -1507,6 +1540,8 @@ BEGIN
 	    @MinBet=@MinBet,
 	    @MaxBet=@MaxBet,
 	    @MaxPerMatch=@MaxPerMatch,
+    	-- MyanmarOdds
+    	@discountMyanmarOdds = @playerdiscountMyanmarOdds,
     	
 	    @MinBetv2=@MinBetv2,
 	    @MaxBetv2=@MaxBetv2,
@@ -2998,7 +3033,9 @@ BEGIN
 		
 		@MinBetv164 = @MinBetv164,
 	    @MaxBetv164 = @MaxBetv164,
-    
+		-- MyanmarOdds
+		@IsMyanmarOdds = @IsMyanmarOdds,
+    	@discountMyanmarOdds = @playerdiscountMyanmarOdds,
 
 	    @ErrCode = @ErrCode OUTPUT
 
@@ -3594,12 +3631,19 @@ BEGIN
     --Log commission
     SELECT @LogSPData = '<Acc_CustomerInsMember_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'discount="'+ COALESCE(CAST(@discount AS VARCHAR(50)), SPACE(1)) + '" ' +
-    'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)), SPACE(1)) + '" ' +
-    'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+    'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)), SPACE(1)) + '" ' 
+    
+    IF @IsMyanmarOdds = 1
+		SET @LogSPData = @LogSPData + 'MyanmarOdds="'+ COALESCE(CAST(@MyanmarOddsAgent AS VARCHAR(50)), SPACE(1)) + '" ' 
+	
+    SELECT @LogSPData = @LogSPData + 'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +
     'playerdiscount="'+ COALESCE(CAST(@playerdiscount AS VARCHAR(50)), SPACE(1)) + '" ' +
     'playerdiscountcs="'+ COALESCE(CAST(@playerdiscountcs AS VARCHAR(50)), SPACE(1)) + '" ' +
     'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' 
-    
+   
+    IF @IsMyanmarOdds = 1
+		SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ COALESCE(CAST(@playerdiscountMyanmarOdds AS VARCHAR(50)), SPACE(1)) + '" ' 
+		
 	SET @LogSPData = @LogSPData + ' />' 
 	
     BEGIN TRY
@@ -3614,12 +3658,20 @@ BEGIN
 	    --Log commission
 	    SELECT @LogSPData = '<Acc_CustomerInsMember_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'discount="'+ COALESCE(CAST(@discount AS VARCHAR(50)), SPACE(1)) + '" ' +
-	    'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)), SPACE(1)) + '" ' +
+	    'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)), SPACE(1)) + '" '  
+    
+    IF @IsMyanmarOdds = 1
+		SET @LogSPData = @LogSPData + 'MyanmarOdds="'+ COALESCE(CAST(@MyanmarOddsAgent AS VARCHAR(50)), SPACE(1)) + '" ' 
+	
+    SELECT @LogSPData = @LogSPData +
 	    'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'playerdiscount="'+ COALESCE(CAST(@playerdiscount AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'playerdiscountcs="'+ COALESCE(CAST(@playerdiscountcs AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'playerdiscount1x2="'+ COALESCE(CAST(@playerdiscount1x2 AS VARCHAR(50)), SPACE(1)) + '" '     
 
+		IF @IsMyanmarOdds = 1
+			SET @LogSPData = @LogSPData + 'playerdiscountMyanmarOdds="'+ COALESCE(CAST(@playerdiscountMyanmarOdds AS VARCHAR(50)), SPACE(1)) + '" ' 
+			
 		SET @LogSPData = @LogSPData + 'errCode="'+ COALESCE(CAST(ERROR_NUMBER() AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'errMsg="'+ COALESCE(CAST(ERROR_MESSAGE() AS VARCHAR(4000)), SPACE(1)) + '" />'
 	    

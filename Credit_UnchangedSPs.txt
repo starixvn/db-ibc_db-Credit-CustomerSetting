@@ -1,1 +1,2 @@
-CustSetting\UpdateSetting\Update CustomerClass\Acc_CustomerUpdateCustomerClass.sql
+CustSetting\AddNewCustomer\CloneSetting\Acc_CustomerInsMember_CloneSetting_SAg.sql
+CustSetting\AddNewCustomer\CloneSetting\Acc_CustomerInsMember_CloneSetting_MAg.sql

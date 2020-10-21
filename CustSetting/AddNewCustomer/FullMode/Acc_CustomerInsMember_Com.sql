@@ -302,6 +302,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@DisableCasino BIT = 0, 
 	@DisableNumber BIT = 0,
 	@DoubleCommLosing BIT = 1,
+
+	-- MyanmarOdds
+	@discountMyanmarOdds DECIMAL(9,8)=0,
 	
 	@DisableGoldDeluxe BIT = 0,
 	@DisableSuperLive BIT = 1,
@@ -406,6 +409,7 @@ Revisions:
 	- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
+	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 
 Param's Explanation:
 • @ErrCode:
@@ -720,7 +724,8 @@ BEGIN
 				@v161alivepositiontaking_87 = @v161alivepositiontaking_87,
 				@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
 				@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
-							
+				
+				@discountMyanmarOdds = @discountMyanmarOdds, -- MyanmarOdds			
 				
 				@isvalid = @isvalid OUTPUT,
 				@errmsg = @errmsg OUTPUT,
@@ -852,6 +857,14 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END
+	
+	DECLARE @IsMyanmarOdds BIT = 0
+
+	SET @IsMyanmarOdds =  dbo.fn_IsMyanmarOddsBySite(@Site)
+	IF @IsMyanmarOdds = 1
+	BEGIN
+	   SELECT @groupb = 0, @groupc = 0, @groupd = 0		
+	END	
 			
 	EXEC dbo.Acc_CustomerInfo_Execrep_00
 		@custid = @custid,
@@ -1119,6 +1132,10 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		--comm 1x2
 		@discount1x2 = @discount1x2,
 	
+		-- Myanma Odds
+		@IsMyanmarOdds = @IsMyanmarOdds,
+		@discountMyanmarOdds = @discountMyanmarOdds,
+	
 		@ErrCode = @ErrCode OUTPUT
 
 	IF @ErrCode > 0
@@ -1210,7 +1227,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	--Write commission log
 	SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" '  +
 	'groupa="'+ COALESCE(CAST(@groupa AS VARCHAR(50)),SPACE(1)) + '" ' 
-
+   IF @IsMyanmarOdds = 0
 	SET @LogSPData = @LogSPData + 
 		'groupb="' + COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'groupc="' + COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1220,8 +1237,9 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' 
 
+	IF @IsMyanmarOdds = 1
+		SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
 	SET @LogSPData = @LogSPData + ' />'
-
 
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
@@ -1234,14 +1252,17 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	BEGIN CATCH
 		SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'groupa="'+ COALESCE(CAST(@groupa AS VARCHAR(50)),SPACE(1)) + '" ' 
-		
-		SET @LogSPData = @LogSPData +
-		'groupb="'+ COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'groupc="'+ COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'groupd="'+ COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
+		IF @IsMyanmarOdds = 0
+			SET @LogSPData = @LogSPData +
+			'groupb="'+ COALESCE(CAST(@groupb AS VARCHAR(50)),SPACE(1)) + '" ' +
+			'groupc="'+ COALESCE(CAST(@groupc AS VARCHAR(50)),SPACE(1)) + '" ' +
+			'groupd="'+ COALESCE(CAST(@groupd AS VARCHAR(50)),SPACE(1)) + '" ' 
 		SET @LogSPData = @LogSPData +
 		'discountcs="'+ COALESCE(CAST(@discountcs AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'discount1x2="'+ COALESCE(CAST(@discount1x2 AS VARCHAR(50)),SPACE(1)) + '" ' 	
+
+		IF @IsMyanmarOdds = 1
+			SET @LogSPData = @LogSPData + 'discountMyanmarOdds="'+ COALESCE(CAST(@discountMyanmarOdds AS VARCHAR(50)),SPACE(1)) + '" ' 
 
 		SET @LogSPData = @LogSPData + 'ErrMsg="'+ ERROR_MESSAGE() +	'" />'
 

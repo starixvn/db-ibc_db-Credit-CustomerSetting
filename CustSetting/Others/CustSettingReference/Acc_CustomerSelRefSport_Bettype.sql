@@ -29,6 +29,7 @@ AS
 		- 20190910@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
 		- 20200826@Elodie: Add NG Color Ball - [Redmine: #128220]
+		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -44,8 +45,9 @@ BEGIN
 			,@DisableNumber			BIT = 0 
 			,@HideNG2				BIT = 0 
 			,@HideVS				BIT = 0 
-			,@HideLottery			BIT = 0 
-			,@recommend				INT = 0
+			,@HideLottery			BIT = 0
+			,@IsMyanmarOdds			BIT = 0	   -- MyanmarOdds
+			,@srecommend			INT	
 			,@isIMBC				BIT = 0
 	
 	CREATE TABLE #tempRef (Bettype INT,GroupTypeId INT)	
@@ -71,7 +73,7 @@ BEGIN
 	BEGIN
 			SELECT	 @HideKeno			 = ci.HideKeno
 					,@DisableNumber		 = ci.DisableNumber
-					
+					,@srecommend		 = ci.srecommend
 			FROM	CustDB.dbo.CustInfo ci WITH (NOLOCK) 
 			WHERE	ci.CustID = @CustID
 
@@ -81,7 +83,9 @@ BEGIN
 			WHERE	cg.CustID = @CustID
 					AND g.IsDisabled = 0
 			
-
+			-- MyanmarOdds
+			SET @IsMyanmarOdds = CustDB.dbo.fn_IsMyanmarOdds(@srecommend)
+			
 			SELECT @HideNG2 = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,4))
 			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
 			WHERE CustID = @CustID	
@@ -98,21 +102,25 @@ BEGIN
 	
 	IF @RoleID = 1
 	BEGIN
-		SET @recommend = (SELECT recommend FROM DBCUST.CustDB.dbo.CustInfo WITH (NOLOCK) WHERE custid=@CustID)
+		SET @srecommend = (SELECT srecommend FROM DBCUST.CustDB.dbo.CustInfo WITH (NOLOCK) WHERE custid=@CustID)
+		SET @IsMyanmarOdds = CustDB.dbo.fn_IsMyanmarOdds(@srecommend)
 	END
-		
-	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef
+	IF @RoleID = 0
+		SET @IsMyanmarOdds = 1
+			
+	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
 	FROM	dbo.Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE	Sporttype NOT IN (
 				 --CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
 				CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
+				,CASE WHEN @IsMyanmarOdds = 0 AND Bettype IN (1,3,7,8) THEN 1 ELSE 0 END -- MyanmarOdds
 				,27, 50 -- Cricket
 			)
 			AND bettype NOT IN(SELECT Bettype FROM #tempRef)
 			AND isLicensee = 0 
 			AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
 	UNION ALL
-	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef
+	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
 	FROM Sport_Bettype_Reference
 	WHERE   Sporttype IN (27, 50)
 			AND [Site] IN (
@@ -125,7 +133,7 @@ BEGIN
 			AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
 	
 	UNION ALL 
-	SELECT DISTINCT Sporttype, Bettype, SporttypeRefPT, BettypeRefPT
+	SELECT DISTINCT Sporttype, Bettype, SporttypeRefPT, BettypeRefPT ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
 	FROM Sport_Bettype_Reference_Setting b WITH(NOLOCK)
 	WHERE   bettype NOT IN(SELECT Bettype FROM #tempRef)
 			AND isLicensee = 0

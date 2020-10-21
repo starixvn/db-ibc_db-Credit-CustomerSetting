@@ -672,6 +672,10 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v255adiscount_1701 decimal(9,8) = 0,
 	@v255sdiscount_1701 decimal(9,8) = 0,
 
+	-- Myanma Odds
+	@discountMyanmarOdds DECIMAL(9,8) = 0,
+	@IsMyanmarOdds BIT = 0,
+
 	@ErrCode INT = 0 OUTPUT
 	
  AS
@@ -719,6 +723,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20190520@Johnson: add @isSearchAndCopy & @copyFromCustID to support SC suspendInfo for member level [redmine: #105587]
 			- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 			- 20190805@Eden: Remove initial setting for inactive products (Colosus Bet)  [redmine: #118699]
+			- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+			
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
@@ -733,7 +739,9 @@ BEGIN
 		  AND dbo.f_CheckRepTable('CustOverrideGame') = 1 
 		  AND dbo.f_CheckRepTable('CustGameType') = 1
 		  AND dbo.f_CheckRepTable('ProductGlobalSetting') = 1 
-		  AND dbo.f_CheckRepTable('ProductBetSetting') = 1 
+		  AND dbo.f_CheckRepTable('ProductBetSetting') = 1
+		  AND dbo.f_CheckRepTable('AgentCommRate') = 1
+		  AND dbo.f_CheckRepTable('CustCommRate') = 1 
 	   )
 	BEGIN
 
@@ -2232,6 +2240,86 @@ BEGIN
 		--End Gold Deluxe
 	END
 	
+	-- For Myanma Odds
+	--DECLARE @DirectParentAgent INT 
+	
+	IF @roleid IN (2,3,4)
+	BEGIN
+		
+		--IF @roleid = 2 
+		--	SET @DirectParentAgent = @mrecommend 
+		--IF @roleid = 3 
+		--	SET @DirectParentAgent = @srecommend 
+		---- For Myanma Odds
+		--IF (@IsMyanmarOdds = 1 AND (@roleid = 4 OR EXISTS (SELECT 1 FROM AgentCommRate WITH (NOLOCK) WHERE CustID = @DirectParentAgent AND SportType = 1 AND Bettype = 1)))
+		IF (@IsMyanmarOdds = 1)
+		BEGIN
+			INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
+			SELECT @custid,1,1,@discountMyanmarOdds
+		END	
+		IF @@ERROR <> 0
+		BEGIN
+			--Error Occurs
+			SELECT @ErrCode=116
+			
+			-- ROLLBACK MANUALLY
+			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
+			DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
+			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
+			DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
+		
+			DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
+			DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
+			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
+			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid
+			
+			RETURN
+		END
+	
+	END
+	IF @roleid = 1
+	BEGIN
+		IF (@IsMyanmarOdds = 1)
+		BEGIN
+		
+			SELECT @CustID AS CustID,AC.SportType,AC.BetType,AC.CommRate,CI.roleid 
+			INTO #CustCommRate_MOtemp
+			FROM AgentCommRate ac WITH (NOLOCK)
+				JOIN custInfo ci WITH (NOLOCK) ON ac.CustID = ci.custid
+			WHERE ac.CustID IN (@srecommend,@mrecommend,@recommend) AND ac.Sporttype = 1 AND ac.Bettype = 1
+			
+			INSERT INTO CustCommRate (CustID,SportType,BetType,sdiscount,adiscount,discount,playerdiscount)
+			SELECT CustID,SportType,BetType,T.[4],T.[3],T.[2],@discountMyanmarOdds
+			FROM #CustCommRate_MOtemp
+			PIVOT(
+				SUM(CommRate)
+				FOR roleID IN ([2],[3],[4])
+			) AS T
+			
+				
+			IF @@ERROR <> 0
+			BEGIN
+				--Error Occurs
+				SELECT @ErrCode=116
+				
+				-- ROLLBACK MANUALLY
+				DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
+				DELETE dbo.CustSetting3rd WITH (ROWLOCK) WHERE custId = @custid
+				DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid
+				DELETE dbo.custOverride3rd WITH (ROWLOCK) WHERE custId = @custid
+			
+				DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
+				DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
+				DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
+				DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  = @custid
+				DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
+				
+				RETURN
+			END
+		END
+		
+	END
+	
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-START*/
 	DECLARE @DCSErrCode INT = 0
@@ -2260,6 +2348,8 @@ BEGIN
 		IF(dbo.f_CheckRepTable('CustSettingGame') = 1) DELETE dbo.CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		IF(dbo.f_CheckRepTable('CustOverrideGame') = 1) DELETE dbo.CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
 		IF(dbo.f_CheckRepTable('CustGameType') = 1) DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
+		IF(dbo.f_CheckRepTable('AgentCommRate') = 1) DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid		
+		IF(dbo.f_CheckRepTable('CustCommRate') = 1) DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/	
 END

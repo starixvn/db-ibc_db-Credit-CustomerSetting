@@ -14,7 +14,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@playerdiscount DECIMAL(9,8),  
 	@playerdiscountcs DECIMAL(9,8),  
 	@playerdiscount1x2 DECIMAL(9,8)=0,  
-	
+	@playerdiscountMyanmarOdds DECIMAL(9,8)=0, -- MyanmarOdds
 	@UpdateCommission BIT = 1,  
 
 	@MinBet MONEY,  
@@ -239,6 +239,8 @@ Revisions:
 	- 20190903@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
+		
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -387,7 +389,7 @@ BEGIN
 	 Declare @playerdiscount_old DECIMAL(9,8),  
 	   @playerdiscountcs_old DECIMAL(9,8),  
 	   @playerdiscount1x2_old DECIMAL(9,8),  
-	
+	   @discountMyanmarOdds_old DECIMAL(9,8)=0,	-- Myanmar Odds
 	   @updatecomm_old bit  
 	  
 		select @playerdiscount_old = playerdiscount  
@@ -399,10 +401,26 @@ BEGIN
 		select @playerdiscount1x2_old = playerdiscount  
 		from custsetting (nolock) where custid = @custid and sporttype = 1 and bettype = 5  
 
+		-- For Myanmar Odds
+		DECLARE @IsMyanmarOdds BIT = 0
+		DECLARE @recommend INT = NULL
+		
+		SELECT @recommend = recommend
+		FROM custInfo WITH (NOLOCK)
+		WHERE custid = @custid
+
+		SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
+			
+		IF @IsMyanmarOdds = 1
+		BEGIN
+			-- Get old value
+			SET @discountMyanmarOdds_old = (SELECT playerdiscount FROM CustCommRate WITH (NOLOCK) WHERE CustId = @custid AND Sporttype = 1 AND Bettype = 1)
+		END
 		
 			
 		if @playerdiscount_old <> @playerdiscount or @playerdiscountcs_old <> @playerdiscountcs   
-			or @playerdiscount1x2_old <> @playerdiscount1x2 
+			or @playerdiscount1x2_old <> @playerdiscount1x2
+			OR (@IsMyanmarOdds = 1 AND @playerdiscountMyanmarOdds <> @discountMyanmarOdds_old) -- Myanmar Odds
 			set @updatecomm_old = 1  
 		else   
 			set @updatecomm_old = 0 
@@ -416,6 +434,10 @@ BEGIN
 	   @playerdiscount1x2 = @playerdiscount1x2,  
 	  
 	   -- For Myanmar Odds
+	   @IsMyanmarOdds = @IsMyanmarOdds,
+	   @discountMyanmarOdds = @playerdiscountMyanmarOdds,
+	   @discountMyanmarOdds_old = @discountMyanmarOdds_old,
+	   
 	   @updatecomm_old = @updatecomm_old,  
 	   @SubAccID = @SubAccID,  
 	   @UserID = @UserID,  

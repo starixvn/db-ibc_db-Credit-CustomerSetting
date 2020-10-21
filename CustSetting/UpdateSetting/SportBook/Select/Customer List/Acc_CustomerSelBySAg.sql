@@ -82,7 +82,8 @@ AS
 		- 20200504@Eden: ION Live casino [Redmine: #132323]
 		- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
 		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
-
+		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+		
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -187,7 +188,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 222, @IsHide = @IsHidden_TableGames OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @Sporttype = 224, @IsHide = @IsHidden_RNGWar OUTPUT
 
-	CREATE TABLE #customer(custid INT primary key, RowNumber INT)
+	CREATE TABLE #customer(custid INT primary key, RowNumber INT, adiscountMyanmarOdds DECIMAL (9,8), IsMyanmarOdds BIT)
 							
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @DoubleCommLosing = 2
 	BEGIN
@@ -508,6 +509,18 @@ BEGIN
 				) t
 			WHERE rownumber BETWEEN @rowstart AND @rowend 			
 		END
+	END
+	
+	-- MyanmarOdds
+	DECLARE @IsMyanmarOdds BIT = 0	
+	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds(@srecommend)
+	IF @IsMyanmarOdds = 1
+	BEGIN
+		UPDATE T
+			SET adiscountMyanmarOdds = ac.CommRate, t.IsMyanmarOdds = @IsMyanmarOdds
+		FROM #customer T
+			JOIN AgentCommRate ac WITH (NOLOCK) ON T.custid = AC.CustId 
+		WHERE ac.Sporttype = 1 AND ac.Bettype = 1		
 	END
 	
 	-- get data for filtered customers
@@ -861,6 +874,10 @@ BEGIN
 			ctm.DisableRNGWar,
 			ctm.HideRNGWar,
 			ctm.HideRNGWarUpline,
+			-- MyanmarOdds
+			ISNULL(t.IsMyanmarOdds,0) AS IsMyanmarOdds,
+			ISNULL(t.adiscountMyanmarOdds,0) AS discountMyanmarOdds,
+			
 			ISNULL(cl.ClosedReason,0)  AS ClosedReason,
 			RowNumber
 			
