@@ -286,6 +286,7 @@ BEGIN
 										, @CustomerClass = @CustomerClass
 										, @StakeRM = @StakeRM
 										, @virtualrate = @virtualrate
+										, @BetFrom = @BetFrom
 			END			
 		END
 		ELSE IF @sporttype = 43 --For Esports, get VR2
