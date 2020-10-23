@@ -16,7 +16,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@IsLowVR			BIT = 0,
 					@CustomerClass		SMALLINT = NULL,         
 					@StakeRM			MONEY = NULL,
-					@virtualrate		SMALLMONEY = NULL
+					@virtualrate		SMALLMONEY = NULL,
+					@BetFrom			NVARCHAR(1) = ''
 AS
 /*
     Created: 20151019@joy
@@ -59,10 +60,26 @@ BEGIN
 
 		IF @IsApplyVR2 = 0 --Get VR1
 		BEGIN
+			SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
+			FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
+			INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
+					ON  cvs.seqNo = pvs.seqNo
+			WHERE       cvs.custid = @CustID
+					AND pvs.sporttype = @SportType
+					AND pvs.bettype = @BetType
+					AND pvs.islive = @isLive   
+					AND pvs.isActive=1 
+
+			IF @virtualMultiplier IS NULL
+			BEGIN
+				SELECT @virtualMultiplier = 1
+				RETURN 
+			END
+
 			IF @IsLicensee = 0 
 				AND @StakeRM <= 80
 			BEGIN
-				IF @CustomerClass BETWEEN 8 AND 10
+				IF @CustomerClass BETWEEN 8 AND 10 OR @BetFrom = 'P'
 				BEGIN
 					IF @virtualrate = 1
 					BEGIN
@@ -83,17 +100,10 @@ BEGIN
 			END
 
 			IF ISNULL(@virtualrate,0) <> 1
-				RETURN
-
-			SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
-			FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
-			INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
-					ON  cvs.seqNo = pvs.seqNo
-			WHERE       cvs.custid = @CustID
-					AND pvs.sporttype = @SportType
-					AND pvs.bettype = @BetType
-					AND pvs.islive = @isLive   
-					AND pvs.isActive=1 
+			BEGIN
+				SELECT @virtualMultiplier = 1
+				RETURN 
+			END
 
 			IF @StakeRM < 500 AND @virtualMultiplier < 1 AND @IsLicensee = 1
 			BEGIN
