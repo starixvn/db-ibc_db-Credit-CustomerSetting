@@ -19,12 +19,15 @@ BEGIN
 	FROM dbo.f_SplitString(@CustIDs,',')
 	OPTION (MAXRECURSION 0)
 	
+	/*
 	WHILE(1=1)
 	BEGIN
-		DELETE TOP(5000) bodb02.dbo.custinfo WITH (ROWLOCK)
+		DELETE TOP(5000) dbo.custinfo WITH (ROWLOCK)
 		WHERE	custid IN (SELECT custid FROM @tmpCust) 
 	
 		IF @@ROWCOUNT < 5000 
 			BREAK
 	END
+	*/
+	
 END	
