@@ -137,19 +137,20 @@ BEGIN
 			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.username= t.Super
 		WHERE t.IsFinished = 0
 			AND c.roleid = 4
-		
-		UPDATE t
-			SET ErrMsg = '', IsFinished = 1
-		FROM tmpCustArchived t (ROWLOCK)
-			INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
-		WHERE ci.Enabled = 0
+		--UPDATE t
+		--	SET ErrMsg = '', IsFinished = 1
+		--FROM tmpCustArchived t (ROWLOCK)
+		--	INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
+		--WHERE ci.Enabled = 0 AND ci.credit = 0 
 		
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
-			SELECT TOP 1 @agent = Agent, @recommend = recommend FROM tmpCustArchived WITH (NOLOCK) WHERE IsFinished = 0	
+			SELECT TOP 1 @agent = Agent, @recommend = recommend 
+			FROM tmpCustArchived WITH (NOLOCK) 
+			WHERE IsFinished = 0	
 			IF (@@ROWCOUNT = 0) BREAK
-	
+		
 			EXEC dbo.DBA_ArchiveAccount2_DisableAgentLine @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT, @srecommend = @srecommend OUTPUT, @mrecommend = @mrecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT
 			
 			UPDATE tmpCustArchived 

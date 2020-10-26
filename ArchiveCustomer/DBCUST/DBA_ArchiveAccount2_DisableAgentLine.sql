@@ -50,6 +50,8 @@ END
 
 if @Enabled = 0
 BEGIN
+	-- agent disabled before but some tables not backup in phase 1 yet
+	EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
 	Select @ErrMsg = @AccName +':'+ 'This agent has been archived!!', @ErrCode = 101
 	print @ErrMsg
 	return
@@ -102,7 +104,7 @@ END
 --Pre-check: Make sure cust info data not exist in DBRACCUST before backup
 IF EXISTS(
 	SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) 
-	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID AND roleid = 1)
+	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
 	)
 BEGIN
 	-- agent disabled before but some tables not backup in phase 1 yet
@@ -409,6 +411,7 @@ WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and 
 -----------------------------------------------------------------------------------------------------------
 
 -- update enable = 0, credit = 0 for whole agent line (use new execRep SP)
+
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 0
 
 ----------------------------------------------------------------

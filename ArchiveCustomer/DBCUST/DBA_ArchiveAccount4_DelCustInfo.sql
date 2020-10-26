@@ -60,6 +60,13 @@ END
 --PERFORM DELETE MEMBERS INFO
 --===============================
 
+DECLARE @CustIDs VARCHAR(MAX) = ''
+
+SELECT @CustIDs = @CustIDs + cast(custid AS VARCHAR(10)) + ','
+FROM custinfo with (nolock) where recommend = @AgentID	
+
+--EXEC DBPRO.bodb02.dbo.DBA_ArchiveAccount4_DelCustInfo_ForDBPRO @CustIDs = @CustIDs
+
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 2 
 ----------------------------------------------------------------
 print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)

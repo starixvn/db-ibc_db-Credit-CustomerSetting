@@ -52,7 +52,7 @@ BEGIN
 
 	--== Check new created members ==========================
 
-	IF EXISTS(SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE srecommend = @SuperID AND roleid = 1 AND creatdate >= DATEADD(mm, -3, GETDATE()))
+	IF EXISTS(SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE srecommend = @SuperID AND roleid IN (1,2,3) AND creatdate >= DATEADD(mm, -3, GETDATE()))
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This master just created new members while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg,4) 
@@ -62,7 +62,8 @@ BEGIN
 
 	--== Check new active trans ==========================
 
-	IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans WITH (NOLOCK) WHERE srecommend = @SuperID AND bettype <> 20000 and custid <> 0)
+	IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans WITH (NOLOCK) WHERE recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE srecommend = @SuperID AND roleid = 2)
+			 AND bettype < 19999 and custid <> 0)
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg,4) 
@@ -70,7 +71,7 @@ BEGIN
 		RETURN
 	END
 
-	IF EXISTS(select 1 from DBTXN.bodb02.dbo.translog WITH (NOLOCK) WHERE srecommend = @SuperID)
+	IF EXISTS(select 1 from DBTXN.bodb02.dbo.translog WITH (NOLOCK) WHERE recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE srecommend = @SuperID AND roleid = 2))
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg,4) 
@@ -78,7 +79,7 @@ BEGIN
 		RETURN
 	END
 
-	IF EXISTS(SELECT 1 FROM DBTXN.bodb02.dbo.bettransLC WITH (NOLOCK) WHERE srecommend = @SuperID)
+	IF EXISTS(SELECT 1 FROM DBTXN.bodb02.dbo.bettransLC WITH (NOLOCK) WHERE recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE srecommend = @SuperID AND roleid = 2))
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg,4) 
@@ -86,7 +87,7 @@ BEGIN
 		RETURN
 	END
 
-	IF EXISTS(SELECT 1 FROM DBTXN.bodb02.dbo.bettransRNG with (nolock) where srecommend = @SuperID)
+	IF EXISTS(SELECT 1 FROM DBTXN.bodb02.dbo.bettransRNG with (nolock) where recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE srecommend = @SuperID AND roleid = 2))
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg,4) 
