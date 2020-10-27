@@ -69,6 +69,7 @@ AS
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+	- 20201008@Winfred : New Super - Prefix Warning [Redmine: #142239]
 	
  Explanation's Param:  
 	- @ErrCode:
@@ -108,7 +109,20 @@ BEGIN
 				,@ErrCode = 201
 		RETURN		
 	END	
-
+	
+	IF @Site  = '789y'	
+	BEGIN
+		IF EXISTS(SELECT 1 FROM Acc_SuperPrefix WITH(NOLOCK)
+			WHERE GroupName IN ('ACCUT','ACCYEN789','ACCYEN889','ACCTEST')
+				AND Prefix = LEFT(@username,2)
+				AND AllowNewSuper = 0
+			)
+		BEGIN
+			SELECT @ErrMsg =  'The selected username prefix is not allowed for new supers anymore.',
+				@ErrCode = 205
+			RETURN		
+		END	
+	END
 	-- Check role of existing super
 	DECLARE @existingUsername VARCHAR(30),@roleid tinyint, @Enabled BIT, @currency INT
 	
