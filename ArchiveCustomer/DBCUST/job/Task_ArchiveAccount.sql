@@ -321,6 +321,7 @@ BEGIN
 	END
 	ELSE IF(@stage = 3)
 	BEGIN
+		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
 		WHILE(1=1)
 		BEGIN
