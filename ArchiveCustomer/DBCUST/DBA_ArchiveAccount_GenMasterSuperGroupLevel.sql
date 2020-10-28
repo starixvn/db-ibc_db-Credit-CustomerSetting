@@ -32,10 +32,10 @@ BEGIN
 	INSERT INTO #tmpMaster (username, custid)
 	SELECT DISTINCT m.username, ag.mrecommend
 	FROM dbo.tmpCustArchived t WITH (NOLOCK)
-		INNER JOIN dbo.Customer ag WITH (NOLOCK) ON ag.custid = t.recommend
-		INNER JOIN dbo.Customer m WITH (NOLOCK) ON m.custid = ag.mrecommend
-	WHERE ISNULL(t.ErrMsg,'') = ''
-
+		INNER JOIN dbo.custInfo ag WITH (NOLOCK) ON ag.custid = t.recommend
+		INNER JOIN dbo.custInfo m WITH (NOLOCK) ON m.custid = ag.mrecommend
+	WHERE ISNULL(t.ErrMsg,'') = '' OR t.ErrMsg LIKE '%archived%'
+		
 	/*
 		Count number of agents for each master
 			- Count in TmpCustArchive
@@ -43,9 +43,10 @@ BEGIN
 	*/
 	INSERT INTO dbo.tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
 	SELECT DISTINCT c.custid, c.roleid
-		,CASE WHEN mem.AgentCount = mem2.AgentCount THEN 'M1' ELSE 'M2' END AS GroupLevelName /*Match -> M1, Not Match -> M2*/
+		,CASE WHEN mem.AgentCount = mem2.AgentCount AND rules.isValid = 1
+				 THEN 'M1' ELSE 'M2' END AS GroupLevelName /*Match -> M1, Not Match -> M2*/
 		,@StageId
-	FROM customer c WITH (NOLOCK)
+	FROM custinfo c WITH (NOLOCK)
 		INNER JOIN #tmpMaster t ON t.custid = c.custid
 		OUTER APPLY (
 			SELECT COUNT(1) AgentCount
@@ -58,7 +59,13 @@ BEGIN
 			WHERE ag.roleid = 2
 				AND ag.mrecommend = t.custid
 		)mem2
-
+		OUTER APPLY (SELECT  CASE 
+								WHEN @StageId = 2 AND c.closed = 0 THEN 0 
+								WHEN @StageId IN (3,4) AND c.enabled = 1 THEN 0			 
+								ELSE 1
+							END AS isValid
+					)rules
+				
 	/*Detect S1, S2 from list M1*/
 	INSERT INTO #tmpSuper (custid, MasterArchivedCount)
 	SELECT c.srecommend, ISNULL(COUNT(t.custid),0)
@@ -96,16 +103,19 @@ BEGIN
 		AND 1 = CASE WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0			 
 				ELSE 1 END
-		
+		AND c.username NOT LIKE 'IBC%'
+		AND c.username NOT IN ('M527','SA-RMB001','MBRM')		
+	
+	-- Insert S1, S2	
 	INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
 	SELECT DISTINCT c.custid, c.roleid
-		,CASE WHEN m.MasterCount = (ISNULL(t.MasterArchivedCount,0) + ISNULL(m0.MasterCount_M0,0)) THEN 'S1' ELSE 'S2' END AS GroupLevelName /*Match -> S1, Not Match -> S2*/
+		,CASE WHEN rules.isValid = 1 AND m.MasterCount = (ISNULL(t.MasterArchivedCount,0) + ISNULL(m0.MasterCount_M0,0)) THEN 'S1' ELSE 'S2' END AS GroupLevelName /*Match -> S1, Not Match -> S2*/
 		,@StageId
-	FROM customer c WITH (NOLOCK)
+	FROM custinfo c WITH (NOLOCK)
 		INNER JOIN #tmpSuper t ON t.custid = c.custid
 		OUTER APPLY (
 			SELECT COUNT(1) MasterCount
-			FROM customer WITH (NOLOCK)
+			FROM custinfo WITH (NOLOCK)
 			WHERE roleid = 3
 				AND srecommend = t.custid
 		)m
@@ -113,7 +123,13 @@ BEGIN
 			SELECT COUNT(1) MasterCount_M0
 			FROM #tmpMaster_DetectM0 t1 WITH (NOLOCK)
 			WHERE t1.srecommend = t.custid
-		)m0		
+		)m0
+		OUTER APPLY (SELECT  CASE 
+								WHEN @StageId = 2 AND c.closed = 0 THEN 0 
+								WHEN @StageId IN (3,4) AND c.enabled = 1 THEN 0			 
+								ELSE 1
+							END AS isValid
+					)rules		
 	
 	/*Get list Super from list M2 into S3*/
 	INSERT INTO dbo.tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
@@ -145,7 +161,8 @@ BEGIN
 					 WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0
 					ELSE 1 
-				END		
+				END
+						
 	-- Master have no downline, its Super not in list processing
 	-- Insert M0 - Master have no downline, its Super not in list processing
 	CREATE TABLE #Super_Exception (srecommend INT)
@@ -200,6 +217,7 @@ BEGIN
 	SELECT DISTINCT c.srecommend
 	FROM tmpCustGroupLevelArchived t WITH (NOLOCK)
 		INNER JOIN customer c WITH (NOLOCK) ON t.custid = c.custid 
+		INNER JOIN customer super WITH (NOLOCK) ON super.custid = c.srecommend
 		INNER JOIN DBCUST.CUSTDB.dbo.CustSuper cm WITH (NOLOCK) ON cm.custid = c.srecommend
 		LEFT JOIN #Super_Exception se ON se.srecommend = c.custid
 		LEFT JOIN tmpCustGroupLevelArchived ts WITH (NOLOCK) ON ts.custid = c.srecommend
@@ -209,13 +227,23 @@ BEGIN
 		AND se.srecommend IS NULL
 		AND c.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
 		AND c.currency NOT IN (20, 72)	
-		AND c.site <> 'cn88'	
-	
+		AND c.site <> 'cn88'
+		AND super.roleid = 4	
+		AND super.username NOT LIKE '3rdSuper%'
+		AND super.username IN ('STAFF', 'SA-UUS', 'LC-RM', 'U3S',
+			'OPS-RM', 'OPS-RMB', 'OPS-HKK', 'OPS-THB', 'OPS-IDD', 'OPS-US$', 'OPS-GBP'--CSD request internal use @20180424
+		)
+		AND super.username NOT LIKE 'SuperTest%'
+		AND super.username NOT LIKE 'STEST%'
+		AND super.username NOT LIKE 'SIBC%'
+		AND super.username NOT LIKE '%ACCSuper%'
+		
 	INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
 	SELECT DISTINCT t.custid, 4
 		,'S1' GroupLevelName 
 		,@StageId
 	FROM #tmpSuper_M0 t WITH (NOLOCK)
+		INNER JOIN custInfo ci WITH (NOLOCK) ON ci.custid = t.custID
 		LEFT JOIN tmpCustGroupLevelArchived ar_s WITH (NOLOCK) ON ar_s.custid = t.custID
 		OUTER APPLY (
 			SELECT COUNT(1) MasterCount
@@ -231,9 +259,15 @@ BEGIN
 				AND ci.srecommend = t.custid
 				AND ar.GroupLevelName = 'M0'
 		)m2
+			
 	WHERE m1.MasterCount = m2.MasterCount
 		AND ar_s.custid IS NULL
-	
+		AND 1 = CASE 
+					WHEN @StageId = 1 AND ci.closed = 1 THEN 0
+					WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
+					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0
+					ELSE 1 
+				END	
 	-- Remove M0 if super <> S1
 	DELETE t
 	FROM tmpCustGroupLevelArchived t

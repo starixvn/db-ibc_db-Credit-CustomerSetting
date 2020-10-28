@@ -222,6 +222,7 @@ BEGIN
 						, @S1M1_username = username
 						, @roleid_tmp = roleid
 						, @GroupLevelName = GroupLevelName
+						, @custid = custid
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
 				
@@ -237,8 +238,10 @@ BEGIN
 					BEGIN
 						IF @roleid_tmp = 3
 						BEGIN
-							UPDATE #ReduceCredit
-								SET ReduceCredit = ReduceCredit + @ReduceCredit
+							UPDATE r
+								SET ReduceCredit = r.ReduceCredit + @ReduceCredit - t.ReduceCredit
+							FROM #ReduceCredit r
+								CROSS APPLY (SELECT	ReduceCredit FROM #ReduceCredit WHERE CustId = @custid) AS t	
 							WHERE CustId = @srecommend
 						END
 					END	
