@@ -143,6 +143,8 @@ BEGIN
 		--	INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
 		--WHERE ci.Enabled = 0 AND ci.credit = 0 
 		
+		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
+		
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
