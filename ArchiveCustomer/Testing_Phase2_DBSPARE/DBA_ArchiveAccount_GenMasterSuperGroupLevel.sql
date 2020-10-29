@@ -234,7 +234,7 @@ BEGIN
 		AND c.site <> 'cn88'
 		AND super.roleid = 4	
 		AND super.username NOT LIKE '3rdSuper%'
-		AND super.username IN ('STAFF', 'SA-UUS', 'LC-RM', 'U3S',
+		AND super.username NOT IN ('STAFF', 'SA-UUS', 'LC-RM', 'U3S',
 			'OPS-RM', 'OPS-RMB', 'OPS-HKK', 'OPS-THB', 'OPS-IDD', 'OPS-US$', 'OPS-GBP'--CSD request internal use @20180424
 		)
 		AND super.username NOT LIKE 'SuperTest%'
