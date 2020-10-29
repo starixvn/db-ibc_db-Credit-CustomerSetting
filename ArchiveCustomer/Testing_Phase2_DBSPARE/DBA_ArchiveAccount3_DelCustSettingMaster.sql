@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSPARECustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBSPARE-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [DBA_ArchiveAccount3_DelCustSettingMaster]
 	@AccName varchar(50),
 	@UserID int = 360418,
