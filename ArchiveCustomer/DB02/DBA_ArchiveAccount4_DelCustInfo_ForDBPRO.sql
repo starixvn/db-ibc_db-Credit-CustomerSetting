@@ -19,7 +19,6 @@ BEGIN
 	FROM dbo.f_SplitString(@CustIDs,',')
 	OPTION (MAXRECURSION 0)
 	
-	/*
 	WHILE(1=1)
 	BEGIN
 		DELETE TOP(5000) dbo.custinfo WITH (ROWLOCK)
@@ -28,6 +27,4 @@ BEGIN
 		IF @@ROWCOUNT < 5000 
 			BREAK
 	END
-	*/
-	
 END	

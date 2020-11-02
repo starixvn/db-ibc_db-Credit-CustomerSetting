@@ -13,7 +13,8 @@ AS
 	DB: DBCUST/CustDB
 	
 	Revisions:
-		20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
+		- 20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
+		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Delete custinfo for DBPRO - [Redmine:130032]
 
 */
     
@@ -65,7 +66,7 @@ DECLARE @CustIDs VARCHAR(MAX) = ''
 SELECT @CustIDs = @CustIDs + cast(custid AS VARCHAR(10)) + ','
 FROM custinfo with (nolock) where recommend = @AgentID	
 
---EXEC DBPRO.bodb02.dbo.DBA_ArchiveAccount4_DelCustInfo_ForDBPRO @CustIDs = @CustIDs
+EXEC DBPRO.bodb02.dbo.DBA_ArchiveAccount4_DelCustInfo_ForDBPRO @CustIDs = @CustIDs
 
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 2 
 ----------------------------------------------------------------
