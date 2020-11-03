@@ -157,6 +157,7 @@ Revisions:
 	- 20200311@Elodie: Suspicious account [Redmine:#129119]
 	- 20200602@Sol: Check IsAutoEnableADBMaster to enable ADB on Mater or not[Redmine: #134242]
 	- 20200722@Johnson: add void time & limit amount for problem account [redmine: #135253]
+	- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 	
 	Param's Explanation:
 • @ErrCode:
@@ -174,6 +175,13 @@ BEGIN
 	
 	IF @currency = 45 --Gold Deluxe doesn't support WON currency [Redmine: #41785]
 		SELECT @HideGoldDeluxe = 1, @DisableGoldDeluxe = 1
+
+	IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value will get site from agent
+	BEGIN
+		SELECT @site = cus.[site]
+		FROM Customer cus WITH (NOLOCK)
+		WHERE cus.custid = @recommend
+	END
 		
     INSERT INTO Customer   			
 			    (username, firstname, lastname, phone, mobilephone, fax, email, address,
