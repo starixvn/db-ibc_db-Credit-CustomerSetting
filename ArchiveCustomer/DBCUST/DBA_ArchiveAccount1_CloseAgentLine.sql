@@ -15,6 +15,7 @@ DB: DBCUST/CustDB
 Revisions:    
 	- 20180126@Daniel: cloned from DBA_ArchiveAccount0_CloseAgent & change:
 	  + add close all downline members (use execRep)
+	- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]  
 	  
 	
 */
@@ -40,7 +41,7 @@ END
 if @Enabled = 0
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent has been archived!!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 	
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 	
 	print @ErrMsg
 	return
 END
@@ -48,7 +49,7 @@ END
 if @Closed = 1
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent has already been CLOSED!!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 	
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 	
 	print @ErrMsg
 	return
 END
@@ -59,7 +60,7 @@ END
 IF EXISTS(select 1 from dbo.customer with (nolock) where recommend = @AgentID AND roleid = 1 AND creatdate >= DATEADD(mm, -3, GETDATE()))
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just created new members while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -69,7 +70,7 @@ END
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -77,7 +78,7 @@ END
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.translog with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -85,7 +86,7 @@ END
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransLC with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -93,7 +94,7 @@ END
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransRNG with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END

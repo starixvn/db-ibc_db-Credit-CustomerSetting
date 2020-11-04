@@ -18,7 +18,7 @@ Revisions:
 	- 20131108@Elodie: Splitting bodb02 into CustDB (call CustInfo, Exchange by link database)
 	- 20160211@Daniel: Add more check for any active transaction & use new SPs update balance
     - 20180320@Daniel: rename SP to count stage from 1 => No. 3 for this stage
-	
+	- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 	
 Note:
 --Pre-check needed:
@@ -65,7 +65,7 @@ END
 IF EXISTS(select 1 from dbo.bettrans with (nolock) where recommend = @AgentID AND bettype < 20000)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID) VALUES(@AgentID) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2) 
 	print @ErrMsg
 	return
 END
@@ -73,7 +73,7 @@ END
 IF EXISTS(select 1 from dbo.translog with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID) VALUES(@AgentID) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2) 
 	print @ErrMsg
 	return
 END
@@ -81,7 +81,7 @@ END
 IF EXISTS(select 1 from dbo.bettransLC with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID) VALUES(@AgentID) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2)
 	print @ErrMsg
 	return
 END
@@ -89,7 +89,7 @@ END
 IF EXISTS(select 1 from dbo.bettransRNG with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID) VALUES(@AgentID) 
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2) 
 	print @ErrMsg
 	return
 END
@@ -122,6 +122,8 @@ BEGIN
 		inner join CustDB.dbo.exchange e  (nolock) on c.currency = e.exchangeid 
 	WHERE  c.recommend = @AgentID AND c.roleid = 1
 	
+	IF @@ROWCOUNT = 0
+		RETURN
 END	
 
 print @AccName +':'+ 'Temp Table Done:' + convert(varchar(50), getdate(), 113)	

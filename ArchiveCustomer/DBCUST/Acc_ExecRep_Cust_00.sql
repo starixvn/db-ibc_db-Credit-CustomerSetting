@@ -16,7 +16,7 @@ AS
 		20190925@Daniel: Remove SP Recompile & involve more setting tables
 		20191217@Daniel: Remove delete custsearch due to perf issue
 		20200922@Helen: Remove old table [Redmine:130032]
-
+		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 	Param's Explanation:
 		@Type: 
 			+ -1-Stage 1: update closed = 1 for whole agent line
@@ -70,7 +70,7 @@ BEGIN
 				FROM dbo.CustVirtualSetting WITH(ROWLOCK,UPDLOCK)
 				WHERE custid IN (SELECT custid 
 								 FROM custinfo WITH(NOLOCK) 
-								 WHERE roleid = 1 AND recommend = @AgentID
+								 WHERE recommend = @AgentID
 								)
 				IF @@ROWCOUNT < 10000
 					BREAK
@@ -85,7 +85,7 @@ BEGIN
 			WHILE(1=1)
 			BEGIN
 				DELETE TOP(10000) dbo.CustSetting WITH (UPDLOCK,ROWLOCK)
-				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) WHERE roleid = 1 AND recommend = @AgentID)
+				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) WHERE recommend = @AgentID)
 						
 				IF @@ROWCOUNT < 10000 
 					BREAK
@@ -94,7 +94,7 @@ BEGIN
 			WHILE(1=1)
 			BEGIN
 				DELETE TOP(10000) dbo.CustSetting3rd WITH (UPDLOCK,ROWLOCK)
-				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) WHERE roleid = 1 AND recommend = @AgentID)
+				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) WHERE recommend = @AgentID)
 							
 				IF @@ROWCOUNT < 10000
 					BREAK			
@@ -109,8 +109,7 @@ BEGIN
 			BEGIN
 				DELETE TOP(10000) dbo.[CustSettingGame] WITH (UPDLOCK,ROWLOCK)
 				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-									WHERE roleid = 1 
-										AND recommend = @AgentID
+									WHERE recommend = @AgentID
 										)
 				IF @@ROWCOUNT < 10000 
 					BREAK
@@ -120,8 +119,7 @@ BEGIN
 			BEGIN
 				DELETE TOP(10000) dbo.[CustGameType] WITH (UPDLOCK,ROWLOCK)
 				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-										WHERE roleid = 1 
-											AND recommend = @AgentID
+										WHERE  recommend = @AgentID
 											)
 				IF @@ROWCOUNT < 10000 
 					BREAK
@@ -143,18 +141,6 @@ BEGIN
 				BREAK
 		END
 
-		--IF dbo.f_CheckRepTable('CustCommRate') = 1 		
-		--WHILE(1=1)
-		--BEGIN
-		--	DELETE TOP(10000) dbo.CustCommRate WITH (ROWLOCK)
-		--	WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-		--						WHERE roleid = 1 
-		--							AND recommend = @AgentID
-		--							)
-		--	IF @@ROWCOUNT < 10000 
-		--		BREAK
-		--END
-
 		IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1 		
 		WHILE(1=1)
 		BEGIN
@@ -172,8 +158,7 @@ BEGIN
 		BEGIN
 			DELETE TOP(10000) dbo.CustProductStatus WITH (ROWLOCK)
 			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
+								WHERE  recommend = @AgentID
 									)
 			IF @@ROWCOUNT < 10000 
 				BREAK
@@ -348,7 +333,7 @@ BEGIN
 			WHILE(1=1)
 			BEGIN
 				DELETE TOP(10000) dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
-				WHERE	roleid = 1 AND recommend = @AgentID 
+				WHERE	recommend = @AgentID 
 				IF @@ROWCOUNT < 10000
 					BREAK
 
@@ -356,7 +341,7 @@ BEGIN
 			WHILE(1=1)
 			BEGIN
 				DELETE TOP(10000) dbo.Customer WITH (UPDLOCK,ROWLOCK)
-				WHERE	roleid = 1 AND recommend = @AgentID 
+				WHERE	recommend = @AgentID 
 				IF @@ROWCOUNT < 10000
 					BREAK			
 			END

@@ -24,9 +24,9 @@ AS
 		- 20190929@Daniel: Involve more setting tables
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200922@Helen: Remove old table [Redmine:130032]
+		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 
 */
-   
     
 SET NOCOUNT ON
 
@@ -50,6 +50,8 @@ END
 
 if @Enabled = 0
 BEGIN
+	-- agent disabled before but some tables not backup in phase 1 yet
+	EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
 	Select @ErrMsg = @AccName +':'+ 'This agent has been archived!!', @ErrCode = 101
 	print @ErrMsg
 	return
@@ -60,7 +62,7 @@ END
 IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE recommend = @AgentID AND creatdate >= DATEADD(mm, -4, GETDATE()))
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just created new members while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID,@ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -70,7 +72,7 @@ END
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID, @ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -78,7 +80,7 @@ END
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.translog with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID, @ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -86,7 +88,7 @@ END
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransLC with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID, @ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -94,7 +96,7 @@ END
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransRNG with (nolock) where recommend = @AgentID)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID, @ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -102,11 +104,13 @@ END
 --Pre-check: Make sure cust info data not exist in DBRACCUST before backup
 IF EXISTS(
 	SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) 
-	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID AND roleid = 1)
+	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
 	)
 BEGIN
+	-- agent disabled before but some tables not backup in phase 1 yet
+	EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
 	Select @ErrMsg = @AccName +':'+ 'Backup data of this agent already exist. Please check!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (AgentID, ErrMsg) VALUES(@AgentID, @ErrMsg) 
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
 	print @ErrMsg
 	return
 END
@@ -148,7 +152,7 @@ select [custid],[firstname],[lastname],[address] ,[postal],[city]
       ,[ugroup],[logincount],[on_sessionid],[site],[iplogin]
       ,[important],[srecommend],[username2]
 from	customer (nolock)
-where	custid IN (	select custid from custinfo with (nolock) where roleid = 1 and recommend = @AgentID)
+where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
 
 --Copy agent+members' custinfo to bodb_Customer 
 insert into DBARCCUST.bodb_Customer.dbo.custinfo_old(
@@ -238,7 +242,7 @@ select 	custid,
 		isautompositiontaking,
 		isautolivempositiontaking  
 from	custSetting (nolock) 
-where	custid IN (	select custid from custinfo with (nolock) where roleid = 1 and recommend = @AgentID)
+where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
 
 --Copy custSetting3rd data to bodb_Customer 
 insert into DBARCCUST.bodb_Customer.dbo.custSetting3rd_old(
@@ -290,7 +294,7 @@ SELECT	[custid]
       ,[autolivempositiontaking]
       ,[isautolivempositiontaking]
 FROM	CustSetting3rd WITH (NOLOCK)
-WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)		
+WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE recommend = @AgentID)		
 
 --- copy DBTRANS.BODB02.dbo.CustSettingGame data to DB05.bodb_Customer.dbo.CustSettingGame_Old
 INSERT INTO DBARCCUST.bodb_Customer.dbo.CustSettingGame_Old(
@@ -323,24 +327,24 @@ SELECT CustID
 		,autompositiontaking
 		,isautompositiontaking
 FROM [dbo].[CustSettingGame] WITH(NOLOCK)
-WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID AND roleid = 1)
+WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID)
 
 --- copy DBTRANS.BODB02.dbo.CustGameType data to DB05.bodb_Customer.dbo.CustGameType_Old
 INSERT INTO DBARCCUST.bodb_Customer.dbo.CustGameType_Old(CustID, GameTypeID, StakeLevelList, MaxPerGameType, MinBet, MaxBet, IsDisabled)
 SELECT CustID, GameTypeID, StakeLevelList, MaxPerGameType, MinBet, MaxBet, IsDisabled
 FROM [dbo].CustGameType WITH(NOLOCK)
-WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID AND roleid = 1)
+WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID)
 
 
 --- copy DBTRANS.BODB02.dbo.CustVirtualSetting data to DB05.bodb_Customer.dbo.CustVirtualSetting_Old
 IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustVirtualSetting_Old WITH(NOLOCK) 
-	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID AND roleid = 1)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID)
 	)
 BEGIN
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustVirtualSetting_Old(custid, seqNo, bitmapVirtual)
 	SELECT custid, seqNo, bitmapVirtual
 	FROM [dbo].CustVirtualSetting WITH(NOLOCK)
-	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID AND roleid = 1)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID )
 END	
 
 
@@ -353,14 +357,7 @@ SELECT	CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch
 FROM	CustBetSetting3rd_Member WITH (NOLOCK)
 WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)			
 
---insert into DBARCCUST.bodb_Customer.dbo.CustCommRate_old(
---	CustID, SportType, BetType, sdiscount, adiscount, discount, playerdiscount
---) 
---SELECT	CustID, SportType, BetType, sdiscount, adiscount, discount, playerdiscount
---FROM	CustCommRate WITH (NOLOCK)
---WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
-
-insert into DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Member_old(
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Member_old(
 	CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount
 ) 
 SELECT	CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount
@@ -372,7 +369,7 @@ insert into DBARCCUST.bodb_Customer.dbo.CustProductStatus_old(
 ) 
 SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
 FROM	CustProductStatus WITH (NOLOCK)
-WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
+WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE recommend = @AgentID)
 
 insert into DBARCCUST.bodb_Customer.dbo.CustPTSetting3rd_Member_old(
 	 CustID, SportType, BetType, IsLive, SuperPT, MasterPT, AgentPT, IsAutoMasterPT, AutoMasterPT, IsAutoSuperPT, AutoSuperPT
@@ -414,6 +411,7 @@ WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and 
 -----------------------------------------------------------------------------------------------------------
 
 -- update enable = 0, credit = 0 for whole agent line (use new execRep SP)
+
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 0
 
 ----------------------------------------------------------------

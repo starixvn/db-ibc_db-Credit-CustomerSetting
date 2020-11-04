@@ -15,6 +15,7 @@ AS
 		- 20190327@Daniel: Add custom scan start date and use permanent preloaded tempCustID table
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200807@Helen: Remove hardcode supers (allow negative given credit for members) since fixed already in Alpha Site [Redmine: #130032]
+		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		
 	Param's Explanation:
 */
@@ -85,9 +86,9 @@ FROM bodb_report.dbo.tmpCustArchived ag WITH (NOLOCK)
 		) mem ON mem.recommend = agci.custid
 	LEFT JOIN #Super_Exception se ON se.srecommend = agci.srecommend
 WHERE ag.isFinished = 1
-	AND isnull(MemCount, 0) > 0
+	--AND isnull(MemCount, 0) > 0
 	AND agci.closed = 1
-	AND agci.enabled = 1
+	--AND agci.enabled = 1
 	AND ag.recommend NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
 	AND agci.custid NOT IN (
 		SELECT DISTINCT recommend
@@ -118,10 +119,10 @@ FROM customer ag WITH (NOLOCK)
 		GROUP BY recommend
 		) mem ON mem.recommend = agci.custid
 WHERE ag.roleid = 2
-	AND isnull(MemCount, 0) > 0
+	--AND isnull(MemCount, 0) > 0
 	AND (ag.creatdate < @startdate)
 	AND agci.closed = 1
-	AND agci.enabled = 1
+	--AND agci.enabled = 1
 	AND ca.isInternal = 0
 	AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
 	AND ag.custid NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
