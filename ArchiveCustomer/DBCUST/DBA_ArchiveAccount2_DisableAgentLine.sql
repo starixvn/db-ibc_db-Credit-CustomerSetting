@@ -25,6 +25,7 @@ AS
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200922@Helen: Remove old table [Redmine:130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+		- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
 
 */
     
@@ -431,6 +432,6 @@ set @duration  = datediff (millisecond,@startRun,@endRun)
 EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@UserID = @UserID,
 	@CustID = @AgentID,
-	@ActionID = 1500,
+	@ActionID = 1178,
 	@TrackingValue = @LogSPData	,
 	@duration = @duration

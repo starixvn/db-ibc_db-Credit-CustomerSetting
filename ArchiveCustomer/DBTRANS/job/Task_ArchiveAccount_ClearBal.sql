@@ -10,7 +10,7 @@ AS
 	Revisions:
 		- 20190708@Daniel: Created
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
-
+		- 20201105@Helen: Phase 2&3 - Include transfer A1, A0, M1, M0 to upline [Redmine: #130032]
 */
 BEGIN
 
@@ -106,7 +106,7 @@ BEGIN
 			INNER JOIN dbo.CustInfo CI WITH (NOLOCK) ON ar.custid = CI.custid
 			INNER JOIN dbo.custInfo super WITH (NOLOCK) ON super.custid = ci.srecommend AND super.roleid = 4
 			INNER JOIN dbo.exchange e ON e.exchangeid = ci.currency
-		WHERE ar.GroupLevelName = 'M1' AND ar.roleid = 3	
+		WHERE ar.GroupLevelName IN ('M1','M0') AND ar.roleid = 3	
 		
 		IF EXISTS (SELECT TOP (1) 1 FROM #MasterToSuper_Transfer)
 		BEGIN
