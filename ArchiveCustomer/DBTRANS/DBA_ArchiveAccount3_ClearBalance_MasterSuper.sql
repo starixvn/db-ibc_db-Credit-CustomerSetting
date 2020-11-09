@@ -135,25 +135,5 @@ BEGIN
 		
 	END	
 		
-		
 	--------------------------END:Master-Super-------------------------------	
-	print @mastername +':'+ 'Master Done:' + convert(varchar(50), getdate(), 113)
-	------------------
-	declare @LogSPData varchar(5000)
-
-	Select @LogSPData = '<DBA_ArchiveAccount3_ClearBalance_MasterSuper AccName="'+ coalesce(cast(@supername as varchar(50)),space(1))+ '" ' +
-						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+ '" ' +
-						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1))  + '"/>'
-						
-	set @endRun = getdate()
-	set @duration  = datediff (millisecond,@startRun,@endRun)
-						
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-		@UserID = @UserID,
-		@CustID = @srecommend,
-		@ActionID = 1504,
-		@TrackingValue = @LogSPData,
-		@duration = @duration
-
 END
