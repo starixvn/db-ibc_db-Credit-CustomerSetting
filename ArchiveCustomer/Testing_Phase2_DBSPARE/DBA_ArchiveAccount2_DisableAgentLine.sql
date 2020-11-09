@@ -25,6 +25,7 @@ AS
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200922@Helen: Remove old table [Redmine:130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+		- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
 
 */
     
@@ -33,7 +34,6 @@ SET NOCOUNT ON
 -- simulate run date based on test data version
 declare @currentDate smalldatetime 
 select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
-
 
 declare @startRun datetime
 declare @endRun datetime
@@ -64,7 +64,7 @@ END
 
 
 --==Check new created members
-IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE recommend = @AgentID AND creatdate >= DATEADD(mm, -4, @currentdate))
+IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE recommend = @AgentID AND creatdate >= DATEADD(mm, -4, @currentDate))
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just created new members while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
@@ -433,9 +433,9 @@ Select @LogSPData = '<DBA_ArchiveAccount2_DisableAgentLine AccName="'+ coalesce(
 set @endRun = getdate()
 set @duration  = datediff (millisecond,@startRun,@endRun)
 
-EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@UserID = @UserID,
 	@CustID = @AgentID,
-	@ActionID = 1500,
+	@ActionID = 1178,
 	@TrackingValue = @LogSPData	,
 	@duration = @duration

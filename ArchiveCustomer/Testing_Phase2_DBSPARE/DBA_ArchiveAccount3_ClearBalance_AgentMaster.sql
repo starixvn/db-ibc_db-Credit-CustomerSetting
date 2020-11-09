@@ -19,6 +19,7 @@ ALTER PROCEDURE [DBA_ArchiveAccount3_ClearBalance_AgentMaster]
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+			- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
 */
 AS
 BEGIN
@@ -32,7 +33,7 @@ BEGIN
 	print  'Start:' + convert(varchar(50), getdate(), 113)
 
 	Declare @refno bigint, @grefno int, @Now datetime, @Enabled bit, @AgentBalance MONEY
-
+	
 	--==========================================================
 	--CREATING TEMP TABLES
 	--==========================================================
@@ -130,26 +131,6 @@ BEGIN
 		END
 		
 	END	
-		
-		
 	--------------------------END:Agent-Master-------------------------------	
-	print @agentname +':'+ 'Master cursor Done:' + convert(varchar(50), getdate(), 113)
-	------------------
-	declare @LogSPData varchar(5000)
-
-	Select @LogSPData = '<DBA_ArchiveAccount3_ClearBalance_AgentMaster AccName="'+ coalesce(cast(@agentname as varchar(50)),space(1))+ '" ' +
-						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+ '" ' +
-						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1))  + '"/>'
-						
-	set @endRun = getdate()
-	set @duration  = datediff (millisecond,@startRun,@endRun)
-						
-	EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-		@UserID = @UserID,
-		@CustID = @recommend,
-		@ActionID = 1502,
-		@TrackingValue = @LogSPData,
-		@duration = @duration
-
 END
+
