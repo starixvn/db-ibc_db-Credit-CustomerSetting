@@ -4,10 +4,11 @@ RETURNS TABLE
 AS
 /*
 Created: 20200629@Eden
-Task :  get sporttype/Settingtype have UM
+Task :  get UM config data by CustID
 DB: DBCUST.CustDB
 Revisions:	
 	- 20200629@Eden: Minimize UM Time - Lock Update Customer setting [Redmine: #136464]
+	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 Param's Explanation:
 Examples : 
 	SELECT * FROM [dbo].[f_CustSetting_SportUMByCust](1)
@@ -24,7 +25,8 @@ RETURN
 			c.Time_Stamp,
 			c.FunctionType,
 			ISNULL(s.siteid,ags.siteid) AS SiteID,
-			cu.currency
+			cu.currency,
+			c.LockAddingNew
 	FROM customer cu WITH(NOLOCK)
 		INNER JOIN customer su WITH(NOLOCK) ON cu.srecommend = su.custid
 		LEFT JOIN customer ag WITH(NOLOCK) ON cu.recommend = ag.custid
