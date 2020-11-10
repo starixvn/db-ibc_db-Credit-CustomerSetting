@@ -311,6 +311,7 @@ Revisions:
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200309@Eden: Alpha - New function to let new member sign in via QR Code [Redmine: #129373]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 
 Param's Explanation:	
 • @ErrCode:
@@ -321,14 +322,13 @@ Param's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @SiteAgent NVARCHAR(50)
-	SELECT @SiteAgent = site FROM customer WITH(NOLOCK) WHERE CustID = @recommend
 
-	EXEC [dbo].[Acc_BlockNewCust_Check]
-		@Site  = @SiteAgent,
-		@Language = @Language,
-		@ErrCode = @ErrCode OUTPUT , 
-		@ErrMsg = @ErrMsg OUTPUT
+	EXEC [Acc_CheckUM] @CustID = @recommend
+		,@FunctionType = 2
+		,@ErrCode = @ErrCode OUTPUT
+		,@ErrMsg = @ErrMsg OUTPUT
+		,@ReturnUMData = 0
+		,@Language = @Language
 
 	IF @ErrCode <> 0 RETURN
 

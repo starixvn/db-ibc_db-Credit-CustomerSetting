@@ -411,6 +411,7 @@ Revisions:
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20201008@Winfred : New Super - Prefix Warning [Redmine: #142239]
+	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	
 Param's Explanation:
 • @ErrCode:
@@ -421,6 +422,50 @@ Param's Explanation:
 */
 BEGIN
 	SET NOCOUNT ON
+
+	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
+	DECLARE @SiteID int
+	SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
+
+	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
+	
+	SELECT t.SportType,t.SiteID,t.Currency,t.BeginTime,t.EndTime
+	INTO #UMConfig
+	FROM UMConfig t WITH(NOLOCK)
+	WHERE CONVERT(SMALLDATETIME,GETDATE()) BETWEEN t.BeginTime AND t.EndTime
+		AND t.Currency IN (0,@currency)
+		AND t.SiteID IN (0,@siteid)
+		AND (t.FunctionType = 2 
+			 OR (t.FunctionType = 1 AND t.LockAddingNew = 1)
+			 )
+		AND t.SuperID = 0
+	
+	--Delete Non-offered Products
+	DELETE ft
+	FROM #UMConfig ft
+		INNER JOIN SportNonOfferedSiteCurrency nof WITH(NOLOCK)
+			ON ft.SportType = nof.SportType
+			AND nof.siteID IN (ft.SiteID, 0)
+			AND nof.Currency IN (ft.Currency, 0)
+	WHERE NOT EXISTS(	SELECT 1 
+						FROM ProductSettingDetail p WITH(NOLOCK) 
+						WHERE nof.SportType = p.SportType 
+							AND nof.BetType <> p.BetType 
+							AND p.SettingStatus = 0 
+					)
+
+	SELECT @FromTime = CONVERT(VARCHAR,MIN(dateadd(HH,12,t.BeginTime)),103) + ' ' + LTRIM(LEFT(CONVERT(VARCHAR, MIN(dateadd(HH,12,t.BeginTime)),8),5)),
+		  @ToTime = CONVERT(VARCHAR,MAX(dateadd(HH,12,t.EndTime)),103) + ' ' + LTRIM(LEFT(CONVERT(VARCHAR, MAX(dateadd(HH,12,t.EndTime)),8),5))
+	FROM #UMConfig t
+
+	IF @FromTime IS NOT NULL AND @ToTime IS NOT NULL
+	BEGIN
+		SELECT @ErrCode = 90016
+			 , @ErrMsg =   REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](90016,@Language),'<FromTime>',@FromTime),'<ToTime>',@ToTime)
+
+		RETURN
+	END
+	------------------------------END----------------------------------------
 	
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
 	DECLARE @tmpUserid VARCHAR(50)
@@ -435,14 +480,6 @@ BEGIN
 		SELECT @ErrCode = 103, @ErrMsg ='You don''t have permission to access'
 		RETURN
 	END
-	
-	EXEC [dbo].[Acc_BlockNewCust_Check]
-		@Site  = @site,
-		@Language = @Language,
-		@ErrCode = @ErrCode OUTPUT , 
-		@ErrMsg = @ErrMsg OUTPUT
-
-	IF @ErrCode <> 0 RETURN
 
 	----- Elodie @ 01 JUN 2015 -------------------
 		DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)

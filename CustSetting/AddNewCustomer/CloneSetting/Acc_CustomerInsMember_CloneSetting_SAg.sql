@@ -86,6 +86,7 @@ AS
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200602@Sol: Check IsAutoEnableADBMaster to enable ADB on Mater or not[Redmine: #134242]
 	- 20200722@Johnson: add void time & limit amount for problem account [redmine:#135253]
+	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -97,6 +98,15 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
+
+	EXEC [Acc_CheckUM] @CustID = @ExistingCustid
+		,@FunctionType = 2
+		,@ErrCode = @ErrCode OUTPUT
+		,@ErrMsg = @ErrMsg OUTPUT
+		,@ReturnUMData = 0
+		,@Language = @Language
+
+	IF @ErrCode <> 0 RETURN
 	
 --20140619@Johnson: Check IP to create downline-----------------
 	DECLARE @isValidIP bit
@@ -149,14 +159,6 @@ BEGIN
 	WHERE custid = @ExistingCustid
 	
 	SET @site = (SELECT Site FROM dbo.Customer WITH (NOLOCK) WHERE custid = @ExistingCustid)
-	
-	EXEC [dbo].[Acc_BlockNewCust_Check]
-		@Site  = @site,
-		@Language = @Language,
-		@ErrCode = @ErrCode OUTPUT , 
-		@ErrMsg = @ErrMsg OUTPUT
-
-	IF @ErrCode <> 0 RETURN
 
 	IF ( NOT (@roleid = 3 AND @existingSrecommend = @srecommend))
 	BEGIN		

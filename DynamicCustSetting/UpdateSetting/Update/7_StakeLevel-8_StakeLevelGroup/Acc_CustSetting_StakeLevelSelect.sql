@@ -17,6 +17,7 @@ AS
 		- 20200407@Elodie: Sort by sport, bettype, stakelevelID [Redmine: #131363]
 		- 20200414@Tiara: Add input param Setting type, add MaxChoice column [Redmine: #131171]
 		- 20200610@Elodie: Don't show stake level of super don't offer the product [Redmine: #135510]
+		- 20200909@Winfred: Sort by sport, bettype, MaxStake [Redmine: #131589]
 	Param's Explanation:
 */
 BEGIN
@@ -39,7 +40,8 @@ BEGIN
 					,	BetType			INT
 					,	StakeLevelID	INT
 					,	StakeLevelName	NVARCHAR(100)
-					,	isChecked		BIT
+					,	isChecked		BIT	 
+					,	MaxStake		DECIMAL(19,8)
 					)
 
 
@@ -66,8 +68,8 @@ BEGIN
 	IF	@RoleID = 4
 	BEGIN
 		INSERT INTO	#CustStakeLevel
-			(	SportType     , BetType     , StakeLevelID   , StakeLevelName                  , isChecked)
-		SELECT	sbtf.SportType, sbtf.BetType, sl.StakeLevelID, sl.MinLabel + N' - ' + sl.MaxLabel, 0
+			(	SportType     , BetType     , StakeLevelID   , StakeLevelName                  , isChecked ,MaxStake)
+		SELECT	sbtf.SportType, sbtf.BetType, sl.StakeLevelID, sl.MinLabel + N' - ' + sl.MaxLabel, 0  ,sl.MaxStake
 		FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
 			INNER JOIN	#SportBetTypeFilter AS sbtf ON	sbtf.BetType = sl.GameTypeID
 			INNER JOIN CustStakeLevel_Agent cs ON sbtf.SportType = cs.SportType AND sbtf.BetType = cs.BetType
@@ -80,8 +82,8 @@ BEGIN
 	BEGIN
 	
 	    INSERT INTO	#CustStakeLevel
-			(	SportType     , BetType     , StakeLevelID   , StakeLevelName                  , isChecked)
-		SELECT	csla.SportType,	csla.BetType, sl.StakeLevelID, sl.MinLabel + N' - ' + sl.MaxLabel, 0
+			(	SportType     , BetType     , StakeLevelID   , StakeLevelName                  , isChecked ,MaxStake)
+		SELECT	csla.SportType,	csla.BetType, sl.StakeLevelID, sl.MinLabel + N' - ' + sl.MaxLabel, 0  ,sl.MaxStake
 		FROM		dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
 		INNER JOIN	#SportBetTypeFilter AS sbtf
 				ON	sbtf.SportType = csla.SportType
@@ -134,7 +136,7 @@ BEGIN
 	END;
 
 	-- View result
-	SELECT DISTINCT	csl.SportType
+	SELECT csl.SportType
 		,	csl.BetType
 		,	csl.StakeLevelID
 		,	csl.StakeLevelName
@@ -142,7 +144,7 @@ BEGIN
 		, ISNULL(S.MaxChoice,'') AS MaxChoice
 	FROM	#CustStakeLevel AS csl WITH (NOLOCK)
 		INNER JOIN #SportBetTypeFilter S WITH (NOLOCK) ON S.SportType = CSL.SportType AND S.BetType = CSL.BetType
-
+	ORDER BY csl.SportType, csl.BetType  ,csl.MaxStake
 	-- Cleanup
 	DROP TABLE #CustStakeLevel
 	DROP TABLE #SportBetTypeFilter
