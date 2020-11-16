@@ -126,17 +126,14 @@ BEGIN
 	BEGIN
 							
 		INSERT INTO #ReduceCredit (CustId,srecommend,RoleID,Credit)
-		SELECT DISTINCT c.custid, c.srecommend, 3,credit
-		FROM dbo.tmpCustArchived t WITH (NOLOCK)
-			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.username= t.Master
-		WHERE t.IsFinished = 0
-			AND c.roleid = 3
+		SELECT c.custid, c.srecommend, 3,credit
+		FROM (SELECT DISTINCT Master FROM dbo.tmpCustArchived  WITH (NOLOCK)  WHERE IsFinished = 0) AS t
+			CROSS APPLY (SELECT custid,srecommend,credit FROM dbo.custInfo c1 WITH (NOLOCK) WHERE c1.username= t.Master and c1.roleid = 3) AS c
 		UNION ALL
-		SELECT DISTINCT c.custid, c.custid, 4,credit
-		FROM dbo.tmpCustArchived t WITH (NOLOCK)
-			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON c.username= t.Super
-		WHERE t.IsFinished = 0
-			AND c.roleid = 4
+		SELECT c.custid, c.custid, 4,credit
+		FROM (SELECT DISTINCT super FROM dbo.tmpCustArchived  WITH (NOLOCK)  WHERE IsFinished = 0) AS t
+			CROSS APPLY (SELECT custid,credit FROM dbo.custInfo c1 WITH (NOLOCK) WHERE c1.username= t.Super and c1.roleid = 4) AS c
+		
 		--UPDATE t
 		--	SET ErrMsg = '', IsFinished = 1
 		--FROM tmpCustArchived t (ROWLOCK)
