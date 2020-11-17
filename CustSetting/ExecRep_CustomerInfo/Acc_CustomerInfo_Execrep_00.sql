@@ -724,6 +724,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 			- 20190805@Eden: Remove initial setting for inactive products (Colosus Bet)  [redmine: #118699]
 			- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+			- 20201112@Eden: Keno - Delete unused bettype (country) of Keno [Redmine: #145247]
 			
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
@@ -757,15 +758,15 @@ BEGIN
     
     IF(dbo.f_CheckRepTable('GameType') = 1)
 	   INSERT INTO @tmp_GameType (GameTypeID, IBCBettypeID)
-	   SELECT GameTypeID, IBCBettypeID FROM GameType WITH (NOLOCK)
+	   SELECT GameTypeID, IBCBettypeID FROM GameType WITH (NOLOCK) WHERE IsDisabled = 0
     ELSE
 	   BEGIN TRY		
 		  INSERT INTO @tmp_GameType (GameTypeID, IBCBettypeID)
-		  SELECT GameTypeID, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK)
+		  SELECT GameTypeID, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0
 	   END TRY
 	   BEGIN CATCH		
 		  INSERT INTO @tmp_GameType (GameTypeID, IBCBettypeID)
-		  SELECT GameTypeID, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
+		  SELECT GameTypeID, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0
 	   END CATCH
    
 	   
@@ -1008,15 +1009,15 @@ BEGIN
 				   ,[autompositiontaking]
 				   ,[isautompositiontaking])
 		SELECT @custid , 1501, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1501
-		UNION ALL SELECT @custid , 1511, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1511
-		UNION ALL SELECT @custid , 1503, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1503
-		UNION ALL SELECT @custid , 1504, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1504
-		UNION ALL SELECT @custid , 1505, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1505
-		UNION ALL SELECT @custid , 1513, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1513
-		UNION ALL SELECT @custid , 1507, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1507
-		UNION ALL SELECT @custid , 1508, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1508
-		UNION ALL SELECT @custid , 1509, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1509
-		UNION ALL SELECT @custid , 1514, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1514
+		--UNION ALL SELECT @custid , 1511, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1511
+		--UNION ALL SELECT @custid , 1503, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1503
+		--UNION ALL SELECT @custid , 1504, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1504
+		--UNION ALL SELECT @custid , 1505, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1505
+		--UNION ALL SELECT @custid , 1513, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1513
+		--UNION ALL SELECT @custid , 1507, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1507
+		--UNION ALL SELECT @custid , 1508, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1508
+		--UNION ALL SELECT @custid , 1509, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1509
+		--UNION ALL SELECT @custid , 1514, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1514
 		UNION ALL SELECT @custid , 1701, 255, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 255 and Bettype = 1701 AND IsDep = 0
 		
 		IF @@ERROR <> 0
@@ -1041,15 +1042,15 @@ BEGIN
 				   ,[Sporttype]
 				   ,[minpositiontaking])
 		SELECT @custid, 1501, 202, 0
-		UNION ALL SELECT @custid, 1511, 202, 0
-		UNION ALL SELECT @custid, 1503, 202, 0
-		UNION ALL SELECT @custid, 1504, 202, 0
-		UNION ALL SELECT @custid, 1505, 202, 0
-		UNION ALL SELECT @custid, 1513, 202, 0
-		UNION ALL SELECT @custid, 1507, 202, 0
-		UNION ALL SELECT @custid, 1508, 202, 0
-		UNION ALL SELECT @custid, 1509, 202, 0
-		UNION ALL SELECT @custid, 1514, 202, 0
+		--UNION ALL SELECT @custid, 1511, 202, 0
+		--UNION ALL SELECT @custid, 1503, 202, 0
+		--UNION ALL SELECT @custid, 1504, 202, 0
+		--UNION ALL SELECT @custid, 1505, 202, 0
+		--UNION ALL SELECT @custid, 1513, 202, 0
+		--UNION ALL SELECT @custid, 1507, 202, 0
+		--UNION ALL SELECT @custid, 1508, 202, 0
+		--UNION ALL SELECT @custid, 1509, 202, 0
+		--UNION ALL SELECT @custid, 1514, 202, 0
 		UNION ALL SELECT @custid, 1701, 255, 0
 
 		IF @@ERROR <> 0
