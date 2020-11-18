@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_04]
 	@CustID INT = 0
 	,@SuperID INT = 0
@@ -13,7 +14,8 @@ AS
     DB: DBCUST/CustDB
     Original versions: Acc_CustSetting3rd_04
         
-    Revision:
+    Revisions:
+			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			                              
     Parameter's Explanation:        
 

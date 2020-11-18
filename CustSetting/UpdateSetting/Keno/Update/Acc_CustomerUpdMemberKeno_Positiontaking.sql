@@ -24,6 +24,7 @@ AS
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 		- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameter's Explanation:	
 */
 SET NOCOUNT ON 
@@ -134,7 +135,7 @@ DECLARE @startRun	DATETIME,
 	--check n2<=a1_new
 	SELECT @ErrType = ''
 	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.Name 
-		+ '-Min: '+ cast((co.minpositiontaking) as varchar(10)) + '<br>'
+		+ '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking)) + '<br>'
 	FROM CustOverrideGame as co with (NOLOCK) inner join
 		(
 			select @bettype as bettype, @sporttype as sporttype, @a1 as apositiontaking 			
@@ -156,7 +157,7 @@ DECLARE @startRun	DATETIME,
 	--check a1_new < a2
 	SELECT @ErrType = ''
 
-	SELECT @ErrType = 'Max: ' + CAST(apositiontaking AS VARCHAR(10))
+	SELECT @ErrType = 'Max: ' + dbo.f_FomatNumericToChar(apositiontaking)
 	FROM CustSettingGame WITH(NOLOCK)
 	WHERE custid = @recommend AND sporttype = @sporttype AND bettype = @bettype
 		AND @a1 > apositiontaking
@@ -220,7 +221,7 @@ DECLARE @startRun	DATETIME,
 	--if im2 = 0 ,check m1 + a1_new < m3
 	SELECT @ErrType = ''
 	
-	SELECT @ErrType = 'Max: ' + CAST((@mpositiontaking_max - @mpositiontaking) AS VARCHAR(50)) WHERE @isauto_mpositiontaking = 0 AND @mpositiontaking + @a1 > @mpositiontaking_max
+	SELECT @ErrType = 'Max: ' + dbo.f_FomatNumericToChar((@mpositiontaking_max - @mpositiontaking)) WHERE @isauto_mpositiontaking = 0 AND @mpositiontaking + @a1 > @mpositiontaking_max
 
 	IF @ErrType <> ''
 	BEGIN
@@ -300,7 +301,7 @@ DECLARE @startRun	DATETIME,
 	SELECT @LogSPData = '<Acc_CustomerUpdMemberKeno_Positiontaking  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
 		'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' + 
-		'a1="' + COALESCE(CAST(@a1 AS VARCHAR(50)), SPACE(1)) + '" ' + 
+		'a1="' + COALESCE(dbo.f_FomatNumericToChar(@a1), SPACE(1)) + '" ' + 
 		'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +
 		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
@@ -311,7 +312,7 @@ DECLARE @startRun	DATETIME,
 	SELECT @TrackingValueDB = '<Acc_CustomerUpdMemberKeno_Positiontaking  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
 		'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' +
-		'a1="' + COALESCE(CAST(@apositiontaking_old AS VARCHAR(50)), SPACE(1)) + '" ' + 
+		'a1="' + COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_old), SPACE(1)) + '" ' + 
 		'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +
 		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
@@ -335,7 +336,7 @@ DECLARE @startRun	DATETIME,
 		SELECT @LogSPData = '<Acc_CustomerUpdMemberKeno_Positiontaking  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
 		'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' + 
-		'a1="' + COALESCE(CAST(@a1 AS VARCHAR(50)), SPACE(1)) + '" ' + 
+		'a1="' + COALESCE(dbo.f_FomatNumericToChar(@a1), SPACE(1)) + '" ' + 
 		'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +
 		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +

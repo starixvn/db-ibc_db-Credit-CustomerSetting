@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MemberSettingSelect]   
 	   @CustID		INT  
 	 , @ProductID	TINYINT  
@@ -18,6 +15,7 @@ AS
  Revision:
 	- 20160104@Dominic: Implementing Charge Commission Plugin Redmine #49689
 	- 20160801@Elodie: Move commission part to Acc_CustSetting_DiscountSelect [Redmine: #60809]
+	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 
  Param's Explanation:  
  - @CustID: Member's ID  
@@ -46,13 +44,13 @@ BEGIN
 		SportType  SMALLINT  
 		, BetType  SMALLINT  
 		, IsLive  BIT  
-		, S1   TINYINT  
-		, M1   TINYINT  
-		, A1   TINYINT  
+		, S1   SMALLMONEY  
+		, M1   SMALLMONEY  
+		, A1   SMALLMONEY  
 		, IS1   BIT  
-		, US1   TINYINT  
+		, US1   SMALLMONEY  
 		, IM1   BIT  
-		, UM1   TINYINT  
+		, UM1   SMALLMONEY  
 		) 
 		
 		--Get member setting from Group OR Individual Settings   

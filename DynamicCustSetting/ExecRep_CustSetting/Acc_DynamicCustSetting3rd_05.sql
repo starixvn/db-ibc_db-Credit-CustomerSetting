@@ -1,9 +1,4 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_05]
     @SuperID			INT	= 0,
     @MasterID			INT = 0,
@@ -18,6 +13,7 @@ AS
     DB: DBCUST/CustDB
     Original versions: Acc_CustSetting3rd_05                
     Revision:
+		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 
     Parameter's Explanation:
 		- @AutoPT
@@ -49,7 +45,7 @@ BEGIN
 					IsAuto_New			BIT,
 					IsAuto_Old			BIT,
 					IsUpdAllMems		BIT,
-					UpdAllMems_Value	TINYINT
+					UpdAllMems_Value	SMALLMONEY
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
 				
@@ -58,26 +54,26 @@ BEGIN
 					SportType		SMALLINT  ,
 					BetType			SMALLINT  ,
 					IsLive			BIT  ,
-					S4				TINYINT
+					S4				SMALLMONEY
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
 	DECLARE @_MasterPTTbl TABLE(
 					SportType		SMALLINT  ,
 					BetType			SMALLINT  ,
 					IsLive			BIT  ,
-					S3				TINYINT,
-					M3				TINYINT,
+					S3				SMALLMONEY,
+					M3				SMALLMONEY,
 					IS3				BIT,
-					US3				TINYINT
+					US3				SMALLMONEY
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
 	DECLARE @_AgentPTTbl TABLE(
 					SportType		SMALLINT  ,
 					BetType			SMALLINT  ,
 					IsLive			BIT  ,
-					M2				TINYINT,
+					M2				SMALLMONEY,
 					IM2				BIT,
-					UM2				TINYINT
+					UM2				SMALLMONEY
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
 				

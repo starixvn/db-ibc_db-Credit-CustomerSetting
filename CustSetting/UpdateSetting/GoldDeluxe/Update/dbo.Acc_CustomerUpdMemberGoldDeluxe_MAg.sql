@@ -28,6 +28,7 @@ AS
 		- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST, change Age_CustomerSelCheckBelonging to Age_CustomerSelCheckBelongingByCustID)
 		- 20151007@Elodie: Remove code to check old and new value
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameters Explanation:
 */
 BEGIN
@@ -186,7 +187,7 @@ BEGIN
 	BEGIN
 		--Check um1<=m3
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + 'Max: '+ CAST((mcs.mpositiontaking) AS VARCHAR(10))
+		SELECT @ErrType = @ErrType + 'Max: '+ dbo.f_FomatNumericToChar((mcs.mpositiontaking))
 		FROM @tmp_mag AS mcs INNER JOIN
 			(
 				SELECT 255 AS sporttype, 1701 AS bettype, @auto_v255mpositiontaking_mem_1701 AS autopositiontaking, @isauto_v255mpositiontaking_mem_1701 AS isautopositiontaking
@@ -208,7 +209,7 @@ BEGIN
 		
 		--check um1>=u1_min
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType +  'Min: '+ CAST((mco.minpositiontaking - cs.apositiontaking) AS VARCHAR(10))
+		SELECT @ErrType = @ErrType +  'Min: '+ dbo.f_FomatNumericToChar((mco.minpositiontaking - cs.apositiontaking))
 		FROM @tmp_mag AS mco 
 		INNER JOIN @tmp_cs cs ON mco.sporttype = cs.sporttype AND mco.bettype = cs.bettype		
 		INNER JOIN	(
@@ -255,7 +256,7 @@ BEGIN
 	BEGIN	
 		--Check m1<=m3
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + 'Max: '+ CAST((mcs.mpositiontaking) AS VARCHAR(10))
+		SELECT @ErrType = @ErrType + 'Max: '+ dbo.f_FomatNumericToChar((mcs.mpositiontaking))
 		FROM @tmp_mag mcs INNER JOIN 
 			(
 				SELECT 255 AS sporttype	,	 1701 AS bettype	,	 @v255mpositiontaking_1701 AS mpositiontaking
@@ -277,7 +278,7 @@ BEGIN
 		
 		--check m1 + a1 <= m3
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + 'Max: '+ CAST((mcs.mpositiontaking - cs.apositiontaking) AS VARCHAR(10))
+		SELECT @ErrType = @ErrType + 'Max: '+ dbo.f_FomatNumericToChar((mcs.mpositiontaking - cs.apositiontaking))
 		FROM @tmp_mag mcs INNER JOIN 
 			(
 				SELECT 255 AS sporttype	,	 1701 AS bettype	,	 @v255mpositiontaking_1701 AS mpositiontaking
@@ -300,7 +301,7 @@ BEGIN
 				
 		--Check m1 + a1 >= n3
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + 'Min: ' + CAST((mco.minpositiontaking - cs.apositiontaking) AS VARCHAR(10))  
+		SELECT @ErrType = @ErrType + 'Min: ' + dbo.f_FomatNumericToChar((mco.minpositiontaking - cs.apositiontaking))  
 		FROM @tmp_cs cs
 			INNER JOIN @tmp_mag mco ON cs.sporttype = mco.sporttype AND cs.bettype = mco.bettype			
 		WHERE cs.apositiontaking + @v255mpositiontaking_1701< mco.minpositiontaking
@@ -517,10 +518,10 @@ BEGIN
 
 	Select @LogSPData = '<Acc_CustomerUpdMemberGoldDeluxe_MAg custid="'+ COALESCE(CAST(@CustID AS VARCHAR(50)),SPACE(1)) + '" ' +
 	
-						'v255mpositiontaking_1701="'+ coalesce(cast(@v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
+						'v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@v255mpositiontaking_1701),space(1)) + '" ' +
 						'isauto_v255mpositiontaking_1701="'+ coalesce(cast(@isauto_v255mpositiontaking_agent_1701 as varchar(50)),SPACE(1)) + '" ' +
 						'isauto_v255mpositiontaking_mem_1701="'+ coalesce(cast(@isauto_v255mpositiontaking_mem_1701 as varchar(50)),SPACE(1)) + '" ' +	
-						'auto_v255mpositiontaking_mem_1701="'+ coalesce(cast(@auto_v255mpositiontaking_mem_1701 as varchar(50)),SPACE(1)) + '" ' +
+						'auto_v255mpositiontaking_mem_1701="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v255mpositiontaking_mem_1701),SPACE(1)) + '" ' +
 						'v255updatepositiontaking_1701="' + coalesce(cast(@v255updatepositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 						'v255updateautopositiontaking_1701="' + coalesce(cast(@v255updateautopositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 	
@@ -533,10 +534,10 @@ BEGIN
 	
 	Select @TrackingValueDB =	'<Acc_CustomerUpdMemberGoldDeluxe_MAg custid="'+ COALESCE(CAST(@CustID AS VARCHAR(50)),SPACE(1)) + '" ' +
 	
-								'v255mpositiontaking_1701="'+ coalesce(cast(@old_v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
+								'v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@old_v255mpositiontaking_1701),space(1)) + '" ' +
 								'isauto_v255mpositiontaking_1701="'+ coalesce(cast(@isauto_v255mpositiontaking_agent_1701 as varchar(50)),SPACE(1)) + '" ' +
 								'isauto_v255mpositiontaking_mem_1701="'+ coalesce(cast(@old_isauto_v255mpositiontaking_mem_1701 as varchar(50)),SPACE(1)) + '" ' +
-								'auto_v255mpositiontaking_mem_1701="'+ coalesce(cast(@old_auto_v255mpositiontaking_mem_1701 as varchar(50)),SPACE(1)) + '" ' +
+								'auto_v255mpositiontaking_mem_1701="'+ coalesce(dbo.f_FomatNumericToChar(@old_auto_v255mpositiontaking_mem_1701),SPACE(1)) + '" ' +
 								'v255updatepositiontaking_1701="' + coalesce(cast(@v255updatepositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 								'v255updateautopositiontaking_1701="' + coalesce(cast(@v255updateautopositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 	
@@ -565,10 +566,10 @@ BEGIN
 	BEGIN CATCH
 		Select @LogSPData = '<Acc_CustomerUpdMemberGoldDeluxe_MAg custid="'+ COALESCE(CAST(@CustID AS VARCHAR(50)),SPACE(1)) + '" ' +
 	
-							'v255mpositiontaking_1701="'+ coalesce(cast(@v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
+							'v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@v255mpositiontaking_1701),space(1)) + '" ' +
 							'isauto_v255mpositiontaking_1701="'+ coalesce(cast(@isauto_v255mpositiontaking_agent_1701 as varchar(50)),SPACE(1)) + '" ' +
 							'isauto_v255mpositiontaking_mem_1701="'+ coalesce(cast(@isauto_v255mpositiontaking_mem_1701 as varchar(50)),SPACE(1)) + '" ' +	
-							'auto_v255mpositiontaking_mem_1701="'+ coalesce(cast(@auto_v255mpositiontaking_mem_1701 as varchar(50)),SPACE(1)) + '" ' +
+							'auto_v255mpositiontaking_mem_1701="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v255mpositiontaking_mem_1701),SPACE(1)) + '" ' +
 							'v255updatepositiontaking_1701="' + coalesce(cast(@v255updatepositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 							'v255updateautopositiontaking_1701="' + coalesce(cast(@v255updateautopositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 		

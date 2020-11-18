@@ -403,6 +403,7 @@ Revisions:
 	- 20190508@Johnson: fix bug for missing bettype of Number Game [redmine: #112318]
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
+	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -2117,8 +2118,8 @@ BEGIN--Update Position Taking
 			
 			--Check u1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 1 AS sporttype, @auto_spositiontaking_1 AS autopositiontaking, @auto_slivepositiontaking_1 AS autolivepositiontaking
@@ -2154,8 +2155,8 @@ BEGIN--Update Position Taking
 			
 			--Check u1>=us1_min (= min_s1)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MinLive: '+ cast((b.autolivepositiontaking_min) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MinLive: '+ dbo.f_FomatNumericToChar((b.autolivepositiontaking_min)) ELSE '' END + '<br>'
 			from 
 				(
 							SELECT 1 AS bettype, 1 AS sporttype, @auto_spositiontaking_1 AS autopositiontaking, @isauto_spositiontaking_1 AS isautopositiontaking, @mspositiontaking_1_min as autopositiontaking_min, @auto_slivepositiontaking_1 AS autolivepositiontaking, @isauto_slivepositiontaking_1 AS isautolivepositiontaking, @mslivepositiontaking_1_min as autolivepositiontaking_min
@@ -2189,8 +2190,8 @@ BEGIN--Update Position Taking
 
 			--Check s1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 1 AS sporttype, @spositiontaking_1 AS positiontaking, @slivepositiontaking_1 AS livepositiontaking
@@ -2226,8 +2227,8 @@ BEGIN--Update Position Taking
 			
 			--Check s1<=s1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((b.livepositiontaking_max) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((b.livepositiontaking_max)) ELSE '' END + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 1 AS sporttype, @spositiontaking_1 AS positiontaking, @isauto_spositiontaking_1 as isauto_spositiontaking, @isauto_smpositiontaking_1 as isauto_smpositiontaking, @mspositiontaking_1_max as positiontaking_max, @slivepositiontaking_1 AS livepositiontaking, @isauto_slivepositiontaking_1 as isauto_slivepositiontaking, @isauto_smlivepositiontaking_1 as isauto_smlivepositiontaking, @mslivepositiontaking_1_max as livepositiontaking_max
@@ -2260,8 +2261,8 @@ BEGIN--Update Position Taking
 			
 			--Check s1>=s1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MinLive: '+ cast((b.livepositiontaking_min) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MinLive: '+ dbo.f_FomatNumericToChar((b.livepositiontaking_min)) ELSE '' END + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 1 AS sporttype, @spositiontaking_1 AS positiontaking, @isauto_spositiontaking_1 as isauto_spositiontaking, @isauto_smpositiontaking_1 as isauto_smpositiontaking, @mspositiontaking_1_min as positiontaking_min, @slivepositiontaking_1 AS livepositiontaking, @isauto_slivepositiontaking_1 as isauto_slivepositiontaking, @isauto_smlivepositiontaking_1 as isauto_smlivepositiontaking, @mslivepositiontaking_1_min as livepositiontaking_min
@@ -2354,8 +2355,8 @@ BEGIN--Update Position Taking
 				
 					--Check u1<=s4
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-					+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+					+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 					from custsetting AS cs with (NOLOCK) inner join
 						(
 						SELECT 1 AS bettype, 2 AS sporttype, @auto_v2spositiontaking_1 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -2389,7 +2390,7 @@ BEGIN--Update Position Taking
 				
 				--Check u1>=us1_min (= min_s1)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min)) + '<br>'
 				from 
 					(
 								SELECT 1 AS bettype, 2 AS sporttype, @auto_v2spositiontaking_1 AS autopositiontaking, @isauto_v2spositiontaking_1 AS isautopositiontaking, @v2mspositiontaking_1_min as autopositiontaking_min
@@ -2418,8 +2419,8 @@ BEGIN--Update Position Taking
 					
 				--Check s1<=s4
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 				from custsetting AS cs with (NOLOCK) inner join
 					(
 								SELECT 1 AS bettype, 2 AS sporttype, @v2spositiontaking_1 AS positiontaking, 0 AS livepositiontaking
@@ -2454,7 +2455,7 @@ BEGIN--Update Position Taking
 				
 				--Check s1<=s1_max
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max)) + '<br>'
 				from
 					(
 						SELECT 1 AS bettype, 2 AS sporttype, @v2spositiontaking_1 AS positiontaking, @isauto_v2spositiontaking_1 as isauto_spositiontaking, @isauto_v2smpositiontaking_1 as isauto_smpositiontaking, @v2mspositiontaking_1_max as positiontaking_max
@@ -2485,7 +2486,7 @@ BEGIN--Update Position Taking
 				
 				--Check s1>=s1_min
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min)) + '<br>'
 				from
 					(
 						SELECT 1 AS bettype, 2 AS sporttype, @v2spositiontaking_1 AS positiontaking, @isauto_v2spositiontaking_1 as isauto_spositiontaking, @isauto_v2smpositiontaking_1 as isauto_smpositiontaking, @v2mspositiontaking_1_min as positiontaking_min
@@ -2568,8 +2569,8 @@ BEGIN--Update Position Taking
 
 				--Check u1<=s4
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs. spositiontaking) AS varchar(10))
-				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs. spositiontaking))
+				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 				from custsetting AS cs with (NOLOCK) inner join
 					(
 						SELECT 1 AS bettype, 3 AS sporttype, @auto_v3spositiontaking_1 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -2599,7 +2600,7 @@ BEGIN--Update Position Taking
 				
 				--Check u1>=us1_min (= min_s1)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min)) + '<br>'
 				from 
 					(
 								SELECT 1 AS bettype, 3 AS sporttype, @auto_v3spositiontaking_1 AS autopositiontaking, @isauto_v3spositiontaking_1 AS isautopositiontaking, @v3mspositiontaking_1_min as autopositiontaking_min
@@ -2627,8 +2628,8 @@ BEGIN--Update Position Taking
 				
 				--Check s1<=s4
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 				from custsetting AS cs with (NOLOCK) inner join
 					(
 						SELECT 1 AS bettype, 3 AS sporttype, @v3spositiontaking_1 AS positiontaking, 0 AS livepositiontaking
@@ -2657,7 +2658,7 @@ BEGIN--Update Position Taking
 				
 				--Check s1<=s1_max
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max)) + '<br>'
 				from
 					(
 						SELECT 1 AS bettype, 3 AS sporttype, @v3spositiontaking_1 AS positiontaking, @isauto_v3spositiontaking_1 as isauto_spositiontaking, @isauto_v3smpositiontaking_1 as isauto_smpositiontaking, @v3mspositiontaking_1_max as positiontaking_max
@@ -2684,7 +2685,7 @@ BEGIN--Update Position Taking
 				
 				--Check s1>=s1_min
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min)) + '<br>'
 				from
 					(
 						SELECT 1 AS bettype, 3 AS sporttype, @v3spositiontaking_1 AS positiontaking, @isauto_v3spositiontaking_1 as isauto_spositiontaking, @isauto_v3smpositiontaking_1 as isauto_smpositiontaking, @v3mspositiontaking_1_min as positiontaking_min
@@ -2765,8 +2766,8 @@ BEGIN--Update Position Taking
 	
 			--Check u1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 5 AS sporttype, @auto_v5spositiontaking_1 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -2797,7 +2798,7 @@ BEGIN--Update Position Taking
 			
 			--Check u1>=us1_min (= min_s1)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min)) + '<br>'
 			from 
 				(
 							SELECT 1 AS bettype, 5 AS sporttype, @auto_v5spositiontaking_1 AS autopositiontaking, @isauto_v5spositiontaking_1 AS isautopositiontaking, @v5mspositiontaking_1_min as autopositiontaking_min
@@ -2827,8 +2828,8 @@ BEGIN--Update Position Taking
 			--Check s1<=s4
 			SELECT @ErrType = ''
 
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 5 AS sporttype, @v5spositiontaking_1 AS positiontaking, 0 AS livepositiontaking
@@ -2858,7 +2859,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1<=s1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max)) + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 5 AS sporttype, @v5spositiontaking_1 AS positiontaking, @isauto_v5spositiontaking_1 as isauto_spositiontaking, @isauto_v5smpositiontaking_1 as isauto_smpositiontaking, @v5mspositiontaking_1_max as positiontaking_max
@@ -2886,7 +2887,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1>=s1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min)) + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 5 AS sporttype, @v5spositiontaking_1 AS positiontaking, @isauto_v5spositiontaking_1 as isauto_spositiontaking, @isauto_v5smpositiontaking_1 as isauto_smpositiontaking, @v5mspositiontaking_1_min as positiontaking_min
@@ -2965,8 +2966,8 @@ BEGIN--Update Position Taking
 
 				--Check u1<=s4
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 				from custsetting AS cs with (NOLOCK) inner join
 					(
 								SELECT 1 AS bettype, 8 AS sporttype, @auto_v8spositiontaking_1 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -2994,7 +2995,7 @@ BEGIN--Update Position Taking
 				
 				--Check u1>=us1_min (= min_s1)
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min)) + '<br>'
 				from 
 					(
 								SELECT 1 AS bettype, 8 AS sporttype, @auto_v8spositiontaking_1 AS autopositiontaking, @isauto_v8spositiontaking_1 AS isautopositiontaking, @v8mspositiontaking_1_min as autopositiontaking_min						
@@ -3021,8 +3022,8 @@ BEGIN--Update Position Taking
 				
 				--Check s1<=s4
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+				+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 				from custsetting AS cs with (NOLOCK) inner join
 					(
 								SELECT 1 AS bettype, 8 AS sporttype, @v8spositiontaking_1 AS positiontaking, 0 AS livepositiontaking
@@ -3051,7 +3052,7 @@ BEGIN--Update Position Taking
 				
 				--Check s1<=s1_max
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max)) + '<br>'
 				from
 					(
 						SELECT 1 AS bettype, 8 AS sporttype, @v8spositiontaking_1 AS positiontaking, @isauto_v8spositiontaking_1 as isauto_spositiontaking, @isauto_v8smpositiontaking_1 as isauto_smpositiontaking, @v8mspositiontaking_1_max as positiontaking_max					
@@ -3077,7 +3078,7 @@ BEGIN--Update Position Taking
 				
 				--Check s1>=s1_min
 				SELECT @ErrType = ''
-				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10)) + '<br>'
+				SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min)) + '<br>'
 				from
 					(
 						SELECT 1 AS bettype, 8 AS sporttype, @v8spositiontaking_1 AS positiontaking, @isauto_v8spositiontaking_1 as isauto_spositiontaking, @isauto_v8smpositiontaking_1 as isauto_smpositiontaking, @v8mspositiontaking_1_min as positiontaking_min						
@@ -3152,8 +3153,8 @@ BEGIN--Update Position Taking
 			END
 				--Check u1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 10 AS sporttype, @auto_v10spositiontaking_1 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -3182,7 +3183,7 @@ BEGIN--Update Position Taking
 			
 			--Check u1>=us1_min (= min_s1)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min)) + '<br>'
 			from 
 				(
 							SELECT 1 AS bettype, 10 AS sporttype, @auto_v10spositiontaking_1 AS autopositiontaking, @isauto_v10spositiontaking_1 AS isautopositiontaking, @v10mspositiontaking_1_min as autopositiontaking_min						
@@ -3210,8 +3211,8 @@ BEGIN--Update Position Taking
 
 			--Check s1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 10 AS sporttype, @v10spositiontaking_1 AS positiontaking, 0 AS livepositiontaking
@@ -3241,7 +3242,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1<=s1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max)) + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 10 AS sporttype, @v10spositiontaking_1 AS positiontaking, @isauto_v10spositiontaking_1 as isauto_spositiontaking, @isauto_v10smpositiontaking_1 as isauto_smpositiontaking, @v10mspositiontaking_1_max as positiontaking_max
@@ -3268,7 +3269,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1>=s1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min)) + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 10 AS sporttype, @v10spositiontaking_1 AS positiontaking, @isauto_v10spositiontaking_1 as isauto_spositiontaking, @isauto_v10smpositiontaking_1 as isauto_smpositiontaking, @v10mspositiontaking_1_min as positiontaking_min						
@@ -3342,8 +3343,8 @@ BEGIN--Update Position Taking
 	
 			--Check u1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 						SELECT 1 AS bettype, 11 AS sporttype, @auto_v11spositiontaking_1 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -3371,7 +3372,7 @@ BEGIN--Update Position Taking
 			
 			--Check u1>=us1_min (= min_s1)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min)) + '<br>'
 			from 
 				(
 							SELECT 1 AS bettype, 11 AS sporttype, @auto_v11spositiontaking_1 AS autopositiontaking, @isauto_v11spositiontaking_1 AS isautopositiontaking, @v11mspositiontaking_1_min as autopositiontaking_min						
@@ -3397,8 +3398,8 @@ BEGIN--Update Position Taking
 			
 			--Check s1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 11 AS sporttype, @v11spositiontaking_1 AS positiontaking, 0 AS livepositiontaking
@@ -3426,7 +3427,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1<=s1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max)) + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 11 AS sporttype, @v11spositiontaking_1 AS positiontaking, @isauto_v11spositiontaking_1 as isauto_spositiontaking, @isauto_v11smpositiontaking_1 as isauto_smpositiontaking, @v11mspositiontaking_1_max as positiontaking_max
@@ -3451,7 +3452,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1>=s1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min)) + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 11 AS sporttype, @v11spositiontaking_1 AS positiontaking, @isauto_v11spositiontaking_1 as isauto_spositiontaking, @isauto_v11smpositiontaking_1 as isauto_smpositiontaking, @v11mspositiontaking_1_min as positiontaking_min						
@@ -3529,8 +3530,8 @@ BEGIN--Update Position Taking
 			
 			--Check u1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 99 AS sporttype, @auto_v99spositiontaking_1 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -3563,7 +3564,7 @@ BEGIN--Update Position Taking
 			
 			--Check u1>=us1_min (= min_s1)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min)) + '<br>'
 			from 
 				(
 							SELECT 1 AS bettype, 99 AS sporttype, @auto_v99spositiontaking_1 AS autopositiontaking, @isauto_v99spositiontaking_1 AS isautopositiontaking, @v99mspositiontaking_1_min as autopositiontaking_min						
@@ -3592,8 +3593,8 @@ BEGIN--Update Position Taking
 
 			--Check s1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 							SELECT 1 AS bettype, 99 AS sporttype, @v99spositiontaking_1 AS positiontaking, 0 AS livepositiontaking
@@ -3623,7 +3624,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1<=s1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max)) + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 99 AS sporttype, @v99spositiontaking_1 AS positiontaking, @isauto_v99spositiontaking_1 as isauto_spositiontaking, @isauto_v99smpositiontaking_1 as isauto_smpositiontaking, @v99mspositiontaking_1_max as positiontaking_max
@@ -3651,7 +3652,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1>=s1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min)) + '<br>'
 			from
 				(
 					SELECT 1 AS bettype, 99 AS sporttype, @v99spositiontaking_1 AS positiontaking, @isauto_v99spositiontaking_1 as isauto_spositiontaking, @isauto_v99smpositiontaking_1 as isauto_smpositiontaking, @v99mspositiontaking_1_min as positiontaking_min						
@@ -3728,8 +3729,8 @@ BEGIN--Update Position Taking
 
 			--Check u1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 						SELECT 9 AS bettype, 99 AS sporttype, @auto_v99spositiontaking_9 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -3754,7 +3755,7 @@ BEGIN--Update Position Taking
 			
 			--Check u1>=us1_min (= min_s1)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min)) + '<br>'
 			from 
 				(
 						SELECT 9 AS bettype, 99 AS sporttype, @auto_v99spositiontaking_9 AS autopositiontaking, @isauto_v99spositiontaking_9 AS isautopositiontaking, @v99mspositiontaking_9_min as autopositiontaking_min						
@@ -3777,8 +3778,8 @@ BEGIN--Update Position Taking
 
 			--Check s1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ cast((cs.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking))
+			+ CASE WHEN b.sporttype=1 and b.bettype in (1,3,7,8) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting AS cs with (NOLOCK) inner join
 				(
 						SELECT 9 AS bettype, 99 AS sporttype, @v99spositiontaking_9 AS positiontaking, 0 AS livepositiontaking
@@ -3804,7 +3805,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1<=s1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max)) + '<br>'
 			from
 				(
 					SELECT 9 AS bettype, 99 AS sporttype, @v99spositiontaking_9 AS positiontaking, @isauto_v99spositiontaking_9 as isauto_spositiontaking, @isauto_v99smpositiontaking_9 as isauto_smpositiontaking, @v99mspositiontaking_9_max as positiontaking_max
@@ -3827,7 +3828,7 @@ BEGIN--Update Position Taking
 			
 			--Check s1>=s1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10)) + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min)) + '<br>'
 			from
 				(
 					SELECT 9 AS bettype, 99 AS sporttype, @v99spositiontaking_9 AS positiontaking, @isauto_v99spositiontaking_9 as isauto_spositiontaking, @isauto_v99smpositiontaking_9 as isauto_smpositiontaking, @v99mspositiontaking_9_min as positiontaking_min						
@@ -3908,8 +3909,8 @@ BEGIN--Update Position Taking
 			-- number game
 			--Check u1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs3.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MaxLive: '+ cast((cs3.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs3.spositiontaking))
+			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs3.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting3rd AS cs3 with (NOLOCK) inner join
 				(
 								SELECT 81 AS bettype, 161 AS sporttype, @auto_v161spositiontaking_81 AS autopositiontaking, 0 AS autolivepositiontaking
@@ -3942,8 +3943,8 @@ BEGIN--Update Position Taking
 			
 			--Check u1>=us1_min (= min_s1)
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.autopositiontaking_min) AS varchar(10))
-			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MinLive: '+ cast((b.autolivepositiontaking_min) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.autopositiontaking_min))
+			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MinLive: '+ dbo.f_FomatNumericToChar((b.autolivepositiontaking_min)) ELSE '' END + '<br>'
 			from 
 				(
 							SELECT 81 AS bettype, 161 AS sporttype, @auto_v161spositiontaking_81 AS autopositiontaking, @isauto_v161spositiontaking_81 AS isautopositiontaking, @v161mspositiontaking_81_min as autopositiontaking_min, 0 AS autolivepositiontaking, 0 AS isautolivepositiontaking, 0 as autolivepositiontaking_min
@@ -3975,8 +3976,8 @@ BEGIN--Update Position Taking
 			-- number game
 			--Check s1<=s4
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((cs3.spositiontaking) AS varchar(10))
-			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MaxLive: '+ cast((cs3.slivepositiontaking) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((cs3.spositiontaking))
+			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((cs3.slivepositiontaking)) ELSE '' END + '<br>'
 			from custsetting3rd AS cs3 with (NOLOCK) inner join
 				(
 								SELECT 81 AS bettype, 161 AS sporttype, @v161spositiontaking_81 AS positiontaking, 0 AS livepositiontaking
@@ -4009,8 +4010,8 @@ BEGIN--Update Position Taking
 			
 			--Check s1<=s1_max
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ cast((b.positiontaking_max) AS varchar(10))
-			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MaxLive: '+ cast((b.livepositiontaking_max) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Max: '+ dbo.f_FomatNumericToChar((b.positiontaking_max))
+			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MaxLive: '+ dbo.f_FomatNumericToChar((b.livepositiontaking_max)) ELSE '' END + '<br>'
 			from
 				(
 					SELECT 81 AS bettype, 161 AS sporttype, @v161spositiontaking_81 AS positiontaking, @isauto_v161spositiontaking_81 as isauto_spositiontaking, @isauto_v161smpositiontaking_81 as isauto_smpositiontaking, @v161mspositiontaking_81_max as positiontaking_max, 0 AS livepositiontaking, 0 as isauto_slivepositiontaking, 0 as isauto_smlivepositiontaking, 0 as livepositiontaking_max
@@ -4040,8 +4041,8 @@ BEGIN--Update Position Taking
 			
 			--Check s1>=s1_min
 			SELECT @ErrType = ''
-			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((b.positiontaking_min) AS varchar(10))
-			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MinLive: '+ cast((b.livepositiontaking_min) AS varchar(10)) ELSE '' END + '<br>'
+			SELECT @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ dbo.f_FomatNumericToChar((b.positiontaking_min))
+			+ CASE WHEN b.sporttype=161 and b.bettype in (85,86,87,89,90) THEN '-MinLive: '+ dbo.f_FomatNumericToChar((b.livepositiontaking_min)) ELSE '' END + '<br>'
 			from
 				(
 								SELECT 81 AS bettype, 161 AS sporttype, @v161spositiontaking_81 AS positiontaking, @isauto_v161spositiontaking_81 as isauto_spositiontaking, @isauto_v161smpositiontaking_81 as isauto_smpositiontaking, @v161mspositiontaking_81_min as positiontaking_min, 0 AS livepositiontaking, 0 as isauto_slivepositiontaking, 0 as isauto_smlivepositiontaking, 0 as livepositiontaking_min
@@ -5079,159 +5080,159 @@ SELECT
 	
 	'UpdatePositiontakingv161="'+ coalesce(cast(@UpdatePositiontakingv161 as varchar(1)),space(1)) + '" />' +
 
-	'<s spt_1="'+ coalesce(cast(@spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'spt_2="'+ coalesce(cast(@spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'spt_3="'+ coalesce(cast(@spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'spt_4="'+ coalesce(cast(@spositiontaking_4 AS varchar(50)),space(1)) + '" ' +
-	'spt_5="'+ coalesce(cast(@spositiontaking_5 AS varchar(50)),space(1))  + '" ' +
-	'spt_6="'+ coalesce(cast(@spositiontaking_6 AS varchar(50)),space(1)) + '" ' +
-	'spt_7="'+ coalesce(cast(@spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'spt_8="'+ coalesce(cast(@spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-	'spt_9="'+ coalesce(cast(@spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-	'spt_10="'+ coalesce(cast(@spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+	'<s spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_1),space(1)) + '" ' +
+	'spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_2),space(1)) + '" ' +
+	'spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_3),space(1)) + '" ' +
+	'spt_4="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_4),space(1)) + '" ' +
+	'spt_5="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_5),space(1))  + '" ' +
+	'spt_6="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_6),space(1)) + '" ' +
+	'spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_7),space(1)) + '" ' +
+	'spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_8),space(1)) + '" ' +
+	'spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_9),space(1)) + '" ' +
+	'spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_10),space(1)) + '" ' +
 	
 	-- Outright PT for sports
-	'v2spt_10="'+ coalesce(cast(@v2spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v3spt_10="'+ coalesce(cast(@v3spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_10="'+ coalesce(cast(@v5spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v8spt_10="'+ coalesce(cast(@v8spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v10spt_10="'+ coalesce(cast(@v10spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v11spt_10="'+ coalesce(cast(@v11spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_10="'+ coalesce(cast(@v99spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+	'v2spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_10),space(1)) + '" ' +
+	'v3spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_10),space(1)) + '" ' +
+	'v5spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_10),space(1)) + '" ' +
+	'v8spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v8spositiontaking_10),space(1)) + '" ' +
+	'v10spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_10),space(1)) + '" ' +
+	'v11spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v11spositiontaking_10),space(1)) + '" ' +
+	'v99spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_10),space(1)) + '" ' +
 	
-	'spt_9999="'+ coalesce(cast(@spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
-	'slivept_1="'+ coalesce(cast(@slivepositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'slivept_3="'+ coalesce(cast(@slivepositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'slivept_7="'+ coalesce(cast(@slivepositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'slivept_8="'+ coalesce(cast(@slivepositiontaking_8 AS varchar(50)),space(1)) + '" ' +
+	'spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_9999),space(1)) + '" ' +
+	'slivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@slivepositiontaking_1),space(1)) + '" ' +
+	'slivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@slivepositiontaking_3),space(1)) + '" ' +
+	'slivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@slivepositiontaking_7),space(1)) + '" ' +
+	'slivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@slivepositiontaking_8),space(1)) + '" ' +
 
-	'v2spt_1="'+ coalesce(cast(@v2spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_2="'+ coalesce(cast(@v2spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_3="'+ coalesce(cast(@v2spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_7="'+ coalesce(cast(@v2spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_8="'+ coalesce(cast(@v2spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-	--'v2spt_9="'+ coalesce(cast(@v2spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_20="'+ coalesce(cast(@v2spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_9999="'+ coalesce(cast(@v2spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'v2spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_1),space(1)) + '" ' +
+	'v2spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_2),space(1)) + '" ' +
+	'v2spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_3),space(1)) + '" ' +
+	'v2spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_7),space(1)) + '" ' +
+	'v2spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_8),space(1)) + '" ' +
+	--'v2spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_9),space(1)) + '" ' +
+	'v2spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_20),space(1)) + '" ' +
+	'v2spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_9999),space(1)) + '" ' +
 
-	'v3spt_1="'+ coalesce(cast(@v3spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v3spt_2="'+ coalesce(cast(@v3spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v3spt_3="'+ coalesce(cast(@v3spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v3spt_20="'+ coalesce(cast(@v3spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'v3spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_1),space(1)) + '" ' +
+	'v3spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_2),space(1)) + '" ' +
+	'v3spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_3),space(1)) + '" ' +
+	'v3spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_20),space(1)) + '" ' +
 
-	'v5spt_1="'+ coalesce(cast(@v5spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_2="'+ coalesce(cast(@v5spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_3="'+ coalesce(cast(@v5spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_20="'+ coalesce(cast(@v5spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_9999="'+ coalesce(cast(@v5spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'v5spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_1),space(1)) + '" ' +
+	'v5spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_2),space(1)) + '" ' +
+	'v5spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_3),space(1)) + '" ' +
+	'v5spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_20),space(1)) + '" ' +
+	'v5spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_9999),space(1)) + '" ' +
 
-	'v8spt_1="'+ coalesce(cast(@v8spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v8spt_3="'+ coalesce(cast(@v8spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v8spt_20="'+ coalesce(cast(@v8spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'v8spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v8spositiontaking_1),space(1)) + '" ' +
+	'v8spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v8spositiontaking_3),space(1)) + '" ' +
+	'v8spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v8spositiontaking_20),space(1)) + '" ' +
 
-	'v10spt_1="'+ coalesce(cast(@v10spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v10spt_2="'+ coalesce(cast(@v10spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v10spt_3="'+ coalesce(cast(@v10spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v10spt_20="'+ coalesce(cast(@v10spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'v10spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_1),space(1)) + '" ' +
+	'v10spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_2),space(1)) + '" ' +
+	'v10spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_3),space(1)) + '" ' +
+	'v10spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_20),space(1)) + '" ' +
 
-	'v11spt_1="'+ coalesce(cast(@v11spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v11spt_20="'+ coalesce(cast(@v11spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'v11spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v11spositiontaking_1),space(1)) + '" ' +
+	'v11spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v11spositiontaking_20),space(1)) + '" ' +
 
-	'v99spt_1="'+ coalesce(cast(@v99spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_2="'+ coalesce(cast(@v99spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_3="'+ coalesce(cast(@v99spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_20="'+ coalesce(cast(@v99spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_9999="'+ coalesce(cast(@v99spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'v99spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_1),space(1)) + '" ' +
+	'v99spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_2),space(1)) + '" ' +
+	'v99spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_3),space(1)) + '" ' +
+	'v99spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_20),space(1)) + '" ' +
+	'v99spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_9999),space(1)) + '" ' +
 	-- mixed sports
-	'v99spt_9="'+ coalesce(cast(@v99spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
+	'v99spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_9),space(1)) + '" ' +
 	
 	--number game
-	'v161spt_81="'+ coalesce(cast(@v161spositiontaking_81 AS varchar(50)),space(1)) + '" ' +
-	'v161spt_83="'+ coalesce(cast(@v161spositiontaking_83 AS varchar(50)),space(1)) + '" ' +
-	'v161spt_86="'+ coalesce(cast(@v161spositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-	'v161spt_88="'+ coalesce(cast(@v161spositiontaking_88 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_85="'+ coalesce(cast(@v161slivepositiontaking_85 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_86="'+ coalesce(cast(@v161slivepositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_87="'+ coalesce(cast(@v161slivepositiontaking_87 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_89="'+ coalesce(cast(@v161slivepositiontaking_89 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_90="'+ coalesce(cast(@v161slivepositiontaking_90 AS varchar(50)),space(1)) + '" />' +
+	'v161spt_81="'+ coalesce(dbo.f_FomatNumericToChar(@v161spositiontaking_81),space(1)) + '" ' +
+	'v161spt_83="'+ coalesce(dbo.f_FomatNumericToChar(@v161spositiontaking_83),space(1)) + '" ' +
+	'v161spt_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161spositiontaking_86),space(1)) + '" ' +
+	'v161spt_88="'+ coalesce(dbo.f_FomatNumericToChar(@v161spositiontaking_88),space(1)) + '" ' +
+	'v161slivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_85),space(1)) + '" ' +
+	'v161slivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_86),space(1)) + '" ' +
+	'v161slivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_87),space(1)) + '" ' +
+	'v161slivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_89),space(1)) + '" ' +
+	'v161slivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_90),space(1)) + '" />' +
 
-	'<au a_spt_1="'+ coalesce(cast(@auto_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_2="'+ coalesce(cast(@auto_spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_3="'+ coalesce(cast(@auto_spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_4="'+ coalesce(cast(@auto_spositiontaking_4 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_5="'+ coalesce(cast(@auto_spositiontaking_5 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_6="'+ coalesce(cast(@auto_spositiontaking_6 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_7="'+ coalesce(cast(@auto_spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_8="'+ coalesce(cast(@auto_spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_9="'+ coalesce(cast(@auto_spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_10="'+ coalesce(cast(@auto_spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+	'<au a_spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_1),space(1)) + '" ' +
+	'a_spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_2),space(1)) + '" ' +
+	'a_spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_3),space(1)) + '" ' +
+	'a_spt_4="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_4),space(1)) + '" ' +
+	'a_spt_5="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_5),space(1)) + '" ' +
+	'a_spt_6="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_6),space(1)) + '" ' +
+	'a_spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_7),space(1)) + '" ' +
+	'a_spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_8),space(1)) + '" ' +
+	'a_spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_9),space(1)) + '" ' +
+	'a_spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_10),space(1)) + '" ' +
 	
 	-- Outright PT for sports
-	'a_v2spt_10="'+ coalesce(cast(@auto_v2spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v3spt_10="'+ coalesce(cast(@auto_v3spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_10="'+ coalesce(cast(@auto_v5spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v8spt_10="'+ coalesce(cast(@auto_v8spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v10spt_10="'+ coalesce(cast(@auto_v10spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v11spt_10="'+ coalesce(cast(@auto_v11spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v99spt_10="'+ coalesce(cast(@auto_v99spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+	'a_v2spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_10),space(1)) + '" ' +
+	'a_v3spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_10),space(1)) + '" ' +
+	'a_v5spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_10),space(1)) + '" ' +
+	'a_v8spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v8spositiontaking_10),space(1)) + '" ' +
+	'a_v10spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_10),space(1)) + '" ' +
+	'a_v11spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v11spositiontaking_10),space(1)) + '" ' +
+	'a_v99spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_10),space(1)) + '" ' +
 	
-	'a_spt_9999="'+ coalesce(cast(@auto_spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
-	'a_slivept_1="'+ coalesce(cast(@auto_slivepositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_slivept_3="'+ coalesce(cast(@auto_slivepositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_slivept_7="'+ coalesce(cast(@auto_slivepositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'a_slivept_8="'+ coalesce(cast(@auto_slivepositiontaking_8 AS varchar(50)),space(1)) + '" ' +
+	'a_spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_9999),space(1)) + '" ' +
+	'a_slivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_slivepositiontaking_1),space(1)) + '" ' +
+	'a_slivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_slivepositiontaking_3),space(1)) + '" ' +
+	'a_slivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@auto_slivepositiontaking_7),space(1)) + '" ' +
+	'a_slivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@auto_slivepositiontaking_8),space(1)) + '" ' +
 
-	'a_v2spt_1="'+ coalesce(cast(@auto_v2spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_2="'+ coalesce(cast(@auto_v2spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_3="'+ coalesce(cast(@auto_v2spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_7="'+ coalesce(cast(@auto_v2spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_8="'+ coalesce(cast(@auto_v2spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-	--'a_v2spt_9="'+ coalesce(cast(@auto_v2spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_20="'+ coalesce(cast(@auto_v2spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_9999="'+ coalesce(cast(@auto_v2spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'a_v2spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_1),space(1)) + '" ' +
+	'a_v2spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_2),space(1)) + '" ' +
+	'a_v2spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_3),space(1)) + '" ' +
+	'a_v2spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_7),space(1)) + '" ' +
+	'a_v2spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_8),space(1)) + '" ' +
+	--'a_v2spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_9),space(1)) + '" ' +
+	'a_v2spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_20),space(1)) + '" ' +
+	'a_v2spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_9999),space(1)) + '" ' +
 
-	'a_v3spt_1="'+ coalesce(cast(@auto_v3spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v3spt_2="'+ coalesce(cast(@auto_v3spositiontaking_2 AS varchar(50)),space(1))  + '" ' +
-	'a_v3spt_3="'+ coalesce(cast(@auto_v3spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v3spt_20="'+ coalesce(cast(@auto_v3spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'a_v3spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_1),space(1)) + '" ' +
+	'a_v3spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_2),space(1))  + '" ' +
+	'a_v3spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_3),space(1)) + '" ' +
+	'a_v3spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_20),space(1)) + '" ' +
 
-	'a_v5spt_1="'+ coalesce(cast(@auto_v5spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_2="'+ coalesce(cast(@auto_v5spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_3="'+ coalesce(cast(@auto_v5spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_20="'+ coalesce(cast(@auto_v5spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_9999="'+ coalesce(cast(@auto_v5spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'a_v5spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_1),space(1)) + '" ' +
+	'a_v5spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_2),space(1)) + '" ' +
+	'a_v5spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_3),space(1)) + '" ' +
+	'a_v5spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_20),space(1)) + '" ' +
+	'a_v5spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_9999),space(1)) + '" ' +
 
-	'a_v8spt_1="'+ coalesce(cast(@auto_v8spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v8spt_3="'+ coalesce(cast(@auto_v8spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v8spt_20="'+ coalesce(cast(@auto_v8spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'a_v8spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v8spositiontaking_1),space(1)) + '" ' +
+	'a_v8spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v8spositiontaking_3),space(1)) + '" ' +
+	'a_v8spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v8spositiontaking_20),space(1)) + '" ' +
 
-	'a_v10spt_1="'+ coalesce(cast(@auto_v10spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v10spt_2="'+ coalesce(cast(@auto_v10spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_v10spt_3="'+ coalesce(cast(@auto_v10spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v10spt_20="'+ coalesce(cast(@auto_v10spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'a_v10spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_1),space(1)) + '" ' +
+	'a_v10spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_2),space(1)) + '" ' +
+	'a_v10spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_3),space(1)) + '" ' +
+	'a_v10spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_20),space(1)) + '" ' +
 
-	'a_v11spt_1="'+ coalesce(cast(@auto_v11spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v11spt_20="'+ coalesce(cast(@auto_v11spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'a_v11spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v11spositiontaking_1),space(1)) + '" ' +
+	'a_v11spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v11spositiontaking_20),space(1)) + '" ' +
 
-	'a_v99spt_1="'+ coalesce(cast(@auto_v99spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v99spt_2="'+ coalesce(cast(@auto_v99spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_v99spt_3="'+ coalesce(cast(@auto_v99spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v99spt_20="'+ coalesce(cast(@auto_v99spositiontaking_20 AS varchar(50)),space(1)) + '" ' + 
-	'a_v99spt_9999="'+ coalesce(cast(@auto_v99spositiontaking_9999 AS varchar(50)),space(1)) + '" ' + 
+	'a_v99spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_1),space(1)) + '" ' +
+	'a_v99spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_2),space(1)) + '" ' +
+	'a_v99spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_3),space(1)) + '" ' +
+	'a_v99spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_20),space(1)) + '" ' + 
+	'a_v99spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_9999),space(1)) + '" ' + 
 	-- mixed sports
-	'a_v99spt_9="'+ coalesce(cast(@auto_v99spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
+	'a_v99spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_9),space(1)) + '" ' +
 
 	-- number game
-	'a_v161spt_81="'+ coalesce(cast(@auto_v161spositiontaking_81 AS varchar(50)),space(1)) + '" ' +
-	'a_v161spt_83="'+ coalesce(cast(@auto_v161spositiontaking_83 AS varchar(50)),space(1)) + '" ' +
-	'a_v161spt_86="'+ coalesce(cast(@auto_v161spositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-	'a_v161spt_88="'+ coalesce(cast(@auto_v161spositiontaking_88 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_85="'+ coalesce(cast(@auto_v161slivepositiontaking_85 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_86="'+ coalesce(cast(@auto_v161slivepositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_87="'+ coalesce(cast(@auto_v161slivepositiontaking_87 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_89="'+ coalesce(cast(@auto_v161slivepositiontaking_89 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_90="'+ coalesce(cast(@auto_v161slivepositiontaking_90 AS varchar(50)),space(1)) + '" />' +
+	'a_v161spt_81="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161spositiontaking_81),space(1)) + '" ' +
+	'a_v161spt_83="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161spositiontaking_83),space(1)) + '" ' +
+	'a_v161spt_86="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161spositiontaking_86),space(1)) + '" ' +
+	'a_v161spt_88="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161spositiontaking_88),space(1)) + '" ' +
+	'a_v161slivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_85),space(1)) + '" ' +
+	'a_v161slivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_86),space(1)) + '" ' +
+	'a_v161slivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_87),space(1)) + '" ' +
+	'a_v161slivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_89),space(1)) + '" ' +
+	'a_v161slivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_90),space(1)) + '" />' +
 
 	--i1
 	'<ia isa_spt_1="'+ coalesce(cast(@isauto_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
@@ -5390,157 +5391,157 @@ SELECT
 	
 	'UpdatePositiontakingv161="'+ coalesce(cast(@UpdatePositiontakingv161 as varchar(1)),space(1)) + '" />' +
 
-	'<s spt_1="'+ coalesce(cast(@Old_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'spt_2="'+ coalesce(cast(@Old_spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'spt_3="'+ coalesce(cast(@Old_spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'spt_4="'+ coalesce(cast(@Old_spositiontaking_4 AS varchar(50)),space(1)) + '" ' +
-	'spt_5="'+ coalesce(cast(@Old_spositiontaking_5 AS varchar(50)),space(1))  + '" ' +
-	'spt_6="'+ coalesce(cast(@Old_spositiontaking_6 AS varchar(50)),space(1)) + '" ' +
-	'spt_7="'+ coalesce(cast(@Old_spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'spt_8="'+ coalesce(cast(@Old_spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-	'spt_9="'+ coalesce(cast(@Old_spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-	'spt_10="'+ coalesce(cast(@Old_spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+	'<s spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_1),space(1)) + '" ' +
+	'spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_2),space(1)) + '" ' +
+	'spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_3),space(1)) + '" ' +
+	'spt_4="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_4),space(1)) + '" ' +
+	'spt_5="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_5),space(1))  + '" ' +
+	'spt_6="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_6),space(1)) + '" ' +
+	'spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_7),space(1)) + '" ' +
+	'spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_8),space(1)) + '" ' +
+	'spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_9),space(1)) + '" ' +
+	'spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_10),space(1)) + '" ' +
 	
 	-- Outright PT for sports
-	'v2spt_10="'+ coalesce(cast(@Old_v2spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v3spt_10="'+ coalesce(cast(@Old_v3spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_10="'+ coalesce(cast(@Old_v5spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v8spt_10="'+ coalesce(cast(@Old_v8spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v10spt_10="'+ coalesce(cast(@Old_v10spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v11spt_10="'+ coalesce(cast(@Old_v11spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_10="'+ coalesce(cast(@Old_v99spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+	'v2spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_10),space(1)) + '" ' +
+	'v3spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_10),space(1)) + '" ' +
+	'v5spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_10),space(1)) + '" ' +
+	'v8spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8spositiontaking_10),space(1)) + '" ' +
+	'v10spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_10),space(1)) + '" ' +
+	'v11spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11spositiontaking_10),space(1)) + '" ' +
+	'v99spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_10),space(1)) + '" ' +
 	
-	'spt_9999="'+ coalesce(cast(@Old_spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
-	'slivept_1="'+ coalesce(cast(@Old_slivepositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'slivept_3="'+ coalesce(cast(@Old_slivepositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'slivept_7="'+ coalesce(cast(@Old_slivepositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'slivept_8="'+ coalesce(cast(@Old_slivepositiontaking_8 AS varchar(50)),space(1)) + '" ' +
+	'spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_9999),space(1)) + '" ' +
+	'slivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_slivepositiontaking_1),space(1)) + '" ' +
+	'slivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_slivepositiontaking_3),space(1)) + '" ' +
+	'slivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_slivepositiontaking_7),space(1)) + '" ' +
+	'slivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_slivepositiontaking_8),space(1)) + '" ' +
 
-	'v2spt_1="'+ coalesce(cast(@Old_v2spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_2="'+ coalesce(cast(@Old_v2spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_3="'+ coalesce(cast(@Old_v2spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_7="'+ coalesce(cast(@Old_v2spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_8="'+ coalesce(cast(@Old_v2spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_20="'+ coalesce(cast(@Old_v2spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'v2spt_9999="'+ coalesce(cast(@Old_v2spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'v2spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_1),space(1)) + '" ' +
+	'v2spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_2),space(1)) + '" ' +
+	'v2spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_3),space(1)) + '" ' +
+	'v2spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_7),space(1)) + '" ' +
+	'v2spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_8),space(1)) + '" ' +
+	'v2spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_20),space(1)) + '" ' +
+	'v2spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_9999),space(1)) + '" ' +
 
-	'v3spt_1="'+ coalesce(cast(@Old_v3spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v3spt_2="'+ coalesce(cast(@Old_v3spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v3spt_3="'+ coalesce(cast(@Old_v3spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v3spt_20="'+ coalesce(cast(@Old_v3spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'v3spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_1),space(1)) + '" ' +
+	'v3spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_2),space(1)) + '" ' +
+	'v3spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_3),space(1)) + '" ' +
+	'v3spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_20),space(1)) + '" ' +
 
-	'v5spt_1="'+ coalesce(cast(@Old_v5spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_2="'+ coalesce(cast(@Old_v5spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_3="'+ coalesce(cast(@Old_v5spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_20="'+ coalesce(cast(@Old_v5spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'v5spt_9999="'+ coalesce(cast(@Old_v5spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'v5spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_1),space(1)) + '" ' +
+	'v5spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_2),space(1)) + '" ' +
+	'v5spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_3),space(1)) + '" ' +
+	'v5spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_20),space(1)) + '" ' +
+	'v5spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_9999),space(1)) + '" ' +
 
-	'v8spt_1="'+ coalesce(cast(@Old_v8spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v8spt_3="'+ coalesce(cast(@Old_v8spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v8spt_20="'+ coalesce(cast(@Old_v8spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'v8spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8spositiontaking_1),space(1)) + '" ' +
+	'v8spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8spositiontaking_3),space(1)) + '" ' +
+	'v8spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8spositiontaking_20),space(1)) + '" ' +
 
-	'v10spt_1="'+ coalesce(cast(@Old_v10spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v10spt_2="'+ coalesce(cast(@Old_v10spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v10spt_3="'+ coalesce(cast(@Old_v10spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v10spt_20="'+ coalesce(cast(@Old_v10spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'v10spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_1),space(1)) + '" ' +
+	'v10spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_2),space(1)) + '" ' +
+	'v10spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_3),space(1)) + '" ' +
+	'v10spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_20),space(1)) + '" ' +
 
-	'v11spt_1="'+ coalesce(cast(@Old_v11spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v11spt_20="'+ coalesce(cast(@Old_v11spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'v11spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11spositiontaking_1),space(1)) + '" ' +
+	'v11spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11spositiontaking_20),space(1)) + '" ' +
 
-	'v99spt_1="'+ coalesce(cast(@Old_v99spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_2="'+ coalesce(cast(@Old_v99spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_3="'+ coalesce(cast(@Old_v99spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_20="'+ coalesce(cast(@Old_v99spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'v99spt_9999="'+ coalesce(cast(@Old_v99spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'v99spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_1),space(1)) + '" ' +
+	'v99spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_2),space(1)) + '" ' +
+	'v99spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_3),space(1)) + '" ' +
+	'v99spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_20),space(1)) + '" ' +
+	'v99spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_9999),space(1)) + '" ' +
 	-- mixed sports
-	'v99spt_9="'+ coalesce(cast(@Old_v99spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
+	'v99spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_9),space(1)) + '" ' +
 	
 	--number game
-	'v161spt_81="'+ coalesce(cast(@Old_v161spositiontaking_81 AS varchar(50)),space(1)) + '" ' +
-	'v161spt_83="'+ coalesce(cast(@Old_v161spositiontaking_83 AS varchar(50)),space(1)) + '" ' +
-	'v161spt_86="'+ coalesce(cast(@Old_v161spositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-	'v161spt_88="'+ coalesce(cast(@Old_v161spositiontaking_88 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_85="'+ coalesce(cast(@Old_v161slivepositiontaking_85 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_86="'+ coalesce(cast(@Old_v161slivepositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_87="'+ coalesce(cast(@Old_v161slivepositiontaking_87 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_89="'+ coalesce(cast(@Old_v161slivepositiontaking_89 AS varchar(50)),space(1)) + '" ' +
-	'v161slivept_90="'+ coalesce(cast(@Old_v161slivepositiontaking_90 AS varchar(50)),space(1)) + '" />' +
+	'v161spt_81="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161spositiontaking_81),space(1)) + '" ' +
+	'v161spt_83="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161spositiontaking_83),space(1)) + '" ' +
+	'v161spt_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161spositiontaking_86),space(1)) + '" ' +
+	'v161spt_88="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161spositiontaking_88),space(1)) + '" ' +
+	'v161slivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_85),space(1)) + '" ' +
+	'v161slivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_86),space(1)) + '" ' +
+	'v161slivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_87),space(1)) + '" ' +
+	'v161slivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_89),space(1)) + '" ' +
+	'v161slivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_90),space(1)) + '" />' +
 
-	'<au a_spt_1="'+ coalesce(cast(@Old_auto_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_2="'+ coalesce(cast(@Old_auto_spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_3="'+ coalesce(cast(@Old_auto_spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_4="'+ coalesce(cast(@Old_auto_spositiontaking_4 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_5="'+ coalesce(cast(@Old_auto_spositiontaking_5 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_6="'+ coalesce(cast(@Old_auto_spositiontaking_6 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_7="'+ coalesce(cast(@Old_auto_spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_8="'+ coalesce(cast(@Old_auto_spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_9="'+ coalesce(cast(@Old_auto_spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-	'a_spt_10="'+ coalesce(cast(@Old_auto_spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+	'<au a_spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_1),space(1)) + '" ' +
+	'a_spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_2),space(1)) + '" ' +
+	'a_spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_3),space(1)) + '" ' +
+	'a_spt_4="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_4),space(1)) + '" ' +
+	'a_spt_5="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_5),space(1)) + '" ' +
+	'a_spt_6="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_6),space(1)) + '" ' +
+	'a_spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_7),space(1)) + '" ' +
+	'a_spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_8),space(1)) + '" ' +
+	'a_spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_9),space(1)) + '" ' +
+	'a_spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_10),space(1)) + '" ' +
 	
 	-- Outright PT for sports
-	'a_v2spt_10="'+ coalesce(cast(@Old_auto_v2spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v3spt_10="'+ coalesce(cast(@Old_auto_v3spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_10="'+ coalesce(cast(@Old_auto_v5spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v8spt_10="'+ coalesce(cast(@Old_auto_v8spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v10spt_10="'+ coalesce(cast(@Old_auto_v10spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v11spt_10="'+ coalesce(cast(@Old_auto_v11spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-	'a_v99spt_10="'+ coalesce(cast(@Old_auto_v99spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+	'a_v2spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_10),space(1)) + '" ' +
+	'a_v3spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_10),space(1)) + '" ' +
+	'a_v5spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_10),space(1)) + '" ' +
+	'a_v8spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v8spositiontaking_10),space(1)) + '" ' +
+	'a_v10spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_10),space(1)) + '" ' +
+	'a_v11spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v11spositiontaking_10),space(1)) + '" ' +
+	'a_v99spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_10),space(1)) + '" ' +
 	
-	'a_spt_9999="'+ coalesce(cast(@Old_auto_spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
-	'a_slivept_1="'+ coalesce(cast(@Old_auto_slivepositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_slivept_3="'+ coalesce(cast(@Old_auto_slivepositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_slivept_7="'+ coalesce(cast(@Old_auto_slivepositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'a_slivept_8="'+ coalesce(cast(@Old_auto_slivepositiontaking_8 AS varchar(50)),space(1)) + '" ' +
+	'a_spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_9999),space(1)) + '" ' +
+	'a_slivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_slivepositiontaking_1),space(1)) + '" ' +
+	'a_slivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_slivepositiontaking_3),space(1)) + '" ' +
+	'a_slivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_slivepositiontaking_7),space(1)) + '" ' +
+	'a_slivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_slivepositiontaking_8),space(1)) + '" ' +
 
-	'a_v2spt_1="'+ coalesce(cast(@Old_auto_v2spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_2="'+ coalesce(cast(@Old_auto_v2spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_3="'+ coalesce(cast(@Old_auto_v2spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_7="'+ coalesce(cast(@Old_auto_v2spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_8="'+ coalesce(cast(@Old_auto_v2spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_20="'+ coalesce(cast(@Old_auto_v2spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'a_v2spt_9999="'+ coalesce(cast(@Old_auto_v2spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'a_v2spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_1),space(1)) + '" ' +
+	'a_v2spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_2),space(1)) + '" ' +
+	'a_v2spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_3),space(1)) + '" ' +
+	'a_v2spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_7),space(1)) + '" ' +
+	'a_v2spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_8),space(1)) + '" ' +
+	'a_v2spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_20),space(1)) + '" ' +
+	'a_v2spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_9999),space(1)) + '" ' +
 
-	'a_v3spt_1="'+ coalesce(cast(@Old_auto_v3spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v3spt_2="'+ coalesce(cast(@Old_auto_v3spositiontaking_2 AS varchar(50)),space(1))  + '" ' +
-	'a_v3spt_3="'+ coalesce(cast(@Old_auto_v3spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v3spt_20="'+ coalesce(cast(@Old_auto_v3spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'a_v3spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_1),space(1)) + '" ' +
+	'a_v3spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_2),space(1))  + '" ' +
+	'a_v3spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_3),space(1)) + '" ' +
+	'a_v3spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_20),space(1)) + '" ' +
 
-	'a_v5spt_1="'+ coalesce(cast(@Old_auto_v5spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_2="'+ coalesce(cast(@Old_auto_v5spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_3="'+ coalesce(cast(@Old_auto_v5spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_20="'+ coalesce(cast(@Old_auto_v5spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-	'a_v5spt_9999="'+ coalesce(cast(@Old_auto_v5spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+	'a_v5spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_1),space(1)) + '" ' +
+	'a_v5spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_2),space(1)) + '" ' +
+	'a_v5spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_3),space(1)) + '" ' +
+	'a_v5spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_20),space(1)) + '" ' +
+	'a_v5spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_9999),space(1)) + '" ' +
 
-	'a_v8spt_1="'+ coalesce(cast(@Old_auto_v8spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v8spt_3="'+ coalesce(cast(@Old_auto_v8spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v8spt_20="'+ coalesce(cast(@Old_auto_v8spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'a_v8spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v8spositiontaking_1),space(1)) + '" ' +
+	'a_v8spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v8spositiontaking_3),space(1)) + '" ' +
+	'a_v8spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v8spositiontaking_20),space(1)) + '" ' +
 
-	'a_v10spt_1="'+ coalesce(cast(@Old_auto_v10spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v10spt_2="'+ coalesce(cast(@Old_auto_v10spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_v10spt_3="'+ coalesce(cast(@Old_auto_v10spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v10spt_20="'+ coalesce(cast(@Old_auto_v10spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'a_v10spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_1),space(1)) + '" ' +
+	'a_v10spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_2),space(1)) + '" ' +
+	'a_v10spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_3),space(1)) + '" ' +
+	'a_v10spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_20),space(1)) + '" ' +
 
-	'a_v11spt_1="'+ coalesce(cast(@Old_auto_v11spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v11spt_20="'+ coalesce(cast(@Old_auto_v11spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+	'a_v11spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v11spositiontaking_1),space(1)) + '" ' +
+	'a_v11spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v11spositiontaking_20),space(1)) + '" ' +
 
-	'a_v99spt_1="'+ coalesce(cast(@Old_auto_v99spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-	'a_v99spt_2="'+ coalesce(cast(@Old_auto_v99spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-	'a_v99spt_3="'+ coalesce(cast(@Old_auto_v99spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-	'a_v99spt_20="'+ coalesce(cast(@Old_auto_v99spositiontaking_20 AS varchar(50)),space(1)) + '" ' + 
-	'a_v99spt_9999="'+ coalesce(cast(@Old_auto_v99spositiontaking_9999 AS varchar(50)),space(1)) + '" ' + 
+	'a_v99spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_1),space(1)) + '" ' +
+	'a_v99spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_2),space(1)) + '" ' +
+	'a_v99spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_3),space(1)) + '" ' +
+	'a_v99spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_20),space(1)) + '" ' + 
+	'a_v99spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_9999),space(1)) + '" ' + 
 	-- mixed sports
-	'a_v99spt_9="'+ coalesce(cast(@Old_auto_v99spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
+	'a_v99spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_9),space(1)) + '" ' +
 
 	-- number game
-	'a_v161spt_81="'+ coalesce(cast(@Old_auto_v161spositiontaking_81 AS varchar(50)),space(1)) + '" ' +
-	'a_v161spt_83="'+ coalesce(cast(@Old_auto_v161spositiontaking_83 AS varchar(50)),space(1)) + '" ' +
-	'a_v161spt_86="'+ coalesce(cast(@Old_auto_v161spositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-	'a_v161spt_88="'+ coalesce(cast(@Old_auto_v161spositiontaking_88 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_85="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_85 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_86="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_87="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_87 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_89="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_89 AS varchar(50)),space(1)) + '" ' +
-	'a_v161slivept_90="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_90 AS varchar(50)),space(1)) + '" />' +
+	'a_v161spt_81="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161spositiontaking_81),space(1)) + '" ' +
+	'a_v161spt_83="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161spositiontaking_83),space(1)) + '" ' +
+	'a_v161spt_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161spositiontaking_86),space(1)) + '" ' +
+	'a_v161spt_88="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161spositiontaking_88),space(1)) + '" ' +
+	'a_v161slivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_85),space(1)) + '" ' +
+	'a_v161slivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_86),space(1)) + '" ' +
+	'a_v161slivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_87),space(1)) + '" ' +
+	'a_v161slivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_89),space(1)) + '" ' +
+	'a_v161slivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_90),space(1)) + '" />' +
 
 	--i1
 	'<ia isa_spt_1="'+ coalesce(cast(@Old_isauto_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
@@ -5652,159 +5653,159 @@ SELECT
 	
 		'UpdatePositiontakingv161="'+ coalesce(cast(@UpdatePositiontakingv161 as varchar(1)),space(1)) + '" />' +
 
-		'<s spt_1="'+ coalesce(cast(@spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'spt_2="'+ coalesce(cast(@spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'spt_3="'+ coalesce(cast(@spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'spt_4="'+ coalesce(cast(@spositiontaking_4 AS varchar(50)),space(1)) + '" ' +
-		'spt_5="'+ coalesce(cast(@spositiontaking_5 AS varchar(50)),space(1))  + '" ' +
-		'spt_6="'+ coalesce(cast(@spositiontaking_6 AS varchar(50)),space(1)) + '" ' +
-		'spt_7="'+ coalesce(cast(@spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'spt_8="'+ coalesce(cast(@spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-		'spt_9="'+ coalesce(cast(@spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-		'spt_10="'+ coalesce(cast(@spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+		'<s spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_1),space(1)) + '" ' +
+		'spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_2),space(1)) + '" ' +
+		'spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_3),space(1)) + '" ' +
+		'spt_4="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_4),space(1)) + '" ' +
+		'spt_5="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_5),space(1))  + '" ' +
+		'spt_6="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_6),space(1)) + '" ' +
+		'spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_7),space(1)) + '" ' +
+		'spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_8),space(1)) + '" ' +
+		'spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_9),space(1)) + '" ' +
+		'spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_10),space(1)) + '" ' +
 		
 		-- Outright PT for sports
-		'v2spt_10="'+ coalesce(cast(@v2spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v3spt_10="'+ coalesce(cast(@v3spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_10="'+ coalesce(cast(@v5spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v8spt_10="'+ coalesce(cast(@v8spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v10spt_10="'+ coalesce(cast(@v10spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v11spt_10="'+ coalesce(cast(@v11spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_10="'+ coalesce(cast(@v99spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+		'v2spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_10),space(1)) + '" ' +
+		'v3spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_10),space(1)) + '" ' +
+		'v5spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_10),space(1)) + '" ' +
+		'v8spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v8spositiontaking_10),space(1)) + '" ' +
+		'v10spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_10),space(1)) + '" ' +
+		'v11spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v11spositiontaking_10),space(1)) + '" ' +
+		'v99spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_10),space(1)) + '" ' +
 		
-		'spt_9999="'+ coalesce(cast(@spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
-		'slivept_1="'+ coalesce(cast(@slivepositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'slivept_3="'+ coalesce(cast(@slivepositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'slivept_7="'+ coalesce(cast(@slivepositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'slivept_8="'+ coalesce(cast(@slivepositiontaking_8 AS varchar(50)),space(1)) + '" ' +
+		'spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@spositiontaking_9999),space(1)) + '" ' +
+		'slivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@slivepositiontaking_1),space(1)) + '" ' +
+		'slivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@slivepositiontaking_3),space(1)) + '" ' +
+		'slivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@slivepositiontaking_7),space(1)) + '" ' +
+		'slivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@slivepositiontaking_8),space(1)) + '" ' +
 
-		'v2spt_1="'+ coalesce(cast(@v2spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_2="'+ coalesce(cast(@v2spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_3="'+ coalesce(cast(@v2spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_7="'+ coalesce(cast(@v2spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_8="'+ coalesce(cast(@v2spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-		--'v2spt_9="'+ coalesce(cast(@v2spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_20="'+ coalesce(cast(@v2spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_9999="'+ coalesce(cast(@v2spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'v2spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_1),space(1)) + '" ' +
+		'v2spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_2),space(1)) + '" ' +
+		'v2spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_3),space(1)) + '" ' +
+		'v2spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_7),space(1)) + '" ' +
+		'v2spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_8),space(1)) + '" ' +
+		--'v2spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_9),space(1)) + '" ' +
+		'v2spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_20),space(1)) + '" ' +
+		'v2spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v2spositiontaking_9999),space(1)) + '" ' +
 
-		'v3spt_1="'+ coalesce(cast(@v3spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v3spt_2="'+ coalesce(cast(@v3spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v3spt_3="'+ coalesce(cast(@v3spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v3spt_20="'+ coalesce(cast(@v3spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'v3spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_1),space(1)) + '" ' +
+		'v3spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_2),space(1)) + '" ' +
+		'v3spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_3),space(1)) + '" ' +
+		'v3spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v3spositiontaking_20),space(1)) + '" ' +
 
-		'v5spt_1="'+ coalesce(cast(@v5spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_2="'+ coalesce(cast(@v5spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_3="'+ coalesce(cast(@v5spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_20="'+ coalesce(cast(@v5spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_9999="'+ coalesce(cast(@v5spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'v5spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_1),space(1)) + '" ' +
+		'v5spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_2),space(1)) + '" ' +
+		'v5spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_3),space(1)) + '" ' +
+		'v5spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_20),space(1)) + '" ' +
+		'v5spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v5spositiontaking_9999),space(1)) + '" ' +
 
-		'v8spt_1="'+ coalesce(cast(@v8spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v8spt_3="'+ coalesce(cast(@v8spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v8spt_20="'+ coalesce(cast(@v8spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'v8spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v8spositiontaking_1),space(1)) + '" ' +
+		'v8spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v8spositiontaking_3),space(1)) + '" ' +
+		'v8spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v8spositiontaking_20),space(1)) + '" ' +
 
-		'v10spt_1="'+ coalesce(cast(@v10spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v10spt_2="'+ coalesce(cast(@v10spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v10spt_3="'+ coalesce(cast(@v10spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v10spt_20="'+ coalesce(cast(@v10spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'v10spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_1),space(1)) + '" ' +
+		'v10spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_2),space(1)) + '" ' +
+		'v10spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_3),space(1)) + '" ' +
+		'v10spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v10spositiontaking_20),space(1)) + '" ' +
 
-		'v11spt_1="'+ coalesce(cast(@v11spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v11spt_20="'+ coalesce(cast(@v11spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'v11spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v11spositiontaking_1),space(1)) + '" ' +
+		'v11spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v11spositiontaking_20),space(1)) + '" ' +
 
-		'v99spt_1="'+ coalesce(cast(@v99spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_2="'+ coalesce(cast(@v99spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_3="'+ coalesce(cast(@v99spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_20="'+ coalesce(cast(@v99spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_9999="'+ coalesce(cast(@v99spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'v99spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_1),space(1)) + '" ' +
+		'v99spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_2),space(1)) + '" ' +
+		'v99spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_3),space(1)) + '" ' +
+		'v99spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_20),space(1)) + '" ' +
+		'v99spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_9999),space(1)) + '" ' +
 		-- mixed sports
-		'v99spt_9="'+ coalesce(cast(@v99spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
+		'v99spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v99spositiontaking_9),space(1)) + '" ' +
 		
 		--number game
-		'v161spt_81="'+ coalesce(cast(@v161spositiontaking_81 AS varchar(50)),space(1)) + '" ' +
-		'v161spt_83="'+ coalesce(cast(@v161spositiontaking_83 AS varchar(50)),space(1)) + '" ' +
-		'v161spt_86="'+ coalesce(cast(@v161spositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-		'v161spt_88="'+ coalesce(cast(@v161spositiontaking_88 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_85="'+ coalesce(cast(@v161slivepositiontaking_85 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_86="'+ coalesce(cast(@v161slivepositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_87="'+ coalesce(cast(@v161slivepositiontaking_87 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_89="'+ coalesce(cast(@v161slivepositiontaking_89 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_90="'+ coalesce(cast(@v161slivepositiontaking_90 AS varchar(50)),space(1)) + '" />' +
+		'v161spt_81="'+ coalesce(dbo.f_FomatNumericToChar(@v161spositiontaking_81),space(1)) + '" ' +
+		'v161spt_83="'+ coalesce(dbo.f_FomatNumericToChar(@v161spositiontaking_83),space(1)) + '" ' +
+		'v161spt_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161spositiontaking_86),space(1)) + '" ' +
+		'v161spt_88="'+ coalesce(dbo.f_FomatNumericToChar(@v161spositiontaking_88),space(1)) + '" ' +
+		'v161slivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_85),space(1)) + '" ' +
+		'v161slivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_86),space(1)) + '" ' +
+		'v161slivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_87),space(1)) + '" ' +
+		'v161slivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_89),space(1)) + '" ' +
+		'v161slivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@v161slivepositiontaking_90),space(1)) + '" />' +
 
-		'<au a_spt_1="'+ coalesce(cast(@auto_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_2="'+ coalesce(cast(@auto_spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_3="'+ coalesce(cast(@auto_spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_4="'+ coalesce(cast(@auto_spositiontaking_4 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_5="'+ coalesce(cast(@auto_spositiontaking_5 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_6="'+ coalesce(cast(@auto_spositiontaking_6 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_7="'+ coalesce(cast(@auto_spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_8="'+ coalesce(cast(@auto_spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_9="'+ coalesce(cast(@auto_spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_10="'+ coalesce(cast(@auto_spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+		'<au a_spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_1),space(1)) + '" ' +
+		'a_spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_2),space(1)) + '" ' +
+		'a_spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_3),space(1)) + '" ' +
+		'a_spt_4="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_4),space(1)) + '" ' +
+		'a_spt_5="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_5),space(1)) + '" ' +
+		'a_spt_6="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_6),space(1)) + '" ' +
+		'a_spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_7),space(1)) + '" ' +
+		'a_spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_8),space(1)) + '" ' +
+		'a_spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_9),space(1)) + '" ' +
+		'a_spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_10),space(1)) + '" ' +
 		
 		-- Outright PT for sports
-		'a_v2spt_10="'+ coalesce(cast(@auto_v2spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v3spt_10="'+ coalesce(cast(@auto_v3spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_10="'+ coalesce(cast(@auto_v5spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v8spt_10="'+ coalesce(cast(@auto_v8spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v10spt_10="'+ coalesce(cast(@auto_v10spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v11spt_10="'+ coalesce(cast(@auto_v11spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v99spt_10="'+ coalesce(cast(@auto_v99spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+		'a_v2spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_10),space(1)) + '" ' +
+		'a_v3spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_10),space(1)) + '" ' +
+		'a_v5spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_10),space(1)) + '" ' +
+		'a_v8spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v8spositiontaking_10),space(1)) + '" ' +
+		'a_v10spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_10),space(1)) + '" ' +
+		'a_v11spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v11spositiontaking_10),space(1)) + '" ' +
+		'a_v99spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_10),space(1)) + '" ' +
 		
-		'a_spt_9999="'+ coalesce(cast(@auto_spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
-		'a_slivept_1="'+ coalesce(cast(@auto_slivepositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_slivept_3="'+ coalesce(cast(@auto_slivepositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_slivept_7="'+ coalesce(cast(@auto_slivepositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'a_slivept_8="'+ coalesce(cast(@auto_slivepositiontaking_8 AS varchar(50)),space(1)) + '" ' +
+		'a_spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@auto_spositiontaking_9999),space(1)) + '" ' +
+		'a_slivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_slivepositiontaking_1),space(1)) + '" ' +
+		'a_slivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_slivepositiontaking_3),space(1)) + '" ' +
+		'a_slivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@auto_slivepositiontaking_7),space(1)) + '" ' +
+		'a_slivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@auto_slivepositiontaking_8),space(1)) + '" ' +
 
-		'a_v2spt_1="'+ coalesce(cast(@auto_v2spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_2="'+ coalesce(cast(@auto_v2spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_3="'+ coalesce(cast(@auto_v2spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_7="'+ coalesce(cast(@auto_v2spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_8="'+ coalesce(cast(@auto_v2spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-		--'a_v2spt_9="'+ coalesce(cast(@auto_v2spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_20="'+ coalesce(cast(@auto_v2spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_9999="'+ coalesce(cast(@auto_v2spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'a_v2spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_1),space(1)) + '" ' +
+		'a_v2spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_2),space(1)) + '" ' +
+		'a_v2spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_3),space(1)) + '" ' +
+		'a_v2spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_7),space(1)) + '" ' +
+		'a_v2spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_8),space(1)) + '" ' +
+		--'a_v2spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_9),space(1)) + '" ' +
+		'a_v2spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_20),space(1)) + '" ' +
+		'a_v2spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v2spositiontaking_9999),space(1)) + '" ' +
 
-		'a_v3spt_1="'+ coalesce(cast(@auto_v3spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v3spt_2="'+ coalesce(cast(@auto_v3spositiontaking_2 AS varchar(50)),space(1))  + '" ' +
-		'a_v3spt_3="'+ coalesce(cast(@auto_v3spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v3spt_20="'+ coalesce(cast(@auto_v3spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'a_v3spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_1),space(1)) + '" ' +
+		'a_v3spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_2),space(1))  + '" ' +
+		'a_v3spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_3),space(1)) + '" ' +
+		'a_v3spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v3spositiontaking_20),space(1)) + '" ' +
 
-		'a_v5spt_1="'+ coalesce(cast(@auto_v5spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_2="'+ coalesce(cast(@auto_v5spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_3="'+ coalesce(cast(@auto_v5spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_20="'+ coalesce(cast(@auto_v5spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_9999="'+ coalesce(cast(@auto_v5spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'a_v5spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_1),space(1)) + '" ' +
+		'a_v5spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_2),space(1)) + '" ' +
+		'a_v5spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_3),space(1)) + '" ' +
+		'a_v5spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_20),space(1)) + '" ' +
+		'a_v5spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v5spositiontaking_9999),space(1)) + '" ' +
 
-		'a_v8spt_1="'+ coalesce(cast(@auto_v8spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v8spt_3="'+ coalesce(cast(@auto_v8spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v8spt_20="'+ coalesce(cast(@auto_v8spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'a_v8spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v8spositiontaking_1),space(1)) + '" ' +
+		'a_v8spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v8spositiontaking_3),space(1)) + '" ' +
+		'a_v8spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v8spositiontaking_20),space(1)) + '" ' +
 
-		'a_v10spt_1="'+ coalesce(cast(@auto_v10spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v10spt_2="'+ coalesce(cast(@auto_v10spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_v10spt_3="'+ coalesce(cast(@auto_v10spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v10spt_20="'+ coalesce(cast(@auto_v10spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'a_v10spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_1),space(1)) + '" ' +
+		'a_v10spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_2),space(1)) + '" ' +
+		'a_v10spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_3),space(1)) + '" ' +
+		'a_v10spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v10spositiontaking_20),space(1)) + '" ' +
 
-		'a_v11spt_1="'+ coalesce(cast(@auto_v11spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v11spt_20="'+ coalesce(cast(@auto_v11spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'a_v11spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v11spositiontaking_1),space(1)) + '" ' +
+		'a_v11spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v11spositiontaking_20),space(1)) + '" ' +
 
-		'a_v99spt_1="'+ coalesce(cast(@auto_v99spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v99spt_2="'+ coalesce(cast(@auto_v99spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_v99spt_3="'+ coalesce(cast(@auto_v99spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v99spt_20="'+ coalesce(cast(@auto_v99spositiontaking_20 AS varchar(50)),space(1)) + '" ' + 
-		'a_v99spt_9999="'+ coalesce(cast(@auto_v99spositiontaking_9999 AS varchar(50)),space(1)) + '" ' + 
+		'a_v99spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_1),space(1)) + '" ' +
+		'a_v99spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_2),space(1)) + '" ' +
+		'a_v99spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_3),space(1)) + '" ' +
+		'a_v99spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_20),space(1)) + '" ' + 
+		'a_v99spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_9999),space(1)) + '" ' + 
 		-- mixed sports
-		'a_v99spt_9="'+ coalesce(cast(@auto_v99spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
+		'a_v99spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v99spositiontaking_9),space(1)) + '" ' +
 		
 		-- number game
-		'a_v161spt_81="'+ coalesce(cast(@auto_v161spositiontaking_81 AS varchar(50)),space(1)) + '" ' +
-		'a_v161spt_83="'+ coalesce(cast(@auto_v161spositiontaking_83 AS varchar(50)),space(1)) + '" ' +
-		'a_v161spt_86="'+ coalesce(cast(@auto_v161spositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-		'a_v161spt_88="'+ coalesce(cast(@auto_v161spositiontaking_88 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_85="'+ coalesce(cast(@auto_v161slivepositiontaking_85 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_86="'+ coalesce(cast(@auto_v161slivepositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_87="'+ coalesce(cast(@auto_v161slivepositiontaking_87 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_89="'+ coalesce(cast(@auto_v161slivepositiontaking_89 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_90="'+ coalesce(cast(@auto_v161slivepositiontaking_90 AS varchar(50)),space(1)) + '" />' +
+		'a_v161spt_81="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161spositiontaking_81),space(1)) + '" ' +
+		'a_v161spt_83="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161spositiontaking_83),space(1)) + '" ' +
+		'a_v161spt_86="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161spositiontaking_86),space(1)) + '" ' +
+		'a_v161spt_88="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161spositiontaking_88),space(1)) + '" ' +
+		'a_v161slivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_85),space(1)) + '" ' +
+		'a_v161slivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_86),space(1)) + '" ' +
+		'a_v161slivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_87),space(1)) + '" ' +
+		'a_v161slivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_89),space(1)) + '" ' +
+		'a_v161slivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v161slivepositiontaking_90),space(1)) + '" />' +
 
 		--i1
 		'<ia isa_spt_1="'+ coalesce(cast(@isauto_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
@@ -5902,157 +5903,157 @@ SELECT
 		
 		'UpdatePositiontakingv161="'+ coalesce(cast(@UpdatePositiontakingv161 as varchar(1)),space(1)) + '" />' +
 
-		'<s spt_1="'+ coalesce(cast(@Old_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'spt_2="'+ coalesce(cast(@Old_spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'spt_3="'+ coalesce(cast(@Old_spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'spt_4="'+ coalesce(cast(@Old_spositiontaking_4 AS varchar(50)),space(1)) + '" ' +
-		'spt_5="'+ coalesce(cast(@Old_spositiontaking_5 AS varchar(50)),space(1))  + '" ' +
-		'spt_6="'+ coalesce(cast(@Old_spositiontaking_6 AS varchar(50)),space(1)) + '" ' +
-		'spt_7="'+ coalesce(cast(@Old_spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'spt_8="'+ coalesce(cast(@Old_spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-		'spt_9="'+ coalesce(cast(@Old_spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-		'spt_10="'+ coalesce(cast(@Old_spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+		'<s spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_1),space(1)) + '" ' +
+		'spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_2),space(1)) + '" ' +
+		'spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_3),space(1)) + '" ' +
+		'spt_4="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_4),space(1)) + '" ' +
+		'spt_5="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_5),space(1))  + '" ' +
+		'spt_6="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_6),space(1)) + '" ' +
+		'spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_7),space(1)) + '" ' +
+		'spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_8),space(1)) + '" ' +
+		'spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_9),space(1)) + '" ' +
+		'spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_10),space(1)) + '" ' +
 		
 		-- Outright PT for sports
-		'v2spt_10="'+ coalesce(cast(@Old_v2spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v3spt_10="'+ coalesce(cast(@Old_v3spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_10="'+ coalesce(cast(@Old_v5spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v8spt_10="'+ coalesce(cast(@Old_v8spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v10spt_10="'+ coalesce(cast(@Old_v10spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v11spt_10="'+ coalesce(cast(@Old_v11spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_10="'+ coalesce(cast(@Old_v99spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+		'v2spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_10),space(1)) + '" ' +
+		'v3spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_10),space(1)) + '" ' +
+		'v5spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_10),space(1)) + '" ' +
+		'v8spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8spositiontaking_10),space(1)) + '" ' +
+		'v10spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_10),space(1)) + '" ' +
+		'v11spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11spositiontaking_10),space(1)) + '" ' +
+		'v99spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_10),space(1)) + '" ' +
 		
-		'spt_9999="'+ coalesce(cast(@Old_spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
-		'slivept_1="'+ coalesce(cast(@Old_slivepositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'slivept_3="'+ coalesce(cast(@Old_slivepositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'slivept_7="'+ coalesce(cast(@Old_slivepositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'slivept_8="'+ coalesce(cast(@Old_slivepositiontaking_8 AS varchar(50)),space(1)) + '" ' +
+		'spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_spositiontaking_9999),space(1)) + '" ' +
+		'slivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_slivepositiontaking_1),space(1)) + '" ' +
+		'slivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_slivepositiontaking_3),space(1)) + '" ' +
+		'slivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_slivepositiontaking_7),space(1)) + '" ' +
+		'slivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_slivepositiontaking_8),space(1)) + '" ' +
 
-		'v2spt_1="'+ coalesce(cast(@Old_v2spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_2="'+ coalesce(cast(@Old_v2spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_3="'+ coalesce(cast(@Old_v2spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_7="'+ coalesce(cast(@Old_v2spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_8="'+ coalesce(cast(@Old_v2spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_20="'+ coalesce(cast(@Old_v2spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'v2spt_9999="'+ coalesce(cast(@Old_v2spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'v2spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_1),space(1)) + '" ' +
+		'v2spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_2),space(1)) + '" ' +
+		'v2spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_3),space(1)) + '" ' +
+		'v2spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_7),space(1)) + '" ' +
+		'v2spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_8),space(1)) + '" ' +
+		'v2spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_20),space(1)) + '" ' +
+		'v2spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2spositiontaking_9999),space(1)) + '" ' +
 
-		'v3spt_1="'+ coalesce(cast(@Old_v3spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v3spt_2="'+ coalesce(cast(@Old_v3spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v3spt_3="'+ coalesce(cast(@Old_v3spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v3spt_20="'+ coalesce(cast(@Old_v3spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'v3spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_1),space(1)) + '" ' +
+		'v3spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_2),space(1)) + '" ' +
+		'v3spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_3),space(1)) + '" ' +
+		'v3spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3spositiontaking_20),space(1)) + '" ' +
 
-		'v5spt_1="'+ coalesce(cast(@Old_v5spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_2="'+ coalesce(cast(@Old_v5spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_3="'+ coalesce(cast(@Old_v5spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_20="'+ coalesce(cast(@Old_v5spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'v5spt_9999="'+ coalesce(cast(@Old_v5spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'v5spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_1),space(1)) + '" ' +
+		'v5spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_2),space(1)) + '" ' +
+		'v5spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_3),space(1)) + '" ' +
+		'v5spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_20),space(1)) + '" ' +
+		'v5spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5spositiontaking_9999),space(1)) + '" ' +
 
-		'v8spt_1="'+ coalesce(cast(@Old_v8spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v8spt_3="'+ coalesce(cast(@Old_v8spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v8spt_20="'+ coalesce(cast(@Old_v8spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'v8spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8spositiontaking_1),space(1)) + '" ' +
+		'v8spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8spositiontaking_3),space(1)) + '" ' +
+		'v8spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8spositiontaking_20),space(1)) + '" ' +
 
-		'v10spt_1="'+ coalesce(cast(@Old_v10spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v10spt_2="'+ coalesce(cast(@Old_v10spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v10spt_3="'+ coalesce(cast(@Old_v10spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v10spt_20="'+ coalesce(cast(@Old_v10spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'v10spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_1),space(1)) + '" ' +
+		'v10spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_2),space(1)) + '" ' +
+		'v10spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_3),space(1)) + '" ' +
+		'v10spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10spositiontaking_20),space(1)) + '" ' +
 
-		'v11spt_1="'+ coalesce(cast(@Old_v11spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v11spt_20="'+ coalesce(cast(@Old_v11spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'v11spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11spositiontaking_1),space(1)) + '" ' +
+		'v11spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11spositiontaking_20),space(1)) + '" ' +
 
-		'v99spt_1="'+ coalesce(cast(@Old_v99spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_2="'+ coalesce(cast(@Old_v99spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_3="'+ coalesce(cast(@Old_v99spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_20="'+ coalesce(cast(@Old_v99spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'v99spt_9999="'+ coalesce(cast(@Old_v99spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'v99spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_1),space(1)) + '" ' +
+		'v99spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_2),space(1)) + '" ' +
+		'v99spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_3),space(1)) + '" ' +
+		'v99spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_20),space(1)) + '" ' +
+		'v99spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_9999),space(1)) + '" ' +
 		-- mixed sports
-		'v99spt_9="'+ coalesce(cast(@Old_v99spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
+		'v99spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99spositiontaking_9),space(1)) + '" ' +
 		
 		--number game
-		'v161spt_81="'+ coalesce(cast(@Old_v161spositiontaking_81 AS varchar(50)),space(1)) + '" ' +
-		'v161spt_83="'+ coalesce(cast(@Old_v161spositiontaking_83 AS varchar(50)),space(1)) + '" ' +
-		'v161spt_86="'+ coalesce(cast(@Old_v161spositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-		'v161spt_88="'+ coalesce(cast(@Old_v161spositiontaking_88 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_85="'+ coalesce(cast(@Old_v161slivepositiontaking_85 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_86="'+ coalesce(cast(@Old_v161slivepositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_87="'+ coalesce(cast(@Old_v161slivepositiontaking_87 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_89="'+ coalesce(cast(@Old_v161slivepositiontaking_89 AS varchar(50)),space(1)) + '" ' +
-		'v161slivept_90="'+ coalesce(cast(@Old_v161slivepositiontaking_90 AS varchar(50)),space(1)) + '" />' +
+		'v161spt_81="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161spositiontaking_81),space(1)) + '" ' +
+		'v161spt_83="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161spositiontaking_83),space(1)) + '" ' +
+		'v161spt_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161spositiontaking_86),space(1)) + '" ' +
+		'v161spt_88="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161spositiontaking_88),space(1)) + '" ' +
+		'v161slivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_85),space(1)) + '" ' +
+		'v161slivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_86),space(1)) + '" ' +
+		'v161slivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_87),space(1)) + '" ' +
+		'v161slivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_89),space(1)) + '" ' +
+		'v161slivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161slivepositiontaking_90),space(1)) + '" />' +
 
-		'<au a_spt_1="'+ coalesce(cast(@Old_auto_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_2="'+ coalesce(cast(@Old_auto_spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_3="'+ coalesce(cast(@Old_auto_spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_4="'+ coalesce(cast(@Old_auto_spositiontaking_4 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_5="'+ coalesce(cast(@Old_auto_spositiontaking_5 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_6="'+ coalesce(cast(@Old_auto_spositiontaking_6 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_7="'+ coalesce(cast(@Old_auto_spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_8="'+ coalesce(cast(@Old_auto_spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_9="'+ coalesce(cast(@Old_auto_spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
-		'a_spt_10="'+ coalesce(cast(@Old_auto_spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+		'<au a_spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_1),space(1)) + '" ' +
+		'a_spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_2),space(1)) + '" ' +
+		'a_spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_3),space(1)) + '" ' +
+		'a_spt_4="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_4),space(1)) + '" ' +
+		'a_spt_5="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_5),space(1)) + '" ' +
+		'a_spt_6="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_6),space(1)) + '" ' +
+		'a_spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_7),space(1)) + '" ' +
+		'a_spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_8),space(1)) + '" ' +
+		'a_spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_9),space(1)) + '" ' +
+		'a_spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_10),space(1)) + '" ' +
 		
 		-- Outright PT for sports
-		'a_v2spt_10="'+ coalesce(cast(@Old_auto_v2spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v3spt_10="'+ coalesce(cast(@Old_auto_v3spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_10="'+ coalesce(cast(@Old_auto_v5spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v8spt_10="'+ coalesce(cast(@Old_auto_v8spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v10spt_10="'+ coalesce(cast(@Old_auto_v10spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v11spt_10="'+ coalesce(cast(@Old_auto_v11spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
-		'a_v99spt_10="'+ coalesce(cast(@Old_auto_v99spositiontaking_10 AS varchar(50)),space(1)) + '" ' +
+		'a_v2spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_10),space(1)) + '" ' +
+		'a_v3spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_10),space(1)) + '" ' +
+		'a_v5spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_10),space(1)) + '" ' +
+		'a_v8spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v8spositiontaking_10),space(1)) + '" ' +
+		'a_v10spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_10),space(1)) + '" ' +
+		'a_v11spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v11spositiontaking_10),space(1)) + '" ' +
+		'a_v99spt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_10),space(1)) + '" ' +
 		
-		'a_spt_9999="'+ coalesce(cast(@Old_auto_spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
-		'a_slivept_1="'+ coalesce(cast(@Old_auto_slivepositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_slivept_3="'+ coalesce(cast(@Old_auto_slivepositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_slivept_7="'+ coalesce(cast(@Old_auto_slivepositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'a_slivept_8="'+ coalesce(cast(@Old_auto_slivepositiontaking_8 AS varchar(50)),space(1)) + '" ' +
+		'a_spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_spositiontaking_9999),space(1)) + '" ' +
+		'a_slivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_slivepositiontaking_1),space(1)) + '" ' +
+		'a_slivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_slivepositiontaking_3),space(1)) + '" ' +
+		'a_slivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_slivepositiontaking_7),space(1)) + '" ' +
+		'a_slivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_slivepositiontaking_8),space(1)) + '" ' +
 
-		'a_v2spt_1="'+ coalesce(cast(@Old_auto_v2spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_2="'+ coalesce(cast(@Old_auto_v2spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_3="'+ coalesce(cast(@Old_auto_v2spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_7="'+ coalesce(cast(@Old_auto_v2spositiontaking_7 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_8="'+ coalesce(cast(@Old_auto_v2spositiontaking_8 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_20="'+ coalesce(cast(@Old_auto_v2spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'a_v2spt_9999="'+ coalesce(cast(@Old_auto_v2spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'a_v2spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_1),space(1)) + '" ' +
+		'a_v2spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_2),space(1)) + '" ' +
+		'a_v2spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_3),space(1)) + '" ' +
+		'a_v2spt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_7),space(1)) + '" ' +
+		'a_v2spt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_8),space(1)) + '" ' +
+		'a_v2spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_20),space(1)) + '" ' +
+		'a_v2spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v2spositiontaking_9999),space(1)) + '" ' +
 
-		'a_v3spt_1="'+ coalesce(cast(@Old_auto_v3spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v3spt_2="'+ coalesce(cast(@Old_auto_v3spositiontaking_2 AS varchar(50)),space(1))  + '" ' +
-		'a_v3spt_3="'+ coalesce(cast(@Old_auto_v3spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v3spt_20="'+ coalesce(cast(@Old_auto_v3spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'a_v3spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_1),space(1)) + '" ' +
+		'a_v3spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_2),space(1))  + '" ' +
+		'a_v3spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_3),space(1)) + '" ' +
+		'a_v3spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v3spositiontaking_20),space(1)) + '" ' +
 
-		'a_v5spt_1="'+ coalesce(cast(@Old_auto_v5spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_2="'+ coalesce(cast(@Old_auto_v5spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_3="'+ coalesce(cast(@Old_auto_v5spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_20="'+ coalesce(cast(@Old_auto_v5spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
-		'a_v5spt_9999="'+ coalesce(cast(@Old_auto_v5spositiontaking_9999 AS varchar(50)),space(1)) + '" ' +
+		'a_v5spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_1),space(1)) + '" ' +
+		'a_v5spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_2),space(1)) + '" ' +
+		'a_v5spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_3),space(1)) + '" ' +
+		'a_v5spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_20),space(1)) + '" ' +
+		'a_v5spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v5spositiontaking_9999),space(1)) + '" ' +
 
-		'a_v8spt_1="'+ coalesce(cast(@Old_auto_v8spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v8spt_3="'+ coalesce(cast(@Old_auto_v8spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v8spt_20="'+ coalesce(cast(@Old_auto_v8spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'a_v8spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v8spositiontaking_1),space(1)) + '" ' +
+		'a_v8spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v8spositiontaking_3),space(1)) + '" ' +
+		'a_v8spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v8spositiontaking_20),space(1)) + '" ' +
 
-		'a_v10spt_1="'+ coalesce(cast(@Old_auto_v10spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v10spt_2="'+ coalesce(cast(@Old_auto_v10spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_v10spt_3="'+ coalesce(cast(@Old_auto_v10spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v10spt_20="'+ coalesce(cast(@Old_auto_v10spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'a_v10spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_1),space(1)) + '" ' +
+		'a_v10spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_2),space(1)) + '" ' +
+		'a_v10spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_3),space(1)) + '" ' +
+		'a_v10spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v10spositiontaking_20),space(1)) + '" ' +
 
-		'a_v11spt_1="'+ coalesce(cast(@Old_auto_v11spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v11spt_20="'+ coalesce(cast(@Old_auto_v11spositiontaking_20 AS varchar(50)),space(1)) + '" ' +
+		'a_v11spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v11spositiontaking_1),space(1)) + '" ' +
+		'a_v11spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v11spositiontaking_20),space(1)) + '" ' +
 
-		'a_v99spt_1="'+ coalesce(cast(@Old_auto_v99spositiontaking_1 AS varchar(50)),space(1)) + '" ' +
-		'a_v99spt_2="'+ coalesce(cast(@Old_auto_v99spositiontaking_2 AS varchar(50)),space(1)) + '" ' +
-		'a_v99spt_3="'+ coalesce(cast(@Old_auto_v99spositiontaking_3 AS varchar(50)),space(1)) + '" ' +
-		'a_v99spt_20="'+ coalesce(cast(@Old_auto_v99spositiontaking_20 AS varchar(50)),space(1)) + '" ' + 
-		'a_v99spt_9999="'+ coalesce(cast(@Old_auto_v99spositiontaking_9999 AS varchar(50)),space(1)) + '" ' + 
+		'a_v99spt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_1),space(1)) + '" ' +
+		'a_v99spt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_2),space(1)) + '" ' +
+		'a_v99spt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_3),space(1)) + '" ' +
+		'a_v99spt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_20),space(1)) + '" ' + 
+		'a_v99spt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_9999),space(1)) + '" ' + 
 		-- mixed sports
-		'a_v99spt_9="'+ coalesce(cast(@Old_auto_v99spositiontaking_9 AS varchar(50)),space(1)) + '" ' +
+		'a_v99spt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v99spositiontaking_9),space(1)) + '" ' +
 		
 		-- number game
-		'a_v161spt_81="'+ coalesce(cast(@Old_auto_v161spositiontaking_81 AS varchar(50)),space(1)) + '" ' +
-		'a_v161spt_83="'+ coalesce(cast(@Old_auto_v161spositiontaking_83 AS varchar(50)),space(1)) + '" ' +
-		'a_v161spt_86="'+ coalesce(cast(@Old_auto_v161spositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-		'a_v161spt_88="'+ coalesce(cast(@Old_auto_v161spositiontaking_88 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_85="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_85 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_86="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_86 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_87="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_87 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_89="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_89 AS varchar(50)),space(1)) + '" ' +
-		'a_v161slivept_90="'+ coalesce(cast(@Old_auto_v161slivepositiontaking_90 AS varchar(50)),space(1)) + '" />' +
+		'a_v161spt_81="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161spositiontaking_81),space(1)) + '" ' +
+		'a_v161spt_83="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161spositiontaking_83),space(1)) + '" ' +
+		'a_v161spt_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161spositiontaking_86),space(1)) + '" ' +
+		'a_v161spt_88="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161spositiontaking_88),space(1)) + '" ' +
+		'a_v161slivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_85),space(1)) + '" ' +
+		'a_v161slivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_86),space(1)) + '" ' +
+		'a_v161slivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_87),space(1)) + '" ' +
+		'a_v161slivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_89),space(1)) + '" ' +
+		'a_v161slivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@Old_auto_v161slivepositiontaking_90),space(1)) + '" />' +
 
 		--i1
 		'<ia isa_spt_1="'+ coalesce(cast(@Old_isauto_spositiontaking_1 AS varchar(50)),space(1)) + '" ' +

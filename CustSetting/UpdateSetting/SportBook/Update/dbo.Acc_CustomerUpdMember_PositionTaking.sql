@@ -140,6 +140,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
+	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -1707,8 +1708,8 @@ BEGIN
 
 	--check n2<=a1<=l2 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 1 as bettype, 1 as sporttype, @apositiontaking_1 as apositiontaking, @alivepositiontaking_1 as alivepositiontaking
@@ -1740,8 +1741,8 @@ BEGIN
 
 	--check a1<=a4 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 					select 1 as bettype, 1 as sporttype, @apositiontaking_1 as apositiontaking, @alivepositiontaking_1 as alivepositiontaking
@@ -1771,8 +1772,8 @@ BEGIN
 	
 	--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((t.alivepositiontaking_max) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((t.alivepositiontaking_max)) else '' end + '<br>'
 	from 
 			(
 						select 1 as bettype, 1 as sporttype, @apositiontaking_1 as apositiontaking, @alivepositiontaking_1 as alivepositiontaking
@@ -1817,8 +1818,8 @@ BEGIN
 	/*
 	--check a1<=a2 - Phuc
 	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((acs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((acs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ dbo.f_FomatNumericToChar((acs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((acs.alivepositiontaking)) else '' end + '<br>'
 	from custsetting as acs with (NOLOCK) inner join 
 		(
 						select 1 as bettype, 1 as sporttype, @apositiontaking_1 as apositiontaking, @alivepositiontaking_1 as alivepositiontaking
@@ -1889,8 +1890,8 @@ BEGIN
 
 	--check n2<=a1<=l2 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 1 as bettype, 2 as sporttype, @v2apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -1921,8 +1922,8 @@ BEGIN
 
 	--check a1<=a4 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 				 	select 1 as bettype, 2 as sporttype, @v2apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -1951,7 +1952,7 @@ BEGIN
 	
 	--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max)) + '<br>'
 	from 
 		(
 					select 1 as bettype, 2 as sporttype, @v2apositiontaking_1 as apositiontaking
@@ -1986,8 +1987,8 @@ BEGIN
 	/*
 	--check a1<=a2 - Phuc
 	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((acs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((acs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ dbo.f_FomatNumericToChar((acs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((acs.alivepositiontaking)) else '' end + '<br>'
 	from custsetting as acs with (NOLOCK) inner join 
 		(
 				 		select 1 as bettype, 2 as sporttype, @v2apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2045,8 +2046,8 @@ BEGIN
 
 	--check n2<=a1<=l2 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 1 as bettype, 3 as sporttype, @v3apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2072,8 +2073,8 @@ BEGIN
 
 	--check a1<=a4 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 				 	select 1 as bettype, 3 as sporttype, @v3apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2097,7 +2098,7 @@ BEGIN
 	
 		--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max)) + '<br>'
 	from 
 		(
 					select 1 as bettype, 3 as sporttype, @v3apositiontaking_1 as apositiontaking
@@ -2130,8 +2131,8 @@ BEGIN
 	/*
 	--check a1<=a2 - Phuc
 	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((acs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((acs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ dbo.f_FomatNumericToChar((acs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((acs.alivepositiontaking)) else '' end + '<br>'
 	from custsetting as acs with (NOLOCK) inner join 
 		(
 				 		select 1 as bettype, 3 as sporttype, @v3apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2187,8 +2188,8 @@ BEGIN
 
 	--check n2<=a1<=l2 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 1 as bettype, 5 as sporttype, @v5apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2215,8 +2216,8 @@ BEGIN
 
 	--check a1<=a4 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 				 	select 1 as bettype, 5 as sporttype, @v5apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2241,7 +2242,7 @@ BEGIN
 	
 		--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max)) + '<br>'
 	from 
 		(
 					select 1 as bettype, 5 as sporttype, @v5apositiontaking_1 as apositiontaking
@@ -2276,8 +2277,8 @@ BEGIN
 	/*
 	--check a1<=a2 - Phuc
 	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((acs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((acs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ dbo.f_FomatNumericToChar((acs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((acs.alivepositiontaking)) else '' end + '<br>'
 	from custsetting as acs with (NOLOCK) inner join 
 		(
 				 		select 1 as bettype, 5 as sporttype, @v5apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2329,8 +2330,8 @@ BEGIN
 
 	--check n2<=a1<=l2 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 1 as bettype, 8 as sporttype, @v8apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2355,8 +2356,8 @@ BEGIN
 
 	--check a1<=a4 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 				 	select 1 as bettype, 8 as sporttype, @v8apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2380,7 +2381,7 @@ BEGIN
 	
 		--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max)) + '<br>'
 	from 
 		(
 					select 1 as bettype, 8 as sporttype, @v8apositiontaking_1 as apositiontaking
@@ -2411,8 +2412,8 @@ BEGIN
 	/*
 	--check a1<=a2 - Phuc
 	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((acs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((acs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ dbo.f_FomatNumericToChar((acs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((acs.alivepositiontaking)) else '' end + '<br>'
 	from custsetting as acs with (NOLOCK) inner join 
 		(
 				 	select 1 as bettype, 8 as sporttype, @v8apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2465,8 +2466,8 @@ BEGIN
 
 	--check n2<=a1<=l2 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 1 as bettype, 10 as sporttype, @v10apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2492,8 +2493,8 @@ BEGIN
 
 	--check a1<=a4 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 				 	select 1 as bettype, 10 as sporttype, @v10apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2517,7 +2518,7 @@ BEGIN
 	
 		--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max)) + '<br>'
 	from 
 		(
 					select 1 as bettype, 10 as sporttype, @v10apositiontaking_1 as apositiontaking
@@ -2550,8 +2551,8 @@ BEGIN
 	/*
 	--check a1<=a2 - Phuc
 	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((acs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((acs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ dbo.f_FomatNumericToChar((acs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((acs.alivepositiontaking)) else '' end + '<br>'
 	from custsetting as acs with (NOLOCK) inner join 
 		(
 				 		select 1 as bettype, 10 as sporttype, @v10apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2601,8 +2602,8 @@ BEGIN
 
 	--check n2<=a1<=l2 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 1 as bettype, 11 as sporttype, @v11apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2626,8 +2627,8 @@ BEGIN
 
 	--check a1<=a4 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 				 	select 1 as bettype, 11 as sporttype, @v11apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2649,7 +2650,7 @@ BEGIN
 	
 		--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max)) + '<br>'
 	from 
 		(
 					select 1 as bettype, 11 as sporttype, @v11apositiontaking_1 as apositiontaking
@@ -2679,8 +2680,8 @@ BEGIN
 	/*
 	--check a1<=a2 - Phuc
 	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((acs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((acs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ dbo.f_FomatNumericToChar((acs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((acs.alivepositiontaking)) else '' end + '<br>'
 	from custsetting as acs with (NOLOCK) inner join 
 		(
 				 		select 1 as bettype, 11 as sporttype, @v11apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2732,8 +2733,8 @@ BEGIN
 
 	--check n2<=a1<=l2 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 1 as bettype, 99 as sporttype, @v99apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2760,8 +2761,8 @@ BEGIN
 
 	--check a1<=a4 - Vinh
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 				 	select 1 as bettype, 99 as sporttype, @v99apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2786,7 +2787,7 @@ BEGIN
 	
 		--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max)) + '<br>'
 	from 
 		(
 					select 1 as bettype, 99 as sporttype, @v99apositiontaking_1 as apositiontaking
@@ -2821,8 +2822,8 @@ BEGIN
 	/*
 	--check a1<=a2 - Phuc
 	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((acs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ cast((acs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ dbo.f_FomatNumericToChar((acs.apositiontaking))
+	+ case when b.sporttype=1 and b.bettype in (1,3,7,8) then '-MaxLive: '+ dbo.f_FomatNumericToChar((acs.alivepositiontaking)) else '' end + '<br>'
 	from custsetting as acs with (NOLOCK) inner join 
 		(
 				 		select 1 as bettype, 99 as sporttype, @v99apositiontaking_1 as apositiontaking, 0 as alivepositiontaking
@@ -2874,7 +2875,7 @@ BEGIN
 
 	--check n2<=a1<=l2 
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking)) + '<br>'
 	from custoverride as co with (NOLOCK) inner join
 		(
 					select 9 as bettype, 99 as sporttype, @v99apositiontaking_9 as apositiontaking
@@ -2896,7 +2897,7 @@ BEGIN
 
 	--check a1<=a4 
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking)) + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 				 	select 9 as bettype, 99 as sporttype, @v99apositiontaking_9 as apositiontaking
@@ -2916,7 +2917,7 @@ BEGIN
 	
 		--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max)) + '<br>'
 	from 
 		(
 					select 9 as bettype, 99 as sporttype, @v99apositiontaking_9 as apositiontaking
@@ -2975,8 +2976,8 @@ BEGIN
 
 	--check n2<=a1<=l2 
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
+	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
 	from custoverride3rd as co with (NOLOCK) inner join
 		(
 					select 81 as bettype, 161 as sporttype, @v161apositiontaking_81 as apositiontaking, 0 as alivepositiontaking
@@ -3004,8 +3005,8 @@ BEGIN
 
 	--check a1<=a4 
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((scs.apositiontaking) as varchar(10))
-	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '-MaxLive: '+ cast((scs.alivepositiontaking) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
+	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
 	from custinfo as c with (NOLOCK) inner join custsetting3rd as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
 		(
 					select 81 as bettype, 161 as sporttype, @v161apositiontaking_81 as apositiontaking, 0 as alivepositiontaking
@@ -3032,8 +3033,8 @@ BEGIN
 	
 	--check a1 with a1_max
 	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((t.apositiontaking_max) as varchar(10))
-	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '-MaxLive: '+ cast((t.alivepositiontaking_max) as varchar(10)) else '' end + '<br>'
+	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max))
+	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '-MaxLive: '+ dbo.f_FomatNumericToChar((t.alivepositiontaking_max)) else '' end + '<br>'
 	from 
 			(
 						select 81 as bettype, 161 as sporttype, @v161apositiontaking_81 as apositiontaking, 0 as alivepositiontaking
@@ -4809,80 +4810,80 @@ Select @LogSPData = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultiple="'+
 'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(8000)),space(1)) + '" />' +
 
-'<ag apt_1="'+ coalesce(cast(@apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'apt_2="'+ coalesce(cast(@apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'apt_3="'+ coalesce(cast(@apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'apt_4="'+ coalesce(cast(@apositiontaking_4 as varchar(50)),space(1)) + '" ' +
-'apt_5="'+ coalesce(cast(@apositiontaking_5 as varchar(50)),space(1)) + '" ' +
-'apt_6="'+ coalesce(cast(@apositiontaking_6 as varchar(50)),space(1)) + '" ' +
-'apt_7="'+ coalesce(cast(@apositiontaking_7 as varchar(50)),space(1)) + '" ' +
-'apt_8="'+ coalesce(cast(@apositiontaking_8 as varchar(50)),space(1)) + '" ' +
-'apt_9="'+ coalesce(cast(@apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-'apt_10="'+ coalesce(cast(@apositiontaking_10 as varchar(50)),space(1)) + '" ' +
+'<ag apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_1),space(1)) + '" ' +
+'apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_2),space(1)) + '" ' +
+'apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_3),space(1)) + '" ' +
+'apt_4="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_4),space(1)) + '" ' +
+'apt_5="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_5),space(1)) + '" ' +
+'apt_6="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_6),space(1)) + '" ' +
+'apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_7),space(1)) + '" ' +
+'apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_8),space(1)) + '" ' +
+'apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_9),space(1)) + '" ' +
+'apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_10),space(1)) + '" ' +
 
 -- Outright PT for sports
-'v2apt_10="'+ coalesce(cast(@v2apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v3apt_10="'+ coalesce(cast(@v3apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v5apt_10="'+ coalesce(cast(@v5apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v8apt_10="'+ coalesce(cast(@v8apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v10apt_10="'+ coalesce(cast(@v10apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v11apt_10="'+ coalesce(cast(@v11apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v99apt_10="'+ coalesce(cast(@v99apositiontaking_10 as varchar(50)),space(1)) + '" ' +
+'v2apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_10),space(1)) + '" ' +
+'v3apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_10),space(1)) + '" ' +
+'v5apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_10),space(1)) + '" ' +
+'v8apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_10),space(1)) + '" ' +
+'v10apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_10),space(1)) + '" ' +
+'v11apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_10),space(1)) + '" ' +
+'v99apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_10),space(1)) + '" ' +
 
-'apt_9999="'+ coalesce(cast(@apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
-'alivept_1="'+ coalesce(cast(@alivepositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'alivept_3="'+ coalesce(cast(@alivepositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'alivept_7="'+ coalesce(cast(@alivepositiontaking_7 as varchar(50)),space(1)) + '" ' +
-'alivept_8="'+ coalesce(cast(@alivepositiontaking_8 as varchar(50)),space(1)) + '" ' +
+'apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_9999),space(1)) + '" ' +
+'alivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_1),space(1)) + '" ' +
+'alivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_3),space(1)) + '" ' +
+'alivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_7),space(1)) + '" ' +
+'alivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_8),space(1)) + '" ' +
 
-'v2apt_1="'+ coalesce(cast(@v2apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v2apt_2="'+ coalesce(cast(@v2apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v2apt_3="'+ coalesce(cast(@v2apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v2apt_7="'+ coalesce(cast(@v2apositiontaking_7 as varchar(50)),space(1)) + '" ' +
-'v2apt_8="'+ coalesce(cast(@v2apositiontaking_8 as varchar(50)),space(1)) + '" ' +
---'v2apt_9="'+ coalesce(cast(@v2apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-'v2apt_20="'+ coalesce(cast(@v2apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-'v2apt_9999="'+ coalesce(cast(@v2apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+'v2apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_1),space(1)) + '" ' +
+'v2apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_2),space(1)) + '" ' +
+'v2apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_3),space(1)) + '" ' +
+'v2apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_7),space(1)) + '" ' +
+'v2apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_8),space(1)) + '" ' +
+--'v2apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_9),space(1)) + '" ' +
+'v2apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_20),space(1)) + '" ' +
+'v2apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_9999),space(1)) + '" ' +
 
-'v3apt_1="'+ coalesce(cast(@v3apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v3apt_2="'+ coalesce(cast(@v3apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v3apt_3="'+ coalesce(cast(@v3apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v3apt_20="'+ coalesce(cast(@v3apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+'v3apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_1),space(1)) + '" ' +
+'v3apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_2),space(1)) + '" ' +
+'v3apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_3),space(1)) + '" ' +
+'v3apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_20),space(1)) + '" ' +
 
-'v5apt_1="'+ coalesce(cast(@v5apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v5apt_2="'+ coalesce(cast(@v5apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v5apt_3="'+ coalesce(cast(@v5apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v5apt_20="'+ coalesce(cast(@v5apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-'v5apt_9999="'+ coalesce(cast(@v5apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+'v5apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_1),space(1)) + '" ' +
+'v5apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_2),space(1)) + '" ' +
+'v5apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_3),space(1)) + '" ' +
+'v5apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_20),space(1)) + '" ' +
+'v5apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_9999),space(1)) + '" ' +
 
-'v8apt_1="'+ coalesce(cast(@v8apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v8apt_3="'+ coalesce(cast(@v8apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v8apt_20="'+ coalesce(cast(@v8apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+'v8apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_1),space(1)) + '" ' +
+'v8apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_3),space(1)) + '" ' +
+'v8apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_20),space(1)) + '" ' +
 
-'v10apt_1="'+ coalesce(cast(@v10apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v10apt_2="'+ coalesce(cast(@v10apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v10apt_3="'+ coalesce(cast(@v10apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v10apt_20="'+ coalesce(cast(@v10apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+'v10apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_1),space(1)) + '" ' +
+'v10apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_2),space(1)) + '" ' +
+'v10apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_3),space(1)) + '" ' +
+'v10apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_20),space(1)) + '" ' +
 
-'v11apt_1="'+ coalesce(cast(@v11apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v11apt_20="'+ coalesce(cast(@v11apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+'v11apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_1),space(1)) + '" ' +
+'v11apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_20),space(1)) + '" ' +
 
-'v99apt_1="'+ coalesce(cast(@v99apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v99apt_2="'+ coalesce(cast(@v99apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v99apt_3="'+ coalesce(cast(@v99apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v99apt_9="'+ coalesce(cast(@v99apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-'v99apt_20="'+ coalesce(cast(@v99apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-'v99apt_9999="'+ coalesce(cast(@v99apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+'v99apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_1),space(1)) + '" ' +
+'v99apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_2),space(1)) + '" ' +
+'v99apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_3),space(1)) + '" ' +
+'v99apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9),space(1)) + '" ' +
+'v99apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_20),space(1)) + '" ' +
+'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9999),space(1)) + '" ' +
 
-'v161apt_81="'+ coalesce(cast(@v161apositiontaking_81 as varchar(50)),space(1)) + '" ' +
-'v161apt_83="'+ coalesce(cast(@v161apositiontaking_83 as varchar(50)),space(1)) + '" ' +
-'v161apt_86="'+ coalesce(cast(@v161apositiontaking_86 as varchar(50)),space(1)) + '" ' +
-'v161apt_88="'+ coalesce(cast(@v161apositiontaking_88 as varchar(50)),space(1)) + '" ' +
-'v161alivept_85="'+ coalesce(cast(@v161alivepositiontaking_85 as varchar(50)),space(1)) + '" ' +
-'v161alivept_86="'+ coalesce(cast(@v161alivepositiontaking_86 as varchar(50)),space(1)) + '" ' +
-'v161alivept_87="'+ coalesce(cast(@v161alivepositiontaking_87 as varchar(50)),space(1)) + '" ' +
-'v161alivept_89="'+ coalesce(cast(@v161alivepositiontaking_89 as varchar(50)),space(1)) + '" ' +
-'v161alivept_90="'+ coalesce(cast(@v161alivepositiontaking_90 as varchar(50)),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
+'v161apt_81="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_81),space(1)) + '" ' +
+'v161apt_83="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_83),space(1)) + '" ' +
+'v161apt_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_86),space(1)) + '" ' +
+'v161apt_88="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_88),space(1)) + '" ' +
+'v161alivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_85),space(1)) + '" ' +
+'v161alivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_86),space(1)) + '" ' +
+'v161alivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_87),space(1)) + '" ' +
+'v161alivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_89),space(1)) + '" ' +
+'v161alivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_90),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
 
 Select @TrackingValue2 = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultiple="'+ coalesce(cast(@UpdateMultiple as varchar(50)),space(1)) + '" ' +
 'Updpt="'+ coalesce(cast(@UpdatePositiontaking as varchar(50)),space(1)) + '" ' +
@@ -4903,78 +4904,78 @@ Select @TrackingValue2 = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultipl
 'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(8000)),space(1)) + '" />' +
 
-'<ag apt_1="'+ coalesce(cast(@Old_apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'apt_2="'+ coalesce(cast(@Old_apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'apt_3="'+ coalesce(cast(@Old_apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'apt_4="'+ coalesce(cast(@Old_apositiontaking_4 as varchar(50)),space(1)) + '" ' +
-'apt_5="'+ coalesce(cast(@Old_apositiontaking_5 as varchar(50)),space(1)) + '" ' +
-'apt_6="'+ coalesce(cast(@Old_apositiontaking_6 as varchar(50)),space(1)) + '" ' +
-'apt_7="'+ coalesce(cast(@Old_apositiontaking_7 as varchar(50)),space(1)) + '" ' +
-'apt_8="'+ coalesce(cast(@Old_apositiontaking_8 as varchar(50)),space(1)) + '" ' +
-'apt_9="'+ coalesce(cast(@Old_apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-'apt_10="'+ coalesce(cast(@Old_apositiontaking_10 as varchar(50)),space(1)) + '" ' +
+'<ag apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_1),space(1)) + '" ' +
+'apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_2),space(1)) + '" ' +
+'apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_3),space(1)) + '" ' +
+'apt_4="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_4),space(1)) + '" ' +
+'apt_5="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_5),space(1)) + '" ' +
+'apt_6="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_6),space(1)) + '" ' +
+'apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_7),space(1)) + '" ' +
+'apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_8),space(1)) + '" ' +
+'apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_9),space(1)) + '" ' +
+'apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_10),space(1)) + '" ' +
 -- Outright PT for sports
-'v2apt_10="'+ coalesce(cast(@Old_v2apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v3apt_10="'+ coalesce(cast(@Old_v3apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v5apt_10="'+ coalesce(cast(@Old_v5apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v8apt_10="'+ coalesce(cast(@Old_v8apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v10apt_10="'+ coalesce(cast(@Old_v10apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v11apt_10="'+ coalesce(cast(@Old_v11apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-'v99apt_10="'+ coalesce(cast(@Old_v99apositiontaking_10 as varchar(50)),space(1)) + '" ' +
+'v2apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_10),space(1)) + '" ' +
+'v3apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_10),space(1)) + '" ' +
+'v5apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_10),space(1)) + '" ' +
+'v8apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_10),space(1)) + '" ' +
+'v10apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_10),space(1)) + '" ' +
+'v11apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_10),space(1)) + '" ' +
+'v99apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_10),space(1)) + '" ' +
 
-'apt_9999="'+ coalesce(cast(@Old_apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
-'alivept_1="'+ coalesce(cast(@Old_alivepositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'alivept_3="'+ coalesce(cast(@Old_alivepositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'alivept_7="'+ coalesce(cast(@Old_alivepositiontaking_7 as varchar(50)),space(1)) + '" ' +
-'alivept_8="'+ coalesce(cast(@Old_alivepositiontaking_8 as varchar(50)),space(1)) + '" ' +
+'apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_9999),space(1)) + '" ' +
+'alivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_1),space(1)) + '" ' +
+'alivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_3),space(1)) + '" ' +
+'alivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_7),space(1)) + '" ' +
+'alivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_8),space(1)) + '" ' +
 
-'v2apt_1="'+ coalesce(cast(@Old_v2apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v2apt_2="'+ coalesce(cast(@Old_v2apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v2apt_3="'+ coalesce(cast(@Old_v2apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v2apt_7="'+ coalesce(cast(@Old_v2apositiontaking_7 as varchar(50)),space(1)) + '" ' +
-'v2apt_8="'+ coalesce(cast(@Old_v2apositiontaking_8 as varchar(50)),space(1)) + '" ' +
-'v2apt_20="'+ coalesce(cast(@Old_v2apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-'v2apt_9999="'+ coalesce(cast(@Old_v2apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+'v2apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_1),space(1)) + '" ' +
+'v2apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_2),space(1)) + '" ' +
+'v2apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_3),space(1)) + '" ' +
+'v2apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_7),space(1)) + '" ' +
+'v2apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_8),space(1)) + '" ' +
+'v2apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_20),space(1)) + '" ' +
+'v2apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_9999),space(1)) + '" ' +
 
-'v3apt_1="'+ coalesce(cast(@Old_v3apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v3apt_2="'+ coalesce(cast(@Old_v3apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v3apt_3="'+ coalesce(cast(@Old_v3apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v3apt_20="'+ coalesce(cast(@Old_v3apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+'v3apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_1),space(1)) + '" ' +
+'v3apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_2),space(1)) + '" ' +
+'v3apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_3),space(1)) + '" ' +
+'v3apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_20),space(1)) + '" ' +
 
-'v5apt_1="'+ coalesce(cast(@Old_v5apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v5apt_2="'+ coalesce(cast(@Old_v5apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v5apt_3="'+ coalesce(cast(@Old_v5apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v5apt_20="'+ coalesce(cast(@Old_v5apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-'v5apt_9999="'+ coalesce(cast(@Old_v5apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+'v5apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_1),space(1)) + '" ' +
+'v5apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_2),space(1)) + '" ' +
+'v5apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_3),space(1)) + '" ' +
+'v5apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_20),space(1)) + '" ' +
+'v5apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_9999),space(1)) + '" ' +
 
-'v8apt_1="'+ coalesce(cast(@Old_v8apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v8apt_3="'+ coalesce(cast(@Old_v8apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v8apt_20="'+ coalesce(cast(@Old_v8apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+'v8apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_1),space(1)) + '" ' +
+'v8apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_3),space(1)) + '" ' +
+'v8apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_20),space(1)) + '" ' +
 
-'v10apt_1="'+ coalesce(cast(@Old_v10apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v10apt_2="'+ coalesce(cast(@Old_v10apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v10apt_3="'+ coalesce(cast(@Old_v10apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v10apt_20="'+ coalesce(cast(@Old_v10apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+'v10apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_1),space(1)) + '" ' +
+'v10apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_2),space(1)) + '" ' +
+'v10apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_3),space(1)) + '" ' +
+'v10apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_20),space(1)) + '" ' +
 
-'v11apt_1="'+ coalesce(cast(@Old_v11apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v11apt_20="'+ coalesce(cast(@Old_v11apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+'v11apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_1),space(1)) + '" ' +
+'v11apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_20),space(1)) + '" ' +
 
-'v99apt_1="'+ coalesce(cast(@Old_v99apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-'v99apt_2="'+ coalesce(cast(@Old_v99apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-'v99apt_3="'+ coalesce(cast(@Old_v99apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-'v99apt_9="'+ coalesce(cast(@Old_v99apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-'v99apt_20="'+ coalesce(cast(@Old_v99apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-'v99apt_9999="'+ coalesce(cast(@Old_v99apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+'v99apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_1),space(1)) + '" ' +
+'v99apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_2),space(1)) + '" ' +
+'v99apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_3),space(1)) + '" ' +
+'v99apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9),space(1)) + '" ' +
+'v99apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_20),space(1)) + '" ' +
+'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9999),space(1)) + '" ' +
 
-'v161apt_81="'+ coalesce(cast(@Old_v161apositiontaking_81 as varchar(50)),space(1)) + '" ' +
-'v161apt_83="'+ coalesce(cast(@Old_v161apositiontaking_83 as varchar(50)),space(1)) + '" ' +
-'v161apt_86="'+ coalesce(cast(@Old_v161apositiontaking_86 as varchar(50)),space(1)) + '" ' +
-'v161apt_88="'+ coalesce(cast(@Old_v161apositiontaking_88 as varchar(50)),space(1)) + '" ' +
-'v161alivept_85="'+ coalesce(cast(@Old_v161alivepositiontaking_85 as varchar(50)),space(1)) + '" ' +
-'v161alivept_86="'+ coalesce(cast(@Old_v161alivepositiontaking_86 as varchar(50)),space(1)) + '" ' +
-'v161alivept_87="'+ coalesce(cast(@Old_v161alivepositiontaking_87 as varchar(50)),space(1)) + '" ' +
-'v161alivept_89="'+ coalesce(cast(@Old_v161alivepositiontaking_89 as varchar(50)),space(1)) + '" ' +
-'v161alivept_90="'+ coalesce(cast(@Old_v161alivepositiontaking_90 as varchar(50)),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
+'v161apt_81="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_81),space(1)) + '" ' +
+'v161apt_83="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_83),space(1)) + '" ' +
+'v161apt_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_86),space(1)) + '" ' +
+'v161apt_88="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_88),space(1)) + '" ' +
+'v161alivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_85),space(1)) + '" ' +
+'v161alivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_86),space(1)) + '" ' +
+'v161alivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_87),space(1)) + '" ' +
+'v161alivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_89),space(1)) + '" ' +
+'v161alivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_90),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
 
 set @endRun = getdate()
 set @duration  = datediff (millisecond,@startRun,@endRun)
@@ -5008,80 +5009,80 @@ BEGIN CATCH
 	'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(8000)),space(1)) + '" />' +
 
-	'<ag apt_1="'+ coalesce(cast(@apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'apt_2="'+ coalesce(cast(@apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'apt_3="'+ coalesce(cast(@apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'apt_4="'+ coalesce(cast(@apositiontaking_4 as varchar(50)),space(1)) + '" ' +
-	'apt_5="'+ coalesce(cast(@apositiontaking_5 as varchar(50)),space(1)) + '" ' +
-	'apt_6="'+ coalesce(cast(@apositiontaking_6 as varchar(50)),space(1)) + '" ' +
-	'apt_7="'+ coalesce(cast(@apositiontaking_7 as varchar(50)),space(1)) + '" ' +
-	'apt_8="'+ coalesce(cast(@apositiontaking_8 as varchar(50)),space(1)) + '" ' +
-	'apt_9="'+ coalesce(cast(@apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-	'apt_10="'+ coalesce(cast(@apositiontaking_10 as varchar(50)),space(1)) + '" ' +
+	'<ag apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_1),space(1)) + '" ' +
+	'apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_2),space(1)) + '" ' +
+	'apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_3),space(1)) + '" ' +
+	'apt_4="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_4),space(1)) + '" ' +
+	'apt_5="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_5),space(1)) + '" ' +
+	'apt_6="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_6),space(1)) + '" ' +
+	'apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_7),space(1)) + '" ' +
+	'apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_8),space(1)) + '" ' +
+	'apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_9),space(1)) + '" ' +
+	'apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_10),space(1)) + '" ' +
 	
 	-- Outright PT for sports
-	'v2apt_10="'+ coalesce(cast(@v2apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v3apt_10="'+ coalesce(cast(@v3apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v5apt_10="'+ coalesce(cast(@v5apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v8apt_10="'+ coalesce(cast(@v8apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v10apt_10="'+ coalesce(cast(@v10apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v11apt_10="'+ coalesce(cast(@v11apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v99apt_10="'+ coalesce(cast(@v99apositiontaking_10 as varchar(50)),space(1)) + '" ' +
+	'v2apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_10),space(1)) + '" ' +
+	'v3apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_10),space(1)) + '" ' +
+	'v5apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_10),space(1)) + '" ' +
+	'v8apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_10),space(1)) + '" ' +
+	'v10apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_10),space(1)) + '" ' +
+	'v11apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_10),space(1)) + '" ' +
+	'v99apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_10),space(1)) + '" ' +
 	
-	'apt_9999="'+ coalesce(cast(@apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
-	'alivept_1="'+ coalesce(cast(@alivepositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'alivept_3="'+ coalesce(cast(@alivepositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'alivept_7="'+ coalesce(cast(@alivepositiontaking_7 as varchar(50)),space(1)) + '" ' +
-	'alivept_8="'+ coalesce(cast(@alivepositiontaking_8 as varchar(50)),space(1)) + '" ' +
+	'apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_9999),space(1)) + '" ' +
+	'alivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_1),space(1)) + '" ' +
+	'alivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_3),space(1)) + '" ' +
+	'alivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_7),space(1)) + '" ' +
+	'alivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_8),space(1)) + '" ' +
 
-	'v2apt_1="'+ coalesce(cast(@v2apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v2apt_2="'+ coalesce(cast(@v2apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v2apt_3="'+ coalesce(cast(@v2apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v2apt_7="'+ coalesce(cast(@v2apositiontaking_7 as varchar(50)),space(1)) + '" ' +
-	'v2apt_8="'+ coalesce(cast(@v2apositiontaking_8 as varchar(50)),space(1)) + '" ' +
-	--'v2apt_9="'+ coalesce(cast(@v2apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-	'v2apt_20="'+ coalesce(cast(@v2apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-	'v2apt_9999="'+ coalesce(cast(@v2apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+	'v2apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_1),space(1)) + '" ' +
+	'v2apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_2),space(1)) + '" ' +
+	'v2apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_3),space(1)) + '" ' +
+	'v2apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_7),space(1)) + '" ' +
+	'v2apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_8),space(1)) + '" ' +
+	--'v2apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_9),space(1)) + '" ' +
+	'v2apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_20),space(1)) + '" ' +
+	'v2apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_9999),space(1)) + '" ' +
 
-	'v3apt_1="'+ coalesce(cast(@v3apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v3apt_2="'+ coalesce(cast(@v3apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v3apt_3="'+ coalesce(cast(@v3apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v3apt_20="'+ coalesce(cast(@v3apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'v3apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_1),space(1)) + '" ' +
+	'v3apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_2),space(1)) + '" ' +
+	'v3apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_3),space(1)) + '" ' +
+	'v3apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_20),space(1)) + '" ' +
 
-	'v5apt_1="'+ coalesce(cast(@v5apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v5apt_2="'+ coalesce(cast(@v5apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v5apt_3="'+ coalesce(cast(@v5apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v5apt_20="'+ coalesce(cast(@v5apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-	'v5apt_9999="'+ coalesce(cast(@v5apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+	'v5apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_1),space(1)) + '" ' +
+	'v5apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_2),space(1)) + '" ' +
+	'v5apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_3),space(1)) + '" ' +
+	'v5apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_20),space(1)) + '" ' +
+	'v5apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_9999),space(1)) + '" ' +
 
-	'v8apt_1="'+ coalesce(cast(@v8apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v8apt_3="'+ coalesce(cast(@v8apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v8apt_20="'+ coalesce(cast(@v8apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'v8apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_1),space(1)) + '" ' +
+	'v8apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_3),space(1)) + '" ' +
+	'v8apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_20),space(1)) + '" ' +
 
-	'v10apt_1="'+ coalesce(cast(@v10apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v10apt_2="'+ coalesce(cast(@v10apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v10apt_3="'+ coalesce(cast(@v10apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v10apt_20="'+ coalesce(cast(@v10apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'v10apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_1),space(1)) + '" ' +
+	'v10apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_2),space(1)) + '" ' +
+	'v10apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_3),space(1)) + '" ' +
+	'v10apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_20),space(1)) + '" ' +
 
-	'v11apt_1="'+ coalesce(cast(@v11apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v11apt_20="'+ coalesce(cast(@v11apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'v11apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_1),space(1)) + '" ' +
+	'v11apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_20),space(1)) + '" ' +
 
-	'v99apt_1="'+ coalesce(cast(@v99apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v99apt_2="'+ coalesce(cast(@v99apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v99apt_3="'+ coalesce(cast(@v99apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v99apt_9="'+ coalesce(cast(@v99apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-	'v99apt_20="'+ coalesce(cast(@v99apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-	'v99apt_9999="'+ coalesce(cast(@v99apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+	'v99apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_1),space(1)) + '" ' +
+	'v99apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_2),space(1)) + '" ' +
+	'v99apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_3),space(1)) + '" ' +
+	'v99apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9),space(1)) + '" ' +
+	'v99apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_20),space(1)) + '" ' +
+	'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9999),space(1)) + '" ' +
 
-	'v161apt_81="'+ coalesce(cast(@v161apositiontaking_81 as varchar(50)),space(1)) + '" ' +
-	'v161apt_83="'+ coalesce(cast(@v161apositiontaking_83 as varchar(50)),space(1)) + '" ' +
-	'v161apt_86="'+ coalesce(cast(@v161apositiontaking_86 as varchar(50)),space(1)) + '" ' +
-	'v161apt_88="'+ coalesce(cast(@v161apositiontaking_88 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_85="'+ coalesce(cast(@v161alivepositiontaking_85 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_86="'+ coalesce(cast(@v161alivepositiontaking_86 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_87="'+ coalesce(cast(@v161alivepositiontaking_87 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_89="'+ coalesce(cast(@v161alivepositiontaking_89 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_90="'+ coalesce(cast(@v161alivepositiontaking_90 as varchar(50)),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
+	'v161apt_81="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_81),space(1)) + '" ' +
+	'v161apt_83="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_83),space(1)) + '" ' +
+	'v161apt_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_86),space(1)) + '" ' +
+	'v161apt_88="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_88),space(1)) + '" ' +
+	'v161alivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_85),space(1)) + '" ' +
+	'v161alivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_86),space(1)) + '" ' +
+	'v161alivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_87),space(1)) + '" ' +
+	'v161alivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_89),space(1)) + '" ' +
+	'v161alivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_90),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
 
 	Select @TrackingValue2 = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultiple="'+ coalesce(cast(@UpdateMultiple as varchar(50)),space(1)) + '" ' +
 	'Updpt="'+ coalesce(cast(@UpdatePositiontaking as varchar(50)),space(1)) + '" ' +
@@ -5102,78 +5103,78 @@ BEGIN CATCH
 	'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(8000)),space(1)) + '" />' +
 
-	'<ag apt_1="'+ coalesce(cast(@Old_apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'apt_2="'+ coalesce(cast(@Old_apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'apt_3="'+ coalesce(cast(@Old_apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'apt_4="'+ coalesce(cast(@Old_apositiontaking_4 as varchar(50)),space(1)) + '" ' +
-	'apt_5="'+ coalesce(cast(@Old_apositiontaking_5 as varchar(50)),space(1)) + '" ' +
-	'apt_6="'+ coalesce(cast(@Old_apositiontaking_6 as varchar(50)),space(1)) + '" ' +
-	'apt_7="'+ coalesce(cast(@Old_apositiontaking_7 as varchar(50)),space(1)) + '" ' +
-	'apt_8="'+ coalesce(cast(@Old_apositiontaking_8 as varchar(50)),space(1)) + '" ' +
-	'apt_9="'+ coalesce(cast(@Old_apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-	'apt_10="'+ coalesce(cast(@Old_apositiontaking_10 as varchar(50)),space(1)) + '" ' +
+	'<ag apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_1),space(1)) + '" ' +
+	'apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_2),space(1)) + '" ' +
+	'apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_3),space(1)) + '" ' +
+	'apt_4="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_4),space(1)) + '" ' +
+	'apt_5="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_5),space(1)) + '" ' +
+	'apt_6="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_6),space(1)) + '" ' +
+	'apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_7),space(1)) + '" ' +
+	'apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_8),space(1)) + '" ' +
+	'apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_9),space(1)) + '" ' +
+	'apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_10),space(1)) + '" ' +
 	-- Outright PT for sports
-	'v2apt_10="'+ coalesce(cast(@Old_v2apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v3apt_10="'+ coalesce(cast(@Old_v3apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v5apt_10="'+ coalesce(cast(@Old_v5apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v8apt_10="'+ coalesce(cast(@Old_v8apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v10apt_10="'+ coalesce(cast(@Old_v10apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v11apt_10="'+ coalesce(cast(@Old_v11apositiontaking_10 as varchar(50)),space(1)) + '" ' +
-	'v99apt_10="'+ coalesce(cast(@Old_v99apositiontaking_10 as varchar(50)),space(1)) + '" ' +
+	'v2apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_10),space(1)) + '" ' +
+	'v3apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_10),space(1)) + '" ' +
+	'v5apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_10),space(1)) + '" ' +
+	'v8apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_10),space(1)) + '" ' +
+	'v10apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_10),space(1)) + '" ' +
+	'v11apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_10),space(1)) + '" ' +
+	'v99apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_10),space(1)) + '" ' +
 	
-	'apt_9999="'+ coalesce(cast(@Old_apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
-	'alivept_1="'+ coalesce(cast(@Old_alivepositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'alivept_3="'+ coalesce(cast(@Old_alivepositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'alivept_7="'+ coalesce(cast(@Old_alivepositiontaking_7 as varchar(50)),space(1)) + '" ' +
-	'alivept_8="'+ coalesce(cast(@Old_alivepositiontaking_8 as varchar(50)),space(1)) + '" ' +
+	'apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_9999),space(1)) + '" ' +
+	'alivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_1),space(1)) + '" ' +
+	'alivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_3),space(1)) + '" ' +
+	'alivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_7),space(1)) + '" ' +
+	'alivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_8),space(1)) + '" ' +
 
-	'v2apt_1="'+ coalesce(cast(@Old_v2apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v2apt_2="'+ coalesce(cast(@Old_v2apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v2apt_3="'+ coalesce(cast(@Old_v2apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v2apt_7="'+ coalesce(cast(@Old_v2apositiontaking_7 as varchar(50)),space(1)) + '" ' +
-	'v2apt_8="'+ coalesce(cast(@Old_v2apositiontaking_8 as varchar(50)),space(1)) + '" ' +
-	'v2apt_20="'+ coalesce(cast(@Old_v2apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-	'v2apt_9999="'+ coalesce(cast(@Old_v2apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+	'v2apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_1),space(1)) + '" ' +
+	'v2apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_2),space(1)) + '" ' +
+	'v2apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_3),space(1)) + '" ' +
+	'v2apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_7),space(1)) + '" ' +
+	'v2apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_8),space(1)) + '" ' +
+	'v2apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_20),space(1)) + '" ' +
+	'v2apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_9999),space(1)) + '" ' +
 
-	'v3apt_1="'+ coalesce(cast(@Old_v3apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v3apt_2="'+ coalesce(cast(@Old_v3apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v3apt_3="'+ coalesce(cast(@Old_v3apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v3apt_20="'+ coalesce(cast(@Old_v3apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'v3apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_1),space(1)) + '" ' +
+	'v3apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_2),space(1)) + '" ' +
+	'v3apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_3),space(1)) + '" ' +
+	'v3apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_20),space(1)) + '" ' +
 
-	'v5apt_1="'+ coalesce(cast(@Old_v5apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v5apt_2="'+ coalesce(cast(@Old_v5apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v5apt_3="'+ coalesce(cast(@Old_v5apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v5apt_20="'+ coalesce(cast(@Old_v5apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-	'v5apt_9999="'+ coalesce(cast(@Old_v5apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+	'v5apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_1),space(1)) + '" ' +
+	'v5apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_2),space(1)) + '" ' +
+	'v5apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_3),space(1)) + '" ' +
+	'v5apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_20),space(1)) + '" ' +
+	'v5apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_9999),space(1)) + '" ' +
 
-	'v8apt_1="'+ coalesce(cast(@Old_v8apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v8apt_3="'+ coalesce(cast(@Old_v8apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v8apt_20="'+ coalesce(cast(@Old_v8apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'v8apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_1),space(1)) + '" ' +
+	'v8apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_3),space(1)) + '" ' +
+	'v8apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_20),space(1)) + '" ' +
 
-	'v10apt_1="'+ coalesce(cast(@Old_v10apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v10apt_2="'+ coalesce(cast(@Old_v10apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v10apt_3="'+ coalesce(cast(@Old_v10apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v10apt_20="'+ coalesce(cast(@Old_v10apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'v10apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_1),space(1)) + '" ' +
+	'v10apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_2),space(1)) + '" ' +
+	'v10apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_3),space(1)) + '" ' +
+	'v10apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_20),space(1)) + '" ' +
 
-	'v11apt_1="'+ coalesce(cast(@Old_v11apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v11apt_20="'+ coalesce(cast(@Old_v11apositiontaking_20 as varchar(50)),space(1)) + '" ' +
+	'v11apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_1),space(1)) + '" ' +
+	'v11apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_20),space(1)) + '" ' +
 
-	'v99apt_1="'+ coalesce(cast(@Old_v99apositiontaking_1 as varchar(50)),space(1)) + '" ' +
-	'v99apt_2="'+ coalesce(cast(@Old_v99apositiontaking_2 as varchar(50)),space(1)) + '" ' +
-	'v99apt_3="'+ coalesce(cast(@Old_v99apositiontaking_3 as varchar(50)),space(1)) + '" ' +
-	'v99apt_9="'+ coalesce(cast(@Old_v99apositiontaking_9 as varchar(50)),space(1)) + '" ' +
-	'v99apt_20="'+ coalesce(cast(@Old_v99apositiontaking_20 as varchar(50)),space(1)) + '" ' +
-	'v99apt_9999="'+ coalesce(cast(@Old_v99apositiontaking_9999 as varchar(50)),space(1)) + '" ' +
+	'v99apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_1),space(1)) + '" ' +
+	'v99apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_2),space(1)) + '" ' +
+	'v99apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_3),space(1)) + '" ' +
+	'v99apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9),space(1)) + '" ' +
+	'v99apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_20),space(1)) + '" ' +
+	'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9999),space(1)) + '" ' +
 
-	'v161apt_81="'+ coalesce(cast(@Old_v161apositiontaking_81 as varchar(50)),space(1)) + '" ' +
-	'v161apt_83="'+ coalesce(cast(@Old_v161apositiontaking_83 as varchar(50)),space(1)) + '" ' +
-	'v161apt_86="'+ coalesce(cast(@Old_v161apositiontaking_86 as varchar(50)),space(1)) + '" ' +
-	'v161apt_88="'+ coalesce(cast(@Old_v161apositiontaking_88 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_85="'+ coalesce(cast(@Old_v161alivepositiontaking_85 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_86="'+ coalesce(cast(@Old_v161alivepositiontaking_86 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_87="'+ coalesce(cast(@Old_v161alivepositiontaking_87 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_89="'+ coalesce(cast(@Old_v161alivepositiontaking_89 as varchar(50)),space(1)) + '" ' +
-	'v161alivept_90="'+ coalesce(cast(@Old_v161alivepositiontaking_90 as varchar(50)),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
+	'v161apt_81="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_81),space(1)) + '" ' +
+	'v161apt_83="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_83),space(1)) + '" ' +
+	'v161apt_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_86),space(1)) + '" ' +
+	'v161apt_88="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_88),space(1)) + '" ' +
+	'v161alivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_85),space(1)) + '" ' +
+	'v161alivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_86),space(1)) + '" ' +
+	'v161alivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_87),space(1)) + '" ' +
+	'v161alivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_89),space(1)) + '" ' +
+	'v161alivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_90),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
 
 	EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @UserID,

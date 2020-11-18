@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditAgentKeno]
 	@custid INT
 AS
@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20150608@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB, Use temp table for GameType table)
 		- 20180115@Johnson: Remove downlines status for new direction change[RedmineID: #87328]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameters Explanation
 */
 BEGIN
@@ -56,7 +57,7 @@ BEGIN
 	WHERE CustID = @Mrecommend
 
 	--Get custinfo
-	SELECT username, firstname, lastname, phone, mobilephone, fax, @DisableAutoMPT as DisableAutoMPT
+	SELECT username, firstname, lastname, phone, mobilephone, fax, @DisableAutoMPT as DisableAutoMPT, Site
 	FROM dbo.Customer WITH (NOLOCK)
 	WHERE custID = @CustID
 

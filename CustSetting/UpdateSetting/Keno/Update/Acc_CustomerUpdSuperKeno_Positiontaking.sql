@@ -22,6 +22,7 @@ AS
         - 20140818@Logan:   Exclude disabled members while checking constraints for Super [Redmine: #19631]
         - 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines, change Age_CustomerSelCheckBelonging -> Age_CustomerSelCheckBelongingByCustID) [Redmine:#36216]
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
     Param's Explanation:
     • @ErrCode is:
             = 0: Transaction recorded successfully.
@@ -91,8 +92,8 @@ BEGIN
     BEGIN
         SELECT @ErrMsg =
                     CASE @Language 
-                            WHEN 'E' then 'Super Max PT exceeded Company limit:' + cast(@MaxPT AS VARCHAR(10)) + '.'
-                            ELSE [dbo].[f_Get_MsgNamebyMsgID](20018,@Language) + cast(@MaxPT AS VARCHAR(10)) + '.'
+                            WHEN 'E' then 'Super Max PT exceeded Company limit:' + dbo.f_FomatNumericToChar(@MaxPT) + '.'
+                            ELSE [dbo].[f_Get_MsgNamebyMsgID](20018,@Language) + dbo.f_FomatNumericToChar(@MaxPT) + '.'
                     END, @ErrCode = 102
         RETURN
     END
@@ -174,7 +175,7 @@ INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
     SELECT @LogSPData = '<Acc_CustomerUpdSuperKeno_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
     'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
     'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' + 
-    's4="' + COALESCE(CAST(@s4 AS VARCHAR(50)),SPACE(1)) + '" ' +
+    's4="' + COALESCE(dbo.f_FomatNumericToChar(@s4),SPACE(1)) + '" ' +
     'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
     'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
     'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
@@ -186,7 +187,7 @@ INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
     SELECT @TrackingValueDB = '<Acc_CustomerUpdSuperKeno_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
     'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
     'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' + 
-    's4="' + COALESCE(CAST(@old_spositiontaking AS VARCHAR(50)),SPACE(1)) + '" ' +
+    's4="' + COALESCE(dbo.f_FomatNumericToChar(@old_spositiontaking),SPACE(1)) + '" ' +
     'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
     'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
     'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
@@ -212,7 +213,7 @@ INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
         SELECT @LogSPData = '<Acc_CustomerUpdSuperKeno_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
         'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
         'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' + 
-        's4="' + COALESCE(CAST(@s4 AS VARCHAR(50)),SPACE(1)) + '" ' +
+        's4="' + COALESCE(dbo.f_FomatNumericToChar(@s4),SPACE(1)) + '" ' +
         'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
         'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
         'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +

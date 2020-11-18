@@ -27,6 +27,7 @@ AS
 		- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 			
 	Param's Explanation:  
 	• @ErrCode:  
@@ -151,7 +152,7 @@ BEGIN
 		END
 
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + 'Max: ' + CAST(@SPositionTaking_Max AS VARCHAR(10)) 
+		SELECT @ErrType = @ErrType + 'Max: ' + dbo.f_FomatNumericToChar(@SPositionTaking_Max) 
 		WHERE @s1 > @SPositionTaking_Max
 		
 		IF @ErrType <> ''
@@ -164,7 +165,7 @@ BEGIN
 		END
 
 		SELECT @ErrType = ''
-		SELECT @ErrType = @ErrType + 'Max: ' + CAST(@SPositionTaking_Max - @MPositionTaking - @APositionTaking AS VARCHAR(10)) 
+		SELECT @ErrType = @ErrType + 'Max: ' + dbo.f_FomatNumericToChar(@SPositionTaking_Max - @MPositionTaking - @APositionTaking) 
 		WHERE @s1 + @MPositionTaking + @APositionTaking > @SPositionTaking_Max
 	
 		IF @ErrType <> ''
@@ -189,7 +190,7 @@ BEGIN
 
 		SELECT @ErrType = ''
 	
-		SELECT @ErrType	= @ErrType + 'Max: ' + CAST(@SPositionTaking_Max AS VARCHAR(10)) 
+		SELECT @ErrType	= @ErrType + 'Max: ' + dbo.f_FomatNumericToChar(@SPositionTaking_Max) 
 		WHERE @us1 > @SPositionTaking_Max
 	
 		IF @ErrType <> ''
@@ -244,7 +245,7 @@ BEGIN
 	BEGIN   
 		 --Check us1<=s4  
 		 select @ErrType = ''  
-		 select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ cast((cs.spositiontaking) as varchar(10)) + '<br>'  
+		 select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((cs.spositiontaking)) + '<br>'  
 		 from @tmp_sag as cs inner join  
 		  (  
 		   select @bettype as bettype, @sporttype as sporttype, @us1 as autopositiontaking      
@@ -269,7 +270,7 @@ BEGIN
 	   
 		 -- check us1>= Max(0, N4-M1-A1) when is1=1  
 		 select @ErrType = @ErrType + s.name + '-'+ bt.name +   
-		  '-Min: '+ cast((case when co.minpositiontaking - b.mpositiontaking - b.apositiontaking >0 then co.minpositiontaking - b.mpositiontaking - b.apositiontaking else 0 end) as varchar(10)) + '<br>'  
+		  '-Min: '+ dbo.f_FomatNumericToChar((case when co.minpositiontaking - b.mpositiontaking - b.apositiontaking >0 then co.minpositiontaking - b.mpositiontaking - b.apositiontaking else 0 end)) + '<br>'  
 		 from @tmp_sag as co inner join  
 			 (  
 				  select @sporttype as sporttype, @bettype as bettype,   
@@ -301,10 +302,10 @@ BEGIN
 		 --Check s1<=Max(N4-M1-A1, S4-M3)  
 		 select @ErrType = ''  
 		 select @ErrType = @ErrType + s.name + '-'+ bt.name   
-		   + '-Max: '+ cast((case when cs.minpositiontaking - b.mpositiontaking - b.apositiontaking > cs.spositiontaking - mcs.mpositiontaking  
+		   + '-Max: '+ dbo.f_FomatNumericToChar((case when cs.minpositiontaking - b.mpositiontaking - b.apositiontaking > cs.spositiontaking - mcs.mpositiontaking  
 				 then cs.minpositiontaking - b.mpositiontaking - b.apositiontaking  
 				 else cs.spositiontaking - mcs.mpositiontaking  
-			   end) as varchar(10)) + '<br>'  
+			   end)) + '<br>'  
 		 from @tmp_sag as cs inner join    
 		  (  
 			   select @bettype as bettype, @sporttype as sporttype,   
@@ -336,7 +337,7 @@ BEGIN
 	   
 		 -- check s1>= Max(0, N4-M1-A1)   
 		 select @ErrType = @ErrType + s.name + '-'+ bt.name +   
-		  '-Min: '+ cast((case when co.minpositiontaking - b.mpositiontaking - b.apositiontaking >0 then co.minpositiontaking - b.mpositiontaking - b.apositiontaking else 0 end) as varchar(10)) + '<br>'  
+		  '-Min: '+ dbo.f_FomatNumericToChar((case when co.minpositiontaking - b.mpositiontaking - b.apositiontaking >0 then co.minpositiontaking - b.mpositiontaking - b.apositiontaking else 0 end)) + '<br>'  
 		 from @tmp_sag as co inner join  
 		 (  
 			  select @sporttype as sporttype, @bettype as bettype,   
@@ -546,9 +547,9 @@ BEGIN
 	SELECT @LogSPData = '<Acc_CustomerUpdMemberKeno_SAg CustId = "' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) 
 		+ '" ' + 'sporttype="'+ coalesce(cast(@sporttype as varchar(50)),space(1))
 		+ '" ' + 'bettype="'+ coalesce(cast(@bettype as varchar(50)),space(1))
-		+ '" ' + 's1 = "' + COALESCE(CAST(@log_s1 AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 's1 = "' + COALESCE(dbo.f_FomatNumericToChar(@log_s1), SPACE(1))
 		+ '" ' + 'is1 = "' + COALESCE(CAST(@is1 AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'us1 ="' + COALESCE(CAST(@us1 AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'us1 ="' + COALESCE(dbo.f_FomatNumericToChar(@us1), SPACE(1))
 		+ '" ' + 'is3 = "' + COALESCE(CAST(@is3 AS VARCHAR(50)), SPACE(1))
 		+ '" ' + 'UpdatePositiontaking ="' + COALESCE(CAST(@UpdatePositiontaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UpdateAutoPositiontaking ="' + COALESCE(CAST(@UpdateAutoPositiontaking AS VARCHAR(10)), SPACE(1))
@@ -562,9 +563,9 @@ BEGIN
 	SELECT @TrackingValueDB = '<Acc_CustomerUpdMemberKeno_SAg CustId = "' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) 
 		+ '" ' + 'sporttype="'+ coalesce(cast(@sporttype as varchar(50)),space(1))
 		+ '" ' + 'bettype="'+ coalesce(cast(@bettype as varchar(50)),space(1))
-		+ '" ' + 's1 = "' + COALESCE(CAST(@Old_SPositionTaking AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 's1 = "' + COALESCE(dbo.f_FomatNumericToChar(@Old_SPositionTaking), SPACE(1))
 		+ '" ' + 'is1 = "' + COALESCE(CAST(@Old_IsAuto_SPositionTaking AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'us1 ="' + COALESCE(CAST(@Old_Auto_SPositionTaking AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'us1 ="' + COALESCE(dbo.f_FomatNumericToChar(@Old_Auto_SPositionTaking), SPACE(1))
 		+ '" ' + 'is3 = "' + COALESCE(CAST(@is3 AS VARCHAR(50)), SPACE(1))
 		+ '" ' + 'UpdatePositiontaking ="' + COALESCE(CAST(@UpdatePositiontaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UpdateAutoPositiontaking ="' + COALESCE(CAST(@UpdateAutoPositiontaking AS VARCHAR(10)), SPACE(1))
@@ -592,9 +593,9 @@ BEGIN
 		SELECT @LogSPData = '<Acc_CustomerUpdMemberKeno_SAg CustId = "' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) 
 		+ '" ' + 'sporttype="'+ coalesce(cast(@sporttype as varchar(50)),space(1))
 		+ '" ' + 'bettype="'+ coalesce(cast(@bettype as varchar(50)),space(1))
-		+ '" ' + 's1 = "' + COALESCE(CAST(@log_s1 AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 's1 = "' + COALESCE(dbo.f_FomatNumericToChar(@log_s1), SPACE(1))
 		+ '" ' + 'is1 = "' + COALESCE(CAST(@is1 AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'us1 ="' + COALESCE(CAST(@us1 AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'us1 ="' + COALESCE(dbo.f_FomatNumericToChar(@us1), SPACE(1))
 		+ '" ' + 'is3 = "' + COALESCE(CAST(@is3 AS VARCHAR(50)), SPACE(1))
 		+ '" ' + 'UpdatePositiontaking ="' + COALESCE(CAST(@UpdatePositiontaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UpdateAutoPositiontaking ="' + COALESCE(CAST(@UpdateAutoPositiontaking AS VARCHAR(10)), SPACE(1))

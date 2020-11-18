@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB,DBACC-bodb02" selecters="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION f_DCS_PT_XMLParse(@DataXML	NVARCHAR(MAX)) 
 RETURNS @SportBetTypeTbl TABLE (SportType SMALLINT
 						, Bettype SMALLINT
@@ -5,16 +6,16 @@ RETURNS @SportBetTypeTbl TABLE (SportType SMALLINT
 						, IsAuto_New BIT
 						, IsAuto_Old BIT
 						, IsUpdAllMems BIT
-						, UpdAllMems_Value SMALLINT
-						, SuperPT SMALLINT
-						, MasterPT SMALLINT
-						, AgentPT SMALLINT
+						, UpdAllMems_Value SMALLMONEY
+						, SuperPT SMALLMONEY
+						, MasterPT SMALLMONEY
+						, AgentPT SMALLMONEY
 						, IsAutoMasterPT BIT
-						, AutoMasterPT SMALLINT
+						, AutoMasterPT SMALLMONEY
 						, IsAutoSuperPT BIT
-						, AutoSuperPT SMALLINT
-						, MinPT SMALLINT
-						, MaxPT SMALLINT
+						, AutoSuperPT SMALLMONEY
+						, MinPT SMALLMONEY
+						, MaxPT SMALLMONEY
 						)
 /*
     Created: Dominic
@@ -23,6 +24,7 @@ RETURNS @SportBetTypeTbl TABLE (SportType SMALLINT
     DB: DBCUST/CustDB
     Original versions:                
     Revision:
+		- 20201023@Eden: Adjust new pt for 789y [Redmine: #143764]
 
     Parameter's Explanation:
 		- @DataXML
@@ -45,18 +47,18 @@ BEGIN
 			, r.value('./@IsAuto_New','BIT')
 			, r.value('./@IsAuto_Old','BIT')
 			, r.value('./@IsUpdAllMems','BIT')
-			, r.value('./@UpdAllMems_Value','SMALLINT')
+			, r.value('./@UpdAllMems_Value','SMALLMONEY')
 			
 			--Setting
-			, r.value('./@SuperPT','SMALLINT')
-			, r.value('./@MasterPT','SMALLINT')
-			, r.value('./@AgentPT','SMALLINT')
+			, r.value('./@SuperPT','SMALLMONEY')
+			, r.value('./@MasterPT','SMALLMONEY')
+			, r.value('./@AgentPT','SMALLMONEY')
 			, r.value('./@IsAutoMasterPT','BIT')
-			, r.value('./@AutoMasterPT','SMALLINT')
+			, r.value('./@AutoMasterPT','SMALLMONEY')
 			, r.value('./@IsAutoSuperPT','BIT')
-			, r.value('./@AutoSuperPT','SMALLINT')
-			, r.value('./@MinPT','SMALLINT')
-			, r.value('./@MaxPT','SMALLINT')
+			, r.value('./@AutoSuperPT','SMALLMONEY')
+			, r.value('./@MinPT','SMALLMONEY')
+			, r.value('./@MaxPT','SMALLMONEY')
 	FROM @xml.nodes('//ROOT/PT') AS RECORDS(r)
 
  

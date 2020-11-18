@@ -25,12 +25,14 @@ AS
 /*
 	Created: 20150422@Elodie
 	Task: master update agent's Gold Deluxe PT setting
-	DB: DBTXN/CustDB
+	DB: DBCUST/CustDB
 	
 	Revisions:
 		- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB)
 		- 20151007@Elodie: Remove code to check old and new value
-		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]			            
+		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+				            
 	Parameters Explanation:
 */
 BEGIN
@@ -111,7 +113,7 @@ BEGIN
 	--check n3<=m2+a2  if im2 = 0, 
 	--a2<=l3 and um2+a2>=n3 if im2 = 1
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType + 'Min: '+ CAST((co.minpositiontaking) AS VARCHAR(10))+ '<br>'
+	SELECT @ErrType = @ErrType + 'Min: '+ dbo.f_FomatNumericToChar(co.minpositiontaking)+ '<br>'
 	FROM custoverrideGame co WITH(NOLOCK)
 		INNER JOIN 
 			(
@@ -133,7 +135,7 @@ BEGIN
 
 	--n2<=a2
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType + 'Min: '+ CAST((co.minpositiontaking) AS VARCHAR(10)) + '<br>'
+	SELECT @ErrType = @ErrType + 'Min: '+ dbo.f_FomatNumericToChar(co.minpositiontaking) + '<br>'
 	FROM 
 		( 
 			SELECT 1701 AS bettype, 255 AS sporttype, @min_v255apositiontaking_1701 AS minpositiontaking
@@ -160,7 +162,7 @@ BEGIN
 	
 	
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType +  'Max: '+ cast((b.max_mapositiontaking) as varchar(10)) + '<br>'
+	SELECT @ErrType = @ErrType +  'Max: '+ dbo.f_FomatNumericToChar(b.max_mapositiontaking) + '<br>'
 	FROM
 		(				
 			select 1701 as bettype, 255 as sporttype, @v255apositiontaking_1701 AS apositiontaking, @v255mpositiontaking_1701 AS mpositiontaking, @max_v255mapositiontaking_1701 AS max_mapositiontaking
@@ -179,7 +181,7 @@ BEGIN
 	
 	--check um2<=min(m3,l3) - Phuc@20081209
 	select @ErrType = ''
-	select @ErrType = @ErrType + 'Max: '+ cast(max_mapositiontaking as varchar(10)) + '<br>'
+	select @ErrType = @ErrType + 'Max: '+ dbo.f_FomatNumericToChar(max_mapositiontaking) + '<br>'
 	from 
 	(
 		select 1701 AS bettype, 255 as sporttype, @auto_v255mpositiontaking_1701 as autopositiontaking, @isauto_v255mpositiontaking_1701 as isautopositiontaking, @max_v255mapositiontaking_1701 as max_mapositiontaking		
@@ -278,10 +280,10 @@ Declare @LogSPData varchar(MAX),
 Select @LogSPData ='<Acc_CustomerUpdAgentGoldDeluxe_PositionTaking CustID="' + COALESCE(CAST(@custid AS VARCHAR(30)), SPACE(1)) + '" ' +
 
 					'updateallmembers="'+ coalesce(cast(@updateallmembers as varchar(50)),space(1)) + '" ' +
-					'newmpositiontaking="'+ coalesce(cast(@newmpositiontaking as varchar(50)),space(1)) + '" ' +
-					'v255apositiontaking_1701="'+ coalesce(cast(@v255apositiontaking_1701 as varchar(50)),space(1)) + '" ' +
-					'v255mpositiontaking_1701="'+ coalesce(cast(@v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
-					'auto_v255mpositiontaking_1701="'+ coalesce(cast(@auto_v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
+					'newmpositiontaking="'+ coalesce(dbo.f_FomatNumericToChar(@newmpositiontaking),space(1)) + '" ' +
+					'v255apositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@v255apositiontaking_1701),space(1)) + '" ' +
+					'v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@v255mpositiontaking_1701),space(1)) + '" ' +
+					'auto_v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v255mpositiontaking_1701),space(1)) + '" ' +
 					'isauto_v255mpositiontaking_1701="'+ coalesce(cast(@isauto_v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
 					'v255UpdatePositiontaking_1701="' + coalesce(cast(@v255UpdatePositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 					'v255UpdateAutoPositiontaking_1701="' + coalesce(cast(@v255UpdateAutoPositiontaking_1701 as varchar(10)), space(1)) + '" ' +
@@ -296,10 +298,10 @@ Select @LogSPData ='<Acc_CustomerUpdAgentGoldDeluxe_PositionTaking CustID="' + C
 
 Select @TrackingValueDB =	'<Acc_CustomerUpdAgentGoldDeluxe_PositionTaking CustID="' + COALESCE(CAST(@custid AS VARCHAR(30)), SPACE(1)) + '" ' +
 							'updateallmembers="'+ coalesce(cast(@updateallmembers as varchar(50)),space(1)) + '" ' +
-							'newmpositiontaking="'+ coalesce(cast(@newmpositiontaking as varchar(50)),space(1)) + '" ' +
-							'v255apositiontaking_1701="'+ coalesce(cast(@old_v255apositiontaking_1701 as varchar(50)),space(1)) + '" ' + 
-							'v255mpositiontaking_1701="'+ coalesce(cast(@old_v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
-							'auto_v255mpositiontaking_1701="'+ coalesce(cast(@old_auto_v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
+							'newmpositiontaking="'+ coalesce(dbo.f_FomatNumericToChar(@newmpositiontaking),space(1)) + '" ' +
+							'v255apositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@old_v255apositiontaking_1701),space(1)) + '" ' + 
+							'v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@old_v255mpositiontaking_1701),space(1)) + '" ' +
+							'auto_v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@old_auto_v255mpositiontaking_1701),space(1)) + '" ' +
 							'isauto_v255mpositiontaking_1701="'+ coalesce(cast(@old_isauto_v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' + 
 							'v255UpdatePositiontaking_1701="' + coalesce(cast(@v255UpdatePositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 							'v255UpdateAutoPositiontaking_1701="' + coalesce(cast(@v255UpdateAutoPositiontaking_1701 as varchar(10)), space(1)) + '" ' +
@@ -329,10 +331,10 @@ BEGIN CATCH
 	Select @LogSPData =	'<Acc_CustomerUpdAgentGoldDeluxe_PositionTaking CustID="' + COALESCE(CAST(@custid AS VARCHAR(30)), SPACE(1)) + '" ' +
 
 						'updateallmembers="'+ coalesce(cast(@updateallmembers as varchar(50)),space(1)) + '" ' +
-						'newmpositiontaking="'+ coalesce(cast(@newmpositiontaking as varchar(50)),space(1)) + '" ' +
-						'v255apositiontaking_1701="'+ coalesce(cast(@v255apositiontaking_1701 as varchar(50)),space(1)) + '" ' +
-						'v255mpositiontaking_1701="'+ coalesce(cast(@v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
-						'auto_v255mpositiontaking_1701="'+ coalesce(cast(@auto_v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
+						'newmpositiontaking="'+ coalesce(dbo.f_FomatNumericToChar(@newmpositiontaking),space(1)) + '" ' +
+						'v255apositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@v255apositiontaking_1701),space(1)) + '" ' +
+						'v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@v255mpositiontaking_1701),space(1)) + '" ' +
+						'auto_v255mpositiontaking_1701="'+ coalesce(dbo.f_FomatNumericToChar(@auto_v255mpositiontaking_1701),space(1)) + '" ' +
 						'isauto_v255mpositiontaking_1701="'+ coalesce(cast(@isauto_v255mpositiontaking_1701 as varchar(50)),space(1)) + '" ' +
 						'v255UpdatePositiontaking_1701="' + coalesce(cast(@v255UpdatePositiontaking_1701 as varchar(10)), space(1)) + '" ' +
 						'v255UpdateAutoPositiontaking_1701="' + coalesce(cast(@v255UpdateAutoPositiontaking_1701 as varchar(10)), space(1)) + '" ' +

@@ -1,17 +1,4 @@
-USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CustOverrideUpdKeno]    Script Date: 06/10/2015 16:56:33 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdKeno    Script Date: 8/28/2014 2:05:30 AM ******/
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdKeno    Script Date: 8/21/2014 3:12:19 PM ******/
-
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdKeno    Script Date: 8/21/2014 2:58:11 PM ******/
-
-
-/****** Object:  Stored Procedure dbo.Acc_CustOverrideUpdKeno_xtest    Script Date: 6/19/2014 10:30:06 AM ******/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustOverrideUpdKeno] 
     @CustID INT,
     @UplineID INT = 0,
@@ -30,10 +17,11 @@ AS
 /*
     Created: 20140225@Elodie
     Task : Update CustOverrideGame for Keno
-    DB: DBTXN/CustDB
+    DB: DBCUST/CustDB
 
     Revisions:
-		- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216]                        
+		- 20150610@Kathy: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB) [Redmine:#36216] 
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]                       
 
     Param's Explanation:
     • @ErrCode:
@@ -95,7 +83,7 @@ BEGIN
     SELECT @LogSPData = '<Acc_CustOverrideUpdKeno custid="' + COALESCE(CAST(@CustID AS VARCHAR(30)), SPACE(1)) + '" ' +
         'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
         'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' + 
-        'Min_Positiontaking="' + COALESCE(CAST(@Min_Positiontaking AS VARCHAR(30)), SPACE(1)) + '" ' + 
+        'Min_Positiontaking="' + COALESCE(dbo.f_FomatNumericToChar(@Min_Positiontaking), SPACE(1)) + '" ' + 
         'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
         'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
         'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -106,7 +94,7 @@ BEGIN
     SELECT @TrackingValueDB = '<Acc_CustOverrideUpdKeno custid="' + COALESCE(CAST(@CustID AS VARCHAR(30)), SPACE(1)) + '" ' +
         'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
         'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' + 
-        'Min_Positiontaking="' + COALESCE(CAST(@Old_Min_Positiontaking AS VARCHAR(30)), SPACE(1)) + '" ' + 
+        'Min_Positiontaking="' + COALESCE(dbo.f_FomatNumericToChar(@Old_Min_Positiontaking), SPACE(1)) + '" ' + 
         'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
         'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
         'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -131,7 +119,7 @@ BEGIN
         SELECT @LogSPData = '<Acc_CustOverrideUpdKeno custid="' + COALESCE(CAST(@CustID AS VARCHAR(30)), SPACE(1)) + '" ' +
         'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' + 
         'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) + '" ' + 
-        'Min_Positiontaking="' + COALESCE(CAST(@Min_Positiontaking AS VARCHAR(30)), SPACE(1)) + '" ' + 
+        'Min_Positiontaking="' + COALESCE(dbo.f_FomatNumericToChar(@Min_Positiontaking), SPACE(1)) + '" ' + 
         'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
         'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
         'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -150,10 +138,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdKeno] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdKeno] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdKeno] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpdKeno] TO [vnteam] AS [dbo]

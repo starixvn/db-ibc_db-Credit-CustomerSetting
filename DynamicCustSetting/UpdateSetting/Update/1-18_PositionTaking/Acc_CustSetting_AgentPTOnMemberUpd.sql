@@ -19,6 +19,7 @@ AS
 			- 20151104@Billy: Change log PT value range from [0,90] to [0,0.9] and update log structure - [Redmine: #46781, #46788]
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 
 		Parameter's Explanation:	
 		• @PT:
@@ -54,28 +55,28 @@ BEGIN
 			  SportType			SMALLINT
 			, BetType			SMALLINT
 			, IsLive			BIT
-			, SuperPT			TINYINT
-			, MasterPT			TINYINT
-			, AgentPT			TINYINT
-			, AgentPT_Max		TINYINT
-			, AgentAPT_Max		TINYINT
+			, SuperPT			SMALLMONEY
+			, MasterPT			SMALLMONEY
+			, AgentPT			SMALLMONEY
+			, AgentPT_Max		SMALLMONEY
+			, AgentAPT_Max		SMALLMONEY
 			, IsAutoMasterPT	BIT
-			, AutoMasterPT		TINYINT
+			, AutoMasterPT		SMALLMONEY
 			, IsAutoSuperPT		BIT
-			, AutoSuperPT		TINYINT
+			, AutoSuperPT		SMALLMONEY
 			UNIQUE CLUSTERED (SportType, BetType, IsLive)
 		)
 	DECLARE @OldPTTble TABLE (
 			SportType			SMALLINT
 			, BetType			SMALLINT
 			, IsLive			BIT
-			, SuperPT			TINYINT
-			, MasterPT			TINYINT
-			, AgentPT			TINYINT
+			, SuperPT			SMALLMONEY
+			, MasterPT			SMALLMONEY
+			, AgentPT			SMALLMONEY
 			, IsAutoMasterPT	BIT
-			, AutoMasterPT		TINYINT
+			, AutoMasterPT		SMALLMONEY
 			, IsAutoSuperPT		BIT
-			, AutoSuperPT		TINYINT
+			, AutoSuperPT		SMALLMONEY
 			UNIQUE CLUSTERED (SportType, BetType, IsLive)
 		)
 		
@@ -84,15 +85,15 @@ BEGIN
 					SportType		SMALLINT  ,
 					BetType			SMALLINT  ,
 					IsLive			BIT  ,
-					S4				TINYINT  ,
-					M4				TINYINT  ,
-					A4				TINYINT  ,
+					S4				SMALLMONEY  ,
+					M4				SMALLMONEY  ,
+					A4				SMALLMONEY  ,
 					IM4				BIT  ,
-					UM4				TINYINT  ,
+					UM4				SMALLMONEY  ,
 					IS4				BIT  ,
-					US4				TINYINT  ,
-					N4				TINYINT  ,
-					L4				TINYINT  
+					US4				SMALLMONEY  ,
+					N4				SMALLMONEY  ,
+					L4				SMALLMONEY  
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
 				
@@ -101,15 +102,15 @@ BEGIN
 					SportType		SMALLINT  ,
 					BetType			SMALLINT  ,
 					IsLive			BIT  ,
-					S3				TINYINT  ,
-					M3				TINYINT  ,
-					A3				TINYINT  ,
+					S3				SMALLMONEY  ,
+					M3				SMALLMONEY  ,
+					A3				SMALLMONEY  ,
 					IM3				BIT  ,
-					UM3				TINYINT  ,
+					UM3				SMALLMONEY  ,
 					IS3				BIT  ,
-					US3				TINYINT  ,
-					N3				TINYINT  ,
-					L3				TINYINT  
+					US3				SMALLMONEY  ,
+					N3				SMALLMONEY  ,
+					L3				SMALLMONEY  
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
 				
@@ -118,15 +119,15 @@ BEGIN
 					SportType		SMALLINT  ,
 					BetType			SMALLINT  ,
 					IsLive			BIT  ,
-					S2				TINYINT  ,
-					M2				TINYINT  ,
-					A2				TINYINT  ,
+					S2				SMALLMONEY  ,
+					M2				SMALLMONEY  ,
+					A2				SMALLMONEY  ,
 					IM2				BIT  ,
-					UM2				TINYINT  ,
+					UM2				SMALLMONEY  ,
 					IS2				BIT  ,
-					US2				TINYINT  ,
-					N2				TINYINT  ,
-					L2				TINYINT  
+					US2				SMALLMONEY  ,
+					N2				SMALLMONEY  ,
+					L2				SMALLMONEY  
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
 	
@@ -625,7 +626,7 @@ BEGIN
 				(
 					SELECT	@ProductID								AS '@ProductID',
 							IsLive									AS '@IsLive',
-							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
+							dbo.f_FomatNumericToChar(AgentPT	/100.0)	AS '@AgentPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
@@ -646,7 +647,7 @@ BEGIN
 				(
 					SELECT	SportType								AS '@SportType',
 							IsLive									AS '@IsLive',
-							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
+							dbo.f_FomatNumericToChar(AgentPT	/100.0)	AS '@AgentPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
@@ -667,7 +668,7 @@ BEGIN
 				(
 					SELECT	BetType									AS '@BetType',
 							IsLive									AS '@IsLive',
-							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
+							dbo.f_FomatNumericToChar(AgentPT	/100.0)	AS '@AgentPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
@@ -689,7 +690,7 @@ BEGIN
 					SELECT	SportType								AS '@SportType',
 							BetType									AS '@BetType',
 							IsLive									AS '@IsLive',
-							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
+							dbo.f_FomatNumericToChar(AgentPT	/100.0)	AS '@AgentPT'
 					FROM @OldPTTble
 					FOR XML PATH('PT'),
 					TYPE
@@ -713,7 +714,7 @@ BEGIN
 				(
 					SELECT	@ProductID								AS '@ProductID',
 							IsLive									AS '@IsLive',
-							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
+							dbo.f_FomatNumericToChar(AgentPT	/100.0)	AS '@AgentPT'
 					FROM @NewPTTble
 					FOR XML PATH('PT'),
 					TYPE
@@ -734,7 +735,7 @@ BEGIN
 				(
 					SELECT	SportType								AS '@SportType',
 							IsLive									AS '@IsLive',
-							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
+							dbo.f_FomatNumericToChar(AgentPT	/100.0)	AS '@AgentPT'
 					FROM @NewPTTble
 					FOR XML PATH('PT'),
 					TYPE
@@ -755,7 +756,7 @@ BEGIN
 				(
 					SELECT	BetType									AS '@BetType',
 							IsLive									AS '@IsLive',
-							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
+							dbo.f_FomatNumericToChar(AgentPT	/100.0)	AS '@AgentPT'
 					FROM @NewPTTble
 					FOR XML PATH('PT'),
 					TYPE
@@ -777,7 +778,7 @@ BEGIN
 					SELECT	SportType								AS '@SportType',
 							BetType									AS '@BetType',
 							IsLive									AS '@IsLive',
-							CONVERT(DECIMAL(10,2), AgentPT	/100.0)	AS '@AgentPT'
+							dbo.f_FomatNumericToChar(AgentPT	/100.0)	AS '@AgentPT'
 					FROM @NewPTTble
 					FOR XML PATH('PT'),
 					TYPE

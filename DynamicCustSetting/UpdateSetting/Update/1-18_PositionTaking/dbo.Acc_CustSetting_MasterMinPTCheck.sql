@@ -17,6 +17,7 @@ AS
 	Revisions:
 		- 20200615@Elodie: Initial SP [Redmine: #135363]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 
 	Parameter's Explanations:
 		@PT = <ROOT>
@@ -39,8 +40,8 @@ BEGIN
 				SportType		SMALLINT,
 				BetType			SMALLINT,
 				IsLive			BIT,
-				MasterPT		SMALLINT,	
-				MasterMinPT		SMALLINT
+				MasterPT		SMALLMONEY,	
+				MasterMinPT		SMALLMONEY
 				)
 	
 	SELECT @SuperID = @srecommend, @MasterID = @custid

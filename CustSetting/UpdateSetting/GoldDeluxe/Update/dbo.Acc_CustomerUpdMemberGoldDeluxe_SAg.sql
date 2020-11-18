@@ -26,6 +26,7 @@ AS
 		- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable to DBCUST, Change Age_CustomerSelCheckBelonging to Age_CustomerSelCheckBelongingByCustID)
 		- 20151007@Elodie: Remove code to check old and new value
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameters Explanation:
 */
 BEGIN
@@ -282,7 +283,7 @@ BEGIN
 
 	    --s1<=s4
 	    SELECT @ErrType = ''	
-	    SELECT @ErrType = @ErrType + 'Max: ' + CAST(spositiontaking AS VARCHAR(10)) 
+	    SELECT @ErrType = @ErrType + 'Max: ' + dbo.f_FomatNumericToChar(spositiontaking) 
 	      FROM @tmp_sag
 	     WHERE @v255spositiontaking_1701 > spositiontaking
 
@@ -302,10 +303,10 @@ BEGIN
     		        	
 		--s1 <= Max(n4-(m1+a1), s4 - m3)
 	    select @ErrType = ''	
-	    SELECT @ErrType = @ErrType + 'Max: ' + CAST((CASE WHEN scs.spositiontaking -  mcs.mpositiontaking > scs.minpositiontaking - (cs.apositiontaking+cs.mpositiontaking)
+	    SELECT @ErrType = @ErrType + 'Max: ' + dbo.f_FomatNumericToChar((CASE WHEN scs.spositiontaking -  mcs.mpositiontaking > scs.minpositiontaking - (cs.apositiontaking+cs.mpositiontaking)
 													THEN scs.spositiontaking -  mcs.mpositiontaking
 													ELSE scs.minpositiontaking - (cs.apositiontaking+cs.mpositiontaking)
-												END) AS VARCHAR(10)) 
+												END)) 
 	    FROM @tmp_sag scs
 		    INNER JOIN @tmp_mag mcs ON scs.sporttype = mcs.sporttype and scs.bettype = mcs.bettype	
 		    INNER JOIN CustSettingGame cs WITH(NOLOCK) ON cs.custid = @custid AND cs.sporttype = scs.sporttype and cs.bettype = scs.bettype	
@@ -330,7 +331,7 @@ BEGIN
 
 	    --s1 + m1 + a1 <=s4
 	    select @ErrType = ''
-	    SELECT @ErrType = @ErrType + 'Max: ' + CAST(scs.spositiontaking - cs.mpositiontaking - cs.apositiontaking AS VARCHAR(10)) 
+	    SELECT @ErrType = @ErrType + 'Max: ' + dbo.f_FomatNumericToChar(scs.spositiontaking - cs.mpositiontaking - cs.apositiontaking) 
 	    FROM @tmp_sag scs
 		    INNER JOIN @tmp_cs cs ON scs.sporttype = cs.sporttype AND scs.bettype = cs.bettype	
 	    WHERE @v255spositiontaking_1701 + cs.mpositiontaking + cs.apositiontaking > scs.spositiontaking
@@ -351,7 +352,7 @@ BEGIN
     	
 	    --s1>=s1_min
 	    select @ErrType = ''
-	    SELECT @ErrType = @ErrType + 'Min: ' + CAST(sco.minpositiontaking - cs.mpositiontaking - cs.apositiontaking AS VARCHAR(10)) 
+	    SELECT @ErrType = @ErrType + 'Min: ' + dbo.f_FomatNumericToChar(sco.minpositiontaking - cs.mpositiontaking - cs.apositiontaking) 
 	    FROM @tmp_sag sco
 		    INNER JOIN @tmp_cs cs ON sco.sporttype = cs.sporttype AND sco.bettype = cs.bettype
 	    WHERE @v255spositiontaking_1701 + cs.mpositiontaking + cs.apositiontaking < sco.minpositiontaking
@@ -375,7 +376,7 @@ BEGIN
     BEGIN
 	    --us1<=s4
 	    SELECT @ErrType = ''	
-	    SELECT @ErrType	= @ErrType + 'Max: ' + CAST(spositiontaking AS VARCHAR(10)) 
+	    SELECT @ErrType	= @ErrType + 'Max: ' + dbo.f_FomatNumericToChar(spositiontaking) 
 	    FROM @tmp_sag 		
 	    WHERE @auto_v255spositiontaking_1701 > spositiontaking
     	
@@ -394,7 +395,7 @@ BEGIN
     	
 	    --us1>= us1_min 
 	    SELECT @ErrType = ''	
-	    SELECT @ErrType	= @ErrType + 'Min: ' + CAST(sco.minpositiontaking - cs.mpositiontaking - cs.apositiontaking AS VARCHAR(10)) 
+	    SELECT @ErrType	= @ErrType + 'Min: ' + dbo.f_FomatNumericToChar(sco.minpositiontaking - cs.mpositiontaking - cs.apositiontaking) 
 	    FROM @tmp_sag sco
 		    INNER JOIN @tmp_cs cs ON sco.sporttype = cs.sporttype AND sco.bettype = cs.bettype
 	    WHERE @isauto_v255spositiontaking_1701 = 1 AND @auto_v255spositiontaking_1701 + cs.mpositiontaking + cs.apositiontaking < sco.minpositiontaking
@@ -547,9 +548,9 @@ BEGIN
 		    @TrackingValueDB VARCHAR(5000)
     		
     SELECT @LogSPData = '<Acc_CustomerUpdMemberGoldDeluxe_SAg Custid = "' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-						'v255spositiontaking_1701 = "' + COALESCE(CAST(@v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
+						'v255spositiontaking_1701 = "' + COALESCE(dbo.f_FomatNumericToChar(@v255spositiontaking_1701), SPACE(1)) + '" ' +
 						'isauto_v255spositiontaking_1701 = "' + COALESCE(CAST(@isauto_v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
-						'auto_v255spositiontaking_1701 ="' + COALESCE(CAST(@auto_v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
+						'auto_v255spositiontaking_1701 ="' + COALESCE(dbo.f_FomatNumericToChar(@auto_v255spositiontaking_1701), SPACE(1)) + '" ' +
 						'v255UpdatePositiontaking_1701 ="' + COALESCE(CAST(@v255UpdatePositiontaking_1701 AS VARCHAR(10)), SPACE(1)) + '" ' +
 						'v255UpdateAutoPositiontaking_1701 ="' + COALESCE(CAST(@v255UpdateAutoPositiontaking_1701 AS VARCHAR(10)), SPACE(1)) + '" ' +
 						'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -560,9 +561,9 @@ BEGIN
 						'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(5000)),SPACE(1)) + '" />' 
 
     SELECT @TrackingValueDB =	'<Acc_CustomerUpdMemberGoldDeluxe_SAg Custid = "' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-								'v255spositiontaking_1701 = "' + COALESCE(CAST(@db_v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
+								'v255spositiontaking_1701 = "' + COALESCE(dbo.f_FomatNumericToChar(@db_v255spositiontaking_1701), SPACE(1)) + '" ' +
 								'isauto_v255spositiontaking_1701 = "' + COALESCE(CAST(@db_isauto_v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
-								'auto_v255spositiontaking_1701 ="' + COALESCE(CAST(@db_auto_v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
+								'auto_v255spositiontaking_1701 ="' + COALESCE(dbo.f_FomatNumericToChar(@db_auto_v255spositiontaking_1701), SPACE(1)) + '" ' +
 								'v255UpdatePositiontaking_1701 ="' + COALESCE(CAST(@v255UpdatePositiontaking_1701 AS VARCHAR(10)), SPACE(1)) + '" ' +
 								'v255UpdateAutoPositiontaking_1701 ="' + COALESCE(CAST(@v255UpdateAutoPositiontaking_1701 AS VARCHAR(10)), SPACE(1)) + '" ' +
 								'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -587,9 +588,9 @@ BEGIN
     END TRY
     BEGIN CATCH
 	    SELECT @LogSPData = '<Acc_CustomerUpdMemberGoldDeluxe_SAg Custid = "' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-							'v255spositiontaking_1701 = "' + COALESCE(CAST(@v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
+							'v255spositiontaking_1701 = "' + COALESCE(dbo.f_FomatNumericToChar(@v255spositiontaking_1701), SPACE(1)) + '" ' +
 							'isauto_v255spositiontaking_1701 = "' + COALESCE(CAST(@isauto_v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
-							'auto_v255spositiontaking_1701 ="' + COALESCE(CAST(@auto_v255spositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' +
+							'auto_v255spositiontaking_1701 ="' + COALESCE(dbo.f_FomatNumericToChar(@auto_v255spositiontaking_1701), SPACE(1)) + '" ' +
 							'v255UpdatePositiontaking_1701 ="' + COALESCE(CAST(@v255UpdatePositiontaking_1701 AS VARCHAR(10)), SPACE(1)) + '" ' +
 							'v255UpdateAutoPositiontaking_1701 ="' + COALESCE(CAST(@v255UpdateAutoPositiontaking_1701 AS VARCHAR(10)), SPACE(1)) + '" ' +
 							'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +

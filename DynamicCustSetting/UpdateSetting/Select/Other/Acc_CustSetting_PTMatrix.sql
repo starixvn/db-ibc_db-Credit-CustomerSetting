@@ -17,6 +17,7 @@ AS
 	- 20160912@Elodie: Support view PT by product - [Redmine: #60809]
 	- 20171214@Vicky: NAP - System show duplicate data when viewing PT of Cricket - [Redmine: #87939]
 	- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
+	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 
  Param's Explanation:  
 
@@ -42,15 +43,15 @@ BEGIN
 		[SportType] [smallint],
 		[BetType] [smallint],
 		[IsLive] [bit],
-		[SuperPT] [tinyint],
-		[MasterPT] [tinyint],
-		[AgentPT] [tinyint],
-		[AutoSuperPT] [tinyint],
+		[SuperPT] SMALLMONEY,
+		[MasterPT] SMALLMONEY,
+		[AgentPT] SMALLMONEY,
+		[AutoSuperPT] SMALLMONEY,
 		[IsAutoSuperPT] [bit],
-		[AutoMasterPT] [tinyint],
+		[AutoMasterPT] SMALLMONEY,
 		[IsAutoMasterPT] [bit],
-		[MinPT] [tinyint],
-		[MaxPT] [tinyint]
+		[MinPT] SMALLMONEY,
+		[MaxPT] SMALLMONEY
 	)	
 	
 	SELECT ProductID, SportType, BetType, IsLive

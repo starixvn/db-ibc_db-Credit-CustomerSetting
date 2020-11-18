@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditSuperKeno]
 	@CustID		INT
 AS
@@ -12,6 +12,7 @@ AS
 		- 20150608@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB, Use temp table for GameType table)
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 		- 20180115@Johnson: Remove downlines status for new direction change[RedmineID: #87328]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameters Explanations:
 			
 */
@@ -35,9 +36,9 @@ BEGIN
 	SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid
 
 	--Customer Info
-	SELECT username, firstname, lastname, phone, mobilephone, fax
-	FROM dbo.Customer WITH (NOLOCK)
-	WHERE custID = @CustID 
+	SELECT c.username, c.firstname, c.lastname, c.phone, c.mobilephone, c.fax, c.site
+	FROM dbo.Customer c WITH (NOLOCK)
+	WHERE c.custID = @CustID 
 
 	--BetSetting & Enable status
 	SELECT	gt.IBCBetTypeID, 

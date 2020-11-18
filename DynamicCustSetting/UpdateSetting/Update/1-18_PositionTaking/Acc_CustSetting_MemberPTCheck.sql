@@ -40,6 +40,7 @@ AS
 		- 20151221@Dominic: Fix Max value in error message when updating A1>A2 #49593
 		- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 
 	*/
 BEGIN
@@ -58,15 +59,15 @@ BEGIN
 		  SportType			SMALLINT
 		, BetType			SMALLINT
 		, IsLive			BIT
-		, SuperPT			SMALLINT
-		, MasterPT			SMALLINT
-		, AgentPT			SMALLINT
-		, AgentPT_Max		SMALLINT
-		, AgentAPT_Max		SMALLINT
+		, SuperPT			SMALLMONEY
+		, MasterPT			SMALLMONEY
+		, AgentPT			SMALLMONEY
+		, AgentPT_Max		SMALLMONEY
+		, AgentAPT_Max		SMALLMONEY
 		, IsAutoMasterPT	BIT
-		, AutoMasterPT		SMALLINT
+		, AutoMasterPT		SMALLMONEY
 		, IsAutoSuperPT		BIT
-		, AutoSuperPT		SMALLINT)
+		, AutoSuperPT		SMALLMONEY)
 		
 	DECLARE @IsGrouped BIT = 0
 

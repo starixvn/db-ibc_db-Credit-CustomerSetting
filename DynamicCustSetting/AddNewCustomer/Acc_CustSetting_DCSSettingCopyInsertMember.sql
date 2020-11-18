@@ -34,6 +34,7 @@ AS
 		- 20200414@Tiara: Add new Setting Type 17 for mulitple stakelevel for member [Redmine: #131171]
 		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -51,7 +52,7 @@ BEGIN
 				  SportType			SMALLINT
 				, BetType			SMALLINT
 				, IsLive			BIT
-				, AgentPT			TINYINT
+				, AgentPT			SMALLMONEY
 				UNIQUE CLUSTERED (SportType, BetType, IsLive)
 			)
 	
@@ -162,7 +163,7 @@ BEGIN
 				  SportType			SMALLINT
 				, BetType			SMALLINT
 				, IsLive			BIT
-				, AgentPT			TINYINT
+				, AgentPT			SMALLMONEY
 				UNIQUE CLUSTERED (SportType, BetType, IsLive)
 			)
 	

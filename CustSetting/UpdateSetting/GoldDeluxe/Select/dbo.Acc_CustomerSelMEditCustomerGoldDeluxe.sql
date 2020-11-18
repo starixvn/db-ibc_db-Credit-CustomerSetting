@@ -1,5 +1,4 @@
-﻿use CustDB
-go
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelMEditCustomerGoldDeluxe]
 	@custid		INT
 AS
@@ -11,6 +10,7 @@ AS
 	Revisions:
 		- 20150612@Kathy: Move sp from DBAGE.bodb02 to DBCUST.CustDB [Redmine:#36216]
 		- 20150721@Patrick: Add more winlimit section
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 
 	Parameters Explanation:
 */
@@ -75,19 +75,21 @@ BEGIN
 			AND bettype = 1701		
 	
 	--Customer Info
-	SELECT	username
-			,username2 AS nickname
-			,firstname
-			,lastname
-			,phone
-			,mobilephone
-			,fax
+	SELECT	 c.username
+			,c.username2 AS nickname
+			,c.firstname
+			,c.lastname
+			,c.phone
+			,c.mobilephone
+			,c.fax
 			,ISNULL(@DisableUpline,1) 		AS DisableUpline
 			,ISNULL(@DisableGoldDeluxe,1)	AS DisableGoldDeluxe
 			,0 AS Downlines
 			,0 AS DisableDownlines
-	FROM	dbo.Customer WITH (NOLOCK)
-	WHERE	custID = @CustID  
+			,ISNULL(NULLIF(c.site,''), ag.site) AS Site
+	FROM	dbo.Customer c WITH (NOLOCK)
+		LEFT JOIN dbo.Customer ag WITH (NOLOCK) ON c.recommend = ag.custid
+	WHERE	c.custID = @CustID  
 	
 	--PT & commission
 	SELECT 	
@@ -122,12 +124,3 @@ BEGIN
 
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerGoldDeluxe] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerGoldDeluxe] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerGoldDeluxe] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerGoldDeluxe] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelMEditCustomerGoldDeluxe] TO [vnteam] AS [dbo]
