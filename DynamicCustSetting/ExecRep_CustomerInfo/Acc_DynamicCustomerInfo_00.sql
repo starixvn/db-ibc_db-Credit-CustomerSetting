@@ -1391,7 +1391,7 @@ BEGIN
 			RETURN
 		END CATCH
 		
-		/********************************************* Bet Game Limit : SettingType = 9,16 ****************************************/
+		/********************************************* Bet Game Limit : SettingType = 9,16,20 ****************************************/
 	
 		SELECT t.* INTO #SportBettypeFilter9
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9) t
@@ -1399,6 +1399,10 @@ BEGIN
 		INSERT INTO #SportBettypeFilter9
 		SELECT * 
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16)
+
+		INSERT INTO #SportBettypeFilter9
+		SELECT * 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20)
 
 		BEGIN TRY
 			IF @RoleID = 4
