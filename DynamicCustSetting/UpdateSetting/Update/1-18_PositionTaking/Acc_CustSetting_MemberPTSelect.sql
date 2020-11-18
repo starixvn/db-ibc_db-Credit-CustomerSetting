@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE Acc_CustSetting_MemberPTSelect
 	   @CustID		INT  
 	 , @ProductID	TINYINT  
@@ -14,6 +13,7 @@ AS
  
 	Revision:
 		- 20200612@Elodie: Initial SP for setting type 18 [Redmine: #135363]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 
 	Param's Explanation:  
 		- @CustID: Member's ID  
@@ -39,13 +39,13 @@ BEGIN
 							SportType  SMALLINT  
 							, BetType  SMALLINT  
 							, IsLive  BIT  
-							, S1   TINYINT  
-							, M1   TINYINT  
-							, A1   TINYINT  
+							, S1   SMALLMONEY  
+							, M1   SMALLMONEY  
+							, A1   SMALLMONEY  
 							, IS1   BIT  
-							, US1   TINYINT  
+							, US1   SMALLMONEY  
 							, IM1   BIT  
-							, UM1   TINYINT  
+							, UM1   SMALLMONEY  
 							)	 
 		
 	--Get member setting from Group OR Individual Settings   

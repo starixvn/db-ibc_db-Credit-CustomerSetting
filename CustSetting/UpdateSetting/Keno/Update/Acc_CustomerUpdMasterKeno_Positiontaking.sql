@@ -36,6 +36,7 @@ AS
                           2.Code aligning on modified parts
 		- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST.CustDB)
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 
     Parameters Explanation:
         @ErrCode is 0 update successful
@@ -106,7 +107,7 @@ BEGIN
     SELECT @ErrType = ''
     --check n4<=s3+m3<=s4, s3<=s4 if i3 = 0, 
     --m3<=s4 and u3+m3>=n4 if i3 = 1
-    SELECT @ErrType = @ErrType + 'Min: ' + CAST(co.minpositiontaking AS VARCHAR(10)) + ' -Max: ' + CAST(cs.spositiontaking AS VARCHAR(10)) + '<br>'
+    SELECT @ErrType = @ErrType + 'Min: ' + dbo.f_FomatNumericToChar(co.minpositiontaking) + ' -Max: ' + dbo.f_FomatNumericToChar(cs.spositiontaking) + '<br>'
       FROM dbo.CustSettingGame cs WITH(NOLOCK)
 INNER JOIN dbo.CustOverrideGame co WITH(NOLOCK) ON cs.custid = co.custid AND cs.bettype = co.bettype AND cs.sporttype = co.sporttype 
      WHERE cs.custid = @srecommend 
@@ -203,7 +204,7 @@ INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 
     --check u3<=s4
     SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + 'Max: ' + CAST (cs.spositiontaking AS VARCHAR(10)) + '<br>'
+    SELECT @ErrType = @ErrType + 'Max: ' + dbo.f_FomatNumericToChar(cs.spositiontaking) + '<br>'
       FROM dbo.CustSettingGame cs WITH(NOLOCK)        
      WHERE custid = @srecommend
         AND cs.bettype = @BetType AND cs.sporttype = @SportType
@@ -309,14 +310,14 @@ INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
     SELECT @LogSPData = '<Acc_CustomerUpdMasterKeno_Positiontaking CustId ="' + COALESCE(CAST(@CustId AS VARCHAR(50)), SPACE(1))
         + '" ' + 'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) 
         + '" ' + 'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) 
-        + '" ' + 's3="' + COALESCE(CAST(@s3 AS VARCHAR(50)), SPACE(1))
-        + '" ' + 'm3="' + COALESCE(CAST(@m3 AS VARCHAR(50)), SPACE(1))
+        + '" ' + 's3="' + COALESCE(dbo.f_FomatNumericToChar(@s3), SPACE(1))
+        + '" ' + 'm3="' + COALESCE(dbo.f_FomatNumericToChar(@m3), SPACE(1))
         + '" ' + 'is3="' + COALESCE(CAST(@is3 AS VARCHAR(50)), SPACE(1))
-        + '" ' + 'us3="' + COALESCE(CAST(@us3 AS VARCHAR(50)), SPACE(1))
+        + '" ' + 'us3="' + COALESCE(dbo.f_FomatNumericToChar(@us3), SPACE(1))
         + '" ' + 'UpdatePositionTaking="' + COALESCE(CAST(@UpdatePositionTaking AS VARCHAR(50)), SPACE(1))
         + '" ' + 'UpdateAutoPositionTaking="' + COALESCE(CAST(@UpdateAutoPositionTaking AS VARCHAR(50)), SPACE(1))
         + '" ' + 'UpdateAllMembers="' + COALESCE(CAST (@UpdateAllMembers AS VARCHAR(3)), SPACE(1))
-        + '" ' + 'NewSPositionTaking="' + COALESCE(CAST (@NewSPositionTaking AS VARCHAR(30)), SPACE(1))
+        + '" ' + 'NewSPositionTaking="' + COALESCE(dbo.f_FomatNumericToChar(@NewSPositionTaking), SPACE(1))
 
         + '" ' + 'UserId="' + COALESCE(CAST(@userid AS VARCHAR(50)), SPACE(1))
         + '" ' + 'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1))
@@ -328,14 +329,14 @@ INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
     SELECT @TrackingValueDB = '<Acc_CustomerUpdMasterKeno_Positiontaking CustId ="' + COALESCE(CAST(@CustId AS VARCHAR(50)), SPACE(1))
         + '" ' + 'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) 
         + '" ' + 'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) 
-        + '" ' + 's3="' + COALESCE(CAST(@Old_SPositionTaking AS VARCHAR(50)), SPACE(1))
-        + '" ' + 'm3="' + COALESCE(CAST(@Old_MPositionTaking AS VARCHAR(50)), SPACE(1))
+        + '" ' + 's3="' + COALESCE(dbo.f_FomatNumericToChar(@Old_SPositionTaking), SPACE(1))
+        + '" ' + 'm3="' + COALESCE(dbo.f_FomatNumericToChar(@Old_MPositionTaking), SPACE(1))
         + '" ' + 'is3="' + COALESCE(CAST(@Old_IsAuto_SPositionTaking AS VARCHAR(50)), SPACE(1))
-        + '" ' + 'us3="' + COALESCE(CAST(@Old_Auto_SPositionTaking AS VARCHAR(50)), SPACE(1))
+        + '" ' + 'us3="' + COALESCE(dbo.f_FomatNumericToChar(@Old_Auto_SPositionTaking), SPACE(1))
         + '" ' + 'UpdatePositionTaking="' + COALESCE(CAST(@UpdatePositionTaking AS VARCHAR(50)), SPACE(1))
         + '" ' + 'UpdateAutoPositionTaking="' + COALESCE(CAST(@UpdateAutoPositionTaking AS VARCHAR(50)), SPACE(1))
         + '" ' + 'UpdateAllMembers="' + COALESCE(CAST (@UpdateAllMembers AS VARCHAR(3)), SPACE(1))
-        + '" ' + 'NewSPositionTaking="' + COALESCE(CAST (@NewSPositionTaking AS VARCHAR(30)), SPACE(1))
+        + '" ' + 'NewSPositionTaking="' + COALESCE(dbo.f_FomatNumericToChar(@NewSPositionTaking), SPACE(1))
         + '" ' + 'UserId="' + COALESCE(CAST(@userid AS VARCHAR(50)), SPACE(1))
         + '" ' + 'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1))
         + '" ' + 'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1))

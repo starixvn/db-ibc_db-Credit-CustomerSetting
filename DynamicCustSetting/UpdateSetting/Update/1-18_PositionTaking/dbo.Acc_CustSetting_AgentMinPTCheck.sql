@@ -18,6 +18,7 @@ AS
 	Revisions:
 		- 20200615@Elodie: Initial SP [Redmine: #135363]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameter's Explanations:
 		
 */
@@ -29,8 +30,8 @@ BEGIN
 				SportType		SMALLINT,
 				BetType			SMALLINT,
 				IsLive			BIT,
-				AgentPT			SMALLINT,	
-				AgentMinPT		SMALLINT
+				AgentPT			SMALLMONEY,	
+				AgentMinPT		SMALLMONEY
 				)	
 	
 	DECLARE @ErrType XML

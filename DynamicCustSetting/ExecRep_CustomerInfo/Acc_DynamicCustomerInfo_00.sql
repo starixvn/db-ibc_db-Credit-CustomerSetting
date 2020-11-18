@@ -40,6 +40,8 @@ AS
 		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 		- 20200819@Winfred: Only insert stake level setting if site and currency of customer is offered [Redmine: #137768]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 	*/
@@ -477,13 +479,13 @@ BEGIN
 					, [SportType]	SMALLINT
 					, [BetType]		SMALLINT
 					, [Islive]		BIT	
-					, [SuperPT]		TINYINT	
-					, [MasterPT]	TINYINT
-					, [AgentPT]		TINYINT
+					, [SuperPT]		SMALLMONEY	
+					, [MasterPT]	SMALLMONEY
+					, [AgentPT]		SMALLMONEY
 					, [IsAutoMPT]	BIT
-					, [AutoMPT]		TINYINT
+					, [AutoMPT]		SMALLMONEY
 					, [IsAutoSPT]	BIT
-					, [AutoSPT]		TINYINT
+					, [AutoSPT]		SMALLMONEY
 				)
 			
 				--Get default PT settings	

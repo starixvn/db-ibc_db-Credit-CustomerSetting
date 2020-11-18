@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelSEditCustomerKeno]
 	@CustID		INT
 AS
@@ -8,6 +9,7 @@ AS
 		
 	Revisions:
 		- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB)
+		- 20201109@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameters Explanations:
 			
 */
@@ -30,9 +32,17 @@ BEGIN
 	DECLARE @srecommend INT, @mrecommend INT
 	
 	--Customer Info
-	SELECT username, firstname, lastname, phone, mobilephone, fax
-	FROM dbo.Customer WITH (NOLOCK)
-	WHERE custID = @CustID
+	SELECT c.username, 
+		   c.firstname, 
+		   c.lastname, 
+		   c.phone, 
+		   c.mobilephone, 
+		   c.fax, 
+		   ag.Site
+	FROM dbo.Customer c WITH(NOLOCK)
+		 INNER JOIN dbo.Customer ag WITH(NOLOCK)
+		   ON c.recommend = ag.custid
+	WHERE c.custID = @CustID
 
 	--BetSetting
 	SELECT gt.IBCBetTypeID, cg.MinBet, cg.MaxBet, cg.MaxPerGameType, cg.IsDisabled
@@ -73,14 +83,4 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerKeno] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerKeno] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerKeno] TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerKeno] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelSEditCustomerKeno] TO [vnteam] AS [dbo]
-
 

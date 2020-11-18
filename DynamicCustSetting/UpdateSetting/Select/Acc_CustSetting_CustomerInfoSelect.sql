@@ -1,9 +1,4 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_CustomerInfoSelect] 
 	  @CustID		INT
 AS
@@ -12,6 +7,9 @@ AS
 	Task : Get User infor
 	DB: DBCUST/CustDB
 	Original:
+
+	Revisions:
+		- 20201023@Eden: Adjust new pt for 789y [Redmine: #143764]
 
 	Param's Explanation:
 	
@@ -27,13 +25,10 @@ BEGIN
 			, c.email AS Email
 			, c.fax AS Fax
 			, c.currency AS Currency
+			, ISNULL(NULLIF(c.site,''), ag.site) AS Site
 	FROM dbo.Customer c WITH (NOLOCK)
+		LEFT JOIN dbo.Customer ag WITH (NOLOCK) ON c.recommend = ag.custid
 	WHERE c.custID = @CustID	
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerInfoSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerInfoSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerInfoSelect] TO [bodbExtAccNet]

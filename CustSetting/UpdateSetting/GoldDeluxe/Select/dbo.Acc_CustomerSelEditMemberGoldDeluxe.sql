@@ -1,7 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="0"></info>*/
-use CustDB
-go
-
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMemberGoldDeluxe]
 	@custid		INT,
 	@recommend	INT
@@ -14,7 +11,8 @@ AS
 	Revisions:
 		- 20150612@Kathy: Move sp from DBAGE.bodb02 to DBCUST.CustDB [Redmine:#36216]
 		- 20150721@Patrick: Add more winlimit section
-		- 20180112@Johnson: remove downlines status for new direction[Redmine:#87328]																							
+		- 20180112@Johnson: remove downlines status for new direction[Redmine:#87328]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]																							
 	Parameters Explanation
 */
 BEGIN
@@ -96,17 +94,19 @@ BEGIN
 	SELECT @max_v255apositiontaking_1701 = CASE WHEN @max_v255apositiontaking_1701 <= @cs_v255apt_1701 THEN @max_v255apositiontaking_1701 ELSE @cs_v255apt_1701 END
 		
 	--Customer Info
-	SELECT	username
-			,username2 AS nickname
-			,firstname
-			,lastname
-			,phone
-			,mobilephone
-			,fax
+	SELECT	 c.username
+			,c.username2 AS nickname
+			,c.firstname
+			,c.lastname
+			,c.phone
+			,c.mobilephone
+			,c.fax
 			,ISNULL(@DisableUpline,1) 		AS DisableUpline
-			,ISNULL(@DisableGoldDeluxe,1)	AS DisableGoldDeluxe			
-	FROM	dbo.Customer WITH (NOLOCK)
-	WHERE	custID = @CustID   	  
+			,ISNULL(@DisableGoldDeluxe,1)	AS DisableGoldDeluxe
+			,ISNULL(NULLIF(c.site,''), ag.site) AS Site			
+	FROM	dbo.Customer c WITH (NOLOCK)
+		LEFT JOIN dbo.Customer ag WITH (NOLOCK) ON c.recommend = ag.custid
+	WHERE	c.custID = @CustID   	  
 	
 	--PT & commission
 	SELECT		

@@ -28,6 +28,7 @@ AS
 		- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameters Explanation:
 	• @ErrCode:  
 		<= 0: Update successfully.  
@@ -223,7 +224,7 @@ BEGIN
 	BEGIN  
 		 --Check um1<=min(m3,m4)  
 		 SELECT @ErrType = ''  
-		 SELECT @ErrType = @ErrType + s.name + '-'+ bt.Name  + '-Max: '+ CAST((b.maxmpositiontaking) AS VARCHAR(10))  
+		 SELECT @ErrType = @ErrType + s.name + '-'+ bt.Name  + '-Max: '+ dbo.f_FomatNumericToChar((b.maxmpositiontaking))  
 		 FROM  
 		  (  
 		   SELECT @sporttype AS sporttype, @bettype AS bettype, @m3 AS maxmpositiontaking, @um1 AS autopositiontaking, @im1 AS isautopositiontaking    
@@ -250,7 +251,7 @@ BEGIN
 		 --Check um1>=Max(0, N3-A1)  
 		 SELECT @ErrType = ''  
 		 SELECT @ErrType = @ErrType + s.Name + '-'+ bt.name   
-		  + '-Min: '+ CAST((case when co.minpositiontaking - b.apositiontaking > 0 then co.minpositiontaking - b.apositiontaking else 0 end) AS VARCHAR(10))  
+		  + '-Min: '+ dbo.f_FomatNumericToChar((case when co.minpositiontaking - b.apositiontaking > 0 then co.minpositiontaking - b.apositiontaking else 0 end))  
 		 FROM @tmp_mag AS co INNER JOIN  
 		  (  
 		   SELECT @sporttype AS sporttype, @bettype AS bettype, @um1 AS autopositiontaking, @im1 AS isautopositiontaking, @APositionTaking as  apositiontaking  
@@ -298,10 +299,10 @@ BEGIN
 		 --Check m1<= Max(0, MIN(M3,M4)-A1)  
 		 SELECT @ErrType = ''  
 		 SELECT @ErrType = @ErrType + s.name + '-'+ bt.Name   
-		   + '-Max: '+ CAST((case when b.maxmpositiontaking - b.apositiontaking  < b.maxspositiontaking -spositiontaking - apositiontaking  
+		   + '-Max: '+ dbo.f_FomatNumericToChar((case when b.maxmpositiontaking - b.apositiontaking  < b.maxspositiontaking -spositiontaking - apositiontaking  
 				 then (case when b.maxmpositiontaking - b.apositiontaking > 0 then b.maxmpositiontaking - b.apositiontaking else 0 end)  
 				 else (case when b.maxspositiontaking -spositiontaking - apositiontaking > 0 then b.maxspositiontaking -spositiontaking - apositiontaking else 0 end)  
-			  end ) AS VARCHAR(10))  
+			  end ))  
 		 FROM (  
 		   SELECT @sporttype AS sporttype, @bettype AS bettype ,        
 			 @SPositionTaking AS spositiontaking, @m1 AS mpositiontaking, @APositionTaking AS apositiontaking,   
@@ -329,7 +330,7 @@ BEGIN
 		 --Check m1>=Max(0, N3-A1)  
 		 SELECT @ErrType = ''  
 		 SELECT @ErrType = @ErrType + s.Name + '-'+ bt.Name   
-		  + '-Min: '+ CAST((case when co.minpositiontaking - b.apositiontaking > 0 then co.minpositiontaking - b.apositiontaking else 0 end) AS VARCHAR(10))  
+		  + '-Min: '+ dbo.f_FomatNumericToChar((case when co.minpositiontaking - b.apositiontaking > 0 then co.minpositiontaking - b.apositiontaking else 0 end))  
 		 FROM @tmp_mag AS co INNER JOIN  
 		  (  
 		   SELECT @sporttype AS sporttype, @bettype AS bettype, @m1 AS mpositiontaking, @im1 AS isautopositiontaking, @APositionTaking as  apositiontaking  
@@ -591,10 +592,10 @@ BEGIN
 	SELECT @LogSPData = '<Acc_CustomerUpdMemberKeno_MAg CustId="'+ COALESCE(CAST(@CustID AS VARCHAR(50)), SPACE(1))
 		+ '" ' + 'sporttype="'+ coalesce(cast(@sporttype as varchar(50)),space(1))
 		+ '" ' + 'bettype="'+ coalesce(cast(@bettype as varchar(50)),space(1))
-		+ '" ' + 'm1="' + COALESCE(CAST(@m1_log AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'm1="' + COALESCE(dbo.f_FomatNumericToChar(@m1_log), SPACE(1))
 		+ '" ' + 'IsAuto_MPositionTaking_BK="' + COALESCE(CAST(@IsAuto_MPositionTaking_BK AS VARCHAR(50)),SPACE(1))
 		+ '" ' + 'im1="' + COALESCE(CAST(@im1 AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'um1="' + COALESCE(CAST(@um1 AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'um1="' + COALESCE(dbo.f_FomatNumericToChar(@um1), SPACE(1))
 		+ '" ' + 'UpdatePositionTaking="' + COALESCE(CAST(@UpdatePositionTaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UpdateAutoPositionTaking="' + COALESCE(CAST(@UpdateAutoPositionTaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UserID="' + COALESCE(CAST(@UserID AS VARCHAR(50)), SPACE(1))
@@ -607,10 +608,10 @@ BEGIN
 	SELECT @TrackingValueDB = '<Acc_CustomerUpdMemberKeno_MAg CustId="'+ COALESCE(CAST(@CustID AS VARCHAR(50)), SPACE(1))
 		+ '" ' + 'sporttype="'+ coalesce(cast(@sporttype as varchar(50)),space(1))
 		+ '" ' + 'bettype="'+ coalesce(cast(@bettype as varchar(50)),space(1))
-		+ '" ' + 'm1="' + COALESCE(CAST(@Old_MPositionTaking AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'm1="' + COALESCE(dbo.f_FomatNumericToChar(@Old_MPositionTaking), SPACE(1))
 		+ '" ' + 'IsAuto_MPositionTaking_BK="' + COALESCE(CAST(@IsAuto_MPositionTaking_BK AS VARCHAR(50)),SPACE(1))
 		+ '" ' + 'im1="' + COALESCE(CAST(@Old_IsAuto_MPositionTaking_Mem AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'um1="' + COALESCE(CAST(@Old_Auto_MPositionTaking_Mem AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'um1="' + COALESCE(dbo.f_FomatNumericToChar(@Old_Auto_MPositionTaking_Mem), SPACE(1))
 		+ '" ' + 'UpdatePositionTaking="' + COALESCE(CAST(@UpdatePositionTaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UpdateAutoPositionTaking="' + COALESCE(CAST(@UpdateAutoPositionTaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UserID="' + COALESCE(CAST(@UserID AS VARCHAR(50)), SPACE(1))
@@ -636,10 +637,10 @@ BEGIN
 		SELECT @LogSPData = '<Acc_CustomerUpdMemberKeno_MAg CustId="'+ COALESCE(CAST(@CustID AS VARCHAR(50)), SPACE(1))
 		+ '" ' + 'sporttype="'+ coalesce(cast(@sporttype as varchar(50)),space(1))
 		+ '" ' + 'bettype="'+ coalesce(cast(@bettype as varchar(50)),space(1))
-		+ '" ' + 'm1="' + COALESCE(CAST(@m1_log AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'm1="' + COALESCE(dbo.f_FomatNumericToChar(@m1_log), SPACE(1))
 		+ '" ' + 'IsAuto_MPositionTaking_BK="' + COALESCE(CAST(@IsAuto_MPositionTaking_BK AS VARCHAR(50)),SPACE(1))
 		+ '" ' + 'im1="' + COALESCE(CAST(@im1 AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'um1="' + COALESCE(CAST(@um1 AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'um1="' + COALESCE(dbo.f_FomatNumericToChar(@um1), SPACE(1))
 		+ '" ' + 'UpdatePositionTaking="' + COALESCE(CAST(@UpdatePositionTaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UpdateAutoPositionTaking="' + COALESCE(CAST(@UpdateAutoPositionTaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UserID="' + COALESCE(CAST(@UserID AS VARCHAR(50)), SPACE(1))

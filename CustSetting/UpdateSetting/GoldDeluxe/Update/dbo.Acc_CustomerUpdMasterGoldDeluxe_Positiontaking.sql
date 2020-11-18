@@ -25,12 +25,14 @@ AS
         Created: Kathy
         Date: 20150424
         Task: Super/Admin edit positiontaking on master
-        DB: DBTXN/custdb
+        DB: DBCUST/custdb
         
         Revisions:
 			- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckAllowedDownlines to DBCUST)
 			- 20151007@Elodie: Remove code to check old and new value
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
+			- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+
         Parameters Explanation:
     */
 BEGIN
@@ -125,7 +127,7 @@ BEGIN
 
     --check n4<=s3+m3<=s4, s3<=s4 if i3 = 0, 
     --m3<=s4 and u3+m3>=n4 if i3 = 1    
-    SELECT	@ErrType = @ErrType + 'Min: ' + CAST(co.minpositiontaking AS VARCHAR(10)) + ' -Max: ' + CAST(cs.spositiontaking AS VARCHAR(10)) + '<br>'
+    SELECT	@ErrType = @ErrType + 'Min: ' + dbo.f_FomatNumericToChar(co.minpositiontaking) + ' -Max: ' + dbo.f_FomatNumericToChar(cs.spositiontaking) + '<br>'
     FROM	CustSettingGame cs WITH(NOLOCK)
         INNER JOIN CustOverrideGame co WITH(NOLOCK) 
 			ON	cs.custid = co.custid 
@@ -235,7 +237,7 @@ BEGIN
     --check u3<=s4
     SELECT @ErrType = ''
 
-    SELECT	@ErrType = @ErrType + 'Max: ' + CAST (cs.spositiontaking AS VARCHAR(10)) + '<br>'
+    SELECT	@ErrType = @ErrType + 'Max: ' + dbo.f_FomatNumericToChar(cs.spositiontaking) + '<br>'
     FROM	dbo.CustSettingGame cs WITH(NOLOCK)        
     WHERE	custid = @srecommend 
 			AND sporttype = 255 
@@ -337,14 +339,14 @@ BEGIN
             @TrackingValueDB VARCHAR(4000)
          
     SELECT @LogSPData = '<Acc_CustomerUpdMasterGoldDeluxe_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
-					'v255spositiontaking_1701="' + COALESCE(CAST(@v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
-					'v255mpositiontaking_1701="' + COALESCE(CAST(@v255mpositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+					'v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@v255spositiontaking_1701),SPACE(1)) + '" ' +
+					'v255mpositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@v255mpositiontaking_1701),SPACE(1)) + '" ' +
 					'isauto_v255spositiontaking_1701="' + COALESCE(CAST(@isauto_v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
-					'auto_v255spositiontaking_1701="' + COALESCE(CAST(@auto_v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+					'auto_v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@auto_v255spositiontaking_1701),SPACE(1)) + '" ' +
 					'v255UpdatePositiontaking_1701="' + COALESCE(CAST(@V255UpdatePositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'v255UpdateAutoPositiontaking_1701="' + COALESCE(CAST(@V255UpdateAutoPositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'updateallmembers="' + COALESCE(CAST (@updateallmembers AS VARCHAR(3)), SPACE(1)) + '" ' +
-					'newspositiontaking="' + COALESCE(CAST (@newspositiontaking AS VARCHAR(30)), SPACE(1)) + '" ' +
+					'newspositiontaking="' + COALESCE(dbo.f_FomatNumericToChar(@newspositiontaking), SPACE(1)) + '" ' +
 
 					'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +
@@ -354,14 +356,14 @@ BEGIN
 					'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(5000)),SPACE(1)) + '" />'
 
     SELECT @TrackingValueDB = '<Acc_CustomerUpdMasterGoldDeluxe_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
-					'v255spositiontaking_1701="' + COALESCE(CAST(@db_v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
-					'v255mpositiontaking_1701="' + COALESCE(CAST(@db_v255mpositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+					'v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@db_v255spositiontaking_1701),SPACE(1)) + '" ' +
+					'v255mpositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@db_v255mpositiontaking_1701),SPACE(1)) + '" ' +
 					'isauto_v255spositiontaking_1701="' + COALESCE(CAST(@db_isauto_v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
-					'auto_v255spositiontaking_1701="' + COALESCE(CAST(@db_auto_v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+					'auto_v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@db_auto_v255spositiontaking_1701),SPACE(1)) + '" ' +
 					'v255UpdatePositiontaking_1701="' + COALESCE(CAST(@V255UpdatePositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'v255UpdateAutoPositiontaking_1701="' + COALESCE(CAST(@V255UpdateAutoPositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'updateallmembers="' + COALESCE(CAST (@updateallmembers AS VARCHAR(3)), SPACE(1)) + '" ' +
-					'newspositiontaking="' + COALESCE(CAST (@newspositiontaking AS VARCHAR(30)), SPACE(1)) + '" ' +
+					'newspositiontaking="' + COALESCE(dbo.f_FomatNumericToChar(@newspositiontaking), SPACE(1)) + '" ' +
 
 					'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +
@@ -386,14 +388,14 @@ BEGIN
     END TRY
     BEGIN CATCH
         SELECT @LogSPData = '<Acc_CustomerUpdMasterGoldDeluxe_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
-					'v255spositiontaking_1701="' + COALESCE(CAST(@v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
-					'v255mpositiontaking_1701="' + COALESCE(CAST(@v255mpositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+					'v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@v255spositiontaking_1701),SPACE(1)) + '" ' +
+					'v255mpositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@v255mpositiontaking_1701),SPACE(1)) + '" ' +
 					'isauto_v255spositiontaking_1701="' + COALESCE(CAST(@isauto_v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
-					'auto_v255spositiontaking_1701="' + COALESCE(CAST(@auto_v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+					'auto_v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@auto_v255spositiontaking_1701),SPACE(1)) + '" ' +
 					'v255UpdatePositiontaking_1701="' + COALESCE(CAST(@V255UpdatePositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'v255UpdateAutoPositiontaking_1701="' + COALESCE(CAST(@V255UpdateAutoPositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'updateallmembers="' + COALESCE(CAST (@updateallmembers AS VARCHAR(3)), SPACE(1)) + '" ' +
-					'newspositiontaking="' + COALESCE(CAST (@newspositiontaking AS VARCHAR(30)), SPACE(1)) + '" ' +
+					'newspositiontaking="' + COALESCE(dbo.f_FomatNumericToChar(@newspositiontaking), SPACE(1)) + '" ' +
 
 					'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +

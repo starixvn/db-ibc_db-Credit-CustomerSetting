@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustOverrideUpdGoldDeluxe]
     @custid							INT,
     @UplineID						INT = 0,
@@ -15,12 +16,13 @@ AS
     Created: Elodie
     Date: 20150422
     Task: Update min positiontaking
-    DB: DBTXN/CustDB
+    DB: DBCUST/CustDB
         
     Revisions:
 		- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines to DBCUST, Change Age_CustomerSelCheckBelonging to Age_CustomerSelCheckBelongingByCustID)
 		- 20151007@Elodie: Remove code to check old and new value
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
     Parameters Explanation:
 */
 BEGIN
@@ -105,7 +107,7 @@ BEGIN
             @TrackingValueDB VARCHAR(4000)
             
     SELECT @LogSPData = '<Acc_CustOverrideUpdGoldDeluxe custid="' + COALESCE(CAST(@custid AS VARCHAR(30)), SPACE(1)) + '" ' +
-        'min_v255positiontaking_1701="' + COALESCE(CAST(@min_v255positiontaking_1701 AS VARCHAR(30)), SPACE(1)) + '" ' + 
+        'min_v255positiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@min_v255positiontaking_1701), SPACE(1)) + '" ' + 
         'language="'+ coalesce(cast(@language as varchar(2)),space(1)) + '" ' +
         'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
         'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -114,7 +116,7 @@ BEGIN
         'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />'
 
     SELECT @TrackingValueDB = '<Acc_CustOverrideUpdGoldDeluxe custid="' + COALESCE(CAST(@custid AS VARCHAR(30)), SPACE(1)) + '" ' +
-        'min_v255positiontaking_1701="' + COALESCE(CAST(@old_min_v255positiontaking_1701 AS VARCHAR(30)), SPACE(1)) + '" ' + 
+        'min_v255positiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@old_min_v255positiontaking_1701), SPACE(1)) + '" ' + 
         'language="'+ coalesce(cast(@language as varchar(2)),space(1)) + '" ' +
         'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
         'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -137,7 +139,7 @@ BEGIN
     END TRY
     BEGIN CATCH
         SELECT @LogSPData = '<Acc_CustOverrideUpdGoldDeluxe custid="' + COALESCE(CAST(@custid AS VARCHAR(30)), SPACE(1)) + '" ' +
-        'min_v255positiontaking_1701="' + COALESCE(CAST(@min_v255positiontaking_1701 AS VARCHAR(30)), SPACE(1)) + '" ' + 
+        'min_v255positiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@min_v255positiontaking_1701), SPACE(1)) + '" ' + 
         'language="'+ coalesce(cast(@language as varchar(2)),space(1)) + '" ' +
         'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
         'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
@@ -157,8 +159,3 @@ END
 
 
 GO  
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdGoldDeluxe] TO [bodbAdminNet]
-GO 
-GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpdGoldDeluxe] TO [bodbDownlineNet]
-GO 
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustOverrideUpdGoldDeluxe] TO [vnteam]

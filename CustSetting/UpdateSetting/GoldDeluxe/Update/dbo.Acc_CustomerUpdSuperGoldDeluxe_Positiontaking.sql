@@ -14,12 +14,13 @@ AS
         Created: Kathy
         Date: 20150423
         Task: Company update positiontaking on super
-        DB: DBTXN/custDB
+        DB: DBCUST/custDB
         
         Revisions:
 			- 20150610@Elodie: Migrate custDB to new server DBCust (Move Acc_CustomerSelCheckEnable, Acc_CustomerSelCheckAllowedDownlines, Change Age_CustomerSelCheckBelonging to Age_CustomerSelCheckBelongingByCustID]           
 			- 20151007@Elodie: Remove code to check old and new value
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+			- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 			
         Parameters Explanation:
 			
@@ -218,7 +219,7 @@ BEGIN
             @TrackingValueDB varchar(4000)
          
     SELECT @LogSPData = '<Acc_CustomerUpdSuperGoldDeluxe_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
-					'v255spositiontaking_1701="' + COALESCE(CAST(@v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+					'v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@v255spositiontaking_1701),SPACE(1)) + '" ' +
 					'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
 					'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 					'IP="'+ COALESCE(CAST(@IP AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -227,7 +228,7 @@ BEGIN
 
 
     SELECT @TrackingValueDB = '<Acc_CustomerUpdSuperGoldDeluxe_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
-						'v255spositiontaking_1701="' + COALESCE(CAST(@db_v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+						'v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@db_v255spositiontaking_1701),SPACE(1)) + '" ' +
 						'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
 						'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -250,7 +251,7 @@ BEGIN
     END TRY
     BEGIN CATCH
         SELECT @LogSPData = '<Acc_CustomerUpdSuperLiveCS_Positiontaking Custid ="' + COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' + 
-						'v255spositiontaking_1701="' + COALESCE(CAST(@v255spositiontaking_1701 AS VARCHAR(50)),SPACE(1)) + '" ' +
+						'v255spositiontaking_1701="' + COALESCE(dbo.f_FomatNumericToChar(@v255spositiontaking_1701),SPACE(1)) + '" ' +
 						'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)),SPACE(1)) + '" ' +
 						'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(50)),SPACE(1)) + '" ' +

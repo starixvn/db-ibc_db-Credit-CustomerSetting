@@ -17,6 +17,7 @@ AS
 	Revisions:
         - 20200626@Elodie: Initial SP [Redmine:#135363]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -94,7 +95,7 @@ BEGIN
 				SportType	SMALLINT,
 				BetType		SMALLINT,
 				IsLive		BIT,
-				SuperMinPT	SMALLINT
+				SuperMinPT	SMALLMONEY
 				)	
 				
 	-- For read xml
@@ -162,7 +163,7 @@ BEGIN
 					(           
 						SELECT  @ProductID									AS '@ProductID',
 								cs.IsLive									AS '@IsLive',								
-								CONVERT(DECIMAL(10,2), cs.MinPT     /100.0)	AS '@SuperMinPT'
+								dbo.f_FomatNumericToChar(cs.MinPT     /100.0)	AS '@SuperMinPT'
 						FROM        CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN  @tblPT t 
 								ON  cs.sporttype = t.SportType 
@@ -187,7 +188,7 @@ BEGIN
 					(           
 						SELECT  cs.SportType								AS '@SportType',
 								cs.IsLive									AS '@IsLive',								
-								CONVERT(DECIMAL(10,2), cs.MinPT     /100.0)	AS '@SuperMinPT'
+								dbo.f_FomatNumericToChar(cs.MinPT     /100.0)	AS '@SuperMinPT'
 						FROM        CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN  @tblPT t 
 								ON  cs.sporttype = t.SportType 
@@ -212,7 +213,7 @@ BEGIN
 					(           
 						SELECT  cs.BetType									AS '@BetType',
 								cs.IsLive									AS '@IsLive',								
-								CONVERT(DECIMAL(10,2), cs.MinPT     /100.0)	AS '@SuperMinPT'
+								dbo.f_FomatNumericToChar(cs.MinPT     /100.0)	AS '@SuperMinPT'
 						FROM        CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN  @tblPT t 
 								ON  cs.sporttype = t.SportType 
@@ -238,7 +239,7 @@ BEGIN
 						SELECT  cs.SportType								AS '@SportType',
 								cs.BetType									AS '@BetType',
 								cs.IsLive									AS '@IsLive',								
-								CONVERT(DECIMAL(10,2), cs.MinPT     /100.0)	AS '@SuperMinPT'
+								dbo.f_FomatNumericToChar(cs.MinPT     /100.0)	AS '@SuperMinPT'
 						FROM        CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN  @tblPT t 
 								ON  cs.sporttype = t.SportType 
@@ -314,7 +315,7 @@ BEGIN
 						SELECT  @ProductID									AS '@ProductID',
 								cs.BetType									AS '@BetType',
 								cs.IsLive									AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.SuperMinPT/100.0)	AS '@SuperMinPT'
+								dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
 						FROM    @tblPT	cs							
 						FOR XML PATH('PT'), 
 						TYPE
@@ -334,7 +335,7 @@ BEGIN
 					(
 						SELECT  cs.SportType								AS '@SportType',
 								cs.IsLive									AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.SuperMinPT/100.0)	AS '@SuperMinPT'
+								dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
 						FROM    @tblPT	cs							
 						FOR XML PATH('PT'), 
 						TYPE
@@ -354,7 +355,7 @@ BEGIN
 					(
 						SELECT  cs.BetType									AS '@BetType',
 								cs.IsLive									AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.SuperMinPT/100.0)	AS '@SuperMinPT'
+								dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
 						FROM    @tblPT	cs							
 						FOR XML PATH('PT'), 
 						TYPE
@@ -375,7 +376,7 @@ BEGIN
 						SELECT  cs.SportType								AS '@SportType',
 								cs.BetType									AS '@BetType',
 								cs.IsLive									AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.SuperMinPT/100.0)	AS '@SuperMinPT'
+								dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
 						FROM    @tblPT	cs							
 						FOR XML PATH('PT'), 
 						TYPE

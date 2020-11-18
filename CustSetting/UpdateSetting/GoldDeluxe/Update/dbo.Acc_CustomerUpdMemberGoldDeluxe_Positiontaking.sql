@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberGoldDeluxe_Positiontaking]
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberGoldDeluxe_Positiontaking]
 	@custid  INT,
 	@v255apositiontaking_1701 SMALLMONEY,
 	
@@ -13,12 +14,13 @@ AS
 		Created: Elodie
 		Date: 20150422
 		Task: Update positiontaking Gold Deluxe on member
-		DB: DBTXN/CustDB
+		DB: DBCUST/CustDB
 		
 		Revisions:
 			- 20151007@Elodie: Remove code to check old and new value
 			- 20151016@Helen: Data Type Error - [Redmine - 45677] 
 			- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+			- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 			
 		Parameters Explanation:
 	*/
@@ -104,7 +106,7 @@ BEGIN
 	--check n2<=a1_new
 	SELECT @ErrType = ''
 
-	SELECT @ErrType = 'Min: ' + CAST(minpositiontaking AS VARCHAR(10))
+	SELECT @ErrType = 'Min: ' + dbo.f_FomatNumericToChar(minpositiontaking)
 	FROM CustOverrideGame WITH(NOLOCK)
 	WHERE custid = @recommend AND sporttype = 255 AND bettype = 1701 
 		AND minpositiontaking > @v255apositiontaking_1701
@@ -122,7 +124,7 @@ BEGIN
 	--check a1_new < a2
 	SELECT @ErrType = ''
 
-	SELECT @ErrType = 'Max: ' + CAST(apositiontaking AS VARCHAR(10))
+	SELECT @ErrType = 'Max: ' + dbo.f_FomatNumericToChar(apositiontaking)
 	FROM CustSettingGame WITH(NOLOCK)
 	WHERE custid = @recommend AND sporttype = 255 AND bettype = 1701
 		AND @v255apositiontaking_1701 > apositiontaking 
@@ -173,7 +175,8 @@ BEGIN
 	--if im2 = 0 ,check m1 + a1_new < m3
 	SELECT @ErrType = ''
 	
-	SELECT @ErrType = 'Max: ' + CAST((@v255mpositiontaking_1701_max - @v255mpositiontaking_1701) AS VARCHAR(50)) WHERE @isauto_v255mpositiontaking_1701 = 0 AND @v255mpositiontaking_1701 + @v255apositiontaking_1701 > @v255mpositiontaking_1701_max
+	SELECT @ErrType = 'Max: ' + dbo.f_FomatNumericToChar((@v255mpositiontaking_1701_max - @v255mpositiontaking_1701)) 
+	WHERE @isauto_v255mpositiontaking_1701 = 0 AND @v255mpositiontaking_1701 + @v255apositiontaking_1701 > @v255mpositiontaking_1701_max
 
 	IF @ErrType <> ''
 	BEGIN
@@ -253,7 +256,7 @@ BEGIN
 			@TrackingValueDB VARCHAR(5000)
 
 	SELECT @LogSPData = '<Acc_CustomerUpdMemberGoldDeluxe_Positiontaking  custid ="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-						'v255apositiontaking_1701 = "' + COALESCE(CAST(@v255apositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' + 
+						'v255apositiontaking_1701 = "' + COALESCE(dbo.f_FomatNumericToChar(@v255apositiontaking_1701), SPACE(1)) + '" ' + 
 						'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
 						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +
 						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
@@ -262,7 +265,7 @@ BEGIN
 						'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(8000)),SPACE(1)) + '" />' 
 
 	SELECT @TrackingValueDB =	'<Acc_CustomerUpdMemberGoldDeluxe_Positiontaking  custid ="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-								'v255apositiontaking_1701 = "' + COALESCE(CAST(@db_v255apositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' + 
+								'v255apositiontaking_1701 = "' + COALESCE(dbo.f_FomatNumericToChar(@db_v255apositiontaking_1701), SPACE(1)) + '" ' + 
 								'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
 								'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +
 								'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
@@ -284,7 +287,7 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 		SELECT @LogSPData = '<Acc_CustomerUpdMemberGoldDeluxe_Positiontaking  custid ="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-							'v255apositiontaking_1701 = "' + COALESCE(CAST(@v255apositiontaking_1701 AS VARCHAR(50)), SPACE(1)) + '" ' + 
+							'v255apositiontaking_1701 = "' + COALESCE(dbo.f_FomatNumericToChar(@v255apositiontaking_1701), SPACE(1)) + '" ' + 
 							'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +
 							'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)),SPACE(1)) + '" ' +
 							'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
@@ -303,10 +306,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_Positiontaking] TO [bodbadminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_Positiontaking] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_Positiontaking] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberGoldDeluxe_Positiontaking] TO [vnteam] AS [dbo]

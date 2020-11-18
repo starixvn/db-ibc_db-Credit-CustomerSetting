@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMasterKeno]
 	@CustID		INT
 AS
@@ -13,6 +13,7 @@ AS
 		- 20150801@Elodie: LEFT JOIN CustSettingGame, CustOverrideGame to show Power Keno [Redmine:#39192]
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 		- 20180115@Johnson: Remove downlines status for new direction change[RedmineID: #87328]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameters Explanations:
 			
 */
@@ -74,7 +75,7 @@ BEGIN
 	WHERE CustID = @custid
 
 	--Customer Info
-	SELECT username, firstname, lastname, phone, mobilephone, fax, @DisableAutoMPT DisableAutoMPT
+	SELECT username, firstname, lastname, phone, mobilephone, fax, @DisableAutoMPT DisableAutoMPT, Site
 	FROM dbo.Customer WITH (NOLOCK)
 	WHERE custID = @CustID 
 

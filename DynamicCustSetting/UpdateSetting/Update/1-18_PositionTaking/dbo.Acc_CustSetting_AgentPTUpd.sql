@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTUpd]
 	@custid				INT,
 	@PT					VARCHAR(MAX) = NULL,
@@ -24,6 +23,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTUpd]
 			- 20160408@Winnie: VoidBridge - always correct PT for VoidBridge [RedmineID: #55532]
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -125,13 +125,13 @@ BEGIN
 					SportType		SMALLINT,
 					BetType			SMALLINT,
 					IsLive			BIT,
-					MasterPT		SMALLINT,
+					MasterPT		SMALLMONEY,
 					IsAutoMasterPT	BIT,
-					AutoMasterPT	SMALLINT,
-					AgentPT			SMALLINT,				
-					AgentMinPT		SMALLINT,
+					AutoMasterPT	SMALLMONEY,
+					AgentPT			SMALLMONEY,				
+					AgentMinPT		SMALLMONEY,
 					UpdAllMems		BIT,
-					NewMasterPT		SMALLINT
+					NewMasterPT		SMALLMONEY
 					)	
 				
 		-- For read xml
@@ -212,13 +212,13 @@ BEGIN
 					(
 						SELECT  @ProductID										AS '@ProductID',
 								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
+								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								dbo.f_FomatNumericToChar(cs.AgentPT		/100.0)	AS '@AgentPT',
+								dbo.f_FomatNumericToChar(cs.MinPT			/100.0)	AS '@AgentMinPT',
 								t.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
+								dbo.f_FomatNumericToChar(t.NewMasterPT    /100.0)	AS '@NewMasterPT'
 						FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 							INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
 													AND cs.bettype = t.BetType 
@@ -243,13 +243,13 @@ BEGIN
 					(
 						SELECT  cs.sporttype									AS '@SportType',
 								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
+								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								dbo.f_FomatNumericToChar(cs.AgentPT		/100.0)	AS '@AgentPT',
+								dbo.f_FomatNumericToChar(cs.MinPT			/100.0)	AS '@AgentMinPT',
 								t.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
+								dbo.f_FomatNumericToChar(t.NewMasterPT    /100.0)	AS '@NewMasterPT'
 						FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 							INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
 													AND cs.bettype = t.BetType 
@@ -274,13 +274,13 @@ BEGIN
 					(
 						SELECT  cs.bettype										AS '@BetType',
 								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
+								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								dbo.f_FomatNumericToChar(cs.AgentPT		/100.0)	AS '@AgentPT',
+								dbo.f_FomatNumericToChar(cs.MinPT			/100.0)	AS '@AgentMinPT',
 								t.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
+								dbo.f_FomatNumericToChar(t.NewMasterPT    /100.0)	AS '@NewMasterPT'
 						FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 							INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
 													AND cs.bettype = t.BetType 
@@ -306,13 +306,13 @@ BEGIN
 						SELECT  cs.sporttype									AS '@SportType',
 								cs.bettype										AS '@BetType',
 								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT',
+								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								dbo.f_FomatNumericToChar(cs.AgentPT		/100.0)	AS '@AgentPT',
+								dbo.f_FomatNumericToChar(cs.MinPT			/100.0)	AS '@AgentMinPT',
 								t.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), t.NewMasterPT    /100.0)	AS '@NewMasterPT'
+								dbo.f_FomatNumericToChar(t.NewMasterPT    /100.0)	AS '@NewMasterPT'
 						FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 							INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
 													AND cs.bettype = t.BetType 
@@ -461,13 +461,13 @@ BEGIN
 					(
 						SELECT  @ProductID										AS '@ProductID',
 								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.AgentMinPT	/100.0)	AS '@AgentMinPT',
+								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								dbo.f_FomatNumericToChar(cs.AgentPT		/100.0)	AS '@AgentPT',
+								dbo.f_FomatNumericToChar(cs.AgentMinPT	/100.0)	AS '@AgentMinPT',
 								cs.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
+								dbo.f_FomatNumericToChar(cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
 						FROM    @tblPT cs	
 						FOR XML PATH('PT'),
 						TYPE
@@ -488,13 +488,13 @@ BEGIN
 					(
 						SELECT  cs.sporttype									AS '@SportType',
 								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.AgentMinPT	/100.0)	AS '@AgentMinPT',
+								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								dbo.f_FomatNumericToChar(cs.AgentPT		/100.0)	AS '@AgentPT',
+								dbo.f_FomatNumericToChar(cs.AgentMinPT	/100.0)	AS '@AgentMinPT',
 								cs.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
+								dbo.f_FomatNumericToChar(cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
 						FROM    @tblPT cs	
 						FOR XML PATH('PT'),
 						TYPE
@@ -515,13 +515,13 @@ BEGIN
 					(
 						SELECT  cs.bettype										AS '@BetType',
 								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.AgentMinPT	/100.0)	AS '@AgentMinPT',
+								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								dbo.f_FomatNumericToChar(cs.AgentPT		/100.0)	AS '@AgentPT',
+								dbo.f_FomatNumericToChar(cs.AgentMinPT	/100.0)	AS '@AgentMinPT',
 								cs.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
+								dbo.f_FomatNumericToChar(cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
 						FROM    @tblPT cs	
 						FOR XML PATH('PT'),
 						TYPE
@@ -543,13 +543,13 @@ BEGIN
 						SELECT  cs.sporttype									AS '@SportType',
 								cs.bettype										AS '@BetType',
 								cs.isLive										AS '@IsLive',
-								CONVERT(DECIMAL(10,2), cs.MasterPT		/100.0)	AS '@MasterPT',
+								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.isAutoMasterPT								AS '@IsAutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
-								CONVERT(DECIMAL(10,2), cs.AgentPT		/100.0)	AS '@AgentPT',
-								CONVERT(DECIMAL(10,2), cs.AgentMinPT	/100.0)	AS '@AgentMinPT',
+								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								dbo.f_FomatNumericToChar(cs.AgentPT		/100.0)	AS '@AgentPT',
+								dbo.f_FomatNumericToChar(cs.AgentMinPT	/100.0)	AS '@AgentMinPT',
 								cs.UpdAllMems									AS '@UpdAllMems',
-								CONVERT(DECIMAL(10,2), cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
+								dbo.f_FomatNumericToChar(cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
 						FROM    @tblPT cs	
 						FOR XML PATH('PT'),
 						TYPE

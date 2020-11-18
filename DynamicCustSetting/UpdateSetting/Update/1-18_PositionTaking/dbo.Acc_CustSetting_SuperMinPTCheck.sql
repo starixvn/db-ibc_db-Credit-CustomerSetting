@@ -16,6 +16,7 @@ AS
 	Revisions:
         - 20200626@Elodie: Initial SP [Redmine:#135363]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -37,7 +38,7 @@ BEGIN
 				SportType	SMALLINT,
 				BetType		SMALLINT,
 				IsLive		BIT,			
-				SuperMinPT	SMALLINT
+				SuperMinPT	SMALLMONEY
 				)
 	DECLARE @tmpPTGroup TABLE(custid INT
 							,sporttype INT

@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTCheck]
 	@custid			INT,
 	@srecommend		INT,
@@ -22,6 +21,7 @@ AS
 		Revisions:
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		Parameter's Explanations:
 		
 	*/
@@ -33,12 +33,12 @@ BEGIN
 				SportType		SMALLINT,
 				BetType			SMALLINT,
 				IsLive			BIT,
-				MasterPT		SMALLINT,
+				MasterPT		SMALLMONEY,
 				IsAutoMasterPT	BIT,
-				AutoMasterPT	SMALLINT,
-				AgentPT			SMALLINT,				
-				AgentMinPT		SMALLINT,
-				AgentMaxPT		SMALLINT
+				AutoMasterPT	SMALLMONEY,
+				AgentPT			SMALLMONEY,				
+				AgentMinPT		SMALLMONEY,
+				AgentMaxPT		SMALLMONEY
 				)	
 	
 	DECLARE @ErrType XML

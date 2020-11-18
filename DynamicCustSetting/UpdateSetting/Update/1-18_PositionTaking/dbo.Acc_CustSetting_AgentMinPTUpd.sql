@@ -19,6 +19,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentMinPTUpd]
 	Revisions:
         - 20200615@Elodie: Initial SP [Redmine: #135363]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -93,7 +94,7 @@ BEGIN
 				SportType		SMALLINT,
 				BetType			SMALLINT,
 				IsLive			BIT,							
-				AgentMinPT		SMALLINT
+				AgentMinPT		SMALLMONEY
 				)	
 				
 	-- For read xml
@@ -162,7 +163,7 @@ BEGIN
                 (
 					SELECT  @ProductID										AS '@ProductID',
                             cs.isLive										AS '@IsLive',
-						    CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT'
+						    dbo.f_FomatNumericToChar(cs.MinPT			/100.0)	AS '@AgentMinPT'
 					FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
 												AND cs.bettype = t.BetType 
@@ -187,7 +188,7 @@ BEGIN
                 (
 					SELECT  cs.sporttype									AS '@SportType',
                             cs.isLive										AS '@IsLive',
-						    CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT'
+						    dbo.f_FomatNumericToChar(cs.MinPT			/100.0)	AS '@AgentMinPT'
 					FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
 												AND cs.bettype = t.BetType 
@@ -212,7 +213,7 @@ BEGIN
                 (
 					SELECT  cs.bettype										AS '@BetType',
                             cs.isLive										AS '@IsLive',
-						    CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT'
+						    dbo.f_FomatNumericToChar(cs.MinPT			/100.0)	AS '@AgentMinPT'
 					FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
 												AND cs.bettype = t.BetType 
@@ -238,7 +239,7 @@ BEGIN
 					SELECT  cs.sporttype									AS '@SportType',
                             cs.bettype										AS '@BetType',
                             cs.isLive										AS '@IsLive',
-						    CONVERT(DECIMAL(10,2), cs.MinPT			/100.0)	AS '@AgentMinPT'
+						    dbo.f_FomatNumericToChar(cs.MinPT			/100.0)	AS '@AgentMinPT'
 					FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
 												AND cs.bettype = t.BetType 
@@ -312,7 +313,7 @@ BEGIN
                 (
 				    SELECT  @ProductID										AS '@ProductID',
                             cs.isLive										AS '@IsLive',
-                            CONVERT(DECIMAL(10,2), cs.AgentMinPT	/100.0)	AS '@AgentMinPT'
+                            dbo.f_FomatNumericToChar(cs.AgentMinPT	/100.0)	AS '@AgentMinPT'
 				    FROM    @tblPT cs	
 				    FOR XML PATH('PT'),
                     TYPE
@@ -333,7 +334,7 @@ BEGIN
                 (
 				    SELECT  cs.sporttype									AS '@SportType',
                             cs.isLive										AS '@IsLive',
-                            CONVERT(DECIMAL(10,2), cs.AgentMinPT	/100.0)	AS '@AgentMinPT'
+                            dbo.f_FomatNumericToChar(cs.AgentMinPT	/100.0)	AS '@AgentMinPT'
 				    FROM    @tblPT cs	
 				    FOR XML PATH('PT'),
                     TYPE
@@ -354,7 +355,7 @@ BEGIN
                 (
 				    SELECT  cs.bettype										AS '@BetType',
                             cs.isLive										AS '@IsLive',
-                            CONVERT(DECIMAL(10,2), cs.AgentMinPT	/100.0)	AS '@AgentMinPT'
+                            dbo.f_FomatNumericToChar(cs.AgentMinPT	/100.0)	AS '@AgentMinPT'
 				    FROM    @tblPT cs	
 				    FOR XML PATH('PT'),
                     TYPE
@@ -376,7 +377,7 @@ BEGIN
 				    SELECT  cs.sporttype									AS '@SportType',
                             cs.bettype										AS '@BetType',
                             cs.isLive										AS '@IsLive',
-                            CONVERT(DECIMAL(10,2), cs.AgentMinPT	/100.0)	AS '@AgentMinPT'
+                            dbo.f_FomatNumericToChar(cs.AgentMinPT	/100.0)	AS '@AgentMinPT'
 				    FROM    @tblPT cs	
 				    FOR XML PATH('PT'),
                     TYPE

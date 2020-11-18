@@ -36,6 +36,7 @@ AS
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
 		- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
+		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	Parameters Explanation:
 		@ErrCode: 0 is successful
 */
@@ -131,7 +132,7 @@ BEGIN
 	--check n3<=m2+a2  if im2 = 0, 
 	--a2<=l3 and um2+a2>=n3 if im2 = 1
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.name + '-Min: '+ CAST((co.minpositiontaking) AS VARCHAR(10)) + '<br>'
+	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking)) + '<br>'
 	FROM dbo.custoverrideGame co WITH(NOLOCK)
 		INNER JOIN 
 		(
@@ -156,7 +157,7 @@ BEGIN
 
 	--n2<=a2
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.Name + '-Min: '+ CAST((co.minpositiontaking) AS VARCHAR(10)) + '<br>'
+	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.Name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking)) + '<br>'
 	FROM (SELECT @BetType AS bettype, @SportType AS sporttype, @n2 AS minpositiontaking) AS co
 		INNER JOIN (SELECT @BetType AS bettype, @SportType AS sporttype, @a2 AS apositiontaking) AS b
 			ON co.bettype = b.bettype AND co.sporttype = b.sporttype
@@ -178,7 +179,7 @@ BEGIN
 	WHERE custid = @mrecommend AND bettype = @BetType AND sporttype = @SportType
 	
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType +  'Max: '+ CAST((b.max_mapositiontaking) AS VARCHAR(10)) + '<br>'
+	SELECT @ErrType = @ErrType +  'Max: '+ dbo.f_FomatNumericToChar((b.max_mapositiontaking)) + '<br>'
 	FROM
 	(
 		SELECT @BetType AS bettype, @SportType AS sporttype, @a2 AS apositiontaking
@@ -199,7 +200,7 @@ BEGIN
 	
 	--check um2<=min(m3,l3)
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.name + '-Max: '+ CAST(max_mapositiontaking AS VARCHAR(10)) + '<br>'
+	SELECT @ErrType = @ErrType + s.Name + ' - ' + bt.name + '-Max: '+ dbo.f_FomatNumericToChar(max_mapositiontaking) + '<br>'
 	FROM 
 	(
 		SELECT @BetType AS bettype, @SportType AS sporttype, @um2 as autopositiontaking
@@ -304,10 +305,10 @@ BEGIN
 		+ '" ' + 'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) 
 		+ '" ' + 'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) 
 		+ '" ' + 'UpdateAllMembers="' + COALESCE(CAST(@UpdateAllMembers AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'NewMPositionTaking="' + COALESCE(CAST(@NewMPositionTaking AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'a2="' + COALESCE(CAST(@a2 AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'm2="' + COALESCE(CAST(@m2 AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'um2="' + COALESCE(CAST(@um2 AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'NewMPositionTaking="' + COALESCE(dbo.f_FomatNumericToChar(@NewMPositionTaking), SPACE(1))
+		+ '" ' + 'a2="' + COALESCE(dbo.f_FomatNumericToChar(@a2), SPACE(1))
+		+ '" ' + 'm2="' + COALESCE(dbo.f_FomatNumericToChar(@m2), SPACE(1))
+		+ '" ' + 'um2="' + COALESCE(dbo.f_FomatNumericToChar(@um2), SPACE(1))
 		+ '" ' + 'im2="' + COALESCE(CAST(@im2 AS VARCHAR(50)), SPACE(1))
 		+ '" ' + 'UpdatePositionTaking="' + COALESCE(CAST(@UpdatePositionTaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UpdateAutoPositionTaking="' + COALESCE(CAST(@UpdateAutoPositionTaking AS VARCHAR(10)), SPACE(1))
@@ -322,10 +323,10 @@ BEGIN
 		+ '" ' + 'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) 
 		+ '" ' + 'bettype="'+ COALESCE(CAST(@bettype AS VARCHAR(10)),SPACE(1)) 
 		+ '" ' + 'UpdateAllMembers="' + COALESCE(CAST(@UpdateAllMembers AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'NewMPositionTaking="' + COALESCE(CAST(@NewMPositionTaking AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'a2="' + COALESCE(CAST(@Old_APositiontaking AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'm2="' + COALESCE(CAST(@Old_MPositionTaking AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'um2="' + COALESCE(CAST(@Old_Auto_MPositionTaking AS VARCHAR(50)), SPACE(1))
+		+ '" ' + 'NewMPositionTaking="' + COALESCE(dbo.f_FomatNumericToChar(@NewMPositionTaking), SPACE(1))
+		+ '" ' + 'a2="' + COALESCE(dbo.f_FomatNumericToChar(@Old_APositiontaking), SPACE(1))
+		+ '" ' + 'm2="' + COALESCE(dbo.f_FomatNumericToChar(@Old_MPositionTaking), SPACE(1))
+		+ '" ' + 'um2="' + COALESCE(dbo.f_FomatNumericToChar(@Old_Auto_MPositionTaking), SPACE(1))
 		+ '" ' + 'im2="' + COALESCE(CAST(@Old_IsAuto_MPositionTaking AS VARCHAR(50)), SPACE(1))
 		+ '" ' + 'UpdatePositionTaking="' + COALESCE(CAST(@UpdatePositionTaking AS VARCHAR(10)), SPACE(1))
 		+ '" ' + 'UpdateAutoPositionTaking="' + COALESCE(CAST(@UpdateAutoPositionTaking AS VARCHAR(10)), SPACE(1))
