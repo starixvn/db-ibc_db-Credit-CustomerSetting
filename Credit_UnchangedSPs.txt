@@ -1,0 +1,1 @@
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
