@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustomerSelByAg]  
 	@Recommend int,  
 	@IsAgentSite bit = 0,  
@@ -89,6 +88,7 @@ BEGIN
 		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]		
 		- 20200828@Winfred: Add WM Live casino [Redmine: #131589]
+		- 20201124@Helen: Alpha - Master Agent List - Member level shows the Site and commission group in Group column [Redmine: #145963]
 	
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -542,7 +542,7 @@ BEGIN
 	
 	SELECT   
 		ci.enabled, ci.closed, isnull(ci.reject,0) as suspended, isnull(ci.DisableOutright,0) as DisableOutright, ci.virtualmultiplier-1 as VirtualMultiplier,   
-		c.username, c.custid, ci.roleid, ISNULL(c.site,'') + c.ugroup as ugroup, IsNull(c.site,'') AS site,   
+		c.username, c.custid, ci.roleid, c.ugroup as ugroup, IsNull(c.site,'') AS site,   
 		c.firstname, c.lastname, c.username2,   
 		c.iplogin as lastloginip,  
 		c.creatdate as createdate, c.currency,  
