@@ -47,7 +47,7 @@ BEGIN
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
 		  
-	CREATE TABLE #customer(custid INT, RowNumber INT )
+	CREATE TABLE #customer(custid INT, RowNumber INT,discountMyanmarOdds DECIMAL (9,8),IsMyanmarOdds BIT )
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @DoubleCommLosing = 2
 	BEGIN
@@ -362,7 +362,19 @@ BEGIN
 			WHERE rownumber BETWEEN @rowstart AND @rowend
 		END
 	END
-	
+	-- MyanmarOdds
+		DECLARE @IsMyanmarOdds BIT = 0	
+		SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds(@MRecommend)
+	IF @IsMyanmarOdds = 1
+	BEGIN
+		
+		UPDATE T
+			SET discountMyanmarOdds = ac.CommRate
+			, t.IsMyanmarOdds = @IsMyanmarOdds
+		FROM #customer T
+			INNER JOIN AgentCommRate ac WITH (NOLOCK) ON T.custid = AC.CustId 
+		WHERE Sporttype = 1 AND Bettype = 1			
+	END
 	-- get data for filtered customers	
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )	
 
@@ -420,7 +432,11 @@ BEGIN
 			cs.groupc as groupc, 
 			cs.groupd as groupd, 
 			discountcs discountcs,	
-			discount1x2 discount1x2,		
+			discount1x2 discount1x2,
+			-- MyanmarOdds
+			ISNULL(t.IsMyanmarOdds,0) AS IsMyanmarOdds,
+			ISNULL(t.discountMyanmarOdds,0) AS discountMyanmarOdds,
+					
 			ctm.currency,	
 			ctm.matchlimit,
 			ctm.virtualmultiplier-1 as VirtualMultiplier,
