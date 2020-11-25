@@ -40,7 +40,9 @@ BEGIN
 	
 	IF @RoleId = 4
 	BEGIN
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, 0 AS MinSuperMinPT, ps.MaxPT AS MaxSuperMinPT, 0 AS MinSuperMaxPT, ps.MaxPT AS MaxSuperMaxPT, 75 AS SuperMinPT, 80 AS SuperMaxPT
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, 0 AS MinSuperMinPT, ps.MaxPT AS MaxSuperMinPT, 0 AS MinSuperMaxPT, ps.MaxPT AS MaxSuperMaxPT, 
+				CASE WHEN ft.SportType = 1 AND  ft.Bettype = 1 THEN  75 ELSE 70 END AS SuperMinPT, 
+				CASE WHEN ft.SportType = 1 AND  ft.Bettype = 1 THEN  90 ELSE 85 END AS SuperMaxPT
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter1 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
 	END
