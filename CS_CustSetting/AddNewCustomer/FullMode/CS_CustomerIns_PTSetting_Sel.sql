@@ -16,6 +16,7 @@ AS
 		- 20181212@Elodie: Initial SP [Redmine:#105338]
 		- 20190724@Elodie: Apply default value for PT [Redmine:#117459]
 		- 20200106@Elodie: Apply default value for MinPT = 70 [Redmine:#126606]
+		- 20201125@Winfred: Apply default value for MinPT = 75, MaxPT = 90 [Redmine:#145992]
 		
 	Param's Explanation:
 		• @RoleId:
@@ -39,7 +40,7 @@ BEGIN
 	
 	IF @RoleId = 4
 	BEGIN
-		SELECT ft.SportType, ft.Bettype, ft.IsLive, 0 AS MinSuperMinPT, ps.MaxPT AS MaxSuperMinPT, 0 AS MinSuperMaxPT, ps.MaxPT AS MaxSuperMaxPT, 70 AS SuperMinPT, 85 AS SuperMaxPT
+		SELECT ft.SportType, ft.Bettype, ft.IsLive, 0 AS MinSuperMinPT, ps.MaxPT AS MaxSuperMinPT, 0 AS MinSuperMaxPT, ps.MaxPT AS MaxSuperMaxPT, 75 AS SuperMinPT, 80 AS SuperMaxPT
 		FROM dbo.CS_ProductSettingDetail ps WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter1 ft ON ps.SportType = ft.SportType AND ps.BetType = ft.BetType AND ps.IsLive = ft.IsLive AND ps.SettingType = ft.SettingType
 	END
