@@ -269,7 +269,7 @@ BEGIN
 	--Check MinBet<=MaxBet
 	IF EXISTS(SELECT TOP 1 1
 			FROM @ErrorSportTypeTbl tmp
-			WHERE ( tmp.MinBet	<> 0 AND tmp.MaxBet	<> 0 )
+			WHERE ( tmp.MinBet	<> 0 OR tmp.MaxBet	<> 0 )
 					AND tmp.MinBet > tmp.MaxBet
 					)
 	BEGIN
@@ -280,7 +280,7 @@ BEGIN
 						SELECT tmp.SportType AS '@SportType'
 							, tmp.BetType AS '@BetType'
 						FROM @ErrorSportTypeTbl tmp
-						WHERE ((tmp.MinBet <> 0 AND tmp.MaxBet <> 0)
+						WHERE ((tmp.MinBet <> 0 OR tmp.MaxBet <> 0)
 								AND tmp.MinBet > tmp.MaxBet
 							  )
 						FOR XML PATH('Row')
