@@ -70,8 +70,8 @@ BEGIN
 		INSERT INTO #AgentToMaster_Transfer (recommend, mrecommend,srecommend,agentName, masterName, currency,currencyName, actualrate)
 		SELECT ci.custid,ci.mrecommend,ci.srecommend, ci.username, t.Master, ci.currency, e.currency,e.actualrate 
 		FROM dbo.tmpCustArchived t WITH (NOLOCK)
-			INNER JOIN dbo.CustInfo CI WITH (NOLOCK) ON t.recommend = CI.custid
-			INNER JOIN dbo.exchange e ON e.exchangeid = ci.currency
+			INNER JOIN CustDB.dbo.CustInfo CI WITH (NOLOCK) ON t.recommend = CI.custid
+			INNER JOIN custdb.dbo.exchange e ON e.exchangeid = ci.currency
 		ORDER BY ci.mrecommend
 		
 		INSERT INTO #Master_tmp (CustID,username)
@@ -152,9 +152,9 @@ BEGIN
 		INSERT INTO #MasterToSuper_Transfer (srecommend, mrecommend,superName, masterName, currency,currencyName, actualrate)
 		SELECT super.custid,ar.custid, super.username,ci.username, ci.currency, e.currency,e.actualrate 
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
-			INNER JOIN dbo.CustInfo CI WITH (NOLOCK) ON ar.custid = CI.custid
-			INNER JOIN dbo.custInfo super WITH (NOLOCK) ON super.custid = ci.srecommend AND super.roleid = 4
-			INNER JOIN dbo.exchange e ON e.exchangeid = ci.currency
+			INNER JOIN CustDB.dbo.CustInfo CI WITH (NOLOCK) ON ar.custid = CI.custid
+			INNER JOIN CustDB.dbo.CustInfo super WITH (NOLOCK) ON super.custid = ci.srecommend AND super.roleid = 4
+			INNER JOIN custdb.dbo.exchange e ON e.exchangeid = ci.currency
 		WHERE ar.GroupLevelName IN ('M1','M0') AND ar.roleid = 3	
 		
 		INSERT INTO #Super_tmp(CustID,username)
