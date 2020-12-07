@@ -16,7 +16,7 @@ Revisions:
 	- 20180126@Daniel: cloned from DBA_ArchiveAccount0_CloseAgent & change:
 	  + add close all downline members (use execRep)
 	- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]  
-	  
+	- 20200911@Helen: Fix stage 1 - M0 - [Redmine:130032]  
 	
 */
 
@@ -48,7 +48,7 @@ END
 
 if @Closed = 1
 BEGIN
-	Select @ErrMsg = @AccName +':'+ 'This agent has already been CLOSED!!', @ErrCode = 101
+	Select @ErrMsg = @AccName +':'+ 'This agent has already been archived!!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 	
 	print @ErrMsg
 	return
