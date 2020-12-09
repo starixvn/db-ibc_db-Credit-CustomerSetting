@@ -1,13 +1,2 @@
-CustSetting\ExecRep_CustomerInfo\Acc_CustomerInfo_Execrep_00.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMember_All.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_All.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_All.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_All.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdMemberGoldDeluxe_All.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdMasterGoldDeluxe_All.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdAgentGoldDeluxe_All.sql
-CustSetting\UpdateSetting\GoldDeluxe\Update\dbo.Acc_CustomerUpdSuperGoldDeluxe_All.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMemberKeno.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno.sql
+DynamicCustSetting\Others\PlaceBet\Dot_Member_CustCreditInfo_Cust_DCS.sql
+Others\Dot_Member_GetCustCreditInfo.sql

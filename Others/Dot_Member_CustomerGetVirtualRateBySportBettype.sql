@@ -41,6 +41,7 @@ AS
 		-- 20200610@VN-Eden: Virtual Rate for Basketball [Redmine: #134978]
 		-- 20200722@VN-Eden: VR setting for Basketball by member stake [Redmine: #138089]
 		-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
+		-- 20201209@VN-Eden: VR Setting for Soccer By Hours (1AM - 6AM GMT+8) [Redmine: #146787]
 
     Parameter's Explanation:
 */
@@ -122,20 +123,21 @@ BEGIN
 			
 				IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
 				BEGIN
-					IF @CurrentHKTime BETWEEN '06:00:00' AND '20:00:00'
-					BEGIN
-						SELECT @virtualMultiplier = @virtualMultiplier - 0.03
-					END	
+				  IF @CurrentHKTime >= '06:00:00' AND @CurrentHKTime < '20:00:00'
+				  BEGIN
+					SELECT @virtualMultiplier = @virtualMultiplier - 0.03
+				  END  
 
-					IF DATENAME(DW,@CurrentHKDate) NOT IN ('Saturday','Sunday') AND (@CurrentHKTime BETWEEN '00:00:00' AND '01:00:00' OR @CurrentHKTime BETWEEN '20:00:00.001' AND '23:59:59.999')
-					BEGIN
-						SELECT @virtualMultiplier = @virtualMultiplier - 0.02
-					END
+				  IF DATENAME(DW,@CurrentHKDate) NOT IN ('Saturday','Sunday') 
+					AND (@CurrentHKTime BETWEEN '00:00:00' AND '01:00:00' OR @CurrentHKTime BETWEEN '20:00:00' AND '23:59:59.999')
+				  BEGIN
+					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
+				  END
 
-					--IF @CurrentHKTime >= '03:00:00' AND @CurrentHKTime <'06:00:00' AND @IsLicensee = 0
-					--BEGIN
-					--	SELECT @virtualMultiplier = @virtualMultiplier + 0.05
-					--END	
+				  IF @CurrentHKTime > '01:00:00' AND @CurrentHKTime < '06:00:00'
+				  BEGIN
+					SELECT @virtualMultiplier = @virtualMultiplier + 0.03
+				  END  
 				END
 			END
 		END
