@@ -12,6 +12,7 @@ AS
 	Revision:
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+		- 20200911@Helen: Fix stage 1 - M0 - [Redmine:130032]
 		
 	Param's Explanation:
 */
@@ -51,7 +52,7 @@ BEGIN
 		OUTER APPLY (
 			SELECT COUNT(1) AgentCount
 			FROM tmpCustArchived mem WITH (NOLOCK)
-			WHERE mem.Master = t.username
+			WHERE mem.Master = t.username AND (ISNULL(ErrMsg,'') = '' OR ErrMsg LIKE '%archived%')
 		) mem
 		OUTER APPLY (
 			SELECT COUNT(1) AgentCount
