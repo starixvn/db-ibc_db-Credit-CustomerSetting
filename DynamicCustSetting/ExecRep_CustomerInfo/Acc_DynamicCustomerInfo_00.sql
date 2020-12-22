@@ -1402,10 +1402,6 @@ BEGIN
 		SELECT * 
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16,@SettingStatus)
 
-		INSERT INTO #SportBettypeFilter9
-		SELECT * 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20)
-
 		BEGIN TRY
 			IF @RoleID = 4
 			BEGIN
