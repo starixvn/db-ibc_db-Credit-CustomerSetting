@@ -1,7 +1,0 @@
-*.orig
-*.bk
-*.UAT_
-*.del
-
-.project
-.settings/org.eclipse.core.resources.prefs
