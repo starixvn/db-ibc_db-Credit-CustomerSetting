@@ -29,6 +29,7 @@ AS
 		- 20200528@Elodie: NAP - Search & Copy Super - DCS: Win Loss limit is not insert for offer supers when search and copy non-offered to offer site [RedmineID: #134949]
 		- 20200619@Elodie: Hardcode MaxPT = 100 [Redmine: #136081]
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
+		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
@@ -556,7 +557,7 @@ BEGIN
 						   ,[MaxPerMatch]
 				FROM [dbo].[CustBetSetting3rd_Agent] cs WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9,16) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9,16,20) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -590,10 +591,10 @@ BEGIN
 					,t.BetType
 					,ps.DefaultMinBet
 					,ps.DefaultMaxBet
-					,ps.DefaultMaxPerMatch
+					,ISNULL(ps.DefaultMaxPerMatch,0)
 				FROM #ProductSettingDetail t 
 					INNER JOIN dbo.ProductBetSetting ps WITH (NOLOCK) ON t.SportType = ps.Sporttype AND t.Bettype = ps.Bettype AND ps.IsDep = 0 AND ps.Currency = @_Currency
-				WHERE t.SettingType IN (9,16) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
+				WHERE t.SettingType IN (9,16,20) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH

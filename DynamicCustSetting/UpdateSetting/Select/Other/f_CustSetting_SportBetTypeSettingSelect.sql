@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" selecters="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB" selecters="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID TINYINT, @SettingType SMALLINT) 
 RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 /*
@@ -15,6 +15,9 @@ RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Betty
 		
 */   
 BEGIN 
+	IF dbo.f_CheckRepTable('ProductSettingDetail') = 0
+		RETURN
+
 	DECLARE @isTest BIT,@SQL NVARCHAR(100) = OBJECT_NAME(@@PROCID)
 
 	IF  (@SQL like '%_xtest%' 

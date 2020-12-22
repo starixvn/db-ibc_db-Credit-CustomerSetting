@@ -35,6 +35,7 @@ AS
 		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -1270,6 +1271,74 @@ BEGIN
 					, @ErrMsg = @ErrMsg OUTPUT
 			END
 			DELETE FROM	#TempBetSetting WHERE ProductID=@ProductID16
+		END
+	END
+	/********************************************* Bet Setting : SettingType = 20 ****************************************/
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20))
+	BEGIN
+		DECLARE @ProductID20 INT
+		CREATE TABLE #TempBetSetting20 (ProductID INT)
+		DECLARE @NewBetSettingTbl20 TABLE (
+			SportType			SMALLINT
+			, BetType			SMALLINT
+			, MinBet			MONEY
+			, MaxBet			MONEY
+			)
+
+		INSERT INTO @NewBetSettingTbl20
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.MinBet
+			, bl.MaxBet
+		FROM dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
+		WHERE bl.custid = @ExistingCustID
+		
+		INSERT INTO #TempBetSetting20(ProductID)	
+		SELECT 
+				DISTINCT
+				psd.ProductID				
+		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		INNER JOIN	@NewBetSettingTbl20 AS ts
+				ON	ts.SportType = psd.SportType
+				AND	ts.BetType = psd.BetType
+		WHERE	psd.SettingType = 20
+			AND psd.ProductID IS NOT NULL
+			AND	psd.SettingLevel IS NOT NULL
+			
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempBetSetting20)
+		BEGIN
+			SELECT TOP 1 @ProductID20=ProductID FROM #TempBetSetting20		
+			SET @xmlBetLimit = (SELECT (
+										SELECT nslt.SportType	AS '@SportType'
+											, nslt.BetType		AS '@BetType'
+											, MinBet			AS '@MinBet'
+											, MaxBet			AS '@MaxBet'
+										FROM @NewBetSettingTbl20 nslt
+										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
+											WHERE psd.SettingType = 20 AND psd.ProductID = @ProductID20
+										FOR XML PATH('BetLimit')
+											, TYPE
+										)
+								FOR XML PATH('ROOT')
+									, TYPE
+								)
+	
+			SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlBetLimit)
+
+			IF EXISTS(SELECT TOP 1 1 FROM @NewBetSettingTbl20)
+			BEGIN
+				EXEC Acc_CustSetting_GameBetSettingUpd
+					  @CustID = @CustID
+					, @BetLimit = @xmlStr
+					, @SubAccID = @SubAccID
+					, @IP = @IP
+					, @UserID = @UserID
+					, @SystemID = @SystemID
+					, @ErrCode = @ErrCode OUTPUT
+					, @ErrMsg = @ErrMsg OUTPUT
+			END
+			DELETE FROM	#TempBetSetting20 WHERE ProductID=@ProductID20
 		END
 	END
 END
