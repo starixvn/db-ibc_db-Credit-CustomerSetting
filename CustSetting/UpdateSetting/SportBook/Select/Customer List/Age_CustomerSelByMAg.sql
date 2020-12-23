@@ -7,7 +7,6 @@ ALTER PROCEDURE [dbo].[Age_CustomerSelByMAg]
 	@Closed bit=null,
 	@Suspended bit = null,
 	@DoubleCommLosing tinyint = 2,
-	@ProductUnSync TINYINT = 0,--0: not filter
 	@PageSize int = 20000,
 	@PageIndex int = 1,
 	@TotalPages int = 1 output,
@@ -29,9 +28,6 @@ AS
 			0: Not Allowed double comm
 			1: Allowed double comm
 			2: All
-		- @ProductUnSync:
-			0: not filter by product
-			6: casino,12: GD, 41: Allbet + SA Gaming, 22: Macau Games
 */   
 BEGIN
 
@@ -53,314 +49,87 @@ BEGIN
 	BEGIN
 		IF @TotalPages = 0
 		BEGIN
-			IF @ProductUnSync = 0
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)			
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2 
-			END
-			ELSE IF @ProductUnSync IN (6,12)
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)			
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2
-					AND 1 = (CASE WHEN (@ProductUnSync =6 AND SyncCasino = 0) 
-										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
-							)
-			END	
-			ELSE IF @ProductUnSync IN (41,22)
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)			
-					INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid					
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2
-					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
-								THEN 1 ELSE 0 END	
-							)
-			END	
+			SELECT 
+				@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
+			FROM dbo.Custinfo AS ci WITH (NOLOCK)			
+			WHERE ci.MRecommend = @MRecommend 
+				AND ci.roleid=2 
 		END 
-		
-		IF @ProductUnSync = 0
-		BEGIN
-			INSERT INTO #customer (custid, RowNumber)
-			SELECT custid, RowNumber 
-			FROM (
-					SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) AS RowNumber 
-					FROM dbo.custinfo ci WITH(NOLOCK) 
-					WHERE	MRecommend = @MRecommend 
-						AND roleid=2 
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
-				) t
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END	
-		ELSE IF @ProductUnSync IN (6,12)
-		BEGIN
-			INSERT INTO #customer (custid, RowNumber)
-			SELECT custid, RowNumber 
-			FROM (
-					SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) AS RowNumber 
-					FROM dbo.custinfo ci WITH(NOLOCK) 
-					WHERE	MRecommend = @MRecommend 
-						AND roleid=2 
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
-						AND 1 = (CASE WHEN (@ProductUnSync =6 AND SyncCasino = 0) 
-										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
-							)
-				) t
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END
-		ELSE IF @ProductUnSync IN (41,22)
-		BEGIN
-			INSERT INTO #customer (custid, RowNumber)
-			SELECT custid, RowNumber 
-			FROM (
-					SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) AS RowNumber 
-					FROM dbo.custinfo ci WITH(NOLOCK) 
-						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid					
-					WHERE	MRecommend = @MRecommend 
-						AND roleid=2 
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
-						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
-								THEN 1 ELSE 0 END	
-							)
-						
-				) t
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END	
+
+		INSERT INTO #customer (custid, RowNumber)
+		SELECT custid, RowNumber 
+		FROM (
+				SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) AS RowNumber 
+				FROM dbo.custinfo ci WITH(NOLOCK) 
+				WHERE	MRecommend = @MRecommend 
+					AND roleid=2 
+					AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
+			) t
+		WHERE rownumber BETWEEN @rowstart AND @rowend
 	END
 	ELSE IF @Username = ''
 	BEGIN
 		IF @TotalPages = 0
 		BEGIN
-			IF @ProductUnSync = 0 
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)			
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2 
-					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END			
-					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
-					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
-			END
-			ELSE IF @ProductUnSync IN (6,12) 
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)			
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2 
-					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END			
-					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
-					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
-					AND 1 = (CASE WHEN (@ProductUnSync =6 AND SyncCasino = 0) 
-										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
-							) 
-			END	
-			ELSE IF @ProductUnSync IN (41,22)  
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)
-					INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2 
-					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END			
-					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
-					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
-					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
-								THEN 1 ELSE 0 END	
-							)
-			END
+			SELECT 
+				@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
+			FROM dbo.Custinfo AS ci WITH (NOLOCK)			
+			WHERE ci.MRecommend = @MRecommend 
+				AND ci.roleid=2 
+				AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
+				AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END			
+				AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
+				AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
+
 		END
-		
-		IF @ProductUnSync = 0
-		BEGIN
-			INSERT INTO #customer(custid, RowNumber)
-			SELECT custid, RowNumber
-			FROM (
-					SELECT custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
-					FROM dbo.custinfo ci WITH (NOLOCK) 
-					WHERE MRecommend = @MRecommend 
-						AND roleid=2 
-						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
-						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END	
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
-				) t
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END	
-		ELSE IF @ProductUnSync IN (6,12)
-		BEGIN
-			INSERT INTO #customer(custid, RowNumber)
-			SELECT custid, RowNumber
-			FROM (
-					SELECT custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
-					FROM dbo.custinfo ci WITH (NOLOCK) 
-					WHERE MRecommend = @MRecommend 
-						AND roleid=2 
-						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
-						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END	
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
-						AND 1 = (CASE WHEN (@ProductUnSync =6 AND SyncCasino = 0) 
-										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
-							) 
-				) t
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END
-		ELSE IF @ProductUnSync IN (41,22)
-		BEGIN
-			INSERT INTO #customer(custid, RowNumber)
-			SELECT custid, RowNumber
-			FROM (
-					SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
-					FROM dbo.custinfo ci WITH (NOLOCK) 
-						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
-					WHERE MRecommend = @MRecommend 
-						AND roleid=2 
-						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
-						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END	
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
-						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
-								THEN 1 ELSE 0 END	
-							)
-				) t
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END
+
+		INSERT INTO #customer(custid, RowNumber)
+		SELECT custid, RowNumber
+		FROM (
+				SELECT custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
+				FROM dbo.custinfo ci WITH (NOLOCK) 
+				WHERE MRecommend = @MRecommend 
+					AND roleid=2 
+					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
+					AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
+					AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END	
+					AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
+			) t
+		WHERE rownumber BETWEEN @rowstart AND @rowend
 	END
 	ELSE
 	BEGIN
 		IF @TotalPages = 0
 		BEGIN
-			IF @ProductUnSync = 0
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)
-					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2 
-					AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
-					AND enabled = CASE WHEN coalesce(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END
-					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
-					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
-			END	
-			ELSE IF @ProductUnSync IN (6,12)
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)
-					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2 
-					AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
-					AND enabled = CASE WHEN coalesce(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END
-					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
-					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
-					AND 1 = (CASE WHEN (@ProductUnSync =6 AND SyncCasino = 0) 
-										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
-							)
-			END
-			ELSE IF @ProductUnSync IN (41,22)
-			BEGIN
-				SELECT 
-					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
-				FROM dbo.Custinfo AS ci WITH (NOLOCK)
-					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-					INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
-				WHERE ci.MRecommend = @MRecommend 
-					AND ci.roleid=2 
-					AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
-					AND enabled = CASE WHEN coalesce(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-					AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END
-					AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
-					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
-					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-									OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
-								THEN 1 ELSE 0 END	
-							)
-			END		
+			SELECT 
+				@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
+			FROM dbo.Custinfo AS ci WITH (NOLOCK)
+				INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+			WHERE ci.MRecommend = @MRecommend 
+				AND ci.roleid=2 
+				AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
+				AND enabled = CASE WHEN coalesce(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
+				AND ISNULL(ci.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(ci.closed, 0)) END
+				AND ISNULL(ci.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(ci.reject, 0))END			
+				AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 		END	
-		
-		IF @ProductUnSync = 0
-		BEGIN
-			INSERT INTO #customer(custid,RowNumber)
-			SELECT custid, RowNumber	
-			FROM (
-					SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
-					FROM dbo.custinfo ci WITH(NOLOCK) 
-						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-					WHERE ci.MRecommend = @MRecommend 
-						AND ci.roleid=2 
-						AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
-						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
-						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END		
-				) t 
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END	
-		ELSE IF @ProductUnSync IN (6,12)
-		BEGIN
-			INSERT INTO #customer(custid,RowNumber)
-			SELECT custid, RowNumber	
-			FROM (
-					SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
-					FROM dbo.custinfo ci WITH(NOLOCK) 
-						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-					WHERE ci.MRecommend = @MRecommend 
-						AND ci.roleid=2 
-						AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
-						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
-						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END		
-						AND 1 = (CASE WHEN (@ProductUnSync =6 AND SyncCasino = 0) 
-										OR (@ProductUnSync = 12 AND HideGoldDeluxe = 1) THEN 1 ELSE 0 END
-							)
-				) t 
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END
-		ELSE IF @ProductUnSync IN (41,22)
-		BEGIN
-			INSERT INTO #customer(custid,RowNumber)
-			SELECT custid, RowNumber	
-			FROM (
-					SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
-					FROM dbo.custinfo ci WITH(NOLOCK) 
-						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-						INNER JOIN dbo.CustProductStatus cs WITH (NOLOCK) ON ci.custid = cs.custid
-					WHERE ci.MRecommend = @MRecommend 
-						AND ci.roleid=2 
-						AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
-						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-						AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
-						AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
-						AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END		
-						AND 1 =(CASE WHEN (@ProductUnSync = 41 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_AllBet) = 0)
-								OR (@ProductUnSync = 22 AND dbo.f_GetProductStatus(cs.bitmapHasSynced,@bitmapOrder_VoidBridge) = 0)
-								THEN 1 ELSE 0 END	
-							)
-				) t 
-			WHERE rownumber BETWEEN @rowstart AND @rowend
-		END
+
+		INSERT INTO #customer(custid,RowNumber)
+		SELECT custid, RowNumber	
+		FROM (
+				SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, ci.closed, ISNULL(ci.reject,0), ci.username) as RowNumber
+				FROM dbo.custinfo ci WITH(NOLOCK) 
+					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+				WHERE ci.MRecommend = @MRecommend 
+					AND ci.roleid=2 
+					AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
+					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
+					AND ISNULL(closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(closed, 0)) END
+					AND ISNULL(reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(reject, 0))END			
+					AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END		
+			) t 
+		WHERE rownumber BETWEEN @rowstart AND @rowend
+
 	END
 	-- MyanmarOdds
 		DECLARE @IsMyanmarOdds BIT = 0	
