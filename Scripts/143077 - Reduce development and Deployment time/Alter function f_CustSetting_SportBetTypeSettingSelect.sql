@@ -5,7 +5,7 @@
 	Server: DB04Admin1,DB04Admin2,DB05,DB052,DB053,DB054,DB055,DB05BK1,DB061,DB06C2\DB06,DBTP
 	Database: bodb02
 */
-
+GO
 ALTER FUNCTION dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID TINYINT, @SettingType SMALLINT, @SettingStatus TINYINT) 
 RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 /*
