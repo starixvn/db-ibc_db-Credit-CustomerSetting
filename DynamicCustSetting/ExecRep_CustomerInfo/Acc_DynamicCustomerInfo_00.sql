@@ -46,7 +46,8 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 	Parameter's explanation:
-		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
+		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
+		- @SettingStatus: 0: Pro, 1: UAT
 	*/
 
 BEGIN
@@ -1593,15 +1594,14 @@ BEGIN
 
 		/********************************************* Bet Game Limit : SettingType = 20 ****************************************/
 		CREATE TABLE #SportBettypeFilter20(
-			ProductID   TINYINT, 
 			SportType   SMALLINT, 
 			BetType     SMALLINT, 
 			IsLive      BIT, 
 			SettingType SMALLINT
 		)
 
-		INSERT INTO #SportBettypeFilter20(ProductID,SportType,BetType,IsLive,SettingType)
-		SELECT ProductID,SportType,BetType,IsLive,SettingType
+		INSERT INTO #SportBettypeFilter20(SportType,BetType,IsLive,SettingType)
+		SELECT SportType,BetType,IsLive,SettingType
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20,@SettingStatus) t
 
 		BEGIN TRY

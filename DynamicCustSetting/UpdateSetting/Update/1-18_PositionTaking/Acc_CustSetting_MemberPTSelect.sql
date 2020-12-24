@@ -22,6 +22,7 @@ AS
 		- @RoleID:  2-Agent select  
 					3-Master select  
 					4-Super select  
+		- @SettingStatus: 0: Pro, 1: UAT
  */  
 BEGIN  
 	IF @RoleID NOT IN (2, 3, 4)  

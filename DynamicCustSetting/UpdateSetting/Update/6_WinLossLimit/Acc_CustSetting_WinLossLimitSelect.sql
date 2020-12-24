@@ -21,6 +21,7 @@ AS
 		• @SettingType: 6: WinLossLimit
 						8: WinLimit
 						12: LossLimit
+		- @SettingStatus: 0: Pro, 1: UAT
 	*/
 BEGIN
 	DECLARE	@Currency	TINYINT,

@@ -16,7 +16,9 @@ AS
 	Revision:
 		- 20170424@Elodie: Get Winning Share commission values of a product [Redmine: #75221]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
 	Param's Explanation:
+		- @SettingStatus: 0: Pro, 1: UAT
 	
 	Example: EXEC Acc_CustSetting_WinningShareCommissionSelect @CustID = 1176070, @ProductID = 26
 	*/

@@ -15,9 +15,10 @@ AS
 	Original:
 
 	Revisions:
-	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	
 	Param's Explanation:
+		- @SettingStatus: 0: Pro, 1: UAT
 	
 	*/
 BEGIN

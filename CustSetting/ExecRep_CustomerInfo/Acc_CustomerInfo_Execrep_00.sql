@@ -730,6 +730,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
+		-@SettingStatus: 0: Pro, 1: UAT
 	*/
 BEGIN
     SET NOCOUNT ON

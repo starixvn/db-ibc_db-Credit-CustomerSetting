@@ -98,6 +98,7 @@ AS
 		- @ProductUnSync:
 			0: not filter by product
 			6: casino,12: GD, 41: Allbet + SA Gaming, 22: Macau Games
+		- @SettingStatus: 0: Pro, 1: UAT
 */   
 BEGIN
 

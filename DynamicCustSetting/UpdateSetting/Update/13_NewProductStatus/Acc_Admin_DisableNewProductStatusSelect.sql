@@ -15,7 +15,9 @@ AS
 		- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
 		- 20200702@Winfred: Get enabled status of Cust when SettingType = 4 (ProductStatus)  (ProductStatus) [RedmineID:#136210]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
 	Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT
 
 	Example: EXEC Acc_Admin_DisableNewProductStatusSelect @CustID = 1275, @ProductID = 23
 	

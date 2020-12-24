@@ -9,16 +9,17 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_ProductProfileSelect]
 	@SettingStatus TINYINT = 0
 AS  
 /*  
- Created: 20150702@Dominic  
- Task : Get Product Profile  
- DB:  DBCUST/CustDB  
- Original:  
-  
- Param's Explanation:  
+	 Created: 20150702@Dominic  
+	 Task : Get Product Profile  
+	 DB:  DBCUST/CustDB  
+	 Original:  
 
- Revisions: 
-	- 20190116@Johnson: grant permission for bodbDownlineNetView [redmine:#106601]
-	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	 Revisions: 
+		- 20190116@Johnson: grant permission for bodbDownlineNetView [redmine:#106601]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
+	 Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT 	
  */  
 BEGIN   
 	SELECT * INTO #SportBettypeFilter

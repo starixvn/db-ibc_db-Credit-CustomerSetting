@@ -32,6 +32,9 @@ AS
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
+	Parameter's explanation:
+		- @SettingStatus: 0: Pro, 1: UAT
 	*/
 BEGIN
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT

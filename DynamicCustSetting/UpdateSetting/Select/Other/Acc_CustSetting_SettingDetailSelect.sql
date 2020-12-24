@@ -16,6 +16,7 @@ AS
 
 	Param's Explanation:
 	- @ProductID: ID of a product
+	- @SettingStatus: 0: Pro, 1: UAT
 	
 	*/
 BEGIN

@@ -23,7 +23,9 @@ AS
 		- 20180112@Elodie: Remove HasDownlines and IsDisableDownline value [RedmineID:#87328]
 		- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
 	Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT
 
 	Example: EXEC Acc_CustSetting_DisableNewProductStatusSelect @CustID = 1275, @ProductID = 23
 	

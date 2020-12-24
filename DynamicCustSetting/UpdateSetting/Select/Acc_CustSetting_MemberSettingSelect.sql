@@ -20,10 +20,11 @@ AS
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
  Param's Explanation:  
- - @CustID: Member's ID  
- - @RoleID:  2-Agent select  
-    3-Master select  
-    4-Super select  
+	- @CustID: Member's ID  
+	- @RoleID:  2-Agent select  
+		3-Master select  
+		4-Super select  
+	- @SettingStatus: 0: Pro, 1: UAT
    
  */  
 BEGIN  

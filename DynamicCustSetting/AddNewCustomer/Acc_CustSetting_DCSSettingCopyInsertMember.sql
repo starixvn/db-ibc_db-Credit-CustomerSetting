@@ -38,6 +38,9 @@ AS
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
+	Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT 	
 	*/
 BEGIN
 	SET NOCOUNT ON

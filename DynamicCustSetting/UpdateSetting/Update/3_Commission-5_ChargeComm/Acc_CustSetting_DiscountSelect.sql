@@ -15,7 +15,9 @@ AS
 	Revision:
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
 	Param's Explanation:
+		- @SettingStatus: 0: Pro, 1: UAT
 	
 	*/
 BEGIN

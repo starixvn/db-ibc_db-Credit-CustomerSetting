@@ -94,6 +94,7 @@ AS
 		> 0: Specific Error.
 	  
 	• @ErrMsg: Error description.	
+	- @SettingStatus: 0: Pro, 1: UAT
   
 */
 BEGIN

@@ -28,7 +28,8 @@ AS
 	- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
  Param's Explanation:  
- - @CustID: 
+	- @CustID: 
+	- @SettingStatus: 0: Pro, 1: UAT
  Example: EXEC Acc_CustSetting_StatusSettingSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
    
  */  

@@ -49,10 +49,11 @@ Revisions:
 	- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 	- 20200421@Elodie: Add GTCasino Product [Redmine: #130689]
 	- 20200504@Eden: ION Live casino [Redmine: #132323]
-
 	- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
 	- 20201012@Tina: Add new parameter @SettingStatus [Redmine: #143077]
-
+	
+	Param's Explanation:
+		- @SettingStatus: 0: Pro, 1: UAT
 */
 
 	SET NOCOUNT ON

@@ -19,6 +19,7 @@ AS
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
  
  Param's Explanation:  
+	- @SettingStatus: 0: Pro, 1: UAT
  
  Example: EXEC Acc_CustSetting_StatusSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
    

@@ -16,7 +16,8 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	
 	Param's Explanation:  
-		• @CustID: Master's ID  
+		- @CustID: Master's ID  
+		- @SettingStatus: 0: Pro, 1: UAT
    
  */  
 BEGIN  

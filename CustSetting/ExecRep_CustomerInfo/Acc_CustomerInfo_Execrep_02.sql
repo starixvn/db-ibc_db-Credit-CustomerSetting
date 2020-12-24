@@ -28,6 +28,7 @@ AS
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	Parameter's Explanation:
+		- @SettingStatus: 0: Pro, 1: UAT
 */ 
 BEGIN
 	SET NOCOUNT ON
