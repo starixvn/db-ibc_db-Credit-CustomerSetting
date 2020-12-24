@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView,Dot_Member" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION f_FomatNumericToChar(@str MONEY) 
 	RETURNS VARCHAR(50) 
 AS
@@ -10,6 +10,7 @@ AS
     Original versions:                
     Revision:
 		- 20201029@Eden: Initial SP [Redmine: #143764]
+		- 20201214@Winfred: grant permission when run 1st dep [redmine: #146574]
     Example:
 		DECLARE @PT smallmoney = 0.0855
 		SELECT dbo.f_FomatNumericToChar (@PT)
