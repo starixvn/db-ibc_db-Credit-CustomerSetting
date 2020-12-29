@@ -26,6 +26,9 @@ WHERE bettype = 21004
 	AND winlostdate >= '2020-12-22' 
 	AND b.transdesc like '%For Delete Account - %'
 
+-- for deployer info
+DECLARE @debug_message VARCHAR(200)
+
 WHILE (1=1)
 BEGIN
 	UPDATE TOP (2000) c WITH (ROWLOCK,UPDLOCK)
@@ -36,6 +39,9 @@ BEGIN
 	
 	IF @@ROWCOUNT = 0
 		BREAK
+	
+	SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
+	RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 	
 	UPDATE b WITH (ROWLOCK,UPDLOCK)
 		SET actualrate = c.actualrate
