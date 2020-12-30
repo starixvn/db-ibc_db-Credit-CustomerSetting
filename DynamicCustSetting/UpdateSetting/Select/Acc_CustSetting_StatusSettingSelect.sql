@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSettingSelect]   
    @CustID  INT  
  , @ProductID TINYINT = NULL  
