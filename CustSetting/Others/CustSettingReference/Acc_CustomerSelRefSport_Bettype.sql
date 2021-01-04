@@ -122,7 +122,7 @@ BEGIN
 			AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
 	UNION ALL
 	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
-	FROM Sport_Bettype_Reference
+	FROM Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE   Sporttype IN (27, 50)
 			AND [Site] IN (
 				 CASE WHEN ISNULL(@CustID, 0) = 0 THEN 'IMBC' END -- ALL
