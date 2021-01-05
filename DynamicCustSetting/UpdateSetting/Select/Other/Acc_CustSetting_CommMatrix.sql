@@ -2,7 +2,8 @@
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_CommMatrix]   
    @ProductID TINYINT = NULL,
-   @UserName VARCHAR(30) = ''
+   @UserName VARCHAR(30) = '',
+   @SettingStatus TINYINT = 0
 AS  
 /*  
 	Created: 20150518@Dominic  
@@ -14,7 +15,10 @@ AS
 		- 20160219@Dominic: Implement charge commission #49689
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
-	Param's Explanation:  		
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
+	Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT 		
    
  */  
 BEGIN  
@@ -22,16 +26,16 @@ BEGIN
 	SELECT * INTO #SportBettypeFilter
 	FROM (
 	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3) -- comm
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) -- comm
 	UNION
 	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5)  
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus)  
 	UNION
 	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) 
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus) 
 	UNION
 	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19)) tmp
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus)) tmp
 	
 	SET NOCOUNT ON
 	DECLARE @CustID INT

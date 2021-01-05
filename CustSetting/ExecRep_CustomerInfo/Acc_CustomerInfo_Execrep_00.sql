@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@custid INT =0,
 	@srecommend INT = 0,
@@ -673,9 +673,10 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v255sdiscount_1701 decimal(9,8) = 0,
 
 	-- Myanma Odds
-	@discountMyanmarOdds DECIMAL(9,8) = 0,
+	@discountMyanmarOdds DECIMAL(9,8) = 0,	
 	@IsMyanmarOdds BIT = 0,
-
+	
+	@SettingStatus TINYINT = 0,
 	@ErrCode INT = 0 OUTPUT
 	
  AS
@@ -725,9 +726,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20190805@Eden: Remove initial setting for inactive products (Colosus Bet)  [redmine: #118699]
 			- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 			- 20201112@Eden: Keno - Delete unused bettype (country) of Keno [Redmine: #145247]
+			- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 			
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
+		-@SettingStatus: 0: Pro, 1: UAT
 	*/
 BEGIN
     SET NOCOUNT ON
@@ -2334,6 +2337,7 @@ BEGIN
 			, @isSearchAndCopy 	= @isSearchAndCopy
 			, @copyFromCustID 	= @copyFromCustID
 			, @ErrCode			= @DCSErrCode OUTPUT
+			, @SettingStatus    = @SettingStatus
 				
 	IF @DCSErrCode <> 0 
 	BEGIN

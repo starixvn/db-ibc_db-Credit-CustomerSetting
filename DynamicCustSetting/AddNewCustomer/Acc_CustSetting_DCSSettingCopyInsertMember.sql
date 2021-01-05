@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember]
 	, @SystemID TINYINT = 1 --20200305@Tiara
 	, @ErrCode			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20151030@Elodie
@@ -36,6 +37,10 @@ AS
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
+	Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT 	
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -45,7 +50,7 @@ BEGIN
 	SELECT @ErrCode = 0		
 	
 	/********************************************* Position Taking: SettingType = 1 ***********************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID1 INT
 		CREATE TABLE #TempPT (ProductID INT)
@@ -78,7 +83,7 @@ BEGIN
 						, CASE WHEN mcs.agentPT > acs.agentPT THEN acs.agentPT ELSE mcs.agentPT END
 					FROM dbo.CustPTSetting3rd_Member mcs WITH (NOLOCK)
 						INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND acs.islive = mcs.islive
-						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
+						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
 					WHERE mcs.custid = @ExistingCustID AND acs.custid = @AgentID
 		END
 		ELSE
@@ -102,7 +107,7 @@ BEGIN
 						, CASE WHEN mcs.agentPT > acs.agentPT THEN acs.agentPT ELSE mcs.agentPT END
 					FROM dbo.CustPTGroupSetting3rd_Member mcs WITH (NOLOCK)
 						INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND acs.islive = mcs.islive
-						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
+						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
 					WHERE mcs.AgentID = @AgentID AND acs.custid = @AgentID		
 		END
 		
@@ -156,7 +161,7 @@ BEGIN
 		END
 	END
 
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID18 INT
 		CREATE TABLE #TempPT18 (ProductID INT)
@@ -189,7 +194,7 @@ BEGIN
 						, CASE WHEN mcs.agentPT > acs.agentPT THEN acs.agentPT ELSE mcs.agentPT END
 					FROM dbo.CustPTSetting3rd_Member mcs WITH (NOLOCK)
 						INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND acs.islive = mcs.islive
-						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
+						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
 					WHERE mcs.custid = @ExistingCustID AND acs.custid = @AgentID
 		END
 		ELSE
@@ -213,7 +218,7 @@ BEGIN
 						, CASE WHEN mcs.agentPT > acs.agentPT THEN acs.agentPT ELSE mcs.agentPT END
 					FROM dbo.CustPTGroupSetting3rd_Member mcs WITH (NOLOCK)
 						INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND acs.islive = mcs.islive
-						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
+						INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus) fil ON fil.SportType = mcs.SportType AND fil.BetType = mcs.BetType AND fil.IsLive = mcs.IsLive
 					WHERE mcs.AgentID = @AgentID AND acs.custid = @AgentID		
 		END
 		
@@ -267,7 +272,7 @@ BEGIN
 		END
 	END
 	/********************************************* Bet Limit : SettingType = 2 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,2))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,2,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID2 INT
 		CREATE TABLE #TempBetlimit (ProductID INT)
@@ -286,7 +291,7 @@ BEGIN
 			, bl.MaxBet
 			, bl.MaxPerMatch
 		FROM dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,2) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,2,@SettingStatus) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
 		WHERE bl.custid = @ExistingCustID
 		
 		INSERT INTO #TempBetlimit(ProductID)	
@@ -338,7 +343,7 @@ BEGIN
 		END
 	END
 	/********************************************* Commision : SettingType = 3 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,3))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,3,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID3 INT
 		CREATE TABLE #TempComm (ProductID INT)
@@ -353,7 +358,7 @@ BEGIN
 			, dc.BetType
 			, dc.PlayerDiscount
 		FROM dbo.CustDiscount3rd_Member dc WITH(NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
 		WHERE dc.CustID	= @ExistingCustID
 
 		INSERT INTO #TempComm(ProductID)	
@@ -403,7 +408,7 @@ BEGIN
 	END
 
 	/********************************************* Commision : SettingType = 19 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,19))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,19,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID19 INT
 		CREATE TABLE #TempComm19 (ProductID INT)
@@ -418,7 +423,7 @@ BEGIN
 			, dc.BetType
 			, dc.PlayerDiscount
 		FROM dbo.CustDiscount3rd_Member dc WITH(NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
 		WHERE dc.CustID	= @ExistingCustID
 
 		INSERT INTO #TempComm19(ProductID)	
@@ -476,7 +481,7 @@ BEGIN
 				,	BetType		SMALLINT
 				,	Discount	DECIMAL(9, 8)
 			)
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus))
 	BEGIN
 	
 		INSERT INTO @NewChargeCommTbl
@@ -484,7 +489,7 @@ BEGIN
 			, dc.BetType
 			, dc.PlayerDiscount
 		FROM dbo.CustDiscount3rd_Member dc WITH(NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
 		WHERE dc.CustID	= @ExistingCustID
 		
 		INSERT INTO #TempChargeComm(ProductID)	
@@ -534,7 +539,7 @@ BEGIN
 		END
 	END
 	/********************************************* Product Status: SettingType = 4 ************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID4 INT
 		CREATE TABLE #TempStatus (ProductID INT)
@@ -552,7 +557,7 @@ BEGIN
 			--, 0 AS IsDisabledDownline
 		FROM dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN ProductStatusProfile PSP WITH (NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
 		WHERE stt.CustID = @ExistingCustID
 
 		INSERT INTO #TempStatus(ProductID)	
@@ -604,7 +609,7 @@ BEGIN
 	END
 
 	/********************************************* SMA Win Loss Limit : SettingType = 6 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,6))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,6,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID6 INT
 		CREATE TABLE #TempWLLimit (ProductID INT)
@@ -623,7 +628,7 @@ BEGIN
 			, wl.MaxLossLimit
 			, wl.IsAutoReset
 		FROM dbo.CustWinLossLimit_Member wl WITH (NOLOCK)	
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,6) fil ON fil.SportType = wl.SportType AND fil.BetType = wl.BetType	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,6,@SettingStatus) fil ON fil.SportType = wl.SportType AND fil.BetType = wl.BetType	
 		WHERE wl.custid = @ExistingCustID
 		
 		INSERT INTO #TempWLLimit(ProductID)	
@@ -675,7 +680,7 @@ BEGIN
 	
 	/****************************** Stake Level Member Single Selection : SettingType = 7 ******************************/
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 7))
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 7,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID7 INT
 		CREATE TABLE #TempStakeLevel (ProductID INT)
@@ -688,7 +693,7 @@ BEGIN
 			(	SportType     , BetType     , StakeLevelList)
 		SELECT	cslm.SportType, cslm.BetType, cslm.StakeLevelList
 		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)	
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7,@SettingStatus) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType	
 		WHERE	cslm.CustID = @ExistingCustID
 		
 		INSERT INTO #TempStakeLevel(ProductID)	
@@ -737,7 +742,7 @@ BEGIN
 
 	/****************************** Stake Level Member Multiple Selection : SettingType = 17 ******************************/
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 17))
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 17,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID17 INT
 		CREATE TABLE #TempStakeLevel17 (ProductID INT)
@@ -750,7 +755,7 @@ BEGIN
 			(	SportType     , BetType     , StakeLevelList)
 		SELECT	cslm.SportType, cslm.BetType, cslm.StakeLevelList
 		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)	
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,17) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,17,@SettingStatus) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType	
 		WHERE	cslm.CustID = @ExistingCustID
 		
 		INSERT INTO #TempStakeLevel17(ProductID)	
@@ -797,7 +802,7 @@ BEGIN
 	END
 	END
 	/****************************** Stake Level Member Single Selection : SettingType = 8 ******************************/
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 8))
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 8,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID8 INT
 		CREATE TABLE #TempStakeLevel8 (	ProductID INT) 	
@@ -811,7 +816,7 @@ BEGIN
 			(	SportType     , BetType     , StakeLevelList)
 		SELECT	cslm.SportType, cslm.BetType, cslm.StakeLevelList
 		FROM	dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)	
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType		
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8,@SettingStatus) fil ON fil.SportType = cslm.SportType AND fil.BetType = cslm.BetType		
 		WHERE	cslm.CustID = @ExistingCustID
 		
 		INSERT INTO #TempStakeLevel8(ProductID)	
@@ -859,7 +864,7 @@ BEGIN
 		END
 	END
 	/********************************************* Game Bet Limit : SettingType = 9 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID9 INT
 		CREATE TABLE #TempGameBetlimit (ProductID INT)
@@ -878,7 +883,7 @@ BEGIN
 			, bl.MaxBet
 			, bl.MaxPerMatch
 		FROM dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9,@SettingStatus) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
 		WHERE bl.custid = @ExistingCustID
 		
 		INSERT INTO #TempGameBetlimit(ProductID)	
@@ -931,7 +936,7 @@ BEGIN
 	END
 	
 	/********************************************* Game Status: SettingType = 11 ************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID11 INT
 		CREATE TABLE #TempGameStatus (ProductID INT)
@@ -949,7 +954,7 @@ BEGIN
 			, 0 AS IsDisabledDownline
 		FROM dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN ProductStatusProfile PSP WITH (NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
 		WHERE stt.CustID = @ExistingCustID
 
 		INSERT INTO #TempGameStatus(ProductID)	
@@ -1001,7 +1006,7 @@ BEGIN
 	END
 	
 	/********************************************* SMA Loss Limit : SettingType = 12 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,12))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,12,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID12 INT
 		CREATE TABLE #TempLLimit (ProductID INT)
@@ -1018,7 +1023,7 @@ BEGIN
 			, wl.MaxLossLimit
 			, wl.IsAutoReset
 		FROM dbo.CustWinLossLimit_Member wl WITH (NOLOCK)	
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,12) fil ON fil.SportType = wl.SportType AND fil.BetType = wl.BetType		
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,12,@SettingStatus) fil ON fil.SportType = wl.SportType AND fil.BetType = wl.BetType		
 		WHERE wl.custid = @ExistingCustID
 		
 		INSERT INTO #TempLLimit(ProductID)	
@@ -1068,7 +1073,7 @@ BEGIN
 	END
 
 	/********************************************* New Product Status: SettingType = 13 ************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID13 INT
 		CREATE TABLE #TempProductStatus (ProductID INT)
@@ -1086,7 +1091,7 @@ BEGIN
 			, 0 AS IsDisabledDownline
 		FROM dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN ProductStatusProfile PSP WITH (NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
 		WHERE stt.CustID = @ExistingCustID
 
 		INSERT INTO #TempProductStatus(ProductID)	
@@ -1138,7 +1143,7 @@ BEGIN
 	END
 
 	/********************************************* Ticket Commision : SettingType = 14 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,14))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,14,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID14 INT
 		CREATE TABLE #TicketComm (ProductID INT)
@@ -1153,7 +1158,7 @@ BEGIN
 			, dc.BetType
 			, dc.PlayerDiscount
 		FROM dbo.CustDiscount3rd_Member dc WITH(NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus) fil ON fil.SportType = dc.SportType AND fil.BetType = dc.BetType
 		WHERE dc.CustID	= @ExistingCustID
 		
 		INSERT INTO #TicketComm(ProductID)	
@@ -1203,7 +1208,7 @@ BEGIN
 	END
 
 	/********************************************* Bet Setting : SettingType = 16 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID16 INT
 		CREATE TABLE #TempBetSetting (ProductID INT)
@@ -1222,7 +1227,7 @@ BEGIN
 			, bl.MaxBet
 			, bl.MaxPerMatch
 		FROM dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16,@SettingStatus) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
 		WHERE bl.custid = @ExistingCustID
 		
 		INSERT INTO #TempBetSetting(ProductID)	
@@ -1274,7 +1279,7 @@ BEGIN
 		END
 	END
 	/********************************************* Bet Setting : SettingType = 20 ****************************************/
-	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20))
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20,@SettingStatus))
 	BEGIN
 		DECLARE @ProductID20 INT
 		CREATE TABLE #TempBetSetting20 (ProductID INT)
@@ -1291,7 +1296,7 @@ BEGIN
 			, bl.MinBet
 			, bl.MaxBet
 		FROM dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20,@SettingStatus) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
 		WHERE bl.custid = @ExistingCustID
 		
 		INSERT INTO #TempBetSetting20(ProductID)	

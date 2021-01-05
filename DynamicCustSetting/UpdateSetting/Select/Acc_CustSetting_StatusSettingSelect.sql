@@ -1,9 +1,10 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSettingSelect]   
    @CustID  INT  
  , @ProductID TINYINT = NULL  
  , @RoleID INT = NULL  
  , @SettingType TINYINT = NULL
+ , @SettingStatus TINYINT = 0
 AS  
 /*  
  Created: 20151012@Helen  
@@ -25,8 +26,10 @@ AS
 						+hasDownline = 1: has at least one customer has sync status
 									=0 : all downlines not sync	
 	- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
  Param's Explanation:  
- - @CustID: 
+	- @CustID: 
+	- @SettingStatus: 0: Pro, 1: UAT
  Example: EXEC Acc_CustSetting_StatusSettingSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
    
  */  
@@ -46,17 +49,17 @@ BEGIN
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 4
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 11
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 13	
 
 	--DELETE sbf  

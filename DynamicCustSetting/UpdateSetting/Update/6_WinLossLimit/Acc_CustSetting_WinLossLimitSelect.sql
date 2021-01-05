@@ -6,6 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitSelect]
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @SettingType	SMALLINT = 6
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160108@Elodie
@@ -14,11 +15,13 @@ AS
 	Original:
 	Revisions:
 	- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	
 	Param's Explanation:
 		• @SettingType: 6: WinLossLimit
 						8: WinLimit
 						12: LossLimit
+		- @SettingStatus: 0: Pro, 1: UAT
 	*/
 BEGIN
 	DECLARE	@Currency	TINYINT,
@@ -29,7 +32,7 @@ BEGIN
 
 	SELECT SportType,Bettype,IsLive, SettingType 
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
 	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency

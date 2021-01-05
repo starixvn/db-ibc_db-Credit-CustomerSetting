@@ -19,6 +19,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 	,@ErrCode INT = 0 OUTPUT
 	,@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	,@SystemID TINYINT=1
+	,@SettingStatus TINYINT = 0
 )
 AS
 /*  
@@ -87,6 +88,7 @@ AS
 	- 20200602@Sol: Check IsAutoEnableADBMaster to enable ADB on Mater or not[Redmine: #134242]
 	- 20200722@Johnson: add void time & limit amount for problem account [redmine:#135253]
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -94,6 +96,7 @@ AS
 		> 0: Specific Error.
 	  
 	• @ErrMsg: Error description.	
+	- @SettingStatus: 0: Pro, 1: UAT
   
 */
 BEGIN
@@ -532,7 +535,7 @@ BEGIN
 		EXEC dbo.Acc_CustomerInfo_Execrep_02
 			@custid = @custid,
 			@ExistingCustid = @ExistingCustid,
-			
+			@SettingStatus = @SettingStatus,
 			@ErrCode = @ErrCode OUTPUT
 	
 	IF @ErrCode > 0 

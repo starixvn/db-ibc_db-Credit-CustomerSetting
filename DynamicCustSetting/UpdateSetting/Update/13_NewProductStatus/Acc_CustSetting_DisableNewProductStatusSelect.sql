@@ -5,6 +5,7 @@ GO
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableNewProductStatusSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20170125@Elodie
@@ -21,7 +22,10 @@ AS
 								=0 : all downlines not sync	
 		- 20180112@Elodie: Remove HasDownlines and IsDisableDownline value [RedmineID:#87328]
 		- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
 	Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT
 
 	Example: EXEC Acc_CustSetting_DisableNewProductStatusSelect @CustID = 1275, @ProductID = 23
 	
@@ -36,7 +40,7 @@ BEGIN
 
 	SELECT SportType,Bettype
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency

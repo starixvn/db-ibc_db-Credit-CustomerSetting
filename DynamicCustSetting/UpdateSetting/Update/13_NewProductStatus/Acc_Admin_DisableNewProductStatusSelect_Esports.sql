@@ -5,6 +5,7 @@ GO
 ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusSelect_Esports] 
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20181026@Winnie
@@ -14,8 +15,10 @@ AS
 
 	Revision:
 		- 20181026@Winnie: Get New product Status setting values of a product on ExtNAP [RedmineID:#101526]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 	Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT
 
 	Example: EXEC Acc_Admin_DisableNewProductStatusSelect @CustID = 1275, @ProductID = 16
 	
@@ -40,7 +43,7 @@ BEGIN
 
 	SELECT SportType,Bettype
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 
 	DELETE FROM #SportBettypeFilter WHERE SportType<>43
 	

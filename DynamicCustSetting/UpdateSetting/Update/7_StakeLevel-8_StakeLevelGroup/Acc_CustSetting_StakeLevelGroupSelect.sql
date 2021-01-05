@@ -2,6 +2,7 @@
 ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevelGroupSelect
 					@CustID			INT
 				,	@ProductID		TINYINT
+				, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160329@Billy
@@ -12,8 +13,10 @@ AS
     Revision:
         - 20180327@Vicky: add header infomation [Redmine: #90422]
 		- 20200819@Elodie: Only show stake level setting if site and currency of customer is offered [Redmine: #137768]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
     
 	Param's Explanation:
+		- @SettingStatus: 0: Pro, 1: UAT
 */
 BEGIN
     SET NOCOUNT ON;
@@ -48,7 +51,7 @@ BEGIN
 	INSERT INTO #SportBetTypeFilter
 		(	SportType         , BetType)
 	SELECT	fcssbtss.SportType, fcssbtss.Bettype
-	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType) AS fcssbtss;
+	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType,@SettingStatus) AS fcssbtss;
 
 	-- Select customer's information
 	SELECT	@Currency   = c.currency

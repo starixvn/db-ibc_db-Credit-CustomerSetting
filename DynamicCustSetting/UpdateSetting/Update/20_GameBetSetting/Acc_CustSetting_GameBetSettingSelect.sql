@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetSettingSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20201118@Eden
@@ -11,8 +12,10 @@ AS
 
 	Revisions: 
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
+		- 20201214@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 	Param's Explanation:
+		- @SettingStatus: 0: Pro, 1: UAT
 		
 */
 BEGIN
@@ -25,7 +28,7 @@ BEGIN
 
 	SELECT SportType,Bettype 
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20,@SettingStatus)
 	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency

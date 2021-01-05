@@ -4,6 +4,7 @@ ALTER PROCEDURE Acc_CustSetting_AgentPTSelect
 	@CustID			INT  
 	, @ProductID	TINYINT = NULL 
 	, @DisableAutoMPT BIT = 0 OUTPUT
+	, @SettingStatus TINYINT = 0
 AS  
 /*  
 	Created: 20200612@Elodie
@@ -13,9 +14,11 @@ AS
   
 	Revision:
 		- 20200612@Elodie: Initial SP for setting type 18 [Redmine: #135363]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	 
 	Param's Explanation:  
-		• @CustID: Agent's ID  
+		- @CustID: Agent's ID 
+		- @SettingStatus: 0: Pro, 1: UAT 
    
  */  
 BEGIN   
@@ -23,7 +26,7 @@ BEGIN
    
 	SELECT SportType,Bettype,IsLive, SettingType 
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
 		
 	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend  
 	FROM dbo.custInfo ci WITH(NOLOCK)  

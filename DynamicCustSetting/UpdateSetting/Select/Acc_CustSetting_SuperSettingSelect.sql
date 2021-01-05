@@ -6,6 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperSettingSelect]
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @SettingType	SMALLINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20141104@Dominic
@@ -17,16 +18,18 @@ AS
 		- 20160104@Dominic: Implementing Charge Commission Plugin Redmine #49689
 		- 20160801@Elodie: Move commission part to Acc_CustSetting_DiscountSelect [Redmine: #60809]
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		
 	Param's Explanation:
 	- @CustID: Super's ID
+	- @SettingStatus: 0: Pro, 1: UAT
 	
 	*/
 BEGIN
 	
 	SELECT SportType,Bettype,IsLive, SettingType 
 	INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
 	
 	--PT Setting
 	IF @SettingType = 1

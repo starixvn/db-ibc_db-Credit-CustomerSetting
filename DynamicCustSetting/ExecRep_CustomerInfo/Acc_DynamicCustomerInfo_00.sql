@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00]
 	, @isSearchAndCopy 	BIT = 0
 	, @copyFromCustID 	INT = 0
 	, @ErrCode			INT	= 0 OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20150916@Dominic
@@ -42,9 +43,11 @@ AS
 		- 20200819@Winfred: Only insert stake level setting if site and currency of customer is offered [Redmine: #137768]
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 	Parameter's explanation:
-		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
+		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
+		- @SettingStatus: 0: Pro, 1: UAT
 	*/
 
 BEGIN
@@ -67,8 +70,8 @@ BEGIN
 		INTO #SportBettypeFilter4
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.[SportType] = psd.[SportType]	AND pbs.[BetType] = psd.[BetType]
-			INNER JOIN (SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4)
-						UNION ALL SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13))t ON pbs.[SportType] = t.[SportType]	AND pbs.[BetType] = t.[BetType]
+			INNER JOIN (SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
+						UNION ALL SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus))t ON pbs.[SportType] = t.[SportType]	AND pbs.[BetType] = t.[BetType]
 		WHERE psd.SettingType = 4 OR psd.SettingType = 13
 			
 		----Hard code to hide CF if Upline is a dummy Super or Master
@@ -210,7 +213,7 @@ BEGIN
 		INTO #SportBettypeFilter11
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
-			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11) t ON pbs.SportType = t.SportType	AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus) t ON pbs.SportType = t.SportType	AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
 		
 		IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)
 		BEGIN
@@ -363,11 +366,11 @@ BEGIN
 
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
 		SELECT t.* INTO #SportBettypeFilter1
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1) t
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus) t
 
 		INSERT INTO #SportBettypeFilter1
 		SELECT * 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
 		
 		BEGIN TRY
 			IF @RoleID = 4
@@ -789,7 +792,7 @@ BEGIN
 		/********************************************* Bet Limit : SettingType = 2 ****************************************/
 	
 		SELECT t.* INTO #SportBettypeFilter2
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,2) t			
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,2,@SettingStatus) t			
 	
 		BEGIN TRY
 			IF @RoleID = 4
@@ -940,13 +943,13 @@ BEGIN
 	
 		/********************************************* Commision : SettingType = 3, Ticket Commision : SettingType = 14 ****************************************/
 		SELECT * INTO #SportBettypeFilter3
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus)
 		INSERT INTO #SportBettypeFilter3
 		SELECT * 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus)
 		INSERT INTO #SportBettypeFilter3
 		SELECT * 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus)
 
 		BEGIN TRY
 			IF @RoleID = 4
@@ -1049,7 +1052,7 @@ BEGIN
 		
 		/*********************************************Charge Commision : SettingType = 5 ****************************************/
 		SELECT * INTO #SportBettypeFilter5
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus)
 	
 		BEGIN TRY
 			IF @RoleID = 4
@@ -1162,10 +1165,10 @@ BEGIN
 		/********************************************* SMA WinLimit : SettingType = 6 ****************************************/
 		/********************************************* SMA LossLimit : SettingType = 12 ****************************************/
 		SELECT * INTO #SportBettypeFilter6
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,6)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,6,@SettingStatus)
 		INSERT INTO #SportBettypeFilter6
 		SELECT * 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,12)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,12,@SettingStatus)
 		
 		BEGIN TRY
 			IF @RoleID = 4
@@ -1293,13 +1296,13 @@ BEGIN
 		/*************************** Group Stake Level Member Single Selection : SettingType = 8 ***************************/
 
 		SELECT * INTO #SportBettypeFilter7
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7,@SettingStatus)
 		INSERT INTO #SportBettypeFilter7
 		SELECT * 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,17)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,17,@SettingStatus)
 		UNION ALL
 		SELECT * 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8,@SettingStatus)
 
 		DELETE sb		
 		FROM #SportBettypeFilter7 sb
@@ -1391,14 +1394,14 @@ BEGIN
 			RETURN
 		END CATCH
 		
-		/********************************************* Bet Game Limit : SettingType = 9,16 ****************************************/
+		/********************************************* Bet Game Limit : SettingType = 9,16,20 ****************************************/
 	
 		SELECT t.* INTO #SportBettypeFilter9
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9) t
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9,@SettingStatus) t
 
 		INSERT INTO #SportBettypeFilter9
 		SELECT * 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16)
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16,@SettingStatus)
 
 		BEGIN TRY
 			IF @RoleID = 4
@@ -1591,16 +1594,15 @@ BEGIN
 
 		/********************************************* Bet Game Limit : SettingType = 20 ****************************************/
 		CREATE TABLE #SportBettypeFilter20(
-			ProductID   TINYINT, 
 			SportType   SMALLINT, 
 			BetType     SMALLINT, 
 			IsLive      BIT, 
 			SettingType SMALLINT
 		)
 
-		INSERT INTO #SportBettypeFilter20(ProductID,SportType,BetType,IsLive,SettingType)
-		SELECT ProductID,SportType,BetType,IsLive,SettingType
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20) t
+		INSERT INTO #SportBettypeFilter20(SportType,BetType,IsLive,SettingType)
+		SELECT SportType,BetType,IsLive,SettingType
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,20,@SettingStatus) t
 
 		BEGIN TRY
 			IF @RoleID = 4

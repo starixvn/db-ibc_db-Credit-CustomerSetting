@@ -1,7 +1,4 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="0"></info>*/
 GO
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_UpdateRestrictionSelect]   
@@ -9,15 +6,20 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_UpdateRestrictionSelect]
 	@SystemID	TINYINT,
 	@TargetID	INT,
 	@ActorRoleID TINYINT,
-	@TargetRoleID TINYINT
+	@TargetRoleID TINYINT,
+	@SettingStatus TINYINT = 0
 AS  
 /*  
  Created: 20160111@Dominic  
  Task : Get Update Restriction Information  
  DB:  DBCUST/custdb  
  Original:  
+
+ Revisions: 
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
   
  Param's Explanation:  
+	- @SettingStatus: 0: Pro, 1: UAT
 
    
  */  
@@ -25,7 +27,7 @@ BEGIN
 	
 	SELECT DISTINCT @ProductID ProductID,fil.SettingType,@SystemID SystemID,@TargetID TargetID,@ActorRoleID ActorRoleID,@TargetRoleID TargetRoleID
 	INTO #tmp
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL) fil
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus) fil
 	
 	
 	SELECT t.SettingType,ISNULL(rs.RestrictionMode,1) RestrictionMode,ISNULL(rs.ErrCode,0) ErrCode
@@ -36,10 +38,3 @@ BEGIN
 	
 END  
   
-
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_UpdateRestrictionSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_UpdateRestrictionSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_UpdateRestrictionSelect] TO [bodbExtAccNet]

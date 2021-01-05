@@ -5,22 +5,25 @@ GO
 ALTER PROCEDURE [dbo].[Acc_CustSetting_ProductProfileSelect]   
 	@ProductID	TINYINT = NULL,
 	@SettingType SMALLINT = NULL,
-	@SystemID	TINYINT  = 0 
+	@SystemID	TINYINT  = 0,
+	@SettingStatus TINYINT = 0
 AS  
 /*  
- Created: 20150702@Dominic  
- Task : Get Product Profile  
- DB:  DBCUST/CustDB  
- Original:  
-  
- Param's Explanation:  
+	 Created: 20150702@Dominic  
+	 Task : Get Product Profile  
+	 DB:  DBCUST/CustDB  
+	 Original:  
 
- Revisions: 
-	- 20190116@Johnson: grant permission for bodbDownlineNetView [redmine:#106601]
+	 Revisions: 
+		- 20190116@Johnson: grant permission for bodbDownlineNetView [redmine:#106601]
+		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+
+	 Param's Explanation: 
+		- @SettingStatus: 0: Pro, 1: UAT 	
  */  
 BEGIN   
 	SELECT * INTO #SportBettypeFilter
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
 	
 	SELECT ProductID,SettingType,SystemID,DisplayMode
 	INTO #ProductSettingSiteDisplay

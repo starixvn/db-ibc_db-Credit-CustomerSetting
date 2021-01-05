@@ -166,7 +166,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@copyFromCustID INT = 0,
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(4000) = '' OUTPUT	,
-	@IsQRCode BIT  = 0
+	@IsQRCode BIT  = 0,
+	@SettingStatus TINYINT = 0
 AS
 --@Source Control
 /*
@@ -313,6 +314,7 @@ Revisions:
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	- 20201027@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
 Param's Explanation:	
 • @ErrCode:
@@ -320,6 +322,7 @@ Param's Explanation:
     > 0: Specific Error.
   
 • @ErrMsg: Error description.
+- @SettingStatus: 0: Pro, 1: UAT
 */
 BEGIN
     SET NOCOUNT ON
@@ -3035,9 +3038,9 @@ BEGIN
 		@MinBetv164 = @MinBetv164,
 	    @MaxBetv164 = @MaxBetv164,
 		-- MyanmarOdds
-		@IsMyanmarOdds = @IsMyanmarOdds,
+		@IsMyanmarOdds = @IsMyanmarOdds,		
     	@discountMyanmarOdds = @playerdiscountMyanmarOdds,
-
+		@SettingStatus = @SettingStatus,
 	    @ErrCode = @ErrCode OUTPUT
 
     IF @ErrCode > 0
@@ -3813,15 +3816,15 @@ BEGIN
 	
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
 	INTO #temSportbettypeSetting
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus)
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11,@SettingStatus)
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13,@SettingStatus)
 
 	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
 	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK)

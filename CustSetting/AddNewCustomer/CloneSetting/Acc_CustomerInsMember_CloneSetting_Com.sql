@@ -19,6 +19,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_Com]
 	,@ErrCode INT = 0 OUTPUT
 	,@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	,@SystemID TINYINT=1
+	,@SettingStatus TINYINT = 0
 )
 AS
 /*  
@@ -70,6 +71,7 @@ AS
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 	- 20201008@Winfred : New Super - Prefix Warning [Redmine: #142239]
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	
  Explanation's Param:  
@@ -78,6 +80,7 @@ AS
 		> 0: Specific Error.
 	  
 	- @ErrMsg: Error description.	
+	- @SettingStatus: 0: Pro, 1: UAT
   
 */
 BEGIN
@@ -502,6 +505,7 @@ BEGIN
 			@custid = @custid,
 			@ExistingCustid = @ExistingCustid,
 			@Language = @Language,
+			@SettingStatus = @SettingStatus,
 			@ErrCode = @ErrCode OUTPUT,
 			@ErrMsg = @ErrMsg OUTPUT
 	END TRY

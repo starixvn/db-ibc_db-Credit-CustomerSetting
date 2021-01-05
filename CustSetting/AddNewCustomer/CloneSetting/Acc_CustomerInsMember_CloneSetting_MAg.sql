@@ -20,6 +20,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_MAg]
 	,@ErrCode int = 0 output
 	,@ErrMsg nvarchar(4000) = '' output
 	,@SystemID TINYINT=1
+	,@SettingStatus TINYINT = 0
 )
 AS
 /*  
@@ -85,6 +86,7 @@ AS
 	- 20200323@Elodie: Block to add new customer for 789y [Redmine: #130636]
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
+	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -92,6 +94,7 @@ AS
 		> 0: Specific Error.
 	  
 	• @ErrMsg: Error description.	
+	- @SettingStatus: 0: Pro, 1: UAT
   
 */
 BEGIN
@@ -539,7 +542,7 @@ BEGIN
 		EXEC dbo.Acc_CustomerInfo_Execrep_02
 			@custid = @custid,
 			@ExistingCustid = @ExistingCustid,
-			
+			@SettingStatus = @SettingStatus,
 			@ErrCode = @ErrCode output
 	
 	IF @ErrCode > 0 
