@@ -22,6 +22,7 @@ AS
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+			- 20210112@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]		
 		Parameter's Explanations:
 		
 	*/
@@ -38,7 +39,8 @@ BEGIN
 				AutoMasterPT	SMALLMONEY,
 				AgentPT			SMALLMONEY,				
 				AgentMinPT		SMALLMONEY,
-				AgentMaxPT		SMALLMONEY
+				AgentMaxPT		SMALLMONEY,
+				Old_IsAutoMasterPT	BIT
 				)	
 	
 	DECLARE @ErrType XML
@@ -55,7 +57,8 @@ BEGIN
 				AutoMasterPT,
 				AgentPT,								
 				AgentMinPT,
-				AgentMaxPT
+				AgentMaxPT,
+				Old_IsAutoMasterPT
 			)
 	SELECT
 		b.SportType,
@@ -66,7 +69,8 @@ BEGIN
 		b.AutoMasterPT,	
 		b.AgentPT,			
 		b.MinPT,
-		acs.MaxPT
+		acs.MaxPT,
+		acs.IsAutoMasterPT
 	FROM dbo.f_DCS_PT_XMLParse(@PT) b
 		INNER JOIN CustPTSetting3rd_Agent AS acs WITH (NOLOCK) ON acs.sporttype = b.sporttype AND acs.bettype = b.bettype AND acs.isLive = b.IsLive					
 	WHERE acs.custid = @AgentID
@@ -113,6 +117,21 @@ BEGIN
         RETURN
     END
     
+	IF EXISTS(SELECT 1
+				FROM @tblPT t
+				WHERE IsAutoMasterPT = 1 
+					AND Old_IsAutoMasterPT = 0 	
+				)
+			AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
+						WHERE custid = @mrecommend	
+							AND DisableAutoMPT = 1)
+	BEGIN
+		SELECT @ErrCode = 110,
+			   @ErrMsg = '<Root MsgID="20044" Msg="You are not allowed to have Auto PT, please contact your upline." />',
+			   @MsgType = 5
+		RETURN					
+	END	
+	
 	SELECT @ErrCode = MAX (CASE	WHEN m.MaxPT < a.AgentMinPT THEN 199 --check l3 >= n2 
 								WHEN a.AgentPT < a.AgentMinPT THEN 198 --check a2 >= n2     
 								WHEN a.IsAutoMasterPT = 0 AND a.MasterPT > m.MasterPT  THEN 197 --check m2 > m3

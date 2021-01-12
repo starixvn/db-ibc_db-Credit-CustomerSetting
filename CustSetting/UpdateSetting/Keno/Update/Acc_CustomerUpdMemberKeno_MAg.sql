@@ -29,6 +29,7 @@ AS
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20210108@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]
 	Parameters Explanation:
 	• @ErrCode:  
 		<= 0: Update successfully.  
@@ -399,7 +400,22 @@ BEGIN
 		 --s1=s1>maxs1?maxs1:s1  
 		 SELECT @SPositionTaking = CASE WHEN @SPositionTaking > @SPositionTaking_Max THEN @SPositionTaking_Max ELSE @SPositionTaking END  
 	END   
-			  
+	
+	--don't allow update autoPT incase DisableAutoMPT = 1
+	IF @im1 = 1
+		AND @Old_IsAuto_MPositionTaking_Mem = 0
+		AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
+					WHERE custid = @mrecommend 
+						AND DisableAutoMPT = 1)
+	BEGIN
+		SELECT @ErrCode = 100,
+			   @ErrMsg = CASE @Language 			   
+								WHEN 'E' THEN 'You are not allowed to have Auto PT, please contact your upline.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](20044,@Language) 
+							END	
+		RETURN					
+	END	
+	
 	--don't update m1,s1 for member under agent was set im2=1  
 	UPDATE cs
 	SET mpositiontaking = @m1 ,  

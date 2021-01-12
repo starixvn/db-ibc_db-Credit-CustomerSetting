@@ -37,6 +37,7 @@ AS
 		- 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20210108@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]
 	Parameters Explanation:
 		@ErrCode: 0 is successful
 */
@@ -128,6 +129,21 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](20001, @Language) END
 		RETURN
 	END
+	
+	--don't allow update autoPT incase DisableAutoMPT = 1
+	IF @im2 = 1
+		AND @Old_Auto_MPositionTaking = 0
+		AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
+					WHERE custid = @mrecommend 
+						AND DisableAutoMPT = 1)
+	BEGIN
+		SELECT @ErrCode = 110,
+			   @ErrMsg = CASE @Language 			   
+								WHEN 'E' THEN 'You are not allowed to have Auto PT, please contact your upline.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](20044,@Language) 
+							END	
+		RETURN					
+	END	
 	
 	--check n3<=m2+a2  if im2 = 0, 
 	--a2<=l3 and um2+a2>=n3 if im2 = 1
