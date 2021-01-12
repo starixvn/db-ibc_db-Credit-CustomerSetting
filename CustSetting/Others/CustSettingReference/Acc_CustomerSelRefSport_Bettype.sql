@@ -31,7 +31,8 @@ AS
 		- 20200826@Elodie: Add NG Color Ball - [Redmine: #128220]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 		- 20210104@Winfred: Add Happy 5 Linked game [Redmine: #146965]
-
+		- 20201209@winfred: get Disable Keno for customer list smartphone [redmine: #137130]
+		
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
 		@isShowAll: 0: Show Active Bettype, 1: Show ALL 
@@ -78,7 +79,7 @@ BEGIN
 			FROM	CustDB.dbo.CustInfo ci WITH (NOLOCK) 
 			WHERE	ci.CustID = @CustID
 
-			SELECT	@DisableKeno = MIN(CAST(cg.IsDisabled AS INT))
+			SELECT	@DisableKeno = MAX(CAST(cg.IsDisabled AS INT))
 			FROM	DBCUST.CustDB.dbo.CustGameType cg WITH (NOLOCK) 
 					INNER JOIN dbo.GameType g WITH (NOLOCK) ON cg.GameTypeID = g.GameTypeID 
 			WHERE	cg.CustID = @CustID
