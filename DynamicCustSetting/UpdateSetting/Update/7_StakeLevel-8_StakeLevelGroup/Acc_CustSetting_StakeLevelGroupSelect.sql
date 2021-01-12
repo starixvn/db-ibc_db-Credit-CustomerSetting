@@ -14,6 +14,7 @@ AS
         - 20180327@Vicky: add header infomation [Redmine: #90422]
 		- 20200819@Elodie: Only show stake level setting if site and currency of customer is offered [Redmine: #137768]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20201112@Eden: Saba.club - Offer more stake levels for 789y market - add default sort [Redmine: #147941]
     
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -145,7 +146,12 @@ BEGIN
 		,	csl.StakeLevelID
 		,	csl.StakeLevelGroupID
 		,	csl.isChecked
-	FROM	#CustStakeLevel AS csl;
+	FROM	#CustStakeLevel AS csl
+		INNER JOIN GameGroup g WITH(NOLOCK)
+			ON g.GameGroupID = csl.StakeLevelGroupID
+	ORDER BY csl.SportType
+		,	csl.BetType
+		,   g.GroupName
 
 	-- Cleanup
 	DROP TABLE #CustStakeLevel;
