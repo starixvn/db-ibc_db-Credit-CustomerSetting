@@ -92,6 +92,7 @@ BEGIN
 		- 20201124@Helen: Alpha - Master Agent List - Member level shows the Site and commission group in Group column [Redmine: #145963]
 		- 20201130@Tina: Add GDG (Gold Diamond Gaming) Live casino [Redmine: #144105]
 		- 20201012@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20201204@Tina: add BG (Big Gaming) [RedmineID: #142458]
 	
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -140,8 +141,9 @@ BEGIN
 		,	@bitmapOrder_TableGames		INT 
 		,	@bitmapOrder_GTCasino		INT 
 		,	@bitmapOrder_RNGWar			INT
-		,	@bitmapOrder_WM				INT 
+		,	@bitmapOrder_WM				INT
 		,	@bitmapOrder_GDG			INT 
+		,	@bitmapOrder_BG				INT 
     
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
@@ -161,6 +163,7 @@ BEGIN
 	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
 	SET @bitmapOrder_WM = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 233 AND Bettype = 3401)
 	SET @bitmapOrder_GDG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 236 AND Bettype = 5701)
+	SET @bitmapOrder_BG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 239 AND Bettype = 3501)
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
     
@@ -183,6 +186,7 @@ BEGIN
 		,	@IsHidden_RNGWar		INT = 1
 		,	@IsHidden_WM			INT = 1
 		,	@IsHidden_GDG			INT = 1
+		,	@IsHidden_BG			INT = 1
 
 	EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_MuayThai OUTPUT
 
@@ -204,6 +208,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 224, @IsHide = @IsHidden_RNGWar OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 233, @IsHide = @IsHidden_WM OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 236, @IsHide = @IsHidden_GDG OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 239, @IsHide = @IsHidden_BG OUTPUT
 
 	DECLARE @RowCount int, @RowStart int, @RowEnd int  
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1   
@@ -763,7 +768,17 @@ BEGIN
 				END AS BIT) AS HideGDG,
 		CAST(CASE	WHEN	@IsHidden_GDG = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_GDG), 1)=0
 					THEN 0 ELSE 1
-					END AS BIT) AS HideGDGUpline
+					END AS BIT) AS HideGDGUpline,
+		-- For BG
+		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_BG)) AS DisableBG,			
+		CAST(	CASE	WHEN	@IsHidden_BG = 0 								
+							AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_BG), 1) = 0 
+							THEN 0
+						ELSE 1 
+				END AS BIT) AS HideBG,
+		CAST(CASE	WHEN	@IsHidden_BG = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_BG), 1)=0
+					THEN 0 ELSE 1
+					END AS BIT) AS HideBGUpline
 					
 		FROM src m  
 			INNER JOIN customer c (nolock) on m.custid = c.custid  

@@ -30,6 +30,7 @@ AS
 		- 20200713@Eden: Integrate 3 new bet types for Keno [Redmine: #137475]
 		- 20200826@Elodie: Add NG Color Ball - [Redmine: #128220]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+		- 20210104@Winfred: Add Happy 5 Linked game [Redmine: #146965]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -121,7 +122,7 @@ BEGIN
 			AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
 	UNION ALL
 	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
-	FROM Sport_Bettype_Reference
+	FROM Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE   Sporttype IN (27, 50)
 			AND [Site] IN (
 				 CASE WHEN ISNULL(@CustID, 0) = 0 THEN 'IMBC' END -- ALL
@@ -145,6 +146,7 @@ BEGIN
 					OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) --Virtual Sport
 					OR b.SportType = 220 -- Lottery
 					OR b.sportType = 164--Happy 5
+					OR b.sportType = 168--Happy 5 linked games
 					OR b.SportType = 202 --Keno
 					OR b.SportType = 161 -- Number Game
 					) 
