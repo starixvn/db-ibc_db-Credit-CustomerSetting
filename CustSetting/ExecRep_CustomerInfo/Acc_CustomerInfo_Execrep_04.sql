@@ -70,6 +70,7 @@ AS
 		- 20200811@Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
 		- 20200827@Eden: VR Adjustment by Agent profile [#140421]
 		- 20200826@Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
+		- 20201201@Eden: Just Update reason for customers who updated closed status [Redmine:145018]
 
 	Param's Explanation:
 		@Action: 
@@ -960,21 +961,24 @@ BEGIN
 		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
 		    SET		closed = @closed 
 			output INSERTED.custid into #tempCust
-		    WHERE	srecommend = @custid;
+		    WHERE	srecommend = @custid
+					AND (closed <> @Closed OR closed IS NULL)
 	    END;
 	    ELSE IF @RoleID = 3 
 	    BEGIN
 		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
 		    SET		closed = @closed 
 			output INSERTED.custid into #tempCust
-		    WHERE	mrecommend = @custid;		
+		    WHERE	mrecommend = @custid
+					AND (closed <> @Closed OR closed IS NULL)	
 	    END;
 	    ELSE IF @RoleID = 2 
 	    BEGIN
 		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
 		    SET		closed = @closed 
 			output INSERTED.custid into #tempCust
-		    WHERE	recommend = @custid;		
+		    WHERE	recommend = @custid
+					AND (closed <> @Closed OR closed IS NULL)	
 	    END;	
 		
 
