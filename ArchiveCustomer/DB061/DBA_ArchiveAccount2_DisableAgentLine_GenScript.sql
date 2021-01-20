@@ -16,6 +16,7 @@ AS
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200807@Helen: Remove hardcode supers (allow negative given credit for members) since fixed already in Alpha Site [Redmine: #130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		
 	Param's Explanation:
 */
@@ -103,44 +104,44 @@ WHERE ag.isFinished = 1
 		)
 	AND se.srecommend IS NULL
 	
-
+/*
 --Get more other cust based on s2 condition
-INSERT INTO #tmpAg
-SELECT ag.custid, isnull(MemCount, 0) [Member Count]
-FROM customer ag WITH (NOLOCK)
-	INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
-	INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
-	INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
-	LEFT JOIN (
-		SELECT recommend
-			,COUNT(*) MemCount
-		FROM custinfo mem WITH (NOLOCK)
-		WHERE roleid = 1
-		GROUP BY recommend
-		) mem ON mem.recommend = agci.custid
-WHERE ag.roleid = 2
-	--AND isnull(MemCount, 0) > 0
-	AND (ag.creatdate < @startdate)
-	AND agci.closed = 1
-	--AND agci.enabled = 1
-	AND ca.isInternal = 0
-	AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
-	AND ag.custid NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
-	AND agci.custid NOT IN (
-		SELECT DISTINCT recommend
-		FROM bodb_report.dbo.tempCustID tc
-		INNER JOIN custinfo ci WITH (NOLOCK) ON tc.custid = ci.custid
-		--WHERE ci.roleid = 1
-		)
-	AND agci.custid NOT IN (
-		SELECT DISTINCT recommend
-		FROM customer c WITH (NOLOCK)
-		WHERE --roleid = 1 AND
-			creatdate >= @startdate
-		)
-	AND agci.custid NOT IN (SELECT recommend FROM bodb_report.dbo.tmpCustArchived)
-	AND agci.srecommend NOT IN (SELECT srecommend FROM #Super_Exception)
-	
+--INSERT INTO #tmpAg
+--SELECT ag.custid, isnull(MemCount, 0) [Member Count]
+--FROM customer ag WITH (NOLOCK)
+--	INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
+--	INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
+--	INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
+--	LEFT JOIN (
+--		SELECT recommend
+--			,COUNT(*) MemCount
+--		FROM custinfo mem WITH (NOLOCK)
+--		WHERE roleid = 1
+--		GROUP BY recommend
+--		) mem ON mem.recommend = agci.custid
+--WHERE ag.roleid = 2
+--	--AND isnull(MemCount, 0) > 0
+--	AND (ag.creatdate < @startdate)
+--	AND agci.closed = 1
+--	--AND agci.enabled = 1
+--	AND ca.isInternal = 0
+--	AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
+--	AND ag.custid NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
+--	AND agci.custid NOT IN (
+--		SELECT DISTINCT recommend
+--		FROM bodb_report.dbo.tempCustID tc
+--		INNER JOIN custinfo ci WITH (NOLOCK) ON tc.custid = ci.custid
+--		--WHERE ci.roleid = 1
+--		)
+--	AND agci.custid NOT IN (
+--		SELECT DISTINCT recommend
+--		FROM customer c WITH (NOLOCK)
+--		WHERE --roleid = 1 AND
+--			creatdate >= @startdate
+--		)
+--	AND agci.custid NOT IN (SELECT recommend FROM bodb_report.dbo.tmpCustArchived)
+--	AND agci.srecommend NOT IN (SELECT srecommend FROM #Super_Exception)
+*/	
 		
 
 SELECT sag.username Super

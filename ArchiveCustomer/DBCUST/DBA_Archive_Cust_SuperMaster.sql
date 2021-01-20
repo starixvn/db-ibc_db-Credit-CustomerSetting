@@ -11,6 +11,7 @@ AS
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+			- 20201130@Eden: NAP/Alpha & EXT - Apply color for archived accounts [Redmine:145018]
 */
 BEGIN
 	IF @Stage = 1
@@ -22,6 +23,19 @@ BEGIN
 			UPDATE dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
 			SET		closed = 1
 			WHERE	custid = @CustID
+		END 
+
+		IF dbo.f_CheckRepTable('CustLoginInfo') = 0 
+			RETURN
+		BEGIN
+			--> Insert Update ClosedReason
+			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo WITH(NOLOCK) WHERE custid = @custid)
+				INSERT INTO CustLoginInfo(CustID, ClosedReason) SELECT @CustID, 4
+			ELSE
+				UPDATE m
+				SET ClosedReason = 4
+				FROM CustLoginInfo m WITH (ROWLOCK, UPDLOCK)
+				WHERE m.CustID = @CustID
 		END 
 	END	
 	ELSE 

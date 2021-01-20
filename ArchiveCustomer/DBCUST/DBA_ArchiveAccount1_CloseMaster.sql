@@ -13,6 +13,7 @@ AS
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+			- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -44,7 +45,7 @@ BEGIN
 
 	if @Closed = 1
 	BEGIN
-		SELECT @ErrMsg = @AccName +':'+ 'This master has already been CLOSED!!', @ErrCode = 101
+		SELECT @ErrMsg = @AccName +':'+ 'This master has been archived!!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@MasterID,@ErrMsg,3) 	
 		PRINT @ErrMsg
 		RETURN
