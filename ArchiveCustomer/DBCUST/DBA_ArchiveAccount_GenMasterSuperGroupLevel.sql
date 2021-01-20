@@ -13,6 +13,7 @@ AS
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20200911@Helen: Fix stage 1 - M0 - [Redmine:130032]
+		- 20201231@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		
 	Param's Explanation:
 */
@@ -158,8 +159,7 @@ BEGIN
 		INNER JOIN dbo.tmpCustGroupLevelArchived a WITH (NOLOCK) ON t.srecommend = a.custid 
 		INNER JOIN dbo.custinfo ci WITH (NOLOCK) ON t.custid = ci.custid
 	WHERE a.roleid = 4 AND a.GroupLevelName = 'S1'	
-		AND 1 = CASE WHEN @StageId = 1 AND ci.closed = 1 THEN 0
-					 WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
+		AND 1 = CASE WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0
 					ELSE 1 
 				END
@@ -206,9 +206,7 @@ BEGIN
 		AND ma.currency NOT IN (20, 72)	
 		AND cm.IsInternal = 0
 		AND ma.site <> 'cn88'		
-		AND 1 = CASE 
-					WHEN @StageId = 1 AND agci.closed = 1 THEN 0
-					WHEN @StageId = 2 AND agci.closed = 0 THEN 0 
+		AND 1 = CASE WHEN @StageId = 2 AND agci.closed = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND agci.enabled = 1 THEN 0
 					ELSE 1 
 				END			

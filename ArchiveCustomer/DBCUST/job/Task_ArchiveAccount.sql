@@ -11,6 +11,7 @@ AS
 		- 20190519@Daniel: Created
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		
 	Param:
 		+ @stage: input stage to run archive
@@ -28,10 +29,16 @@ BEGIN
 			, @NewCredit MONEY = 0
 			, @username NVARCHAR(MAX)
 			, @recommend INT
+			, @ArchivedDate	DATE = GETDATE() --keep time stamp for Cust_ArchiveAccount
+			, @ProcessedDate DATETIME 
+			, @ArchivedCustID INT
+			, @IsOverwrite	BIT
+
 	DECLARE @status varchar(200), @GroupLevelName VARCHAR(10) = '' 
 	DECLARE @agent varchar(50), @ErrMsg VARCHAR(150), @msg VARCHAR(100), @roleid_tmp INT, @S1M1_username NVARCHAR(100)
 	CREATE TABLE #ReduceCredit (CustId INT,RoleID TINYINT,GroupLevelName VARCHAR(10), srecommend INT,Credit MONEY, ReduceCredit MONEY DEFAULT(0), IsFinished BIT DEFAULT(0))
 	CREATE TABLE #ArchiveMasterSuper_tmp (CustID INT, RoleID TINYINT, GroupLevelName VARCHAR(10),username NVARCHAR(100), IsFinished BIT DEFAULT(0))
+	CREATE TABLE #M0NotInStage1(CustID INT, srecommend INT)
 		
 	if (@stage is null)
 	begin
@@ -50,19 +57,66 @@ BEGIN
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
 		--Step 1.2. Loop through list to execute sp for each agent
-		UPDATE t
-			SET ErrMsg = '', IsFinished = 1
-		FROM tmpCustArchived t (ROWLOCK)
-			INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
-		WHERE ci.closed = 1
+		--UPDATE t
+		--	SET ErrMsg = '', IsFinished = 1
+		--FROM tmpCustArchived t (ROWLOCK)
+		--	INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
+		--WHERE ci.closed = 1 
+
+		--> Insert data for Cust_ArchiveAccount
+		WHILE(1=1)
+		BEGIN
+			SELECT @ProcessedDate = GETDATE()
+
+			SELECT TOP 1 @recommend = t.recommend 
+			FROM tmpCustArchived t (ROWLOCK)
+				INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
+			WHERE ci.closed = 1	
+				AND t.IsFinished = 0
+
+			IF (@@ROWCOUNT = 0) BREAK
+	
+			EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+				@CustId = @recommend,
+				@RoleID = 2,
+				@StageID = @stage,
+				@ProcessedDate = @ProcessedDate,
+				@ArchivedDate = @ArchivedDate
+	
+			UPDATE tmpCustArchived 
+			SET ErrMsg = Agent +':'+ 'This agent has been archived!!', IsFinished = 1
+			WHERE recommend = @recommend	
+		END
 			
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
-			SELECT TOP 1 @agent = Agent FROM tmpCustArchived WHERE IsFinished = 0	
+			SELECT @ProcessedDate = GETDATE()
+
+			SELECT TOP 1 @agent = Agent, @recommend = recommend 
+			FROM tmpCustArchived 
+			WHERE IsFinished = 0	
+
 			IF (@@ROWCOUNT = 0) BREAK
 	
 			EXEC dbo.DBA_ArchiveAccount1_CloseAgentLine @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT
+
+			--> Insert data for Cust_ArchiveAccount
+			IF ISNULL(@ErrMsg,'') = '' OR @ErrMsg LIKE '%archived%'
+			BEGIN
+				IF ISNULL(@ErrMsg,'') = ''
+					SET @IsOverwrite = 1
+				ELSE 
+					SET @IsOverwrite = 0
+
+				EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+					@CustId = @recommend,
+					@RoleID = 2,
+					@StageID = @stage,
+					@ProcessedDate = @ProcessedDate,
+					@ArchivedDate = @ArchivedDate,
+					@IsOverwrite = @IsOverwrite
+			END
 	
 			UPDATE tmpCustArchived 
 			SET ErrMsg = @ErrMsg, IsFinished = 1
@@ -93,10 +147,11 @@ BEGIN
 				SELECT @ErrMsg = ''
 				
 				UPDATE TOP (1) t
-					SET  IsFinished = 1
-						, @S1M1_username = username
-						, @roleid_tmp = roleid
-						, @GroupLevelName = GroupLevelName
+				SET  IsFinished = 1
+					, @S1M1_username = username
+					, @roleid_tmp = roleid
+					, @GroupLevelName = GroupLevelName
+					, @ArchivedCustID = CustID
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
 				
@@ -105,6 +160,25 @@ BEGIN
 				IF @roleid_tmp = 3
 				BEGIN
 					EXEC dbo.DBA_ArchiveAccount1_CloseMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
+
+					SELECT @ProcessedDate = GETDATE()
+
+					--> Insert data for Cust_ArchiveAccount
+					IF ISNULL(@ErrMsg,'') = '' OR @ErrMsg LIKE '%archived%'
+					BEGIN
+						IF ISNULL(@ErrMsg,'') = ''
+							SET @IsOverwrite = 1
+						ELSE 
+							SET @IsOverwrite = 0
+
+						EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+							@CustId = @ArchivedCustID,
+							@RoleID = 3,
+							@StageID = @stage,
+							@ProcessedDate = @ProcessedDate,
+							@ArchivedDate = @ArchivedDate,
+							@IsOverwrite = @IsOverwrite
+					END
 					
 				END
 				ELSE IF @roleid_tmp = 4
@@ -134,28 +208,24 @@ BEGIN
 		FROM (SELECT DISTINCT super FROM dbo.tmpCustArchived  WITH (NOLOCK)  WHERE IsFinished = 0) AS t
 			CROSS APPLY (SELECT custid,credit FROM dbo.custInfo c1 WITH (NOLOCK) WHERE c1.username= t.Super and c1.roleid = 4) AS c
 		
-		--UPDATE t
-		--	SET ErrMsg = '', IsFinished = 1
-		--FROM tmpCustArchived t (ROWLOCK)
-		--	INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
-		--WHERE ci.Enabled = 0 AND ci.credit = 0 
-		
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
-			SELECT TOP 1 @agent = Agent, @recommend = recommend 
-			FROM tmpCustArchived WITH (NOLOCK) 
-			WHERE IsFinished = 0	
+
+			SELECT TOP (1) @agent = Agent, @recommend = recommend 
+			FROM tmpCustArchived a WITH (NOLOCK) 
+			WHERE IsFinished = 0
+
 			IF (@@ROWCOUNT = 0) BREAK
 		
-			EXEC dbo.DBA_ArchiveAccount2_DisableAgentLine @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT, @srecommend = @srecommend OUTPUT, @mrecommend = @mrecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT
+			EXEC dbo.DBA_ArchiveAccount2_DisableAgentLine @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT, @srecommend = @srecommend OUTPUT, @mrecommend = @mrecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT,@ArchivedDate = @ArchivedDate
 			
 			UPDATE tmpCustArchived 
 			SET ErrMsg = @ErrMsg, IsFinished = 1
 			WHERE Agent = @agent
-			
+
 			IF @ErrMsg = ''
 			BEGIN
 				IF @ReduceCredit <>  0
@@ -201,6 +271,29 @@ BEGIN
 
 		--Gen List Super Master into tmpCustGroupLevelArchived
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
+
+		--> Get M0 list who were not processed on Stage 1 yet
+		INSERT INTO #M0NotInStage1(CustID,srecommend)
+		SELECT ar.custid,ci.srecommend
+		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
+			INNER JOIN dbo.custinfo ci WITH (NOLOCK)  ON ar.custid = ci.custid
+			LEFT JOIN Cust_ArchiveAccount c WITH(NOLOCK) ON ar.custid = c.CustID
+		WHERE ar.GroupLevelName = 'M0'
+			AND c.CustID IS NULL
+
+		IF EXISTS( SELECT TOP 1 1 FROM #M0NotInStage1)
+		BEGIN
+			--Update S1(s)-->S2(s) if M0(s) were not processed on Stage 1 yet
+			UPDATE ar 
+			SET ar.GroupLevelName = 'S2'
+			FROM #M0NotInStage1 t
+				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.srecommend
+		
+			--Delete M0(s) if they were not processed on Stage 1 yet
+			DELETE ar
+			FROM #M0NotInStage1 t
+				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.CustID
+		END
 		
 		-- Processing for M0, M1, S1
 		INSERT INTO #ArchiveMasterSuper_tmp (CustID, GroupLevelName, RoleID, username)
@@ -227,7 +320,7 @@ BEGIN
 				
 				IF (@@ROWCOUNT = 0) BREAK
 				
-				EXEC dbo.DBA_ArchiveAccount2_DisableMasterSuper @AccName = @S1M1_username,@srecommend = @srecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+				EXEC dbo.DBA_ArchiveAccount2_DisableMasterSuper @AccName = @S1M1_username,@srecommend = @srecommend OUTPUT, @ReduceCredit = @ReduceCredit OUTPUT, @ErrMsg = @ErrMsg OUTPUT,@ArchivedDate = @ArchivedDate
 				
 				PRINT 'DBA_ArchiveAccount2_DisableMasterSuper' + @ErrMsg
 				
@@ -323,10 +416,22 @@ BEGIN
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
-			SELECT TOP 1 @agent = Agent FROM tmpCustArchived WHERE IsFinished = 0	
+			SELECT @ProcessedDate = GETDATE()
+
+			SELECT TOP 1 @agent = Agent, @recommend = recommend
+			FROM tmpCustArchived WHERE IsFinished = 0	
 			IF (@@ROWCOUNT = 0) BREAK
 	
 			EXEC dbo.DBA_ArchiveAccount3_DelCustSetting @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT
+
+			--> Insert data for Cust_ArchiveAccount
+			IF ISNULL(@ErrMsg,'') = ''
+				EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+					@CustId = @recommend,
+					@RoleID = 2,
+					@StageID = @stage,
+					@ProcessedDate = @ProcessedDate,
+					@ArchivedDate = @ArchivedDate
 
 			UPDATE tmpCustArchived 
 			SET ErrMsg = @ErrMsg, IsFinished = 1
@@ -354,17 +459,29 @@ BEGIN
 			WHILE(1=1)
 			BEGIN
 				SELECT @ErrMsg = ''
+				SELECT @ProcessedDate = GETDATE()
 				
 				UPDATE TOP (1) t
 					SET  IsFinished = 1
 						, @S1M1_username = username
 						, @GroupLevelName = GroupLevelName
+						, @ArchivedCustID = t.CustID
+						, @roleid_tmp = t.RoleID
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
 				
 				IF (@@ROWCOUNT = 0) BREAK
 				
 				EXEC dbo.DBA_ArchiveAccount3_DelCustSettingMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
+
+				--> Insert data for Cust_ArchiveAccount
+				IF ISNULL(@ErrMsg,'') = '' AND @roleid_tmp = 3
+					EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+						@CustId = @ArchivedCustID,
+						@RoleID = 3,
+						@StageID = @stage,
+						@ProcessedDate = @ProcessedDate,
+						@ArchivedDate = @ArchivedDate
 				
 				SET @msg = 'Stage 3 - Done Delete Setting for '+ @GroupLevelName + ':' + @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
@@ -384,10 +501,19 @@ BEGIN
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
-			SELECT TOP 1 @agent = Agent FROM tmpCustArchived WHERE IsFinished = 0	
+			SELECT TOP 1 @agent = Agent, @recommend = recommend
+			FROM tmpCustArchived 
+			WHERE IsFinished = 0	
+
 			IF (@@ROWCOUNT = 0) BREAK
 	
 			EXEC dbo.DBA_ArchiveAccount4_DelCustInfo @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT
+
+			-->Delete data from Cust_ArchiveAccount		
+			IF ISNULL(@ErrMsg,'') = ''
+				EXEC Acc_DormantAccountList_Del 
+					@CustId = @recommend,
+					@RoleID = 2
 	
 			UPDATE tmpCustArchived 
 			SET ErrMsg = @ErrMsg, IsFinished = 1
@@ -418,12 +544,19 @@ BEGIN
 					SET  IsFinished = 1
 						, @S1M1_username = username
 						, @GroupLevelName = GroupLevelName
+						, @ArchivedCustID = t.CustID
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
 				
 				IF (@@ROWCOUNT = 0) BREAK
 				
 				EXEC dbo.DBA_ArchiveAccount4_DelCustInfoMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
+
+				-->Delete data from Cust_ArchiveAccount		
+				IF ISNULL(@ErrMsg,'') = ''
+					EXEC Acc_DormantAccountList_Del 
+						@CustId = @ArchivedCustID,
+						@RoleID = 3
 				
 				SET @msg = 'Stage 4 - Done Delete Customer Information for ' + @GroupLevelName +':'+  @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
@@ -438,4 +571,5 @@ BEGIN
 
 	DROP TABLE #ReduceCredit
 	DROP TABLE #ArchiveMasterSuper_tmp
+	DROP TABLE #M0NotInStage1
 END	

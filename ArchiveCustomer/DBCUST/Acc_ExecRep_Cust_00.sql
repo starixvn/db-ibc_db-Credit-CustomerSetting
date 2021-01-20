@@ -17,6 +17,8 @@ AS
 		20191217@Daniel: Remove delete custsearch due to perf issue
 		20200922@Helen: Remove old table [Redmine:130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+		- 20201201@Eden: NAP/Alpha & EXT - Apply color for archived accounts [Redmine:145018]
+
 	Param's Explanation:
 		@Type: 
 			+ -1-Stage 1: update closed = 1 for whole agent line
@@ -29,16 +31,71 @@ AS
 BEGIN
 	IF @Type = -1 --1st stage (1)
 	BEGIN 
+		--CLosed Agent and downlines
 		IF dbo.f_CheckRepTable('Custinfo') = 0
 			RETURN
 		ELSE 
 		BEGIN
+			DECLARE @Update_Cust TABLE (CustID INT PRIMARY KEY)
+
 			WHILE (1=1)
 			BEGIN 
 				UPDATE TOP(10000) dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
 				SET		closed = 1
+				OUTPUT deleted.custid INTO @Update_Cust(CustID)
 				WHERE	recommend = @AgentID AND closed = 0 
 				IF @@ROWCOUNT < 10000
+					BREAK
+			END 
+		END 
+
+		--Update ClosedReason for agent and downlines
+		IF dbo.f_CheckRepTable('CustLoginInfo') = 0 
+			OR dbo.f_CheckRepTable('CustLoginInfo_Member') = 0
+			OR dbo.f_CheckRepTable('custinfo') = 0
+			RETURN
+		ELSE 
+		BEGIN
+			--Insert Update for Agent
+			--> Insert Update ClosedReason
+			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo WITH(NOLOCK) WHERE custid = @AgentID)
+				INSERT INTO CustLoginInfo(CustID, ClosedReason) 
+				SELECT @AgentID, 4
+				WHERE EXISTS( SELECT 1 FROM @Update_Cust WHERE CustID = @AgentID)
+			ELSE
+				UPDATE m
+				SET ClosedReason = 4
+				FROM CustLoginInfo m WITH (ROWLOCK, UPDLOCK)
+					INNER JOIN @Update_Cust t ON m.CustID = t.CustID
+				WHERE m.CustID = @AgentID
+
+			
+			--Insert Update for Members
+			WHILE (1=1)
+			BEGIN 
+				INSERT INTO [CustLoginInfo_Member](CustID,ClosedReason)
+				SELECT TOP (5000) 
+					c.custid,
+					4 as ClosedReason
+				FROM  custinfo c WITH(NOLOCK) 
+					INNER JOIN @Update_Cust t ON c.CustID = t.CustID
+				WHERE c.recommend = @AgentID 
+					AND c.roleid = 1
+					AND NOT EXISTS ( SELECT 1 FROM CustLoginInfo_Member m WITH (NOLOCK) WHERE m.CustID = c.custid)
+
+				IF @@ROWCOUNT < 5000
+					BREAK
+			END 
+
+			WHILE (1=1)
+			BEGIN 
+				UPDATE TOP (5000) m
+				SET ClosedReason = 4
+				FROM CustLoginInfo_Member m WITH (ROWLOCK, UPDLOCK)
+					INNER JOIN @Update_Cust t ON m.CustID = t.CustID
+				WHERE ISNULL(ClosedReason,0) <> 4
+
+				IF @@ROWCOUNT < 5000
 					BREAK
 			END 
 		END 

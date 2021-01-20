@@ -11,6 +11,7 @@ AS
 		- 20190708@Daniel: Created
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20201105@Helen: Phase 2&3 - Include transfer A1, A0, M1, M0 to upline [Redmine: #130032]
+		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 */
 BEGIN
 
@@ -103,7 +104,7 @@ BEGIN
 						, @agentName = agentName
 						, @masterName = masterName
 						, @currency = currency
-						, @actualrate = @actualrate
+						, @actualrate = actualrate
 						, @currencyName = currencyName
 				FROM #AgentToMaster_Transfer t 
 				WHERE IsFinished = 0 AND t.mrecommend = @custid_tmp	
@@ -187,7 +188,7 @@ BEGIN
 							, @mastername = masterName
 							, @supername = supername
 							, @currency = currency
-							, @actualrate = @actualrate
+							, @actualrate = actualrate
 							, @currencyName = currencyName
 					FROM #MasterToSuper_Transfer t 
 					WHERE IsFinished = 0 AND t.srecommend = @custid_tmp	
