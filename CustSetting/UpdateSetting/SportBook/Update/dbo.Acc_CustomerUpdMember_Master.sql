@@ -2790,20 +2790,20 @@ if	@UpdatePositiontaking   = 1  or
 				END
 			
 			--don't allow update autoPT incase DisableAutoMPT = 1
-			IF ((@isauto_mpositiontaking_1 = 1 AND @old_isauto_mpositiontaking_mem_1 = 0)
-				OR (@isauto_mpositiontaking_2 = 1 AND @old_isauto_mpositiontaking_mem_2 = 0)
-				OR (@isauto_mpositiontaking_3 = 1 AND @old_isauto_mpositiontaking_mem_3 = 0)
-				OR (@isauto_mpositiontaking_4 = 1 AND @old_isauto_mpositiontaking_mem_4 = 0)
-				OR (@isauto_mpositiontaking_5 = 1 AND @old_isauto_mpositiontaking_mem_5 = 0)
-				OR (@isauto_mpositiontaking_6 = 1 AND @old_isauto_mpositiontaking_mem_6 = 0)
-				OR (@isauto_mpositiontaking_7 = 1 AND @old_isauto_mpositiontaking_mem_7 = 0)
-				OR (@isauto_mpositiontaking_8 = 1 AND @old_isauto_mpositiontaking_mem_8 = 0)
-				OR (@isauto_mpositiontaking_9 = 1 AND @old_isauto_mpositiontaking_mem_9 = 0)
-				OR (@isauto_mpositiontaking_10 = 1 AND @old_isauto_mpositiontaking_mem_10 = 0)
-				OR (@isauto_mlivepositiontaking_1 = 1 AND @old_isauto_mlivepositiontaking_mem_1 = 0)
-				OR (@isauto_mlivepositiontaking_3 = 1 AND @old_isauto_mlivepositiontaking_mem_3 = 0)
-				OR (@isauto_mlivepositiontaking_7 = 1 AND @old_isauto_mlivepositiontaking_mem_7 = 0)
-				OR (@isauto_mlivepositiontaking_8 = 1 AND @old_isauto_mlivepositiontaking_mem_8 = 0)				
+			IF ((@isauto_mpositiontaking_mem_1 = 1 AND @old_isauto_mpositiontaking_mem_1 = 0)
+				OR (@isauto_mpositiontaking_mem_2 = 1 AND @old_isauto_mpositiontaking_mem_2 = 0)
+				OR (@isauto_mpositiontaking_mem_3 = 1 AND @old_isauto_mpositiontaking_mem_3 = 0)
+				OR (@isauto_mpositiontaking_mem_4 = 1 AND @old_isauto_mpositiontaking_mem_4 = 0)
+				OR (@isauto_mpositiontaking_mem_5 = 1 AND @old_isauto_mpositiontaking_mem_5 = 0)
+				OR (@isauto_mpositiontaking_mem_6 = 1 AND @old_isauto_mpositiontaking_mem_6 = 0)
+				OR (@isauto_mpositiontaking_mem_7 = 1 AND @old_isauto_mpositiontaking_mem_7 = 0)
+				OR (@isauto_mpositiontaking_mem_8 = 1 AND @old_isauto_mpositiontaking_mem_8 = 0)
+				OR (@isauto_mpositiontaking_mem_9 = 1 AND @old_isauto_mpositiontaking_mem_9 = 0)
+				OR (@isauto_mpositiontaking_mem_10 = 1 AND @old_isauto_mpositiontaking_mem_10 = 0)
+				OR (@isauto_mlivepositiontaking_mem_1 = 1 AND @old_isauto_mlivepositiontaking_mem_1 = 0)
+				OR (@isauto_mlivepositiontaking_mem_3 = 1 AND @old_isauto_mlivepositiontaking_mem_3 = 0)
+				OR (@isauto_mlivepositiontaking_mem_7 = 1 AND @old_isauto_mlivepositiontaking_mem_7 = 0)
+				OR (@isauto_mlivepositiontaking_mem_8 = 1 AND @old_isauto_mlivepositiontaking_mem_8 = 0)				
 				)
 				AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 							WHERE custid = @mrecommend 
@@ -3103,14 +3103,14 @@ if	@UpdatePositiontaking   = 1  or
 			END	
 			
 			--don't allow update autoPT incase DisableAutoMPT = 1
-			IF ((@isauto_v2mpositiontaking_1 = 1 AND @old_isauto_v2mpositiontaking_mem_1 = 0)
-				OR (@isauto_v2mpositiontaking_2 = 1 AND @old_isauto_v2mpositiontaking_mem_2 = 0)
-				OR (@isauto_v2mpositiontaking_3 = 1 AND @old_isauto_v2mpositiontaking_mem_3 = 0)
-				OR (@isauto_v2mpositiontaking_7 = 1 AND @old_isauto_v2mpositiontaking_mem_7 = 0)
-				OR (@isauto_v2mpositiontaking_8 = 1 AND @old_isauto_v2mpositiontaking_mem_8 = 0)
-				OR (@isauto_v2mpositiontaking_10 = 1 AND @old_isauto_v2mpositiontaking_mem_10 = 0)
-				OR (@isauto_v2mpositiontaking_20 = 1 AND @old_isauto_v2mpositiontaking_mem_20 = 0)
-				OR (@isauto_v2mpositiontaking_9999 = 1 AND @old_isauto_v2mpositiontaking_mem_9999 = 0)
+			IF ((@isauto_v2mpositiontaking_mem_1 = 1 AND @old_isauto_v2mpositiontaking_mem_1 = 0)
+				OR (@isauto_v2mpositiontaking_mem_2 = 1 AND @old_isauto_v2mpositiontaking_mem_2 = 0)
+				OR (@isauto_v2mpositiontaking_mem_3 = 1 AND @old_isauto_v2mpositiontaking_mem_3 = 0)
+				OR (@isauto_v2mpositiontaking_mem_7 = 1 AND @old_isauto_v2mpositiontaking_mem_7 = 0)
+				OR (@isauto_v2mpositiontaking_mem_8 = 1 AND @old_isauto_v2mpositiontaking_mem_8 = 0)
+				OR (@isauto_v2mpositiontaking_mem_10 = 1 AND @old_isauto_v2mpositiontaking_mem_10 = 0)
+				OR (@isauto_v2mpositiontaking_mem_20 = 1 AND @old_isauto_v2mpositiontaking_mem_20 = 0)
+				OR (@isauto_v2mpositiontaking_mem_9999 = 1 AND @old_isauto_v2mpositiontaking_mem_9999 = 0)
 				)
 				AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 							WHERE custid = @mrecommend 
@@ -3383,11 +3383,11 @@ if	@UpdatePositiontaking   = 1  or
 			END
 			
 			--don't allow update autoPT incase DisableAutoMPT = 1
-			IF ((@isauto_v3mpositiontaking_1 = 1 AND @old_isauto_v3mpositiontaking_mem_1 = 0)
-				OR (@isauto_v3mpositiontaking_2 = 1 AND @old_isauto_v3mpositiontaking_mem_2 = 0)
-				OR (@isauto_v3mpositiontaking_3 = 1 AND @old_isauto_v3mpositiontaking_mem_3 = 0)
-				OR (@isauto_v3mpositiontaking_10 = 1 AND @old_isauto_v3mpositiontaking_mem_10 = 0)
-				OR (@isauto_v3mpositiontaking_20 = 1 AND @old_isauto_v3mpositiontaking_mem_20 = 0)
+			IF ((@isauto_v3mpositiontaking_mem_1 = 1 AND @old_isauto_v3mpositiontaking_mem_1 = 0)
+				OR (@isauto_v3mpositiontaking_mem_2 = 1 AND @old_isauto_v3mpositiontaking_mem_2 = 0)
+				OR (@isauto_v3mpositiontaking_mem_3 = 1 AND @old_isauto_v3mpositiontaking_mem_3 = 0)
+				OR (@isauto_v3mpositiontaking_mem_10 = 1 AND @old_isauto_v3mpositiontaking_mem_10 = 0)
+				OR (@isauto_v3mpositiontaking_mem_20 = 1 AND @old_isauto_v3mpositiontaking_mem_20 = 0)
 				)
 				AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 							WHERE custid = @mrecommend 
@@ -3637,12 +3637,12 @@ if	@UpdatePositiontaking   = 1  or
 			END
 			
 			--don't allow update autoPT incase DisableAutoMPT = 1
-			IF ((@isauto_v5mpositiontaking_1 = 1 AND @old_isauto_v5mpositiontaking_mem_1 = 0)
-				OR (@isauto_v5mpositiontaking_2 = 1 AND @old_isauto_v5mpositiontaking_mem_2 = 0)
-				OR (@isauto_v5mpositiontaking_3 = 1 AND @old_isauto_v5mpositiontaking_mem_3 = 0)
-				OR (@isauto_v5mpositiontaking_10 = 1 AND @old_isauto_v5mpositiontaking_mem_10 = 0)
-				OR (@isauto_v5mpositiontaking_20 = 1 AND @old_isauto_v5mpositiontaking_mem_20 = 0)
-				OR (@isauto_v5mpositiontaking_9999 = 1 AND @old_isauto_v5mpositiontaking_mem_9999 = 0)
+			IF ((@isauto_v5mpositiontaking_mem_1 = 1 AND @old_isauto_v5mpositiontaking_mem_1 = 0)
+				OR (@isauto_v5mpositiontaking_mem_2 = 1 AND @old_isauto_v5mpositiontaking_mem_2 = 0)
+				OR (@isauto_v5mpositiontaking_mem_3 = 1 AND @old_isauto_v5mpositiontaking_mem_3 = 0)
+				OR (@isauto_v5mpositiontaking_mem_10 = 1 AND @old_isauto_v5mpositiontaking_mem_10 = 0)
+				OR (@isauto_v5mpositiontaking_mem_20 = 1 AND @old_isauto_v5mpositiontaking_mem_20 = 0)
+				OR (@isauto_v5mpositiontaking_mem_9999 = 1 AND @old_isauto_v5mpositiontaking_mem_9999 = 0)
 				)
 				AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 							WHERE custid = @mrecommend 
@@ -3896,10 +3896,10 @@ if	@UpdatePositiontaking   = 1  or
 				END
 				
 				--don't allow update autoPT incase DisableAutoMPT = 1
-				IF ((@isauto_v8mpositiontaking_1 = 1 AND @old_isauto_v8mpositiontaking_mem_1 = 0)					
-					OR (@isauto_v8mpositiontaking_3 = 1 AND @old_isauto_v8mpositiontaking_mem_3 = 0)
-					OR (@isauto_v8mpositiontaking_10 = 1 AND @old_isauto_v8mpositiontaking_mem_10 = 0)
-					OR (@isauto_v8mpositiontaking_20 = 1 AND @old_isauto_v8mpositiontaking_mem_20 = 0)					
+				IF ((@isauto_v8mpositiontaking_mem_1 = 1 AND @old_isauto_v8mpositiontaking_mem_1 = 0)					
+					OR (@isauto_v8mpositiontaking_mem_3 = 1 AND @old_isauto_v8mpositiontaking_mem_3 = 0)
+					OR (@isauto_v8mpositiontaking_mem_10 = 1 AND @old_isauto_v8mpositiontaking_mem_10 = 0)
+					OR (@isauto_v8mpositiontaking_mem_20 = 1 AND @old_isauto_v8mpositiontaking_mem_20 = 0)					
 					)
 					AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 								WHERE custid = @mrecommend 
@@ -4145,11 +4145,11 @@ if	@UpdatePositiontaking   = 1  or
 			END	
 			
 			--don't allow update autoPT incase DisableAutoMPT = 1
-			IF ((@isauto_v10mpositiontaking_1 = 1 AND @old_isauto_v10mpositiontaking_mem_1 = 0)
-				OR (@isauto_v10mpositiontaking_2 = 1 AND @old_isauto_v10mpositiontaking_mem_2 = 0)
-				OR (@isauto_v10mpositiontaking_3 = 1 AND @old_isauto_v10mpositiontaking_mem_3 = 0)
-				OR (@isauto_v10mpositiontaking_10 = 1 AND @old_isauto_v10mpositiontaking_mem_10 = 0)
-				OR (@isauto_v10mpositiontaking_20 = 1 AND @old_isauto_v10mpositiontaking_mem_20 = 0)				
+			IF ((@isauto_v10mpositiontaking_mem_1 = 1 AND @old_isauto_v10mpositiontaking_mem_1 = 0)
+				OR (@isauto_v10mpositiontaking_mem_2 = 1 AND @old_isauto_v10mpositiontaking_mem_2 = 0)
+				OR (@isauto_v10mpositiontaking_mem_3 = 1 AND @old_isauto_v10mpositiontaking_mem_3 = 0)
+				OR (@isauto_v10mpositiontaking_mem_10 = 1 AND @old_isauto_v10mpositiontaking_mem_10 = 0)
+				OR (@isauto_v10mpositiontaking_mem_20 = 1 AND @old_isauto_v10mpositiontaking_mem_20 = 0)				
 				)
 				AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 							WHERE custid = @mrecommend 
@@ -4391,9 +4391,9 @@ if	@UpdatePositiontaking   = 1  or
 			END				
 						
 			--don't allow update autoPT incase DisableAutoMPT = 1
-			IF ((@isauto_v11mpositiontaking_1 = 1 AND @old_isauto_v11mpositiontaking_mem_1 = 0)
-				OR (@isauto_v11mpositiontaking_10 = 1 AND @old_isauto_v11mpositiontaking_mem_10 = 0)
-				OR (@isauto_v11mpositiontaking_20 = 1 AND @old_isauto_v11mpositiontaking_mem_20 = 0)				
+			IF ((@isauto_v11mpositiontaking_mem_1 = 1 AND @old_isauto_v11mpositiontaking_mem_1 = 0)
+				OR (@isauto_v11mpositiontaking_mem_10 = 1 AND @old_isauto_v11mpositiontaking_mem_10 = 0)
+				OR (@isauto_v11mpositiontaking_mem_20 = 1 AND @old_isauto_v11mpositiontaking_mem_20 = 0)				
 				)
 				AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 							WHERE custid = @mrecommend 
@@ -4630,12 +4630,12 @@ if	@UpdatePositiontaking   = 1  or
 			END				
 			
 			--don't allow update autoPT incase DisableAutoMPT = 1
-			IF ((@isauto_v99mpositiontaking_1 = 1 AND @old_isauto_v99mpositiontaking_mem_1 = 0)
-				OR (@isauto_v99mpositiontaking_2 = 1 AND @old_isauto_v99mpositiontaking_mem_2 = 0)
-				OR (@isauto_v99mpositiontaking_3 = 1 AND @old_isauto_v99mpositiontaking_mem_3 = 0)
-				OR (@isauto_v99mpositiontaking_10 = 1 AND @old_isauto_v99mpositiontaking_mem_10 = 0)
-				OR (@isauto_v99mpositiontaking_20 = 1 AND @old_isauto_v99mpositiontaking_mem_20 = 0)
-				OR (@isauto_v99mpositiontaking_9999 = 1 AND @old_isauto_v99mpositiontaking_mem_9999 = 0)
+			IF ((@isauto_v99mpositiontaking_mem_1 = 1 AND @old_isauto_v99mpositiontaking_mem_1 = 0)
+				OR (@isauto_v99mpositiontaking_mem_2 = 1 AND @old_isauto_v99mpositiontaking_mem_2 = 0)
+				OR (@isauto_v99mpositiontaking_mem_3 = 1 AND @old_isauto_v99mpositiontaking_mem_3 = 0)
+				OR (@isauto_v99mpositiontaking_mem_10 = 1 AND @old_isauto_v99mpositiontaking_mem_10 = 0)
+				OR (@isauto_v99mpositiontaking_mem_20 = 1 AND @old_isauto_v99mpositiontaking_mem_20 = 0)
+				OR (@isauto_v99mpositiontaking_mem_9999 = 1 AND @old_isauto_v99mpositiontaking_mem_9999 = 0)
 				)
 				AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 							WHERE custid = @mrecommend 
@@ -4880,7 +4880,7 @@ if	@UpdatePositiontaking   = 1  or
 				END				
 				
 				--don't allow update autoPT incase DisableAutoMPT = 1
-				IF (@isauto_v99mpositiontaking_9 = 1 AND @old_isauto_v99mpositiontaking_mem_9 = 0)					
+				IF (@isauto_v99mpositiontaking_mem_9 = 1 AND @old_isauto_v99mpositiontaking_mem_9 = 0)					
 					AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 								WHERE custid = @mrecommend 
 									AND DisableAutoMPT = 1)
@@ -5103,15 +5103,15 @@ if	@UpdatePositiontaking   = 1  or
 				END
 				
 				--don't allow update autoPT incase DisableAutoMPT = 1
-				IF ((@isauto_v161mpositiontaking_81 = 1 AND @old_isauto_v161mpositiontaking_mem_81 = 0)
-					OR (@isauto_v161mpositiontaking_83 = 1 AND @old_isauto_v161mpositiontaking_mem_83 = 0)
-					OR (@isauto_v161mpositiontaking_86 = 1 AND @old_isauto_v161mpositiontaking_mem_86 = 0)
-					OR (@isauto_v161mpositiontaking_88 = 1 AND @old_isauto_v161mpositiontaking_mem_88 = 0)
-					OR (@isauto_v161mlivepositiontaking_85 = 1 AND @old_isauto_v161mlivepositiontaking_mem_85 = 0)
-					OR (@isauto_v161mlivepositiontaking_86 = 1 AND @old_isauto_v161mlivepositiontaking_mem_86 = 0)
-					OR (@isauto_v161mlivepositiontaking_87 = 1 AND @old_isauto_v161mlivepositiontaking_mem_87 = 0)
-					OR (@isauto_v161mlivepositiontaking_89 = 1 AND @old_isauto_v161mlivepositiontaking_mem_89 = 0)
-					OR (@isauto_v161mlivepositiontaking_90 = 1 AND @old_isauto_v161mlivepositiontaking_mem_90 = 0)
+				IF ((@isauto_v161mpositiontaking_mem_81 = 1 AND @old_isauto_v161mpositiontaking_mem_81 = 0)
+					OR (@isauto_v161mpositiontaking_mem_83 = 1 AND @old_isauto_v161mpositiontaking_mem_83 = 0)
+					OR (@isauto_v161mpositiontaking_mem_86 = 1 AND @old_isauto_v161mpositiontaking_mem_86 = 0)
+					OR (@isauto_v161mpositiontaking_mem_88 = 1 AND @old_isauto_v161mpositiontaking_mem_88 = 0)
+					OR (@isauto_v161mlivepositiontaking_mem_85 = 1 AND @old_isauto_v161mlivepositiontaking_mem_85 = 0)
+					OR (@isauto_v161mlivepositiontaking_mem_86 = 1 AND @old_isauto_v161mlivepositiontaking_mem_86 = 0)
+					OR (@isauto_v161mlivepositiontaking_mem_87 = 1 AND @old_isauto_v161mlivepositiontaking_mem_87 = 0)
+					OR (@isauto_v161mlivepositiontaking_mem_89 = 1 AND @old_isauto_v161mlivepositiontaking_mem_89 = 0)
+					OR (@isauto_v161mlivepositiontaking_mem_90 = 1 AND @old_isauto_v161mlivepositiontaking_mem_90 = 0)
 					)
 					AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
 								WHERE custid = @mrecommend 
