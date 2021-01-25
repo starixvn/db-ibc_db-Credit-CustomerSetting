@@ -6,7 +6,8 @@ ALTER PROCEDURE [DBA_ArchiveAccount2_DisableAgentLine]
 	@ErrCode INT = 0 OUTPUT,
 	@srecommend INT = 0 OUTPUT,
 	@mrecommend INT = 0 OUTPUT,
-	@ReduceCredit MONEY = 0 OUTPUT
+	@ReduceCredit MONEY = 0 OUTPUT,
+	@ArchivedDate DATE = NULL
 AS
 /*
 	Created: Daniel
@@ -26,6 +27,7 @@ AS
 		- 20200922@Helen: Remove old table [Redmine:130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
+		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 
 */
     
@@ -41,6 +43,7 @@ declare @duration int, @Now datetime
 set @startRun = getdate()
 
 Declare @roleid int, @AgentID int, @Enabled bit
+DECLARE @ProcessedDate DATETIME
 
 SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @srecommend = srecommend, @mrecommend = mrecommend, @ReduceCredit = credit
 FROM custinfo (nolock)
@@ -59,6 +62,16 @@ BEGIN
 	EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
 	Select @ErrMsg = @AccName +':'+ 'This agent has been archived!!', @ErrCode = 101
 	print @ErrMsg
+
+	SET @ProcessedDate = GETDATE()
+
+	EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+		@CustId = @AgentID,
+		@RoleID = 2,
+		@StageID = 2,
+		@ProcessedDate = @ProcessedDate,
+		@ArchivedDate = @ArchivedDate
+
 	return
 END
 
@@ -416,6 +429,15 @@ WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and 
 -----------------------------------------------------------------------------------------------------------
 
 -- update enable = 0, credit = 0 for whole agent line (use new execRep SP)
+--> Insert data for Cust_ArchiveAccount
+SET @ProcessedDate = GETDATE()
+
+EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+	@CustId = @AgentID,
+	@RoleID = 2,
+	@StageID = 2,
+	@ProcessedDate = @ProcessedDate,
+	@ArchivedDate = @ArchivedDate
 
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 0
 

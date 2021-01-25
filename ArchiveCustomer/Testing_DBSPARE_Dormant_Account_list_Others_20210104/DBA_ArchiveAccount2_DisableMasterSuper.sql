@@ -5,7 +5,8 @@ ALTER PROCEDURE [DBA_ArchiveAccount2_DisableMasterSuper]
 	@ErrMsg NVARCHAR(200) = '' OUTPUT,
 	@ErrCode INT = 0 OUTPUT,
 	@srecommend INT = 0 OUTPUT,
-	@ReduceCredit MONEY = 0 OUTPUT
+	@ReduceCredit MONEY = 0 OUTPUT,
+	@ArchivedDate DATE = NULL
 AS
 /*
 		Description: Disable an Master, Super
@@ -15,6 +16,7 @@ AS
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+			- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 */
 BEGIN
 	    
@@ -288,6 +290,19 @@ BEGIN
 	END
 		
 	-----------------------------------------------------------------------------------------------------------
+	--> Insert data for Cust_ArchiveAccount - Master level only
+	IF @roleid = 3
+	BEGIN
+		DECLARE @ProcessedDate DATETIME  = GETDATE()
+
+		EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+			@CustId = @CustID,
+			@RoleID = 3,
+			@StageID = 2,
+			@ProcessedDate = @ProcessedDate,
+			@ArchivedDate = @ArchivedDate
+	END
+
 	EXEC DBA_Archive_Cust_SuperMaster @custid = @CustID, @stage = 2
 	
 	----------------------------------------------------------------
