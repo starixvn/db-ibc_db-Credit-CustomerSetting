@@ -384,7 +384,7 @@ Revisions:
 	- 20190426@Johnson: hotfix for bettype Number game [redmineID: #111931] 
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
-
+	- 20210111@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -524,7 +524,7 @@ BEGIN
 					end
 		return
 	END
-
+		
 	--check n3<=m2+a2<=l3 if i2 = 0, 
 	--a2<=l3 and u2+a2>=n3 if i2 = 1
 	
@@ -2501,6 +2501,94 @@ BEGIN
 					end		
 		return
 	END
+	
+	--don't allow update autoPT incase DisableAutoMPT = 1
+	IF ((@isauto_mpositiontaking_1 = 1 AND @old_isauto_mpositiontaking_1 = 0)
+		OR (@isauto_mpositiontaking_2 = 1 AND @old_isauto_mpositiontaking_2 = 0)			
+		OR (@isauto_mpositiontaking_3 = 1 AND @old_isauto_mpositiontaking_3 = 0)
+		OR (@isauto_mpositiontaking_4 = 1 AND @old_isauto_mpositiontaking_4 = 0)
+		OR (@isauto_mpositiontaking_5 = 1 AND @old_isauto_mpositiontaking_5 = 0)
+		OR (@isauto_mpositiontaking_6 = 1 AND @old_isauto_mpositiontaking_6 = 0)
+		OR (@isauto_mpositiontaking_7 = 1 AND @old_isauto_mpositiontaking_7 = 0)
+		OR (@isauto_mpositiontaking_8 = 1 AND @old_isauto_mpositiontaking_8 = 0)
+		OR (@isauto_mpositiontaking_9 = 1 AND @old_isauto_mpositiontaking_9 = 0)
+		OR (@isauto_mpositiontaking_10 = 1 AND @old_isauto_mpositiontaking_10 = 0)
+		OR (@isauto_mpositiontaking_9999 = 1 AND @old_isauto_mpositiontaking_9999 = 0)
+		OR (@isauto_mlivepositiontaking_1 = 1 AND @old_isauto_mlivepositiontaking_1 = 0)
+		OR (@isauto_mlivepositiontaking_3 = 1 AND @old_isauto_mlivepositiontaking_3 = 0)
+		OR (@isauto_mlivepositiontaking_7 = 1 AND @old_isauto_mlivepositiontaking_7 = 0)
+		OR (@isauto_mlivepositiontaking_8 = 1 AND @old_isauto_mlivepositiontaking_8 = 0)
+		
+		--v2
+		OR (@isauto_v2mpositiontaking_1 = 1 AND @old_isauto_v2mpositiontaking_1 = 0)
+		OR (@isauto_v2mpositiontaking_2 = 1 AND @old_isauto_v2mpositiontaking_2 = 0)			
+		OR (@isauto_v2mpositiontaking_3 = 1 AND @old_isauto_v2mpositiontaking_3 = 0)
+		OR (@isauto_v2mpositiontaking_7 = 1 AND @old_isauto_v2mpositiontaking_7 = 0)
+		OR (@isauto_v2mpositiontaking_8 = 1 AND @old_isauto_v2mpositiontaking_8 = 0)
+		OR (@isauto_v2mpositiontaking_20 = 1 AND @old_isauto_v2mpositiontaking_20 = 0)
+		OR (@isauto_v2mpositiontaking_9999 = 1 AND @old_isauto_v2mpositiontaking_9999 = 0)
+		
+		--v3		
+		OR (@isauto_v3mpositiontaking_1 = 1 AND @old_isauto_v3mpositiontaking_1 = 0)
+		OR (@isauto_v3mpositiontaking_2 = 1 AND @old_isauto_v3mpositiontaking_2 = 0)			
+		OR (@isauto_v3mpositiontaking_3 = 1 AND @old_isauto_v3mpositiontaking_3 = 0)
+		OR (@isauto_v3mpositiontaking_20 = 1 AND @old_isauto_v3mpositiontaking_20 = 0)
+		
+		--v5		
+		OR (@isauto_v5mpositiontaking_1 = 1 AND @old_isauto_v5mpositiontaking_1 = 0)
+		OR (@isauto_v5mpositiontaking_2 = 1 AND @old_isauto_v5mpositiontaking_2 = 0)			
+		OR (@isauto_v5mpositiontaking_3 = 1 AND @old_isauto_v5mpositiontaking_3 = 0)
+		OR (@isauto_v5mpositiontaking_20 = 1 AND @old_isauto_v5mpositiontaking_20 = 0)
+		OR (@isauto_v5mpositiontaking_9999 = 1 AND @old_isauto_v5mpositiontaking_9999 = 0)
+		
+		--v8		
+		OR (@isauto_v8mpositiontaking_1 = 1 AND @old_isauto_v8mpositiontaking_1 = 0)		
+		OR (@isauto_v8mpositiontaking_3 = 1 AND @old_isauto_v8mpositiontaking_3 = 0)
+		OR (@isauto_v8mpositiontaking_20 = 1 AND @old_isauto_v8mpositiontaking_20 = 0)
+		
+		--v10		
+		OR (@isauto_v10mpositiontaking_1 = 1 AND @old_isauto_v10mpositiontaking_1 = 0)
+		OR (@isauto_v10mpositiontaking_2 = 1 AND @old_isauto_v10mpositiontaking_2 = 0)			
+		OR (@isauto_v10mpositiontaking_3 = 1 AND @old_isauto_v10mpositiontaking_3 = 0)
+		OR (@isauto_v10mpositiontaking_20 = 1 AND @old_isauto_v10mpositiontaking_20 = 0)
+		
+		--v11		
+		OR (@isauto_v11mpositiontaking_1 = 1 AND @old_isauto_v11mpositiontaking_1 = 0)
+		OR (@isauto_v11mpositiontaking_20 = 1 AND @old_isauto_v11mpositiontaking_20 = 0)
+		
+		--v99		
+		OR (@isauto_v99mpositiontaking_1 = 1 AND @old_isauto_v99mpositiontaking_1 = 0)
+		OR (@isauto_v99mpositiontaking_2 = 1 AND @old_isauto_v99mpositiontaking_2 = 0)			
+		OR (@isauto_v99mpositiontaking_3 = 1 AND @old_isauto_v99mpositiontaking_3 = 0)
+		OR (@isauto_v99mpositiontaking_20 = 1 AND @old_isauto_v99mpositiontaking_20 = 0)
+		OR (@isauto_v99mpositiontaking_9999 = 1 AND @old_isauto_v99mpositiontaking_9999 = 0)
+		
+		--v99MP
+		OR (@isauto_v99mpositiontaking_9 = 1 AND @old_isauto_v99mpositiontaking_9 = 0)
+		
+		--v161		
+		OR (@isauto_v161mpositiontaking_81 = 1 AND @old_isauto_v161mpositiontaking_81 = 0)
+		OR (@isauto_v161mpositiontaking_83 = 1 AND @old_isauto_v161mpositiontaking_83 = 0)
+		OR (@isauto_v161mpositiontaking_86 = 1 AND @old_isauto_v161mpositiontaking_86 = 0)
+		OR (@isauto_v161mpositiontaking_88 = 1 AND @old_isauto_v161mpositiontaking_88 = 0)
+		
+		OR (@isauto_v161mlivepositiontaking_85 = 1 AND @old_isauto_v161mlivepositiontaking_85 = 0)
+		OR (@isauto_v161mlivepositiontaking_86 = 1 AND @old_isauto_v161mlivepositiontaking_86 = 0)
+		OR (@isauto_v161mlivepositiontaking_87 = 1 AND @old_isauto_v161mlivepositiontaking_87 = 0)
+		OR (@isauto_v161mlivepositiontaking_89 = 1 AND @old_isauto_v161mlivepositiontaking_89 = 0)
+		OR (@isauto_v161mlivepositiontaking_90 = 1 AND @old_isauto_v161mlivepositiontaking_90 = 0)				
+		)
+		AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
+					WHERE custid = @mrecommend 
+						AND DisableAutoMPT = 1)
+	BEGIN
+		SELECT @ErrCode = 110,
+			   @ErrMsg = CASE @Language 			   
+								WHEN 'E' THEN 'You are not allowed to have Auto PT, please contact your upline.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](20044,@Language) 
+							END	
+		RETURN					
+	END	
 END
 
 

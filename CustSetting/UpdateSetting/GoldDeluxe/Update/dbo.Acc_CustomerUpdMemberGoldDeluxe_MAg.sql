@@ -29,6 +29,7 @@ AS
 		- 20151007@Elodie: Remove code to check old and new value
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20210108@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]
 	Parameters Explanation:
 */
 BEGIN
@@ -182,7 +183,7 @@ BEGIN
 	FROM CustSettingGame acs WITH(NOLOCK)
 		INNER JOIN CustOverrideGame aco WITH(NOLOCK) ON acs.custid = aco.custid AND acs.sporttype = aco.sporttype AND acs.bettype = aco.bettype
 	WHERE acs.custid = @recommend AND acs.sporttype = 255 and acs.bettype = 1701		
-
+		
 	IF @v255UpdateAutoPositiontaking_1701 = 1 
 	BEGIN
 		--Check um1<=m3
@@ -373,6 +374,22 @@ BEGIN
 		SELECT @v255spositiontaking_1701 = CASE WHEN @v255spositiontaking_1701 > @max_v255spositiontaking_1701 THEN @max_v255spositiontaking_1701 ELSE @v255spositiontaking_1701 END
 				
 	END
+	
+	--don't allow update autoPT incase DisableAutoMPT = 1
+	IF @isauto_v255mpositiontaking_mem_1701 = 1
+		AND @old_isauto_v255mpositiontaking_mem_1701 = 0
+		AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
+					WHERE custid = @mrecommend 
+						AND DisableAutoMPT = 1)
+	BEGIN
+		SELECT @ErrCode = 100,
+			   @ErrMsg = CASE @Language 			   
+								WHEN 'E' THEN 'You are not allowed to have Auto PT, please contact your upline.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](20044,@Language) 
+							END	
+		RETURN					
+	END	
+	
 	--don't update m1,s1 for member under agent was set im2=1
 	UPDATE cs
 	SET	mpositiontaking = @v255mpositiontaking_1701 ,

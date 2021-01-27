@@ -41,7 +41,7 @@ AS
 		- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
-
+		- 20210111@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]		
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -67,7 +67,9 @@ BEGIN
 		, IsAutoMasterPT	BIT
 		, AutoMasterPT		SMALLMONEY
 		, IsAutoSuperPT		BIT
-		, AutoSuperPT		SMALLMONEY)
+		, AutoSuperPT		SMALLMONEY
+		, Old_IsAutoMasterPT BIT
+		)
 		
 	DECLARE @IsGrouped BIT = 0
 
@@ -85,6 +87,7 @@ BEGIN
 		, AutoMasterPT 
 		, IsAutoSuperPT 
 		, AutoSuperPT 
+		, NULL Old_IsAutoMasterPT
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
 
 	--Exclude Update for Sport is having UM
@@ -326,6 +329,7 @@ BEGIN
 				, main.AgentPT = cs.AgentPT
 				, main.IsAutoSuperPT =cs.IsAutoSuperPT
 				, main.AutoSuperPT = cs.AutoSuperPT
+				, main.Old_IsAutoMasterPT = cs.IsAutoMasterPT
 			FROM @NewPTTble main
 				INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK)
 					ON cs.SportType=main.SportType
@@ -341,6 +345,7 @@ BEGIN
 				, main.AgentPT = cs.AgentPT
 				, main.IsAutoSuperPT =cs.IsAutoSuperPT
 				, main.AutoSuperPT = cs.AutoSuperPT
+				, main.Old_IsAutoMasterPT = cs.IsAutoMasterPT
 			FROM @NewPTTble main
 				INNER JOIN dbo.CustPTSetting3rd_Member cs WITH (NOLOCK)
 					ON cs.SportType=main.SportType
@@ -371,6 +376,21 @@ BEGIN
                     , @MsgType = 5                                    
             RETURN
         END	
+		
+		IF EXISTS(SELECT 1
+				FROM @NewPTTble mempt
+				WHERE IsAutoMasterPT = 1 
+					AND Old_IsAutoMasterPT = 0 	
+				)
+			AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
+						WHERE custid = @MasterID
+							AND DisableAutoMPT = 1)
+		BEGIN
+			SELECT @ErrCode = 120,
+				   @ErrMsg = '<Root MsgID="20044" Msg="You are not allowed to have Auto PT, please contact your upline." />',
+				   @MsgType = 5
+			RETURN					
+		END			
 		
 		--if im1=1 then um1<=l3
 		SELECT @ErrInfo = (

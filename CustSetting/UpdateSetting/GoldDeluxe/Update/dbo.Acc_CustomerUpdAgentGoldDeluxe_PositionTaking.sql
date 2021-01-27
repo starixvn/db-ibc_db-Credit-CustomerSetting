@@ -32,7 +32,7 @@ AS
 		- 20151007@Elodie: Remove code to check old and new value
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
 		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
-				            
+		- 20210108@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]		            
 	Parameters Explanation:
 */
 BEGIN
@@ -200,7 +200,21 @@ BEGIN
 		return
 	END
 	
-	
+	--don't allow update autoPT incase DisableAutoMPT = 1
+	IF @isauto_v255mpositiontaking_1701 = 1
+		AND @old_isauto_v255mpositiontaking_1701 = 0
+		AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
+					WHERE custid = @mrecommend 
+						AND DisableAutoMPT = 1)
+	BEGIN
+		SELECT @ErrCode = 105,
+			   @ErrMsg = CASE @Language 			   
+								WHEN 'E' THEN 'You are not allowed to have Auto PT, please contact your upline.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](20044,@Language) 
+							END	
+		RETURN					
+	END	
+		
 	---- update
 	IF @v255UpdatePositiontaking_1701 = 1
 	BEGIN	
