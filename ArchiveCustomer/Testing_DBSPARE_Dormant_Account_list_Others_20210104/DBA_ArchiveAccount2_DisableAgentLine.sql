@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-custdb" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [DBA_ArchiveAccount2_DisableAgentLine]
+CREATE PROCEDURE [DBA_ArchiveAccount2_DisableAgentLine]
 	@AccName VARCHAR(50),
 	@UserID INT = 360418,
 	@ErrMsg NVARCHAR(200) = '' OUTPUT,
@@ -28,6 +28,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+		- 20200128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
 
 */
     
@@ -77,7 +78,7 @@ END
 
 
 --==Check new created members
-IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE recommend = @AgentID AND creatdate >= DATEADD(mm, -4, @currentDate))
+IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE recommend = @AgentID AND creatdate >= DATEADD(mm, -4, GETDATE()))
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just created new members while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
@@ -122,6 +123,20 @@ END
 --Pre-check: Make sure cust info data not exist in DBRACCUST before backup
 IF EXISTS(
 	SELECT 1 FROM bodb_Customer.dbo.customer_old WITH(NOLOCK) 
+	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
+	)
+BEGIN
+	-- agent disabled before but some tables not backup in phase 1 yet
+	EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
+	Select @ErrMsg = @AccName +':'+ 'Backup data of this agent already exist. Please check!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
+	print @ErrMsg
+	return
+END
+
+--Pre-check: Make sure cust info data not exist in DBRACCUST before backup
+IF EXISTS(
+	SELECT 1 FROM bodb_Customer.dbo.custinfo_old WITH(NOLOCK) 
 	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
 	)
 BEGIN
@@ -461,3 +476,4 @@ EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@ActionID = 1178,
 	@TrackingValue = @LogSPData	,
 	@duration = @duration
+    

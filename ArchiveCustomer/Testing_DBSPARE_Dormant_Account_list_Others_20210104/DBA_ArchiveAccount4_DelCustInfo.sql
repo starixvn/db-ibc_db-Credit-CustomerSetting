@@ -13,7 +13,8 @@ AS
 	DB: DBCUST/CustDB
 	
 	Revisions:
-		20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
+		- 20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
+		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Delete custinfo for DBPRO - [Redmine:130032]
 
 */
     

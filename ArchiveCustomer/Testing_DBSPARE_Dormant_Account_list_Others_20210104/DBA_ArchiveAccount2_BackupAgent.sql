@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [DBA_ArchiveAccount2_BackupAgent]
+CREATE PROCEDURE [DBA_ArchiveAccount2_BackupAgent]
 	@AccName VARCHAR(50)
 AS
 /*
@@ -10,6 +10,7 @@ AS
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+			- 20200128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
 */
 BEGIN
 	    
@@ -45,6 +46,39 @@ BEGIN
 		from	customer (nolock)
 		WHERE custid = @CustID
 	END
+	
+	
+	IF NOT EXISTS(SELECT 1 FROM bodb_Customer.dbo.custinfo_old WITH(NOLOCK) 
+				WHERE	custid = @CustID
+		)
+	BEGIN
+	
+		insert into bodb_Customer.dbo.custinfo_old(
+			   [ArchiveDate],
+				username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
+							  VirtualMultiplier, maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11, maxpermatch12, 
+							  maxpermatch99, Enabled, danger, DisableCasino, SyncCasino, danger2, 
+							  danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161, 
+							  MaxPerBall161,
+							  Abnormal, DoubleCommLosing,
+							  autosuspend2, HideKeno, DisableEsports, HideGoldDeluxe, DisableGoldDeluxe,  
+							  DisableSuperLive, DisableColossusBet, HideColossusBet, 
+							  LockUpd, MaxPerMatch1MP, BonusWalletFlag
+		)
+		select CAST(current_timestamp as datetime), 
+				username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
+							  VirtualMultiplier, maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11, maxpermatch12, 
+							  maxpermatch99, Enabled, danger, DisableCasino, SyncCasino, danger2, 
+							  danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161, 
+							  MaxPerBall161,
+							  Abnormal, DoubleCommLosing,
+							  autosuspend2, HideKeno, DisableEsports, HideGoldDeluxe, DisableGoldDeluxe,  
+							  DisableSuperLive, DisableColossusBet, HideColossusBet, 
+							  LockUpd, MaxPerMatch1MP, BonusWalletFlag
+		from	custinfo (nolock)
+		WHERE custid = @CustID
+	END
+	
 	--Copy custSetting data to bodb_Customer before delete
 	IF NOT EXISTS(SELECT 1 FROM bodb_Customer.dbo.custSetting_old WITH(NOLOCK) 
 				WHERE	custid = @CustID
@@ -240,3 +274,4 @@ BEGIN
 		where	custid = @CustID
 	END		
 END
+    
