@@ -415,10 +415,8 @@ Revisions:
 	- 20201027@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20201008@Winfred : New Super - Prefix Warning [Redmine: #142239]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
-	
+	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 
-
-	
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -1209,6 +1207,44 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 			DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
 		RETURN
 	END	
+
+	 --New 611111 super must have VR setting = 0% (Basketball level)
+	 IF @site = '611111'
+	 BEGIN
+		DECLARE @VirtualMultiplier VARCHAR(MAX) = ''
+
+		SELECT @VirtualMultiplier = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
+															FROM VRSettingHierarchy b WITH(NOLOCK) 
+																CROSS APPLY VRValueMapping vr (NOLOCK)
+															WHERE b.SportType = 2 
+																AND b.VRLeagueGroupID = -1 
+																AND b.BetType = -1 
+																AND vr.Value = 1
+															FOR XML RAW('Row'), ROOT ('Root'))
+											)
+
+		EXEC [Acc_CustVirtualMultiplier_Upd]
+			  @CustID = @CustID
+			, @SportType = 2
+			, @VirtualMultiplier = @VirtualMultiplier
+			, @UserID  = @creator
+			, @IP  = @IP
+			, @ErrCode = @ErrCode OUTPUT 
+			, @ErrMsg = @ErrMsg OUTPUT
+		
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								when 'E' then 'Create customer fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END
+				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+				DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
+				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+			RETURN
+		END		
+	 END
+	
 
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
