@@ -28,7 +28,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
-		- 20200128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
+		- 20210128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
 
 */
     
@@ -46,7 +46,7 @@ set @startRun = getdate()
 Declare @roleid int, @AgentID int, @Enabled bit
 DECLARE @ProcessedDate DATETIME
 
-SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @srecommend = srecommend, @mrecommend = mrecommend, @ReduceCredit = credit
+SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @srecommend = srecommend, @mrecommend = mrecommend--, @ReduceCredit = credit
 FROM custinfo (nolock)
 WHERE username = @AccName
 
@@ -64,7 +64,7 @@ BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent has been archived!!', @ErrCode = 101
 	print @ErrMsg
 
-	SET @ProcessedDate = GETDATE()
+	SET @ProcessedDate = @currentDate
 
 	EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 		@CustId = @AgentID,
@@ -78,7 +78,7 @@ END
 
 
 --==Check new created members
-IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE recommend = @AgentID AND creatdate >= DATEADD(mm, -4, GETDATE()))
+IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE recommend = @AgentID AND creatdate >= DATEADD(mm, -4, @currentDate))
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just created new members while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
@@ -445,7 +445,7 @@ WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and 
 
 -- update enable = 0, credit = 0 for whole agent line (use new execRep SP)
 --> Insert data for Cust_ArchiveAccount
-SET @ProcessedDate = GETDATE()
+SET @ProcessedDate = @currentDate
 
 EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 	@CustId = @AgentID,
@@ -453,6 +453,8 @@ EXEC dbo.[Acc_DormantAccountList_InsertUpdate]
 	@StageID = 2,
 	@ProcessedDate = @ProcessedDate,
 	@ArchivedDate = @ArchivedDate
+
+SELECT @ReduceCredit = credit FROM custinfo (nolock) WHERE Custid = @AgentID
 
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 0
 
