@@ -364,15 +364,16 @@ BEGIN
 			
 			WHILE(1=1)
 			BEGIN
-				UPDATE TOP (1) t
+				UPDATE t
 				SET t.IsFinished = 1
 					, @custid = t.CustId
 					, @ReduceCredit = t.ReduceCredit
 					, @GroupLevelName = t.GroupLevelName
 					, @roleid_tmp = t.RoleID
 				FROM #ReduceCredit t
-				WHERE IsFinished = 0
-					AND ReduceCredit <> 0
+				WHERE T.CustId IN (SELECT TOP 1 CustId FROM #ReduceCredit  WHERE  IsFinished = 0
+									AND ReduceCredit <> 0
+									ORDER BY RoleID ASC )
 		
 				IF @@ROWCOUNT = 0 
 					BREAK
