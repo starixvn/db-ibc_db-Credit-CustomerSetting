@@ -12,6 +12,7 @@ AS
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+		- 20210128@Winfred: Archiving min credit accounts process for Master & Agent levels [RedmineID: #149262]
 		
 	Param:
 		+ @stage: input stage to run archive
@@ -27,6 +28,7 @@ BEGIN
 			, @LogData VARCHAR(500)
 			, @custid INT
 			, @NewCredit MONEY = 0
+			, @RealDownlineCredit MONEY = 0
 			, @username NVARCHAR(MAX)
 			, @recommend INT
 			, @ArchivedDate	DATE = GETDATE() --keep time stamp for Cust_ArchiveAccount
@@ -200,13 +202,14 @@ BEGIN
 	BEGIN
 							
 		INSERT INTO #ReduceCredit (CustId,srecommend,RoleID,Credit)
-		SELECT c.custid, c.srecommend, 3,credit
+		SELECT c.custid, c.srecommend, 3 ,credit
 		FROM (SELECT DISTINCT Master FROM dbo.tmpCustArchived  WITH (NOLOCK)  WHERE IsFinished = 0) AS t
 			CROSS APPLY (SELECT custid,srecommend,credit FROM dbo.custInfo c1 WITH (NOLOCK) WHERE c1.username= t.Master and c1.roleid = 3) AS c
-		UNION ALL
+		
+		INSERT INTO #ReduceCredit (CustId,srecommend,RoleID,Credit)
 		SELECT c.custid, c.custid, 4,credit
 		FROM (SELECT DISTINCT super FROM dbo.tmpCustArchived  WITH (NOLOCK)  WHERE IsFinished = 0) AS t
-			CROSS APPLY (SELECT custid,credit FROM dbo.custInfo c1 WITH (NOLOCK) WHERE c1.username= t.Super and c1.roleid = 4) AS c
+			CROSS APPLY (SELECT custid,credit FROM dbo.custInfo c1 WITH (NOLOCK) WHERE c1.username= t.Super and c1.roleid = 4) AS c 
 		
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 		
@@ -351,20 +354,23 @@ BEGIN
 		FROM #ReduceCredit r
 			INNER JOIN dbo.tmpCustGroupLevelArchived a WITH (NOLOCK) ON r.CustId = a.custid	
 		WHERE a.GroupLevelName IN ('M0','M1','S1')	
-		
+
 		IF EXISTS (SELECT TOP(1) 1 FROM #ReduceCredit WHERE ReduceCredit <> 0)
 		BEGIN
 			
 			WHILE(1=1)
 			BEGIN
-				UPDATE TOP (1) t
+				UPDATE t
 				SET t.IsFinished = 1
 					, @custid = t.CustId
 					, @ReduceCredit = t.ReduceCredit
 					, @GroupLevelName = t.GroupLevelName
+					, @roleid_tmp = t.RoleID
 				FROM #ReduceCredit t
-				WHERE IsFinished = 0
-					AND ReduceCredit <> 0
+				WHERE T.CustId IN (SELECT TOP 1 CustId FROM #ReduceCredit  WHERE  IsFinished = 0
+									AND ReduceCredit <> 0
+									ORDER BY RoleID ASC )
+
 		
 				IF @@ROWCOUNT = 0 
 					BREAK
@@ -373,9 +379,20 @@ BEGIN
 						@OldCredit = Credit
 				FROM	dbo.custInfo WITH (NOLOCK)
 				WHERE	custid = @custid
-
-				SET @NewCredit = @OldCredit - @ReduceCredit
 				
+				IF @roleid_tmp = 3 
+				BEGIN
+					SET @RealDownlineCredit = ISNULL((SELECT SUM(credit) FROM	dbo.custInfo WITH (NOLOCK) WHERE mrecommend = @custid AND roleid  = 2),0)
+				END
+				ELSE
+				BEGIN
+					SET @RealDownlineCredit = ISNULL((SELECT SUM(credit) FROM	dbo.custInfo WITH (NOLOCK) WHERE srecommend = @custid AND roleid  = 3),0)
+				END
+				SET @RealDownlineCredit = CASE WHEN 0 < @RealDownlineCredit THEN @RealDownlineCredit ELSE 0 END
+
+				SET @NewCredit = CASE WHEN @OldCredit - @ReduceCredit < @RealDownlineCredit THEN @RealDownlineCredit
+									  ELSE @OldCredit - @ReduceCredit END
+
 				UPDATE c
 					SET c.credit = @NewCredit
 				FROM dbo.custInfo c WITH (ROWLOCK, UPDLOCK)

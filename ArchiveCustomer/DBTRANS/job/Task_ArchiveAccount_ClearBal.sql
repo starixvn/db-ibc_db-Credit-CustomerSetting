@@ -12,6 +12,7 @@ AS
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20201105@Helen: Phase 2&3 - Include transfer A1, A0, M1, M0 to upline [Redmine: #130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+		- 20210128@Winfred: Check startrun when log master / Super [RedmineID: #149262]
 */
 BEGIN
 
@@ -31,7 +32,7 @@ BEGIN
 	DECLARE @endRun DATETIME
 	DECLARE @duration INT
 	DECLARE @UserID int = 360418
-	SET @startRun = getdate()
+	SET @startRun = GETDATE()
 	
 	if exists(select 1 from DBACC.bodb02.dbo.SystemSettings with(nolock) where VName = 'aa_Status' AND VValue IN ('Stage 3 - Running','Stage 3 - Done'))
 	BEGIN
@@ -91,6 +92,8 @@ BEGIN
 			WHERE IsFinished = 0	
 			
 			IF (@@ROWCOUNT = 0) BREAK
+			
+			SET @startRun = GETDATE()	
 			
 			WHILE (1=1)
 			BEGIN
@@ -176,6 +179,8 @@ BEGIN
 				WHERE IsFinished = 0	
 				
 				IF (@@ROWCOUNT = 0) BREAK
+			
+				SET @startRun = GETDATE()	
 				
 				WHILE(1=1)
 				BEGIN
