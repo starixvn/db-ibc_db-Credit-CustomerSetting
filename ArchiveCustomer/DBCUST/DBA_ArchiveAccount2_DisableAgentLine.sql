@@ -28,6 +28,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+		- 20210128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
 
 */
     
@@ -41,7 +42,7 @@ set @startRun = getdate()
 Declare @roleid int, @AgentID int, @Enabled bit
 DECLARE @ProcessedDate DATETIME
 
-SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @srecommend = srecommend, @mrecommend = mrecommend, @ReduceCredit = credit
+SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @srecommend = srecommend, @mrecommend = mrecommend--, @ReduceCredit = credit
 FROM custinfo (nolock)
 WHERE username = @AccName
 
@@ -118,6 +119,20 @@ END
 --Pre-check: Make sure cust info data not exist in DBRACCUST before backup
 IF EXISTS(
 	SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) 
+	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
+	)
+BEGIN
+	-- agent disabled before but some tables not backup in phase 1 yet
+	EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
+	Select @ErrMsg = @AccName +':'+ 'Backup data of this agent already exist. Please check!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
+	print @ErrMsg
+	return
+END
+
+--Pre-check: Make sure cust info data not exist in DBRACCUST before backup
+IF EXISTS(
+	SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) 
 	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
 	)
 BEGIN
@@ -434,6 +449,8 @@ EXEC dbo.[Acc_DormantAccountList_InsertUpdate]
 	@StageID = 2,
 	@ProcessedDate = @ProcessedDate,
 	@ArchivedDate = @ArchivedDate
+
+SELECT @ReduceCredit = credit FROM custinfo (nolock) WHERE Custid = @AgentID
 
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 0
 

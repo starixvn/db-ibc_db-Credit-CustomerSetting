@@ -13,6 +13,7 @@ AS
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+			- 20210128@Winfred: Check exists bettype 20000 in bettrans [RedmineID: #149262]
 */
 BEGIN
 	    
@@ -53,7 +54,13 @@ BEGIN
 		EXEC dbo.DBA_ArchiveAccount4_BackupCustInfoMaster @AccName=@AccName, @ErrMsg = @ErrMsg
 		--IF @ErrMsg <> '' return
 	END
-
+	--Pre-check: Make sure @CustID not exists bettype 20000 in bettrans
+	IF EXISTS(select 1 from DBACC.bodb02.dbo.bettrans with (nolock) where custid = @CustID AND bettype = 20000)
+	BEGIN
+		Select @ErrMsg = @AccName +':'+ 'This master exists bettype 20000 in bettrans!', @ErrCode = 11
+		print @ErrMsg
+		return
+	END
 
 	--===============================
 	--PERFORM DELETE MEMBERS INFO
