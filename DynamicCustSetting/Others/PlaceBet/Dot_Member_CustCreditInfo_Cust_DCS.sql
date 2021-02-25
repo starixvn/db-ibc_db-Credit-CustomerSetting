@@ -57,6 +57,7 @@ BEGIN
 	-- 20200811@VN-Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
 	-- 20200826@VN-Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
 	-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
+	-- 20210219@VN-Eden: Apply VR by stake range and Auto Adjustment VR by Member profile [Redmine: #150298]
 */
 	SET NOCOUNT ON;
 
@@ -65,7 +66,7 @@ BEGIN
 			@credit money, @MaxPerBall161 money,
 			@actualrate float, @currencyname nvarchar(50), @virtualrate smallmoney,
 			@maxpermatch money, @autosuspend bit, @currency int,
-			@closed bit, @reject bit, @DisableBet bit,@MaxWinVendorGame smallmoney=0,@WinMaxBetType smallint,@DisBetSetting bit,@BonusWalletFlag bit,@False bit=0,@True bit=1,@Zero tinyint=0
+			@closed bit, @reject bit, @DisableBet bit,@MaxWinVendorGame smallmoney=0,@WinMaxBetType smallint,@DisBetSetting bit,@BonusWalletFlag bit,@False bit=0,@True bit=1,@Zero tinyint=0, @Site VARCHAR(10), @IsForcedVRValue BIT, @ForcedVRValue SMALLMONEY,@creatdate DATETIME
 	/* don't move
 	set @WinMaxBetType=@bettype
 	select @WinMaxBetType=case --when @sporttype = 255 then 1701 --GD
@@ -265,9 +266,38 @@ BEGIN
 		END
 	END
 
+	--#150298 Check Member meet with given credit and StakeRM condition to Set VR = 0
+	IF EXISTS( SELECT 1 FROM VRMemberBigStake WITH(NOLOCK) WHERE custid = @custid AND Type = 1 AND status = 1)
+	BEGIN
+		SET @IsForcedVRValue = 0
+	END
+	ELSE
+	BEGIN
+		SELECT @Site = ISNULL(site,''), @creatdate = creatdate FROM Customer WITH(NOLOCK) WHERE custid = @custid
+
+		IF EXISTS(
+			SELECT 1
+			FROM dbo.f_GetVRBigStakeConfig(@Site) cf
+			WHERE cf.Credit < @credit * (CASE WHEN @currency <> 20 THEN @actualrate ELSE 1 END) 
+				AND stakeRM < @StakeRM
+				AND cf.Type = 1
+				AND cf.ReleasedDate <= @creatdate
+			)
+		BEGIN
+			SET @IsForcedVRValue = 1
+
+			SELECT @ForcedVRValue = VRValue
+			FROM dbo.f_GetVRBigStakeConfig(@Site) cf
+			WHERE cf.Type = 1
+		END
+
+		ELSE
+			SET @IsForcedVRValue = 0
+	END
+
 	IF @bettype<>0
 	BEGIN
-		IF @sporttype = 1 
+		IF @sporttype = 1
 		BEGIN
 			IF @bettype NOT BETWEEN 801 AND 806 --For Soccer, exclude SuperLive
 			BEGIN
@@ -311,6 +341,11 @@ BEGIN
 									, @srecommend = @srecommend													
 									, @virtualMultiplier = @new_virtualrate OUT
 									, @IsLowVR = @IsLowVR
+		END
+
+		IF @IsForcedVRValue = 1 AND @sporttype NOT IN (2,43)
+		BEGIN
+			SET @new_virtualrate = CASE WHEN @ForcedVRValue > ISNULL(@new_virtualrate,1) THEN @ForcedVRValue ELSE ISNULL(@new_virtualrate,1) END
 		END
 
 		SET @virtualrate = isnull(@new_virtualrate,1)
