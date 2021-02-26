@@ -88,6 +88,7 @@ AS
 		- 20201130@Tina: Add GDG (Gold Diamond Gaming) Live casino [Redmine: #144105]
 		- 20201012@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20201204@Tina: add BG (Big Gaming) [RedmineID: #142458]
+		- 20210229@Winfred: add Sports Lottery [RedmineID: #147361]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -139,7 +140,8 @@ BEGIN
 		,	@bitmapOrder_RNGWar			INT
 		,	@bitmapOrder_WM				INT  
 		,	@bitmapOrder_GDG			INT  
-		,	@bitmapOrder_BG				INT  
+		,	@bitmapOrder_BG				INT 
+		,	@bitmapOrder_SportsLottery	INT  
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)   
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)   
@@ -159,30 +161,32 @@ BEGIN
 	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
 	SET @bitmapOrder_WM = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 233 AND Bettype = 3401)
 	SET @bitmapOrder_GDG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 236 AND Bettype = 5701)
-	SET @bitmapOrder_BG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 239 AND Bettype = 3501)
+	SET @bitmapOrder_BG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 169 AND Bettype = 3501)
+	SET @bitmapOrder_SportsLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 239 AND Bettype = 3611)
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
     
-    DECLARE	@IsHidden_MuayThai		INT = 1
-		,	@IsHidden_Esports		INT = 1
-		,	@IsHidden_AllBet		INT = 1
-		,	@IsHidden_VoidBridge	INT = 1
-		,	@IsHidden_Lottery		INT = 1
-		,	@IsHidden_NG2			INT = 1
-		,	@IsHidden_FishingWorld	INT = 1
-		,	@IsHidden_VS			INT = 1
-		,	@IsHidden_VG			INT = 1
-		,	@IsHidden_SabaClub		INT = 1
-		,	@IsHidden_SAGaming		INT = 1
-		,	@IsHidden_SexyGaming	INT = 1
-		,	@IsHidden_ION		INT = 1
-		,	@IsHidden_BBIN			INT = 1
-		,	@IsHidden_TableGames	INT = 1
-		,	@IsHidden_GTCasino		INT = 1
-		,	@IsHidden_RNGWar		INT = 1
-		,	@IsHidden_WM			INT = 1
-		,	@IsHidden_GDG			INT = 1
-		,	@IsHidden_BG			INT = 1
+    DECLARE	@IsHidden_MuayThai			INT = 1
+		,	@IsHidden_Esports			INT = 1
+		,	@IsHidden_AllBet			INT = 1
+		,	@IsHidden_VoidBridge		INT = 1
+		,	@IsHidden_Lottery			INT = 1
+		,	@IsHidden_NG2				INT = 1
+		,	@IsHidden_FishingWorld		INT = 1
+		,	@IsHidden_VS				INT = 1
+		,	@IsHidden_VG				INT = 1
+		,	@IsHidden_SabaClub			INT = 1
+		,	@IsHidden_SAGaming			INT = 1
+		,	@IsHidden_SexyGaming		INT = 1
+		,	@IsHidden_ION				INT = 1
+		,	@IsHidden_BBIN				INT = 1
+		,	@IsHidden_TableGames		INT = 1
+		,	@IsHidden_GTCasino			INT = 1
+		,	@IsHidden_RNGWar			INT = 1
+		,	@IsHidden_WM				INT = 1
+		,	@IsHidden_GDG				INT = 1
+		,	@IsHidden_BG				INT = 1
+		,	@IsHidden_SportsLottery		INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_MuayThai OUTPUT	
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
@@ -205,6 +209,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 233, @IsHide = @IsHidden_WM OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 236, @IsHide = @IsHidden_GDG OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 239, @IsHide = @IsHidden_BG OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 169, @IsHide = @IsHidden_SportsLottery OUTPUT
 	
 	CREATE TABLE #customer(custid INT primary key, RowNumber INT, adiscountMyanmarOdds DECIMAL (9,8), IsMyanmarOdds BIT)
 							
@@ -767,7 +772,17 @@ BEGIN
 						END AS BIT) AS HideBG,
 				CAST(CASE	WHEN	@IsHidden_BG = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_BG), 1)=0
 						THEN 0 ELSE 1
-						END AS BIT) AS HideBGUpline,		
+						END AS BIT) AS HideBGUpline,
+				-- For Sports Lottery
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SportsLottery)) AS DisableSportsLottery,			
+				CAST(	CASE	WHEN	@IsHidden_SportsLottery = 0 								
+									AND	ISNULL(dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_SportsLottery), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideSportsLottery,
+				CAST(CASE	WHEN	@IsHidden_SportsLottery = 0 AND ISNULL(dbo.f_GetProductStatus(cpsUpline.bitmapIsHidden, @bitmapOrder_SportsLottery), 1)=0
+						THEN 0 ELSE 1
+						END AS BIT) AS HideSportsLotteryUpline,		
 				cm.IsInternal, cm.DisableAutoMPT,
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate
 		FROM dbo.Customer c WITH(NOLOCK)
@@ -939,6 +954,10 @@ BEGIN
 			ctm.DisableBG,
 			ctm.HideBG,
 			ctm.HideBGUpline,
+			--Sports Lottery
+			ctm.DisableSportsLottery,
+			ctm.HideSportsLottery,
+			ctm.HideSportsLotteryUpline,
 			
 			ISNULL(cl.ClosedReason,0)  AS ClosedReason,
 			RowNumber
