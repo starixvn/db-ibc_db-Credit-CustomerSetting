@@ -14,6 +14,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20200911@Helen: Fix stage 1 - M0 - [Redmine:130032]
 		- 20201231@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+		- 20210302@Eden: Just process SMA(s) stage 2, 3, 4 when they processed stage 1  [RedmineID: #149262]
 		
 	Param's Explanation:
 */
@@ -262,7 +263,7 @@ BEGIN
 	WHERE m1.MasterCount = m2.MasterCount
 		AND ar_s.custid IS NULL
 		AND 1 = CASE 
-					WHEN @StageId = 1 AND ci.closed = 1 THEN 0
+					--WHEN @StageId = 1 AND ci.closed = 1 THEN 0
 					WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0
 					ELSE 1 
@@ -273,12 +274,41 @@ BEGIN
 		 INNER JOIN custinfo c WITH (NOLOCK) ON t.custid = c.custid
 		 LEFT JOIN tmpCustGroupLevelArchived t1 WITH (NOLOCK) ON t1.custid = c.srecommend
 	WHERE  t.Roleid = 3 AND t.GroupLevelName = 'M0' AND (t1.GroupLevelName <> 'S1' OR t1.GroupLevelName IS NULL)
+
+	CREATE TABLE #M0NotInStage1(CustID INT, srecommend INT)
+
+	--> Get M0 list who were not processed on Stage 1 yet
+	IF @StageId <> 1
+	BEGIN
+		INSERT INTO #M0NotInStage1(CustID,srecommend)
+		SELECT ar.custid,ci.srecommend
+		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
+			INNER JOIN dbo.custinfo ci WITH (NOLOCK)  ON ar.custid = ci.custid
+			LEFT JOIN Cust_ArchiveAccount c WITH(NOLOCK) ON ar.custid = c.CustID
+		WHERE ar.GroupLevelName = 'M0'
+			AND c.CustID IS NULL
+
+		IF EXISTS( SELECT TOP 1 1 FROM #M0NotInStage1)
+		BEGIN
+			--Update S1(s)-->S2(s) if M0(s) were not processed on Stage 1 yet
+			UPDATE ar 
+			SET ar.GroupLevelName = 'S2'
+			FROM #M0NotInStage1 t
+				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.srecommend
+		
+			--Delete M0(s) if they were not processed on Stage 1 yet
+			DELETE ar
+			FROM #M0NotInStage1 t
+				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.CustID
+		END
+	END
 					 
 	DROP TABLE #tmpMaster
 	DROP TABLE #tmpSuper
 	DROP TABLE #tmpMaster_DetectM0
 	DROP TABLE #Super_Exception
 	DROP TABLE #tmpSuper_M0
+	DROP TABLE #M0NotInStage1
 	
 END
 GO
