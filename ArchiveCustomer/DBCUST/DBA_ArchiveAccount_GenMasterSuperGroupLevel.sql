@@ -276,6 +276,19 @@ BEGIN
 	WHERE  t.Roleid = 3 AND t.GroupLevelName = 'M0' AND (t1.GroupLevelName <> 'S1' OR t1.GroupLevelName IS NULL)
 
 	CREATE TABLE #M0NotInStage1(CustID INT, srecommend INT)
+	CREATE TABLE #Cust_ArchiveAccount_Master(CustID INT)
+
+	IF OBJECT_ID (N'Cust_ArchiveAccount', N'U') IS NOT NULL --check table is existing ?
+	BEGIN
+		INSERT INTO #Cust_ArchiveAccount_Master(CustID)
+		SELECT CUSTID FROM Cust_ArchiveAccount WITH(NOLOCK) WHERE roleid = 3
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #Cust_ArchiveAccount_Master(CustID)
+		SELECT CUSTID
+		FROM OPENQUERY (DBCUST, 'SELECT CUSTID FROM CUSTDB.dbo.Cust_ArchiveAccount WITH(NOLOCK) WHERE roleid = 3')
+	END
 
 	--> Get M0 list who were not processed on Stage 1 yet
 	IF @StageId <> 1
@@ -284,7 +297,7 @@ BEGIN
 		SELECT ar.custid,ci.srecommend
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
 			INNER JOIN dbo.custinfo ci WITH (NOLOCK)  ON ar.custid = ci.custid
-			LEFT JOIN Cust_ArchiveAccount c WITH(NOLOCK) ON ar.custid = c.CustID
+			LEFT JOIN #Cust_ArchiveAccount_Master c WITH(NOLOCK) ON ar.custid = c.CustID
 		WHERE ar.GroupLevelName = 'M0'
 			AND c.CustID IS NULL
 
