@@ -112,7 +112,7 @@ WHERE ag.isFinished = 1
 			creatdate >= @DDiff
 		)
 	AND se.srecommend IS NULL
-	AND ag.IsFinished = 1 AND ISNULL(ag.ErrMsg,'') <> '' AND ag.ErrMsg NOT LIKE '%archived%'
+	AND ag.IsFinished = 1 AND (ISNULL(ag.ErrMsg,'') = '' OR ag.ErrMsg LIKE '%archived%')
 
 ----Get more other cust based on s4 condition
 --INSERT INTO #tmpAg

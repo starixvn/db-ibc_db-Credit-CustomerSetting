@@ -70,7 +70,7 @@ EXEC dbo.DBA_ArchiveAccount_UpdateException
 SELECT ag.custid, isnull(MemCount, 0) [Member Count], isnull(TransCount, 0) [Trans Count]
 INTO #tmpAg
 FROM customer ag WITH (NOLOCK)
-	INNER JOIN bodb_report.dbo.tmpCustArchived tmp WITH (NOLOCK) ON ag.custid = tmp.recommend AND tmp.IsFinished = 1 AND ISNULL(tmp.ErrMsg,'') <> '' AND tmp.ErrMsg NOT LIKE '%archived%'
+	INNER JOIN bodb_report.dbo.tmpCustArchived tmp WITH (NOLOCK) ON ag.custid = tmp.recommend AND tmp.IsFinished = 1 AND (ISNULL(tmp.ErrMsg,'') = '' OR tmp.ErrMsg LIKE '%archived%')
 	INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
 	INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
 	INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
