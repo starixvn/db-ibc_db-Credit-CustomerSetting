@@ -13,7 +13,7 @@ AS
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20200807@Helen: Remove hardcode supers (allow negative given credit for members) since fixed already in Alpha Site [Redmine: #130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
-		- 20210302@Eden: Just process Agent on stage 3 when they processed stage 2  [RedmineID: #149262]
+		- 20210302@Eden: Just process Agent on stage 3 when they processed successfully on stage 2  [RedmineID: #149262]
 		
 	Param's Explanation:
 */
@@ -70,7 +70,7 @@ EXEC dbo.DBA_ArchiveAccount_UpdateException
 SELECT ag.custid, isnull(MemCount, 0) [Member Count], isnull(TransCount, 0) [Trans Count]
 INTO #tmpAg
 FROM customer ag WITH (NOLOCK)
-	INNER JOIN bodb_report.dbo.tmpCustArchived tmp WITH (NOLOCK) ON ag.custid = tmp.recommend
+	INNER JOIN bodb_report.dbo.tmpCustArchived tmp WITH (NOLOCK) ON ag.custid = tmp.recommend AND tmp.IsFinished = 1 AND ISNULL(tmp.ErrMsg,'') <> '' AND tmp.ErrMsg NOT LIKE '%archived%'
 	INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
 	INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
 	INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid

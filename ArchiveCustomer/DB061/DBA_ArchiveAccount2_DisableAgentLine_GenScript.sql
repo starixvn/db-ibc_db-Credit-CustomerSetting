@@ -17,6 +17,7 @@ AS
 		- 20200807@Helen: Remove hardcode supers (allow negative given credit for members) since fixed already in Alpha Site [Redmine: #130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+		- 20210302@Eden: Just process Agent on stage 2 when they processed successfully on stage 1  [RedmineID: #149262]
 		
 	Param's Explanation:
 */
@@ -103,6 +104,7 @@ WHERE ag.isFinished = 1
 			creatdate >= @startdate
 		)
 	AND se.srecommend IS NULL
+	AND ag.IsFinished = 1 AND ISNULL(ag.ErrMsg,'') <> '' AND ag.ErrMsg NOT LIKE '%archived%'
 	
 /*
 --Get more other cust based on s2 condition
