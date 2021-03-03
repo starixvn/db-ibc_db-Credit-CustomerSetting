@@ -20,7 +20,7 @@ BEGIN
 	)
 
 	CREATE TABLE #custSub_batch(
-		[subaccid] [int] 
+		[subaccid] [int] PRIMARY KEY
 	)
 
 	INSERT INTO #custSub (subaccid)
