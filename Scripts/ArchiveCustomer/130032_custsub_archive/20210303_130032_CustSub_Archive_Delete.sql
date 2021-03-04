@@ -7,8 +7,14 @@
 USE CUSTDB
 GO
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_09]
+(
+	@Target VARCHAR(20) = ''
+)
 AS
 BEGIN
+	
+	IF (@target = 'REPLICATED' AND @@SERVERNAME  IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2') ) RETURN	-- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2')) RETURN -- run at dbcust only
 	
 	IF dbo.f_CheckRepTable('custSub') = 0 
 		OR dbo.f_CheckRepTable('custInfo') = 0 
@@ -63,6 +69,10 @@ END
 GO
 -- STEP 1: DEPLOY THIS SP ON @DBCUST.CustDB --------
 
--- STEP 2: RUN THIS SCRIPT AT DBCUST --------
-EXEC dbo.Acc_CustomerInfo_Execrep_09
+-- BEGIN STEP 2: RUN THIS SCRIPT AT ALL REPLICATED SERVERS -----
+--------------------------------------------------------------------------------------
+EXEC dbo.Acc_CustomerInfo_Execrep_09 @target = 'REPLICATED'
 
+-- BEGIN STEP 3: RUN THIS SCRIPT AT DBCUST/CUSTDB -----
+--------------------------------------------------------------------------------------
+EXEC dbo.Acc_CustomerInfo_Execrep_09 @target = 'DBCUST' 

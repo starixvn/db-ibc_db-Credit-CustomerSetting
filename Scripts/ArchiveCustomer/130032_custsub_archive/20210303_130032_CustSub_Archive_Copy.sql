@@ -47,10 +47,12 @@ CREATE TABLE #custSub_batch(
 )
 
 INSERT INTO #custSub (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
-SELECT DISTINCT cs.subaccid, cs.custid, cs.username, cs.userpwd, cs.PageAccess, cs.createdate, cs.firstname, cs.lastname, cs.closed, cs.LoginCount, cs.UserName2, cs.NicknameLoginOnly, cs.IsAllDownline, cs.IsDeleted
+SELECT cs.subaccid, cs.custid, cs.username, cs.userpwd, cs.PageAccess, cs.createdate, cs.firstname, cs.lastname, cs.closed, cs.LoginCount, cs.UserName2, cs.NicknameLoginOnly, cs.IsAllDownline, cs.IsDeleted
 FROM #custsub_tmp cs 
-	LEFT JOIN bodb02.dbo.custInfo ci WITH (NOLOCK) ON cs.custid = ci.custid
-WHERE ci.custid IS NULL
+	LEFT JOIN dbo.custsub_old cs_old WITH (NOLOCK) ON cs.subaccid = cs_old.custid
+	OUTER APPLY (SELECT custid FROM bodb02.dbo.custinfo ci WITH (NOLOCK)
+				WHERE ci.custid = cs.custid) AS c
+WHERE cs_old.subaccid IS NULL AND c.custid IS NULL
 
 DECLARE @debug_message VARCHAR(500)
 SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
