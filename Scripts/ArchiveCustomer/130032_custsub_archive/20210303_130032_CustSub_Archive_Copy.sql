@@ -49,7 +49,7 @@ CREATE TABLE #custSub_batch(
 INSERT INTO #custSub (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
 SELECT cs.subaccid, cs.custid, cs.username, cs.userpwd, cs.PageAccess, cs.createdate, cs.firstname, cs.lastname, cs.closed, cs.LoginCount, cs.UserName2, cs.NicknameLoginOnly, cs.IsAllDownline, cs.IsDeleted
 FROM #custsub_tmp cs 
-	LEFT JOIN dbo.custsub_old cs_old WITH (NOLOCK) ON cs.subaccid = cs_old.custid
+	LEFT JOIN dbo.custsub_old cs_old WITH (NOLOCK) ON cs.subaccid = cs_old.subaccid
 	OUTER APPLY (SELECT custid FROM bodb02.dbo.custinfo ci WITH (NOLOCK)
 				WHERE ci.custid = cs.custid) AS c
 WHERE cs_old.subaccid IS NULL AND c.custid IS NULL
