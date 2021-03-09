@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-custdb" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [Task_ArchiveAccount]
+ALTER PROCEDURE [Task_ArchiveAccount]
 	@stage tinyint = NULL
 AS
 /*
@@ -13,7 +13,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210128@Winfred: Archiving min credit accounts process for Master & Agent levels [RedmineID: #149262]
-		
+		- 20210302@Eden: Just process SMA(s) stage 2, 3, 4 when they processed stage 1  [RedmineID: #149262]
 	Param:
 		+ @stage: input stage to run archive
 */
@@ -23,7 +23,7 @@ BEGIN
 	
 	-- simulate run date based on test data version
 	declare @currentDate smalldatetime 
-	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
+	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'	
 	
 	DECLARE @srecommend INT
 			, @mrecommend INT
@@ -35,7 +35,7 @@ BEGIN
 			, @RealDownlineCredit MONEY = 0
 			, @username NVARCHAR(MAX)
 			, @recommend INT
-			, @ArchivedDate	DATE = @CurrentDate --keep time stamp for Cust_ArchiveAccount
+			, @ArchivedDate	DATE = @currentDate --keep time stamp for Cust_ArchiveAccount
 			, @ProcessedDate DATETIME 
 			, @ArchivedCustID INT
 			, @IsOverwrite	BIT
@@ -44,7 +44,6 @@ BEGIN
 	DECLARE @agent varchar(50), @ErrMsg VARCHAR(150), @msg VARCHAR(100), @roleid_tmp INT, @S1M1_username NVARCHAR(100)
 	CREATE TABLE #ReduceCredit (CustId INT,RoleID TINYINT,GroupLevelName VARCHAR(10), srecommend INT,Credit MONEY, ReduceCredit MONEY DEFAULT(0), IsFinished BIT DEFAULT(0))
 	CREATE TABLE #ArchiveMasterSuper_tmp (CustID INT, RoleID TINYINT, GroupLevelName VARCHAR(10),username NVARCHAR(100), IsFinished BIT DEFAULT(0))
-	CREATE TABLE #M0NotInStage1(CustID INT, srecommend INT)
 		
 	if (@stage is null)
 	begin
@@ -72,7 +71,7 @@ BEGIN
 		--> Insert data for Cust_ArchiveAccount
 		WHILE(1=1)
 		BEGIN
-			SELECT @ProcessedDate = @CurrentDate
+			SELECT @ProcessedDate = @currentDate
 
 			SELECT TOP 1 @recommend = t.recommend 
 			FROM tmpCustArchived t (ROWLOCK)
@@ -97,7 +96,7 @@ BEGIN
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
-			SELECT @ProcessedDate = @CurrentDate
+			SELECT @ProcessedDate = @currentDate
 
 			SELECT TOP 1 @agent = Agent, @recommend = recommend 
 			FROM tmpCustArchived 
@@ -167,7 +166,7 @@ BEGIN
 				BEGIN
 					EXEC dbo.DBA_ArchiveAccount1_CloseMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
 
-					SELECT @ProcessedDate = @CurrentDate
+					SELECT @ProcessedDate = @currentDate
 
 					--> Insert data for Cust_ArchiveAccount
 					IF ISNULL(@ErrMsg,'') = '' OR @ErrMsg LIKE '%archived%'
@@ -279,28 +278,7 @@ BEGIN
 		--Gen List Super Master into tmpCustGroupLevelArchived
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = @stage
 
-		--> Get M0 list who were not processed on Stage 1 yet
-		INSERT INTO #M0NotInStage1(CustID,srecommend)
-		SELECT ar.custid,ci.srecommend
-		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
-			INNER JOIN dbo.custinfo ci WITH (NOLOCK)  ON ar.custid = ci.custid
-			LEFT JOIN Cust_ArchiveAccount c WITH(NOLOCK) ON ar.custid = c.CustID
-		WHERE ar.GroupLevelName = 'M0'
-			AND c.CustID IS NULL
-
-		IF EXISTS( SELECT TOP 1 1 FROM #M0NotInStage1)
-		BEGIN
-			--Update S1(s)-->S2(s) if M0(s) were not processed on Stage 1 yet
-			UPDATE ar 
-			SET ar.GroupLevelName = 'S2'
-			FROM #M0NotInStage1 t
-				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.srecommend
 		
-			--Delete M0(s) if they were not processed on Stage 1 yet
-			DELETE ar
-			FROM #M0NotInStage1 t
-				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.CustID
-		END
 		
 		-- Processing for M0, M1, S1
 		INSERT INTO #ArchiveMasterSuper_tmp (CustID, GroupLevelName, RoleID, username)
@@ -374,6 +352,7 @@ BEGIN
 				WHERE T.CustId IN (SELECT TOP 1 CustId FROM #ReduceCredit  WHERE  IsFinished = 0
 									AND ReduceCredit <> 0
 									ORDER BY RoleID ASC )
+
 		
 				IF @@ROWCOUNT = 0 
 					BREAK
@@ -436,7 +415,7 @@ BEGIN
 		WHILE(1=1)
 		BEGIN
 			SELECT @ErrMsg = ''
-			SELECT @ProcessedDate = @CurrentDate
+			SELECT @ProcessedDate = @currentDate
 
 			SELECT TOP 1 @agent = Agent, @recommend = recommend
 			FROM tmpCustArchived WHERE IsFinished = 0	
@@ -479,7 +458,7 @@ BEGIN
 			WHILE(1=1)
 			BEGIN
 				SELECT @ErrMsg = ''
-				SELECT @ProcessedDate = @CurrentDate
+				SELECT @ProcessedDate = @currentDate
 				
 				UPDATE TOP (1) t
 					SET  IsFinished = 1
@@ -591,7 +570,4 @@ BEGIN
 
 	DROP TABLE #ReduceCredit
 	DROP TABLE #ArchiveMasterSuper_tmp
-	DROP TABLE #M0NotInStage1
 END	
-
-    
