@@ -82,7 +82,7 @@ BEGIN
 	GROUP BY c.srecommend
 	
 	DECLARE @DDiff DATETIME
-	SELECT @DDiff = DATEADD(mm, -7, @currentdate))
+	SELECT @DDiff = DATEADD(mm, -7, @currentdate)
 	SELECT @DDiff = DATEADD(week, -2, @DDiff)
 
 	INSERT INTO #tmpMaster_DetectM0 (custid,srecommend)
