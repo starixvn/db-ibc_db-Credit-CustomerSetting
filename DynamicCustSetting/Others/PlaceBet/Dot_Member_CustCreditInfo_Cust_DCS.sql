@@ -58,6 +58,7 @@ BEGIN
 	-- 20200826@VN-Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
 	-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
 	-- 20210219@VN-Eden: Apply VR by stake range and Auto Adjustment VR by Member profile [Redmine: #150298]
+	-- 20210309@VN-Eden: Revise @betfrom = 'a' to 'z' to VR setting for Basketball on some licensees from Desktop/China View [Redmine: #151392]
 */
 	SET NOCOUNT ON;
 
@@ -137,7 +138,7 @@ BEGIN
 	DECLARE @new_virtualrate FLOAT = 1
 
 	IF @sporttype_vrate <= 99
-		AND @BetFrom = 'a' --Desktop/ChinaView
+		AND @BetFrom = 'z' --Desktop/ChinaView
 		AND @isLicensee = 1 AND @currencyname IN( 'RMB','UUS')
 	BEGIN
 		DECLARE @AdjustmentSporttype smallint
