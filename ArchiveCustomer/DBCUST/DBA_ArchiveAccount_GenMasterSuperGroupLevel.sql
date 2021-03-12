@@ -287,7 +287,8 @@ BEGIN
 	BEGIN
 		INSERT INTO #Cust_ArchiveAccount_Master(CustID)
 		SELECT CUSTID
-		FROM OPENQUERY (DBCUST, 'SELECT CUSTID FROM CUSTDB.dbo.Cust_ArchiveAccount WITH(NOLOCK) WHERE roleid = 3')
+		FROM DBCUST.CUSTDB.dbo.Cust_ArchiveAccount WITH(NOLOCK) 
+		WHERE roleid = 3
 	END
 
 	--> Get M0 list who were not processed on Stage 1 yet
