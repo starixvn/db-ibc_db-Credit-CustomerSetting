@@ -14,6 +14,8 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210128@Winfred: Check exists bettype 20000 in bettrans [RedmineID: #149262]
+		- 20210225@Winfred: Check exists bettype 20000 and matchid = 0 ( use clustered index ) in bettrans [RedmineID: #149262]
+		- 20210302@Eden: Just process Agent on stage 4 when they processed successfully on stage 3  [RedmineID: #149262]
 		
 	Param's Explanation:
 */
@@ -110,6 +112,8 @@ WHERE ag.isFinished = 1
 			creatdate >= @DDiff
 		)
 	AND se.srecommend IS NULL
+	AND ag.IsFinished = 1 AND (ISNULL(ag.ErrMsg,'') = '' OR ag.ErrMsg LIKE '%archived%')
+
 ----Get more other cust based on s4 condition
 --INSERT INTO #tmpAg
 --SELECT ag.custid, isnull(MemCount, 0) [Member Count], isnull(TransCount, 0) [Trans Count]
@@ -165,7 +169,7 @@ FROM customer ag WITH (NOLOCK)
 	INNER JOIN #tmpAg t WITH (NOLOCK) ON ag.custid = t.custid
 	INNER JOIN customer mag WITH (NOLOCK) ON ag.mrecommend = mag.custid AND mag.roleid = 3
 	INNER JOIN customer sag WITH (NOLOCK) ON ag.srecommend = sag.custid AND sag.roleid = 4
-	LEFT JOIN  dbo.bettrans bt WITH(NOLOCK) ON ag.custid = bt.custid  AND bt.bettype = 20000
+	LEFT JOIN  dbo.bettrans bt WITH(NOLOCK) ON ag.custid = bt.custid  AND bt.bettype = 20000 AND matchid = 0
 WHERE bt.custid IS NULL	
 ORDER BY [Member Count] DESC
 
