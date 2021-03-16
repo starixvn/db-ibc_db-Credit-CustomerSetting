@@ -489,6 +489,7 @@ BEGIN
 			
 		END
 		
+		Print 'ArchivedMasterAgent_Stage3: Begin'
 		-- insert data for table ArchivedMasterAgent_Stage3 - tw will refer to delete data for Casino DB
 		TRUNCATE TABLE ArchivedMasterAgent_Stage3
 		
@@ -522,6 +523,8 @@ BEGIN
 		
 		DROP TABLE #AgentList_Stage3
 		DROP TABLE #Masterlist_Stage3
+		
+		Print 'ArchivedMasterAgent_Stage3: END'
 
 	END
 	ELSE IF(@stage = 4)
