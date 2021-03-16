@@ -12,6 +12,7 @@ AS
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201130@Eden: NAP/Alpha & EXT - Apply color for archived accounts [Redmine:145018]
+			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 */
 BEGIN
 	IF @Stage = 1
@@ -108,6 +109,13 @@ BEGIN
 			DELETE dbo.Customer WITH (UPDLOCK,ROWLOCK)
 			WHERE	custid = @CustID
 		END	
+		
+		IF dbo.f_CheckRepTable('custsub') = 1 
+		BEGIN
+			DELETE dbo.custSub WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
 				
 	END 
 END

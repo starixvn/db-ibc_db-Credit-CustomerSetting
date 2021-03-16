@@ -14,6 +14,8 @@ AS
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210128@Winfred: Archiving min credit accounts process for Master & Agent levels [RedmineID: #149262]
 		- 20210302@Eden: Just process SMA(s) stage 2, 3, 4 when they processed stage 1  [RedmineID: #149262]
+		- 20210316@Helen: ArchivedMasterAgent_Stage3 for stage 3, backup CustSub and delete for stage 4 [RedmineID: #130032]
+		
 	Param:
 		+ @stage: input stage to run archive
 */
@@ -487,6 +489,37 @@ BEGIN
 			
 		END
 		
+		-- insert data for table ArchivedMasterAgent_Stage3 - tw will refer to delete data for Casino DB
+		TRUNCATE TABLE ArchivedMasterAgent_Stage3
+		
+		SELECT DISTINCT custid 
+		INTO #Masterlist_Stage3
+		FROM tmpCustGroupLevelArchived WITH(NOLOCK) 
+		WHERE GroupLevelName IN ('M1','M0')
+			
+		SELECT DISTINCT recommend AS CustID
+		INTO #AgentList_Stage3
+		FROM tmpCustArchived WITH(NOLOCK) 
+		WHERE IsFinished = 1 AND ISNULL(ErrMsg,'') = ''
+
+		INSERT INTO ArchivedMasterAgent_Stage3(CustID,username,Level)
+		SELECT s.CustID,
+			c.username,
+			'Agent' AS [Level]
+		FROM #AgentList_Stage3 s 
+			INNER JOIN custInfo c WITH(NOLOCK) ON s.CustID = c.custid
+		WHERE c.roleid = 2
+			AND c.Enabled = 0
+			AND NOT EXISTS( SELECT 1 FROM #Masterlist_Stage3 WHERE custid = c.mrecommend)
+		UNION ALL 
+		SELECT s.CustID,
+			c.username,
+			'Master' AS [Level]
+		FROM #Masterlist_Stage3 s 
+			INNER JOIN custInfo c WITH(NOLOCK) ON s.CustID = c.custid
+		WHERE c.roleid = 3
+			AND c.Enabled = 0
+
 	END
 	ELSE IF(@stage = 4)
 	BEGIN
@@ -566,4 +599,7 @@ BEGIN
 
 	DROP TABLE #ReduceCredit
 	DROP TABLE #ArchiveMasterSuper_tmp
+	DROP TABLE #AgentList_Stage3
+	DROP TABLE #Masterlist_Stage3
+	
 END	

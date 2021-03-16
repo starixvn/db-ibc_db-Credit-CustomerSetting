@@ -18,7 +18,8 @@ AS
 		20200922@Helen: Remove old table [Redmine:130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201201@Eden: NAP/Alpha & EXT - Apply color for archived accounts [Redmine:145018]
-
+		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+		
 	Param's Explanation:
 		@Type: 
 			+ -1-Stage 1: update closed = 1 for whole agent line
@@ -403,6 +404,13 @@ BEGIN
 					BREAK			
 			END
 		END
-
+				
+	    IF dbo.f_CheckRepTable('custsub') = 1 
+		BEGIN
+			DELETE dbo.custSub WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @AgentID 
+			
+		END
+		
 	END 
 END

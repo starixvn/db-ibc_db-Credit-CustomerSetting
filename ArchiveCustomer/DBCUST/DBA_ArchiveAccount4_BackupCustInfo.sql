@@ -17,6 +17,7 @@ AS
 		20190917@Daniel: Remove inactive products - unused custinfo columns (#117439 - P2)
 		20190929@Daniel: Involve more setting tables
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 
 */
     
@@ -104,7 +105,6 @@ select	@Now,
 from	custinfo (nolock)
 where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
 
-
 --------- Involve more tables (new tables/DCS)
 
 insert into DBARCCUST.bodb_Customer.dbo.CustLoginInfo_Member_old(
@@ -115,5 +115,11 @@ SELECT CustID, SecurityCode, IP, LastChangedID, LastChangedDate, OddsType, Layou
      ShowScoreMap, ShowBanner, AutoRefresh, MarketType, AutoRefreshMatch, MobileOthersType, gesture, failedcount, lastlogged, OddsColorStyle, ClosedReason, notify, recommendation
 FROM	CustLoginInfo_Member WITH (NOLOCK)
 WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
+
+------- custSub -------------------------------
+INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+FROM	custsub WITH (NOLOCK)
+WHERE	custid = @AgentID
 
 print  @AccName +':'+ 'END Backup cust info:' + convert(varchar(50), getdate(), 113) 

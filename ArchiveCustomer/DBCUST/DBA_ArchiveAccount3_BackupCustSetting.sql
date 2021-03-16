@@ -17,6 +17,7 @@ AS
 		20190929@Daniel: Involve more setting tables
 		20200922@Helen: Remove old table [Redmine:130032]
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 
 */
 BEGIN    
@@ -360,6 +361,12 @@ BEGIN
 		INNER JOIN  custinfo ci WITH (NOLOCK) ON ci.custid = cs.custID 
 	WHERE	ci.recommend = @AgentID	
 
+	------- custSub -------------------------------
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+	SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+	FROM	custsub WITH (NOLOCK)
+	WHERE	custid = @AgentID
+	
 	-----------------------------------------------------------------------------------------------------------
 
 

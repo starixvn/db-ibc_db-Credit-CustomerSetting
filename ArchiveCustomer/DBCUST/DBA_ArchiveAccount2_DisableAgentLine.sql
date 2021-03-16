@@ -29,6 +29,7 @@ AS
 		- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
+		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 
 */
     
@@ -436,6 +437,11 @@ insert into DBARCCUST.bodb_Customer.dbo.CustWinLossLimit_Member_old(
 SELECT CustId, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset
 FROM	CustWinLossLimit_Member WITH (NOLOCK)
 WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
+
+INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+FROM	custsub WITH (NOLOCK)
+WHERE	custid = @AgentID
 
 -----------------------------------------------------------------------------------------------------------
 
