@@ -87,6 +87,7 @@ AS
 	- 20200403@Eden: Block to add new customer by site [Redmine: #131758]
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 
  Explanation's Param:  
 	• @ErrCode:
@@ -736,6 +737,43 @@ BEGIN
 							
 		RETURN	
 	END CATCH	
+
+	BEGIN TRY
+		 --VR lock status
+		INSERT INTO VRCustLockStatus(CustID,Type)
+		SELECT @custid,Type
+		FROM VRCustLockStatus v (NOLOCK) 
+		WHERE CustID = @mrecommend
+			AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
+			
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+				,@ErrCode = 106
+			
+		-- ROLLBACK MANUALLY
+		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
+		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
+		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
+		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
+	
+		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
+		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
+		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+							
+		RETURN	
+	END CATCH
 	
 	
 	SET @endRun=GETDATE()

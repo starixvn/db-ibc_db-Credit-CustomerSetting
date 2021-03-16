@@ -1,1 +1,4 @@
-
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql

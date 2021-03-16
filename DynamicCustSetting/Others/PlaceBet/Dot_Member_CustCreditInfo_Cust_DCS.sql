@@ -59,6 +59,7 @@ BEGIN
 	-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
 	-- 20210219@VN-Eden: Apply VR by stake range and Auto Adjustment VR by Member profile [Redmine: #150298]
 	-- 20210309@VN-Eden: Revise @betfrom = 'a' to 'z' to VR setting for Basketball on some licensees from Desktop/China View [Redmine: #151392]
+	-- 20210226@VN-Eden: Implement Lock for VR update [Redmine:#149370]
 */
 	SET NOCOUNT ON;
 
@@ -174,6 +175,13 @@ BEGIN
 					AND v.CustID = @custid
 					AND v.[Status] = 1
 					AND FirstBetDate IS NULL
+
+			----lock VR status Other sport
+			IF NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = 2)
+			BEGIN
+				INSERT INTO VRCustLockStatus(CustID,Type)
+				SELECT @custid, 2
+			END
 			
 			SELECT @ValueID_0 = ValueID
 			FROM VRValueMapping WITH(NOLOCK)
@@ -224,6 +232,13 @@ BEGIN
 				SELECT	sporttype,bettype,islive,1.00
 				FROM ProfileVirtualSetting 	WITH (NOLOCK)	
 				WHERE sporttype = 1
+
+				--lock VR status for Soccer
+				IF NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = 1)
+				BEGIN
+					INSERT INTO VRCustLockStatus(CustID,Type)
+					SELECT @custid, 1
+				END
 			END
 										
 			INSERT INTO @virtualXML(seqNo, Pos, Val )
