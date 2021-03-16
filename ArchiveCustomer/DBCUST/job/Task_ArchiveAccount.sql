@@ -519,6 +519,9 @@ BEGIN
 			INNER JOIN custInfo c WITH(NOLOCK) ON s.CustID = c.custid
 		WHERE c.roleid = 3
 			AND c.Enabled = 0
+		
+		DROP TABLE #AgentList_Stage3
+		DROP TABLE #Masterlist_Stage3
 
 	END
 	ELSE IF(@stage = 4)
@@ -599,7 +602,5 @@ BEGIN
 
 	DROP TABLE #ReduceCredit
 	DROP TABLE #ArchiveMasterSuper_tmp
-	DROP TABLE #AgentList_Stage3
-	DROP TABLE #Masterlist_Stage3
 	
 END	
