@@ -489,18 +489,20 @@ BEGIN
 			
 		END
 		
-		Print 'ArchivedMasterAgent_Stage3: Begin'
+		PRINT 'ArchivedMasterAgent_Stage3: Begin'
 		-- insert data for table ArchivedMasterAgent_Stage3 - tw will refer to delete data for Casino DB
 		TRUNCATE TABLE ArchivedMasterAgent_Stage3
 		
-		SELECT DISTINCT custid 
+		SELECT DISTINCT ar.custid 
 		INTO #Masterlist_Stage3
-		FROM tmpCustGroupLevelArchived WITH(NOLOCK) 
+		FROM tmpCustGroupLevelArchived ar WITH(NOLOCK) 
+			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.custid = ca.CustID AND ca.ArchivedDate = @ArchivedDate
 		WHERE GroupLevelName IN ('M1','M0')
 			
-		SELECT DISTINCT recommend AS CustID
+		SELECT DISTINCT ar.recommend AS CustID
 		INTO #AgentList_Stage3
-		FROM tmpCustArchived WITH(NOLOCK) 
+		FROM tmpCustArchived ar WITH(NOLOCK) 
+			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.recommend = ca.CustID AND ca.ArchivedDate = @ArchivedDate
 		WHERE IsFinished = 1 AND ISNULL(ErrMsg,'') = ''
 
 		INSERT INTO ArchivedMasterAgent_Stage3(CustID,username,Level)
