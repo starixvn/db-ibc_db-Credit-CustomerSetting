@@ -453,6 +453,7 @@ Revisions:
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	- 20201027@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
 Param's Explanation:
 • @ErrCode:
     = 0: Create agent successfully.
@@ -2562,6 +2563,16 @@ BEGIN
 			AND psd.SettingType IN (4,11,13)-- Product Status, Game Status
 	)iq
 
+	--Log for VR lock Status
+	DECLARE @VRLockedStatus_Soccer BIT = 0
+	DECLARE @VRLockedStatus_OS BIT = 0
+
+	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @mrecommend AND Type = 1)
+		SET @VRLockedStatus_Soccer = 1
+
+	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @mrecommend AND Type = 2)
+		SET @VRLockedStatus_OS = 1
+
     SELECT @LogSPData = '<Acc_CustomerInsMember_MAg custid="'+ COALESCE(CAST(@custid as VARCHAR(50)), SPACE(1)) + '" ' +
     'isinternal="'+ COALESCE(CAST(@IsInternal as VARCHAR(50)), SPACE(1)) + '" ' +
     'suspended="'+ COALESCE(CAST(@suspended as VARCHAR(1)), SPACE(1)) + '" ' +
@@ -2577,7 +2588,8 @@ BEGIN
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
-
+	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
+	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
     'DisableCasino="'+ COALESCE(CAST(@DisableCasino as VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright as VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableNumber="' + COALESCE(CAST(@DisableNumber as VARCHAR(1)), SPACE(1)) + '" ' +
@@ -2610,7 +2622,8 @@ BEGIN
 		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
-	
+		'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
+		'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	    'DisableCasino="'+ COALESCE(CAST(@DisableCasino as VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableOutright="'+ COALESCE(CAST(@DisableOutright as VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableNumber="' + COALESCE(CAST(@DisableNumber as VARCHAR(1)), SPACE(1)) + '" ' +

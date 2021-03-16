@@ -416,6 +416,7 @@ Revisions:
 	- 20201008@Winfred : New Super - Prefix Warning [Redmine: #142239]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
+	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
 
 Param's Explanation:
 • @ErrCode:
@@ -1441,6 +1442,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'VRLockStatus_Soccer="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +   
+	'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
 	
 	'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -1470,6 +1473,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'VRLockStatus_Soccer="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +   
+		'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
 		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	
 		'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +

@@ -158,6 +158,7 @@ Revisions:
 	- 20200602@Sol: Check IsAutoEnableADBMaster to enable ADB on Mater or not[Redmine: #134242]
 	- 20200722@Johnson: add void time & limit amount for problem account [redmine: #135253]
 	- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
+	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 	
 	Param's Explanation:
 • @ErrCode:
@@ -373,6 +374,44 @@ BEGIN
 	    RETURN
     END	
 
+	DECLARE @UplineID INT
+
+	SELECT @UplineID = CASE WHEN @roleid = 3 THEN @srecommend 
+							WHEN @roleid = 2 THEN @mrecommend
+							WHEN @roleid = 1 THEN @recommend
+						END
+
+	--VR lock status
+	INSERT INTO VRCustLockStatus(CustID,Type)
+	SELECT @custid,Type
+	FROM VRCustLockStatus v (NOLOCK) 
+	WHERE CustID = @UplineID
+		AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
+
+	IF @@ERROR <> 0
+    BEGIN
+	    SELECT @ErrMsg = CASE @Language 
+					       WHEN 'E' THEN 'Create customer failed. Please try again.'
+					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+					     END
+		     , @ErrCode = 112
+
+	    -- ROLLBACK MANUALLY
+	    IF @RoleID = 4
+		    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+	    ELSE IF @RoleID = 3
+		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+	    ELSE IF @RoleID = 2
+		    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
+
+	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
+	    RETURN
+    END	
+
+
 	DECLARE @ClosedReason TINYINT 
 	IF(@SystemID=1 AND @closed=1)
 		SELECT @ClosedReason=1
@@ -414,6 +453,7 @@ BEGIN
 
 		    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+			DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 			EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 		    RETURN
 	    END
@@ -442,6 +482,7 @@ BEGIN
 
 				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+				DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 				EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 				RETURN
 			END
@@ -527,6 +568,7 @@ BEGIN
 		DELETE FROM custInfo WITH (ROWLOCK) WHERE CustId = @custid
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
+		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 		RETURN
     END CATCH
@@ -740,6 +782,7 @@ BEGIN
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
+			DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 			EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 			
 			RETURN
