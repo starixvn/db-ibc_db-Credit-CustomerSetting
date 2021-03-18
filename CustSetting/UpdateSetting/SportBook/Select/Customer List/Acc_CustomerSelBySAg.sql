@@ -974,7 +974,11 @@ BEGIN
 			ctm.DisableSportsLottery,
 			ctm.HideSportsLottery,
 			ctm.HideSportsLotteryUpline,
-			
+			--PP Live
+			ctm.DisablePPLive,
+			ctm.HidePPLive,
+			ctm.HidePPLiveUpline,
+
 			ISNULL(cl.ClosedReason,0)  AS ClosedReason,
 			RowNumber
 			

@@ -968,6 +968,10 @@ BEGIN
 			ctm.DisableSportsLottery,
 			ctm.HideSportsLottery,
 			ctm.HideSportsLotteryUpline,
+			--PP Live Casino
+			ctm.DisablePPLive,
+			ctm.HidePPLive,
+			ctm.HidePPLiveUpline,
 			
 			ctm.DisableNG2,
 			ctm.HideNG2,
