@@ -73,6 +73,7 @@ AS
 		- 20200826@Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
 		- 20201201@Eden: Just Update reason for customers who updated closed status [Redmine:145018]
 		- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
+		- 20210308@Eden: Copy and apply VR settings to multiple member accounts [Redmine:#149372]
 
 	Param's Explanation:
 		@Action: 
@@ -424,7 +425,7 @@ BEGIN
 		END;
 	END;
 	
-	IF	(@EnableVirtualrate = 1 AND dbo.f_CheckRepTable('CustVirtualSetting') = 1 AND (SELECT TOP 1 1 FROM @tblVirtualrate) IS NOT NULL)
+	IF	(dbo.f_CheckRepTable('CustVirtualSetting') = 1 AND (SELECT TOP 1 1 FROM @tblVirtualrate) IS NOT NULL)
 	BEGIN
 		INSERT INTO @virtualXML_Soccer
 			(	seqNo, Pos, Val                       )
@@ -1315,7 +1316,8 @@ BEGIN
 	END
 	ELSE IF @Action = 'EnableVRLockStatus'--execrep just use for enable 
 	BEGIN
-		IF OBJECT_ID (N'VRCustLockStatus', N'U') IS NOT NULL --check table is existing ?
+		--IF OBJECT_ID (N'VRCustLockStatus', N'U') IS NOT NULL --check table is existing ?
+		IF dbo.f_CheckRepTable('VRCustLockStatus') = 1
 		BEGIN
 			CREATE TABLE #TblCustDownline (custID INT)
 			CREATE TABLE #TblCustDownline_tmpBatch (CustID INT PRIMARY KEY)	
