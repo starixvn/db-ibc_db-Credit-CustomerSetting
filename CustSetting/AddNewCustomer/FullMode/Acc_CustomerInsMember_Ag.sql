@@ -316,6 +316,7 @@ Revisions:
 	- 20201027@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
+	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 
 Param's Explanation:	
 • @ErrCode:
@@ -484,7 +485,32 @@ BEGIN
 		END	
 	END
 -----END: 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit-member each minute. Normal agent can open up to 10 members per minute
-
+	DECLARE @_Site VARCHAR(10)
+	SELECT @_Site = site
+	FROM dbo.customer WITH(NOLOCK)
+	WHERE CustID = @recommend
+	
+	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0
+	SET @DefaultValueLimitAcc = dbo.fn_IsSiteLimitCreateAccount(@_Site)
+	IF @DefaultValueLimitAcc > 0
+	BEGIN
+		SELECT @lastAccountToDay = COUNT(1)
+		FROM Customer c WITH(NOLOCK)
+		WHERE c.recommend = @recommend
+			and c.roleid = 1
+			AND c.site = @_Site
+			and CONVERT(DATE,c.creatdate) = CONVERT(DATE, CURRENT_TIMESTAMP)
+			
+		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
+		BEGIN
+			Select	@ErrMsg = case @Language 
+							when 'E' then 'Sorry. You cannot create customer too often.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40029,@Language)
+						end,
+					@ErrCode = 998	
+			return
+		END
+	END
 
 --20140619@Johnson: Check IP to create downline-----------------
 	Declare @isValidIP BIT
@@ -3807,12 +3833,6 @@ BEGIN
     SET @LogDataKeno = 'HideKeno="'+ COALESCE(CAST(@HideKeno AS VARCHAR(1)), SPACE(1)) + '" ' + @LogDataKeno
 
 	DECLARE @LogDataSP2 VARCHAR(4000)
-	
-	DECLARE @_Site VARCHAR(10)
-	SELECT @_Site = site
-	FROM dbo.customer WITH(NOLOCK)
-	WHERE CustID = @recommend
-
 	SET @LogDataSP2 = ''
 	
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType

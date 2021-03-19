@@ -440,6 +440,7 @@ Revisions:
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
+	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 			
 Param's Explanation:
 • @ErrCode:
@@ -603,6 +604,27 @@ BEGIN
 		RETURN 
 	END
     ----- / 20130717@Lukas-----------------
+    DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0
+	SET @DefaultValueLimitAcc = dbo.fn_IsSiteLimitCreateAccount(@Site)
+	IF @DefaultValueLimitAcc > 0
+	BEGIN
+		SELECT @lastAccountToDay = COUNT(1)
+		FROM Customer c WITH(NOLOCK)
+		WHERE c.srecommend = @srecommend
+			and c.roleid = 3
+			AND c.site = @Site
+			and convert(date,c.creatdate) = convert(date, CURRENT_TIMESTAMP)
+			
+		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
+		BEGIN
+			Select	@ErrMsg = case @Language 
+							when 'E' then 'Sorry. You cannot create customer too often.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40029,@Language)
+						end,
+					@ErrCode = 998	
+			return
+		END
+	END
 --20140619@Johnson: Check IP to create downline-----------------
 	DECLARE @isValidIP BIT
 	

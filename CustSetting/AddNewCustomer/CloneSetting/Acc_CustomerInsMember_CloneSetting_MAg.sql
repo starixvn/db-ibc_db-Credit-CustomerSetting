@@ -88,7 +88,8 @@ AS
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
-
+	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
+	
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -197,7 +198,29 @@ BEGIN
 			@ErrCode = 100
 		return
 	END
-
+	
+	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0
+	SET @DefaultValueLimitAcc = dbo.fn_IsSiteLimitCreateAccount(@Site)
+	IF @DefaultValueLimitAcc > 0
+	BEGIN
+		SELECT @lastAccountToDay = COUNT(1)
+		FROM Customer c WITH(NOLOCK)
+		WHERE c.mrecommend = @mrecommend
+			and c.roleid = 2
+			AND c.site = @Site
+			and convert(date,c.creatdate) = convert(date, CURRENT_TIMESTAMP)
+			
+		IF @lastAccountToDay >= @DefaultValueLimitAcc
+		BEGIN
+			Select	@ErrMsg = case @Language 
+							when 'E' then 'Sorry. You cannot create customer too often.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40029,@Language)
+						end,
+					@ErrCode = 998	
+			return
+		END
+	END
+	
 	--CREDIT CHECK
 	DECLARE @Credit_AllOtherAgent MONEY, @Credit_MAg MONEY
 	

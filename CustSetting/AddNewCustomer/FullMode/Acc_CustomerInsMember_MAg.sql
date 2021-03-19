@@ -454,6 +454,8 @@ Revisions:
 	- 20201027@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
+	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Create agent successfully.
@@ -855,7 +857,27 @@ BEGIN
 	   SELECT @groupb = 0, @groupc = 0, @groupd = 0		
 	END
 	
-	
+	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0
+	SET @DefaultValueLimitAcc = dbo.fn_IsSiteLimitCreateAccount(@Site)
+	IF @DefaultValueLimitAcc > 0
+	BEGIN
+		SELECT @lastAccountToDay = COUNT(1)
+		FROM Customer c WITH(NOLOCK)
+		WHERE c.mrecommend = @mrecommend
+			and c.roleid = 2
+			AND c.site = @Site
+			and convert(date,c.creatdate) = convert(date, CURRENT_TIMESTAMP)
+			
+		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
+		BEGIN
+			Select	@ErrMsg = case @Language 
+							when 'E' then 'Sorry. You cannot create customer too often.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40029,@Language)
+						end,
+					@ErrCode = 998	
+			return
+		END
+	END
     EXEC dbo.Acc_CustomerInsMember_MAg_CheckParam
 		@custid = @custid OUTPUT,
 	    @discountcs=@discountcs,
