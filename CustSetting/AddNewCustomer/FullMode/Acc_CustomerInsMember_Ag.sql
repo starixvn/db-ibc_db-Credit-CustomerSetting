@@ -490,16 +490,16 @@ BEGIN
 	FROM dbo.customer WITH(NOLOCK)
 	WHERE CustID = @recommend
 	
-	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0
-	SET @DefaultValueLimitAcc = dbo.fn_IsSiteLimitCreateAccount(@_Site)
+	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0 , @CurrentDate DATETIME
+	SET @CurrentDate  = CONVERT(DATE,GETDATE())
+	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@_Site)),0)
 	IF @DefaultValueLimitAcc > 0
 	BEGIN
-		SELECT @lastAccountToDay = COUNT(1)
-		FROM Customer c WITH(NOLOCK)
-		WHERE c.recommend = @recommend
-			and c.roleid = 1
-			AND c.site = @_Site
-			and CONVERT(DATE,c.creatdate) = CONVERT(DATE, CURRENT_TIMESTAMP)
+		SET @lastAccountToDay = (SELECT  COUNT(1)
+								FROM Customer c WITH(NOLOCK)
+								WHERE c.recommend = @recommend
+									AND c.roleid = 1
+									AND c.creatdate  > @CurrentDate)
 			
 		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
 		BEGIN

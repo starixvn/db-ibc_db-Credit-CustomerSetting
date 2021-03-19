@@ -199,18 +199,18 @@ BEGIN
 		return
 	END
 	
-	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0
-	SET @DefaultValueLimitAcc = dbo.fn_IsSiteLimitCreateAccount(@Site)
+	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
+	SET @CurrentDate  = CONVERT(DATE,GETDATE())
+	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
 	IF @DefaultValueLimitAcc > 0
 	BEGIN
-		SELECT @lastAccountToDay = COUNT(1)
-		FROM Customer c WITH(NOLOCK)
-		WHERE c.mrecommend = @mrecommend
-			and c.roleid = 2
-			AND c.site = @Site
-			and convert(date,c.creatdate) = convert(date, CURRENT_TIMESTAMP)
+		SET @lastAccountToDay = (SELECT  COUNT(1)
+								FROM Customer c WITH(NOLOCK)
+								WHERE c.mrecommend = @mrecommend
+									and c.roleid = 2
+									AND c.creatdate  > @CurrentDate)
 			
-		IF @lastAccountToDay >= @DefaultValueLimitAcc
+		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
 		BEGIN
 			Select	@ErrMsg = case @Language 
 							when 'E' then 'Sorry. You cannot create customer too often.'

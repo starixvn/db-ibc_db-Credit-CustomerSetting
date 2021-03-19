@@ -604,16 +604,16 @@ BEGIN
 		RETURN 
 	END
     ----- / 20130717@Lukas-----------------
-    DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0
-	SET @DefaultValueLimitAcc = dbo.fn_IsSiteLimitCreateAccount(@Site)
+    DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
+	SET @CurrentDate  = CONVERT(DATE,GETDATE())
+	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
 	IF @DefaultValueLimitAcc > 0
 	BEGIN
-		SELECT @lastAccountToDay = COUNT(1)
-		FROM Customer c WITH(NOLOCK)
-		WHERE c.srecommend = @srecommend
-			and c.roleid = 3
-			AND c.site = @Site
-			and convert(date,c.creatdate) = convert(date, CURRENT_TIMESTAMP)
+		SET @lastAccountToDay = (SELECT  COUNT(1)
+								FROM Customer c WITH(NOLOCK)
+								WHERE c.srecommend = @srecommend
+									AND c.roleid = 3
+									AND c.creatdate  > @CurrentDate)
 			
 		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
 		BEGIN
