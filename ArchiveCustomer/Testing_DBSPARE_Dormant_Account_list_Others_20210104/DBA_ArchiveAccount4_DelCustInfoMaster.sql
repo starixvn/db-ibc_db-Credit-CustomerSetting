@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSPARE-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBSPARE-custDB" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [DBA_ArchiveAccount4_DelCustInfoMaster]
 	@AccName varchar(50),
 	@UserID int = 360418,
@@ -13,7 +13,9 @@ AS
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
-			- 20200128@Winfred: Check exists bettype 20000 in bettrans [RedmineID: #149262]
+			- 20210128@Winfred: Check exists bettype 20000 in bettrans [RedmineID: #149262]
+			- 20210225@Winfred: Check exists bettype 20000 and matchid = 0 ( use clustered index ) in bettrans [RedmineID: #149262]
+			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 */
 BEGIN
 	    
@@ -54,8 +56,19 @@ BEGIN
 		EXEC dbo.DBA_ArchiveAccount4_BackupCustInfoMaster @AccName=@AccName, @ErrMsg = @ErrMsg
 		--IF @ErrMsg <> '' return
 	END
+	
+	IF NOT EXISTS(SELECT 1 FROM bodb_Customer.dbo.custsub_old WITH(NOLOCK) 
+				WHERE	custid = @CustID
+		)
+	BEGIN
+		INSERT INTO bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+		SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+		FROM	custsub WITH (NOLOCK)
+		WHERE	custid = @CustID
+	END
+	
 	--Pre-check: Make sure @CustID not exists bettype 20000 in bettrans
-	IF EXISTS(select 1 from bodb02.dbo.bettrans with (nolock) where custid = @CustID AND bettype = 20000)
+	IF EXISTS(select 1 from bodb02.dbo.bettrans with (nolock) where custid = @CustID AND bettype = 20000 AND matchid = 0)
 	BEGIN
 		Select @ErrMsg = @AccName +':'+ 'This master exists bettype 20000 in bettrans!', @ErrCode = 11
 		print @ErrMsg

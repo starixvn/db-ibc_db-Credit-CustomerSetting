@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-custDB" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [DBA_ArchiveAccount4_DelCustInfo]
+CREATE PROCEDURE [DBA_ArchiveAccount4_DelCustInfo]
 	@AccName varchar(50),
 	@UserID int = 360418,
 	@ErrMsg nvarchar(200) = '' OUTPUT,
@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Delete custinfo for DBPRO - [Redmine:130032]
+		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 
 */
     
@@ -56,7 +57,15 @@ BEGIN
 	--IF @ErrMsg <> '' return
 END
 
-
+IF NOT EXISTS(SELECT 1 FROM bodb_Customer.dbo.custsub_old WITH(NOLOCK) 
+				WHERE	custid = @AgentID
+		)
+BEGIN
+	INSERT INTO bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+	SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+	FROM	custsub WITH (NOLOCK)
+	WHERE	custid = @AgentID
+END
 --===============================
 --PERFORM DELETE MEMBERS INFO
 --===============================
@@ -66,7 +75,7 @@ DECLARE @CustIDs VARCHAR(MAX) = ''
 SELECT @CustIDs = @CustIDs + cast(custid AS VARCHAR(10)) + ','
 FROM custinfo with (nolock) where recommend = @AgentID	
 
-EXEC bodb02_DB02.dbo.DBA_ArchiveAccount4_DelCustInfo_ForDBPRO @CustIDs = @CustIDs
+--EXEC DBPRO.bodb02.dbo.DBA_ArchiveAccount4_DelCustInfo_ForDBPRO @CustIDs = @CustIDs
 
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 2 
 ----------------------------------------------------------------
@@ -89,3 +98,4 @@ EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@ActionID = 1500,
 	@TrackingValue = @LogSPData	,
 	@duration = @duration
+    
