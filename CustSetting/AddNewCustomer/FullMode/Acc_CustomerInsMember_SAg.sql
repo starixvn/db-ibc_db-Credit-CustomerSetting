@@ -617,12 +617,12 @@ BEGIN
 			
 		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
 		BEGIN
-			Select	@ErrMsg = case @Language 
-							when 'E' then 'Sorry. You cannot create customer too often.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40029,@Language)
-						end,
-					@ErrCode = 998	
-			return
+			Select	@ErrMsg = CASE @Language  
+							WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
+							ELSE REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
+						END,
+					@ErrCode = 40056	
+			RETURN
 		END
 	END
 --20140619@Johnson: Check IP to create downline-----------------
