@@ -206,7 +206,7 @@ BEGIN
 	BEGIN
 		SET @lastAccountToDay = (SELECT  COUNT(1)
 								FROM Customer c WITH(NOLOCK)
-								WHERE c.mrecommend = @mrecommend
+								WHERE c.mrecommend = @existingMrecommend
 									and c.roleid = 2
 									AND c.creatdate  > @CurrentDate)
 			
