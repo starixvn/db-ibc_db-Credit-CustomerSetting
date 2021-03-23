@@ -417,8 +417,7 @@ Revisions:
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
-	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
-	
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -784,27 +783,6 @@ BEGIN
 		RETURN
 	END
 	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
-	SET @CurrentDate  = CONVERT(DATE,GETDATE())
-	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
-	IF @DefaultValueLimitAcc > 0
-	BEGIN
-		SET @lastAccountToDay = (SELECT  COUNT(1)
-								FROM Customer c WITH(NOLOCK)
-								WHERE c.roleid = 4
-									AND c.site = @Site
-									AND c.creatdate  > @CurrentDate)
-			
-		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
-		BEGIN
-			Select	@ErrMsg = case @Language 
-							when 'E' then 'Sorry. You cannot create customer too often.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40029,@Language)
-						end,
-					@ErrCode = 998	
-			return
-		END
-	END
 	
 	DECLARE @IsExists BIT 
 	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT

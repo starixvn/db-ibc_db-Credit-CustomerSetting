@@ -74,8 +74,7 @@ AS
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
-	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
-		
+	
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -183,28 +182,6 @@ BEGIN
 	BEGIN
 		SELECT @ErrMsg = 'Not allow to copy IMBC super setting to others and vice versa!',@ErrCode = 204								
 		RETURN	
-	END
-	
-	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
-	SET @CurrentDate  = CONVERT(DATE,GETDATE())
-	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
-	IF @DefaultValueLimitAcc > 0
-	BEGIN
-		SET @lastAccountToDay = (SELECT  COUNT(1)
-								FROM Customer c WITH(NOLOCK)
-								WHERE c.roleid = 4
-									AND c.site = @Site
-									AND c.creatdate  > @CurrentDate)
-			
-		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
-		BEGIN
-			Select	@ErrMsg = case @Language 
-							when 'E' then 'Sorry. You cannot create customer too often.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40029,@Language)
-						end,
-					@ErrCode = 998	
-			return
-		END
 	END
 	
 -- For Myanmar Odds
