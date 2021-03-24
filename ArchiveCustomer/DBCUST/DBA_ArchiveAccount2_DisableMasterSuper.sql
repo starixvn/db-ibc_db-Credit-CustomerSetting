@@ -17,6 +17,7 @@ AS
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 */
 BEGIN
 	    
@@ -288,7 +289,17 @@ BEGIN
 		FROM	CustProductStatus WITH (NOLOCK)
 		where	custid = @CustID
 	END
-		
+	
+	------- custSub -------------------------------
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsub_old WITH(NOLOCK) 
+			WHERE	custid = @CustID
+	)
+	BEGIN
+		INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+		SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+		FROM	custsub WITH (NOLOCK)
+		WHERE	custid = @CustID
+	END
 	-----------------------------------------------------------------------------------------------------------
 	--> Insert data for Cust_ArchiveAccount - Master level only
 	IF @roleid = 3

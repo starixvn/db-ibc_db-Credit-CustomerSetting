@@ -12,6 +12,7 @@ AS
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 */
     
 SET NOCOUNT ON
@@ -97,5 +98,12 @@ select	@Now,
                       LockUpd, MaxPerMatch1MP, BonusWalletFlag 
 from	custinfo (nolock)
 where	custid = @custid
+
+------- custSub -------------------------------
+INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+FROM	custsub WITH (NOLOCK)
+WHERE	custid = @custid
+
 
 print  @AccName +':'+ 'END Backup cust info:' + convert(varchar(50), getdate(), 113) 

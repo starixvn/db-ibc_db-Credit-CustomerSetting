@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Delete custinfo for DBPRO - [Redmine:130032]
+		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 
 */
     
@@ -56,7 +57,15 @@ BEGIN
 	--IF @ErrMsg <> '' return
 END
 
-
+IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsub_old WITH(NOLOCK) 
+				WHERE	custid = @AgentID
+		)
+BEGIN
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+	SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+	FROM	custsub WITH (NOLOCK)
+	WHERE	custid = @AgentID
+END
 --===============================
 --PERFORM DELETE MEMBERS INFO
 --===============================

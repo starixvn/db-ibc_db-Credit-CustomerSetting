@@ -11,6 +11,7 @@ AS
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20210128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
+			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 */
 BEGIN
 	    
@@ -272,5 +273,16 @@ BEGIN
 		SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
 		FROM	CustProductStatus WITH (NOLOCK)
 		where	custid = @CustID
-	END		
+	END
+	
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsub_old WITH(NOLOCK) 
+				WHERE	custid = @CustID
+		)
+	BEGIN
+		INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
+		SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+		FROM	custsub WITH (NOLOCK)
+		WHERE	custid = @CustID
+	END
+			
 END
