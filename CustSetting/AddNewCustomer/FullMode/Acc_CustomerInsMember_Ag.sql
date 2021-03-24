@@ -505,7 +505,7 @@ BEGIN
 		BEGIN
 			SELECT	@ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
-							ELSE REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
+							ELSE REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'300',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
 						END,
 					@ErrCode = 40056	
 			return
