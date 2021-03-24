@@ -89,7 +89,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v161slivepositiontaking_89 SMALLMONEY = 0,
 	@v161slivepositiontaking_90 SMALLMONEY = 0,	
 	
-	@v255spositiontaking_1701 SMALLMONEY =0,
 
 	@v202spositiontaking_1501 smallmoney = 0,
 	@v202spositiontaking_1511 smallmoney = 0,
@@ -326,8 +325,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v161mlivepositiontaking_89 SMALLMONEY = 0,
 	@v161mlivepositiontaking_90 SMALLMONEY =0,	
 	
-	@v255mpositiontaking_1701 SMALLMONEY =0,
-
 	@v202mpositiontaking_1501 smallmoney = 0,
 	@v202mpositiontaking_1511 smallmoney = 0,
 	@v202mpositiontaking_1503 smallmoney = 0,
@@ -569,7 +566,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v161alivepositiontaking_87 SMALLMONEY = 0,
 	@v161alivepositiontaking_89 SMALLMONEY = 0,
 	@v161alivepositiontaking_90 SMALLMONEY = 0,
-	@v255apositiontaking_1701 SMALLMONEY = 0,
+
 							  
 	@v202apositiontaking_1501 SMALLMONEY = 0,
 	@v202apositiontaking_1511 SMALLMONEY = 0,
@@ -667,11 +664,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@v202sdiscount_1508 decimal(9,8) = 0,
 	@v202sdiscount_1509 decimal(9,8) = 0,
 	@v202sdiscount_1514 decimal(9,8) = 0,
-	--v255
-	@v255discount_1701 decimal(9,8) = 0,
-	@v255adiscount_1701 decimal(9,8) = 0,
-	@v255sdiscount_1701 decimal(9,8) = 0,
-
+	
 	-- Myanma Odds
 	@discountMyanmarOdds DECIMAL(9,8) = 0,	
 	@IsMyanmarOdds BIT = 0,
@@ -727,7 +720,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 			- 20201112@Eden: Keno - Delete unused bettype (country) of Keno [Redmine: #145247]
 			- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
-			
+			- 20210324@Johnson: Hide GoldDeluxe settings [redmine:#151188]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -1021,7 +1014,7 @@ BEGIN
 		--UNION ALL SELECT @custid , 1508, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1508
 		--UNION ALL SELECT @custid , 1509, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1509
 		--UNION ALL SELECT @custid , 1514, 202, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 202 and Bettype = 1514
-		UNION ALL SELECT @custid , 1701, 255, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 255 and Bettype = 1701 AND IsDep = 0
+		--UNION ALL SELECT @custid , 1701, 255, MaxPositiontaking, MaxPositiontaking, MaxPositiontaking, 0, 0, 0, 0, 0, 0 ,0 ,0 FROM ProductGlobalSetting WITH (NOLOCK) WHERE Sporttype = 255 and Bettype = 1701 AND IsDep = 0
 		
 		IF @@ERROR <> 0
 		BEGIN
@@ -1054,7 +1047,7 @@ BEGIN
 		--UNION ALL SELECT @custid, 1508, 202, 0
 		--UNION ALL SELECT @custid, 1509, 202, 0
 		--UNION ALL SELECT @custid, 1514, 202, 0
-		UNION ALL SELECT @custid, 1701, 255, 0
+		--UNION ALL SELECT @custid, 1701, 255, 0
 
 		IF @@ERROR <> 0
 		BEGIN
@@ -1072,12 +1065,7 @@ BEGIN
 			
 			RETURN
 		END		
-
-		DECLARE @StakeLevelList_1701 VARCHAR(50), @StakeLevelList_1702 VARCHAR(50)
-		SELECT @StakeLevelList_1701 = '', @StakeLevelList_1702 = ''
-		SELECT @StakeLevelList_1701 = @StakeLevelList_1701 + CASE WHEN @StakeLevelList_1701 = '' THEN '' ELSE ',' END + CAST(StakeLevelID AS VARCHAR(5)) FROM StakeLevel WHERE GameTypeID = 1701 AND ExchangeId = @currency
-		SELECT @StakeLevelList_1702 = @StakeLevelList_1702 + CASE WHEN @StakeLevelList_1702 = '' THEN '' ELSE ',' END + CAST(StakeLevelID AS VARCHAR(5)) FROM StakeLevel WHERE GameTypeID = 1702 AND ExchangeId = @currency
-
+		
 		--Keno
 		DECLARE @isDisableKeno BIT = 0 --Enable Keno by default for all sites
 
@@ -1085,9 +1073,7 @@ BEGIN
 		SELECT	GameTypeID, @Custid, 0, 0, 0, @isDisableKeno, CAST(0 AS VARCHAR(100))
 		FROM	@tmp_GameType
 		WHERE	IBCBetTypeID BETWEEN 1501 AND 1599
-		UNION ALL SELECT 1701, @custid, 0, 0, 0, 0, @StakeLevelList_1701
-		UNION ALL SELECT 1702, @custid, 0, 0, 0, 0, @StakeLevelList_1702
-
+		
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
@@ -1388,11 +1374,7 @@ BEGIN
 			SELECT @custid , bettype, 202, 0, 0, spositiontaking, 0, 0, 0,  0, 0, 0 ,0 ,0       
 			FROM CustSettingGame cs WITH(NOLOCK)
 			WHERE cs.custid = @srecommend and cs.sporttype = 202 AND cs.bettype BETWEEN 1501 AND 1599
-			UNION ALL 
-			SELECT @custid , bettype, sporttype, 0, 0, spositiontaking, 0, 0, 0,  0, 0, 0 ,0 ,0       
-			FROM CustSettingGame cs WITH(NOLOCK)
-			WHERE cs.custid = @srecommend and cs.sporttype = 255 AND cs.bettype = 1701
-
+			
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
@@ -1418,12 +1400,7 @@ BEGIN
 		SELECT @custid, bettype, 202, 0 
 		FROM CustOverrideGame co WITH(NOLOCK)
 		WHERE co.custid = @srecommend and co.sporttype = 202 AND co.bettype BETWEEN 1501 AND 1599	
-		UNION ALL 
-		SELECT @custid, bettype, sporttype, 0 
-		FROM CustOverrideGame co WITH(NOLOCK)
-		WHERE co.custid = @srecommend and co.sporttype = 255 AND co.bettype = 1701
-	
-
+		
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
@@ -1473,9 +1450,7 @@ BEGIN
 		WHERE cg.CustID = @srecommend
            AND pbs.Currency = @currency
            AND gt.IBCBetTypeID BETWEEN 1501 AND 1599
-		UNION ALL 
-		SELECT GameTypeID, @custid, StakeLevelList, 0, 0, 0, 0 FROM CustGameType WITH (NOLOCK) WHERE CustID = @srecommend AND GameTypeID IN (1701,1702)
-
+		
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
@@ -1763,11 +1738,7 @@ BEGIN
 		SELECT @custid , bettype, 202, 0, mpositiontaking, 0, 0, 0, 0,  0, 0, 0 ,0 ,0       
 		FROM CustSettingGame cs WITH(NOLOCK)
 		WHERE cs.custid = @mrecommend and cs.sporttype = 202 AND cs.bettype BETWEEN 1501 AND 1599
-		UNION ALL 
-		SELECT @custid , bettype, sporttype, 0, mpositiontaking, 0, 0, 0, 0,  0, 0, 0 ,0 ,0       
-		FROM CustSettingGame cs WITH(NOLOCK)
-		WHERE cs.custid = @mrecommend and cs.sporttype = 255 AND cs.bettype = 1701
-
+		
 		if @@error <> 0
 		BEGIN
 
@@ -1791,10 +1762,6 @@ BEGIN
 		SELECT @custid, bettype, 202, 0
 		FROM Custoverridegame WITH (NOLOCK) 
 		WHERE custid = @mrecommend AND Sporttype = 202 AND Bettype BETWEEN 1501 and 1599
-		UNION ALL 
-		SELECT @custid, bettype, Sporttype, 0
-		FROM Custoverridegame WITH (NOLOCK) 
-		WHERE custid = @mrecommend AND Sporttype = 255 AND Bettype =1701
 		
 		if @@error <> 0
 		BEGIN
@@ -1868,9 +1835,6 @@ BEGIN
            AND pbs.Currency = @currency
            AND gt.IBCBetTypeID BETWEEN 1501 AND 1599
 		
-		UNION ALL 
-		SELECT GameTypeID, @custid, StakeLevelList, 0, 0, 0, 0 FROM CustGameType WITH (NOLOCK) WHERE CustID = @mrecommend AND GameTypeID IN (1701,1702)
-
 		IF @@error <> 0
 		BEGIN
 			--Error occur
@@ -2103,12 +2067,7 @@ BEGIN
 		SELECT @custid, 1514, 202, ISNULL(@v202apositiontaking_1514,0), ISNULL(@v202mpositiontaking_1514,0), ISNULL(@v202spositiontaking_1514,0), 0, ISNULL(@v202discount_1514,0), ISNULL(@v202adiscount_1514,0), ISNULL(@v202sdiscount_1514,0), 0, 0, 0, 0
 		FROM CustSettingGame WITH(NOLOCK)
 		WHERE custid = @recommend AND sporttype = 202 AND bettype = 1514
-		
-		UNION ALL
-		SELECT @custid, 1701, 255, ISNULL(@v255apositiontaking_1701,0), ISNULL(@v255mpositiontaking_1701,0), ISNULL(@v255spositiontaking_1701,0), 0, ISNULL(@v255discount_1701,0), ISNULL(@v255adiscount_1701,0), ISNULL(@v255sdiscount_1701,0), 0, 0, 0, 0
-		FROM CustSettingGame WITH(NOLOCK)
-		WHERE custid = @recommend AND sporttype = 255 AND bettype = 1701
-								
+							
 		if @@error <> 0
 		BEGIN
 
@@ -2201,47 +2160,6 @@ BEGIN
 			RETURN
 		END
 		--End Keno
-
-		--Gold Deluxe
-		DECLARE @StakeLevelListAg_1701 VARCHAR(50), @StakeLevelListAg_1702 VARCHAR(50), @StakeLevelID_1701 VARCHAR(50),  @StakeLevelID_1702 VARCHAR(50)
-		SELECT @StakeLevelListAg_1701 = StakeLevelList FROM CustGameType WITH (NOLOCK) WHERE custid = @recommend AND GameTypeID = 1701
-		SELECT @StakeLevelListAg_1702 = StakeLevelList FROM CustGameType WITH (NOLOCK) WHERE custid = @recommend AND GameTypeID = 1702
-
-		IF @StakeLevelListAg_1701 IS NOT NULL AND @StakeLevelListAg_1702 IS NOT NULL
-		BEGIN
-			SELECT TOP 1 @StakeLevelID_1701 = StakeLevelID FROM dbo.strSplit(@StakeLevelListAg_1701,',') a INNER JOIN StakeLevel s WITH (NOLOCK) ON s.StakeLevelID = a.val ORDER BY MinStake, MaxStake ASC
-			SELECT TOP 1 @StakeLevelID_1702 = StakeLevelID FROM dbo.strSplit(@StakeLevelListAg_1702,',') a INNER JOIN StakeLevel s WITH (NOLOCK) ON s.StakeLevelID = a.val ORDER BY MinStake, MaxStake ASC
-		END
-
-		INSERT INTO dbo.CustGameType
-        (
-            GameTypeID
-          , CustID
-          , StakeLevelList
-          , MinBet
-          , MaxBet
-          , MaxPerGameType
-          , IsDisabled
-        )		
-		SELECT 1701, @custid, ISNULL(@StakeLevelID_1701,''), 0, 0, 0, 0
-		UNION ALL 
-		SELECT 1702, @custid, ISNULL(@StakeLevelID_1702,''), 0, 0, 0, 0
-		
-		IF @@error <> 0
-		BEGIN
-			--Error occur
-			SET @ErrCode = 156
-				
-			-- ROLLBACK MANUALLY
-			Delete dbo.custsetting with (ROWLOCK) where custid = @custid
-			Delete dbo.CustSetting3rd with (ROWLOCK) where custid = @custid
-			
-			DELETE dbo.custsettingGame WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.CustGameType WITH (ROWLOCK) WHERE custId = @custid			
-				
-			RETURN
-		END
-		--End Gold Deluxe
 	END
 	
 	-- For Myanma Odds
