@@ -440,6 +440,7 @@ Revisions:
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
+	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 			
 Param's Explanation:
 • @ErrCode:
@@ -603,6 +604,27 @@ BEGIN
 		RETURN 
 	END
     ----- / 20130717@Lukas-----------------
+    DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
+	SET @CurrentDate  = CONVERT(DATE,GETDATE())
+	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
+	IF @DefaultValueLimitAcc > 0
+	BEGIN
+		SET @lastAccountToDay = (SELECT  COUNT(1)
+								FROM Customer c WITH(NOLOCK)
+								WHERE c.srecommend = @srecommend
+									AND c.roleid = 3
+									AND c.creatdate  > @CurrentDate)
+			
+		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
+		BEGIN
+			Select	@ErrMsg = CASE @Language  
+							WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
+							ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10))),'(300)',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
+						END,
+					@ErrCode = 40056	
+			RETURN
+		END
+	END
 --20140619@Johnson: Check IP to create downline-----------------
 	DECLARE @isValidIP BIT
 	

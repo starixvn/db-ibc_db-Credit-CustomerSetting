@@ -454,6 +454,8 @@ Revisions:
 	- 20201027@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
+	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Create agent successfully.
@@ -855,7 +857,27 @@ BEGIN
 	   SELECT @groupb = 0, @groupc = 0, @groupd = 0		
 	END
 	
-	
+	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
+	SET @CurrentDate  = CONVERT(DATE,GETDATE())
+	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
+	IF @DefaultValueLimitAcc > 0
+	BEGIN
+		SET @lastAccountToDay = (SELECT  COUNT(1)
+								FROM Customer c WITH(NOLOCK)
+								WHERE c.mrecommend = @mrecommend
+									AND c.roleid = 2
+									AND c.creatdate  > @CurrentDate)
+			
+		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
+		BEGIN
+			Select	@ErrMsg = CASE @Language 
+							WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
+							ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10))),'(300)',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
+						END,
+					@ErrCode = 40056		
+			return
+		END
+	END
     EXEC dbo.Acc_CustomerInsMember_MAg_CheckParam
 		@custid = @custid OUTPUT,
 	    @discountcs=@discountcs,
