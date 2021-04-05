@@ -417,7 +417,7 @@ Revisions:
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
-
+	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -1448,11 +1448,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	
 	'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
-
 	
-	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-
 	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +
 	 @LogDataKeno + @LogDataSP2 +
 	'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" />'
@@ -1479,9 +1475,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	
 		'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
-		
-		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
 		
 		'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +		
 		'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +

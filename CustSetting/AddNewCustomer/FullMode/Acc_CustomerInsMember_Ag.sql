@@ -3798,10 +3798,7 @@ BEGIN
     'DisableCasino="'+ COALESCE(CAST(@DisableCasino AS VARCHAR(1)), SPACE(1)) + '" ' +   
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableNumber="'+ COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
-
    
-	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)), SPACE(1)) + '" ' +
 	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)), SPACE(1)) + '" />'
 
     BEGIN TRY
@@ -3834,9 +3831,6 @@ BEGIN
 	    'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableNumber="'+ COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' +	   
 	  
-	    
-		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'DisableGoldDeluxe="'+ COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)), SPACE(1)) + '" ' +
 		'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'ErrCode="'+ COALESCE(CAST(ERROR_NUMBER() AS VARCHAR(50)), SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
 	    'ErrMsg="'+ COALESCE(CAST(ERROR_MESSAGE() AS VARCHAR(4000)), SPACE(1)) + '" />'
