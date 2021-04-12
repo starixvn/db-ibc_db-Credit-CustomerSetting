@@ -53,7 +53,7 @@ BEGIN
 
 	--== Check new created members ==========================
 
-	IF EXISTS(SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE srecommend = @SuperID AND roleid IN (1,2,3) AND creatdate >= DATEADD(mm, -3, @CurrentDate)))
+	IF EXISTS(SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE srecommend = @SuperID AND roleid IN (1,2,3) AND creatdate >= DATEADD(mm, -3, @CurrentDate))
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This super just created new members while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg,4) 
