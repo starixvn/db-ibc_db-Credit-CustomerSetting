@@ -21,17 +21,16 @@ BEGIN
 	
 	-- simulate run date based on test data version
 	declare @currentDate smalldatetime 
-	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'   
+	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
 	
-		
 	DECLARE @startRun DATETIME
 	DECLARE @endRun DATETIME
 	DECLARE @duration INT
 	SET @startRun = getdate()
 
-	DECLARE @roleid int, @SuperID int, @Enabled bit, @Closed bit, @ClosedReason tinyint
+	DECLARE @roleid int, @SuperID int, @Closed bit, @ClosedReason tinyint
 
-	SELECT @roleid = roleid, @SuperID = custid, @Enabled = Enabled, @Closed = Closed
+	SELECT @roleid = roleid, @SuperID = custid, @Closed = Closed
 	FROM custinfo (nolock)
 	WHERE username = @AccName
 
@@ -44,7 +43,7 @@ BEGIN
 
 	SELECT @ClosedReason = ClosedReason FROM CustLoginInfo l WITH(NOLOCK) WHERE custid = @SuperID
 
-	if @Enabled = 0 OR (@Closed = 1 AND @ClosedReason = 4)
+	if @Closed = 1 AND @ClosedReason = 4
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This super has been archived!!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg, 4) 	
@@ -54,7 +53,7 @@ BEGIN
 
 	--== Check new created members ==========================
 
-	IF EXISTS(SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE srecommend = @SuperID AND roleid IN (1,2,3) AND creatdate >= DATEADD(mm, -3, @CurrentDate))
+	IF EXISTS(SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE srecommend = @SuperID AND roleid IN (1,2,3) AND creatdate >= DATEADD(mm, -3, @CurrentDate)))
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This super just created new members while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg,4) 
@@ -157,6 +156,10 @@ BEGIN
 		@TrackingValue2 = @LogSPDataOld,
 		@duration = @duration
 END
+
+
+    
+
 
 
     

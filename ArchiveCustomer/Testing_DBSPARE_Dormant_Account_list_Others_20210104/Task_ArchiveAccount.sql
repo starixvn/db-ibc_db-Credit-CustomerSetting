@@ -26,7 +26,7 @@ BEGIN
 	
 	-- simulate run date based on test data version
 	declare @currentDate smalldatetime 
-	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'	
+	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'	   
 	
 	DECLARE @srecommend INT
 			, @mrecommend INT
@@ -581,7 +581,7 @@ BEGIN
 	DROP TABLE #ReduceCredit
 	DROP TABLE #ArchiveMasterSuper_tmp
 	
-END	
+END
 
     
 

@@ -31,9 +31,9 @@ declare @endRun datetime
 declare @duration int
 set @startRun = getdate()
 
-Declare @roleid int, @AgentID int, @Enabled bit, @Closed bit, @ClosedReason tinyint
+Declare @roleid int, @AgentID int, @Closed bit, @ClosedReason tinyint
 
-SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @Closed = Closed
+SELECT @roleid = roleid, @AgentID = custid, @Closed = Closed
 FROM custinfo (nolock)
 WHERE username = @AccName
 
@@ -46,7 +46,7 @@ END
 
 SELECT @ClosedReason = ClosedReason FROM CustLoginInfo l WITH(NOLOCK) WHERE custid = @AgentID
 
-if @Enabled = 0 OR (@Closed = 1 AND @ClosedReason = 4)
+if @Closed = 1 AND @ClosedReason = 4
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent has been archived!!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 	
@@ -64,7 +64,7 @@ END
 
 --== Check new created members ==========================
 
-IF EXISTS(select 1 from dbo.customer with (nolock) where recommend = @AgentID AND roleid = 1 AND creatdate >= DATEADD(mm, -3, @CurrentDate))
+IF EXISTS(select 1 from dbo.customer with (nolock) where recommend = @AgentID AND roleid = 1 AND creatdate >= DATEADD(mm, -3, @currentDate))
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just created new members while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
@@ -116,7 +116,7 @@ insert into bodb_Customer.dbo.CustBackupClosed(
 	[credit]
 )
 select	
-	@CurrentDate, 
+	@currentDate, 
 	[custid],
 	[closed],
 	[reject],
@@ -183,6 +183,13 @@ EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@duration = @duration
 
 GO
+
+
+    
+
+
+
+    
 
 
     
