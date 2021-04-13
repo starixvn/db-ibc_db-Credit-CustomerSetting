@@ -441,7 +441,7 @@ Revisions:
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
-			
+	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]		
 Param's Explanation:
 • @ErrCode:
     = 0: super create master successfully.
@@ -2586,9 +2586,6 @@ BEGIN
     'IsInternal="'+ COALESCE(CAST(@IsInternal AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableNumber="' + COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' +
  
-	'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'DisableGoldDeluxe="' + COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)), SPACE(1)) + '" ' +
-	
 	'DisableSuperLive="' + COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)), SPACE(1)) + '" ' +  @LogDataKeno + @LogDataSP2 + 
     '/>'
 
@@ -2624,10 +2621,6 @@ BEGIN
 	    'IsInternal="'+ COALESCE(CAST(@IsInternal AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableNumber="' + COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' +
 	   
-	  
-		'HideGoldDeluxe="'+ COALESCE(CAST(@HideGoldDeluxe AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'DisableGoldDeluxe="' + COALESCE(CAST(@DisableGoldDeluxe AS VARCHAR(1)), SPACE(1)) + '" ' +
-		
 		'DisableSuperLive="' + COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)), SPACE(1)) + '" ' +   @LogDataKeno + @LogDataSP2 +
 	    'ErrMsg="'+ ERROR_MESSAGE() + ' />'
     	
