@@ -3,7 +3,9 @@ ALTER PROCEDURE [DBA_ArchiveAccount1_CloseAgentLine]
 	@AccName varchar(50),
 	@UserID int = 360418,
 	@ErrMsg nvarchar(200) = '' OUTPUT,
-	@ErrCode int = 0 OUTPUT
+	@ErrCode int = 0 OUTPUT,
+	@ProcessedDate DATETIME = NULL,
+	@ArchivedDate DATE = NULL
 AS
     
 SET NOCOUNT ON
@@ -17,7 +19,7 @@ Revisions:
 	  + add close all downline members (use execRep)
 	- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]  
 	- 20200911@Helen: Fix stage 1 - M0 - [Redmine:130032]  
-	
+	- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
 */
 
 declare @startRun datetime
@@ -25,9 +27,9 @@ declare @endRun datetime
 declare @duration int
 set @startRun = getdate()
 
-Declare @roleid int, @AgentID int, @Enabled bit, @Closed bit
+Declare @roleid int, @AgentID int, @Closed bit, @ClosedReason tinyint
 
-SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled, @Closed = Closed
+SELECT @roleid = roleid, @AgentID = custid, @Closed = Closed
 FROM custinfo (nolock)
 WHERE username = @AccName
 
@@ -38,22 +40,23 @@ BEGIN
 	return
 END
 
-if @Enabled = 0
+SELECT @ClosedReason = ClosedReason FROM CustLoginInfo l WITH(NOLOCK) WHERE custid = @AgentID
+
+if @Closed = 1 AND @ClosedReason = 4
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent has been archived!!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 	
 	print @ErrMsg
+
+	EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+		@CustId = @AgentID,
+		@RoleID = 2,
+		@StageID = 1,
+		@ProcessedDate = @ProcessedDate,
+		@ArchivedDate = @ArchivedDate
+
 	return
 END
-
-if @Closed = 1
-BEGIN
-	Select @ErrMsg = @AccName +':'+ 'This agent has already been archived!!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 	
-	print @ErrMsg
-	return
-END
-
 
 --== Check new created members ==========================
 
@@ -118,18 +121,51 @@ from	custinfo c with (nolock)
 where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
 	and NOT EXISTS (select top 1 1 from DBARCCUST.bodb_Customer.dbo.CustBackupClosed with (nolock) where custid = c.custid)
 
-
 --close whole line using ExecRep
-
 EXEC dbo.Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = -1
 
-------------------
-declare @LogSPData varchar(5000)
+--> Insert data for Cust_ArchiveAccount
+DECLARE @IsOverwrite BIT
 
-Select @LogSPData = '<DBA_ArchiveAccount1_CloseAgentLine AccName="'+ coalesce(cast(@AccName as varchar(50)),space(1)) + '" ' +
-'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1)) + '" ' +
-'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" />'
+IF @Closed = 0
+	SET @IsOverwrite = 1
+ELSE 
+	SET @IsOverwrite = 0
+
+EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+	@CustId = @AgentID,
+	@RoleID = 2,
+	@StageID = 1,
+	@ProcessedDate = @ProcessedDate,
+	@ArchivedDate = @ArchivedDate,
+	@IsOverwrite = @IsOverwrite
+
+------------------
+declare @LogSPData varchar(5000), @LogSPDataOld varchar(5000), @ActionID INT 
+
+IF  @Closed = 1
+BEGIN
+	SET @ActionID = 1179 -- only change reason
+
+	Select @LogSPDataOld = '<DBA_ArchiveAccount1_CloseAgentLine ' +
+	'Reason="'+ coalesce(cast(@ClosedReason as varchar(50)),space(1)) + '" ' +
+	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1)) + '" ' +
+	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" />'
+
+	Select @LogSPData = '<DBA_ArchiveAccount1_CloseAgentLine ' +
+	'Reason="4" ' +
+	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1)) + '" ' +
+	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" />'
+END
+ELSE
+BEGIN
+	SET @ActionID = 1115
+
+	Select @LogSPData = '<DBA_ArchiveAccount1_CloseAgentLine AccName="'+ coalesce(cast(@AccName as varchar(50)),space(1)) + '" ' +
+	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1)) + '" ' +
+	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" />'
+END
 
 set @endRun = getdate()
 set @duration  = datediff (millisecond,@startRun,@endRun)
@@ -137,11 +173,10 @@ set @duration  = datediff (millisecond,@startRun,@endRun)
 EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@UserID = @UserID,
 	@CustID = @AgentID,
-	@ActionID = 1115,
+	@ActionID = @ActionID,
 	@TrackingValue = @LogSPData,
+	@TrackingValue2 = @LogSPDataOld,
 	@duration = @duration
-
-
 
 GO
 
