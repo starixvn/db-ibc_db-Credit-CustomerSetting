@@ -20,7 +20,7 @@ AS
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
-
+			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
 		Parameter's Explanation:	
 		• @PT:
 					<ROOT>
@@ -551,19 +551,31 @@ BEGIN
 		ELSE
 		BEGIN
 			--Move to Individual Setting
-			INSERT INTO dbo.CustPTSetting3rd_Member
+			INSERT INTO dbo.CustPTSetting3rd_Member(					
+					   [CustID]
+					   ,[SportType]
+					   ,[BetType]
+					   ,[IsLive]
+					   ,[IsAutoMasterPT]
+					   ,[IsAutoSuperPT]
+					   ,[SuperPT]
+					   ,[MasterPT]
+					   ,[AgentPT]
+					   ,[AutoSuperPT]
+					   ,[AutoMasterPT]
+					)
 			SELECT
-					@CustID,
-					grpt.SportType,
-					grpt.BetType,
-					grpt.IsLive,
-					grpt.SuperPT,
-					grpt.MasterPT,
-					grpt.AgentPT,
-					grpt.IsAutoMasterPT,
-					grpt.AutoMasterPT,
-					grpt.IsAutoSuperPT,
-					grpt.AutoSuperPT
+				@CustID,
+				grpt.SportType,
+				grpt.BetType,
+				grpt.IsLive,						
+				grpt.IsAutoMasterPT,
+				grpt.IsAutoSuperPT,
+				grpt.SuperPT,
+				grpt.MasterPT,
+				grpt.AgentPT,
+				grpt.AutoSuperPT,
+				grpt.AutoMasterPT
 			FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
 				LEFT JOIN dbo.CustPTSetting3rd_Member mempt
 					ON mempt.CustID = @CustID
