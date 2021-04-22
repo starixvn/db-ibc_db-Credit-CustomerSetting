@@ -26,6 +26,7 @@ AS
 		- 20200210@Elodie: Initial SP [Redmine:#116814]
 		- 20200720@Johnson: Add void time & Limit amount [redmine:#135253]
 		- 20201016@Elodie: Output all downline list is removed PA [Redmine:#141756]
+		- 20210422@Johnson: change source ProblemAccount to ProblemAccountClassification for UpdateReviewStatus [redmine:#153059]
 	Param's Explanation:
 		@Action: MarkProblem, RemoveReduceBetLimit
 		
@@ -160,10 +161,10 @@ BEGIN
 		UPDATE pa 		
 		SET pa.IsReviewed = 1
 		OUTPUT Inserted.CustId INTO #DownlineSuccess
-		FROM dbo.ProblemAccount pa WITH (ROWLOCK)
+		FROM dbo.ProblemAccountClassification pa WITH (ROWLOCK)
 			INNER JOIN #DownlineCust t ON t.CustID = pa.CustId
 		WHERE pa.IsReviewed = 0 
-			AND (pa.ReasonId IS NOT NULL OR pa.IsAbnormalMember = 1)
+			--AND (pa.ReasonId IS NOT NULL OR pa.IsAbnormalMember = 1)
 
 		SELECT @SuccessDownlineList = STUFF((SELECT ','+ CAST(l.CustID AS VARCHAR(20))
 											FROM #DownlineSuccess l
