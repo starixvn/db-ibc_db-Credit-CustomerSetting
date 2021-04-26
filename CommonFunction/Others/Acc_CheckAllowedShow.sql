@@ -51,6 +51,7 @@ Revisions:
 	- 20200504@Eden: ION Live casino [Redmine: #132323]
 	- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
 	- 20201012@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	- 20210426@Tina: Add VGaming [Redmine: #153938]
 	
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -60,7 +61,8 @@ Revisions:
 
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
 	Declare @srecommend int, @mrecommend int, @recommend int 
-	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT, @AllowedGTCasino BIT, @AllowedBBIN BIT, @AllowedLottery BIT, @AllowedTableGames BIT, @AllowedRNGWar BIT, @AllowedION BIT   
+	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT, @AllowedGTCasino BIT, @AllowedBBIN BIT, @AllowedLottery BIT, @AllowedTableGames BIT, @AllowedRNGWar BIT, @AllowedION BIT,
+			@AllowedVGaming BIT   
 	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
@@ -71,11 +73,12 @@ Revisions:
 		,	@IsHideSaba				INT
 		,	@IsHideSAGaming			INT
 		,	@IsHideSexyGaming		INT
-		,	@IsHide_ION		INT = 1
+		,	@IsHide_ION				INT = 1
 		,	@IsHideBBIN				INT
 		,	@IsHideTableGames		INT
 		,	@IsHideGTCasino			INT
-		,	@IsHideRNGWar		INT
+		,	@IsHideRNGWar			INT
+		,	@IsHideVGamming			INT
 
 	DECLARE @bitmapOrder_Allbet		INT
 		,	@bitOrderVB				INT 
@@ -92,6 +95,7 @@ Revisions:
 		,	@bitmapOrder_TableGames	INT 
 		,	@bitmapOrder_GTCasino	INT 
 		,	@bitmapOrder_RNGWar		INT 
+		,	@bitmapOrder_VGaming	INT 
 
 	SET @bitmapOrder_Allbet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 211 AND Bettype = 2401)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
@@ -108,6 +112,7 @@ Revisions:
 	SET @bitmapOrder_TableGames = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 222 AND Bettype = 4901)
 	SET @bitmapOrder_GTCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 242 AND Bettype = 3201)
 	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
+	SET @bitmapOrder_VGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 171 AND Bettype = 3801)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -337,6 +342,26 @@ Revisions:
 		SELECT	@AllowedSabaClub =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Saba)) = 0
 											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_Saba)) = 1
 											AND @IsHideSaba = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END
+
+	-- For VGaming
+	EXEC Acc_CheckShowProduct @ProductID = 66, @SettingStatus = @SettingStatus, @IsHide = @IsHideVGamming OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedVGaming =	CASE	WHEN @IsHideVGamming = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_VGaming)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedVGaming =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_VGaming)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_VGaming)) = 1
+											AND @IsHideVGamming = 0 
 											THEN 1
 										ELSE 0 END
 		FROM	CustProductStatus AS cps WITH (NOLOCK)
