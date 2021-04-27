@@ -10,6 +10,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedRNGLottery		BIT = 0		OUTPUT
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
 				,	@AllowedSabaClub		BIT = 0		OUTPUT
+				,	@AllowedVGaming			BIT = 0		OUTPUT
 				,   @SettingStatus          TINYINT = 0
 
 AS
@@ -61,8 +62,8 @@ Revisions:
 
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
 	Declare @srecommend int, @mrecommend int, @recommend int 
-	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT, @AllowedGTCasino BIT, @AllowedBBIN BIT, @AllowedLottery BIT, @AllowedTableGames BIT, @AllowedRNGWar BIT, @AllowedION BIT,
-			@AllowedVGaming BIT   
+	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT, @AllowedGTCasino BIT, @AllowedBBIN BIT, @AllowedLottery BIT, @AllowedTableGames BIT, @AllowedRNGWar BIT, @AllowedION BIT
+		
 	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
