@@ -12,12 +12,12 @@ AS
 
 	Revisions:  		
 		- 20200901@Johnson: Initial sp [redmine:#140809]
-		
+		- 20210420@Johnson: sync categroy for PA redmine:[#153617]
 	Parameter's Explanation: 
 		@custList = '<Root>
-					<r id="100" c="10" />
-					<r id="101" c="11" />
-					<r id="102" c="12" />
+					<r id="100" c="10" t="1" />
+					<r id="101" c="11" t="2" />
+					<r id="102" c="12" t="3" />
 					</Root>'
 */
 BEGIN
