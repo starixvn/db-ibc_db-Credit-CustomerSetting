@@ -17,7 +17,10 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@CustomerClass		SMALLINT = NULL,         
 					@StakeRM			MONEY = NULL,
 					@virtualrate		SMALLMONEY = NULL,
-					@BetFrom			NVARCHAR(1) = ''
+					@BetFrom			NVARCHAR(1) = '',
+					@SiteID				INT = NULL,
+					@LeagueID			INT = -1,
+					@Istest				BIT = 0
 AS
 /*
     Created: 20151019@joy
@@ -42,19 +45,26 @@ AS
 		-- 20200722@VN-Eden: VR setting for Basketball by member stake [Redmine: #138089]
 		-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
 		-- 20201209@VN-Eden: VR Setting for Soccer By Hours (1AM - 6AM GMT+8) [Redmine: #146787]
+		-- 20210427@VN-Eden: Implement dedicated feature to control Global Virtual Rate adjustment on tickets [Redmine:#136423]
 
     Parameter's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00, @CurrentHKDate DATETIME, @CurrentHKTime TIME
+	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00, @CurrentHKDate DATETIME, @CurrentHKTime TIME, @DateOfWeek TINYINT
+	DECLARE @SiteType TINYINT
 	
 	IF @usertype = 2 --CN88 : Not apply VR
 		GOTO ReturnVR;
 
 	SELECT @StakeRM = ISNULL(@StakeRM,0),
-		@CustomerClass = ISNULL(@CustomerClass,0)
+		   @CustomerClass = ISNULL(@CustomerClass,0)
 
+	SELECT @CurrentHKDate = DATEADD(HOUR, 12, GETDATE())
+	SELECT @CurrentHKTime = CONVERT(VARCHAR(12),@CurrentHKDate,114)
+	SELECT @DateOfWeek = DATEPART(DW,@CurrentHKDate)
+	SELECT @SiteType = CASE WHEN @IsLicensee = 1 THEN 2 ELSE 1 END --1 : Credit, 2: Deposit
+			
 	IF @SportType = 1
 	BEGIN --For Soccer
 		SELECT @virtualMultiplier = NULL
@@ -75,70 +85,6 @@ BEGIN
 			BEGIN
 				SELECT @virtualMultiplier = 1
 				RETURN 
-			END
-
-			IF @IsLicensee = 0 
-				AND @StakeRM <= 80
-			BEGIN
-				IF @CustomerClass BETWEEN 8 AND 10 OR @BetFrom = 'P'
-				BEGIN
-					IF @virtualrate = 1
-					BEGIN
-						SELECT @virtualMultiplier = 1
-						GOTO ReturnVR; -- Apply CM
-					END
-					ELSE
-					BEGIN
-						SELECT @virtualMultiplier = 1
-						RETURN 
-					END
-				END
-				ELSE
-				BEGIN
-					SET @virtualMultiplier = 0.01
-					GOTO ReturnVR;
-				END 
-			END
-
-			IF ISNULL(@virtualrate,0) <> 1
-			BEGIN
-				SELECT @virtualMultiplier = 1
-				RETURN 
-			END
-
-			IF @StakeRM < 500 AND @virtualMultiplier < 1 AND @IsLicensee = 1
-			BEGIN
-				SET @virtualMultiplier = 0.01
-				GOTO ReturnVR;
-			END
-			ELSE IF @StakeRM < 500 AND @StakeRM > 80 AND @virtualMultiplier < 1 AND @IsLicensee = 0
-			BEGIN
-				SET @virtualMultiplier = 0.01
-				GOTO ReturnVR;
-			END
-			ELSE
-			BEGIN
-				SELECT @CurrentHKDate = DATEADD(HOUR, 12, GETDATE())
-				SELECT @CurrentHKTime = CONVERT(VARCHAR(12),@CurrentHKDate,114)	
-			
-				IF @isLive = 1 AND @virtualMultiplier < 1 AND @usertype <> 2
-				BEGIN
-				  IF @CurrentHKTime >= '06:00:00' AND @CurrentHKTime < '20:00:00'
-				  BEGIN
-					SELECT @virtualMultiplier = @virtualMultiplier - 0.03
-				  END  
-
-				  IF DATENAME(DW,@CurrentHKDate) NOT IN ('Saturday','Sunday') 
-					AND (@CurrentHKTime BETWEEN '00:00:00' AND '01:00:00' OR @CurrentHKTime BETWEEN '20:00:00' AND '23:59:59.999')
-				  BEGIN
-					SELECT @virtualMultiplier = @virtualMultiplier - 0.02
-				  END
-
-				  IF @CurrentHKTime > '01:00:00' AND @CurrentHKTime < '06:00:00'
-				  BEGIN
-					SELECT @virtualMultiplier = @virtualMultiplier + 0.03
-				  END  
-				END
 			END
 		END
 		ELSE --Get VR2
@@ -191,19 +137,6 @@ BEGIN
 			INNER JOIN VRValueMapping vnonlive WITH (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
 			WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0 --Exclude 'Follow parent'
 			ORDER BY c.RoleID,h.OrderNo
-
-			--IF @virtualMultiplier IS NULL --Get VR1
-			--BEGIN
-			--	SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
-			--	FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)
-			--	INNER JOIN  ProfileVirtualSetting   AS pvs WITH (NOLOCK)
-			--			ON  cvs.seqNo = pvs.seqNo
-			--	WHERE       cvs.custid = @CustID
-			--			AND pvs.sporttype = @SportType
-			--			AND pvs.bettype = @BetType
-			--			AND pvs.islive = @isLive   
-			--			AND pvs.isActive=1 
-			--END
 		END		
 	END
 
@@ -264,12 +197,6 @@ BEGIN
 		INNER JOIN VRValueMapping vnonlive WITH (NOLOCK) ON vr.ValueIDNonLIVE = vnonlive.ValueID
 		WHERE CASE WHEN @IsLive = 1 THEN vlive.ValueID ELSE vnonlive.ValueID END > 0 --Exclude 'Follow parent'
 		ORDER BY c.RoleID,h.OrderNo
-
-		IF @SportType = 2 AND @IsLowVR = 1 AND @virtualMultiplier < 1
-		BEGIN
-			SET @virtualMultiplier = 0.01
-		END
-
 	END
 	
 	ELSE --Not E-sports, Soccers,BasketBall
@@ -285,11 +212,30 @@ BEGIN
 				AND pvs.isActive=1  
 	END
 
+	--Get VR on tickets by config table
+	EXEC Dot_Member_GetVRSettingAdjustment
+		 @Sporttype     = @OriginalSportType    
+		,@Bettype       = @OriginalBetType      
+		,@SiteType      = @SiteType     
+		,@SiteID        = @SiteID       
+		,@CustomerClass = @CustomerClass
+		,@DateOfWeek    = @DateOfWeek   
+		,@LeagueGroupID = @LeagueGroupID
+		,@LeagueID      = @LeagueID     
+		,@Betfrom       = @Betfrom      
+		,@StakeRM       = @StakeRM      
+		,@VRValue       = @virtualMultiplier OUTPUT   
+		,@VRStatus      = @virtualrate     
+		,@Time          = @CurrentHKTime         
+		,@LiveIndicator = @isLive
+		,@Istest		= @Istest
+
 	ReturnVR:
 
 	IF @virtualMultiplier IS NULL OR @usertype = 2 --CN88
 		SELECT @virtualMultiplier = 1
 
+	/*
 	--Apply Currency Modifier
 	IF @IsLicensee = 0
 	BEGIN
@@ -301,4 +247,6 @@ BEGIN
 	END
 
 	SELECT @virtualMultiplier = @virtualMultiplier * @CurrencyModifier
+	*/
 END
+GO

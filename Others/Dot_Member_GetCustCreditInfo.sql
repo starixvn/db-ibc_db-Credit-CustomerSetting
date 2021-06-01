@@ -17,13 +17,14 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo]
     @WinMaxBetType smallint = 0,
     @Date Date = null,
     @usertype int = 0, --0:default(MBC) 1:IMBC 2:CN88
-	@LeagueGroupID SMALLINT =0,
+	@LeagueGroupID SMALLINT = 0,
 	@IsApplyVR2 BIT = 0,
 	@RefLevelID INT = NULL,
 	@IsLowVR BIT = 0,
 	@BetFrom NVARCHAR(1) = '',
 	@CustomerClass SMALLINT = NULL,     
-	@StakeRM MONEY = NULL
+	@StakeRM MONEY = NULL,
+	@LeagueID INT = -1
 AS
 /*
 --------------------------------------------------------------------------------
@@ -74,6 +75,7 @@ AS
 	-- 20210219@VN-Eden: Apply VR by stake range and Auto Adjustment VR by Member profile [Redmine: #150298]
 	-- 20210309@VN-Eden: Revise @betfrom = 'a' to 'z' to VR setting for Basketball on some licensees from Desktop/China View [Redmine: #151392]
 	-- 20210226@VN-Eden: Implement Lock for VR update [Redmine:#149370]
+	-- 20210427@VN-Eden: Implement dedicated feature to control Global Virtual Rate adjustment on tickets [Redmine:#136423]
 */	
 BEGIN
 
@@ -87,7 +89,13 @@ BEGIN
 			@maxpermatch MONEY, @autosuspend BIT, @currency INT,
 			@closed BIT, @reject BIT, @DisableBet BIT,@MaxWinVendorGame SMALLMONEY=0,
 			@DisBetSetting BIT,@DisBetSetting3rd BIT = 0,@BonusWalletFlag BIT,@False BIT=0,@True BIT=1,@Zero TINYINT=0,@MaxWinLimit SMALLMONEY=0,
-			@MaxLossLimit MONEY=0,@CN88_reject BIT= 1,@CN88_closed BIT=1, @Site VARCHAR(10), @IsForcedVRValue BIT, @ForcedVRValue SMALLMONEY,@creatdate DATETIME
+			@MaxLossLimit MONEY=0,@CN88_reject BIT= 1,@CN88_closed BIT=1, @Site VARCHAR(10), @IsForcedVRValue BIT, @ForcedVRValue SMALLMONEY, @creatdate DATETIME, @SiteID INT,
+			@Istest BIT
+
+	SELECT @Istest = CASE WHEN (OBJECT_NAME(@@PROCID) LIKE '%[_]xtest%' 
+								OR  OBJECT_NAME(@@PROCID) LIKE  '%[_]xpre%' 
+								OR  OBJECT_NAME(@@PROCID) LIKE  '%[_]uat[1-9]%')
+							THEN 1 ELSE 0 END
 
 	--set @WinMaxBetType=@bettype
 	IF @WinMaxSportType<>0 and @WinMaxBetType<>0
@@ -336,6 +344,9 @@ BEGIN
 		END
 	END
 
+	SELECT @Site = ISNULL(site,''), @creatdate = creatdate FROM Customer WITH(NOLOCK) WHERE custid = @custid
+	SELECT @SiteID = SiteID FROM Site WITH(NOLOCK) WHERE site = @Site
+
 	--#150298 Check Member meet with given credit and StakeRM condition to Set VR = 0
 	IF EXISTS( SELECT 1 FROM VRMemberBigStake WITH(NOLOCK) WHERE custid = @custid AND Type = 1 AND status = 1)
 	BEGIN
@@ -343,8 +354,6 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		SELECT @Site = ISNULL(site,''), @creatdate = creatdate FROM Customer WITH(NOLOCK) WHERE custid = @custid
-
 		IF EXISTS(
 			SELECT 1
 			FROM dbo.f_GetVRBigStakeConfig(@Site) cf
@@ -389,6 +398,9 @@ BEGIN
 										, @StakeRM = @StakeRM
 										, @virtualrate = @virtualrate
 										, @BetFrom = @BetFrom
+										, @SiteID = @SiteID
+										, @LeagueID = @LeagueID
+										, @Istest = @Istest
 			END			
 		END
 		ELSE IF @sporttype IN(2, 43) --For Esports/BasketBall, get VR2
@@ -396,6 +408,8 @@ BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
 									, @sporttype = @sporttype_vrate
 									, @bettype = @bettype_vrate
+									, @OriginalSportType = @sporttype
+									, @OriginalBetType = @bettype
 									, @isLive = @liveindicator
 									, @isLicensee = @isLicensee
 									, @LeagueGroupID = @LeagueGroupID
@@ -404,6 +418,12 @@ BEGIN
 									, @usertype = @usertype
 									, @RefLevelID = @RefLevelID
 									, @IsLowVR = @IsLowVR
+									, @CustomerClass = @CustomerClass
+									, @StakeRM = @StakeRM
+									, @BetFrom = @BetFrom
+									, @SiteID = @SiteID
+									, @LeagueID = @LeagueID
+									, @Istest = @Istest
 		END
 
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
@@ -411,12 +431,22 @@ BEGIN
 			EXEC Dot_Member_CustomerGetVirtualRateBySportBettype @custid=@custid
 									, @sporttype = @sporttype_vrate
 									, @bettype = @bettype_vrate
+									, @OriginalSportType = @sporttype
+									, @OriginalBetType = @bettype
 									, @isLive = @liveindicator	
 									, @isLicensee = @isLicensee	
+									, @LeagueGroupID = @LeagueGroupID
 									, @srecommend = @srecommend															
 									, @virtualMultiplier = @new_virtualrate OUT
 									, @usertype = @usertype
 									, @IsLowVR = @IsLowVR
+									, @CustomerClass = @CustomerClass
+									, @StakeRM = @StakeRM
+									, @virtualrate = @virtualrate
+									, @BetFrom = @BetFrom
+									, @SiteID = @SiteID
+									, @LeagueID = @LeagueID
+									, @Istest = @Istest
 		END
 
 		IF @IsForcedVRValue = 1 AND @sporttype NOT IN (2,43)
