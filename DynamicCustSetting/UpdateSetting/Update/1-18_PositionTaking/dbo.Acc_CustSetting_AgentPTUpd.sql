@@ -24,6 +24,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTUpd]
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+			- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -428,7 +429,7 @@ BEGIN
 				,@SportBettypeXML = @PT
 
 			-- The minimum position taking value of agent was modified by agent's upline
-			EXEC DBONUSER.On_User.dbo.Age_MessageNoticeUpd @custID = @custid, @userID = @UserID 
+			EXEC dbo.Age_MessageNoticeUpd_Wrapper @custID = @custid, @userID = @UserID 
 		END
 	
 		IF @UpdatePresetPT = 1 

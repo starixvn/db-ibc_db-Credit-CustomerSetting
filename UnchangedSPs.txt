@@ -1,1 +1,5 @@
-
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_All.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno_BetSetting.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_PositionTaking.sql
+DynamicCustSetting\AddNewCustomer\Acc_CustSetting_DCSSettingCopyInsertMember.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_All.sql

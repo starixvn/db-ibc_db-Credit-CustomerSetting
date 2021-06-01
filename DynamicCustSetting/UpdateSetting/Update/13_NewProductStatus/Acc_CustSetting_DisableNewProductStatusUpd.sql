@@ -23,6 +23,7 @@ AS
 		- 20180112@Elodie: Remove IsDisableDownline value [RedmineID:#87328]
 		- 20200406@Elodie: Update unhide by RealProductID [RedmineID:#129440]
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -300,7 +301,7 @@ BEGIN
 		BEGIN		
 			IF @ProductID = 24 --Fishing World
 			BEGIN
-				EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
+				EXEC dbo.Age_MessageNoticeDownlineUpdStatus_Wrapper @CustID = @CustID, @TypeID = 3, @isViewed = 1
 			END
 			
 			EXEC dbo.[Acc_DynamicCustomerInfo_04] @CustID = @CustID

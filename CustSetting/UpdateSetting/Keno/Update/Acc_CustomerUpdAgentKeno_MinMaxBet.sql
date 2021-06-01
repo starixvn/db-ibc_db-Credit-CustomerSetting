@@ -32,6 +32,7 @@ AS
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]	
 		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 		- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 	Param's Explanation:
 	• @ErrCode:
 		= 0: Update successfully.
@@ -198,7 +199,7 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 	-- Compare old value & new value Betting Limit: Popup Message For Betting Limit 
 	IF @MinBet <> @Old_MinBet OR @MaxBet <> @Old_MaxBet OR @MaxPerMatch <> @Old_MaxPerGame
 	BEGIN
-		EXEC DBONUSER.On_User.dbo.Age_MessageNoticeUpd @custID = @custid
+		EXEC dbo.Age_MessageNoticeUpd_Wrapper @custID = @custid
 			, @userID = @UserID
 			, @TypeID = 2
 	END
