@@ -18,6 +18,7 @@ AS
 		- 20180118@Elodie: Update enable status on NAP & ExtNAP [RedmineID:#87328]
 		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -356,9 +357,9 @@ BEGIN
 				IF @downlines = 1
 				BEGIN
 					IF EXISTS (	SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0 AND UpdateAllMembers = 1 AND DisableAllMembers = 0) --enable member downline
-						EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpd @CustID = @CustID, @UserID = @UserID, @TypeID = 3, @IsDisabled = @IsDisabled_Downline_tmp
+						EXEC dbo.Age_MessageNoticeDownlineUpd_Wrapper @CustID = @CustID, @UserID = @UserID, @TypeID = 3, @IsDisabled = @IsDisabled_Downline_tmp
 					IF EXISTS (SELECT TOP 1 1 FROM #NewDisableStatTbl WHERE IsDisabled = 1) --disable downline
-						EXEC DBONUSER.On_User.dbo.Age_MessageNoticeDownlineUpdStatus @CustID = @CustID, @TypeID = 3, @isViewed = 1
+						EXEC dbo.Age_MessageNoticeDownlineUpdStatus_Wrapper @CustID = @CustID, @TypeID = 3, @isViewed = 1
 				END
 			END	
 

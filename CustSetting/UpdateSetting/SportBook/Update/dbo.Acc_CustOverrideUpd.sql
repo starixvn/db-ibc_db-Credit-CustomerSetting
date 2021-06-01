@@ -209,6 +209,7 @@ Revisions:
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 
 Param's Explanation:
 • @ErrCode:
@@ -1195,7 +1196,7 @@ BEGIN
                 EXEC dbo.Acc_CustSetting_04 @recommend = @recommend, @mrecommend = @mrecommend, @srecommend = @srecommend, @roleid = 2
                 EXEC dbo.Acc_CustSetting3rd_04 @recommend = @recommend, @mrecommend = @mrecommend, @srecommend = @srecommend, @roleid = 2, @mode = 'number'
     -- The minimum position taking value of agent was modified by agent's upline
-    EXEC DBONUSER.On_User.dbo.Age_MessageNoticeUpd @custID = @custid, @userID = @UserID
+    EXEC dbo.Age_MessageNoticeUpd_Wrapper @custID = @custid, @userID = @UserID
 END
 else if @roleid = 3
 BEGIN
