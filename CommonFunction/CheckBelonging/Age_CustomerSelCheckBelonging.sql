@@ -12,7 +12,7 @@ BEGIN
 	/*
 	Created:
 	Task: check downline belonging
-	DB: DBAGE/bodb02, DBTXN/CustDB
+	DB: DBAGE/bodb02, DBCUST/CustDB
 	Original: 
 	
 	Revisions:
@@ -21,56 +21,57 @@ BEGIN
 		- 20140303@Johnson: fix bug check session's roleid 
 		- 20150225@Lukas: add subaccountID 
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20210607@Elodie: Check belonging in case main acc edit sub acc
 	*/
+BEGIN
 	SET NOCOUNT ON
-	Declare @SessionRoleID tinyint
+	DECLARE @SessionRoleID TINYINT
 
-	if @SessionCustID is NULL --Not check
+	IF @SessionCustID IS NULL --Not check
 	BEGIN
-		select @roleid = roleid
-		from custinfo c with (nolock)
-		where c.custid = @custid
+		SELECT @roleid = roleid
+		FROM custinfo c WITH (NOLOCK)
+		WHERE c.custid = @custid
 		RETURN
 	END
 
 	--check customer by transid/refno -----------------------------------------------
-	if @custid is NULL
-		select @custid = custid from bodb02.dbo.bettrans with (nolock) where transid = @transid
+	IF @custid is NULL
+		SELECT @custid = custid FROM bodb02.dbo.bettrans WITH (NOLOCK) WHERE transid = @transid
 
-	if @custid is NULL
-		select @custid = custid from bodb02.dbo.bettrans14 with (nolock) where transid = @transid
+	IF @custid is NULL
+		SELECT @custid = custid FROM bodb02.dbo.bettrans14 WITH (NOLOCK) WHERE transid = @transid
 
-	if @custid is NULL
-		select @custid = custid from DBARC.bodb_archive.dbo.Bettrans_bk with (nolock) where transid = @transid
+	IF @custid is NULL
+		SELECT @custid = custid FROM DBARC.bodb_archive.dbo.Bettrans_bk WITH (NOLOCK) WHERE transid = @transid
 
 	--------------------------------------------------------------------------------
-
-
+	SELECT	@SessionRoleID = roleid,
 	select	@SessionRoleID = roleid,
-			@isActive = CASE WHEN cps.CloseInfo > 0 OR Enabled = 0 THEN 0 ELSE 1 END
+		@isActive = CASE WHEN cps.CloseInfo > 0 OR Enabled = 0 THEN 0 ELSE 1 END
 	from custinfo ci with(nolock)
 		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid
 	where ci.custID = @SessionCustID
 
 	IF ISNULL(@sessionRoleid ,0) = 0 RETURN
 
-	select	@roleid = roleid, @username = username		
-	from custinfo c with (nolock)
-	where c.custid = @custid
+	SELECT	@roleid = roleid, @username = username		
+	FROM custinfo c WITH (NOLOCK)
+	WHERE c.custid = @custid
 		and
 		(c.srecommend = @SessionCustID or c.mrecommend = @SessionCustID
 			or c.recommend = @SessionCustID or c.custid = @SessionCustID
 			OR @SessionRoleID >= 5)
 
-	if @SubAccountID <> 0
+	IF @SubAccountID <> 0 OR ISNULL(@roleid, 0) = 0
 	BEGIN
-		SELECT @isActive = CASE WHEN closed = 0 THEN 1 ELSE 0 END 
+		SELECT @isActive = CASE WHEN closed = 0 THEN 1 ELSE 0 END,
+			@roleid = @SessionRoleID, @username = username
 		FROM dbo.custSub WITH(NOLOCK) 
-		WHERE subaccID = @SubAccountID AND custid = @SessionCustID
+		WHERE subaccID = @custid AND custid = @SessionCustID
 	END
 
-	select	@roleid = isnull(@roleid, 0), 
+	SELECT	@roleid = ISNULL(@roleid, 0), 
 			@isActive = ISNULL(@isActive,0)
-
 END
-GO
+END
