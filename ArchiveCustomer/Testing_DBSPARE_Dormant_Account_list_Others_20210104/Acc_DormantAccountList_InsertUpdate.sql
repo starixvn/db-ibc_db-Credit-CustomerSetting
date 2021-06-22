@@ -16,6 +16,7 @@ AS
 
 	Revisions:  
 	- 20201209@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+	- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
 
 	Parameter Definition
 
@@ -31,10 +32,36 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	IF @StageID NOT IN (1,2,3)
+	IF @StageID NOT IN (1,2,3,4)
 		RETURN
 
 	DECLARE @TotalDownline INT
+
+	--> Process for S4
+	IF @StageID = 4 
+	BEGIN
+		IF @RoleID = 2
+		BEGIN
+			UPDATE c
+			SET AccountDeletedDate = @ProcessedDate,
+				ArchivedDate = @ArchivedDate,
+				StageID = @StageID
+			FROM Cust_ArchiveAccount c WITH(ROWLOCK)
+			WHERE c.recommend = @CustID
+				AND c.roleid IN (1,2)
+		END
+		ELSE
+		BEGIN
+			UPDATE c
+			SET AccountDeletedDate = @ProcessedDate,
+				ArchivedDate = @ArchivedDate,
+				StageID = @StageID
+			FROM Cust_ArchiveAccount c WITH(ROWLOCK)
+			WHERE c.CustID = @CustID
+		END
+
+		RETURN
+	END
 
 	IF @RoleID = 2
 	BEGIN
@@ -141,3 +168,5 @@ END
 GO
 
 
+
+    

@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-custdb" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [Task_ArchiveAccount]
+ALTER PROCEDURE [Task_ArchiveAccount]
 	@stage tinyint = NULL
 AS
 /*
@@ -16,6 +16,7 @@ AS
 		- 20210302@Eden: Just process SMA(s) stage 2, 3, 4 when they processed stage 1  [RedmineID: #149262]
 		- 20210316@Helen: ArchivedMasterAgent_Stage3 for stage 3, backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
+		- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
 		
 	Param:
 		+ @stage: input stage to run archive
@@ -23,10 +24,10 @@ AS
 BEGIN
 
 	SET NOCOUNT ON
-	
+
 	-- simulate run date based on test data version
 	declare @currentDate smalldatetime 
-	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'	   
+	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
 	
 	DECLARE @srecommend INT
 			, @mrecommend INT
@@ -509,6 +510,7 @@ BEGIN
 		
 		WHILE(1=1)
 		BEGIN
+			SELECT @ProcessedDate = @currentDate
 			SELECT @ErrMsg = ''
 			SELECT TOP 1 @agent = Agent, @recommend = recommend
 			FROM tmpCustArchived 
@@ -518,11 +520,14 @@ BEGIN
 	
 			EXEC dbo.DBA_ArchiveAccount4_DelCustInfo @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT
 
-			-->Delete data from Cust_ArchiveAccount		
+			-->Update data from Cust_ArchiveAccount		
 			IF ISNULL(@ErrMsg,'') = ''
-				EXEC Acc_DormantAccountList_Del 
+				EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 					@CustId = @recommend,
-					@RoleID = 2
+					@RoleID = 2,
+					@StageID = @stage,
+					@ProcessedDate = @ProcessedDate,
+					@ArchivedDate = @ArchivedDate
 	
 			UPDATE tmpCustArchived 
 			SET ErrMsg = @ErrMsg, IsFinished = 1
@@ -545,6 +550,7 @@ BEGIN
 		
 		IF EXISTS (SELECT TOP (1) 1 FROM #ArchiveMasterSuper_tmp)
 		BEGIN
+			SELECT @ProcessedDate = @currentDate
 			WHILE(1=1)
 			BEGIN
 				SELECT @ErrMsg = ''
@@ -561,11 +567,14 @@ BEGIN
 				
 				EXEC dbo.DBA_ArchiveAccount4_DelCustInfoMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
 
-				-->Delete data from Cust_ArchiveAccount		
+				-->Update data from Cust_ArchiveAccount		
 				IF ISNULL(@ErrMsg,'') = ''
-					EXEC Acc_DormantAccountList_Del 
+					EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 						@CustId = @ArchivedCustID,
-						@RoleID = 3
+						@RoleID = 3,
+						@StageID = @stage,
+						@ProcessedDate = @ProcessedDate,
+						@ArchivedDate = @ArchivedDate
 				
 				SET @msg = 'Stage 4 - Done Delete Customer Information for ' + @GroupLevelName +':'+  @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
@@ -581,7 +590,6 @@ BEGIN
 	DROP TABLE #ReduceCredit
 	DROP TABLE #ArchiveMasterSuper_tmp
 	
-END
+END	
 
     
-
