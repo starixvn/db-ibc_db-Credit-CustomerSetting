@@ -16,6 +16,7 @@ AS
 		- 20210302@Eden: Just process SMA(s) stage 2, 3, 4 when they processed stage 1  [RedmineID: #149262]
 		- 20210316@Helen: ArchivedMasterAgent_Stage3 for stage 3, backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
+		- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
 		
 	Param:
 		+ @stage: input stage to run archive
@@ -505,6 +506,7 @@ BEGIN
 		
 		WHILE(1=1)
 		BEGIN
+			SELECT @ProcessedDate = GETDATE()
 			SELECT @ErrMsg = ''
 			SELECT TOP 1 @agent = Agent, @recommend = recommend
 			FROM tmpCustArchived 
@@ -514,11 +516,14 @@ BEGIN
 	
 			EXEC dbo.DBA_ArchiveAccount4_DelCustInfo @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT
 
-			-->Delete data from Cust_ArchiveAccount		
+			-->Update data from Cust_ArchiveAccount		
 			IF ISNULL(@ErrMsg,'') = ''
-				EXEC Acc_DormantAccountList_Del 
+				EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 					@CustId = @recommend,
-					@RoleID = 2
+					@RoleID = 2,
+					@StageID = @stage,
+					@ProcessedDate = @ProcessedDate,
+					@ArchivedDate = @ArchivedDate
 	
 			UPDATE tmpCustArchived 
 			SET ErrMsg = @ErrMsg, IsFinished = 1
@@ -544,6 +549,7 @@ BEGIN
 			WHILE(1=1)
 			BEGIN
 				SELECT @ErrMsg = ''
+				SELECT @ProcessedDate = GETDATE()
 				
 				UPDATE TOP (1) t
 					SET  IsFinished = 1
@@ -557,11 +563,14 @@ BEGIN
 				
 				EXEC dbo.DBA_ArchiveAccount4_DelCustInfoMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
 
-				-->Delete data from Cust_ArchiveAccount		
+				-->Update data from Cust_ArchiveAccount		
 				IF ISNULL(@ErrMsg,'') = ''
-					EXEC Acc_DormantAccountList_Del 
+					EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 						@CustId = @ArchivedCustID,
-						@RoleID = 3
+						@RoleID = 3,
+						@StageID = @stage,
+						@ProcessedDate = @ProcessedDate,
+						@ArchivedDate = @ArchivedDate
 				
 				SET @msg = 'Stage 4 - Done Delete Customer Information for ' + @GroupLevelName +':'+  @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
