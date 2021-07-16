@@ -303,7 +303,7 @@ BEGIN
 		SELECT ar.custid,ci.srecommend
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
 			INNER JOIN custdb.dbo.custinfo ci WITH (NOLOCK)  ON ar.custid = ci.custid
-			LEFT JOIN #Cust_ArchiveAccount_Master c WITH(NOLOCK) ON ar.custid = c.CustID
+			LEFT JOIN #Cust_ArchiveAccount_Master c WITH(NOLOCK) ON ar.custid = c.CustID AND c.StageID >= @StageId - 1
 		WHERE ar.GroupLevelName = 'M0'
 			AND c.CustID IS NULL
 
