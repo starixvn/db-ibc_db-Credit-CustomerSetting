@@ -15,6 +15,7 @@ AS
 		- 20200911@Helen: Fix stage 1 - M0 - [Redmine:130032]
 		- 20201231@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210302@Eden: Just process SMA(s) stage 2, 3, 4 when they processed stage 1  [RedmineID: #149262]
+		- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
 		
 	Param's Explanation:
 */
@@ -275,18 +276,18 @@ BEGIN
 		 LEFT JOIN tmpCustGroupLevelArchived t1 WITH (NOLOCK) ON t1.custid = c.srecommend
 	WHERE  t.Roleid = 3 AND t.GroupLevelName = 'M0' AND (t1.GroupLevelName <> 'S1' OR t1.GroupLevelName IS NULL)
 
-	CREATE TABLE #M0NotInStage1(CustID INT, srecommend INT)
-	CREATE TABLE #Cust_ArchiveAccount_Master(CustID INT)
+	CREATE TABLE #M0NotInPreviousStage(CustID INT, srecommend INT)
+	CREATE TABLE #Cust_ArchiveAccount_Master(CustID INT, StageID TINYINT)
 
 	IF OBJECT_ID (N'Cust_ArchiveAccount', N'U') IS NOT NULL --check table is existing ?
 	BEGIN
-		INSERT INTO #Cust_ArchiveAccount_Master(CustID)
-		SELECT CUSTID FROM Cust_ArchiveAccount WITH(NOLOCK) WHERE roleid = 3
+		INSERT INTO #Cust_ArchiveAccount_Master(CustID,StageID)
+		SELECT CUSTID,StageID FROM Cust_ArchiveAccount WITH(NOLOCK) WHERE roleid = 3
 	END
 	ELSE
 	BEGIN
-		INSERT INTO #Cust_ArchiveAccount_Master(CustID)
-		SELECT CUSTID
+		INSERT INTO #Cust_ArchiveAccount_Master(CustID,StageID)
+		SELECT CUSTID,StageID
 		FROM DBCUST.CUSTDB.dbo.Cust_ArchiveAccount WITH(NOLOCK) 
 		WHERE roleid = 3
 	END
@@ -294,25 +295,25 @@ BEGIN
 	--> Get M0 list who were not processed on Stage 1 yet
 	IF @StageId <> 1
 	BEGIN
-		INSERT INTO #M0NotInStage1(CustID,srecommend)
+		INSERT INTO #M0NotInPreviousStage(CustID,srecommend)
 		SELECT ar.custid,ci.srecommend
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
 			INNER JOIN dbo.custinfo ci WITH (NOLOCK)  ON ar.custid = ci.custid
-			LEFT JOIN #Cust_ArchiveAccount_Master c WITH(NOLOCK) ON ar.custid = c.CustID
+			LEFT JOIN #Cust_ArchiveAccount_Master c WITH(NOLOCK) ON ar.custid = c.CustID AND c.StageID >= @StageId - 1
 		WHERE ar.GroupLevelName = 'M0'
 			AND c.CustID IS NULL
 
-		IF EXISTS( SELECT TOP 1 1 FROM #M0NotInStage1)
+		IF EXISTS( SELECT TOP 1 1 FROM #M0NotInPreviousStage)
 		BEGIN
-			--Update S1(s)-->S2(s) if M0(s) were not processed on Stage 1 yet
+			--Update S1(s)-->S2(s) if M0(s) were not processed on previous Stage yet
 			UPDATE ar 
 			SET ar.GroupLevelName = 'S2'
-			FROM #M0NotInStage1 t
+			FROM #M0NotInPreviousStage t
 				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.srecommend
 		
-			--Delete M0(s) if they were not processed on Stage 1 yet
+			--Delete M0(s) if they were not processed on on previous Stage yet
 			DELETE ar
-			FROM #M0NotInStage1 t
+			FROM #M0NotInPreviousStage t
 				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.CustID
 		END
 	END
@@ -322,7 +323,7 @@ BEGIN
 	DROP TABLE #tmpMaster_DetectM0
 	DROP TABLE #Super_Exception
 	DROP TABLE #tmpSuper_M0
-	DROP TABLE #M0NotInStage1
+	DROP TABLE #M0NotInPreviousStage
 	
 END
 GO
