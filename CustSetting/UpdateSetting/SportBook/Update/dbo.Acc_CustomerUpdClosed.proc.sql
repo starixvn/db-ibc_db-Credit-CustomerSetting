@@ -45,6 +45,7 @@ Revisions:
 	- 20170504@Winnie: Color for closed Accounts  - [Redmine:#74494]
 	- 20200216@Elodie: Lock close/suspend for some member [Redmine: #128541]
 	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
+	- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
 
 Param's Explanation
 • @custid: custid that need to be viewed.   

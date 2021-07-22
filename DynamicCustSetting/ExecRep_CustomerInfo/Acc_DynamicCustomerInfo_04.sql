@@ -23,6 +23,7 @@ AS
 		- 20200406@Elodie: Update unhide by RealProductID [RedmineID:#129440]
 		- 20200702@Winfred: Update enable status of Cust when SettingType = 4[RedmineID:#136210]  
 		- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
 */
 BEGIN
 	SET NOCOUNT ON 
