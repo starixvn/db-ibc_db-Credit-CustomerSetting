@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_04]
 	@IsDisabled_XML VARCHAR(MAX) = NULL,
 	@Suspended BIT = NULL,
 	@Closed BIT = NULL,	
+	@ClosedReason TINYINT = NULL,
 	@Action	VARCHAR(30)	= 'ProductStatus'
 AS
 /*
@@ -650,8 +651,6 @@ BEGIN
 	END
 	IF @Action = 'CloseInfo'
 	BEGIN
-		DECLARE @ClosedReason INT
-					
 		IF @roleid = 4
 		BEGIN			
 			UPDATE	cs 
@@ -681,8 +680,6 @@ BEGIN
 
 		IF dbo.f_CheckRepTable('CustLoginInfo') = 1 AND dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
 		BEGIN
-			SELECT @ClosedReason = ClosedReason FROM CustLoginInfo WHERE CustID = @CustID
-
 			IF @roleid = 4
 			BEGIN			
 				UPDATE	cs 

@@ -146,7 +146,7 @@ BEGIN
 	---------------------------
 
 	Declare @roleid tinyint, @LoginCount int, @Old_Closed bit, @UplineClosed bit, @srecommend int, @mrecommend int, @recommend int 
-	DECLARE @IsDeposit BIT = 0, @SuperClosed BIT, @MasterClosed BIT, @AgentClosed BIT, @MemberClosed BIT
+	DECLARE @IsDeposit BIT = 0, @SuperClosed BIT, @MasterClosed BIT, @AgentClosed BIT, @MemberClosed BIT, @ClosedReason TINYINT
 
 	IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo ci WITH(NOLOCK)
 					INNER JOIN dbo.Dep_CustSuper dep WITH(NOLOCK) ON ci.srecommend = dep.custid
@@ -267,6 +267,7 @@ BEGIN
 	BEGIN
 		IF(@roleid=1 AND @SystemID=1)
 		BEGIN
+			SET @ClosedReason = 1
 			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
 			BEGIN
 				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
@@ -280,6 +281,7 @@ BEGIN
 		END
 		ELSE IF(@roleid=1 AND @SystemID <> 1)
 		BEGIN
+			SET @ClosedReason = 2
 			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
 			BEGIN
 				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
@@ -293,17 +295,22 @@ BEGIN
 		END
 		ELSE IF(@roleid IN(2,3,4) AND @SystemID=1)
 		BEGIN
+			SET @ClosedReason = 1
+
 			UPDATE [dbo].[CustLoginInfo] WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
 			WHERE custid = @custid
 		END
 		ELSE
 		BEGIN
+			SET @ClosedReason = 2
+
 			UPDATE [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 2
 			WHERE custid = @custid
 		END
 	END
 	ELSE IF (@Closed=0)
 	BEGIN
+		SET @ClosedReason = 0
 		IF(@roleid=1)
 			update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 0
 			where custid = @custid
@@ -346,6 +353,7 @@ BEGIN
 				,@RoleID	= @RoleID
 				,@Action	= 'CloseInfo'
 				,@Closed	= @Closed
+				,@ClosedReason = @ClosedReason
 	END
 
 
