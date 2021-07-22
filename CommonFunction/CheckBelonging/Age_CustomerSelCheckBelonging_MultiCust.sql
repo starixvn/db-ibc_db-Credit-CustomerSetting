@@ -1,10 +1,13 @@
-﻿ALTER PROCEDURE [dbo].[Age_CustomerSelCheckBelonging_MultiCust]
+﻿/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="0"></info>*/
+
+ALTER PROCEDURE [dbo].[Age_CustomerSelCheckBelonging_MultiCust]
 	@SessionCustID INT, --uplineID	
 	@subAccountID INT = 0,
 	@isActive BIT = 1 OUTPUT,
 	@custid VARCHAR(4000),
 	@roleid TINYINT OUTPUT --0: not belonged to
 AS
+BEGIN
 /*
 Created:20111011@TOM
 Task: check downline belonging
@@ -13,6 +16,7 @@ Original: [Age_CustomerSelCheckBelonging]
 	
 Revisions:
    - 20150225@Lukas: add subaccountID 
+   - 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 */
 SET NOCOUNT ON
 DECLARE @tblCust TABLE (CustID INT )
@@ -44,21 +48,14 @@ BEGIN
 END
 ELSE 
 BEGIN
-	SELECT @isActive = CASE WHEN closed = 1 OR Enabled = 0 THEN 0 ELSE 1 END
-	FROM dbo.custinfo WITH(NOLOCK) 
-	WHERE custid = @SessionCustID
+	SELECT @isActive = CASE WHEN cps.CloseInfo > 0 OR Enabled = 0 THEN 0 ELSE 1 END
+	FROM dbo.custinfo ci WITH(NOLOCK) 
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON ci.custid = cps.CustID
+	WHERE ci.custid = @SessionCustID
 END 
 
 SELECT	@roleid = ISNULL(@roleid, 0),
 		@isActive = ISNULL(@isActive,0)
 
+END
 GO
-GRANT EXECUTE ON [dbo].[Age_CustomerSelCheckBelonging_MultiCust] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Age_CustomerSelCheckBelonging_MultiCust] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[Age_CustomerSelCheckBelonging_MultiCust] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Age_CustomerSelCheckBelonging_MultiCust] TO [bodbDownlineNetView]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Age_CustomerSelCheckBelonging_MultiCust] TO [vnteam]

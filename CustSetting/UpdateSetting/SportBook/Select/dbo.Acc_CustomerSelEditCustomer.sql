@@ -44,6 +44,7 @@ Revisions:
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 
 Param's Explanation:
 • @CustID: member ID
@@ -123,10 +124,10 @@ Declare @MinBet_Max money, @MaxBet_Min money, @MaxPerMatch_Min money, @MaxPerMat
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-declare @srecommend int, @mrecommend int, @recommend int, @Asuspended bit  ,@site varchar(10)
+declare @srecommend int, @mrecommend int, @recommend int  ,@site varchar(10) --, @Asuspended bit
 select	@srecommend = srecommend ,@mrecommend = mrecommend, @recommend=recommend from custinfo with (NOLOCK) where custid = @custid
-select	@Asuspended = isnull(reject,0)
-from custinfo with (NOLOCK) where custid = @recommend
+--select	@Asuspended = isnull(reject,0)
+--from custinfo with (NOLOCK) where custid = @recommend
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1023,8 +1024,8 @@ select
 	END	
 
 SELECT 
-	C.username, C.firstname, C.lastname,c.username2, Ci.closed,ci.reject as suspended,ci.currency AS CurrencyID,
-	@Asuspended as Asuspended ,
+	C.username, C.firstname, C.lastname,c.username2, Cps.closed,cps.reject as suspended,ci.currency AS CurrencyID,
+	CASE WHEN (sp.SuperStatus + sp.MasterStatus + sp.AgentStatus) > 0 THEN 1 ELSE 0 END as Asuspended,
 	C.postal, isnull(C.email,'') as email, 
 	isnull(C.phone,'') as phone, 
 	isnull(C.mobilephone,'') as mobilephone, 
@@ -1424,11 +1425,18 @@ from
 	INNER JOIN CustSetting as cs with (NOLOCK) on c.custid = cs.custid
 	INNER JOIN exchange with (NOLOCK) ON C.currency=exchange.exchangeid
 	INNER JOIN CustSetting3rd cs3 with (NOLOCK) on cs.custid = cs3.custid
+	CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, SuspendInfo
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cps
+	CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.SuspendInfo)) AS sp
 	LEFT JOIN CustDirectAccount CDA WITH (NOLOCK) ON C.custid = CDA.CustID
 	LEFT JOIN dbo.Customer ag WITH (NOLOCK) ON c.recommend = ag.custid
 where C.custid=@CustID
 group by 
-	C.username, C.firstname, C.lastname,c.username2, Ci.closed,ci.reject,ci.currency,
+	C.username, C.firstname, C.lastname,c.username2, cps.closed,cps.reject,ci.currency,
 	C.postal, C.email, C.phone, C.mobilephone, c.email, C.fax, 
 	Ci.maxpermatch,
 	ci.maxpermatch2,
@@ -1453,7 +1461,8 @@ group by
      --ci.disablebingo,
     ci.disablenumber,
     --ci.syncbingo
-    CDA.CustID
+    CDA.CustID,
+	sp.SuperStatus,sp.MasterStatus,sp.AgentStatus
     
 END
 GO 

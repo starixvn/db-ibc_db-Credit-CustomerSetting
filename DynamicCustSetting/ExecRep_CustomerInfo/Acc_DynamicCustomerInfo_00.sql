@@ -44,6 +44,7 @@ AS
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
@@ -161,11 +162,12 @@ BEGIN
 						)
 				END
 						
-				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo)
+				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo)
 				SELECT	@CustID
 						, (select bitmap from dbo.f_GenerateProductStatus_multiple (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
 						, (select bitmap from dbo.f_GenerateProductStatus_multiple (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, CONVERT(VARCHAR(MAX),@xmlStrHidden)))
 						, (select bitmap from dbo.f_GenerateProductStatus_multiple (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, CONVERT(VARCHAR(MAX),@xmlStrSync)))
+						, 0
 						, 0
 						
 			END	ELSE IF @RoleID IN (3,2,1)
@@ -175,6 +177,7 @@ BEGIN
 				--Enable/Disable: upline status
 				DECLARE @UplineID INT,
 						@CopySuspendInfo TINYINT
+						,@CopyCloseInfo TINYINT
 						
 				IF @RoleID = 3
 					SET @UplineID = @SuperID
@@ -183,19 +186,19 @@ BEGIN
 				ELSE IF @RoleID = 1
 					SET @UplineID = @AgentID		
 			
-				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo)
-				SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced, cs.SuspendInfo
+				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo)
+				SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced, cs.SuspendInfo,cs.CloseInfo
 				FROM [dbo].[CustProductStatus] cs WITH (NOLOCK)
 				WHERE cs.CustID = @UplineID
 				
 				IF @isSearchAndCopy = 1
 				BEGIN
-					SELECT @CopySuspendInfo = SuspendInfo
+					SELECT @CopySuspendInfo = SuspendInfo,@CopyCloseInfo = CloseInfo 
 					FROM CustProductStatus WITH(NOLOCK)
 					WHERE custid = @copyFromCustID
 					
 					UPDATE CustProductStatus WITH(UPDLOCK,ROWLOCK)
-					SET suspendInfo = @CopySuspendInfo
+					SET suspendInfo = @CopySuspendInfo, CloseInfo = @CopyCloseInfo
 					WHERE custid = @custid
 				END
 			END

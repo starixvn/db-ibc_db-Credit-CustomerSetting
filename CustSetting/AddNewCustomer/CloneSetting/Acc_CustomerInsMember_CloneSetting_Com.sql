@@ -74,6 +74,7 @@ AS
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20201005@Eden: Minimize UM Time Phase 2 [Redmine: #142115]
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
+	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	
  Explanation's Param:  
 	- @ErrCode:
@@ -375,9 +376,9 @@ BEGIN
 				,recommend
 				,dangercust
 				,autosuspend
-				,reject
+				--,reject
 				,credit
-				,closed
+				--,closed
 				,MatchLimit
 				,VirtualMultiplier
 				,maxpermatch
@@ -417,9 +418,9 @@ BEGIN
 				,0 as recommend
 				,dangercust
 				,0 AS autosuspend
-				,reject
+				--,reject
 				,@Credit AS Credit
-				,closed
+				--,closed
 				,MatchLimit
 				,0 AS VirtualMultiplier
 				,maxpermatch
@@ -527,7 +528,8 @@ BEGIN
 	END CATCH
 
     DECLARE @isForcedChangeSecurityCode BIT = 0, @ClosedReason TINYINT=0,@Closed BIT
-	SELECT TOP 1 @Closed=Closed FROM custInfo WITH(NOLOCK) WHERE custid=@ExistingCustid
+	SELECT TOP 1 @Closed= CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END
+	FROM CustProductStatus WITH(NOLOCK) WHERE custid=@ExistingCustid
 
 	IF (@SystemID=1 AND @Closed=1)
 		SELECT @ClosedReason=1

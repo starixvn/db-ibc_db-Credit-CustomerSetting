@@ -39,6 +39,7 @@ Revisions:
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20210510@Tina: Lock account & indirect close account [redmine: #148600]
 	
 */
 BEGIN
@@ -118,11 +119,17 @@ Declare @MinBet_Max money,
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Select @Credit_AllOtherMember = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where recommend = @CustID and RoleID = 1
 
-select	@Credit_Ag = isnull(credit, 0),
-		@Asuspended = reject , 
-		@UplineClosed = closed,
+SELECT	@Credit_Ag = isnull(credit, 0),
+		@Asuspended = cs.reject , 
+		@UplineClosed = cs.closed,
 		@CurrencyID=ci.currency
-from CustInfo as ci with (NOLOCK) where CustID = @CustID
+FROM CustInfo as ci with (NOLOCK) 
+	CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cs
+WHERE CustID = @CustID
 
 select @MaxCredit_Mem = isnull(maxcredit,0) from CustAgent WITH (NOLOCK) where CustID = @CustID
 
@@ -552,7 +559,6 @@ From
 	INNER JOIN CustSetting3rd as cs3 with (NOLOCK) on Customer.custid = cs3.custid 
 	INNER JOIN CustSetting3rd as scs3 with (NOLOCK) on ci.srecommend = scs3.custid and scs3.sporttype = cs3.sporttype and scs3.bettype = cs3.bettype
 	LEFT JOIN CustOverride3rd as co3 with (NOLOCK) on co3.custid = cs3.custid and co3.sporttype = cs3.sporttype and co3.bettype = cs3.bettype
-	
 Where Customer.CustID = @CustID
 group by ci.maxpermatch,
 	ci.maxpermatch2,

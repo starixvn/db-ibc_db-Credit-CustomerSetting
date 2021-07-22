@@ -441,7 +441,8 @@ Revisions:
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
-	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]		
+	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]	
+	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]	
 Param's Explanation:
 • @ErrCode:
     = 0: super create master successfully.
@@ -710,7 +711,7 @@ BEGIN
 	    @RoleID_SAg TINYINT, @matchlimit SMALLMONEY,
 	    @TransferOption_dec TINYINT,
 	    @DisableOutright BIT,
-	    @Ssuspended BIT,
+	    --@Ssuspended BIT,
 	    @UplineClosed BIT,
 	    @autosuspend BIT,
 	    @autosuspend2 BIT,
@@ -885,8 +886,8 @@ BEGIN
 
     SELECT 
 	    --@currency = currency,
-	    @Ssuspended = reject,
-	    @UplineClosed = closed,
+	    --@Ssuspended = cs.reject,
+	    @UplineClosed = cs.closed,
 	    @Credit_SAg = isnull(credit, 0),
 	    @MaxMaxPerMatch = isnull(MaxPerMatch, 0),
 	    @MaxMaxPerMatchv2 = isnull(MaxPerMatch2, 0),
@@ -923,7 +924,12 @@ BEGIN
 		@DangerSuper = Danger,
 		@DangerSuper2 = Danger2,
 		@DangerSuper3 = Danger3
-    FROM CustInfo ci WITH(NOLOCK) 
+    FROM CustInfo ci WITH(NOLOCK)
+		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+							,CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject									
+					FROM dbo.CustProductStatus  WITH(NOLOCK)
+					WHERE CustID = ci.custid
+					) AS cs	
     WHERE CustID = @srecommend
 
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1764,10 +1770,10 @@ BEGIN
 	    @isauto_v161slivepositiontaking_90 = CASE WHEN @auto_v161slivepositiontaking_90 > 0 THEN 1 ELSE 0 END
 	
 	--if upline suspended then new master will be suspended
-    IF @Ssuspended = 1 
-    begin 
-	    set @suspended = 1
-    END 
+    --IF @Ssuspended = 1 
+    --begin 
+	   -- set @suspended = 1
+    --END 
 
 
     --Insert general info
@@ -1795,7 +1801,7 @@ BEGIN
 	    @country = @country,
 	    @postal = @postal,
 	    @TransferOption = @TransferOption,
-	    @suspended = @suspended,
+		-- @suspended = @suspended,
 	    @closed = @UplineClosed,
     	@SystemID=@SystemID,
 	    @autosuspend = @autosuspend,
@@ -2527,13 +2533,14 @@ BEGIN
 
 	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
 	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK) 
-		INNER JOIN (SELECT psd.ProductID, MIN(CAST(dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) AS INT)) AS custIsHidden
+		INNER JOIN (SELECT psd.ProductID, MIN(CAST(Hi.[Value] AS INT)) AS custIsHidden
 					FROM ProductSettingDetail psd WITH(NOLOCK)
 						INNER JOIN	ProductStatusProfile psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype
 																			AND	psd.BetType = psp.Bettype
 																			AND psd.SettingType IN (4,11,13)		-- Product Status
 						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
 						INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
+						CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
 					WHERE psd.ProductID <> 20 
 					GROUP BY psd.ProductID	
 					) iq ON iq.ProductID = p.ProductID

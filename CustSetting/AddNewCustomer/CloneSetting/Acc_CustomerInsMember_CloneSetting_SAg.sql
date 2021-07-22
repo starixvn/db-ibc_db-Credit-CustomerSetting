@@ -92,6 +92,7 @@ AS
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
+	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -419,9 +420,9 @@ BEGIN
 				,dangercust
 				,autosuspend
 				,autosuspend2
-				,reject
+				--,reject
 				,credit
-				,closed
+				--,closed
 				,MatchLimit
 				,VirtualMultiplier
 				,maxpermatch
@@ -466,9 +467,9 @@ BEGIN
 				,0 AS dangercust
 				,@autosuspend AS autosuspend
 				,@autosuspend2 as autosuspend2
-				,reject
+				--,reject
 				,@Credit AS Credit
-				,closed
+				--,closed
 				,MatchLimit
 				,@virtualmultiplier
 				,maxpermatch
@@ -580,7 +581,8 @@ BEGIN
 
 	DECLARE	@UplineSecurityCode			VARCHAR(50)
 		  , @isForcedChangeSecurityCode	BIT,@ClosedReason TINYINT=0,@Closed BIT
-	SELECT TOP 1 @Closed=Closed FROM custInfo WITH(NOLOCK) WHERE custid=@ExistingCustid
+	SELECT TOP 1 @Closed=CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END
+	FROM CustProductStatus WITH(NOLOCK) WHERE custid=@ExistingCustid
 
 	IF (@SystemID=1 AND @Closed=1)
 		SELECT @ClosedReason=1

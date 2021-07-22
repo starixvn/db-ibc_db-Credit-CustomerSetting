@@ -11,12 +11,14 @@ AS
 	Revisions:
 		- 20131018@Kathy: Add HR Fixed Odds (154) [Redmine:#6505]
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+		- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	Paramter's Explanation:
 */
+BEGIN
 SET NOCOUNT ON
 
-SELECT ci.closed,
-	ci.reject as suspended,
+SELECT cps.closed,
+	cps.reject as suspended,
 	MAX( CASE WHEN cs.sporttype = 1 AND cs.bettype = 1 THEN cs.playerdiscount ELSE 0 END ) as playerdiscount,
 	MAX( CASE WHEN cs.sporttype = 1 AND cs.bettype = 5 THEN cs.playerdiscount ELSE 0 END ) as playerdiscount1x2,
 	MAX( CASE WHEN cs.sporttype = 1 AND cs.bettype = 4 THEN cs.playerdiscount ELSE 0 END ) as playerdiscountcs,
@@ -40,16 +42,16 @@ SELECT ci.closed,
 FROM CustInfo ci WITH(NOLOCK)
 	INNER JOIN CustSetting cs WITH(NOLOCK) ON ci.custid = @custid AND roleid = 1 AND cs.custid = ci.custid
 	INNER JOIN CustSetting3rd cs3 WITH(NOLOCK) ON cs3.custid = ci.custid
-GROUP BY ci.closed,
-		ci.reject,
+	CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cps
+GROUP BY cps.closed,
+		cps.reject,
 		ci.MaxPerMatch,
 		ci.MaxPerMatch2,
 		ci.MaxPerMatch161
 
-	
+END	
 GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelSBCloneSetting_Ag] TO [vnteam]
-GO
-GRANT EXECUTE On [dbo].[Acc_CustomerSelSBCloneSetting_Ag] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSBCloneSetting_Ag] TO [bodbDownlineNetView]

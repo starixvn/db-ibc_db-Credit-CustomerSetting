@@ -8,7 +8,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @email nvarchar(50)=NULL,
     @fax nvarchar(50),
     @disCasino bit = 0,
-    @closed bit,    
 
     @SubAccID int = 0,
     @MinBet money,
@@ -419,30 +418,6 @@ Revisions:
 		Select @ErrCode = @ErrCode + '-101'+char(7), @ErrMsg = @ErrMsg + char(7)
 	END
 
-	----------------------------------------------
-	--Update Closed    
-	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-	EXEC dbo.Acc_CustomerUpdClosed 
-		@CustID = @CustID,
-		@Closed = @Closed,
-		@UserID = @UserID,
-		@disCasino = @disCasino,
-		@Language = @Language,
-		@SystemID=@SystemID,
-		@ErrCode = @ErrCode_Cur OUTPUT,
-		@ErrMsg = @ErrMsg_Cur OUTPUT,
-		@IP = @IP
-	IF @ErrCode_Cur > 0
-	BEGIN
-		select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
-				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-	    
-	END
-	ELSE
-	BEGIN
-		Select @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)
-	END
-	
 	----------------------------------------------
 	--Update credit
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''

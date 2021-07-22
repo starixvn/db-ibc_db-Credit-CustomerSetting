@@ -3,7 +3,8 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_04]
 	@custid int,
 	@roleid tinyint,
 	@IsDisabled_XML VARCHAR(MAX) = NULL,
-	@Suspended BIT = NULL,	
+	@Suspended BIT = NULL,
+	@Closed BIT = NULL,	
 	@Action	VARCHAR(30)	= 'ProductStatus'
 AS
 /*
@@ -20,15 +21,18 @@ AS
 		- 20190404@Johnson: add suspendinfo [redmine: #105587]
 		- 20200406@Elodie: Update unhide by RealProductID [RedmineID:#129440]
 		- 20200702@Winfred: Update enable status of Cust when SettingType = 4[RedmineID:#136210]  
+		- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 */
 BEGIN
 	SET NOCOUNT ON 
 	
 	IF dbo.f_CheckRepTable('custinfo') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustProductStatus') = 0 RETURN
-	
+	IF dbo.f_CheckRepTable('ProductStatusProfile') = 0 RETURN
+	IF dbo.f_CheckRepTable('ProductSettingDetail') = 0 RETURN
+		
 	--Check if XML is null or empty
-	IF @Action <> 'SuspendInfo'AND ( @IsDisabled_XML IS NULL OR @IsDisabled_XML='') RETURN
+	IF @Action NOT IN ('SuspendInfo', 'CloseInfo') AND ( @IsDisabled_XML IS NULL OR @IsDisabled_XML='') RETURN
 		
 	DECLARE @iDoc INT, 
 			@xmlStrDisabledMasters XML, 
@@ -643,6 +647,124 @@ BEGIN
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
 			END
 		END
+	END
+	IF @Action = 'CloseInfo'
+	BEGIN
+		DECLARE @ClosedReason INT
+					
+		IF @roleid = 4
+		BEGIN			
+			UPDATE	cs 
+			SET	CloseInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(4,@Closed,ISNULL(CloseInfo,0)))
+			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
+				INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+			WHERE	SRecommend = @CustID;
+			
+		END	
+		ELSE IF @roleid = 3
+		BEGIN			
+			UPDATE	cs 
+			SET	CloseInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(3,@Closed,ISNULL(CloseInfo,0)))
+			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
+				INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+			WHERE	mRecommend = @CustID;
+								
+		END	
+		ELSE IF @roleid = 2
+		BEGIN			
+			UPDATE	cs 
+			SET	CloseInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(2,@Closed,ISNULL(CloseInfo,0)))
+			FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 
+				INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+			WHERE	Recommend = @CustID;			
+		END	
+
+		IF dbo.f_CheckRepTable('CustLoginInfo') = 1 AND dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+		BEGIN
+			SELECT @ClosedReason = ClosedReason FROM CustLoginInfo WHERE CustID = @CustID
+
+			IF @roleid = 4
+			BEGIN			
+				UPDATE	cs 
+				SET	cs.ClosedReason = @ClosedReason
+				FROM CustLoginInfo cs WITH (ROWLOCK, UPDLOCK) 
+					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.CustID = ci.custid
+					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus > 0 THEN 1 ELSE 0 END AS closed
+								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
+										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+								  WHERE CustID = ci.custid
+								  ) AS cps
+				WHERE ci.SRecommend = @CustID AND cs.CustID <> @CustID 
+					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
+								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
+								 ELSE 0 END)	;
+			
+				UPDATE	cs 
+				SET	ClosedReason = @ClosedReason
+				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
+					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
+								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
+										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+								  WHERE CustID = ci.custid
+								  ) AS cps
+				WHERE ci.SRecommend = @CustID AND cs.CustID <> @CustID
+					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
+								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
+								 ELSE 0 END)	;
+			END	
+			ELSE IF @roleid = 3
+			BEGIN			
+				UPDATE	cs 
+				SET	ClosedReason = @ClosedReason
+				FROM CustLoginInfo cs WITH (ROWLOCK, UPDLOCK) 
+					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+					CROSS APPLY  (SELECT CASE WHEN cl.AgentStatus > 0 THEN 1 ELSE 0 END AS closed
+								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
+										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+								  WHERE CustID = ci.custid
+								  ) AS cps
+				WHERE ci.MRecommend = @CustID AND cs.CustID <> @CustID
+					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
+								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
+								 ELSE 0 END)	;
+			
+				UPDATE	cs 
+				SET	ClosedReason = @ClosedReason
+				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
+					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+					CROSS APPLY  (SELECT CASE WHEN cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
+								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
+										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+								  WHERE CustID = ci.custid
+								  ) AS cps
+				WHERE ci.MRecommend = @CustID AND cs.CustID <> @CustID
+					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
+								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
+								 ELSE 0 END)	;
+								
+			END	
+			ELSE IF @roleid = 2
+			BEGIN			
+				UPDATE	cs 
+				SET	ClosedReason = @ClosedReason
+				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
+					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+					CROSS APPLY  (SELECT CASE WHEN cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
+								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
+										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+								  WHERE CustID = ci.custid
+								  ) AS cps
+				WHERE ci.Recommend = @CustID
+					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
+								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
+								 ELSE 0 END)	;
+			END
+
+
+		END
+
+		
 	END
 END
 GO

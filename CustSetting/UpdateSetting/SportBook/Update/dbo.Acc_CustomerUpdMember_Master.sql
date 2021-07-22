@@ -1,9 +1,6 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Master]
 	@CustID INT,--memberid
-	@Closed BIT = null,
-	@UpdateClosed bit = 0,		
-	@disCasino bit = 0,
 
 	--m1
 	@mpositiontaking_1 SMALLMONEY OUTPUT,
@@ -398,6 +395,7 @@ Revisions:
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20210111@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]
+	- 20210714@Tina: Lock account & indirect close account [redmine: #148600]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -476,41 +474,7 @@ END
 --end
 
 --Update Customer Info First.
-	
 	SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-	IF @disCasino = 1 AND EXISTS (SELECT 1 FROM Custinfo WITH (NOLOCK) WHERE syncCasino = 1 AND custID = @CustID)
-	BEGIN
-		IF @UpdateClosed = 1
-		BEGIN
-			Select @ErrMsg_Cur = case @Language 
-								when 'E' then 'This CLOSED function is temporarily unavailable, please update later.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](60004,@Language)
-							end	,
-				@ErrCode_Cur = 902
-				SELECT @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
-				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-		END
-		SELECT @ErrCode_Cur = 0, @ErrMsg_Cur=''
-			
-	END
-	ELSE
-		BEGIN
-			--- update closed
-			IF @UpdateClosed = 1 --OR @closed is not null
-			BEGIN
-				exec [dbo].[Acc_CustomerUpdClosed] @CustID = @CustID, @Closed = @closed, @SubAccID = @SubAccID, @UserID = @UserID, @disCasino = @disCasino,@SystemID=@SystemID, @Language = @language,@ErrCode = @ErrCode_cur output, @ErrMsg = @ErrMsg_cur output, @IP = @IP
-				IF @ErrCode_Cur > 0
-
-				BEGIN
-					select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
-							@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-					return
-				END
-			END
-			
-			Select @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)
-			
-		END
 
 -----------------------------------------------------------------------------------------------------------------------------------
 --BEGIN Update Position Taking
@@ -6383,6 +6347,8 @@ if	@UpdatePositiontaking   = 1  or
 		SELECT @v161slivepositiontaking_90 = CASE WHEN @v161slivepositiontaking_90 > @max_v161slivepositiontaking_90 THEN @max_v161slivepositiontaking_90 ELSE @v161slivepositiontaking_90 END
 		
 		--- 20131030@Johnson: Apply execrep when update pt on member
+		SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = ''
+
 			EXEC dbo.Acc_CustSetting_08
 			@custid = @custid,
 			@roleid = 3,
@@ -6728,7 +6694,16 @@ if	@UpdatePositiontaking   = 1  or
 			@isauto_v161mlivepositiontaking_mem_89 = @isauto_v161mlivepositiontaking_mem_89,
 			@isauto_v161mlivepositiontaking_mem_90 = @isauto_v161mlivepositiontaking_mem_90
 
-			
+			IF @ErrCode_Cur > 0
+			BEGIN
+				select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
+						@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
+				return
+			END
+			ELSE
+			BEGIN
+				Select @ErrCode = @ErrCode + '-107'+char(7), @ErrMsg = @ErrMsg + char(7)
+			END
 		/*
 		print @ErrCode_Cur
 		--Update auto PT

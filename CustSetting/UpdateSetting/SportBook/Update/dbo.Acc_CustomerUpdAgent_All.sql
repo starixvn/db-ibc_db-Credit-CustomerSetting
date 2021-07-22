@@ -13,7 +13,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@groupd decimal(9,8),
 	@discountcs decimal(9,8),
 	@discount1x2 decimal(9,8)=0,	
-	@closed bit,	
 	@disCasino bit = 0,	
 	@discountMyanmarOdds DECIMAL(9,8)=0, -- MyanmarOdds
 	
@@ -425,7 +424,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@updateallmembers bit = 0,
 	@newmpositiontaking smallmoney = 0,--equals max(m+a) - chosen(a)
 	
-	@UpdateClosed bit = 1,		
 	@SubAccID int = 0, --Sub-AccountID
 	@UserID int,
 	@IP varchar(15)='',
@@ -484,6 +482,7 @@ Revisions:
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
+	- 20210707@Tina: Lock account & indirect close account [redmine: #148600]
 
 Param's Explanation:
 • @ErrCode:
@@ -561,35 +560,6 @@ BEGIN
 		END
 			
 	END
-	----------------------------------------------
-	--Update Closed
-	if @UpdateClosed = 1
-	BEGIN
-		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-		EXEC dbo.Acc_CustomerUpdClosed
-					@CustID = @CustID,
-					@Closed = @Closed,
-					@disCasino = @disCasino,				
-					@SubAccID = @SubAccID,
-					@UserID = @UserID,
-					@systemID=@systemID,
-					@Language = @Language,
-					@ErrCode = @ErrCode_Cur OUTPUT,
-					@ErrMsg = @ErrMsg_Cur OUTPUT,
-					@IP = @IP
-					
-		IF @ErrCode_Cur > 0
-		BEGIN
-			select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
-					@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-			
-		END
-		ELSE
-		BEGIN
-			Select @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)
-		END
-	END
-
 	
 	--Update credit
 	IF @UpdateMultiple = 0

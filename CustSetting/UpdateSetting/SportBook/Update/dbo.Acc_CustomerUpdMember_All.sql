@@ -88,8 +88,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 
 	@credit MONEY,  
 
-	@closed BIT,  	
-	@UpdateClosed BIT = 1,  	
 	@disCasino bit = 0,  
 
 	@apositiontaking_1 SMALLMONEY,  
@@ -315,46 +313,6 @@ BEGIN
 	 END  
 	END  
 	  
-	----------------------------------------------  
-	DECLARE @Old_Closed bit  
-
-	SELECT @Old_Closed = closed
-	FROM Custinfo WITH (NOLOCK)  
-	WHERE CustID = @CustID  
-
-	IF @Old_Closed = @closed
-	BEGIN
-		SET @UpdateClosed = 0
-	END
-				
-	--Update Closed  
-	if @UpdateClosed = 1  
-	BEGIN  
-	 Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''  
-	 EXEC dbo.Acc_CustomerUpdClosed   
-		@CustID = @CustID,  
-		@Closed = @Closed,  
-		@disCasino = @disCasino,  
-		@SubAccID = @SubAccID,  
-		@UserID = @UserID,  
-		@Language = @Language,
-		@SystemID=@SystemID,  
-		@ErrCode = @ErrCode_Cur OUTPUT,  
-		@ErrMsg = @ErrMsg_Cur OUTPUT,  
-		@IP = @IP  
-	      
-	 IF @ErrCode_Cur > 0  
-	 BEGIN  
-	  select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7),   
-		@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)  
-	    
-	 END  
-	 ELSE  
-	 BEGIN  
-	  Select @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)  
-	 END  
-	END  
-	  	 
 	----------------------------------------------  
 	--Update credit  
 	IF @UpdateMultiple = 0  

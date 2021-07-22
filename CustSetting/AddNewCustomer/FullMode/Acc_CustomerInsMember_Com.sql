@@ -418,6 +418,7 @@ Revisions:
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]
+	- 20210616@Tina: Lock account & indirect close account [redmine: #148600]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -851,7 +852,7 @@ BEGIN
 		@country = @country,
 		@postal = @postal,
 		@TransferOption = NULL,
-		@suspended = 0,
+		--@suspended = 0,
 		@SystemID=@SystemID,
 		@autosuspend = @autosuspend,
 		@autosuspend2 = @autosuspend2,		

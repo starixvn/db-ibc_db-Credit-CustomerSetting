@@ -38,7 +38,7 @@ Revisions:
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
-
+	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 */
 	SET NOCOUNT ON  
 	  
@@ -314,13 +314,13 @@ Revisions:
 		
 		@isauto_v99spositiontaking_9 bit,
 		
-		@Ssuspended BIT, 
+		--@Ssuspended BIT, 
 		@AllowedCurr BIT,
 		@CurrencyID INT,
 		
 		-- is upline close suspend
-		@UplineClosed bit,
-		@UplineSuspended bit,
+		--@UplineClosed bit,
+		--@UplineSuspended bit,
 		
 		-- Out right PT
 		@v2mspositiontaking_10_max SMALLMONEY,
@@ -702,11 +702,13 @@ Revisions:
 	WHERE ci.CustID = @AgentID  
 
 
-	SELECT @Ssuspended = ISNULL(reject,0), @CurrencyID=currency FROM custinfo WITH (NOLOCK)
+	SELECT @CurrencyID=currency FROM custinfo WITH (NOLOCK)
 	WHERE custid = (SELECT srecommend FROM customer WITH (NOLOCK) WHERE custid = @custid )
 
-	SELECT @UplineClosed = closed, @UplineSuspended = reject  FROM custinfo WITH(NOLOCK) 
-	WHERE custid = @agentid
+	--SELECT @UplineClosed = CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END, 
+	--	   @UplineSuspended = CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END  
+	--FROM CustProductStatus WITH(NOLOCK) 
+	--WHERE custid = @agentid
 	 
 	DECLARE @playerdiscountMyanmarOdds DECIMAL(9,8)=0,
 			@discountMyanmarOdds DECIMAL(9,8)=0,
@@ -727,11 +729,12 @@ Revisions:
 
 	SELECT  
 		ISNULL(c.fax,'') AS fax, c.firstname, c.lastname,c.username2,   
-		ci.reject AS suspended, ci.synccasino,
-		@Ssuspended AS Ssuspended,
+		cps.reject AS suspended, 
+		ci.synccasino,
+		sp.SuperStatus AS Ssuspended,
 		@AllowedCurr AS AllowedCurr,
-		@UplineClosed AS UplineClosed,
-		@UplineSuspended AS UplineSuspended,
+		CASE WHEN (cl.SuperStatus + cl.MasterStatus + cl.AgentStatus) > 0 THEN 1 ELSE 0 END AS UplineClosed,
+		CASE WHEN (sp.SuperStatus + sp.MasterStatus + sp.AgentStatus) > 0 THEN 1 ELSE 0 END  AS UplineSuspended,
 		ci.maxpermatch,   
 		ci.maxpermatch2 AS maxpermatchv2,   
 		ci.maxpermatch3 AS maxpermatchv3,   
@@ -749,7 +752,10 @@ Revisions:
 		ci.maxperball161 as maxperballv161,
 		
 		ISNULL(c.mobilephone,'') AS mobilephone, ISNULL(c.email,'') AS email, ISNULL(c.phone,'') AS phone, c.ugroup, c.username,  
-		exchange.minbet AS defaultminbet, ci.closed,ci.reject, ci.credit,  
+		exchange.minbet AS defaultminbet, 
+		cps.closed,
+		cps.reject, 
+		ci.credit,  
 		MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype=1 THEN cs.minbet ELSE 0 END) AS minbet,  
 		MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype=1 THEN cs.maxbet ELSE 0 END) AS maxbet,  
 
@@ -1570,12 +1576,21 @@ Revisions:
 		INNER JOIN custinfo AS ci WITH (NOLOCK) ON c.custid  = ci.custid  
 		INNER JOIN custsetting AS cs WITH (NOLOCK) ON c.custid  = cs.custid  
 		INNER JOIN custsetting3rd AS cs3 WITH (NOLOCK) ON c.custid  = cs3.custid  
-		INNER JOIN exchange WITH (NOLOCK) ON C.currency=exchange.exchangeid   
+		INNER JOIN exchange WITH (NOLOCK) ON C.currency=exchange.exchangeid 
+		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, CloseInfo
+										, SuspendInfo
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cps 
+		CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.CloseInfo)) AS cl
+		CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.SuspendInfo)) AS sp 
 	WHERE 
 		c.custid=@custId AND c.recommend=@agentId  
 	GROUP BY   
 		c.fax, c.firstname, c.lastname, c.username2,ci.maxpermatch, c.mobilephone, c.email, c.phone, c.ugroup, c.username,   
-		ci.reject, ci.synccasino,
+		ci.synccasino,
 		ci.maxpermatch2,  
 		ci.maxpermatch3,  
 		ci.maxpermatch5,  
@@ -1588,7 +1603,10 @@ Revisions:
 		ci.maxpermatch161,
 		ci.maxperball161,
 		ci.maxpermatch164,
-		exchange.minbet, ci.closed, ci.credit,ci.reject
+		exchange.minbet, cps.closed, ci.credit,cps.reject,
+		cps.closed,
+		sp.SuperStatus,sp.MasterStatus,sp.AgentStatus,
+		cl.SuperStatus,cl.MasterStatus,cl.AgentStatus
 
 END	 
  

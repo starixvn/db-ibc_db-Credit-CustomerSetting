@@ -32,6 +32,7 @@ AS
 		- 20200615@Elodie: Implement new setting type 18,19 [Redmine: #135363]
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -58,10 +59,11 @@ BEGIN
 		BEGIN TRY
 			IF EXISTS(SELECT 1 FROM [dbo].[CustProductStatus] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 			BEGIN
-				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,suspendinfo)
+				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,suspendinfo,CloseInfo)
 				SELECT @CustID,cs.bitmapIsDisabled,cs.bitmapIsHidden,
 						CASE WHEN @RoleID = 4 THEN 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF ELSE bitmapHasSynced END,
-						suspendinfo
+						suspendinfo,
+						CloseInfo
 				FROM [dbo].[CustProductStatus] cs WITH(NOLOCK)
 				WHERE CustID = @ExistingCustID
 			END

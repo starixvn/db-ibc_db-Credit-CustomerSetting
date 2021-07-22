@@ -12,6 +12,7 @@ AS
 	
 	Revisions:
 		- 20190409@Johnson: initial sp [redmine:#105587]
+		- 20210510@Tina: Lock account & indirect close account [redmine: #148600]
 	Parameter's Explanation:
 		
 */	
@@ -26,9 +27,10 @@ BEGIN
 	
 	IF @roleid > 1
 	BEGIN
-		SELECT custid, username, reject as suspended
+		SELECT ci.custid, username, (CASE WHEN cps.SuspendInfo > 0 THEN 1 ELSE 0 END) as suspended
 		FROM custinfo ci WITH(NOLOCK)
-		WHERE custid IN (SELECT custid FROM @tblCust)
+			INNER JOIN CustProductStatus cps WITH (NOLOCK) ON ci.custid = cps.CustID
+		WHERE ci.custid IN (SELECT custid FROM @tblCust)
 		ORDER BY custid
 	END
 	
@@ -79,8 +81,9 @@ BEGIN
 	END
 	ELSE IF @roleid = 1
 	BEGIN		
-		SELECT ci.custid, ci.username, ci.reject as suspended
+		SELECT ci.custid, ci.username, (CASE WHEN cps.SuspendInfo > 0 THEN 1 ELSE 0 END) as suspended
 		FROM custinfo ci WITH(NOLOCK)
+			INNER JOIN CustProductStatus cps WITH (NOLOCK) ON ci.custid = cps.CustID
 		WHERE ci.custid IN (SELECT custid FROM @tblCust)	
 	END	
 END

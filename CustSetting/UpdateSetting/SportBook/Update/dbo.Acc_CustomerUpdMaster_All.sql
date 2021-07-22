@@ -8,7 +8,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @mobilephone nvarchar(50),
     @email nvarchar(50) = NULL,
     @fax nvarchar(50),
-    @closed bit,    
     @srecommend int,--superid
 
 
@@ -177,8 +176,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @UpdatePositiontakingv161 bit = 1,
 	@UpdatePositiontakingv164 bit = 1,
 	
-    @UpdateClosed bit = 1,
-    
     @auto_spositiontaking_1 smallmoney = 0,
     @auto_spositiontaking_2 smallmoney = 0,
     @auto_spositiontaking_3 smallmoney = 0,
@@ -473,7 +470,8 @@ Revisions:
 	- 20190829@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
-	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
+	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+	- 20210707@Tina: Lock account & indirect close account [redmine: #148600]	
 	
 Param's Explanation:
 • @ErrCode:
@@ -549,36 +547,6 @@ BEGIN
 			Select @ErrCode = @ErrCode + '-101'+char(7), @ErrMsg = @ErrMsg + char(7)
 		END
 	END
-
-	----------------------------------------------
-	--Update Closed
-	if @UpdateClosed = 1
-	BEGIN
-		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-		EXEC dbo.Acc_CustomerUpdClosed
-					@CustID = @CustID,
-					@Closed = @Closed,
-					@disCasino = @disCasino,                
-					@SubAccID = @SubAccID,
-					@UserID = @UserID,
-					@SystemID=@SystemID,
-					@Language = @Language,
-					@ErrCode = @ErrCode_Cur OUTPUT,
-					@ErrMsg = @ErrMsg_Cur OUTPUT,
-					@IP = @IP
-	                
-		IF @ErrCode_Cur > 0
-		BEGIN
-			select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
-					@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-	        
-		END
-		ELSE
-		BEGIN
-			Select @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)
-		END
-	END
-
 
 	----------------------------------------------
 	--Update credit

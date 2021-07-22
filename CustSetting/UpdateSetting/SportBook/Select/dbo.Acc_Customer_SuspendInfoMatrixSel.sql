@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20190408@Johnson: initial sp [redmine: #105587]
+		- 20210510@Tina: Lock account & indirect close account [redmine: #148600]
 	Parameter's Explanation:
 */
 BEGIN
@@ -30,12 +31,14 @@ BEGIN
 	FROM custInfo WITH(NOLOCK)
 	WHERE username = @username
 	
-	SELECT ci.custid, ci.username, roleid, ci.reject as suspended,
-		(SELECT CAST(suspendInfo as BIT) FROM dbo.f_GetSuspendInfoStatus(4,SuspendInfo)) as SuspendBySuper,
-		(SELECT CAST(suspendInfo as BIT) FROM dbo.f_GetSuspendInfoStatus(3,SuspendInfo)) as SuspendByMaster,
-		(SELECT CAST(suspendInfo as BIT) FROM dbo.f_GetSuspendInfoStatus(2,SuspendInfo)) as SuspendByAgent,
-		(SELECT CAST(suspendInfo as BIT) FROM dbo.f_GetSuspendInfoStatus(1,SuspendInfo)) as SuspendMember
+	SELECT ci.custid, ci.username, roleid, 
+		CASE WHEN cs.SuspendInfo > 0 THEN 1 ELSE 0 END AS suspended,
+		ISNULL(cl.SuperStatus, 0) as SuspendBySuper,
+		ISNULL(cl.MasterStatus, 0) as SuspendByMaster,
+		ISNULL(cl.AgentStatus, 0) as SuspendByAgent,
+		ISNULL(cl.MemberStatus, 0) as SuspendMember
 	FROM dbo.CustProductStatus cs WITH(NOLOCK)
+		CROSS APPLY (SELECT * FROM f_GetInfoStatus(cs.SuspendInfo)) AS cl
 		INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 	WHERE ci.custid IN (@srecommend,@mrecommend,@recommend,@custid)	
 	
