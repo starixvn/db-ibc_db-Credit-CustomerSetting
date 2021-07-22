@@ -39,6 +39,7 @@ Revisions:
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 
 */
 SET NOCOUNT ON
@@ -47,9 +48,9 @@ SET NOCOUNT ON
 ---------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-declare @srecommend INT, @mrecommend int, @recommend INT,@Msuspended bit, @DisableAutoMPT bit, @UplineClosed bit, @UplineSuspended bit
+declare @srecommend INT, @mrecommend int, @recommend INT, @DisableAutoMPT bit--,@Msuspended bit, @UplineClosed bit, @UplineSuspended bit
 select @srecommend = srecommend, @mrecommend = mrecommend, @recommend = recommend from custinfo with (NOLOCK) where custid = @custid
-select @Msuspended = isnull(reject,0) from custinfo with (nolock) where custid = @mrecommend
+--select @Msuspended = isnull(reject,0) from custinfo with (nolock) where custid = @mrecommend
 --Disable auto master PT
 Select @DisableAutoMPT = DisableAutoMPT From CustMaster (nolock) Where CustID = @mrecommend
 
@@ -907,8 +908,8 @@ FROM
 WHERE cs3.custid = @custid
 */
 
-SELECT @UplineClosed = closed, @UplineSuspended = reject  FROM custinfo WITH(NOLOCK) 
-WHERE custid = @agentid
+--SELECT @UplineClosed = closed, @UplineSuspended = reject  FROM custinfo WITH(NOLOCK) 
+--WHERE custid = @agentid
 
 DECLARE @playerdiscountMyanmarOdds DECIMAL(9,8)=0,
 		@discountMyanmarOdds DECIMAL(9,8)=0,
@@ -947,12 +948,12 @@ SELECT
 	ci.maxperball161 as maxperballv161,
 	ci.maxpermatch164 as maxpermatchv164,
 	exchange.minbet as defaultminbet, 
-	ci.closed, 
-	ci.reject as suspended, 
+	cps.closed, 
+	cps.reject as suspended, 
 	ci.synccasino,
-	@Msuspended as Msuspended, 
-	@UplineClosed AS UplineClosed,
-	@UplineSuspended AS UplineSuspended,
+	sp.MasterStatus as Msuspended, 
+	CASE WHEN (cl.SuperStatus + cl.MasterStatus + cl.AgentStatus) > 0 THEN 1 ELSE 0 END AS UplineClosed,
+	CASE WHEN (sp.SuperStatus + sp.MasterStatus + sp.AgentStatus) > 0 THEN 1 ELSE 0 END AS UplineSuspended,
 	isnull(@DisableAutoMPT,0) as DisableAutoMPT,
 	ci.credit,
 	
@@ -1760,6 +1761,15 @@ FROM
 	INNER JOIN custsetting as cs with (NOLOCK) on c.custid  = cs.custid
 	inner join custsetting3rd cs3 with(nolock) on c.custid = cs3.custid 
 	inner join exchange with (nolock) ON C.currency=exchange.exchangeid 
+	CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, CloseInfo
+										, SuspendInfo
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cps
+	CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.CloseInfo)) AS cl
+	CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.SuspendInfo)) AS sp
 	
 WHERE c.custid=@custId AND c.recommend=@agentId
 group by 
@@ -1777,6 +1787,8 @@ group by
 	ci.maxpermatch161,
 	ci.maxperball161,
 	ci.maxpermatch164,
-	exchange.minbet, ci.closed,ci.reject,ci.synccasino,ci.credit
+	exchange.minbet, cps.closed,cps.reject,ci.synccasino,ci.credit,
+	sp.SuperStatus,sp.MasterStatus,sp.AgentStatus,
+	cl.SuperStatus,cl.MasterStatus,cl.AgentStatus
 END
 GO

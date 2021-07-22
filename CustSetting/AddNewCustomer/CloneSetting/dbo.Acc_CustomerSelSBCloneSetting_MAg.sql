@@ -17,6 +17,7 @@ AS
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 		- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
+		- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 			
 	Explanation's Param:
 */
@@ -32,8 +33,8 @@ BEGIN
 		SET @discountMyanmarOdds = (SELECT CommRate FROM AgentCommRate WITH (NOLOCK) WHERE CustId = @Custid AND Sporttype = 1 AND Bettype = 1)
 
 	SELECT 
-		ci.closed
-		,ci.reject AS suspended
+		cps.closed
+		,cps.reject AS suspended
 	----------commission section---------------------------------------------------------------------------------------
 		--groupA: for HDP, OU, OE
 		,groupA=MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=1 THEN cs.groupA ELSE 0 END)
@@ -113,18 +114,22 @@ BEGIN
 			AND ci.roleid=2			
 		INNER JOIN dbo.CustSetting3rd AS cs3rd WITH(NOLOCK) ON cs3rd.CustID=ci.CustID
 		INNER JOIN dbo.CustAgent AS csAg WITH(NOLOCK) ON csAg.CustID=ci.CustID				
+		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cps
 		LEFT JOIN dbo.custoverride AS csOv WITH (NOLOCK) on csOv.custid = cs.custid AND csOv.sporttype = cs.sporttype AND csOv.bettype = cs.bettype
 		LEFT JOIN dbo.custoverride3rd AS csOv3rd WITH (NOLOCK) ON csOv3rd.custid = cs3rd.custid AND csOv3rd.sporttype = cs3rd.sporttype AND csOv3rd.bettype = cs3rd.bettype
-	GROUP BY ci.closed
-			,ci.reject
+	GROUP BY cps.closed
+			,cps.reject
 			,MaxPerMatch
 			,MaxPerMatch2
 			,MaxPerMatch161
 			,TransferOption
 	SET NOCOUNT OFF
+
 END
-
-
 
 GO
 

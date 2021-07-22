@@ -39,6 +39,7 @@ Revisions:
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 
 Param's Explanation:
 • @CustID: AgentID
@@ -135,7 +136,7 @@ SELECT @Mem_MaxCredit = isnull(maxcredit,0) FROM CustAgent WITH (NOLOCK)
 WHERE  custid=@CustID 
 
 Select @Credit_AllOtherAgent = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where mrecommend = @MRecommend and RoleID = 2 and Custid <> @CustId
-select @Credit_MAg = isnull(credit, 0), @Msuspended = isnull(reject,0) from CustInfo as ci with (NOLOCK) where CustID = @MRecommend
+select @Credit_MAg = isnull(credit, 0) from CustInfo as ci with (NOLOCK) where CustID = @MRecommend
 
 select @Credit_Ag_Max = @Credit_MAg - @Credit_AllOtherAgent
 
@@ -915,8 +916,9 @@ from custsetting as cs with (nolock)
 where cs.custid = (select srecommend from customer with (nolock) where custid = @CustID)
 
 select 
-	ci.closed, isnull(ci.reject,0) as suspended, 
-	@Msuspended as Msuspended, 	 
+	cps.closed, 
+	cps.reject as suspended, 
+	CASE WHEN (sp.SuperStatus + sp.MasterStatus)  > 0 THEN 1 ELSE 0 END as Msuspended, 	 
 	isnull(c.firstname,'') as firstname, 
 	isnull(c.lastname,'') as lastname, 
 	c.roleid, c.username,
@@ -1791,6 +1793,13 @@ from
 	INNER JOIN custsetting as cs with (NOLOCK) on c.custid = cs.custid
 	INNER JOIN custsetting3rd as cs3 with (NOLOCK) on c.custid = cs3.custid
 	INNER JOIN custoverride as co with (NOLOCK) on co.custid = cs.custid and co.sporttype=cs.sporttype and co.bettype=cs.bettype
+	CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, SuspendInfo
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cps
+	CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.SuspendInfo)) AS sp
 	--left join Custoverride3rd for sporttype = 164
 	LEFT JOIN custoverride3rd as co3 with (NOLOCK) on co3.custid = cs3.custid and co3.sporttype=cs3.sporttype and co3.bettype=cs3.bettype
 	INNER JOIN exchange with (NOLOCK) ON c.currency = exchange.exchangeid
@@ -1798,7 +1807,8 @@ where
 	c.roleid=2 and c.custid=@CustID and
 	c.mrecommend=@MRecommend
 group by 
-	ci.closed, ci.reject, c.firstname, c.lastname, c.roleid, c.username,
+	cps.closed, cps.reject, c.firstname, c.lastname, c.roleid, c.username,
+	sp.SuperStatus, sp.MasterStatus,
 	exchange.minbet, c.phone, c.mobilephone, c.email,c.fax,
 	ci.maxpermatch,
 	ci.maxpermatch2,

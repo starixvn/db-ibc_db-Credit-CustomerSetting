@@ -456,6 +456,8 @@ Revisions:
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]
+	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Create agent successfully.
@@ -634,7 +636,7 @@ BEGIN
 	    @srecommend INT,	 
 	    @matchlimit SMALLMONEY,
 	    @TransferOption_dec TINYINT,
-	    @Msuspended BIT,
+	    --@Msuspended BIT,
 	    @UplineClosed BIT,
 	    @DisableOutright BIT,
 	    @DoubleCommLosing BIT,
@@ -805,8 +807,8 @@ BEGIN
 		@DangerMaster3 TINYINT = 0
         
     SELECT @currency = currency
-         , @Msuspended = reject
-         , @UplineClosed = closed
+         --, @Msuspended = reject
+         , @UplineClosed = cs.closed
 
          , @Credit_MAg = isnull(credit, 0)
          , @srecommend = srecommend
@@ -831,6 +833,11 @@ BEGIN
 		 , @DangerMaster2 = Danger2
 		 , @DangerMaster3 = Danger3
      FROM CustInfo ci WITH(NOLOCK) 
+		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+							,CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject									
+					FROM dbo.CustProductStatus  WITH(NOLOCK)
+					WHERE CustID = ci.custid
+					) AS cs
      WHERE CustID = @mrecommend
 
 
@@ -1827,10 +1834,10 @@ BEGIN
 	    @isauto_v161mlivepositiontaking_90  = CASE WHEN @auto_v161mlivepositiontaking_90 > 0 then 1 else 0 END
 
     --check suspended
-    if @Msuspended =1 
-    BEGIN
-	    set @suspended =1 
-    END 
+    --if @Msuspended =1 
+    --BEGIN
+	   -- set @suspended =1 
+    --END 
 
 	
     --Insert general data 
@@ -1858,7 +1865,7 @@ BEGIN
 	    @country = @country,
 	    @postal = @postal,
 	    @TransferOption = @TransferOption,
-	    @suspended = @suspended,
+	    --@suspended = @suspended,
 	    @closed=@UplineClosed,
 
 	    @autosuspend = @autosuspend,
@@ -2559,13 +2566,14 @@ BEGIN
 
 	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
 	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK) 
-		INNER JOIN (SELECT psd.ProductID, MIN(CAST(dbo.f_GetProductStatus(cps.bitmapIsHidden, psp.bitmapOrder) AS INT)) AS custIsHidden
+		INNER JOIN (SELECT psd.ProductID, MIN(CAST(Hi.[Value] AS INT)) AS custIsHidden
 					FROM ProductSettingDetail psd WITH(NOLOCK)
 						INNER JOIN	ProductStatusProfile psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype
 																			AND	psd.BetType = psp.Bettype
 																			AND psd.SettingType IN (4,11,13)		-- Product Status
 						INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
+						CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
 					WHERE psd.ProductID <> 20 
 					GROUP BY psd.ProductID	
 					) iq ON iq.ProductID = p.ProductID

@@ -31,7 +31,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	@country NVARCHAR(50),
 	@postal NVARCHAR(50),
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in case direct master add new agent
-	@suspended BIT = NULL,
+	--@suspended BIT = NULL,
 
 	@closed BIT = NULL,	
 	@DisableOutright BIT = 0,
@@ -159,6 +159,7 @@ Revisions:
 	- 20200722@Johnson: add void time & limit amount for problem account [redmine: #135253]
 	- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
+	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	
 	Param's Explanation:
 • @ErrCode:
@@ -495,7 +496,11 @@ BEGIN
 			custid, currency
 		  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11
 		  , maxpermatch99
-		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
+		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2
+		 -- , reject
+		  , credit
+		  --, closed
+		  , username
 		  , MatchLimit, VirtualMultiplier
 		  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
 		  , danger, danger2, danger3, Abnormal
@@ -507,7 +512,11 @@ BEGIN
 			@custid, @currency--,1
 		  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11
 		  , @MaxPerMatchv99
-		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), @credit, ISNULL(@closed, 0), @username
+		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2
+		  --, ISNULL(@suspended, 0)
+		  , @credit
+		  --, ISNULL(@closed, 0)
+		  , @username
 		  , @matchlimit, @virtualmultiplier
 		  , @DisableOutright, @DisableCasino, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
 		  , @danger, @danger2, @danger3, @Abnormal

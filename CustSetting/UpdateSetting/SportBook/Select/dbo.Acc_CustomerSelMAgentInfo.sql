@@ -38,7 +38,8 @@ Revisions:
 	- 20190909@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
-	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]	
+	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]	
 
  */
 BEGIN 
@@ -199,7 +200,8 @@ Declare
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Select @Credit_AllOtherAgent = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where mrecommend = @CustID and RoleID = 2
-select @Credit_MAg = isnull(credit, 0),@Msuspended = reject,@CurrencyID=ci.currency , @srecommend = srecommend from CustInfo as ci with (NOLOCK) where CustID = @CustID
+select @Credit_MAg = isnull(credit, 0),@CurrencyID=ci.currency , @srecommend = srecommend from CustInfo as ci with (NOLOCK) where CustID = @CustID
+SELECT @Msuspended = CASE WHEN cps.SuspendInfo > 0 THEN 1 ELSE 0 END FROM CustProductStatus cps WITH (NOLOCK) WHERE CustID = @CustID
 select @Credit_Ag_Max = @Credit_MAg - @Credit_AllOtherAgent
 Select @IsInternalMaster = isnull(IsInternal, 0) from CustMaster with (NOLOCK) where CustID = @CustId
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

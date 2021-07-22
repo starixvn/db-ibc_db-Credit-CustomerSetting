@@ -16,7 +16,8 @@ AS
 	Original:
 
 	Revisions:  
-	- 20201201@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+		- 20201201@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
+		- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 
 	Parameter Definition
 		-@FilterStatusID:
@@ -89,8 +90,9 @@ BEGIN
 		FROM custInfo a WITH(NOLOCK) 
 			INNER JOIN Cust_ArchiveAccount c WITH(NOLOCK) 
 				ON a.custid = c.CustID
+			INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = a.custid
 		WHERE a.srecommend = @CustID AND a.RoleID IN(2,3,4)
-			AND a.closed = 0
+			AND cps.CloseInfo = 0
 		UNION
 		SELECT a.custid,MAX(a.mrecommend) as mrecommend
 		FROM custInfo a WITH(NOLOCK) 
@@ -184,8 +186,9 @@ BEGIN
 		FROM custInfo a WITH(NOLOCK) 
 			INNER JOIN Cust_ArchiveAccount c WITH(NOLOCK) 
 				ON a.custid = c.CustID
+			INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = a.custid
 		WHERE a.mrecommend = @CustID AND a.RoleID IN(2,3)
-			AND a.closed = 0
+			AND cps.CloseInfo = 0
 		UNION
 		SELECT a.custid,MAX(a.mrecommend) as mrecommend
 		FROM custInfo a WITH(NOLOCK) 

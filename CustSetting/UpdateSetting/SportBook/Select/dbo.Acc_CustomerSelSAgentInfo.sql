@@ -39,6 +39,7 @@ Revisions:
 	- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	
 */
 SET NOCOUNT ON
@@ -100,7 +101,8 @@ Declare @MinBet_Max money, @MaxBet_Min money,
 		@srecommend INT = 0
 		
 Select @Credit_AllOtherMaster = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where srecommend = @CustID and RoleID = 3
-select @Credit_SAg = isnull(credit, 0),@Ssuspended = reject, @CurrencyID=ci.currency ,@srecommend = srecommend from CustInfo as ci with (NOLOCK) where CustID = @CustID
+select @Credit_SAg = isnull(credit, 0), @CurrencyID=ci.currency ,@srecommend = srecommend from CustInfo as ci with (NOLOCK) where CustID = @CustID
+SELECT @Ssuspended = CASE WHEN cps.SuspendInfo > 0 THEN 1 ELSE 0 END FROM CustProductStatus cps WITH (NOLOCK) WHERE CustID = @CustID
 Select @IsInternal = isnull(IsInternal, 0) from custsuper with (NOLOCK) where CustID = @CustId
 if @CustID <= 100
 BEGIN

@@ -44,6 +44,7 @@ Revisions:
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
 	- 20170504@Winnie: Color for closed Accounts  - [Redmine:#74494]
 	- 20200216@Elodie: Lock close/suspend for some member [Redmine: #128541]
+	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 
 Param's Explanation
 • @custid: custid that need to be viewed.   
@@ -145,6 +146,14 @@ BEGIN
 	---------------------------
 
 	Declare @roleid tinyint, @LoginCount int, @Old_Closed bit, @UplineClosed bit, @srecommend int, @mrecommend int, @recommend int 
+	DECLARE @IsDeposit BIT = 0, @SuperClosed BIT, @MasterClosed BIT, @AgentClosed BIT, @MemberClosed BIT
+
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo ci WITH(NOLOCK)
+					INNER JOIN dbo.Dep_CustSuper dep WITH(NOLOCK) ON ci.srecommend = dep.custid
+			   WHERE ci.custid = @custid)
+	BEGIN
+		SET @IsDeposit = 1
+	END
 
 	select @roleid = roleid, @LoginCount = logincount
 	from customer with (nolock)
@@ -156,6 +165,48 @@ BEGIN
 			@recommend = recommend
 	from custinfo with (nolock)
 	where custid = @custid
+
+	SELECT @roleid = isnull(@roleid, 0)
+
+	IF @roleid not in (1,2,3,4)
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							WHEN 'E' THEN 'Invalid user!!'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40002,@Language)
+						END	,
+			@ErrCode = 100	
+		RETURN
+	END
+
+	--Get Close status for Credit
+	IF (@IsDeposit = 0)
+	BEGIN
+		SELECT @SuperClosed = cl.SuperStatus, 
+			   @MasterClosed = cl.MasterStatus, 
+			   @AgentClosed = cl.AgentStatus, 
+			   @MemberClosed = cl.MemberStatus,
+			   @Old_Closed =  (CASE WHEN cps.CloseInfo > 0 THEN 1 ELSE 0 END)
+		FROM CustProductStatus cps WITH (NOLOCK)
+			CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.CloseInfo)) AS cl
+		WHERE cps.CustID = @CustID
+
+		IF(@roleid = 1)
+		BEGIN
+			SET @UplineClosed =  CASE WHEN (@SuperClosed = 1 OR @MasterClosed = 1 OR @AgentClosed = 1) THEN 1 ELSE 0 END
+		END
+		ELSE IF(@roleid = 2)
+		BEGIN
+			SET @UplineClosed =  CASE WHEN (@SuperClosed = 1 OR @MasterClosed = 1) THEN 1 ELSE 0 END
+		END
+		ELSE IF(@roleid = 3)
+		BEGIN
+			SET @UplineClosed =  @SuperClosed
+		END
+		ELSE IF(@roleid = 4)
+		BEGIN
+			SET @UplineClosed =  0
+		END
+	END
 
 	-- 20130410@Elodie: Only update 'closed' status if values are different
 	IF @Old_Closed = @Closed -- and @LoginCount > 5
@@ -174,30 +225,21 @@ BEGIN
 	END	
 	--End 
 
-	select @roleid = isnull(@roleid, 0)
-
-	if @roleid not in (1,2,3,4)
+	IF (@IsDeposit = 1)
 	BEGIN
-		Select @ErrMsg = case @Language 
-							when 'E' then 'Invalid user!!'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40002,@Language)
-						end	,
-			@ErrCode = 100	
-		return
+		IF @roleid = 1
+			Select @UplineClosed = isnull(closed,0)
+			from Custinfo with (nolock) where custid = @recommend 
+		ELSE IF @roleid = 2
+			Select @UplineClosed = isnull(closed,0)
+			from Custinfo with (nolock) where custid = @mrecommend 
+		ELSE IF @roleid = 3
+			Select @UplineClosed = isnull(closed,0)
+			from Custinfo with (nolock) where custid = @srecommend 
+		ELSE IF @roleid = 4
+			Select @UplineClosed = 0
 	END
-
-	IF @roleid = 1
-		Select @UplineClosed = isnull(closed,0)
-		from Custinfo with (nolock) where custid = @recommend 
-	ELSE IF @roleid = 2
-		Select @UplineClosed = isnull(closed,0)
-		from Custinfo with (nolock) where custid = @mrecommend 
-	ELSE IF @roleid = 3
-		Select @UplineClosed = isnull(closed,0)
-		from Custinfo with (nolock) where custid = @srecommend 
-	ELSE IF @roleid = 4
-		Select @UplineClosed = 0
-		
+	 	
 	IF @UplineClosed = 1 AND @Old_Closed <> @Closed
 	BEGIN
 		SELECT @ErrMsg =  CASE @Language 
@@ -207,10 +249,20 @@ BEGIN
 		return
 	END
 
-
-	update custinfo with (ROWLOCK, UPDLOCK) set Closed = @Closed
-	where custid = @custid
-
+	--Update Close status
+	--Credit
+	IF(@IsDeposit = 0)
+	BEGIN
+		UPDATE cps SET cps.CloseInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Closed,ISNULL(CloseInfo,0)))
+		FROM CustProductStatus cps WITH (ROWLOCK, UPDLOCK)
+		WHERE cps.CustID = @CustID			
+	END
+	ELSE --Deposit
+	BEGIN
+		UPDATE custinfo with (ROWLOCK, UPDLOCK) SET Closed = @Closed
+		WHERE custid = @custid
+	END
+	
 	IF(@Closed=1)
 	BEGIN
 		IF(@roleid=1 AND @SystemID=1)
@@ -278,7 +330,7 @@ BEGIN
 	end
 
 	--20130709@Jamie: Apply Exec Rep SP 
-	IF @Closed = 1 AND @RoleID BETWEEN 2 AND 4
+	IF @IsDeposit = 1 AND @Closed = 1 AND @RoleID BETWEEN 2 AND 4
 	BEGIN
 		EXEC Acc_CustomerInfo_Execrep_04
 			 @CustID		= @CustID
@@ -286,6 +338,14 @@ BEGIN
 			,@Action		= 'Closed'
 			,@Closed		= @Closed
 			,@SystemID		=@SystemID
+	END
+	ELSE IF (@IsDeposit = 0 AND @roleid BETWEEN 2 AND 4)
+	BEGIN
+			EXEC Acc_DynamicCustomerInfo_04
+				@CustID		= @CustID
+				,@RoleID	= @RoleID
+				,@Action	= 'CloseInfo'
+				,@Closed	= @Closed
 	END
 
 
@@ -315,6 +375,58 @@ BEGIN
 			@ActionID = 1105,
 			@TrackingValue = @LogSPData	,
 			@duration = @duration
+
+		--write log to support downlines view upline's actions 
+		IF @roleid = 4
+		BEGIN
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 65020,--master view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 70029,--agent view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75039,--member view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END
+		
+		IF @roleid = 3
+		BEGIN	
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 70030,--agent view on master action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75040,--member view on master action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END
+		
+		IF @roleid = 2
+		BEGIN	
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75041,--member view on agent action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END	
 	END TRY
 	BEGIN CATCH
 		Select @LogSPData = '<Acc_CustomerUpdClosed CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +
@@ -333,6 +445,58 @@ BEGIN
 			@ActionID = 1105,
 			@TrackingValue = @LogSPData	,
 			@duration = @duration
+
+		--write log to support downlines view upline's actions 
+		IF @roleid = 4
+		BEGIN
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 65020,--master view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 70029,--agent view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75039,--member view on super action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END
+		
+		IF @roleid = 3
+		BEGIN	
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 70030,--agent view on master action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+			
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75040,--member view on master action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END
+		
+		IF @roleid = 2
+		BEGIN	
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+			@UserID = @UserID,
+			@CustID = @CustID,
+			@ActionID = 75041,--member view on agent action
+			@TrackingValue = @LogSPData,
+			@duration = @duration
+		END	
 	END CATCH
 END
 

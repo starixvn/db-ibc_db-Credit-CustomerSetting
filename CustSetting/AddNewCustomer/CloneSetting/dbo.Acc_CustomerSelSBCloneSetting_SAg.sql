@@ -32,8 +32,8 @@ BEGIN
 	IF @IsMyanmarOdds = 1
 		SET @discountMyanmarOdds = (SELECT CommRate FROM AgentCommRate WITH (NOLOCK) WHERE CustId = @Custid AND Sporttype = 1 AND Bettype = 1)
 	SELECT 
-		ci.closed
-		,ci.reject AS suspended
+		cps.closed
+		,cps.reject AS suspended
 		,DisableAutoMPT
 	----------commission section---------------------------------------------------------------------------------------
 		--groupA: for HDP, OU, OE
@@ -113,11 +113,16 @@ BEGIN
 			AND ci.custid=@CustID
 			AND ci.roleid=3			
 		INNER JOIN dbo.CustSetting3rd AS cs3rd WITH(NOLOCK) ON cs3rd.CustID=ci.CustID
-		INNER JOIN dbo.CustMaster AS csMa WITH(NOLOCK) ON csMa.CustID=ci.CustID				
+		INNER JOIN dbo.CustMaster AS csMa WITH(NOLOCK) ON csMa.CustID=ci.CustID	
+		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cps			
 		LEFT JOIN dbo.custoverride AS csOv WITH (NOLOCK) on csOv.custid = cs.custid AND csOv.sporttype = cs.sporttype AND csOv.bettype = cs.bettype
 		LEFT JOIN dbo.custoverride3rd AS csOv3rd WITH (NOLOCK) ON csOv3rd.custid = cs3rd.custid AND csOv3rd.sporttype = cs3rd.sporttype AND csOv3rd.bettype = cs3rd.bettype
-	GROUP BY ci.closed
-			,ci.reject
+	GROUP BY cps.closed
+			,cps.reject
 			,DisableAutoMPT			
 			,MaxPerMatch
 			,MaxPerMatch2
@@ -125,9 +130,6 @@ BEGIN
 			,TransferOption
 	SET NOCOUNT OFF
 END
-
-
-
 GO
 
 

@@ -1,9 +1,6 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Super] 
 	@CustID INT,--memberid
-	@Closed BIT,
-	@disCasino BIT = 0,
-	@UpdateClosed BIT = 0,
 	
 	@DisabledFI BIT = 0,
 	@spositiontaking_1 SMALLMONEY OUTPUT,
@@ -404,6 +401,7 @@ Revisions:
 	- 20190510@Johnson: remove suspend status on setting page [redmine: #105587]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20210714@Tina: Lock account & indirect close account [redmine: #148600]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -475,53 +473,10 @@ BEGIN
 	return
 END
 --END
- 
--- Update customer info first
-SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-IF @disCasino = 1 AND EXISTS(SELECT 1 FROM Custinfo WITH (NOLOCK) WHERE syncCasino = 1 AND custID = @CustID)
-	BEGIN
-		IF @UpdateClosed = 1
-		BEGIN
-			SELECT @ErrMsg_Cur = case @Language 
-								WHEN 'E' THEN 'This CLOSED function is temporarily unavailable, please update later.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](60004,@Language)
-							END	,
-				@ErrCode_Cur = 902
-				
-			SELECT @ErrCode = @ErrCode + cast(@ErrCode_cur AS varchar(300)) + char(7), 
-				@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-		END
-					
-		SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-	END
-ELSE
-	BEGIN	--- update close
-		IF @UpdateClosed = 1 --OR @closed is not null
-		BEGIN
-			EXEC [dbo].[Acc_CustomerUpdClosed] 
-				@CustID = @CustID, 
-				@Closed = @closed, 
-				@SubAccID = @SubAccID, 
-				@UserID = @UserID, 
-				@disCasino = @disCasino, 
-				@Language = @language,
-				@SystemID=@SystemID,
-				@ErrCode = @ErrCode_cur output, 
-				@ErrMsg = @ErrMsg_cur output, 
-				@IP = @IP
-				
-			IF @ErrCode_Cur > 0
-			BEGIN
-				SELECT @ErrCode = @ErrCode + cast(@ErrCode_cur AS varchar(300)) + char(7), 
-						@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
-				RETURN
-			END
-		END
-				
-		SELECT @ErrCode = @ErrCode + '-102'+char(7), @ErrMsg = @ErrMsg + char(7)
-		
-	END
 
+--Update Customer Info First.
+	SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = ''
+ 
 --Update Position Taking
 if	@UpdatePositiontaking   = 1  or
 	@UpdatePositiontakingv2   = 1  or
@@ -4310,6 +4265,8 @@ BEGIN--Update Position Taking
 		@v161slivepositiontaking_90 = CASE WHEN @v161slivepositiontaking_90<0 THEN 0 ELSE @v161slivepositiontaking_90 END
 
 	--- 20131031@Johnson: Aplly execrep when update pt on member
+		SELECT @ErrCode_Cur = 0, @ErrMsg_Cur = ''
+
 		EXEC dbo.Acc_CustSetting_08
 		@custid = @custid,
 		@roleid = 4,
@@ -4665,6 +4622,18 @@ BEGIN--Update Position Taking
 		
 		@UpdateMultiple = @UpdateMultiple,
 		@UpdatePositiontakingv161 = @UpdatePositiontakingv161
+
+
+		IF @ErrCode_Cur > 0
+		BEGIN
+			select @ErrCode = @ErrCode + cast(@ErrCode_cur as varchar(300)) + char(7), 
+					@ErrMsg = @ErrMsg + @ErrMsg_Cur + char(7)
+			return
+		END
+		ELSE
+		BEGIN
+			Select @ErrCode = @ErrCode + '-107'+char(7), @ErrMsg = @ErrMsg + char(7)
+		END
 	/*
 	EXEC dbo.Acc_CustomerUpdMember_AutoPositiontaking 
 				@custid = @custid,

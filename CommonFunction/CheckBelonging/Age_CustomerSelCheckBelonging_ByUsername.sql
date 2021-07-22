@@ -1,4 +1,6 @@
-﻿ALTER PROCEDURE [dbo].[Age_CustomerSelCheckBelonging_ByUsername]
+﻿/*<info serverAlias="DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
+ALTER PROCEDURE [dbo].[Age_CustomerSelCheckBelonging_ByUsername]
 	@uplineID INT, --user who is logging
 	@userName VARCHAR(30) = NULL, --userName to check belong
 	@subAccountID INT = 0,
@@ -21,6 +23,7 @@ Revisions:
     - 20130719@Elodie: Correct link server DBACC instead of DBARC
     - 20150226@Johnson: add sub-accountID and check user is active or not
     - 20161129@Helen: change @userName parameter (NVARCHAR(50) -> VARCHAR(30)) for performance issue - [Redmine:N/A]
+	- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
     
 Param's Explanation:
 • @uplineID: user who is logging.
@@ -83,20 +86,13 @@ BEGIN
 	END
 	ELSE 
 	BEGIN
-		SELECT @isActive = CASE WHEN closed = 1 OR Enabled = 0 THEN 0 ELSE 1 END
-		FROM dbo.custinfo WITH(NOLOCK) 
-		WHERE custid = @uplineID	
+		SELECT @isActive = CASE WHEN cps.CloseInfo > 0 OR ci.[Enabled] = 0 THEN 0 ELSE 1 END
+		FROM dbo.custinfo ci WITH(NOLOCK) 
+			INNER JOIN CustProductStatus cps WITH (NOLOCK) ON ci.custid = cps.CustID
+		WHERE ci.custid = @uplineID	
 	END 
 
 	SELECT @isActive = ISNULL(@isActive,0) 
 END
 GO
-GRANT EXECUTE ON [dbo].[Age_CustomerSelCheckBelonging_ByUsername] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Age_CustomerSelCheckBelonging_ByUsername] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Age_CustomerSelCheckBelonging_ByUsername] TO [bodbDownlineNetView]
-GO
-GRANT EXECUTE ON [dbo].[Age_CustomerSelCheckBelonging_ByUsername] TO [bodbExtAccNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Age_CustomerSelCheckBelonging_ByUsername] TO [vnteam]
+

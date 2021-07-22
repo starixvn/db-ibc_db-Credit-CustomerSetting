@@ -41,6 +41,7 @@ Revisions:
 	- 20160104@Helen: Disallow SMA changes password or updates account status of members - [Redmine:#49967]
 	- 20190404@Johnson: add suspendinfo [redmine: #105587]
 	- 20200216@Elodie: Lock close/suspend for some member [Redmine: #128541]
+	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 	
 Param's Explanation:
 • @ErrCode:
@@ -91,6 +92,7 @@ BEGIN
 
 	---hardcode: force agent or master not able to active 2 member
 	Declare @custid_Edited int,@recommend int, @mrecommend int, @srecommend int
+	
 	select @custid_Edited=custid,@recommend=recommend, @mrecommend=srecommend
 	from custinfo with (nolock) where username in ('S1p0106001','S1P0106002')
 	if @custid_Edited =@CustID and (@UserID=@recommend or @UserID=@mrecommend) and @Suspended = 0
@@ -101,6 +103,15 @@ BEGIN
 	----------
 
 	Declare @RoleID tinyint , @UplineSuspended bit , @Old_Suspended bit, @UplineClosed bit
+	DECLARE @IsDeposit BIT = 0, @SuperSuspended BIT, @MasterSuspended BIT, @AgentSuspended BIT, @MemberSuspended BIT
+			, @SuperClosed BIT, @MasterClosed BIT, @AgentClosed BIT, @MemberClosed BIT
+
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo ci WITH(NOLOCK)
+					INNER JOIN dbo.Dep_CustSuper dep WITH(NOLOCK) ON ci.srecommend = dep.custid
+			   WHERE ci.custid = @custid)
+	BEGIN
+		SET @IsDeposit = 1
+	END
 
 	select 
 		@RoleID = RoleID, 
@@ -111,6 +122,20 @@ BEGIN
 	from Custinfo with (nolock)
 	where CustID = @CustID
 
+	select @RoleID = isnull(@RoleID, 0)
+
+	if @RoleID not in (1,2,3,4)
+	BEGIN
+		Select @ErrMsg = case @Language 
+							when 'E' then 'Invalid user!!'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40002,@Language)
+						end
+		
+		,
+			@ErrCode = 100	
+		return
+	END
+	
 	-- Check Allowed downlines during peak hour at weekend 
 	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines	@custid=@custid,
 												@roleid=@roleid,
@@ -120,22 +145,65 @@ BEGIN
 												@ErrCode=@ErrCode output
 	if @ErrCode <>0 return 
 	--End 
-		
-		
-	IF @roleid = 1
-		Select @UplineSuspended = isnull(reject,0),
-			@UplineClosed = isnull(closed,0)
-		from Custinfo with (nolock) where custid = @recommend 
-	ELSE IF @roleid = 2
-		Select @UplineSuspended = isnull(reject,0),
-			@UplineClosed = isnull(closed,0)
-		from Custinfo with (nolock) where custid = @mrecommend 
-	ELSE IF @roleid = 3
-		Select @UplineSuspended = isnull(reject,0), 
-			@UplineClosed = isnull(closed,0)
-		from Custinfo with (nolock) where custid = @srecommend 
-	ELSE IF @roleid = 4
-		Select @UplineSuspended = 0, @UplineClosed = 0
+	
+	--Get Close status for Credit
+	IF (@IsDeposit = 0)
+	BEGIN
+		SELECT @SuperSuspended = sp.SuperStatus, 
+			   @MasterSuspended = sp.MasterStatus, 
+			   @AgentSuspended = sp.AgentStatus, 
+			   @MemberSuspended = sp.MemberStatus,
+			   @Old_Suspended = (CASE WHEN cps.SuspendInfo > 0 THEN 1 ELSE 0 END),
+			   @SuperClosed = cl.SuperStatus, 
+			   @MasterClosed = cl.MasterStatus, 
+			   @AgentClosed = cl.AgentStatus, 
+			   @MemberClosed = cl.MemberStatus
+		FROM CustProductStatus cps WITH (NOLOCK)
+			CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.SuspendInfo)) AS sp
+			CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.SuspendInfo)) AS cl
+		WHERE cps.CustID = @CustID
+
+		IF(@roleid = 1)
+		BEGIN
+			SET @UplineSuspended =  CASE WHEN (@SuperSuspended = 1 OR @MasterSuspended = 1 OR @AgentSuspended = 1) THEN 1 ELSE 0 END
+			SET @UplineClosed =  CASE WHEN (@SuperClosed = 1 OR @MasterClosed = 1 OR @AgentClosed = 1) THEN 1 ELSE 0 END
+		END
+		ELSE IF(@roleid = 2)
+		BEGIN
+			SET @UplineSuspended =  CASE WHEN (@SuperSuspended = 1 OR @MasterSuspended = 1) THEN 1 ELSE 0 END
+			SET @UplineClosed =  CASE WHEN (@SuperClosed = 1 OR @MasterClosed = 1) THEN 1 ELSE 0 END
+		END
+		ELSE IF(@roleid = 3)
+		BEGIN
+			SET @UplineSuspended =  @SuperSuspended
+			SET @UplineClosed =  @SuperClosed 
+		END
+		ELSE IF(@roleid = 4)
+		BEGIN
+			SET @UplineSuspended =  0
+			SET @UplineClosed =  0
+		END
+	END
+
+	IF @Old_Suspended = @Suspended RETURN --Only update 'Suspended' status if values are different
+
+	IF (@IsDeposit = 1)
+	BEGIN
+		IF @roleid = 1
+			Select @UplineSuspended = isnull(reject,0),
+				@UplineClosed = isnull(closed,0)
+			from Custinfo with (nolock) where custid = @recommend 
+		ELSE IF @roleid = 2
+			Select @UplineSuspended = isnull(reject,0),
+				@UplineClosed = isnull(closed,0)
+			from Custinfo with (nolock) where custid = @mrecommend 
+		ELSE IF @roleid = 3
+			Select @UplineSuspended = isnull(reject,0), 
+				@UplineClosed = isnull(closed,0)
+			from Custinfo with (nolock) where custid = @srecommend 
+		ELSE IF @roleid = 4
+			Select @UplineSuspended = 0, @UplineClosed = 0
+	END 
 
 	IF @UplineSuspended = 1 and @Old_Suspended <> @Suspended
 	BEGIN
@@ -153,29 +221,20 @@ BEGIN
 							END, @ErrCode = 106
 		return
 	END
-	select @RoleID = isnull(@RoleID, 0)
-
-	if @RoleID not in (1,2,3,4)
-	BEGIN
-		Select @ErrMsg = case @Language 
-							when 'E' then 'Invalid user!!'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40002,@Language)
-						end
-		
-		,
-			@ErrCode = 100	
-		return
-	END
-
-	IF @Old_Suspended = @Suspended RETURN 
-	-------------
-	UPDATE	cs 
-	SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Suspended,ISNULL(SuspendInfo,0)))	
-	FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 		
-	WHERE	custid = @CustID;
 	
-	update CustInfo with (ROWLOCK, UPDLOCK) set Reject = @Suspended
-	where CustID = @CustID
+	-------------
+	IF(@IsDeposit = 0) --Credit
+	BEGIN
+		UPDATE	cs 
+		SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Suspended,ISNULL(SuspendInfo,0)))	
+		FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 		
+		WHERE custid = @CustID;
+	END
+	ELSE --Deposit
+	BEGIN
+		UPDATE CustInfo with (ROWLOCK, UPDLOCK) set Reject = @Suspended
+		WHERE CustID = @CustID
+	END
 	if (@@error <> 0)
 	begin
 		
@@ -186,50 +245,15 @@ BEGIN
 						end	, @ErrCode = 101
 		return
 	end
-	
-	CREATE TABLE #tblCustAffected (CustID INT)
-	DECLARE @tmpCust TABLE(custid INT) 
-	DECLARE @custlist VARCHAR(MAX)
 		
-	--20130709@Jamie: Apply ExecRep 
-	IF @RoleID BETWEEN 2 AND 4 
+	IF @IsDeposit = 0 AND @RoleID BETWEEN 2 AND 4 
 	BEGIN
-		--get custid affect after update custproductstatus
-		INSERT INTO #tblCustAffected(custid)
 		EXEC Acc_DynamicCustomerInfo_04
 			@CustID		= @CustID
 			,@RoleID	= @RoleID
 			,@Action	= 'SuspendInfo'
 			,@Suspended	= @Suspended
-			
-		WHILE (1=1)
-		BEGIN 
-			SELECT @custlist = ''
-
-			DELETE TOP (2500) t
-			OUTPUT DELETED.custid INTO @tmpCust
-			FROM #tblCustAffected t
-				
-			SELECT @custlist = @custlist + cast(custid AS VARCHAR(10)) + ','
-			FROM @tmpCust
-			
-			EXEC [Acc_CustomerInfo_Execrep_04]
-				 @CustID		= @CustID
-				,@custlist		= @custList
-				,@RoleID		= @RoleID
-				,@Action		= 'Suspended'
-				,@Suspended		= @Suspended
-			
-			DELETE @tmpCust
-	
-			IF @@rowcount < 2500
-				BREAK;	
-			
-		END		
-		
-		DROP TABLE #tblCustAffected
 	END
-
 
 	---------------
 	declare @LogSPData varchar(8000),
