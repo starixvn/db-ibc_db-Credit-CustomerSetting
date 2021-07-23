@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_04]
 	@IsDisabled_XML VARCHAR(MAX) = NULL,
 	@Suspended BIT = NULL,
 	@Closed BIT = NULL,	
+	@ClosedReason TINYINT = NULL,
 	@Action	VARCHAR(30)	= 'ProductStatus'
 AS
 /*
@@ -22,6 +23,7 @@ AS
 		- 20200406@Elodie: Update unhide by RealProductID [RedmineID:#129440]
 		- 20200702@Winfred: Update enable status of Cust when SettingType = 4[RedmineID:#136210]  
 		- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -650,8 +652,6 @@ BEGIN
 	END
 	IF @Action = 'CloseInfo'
 	BEGIN
-		DECLARE @ClosedReason INT
-					
 		IF @roleid = 4
 		BEGIN			
 			UPDATE	cs 
@@ -681,8 +681,6 @@ BEGIN
 
 		IF dbo.f_CheckRepTable('CustLoginInfo') = 1 AND dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
 		BEGIN
-			SELECT @ClosedReason = ClosedReason FROM CustLoginInfo WHERE CustID = @CustID
-
 			IF @roleid = 4
 			BEGIN			
 				UPDATE	cs 
