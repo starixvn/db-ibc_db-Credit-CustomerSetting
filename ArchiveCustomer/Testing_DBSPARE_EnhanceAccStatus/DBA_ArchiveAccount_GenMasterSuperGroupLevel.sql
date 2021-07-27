@@ -194,7 +194,7 @@ BEGIN
 	FROM custdb.dbo.customer ma WITH (NOLOCK)
 		INNER JOIN custdb.dbo.custinfo agci WITH (NOLOCK) ON agci.custid = ma.custid
 		INNER JOIN custdb.dbo.CustProductStatus cps WITH (NOLOCK) ON cps.CustID = agci.custid
-		INNER JOIN DBCUST.CUSTDB.dbo.CustMaster cm WITH (NOLOCK) ON cm.custid = ma.custid 
+		INNER JOIN CUSTDB.dbo.CustMaster cm WITH (NOLOCK) ON cm.custid = ma.custid 
 		OUTER APPLY (
 			SELECT TOP 1 recommend
 			FROM custdb.dbo.custinfo mem WITH (NOLOCK)
