@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetSettingUpd] 
+ALTER PROCEDURE Acc_CustSetting_GameBetSettingUpd
 	  @CustID		INT
 	, @BetLimit		VARCHAR(MAX)
 	, @SubAccID		INT				= 0
@@ -18,7 +18,7 @@ AS
 
 	Revisions: 
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
-
+		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
 	Param's Explanation:
 	- @BetLimit:
 		<ROOT>
@@ -33,14 +33,18 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
-
+	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
 		, @duration		INT
+		, @ActionID		INT
 		
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
+		, @logSpData_Indirectly	NVARCHAR(MAX)
+		, @logSpData_Old_Indirectly	NVARCHAR(MAX)
 		, @xml				XML
+		, @UserName			NVARCHAR(50)
 		
 	DECLARE @AgentID		INT
 		, @MasterID			INT
@@ -92,6 +96,7 @@ BEGIN
 		, @MasterID = mrecommend
 		, @SuperID	= srecommend
 		, @RoleID	= RoleID
+		, @UserName = username
 	FROM dbo.custInfo WITH (NOLOCK)
 	WHERE custid = @CustID
 
@@ -231,6 +236,23 @@ BEGIN
 					main.minbet		<> tmp.MinBet
 				OR main.maxbet		<> tmp.MaxBet
 				)
+
+		
+		SET	@BetLimit =	(
+							SELECT	Sporttype,			
+									BetType,			
+									MinBet,
+									MaxBet
+							FROM	@NewBetSettingTbl
+							FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
+						)
+					
+		-- Correct downlines via ExecRep
+		EXECUTE	Acc_DynamicCustSetting3rd_02
+					@CustID		= @CustID,
+					@RoleID		= @RoleID,
+					@BetLimit	= @BetLimit,
+					@Mode		= 'GameBetSetting'
 	END
 
 	--START LOGGING
@@ -252,6 +274,18 @@ BEGIN
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 	WHERE p.ProductID = @ProductID
 
+	DECLARE @SPName varchar(100) = 'Acc_CustSetting_GameBetSettingUpd'
+
+	SELECT @SPName = LogStr 
+	FROM f_CustSetting_FormatLog (@SPName)
+
+	INSERT INTO @LogAction (ActionID)
+	SELECT 399 UNION ALL
+	SELECT l.ActionID
+	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
+		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
+	WHERE l.SPName = @SPName AND ld.ProductID IS NULL AND ld.Level = @RoleID
+
 	-- Log old data
 	IF @SettingLevel = 1			-- Product setting level
 	BEGIN
@@ -259,6 +293,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -280,6 +315,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -301,6 +337,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -322,6 +359,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -347,6 +385,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -368,6 +407,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -389,6 +429,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -410,6 +451,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -426,31 +468,47 @@ BEGIN
 		TYPE
 	)
 	END
-	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+	SET @logSpData_Indirectly = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
-	SELECT @logSpData_Old = LogStr 
-	FROM f_CustSetting_FormatLog (@logSpData_Old)
-	SELECT @logSpData = LogStr 
-	FROM f_CustSetting_FormatLog (@logSpData)
+	SELECT @logSpData_Old_Indirectly = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old_Indirectly)
+	SELECT @logSpData_Indirectly = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Indirectly)
+
+	SET @logSpData = REPLACE(@logSpData_Indirectly, 'SourceAccount="'+ @UserName +'"', '')
+	SET @logSpData_Old = REPLACE(@logSpData_Old_Indirectly, 'SourceAccount="'+ @UserName +'"', '')
 
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @CustID
-						, @ActionID			= 399
-						, @TrackingValue	= @logSpData
-						, @TrackingValue2	= @logSpData_Old
-						, @duration			= @duration
-	END TRY
-	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @CustID
-						, @ActionID			= 399
-						, @TrackingValue	= @logSpData
-						, @TrackingValue2	= @logSpData_Old
-						, @duration			= @duration
-	END CATCH
+	WHILE (1=1)
+	BEGIN
+		UPDATE TOP (1) @LogAction
+		SET IsFinished = 1, @ActionID = ActionID
+		WHERE IsFinished = 0
+
+		IF @@ROWCOUNT = 0 BREAK
+		
+		IF @ActionID <> 399
+		BEGIN
+			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+				@UserID = @UserID,
+				@CustID = @CustID,
+				@ActionID = @ActionID,
+				@TrackingValue = @LogSPData,
+				@TrackingValue2 = @logSPData_Old,
+				@duration = @duration	
+		END
+		ELSE
+		BEGIN
+			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+				@UserID = @UserID,
+				@CustID = @CustID,
+				@ActionID = @ActionID,
+				@TrackingValue = @logSpData_Indirectly,
+				@TrackingValue2 = @logSpData_Old_Indirectly,
+				@duration = @duration	
+		END
+	END
 END
 GO
