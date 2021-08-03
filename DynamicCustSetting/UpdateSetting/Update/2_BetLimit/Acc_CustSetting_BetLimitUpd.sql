@@ -509,7 +509,7 @@ BEGIN
 
 		IF @@ROWCOUNT = 0 BREAK
 		
-		IF @ActionID <> 384
+		IF @ActionID = 384
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,
