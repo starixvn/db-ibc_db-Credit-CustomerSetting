@@ -250,7 +250,7 @@ BEGIN
 				)
 
 		SET	@GameBetLimit =	(
-							SELECT	Sporttype,			
+							SELECT	SportType,			
 									BetType,			
 									MinBet,
 									MaxBet,

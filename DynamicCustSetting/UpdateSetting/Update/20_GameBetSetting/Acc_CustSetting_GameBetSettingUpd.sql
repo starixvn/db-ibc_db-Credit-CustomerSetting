@@ -239,7 +239,7 @@ BEGIN
 
 		
 		SET	@BetLimit =	(
-							SELECT	Sporttype,			
+							SELECT	SportType,			
 									BetType,			
 									MinBet,
 									MaxBet
