@@ -13,6 +13,7 @@ AS
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 */
 BEGIN  
 	SET NOCOUNT ON
@@ -263,9 +264,9 @@ BEGIN
 
 	--------- Involve more tables (new tables/DCS)
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustProductStatus_old(
-		 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
+		 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo, Locked
 	) 
-	SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
+	SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo, Locked
 	FROM	CustProductStatus WITH (NOLOCK)
 	WHERE	custid = @CustID
 	

@@ -17,6 +17,7 @@ AS
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 			- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
+			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -27,9 +28,13 @@ BEGIN
 
 	DECLARE @roleid int, @MasterID int, @Closed bit, @ClosedReason tinyint
 
-	SELECT @roleid = roleid, @MasterID = custid, @Closed = Closed
+	SELECT @roleid = roleid, @MasterID = custid
 	FROM custinfo (nolock)
 	WHERE username = @AccName
+
+	SELECT @Closed = CASE WHEN cps.CloseInfo > 0 THEN 1 ELSE 0 END
+	FROM CustProductStatus cps WITH (NOLOCK)
+	WHERE cps.CustID = @MasterID
 
 	if isnull(@MasterID,0) = 0 or @roleid NOT IN (3)
 	BEGIN
@@ -103,22 +108,30 @@ BEGIN
 	END
 
 	--backup data for later rollback for this stage
-	insert into DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
 		[ArchiveDate],
 		[custid],
 		[closed],
 		[reject],
-		[credit]
+		[credit],
+		[SuspendInfo],
+		[CloseInfo],
+		[ClosedReason]
 	)
 	SELECT	
-		GetDate(), 
-		[custid],
-		[closed],
-		[reject],
-		[credit]
-	FROM	custinfo c WITH (NOLOCK)
-	WHERE	custid = @MasterID
-		AND NOT EXISTS (select top 1 1 from DBARCCUST.bodb_Customer.dbo.CustBackupClosed with (nolock) where custid = c.custid)
+		GETDATE(), 
+		c.[custid],
+		c.[closed],
+		c.[reject],
+		c.[credit],
+		cps.SuspendInfo,
+		cps.CloseInfo,
+		cl.ClosedReason
+	FROM custinfo c WITH (NOLOCK)
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
+		LEFT JOIN CustLoginInfo cl WITH (NOLOCK) ON cl.CustID = c.custid
+	WHERE c.custid = @MasterID
+		AND NOT EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = c.custid)
 
 	--close master
 	EXEC DBA_Archive_Cust_SuperMaster @custid = @MasterID, @stage = 1

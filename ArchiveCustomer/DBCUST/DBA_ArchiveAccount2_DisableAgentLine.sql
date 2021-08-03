@@ -30,6 +30,7 @@ AS
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 
 */
     
@@ -83,6 +84,14 @@ BEGIN
 	return
 END
 
+--==Check the status has changed
+IF EXISTS(SELECT 1 FROM CustProductStatus cps WITH (NOLOCK) WHERE cps.CustID = @AgentID AND cps.CloseInfo = 0)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent has been reopened while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
+	print @ErrMsg
+	return
+END
 --== Check new active trans ==========================
 
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
@@ -395,9 +404,9 @@ FROM	CustDiscount3rd_Member WITH (NOLOCK)
 WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)	
 
 insert into DBARCCUST.bodb_Customer.dbo.CustProductStatus_old(
-	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
+	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo
 ) 
-SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
+SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo
 FROM	CustProductStatus WITH (NOLOCK)
 WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE recommend = @AgentID)
 

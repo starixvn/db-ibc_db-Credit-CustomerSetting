@@ -18,6 +18,8 @@ AS
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+			- 20210614@Eden: All sites - Dormant SMA Account List [RedmineID: #155969]
 */
 BEGIN
 	    
@@ -283,9 +285,9 @@ BEGIN
 		)
 	BEGIN
 		insert into DBARCCUST.bodb_Customer.dbo.CustProductStatus_old(
-			 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
+			 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo
 		) 
-		SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
+		SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo
 		FROM	CustProductStatus WITH (NOLOCK)
 		where	custid = @CustID
 	END
@@ -301,14 +303,13 @@ BEGIN
 		WHERE	custid = @CustID
 	END
 	-----------------------------------------------------------------------------------------------------------
-	--> Insert data for Cust_ArchiveAccount - Master level only
-	IF @roleid = 3
+	--> Insert data for Cust_ArchiveAccount - Master/Super
 	BEGIN
 		DECLARE @ProcessedDate DATETIME  = GETDATE()
 
 		EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 			@CustId = @CustID,
-			@RoleID = 3,
+			@RoleID = @roleid,
 			@StageID = 2,
 			@ProcessedDate = @ProcessedDate,
 			@ArchivedDate = @ArchivedDate

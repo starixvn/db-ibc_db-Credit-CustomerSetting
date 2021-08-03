@@ -20,6 +20,7 @@ AS
 		- 20201201@Eden: NAP/Alpha & EXT - Apply color for archived accounts [Redmine:145018]
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
+		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		
 	Param's Explanation:
 		@Type: 
@@ -31,18 +32,35 @@ AS
  --test rep---
 */
 BEGIN
+	DECLARE @RoleID INT
+	CREATE TABLE #tmp_UpdateBatch (CustID INT, RoleID INT)
 	IF @Type = -1 --1st stage (1)
 	BEGIN 
+		--SET @RoleID = 2
 		--CLosed Agent and downlines
 		IF dbo.f_CheckRepTable('Custinfo') = 0
+		   OR dbo.f_CheckRepTable('CustProductStatus') = 0
 			RETURN
 		ELSE 
 		BEGIN
+			SET @RoleID = 2
+			UPDATE TOP(10000) cps
+				SET CloseInfo = CloseInfo|POWER(2,@RoleID - 1) -- turn on agent's bit = 1. It means this agent is closed.
+			FROM dbo.custInfo ci WITH (NOLOCK)
+				INNER JOIN CustProductStatus cps WITH (UPDLOCK,ROWLOCK) ON cps.CustID = ci.custid
+			WHERE ci.custid = @AgentID 
+				AND CloseInfo&POWER(2,@RoleID - 1) = 0 --check agent's bit = 0. It means this agent opens.
+
 			WHILE (1=1)
 			BEGIN 
-				UPDATE TOP(10000) dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
-				SET		closed = 1
-				WHERE	recommend = @AgentID AND closed = 0 
+				UPDATE TOP(10000) cps
+					SET CloseInfo = CloseInfo|3 -- turn on member's bit = 1 and agent's bit = 1
+				FROM dbo.custInfo ci WITH (NOLOCK)
+					INNER JOIN CustProductStatus cps WITH (UPDLOCK,ROWLOCK) ON cps.CustID = ci.custid
+				WHERE ci.recommend = @AgentID 
+					AND (CloseInfo&POWER(2,0) = 0 OR CloseInfo&POWER(2,@RoleID - 1) = 0) --check member's bit = 0 or agent's bit = 0. It means this direct agent opens or this member still opens.
+					AND ci.roleid = 1
+
 				IF @@ROWCOUNT < 10000
 					BREAK
 			END 
@@ -51,7 +69,6 @@ BEGIN
 		--Update ClosedReason for agent and downlines
 		IF dbo.f_CheckRepTable('CustLoginInfo') = 0 
 			OR dbo.f_CheckRepTable('CustLoginInfo_Member') = 0
-			OR dbo.f_CheckRepTable('custinfo') = 0
 			RETURN
 		ELSE 
 		BEGIN
@@ -89,9 +106,10 @@ BEGIN
 				SET ClosedReason = 4
 				FROM CustLoginInfo_Member m WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN custinfo c WITH(NOLOCK) ON m.CustID = c.custid
+					INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = m.CustID
 				WHERE ISNULL(ClosedReason,0) <> 4
 					AND c.recommend = @AgentID
-					AND c.closed = 1
+					AND cps.CloseInfo > 0
 
 				IF @@ROWCOUNT < 5000
 					BREAK
@@ -107,13 +125,32 @@ BEGIN
 		BEGIN
 			WHILE (1=1)
 			BEGIN 
+				DELETE #tmp_UpdateBatch
+
 				UPDATE TOP(10000) dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
-				SET		[enabled] = 0, closed = 1, credit = 0
+				SET		[enabled] = 0, credit = 0
+				OUTPUT DELETED.custid, DELETED.roleid
+				INTO #tmp_UpdateBatch(CustID, RoleID)
 				WHERE	recommend = @AgentID AND [enabled] = 1 
-				IF @@ROWCOUNT < 10000
+				
+				IF @@ROWCOUNT = 0
 					BREAK
+
+				--CLosed Agent and downlines
+				IF(dbo.f_CheckRepTable('CustProductStatus') = 1)
+				BEGIN
+					UPDATE cps
+						SET CloseInfo = CASE WHEN ci.RoleID = 1 THEN CloseInfo|3 -- turn on member's bit = 1 and agent's bit = 1
+											 WHEN ci.RoleID = 2 THEN CloseInfo|POWER(2,@RoleID - 1) -- turn on agent's bit = 1. It means this agent is closed.
+										END  
+					FROM #tmp_UpdateBatch ci WITH (NOLOCK)
+						INNER JOIN CustProductStatus cps WITH (UPDLOCK,ROWLOCK) ON cps.CustID = ci.custid
+					WHERE ci.roleid = 1 AND (CloseInfo&POWER(2,0) = 0 OR CloseInfo&POWER(2,@RoleID - 1) = 0) --check member's bit = 0 or agent's bit = 0. It means this direct agent opens or this member still opens.
+						OR (ci.RoleID = 2 AND CloseInfo&POWER(2,@RoleID - 1) = 0) --check agent's bit = 0. It means this agent opens.)
+				END
 			END 
-		END 
+		END
+		
 	END	
 	ELSE IF @Type = 1
 	BEGIN
@@ -208,17 +245,6 @@ BEGIN
 				BREAK
 		END
 
-		IF dbo.f_CheckRepTable('CustProductStatus') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(10000) dbo.CustProductStatus WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE  recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 10000 
-				BREAK
-		END
-
 		IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 1 		
 		WHILE(1=1)
 		BEGIN
@@ -268,7 +294,7 @@ BEGIN
 		END
 
 	END 
-	ELSE IF @Type = 2
+	ELSE IF @Type = 2  --Stage 4
 	BEGIN
 		IF @@SERVERNAME = 'DBTRANS' -- @DBTRANS => delete balance tables
 		BEGIN
@@ -371,6 +397,19 @@ BEGIN
 		END -- END of DBTRANS - delete balance tables
 
 		----- add more tables----------------------------
+
+		IF dbo.f_CheckRepTable('CustProductStatus') = 1 		
+		WHILE(1=1)
+		BEGIN
+			DELETE TOP(10000) dbo.CustProductStatus WITH (ROWLOCK)
+			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
+								WHERE  recommend = @AgentID
+									)
+			IF @@ROWCOUNT < 10000 
+				BREAK
+		END
+
+		--------------------------------------------------
 		IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1 
 		WHILE(1=1)
 		BEGIN

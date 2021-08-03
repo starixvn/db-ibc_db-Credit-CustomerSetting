@@ -16,6 +16,7 @@ AS
 		- 20201231@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210302@Eden: Just process SMA(s) stage 2, 3, 4 when they processed stage 1  [RedmineID: #149262]
 		- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
+		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		
 	Param's Explanation:
 */
@@ -52,6 +53,7 @@ BEGIN
 		,@StageId
 	FROM custinfo c WITH (NOLOCK)
 		INNER JOIN #tmpMaster t ON t.custid = c.custid
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
 		OUTER APPLY (
 			SELECT COUNT(1) AgentCount
 			FROM tmpCustArchived mem WITH (NOLOCK)
@@ -64,7 +66,7 @@ BEGIN
 				AND ag.mrecommend = t.custid
 		)mem2
 		OUTER APPLY (SELECT  CASE 
-								WHEN @StageId = 2 AND c.closed = 0 THEN 0 
+								WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
 								WHEN @StageId IN (3,4) AND c.enabled = 1 THEN 0			 
 								ELSE 1
 							END AS isValid
@@ -87,7 +89,8 @@ BEGIN
 	FROM #tmpSuper s
 		INNER JOIN dbo.customer c WITH (NOLOCK) ON s.custid = c.srecommend
 		INNER JOIN dbo.custinfo ci WITH (NOLOCK) ON ci.custid = c.custid
-		INNER JOIN DBCUST.CUSTDB.dbo.CustMaster cm WITH (NOLOCK) ON cm.custid = c.custid 
+		INNER JOIN DBCUST.CUSTDB.dbo.CustMaster cm WITH (NOLOCK) ON cm.custid = c.custid
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
 		LEFT JOIN #tmpMaster ma ON ma.custid = c.custid
 		OUTER APPLY (SELECT TOP 1 1 AS MO_total
 					FROM dbo.customer c1 WITH (NOLOCK)
@@ -104,7 +107,7 @@ BEGIN
 						 WHEN @StageId = 4 AND c.creatdate < @DDiff THEN 1
 						 ELSE 0
 					END	
-		AND 1 = CASE WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
+		AND 1 = CASE WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0			 
 				ELSE 1 END
 		AND c.username NOT LIKE 'IBC%'
@@ -117,6 +120,7 @@ BEGIN
 		,@StageId
 	FROM custinfo c WITH (NOLOCK)
 		INNER JOIN #tmpSuper t ON t.custid = c.custid
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON c.custid = cps.CustID
 		OUTER APPLY (
 			SELECT COUNT(1) MasterCount
 			FROM custinfo WITH (NOLOCK)
@@ -129,7 +133,7 @@ BEGIN
 			WHERE t1.srecommend = t.custid
 		)m0
 		OUTER APPLY (SELECT  CASE 
-								WHEN @StageId = 2 AND c.closed = 0 THEN 0 
+								WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
 								WHEN @StageId IN (3,4) AND c.enabled = 1 THEN 0			 
 								ELSE 1
 							END AS isValid
@@ -160,8 +164,9 @@ BEGIN
 	FROM #tmpMaster_DetectM0 t	
 		INNER JOIN dbo.tmpCustGroupLevelArchived a WITH (NOLOCK) ON t.srecommend = a.custid 
 		INNER JOIN dbo.custinfo ci WITH (NOLOCK) ON t.custid = ci.custid
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid
 	WHERE a.roleid = 4 AND a.GroupLevelName = 'S1'	
-		AND 1 = CASE WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
+		AND 1 = CASE WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0
 					ELSE 1 
 				END
@@ -184,6 +189,7 @@ BEGIN
 	SELECT ma.custid, 3, 'M0', @StageId
 	FROM customer ma WITH (NOLOCK)
 		INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ma.custid
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = agci.custid
 		INNER JOIN DBCUST.CUSTDB.dbo.CustMaster cm WITH (NOLOCK) ON cm.custid = ma.custid 
 		OUTER APPLY (
 			SELECT TOP 1 recommend
@@ -208,7 +214,7 @@ BEGIN
 		AND ma.currency NOT IN (20, 72)	
 		AND cm.IsInternal = 0
 		AND ma.site <> 'cn88'		
-		AND 1 = CASE WHEN @StageId = 2 AND agci.closed = 0 THEN 0 
+		AND 1 = CASE WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND agci.enabled = 1 THEN 0
 					ELSE 1 
 				END			
@@ -245,6 +251,7 @@ BEGIN
 		,@StageId
 	FROM #tmpSuper_M0 t WITH (NOLOCK)
 		INNER JOIN custInfo ci WITH (NOLOCK) ON ci.custid = t.custID
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid
 		LEFT JOIN tmpCustGroupLevelArchived ar_s WITH (NOLOCK) ON ar_s.custid = t.custID
 		OUTER APPLY (
 			SELECT COUNT(1) MasterCount
@@ -265,7 +272,7 @@ BEGIN
 		AND ar_s.custid IS NULL
 		AND 1 = CASE 
 					--WHEN @StageId = 1 AND ci.closed = 1 THEN 0
-					WHEN @StageId = 2 AND ci.closed = 0 THEN 0 
+					WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0
 					ELSE 1 
 				END	

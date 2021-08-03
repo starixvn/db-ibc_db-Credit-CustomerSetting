@@ -13,18 +13,36 @@ AS
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201130@Eden: NAP/Alpha & EXT - Apply color for archived accounts [Redmine:145018]
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 */
 BEGIN
+	DECLARE @RoleID INT
+
 	IF @Stage = 1
 	BEGIN 
+		SELECT @RoleID = ci.roleid FROM custInfo ci WITH (NOLOCK) WHERE ci.custid = @CustID
+		--CLosed Super, Master, Agent
 		IF dbo.f_CheckRepTable('Custinfo') = 0
+		   OR dbo.f_CheckRepTable('CustProductStatus') = 0
 			RETURN
 		ELSE 
 		BEGIN
-			UPDATE dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
-			SET		closed = 1
-			WHERE	custid = @CustID
-		END 
+			WHILE (1=1)
+			BEGIN 
+				UPDATE TOP(10000) cps
+					SET CloseInfo = CloseInfo|POWER(2,@RoleID - 1)
+				FROM dbo.custInfo ci WITH (NOLOCK)
+					INNER JOIN CustProductStatus cps WITH (UPDLOCK,ROWLOCK) ON cps.CustID = ci.custid
+				WHERE 1 = CASE WHEN @RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid IN (4,3) AND CloseInfo&POWER(2,@RoleID - 1) = 0 THEN 1
+							   WHEN @RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid IN (3,2) AND CloseInfo&POWER(2,@RoleID - 1) = 0 THEN 1
+							   ELSE 0
+						  END
+				
+
+				IF @@ROWCOUNT < 10000
+					BREAK
+			END 
+		END
 
 		IF dbo.f_CheckRepTable('CustLoginInfo') = 0 
 			RETURN
@@ -39,17 +57,40 @@ BEGIN
 				WHERE m.CustID = @CustID
 		END 
 	END	
-	ELSE 
-	IF @Stage = 2 
+	ELSE IF @Stage = 2 
 	BEGIN 
 		IF dbo.f_CheckRepTable('Custinfo') = 0
 			RETURN
 		ELSE 
 		BEGIN
 			UPDATE dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
-			SET		[enabled] = 0, closed = 1, credit = 0
+			SET		[enabled] = 0, credit = 0
 			WHERE	custid = @CustID
 			 
+		END
+		
+		SELECT @RoleID = ci.roleid FROM custInfo ci WITH (NOLOCK) WHERE ci.custid = @CustID
+		--CLosed Super, Master, Agent
+		IF dbo.f_CheckRepTable('Custinfo') = 0
+		   OR dbo.f_CheckRepTable('CustProductStatus') = 0
+			RETURN
+		ELSE 
+		BEGIN
+			WHILE (1=1)
+			BEGIN 
+				UPDATE TOP(10000) cps
+					SET CloseInfo = CloseInfo|POWER(2,@RoleID - 1)
+				FROM dbo.custInfo ci WITH (NOLOCK)
+					INNER JOIN CustProductStatus cps WITH (UPDLOCK,ROWLOCK) ON cps.CustID = ci.custid
+				WHERE 1 = CASE WHEN @RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid IN (4,3) AND CloseInfo&POWER(2,@RoleID - 1) = 0 THEN 1
+							   WHEN @RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid IN (3,2) AND CloseInfo&POWER(2,@RoleID - 1) = 0 THEN 1
+							   ELSE 0
+						  END
+				
+
+				IF @@ROWCOUNT < 10000
+					BREAK
+			END 
 		END 
 	END	
 	ELSE IF @Stage = 3
@@ -88,16 +129,9 @@ BEGIN
 					
 		END
 
-		IF dbo.f_CheckRepTable('CustProductStatus') = 1 		
-		BEGIN
-			DELETE  dbo.CustProductStatus WITH (ROWLOCK)
-			WHERE	custid = @CustID
-		END	
-			
 	END 
 	ELSE IF @Stage = 4
 	BEGIN
-				
 	    IF (dbo.f_CheckRepTable('Custinfo') = 1 
 		  AND dbo.f_CheckRepTable('Customer') = 1 
 	    )
@@ -116,6 +150,12 @@ BEGIN
 			WHERE	custid = @CustID 
 			
 		END
+
+		IF dbo.f_CheckRepTable('CustProductStatus') = 1 		
+		BEGIN
+			DELETE  dbo.CustProductStatus WITH (ROWLOCK)
+			WHERE	custid = @CustID
+		END	
 				
 	END 
 END
