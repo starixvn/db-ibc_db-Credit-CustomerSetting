@@ -18,6 +18,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210302@Eden: Just process Agent on stage 2 when they processed successfully on stage 1  [RedmineID: #149262]
+		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		
 	Param's Explanation:
 */
@@ -79,6 +80,7 @@ SELECT ag.recommend custid, isnull(MemCount, 0) [Member Count]
 INTO #tmpAg
 FROM bodb_report.dbo.tmpCustArchived ag WITH (NOLOCK)
 	INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.recommend
+	INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = agci.custid
 	LEFT JOIN (
 		SELECT recommend
 			,COUNT(*) MemCount
@@ -89,7 +91,7 @@ FROM bodb_report.dbo.tmpCustArchived ag WITH (NOLOCK)
 	LEFT JOIN #Super_Exception se ON se.srecommend = agci.srecommend
 WHERE ag.isFinished = 1
 	--AND isnull(MemCount, 0) > 0
-	AND agci.closed = 1
+	AND cps.CloseInfo > 0
 	--AND agci.enabled = 1
 	AND ag.recommend NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
 	AND agci.custid NOT IN (

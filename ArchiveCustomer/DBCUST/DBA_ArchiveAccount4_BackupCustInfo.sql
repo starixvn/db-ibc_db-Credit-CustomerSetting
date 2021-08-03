@@ -18,6 +18,7 @@ AS
 		20190929@Daniel: Involve more setting tables
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+		- 20210713@Tina: backup CustProductStatus and delete for stage 4 [RedmineID: #148600]
 
 */
     
@@ -121,5 +122,14 @@ INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username,
 SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
 FROM	custsub WITH (NOLOCK)
 WHERE	custid = @AgentID
+
+------CustProductStatus-------------------------
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustProductStatus_old(
+		CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo, Locked
+) 
+SELECT	 cs.CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo, Locked
+FROM	CustProductStatus cs WITH(NOLOCK) 
+	INNER JOIN  custinfo ci WITH (NOLOCK) ON ci.custid = cs.custID 
+WHERE	ci.recommend = @AgentID
 
 print  @AccName +':'+ 'END Backup cust info:' + convert(varchar(50), getdate(), 113) 

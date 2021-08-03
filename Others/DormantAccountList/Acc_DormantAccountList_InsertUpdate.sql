@@ -17,6 +17,7 @@ AS
 	Revisions:  
 	- 20201209@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 	- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
+	- 20210614@Eden: All sites - Dormant SMA Account List [RedmineID: #155969]
 
 	Parameter Definition
 
@@ -63,6 +64,7 @@ BEGIN
 		RETURN
 	END
 
+	--> Process for S1/S2/S3
 	IF @RoleID = 2
 	BEGIN
 		SELECT @TotalDownline = COUNT(c1.custid)
@@ -80,9 +82,12 @@ BEGIN
 			ArchivedDate = @ArchivedDate,
 			recommend = ci.recommend,
 			mrecommend = ci.mrecommend,
-			srecommend = ci.srecommend
+			srecommend = ci.srecommend,
+			Username = CASE WHEN @StageID = 3 THEN ci.username ELSE c.Username END,
+			Lastlogged = CASE WHEN @StageID = 3 THEN cu.Lastlogged ELSE c.Lastlogged END
 		FROM Cust_ArchiveAccount c WITH(ROWLOCK)
 			INNER JOIN custInfo ci WITH(NOLOCK) ON c.CustID = ci.custid
+			INNER JOIN Customer cu WITH(NOLOCK) ON c.CustID = cu.custid
 		WHERE ci.recommend = @CustID
 			AND ci.roleid IN (1,2)
 
@@ -114,12 +119,22 @@ BEGIN
 				AND NOT EXISTS( SELECT 1 FROM Cust_ArchiveAccount WITH(NOLOCK) WHERE CustID = c.custid)
 		END
 	END
-	IF @RoleID = 3
+	IF @RoleID IN (3, 4)
 	BEGIN
-		SELECT @TotalDownline = COUNT(c1.custid) 
-		FROM custinfo c1 WITH(NOLOCK)
-		WHERE c1.roleid IN (1,2)
-			AND c1.mrecommend = @CustID
+		IF @RoleID = 3
+		BEGIN
+			SELECT @TotalDownline = COUNT(c1.custid) 
+			FROM custinfo c1 WITH(NOLOCK)
+			WHERE c1.roleid IN (1,2)
+				AND c1.mrecommend = @CustID
+		END
+		ELSE IF @RoleID = 4
+		BEGIN
+			SELECT @TotalDownline = COUNT(c1.custid) 
+			FROM custinfo c1 WITH(NOLOCK)
+			WHERE c1.roleid IN (1,2,3)
+				AND c1.srecommend = @CustID
+		END
 
 		IF NOT EXISTS( SELECT 1 FROM Cust_ArchiveAccount WITH(NOLOCK) WHERE CustID = @CustID) AND @StageID = 1
 		BEGIN
@@ -158,9 +173,12 @@ BEGIN
 				ArchivedDate = @ArchivedDate,
 				recommend = ci.recommend,
 				mrecommend = ci.mrecommend,
-				srecommend = ci.srecommend
+				srecommend = ci.srecommend,
+				Username = CASE WHEN @StageID = 3 THEN ci.username ELSE c.Username END,
+				Lastlogged = CASE WHEN @StageID = 3 THEN cu.Lastlogged ELSE c.Lastlogged END
 			FROM Cust_ArchiveAccount c WITH(ROWLOCK)
 				INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = c.CustID
+				INNER JOIN Customer cu WITH(NOLOCK) ON c.CustID = cu.custid
 			WHERE c.custid = @CustID
 		END
 	END

@@ -20,6 +20,8 @@ Revisions:
 	- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]  
 	- 20200911@Helen: Fix stage 1 - M0 - [Redmine:130032]  
 	- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
+	- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+
 */
 
 declare @startRun datetime
@@ -29,9 +31,13 @@ set @startRun = getdate()
 
 Declare @roleid int, @AgentID int, @Closed bit, @ClosedReason tinyint
 
-SELECT @roleid = roleid, @AgentID = custid, @Closed = Closed
+SELECT @roleid = roleid, @AgentID = custid
 FROM custinfo (nolock)
 WHERE username = @AccName
+
+SELECT @Closed = CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END
+FROM CustProductStatus cps WITH (NOLOCK)
+WHERE cps.CustID = @AgentID
 
 if isnull(@AgentID,0) = 0 or @roleid NOT in (2)
 BEGIN
@@ -104,22 +110,58 @@ END
 
 
 --backup data for later rollback for this stage
-insert into DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+--insert for agent
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
 	[ArchiveDate],
 	[custid],
 	[closed],
 	[reject],
-	[credit]
+	[credit],
+	[SuspendInfo],
+	[CloseInfo],
+	[ClosedReason]
 )
-select	
+SELECT	
 	GetDate(), 
+	c.[custid],
+	c.[closed],
+	c.[reject],
+	c.[credit],
+	cps.SuspendInfo,
+	cps.CloseInfo,
+	cl.ClosedReason
+FROM custinfo c WITH (NOLOCK)
+	INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
+	LEFT JOIN CustLoginInfo cl WITH (NOLOCK) ON cl.CustID = c.custid
+WHERE c.custid = @AgentID
+	AND NOT EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = c.custid)
+--insert for member
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+	[ArchiveDate],
 	[custid],
 	[closed],
 	[reject],
-	[credit]
-from	custinfo c with (nolock)
-where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
-	and NOT EXISTS (select top 1 1 from DBARCCUST.bodb_Customer.dbo.CustBackupClosed with (nolock) where custid = c.custid)
+	[credit],
+	[SuspendInfo],
+	[CloseInfo],
+	[ClosedReason]
+)
+SELECT	
+	GetDate(), 
+	c.[custid],
+	c.[closed],
+	c.[reject],
+	c.[credit],
+	cps.SuspendInfo,
+	cps.CloseInfo,
+	cl.ClosedReason
+FROM custinfo c with (nolock)
+	INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
+	LEFT JOIN CustLoginInfo_Member cl WITH (NOLOCK) ON cl.CustID = c.custid
+WHERE c.recommend = @AgentID AND roleid = 1
+	AND NOT EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = c.custid)
+
+
 
 --close whole line using ExecRep
 EXEC dbo.Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = -1

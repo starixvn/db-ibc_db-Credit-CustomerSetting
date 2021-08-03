@@ -17,6 +17,8 @@ AS
 		- 20210316@Helen: ArchivedMasterAgent_Stage3 for stage 3, backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
 		- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
+		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20210614@Eden: All sites - Dormant SMA Account List [RedmineID: #155969]
 		
 	Param:
 		+ @stage: input stage to run archive
@@ -71,7 +73,8 @@ BEGIN
 		FROM tmpCustArchived t (ROWLOCK)
 			INNER JOIN custinfo ci (NOLOCK) ON ci.custid = t.recommend
 			INNER JOIN CustLoginInfo l WITH(NOLOCK) ON ci.custid = l.CustID
-		WHERE ci.closed = 1 
+			INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = ci.CustID
+		WHERE cps.CloseInfo > 0 
 			AND l.ClosedReason = 4
 
 		--> Insert data for Cust_ArchiveAccount
@@ -156,7 +159,7 @@ BEGIN
 				END
 				ELSE IF @roleid_tmp = 4
 				BEGIN
-					EXEC dbo.DBA_ArchiveAccount1_CloseSuper @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
+					EXEC dbo.DBA_ArchiveAccount1_CloseSuper @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT, @ArchivedDate = @ArchivedDate, @ProcessedDate = @ProcessedDate
 				END
 				
 				SET @msg = 'Stage 1 - Done Close ' + @GroupLevelName + ':' + @S1M1_username + CHAR(13)
@@ -261,6 +264,7 @@ BEGIN
 			WHILE(1=1)
 			BEGIN
 				SELECT @ErrMsg = ''
+				SELECT @ProcessedDate = GETDATE()
 				
 				UPDATE TOP (1) t
 					SET  IsFinished = 1

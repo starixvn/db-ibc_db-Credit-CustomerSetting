@@ -3,7 +3,9 @@ ALTER PROCEDURE [DBA_ArchiveAccount1_CloseSuper]
 	@AccName VARCHAR(50),
 	@UserID INT = 360418,
 	@ErrMsg NVARCHAR(200) = '' OUTPUT,
-	@ErrCode INT = 0 OUTPUT
+	@ErrCode INT = 0 OUTPUT,
+	@ProcessedDate DATETIME = NULL,
+	@ArchivedDate DATE = NULL
 AS
 /*
 		Description: Close an Master, Super
@@ -15,6 +17,8 @@ AS
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 			- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
+			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+			- 20210614@Eden: All sites - Dormant SMA Account List [RedmineID: #155969]
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -25,9 +29,13 @@ BEGIN
 
 	DECLARE @roleid int, @SuperID int, @Closed bit, @ClosedReason tinyint
 
-	SELECT @roleid = roleid, @SuperID = custid, @Closed = Closed
+	SELECT @roleid = roleid, @SuperID = custid
 	FROM custinfo (nolock)
 	WHERE username = @AccName
+
+	SELECT @Closed = CASE WHEN cps.CloseInfo > 0 THEN 1 ELSE 0 END
+	FROM CustProductStatus cps WITH (NOLOCK)
+	WHERE cps.CustID = @SuperID
 
 	if ISNULL(@SuperID,0) = 0 or @roleid NOT IN (4)
 	BEGIN
@@ -43,6 +51,14 @@ BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This super has been archived!!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@SuperID,@ErrMsg, 4) 	
 		PRINT @ErrMsg
+
+		EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+			@CustId = @SuperID,
+			@RoleID = 4,
+			@StageID = 1,
+			@ProcessedDate = @ProcessedDate,
+			@ArchivedDate = @ArchivedDate
+
 		RETURN
 	END
 
@@ -92,25 +108,48 @@ BEGIN
 	END
 
 	--backup data for later rollback for this stage
-	insert into DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
 		[ArchiveDate],
 		[custid],
 		[closed],
 		[reject],
-		[credit]
+		[credit],
+		[SuspendInfo],
+		[CloseInfo],
+		[ClosedReason]
 	)
 	SELECT	
-		GetDate(), 
-		[custid],
-		[closed],
-		[reject],
-		[credit]
-	FROM	custinfo c WITH (NOLOCK)
-	WHERE	custid = @SuperID
-		AND NOT EXISTS (select top 1 1 from DBARCCUST.bodb_Customer.dbo.CustBackupClosed with (nolock) where custid = c.custid)
+		GETDATE(), 
+		c.[custid],
+		c.[closed],
+		c.[reject],
+		c.[credit],
+		cps.SuspendInfo,
+		cps.CloseInfo,
+		cl.ClosedReason
+	FROM custinfo c WITH (NOLOCK)
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
+		LEFT JOIN CustLoginInfo cl WITH (NOLOCK) ON cl.CustID = c.custid
+	WHERE c.custid = @SuperID
+		AND NOT EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = c.custid)
 
 	--close super
 	EXEC DBA_Archive_Cust_SuperMaster @custid = @SuperID, @stage = 1
+
+	DECLARE @IsOverwrite BIT
+
+	IF @Closed = 0
+		SET @IsOverwrite = 1
+	ELSE 
+		SET @IsOverwrite = 0
+
+	EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+		@CustId = @SuperID,
+		@RoleID = 4,
+		@StageID = 1,
+		@ProcessedDate = @ProcessedDate,
+		@ArchivedDate = @ArchivedDate,
+		@IsOverwrite = @IsOverwrite
 	
 	------------------
 	DECLARE @LogSPData VARCHAR(5000), @LogSPDataOld varchar(5000), @ActionID INT

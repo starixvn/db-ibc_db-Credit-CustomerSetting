@@ -12,6 +12,7 @@ AS
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20210128@Winfred: Check custinfo and backup agent [RedmineID: #149262]
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 */
 BEGIN
 	    
@@ -268,9 +269,9 @@ BEGIN
 		)
 	BEGIN
 		insert into DBARCCUST.bodb_Customer.dbo.CustProductStatus_old(
-			 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
+			 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo
 		) 
-		SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo
+		SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo
 		FROM	CustProductStatus WITH (NOLOCK)
 		where	custid = @CustID
 	END

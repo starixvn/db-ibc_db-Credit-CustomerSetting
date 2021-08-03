@@ -13,6 +13,7 @@ AS
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+			- 20210713@Tina: backup CustProductStatus and delete for stage 4 [RedmineID: #148600]
 */
     
 SET NOCOUNT ON
@@ -105,5 +106,12 @@ SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, l
 FROM	custsub WITH (NOLOCK)
 WHERE	custid = @custid
 
+------ CustProductStatus ----------------------
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustProductStatus_old(
+		 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo, Locked
+	) 
+	SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo, Locked
+	FROM	CustProductStatus WITH (NOLOCK)
+	WHERE	custid = @CustID
 
 print  @AccName +':'+ 'END Backup cust info:' + convert(varchar(50), getdate(), 113) 
