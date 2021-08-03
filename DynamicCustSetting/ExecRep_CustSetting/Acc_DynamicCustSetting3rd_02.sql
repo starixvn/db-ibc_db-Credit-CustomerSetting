@@ -123,8 +123,8 @@ BEGIN
 				@NewMinBet = bsm.MinBet,
 				@NewMaxBet = bsm.MaxBet,
 				@NewMaxPerMatch = bsm.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsm.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND bss.MaxPerMatch < bsm.MaxPerMatch THEN bss.MaxPerMatch ELSE @NewMaxPerMatch END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsm.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
@@ -137,9 +137,6 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsm.sporttype
-													AND bss.bettype = bsm.bettype
-													AND bss.custid=@CustID
 			WHERE (bsm.MinBet <> 0 AND bsm.MaxBet <> 0 AND bsm.MaxPerMatch <> 0)
 				AND (bsm.MinBet <> 0 AND bsm.MaxBet <> 0.1 AND bsm.MaxPerMatch <> 0.1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
@@ -150,8 +147,8 @@ BEGIN
 				@NewMinBet = bsa.MinBet,
 				@NewMaxBet = bsa.MaxBet,
 				@NewMaxPerMatch = bsa.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsa.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND bss.MaxPerMatch < bsa.MaxPerMatch THEN bss.MaxPerMatch ELSE @NewMaxPerMatch END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsa.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
@@ -165,9 +162,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsa.sporttype
-													AND bss.bettype = bsa.bettype
-													AND bss.custid=@CustID
 			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0 AND bsa.MaxPerMatch <> 0)
 				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1 AND bsa.MaxPerMatch <> 0.1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
@@ -178,8 +172,8 @@ BEGIN
 				@NewMinBet = bsmem.MinBet,
 				@NewMaxBet = bsmem.MaxBet,
 				@NewMaxPerMatch = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsmem.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND bss.MaxPerMatch < bsmem.MaxPerMatch THEN bss.MaxPerMatch ELSE @NewMaxPerMatch END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsmem.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
@@ -193,9 +187,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsmem.sporttype
-													AND bss.bettype = bsmem.bettype
-													AND bss.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)
 		END
@@ -209,8 +200,8 @@ BEGIN
 				@NewMinBet = bsa.MinBet,
 				@NewMaxBet = bsa.MaxBet,
 				@NewMaxPerMatch = bsa.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bsm.MaxBet < bsa.MaxBet THEN bsm.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND bsm.MaxPerMatch < bsa.MaxPerMatch THEN bsm.MaxPerMatch ELSE @NewMaxPerMatch END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsa.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
@@ -224,9 +215,6 @@ BEGIN
 												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK) ON bsm.sporttype = bsa.sporttype
-													AND bsm.bettype = bsa.bettype
-													AND bsm.custid=@CustID
 			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0 AND bsa.MaxPerMatch <> 0)
 				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1 AND bsa.MaxPerMatch <> 0.1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
@@ -237,8 +225,8 @@ BEGIN
 				@NewMinBet = bsmem.MinBet,
 				@NewMaxBet = bsmem.MaxBet,
 				@NewMaxPerMatch = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bsm.MaxBet < bsmem.MaxBet THEN bsm.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND bsm.MaxPerMatch < bsmem.MaxPerMatch THEN bsm.MaxPerMatch ELSE @NewMaxPerMatch END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsmem.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
@@ -252,9 +240,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK) ON bsm.sporttype = bsmem.sporttype
-													AND bsm.bettype = bsmem.bettype
-													AND bsm.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)
 											
@@ -284,9 +269,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsa WITH(NOLOCK) ON bsa.sporttype = bsmem.sporttype
-													AND bsa.bettype = bsmem.bettype
-													AND bsa.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)									
 		END
@@ -338,8 +320,8 @@ BEGIN
 				@NewMinBet = bsm.MinBet,
 				@NewMaxBet = bsm.MaxBet,
 				@NewMaxPerNumber = bsm.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsm.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND bss.MaxPerMatch < bsm.MaxPerMatch THEN bss.MaxPerMatch ELSE @NewMaxPerNumber END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsm.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
@@ -352,9 +334,6 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsm.sporttype
-													AND bss.bettype = bsm.bettype
-													AND bss.custid=@CustID
 			WHERE (bsm.MinBet <> 0 AND bsm.MaxBet <> 0 AND bsm.MaxPerMatch <> 0)
 				AND (bsm.MinBet <> 0 AND bsm.MaxBet <> 0.1 AND bsm.MaxPerMatch <> 0.1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
@@ -365,8 +344,8 @@ BEGIN
 				@NewMinBet = bsa.MinBet,
 				@NewMaxBet = bsa.MaxBet,
 				@NewMaxPerNumber = bsa.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsa.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND bss.MaxPerMatch < bsa.MaxPerMatch THEN bss.MaxPerMatch ELSE @NewMaxPerNumber END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsa.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
@@ -380,9 +359,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsa.sporttype
-													AND bss.bettype = bsa.bettype
-													AND bss.custid=@CustID
 			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0 AND bsa.MaxPerMatch <> 0)
 				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1 AND bsa.MaxPerMatch <> 0.1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
@@ -393,8 +369,8 @@ BEGIN
 				@NewMinBet = bsmem.MinBet,
 				@NewMaxBet = bsmem.MaxBet,
 				@NewMaxPerNumber = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsmem.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND bss.MaxPerMatch < bsmem.MaxPerMatch THEN bss.MaxPerMatch ELSE @NewMaxPerNumber END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsmem.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
@@ -408,9 +384,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsmem.sporttype
-													AND bss.bettype = bsmem.bettype
-													AND bss.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)
 		END
@@ -424,8 +397,8 @@ BEGIN
 				@NewMinBet = bsa.MinBet,
 				@NewMaxBet = bsa.MaxBet,
 				@NewMaxPerNumber = bsa.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bsm.MaxBet < bsa.MaxBet THEN bsm.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND bsm.MaxPerMatch < bsa.MaxPerMatch THEN bsm.MaxPerMatch ELSE @NewMaxPerNumber END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsa.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
@@ -439,9 +412,6 @@ BEGIN
 												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK) ON bsm.sporttype = bsa.sporttype
-													AND bsm.bettype = bsa.bettype
-													AND bsm.custid=@CustID
 			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0 AND bsa.MaxPerMatch <> 0)
 				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1 AND bsa.MaxPerMatch <> 0.1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
@@ -452,8 +422,8 @@ BEGIN
 				@NewMinBet = bsmem.MinBet,
 				@NewMaxBet = bsmem.MaxBet,
 				@NewMaxPerNumber = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bsm.MaxBet < bsmem.MaxBet THEN bsm.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND bsm.MaxPerMatch < bsmem.MaxPerMatch THEN bsm.MaxPerMatch ELSE @NewMaxPerNumber END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsmem.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
@@ -467,9 +437,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK) ON bsm.sporttype = bsmem.sporttype
-													AND bsm.bettype = bsmem.bettype
-													AND bsm.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)
 											
@@ -484,8 +451,8 @@ BEGIN
 				@NewMinBet = bsmem.MinBet,
 				@NewMaxBet = bsmem.MaxBet,
 				@NewMaxPerNumber = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bsa.MaxBet < bsmem.MaxBet THEN bsa.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND bsa.MaxPerMatch < bsmem.MaxPerMatch THEN bsa.MaxPerMatch ELSE @NewMaxPerNumber END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsmem.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerNumber END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
@@ -499,9 +466,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsa WITH(NOLOCK) ON bsa.sporttype = bsmem.sporttype
-													AND bsa.bettype = bsmem.bettype
-													AND bsa.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)									
 		END
@@ -549,7 +513,7 @@ BEGIN
 			SET
 				@NewMinBet = bsm.MinBet,
 				@NewMaxBet = bsm.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsm.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
@@ -560,9 +524,6 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsm.sporttype
-													AND bss.bettype = bsm.bettype
-													AND bss.custid=@CustID
 			WHERE (bsm.MinBet <> 0 AND bsm.MaxBet <> 0)
 				AND (bsm.MinBet <> 0 AND bsm.MaxBet <> 0.1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
@@ -571,7 +532,7 @@ BEGIN
 			SET
 				@NewMinBet = bsa.MinBet,
 				@NewMaxBet = bsa.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsa.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
@@ -583,9 +544,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsa.sporttype
-													AND bss.bettype = bsa.bettype
-													AND bss.custid=@CustID
 			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0)
 				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
@@ -594,7 +552,7 @@ BEGIN
 			SET
 				@NewMinBet = bsmem.MinBet,
 				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bss.MaxBet < bsmem.MaxBet THEN bss.MaxBet ELSE @NewMaxBet END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
@@ -606,9 +564,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bss WITH(NOLOCK) ON bss.sporttype = bsmem.sporttype
-													AND bss.bettype = bsmem.bettype
-													AND bss.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 )
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1)
 		END
@@ -620,7 +575,7 @@ BEGIN
 			SET
 				@NewMinBet = bsa.MinBet,
 				@NewMaxBet = bsa.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bsm.MaxBet < bsa.MaxBet THEN bsm.MaxBet ELSE @NewMaxBet END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
@@ -632,9 +587,6 @@ BEGIN
 												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK) ON bsm.sporttype = bsa.sporttype
-													AND bsm.bettype = bsa.bettype
-													AND bsm.custid=@CustID
 			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0)
 				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
@@ -643,7 +595,7 @@ BEGIN
 			SET
 				@NewMinBet = bsmem.MinBet,
 				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bsm.MaxBet < bsmem.MaxBet THEN bsm.MaxBet ELSE @NewMaxBet END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
@@ -655,9 +607,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK) ON bsm.sporttype = bsmem.sporttype
-													AND bsm.bettype = bsmem.bettype
-													AND bsm.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0)
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1)
 											
@@ -670,7 +619,7 @@ BEGIN
 			SET
 				@NewMinBet = bsmem.MinBet,
 				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND bsa.MaxBet < bsmem.MaxBet THEN bsa.MaxBet ELSE @NewMaxBet END,
+				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
 				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
 				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
@@ -682,9 +631,6 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-				INNER JOIN dbo.CustBetSetting3rd_Agent bsa WITH(NOLOCK) ON bsa.sporttype = bsmem.sporttype
-													AND bsa.bettype = bsmem.bettype
-													AND bsa.custid=@CustID
 			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0)
 				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1)									
 		END
