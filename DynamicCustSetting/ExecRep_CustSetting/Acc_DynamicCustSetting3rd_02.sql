@@ -137,8 +137,7 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
-			WHERE (bsm.MinBet <> 0 AND bsm.MaxBet <> 0 AND bsm.MaxPerMatch <> 0)
-				AND (bsm.MinBet <> 0 AND bsm.MaxBet <> 0.1 AND bsm.MaxPerMatch <> 0.1)
+			WHERE NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerMatch < 1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
 			--downline_agent_maxpermatch = min (downline_agent_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
@@ -162,8 +161,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0 AND bsa.MaxPerMatch <> 0)
-				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1 AND bsa.MaxPerMatch <> 0.1)
+			WHERE NOT (bsa.MinBet = 0 AND bsa.MaxBet < 1 AND bsa.MaxPerMatch < 1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
 			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
@@ -187,8 +185,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)
 		END
 		ELSE IF @RoleID=3
 		BEGIN
@@ -215,8 +212,7 @@ BEGIN
 												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0 AND bsa.MaxPerMatch <> 0)
-				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1 AND bsa.MaxPerMatch <> 0.1)
+			WHERE NOT (bsa.MinBet = 0 AND bsa.MaxBet < 1 AND bsa.MaxPerMatch < 1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
 			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
@@ -240,9 +236,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)
-											
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)						
 		END
 		ELSE IF @RoleID=2
 		BEGIN
@@ -269,8 +263,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)									
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)							
 		END
 	END
 	ELSE IF @Mode = 'GameBetLimit'
@@ -334,8 +327,7 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
-			WHERE (bsm.MinBet <> 0 AND bsm.MaxBet <> 0 AND bsm.MaxPerMatch <> 0)
-				AND (bsm.MinBet <> 0 AND bsm.MaxBet <> 0.1 AND bsm.MaxPerMatch <> 0.1)
+			WHERE NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerMatch < 1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
 			--downline_agent_maxpermatch = min (downline_agent_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
@@ -359,8 +351,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0 AND bsa.MaxPerMatch <> 0)
-				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1 AND bsa.MaxPerMatch <> 0.1)
+			WHERE NOT (bsa.MinBet = 0 AND bsa.MaxBet < 1 AND bsa.MaxPerMatch < 1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
 			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
@@ -384,8 +375,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)
 		END
 		ELSE IF @RoleID=3
 		BEGIN
@@ -412,8 +402,7 @@ BEGIN
 												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0 AND bsa.MaxPerMatch <> 0)
-				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1 AND bsa.MaxPerMatch <> 0.1)
+			WHERE NOT (bsa.MinBet = 0 AND bsa.MaxBet < 1 AND bsa.MaxPerMatch < 1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
 			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
@@ -437,9 +426,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)
-											
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)
 		END
 		ELSE IF @RoleID=2
 		BEGIN
@@ -466,8 +453,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 AND bsmem.MaxPerMatch <> 0)
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1 AND bsmem.MaxPerMatch <> 0.1)									
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)								
 		END
 	END
 	ELSE IF @Mode = 'GameBetSetting'
@@ -524,8 +510,7 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
-			WHERE (bsm.MinBet <> 0 AND bsm.MaxBet <> 0)
-				AND (bsm.MinBet <> 0 AND bsm.MaxBet <> 0.1)
+			WHERE NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
 			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
 			UPDATE bsa
@@ -544,8 +529,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0)
-				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1)
+			WHERE NOT (bsa.MinBet = 0 AND bsa.MaxBet < 1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
 			UPDATE bsmem
@@ -564,8 +548,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0 )
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1)
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1)
 		END
 		ELSE IF @RoleID=3
 		BEGIN
@@ -587,8 +570,7 @@ BEGIN
 												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 2
 												   AND ci.Enabled=1
-			WHERE (bsa.MinBet <> 0 AND bsa.MaxBet <> 0)
-				AND (bsa.MinBet <> 0 AND bsa.MaxBet <> 0.1)
+			WHERE NOT (bsa.MinBet = 0 AND bsa.MaxBet < 1)
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
 			UPDATE bsmem
@@ -607,9 +589,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0)
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1)
-											
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1)
 		END
 		ELSE IF @RoleID=2
 		BEGIN
@@ -631,8 +611,7 @@ BEGIN
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
-			WHERE (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0)
-				AND (bsmem.MinBet <> 0 AND bsmem.MaxBet <> 0.1)									
+			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1)								
 		END
 	END
 END
