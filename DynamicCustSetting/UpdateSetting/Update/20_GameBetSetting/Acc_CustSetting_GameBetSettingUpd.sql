@@ -18,7 +18,7 @@ AS
 
 	Revisions: 
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
-		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
+		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]  
 	Param's Explanation:
 	- @BetLimit:
 		<ROOT>
