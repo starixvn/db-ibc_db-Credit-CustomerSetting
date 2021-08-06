@@ -1,1 +1,5 @@
 Others\DormantAccountList\Acc_DormantAccountList_Sel.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMember_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_All.sql
