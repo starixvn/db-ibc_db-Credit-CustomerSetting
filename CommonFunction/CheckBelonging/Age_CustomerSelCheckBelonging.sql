@@ -47,7 +47,6 @@ BEGIN
 
 	--------------------------------------------------------------------------------
 	SELECT	@SessionRoleID = roleid,
-	select	@SessionRoleID = roleid,
 		@isActive = CASE WHEN cps.CloseInfo > 0 OR Enabled = 0 THEN 0 ELSE 1 END
 	from custinfo ci with(nolock)
 		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid
