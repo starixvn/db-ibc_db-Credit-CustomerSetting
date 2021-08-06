@@ -50,10 +50,11 @@ BEGIN
 		, @UserName			NVARCHAR(50)
 
 	DECLARE @AgentID			INT
-		, @MasterID			INT
-		, @SuperID			INT
-		, @RoleID			INT
-		
+		, @MasterID				INT
+		, @SuperID				INT
+		, @RoleID				INT
+		, @IsAdjustDownline		BIT = 0
+
 	DECLARE @OldBetLimitTbl TABLE (
 		SportType			SMALLINT
 		, BetType			SMALLINT
@@ -238,7 +239,7 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
-		FROM dbo.CustBetSetting3rd_Agent main WITH(ROWLOCK,UPDLOCK)
+		FROM dbo.CustBetSetting3rd_Agent main WITH(ROWLOCK)
 		INNER JOIN @NewBetLimitTbl tmp
 			ON tmp.SportType	= main.sporttype
 				AND tmp.BetType = main.bettype
@@ -249,22 +250,38 @@ BEGIN
 				OR main.maxpermatch <> tmp.MaxperMatch
 				)
 
-		SET	@BetLimit =	(
-							SELECT	SportType,			
-									BetType,			
-									MinBet,
-									MaxBet,
-									MaxPerMatch
-							FROM	@NewBetLimitTbl
-							FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
-						)
-					
-		-- Correct downlines via ExecRep
-		EXECUTE	Acc_DynamicCustSetting3rd_02
-					@CustID		= @CustID,
-					@RoleID		= @RoleID,
-					@BetLimit	= @BetLimit,
-					@Mode		= 'BetSetting'
+		SELECT @IsAdjustDownline = 1
+		FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
+			INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+			INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+												AND ci.srecommend = @CustID
+												AND ci.roleid = 3
+		WHERE NOT (fil.MinBet = 0 AND fil.MaxBet = 0 AND fil.MaxPerMatch = 0)
+			AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerMatch < 1)
+			AND (bsm.MaxBet > fil.MaxBet OR bsm.MaxPerMatch > fil.MaxPerMatch
+				OR (fil.MinBet = 0 AND fil.MaxBet < 1 AND fil.MaxPerMatch < 1))
+
+		IF @IsAdjustDownline = 1
+		BEGIN
+			--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
+			SET	@BetLimit =	(
+								SELECT	SportType,			
+										BetType,			
+										MinBet,
+										MaxBet,
+										MaxPerMatch
+								FROM	@NewBetLimitTbl
+								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
+								FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
+							)
+				
+			-- Correct downlines via ExecRep
+			EXECUTE	Acc_DynamicCustSetting3rd_02
+						@CustID		= @CustID,
+						@RoleID		= @RoleID,
+						@BetLimit	= @BetLimit,
+						@Mode		= 'BetSetting'
+		END
 	END
 
 	--START LOGGING
@@ -519,7 +536,7 @@ BEGIN
 				@TrackingValue2 = @logSPData_Old,
 				@duration = @duration	
 		END
-		ELSE
+		ELSE IF @IsAdjustDownline = 1
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,

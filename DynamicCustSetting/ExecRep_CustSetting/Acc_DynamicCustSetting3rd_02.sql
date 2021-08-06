@@ -106,10 +106,6 @@ BEGIN
 	
 		EXEC sp_xml_removedocument @iDoc
 
-		--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
-		DELETE @NewBetLimitTbl
-		WHERE MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0
-
 		--Updating upline to 0/0.1/0.1/0.1 shall update downlines to 0/0.1/0.1/0.1
 		UPDATE @NewBetLimitTbl SET IsSpecial = 1 WHERE MinBet = 0 AND MaxBet < 1 AND MaxPerMatch < 1
 
