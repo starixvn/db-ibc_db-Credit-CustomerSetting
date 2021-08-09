@@ -239,7 +239,7 @@ BEGIN
 
 		IF EXISTS (SELECT 1
 					FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
-						INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+						INNER JOIN @NewBetSettingTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
 						INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 															AND ci.srecommend = @CustID
 															AND ci.roleid = 3
