@@ -273,7 +273,7 @@ BEGIN
 										MaxBet,
 										MaxPerNumber
 								FROM	@NewBetLimitTbl
-								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
+								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerNumber = 0)
 								FOR XML RAW ('GameBetLimit'), ROOT ('ROOT') 
 							)
 					
