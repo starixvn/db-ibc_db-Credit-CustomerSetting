@@ -26,6 +26,7 @@ AS
     - 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)   
     - 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 	- 20200310@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+	- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
 
  Param's Explanation:  
  * @ErrCode:  
