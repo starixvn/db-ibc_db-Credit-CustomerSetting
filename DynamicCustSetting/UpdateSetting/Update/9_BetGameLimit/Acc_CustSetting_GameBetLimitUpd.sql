@@ -53,7 +53,8 @@ BEGIN
 		, @MasterID			INT
 		, @SuperID			INT
 		, @RoleID			INT
-		
+		, @IsAdjustDownline	BIT = 0
+
 	DECLARE @OldBetLimitTbl TABLE (
 		SportType			SMALLINT
 		, BetType			SMALLINT
@@ -248,23 +249,41 @@ BEGIN
 				OR main.maxbet		<> tmp.MaxBet
 				OR main.maxpermatch <> tmp.MaxPerNumber
 				)
+		
+		IF EXISTS (SELECT 1
+					FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
+						INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+						INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+															AND ci.srecommend = @CustID
+															AND ci.roleid = 3
+					WHERE NOT (fil.MinBet = 0 AND fil.MaxBet = 0 AND fil.MaxPerNumber = 0)
+						AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerMatch < 1)
+						AND (bsm.MaxBet > fil.MaxBet OR bsm.MaxPerMatch > fil.MaxPerNumber
+							OR (fil.MinBet = 0 AND fil.MaxBet < 1 AND fil.MaxPerNumber < 1)))
+			SELECT @IsAdjustDownline = 1
 
-		SET	@GameBetLimit =	(
-							SELECT	SportType,			
-									BetType,			
-									MinBet,
-									MaxBet,
-									MaxPerNumber
-							FROM	@NewBetLimitTbl
-							FOR XML RAW ('GameBetLimit'), ROOT ('ROOT') 
-						)
+		
+		IF @IsAdjustDownline = 1
+		BEGIN
+			--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
+			SET	@GameBetLimit =	(
+								SELECT	SportType,			
+										BetType,			
+										MinBet,
+										MaxBet,
+										MaxPerNumber
+								FROM	@NewBetLimitTbl
+								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
+								FOR XML RAW ('GameBetLimit'), ROOT ('ROOT') 
+							)
 					
-		-- Correct downlines via ExecRep
-		EXECUTE	Acc_DynamicCustSetting3rd_02
-					@CustID		= @CustID,
-					@RoleID		= @RoleID,
-					@BetLimit	= @GameBetLimit,
-					@Mode		= 'GameBetLimit'
+			-- Correct downlines via ExecRep
+			EXECUTE	Acc_DynamicCustSetting3rd_02
+						@CustID		= @CustID,
+						@RoleID		= @RoleID,
+						@BetLimit	= @GameBetLimit,
+						@Mode		= 'GameBetLimit'
+		END
 	END
 
 	--START LOGGING
@@ -519,7 +538,7 @@ BEGIN
 				@TrackingValue2 = @logSPData_Old,
 				@duration = @duration	
 		END
-		ELSE
+		ELSE IF @IsAdjustDownline = 1
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,

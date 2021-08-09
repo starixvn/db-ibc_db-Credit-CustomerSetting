@@ -50,7 +50,7 @@ BEGIN
 		, @MasterID			INT
 		, @SuperID			INT
 		, @RoleID			INT
-		
+		, @IsAdjustDownline	BIT = 0
 	DECLARE @OldBetSettingTbl TABLE (
 		SportType			SMALLINT
 		, BetType			SMALLINT
@@ -227,7 +227,7 @@ BEGIN
 		UPDATE main
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
-		FROM dbo.CustBetSetting3rd_Agent main WITH(ROWLOCK,UPDLOCK)
+		FROM dbo.CustBetSetting3rd_Agent main WITH(ROWLOCK)
 		INNER JOIN @NewBetSettingTbl tmp
 			ON tmp.SportType	= main.sporttype
 				AND tmp.BetType = main.bettype
@@ -237,22 +237,38 @@ BEGIN
 				OR main.maxbet		<> tmp.MaxBet
 				)
 
-		
-		SET	@BetLimit =	(
-							SELECT	SportType,			
-									BetType,			
-									MinBet,
-									MaxBet
-							FROM	@NewBetSettingTbl
-							FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
-						)
+		IF EXISTS (SELECT 1
+					FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
+						INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+						INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+															AND ci.srecommend = @CustID
+															AND ci.roleid = 3
+					WHERE NOT (fil.MinBet = 0 AND fil.MaxBet = 0)
+						AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1)
+						AND (bsm.MaxBet > fil.MaxBet
+							OR (fil.MinBet = 0 AND fil.MaxBet < 1)))
+			SELECT @IsAdjustDownline = 1
+
+		IF @IsAdjustDownline = 1
+		BEGIN
+			--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
+			SET	@BetLimit =	(
+								SELECT	SportType,			
+										BetType,			
+										MinBet,
+										MaxBet
+								FROM	@NewBetSettingTbl
+								WHERE NOT (MinBet = 0 AND MaxBet = 0)
+								FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
+							)
 					
-		-- Correct downlines via ExecRep
-		EXECUTE	Acc_DynamicCustSetting3rd_02
-					@CustID		= @CustID,
-					@RoleID		= @RoleID,
-					@BetLimit	= @BetLimit,
-					@Mode		= 'GameBetSetting'
+			-- Correct downlines via ExecRep
+			EXECUTE	Acc_DynamicCustSetting3rd_02
+						@CustID		= @CustID,
+						@RoleID		= @RoleID,
+						@BetLimit	= @BetLimit,
+						@Mode		= 'GameBetSetting'
+		END
 	END
 
 	--START LOGGING
@@ -499,7 +515,7 @@ BEGIN
 				@TrackingValue2 = @logSPData_Old,
 				@duration = @duration	
 		END
-		ELSE
+		ELSE IF @IsAdjustDownline = 1
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,

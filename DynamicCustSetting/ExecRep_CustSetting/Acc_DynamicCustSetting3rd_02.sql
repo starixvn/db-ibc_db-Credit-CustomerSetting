@@ -292,10 +292,6 @@ BEGIN
 	
 		EXEC sp_xml_removedocument @iDoc
 
-		--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
-		DELETE @NewGameBetLimitTbl
-		WHERE MinBet = 0 AND MaxBet = 0 AND MaxPerNumber = 0
-
 		--Updating upline to 0/0.1/0.1/0.1 shall update downlines to 0/0.1/0.1/0.1
 		UPDATE @NewGameBetLimitTbl SET IsSpecial = 1 WHERE MinBet = 0 AND MaxBet < 1 AND MaxPerNumber < 1
 
@@ -479,10 +475,6 @@ BEGIN
 		WITH(SportType SMALLINT, BetType SMALLINT, MinBet VARCHAR(15), MaxBet VARCHAR(15))	
 	
 		EXEC sp_xml_removedocument @iDoc
-
-		--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
-		DELETE @NewGameBetSetting
-		WHERE MinBet = 0 AND MaxBet = 0
 
 		--Updating upline to 0/0.1/0.1/0.1 shall update downlines to 0/0.1/0.1/0.1
 		UPDATE @NewGameBetSetting SET IsSpecial = 1 WHERE MinBet = 0 AND MaxBet < 1
