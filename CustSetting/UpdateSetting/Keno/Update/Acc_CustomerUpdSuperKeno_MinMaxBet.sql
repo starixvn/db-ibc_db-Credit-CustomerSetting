@@ -189,7 +189,7 @@ BEGIN
     DECLARE @LogSPData VARCHAR (MAX), @TrackingValueDB VARCHAR(4000), @logSpData_Indirectly VARCHAR (MAX), @TrackingValueDB_Indirectly VARCHAR(4000)  
     
     Select @LogSPData_Indirectly =	'<Acc_CustomerUpdSuperKeno_MinMaxBet custid="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +  
-									'SourceAccount="' + COALESCE(CAST(@UserName AS NVARCHAR(50)),SPACE(1)) + '" ' +   
+									'SourceAccount="' + COALESCE(@UserName,SPACE(1)) + '" ' +   
 									'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' +   
 									'bettype="'+ coalesce(cast(@bettype as varchar(50)),space(1)) + '" ' +  
 									'MinB="'+ coalesce(cast(@MinBet as varchar(50)),space(1)) + '" ' +  
@@ -203,7 +203,7 @@ BEGIN
 									'ErrMsg="'+ coalesce(cast(@ErrMsg as nvarchar(4000)),space(1)) + '" />'  
   
     SELECT @TrackingValueDB_Indirectly =	'<Acc_CustomerUpdSuperKeno_MinMaxBet custid="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +  
-											'SourceAccount="' + COALESCE(CAST(@UserName AS NVARCHAR(50)),SPACE(1)) + '" ' +   
+											'SourceAccount="' + COALESCE(@UserName,SPACE(1)) + '" ' +  
 											'sporttype="'+ COALESCE(CAST(@sporttype AS VARCHAR(10)),SPACE(1)) + '" ' +   
 											'bettype="'+ coalesce(cast(@bettype as varchar(50)),space(1)) + '" ' +  
 											'MinB="'+ coalesce(cast(@MinBet_old as varchar(50)),space(1)) + '" ' +  
