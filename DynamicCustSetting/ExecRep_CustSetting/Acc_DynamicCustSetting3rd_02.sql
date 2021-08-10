@@ -133,6 +133,7 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
+												   AND ci.Enabled=1
 			WHERE NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerMatch < 1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
 			--downline_agent_maxpermatch = min (downline_agent_maxpermatch, @NEW_MAXPERMATCH)
@@ -229,7 +230,7 @@ BEGIN
 			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
+												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
 			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)						
@@ -256,7 +257,7 @@ BEGIN
 			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
+												   AND ci.recommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
 			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)							
@@ -319,6 +320,7 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
+												   AND ci.Enabled=1
 			WHERE NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerMatch < 1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
 			--downline_agent_maxpermatch = min (downline_agent_maxpermatch, @NEW_MAXPERMATCH)
@@ -415,7 +417,7 @@ BEGIN
 			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewGameBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
+												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
 			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)
@@ -442,7 +444,7 @@ BEGIN
 			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewGameBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
+												   AND ci.recommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
 			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1 AND bsmem.MaxPerMatch < 1)								
@@ -498,6 +500,7 @@ BEGIN
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 												   AND ci.srecommend = @CustID
 												   AND ci.roleid = 3
+												   AND ci.Enabled=1
 			WHERE NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1)
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
 			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
@@ -574,7 +577,7 @@ BEGIN
 			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK)
 				INNER JOIN @NewGameBetSetting fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
+												   AND ci.mrecommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
 			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1)
@@ -596,7 +599,7 @@ BEGIN
 			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK)
 				INNER JOIN @NewGameBetSetting fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
 				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
+												   AND ci.recommend = @CustID
 												   AND ci.roleid = 1
 												   AND ci.Enabled=1
 			WHERE NOT (bsmem.MinBet = 0 AND bsmem.MaxBet < 1)								

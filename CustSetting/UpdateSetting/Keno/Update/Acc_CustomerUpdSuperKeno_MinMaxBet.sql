@@ -177,7 +177,7 @@ BEGIN
 			@CustID			= @CustID,
 			@RoleID			= @RoleID,
 			@Sporttype		= @Sporttype,
-			@bettype		= @bettype,
+			@bettype		= @GameTypeID,
 			@MinBet			= @MinBet,
 			@MaxBet			= @MaxBet,
 			@MaxPerMatch	= @MaxPerMatch,
