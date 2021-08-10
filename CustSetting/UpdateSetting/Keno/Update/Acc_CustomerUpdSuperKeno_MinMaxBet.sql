@@ -1,39 +1,39 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuperKeno_MinMaxBet]  
- @CustID   INT,  
- @Sporttype  INT = 202,  
- @Bettype  INT,  
+	@CustID   INT,  
+	@Sporttype  INT = 202,  
+	@Bettype  INT,  
   
- @MinBet   MONEY,  
- @MaxBet   MONEY,  
- @MaxPerMatch MONEY,  
+	@MinBet   MONEY,  
+	@MaxBet   MONEY,  
+	@MaxPerMatch MONEY,  
   
- @SubAccID       INT = 0,  
- @UserID   INT = 0,   
- @Language  VARCHAR(2) = 'E',  
- @IP    VARCHAR(15)='',
- @SystemID TINYINT, --20200310@Tiara
- @ErrCode  INT  = 0  OUTPUT,  
- @ErrMsg   NVARCHAR(4000) = '' OUTPUT  
+	@SubAccID       INT = 0,  
+	@UserID   INT = 0,   
+	@Language  VARCHAR(2) = 'E',  
+	@IP    VARCHAR(15)='',
+	@SystemID TINYINT, --20200310@Tiara
+	@ErrCode  INT  = 0  OUTPUT,  
+	@ErrMsg   NVARCHAR(4000) = '' OUTPUT  
 AS  
 /*  
- Created: 20140225@Elodie  
- Task : Update super's minbet, maxbet, max per match for Keno  
- DB: DBCUST/CustDB  
+	Created: 20140225@Elodie  
+	Task : Update super's minbet, maxbet, max per match for Keno  
+	DB: DBCUST/CustDB  
   
- Revisions:  
-    - 20141027@Logan:   Add currency when selecting Min Bet Global [Redmine: #25040]
-    - 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)   
-    - 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
-	- 20200310@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
-	- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
+	Revisions:  
+		- 20141027@Logan:   Add currency when selecting Min Bet Global [Redmine: #25040]
+		- 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)   
+		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
+		- 20200310@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
 
- Param's Explanation:  
- * @ErrCode:  
-  = 0: Update successfully.  
-  > 0: Specific Error.  
+	Param's Explanation:  
+		* @ErrCode:  
+		= 0: Update successfully.  
+		> 0: Specific Error.  
     
- * @ErrMsg: Error description.  
+		* @ErrMsg: Error description.  
 */  
 BEGIN  
     SET NOCOUNT ON  
@@ -64,7 +64,6 @@ BEGIN
       FROM dbo.custInfo WITH(NOLOCK)
      WHERE custid = @CustID
        AND roleid = 4
-
 	            
 	-- Only direct upline have update permission
 	IF NOT EXISTS (SELECT 1 FROM dbo.f_AGE_IsCrossLevelUpdate(@custid,4,@userid))
@@ -102,20 +101,20 @@ BEGIN
     END
 
      IF((@MinBet <> 0 OR @MaxBet <> 0) AND @MinBet > @MaxBet)   
-      or ((@MaxBet <> 0 OR @MaxPerMatch <> 0) AND @MaxBet > @MaxPerMatch)   
-      or ((@MinBet <> 0 OR @MaxPerMatch <> 0) AND @MinBet > @MaxPerMatch)   
+		OR ((@MaxBet <> 0 OR @MaxPerMatch <> 0) AND @MaxBet > @MaxPerMatch)   
+		OR ((@MinBet <> 0 OR @MaxPerMatch <> 0) AND @MinBet > @MaxPerMatch)   
      BEGIN  
-      SELECT  
-       @ErrMsg = CASE @Language   
-            WHEN 'E' THEN 'Min bet must be less than max bet and max bet must be less than max bet per match.'  
-            ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language) END,   
-       @ErrCode = 102  
-      RETURN  
+		  SELECT  
+			   @ErrMsg = CASE @Language   
+					WHEN 'E' THEN 'Min bet must be less than max bet and max bet must be less than max bet per match.'  
+					ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language) END,   
+			   @ErrCode = 102  
+		  RETURN  
      END  
   
      IF EXISTS (SELECT 1
-                  FROM ProductBetSetting WITH(NOLOCK)
-                 WHERE sporttype = @Sporttype
+				FROM ProductBetSetting WITH(NOLOCK)
+				WHERE sporttype = @Sporttype
                    AND bettype = @bettype
                    AND Currency = @currency
                    AND MinBet > @MinBet
@@ -123,39 +122,52 @@ BEGIN
                    AND IsDep = 0
                )  
      BEGIN  
-      SELECT  
-       @ErrMsg = CASE @Language   
-            WHEN 'E' THEN 'Min Bet must be greater than or equal to Min Bet limit.'  
-            ELSE [dbo].[f_Get_MsgNamebyMsgID](10030, @Language) END,   
-       @ErrCode = 103  
-      RETURN  
+		  SELECT  
+			   @ErrMsg = CASE @Language   
+					WHEN 'E' THEN 'Min Bet must be greater than or equal to Min Bet limit.'  
+					ELSE [dbo].[f_Get_MsgNamebyMsgID](10030, @Language) END,   
+			   @ErrCode = 103  
+		  RETURN  
      END  
   
      SELECT @minbet_old = cg.MinBet, @maxbet_old = cg.MaxBet, @maxpermatch_old = cg.MaxPerGameType  
      FROM CustGameType cg WITH(NOLOCK)  
-      INNER JOIN @tmp_GameType gt ON cg.GameTypeID = gt.GameTypeID  
+		INNER JOIN @tmp_GameType gt ON cg.GameTypeID = gt.GameTypeID  
      WHERE custid = @CustID and gt.IBCBetTypeID = @bettype  
   
      --Check not change value  
      IF (@minbet_old = @MinBet AND @maxbet_old = @MaxBet AND @maxpermatch_old = @MaxPerMatch)  
-      RETURN  
+		RETURN  
    
      UPDATE cg with (ROWLOCK, UPDLOCK)  
      SET MinBet = @MinBet,   
-      MaxBet= @MaxBet,  
-      MaxPerGameType = @MaxPerMatch  
+		MaxBet= @MaxBet,  
+		MaxPerGameType = @MaxPerMatch  
      FROM CustGameType cg INNER JOIN @tmp_GameType gt ON cg.GameTypeID = gt.GameTypeID  
      WHERE custid=@CustID AND gt.IBCBetTypeID = @bettype  
    
      IF (@@error <> 0)  
      BEGIN  
-      SELECT @ErrMsg = CASE @Language   
-           WHEN 'E' THEN 'Update process is unsuccessful!'  
-           ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language) END,   
-        @ErrCode = 104  
-      RETURN  
+		  SELECT @ErrMsg = CASE @Language   
+							   WHEN 'E' THEN 'Update process is unsuccessful!'  
+							   ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language) END,   
+				@ErrCode = 104  
+		  RETURN  
      END    
   
+	IF EXISTS (SELECT 1
+				FROM dbo.CustGameType bsm WITH(NOLOCK)
+					INNER JOIN @tmp_GameType gt ON bsm.GameTypeID = gt.GameTypeID 
+					INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+														AND ci.srecommend = @CustID
+														AND ci.roleid = 3
+				WHERE gt.IBCBetTypeID = @bettype  
+					AND NOT (fil.MinBet = 0 AND fil.MaxBet = 0 AND fil.MaxPerMatch = 0)
+					AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerMatch < 1)
+					AND (bsm.MaxBet > fil.MaxBet OR bsm.MaxPerMatch > fil.MaxPerMatch
+						OR (fil.MinBet = 0 AND fil.MaxBet < 1 AND fil.MaxPerMatch < 1)))
+			SELECT @IsAdjustDownline = 1
+
      DECLARE @LogSPData VARCHAR (MAX),  
        @TrackingValueDB VARCHAR(4000)  
     
