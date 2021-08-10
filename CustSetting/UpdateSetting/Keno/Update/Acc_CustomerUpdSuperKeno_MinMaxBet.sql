@@ -75,6 +75,10 @@ BEGIN
 		RETURN
 	END
 	
+	DECLARE @GameTypeID INT
+	SELECT @GameTypeID = GameTypeID
+    FROM @tmp_GameType WHERE IBCBetTypeID = @BetType
+
 	--Get site info
 	DECLARE @Site NVARCHAR (50), @RoleID TINYINT, @recommend INT
 	SELECT @RoleID=RoleID  FROM custinfo(NOLOCK) WHERE custid=@custid
