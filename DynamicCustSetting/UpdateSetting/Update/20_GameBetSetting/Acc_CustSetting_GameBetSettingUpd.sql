@@ -241,8 +241,9 @@ BEGIN
 					FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
 						INNER JOIN @NewBetSettingTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
 						INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
-															AND ci.srecommend = @CustID
-															AND ci.roleid = 3
+															AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid = 3)
+															OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid = 2)
+															OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
 					WHERE NOT (fil.MinBet = 0 AND fil.MaxBet = 0)
 						AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1)
 						AND (bsm.MaxBet > fil.MaxBet
