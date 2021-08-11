@@ -196,11 +196,10 @@ BEGIN
 		
 	IF EXISTS (	SELECT 1
 				FROM dbo.CustGameType bsm WITH(NOLOCK)
-					INNER JOIN @tmp_GameType gt ON bsm.GameTypeID = gt.GameTypeID 
 					INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 														AND ci.mrecommend = @CustID
 														AND ci.roleid = 2
-				WHERE gt.IBCBetTypeID = @bettype  
+				WHERE bsm.GameTypeID = @GameTypeID  
 					AND NOT (@MinBet = 0 AND @MaxBet = 0 AND @MaxPerMatch = 0)
 					AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerGameType < 1)
 					AND (bsm.MaxBet > @MaxBet OR bsm.MaxPerGameType > @MaxPerMatch
