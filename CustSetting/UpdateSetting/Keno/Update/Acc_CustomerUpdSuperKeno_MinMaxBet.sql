@@ -175,7 +175,7 @@ BEGIN
 			SELECT @IsAdjustDownline = 1
 
 	INSERT INTO @AgentList (CustId, IsFinished)
-	SELECT bsm.CustId, 0
+	SELECT bsa.CustId, 0
 	FROM dbo.CustGameType bsa WITH(NOLOCK)
 		INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
 											AND ci.srecommend = @CustID
