@@ -39,6 +39,7 @@ BEGIN
     SET NOCOUNT ON  
     ----- David @ 09 JUN 2015 -------------------
 	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
+	DECLARE @AgentList TABLE (CustId INT, IsFinished BIT)
 
 	BEGIN TRY		
 		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
@@ -59,6 +60,7 @@ BEGIN
           , @currency			SMALLINT
 		  , @IsAdjustDownline	BIT = 0
 		  , @UserName			NVARCHAR(50)
+		  , @AgentID			INT
 
     SET @startRun = GETDATE()
 
@@ -168,10 +170,20 @@ BEGIN
 														AND ci.roleid = 3
 				WHERE bsm.GameTypeID = @GameTypeID  
 					AND NOT (@MinBet = 0 AND @MaxBet = 0 AND @MaxPerMatch = 0)
-					AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerGameType < 1)
 					AND (bsm.MaxBet > @MaxBet OR bsm.MaxPerGameType > @MaxPerMatch
 						OR (@MinBet = 0 AND @MaxBet < 1 AND @MaxPerMatch < 1)))
 			SELECT @IsAdjustDownline = 1
+
+	INSERT INTO @AgentList (CustId, IsFinished)
+	SELECT bsm.CustId, 0
+	FROM dbo.CustGameType bsa WITH(NOLOCK)
+		INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
+											AND ci.srecommend = @CustID
+											AND ci.roleid = 2
+	WHERE bsa.GameTypeID = @GameTypeID  
+		AND NOT (@MinBet = 0 AND @MaxBet = 0 AND @MaxPerMatch = 0)
+		AND (bsa.MaxBet > @MaxBet OR bsa.MaxPerGameType > @MaxPerMatch
+			OR (@MinBet = 0 AND @MaxBet < 1 AND @MaxPerMatch < 1))
 
 	IF @IsAdjustDownline = 1
 	BEGIN
@@ -187,6 +199,22 @@ BEGIN
 			@Mode			= 'Keno',
 			@ErrCode		= @ErrCode OUTPUT,
 			@ErrMsg			= @ErrMsg OUTPUT
+	END
+
+	WHILE (1=1)
+	BEGIN
+		UPDATE TOP(1) a
+		SET IsFinished = 1,
+			@AgentID = CustId
+		FROM @AgentList a 
+		WHERE IsFinished = 0
+
+		IF @@ROWCOUNT = 0 
+			BREAK
+
+		EXEC dbo.Age_MessageNoticeUpd_Wrapper @custID = @AgentID
+			, @userID = @UserID
+			, @TypeID = 2
 	END
 
     DECLARE @LogSPData VARCHAR (MAX), @TrackingValueDB VARCHAR(4000), @logSpData_Indirectly VARCHAR (MAX), @TrackingValueDB_Indirectly VARCHAR(4000)  

@@ -258,7 +258,6 @@ BEGIN
 															OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid = 2)
 															OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
 				WHERE NOT (fil.MinBet = 0 AND fil.MaxBet = 0 AND fil.MaxPerMatch = 0)
-					AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerMatch < 1)
 					AND (bsm.MaxBet > fil.MaxBet OR bsm.MaxPerMatch > fil.MaxPerMatch
 						OR (fil.MinBet = 0 AND fil.MaxBet < 1 AND fil.MaxPerMatch < 1)))
 			SELECT @IsAdjustDownline = 1

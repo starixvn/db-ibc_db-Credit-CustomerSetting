@@ -205,7 +205,6 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 														AND ci.roleid = 1
 				WHERE bsm.GameTypeID =  @GameTypeID 
 					AND NOT (@MinBet = 0 AND @MaxBet = 0 AND @MaxPerMatch = 0)
-					AND NOT (bsm.MinBet = 0 AND bsm.MaxBet < 1 AND bsm.MaxPerGameType < 1)
 					AND (bsm.MaxBet > @MaxBet OR bsm.MaxPerGameType > @MaxPerMatch
 						OR (@MinBet = 0 AND @MaxBet < 1 AND @MaxPerMatch < 1)))
 			SELECT @IsAdjustDownline = 1
