@@ -27,6 +27,7 @@ AS
 		- 20190826@Eden: 3rd party products - Remove InActive Products Phase 2  [Redmine: #118699]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20210518@Winfred: Add new Parlay Max Payout [RedmineID:#154104]
 	Parameter's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */ 
@@ -316,7 +317,97 @@ BEGIN
 			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
 
 			RETURN
-		END		
+		END	
+		
+		-- Parlay Max Payout
+		DECLARE @RoleID TINYINT ,@SuperID INT, @MasterID INT, @AgentID INT
+		SELECT @RoleID = roleid , @SuperID = srecommend , @MasterID = mrecommend , @AgentID = recommend
+		FROM Customer WITH (NOLOCK) WHERE custid = @CustID	
+		
+		IF @RoleID  = 4 
+		BEGIN
+			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+			SELECT @custid , cs.SportType, cs.BetType, 
+					cs.SingleMatchParlay,
+					cs.Combo2,
+					cs.Combo35,
+					cs.ComboOver6
+			FROM dbo.CustMaxPayoutSetting_Agent cs  WITH(NOLOCK)
+			WHERE cs.CustID  = @ExistingCustid
+		END
+		ELSE IF @RoleID  = 3
+		BEGIN
+			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+			SELECT @custid , cs.SportType, cs.BetType, 
+					CASE WHEN cs.SingleMatchParlay > upl.SingleMatchParlay  AND upl.SingleMatchParlay > 0 THEN upl.SingleMatchParlay ELSE cs.SingleMatchParlay END AS SingleMatchParlay,
+					CASE WHEN cs.Combo2 > upl.Combo2  AND upl.Combo2 > 0 THEN upl.Combo2 ELSE cs.Combo2 END AS Combo2,
+					CASE WHEN cs.Combo35 > upl.Combo35  AND upl.Combo35 > 0 THEN upl.Combo35 ELSE cs.Combo35 END AS Combo35,
+					CASE WHEN cs.ComboOver6 > upl.ComboOver6  AND upl.ComboOver6 > 0 THEN upl.ComboOver6 ELSE cs.ComboOver6 END AS ComboOver6
+			FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
+			INNER JOIN dbo.CustMaxPayoutSetting_Agent upl WITH (NOLOCK) ON cs.SportType = upl.SportType AND cs.BetType = upl.BetType
+			WHERE cs.CustID  = @ExistingCustid  AND Upl.CustID = @SuperID
+		END
+		ELSE IF @RoleID  = 2
+		BEGIN
+			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+			SELECT @custid , cs.SportType, cs.BetType, 
+					CASE WHEN cs.SingleMatchParlay > upl.SingleMatchParlay  AND upl.SingleMatchParlay > 0 THEN upl.SingleMatchParlay ELSE cs.SingleMatchParlay END AS SingleMatchParlay,
+					CASE WHEN cs.Combo2 > upl.Combo2  AND upl.Combo2 > 0 THEN upl.Combo2 ELSE cs.Combo2 END AS Combo2,
+					CASE WHEN cs.Combo35 > upl.Combo35  AND upl.Combo35 > 0 THEN upl.Combo35 ELSE cs.Combo35 END AS Combo35,
+					CASE WHEN cs.ComboOver6 > upl.ComboOver6  AND upl.ComboOver6 > 0 THEN upl.ComboOver6 ELSE cs.ComboOver6 END AS ComboOver6
+			FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
+			INNER JOIN dbo.CustMaxPayoutSetting_Agent upl WITH (NOLOCK) ON cs.SportType = upl.SportType AND cs.BetType = upl.BetType
+			WHERE cs.CustID  = @ExistingCustid  AND Upl.CustID = @MasterID
+		END
+		
+		IF @@ERROR <> 0
+		BEGIN
+			--Error Occurs
+			SELECT @ErrCode = 157
+				
+			-- ROLLBACK MANUALLY
+			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
+			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
+			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
+			
+			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
+			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
+			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
+			DELETE dbo.CustMaxPayoutSetting_Agent WITH(ROWLOCK) WHERE custid = @CustID 
+			RETURN
+		END	
+		
+		IF @RoleID  = 1
+		BEGIN
+			INSERT INTO CustMaxPayoutSetting_Member(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+			SELECT @custid , cs.SportType, cs.BetType, 
+					CASE WHEN cs.SingleMatchParlay > upl.SingleMatchParlay  AND upl.SingleMatchParlay > 0 THEN upl.SingleMatchParlay ELSE cs.SingleMatchParlay END AS SingleMatchParlay,
+					CASE WHEN cs.Combo2 > upl.Combo2  AND upl.Combo2 > 0 THEN upl.Combo2 ELSE cs.Combo2 END AS Combo2,
+					CASE WHEN cs.Combo35 > upl.Combo35  AND upl.Combo35 > 0 THEN upl.Combo35 ELSE cs.Combo35 END AS Combo35,
+					CASE WHEN cs.ComboOver6 > upl.ComboOver6  AND upl.ComboOver6 > 0 THEN upl.ComboOver6 ELSE cs.ComboOver6 END AS ComboOver6
+			FROM dbo.CustMaxPayoutSetting_Member cs WITH (NOLOCK)
+			INNER JOIN dbo.CustMaxPayoutSetting_Agent upl WITH (NOLOCK) ON cs.SportType = upl.SportType AND cs.BetType = upl.BetType
+			WHERE cs.CustID  = @ExistingCustid  AND Upl.CustID = @AgentID
+		END
+		
+		IF @@ERROR <> 0
+		BEGIN
+			--Error Occurs
+			SELECT @ErrCode = 157
+				
+			-- ROLLBACK MANUALLY
+			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
+			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
+			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
+			
+			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
+			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
+			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
+			DELETE dbo.CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE custid = @CustID 
+			RETURN
+		END	
 	END
 
 	DECLARE @DCSErrCode INT = 0
