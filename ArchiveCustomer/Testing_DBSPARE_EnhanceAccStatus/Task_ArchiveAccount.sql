@@ -19,7 +19,7 @@ AS
 		- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210614@Eden: All sites - Dormant SMA Account List [RedmineID: #155969]
-		
+		- 20210810@Eden: Edit stage 1 to resume when archive Agent Process [RedmineID: #155969]		
 	Param:
 		+ @stage: input stage to run archive
 */
@@ -80,6 +80,7 @@ BEGIN
 			INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = ci.CustID
 		WHERE cps.CloseInfo > 0 
 			AND l.ClosedReason = 4
+			AND IsFinished = 0
 
 		--> Insert data for Cust_ArchiveAccount
 		WHILE(1=1)
