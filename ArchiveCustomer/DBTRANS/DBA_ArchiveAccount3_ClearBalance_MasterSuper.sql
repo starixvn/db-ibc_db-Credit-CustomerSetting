@@ -23,6 +23,7 @@ AS
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
 			- 20201109@Helen: Stage 3 - Tuning - [Redmine:130032]
+			- 20210817@Elodie: Change data type of Refno  to bigint instead [Redmine: #160262]
 */
 BEGIN
 
@@ -35,7 +36,7 @@ BEGIN
 	
 	print  'Start:' + convert(varchar(50), getdate(), 113)
 
-	Declare @refno bigint, @grefno int, @Now datetime, @Enabled bit, @MasterBalance MONEY
+	Declare @refno bigint, @grefno bigint, @Now datetime, @Enabled bit, @MasterBalance MONEY
 
 	CREATE TABLE #temp_recommend (recommend INT PRIMARY KEY)
 	
