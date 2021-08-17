@@ -321,7 +321,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -343,7 +343,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -365,7 +365,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -388,11 +388,11 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
-	SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+	SET @logSpData_Old_Indirectly = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
 	-- Log new updated data
 	IF @SettingLevel = 1			-- Product setting level
@@ -413,7 +413,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -435,7 +435,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -457,7 +457,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -480,7 +480,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END

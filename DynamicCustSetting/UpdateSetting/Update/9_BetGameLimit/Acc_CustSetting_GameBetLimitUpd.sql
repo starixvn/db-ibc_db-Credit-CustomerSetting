@@ -337,7 +337,7 @@ BEGIN
 					FOR XML PATH('GameBetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetLimitUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -360,7 +360,7 @@ BEGIN
 					FOR XML PATH('GameBetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetLimitUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -383,7 +383,7 @@ BEGIN
 					FOR XML PATH('GameBetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetLimitUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -407,7 +407,7 @@ BEGIN
 					FOR XML PATH('GameBetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetLimitUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -433,7 +433,7 @@ BEGIN
 					FOR XML PATH('GameBetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetLimitUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -456,7 +456,7 @@ BEGIN
 					FOR XML PATH('GameBetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetLimitUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -479,7 +479,7 @@ BEGIN
 					FOR XML PATH('GameBetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetLimitUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -503,7 +503,7 @@ BEGIN
 					FOR XML PATH('GameBetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetLimitUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
