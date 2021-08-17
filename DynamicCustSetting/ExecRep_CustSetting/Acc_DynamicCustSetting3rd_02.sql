@@ -27,8 +27,12 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	DECLARE	@iDoc			INT
+	DECLARE	@iDoc INT, @BatchNo INT, @SportbettypeCount INT
 	DECLARE @NewMinBet MONEY, @NewMaxBet MONEY, @NewMaxPerMatch	MONEY, @NewMaxPerNumber MONEY
+	CREATE TABLE #Agent(custid INT, RoleID INT)
+	CREATE TABLE #Member(custid INT)
+	CREATE TABLE #AgentTmpBatch(custid INT)
+	CREATE TABLE #MemberTmpBatch(custid INT)
 
 	IF @Mode = 'StakeLevel'
 	BEGIN
@@ -106,157 +110,154 @@ BEGIN
 	
 		EXEC sp_xml_removedocument @iDoc
 
+		SELECT @SportbettypeCount = COUNT(1) FROM @NewBetLimitTbl
+
+		IF @SportbettypeCount = 0
+			RETURN
+
+		SET @BatchNo = 5000/@SportbettypeCount
+
 		--Updating upline to 0/0.1/0.1/0.1 shall update downlines to 0/0.1/0.1/0.1
 		UPDATE @NewBetLimitTbl SET IsSpecial = 1 WHERE MinBet = 0 AND MaxBet < 1 AND MaxPerMatch < 1
+
+		IF @RoleId = 4
+		BEGIN
+			INSERT INTO #Agent(custid,RoleID)
+			SELECT custid,roleid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE srecommend = @CustId AND roleid IN(2,3) AND Enabled = 1
+			
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE srecommend = @CustId AND roleid = 1 AND Enabled = 1					
+		END
+		ELSE IF @RoleId = 3
+		BEGIN
+			INSERT INTO #Agent(custid,RoleID)
+			SELECT custid,roleid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE mrecommend = @CustId AND roleid = 2 AND Enabled = 1	
+			
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE mrecommend = @CustId AND roleid = 1 AND Enabled = 1
+		END
+		ELSE IF @RoleId = 2
+		BEGIN
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE recommend = @CustId AND roleid = 1 AND Enabled = 1
+		END
 
 		IF @RoleID=4
 		BEGIN
 			--downline_master_maxbet = min (downline_master_maxbet, @NEW_MAXBET)
 			--downline_master_maxpermatch = min (downline_master_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_master_minbet = min (downline_master_minbet, @NEW_MAXBET)
-			UPDATE bsm
-			SET
-				@NewMinBet = bsm.MinBet,
-				@NewMaxBet = bsm.MaxBet,
-				@NewMaxPerMatch = bsm.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsm.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsm.MinBet = @NewMinBet,
-				bsm.MaxBet = @NewMaxBet,
-				bsm.MaxPerMatch = @NewMaxPerMatch
-			FROM dbo.CustBetSetting3rd_Agent bsm WITH(ROWLOCK)
-				INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 3
-												   AND ci.Enabled=1
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #AgentTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				FROM #Agent a
+				WHERE a.RoleID = 3
 
-			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
-			--downline_agent_maxpermatch = min (downline_agent_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
-			UPDATE bsa
-			SET
-				@NewMinBet = bsa.MinBet,
-				@NewMaxBet = bsa.MaxBet,
-				@NewMaxPerMatch = bsa.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsa.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsa.MinBet = @NewMinBet,
-				bsa.MaxBet = @NewMaxBet,
-				bsa.MaxPerMatch = @NewMaxPerMatch
-			FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN @NewBetLimitTbl fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 2
-												   AND ci.Enabled=1
-			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
-			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxPerMatch = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsmem.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet,
-				bsmem.MaxPerMatch = @NewMaxPerMatch
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN @NewBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+				IF @@ROWCOUNT = 0 
+					BREAK;
+
+				UPDATE bsm
+				SET
+					@NewMinBet = bsm.MinBet,
+					@NewMaxBet = bsm.MaxBet,
+					@NewMaxPerMatch = bsm.MaxPerMatch,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsm.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsm.MinBet = @NewMinBet,
+					bsm.MaxBet = @NewMaxBet,
+					bsm.MaxPerMatch = @NewMaxPerMatch
+				FROM dbo.CustBetSetting3rd_Agent bsm WITH(ROWLOCK)
+					INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+					INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON bsm.custid = ci.custid
+			END
 		END
-		ELSE IF @RoleID=3
+		
+		IF @RoleID IN (3,4)
 		BEGIN
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
 			--downline_agent_maxpermatch = min (downline_agent_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
-			UPDATE bsa
-			SET
-				@NewMinBet = bsa.MinBet,
-				@NewMaxBet = bsa.MaxBet,
-				@NewMaxPerMatch = bsa.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsa.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsa.MinBet = @NewMinBet,
-				bsa.MaxBet = @NewMaxBet,
-				bsa.MaxPerMatch = @NewMaxPerMatch
-			FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN @NewBetLimitTbl fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
-												   AND ci.mrecommend = @CustID
-												   AND ci.roleid = 2
-												   AND ci.Enabled=1
-			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
-			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxPerMatch = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsmem.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet,
-				bsmem.MaxPerMatch = @NewMaxPerMatch
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN @NewBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.mrecommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)			
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #AgentTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				FROM #Agent a
+				WHERE a.RoleID = 2
+
+				IF @@ROWCOUNT = 0 
+					BREAK;				
+			
+				UPDATE bsa
+				SET
+					@NewMinBet = bsa.MinBet,
+					@NewMaxBet = bsa.MaxBet,
+					@NewMaxPerMatch = bsa.MaxPerMatch,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsa.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsa.MinBet = @NewMinBet,
+					bsa.MaxBet = @NewMaxBet,
+					bsa.MaxPerMatch = @NewMaxPerMatch
+				FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK, UPDLOCK)
+					INNER JOIN @NewBetLimitTbl fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
+					INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON bsa.custid = ci.custid		
+			END									
 		END
-		ELSE IF @RoleID=2
+		
+		IF @RoleId IN (2,3,4)
 		BEGIN
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
 			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxPerMatch = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsmem.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet,
-				bsmem.MaxPerMatch = @NewMaxPerMatch
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN @NewBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.recommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)		
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #MemberTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+				FROM #Member a
+
+				IF @@ROWCOUNT = 0 
+					BREAK;
+										
+				UPDATE bsmem
+				SET
+					@NewMinBet = bsmem.MinBet,
+					@NewMaxBet = bsmem.MaxBet,
+					@NewMaxPerMatch = bsmem.MaxPerMatch,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerMatch = CASE WHEN IsSpecial = 0 AND fil.MaxPerMatch < bsmem.MaxPerMatch THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerMatch = CASE WHEN IsSpecial = 1 THEN fil.MaxPerMatch ELSE @NewMaxPerMatch END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsmem.MinBet = @NewMinBet,
+					bsmem.MaxBet = @NewMaxBet,
+					bsmem.MaxPerMatch = @NewMaxPerMatch
+				FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
+					INNER JOIN @NewBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
+					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid												  
 		END
+	END
 	END
 	ELSE IF @Mode = 'GameBetLimit'
 	BEGIN
@@ -288,155 +289,153 @@ BEGIN
 	
 		EXEC sp_xml_removedocument @iDoc
 
+		SELECT @SportbettypeCount = COUNT(1) FROM @NewGameBetLimitTbl
+
+		IF @SportbettypeCount = 0
+			RETURN
+
+		SET @BatchNo = 5000/@SportbettypeCount
+
 		--Updating upline to 0/0.1/0.1/0.1 shall update downlines to 0/0.1/0.1/0.1
 		UPDATE @NewGameBetLimitTbl SET IsSpecial = 1 WHERE MinBet = 0 AND MaxBet < 1 AND MaxPerNumber < 1
+
+		IF @RoleId = 4
+		BEGIN
+			INSERT INTO #Agent(custid,RoleID)
+			SELECT custid,roleid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE srecommend = @CustId AND roleid IN(2,3) AND Enabled = 1
+			
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE srecommend = @CustId AND roleid = 1 AND Enabled = 1					
+		END
+		ELSE IF @RoleId = 3
+		BEGIN
+			INSERT INTO #Agent(custid,RoleID)
+			SELECT custid,roleid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE mrecommend = @CustId AND roleid = 2 AND Enabled = 1	
+			
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE mrecommend = @CustId AND roleid = 1 AND Enabled = 1
+		END
+		ELSE IF @RoleId = 2
+		BEGIN
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE recommend = @CustId AND roleid = 1 AND Enabled = 1
+		END
 
 		IF @RoleID=4
 		BEGIN
 			--downline_master_maxbet = min (downline_master_maxbet, @NEW_MAXBET)
 			--downline_master_maxpernumber = min (downline_master_maxpernumber, @NEW_MAXPERNUMBER)
 			--downline_master_minbet = min (downline_master_minbet, @NEW_MAXBET)
-			UPDATE bsm
-			SET
-				@NewMinBet = bsm.MinBet,
-				@NewMaxBet = bsm.MaxBet,
-				@NewMaxPerNumber = bsm.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsm.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsm.MinBet = @NewMinBet,
-				bsm.MaxBet = @NewMaxBet,
-				bsm.MaxPerMatch = @NewMaxPerNumber
-			FROM dbo.CustBetSetting3rd_Agent bsm WITH(ROWLOCK)
-				INNER JOIN @NewGameBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 3
-												   AND ci.Enabled=1
-			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
-			--downline_agent_maxpermatch = min (downline_agent_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
-			UPDATE bsa
-			SET
-				@NewMinBet = bsa.MinBet,
-				@NewMaxBet = bsa.MaxBet,
-				@NewMaxPerNumber = bsa.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsa.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsa.MinBet = @NewMinBet,
-				bsa.MaxBet = @NewMaxBet,
-				bsa.MaxPerMatch = @NewMaxPerNumber
-			FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK)
-				INNER JOIN @NewGameBetLimitTbl fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 2
-												   AND ci.Enabled=1
-			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
-			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxPerNumber = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsmem.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet,
-				bsmem.MaxPerMatch = @NewMaxPerNumber
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK)
-				INNER JOIN @NewGameBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #AgentTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				FROM #Agent a
+				WHERE a.RoleID = 3
+
+				IF @@ROWCOUNT = 0 
+					BREAK;
+
+				UPDATE bsm
+				SET
+					@NewMinBet = bsm.MinBet,
+					@NewMaxBet = bsm.MaxBet,
+					@NewMaxPerNumber = bsm.MaxPerMatch,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsm.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsm.MinBet = @NewMinBet,
+					bsm.MaxBet = @NewMaxBet,
+					bsm.MaxPerMatch = @NewMaxPerNumber
+				FROM dbo.CustBetSetting3rd_Agent bsm WITH(ROWLOCK)
+					INNER JOIN @NewGameBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+					INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON bsm.custid = ci.custid
+			END
 		END
-		ELSE IF @RoleID=3
+		
+		IF @RoleID IN (3,4)
 		BEGIN
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
 			--downline_agent_maxpermatch = min (downline_agent_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
-			UPDATE bsa
-			SET
-				@NewMinBet = bsa.MinBet,
-				@NewMaxBet = bsa.MaxBet,
-				@NewMaxPerNumber = bsa.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsa.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsa.MinBet = @NewMinBet,
-				bsa.MaxBet = @NewMaxBet,
-				bsa.MaxPerMatch = @NewMaxPerNumber
-			FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN @NewGameBetLimitTbl fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
-												   AND ci.mrecommend = @CustID
-												   AND ci.roleid = 2
-												   AND ci.Enabled=1
-			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
-			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxPerNumber = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsmem.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet,
-				bsmem.MaxPerMatch = @NewMaxPerNumber
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN @NewGameBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.mrecommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)				
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #AgentTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				FROM #Agent a
+				WHERE a.RoleID = 2
+
+				IF @@ROWCOUNT = 0 
+					BREAK;		
+								
+				UPDATE bsa
+				SET
+					@NewMinBet = bsa.MinBet,
+					@NewMaxBet = bsa.MaxBet,
+					@NewMaxPerNumber = bsa.MaxPerMatch,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsa.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsa.MinBet = @NewMinBet,
+					bsa.MaxBet = @NewMaxBet,
+					bsa.MaxPerMatch = @NewMaxPerNumber
+				FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK, UPDLOCK)
+					INNER JOIN @NewGameBetLimitTbl fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
+					INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON bsa.custid = ci.custid											  
+			END
 		END
-		ELSE IF @RoleID=2
+		
+		IF @RoleID IN(2,3,4)
 		BEGIN
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
 			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxPerNumber = bsmem.MaxPerMatch,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsmem.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet,
-				bsmem.MaxPerMatch = @NewMaxPerNumber
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN @NewGameBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.recommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)		
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #MemberTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+				FROM #Member a
+
+				IF @@ROWCOUNT = 0 
+					BREAK;
+												
+				UPDATE bsmem
+				SET
+					@NewMinBet = bsmem.MinBet,
+					@NewMaxBet = bsmem.MaxBet,
+					@NewMaxPerNumber = bsmem.MaxPerMatch,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerNumber = CASE WHEN IsSpecial = 0 AND fil.MaxPerNumber < bsmem.MaxPerMatch THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMaxPerNumber = CASE WHEN IsSpecial = 1 THEN fil.MaxPerNumber ELSE @NewMaxPerNumber END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsmem.MinBet = @NewMinBet,
+					bsmem.MaxBet = @NewMaxBet,
+					bsmem.MaxPerMatch = @NewMaxPerNumber
+				FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
+					INNER JOIN @NewGameBetLimitTbl fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
+					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid
+			END
 		END
 	END
 	ELSE IF @Mode = 'GameBetSetting'
@@ -467,125 +466,138 @@ BEGIN
 	
 		EXEC sp_xml_removedocument @iDoc
 
+		SELECT @SportbettypeCount = COUNT(1) FROM @NewGameBetSetting
+
+		IF @SportbettypeCount = 0
+			RETURN
+
+		SET @BatchNo = 5000/@SportbettypeCount
+
 		--Updating upline to 0/0.1/0.1/0.1 shall update downlines to 0/0.1/0.1/0.1
 		UPDATE @NewGameBetSetting SET IsSpecial = 1 WHERE MinBet = 0 AND MaxBet < 1
+
+		IF @RoleId = 4
+		BEGIN
+			INSERT INTO #Agent(custid,RoleID)
+			SELECT custid,roleid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE srecommend = @CustId AND roleid IN(2,3) AND Enabled = 1
+			
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE srecommend = @CustId AND roleid = 1 AND Enabled = 1					
+		END
+		ELSE IF @RoleId = 3
+		BEGIN
+			INSERT INTO #Agent(custid,RoleID)
+			SELECT custid,roleid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE mrecommend = @CustId AND roleid = 2 AND Enabled = 1	
+			
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE mrecommend = @CustId AND roleid = 1 AND Enabled = 1
+		END
+		ELSE IF @RoleId = 2
+		BEGIN
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE recommend = @CustId AND roleid = 1 AND Enabled = 1
+		END
 
 		IF @RoleID=4
 		BEGIN
 			--downline_master_maxbet = min (downline_master_maxbet, @NEW_MAXBET)
 			--downline_master_minbet = min (downline_master_minbet, @NEW_MAXBET)
-			UPDATE bsm
-			SET
-				@NewMinBet = bsm.MinBet,
-				@NewMaxBet = bsm.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsm.MinBet = @NewMinBet,
-				bsm.MaxBet = @NewMaxBet
-			FROM dbo.CustBetSetting3rd_Agent bsm WITH(ROWLOCK)
-				INNER JOIN @NewGameBetSetting fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 3
-												   AND ci.Enabled=1
-			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
-			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
-			UPDATE bsa
-			SET
-				@NewMinBet = bsa.MinBet,
-				@NewMaxBet = bsa.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsa.MinBet = @NewMinBet,
-				bsa.MaxBet = @NewMaxBet
-			FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK)
-				INNER JOIN @NewGameBetSetting fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 2
-												   AND ci.Enabled=1
-			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK)
-				INNER JOIN @NewGameBetSetting fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.srecommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #AgentTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				FROM #Agent a
+				WHERE a.RoleID = 3
+
+				IF @@ROWCOUNT = 0 
+					BREAK;
+
+				UPDATE bsm
+				SET
+					@NewMinBet = bsm.MinBet,
+					@NewMaxBet = bsm.MaxBet,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsm.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsm.MinBet = @NewMinBet,
+					bsm.MaxBet = @NewMaxBet
+				FROM dbo.CustBetSetting3rd_Agent bsm WITH(ROWLOCK)
+					INNER JOIN @NewGameBetSetting fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+					INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON bsm.custid = ci.custid
+			END												 
 		END
-		ELSE IF @RoleID=3
+		
+		IF @RoleID IN (3,4)
 		BEGIN
 			--downline_agent_maxbet = min (downline_agent_maxbet, @NEW_MAXBET)		
-			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)							
-			UPDATE bsa
-			SET
-				@NewMinBet = bsa.MinBet,
-				@NewMaxBet = bsa.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsa.MinBet = @NewMinBet,
-				bsa.MaxBet = @NewMaxBet
-			FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK)
-				INNER JOIN @NewGameBetSetting fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
-												   AND ci.mrecommend = @CustID
-												   AND ci.roleid = 2
-												   AND ci.Enabled=1
-			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK)
-				INNER JOIN @NewGameBetSetting fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.mrecommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+			--downline_agent_minbet = min (downline_agent_minbet, @NEW_MAXBET)		
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #AgentTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				FROM #Agent a
+				WHERE a.RoleID = 2
+
+				IF @@ROWCOUNT = 0 
+					BREAK;		
+										
+				UPDATE bsa
+				SET
+					@NewMinBet = bsa.MinBet,
+					@NewMaxBet = bsa.MaxBet,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsa.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsa.MinBet = @NewMinBet,
+					bsa.MaxBet = @NewMaxBet
+				FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK)
+					INNER JOIN @NewGameBetSetting fil ON bsa.sporttype = fil.sporttype AND bsa.bettype = fil.bettype
+					INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON bsa.custid = ci.custid
+			END											 
 		END
-		ELSE IF @RoleID=2
+		
+		IF @RoleID IN (2,3,4)
 		BEGIN
 			--downline_member_maxbet = min (downline_member_maxbet, @NEW_MAXBET)		
-			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)									
-			UPDATE bsmem
-			SET
-				@NewMinBet = bsmem.MinBet,
-				@NewMaxBet = bsmem.MaxBet,
-				@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
-				@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
-				@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
-				bsmem.MinBet = @NewMinBet,
-				bsmem.MaxBet = @NewMaxBet
-			FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK)
-				INNER JOIN @NewGameBetSetting fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
-				INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsmem.custid = ci.custid
-												   AND ci.recommend = @CustID
-												   AND ci.roleid = 1
-												   AND ci.Enabled=1
+			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #MemberTmpBatch
+				DELETE TOP (@BatchNo) a
+				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+				FROM #Member a
+
+				IF @@ROWCOUNT = 0 
+					BREAK;
+														
+				UPDATE bsmem
+				SET
+					@NewMinBet = bsmem.MinBet,
+					@NewMaxBet = bsmem.MaxBet,
+					@NewMaxBet = CASE WHEN IsSpecial = 0 AND fil.MaxBet < bsmem.MaxBet THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN IsSpecial = 0 AND @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE @NewMinBet END,
+					@NewMaxBet = CASE WHEN IsSpecial = 1 THEN fil.MaxBet ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN IsSpecial = 1 THEN fil.MinBet ELSE @NewMinBet END,
+					bsmem.MinBet = @NewMinBet,
+					bsmem.MaxBet = @NewMaxBet
+				FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK)
+					INNER JOIN @NewGameBetSetting fil ON bsmem.sporttype = fil.sporttype AND bsmem.bettype = fil.bettype
+					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid
+				END
+			END									  
 		END
-	END
 END
