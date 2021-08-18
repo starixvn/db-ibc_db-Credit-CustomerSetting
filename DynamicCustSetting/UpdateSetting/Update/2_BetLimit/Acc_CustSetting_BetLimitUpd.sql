@@ -257,14 +257,14 @@ BEGIN
 														AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid = 3)
 															OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid = 2)
 															OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
-				WHERE NOT (fil.MinBet = 0 AND fil.MaxBet = 0 AND fil.MaxPerMatch = 0)
+				WHERE fil.MaxBet <> 0 AND fil.MaxPerMatch <> 0
 					AND (bsm.MaxBet > fil.MaxBet OR bsm.MaxPerMatch > fil.MaxPerMatch
 						OR (fil.MinBet = 0 AND fil.MaxBet < 1 AND fil.MaxPerMatch < 1)))
 			SELECT @IsAdjustDownline = 1
 
 		IF @IsAdjustDownline = 1
 		BEGIN
-			--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
+			--Updating any field of max bet, max per match or max payour per match = 0 on upline does not count reducing Bet setting, downline's bet setting will not be changed.
 			SET	@BetLimit =	(
 								SELECT	SportType,			
 										BetType,			
@@ -272,7 +272,7 @@ BEGIN
 										MaxBet,
 										MaxPerMatch
 								FROM	@NewBetLimitTbl
-								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
+								WHERE MaxBet <> 0 AND MaxPerMatch <> 0
 								FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
 							)
 				

@@ -257,7 +257,7 @@ BEGIN
 															AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid = 3)
 															OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid = 2)
 															OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
-					WHERE NOT (fil.MinBet = 0 AND fil.MaxBet = 0 AND fil.MaxPerNumber = 0)
+					WHERE fil.MaxBet <> 0 AND fil.MaxPerMatch <> 0
 						AND (bsm.MaxBet > fil.MaxBet OR bsm.MaxPerMatch > fil.MaxPerNumber
 							OR (fil.MinBet = 0 AND fil.MaxBet < 1 AND fil.MaxPerNumber < 1)))
 			SELECT @IsAdjustDownline = 1
@@ -273,7 +273,7 @@ BEGIN
 										MaxBet,
 										MaxPerNumber
 								FROM	@NewBetLimitTbl
-								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerNumber = 0)
+								WHERE MaxBet <> 0 AND MaxPerMatch <> 0
 								FOR XML RAW ('GameBetLimit'), ROOT ('ROOT') 
 							)
 					
