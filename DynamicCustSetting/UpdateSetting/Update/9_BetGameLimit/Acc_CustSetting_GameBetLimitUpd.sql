@@ -273,7 +273,7 @@ BEGIN
 										MaxBet,
 										MaxPerNumber
 								FROM	@NewBetLimitTbl
-								WHERE MaxBet <> 0 AND MaxPerMatch <> 0
+								WHERE MaxBet <> 0 AND MaxPerNumber <> 0
 								FOR XML RAW ('GameBetLimit'), ROOT ('ROOT') 
 							)
 					
