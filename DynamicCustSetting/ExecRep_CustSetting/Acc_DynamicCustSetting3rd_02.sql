@@ -102,8 +102,7 @@ BEGIN
 		SELECT SportType,BetType,
 			CAST(MinBet AS MONEY) AS MinBet,
 			CAST(MaxBet AS MONEY) AS MaxBet,
-			CAST(MaxPerMatch AS MONEY) AS MaxPerMatch,
-			0 AS IsSpecial
+			CAST(MaxPerMatch AS MONEY) AS MaxPerMatch
 		FROM OPENXML (@iDoc, '/ROOT/BetLimit',1) 
 		WITH(SportType SMALLINT, BetType SMALLINT, MinBet VARCHAR(15), MaxBet VARCHAR(15), MaxPerMatch VARCHAR(15))	
 	
@@ -265,8 +264,7 @@ BEGIN
 		SELECT SportType,BetType,
 			CAST(MinBet AS MONEY) AS MinBet,
 			CAST(MaxBet AS MONEY) AS MaxBet,
-			CAST(MaxPerNumber AS MONEY) AS MaxPerNumber,
-			0 AS IsSpecial
+			CAST(MaxPerNumber AS MONEY) AS MaxPerNumber
 		FROM OPENXML (@iDoc, '/ROOT/GameBetLimit',1) 
 		WITH(SportType SMALLINT, BetType SMALLINT, MinBet VARCHAR(15), MaxBet VARCHAR(15), MaxPerNumber VARCHAR(15))	
 	
@@ -426,8 +424,7 @@ BEGIN
 		INSERT @NewGameBetSetting
 		SELECT SportType,BetType,
 			CAST(MinBet AS MONEY) AS MinBet,
-			CAST(MaxBet AS MONEY) AS MaxBet,
-			0 AS IsSpecial
+			CAST(MaxBet AS MONEY) AS MaxBet
 		FROM OPENXML (@iDoc, '/ROOT/BetLimit',1) 
 		WITH(SportType SMALLINT, BetType SMALLINT, MinBet VARCHAR(15), MaxBet VARCHAR(15))	
 	
