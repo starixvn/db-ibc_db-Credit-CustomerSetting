@@ -202,7 +202,7 @@ BEGIN
 											AND ci.mrecommend = @CustID
 											AND ci.roleid = 2
 	WHERE bsa.GameTypeID = @GameTypeID  
-		AND NOT (@MinBet = 0 AND @MaxBet = 0 AND @MaxPerMatch = 0)
+		AND @MaxBet <> 0 AND @MaxPerMatch <> 0
 		AND (bsa.MaxBet > @MaxBet OR bsa.MaxPerGameType > @MaxPerMatch
 			OR (@MinBet = 0 AND @MaxBet < 1 AND @MaxPerMatch < 1))
 

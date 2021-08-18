@@ -169,7 +169,7 @@ BEGIN
 														AND ci.srecommend = @CustID
 														AND ci.roleid = 3
 				WHERE bsm.GameTypeID = @GameTypeID  
-					AND NOT (@MinBet = 0 AND @MaxBet = 0 AND @MaxPerMatch = 0)
+					AND @MaxBet <> 0 AND @MaxPerMatch <> 0
 					AND (bsm.MaxBet > @MaxBet OR bsm.MaxPerGameType > @MaxPerMatch
 						OR (@MinBet = 0 AND @MaxBet < 1 AND @MaxPerMatch < 1)))
 			SELECT @IsAdjustDownline = 1
@@ -181,7 +181,7 @@ BEGIN
 											AND ci.srecommend = @CustID
 											AND ci.roleid = 2
 	WHERE bsa.GameTypeID = @GameTypeID  
-		AND NOT (@MinBet = 0 AND @MaxBet = 0 AND @MaxPerMatch = 0)
+		AND @MaxBet <> 0 AND @MaxPerMatch <> 0
 		AND (bsa.MaxBet > @MaxBet OR bsa.MaxPerGameType > @MaxPerMatch
 			OR (@MinBet = 0 AND @MaxBet < 1 AND @MaxPerMatch < 1))
 
