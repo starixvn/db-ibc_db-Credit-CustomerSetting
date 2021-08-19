@@ -1,13 +1,11 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="1"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MaxPayoutCheckDownline] 
 	  @CustID		INT
 	, @MaxPayoutLimit VARCHAR(MAX)
-	, @Language VARCHAR(2)= 'E'
+	, @Language		VARCHAR(2)= 'E'
 	, @ErrCode		INT				= 0		OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
+	, @isConfirm	BIT = 0 OUTPUT
 AS
 /*
 	Created: 20210518@Winfred
@@ -17,6 +15,7 @@ AS
 
 	Revision: 
 		- 20210518@Winfred: Initial SP [RedmineID:#154104]	
+		- 20210813@Eden: no need to update downlines and write indirect log when not affected [RedmineID:#160135]
 
 	Param's Explanation:
 		• @@MaxPayoutLimit:
@@ -26,12 +25,14 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
+	SET @isConfirm = 0
+
 	DECLARE @AgentID		INT
 		, @MasterID			INT
 		, @SuperID			INT
 		, @RoleID			INT
 
-	DECLARE @xml		XML ,@Currency INT,@Bettype NVARCHAR(50),@Columns NVARCHAR(100), @isConfirm BIT = 0
+	DECLARE @xml XML,@Bettype NVARCHAR(50),@Columns NVARCHAR(100)
 	DECLARE @NewMaxPayoutTbl TABLE (
 		SportType			SMALLINT
 		, BetType			SMALLINT
@@ -66,75 +67,100 @@ BEGIN
 	EXEC sp_xml_removedocument @iDoc
 
 	--Get currency of member
-	SELECT @Currency = ci.currency
-		, @AgentID = recommend
-		, @MasterID = mrecommend
-		, @SuperID	= srecommend
-		, @RoleID = RoleID
+	SELECT @RoleID = RoleID
 	FROM dbo.custInfo ci WITH(NOLOCK)
 	WHERE ci.custid=@CustID
 	
-	IF @RoleID = 2 AND EXISTS(SELECT TOP 1 1  
-					FROM dbo.CustMaxPayoutSetting_Member cs WITH (NOLOCK)
-					INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-					WHERE cs.custid IN (SELECT Custid from custInfo WITH(NOLOCK) WHERE recommend = @AgentID AND roleid  = 1 )
-					AND  ((s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
-							OR (s.Combo2 < cs.Combo2 AND s.Combo2 > 0)
-							OR (s.Combo35 < cs.Combo35 AND s.Combo35 > 0)
-							OR (s.ComboOver6 < cs.ComboOver6 AND s.ComboOver6 > 0)))
+	IF @RoleID = 2  
 	BEGIN
-		SET @isConfirm = 1
-	END	
-	ELSE IF @RoleID = 3  AND EXISTS(SELECT TOP 1 1  
-									FROM dbo.CustMaxPayoutSetting_Member cs WITH (NOLOCK)
-									INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-									WHERE cs.custid IN (SELECT Custid from custInfo WITH(NOLOCK) WHERE mrecommend = @MasterID AND roleid  = 1 )
-									AND  ((s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
-										OR (s.Combo2 < cs.Combo2 AND s.Combo2 > 0)
-										OR (s.Combo35 < cs.Combo35 AND s.Combo35 > 0)
-										OR (s.ComboOver6 < cs.ComboOver6 AND s.ComboOver6 > 0))
-									UNION ALL
-									SELECT TOP 1 1  
-									FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
-									INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-									WHERE cs.custid IN (SELECT Custid from custInfo WITH(NOLOCK) WHERE mrecommend = @MasterID AND roleid  = 2 )
-									AND  ((s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
+		IF EXISTS(SELECT TOP 1 1  
+						FROM dbo.CustMaxPayoutSetting_Member cs WITH (NOLOCK)
+						INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
+						WHERE c.recommend = @CustID AND c.roleid  = 1
+							AND  ((s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
+									OR (s.Combo2 < cs.Combo2 AND s.Combo2 > 0)
+									OR (s.Combo35 < cs.Combo35 AND s.Combo35 > 0)
+									OR (s.ComboOver6 < cs.ComboOver6 AND s.ComboOver6 > 0)))
+		BEGIN
+			SET @isConfirm = 1
+			GOTO RETURNLB;
+		END	
+	END
+	ELSE IF @RoleID = 3 
+	BEGIN
+		IF EXISTS(SELECT TOP 1 1  
+						FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
+						INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
+						WHERE c.mrecommend = @CustID AND c.roleid  = 2
+							AND  (		   (s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
 										OR (s.Combo2 < cs.Combo2 AND s.Combo2 > 0)
 										OR (s.Combo35 < cs.Combo35 AND s.Combo35 > 0)
 										OR (s.ComboOver6 < cs.ComboOver6 AND s.ComboOver6 > 0)
 										OR (cs.SingleMatchParlay = 0 AND S.SingleMatchParlay > 0) 
 										OR (cs.Combo2 = 0 AND S.Combo2 > 0) 
 										OR (cs.Combo35 = 0 AND S.Combo35 > 0) 
-										OR (cs.ComboOver6 = 0 AND S.ComboOver6 > 0) )
+										OR (cs.ComboOver6 = 0 AND S.ComboOver6 > 0) 
+									)
 					)
-	BEGIN
-		SET @isConfirm = 1
+		BEGIN
+			SET @isConfirm = 1
+			GOTO RETURNLB;
+		END	
+
+		IF EXISTS(SELECT TOP 1 1  
+						FROM dbo.CustMaxPayoutSetting_Member cs WITH (NOLOCK)
+						INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
+						WHERE c.mrecommend = @CustID AND c.roleid  = 1
+							AND  ((s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
+									OR (s.Combo2 < cs.Combo2 AND s.Combo2 > 0)
+									OR (s.Combo35 < cs.Combo35 AND s.Combo35 > 0)
+									OR (s.ComboOver6 < cs.ComboOver6 AND s.ComboOver6 > 0)))
+		BEGIN
+			SET @isConfirm = 1
+			GOTO RETURNLB;
+		END	
 	END
-	ELSE IF @RoleID = 4 AND EXISTS(SELECT TOP 1 1  
-									FROM dbo.CustMaxPayoutSetting_Member cs WITH (NOLOCK)
-									INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-									WHERE cs.custid IN (SELECT Custid from custInfo WITH(NOLOCK) WHERE srecommend = @SuperID AND roleid  = 1 )
-									AND  ((s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
-										OR (s.Combo2 < cs.Combo2 AND s.Combo2 > 0)
-										OR (s.Combo35 < cs.Combo35 AND s.Combo35 > 0)
-										OR (s.ComboOver6 < cs.ComboOver6 AND s.ComboOver6 > 0))
-									UNION 
-									SELECT TOP 1 1  
-									FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
-									INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-									WHERE cs.custid IN (SELECT Custid from custInfo WITH(NOLOCK) WHERE srecommend = @SuperID AND roleid in(2 ,3) )
-									AND  ((s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
+	ELSE IF @RoleID = 4 
+	BEGIN
+		IF EXISTS(SELECT TOP 1 1  
+						FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
+						INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
+						WHERE c.srecommend = @CustID AND c.roleid IN(2,3)
+							AND  (		   (s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
 										OR (s.Combo2 < cs.Combo2 AND s.Combo2 > 0)
 										OR (s.Combo35 < cs.Combo35 AND s.Combo35 > 0)
 										OR (s.ComboOver6 < cs.ComboOver6 AND s.ComboOver6 > 0)
 										OR (cs.SingleMatchParlay = 0 AND S.SingleMatchParlay > 0) 
 										OR (cs.Combo2 = 0 AND S.Combo2 > 0) 
 										OR (cs.Combo35 = 0 AND S.Combo35 > 0) 
-										OR (cs.ComboOver6 = 0 AND S.ComboOver6 > 0) )
+										OR (cs.ComboOver6 = 0 AND S.ComboOver6 > 0) 
+									)
 					)
-	BEGIN
-		SET @isConfirm = 1
+		BEGIN
+			SET @isConfirm = 1
+			GOTO RETURNLB;
+		END	
+
+		IF EXISTS(SELECT TOP 1 1  
+						FROM dbo.CustMaxPayoutSetting_Member cs WITH (NOLOCK)
+						INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
+						WHERE c.srecommend = @CustID AND c.roleid  = 1
+							AND  ((s.SingleMatchParlay < cs.SingleMatchParlay AND s.SingleMatchParlay > 0)
+									OR (s.Combo2 < cs.Combo2 AND s.Combo2 > 0)
+									OR (s.Combo35 < cs.Combo35 AND s.Combo35 > 0)
+									OR (s.ComboOver6 < cs.ComboOver6 AND s.ComboOver6 > 0)))
+		BEGIN
+			SET @isConfirm = 1
+			GOTO RETURNLB;
+		END	
 	END
+
+	RETURNLB:
 
 	IF @isConfirm = 1	
 	BEGIN	

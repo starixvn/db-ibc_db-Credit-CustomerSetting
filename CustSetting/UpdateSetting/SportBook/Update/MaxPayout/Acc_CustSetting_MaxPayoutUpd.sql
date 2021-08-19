@@ -17,6 +17,7 @@ AS
 
 	Revisions:
 		- 20210518@Winfred: Initial SP  [RedmineID:#154104]
+		- 20210813@Eden: no need to update downlines and write indirect log when not affected [RedmineID:#160135]
 
 	Param's Explanation:
 	• @@MaxPayoutLimit:
@@ -111,20 +112,6 @@ BEGIN
 		SET @ErrMsg = 'Users are not in the same line!'
 		RETURN
 	END
-	
-	--Check Allowed downlines	
-	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
-												@custid		= @custid
-											,	@roleid		= @roleid
-											,	@isExecRep	= 1
-											,	@Language	= @Language
-											,	@ErrCode	= @ErrCode	OUTPUT
-											,	@ErrMsg		= @ErrMsg	OUTPUT
-
-	IF @ErrCode > 0
-	BEGIN
-		RETURN
-	END
 
 	--Parse XML	
 	DECLARE @iDoc INT
@@ -166,6 +153,8 @@ BEGIN
 
 	IF @ErrCode <> 0
 		RETURN
+
+	DECLARE @IsAffectedDownline BIT = 0
 
 	IF @RoleID = 1
 	BEGIN
@@ -239,6 +228,28 @@ BEGIN
 		BEGIN
 		  RETURN  
 		END 
+
+		EXEC [Acc_CustSetting_MaxPayoutCheckDownline]
+			@CustID = @CustID,
+			@MaxPayoutLimit = @MaxPayoutLimit,
+			@isConfirm = @IsAffectedDownline OUTPUT
+
+		IF @IsAffectedDownline = 1
+		BEGIN
+			--Check Allowed downlines	
+			EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
+														@custid		= @custid
+													,	@roleid		= @roleid
+													,	@isExecRep	= 1
+													,	@Language	= @Language
+													,	@ErrCode	= @ErrCode	OUTPUT
+													,	@ErrMsg		= @ErrMsg	OUTPUT
+
+			IF @ErrCode > 0
+			BEGIN
+				RETURN
+			END
+		END
 		
 		--update new settings
 		UPDATE main
@@ -257,12 +268,15 @@ BEGIN
 				OR main.Combo35 <> tmp.Combo35
 				OR main.ComboOver6 <> tmp.ComboOver6
 				)
-		-- update Downline
-		EXEC dbo.Acc_CustSetting_12
-			@CustId = @CustId
-			,@RoleId = @RoleId
-			,@XML = @MaxPayoutLimit
-			,@Mode='MaxPayout'
+
+		IF @IsAffectedDownline = 1 -- update Downline
+		BEGIN
+			EXEC dbo.Acc_CustSetting_12
+				@CustId = @CustId
+				,@RoleId = @RoleId
+				,@XML = @MaxPayoutLimit
+				,@Mode='MaxPayout'
+		END
 	END
 	
 
@@ -352,7 +366,7 @@ BEGIN
 				@TrackingValue2 = @logSPData_Old,
 				@duration = @duration	
 		END
-		ELSE
+		ELSE IF @IsAffectedDownline = 1 -- write log Indirectly
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,
