@@ -90,6 +90,7 @@ AS
 	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
+	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -401,7 +402,9 @@ BEGIN
 			@autosuspend2 BIT,
 			@DangerMaster TINYINT = 0,
 			@DangerMaster2 TINYINT = 0,
-			@DangerMaster3 TINYINT = 0
+			@DangerMaster3 TINYINT = 0,
+			@DangerMaster4 TINYINT = 0,
+			@DangerMaster5 TINYINT = 0
 
 	select @enableUpline = isnull(enabled,0), @doubleCommLosingUpline = DoubleCommLosing,
 		@autosuspend = ISNULL(autosuspend, 0),
@@ -409,7 +412,9 @@ BEGIN
 		@virtualmultiplier = ISNULL(virtualmultiplier,1),
 		@DangerMaster = Danger,
 		@DangerMaster2 = Danger2,
-		@DangerMaster3 = Danger3
+		@DangerMaster3 = Danger3,
+		@DangerMaster4 = Danger4,
+		@DangerMaster5 = Danger5
 	from custinfo with (nolock)
 	where custid = @mrecommend
 	
@@ -462,6 +467,8 @@ BEGIN
 				,Danger
 				,Danger2
 				,Danger3
+				,Danger4
+				,Danger5
 				)
 		 SELECT
 				@custid
@@ -512,6 +519,8 @@ BEGIN
 				,@DangerMaster
 				,@DangerMaster2
 				,@DangerMaster3
+				,@DangerMaster4
+				,@DangerMaster5
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 		

@@ -19,6 +19,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	@Danger TINYINT = 0,
 	@Danger2 TINYINT = 0,
 	@Danger3 TINYINT = 0,
+	@Danger4 TINYINT = 0,
+	@Danger5 TINYINT = 0,
 	@Abnormal TINYINT = 0,
 	
 	@phone NVARCHAR(50),
@@ -160,6 +162,7 @@ Revisions:
 	- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
+	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	
 	Param's Explanation:
 • @ErrCode:
@@ -503,7 +506,7 @@ BEGIN
 		  , username
 		  , MatchLimit, VirtualMultiplier
 		  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
-		  , danger, danger2, danger3, Abnormal
+		  , danger, danger2, danger3, danger4, danger5, Abnormal
 		  ,  DoubleCommLosing
 		  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
 		  , MaxPerMatch1MP,maxpermatch164)
@@ -519,7 +522,7 @@ BEGIN
 		  , @username
 		  , @matchlimit, @virtualmultiplier
 		  , @DisableOutright, @DisableCasino, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
-		  , @danger, @danger2, @danger3, @Abnormal
+		  , @danger, @danger2, @danger3, @danger4, @danger5, @Abnormal
 		  ,  @DoubleCommLosing	
 		  , @HideKeno, @DisableEsports, @DisableGoldDeluxe, @HideGoldDeluxe, @DisableSuperLive
 		  , @MaxPerMatchv1MP, @maxpermatchv164
