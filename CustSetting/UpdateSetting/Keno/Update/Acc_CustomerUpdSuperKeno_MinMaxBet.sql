@@ -179,7 +179,7 @@ BEGIN
 											AND ci.srecommend = @CustID
 											AND ci.roleid = 2
 	WHERE bsa.GameTypeID = @GameTypeID  
-		AND ((bsa.MaxBet > @MaxBet AND @MaxBet > 0) OR (bsa.MaxPerGameType > @MaxPerMatch AND @MaxPerMatch > 0)))
+		AND ((bsa.MaxBet > @MaxBet AND @MaxBet > 0) OR (bsa.MaxPerGameType > @MaxPerMatch AND @MaxPerMatch > 0))
 
 	IF @IsAdjustDownline = 1
 	BEGIN
