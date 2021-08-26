@@ -166,8 +166,8 @@ BEGIN
 
 				UPDATE bsm
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsm.MaxBet THEN new.MaxBet ELSE bsm.MaxBet END,
-					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < bsm.MaxPerMatch THEN new.MaxPerMatch ELSE bsm.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsm.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsm.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < bsm.MaxPerMatch AND new.MaxPerMatch > 0 THEN new.MaxPerMatch ELSE bsm.MaxPerMatch END,
 					@NewMaxBet = CASE WHEN @NewMaxPerMatch < @NewMaxBet THEN @NewMaxPerMatch ELSE @NewMaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE bsm.MinBet END,
 					bsm.MinBet = @NewMinBet,
@@ -198,8 +198,8 @@ BEGIN
 			
 				UPDATE bsa
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsa.MaxBet THEN new.MaxBet ELSE bsa.MaxBet END,
-					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < bsa.MaxPerMatch THEN new.MaxPerMatch ELSE bsa.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsa.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsa.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < bsa.MaxPerMatch AND new.MaxPerMatch > 0 THEN new.MaxPerMatch ELSE bsa.MaxPerMatch END,
 					@NewMaxBet = CASE WHEN @NewMaxPerMatch < @NewMaxBet THEN @NewMaxPerMatch ELSE @NewMaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE bsa.MinBet END,
 					bsa.MinBet = @NewMinBet,
@@ -229,8 +229,8 @@ BEGIN
 										
 				UPDATE bsmem
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsmem.MaxBet THEN new.MaxBet ELSE bsmem.MaxBet END,
-					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < bsmem.MaxPerMatch THEN new.MaxPerMatch ELSE bsmem.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsmem.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsmem.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < bsmem.MaxPerMatch AND new.MaxPerMatch > 0 THEN new.MaxPerMatch ELSE bsmem.MaxPerMatch END,
 					@NewMaxBet = CASE WHEN @NewMaxPerMatch < @NewMaxBet THEN @NewMaxPerMatch ELSE @NewMaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE bsmem.MinBet END,
 					bsmem.MinBet = @NewMinBet,
@@ -328,8 +328,8 @@ BEGIN
 
 				UPDATE bsm
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsm.MaxBet THEN new.MaxBet ELSE bsm.MaxBet END,
-					@NewMaxPerNumber = CASE WHEN new.MaxPerNumber < bsm.MaxPerMatch THEN new.MaxPerNumber ELSE bsm.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsm.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsm.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerNumber < bsm.MaxPerMatch AND new.MaxPerNumber > 0 THEN new.MaxPerNumber ELSE bsm.MaxPerMatch END,
 					@NewMaxBet = CASE WHEN @NewMaxPerNumber < @NewMaxBet THEN @NewMaxPerNumber ELSE @NewMaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE bsm.MinBet END,				
 					bsm.MinBet = @NewMinBet,
@@ -360,8 +360,8 @@ BEGIN
 								
 				UPDATE bsa
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsa.MaxBet THEN new.MaxBet ELSE bsa.MaxBet END,
-					@NewMaxPerNumber = CASE WHEN new.MaxPerNumber < bsa.MaxPerMatch THEN new.MaxPerNumber ELSE bsa.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsa.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsa.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerNumber < bsa.MaxPerMatch AND new.MaxPerNumber > 0 THEN new.MaxPerNumber ELSE bsa.MaxPerMatch END,
 					@NewMaxBet = CASE WHEN @NewMaxPerNumber < @NewMaxBet THEN @NewMaxPerNumber ELSE @NewMaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE bsa.MinBet END,	
 					bsa.MinBet = @NewMinBet,
@@ -391,8 +391,8 @@ BEGIN
 												
 				UPDATE bsmem
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsmem.MaxBet THEN new.MaxBet ELSE bsmem.MaxBet END,
-					@NewMaxPerNumber = CASE WHEN new.MaxPerNumber < bsmem.MaxPerMatch THEN new.MaxPerNumber ELSE bsmem.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsmem.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsmem.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerNumber < bsmem.MaxPerMatch AND new.MaxPerNumber > 0 THEN new.MaxPerNumber ELSE bsmem.MaxPerMatch END,
 					@NewMaxBet = CASE WHEN @NewMaxPerNumber < @NewMaxBet THEN @NewMaxPerNumber ELSE @NewMaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE bsmem.MinBet END,	
 					bsmem.MinBet = @NewMinBet,
@@ -486,7 +486,7 @@ BEGIN
 
 				UPDATE bsm
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsm.MaxBet THEN new.MaxBet ELSE bsm.MaxBet END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsm.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsm.MaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsm.MinBet THEN @NewMaxBet ELSE bsm.MinBet END,
 					bsm.MinBet = @NewMinBet,
 					bsm.MaxBet = @NewMaxBet
@@ -513,7 +513,7 @@ BEGIN
 										
 				UPDATE bsa
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsa.MaxBet THEN new.MaxBet ELSE bsa.MaxBet END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsa.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsa.MaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsa.MinBet THEN @NewMaxBet ELSE bsa.MinBet END,
 					bsa.MinBet = @NewMinBet,
 					bsa.MaxBet = @NewMaxBet
@@ -539,7 +539,7 @@ BEGIN
 														
 				UPDATE bsmem
 				SET
-					@NewMaxBet = CASE WHEN new.MaxBet < bsmem.MaxBet THEN new.MaxBet ELSE bsmem.MaxBet END,
+					@NewMaxBet = CASE WHEN new.MaxBet < bsmem.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE bsmem.MaxBet END,
 					@NewMinBet = CASE WHEN @NewMaxBet < bsmem.MinBet THEN @NewMaxBet ELSE bsmem.MinBet END,
 					bsmem.MinBet = @NewMinBet,
 					bsmem.MaxBet = @NewMaxBet

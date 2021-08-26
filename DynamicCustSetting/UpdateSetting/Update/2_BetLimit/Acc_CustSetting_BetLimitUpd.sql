@@ -250,16 +250,15 @@ BEGIN
 				OR main.maxpermatch <> tmp.MaxperMatch
 				)
 	
-		IF EXISTS (SELECT 1
-				FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
-					INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
-					INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
-														AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid = 3)
-															OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid = 2)
-															OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
-				WHERE fil.MaxBet <> 0 AND fil.MaxPerMatch <> 0
-					AND (bsm.MaxBet > fil.MaxBet OR bsm.MaxPerMatch > fil.MaxPerMatch
-						OR (fil.MinBet = 0 AND fil.MaxBet < 1 AND fil.MaxPerMatch < 1)))
+		IF EXISTS (	SELECT 1
+					FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
+						INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+						INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+															AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid = 3)
+																OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid = 2)
+																OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
+					WHERE (bsm.MaxBet > fil.MaxBet AND fil.MaxBet > 0) 
+						OR (bsm.MaxPerMatch > fil.MaxPerMatch AND fil.MaxPerMatch > 0))
 			SELECT @IsAdjustDownline = 1
 
 		IF @IsAdjustDownline = 1
@@ -272,7 +271,7 @@ BEGIN
 										MaxBet,
 										MaxPerMatch
 								FROM	@NewBetLimitTbl
-								WHERE MaxBet <> 0 AND MaxPerMatch <> 0
+								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
 								FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
 							)
 				
