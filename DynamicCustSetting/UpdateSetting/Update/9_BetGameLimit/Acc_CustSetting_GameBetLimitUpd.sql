@@ -250,17 +250,24 @@ BEGIN
 				OR main.maxpermatch <> tmp.MaxPerNumber
 				)
 		
-		IF EXISTS (SELECT 1
+		IF EXISTS (	SELECT 1
 					FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
 						INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
 						INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
-															AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid IN (3,2,1))
-																OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid IN (2,1))
-																OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
+															AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid IN (3,2))
+																OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid IN (2)))
 					WHERE (bsm.MaxBet > fil.MaxBet AND fil.MaxBet > 0) 
 						OR (bsm.MaxPerMatch > fil.MaxPerNumber AND fil.MaxPerNumber > 0))
+		OR EXISTS (	SELECT 1
+				FROM dbo.CustBetSetting3rd_Member bsm WITH(NOLOCK)
+					INNER JOIN @NewBetLimitTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+					INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+														AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid = 1)
+															OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid = 1)
+															OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
+				WHERE (bsm.MaxBet > fil.MaxBet AND fil.MaxBet > 0) 
+					OR (bsm.MaxPerMatch > fil.MaxPerNumber AND fil.MaxPerNumber > 0))
 			SELECT @IsAdjustDownline = 1
-
 		
 		IF @IsAdjustDownline = 1
 		BEGIN
