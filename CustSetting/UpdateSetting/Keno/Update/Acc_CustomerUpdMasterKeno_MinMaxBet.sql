@@ -200,7 +200,7 @@ BEGIN
 	FROM dbo.CustGameType bsa WITH(NOLOCK)
 		INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsa.custid = ci.custid
 											AND ci.mrecommend = @CustID
-											AND ci.roleid = 2
+											AND ci.roleid IN (2,1)
 	WHERE bsa.GameTypeID = @GameTypeID  
 		AND ((bsa.MaxBet > @MaxBet AND @MaxBet > 0) OR (bsa.MaxPerGameType > @MaxPerMatch AND @MaxPerMatch > 0))
 

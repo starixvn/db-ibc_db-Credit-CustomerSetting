@@ -167,7 +167,7 @@ BEGIN
 				FROM dbo.CustGameType bsm WITH(NOLOCK)
 					INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
 														AND ci.srecommend = @CustID
-														AND ci.roleid = 3
+														AND ci.roleid IN (3,2,1)
 				WHERE bsm.GameTypeID = @GameTypeID  
 					AND ((bsm.MaxBet > @MaxBet AND @MaxBet > 0) OR (bsm.MaxPerGameType > @MaxPerMatch AND @MaxPerMatch > 0)))
 			SELECT @IsAdjustDownline = 1
