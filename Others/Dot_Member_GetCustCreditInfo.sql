@@ -72,10 +72,13 @@ AS
 	-- 20200811@VN-Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
 	-- 20200826@VN-Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
 	-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
+	-- 20210204@TW-Andy: BasketBall BetBuilder Use MaxPerMatch99MP														   
 	-- 20210219@VN-Eden: Apply VR by stake range and Auto Adjustment VR by Member profile [Redmine: #150298]
 	-- 20210309@VN-Eden: Revise @betfrom = 'a' to 'z' to VR setting for Basketball on some licensees from Desktop/China View [Redmine: #151392]
 	-- 20210226@VN-Eden: Implement Lock for VR update [Redmine:#149370]
 	-- 20210427@VN-Eden: Implement dedicated feature to control Global Virtual Rate adjustment on tickets [Redmine:#136423]
+	-- 20210703@TW-Andy: Credit user lock account  suspend 
+	-- 20210427@VN-Eden: change funtion get autosuspend [Redmine: #160766]
 */	
 BEGIN
 
@@ -90,7 +93,7 @@ BEGIN
 			@closed BIT, @reject BIT, @DisableBet BIT,@MaxWinVendorGame SMALLMONEY=0,
 			@DisBetSetting BIT,@DisBetSetting3rd BIT = 0,@BonusWalletFlag BIT,@False BIT=0,@True BIT=1,@Zero TINYINT=0,@MaxWinLimit SMALLMONEY=0,
 			@MaxLossLimit MONEY=0,@CN88_reject BIT= 1,@CN88_closed BIT=1, @Site VARCHAR(10), @IsForcedVRValue BIT, @ForcedVRValue SMALLMONEY, @creatdate DATETIME, @SiteID INT,
-			@Istest BIT
+			@Istest BIT,@Locked bit = 0
 
 	SELECT @Istest = CASE WHEN (OBJECT_NAME(@@PROCID) LIKE '%[_]xtest%' 
 								OR  OBJECT_NAME(@@PROCID) LIKE  '%[_]xpre%' 
@@ -157,6 +160,7 @@ BEGIN
 					WHEN @isparlay=0 and @sporttype=32 THEN maxpermatch2
 					WHEN @isparlay=0 and @sporttype=44 THEN MaxPerMatch99
 					WHEN @isparlay=1 and @sporttype=1 THEN MaxPerMatch1MP
+					WHEN @isparlay=1 and @sporttype=2 and @bettype = 38 THEN MaxPerMatch99MP														 
 					WHEN @isparlay=1 and @sporttype=99 THEN MaxPerMatch99MP
 					ELSE ci.maxpermatch99 END, 0),
 					@autosuspend=case when @sporttype=1 then ISNULL(ci.autosuspend,@False)
@@ -171,10 +175,19 @@ BEGIN
 										when @sporttype=43 then ci.DisableEsports
 										when @sporttype=1 and @bettype in (801,802,803,804,805,806) then ci.DisableSuperLive
 										else @False end,@True) | @DisableSport,
-					@closed=CASE WHEN @usertype=2 THEN isnull(ci.closed,@False) | @CN88_closed ELSE isnull(ci.closed,@False) END,
-					@reject= case when @DisableBet=@False then CASE WHEN @usertype=2 THEN @CN88_reject ELSE isnull(ci.reject,@False) END else @DisableBet end
+					@closed=CASE WHEN @usertype=2 THEN isnull(ci.closed,@False) | @CN88_closed 
+							WHEN @isLicensee=0 then case when isnull(cps.closeinfo,0) >0 then 1 else 0 end
+							ELSE isnull(ci.closed,@False) END,
+					@reject= case when @DisableBet=@False then 
+								CASE WHEN @isLicensee=0 then case when isnull(cps.SuspendInfo,0) >0 then 1 else 0 end
+									 WHEN @usertype=2 THEN @CN88_reject 
+								ELSE isnull(ci.reject,@False) END 
+							 else @DisableBet end,
+					@Locked= CASE WHEN @isLicensee=0 then case when isnull(cps.Locked,0) >0 then 1 else 0 end
+							 ELSE 0 END
 		from custinfo as ci with (nolock) 
-			join exchange as ex with (nolock) on  ci.currency = ex.exchangeid 
+		join exchange as ex with (nolock) on  ci.currency = ex.exchangeid 
+		left join CustProductStatus as cps with (nolock) on ci.custid = cps.custid
 		where ci.custid=@custid 
 	
 	------------------------------------------------
@@ -457,18 +470,15 @@ BEGIN
 		SET @virtualrate = isnull(@new_virtualrate,1)
 	end
 
-	--Get E-Sport Autosuspend 
+	--Get Autosuspend (VR2)
 	IF @sporttype IN(2, 43) AND @isparlay = 0 
 	BEGIN
 		SET @autosuspend = @False
 
-		IF @sporttype = 2 AND @IsLowVR = 1 AND @virtualrate < 1.00 
-			SET @autosuspend = @False
-		ELSE
 		IF ISNULL(@usertype,0) <> 2 -- not CN88
 		BEGIN
 			SELECT @autosuspend = t.IsVRAutoSuspend 
-			FROM [dbo].[f_GetVRAutosuspendStatus](@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator) t
+			FROM [dbo].f_GetVRAutosuspendStatus_Placebet(@custid, @sporttype_vrate, @bettype_vrate, @LeagueGroupID, @liveindicator,@virtualrate) t
 
 			SET @autosuspend = ISNULL(@autosuspend,@False)
 		END
@@ -504,5 +514,5 @@ BEGIN
 			@actualrate actualrate, @currencyname currencyname, @virtualrate virtualrate,
 			@maxpermatch maxpermatch, @autosuspend autosuspend, @currency currency,
 			@closed closed, @reject reject, @DisableBet disabledBet,@DisBetSetting3rd DisBetSetting3rd,@BonusWalletFlag BonusWalletFlag,
-			@MaxWinLimit MaxWinLimit, @MaxLossLimit MaxLossLimit
+			@MaxWinLimit MaxWinLimit, @MaxLossLimit MaxLossLimit,@Locked Locked
 END
