@@ -319,6 +319,7 @@ Revisions:
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 	- 20210324@Johnson: Hide GoldDeluxe settings [redmine:#151188]
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600] 
+	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -627,6 +628,8 @@ BEGIN
 	    @AgentDanger tinyint,
 	    @AgentDanger2 tinyint,
 	    @AgentDanger3 tinyint,
+		@AgentDanger4 tinyint,
+	    @AgentDanger5 tinyint,
 	    @AgentAbnormal tinyint,
     	
 	    -- check autosuspend's upline
@@ -1442,6 +1445,8 @@ BEGIN
          , @AgentDanger = Danger
          , @AgentDanger2 = Danger2
          , @AgentDanger3 = Danger3
+		 , @AgentDanger4 = Danger4
+         , @AgentDanger5 = Danger5
          , @AgentAbnormal = Abnormal
          , @autosuspend = ISNULL(autosuspend, 0)
          , @autosuspend2 = ISNULL(autosuspend2, 0)
@@ -2604,6 +2609,8 @@ BEGIN
 	    @Danger = @AgentDanger,
 	    @Danger2 = @AgentDanger2,
 	    @Danger3 = @AgentDanger3,
+		@Danger4 = @AgentDanger4,
+	    @Danger5 = @AgentDanger5,
 	    @Abnormal = @AgentAbnormal,
     	
 	  
@@ -3792,6 +3799,8 @@ BEGIN
     'Danger="'+ COALESCE(CAST(@AgentDanger AS VARCHAR(5)), SPACE(1)) + '" ' +
     'Danger2="'+ COALESCE(CAST(@AgentDanger2 AS VARCHAR(5)), SPACE(1)) + '" ' +
     'Danger3="'+ COALESCE(CAST(@AgentDanger3 AS VARCHAR(5)), SPACE(1)) + '" ' +
+	'Danger4="'+ COALESCE(CAST(@AgentDanger4 AS VARCHAR(5)), SPACE(1)) + '" ' +
+	'Danger5="'+ COALESCE(CAST(@AgentDanger5 AS VARCHAR(5)), SPACE(1)) + '" ' +
     'Abnormal="'+ COALESCE(CAST(@AgentAbnormal AS VARCHAR(5)), SPACE(1)) + '" ' +
 	--20171206@Johnson: add more log for status
 	'Special=" " ' +
@@ -3824,6 +3833,8 @@ BEGIN
 	    'Danger="'+ COALESCE(CAST(@AgentDanger AS VARCHAR(5)), SPACE(1)) + '" ' +
 	    'Danger2="'+ COALESCE(CAST(@AgentDanger2 AS VARCHAR(5)), SPACE(1)) + '" ' +
 	    'Danger3="'+ COALESCE(CAST(@AgentDanger3 AS VARCHAR(5)), SPACE(1)) + '" ' +
+		'Danger4="'+ COALESCE(CAST(@AgentDanger4 AS VARCHAR(5)), SPACE(1)) + '" ' +
+		'Danger5="'+ COALESCE(CAST(@AgentDanger5 AS VARCHAR(5)), SPACE(1)) + '" ' +
 	    'Abnormal="'+ COALESCE(CAST(@AgentAbnormal AS VARCHAR(5)), SPACE(1)) + '" ' +
 		--20171206@Johnson: add more log for status
 		'Special=" " ' +

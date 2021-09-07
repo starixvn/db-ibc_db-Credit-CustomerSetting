@@ -443,6 +443,8 @@ Revisions:
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]	
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]	
+	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: super create master successfully.
@@ -877,7 +879,9 @@ BEGIN
 		@DisableSuperLive BIT = 0,
 		@DangerSuper TINYINT = 0,
 		@DangerSuper2 TINYINT = 0,
-		@DangerSuper3 TINYINT = 0
+		@DangerSuper3 TINYINT = 0,
+		@DangerSuper4 TINYINT = 0,
+		@DangerSuper5 TINYINT = 0
 		
 
     DECLARE @ErrType VARCHAR(4000)	
@@ -923,7 +927,9 @@ BEGIN
 		@DisableSuperLive = DisableSuperLive,
 		@DangerSuper = Danger,
 		@DangerSuper2 = Danger2,
-		@DangerSuper3 = Danger3
+		@DangerSuper3 = Danger3,
+		@DangerSuper4 = Danger4,
+		@DangerSuper5 = Danger5
     FROM CustInfo ci WITH(NOLOCK)
 		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 							,CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject									
@@ -1842,6 +1848,8 @@ BEGIN
 		@Danger = @DangerSuper,
 		@Danger2 = @DangerSuper2,
 		@Danger3 = @DangerSuper3,
+		@Danger4 = @DangerSuper4,
+		@Danger5 = @DangerSuper5,
     	
 	    @credit = @credit,
 	    @maxcredit = null,
@@ -2577,6 +2585,8 @@ BEGIN
 	'Danger="'+ COALESCE(CAST(@DangerSuper AS VARCHAR(5)), SPACE(1)) + '" ' +
     'Danger2="'+ COALESCE(CAST(@DangerSuper2 AS VARCHAR(5)), SPACE(1)) + '" ' +
     'Danger3="'+ COALESCE(CAST(@DangerSuper3 AS VARCHAR(5)), SPACE(1)) + '" ' +
+	'Danger4="'+ COALESCE(CAST(@DangerSuper4 AS VARCHAR(5)), SPACE(1)) + '" ' +
+	'Danger5="'+ COALESCE(CAST(@DangerSuper5 AS VARCHAR(5)), SPACE(1)) + '" ' +
 	--20171206@Johnson: add more log for status
 	'Special=" " ' +
 	'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -2611,6 +2621,8 @@ BEGIN
 		'Danger="'+ COALESCE(CAST(@DangerSuper AS VARCHAR(5)), SPACE(1)) + '" ' +
 		'Danger2="'+ COALESCE(CAST(@DangerSuper2 AS VARCHAR(5)), SPACE(1)) + '" ' +
 		'Danger3="'+ COALESCE(CAST(@DangerSuper3 AS VARCHAR(5)), SPACE(1)) + '" ' +
+		'Danger4="'+ COALESCE(CAST(@DangerSuper4 AS VARCHAR(5)), SPACE(1)) + '" ' +
+		'Danger5="'+ COALESCE(CAST(@DangerSuper5 AS VARCHAR(5)), SPACE(1)) + '" ' +
 		--20171206@Johnson: add more log for status
 		'Special=" " ' +
 		'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +

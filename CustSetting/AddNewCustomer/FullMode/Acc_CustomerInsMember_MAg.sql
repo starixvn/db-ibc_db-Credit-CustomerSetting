@@ -457,7 +457,7 @@ Revisions:
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
-	
+	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 Param's Explanation:
 • @ErrCode:
     = 0: Create agent successfully.
@@ -804,7 +804,9 @@ BEGIN
 		@DisableSuperLive BIT = 0,
 		@DangerMaster TINYINT = 0,
 		@DangerMaster2 TINYINT = 0,
-		@DangerMaster3 TINYINT = 0
+		@DangerMaster3 TINYINT = 0,
+		@DangerMaster4 TINYINT = 0,
+		@DangerMaster5 TINYINT = 0
         
     SELECT @currency = currency
          --, @Msuspended = reject
@@ -832,6 +834,8 @@ BEGIN
 		 , @DangerMaster = Danger
 		 , @DangerMaster2 = Danger2
 		 , @DangerMaster3 = Danger3
+		 , @DangerMaster4 = Danger4
+		 , @DangerMaster5 = Danger5
      FROM CustInfo ci WITH(NOLOCK) 
 		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 							,CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject									
@@ -1910,6 +1914,8 @@ BEGIN
 		@Danger = @DangerMaster,
 		@Danger2 = @DangerMaster2,
 		@Danger3 = @DangerMaster3,
+		@Danger4 = @DangerMaster4,
+		@Danger5 = @DangerMaster5,
 	 
 	    @IP = @IP,
 	    @TransferOption_dec = @TransferOption_dec,
@@ -2611,6 +2617,8 @@ BEGIN
 	'Danger="'+ COALESCE(CAST(@DangerMaster AS VARCHAR(5)),SPACE(1)) + '" ' +
 	'Danger2="'+ COALESCE(CAST(@DangerMaster2 AS VARCHAR(5)),SPACE(1)) + '" ' +
 	'Danger3="'+ COALESCE(CAST(@DangerMaster3 AS VARCHAR(5)),SPACE(1)) + '" ' +
+	'Danger4="'+ COALESCE(CAST(@DangerMaster4 AS VARCHAR(5)),SPACE(1)) + '" ' +
+	'Danger5="'+ COALESCE(CAST(@DangerMaster5 AS VARCHAR(5)),SPACE(1)) + '" ' +
 	'Abnormal="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'Special=" " ' +
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -2642,6 +2650,8 @@ BEGIN
 		'Danger="'+ COALESCE(CAST(@DangerMaster AS VARCHAR(5)),SPACE(1)) + '" ' +
 		'Danger2="'+ COALESCE(CAST(@DangerMaster2 AS VARCHAR(5)),SPACE(1)) + '" ' +
 		'Danger3="'+ COALESCE(CAST(@DangerMaster3 AS VARCHAR(5)),SPACE(1)) + '" ' +
+		'Danger4="'+ COALESCE(CAST(@DangerMaster4 AS VARCHAR(5)),SPACE(1)) + '" ' +
+		'Danger5="'+ COALESCE(CAST(@DangerMaster5 AS VARCHAR(5)),SPACE(1)) + '" ' +
 		'Abnormal="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'Special=" " ' +
 		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
