@@ -1,1 +1,3 @@
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
+DynamicCustSetting\UpdateSetting\Update\6_WinLossLimit\Acc_CustSetting_WinLossLimitUpd.sql
+DynamicCustSetting\UpdateSetting\Update\2_BetLimitAcc_CustSetting_BetLimitUpd.sql
+DynamicCustSetting\UpdateSetting\Update\13_NewProductStatusAcc_CustSetting_DisableNewProductStatusUpd.sql
