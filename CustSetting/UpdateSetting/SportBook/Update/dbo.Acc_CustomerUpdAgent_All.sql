@@ -380,7 +380,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	-- mixed sports
 	@UpdateMinMaxBetv99MP bit = 1,
 	
-	@UpdateMinMaxBetv1MP bit = 1,
+	@UpdateMinMaxBetMP bit = 1,
 
 	-- number game
 	@UpdateMinMaxBetv161 bit = 1,
@@ -496,6 +496,7 @@ Revisions:
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20210707@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20210910@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
 
 Param's Explanation:
 • @ErrCode:
@@ -689,7 +690,7 @@ BEGIN
 			,@UpdateMinMaxBetv11 = 1
 			,@UpdateMinMaxBetv99 = 1
 			,@UpdateMinMaxBetv99MP = 1
-			,@UpdateMinMaxBetv1MP = 1
+			,@UpdateMinMaxBetMP = 1
 			,@UpdateMinMaxBetv161 = 1
 			,@UpdateMinMaxBetv164 = 1
 	END
@@ -704,7 +705,7 @@ BEGIN
 		@UpdateMinMaxBetv11  = 1 or
 		@UpdateMinMaxBetv99  = 1 or
 		@UpdateMinMaxBetv99MP = 1 or
-		@UpdateMinMaxBetv1MP = 1 or		
+		@UpdateMinMaxBetMP = 1 or		
 		@UpdateMinMaxBetv161 = 1 or
 		@UpdateMinMaxBetv164 = 1  		
 	BEGIN
@@ -779,7 +780,7 @@ BEGIN
 			@UpdateMinMaxBetv11 = @UpdateMinMaxBetv11,
 			@UpdateMinMaxBetv99 = @UpdateMinMaxBetv99,
 			@UpdateMinMaxBetv99MP = @UpdateMinMaxBetv99MP,
-			@UpdateMinMaxBetv1MP = @UpdateMinMaxBetv1MP,			
+			@UpdateMinMaxBetMP = @UpdateMinMaxBetMP,			
 			@UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,
 			@UpdateMinMaxBetv164 = @UpdateMinMaxBetv164,
 			@SubAccID = @SubAccID,

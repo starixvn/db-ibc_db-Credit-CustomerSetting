@@ -67,7 +67,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_MinMaxBet]
 	-- mix parlay of mixed sports
 	@UpdateMinMaxBetv99MP bit = 1,
 	
-	@UpdateMinMaxBetv1MP bit = 1,
+	@UpdateMinMaxBetMP bit = 1,
 	
 	-- number game
 	@UpdateMinMaxBetv161 bit = 1,
@@ -109,6 +109,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+	- 20210910@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -360,7 +361,7 @@ BEGIN
 		END
 	END
 
-	if @UpdateMinMaxBetv1MP = 1 or @UpdateMultiple = 0
+	if @UpdateMinMaxBetMP = 1 or @UpdateMultiple = 0
 	BEGIN
 		if 
 			@minbetv1mp < 0
@@ -442,7 +443,7 @@ BEGIN
 		END
 	END
 
-	if @UpdateMultiple = 0 or @UpdateMinMaxBetv1MP=1 
+	if @UpdateMultiple = 0 or @UpdateMinMaxBetMP=1 
 	BEGIN
 		if (@minbetv1mp <> 0 and @maxbetv1mp <> 0 and @minbetv1mp > @maxbetv1mp) 
 		or (@maxbetv1mp <> 0 and @maxpermatchv1mp <> 0 and @maxbetv1mp > @maxpermatchv1mp)
@@ -746,7 +747,7 @@ BEGIN
 		END
 	END
 	
-	IF @UpdateMultiple = 0 or @UpdateMinMaxBetv1MP=1 
+	IF @UpdateMultiple = 0 or @UpdateMinMaxBetMP=1 
 	BEGIN
 		if (@MinMinBetv1MP > 0 and @minbetv1mp > 0 and @minbetv1mp < @MinMinBetv1MP)
 		
@@ -1200,8 +1201,8 @@ BEGIN
 	------------
 	update custsetting with (ROWLOCK, UPDLOCK)
 	set	
-		minbet = case when @UpdateMultiple = 1 and ((sporttype=1 and @UpdateMinMaxBetv1MP = 0 AND bettype = 9) or (sporttype=1 and @UpdateMinMaxBet = 0 AND bettype <> 9) or (sporttype=2 and @UpdateMinMaxBetv2 = 0) or (sporttype=3 and @UpdateMinMaxBetv3 = 0) or (sporttype=5 and @UpdateMinMaxBetv5 = 0) or (sporttype=8 and @UpdateMinMaxBetv8 = 0) or (sporttype=10 and @UpdateMinMaxBetv10 = 0) or (sporttype=11 and @UpdateMinMaxBetv11 = 0) or (sporttype=99 and @UpdateMinMaxBetv99 = 0 and bettype <> 9) or (sporttype=99 and @UpdateMinMaxBetv99MP = 0 and bettype = 9) or (sporttype=161 and @UpdateMinMaxBetv161=0)) then minbet else case sporttype when 1 then (case when bettype = 9 then @minbetv1mp else @minbet end)  when 2 then @minbetv2 when 3 then @minbetv3 when 5 then @minbetv5 when 8 then @minbetv8 when 10 then @minbetv10 when 11 then @minbetv11  when 99 then (case when bettype = 9 then @minbetv99mp else @minbetv99 end)  else minbet end end,
-		maxbet = case when @UpdateMultiple = 1 and ((sporttype=1 and @UpdateMinMaxBetv1MP = 0 AND bettype = 9) or (sporttype=1 and @UpdateMinMaxBet = 0 AND bettype <> 9) or (sporttype=2 and @UpdateMinMaxBetv2 = 0) or (sporttype=3 and @UpdateMinMaxBetv3 = 0) or (sporttype=5 and @UpdateMinMaxBetv5 = 0) or (sporttype=8 and @UpdateMinMaxBetv8 = 0) or (sporttype=10 and @UpdateMinMaxBetv10 = 0) or (sporttype=11 and @UpdateMinMaxBetv11 = 0) or (sporttype=99 and @UpdateMinMaxBetv99 = 0 and bettype <> 9) or (sporttype=99 and @UpdateMinMaxBetv99MP = 0 and bettype = 9) or (sporttype=161 and @UpdateMinMaxBetv161=0)) then maxbet else case sporttype when 1 then (case when bettype = 9 then @maxbetv1mp else @maxbet end)  when 2 then @maxbetv2 when 3 then @maxbetv3 when 5 then @maxbetv5 when 8 then @maxbetv8 when 10 then @maxbetv10 when 11 then @maxbetv11  when 99 then (case when bettype = 9 then @maxbetv99mp else @maxbetv99 end)  else maxbet end end	
+		minbet = case when @UpdateMultiple = 1 and ((sporttype=1 and @UpdateMinMaxBetMP = 0 AND bettype = 9) or (sporttype=1 and @UpdateMinMaxBet = 0 AND bettype <> 9) or (sporttype=2 and @UpdateMinMaxBetv2 = 0) or (sporttype=3 and @UpdateMinMaxBetv3 = 0) or (sporttype=5 and @UpdateMinMaxBetv5 = 0) or (sporttype=8 and @UpdateMinMaxBetv8 = 0) or (sporttype=10 and @UpdateMinMaxBetv10 = 0) or (sporttype=11 and @UpdateMinMaxBetv11 = 0) or (sporttype=99 and @UpdateMinMaxBetv99 = 0 and bettype <> 9) or (sporttype=99 and @UpdateMinMaxBetv99MP = 0 and bettype = 9) or (sporttype=161 and @UpdateMinMaxBetv161=0)) then minbet else case sporttype when 1 then (case when bettype = 9 then @minbetv1mp else @minbet end)  when 2 then @minbetv2 when 3 then @minbetv3 when 5 then @minbetv5 when 8 then @minbetv8 when 10 then @minbetv10 when 11 then @minbetv11  when 99 then (case when bettype = 9 then @minbetv99mp else @minbetv99 end)  else minbet end end,
+		maxbet = case when @UpdateMultiple = 1 and ((sporttype=1 and @UpdateMinMaxBetMP = 0 AND bettype = 9) or (sporttype=1 and @UpdateMinMaxBet = 0 AND bettype <> 9) or (sporttype=2 and @UpdateMinMaxBetv2 = 0) or (sporttype=3 and @UpdateMinMaxBetv3 = 0) or (sporttype=5 and @UpdateMinMaxBetv5 = 0) or (sporttype=8 and @UpdateMinMaxBetv8 = 0) or (sporttype=10 and @UpdateMinMaxBetv10 = 0) or (sporttype=11 and @UpdateMinMaxBetv11 = 0) or (sporttype=99 and @UpdateMinMaxBetv99 = 0 and bettype <> 9) or (sporttype=99 and @UpdateMinMaxBetv99MP = 0 and bettype = 9) or (sporttype=161 and @UpdateMinMaxBetv161=0)) then maxbet else case sporttype when 1 then (case when bettype = 9 then @maxbetv1mp else @maxbet end)  when 2 then @maxbetv2 when 3 then @maxbetv3 when 5 then @maxbetv5 when 8 then @maxbetv8 when 10 then @maxbetv10 when 11 then @maxbetv11  when 99 then (case when bettype = 9 then @maxbetv99mp else @maxbetv99 end)  else maxbet end end	
 	where custid=@custid
 	if (@@error <> 0)
 	begin
@@ -1260,7 +1261,7 @@ BEGIN
 		@UpdateMinMaxBetv99 = @UpdateMinMaxBetv99,
 		@UpdateMinMaxBetv99MP = @UpdateMinMaxBetv99MP,
 		
-		@UpdateMinMaxBetv1MP = @UpdateMinMaxBetv1MP,
+		@UpdateMinMaxBetMP = @UpdateMinMaxBetMP,
 		
 
 		@UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,
@@ -1374,11 +1375,11 @@ BEGIN
 								ELSE 0 END),
 								
 		@minbetv1mp = MAX(CASE WHEN sporttype = 1 AND bettype = 9 THEN 
-										(CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetv1mp = 0 
+										(CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetMP = 0 
 												THEN minbet ELSE @minbetv1mp END) 
 								ELSE 0 END),
 		@maxbetv1mp = MAX(CASE WHEN sporttype = 1 AND bettype = 9 THEN 
-										(CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetv1mp = 0 
+										(CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetMP = 0 
 												THEN maxbet ELSE @maxbetv1mp END) 
 								ELSE 0 END)
 	FROM custSetting WITH(NOLOCK)
@@ -1413,7 +1414,7 @@ BEGIN
 		@maxpermatchv99 = CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetv99 = 0 THEN maxpermatch99 ELSE @maxpermatchv99 END,
 		@maxpermatchv99MP = CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetv99MP = 0 THEN maxpermatch99MP ELSE @maxpermatchv99MP END,
 		
-		@maxpermatchv1MP = CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetv1MP = 0 THEN maxpermatch1MP ELSE @maxpermatchv1MP END,
+		@maxpermatchv1MP = CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetMP = 0 THEN maxpermatch1MP ELSE @maxpermatchv1MP END,
 		
 		
 		@maxpermatchv161 = CASE WHEN @UpdateMultiple = 1 AND @UpdateMinMaxBetv161 = 0 THEN maxpermatch161 ELSE @maxpermatchv161 END,
@@ -1477,7 +1478,7 @@ BEGIN
 	'UMMBv11="'+ coalesce(cast(@UpdateMinMaxBetv11 as varchar(50)),space(1))+ '" ' +
 	'UMMBv99="'+ coalesce(cast(@UpdateMinMaxBetv99 as varchar(50)),space(1))+ '" ' +
 	'UMMBv99MP="'+ coalesce(cast(@UpdateMinMaxBetv99MP as varchar(50)),space(1))+ '" ' +
-	'UMMBv1MP="'+ coalesce(cast(@UpdateMinMaxBetv1MP as varchar(50)),space(1))+ '" ' +
+	'UMMBv1MP="'+ coalesce(cast(@UpdateMinMaxBetMP as varchar(50)),space(1))+ '" ' +
 
 	'UMMBv161="'+ coalesce(cast(@UpdateMinMaxBetv161 as varchar(50)),space(1))+ '" ' +
 	'UMMBv164="'+ coalesce(cast(@UpdateMinMaxBetv164 as varchar(50)),space(1))+ '" ' +
@@ -1543,7 +1544,7 @@ BEGIN
 	'UMMBv11="'+ coalesce(cast(@UpdateMinMaxBetv11 as varchar(50)),space(1))+ '" ' +
 	'UMMBv99="'+ coalesce(cast(@UpdateMinMaxBetv99 as varchar(50)),space(1))+ '" ' +
 	'UMMBv99MP="'+ coalesce(cast(@UpdateMinMaxBetv99MP as varchar(50)),space(1))+ '" ' +
-	'UMMBv1MP="'+ coalesce(cast(@UpdateMinMaxBetv1MP as varchar(50)),space(1))+ '" ' +
+	'UMMBv1MP="'+ coalesce(cast(@UpdateMinMaxBetMP as varchar(50)),space(1))+ '" ' +
 	
 	'UMMBv161="'+ coalesce(cast(@UpdateMinMaxBetv161 as varchar(50)),space(1))+ '" ' +
 	'UMMBv164="'+ coalesce(cast(@UpdateMinMaxBetv164 as varchar(50)),space(1))+ '" ' +
@@ -1623,7 +1624,7 @@ BEGIN
 		'UMMBv99="'+ coalesce(cast(@UpdateMinMaxBetv99 as varchar(50)),space(1))+ '" ' +
 		'UMMBv99MP="'+ coalesce(cast(@UpdateMinMaxBetv99MP as varchar(50)),space(1))+ '" ' +
 		
-		'UMMBv1MP="'+ coalesce(cast(@UpdateMinMaxBetv1MP as varchar(50)),space(1))+ '" ' +
+		'UMMBv1MP="'+ coalesce(cast(@UpdateMinMaxBetMP as varchar(50)),space(1))+ '" ' +
 		
 	
 		'UMMBv161="'+ coalesce(cast(@UpdateMinMaxBetv161 as varchar(50)),space(1))+ '" ' +
@@ -1693,7 +1694,7 @@ BEGIN
 		'UMMBv99="'+ coalesce(cast(@UpdateMinMaxBetv99 as varchar(50)),space(1))+ '" ' +
 		'UMMBv99MP="'+ coalesce(cast(@UpdateMinMaxBetv99MP as varchar(50)),space(1))+ '" ' +
 		
-		'UMMBv1MP="'+ coalesce(cast(@UpdateMinMaxBetv1MP as varchar(50)),space(1))+ '" ' +
+		'UMMBv1MP="'+ coalesce(cast(@UpdateMinMaxBetMP as varchar(50)),space(1))+ '" ' +
 		
 		'UMMBv161="'+ coalesce(cast(@UpdateMinMaxBetv161 as varchar(50)),space(1))+ '" ' +
 		'UMMBv164="'+ coalesce(cast(@UpdateMinMaxBetv164 as varchar(50)),space(1))+ '" ' +

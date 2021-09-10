@@ -93,7 +93,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@UpdateMinMaxBetv99 BIT = 1,  
 
 	@UpdateMinMaxBetv99MP BIT = 1,  
-	@UpdateMinMaxBetv1MP BIT = 1,
+	@UpdateMinMaxBetMP BIT = 1,
 	
 	@UpdateMinMaxBetv161 BIT = 1,  
 	@UpdateMinMaxBetv164 BIT = 1,  
@@ -251,7 +251,7 @@ Revisions:
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-		
+	- 20210910@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]	
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -441,7 +441,7 @@ BEGIN
 			,@UpdateMinMaxBetv11 = 1
 			,@UpdateMinMaxBetv99 = 1
 			,@UpdateMinMaxBetv99MP = 1
-			,@UpdateMinMaxBetv1MP = 1
+			,@UpdateMinMaxBetMP = 1
 			,@UpdateMinMaxBetv161 = 1
 			,@UpdateMinMaxBetv164 = 1
 	END
@@ -455,7 +455,7 @@ BEGIN
 		@UpdateMinMaxBetv11  = 1 or  
 		@UpdateMinMaxBetv99  = 1 or  
 		@UpdateMinMaxBetv99MP = 1 or  
-		@UpdateMinMaxBetv1MP = 1 or  
+		@UpdateMinMaxBetMP = 1 or  
 		
 		@UpdateMinMaxBetv161 = 1 or
 		@UpdateMinMaxBetv164 = 1  	
@@ -527,7 +527,7 @@ BEGIN
 	  @UpdateMinMaxBetv99 = @UpdateMinMaxBetv99,  
 	  @UpdateMinMaxBetv99MP = @UpdateMinMaxBetv99MP,  
 	  
-	  @UpdateMinMaxBetv1MP = @UpdateMinMaxBetv1MP,  
+	  @UpdateMinMaxBetMP = @UpdateMinMaxBetMP,  
 	  
 	
 	  @UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,  
