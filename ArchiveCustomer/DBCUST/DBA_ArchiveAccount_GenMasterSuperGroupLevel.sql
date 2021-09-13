@@ -17,6 +17,7 @@ AS
 		- 20210302@Eden: Just process SMA(s) stage 2, 3, 4 when they processed stage 1  [RedmineID: #149262]
 		- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20210825@Eden: Exclude Direct Masters/Agents/Members from Archiving Credit Account process (Stage 3 and Stage 4) [RedmineID: #160690]
 		
 	Param's Explanation:
 */
@@ -173,17 +174,24 @@ BEGIN
 						
 	-- Master have no downline, its Super not in list processing
 	-- Insert M0 - Master have no downline, its Super not in list processing
-	CREATE TABLE #Super_Exception (srecommend INT)
+	CREATE TABLE #Super_Exception (srecommend INT PRIMARY KEY)
+
 	INSERT INTO #Super_Exception (srecommend)
-	SELECT DISTINCT ci.srecommend		
+	SELECT ci.srecommend		
 	FROM DBCUST.CUSTDB.dbo.CustGroupHeadline gl WITH(NOLOCK)		
 		INNER JOIN Customer ci WITH(NOLOCK) ON gl.CustID = ci.custid		
 	WHERE GroupID > 0 and ci.roleid in (1,2,3,4)
 	UNION
-	SELECT DISTINCT ag.custid
+	SELECT ag.custid
 	FROM DBCUST.CUSTDB.dbo.phonebettingCustomerList p WITH(NOLOCK)
 		INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
 		INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
+
+	--Exclude SuperID: 44671646
+	INSERT INTO #Super_Exception(srecommend)
+	SELECT t.custid
+	FROM (VALUES(44671646)) AS t(custID)
+	WHERE NOT EXISTS( SELECT 1 FROM #Super_Exception WHERE srecommend = t.custID)
 	
 	INSERT INTO tmpCustGroupLevelArchived (custid, roleid, GroupLevelName, StageID)	
 	SELECT ma.custid, 3, 'M0', @StageId
@@ -324,6 +332,39 @@ BEGIN
 				INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.CustID
 		END
 	END
+
+	--Exlude dirrect Master from S3, S4
+	CREATE TABLE #DirectMaster(CustID INT, srecommend INT)
+	IF @StageId IN (3,4)
+	BEGIN
+		IF OBJECT_ID (N'CustDirectAccount', N'U') IS NOT NULL --check table is existing ?
+		BEGIN
+			INSERT INTO #DirectMaster(CustID,srecommend)
+			SELECT d.CustID,ci.srecommend
+			FROM CustDirectAccount d WITH(NOLOCK)
+				INNER JOIN custinfo ci WITH(NOLOCK) ON d.CustID = ci.custid
+			WHERE ci.roleid = 3
+		END
+		ELSE
+		BEGIN
+			INSERT INTO #DirectMaster(CustID,srecommend)
+			SELECT d.CustID,ci.srecommend
+			FROM DBCUST.CUSTDB.dbo.CustDirectAccount d WITH(NOLOCK)
+				INNER JOIN custinfo ci WITH(NOLOCK) ON d.CustID = ci.custid
+			WHERE ci.roleid = 3
+		END
+
+		--Update GroupLevelName = 'S2' if their downlines is direct master
+		UPDATE ar 
+		SET ar.GroupLevelName = 'S2'
+		FROM #DirectMaster t
+			INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.srecommend
+		
+		--Delete M0,M1
+		DELETE ar
+		FROM #DirectMaster t
+			INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.CustID
+	END
 					 
 	DROP TABLE #tmpMaster
 	DROP TABLE #tmpSuper
@@ -331,6 +372,8 @@ BEGIN
 	DROP TABLE #Super_Exception
 	DROP TABLE #tmpSuper_M0
 	DROP TABLE #M0NotInPreviousStage
+	DROP TABLE #Cust_ArchiveAccount_Master
+	DROP TABLE #DirectMaster
 	
 END
 GO
