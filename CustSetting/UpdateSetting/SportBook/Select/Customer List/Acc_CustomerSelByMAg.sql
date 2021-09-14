@@ -95,6 +95,7 @@ AS
 		- 20210315@Tina: add PP Live Casino [RedmineID: #134041]
 		- 20210426@Tina: Add VGaming [Redmine: #153938]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20210809@Winfred: add Bitcoin Betting / not used HideUpline [RedmineID: #159039]
 		
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -150,6 +151,7 @@ BEGIN
 		,	@bitmapOrder_SportsLottery	INT 
 		,	@bitmapOrder_PPLive			INT
 		,	@bitmapOrder_VGaming		INT 
+		,	@bitmapOrder_Bitcoin INT
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
@@ -176,7 +178,7 @@ BEGIN
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
 	SET @bitmapOrder_VGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 171 AND Bettype = 3801)
-
+	SET @bitmapOrder_Bitcoin = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 175 AND Bettype = 7901)
     
     DECLARE	@IsHidden_MuayThai			INT = 1		
 		,	@IsHidden_ESports			INT = 1	
@@ -201,6 +203,7 @@ BEGIN
 		,	@IsHidden_SportsLottery		INT = 1
 		,	@IsHidden_PPLive			INT = 1
 		,	@IsHidden_VGaming			INT = 1
+		,	@IsHidden_Bitcoin	INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_MuayThai OUTPUT	
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
@@ -225,7 +228,8 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 169, @IsHide = @IsHidden_SportsLottery OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 170, @IsHide = @IsHidden_PPLive OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 66, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_VGaming OUTPUT
-
+	EXEC Acc_CheckShowProduct @ProductID = 69, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_Bitcoin OUTPUT
+	
 	CREATE TABLE #customer(custid INT, RowNumber INT ,discountMyanmarOdds DECIMAL (9,8),IsMyanmarOdds BIT)
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @DoubleCommLosing = 2 AND @Locked IS NULL
@@ -917,9 +921,13 @@ BEGIN
 									THEN 0
 								ELSE 1 
 						END AS BIT) AS HideVGaming,
-				CAST(CASE	WHEN	@IsHidden_VGaming = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cpsUpline.bitmapIsHidden, @bitmapOrder_VGaming)), 1)=0
-						THEN 0 ELSE 1
-						END AS BIT) AS HideVGamingUpline,
+				-- For Bitcoin
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_Bitcoin)) AS DisableBitcoin,			
+				CAST(	CASE	WHEN	@IsHidden_Bitcoin = 0 								
+									AND	ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Bitcoin)), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideBitcoin,
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate, ISNULL(cps.Locked,0) AS Locked
 
 		FROM Customer c WITH(NOLOCK)
@@ -1104,7 +1112,9 @@ BEGIN
 			--VGaming
 			ctm.DisableVGaming,
 			ctm.HideVGaming,
-			ctm.HideVGamingUpline,
+			--Bitcoin
+			ctm.DisableBitcoin,
+			ctm.HideBitcoin,
 			-- MyanmarOdds
 			ISNULL(t.IsMyanmarOdds,0) AS IsMyanmarOdds,
 			ISNULL(t.discountMyanmarOdds,0) AS discountMyanmarOdds,

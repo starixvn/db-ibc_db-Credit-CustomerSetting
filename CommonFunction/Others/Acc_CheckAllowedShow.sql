@@ -11,6 +11,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
 				,	@AllowedSabaClub		BIT = 0		OUTPUT
 				,	@AllowedVGaming			BIT = 0		OUTPUT
+				,	@AllowedBitcoin			BIT = 0		OUTPUT
 				,   @SettingStatus          TINYINT = 0
 
 AS
@@ -53,6 +54,7 @@ Revisions:
 	- 20200506@Tiara: Add RNG War Product [Redmine: 132018]
 	- 20201012@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210426@Tina: Add VGaming [Redmine: #153938]
+	- 20210809@Winfred: add Bitcoin Betting [RedmineID: #159039]
 	
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -80,6 +82,7 @@ Revisions:
 		,	@IsHideGTCasino			INT
 		,	@IsHideRNGWar			INT
 		,	@IsHideVGamming			INT
+		,	@IsHideBitcoin			INT
 
 	DECLARE @bitmapOrder_Allbet		INT
 		,	@bitOrderVB				INT 
@@ -97,6 +100,7 @@ Revisions:
 		,	@bitmapOrder_GTCasino	INT 
 		,	@bitmapOrder_RNGWar		INT 
 		,	@bitmapOrder_VGaming	INT 
+		,	@bitmapOrder_Bitcoin		INT  
 
 	SET @bitmapOrder_Allbet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 211 AND Bettype = 2401)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
@@ -114,6 +118,7 @@ Revisions:
 	SET @bitmapOrder_GTCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 242 AND Bettype = 3201)
 	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
 	SET @bitmapOrder_VGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 171 AND Bettype = 3801)
+	SET @bitmapOrder_Bitcoin = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 175 AND Bettype = 7901)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -371,5 +376,24 @@ Revisions:
 			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
+	-- For Bitcoin
+	EXEC Acc_CheckShowProduct @ProductID = 69, @SettingStatus = @SettingStatus, @IsHide = @IsHideBitcoin OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedBitcoin =	CASE	WHEN @IsHideBitcoin = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Bitcoin)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedBitcoin =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Bitcoin)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_Bitcoin)) = 1
+											AND @IsHideBitcoin = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END									
 END
 GO
