@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-bodb02" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [DBA_ArchiveAccount3_ClearBalance_MasterSuper]
+CREATE PROCEDURE [DBA_ArchiveAccount3_ClearBalance_MasterSuper]
 	@recommend INT = 0,
 	@agentname varchar(50) = '',	
 	@mrecommend INT = 0,
@@ -22,6 +22,8 @@ AS
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
+			- 20201109@Helen: Stage 3 - Tuning - [Redmine:130032]
+			- 20210817@Elodie: Change data type of Refno  to bigint instead [Redmine: #160262]
 */
 BEGIN
 
@@ -31,20 +33,36 @@ BEGIN
 	declare @endRun datetime
 	declare @duration int
 	set @startRun = getdate()
-
+	
 	print  'Start:' + convert(varchar(50), getdate(), 113)
 
-	Declare @refno bigint, @grefno int, @Now datetime, @Enabled bit, @MasterBalance MONEY
+	Declare @refno bigint, @grefno bigint, @Now datetime, @Enabled bit, @MasterBalance MONEY
+
+	CREATE TABLE #temp_recommend (recommend INT PRIMARY KEY)
+	
+	INSERT INTO #temp_recommend (recommend)
+	SELECT DISTINCT custid
+	FROM CustDB.dbo.custinfo WITH (NOLOCK)
+	WHERE mrecommend = @mrecommend AND roleid = 2
+	
+	DECLARE @Balance_Recommend MONEY
+	DECLARE @Balance_master MONEY
+	
+	SELECT @Balance_Recommend = ISNULL(SUM(winlost - actual_stake + mwinlost + acomm + awinlost), 0) 
+	FROM #temp_recommend r
+		INNER JOIN dbo.bettrans b WITH (NOLOCK, INDEX = IX_recommend) ON r.recommend = b.recommend
+	OPTION (MAXDOP 1)		
+		
+	SELECT @Balance_master =  ISNULL(SUM(winlost - actual_stake + mwinlost + acomm + awinlost), 0) 
+	FROM bettrans b WITH (NOLOCK)
+	WHERE custid = @mrecommend
 
 	--==========================================================
 	--CREATING TEMP TABLES
 	--==========================================================
 	print @mastername +':'+ 'Temp Table Done:' + convert(varchar(50), getdate(), 113)	
 
-	SET @MasterBalance =  (SELECT ISNULL(SUM(winlost - actual_stake + mwinlost + acomm + awinlost), 0) 
-							FROM bettrans WITH (NOLOCK)
-							WHERE mrecommend = @mrecommend
-							)  
+	SET @MasterBalance =  @Balance_Recommend + @Balance_master
 
 	IF @MasterBalance = 0
 		RETURN
@@ -136,5 +154,8 @@ BEGIN
 	END	
 		
 	--------------------------END:Master-Super-------------------------------	
+	DROP TABLE #temp_recommend
 END
+    
+
 

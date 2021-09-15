@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSPARE-bodb02" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [DBA_ArchiveAccount3_ClearBalance_AgentMaster]
+CREATE PROCEDURE [DBA_ArchiveAccount3_ClearBalance_AgentMaster]
 	@recommend INT = 0,
 	@agentname varchar(50) = '',	
 	@mrecommend INT = 0,
@@ -20,6 +20,7 @@ ALTER PROCEDURE [DBA_ArchiveAccount3_ClearBalance_AgentMaster]
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20201109@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Stage 2,3,4 - [Redmine:130032]
+			- 20210817@Elodie: Change data type of Refno  to bigint instead [Redmine: #160262]
 */
 AS
 BEGIN
@@ -32,7 +33,7 @@ BEGIN
 
 	print  'Start:' + convert(varchar(50), getdate(), 113)
 
-	Declare @refno bigint, @grefno int, @Now datetime, @Enabled bit, @AgentBalance MONEY
+	Declare @refno bigint, @grefno bigint, @Now datetime, @Enabled bit, @AgentBalance MONEY
 	
 	--==========================================================
 	--CREATING TEMP TABLES
@@ -133,4 +134,6 @@ BEGIN
 	END	
 	--------------------------END:Agent-Master-------------------------------	
 END
+    
+
 
