@@ -19,7 +19,7 @@ Revisions:
 	- 20160211@Daniel: Add more check for any active transaction & use new SPs update balance
     - 20180320@Daniel: rename SP to count stage from 1 => No. 3 for this stage
 	- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
-	
+	- 20210817@Elodie: Change data type of Refno  to bigint instead [Redmine: #160262]
 Note:
 --Pre-check needed:
 	--+Closed status
@@ -46,7 +46,7 @@ Declare @roleid int, @AgentID int, @Amount MONEY,
 		@membername varchar(50), @agentname varchar(50), @mastername varchar(50), @supername varchar(50),
 		@memberBalance MONEY, @agentBalance MONEY, @masterBalance MONEY
 
-Declare @refno bigint, @grefno int, @Now datetime, @Enabled bit
+Declare @refno bigint, @grefno bigint, @Now datetime, @Enabled bit
 
 
 SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled
