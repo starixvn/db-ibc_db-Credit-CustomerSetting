@@ -46,6 +46,7 @@ BEGIN
 		SELECT @custid = custid FROM DBARC.bodb_archive.dbo.Bettrans_bk WITH (NOLOCK) WHERE transid = @transid
 
 	--------------------------------------------------------------------------------
+	--Get info of main acc take action 
 	SELECT	@SessionRoleID = roleid,
 		@isActive = CASE WHEN cps.CloseInfo > 0 OR Enabled = 0 THEN 0 ELSE 1 END
 	from custinfo ci with(nolock)
@@ -54,6 +55,7 @@ BEGIN
 
 	IF ISNULL(@sessionRoleid ,0) = 0 RETURN
 
+	--Get info of downline is updated
 	SELECT	@roleid = roleid, @username = username		
 	FROM custinfo c WITH (NOLOCK)
 	WHERE c.custid = @custid
@@ -62,7 +64,16 @@ BEGIN
 			or c.recommend = @SessionCustID or c.custid = @SessionCustID
 			OR @SessionRoleID >= 5)
 
-	IF @SubAccountID <> 0 OR ISNULL(@roleid, 0) = 0
+	--Get info of sub acc is updated
+	IF ISNULL(@roleid, 0) = 0 
+	BEGIN
+		SELECT @roleid = @SessionRoleID, @username = username
+		FROM dbo.custSub WITH(NOLOCK) 
+		WHERE subaccID = @custid AND custid = @SessionCustID
+	END
+
+	--Get info of sub acc take action 
+	IF @SubAccountID <> 0
 	BEGIN
 		SELECT @isActive = CASE WHEN closed = 0 THEN 1 ELSE 0 END,
 			@roleid = @SessionRoleID, @username = username
