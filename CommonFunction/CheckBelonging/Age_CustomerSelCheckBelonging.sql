@@ -75,10 +75,9 @@ BEGIN
 	--Get info of sub acc take action 
 	IF @SubAccountID <> 0
 	BEGIN
-		SELECT @isActive = CASE WHEN closed = 0 THEN 1 ELSE 0 END,
-			@roleid = @SessionRoleID, @username = username
+		SELECT @isActive = CASE WHEN closed = 0 THEN 1 ELSE 0 END 
 		FROM dbo.custSub WITH(NOLOCK) 
-		WHERE subaccID = @custid AND custid = @SessionCustID
+		WHERE subaccID = @SubAccountID AND custid = @SessionCustID
 	END
 
 	SELECT	@roleid = ISNULL(@roleid, 0), 
