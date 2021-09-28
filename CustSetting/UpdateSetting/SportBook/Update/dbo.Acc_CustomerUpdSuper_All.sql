@@ -60,6 +60,18 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
 	@MinBetv164 money =0,
     @MaxBetv164 money =0,
     @MaxPerMatchv164 money=0,
+
+	--Max Payout Per Match
+	@maxPOpermatch money = NULL,
+	@maxPOpermatchv2 money = NULL,
+	@maxPOpermatchv3 money = NULL,
+	@maxPOpermatchv5 money = NULL,
+	@maxPOpermatchv8 money = NULL,
+	@maxPOpermatchv10 money = NULL,
+	@maxPOpermatchv11 money = NULL,
+	@maxPOpermatchv99 money = NULL,
+	@maxPOpermatchv99mp money = NULL,
+	@maxPOpermatchv1mp money = NULL,
 	
     @credit money,
     @Language varchar(2),
@@ -349,6 +361,7 @@ Revisions:
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
+	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	
 • @ErrCode:
     = 0: Update successfully.
@@ -522,7 +535,7 @@ Revisions:
 	--Update Min Max Bet
 
 	Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
-	EXEC dbo.Acc_CustomerUpdSuper_MinMaxBet 
+	EXEC dbo.Acc_CustomerUpd_BetSetting 
 		@custid = @custid,
 		@MinBet = @MinBet,
 		@MaxBet = @MaxBet,
@@ -565,6 +578,17 @@ Revisions:
 		@MinBetv164 = @MinBetv164,
 		@MaxBetv164 = @MaxBetv164,
 		@MaxPerMatchv164 = @MaxPerMatchv164,
+		--MaxPayoutPerMatch
+		@maxPOpermatch      = @maxPOpermatch,      
+		@maxPOpermatchv2    = @maxPOpermatchv2,    
+		@maxPOpermatchv3    = @maxPOpermatchv3,    
+		@maxPOpermatchv5    = @maxPOpermatchv5,   
+		@maxPOpermatchv8    = @maxPOpermatchv8,    
+		@maxPOpermatchv10   = @maxPOpermatchv10,   
+		@maxPOpermatchv11   = @maxPOpermatchv11,   
+		@maxPOpermatchv99   = @maxPOpermatchv99,   
+		@maxPOpermatchv99mp = @maxPOpermatchv99mp, 
+		@maxPOpermatchv1mp  = @maxPOpermatchv1mp, 
 		
 		@UserID = @UserID,
 		@Language = @Language,

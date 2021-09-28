@@ -45,6 +45,7 @@ Revisions:
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
+	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 
 Param's Explanation:
 • @CustID: member ID
@@ -60,11 +61,20 @@ Declare @MinBet_Max money, @MaxBet_Min money, @MaxPerMatch_Min money, @MaxPerMat
 		@MinBetv11_Max money, @MaxBetv11_Min money, @MaxPerMatchv11_Min money, @MaxPerMatchv11_Max money,
 		@MinBetv99_Max money, @MaxBetv99_Min money, @MaxPerMatchv99_Min money, @MaxPerMatchv99_Max money,
 		@MinBetv99MP_Max money, @MaxBetv99MP_Min money, @MaxPerMatchv99MP_Min money, @MaxPerMatchv99MP_Max money,
-		
 		@MinBetv1MP_Max money, @MaxBetv1MP_Min money, @MaxPerMatchv1MP_Min money, @MaxPerMatchv1MP_Max money,
-		@MinBetv161_Max money, @MaxBetv161_Min money, @MaxPerMatchv161_Min money, @MaxPerMatchv161_Max money,
-		@MaxPerBallv161_Max money,
+		@MinBetv161_Max money, @MaxBetv161_Min money, @MaxPerMatchv161_Min money, @MaxPerMatchv161_Max money,@MaxPerBallv161_Max money,
 		@MinBetv164_Max money, @MaxBetv164_Min money, @MaxPerMatchv164_Min money, @MaxPerMatchv164_Max money,
+		--Max Payout Per Match
+		@MaxPayoutPerMatch_max money = 0,
+		@MaxPayoutPerMatchv2_max money = 0,
+		@MaxPayoutPerMatchv3_max money = 0,
+		@MaxPayoutPerMatchv5_max money = 0,
+		@MaxPayoutPerMatchv8_max money = 0,
+		@MaxPayoutPerMatchv10_max money = 0,
+		@MaxPayoutPerMatchv11_max money = 0,
+		@MaxPayoutPerMatchv99_max money = 0,
+		@MaxPayoutPerMatchv99mp_max money = 0,
+		@MaxPayoutPerMatchv1mp_max money = 0,
 		
 	@ap_1 smallmoney,@ap_2 smallmoney,@ap_3 smallmoney,@ap_4 smallmoney,@ap_5 smallmoney,@ap_6 smallmoney,@ap_7 smallmoney,@ap_8 smallmoney,@ap_9 smallmoney,@ap_10 smallmoney,@ap_9999 smallmoney,
 	@alp_1 smallmoney,@alp_3 smallmoney,@alp_7 smallmoney,@alp_8 smallmoney,
@@ -121,6 +131,53 @@ Declare @MinBet_Max money, @MaxBet_Min money, @MaxPerMatch_Min money, @MaxPerMat
 	@v11sp_10 smallmoney,
 	@v99sp_10 smallmoney
 	
+DECLARE @minbet                 MONEY = 0, 
+        @maxbet                 MONEY = 0, 
+        @maxpermatch            MONEY = 0, 
+        @minbetv2               MONEY = 0, 
+        @maxbetv2               MONEY = 0, 
+        @maxpermatchv2          MONEY = 0, 
+        @minbetv3               MONEY = 0, 
+        @maxbetv3               MONEY = 0, 
+        @maxpermatchv3          MONEY = 0, 
+        @minbetv5               MONEY = 0, 
+        @maxbetv5               MONEY = 0, 
+        @maxpermatchv5          MONEY = 0, 
+        @minbetv8               MONEY = 0, 
+        @maxbetv8               MONEY = 0, 
+        @maxpermatchv8          MONEY = 0, 
+        @minbetv10              MONEY = 0, 
+        @maxbetv10              MONEY = 0, 
+        @maxpermatchv10         MONEY = 0, 
+        @minbetv11              MONEY = 0, 
+        @maxbetv11              MONEY = 0, 
+        @maxpermatchv11         MONEY = 0, 
+        @minbetv99              MONEY = 0, 
+        @maxbetv99              MONEY = 0, 
+        @maxpermatchv99         MONEY = 0, 
+        @minbetv99mp            MONEY = 0, 
+        @maxbetv99mp            MONEY = 0, 
+        @maxpermatchv99mp       MONEY = 0, 
+        @minbetv1mp             MONEY = 0, 
+        @maxbetv1mp             MONEY = 0, 
+        @maxpermatchv1mp        MONEY = 0, 
+        @minbetv161             MONEY = 0, 
+        @maxbetv161             MONEY = 0, 
+        @maxpermatchv161        MONEY = 0, 
+        @MaxPerBallv161         MONEY = 0, 
+        @minbetv164             MONEY = 0, 
+        @maxbetv164             MONEY = 0, 
+        @maxpermatchv164        MONEY = 0, 
+        @MaxPayoutPerMatch      MONEY = 0, 
+        @MaxPayoutPerMatchv2    MONEY = 0, 
+        @MaxPayoutPerMatchv3    MONEY = 0, 
+        @MaxPayoutPerMatchv5    MONEY = 0, 
+        @MaxPayoutPerMatchv8    MONEY = 0, 
+        @MaxPayoutPerMatchv10   MONEY = 0, 
+        @MaxPayoutPerMatchv11   MONEY = 0, 
+        @MaxPayoutPerMatchv99   MONEY = 0, 
+        @MaxPayoutPerMatchv99mp MONEY = 0, 
+        @MaxPayoutPerMatchv1mp  MONEY = 0
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -465,180 +522,6 @@ FROM
 Where cs3.CustID = @recommend
 
 --PRINT 'min(a2,l2): ' + convert(varchar(10),@v2apositiontaking_9_max)
-
-Select
-	@MinBet_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBet_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 1 and cs.sporttype=1
-where ci.custid = @CustID
-
-Select 
-	@MinBetv2_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv2_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 1 and cs.sporttype=2
-where ci.custid = @CustID
-
-Select 
-	@MinBetv3_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv3_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 1 and cs.sporttype=3
-where ci.custid = @CustID
-
-Select 
-	@MinBetv5_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv5_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 1 and cs.sporttype=5
-where ci.custid = @CustID
-
-Select 
-	@MinBetv8_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv8_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 1 and cs.sporttype=8
-where ci.custid = @CustID
-
-Select 
-	@MinBetv10_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv10_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 1 and cs.sporttype=10
-where ci.custid = @CustID
-
-Select 
-	@MinBetv11_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv11_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 1 and cs.sporttype=11
-where ci.custid = @CustID
-
-Select 
-	@MinBetv99_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv99_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 1 and cs.sporttype=99
-where ci.custid = @CustID
-
-Select 
-	@MinBetv99MP_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv99MP_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 9 and cs.sporttype=99
-where ci.custid = @CustID
-
-Select 
-	@MinBetv1MP_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv1MP_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 9 and cs.sporttype=1
-where ci.custid = @CustID
-
-
-Select 
-	@MinBetv161_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv161_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting3rd as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 81 and cs.sporttype=161
-where ci.custid = @CustID
-
-Select 
-	@MinBetv164_Max = Max(case when MinBet = 0 then NULL else MinBet end), 
-	@MaxBetv164_Min = Min(case when MaxBet = 0 then NULL else MaxBet end)
-from 
-	custsetting3rd as cs WITH (NOLOCK)
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-	and cs.bettype = 8101 and cs.sporttype=164
-where ci.custid = @CustID
-
-/*
---Revert MPM
-Select 	
-	@MaxPerMatch_Min = 0, @MaxPerMatchv2_Min = 0,
-	@MaxPerMatch_Max = isnull(max(isnull(aci.MaxPerMatch, 0)), 0) - isnull(sum(ci.MaxPerMatch), 0),
-	@MaxPerMatchv2_Max = isnull(max(isnull(aci.MaxPerMatchb, 0)), 0) - isnull(sum(ci.MaxPerMatchb), 0)
-from 
-	custinfo as aci WITH (NOLOCK) 
-	LEFT JOIN custinfo as ci WITH (NOLOCK) on (aci.CustID = ci.Recommend)  and ci.custid<>@custid and ci.roleid=1
-where aci.custid=@recommend
-*/
-
-Select 
-	@MaxPerMatch_Min = 0, 
-	--@MaxperMatch_Max = cs.MaxPerMatch, --Min(case when cs.MaxPerMatch = 0 then NULL else cs.MaxPerMatch end), 
-	@MaxperMatch_Max = Min(case when cs.MaxPerMatch = 0 then NULL else cs.MaxPerMatch end), 
-	
-	@MaxPerMatchv2_Min = 0,
-	--@MaxPerMatchv2_Max = cs.MaxPerMatch2,--Min(case when cs.MaxPerMatch2 = 0 then NULL else cs.MaxPerMatch2 end), 
-	@MaxPerMatchv2_Max = Min(case when cs.MaxPerMatch2 = 0 then NULL else cs.MaxPerMatch2 end), 
-
-	@MaxPerMatchv3_Min = 0,
-	--@MaxPerMatchv3_Max = cs.MaxPerMatch3,--Min(case when cs.MaxPerMatch3 = 0 then NULL else cs.MaxPerMatch3 end), 
-	@MaxPerMatchv3_Max = Min(case when cs.MaxPerMatch3 = 0 then NULL else cs.MaxPerMatch3 end), 
-
-	@MaxPerMatchv5_Min = 0,
-	--@MaxPerMatchv5_Max = cs.MaxPerMatch5,--Min(case when cs.MaxPerMatch5 = 0 then NULL else cs.MaxPerMatch5 end), 
-	@MaxPerMatchv5_Max = Min(case when cs.MaxPerMatch5 = 0 then NULL else cs.MaxPerMatch5 end), 
-	
-	@MaxPerMatchv8_Min = 0,
-	--@MaxPerMatchv8_Max = cs.MaxPerMatch8,--Min(case when cs.MaxPerMatch8 = 0 then NULL else cs.MaxPerMatch8 end), 
-	@MaxPerMatchv8_Max = Min(case when cs.MaxPerMatch8 = 0 then NULL else cs.MaxPerMatch8 end), 
-
-	@MaxPerMatchv10_Min = 0,
-	--@MaxPerMatchv10_Max = cs.MaxPerMatch10,--Min(case when cs.MaxPerMatch10 = 0 then NULL else cs.MaxPerMatch10 end), 
-	@MaxPerMatchv10_Max = Min(case when cs.MaxPerMatch10 = 0 then NULL else cs.MaxPerMatch10 end), 
-	
-	@MaxPerMatchv11_Min = 0,
-	--@MaxPerMatchv11_Max = cs.MaxPerMatch11,--Min(case when cs.MaxPerMatch11 = 0 then NULL else cs.MaxPerMatch11 end), 
-	@MaxPerMatchv11_Max = Min(case when cs.MaxPerMatch11 = 0 then NULL else cs.MaxPerMatch11 end), 
-
-	@MaxPerMatchv99_Min = 0,
-	--@MaxPerMatchv99_Max = cs.MaxPerMatch99 --Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end), 
-	@MaxPerMatchv99_Max = Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),
-	
-	@MaxPerMatchv99MP_Min = 0,
-	@MaxPerMatchv99MP_Max = Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),
-	
-	@MaxPerMatchv1MP_Min = 0,
-	@MaxPerMatchv1MP_Max = Min(case when cs.MaxPerMatch1MP = 0 then NULL else cs.MaxPerMatch1MP end),
-	
-	@MaxPerMatchv161_Min = 0,
-	@MaxPerMatchv161_Max = Min(case when cs.MaxPerMatch161 = 0 then NULL else cs.MaxPerMatch161 end),
-	
-	@MaxPerBallv161_Max = Min(case when cs.MaxPerBall161 = 0  then NULL else cs.MaxPerBall161 end),
-	
-	@MaxPerMatchv164_Min = 0,
-	@MaxPerMatchv164_Max = Min(case when cs.MaxPerMatch164 = 0 then NULL else cs.MaxPerMatch164 end)	
-	
-from 
-	custinfo as cs WITH (NOLOCK) 
-	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-where ci.custid = @CustID
-
 
 Select 
 	@sp_1 = max(case when Scs.bettype = 1 and Scs.sporttype=1 then Scs.spositiontaking else 0 end),
@@ -1023,6 +906,82 @@ select
 		SET @discountMyanmarOdds = ISNULL((SELECT CommRate FROM AgentCommRate WITH (NOLOCK) WHERE CustId = @recommend AND Sporttype = 1 AND Bettype = 1),0)
 	END	
 
+--Get BetSetting limit
+EXEC Age_CustomerSelMinMaxLimit @custid = @custid,
+	@MinBet_Max = @MinBet_Max output, @MaxBet_Min = @MaxBet_Min output, @MaxPerMatch_Min = @MaxPerMatch_Min output, @MaxPerMatch_Max = @MaxPerMatch_Max output,
+	@MinBetv2_Max = @MinBetv2_Max output, @MaxBetv2_Min = @MaxBetv2_Min output, @MaxPerMatchv2_Min = @MaxPerMatchv2_Min output, @MaxPerMatchv2_Max = @MaxPerMatchv2_Max output,
+	@MinBetv3_Max = @MinBetv3_Max output, @MaxBetv3_Min = @MaxBetv3_Min output, @MaxPerMatchv3_Min = @MaxPerMatchv3_Min output, @MaxPerMatchv3_Max = @MaxPerMatchv3_Max output,
+	@MinBetv5_Max = @MinBetv5_Max output, @MaxBetv5_Min = @MaxBetv5_Min output, @MaxPerMatchv5_Min = @MaxPerMatchv5_Min output, @MaxPerMatchv5_Max = @MaxPerMatchv5_Max output,
+	@MinBetv8_Max = @MinBetv8_Max output, @MaxBetv8_Min = @MaxBetv8_Min output, @MaxPerMatchv8_Min = @MaxPerMatchv8_Min output, @MaxPerMatchv8_Max = @MaxPerMatchv8_Max output,
+	@MinBetv10_Max = @MinBetv10_Max output, @MaxBetv10_Min = @MaxBetv10_Min output, @MaxPerMatchv10_Min = @MaxPerMatchv10_Min output, @MaxPerMatchv10_Max = @MaxPerMatchv10_Max output,
+	@MinBetv11_Max = @MinBetv11_Max output, @MaxBetv11_Min = @MaxBetv11_Min output, @MaxPerMatchv11_Min = @MaxPerMatchv11_Min output, @MaxPerMatchv11_Max = @MaxPerMatchv11_Max output,
+	@MinBetv99_Max = @MinBetv99_Max output, @MaxBetv99_Min = @MaxBetv99_Min output, @MaxPerMatchv99_Min = @MaxPerMatchv99_Min output, @MaxPerMatchv99_Max = @MaxPerMatchv99_Max output,		
+	@MinBetv99MP_Max = @MinBetv99MP_Max output, @MaxBetv99MP_Min = @MaxBetv99MP_Min output, @MaxPerMatchv99MP_Min = @MaxPerMatchv99MP_Min output, @MaxPerMatchv99MP_Max = @MaxPerMatchv99MP_Max output,
+	@MinBetv1MP_Max = @MinBetv1MP_Max output, @MaxBetv1MP_Min = @MaxBetv1MP_Min output, @MaxPerMatchv1MP_Min = @MaxPerMatchv1MP_Min output, @MaxPerMatchv1MP_Max = @MaxPerMatchv1MP_Max output,
+	@MinBetv161_Max = @MinBetv161_Max output, @MaxBetv161_Min = @MaxBetv161_Min output, @MaxPerMatchv161_Min = @MaxPerMatchv161_Min output, @MaxPerMatchv161_Max = @MaxPerMatchv161_Max output, @MaxPerBallv161_Max = @MaxPerBallv161_Max output,
+	@MinBetv164_Max = @MinBetv164_Max output, @MaxBetv164_Min = @MaxBetv164_Min output, @MaxPerMatchv164_Min = @MaxPerMatchv164_Min output, @MaxPerMatchv164_Max = @MaxPerMatchv164_Max output,
+	@MaxPayoutPerMatch_max      = @MaxPayoutPerMatch_max      OUTPUT,
+	@MaxPayoutPerMatchv2_max    = @MaxPayoutPerMatchv2_max    OUTPUT,
+	@MaxPayoutPerMatchv3_max    = @MaxPayoutPerMatchv3_max    OUTPUT,
+	@MaxPayoutPerMatchv5_max    = @MaxPayoutPerMatchv5_max    OUTPUT,
+	@MaxPayoutPerMatchv8_max    = @MaxPayoutPerMatchv8_max    OUTPUT,
+	@MaxPayoutPerMatchv10_max   = @MaxPayoutPerMatchv10_max   OUTPUT,
+	@MaxPayoutPerMatchv11_max   = @MaxPayoutPerMatchv11_max   OUTPUT,
+	@MaxPayoutPerMatchv99_max   = @MaxPayoutPerMatchv99_max   OUTPUT,
+	@MaxPayoutPerMatchv99mp_max = @MaxPayoutPerMatchv99mp_max OUTPUT,
+	@MaxPayoutPerMatchv1mp_max  = @MaxPayoutPerMatchv1mp_max  OUTPUT
+
+--> Get BetSetting
+EXEC Acc_CustomerSelMinMax
+	@custid						= @custid,
+	@minbet						= @minbet					OUTPUT,            
+	@maxbet                		= @maxbet                	OUTPUT,
+	@maxpermatch           		= @maxpermatch           	OUTPUT,
+	@minbetv2              		= @minbetv2              	OUTPUT,
+	@maxbetv2              		= @maxbetv2              	OUTPUT,
+	@maxpermatchv2         		= @maxpermatchv2         	OUTPUT,
+	@minbetv3              		= @minbetv3              	OUTPUT,
+	@maxbetv3              		= @maxbetv3              	OUTPUT,
+	@maxpermatchv3         		= @maxpermatchv3         	OUTPUT,
+	@minbetv5              		= @minbetv5              	OUTPUT,
+	@maxbetv5              		= @maxbetv5              	OUTPUT,
+	@maxpermatchv5         		= @maxpermatchv5         	OUTPUT,
+	@minbetv8              		= @minbetv8              	OUTPUT,
+	@maxbetv8              		= @maxbetv8              	OUTPUT,
+	@maxpermatchv8         		= @maxpermatchv8         	OUTPUT,
+	@minbetv10             		= @minbetv10             	OUTPUT,
+	@maxbetv10             		= @maxbetv10             	OUTPUT,
+	@maxpermatchv10        		= @maxpermatchv10        	OUTPUT,
+	@minbetv11             		= @minbetv11             	OUTPUT,
+	@maxbetv11             		= @maxbetv11             	OUTPUT,
+	@maxpermatchv11        		= @maxpermatchv11        	OUTPUT,
+	@minbetv99             		= @minbetv99             	OUTPUT,
+	@maxbetv99             		= @maxbetv99             	OUTPUT,
+	@maxpermatchv99        		= @maxpermatchv99        	OUTPUT,
+	@minbetv99mp           		= @minbetv99mp           	OUTPUT,
+	@maxbetv99mp           		= @maxbetv99mp           	OUTPUT,
+	@maxpermatchv99mp      		= @maxpermatchv99mp      	OUTPUT,
+	@minbetv1mp            		= @minbetv1mp            	OUTPUT,
+	@maxbetv1mp            		= @maxbetv1mp            	OUTPUT,
+	@maxpermatchv1mp       		= @maxpermatchv1mp       	OUTPUT,
+	@minbetv161            		= @minbetv161            	OUTPUT,
+	@maxbetv161            		= @maxbetv161            	OUTPUT,
+	@maxpermatchv161       		= @maxpermatchv161       	OUTPUT,
+	@MaxPerBallv161        		= @MaxPerBallv161        	OUTPUT,
+	@minbetv164            		= @minbetv164            	OUTPUT,
+	@maxbetv164            		= @maxbetv164            	OUTPUT,
+	@maxpermatchv164       		= @maxpermatchv164       	OUTPUT,
+	@MaxPayoutPerMatch     		= @MaxPayoutPerMatch     	OUTPUT,
+	@MaxPayoutPerMatchv2   		= @MaxPayoutPerMatchv2   	OUTPUT,
+	@MaxPayoutPerMatchv3   		= @MaxPayoutPerMatchv3   	OUTPUT,
+	@MaxPayoutPerMatchv5   		= @MaxPayoutPerMatchv5   	OUTPUT,
+	@MaxPayoutPerMatchv8   		= @MaxPayoutPerMatchv8   	OUTPUT,
+	@MaxPayoutPerMatchv10  		= @MaxPayoutPerMatchv10  	OUTPUT,
+	@MaxPayoutPerMatchv11  		= @MaxPayoutPerMatchv11  	OUTPUT,
+	@MaxPayoutPerMatchv99  		= @MaxPayoutPerMatchv99  	OUTPUT,
+	@MaxPayoutPerMatchv99mp		= @MaxPayoutPerMatchv99mp	OUTPUT,
+	@MaxPayoutPerMatchv1mp 		= @MaxPayoutPerMatchv1mp 	OUTPUT
+
 SELECT 
 	C.username, C.firstname, C.lastname,c.username2, Cps.closed,cps.reject as suspended,ci.currency AS CurrencyID,
 	CASE WHEN (sp.SuperStatus + sp.MasterStatus + sp.AgentStatus) > 0 THEN 1 ELSE 0 END as Asuspended,
@@ -1032,77 +991,18 @@ SELECT
 	isnull(C.email,'') as email, 
 	isnull(C.fax,'') as fax, 
 	@Credit_Mem_Max as Credit_Max,	
-
-	isnull(Ci.maxpermatch, 0) as maxpermatch,
-	isnull(ci.maxpermatch2, 0) as maxpermatchv2,
-	isnull(ci.maxpermatch3, 0) as maxpermatchv3,
-	isnull(ci.maxpermatch5, 0) as maxpermatchv5,
-	isnull(ci.maxpermatch8, 0) as maxpermatchv8,
-	isnull(ci.maxpermatch10, 0) as maxpermatchv10,
-	isnull(ci.maxpermatch11, 0) as maxpermatchv11,
-	isnull(ci.maxpermatch99, 0) as maxpermatchv99,
-	isnull(ci.maxpermatch99MP, 0) as maxpermatchv99MP,
-	
-	isnull(ci.maxpermatch1MP, 0) as maxpermatchv1MP,
-	
-	
-	isnull(ci.maxpermatch161, 0) as maxpermatchv161,
-	isnull(ci.maxperball161,0) as maxperballv161,
-	
-	isnull(ci.maxpermatch164, 0) as maxpermatchv164,
-	
 	C.site as csite, C.ugroup, C.roleid,
 	isnull(exchange.minbet, 0) AS defaultminbet, C.refcode1,C.address, C.city, C.state, C.country, isnull(ci.credit, 0) as credit,
-
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=1 then cs.minbet else 0 end), 0) as minbet,
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=1 then cs.maxbet else 0 end), 0) as maxbet,
 	
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=2 then cs.minbet else 0 end), 0) as MinBetv2,
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=2 then cs.maxbet else 0 end), 0) as MaxBetv2,
-	
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=3 then cs.minbet else 0 end), 0) as MinBetv3,
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=3 then cs.maxbet else 0 end), 0) as MaxBetv3,
-
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=5 then cs.minbet else 0 end), 0) as MinBetv5,
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=5 then cs.maxbet else 0 end), 0) as MaxBetv5,
-
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=8 then cs.minbet else 0 end), 0) as MinBetv8,
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=8 then cs.maxbet else 0 end), 0) as MaxBetv8,
-
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=10 then cs.minbet else 0 end), 0) as MinBetv10,
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=10 then cs.maxbet else 0 end), 0) as MaxBetv10,
-
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=11 then cs.minbet else 0 end), 0) as MinBetv11,
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=11 then cs.maxbet else 0 end), 0) as MaxBetv11,
-
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=99 then cs.minbet else 0 end), 0) as MinBetv99,
-	isnull(max(case when cs.bettype = 1 and cs.sporttype=99 then cs.maxbet else 0 end), 0) as MaxBetv99,
-	
-	isnull(max(case when cs.bettype = 9 and cs.sporttype=99 then cs.minbet else 0 end), 0) as MinBetv99MP,
-	isnull(max(case when cs.bettype = 9 and cs.sporttype=99 then cs.maxbet else 0 end), 0) as MaxBetv99MP,
-	
-	isnull(max(case when cs.bettype = 9 and cs.sporttype=1 then cs.minbet else 0 end), 0) as MinBetv1MP,
-	isnull(max(case when cs.bettype = 9 and cs.sporttype=1 then cs.maxbet else 0 end), 0) as MaxBetv1MP,
-		
-	isnull(max(case when cs3.bettype = 81 and cs3.sporttype=161 then cs3.minbet else 0 end), 0) as MinBetv161,
-	isnull(max(case when cs3.bettype = 81 and cs3.sporttype=161 then cs3.maxbet else 0 end), 0) as MaxBetv161,
-	
-	isnull(max(case when cs3.bettype = 8101 and cs3.sporttype=164 then cs3.minbet else 0 end), 0) as MinBetv164,
-	isnull(max(case when cs3.bettype = 8101 and cs3.sporttype=164 then cs3.maxbet else 0 end), 0) as MaxBetv164,
-		
 	isnull(max(case when cs.bettype = 1 and cs.sporttype=1 then cs.discount else 0 end), 0) as discount,
-	
 	isnull(max(case when cs.bettype = 4 and cs.sporttype=1 then cs.discount else 0 end), 0) as discountcs,
-	
 	isnull(max(case when cs.bettype = 5 and cs.sporttype=1 then cs.discount else 0 end), 0) as discount1x2, --1x2
 	--isnull(max(case when cs3.bettype = 81 and cs3.sporttype=161 then cs3.discount else 0 end), 0) as discountnumber, 
 	
-
 	isnull(max(case when cs.bettype = 1 and cs.sporttype=1 then cs.playerdiscount else 0 end), 0) as playerdiscount,
 	isnull(max(case when cs.bettype = 4 and cs.sporttype=1 then cs.playerdiscount else 0 end), 0) as playerdiscountcs,
 	isnull(max(case when cs.bettype = 5 and cs.sporttype=1 then cs.playerdiscount else 0 end), 0) as playerdiscount1x2, --1x2
 	--isnull(max(case when cs3.bettype = 81 and cs3.sporttype=161 then cs3.playerdiscount else 0 end), 0) as playerdiscountnumber, 
-	
 	
 	-- For MyanmarOdds
 	ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds,
@@ -1256,68 +1156,6 @@ SELECT
 	isnull(@v161alivepositiontaking_87_max, 0) as maxv161lpos_87,
 	isnull(@v161alivepositiontaking_89_max, 0) as maxv161lpos_89,
 	isnull(@v161alivepositiontaking_90_max, 0) as maxv161lpos_90,
-
-	IsNull(@MinBet_Max, 0) as MinBet_Max,
-	IsNull(@MaxBet_Min, 0) as MaxBet_Min,
-	IsNull(@MaxPerMatch_Min, 0) as MaxPerMatch_Min,
-	IsNull(@MaxPerMatch_Max, 0) as MaxPerMatch_Max,
-	
-	IsNull(@MinBetv2_Max, 0) as MinBetv2_Max,	
-	IsNull(@MaxBetv2_Min, 0) as MaxBetv2_Min,	
-	IsNull(@MaxPerMatchv2_Min, 0) as MaxPerMatchv2_Min,	
-	IsNull(@MaxPerMatchv2_Max, 0) as MaxPerMatchv2_Max,	
-	
-	IsNull(@MinBetv3_Max, 0) as MinBetv3_Max,	
-	IsNull(@MaxBetv3_Min, 0) as MaxBetv3_Min,	
-	IsNull(@MaxPerMatchv3_Min, 0) as MaxPerMatchv3_Min,	
-	IsNull(@MaxPerMatchv3_Max, 0) as MaxPerMatchv3_Max,
-
-	IsNull(@MinBetv5_Max, 0) as MinBetv5_Max,	
-	IsNull(@MaxBetv5_Min, 0) as MaxBetv5_Min,	
-	IsNull(@MaxPerMatchv5_Min, 0) as MaxPerMatchv5_Min,	
-	IsNull(@MaxPerMatchv5_Max, 0) as MaxPerMatchv5_Max,
-
-	IsNull(@MinBetv8_Max, 0) as MinBetv8_Max,	
-	IsNull(@MaxBetv8_Min, 0) as MaxBetv8_Min,	
-	IsNull(@MaxPerMatchv8_Min, 0) as MaxPerMatchv8_Min,	
-	IsNull(@MaxPerMatchv8_Max, 0) as MaxPerMatchv8_Max,
-
-	IsNull(@MinBetv10_Max, 0) as MinBetv10_Max,	
-	IsNull(@MaxBetv10_Min, 0) as MaxBetv10_Min,	
-	IsNull(@MaxPerMatchv10_Min, 0) as MaxPerMatchv10_Min,	
-	IsNull(@MaxPerMatchv10_Max, 0) as MaxPerMatchv10_Max,
-
-	IsNull(@MinBetv11_Max, 0) as MinBetv11_Max,	
-	IsNull(@MaxBetv11_Min, 0) as MaxBetv11_Min,	
-	IsNull(@MaxPerMatchv11_Min, 0) as MaxPerMatchv11_Min,	
-	IsNull(@MaxPerMatchv11_Max, 0) as MaxPerMatchv11_Max,
-
-	IsNull(@MinBetv99_Max, 0) as MinBetv99_Max,	
-	IsNull(@MaxBetv99_Min, 0) as MaxBetv99_Min,	
-	IsNull(@MaxPerMatchv99_Min, 0) as MaxPerMatchv99_Min,	
-	IsNull(@MaxPerMatchv99_Max, 0) as MaxPerMatchv99_Max,
-	
-	IsNull(@MinBetv99MP_Max, 0) as MinBetv99MP_Max,	
-	IsNull(@MaxBetv99MP_Min, 0) as MaxBetv99MP_Min,	
-	IsNull(@MaxPerMatchv99MP_Min, 0) as MaxPerMatchv99MP_Min,	
-	IsNull(@MaxPerMatchv99MP_Max, 0) as MaxPerMatchv99MP_Max,
-	
-	IsNull(@MinBetv1MP_Max, 0) as MinBetv1MP_Max,	
-	IsNull(@MaxBetv1MP_Min, 0) as MaxBetv1MP_Min,	
-	IsNull(@MaxPerMatchv1MP_Min, 0) as MaxPerMatchv1MP_Min,	
-	IsNull(@MaxPerMatchv1MP_Max, 0) as MaxPerMatchv1MP_Max,
-	
-
-	IsNull(@MinBetv161_Max, 0) as MinBetv161_Max,	
-	IsNull(@MaxBetv161_Min, 0) as MaxBetv161_Min,	
-	IsNull(@MaxPerMatchv161_Min, 0) as MaxPerMatchv161_Min,	
-	IsNull(@MaxPerMatchv161_Max, 0) as MaxPerMatchv161_Max,
-	ISNull(@MaxPerBallv161_Max, 0) as MaxPerBallv161_Max,
-	
-	IsNull(@MinBetv164_Max, 0) as MinBetv164_Max,	
-	IsNull(@MaxBetv164_Min, 0) as MaxBetv164_Min,	
-	IsNull(@MaxPerMatchv164_Min, 0) as MaxPerMatchv164_Min,	
-	IsNull(@MaxPerMatchv164_Max, 0) as MaxPerMatchv164_Max,
 	
 	isnull(@apositiontaking_1_min, 0) as minpos_1,
 	isnull(@apositiontaking_2_min, 0) as minpos_2, 
@@ -1418,7 +1256,127 @@ SELECT
 	isnull(@v11apositiontaking_10_min, 0) as minv11pos_10,
 	isnull(@v99apositiontaking_10_min, 0) as minv99pos_10
 	,CASE WHEN CDA.CustID IS NOT NULL THEN 1 ELSE 0 END AS IsDirectCustomer,
-	ISNULL(NULLIF(MAX(c.site),''), MAX(ag.site)) AS Site
+	ISNULL(NULLIF(MAX(c.site),''), MAX(ag.site)) AS Site,
+	IsNull(@MinBet_Max, 0) as MinBet_Max,
+	IsNull(@MaxBet_Min, 0) as MaxBet_Min,
+	IsNull(@MaxPerMatch_Min, 0) as MaxPerMatch_Min,
+	IsNull(@MaxPerMatch_Max, 0) as MaxPerMatch_Max,
+	
+	IsNull(@MinBetv2_Max, 0) as MinBetv2_Max,	
+	IsNull(@MaxBetv2_Min, 0) as MaxBetv2_Min,	
+	IsNull(@MaxPerMatchv2_Min, 0) as MaxPerMatchv2_Min,	
+	IsNull(@MaxPerMatchv2_Max, 0) as MaxPerMatchv2_Max,	
+	
+	IsNull(@MinBetv3_Max, 0) as MinBetv3_Max,	
+	IsNull(@MaxBetv3_Min, 0) as MaxBetv3_Min,	
+	IsNull(@MaxPerMatchv3_Min, 0) as MaxPerMatchv3_Min,	
+	IsNull(@MaxPerMatchv3_Max, 0) as MaxPerMatchv3_Max,
+
+	IsNull(@MinBetv5_Max, 0) as MinBetv5_Max,	
+	IsNull(@MaxBetv5_Min, 0) as MaxBetv5_Min,	
+	IsNull(@MaxPerMatchv5_Min, 0) as MaxPerMatchv5_Min,	
+	IsNull(@MaxPerMatchv5_Max, 0) as MaxPerMatchv5_Max,
+
+	IsNull(@MinBetv8_Max, 0) as MinBetv8_Max,	
+	IsNull(@MaxBetv8_Min, 0) as MaxBetv8_Min,	
+	IsNull(@MaxPerMatchv8_Min, 0) as MaxPerMatchv8_Min,	
+	IsNull(@MaxPerMatchv8_Max, 0) as MaxPerMatchv8_Max,
+
+	IsNull(@MinBetv10_Max, 0) as MinBetv10_Max,	
+	IsNull(@MaxBetv10_Min, 0) as MaxBetv10_Min,	
+	IsNull(@MaxPerMatchv10_Min, 0) as MaxPerMatchv10_Min,	
+	IsNull(@MaxPerMatchv10_Max, 0) as MaxPerMatchv10_Max,
+
+	IsNull(@MinBetv11_Max, 0) as MinBetv11_Max,	
+	IsNull(@MaxBetv11_Min, 0) as MaxBetv11_Min,	
+	IsNull(@MaxPerMatchv11_Min, 0) as MaxPerMatchv11_Min,	
+	IsNull(@MaxPerMatchv11_Max, 0) as MaxPerMatchv11_Max,
+
+	IsNull(@MinBetv99_Max, 0) as MinBetv99_Max,	
+	IsNull(@MaxBetv99_Min, 0) as MaxBetv99_Min,	
+	IsNull(@MaxPerMatchv99_Min, 0) as MaxPerMatchv99_Min,	
+	IsNull(@MaxPerMatchv99_Max, 0) as MaxPerMatchv99_Max,
+	
+	IsNull(@MinBetv99MP_Max, 0) as MinBetv99MP_Max,	
+	IsNull(@MaxBetv99MP_Min, 0) as MaxBetv99MP_Min,	
+	IsNull(@MaxPerMatchv99MP_Min, 0) as MaxPerMatchv99MP_Min,	
+	IsNull(@MaxPerMatchv99MP_Max, 0) as MaxPerMatchv99MP_Max,
+	
+	IsNull(@MinBetv1MP_Max, 0) as MinBetv1MP_Max,	
+	IsNull(@MaxBetv1MP_Min, 0) as MaxBetv1MP_Min,	
+	IsNull(@MaxPerMatchv1MP_Min, 0) as MaxPerMatchv1MP_Min,	
+	IsNull(@MaxPerMatchv1MP_Max, 0) as MaxPerMatchv1MP_Max,
+	
+
+	IsNull(@MinBetv161_Max, 0) as MinBetv161_Max,	
+	IsNull(@MaxBetv161_Min, 0) as MaxBetv161_Min,	
+	IsNull(@MaxPerMatchv161_Min, 0) as MaxPerMatchv161_Min,	
+	IsNull(@MaxPerMatchv161_Max, 0) as MaxPerMatchv161_Max,
+	ISNull(@MaxPerBallv161_Max, 0) as MaxPerBallv161_Max,
+	
+	IsNull(@MinBetv164_Max, 0) as MinBetv164_Max,	
+	IsNull(@MaxBetv164_Min, 0) as MaxBetv164_Min,	
+	IsNull(@MaxPerMatchv164_Min, 0) as MaxPerMatchv164_Min,	
+	IsNull(@MaxPerMatchv164_Max, 0) as MaxPerMatchv164_Max,
+	--> MaxMaxPayoutPerMatch
+	@MaxPayoutPerMatch_max AS MaxPayoutPerMatch_max, 
+    @MaxPayoutPerMatchv2_max AS MaxPayoutPerMatchv2_max, 
+    @MaxPayoutPerMatchv3_max AS MaxPayoutPerMatchv3_max, 
+    @MaxPayoutPerMatchv5_max AS MaxPayoutPerMatchv5_max, 
+    @MaxPayoutPerMatchv8_max AS MaxPayoutPerMatchv8_max, 
+    @MaxPayoutPerMatchv10_max AS MaxPayoutPerMatchv10_max, 
+    @MaxPayoutPerMatchv11_max AS MaxPayoutPerMatchv11_max, 
+    @MaxPayoutPerMatchv99_max AS MaxPayoutPerMatchv99_max, 
+    @MaxPayoutPerMatchv99mp_max AS MaxPayoutPerMatchv99mp_max, 
+    @MaxPayoutPerMatchv1mp_max AS MaxPayoutPerMatchv1mp_max,
+	--BetSetting
+	@minbet AS minbet, 
+    @maxbet AS maxbet, 
+    @maxpermatch AS maxpermatch, 
+    @minbetv2 AS minbetv2, 
+    @maxbetv2 AS maxbetv2, 
+    @maxpermatchv2 AS maxpermatchv2, 
+    @minbetv3 AS minbetv3, 
+    @maxbetv3 AS maxbetv3, 
+    @maxpermatchv3 AS maxpermatchv3, 
+    @minbetv5 AS minbetv5, 
+    @maxbetv5 AS maxbetv5, 
+    @maxpermatchv5 AS maxpermatchv5, 
+    @minbetv8 AS minbetv8, 
+    @maxbetv8 AS maxbetv8, 
+    @maxpermatchv8 AS maxpermatchv8, 
+    @minbetv10 AS minbetv10, 
+    @maxbetv10 AS maxbetv10, 
+    @maxpermatchv10 AS maxpermatchv10, 
+    @minbetv11 AS minbetv11, 
+    @maxbetv11 AS maxbetv11, 
+    @maxpermatchv11 AS maxpermatchv11, 
+    @minbetv99 AS minbetv99, 
+    @maxbetv99 AS maxbetv99, 
+    @maxpermatchv99 AS maxpermatchv99, 
+    @minbetv99mp AS minbetv99mp, 
+    @maxbetv99mp AS maxbetv99mp, 
+    @maxpermatchv99mp AS maxpermatchv99mp, 
+    @minbetv1mp AS minbetv1mp, 
+    @maxbetv1mp AS maxbetv1mp, 
+    @maxpermatchv1mp AS maxpermatchv1mp, 
+    @minbetv161 AS minbetv161, 
+    @maxbetv161 AS maxbetv161, 
+    @maxpermatchv161 AS maxpermatchv161, 
+    @MaxPerBallv161 AS MaxPerBallv161, 
+    @minbetv164 AS minbetv164, 
+    @maxbetv164 AS maxbetv164, 
+    @maxpermatchv164 AS maxpermatchv164, 
+    @MaxPayoutPerMatch AS MaxPayoutPerMatch, 
+    @MaxPayoutPerMatchv2 AS MaxPayoutPerMatchv2, 
+    @MaxPayoutPerMatchv3 AS MaxPayoutPerMatchv3, 
+    @MaxPayoutPerMatchv5 AS MaxPayoutPerMatchv5, 
+    @MaxPayoutPerMatchv8 AS MaxPayoutPerMatchv8, 
+    @MaxPayoutPerMatchv10 AS MaxPayoutPerMatchv10, 
+    @MaxPayoutPerMatchv11 AS MaxPayoutPerMatchv11, 
+    @MaxPayoutPerMatchv99 AS MaxPayoutPerMatchv99, 
+    @MaxPayoutPerMatchv99mp AS MaxPayoutPerMatchv99mp, 
+    @MaxPayoutPerMatchv1mp AS MaxPayoutPerMatchv1mp
 from 
 	customer as C with (NOLOCK) 
 	INNER JOIN CustInfo as ci with (NOLOCK) on c.custid = ci.custid
@@ -1438,20 +1396,6 @@ where C.custid=@CustID
 group by 
 	C.username, C.firstname, C.lastname,c.username2, cps.closed,cps.reject,ci.currency,
 	C.postal, C.email, C.phone, C.mobilephone, c.email, C.fax, 
-	Ci.maxpermatch,
-	ci.maxpermatch2,
-	ci.maxpermatch3,
-	ci.maxpermatch5,
-	ci.maxpermatch8,
-	ci.maxpermatch10, 
-	ci.maxpermatch11,
-	ci.maxpermatch99,
-	ci.maxpermatch99MP,
-	ci.maxpermatch1MP,
-	
-	ci.maxpermatch161,
-	ci.maxperball161,
-	ci.maxpermatch164,
 	C.site, C.ugroup, C.roleid,
 	exchange.minbet, C.refcode1,C.address, C.city, C.state, C.country, ci.credit
 	

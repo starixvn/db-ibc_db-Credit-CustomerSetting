@@ -82,6 +82,18 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_MAg]
 	@MinBetv164 MONEY=0,
 	@MaxBetv164 MONEY=0,
 	@MaxPerMatchv164 MONEY=0,
+
+	--Max Payout Per Match
+	@maxPOpermatch money = NULL,
+	@maxPOpermatchv2 money = NULL,
+	@maxPOpermatchv3 money = NULL,
+	@maxPOpermatchv5 money = NULL,
+	@maxPOpermatchv8 money = NULL,
+	@maxPOpermatchv10 money = NULL,
+	@maxPOpermatchv11 money = NULL,
+	@maxPOpermatchv99 money = NULL,
+	@maxPOpermatchv99mp money = NULL,
+	@maxPOpermatchv1mp money = NULL,
 	
 	@credit MONEY,
 	@maxcredit MONEY = 0,
@@ -458,6 +470,7 @@ Revisions:
 	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
+	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 Param's Explanation:
 • @ErrCode:
     = 0: Create agent successfully.
@@ -616,22 +629,7 @@ BEGIN
 
     declare @ErrType VARCHAR(4000)
     declare 
-	    @transcode bigint, @currency INT, @pwdexpiry datetime,
-	    @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY, 
-	    @MinMinBetv2 MONEY, @MaxMaxBetv2 MONEY, @MaxMaxPerMatchv2 MONEY, 
-	    @MinMinBetv3 MONEY, @MaxMaxBetv3 MONEY, @MaxMaxPerMatchv3 MONEY, 
-	    @MinMinBetv5 MONEY, @MaxMaxBetv5 MONEY, @MaxMaxPerMatchv5 MONEY,
-	    @MinMinBetv8 MONEY, @MaxMaxBetv8 MONEY, @MaxMaxPerMatchv8 MONEY,
-	    @MinMinBetv10 MONEY, @MaxMaxBetv10 MONEY, @MaxMaxPerMatchv10 MONEY,
-	    @MinMinBetv11 MONEY, @MaxMaxBetv11 MONEY, @MaxMaxPerMatchv11 MONEY,
-	    @MinMinBetv99 MONEY, @MaxMaxBetv99 MONEY, @MaxMaxPerMatchv99 MONEY,
-	    @MinMinBetv99mp MONEY, @MaxMaxBetv99mp MONEY, @MaxMaxPerMatchv99mp MONEY,
-	    
-	    @MinMinBetv1mp MONEY, @MaxMaxBetv1mp MONEY, @MaxMaxPerMatchv1mp MONEY,
-	   
-	    @MinMinBetv161 MONEY, @MaxMaxBetv161 MONEY, @MaxMaxPerMatchv161 MONEY, 
-	    @MaxMaxPerBallv161 MONEY,
-		@MinMinBetv164 MONEY, @MaxMaxBetv164 MONEY, @MaxMaxPerMatchv164 MONEY,  	
+	    @transcode bigint, @currency INT, @pwdexpiry datetime,	
 	    @Credit_AllOtherAgent MONEY, @Credit_AllMember MONEY, @Credit_MAg MONEY,
 	    @srecommend INT,	 
 	    @matchlimit SMALLMONEY,
@@ -897,57 +895,6 @@ BEGIN
 	    @groupb=@groupb,
 	    @groupc=@groupc,
 	    @groupd=@groupd,
-	    @MinBet=@MinBet,
-	    @MaxBet=@MaxBet,
-	    @MaxPerMatch=@MaxPerMatch,
-    	
-	    @MinBetv2=@MinBetv2,
-	    @MaxBetv2=@MaxBetv2,
-	    @MaxPerMatchv2=@MaxPerMatchv2,
-
-	    @MinBetv3=@MinBetv3,
-	    @MaxBetv3=@MaxBetv3,
-	    @MaxPerMatchv3=@MaxPerMatchv3,
-
-	    @MinBetv5=@MinBetv5,
-	    @MaxBetv5=@MaxBetv5,
-	    @MaxPerMatchv5=@MaxPerMatchv5,
-
-	    @MinBetv8=@MinBetv8,
-	    @MaxBetv8=@MaxBetv8,
-	    @MaxPerMatchv8=@MaxPerMatchv8,
-
-	    @MinBetv10=@MinBetv10,
-	    @MaxBetv10=@MaxBetv10,
-	    @MaxPerMatchv10=@MaxPerMatchv10,
-
-	    @MinBetv11=@MinBetv11,
-	    @MaxBetv11=@MaxBetv11,
-	    @MaxPerMatchv11=@MaxPerMatchv11,
-
-	    @MinBetv99=@MinBetv99,
-	    @MaxBetv99=@MaxBetv99,
-	    @MaxPerMatchv99=@MaxPerMatchv99,
-    	
-	    -- mix parlay of mixed sports
-	    @MinBetv99mp = @MinBetv99mp,
-	    @MaxBetv99mp = @MaxBetv99mp,
-	    @MaxPerMatchv99mp = @MaxPerMatchv99mp,
-
-		-- mix parlay of soccer sports
-	    @MinBetv1mp = @MinBetv1mp,
-	    @MaxBetv1mp = @MaxBetv1mp,
-	    @MaxPerMatchv1mp = @MaxPerMatchv1mp,
-	    --number game
-	    @MinBetv161 = @MinBetv161,
-	    @MaxBetv161 = @MaxBetv161,
-	    @MaxPerMatchv161 = @MaxPerMatchv161,
-    	
-	    @MaxPerBallv161 = @MaxPerBallv161,
-    	
-		@MinBetv164 = @MinBetv164,
-	    @MaxBetv164 = @MaxBetv164,
-	    @MaxPerMatchv164 = @MaxPerMatchv164,
 		
 	    @credit=@credit,
 	    @maxcredit = @maxcredit,
@@ -1201,6 +1148,81 @@ BEGIN
     BEGIN
 	    return
     END
+
+	DECLARE @BetSettingXML VARCHAR(8000) = ''
+
+	EXEC Acc_CustomerInsMember_CheckBetSetting
+		 @custid			= @mrecommend
+		,@minbet			= @minbet
+		,@maxbet			= @maxbet
+		,@maxpermatch		= @maxpermatch
+
+		,@minbetv2			= @minbetv2
+		,@maxbetv2			= @maxbetv2
+		,@maxpermatchv2		= @maxpermatchv2
+
+		,@minbetv3			= @minbetv3
+		,@maxbetv3			= @maxbetv3
+		,@maxpermatchv3		= @maxpermatchv3
+
+		,@minbetv5			= @minbetv5
+		,@maxbetv5			= @maxbetv5
+		,@maxpermatchv5		= @maxpermatchv5
+
+		,@minbetv8			= @minbetv8
+		,@maxbetv8			= @maxbetv8
+		,@maxpermatchv8		= @maxpermatchv8
+
+		,@minbetv10			= @minbetv10
+		,@maxbetv10			= @maxbetv10
+		,@maxpermatchv10	= @maxpermatchv10
+
+		,@minbetv11			= @minbetv11
+		,@maxbetv11			= @maxbetv11
+		,@maxpermatchv11	= @maxpermatchv11
+
+		,@minbetv99			= @minbetv99
+		,@maxbetv99			= @maxbetv99
+		,@maxpermatchv99	= @maxpermatchv99
+
+		,@minbetv99mp		= @minbetv99mp
+		,@maxbetv99mp		= @maxbetv99mp
+		,@maxpermatchv99mp	= @maxpermatchv99mp
+
+		,@minbetv1mp		= @minbetv1mp
+		,@maxbetv1mp		= @maxbetv1mp
+		,@maxpermatchv1mp	= @maxpermatchv1mp
+
+		,@minbetv161		= @minbetv161
+		,@maxbetv161		= @maxbetv161
+		,@maxpermatchv161	= @maxpermatchv161
+		,@MaxPerBallv161	= @MaxPerBallv161
+
+		,@minbetv164		= @minbetv164
+		,@maxbetv164		= @maxbetv164
+		,@maxpermatchv164	= @maxpermatchv164
+
+		,@maxPOpermatch		= @maxPOpermatch
+		,@maxPOpermatchv2	= @maxPOpermatchv2
+		,@maxPOpermatchv3	= @maxPOpermatchv3
+		,@maxPOpermatchv5	= @maxPOpermatchv5
+		,@maxPOpermatchv8	= @maxPOpermatchv8
+		,@maxPOpermatchv10	= @maxPOpermatchv10
+		,@maxPOpermatchv11	= @maxPOpermatchv11
+		,@maxPOpermatchv99	= @maxPOpermatchv99
+		,@maxPOpermatchv99mp= @maxPOpermatchv99mp
+		,@maxPOpermatchv1mp	= @maxPOpermatchv1mp
+
+		,@language			= @language
+		,@SystemID			= @SystemID
+		,@ErrCode			= @ErrCode OUTPUT
+		,@ErrMsg			= @ErrMsg OUTPUT
+		,@BetSettingXML		= @BetSettingXML OUTPUT
+
+	IF @ErrCode <> 0
+    BEGIN
+	    RETURN
+    END
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     SELECT @username = rtrim(ltrim(@username))
 
@@ -1381,40 +1403,6 @@ BEGIN
 	    SELECT @ErrCode = 102
 	    return 
     END
-
-    SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + sports.Name + ', '
-    FROM #tmp_Sports sports inner join
-    (
-				    SELECT 1 as sporttype, @MinBet as MinBet, @MaxBet as MaxBet, @MaxPerMatch as MaxPerMatch
-	    UNION ALL	SELECT 2 as sporttype, @MinBetv2 as MinBet, @MaxBetv2 as MaxBet, @MaxPerMatchv2 as MaxPerMatch
-	    UNION ALL	SELECT 3 as sporttype, @MinBetv3 as MinBet, @MaxBetv3 as MaxBet, @MaxPerMatchv3 as MaxPerMatch
-	    UNION ALL	SELECT 5 as sporttype, @MinBetv5 as MinBet, @MaxBetv5 as MaxBet, @MaxPerMatchv5 as MaxPerMatch
-	    UNION ALL	SELECT 8 as sporttype, @MinBetv8 as MinBet, @MaxBetv8 as MaxBet, @MaxPerMatchv8 as MaxPerMatch
-	    UNION ALL	SELECT 10 as sporttype, @MinBetv10 as MinBet, @MaxBetv10 as MaxBet, @MaxPerMatchv10 as MaxPerMatch
-	    UNION ALL	SELECT 11 as sporttype, @MinBetv11 as MinBet, @MaxBetv11 as MaxBet, @MaxPerMatchv11 as MaxPerMatch
-	    UNION ALL	SELECT 99 as sporttype, @MinBetv99 as MinBet, @MaxBetv99 as MaxBet, @MaxPerMatchv99 as MaxPerMatch	
-	    UNION ALL   SELECT 99 as sporttype, @MinBetv99mp as MinBet, @MaxBetv99mp as MaxBet, @MaxPerMatchv99mp as MaxPerMatch
-	    
-	    UNION ALL   SELECT 1 as sporttype, @MinBetv1mp as MinBet, @MaxBetv1mp as MaxBet, @MaxPerMatchv1mp as MaxPerMatch	  	
-	    UNION ALL   SELECT 161 as sporttype, @MinBetv161 as MinBet, @MaxBetv161 as MaxBet, @MaxPerMatchv161 as MaxPerMatch 
-		UNION ALL   SELECT 164 as sporttype, @MinBetv164 as MinBet, @MaxBetv164 as MaxBet, @MaxPerMatchv164 as MaxPerMatch 
-    ) as b on sports.ID = b.sporttype
-    WHERE (MinBet<>0 and MaxBet <> 0 and  MinBet>MaxBet) 
-    or (MaxBet<> 0 and MaxPerMatch <> 0 and MaxBet>MaxPerMatch) 
-    or (MinBet <> 0 and MaxPerMatch <> 0 and MinBet>MaxPerMatch) 
-
-    if @ErrType <>''
-    BEGIN
-	    SELECT
-		    @ErrMsg =	case @Language 
-							    when 'E' then 'Min bet must be less than max bet and max bet must be less than max per match ('+@ErrType+').'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language) + ' (' + @ErrType + ').'
-					    END
-    										
-	    SELECT @ErrCode = 103
-	    return
-    END
     
     --Auto Master PT
     SELECT @auto_mpositiontaking_1=  CASE WHEN @auto_mpositiontaking_1>@max_mapositiontaking_1 then @max_mapositiontaking_1 else @auto_mpositiontaking_1 END
@@ -1493,120 +1481,6 @@ BEGIN
     SELECT @auto_v161mlivepositiontaking_87 = CASE WHEN @auto_v161mlivepositiontaking_87 > @max_v161malivepositiontaking_87 then @max_v161malivepositiontaking_87 else @auto_v161mlivepositiontaking_87 END
     SELECT @auto_v161mlivepositiontaking_89 = CASE WHEN @auto_v161mlivepositiontaking_89 > @max_v161malivepositiontaking_89 then @max_v161malivepositiontaking_89 else @auto_v161mlivepositiontaking_89 END
     SELECT @auto_v161mlivepositiontaking_90 = CASE WHEN @auto_v161mlivepositiontaking_90 > @max_v161malivepositiontaking_90 then @max_v161malivepositiontaking_90 else @auto_v161mlivepositiontaking_90 END
-
-    SELECT 
-	    @MinMinBet = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0), 
-	    @MaxMaxBet = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM 
-	    custsetting as cs WITH (NOLOCK)
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=1
-    WHERE ci.custid = @mrecommend
-
-    SELECT 
-	    @MinMinBetv2 = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0), 
-	    @MaxMaxBetv2 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM 
-	    custsetting as cs WITH (NOLOCK)
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=2
-    WHERE ci.custid = @mrecommend
-
-    SELECT 
-	    @MinMinBetv3 = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0), 
-	    @MaxMaxBetv3 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM 
-	    custsetting as cs WITH (NOLOCK)
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=3
-    WHERE ci.custid = @mrecommend
-
-    SELECT 
-	    @MinMinBetv5 = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0), 
-	    @MaxMaxBetv5 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM 
-	    custsetting as cs WITH (NOLOCK)
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=5
-    WHERE ci.custid = @mrecommend
-
-    SELECT 
-	    @MinMinBetv8 = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0), 
-	    @MaxMaxBetv8 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM 
-	    custsetting as cs WITH (NOLOCK)
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=8
-    WHERE ci.custid = @mrecommend
-
-    SELECT 
-	    @MinMinBetv10 = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0), 
-	    @MaxMaxBetv10 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM 
-	    custsetting as cs WITH (NOLOCK)
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=10
-    WHERE ci.custid = @mrecommend
-
-    SELECT 
-	    @MinMinBetv11 = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0), 
-	    @MaxMaxBetv11 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM 
-	    custsetting as cs WITH (NOLOCK)
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=11
-    WHERE ci.custid = @mrecommend
-
-    SELECT 
-	    @MinMinBetv99 = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0), 
-	    @MaxMaxBetv99 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM 
-	    custsetting as cs WITH (NOLOCK)
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=99
-    WHERE ci.custid = @mrecommend
-
-    --- mix parlay of mixed sports
-    select	@MinMinBetv99mp = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0),
-		    @MaxMaxBetv99mp = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM custsetting as cs WITH(NOLOCK) inner join
-	    custinfo as ci WITH(NOLOCK) on (cs.custid = ci.custid or cs.custid = ci.srecommend) and cs.bettype = 9 and cs.sporttype = 99
-    WHERE ci.custid = @mrecommend
-
-	--- mix parlay of soccer sports
-    select	@MinMinBetv1mp = isnull(Max(case when MinBet = 0 then NULL else MinBet END),0),
-		    @MaxMaxBetv1mp = isnull(Min(case when MaxBet = 0 then NULL else MaxBet END),0)
-    FROM custsetting as cs WITH(NOLOCK) inner join
-	    custinfo as ci WITH(NOLOCK) on (cs.custid = ci.custid or cs.custid = ci.srecommend) and cs.bettype = 9 and cs.sporttype = 1
-    WHERE ci.custid = @mrecommend    
-   
-    -- number game
-    select	@MinMinBetv161 = isnull(max(case when minbet = 0 then NULL else minbet END),0),
-		    @MaxMaxBetv161 = isnull(Min(case when maxbet = 0 then NULL else maxbet END),0)
-    FROM custsetting3rd as cs WITH(NOLOCK) inner join 
-	     custinfo as ci WITH(NOLOCK) on (cs.custid = ci.custid or cs.custid = ci.srecommend) and cs.bettype = 81 and cs.sporttype = 161
-    WHERE ci.custid = @mrecommend
-	
-	select	@MinMinBetv164 = isnull(max(case when minbet = 0 then NULL else minbet END),0),
-		    @MaxMaxBetv164 = isnull(Min(case when maxbet = 0 then NULL else maxbet END),0)
-    FROM custsetting3rd as cs WITH(NOLOCK) inner join 
-	     custinfo as ci WITH(NOLOCK) on (cs.custid = ci.custid or cs.custid = ci.srecommend) and cs.bettype = 8101 and cs.sporttype = 164
-    WHERE ci.custid = @mrecommend
-	
-    	
-    SELECT 
-	    @MaxMaxperMatch = isnull(Min(case when cs.MaxPerMatch = 0 then NULL else cs.MaxPerMatch END),0),	
-	    @MaxMaxPerMatchv2 = isnull(Min(case when cs.MaxPerMatch2 = 0 then NULL else cs.MaxPerMatch2 END),0),
-	    @MaxMaxPerMatchv3 = isnull(Min(case when cs.MaxPerMatch3 = 0 then NULL else cs.MaxPerMatch3 END),0),
-	    @MaxMaxPerMatchv5 = isnull(Min(case when cs.MaxPerMatch5 = 0 then NULL else cs.MaxPerMatch5 END),0),
-	    @MaxMaxPerMatchv8 = isnull(Min(case when cs.MaxPerMatch8 = 0 then NULL else cs.MaxPerMatch8 END),0),
-	    @MaxMaxPerMatchv10 = isnull(Min(case when cs.MaxPerMatch10 = 0 then NULL else cs.MaxPerMatch10 END),0),
-	    @MaxMaxPerMatchv11 = isnull(Min(case when cs.MaxPerMatch11 = 0 then NULL else cs.MaxPerMatch11 END),0),
-	    @MaxMaxPerMatchv99 = isnull(Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 END),0),
-	    @MaxMaxPerMatchv99mp = isnull(min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP END),0),
-	    
-	    @MaxMaxPerMatchv1mp = isnull(min(case when cs.MaxPerMatch1MP = 0 then NULL else cs.MaxPerMatch1MP END),0),	    
-	  
-	    @MaxMaxPerMatchv161 = isnull(min(case when cs.MaxPerMatch161 = 0 then NULL else cs.MaxPerMatch161 END),0),
-	    @MaxMaxPerBallv161 = isnull(min(case when cs.MaxPerBall161 = 0 then NULL else cs.MaxPerBall161 END),0),
-		@MaxMaxPerMatchv164 = isnull(min(case when cs.MaxPerMatch164 = 0 then NULL else cs.MaxPerMatch164 END),0)
-    FROM 
-	    custinfo as cs WITH (NOLOCK) 
-	    INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.SRecommend)
-    WHERE ci.custid = @mrecommend
-
     	
     --Check valid commission for financial and HR
     SELECT 
@@ -1655,112 +1529,6 @@ BEGIN
      return  
     END 
 
-
-    SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + sports.Name + ', '
-    FROM #tmp_Sports sports inner join
-    (
-				    SELECT 1 as sporttype, @MinBet as MinBet, @MinMinBet as MinMinBet
-	    UNION ALL	SELECT 2 as sporttype, @MinBetv2 as MinBet, @MinMinBetv2 as MinMinBet
-	    UNION ALL	SELECT 3 as sporttype, @MinBetv3 as MinBet, @MinMinBetv3 as MinMinBet
-	    UNION ALL	SELECT 5 as sporttype, @MinBetv5 as MinBet, @MinMinBetv5 as MinMinBet
-	    UNION ALL	SELECT 8 as sporttype, @MinBetv8 as MinBet, @MinMinBetv8 as MinMinBet
-	    UNION ALL	SELECT 10 as sporttype, @MinBetv10 as MinBet, @MinMinBetv10 as MinMinBet
-	    UNION ALL	SELECT 11 as sporttype, @MinBetv11 as MinBet, @MinMinBetv11 as MinMinBet
-	    UNION ALL	SELECT 99 as sporttype, @MinBetv99 as MinBet, @MinMinBetv99 as MinMinBet
-	    UNION ALL   SELECT 99 as sporttype, @MinBetv99mp as MinBet, @MinMinBetv99mp as MinMinBet
-	    
-	    UNION ALL   SELECT 1 as sporttype, @MinBetv1mp as MinBet, @MinMinBetv1mp as MinMinBet	
-	    UNION ALL   SELECT 161 as sporttype, @MinBetv161 as MinBet, @MinMinBetv161 as MinMinBet	 	
-		UNION ALL   SELECT 164 as sporttype, @MinBetv164 as MinBet, @MinMinBetv164 as MinMinBet	 	
-    ) as b on sports.ID = b.sporttype
-    WHERE MinMinBet>0 and MinBet>0 and MinBet<MinMinBet
-
-    if @ErrType <>''
-    BEGIN
-	    SELECT
-		    @ErrMsg =	case @Language 
-							    when 'E' then 'Min bet must be equal to or greater than master agent min bet ('+@ErrType+').'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](10019,@Language) + ' ('+@ErrType+').'
-					    END										
-	    SELECT @ErrCode = 105
-	    return
-    END
-
-
-    SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + sports.Name + ', '
-    FROM #tmp_Sports sports inner join
-    (
-				    SELECT 1 as sporttype, @MaxBet as MaxBet, @MaxMaxBet as MaxMaxBet
-	    UNION ALL	SELECT 2 as sporttype, @MaxBetv2 as MaxBet, @MaxMaxBetv2 as MaxMaxBet
-	    UNION ALL	SELECT 3 as sporttype, @MaxBetv3 as MaxBet, @MaxMaxBetv3 as MaxMaxBet
-	    UNION ALL	SELECT 5 as sporttype, @MaxBetv5 as MaxBet, @MaxMaxBetv5 as MaxMaxBet
-	    UNION ALL	SELECT 8 as sporttype, @MaxBetv8 as MaxBet, @MaxMaxBetv8 as MaxMaxBet
-	    UNION ALL	SELECT 10 as sporttype, @MaxBetv10 as MaxBet, @MaxMaxBetv10 as MaxMaxBet
-	    UNION ALL	SELECT 11 as sporttype, @MaxBetv11 as MaxBet, @MaxMaxBetv11 as MaxMaxBet
-	    UNION ALL	SELECT 99 as sporttype, @MaxBetv99 as MaxBet, @MaxMaxBetv99 as MaxMaxBet
-	    UNION ALL   SELECT 99 as sporttype, @MaxBetv99mp as MaxBet, @MaxMaxBetv99mp as MaxMaxBet	 
-	    UNION ALL   SELECT 161 as sporttype, @MaxBetv161 as MaxBet, @MaxMaxBetv161 as MaxMaxBet
-		UNION ALL   SELECT 164 as sporttype, @MaxBetv164 as MaxBet, @MaxMaxBetv164 as MaxMaxBet
-    ) as b on sports.ID = b.sporttype
-    WHERE MaxMaxBet>0 and MaxBet>0 and MaxBet>MaxMaxBet
-
-    if @ErrType <>''
-    BEGIN
-	    SELECT
-		    @ErrMsg =	case @Language 
-							    when 'E' then 'Max bet must be equal to or less than master agent max bet ('+@ErrType+').'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](10020,@Language) + ' ('+@ErrType+').'
-					    END
-    										
-	    SELECT @ErrCode = 107
-	    return
-    END
-
-	SELECT @ErrType = ''
-    SELECT @ErrType = @ErrType + sports.Name + ', '
-    FROM #tmp_Sports sports inner join
-    (
-				    SELECT 1 as sporttype, @MaxPerMatch as MaxPerMatch, @MaxMaxPerMatch as MaxMaxPerMatch
-	    UNION ALL	SELECT 2 as sporttype, @MaxPerMatchv2 as MaxPerMatch, @MaxMaxPerMatchv2 as MaxMaxPerMatch
-	    UNION ALL	SELECT 3 as sporttype, @MaxPerMatchv3 as MaxPerMatch, @MaxMaxPerMatchv3 as MaxMaxPerMatch
-	    UNION ALL	SELECT 5 as sporttype, @MaxPerMatchv5 as MaxPerMatch, @MaxMaxPerMatchv5 as MaxMaxPerMatch
-	    UNION ALL	SELECT 8 as sporttype, @MaxPerMatchv8 as MaxPerMatch, @MaxMaxPerMatchv8 as MaxMaxPerMatch
-	    UNION ALL	SELECT 10 as sporttype, @MaxPerMatchv10 as MaxPerMatch, @MaxMaxPerMatchv10 as MaxMaxPerMatch
-	    UNION ALL	SELECT 11 as sporttype, @MaxPerMatchv11 as MaxPerMatch, @MaxMaxPerMatchv11 as MaxMaxPerMatch
-	    UNION ALL	SELECT 99 as sporttype, @MaxPerMatchv99 as MaxPerMatch, @MaxMaxPerMatchv99 as MaxMaxPerMatch	 
-	    UNION ALL	SELECT 99 as sporttype, @MaxPerMatchv99mp as MaxPerMatch, @MaxMaxPerMatchv99mp as MaxMaxPerMatch
-	    
-	    UNION ALL	SELECT 99 as sporttype, @MaxPerMatchv1mp as MaxPerMatch, @MaxMaxPerMatchv1mp as MaxMaxPerMatch
-	    UNION ALL	SELECT 161 as sporttype, @MaxPerMatchv161 as MaxPerMatch, @MaxMaxPerMatchv161 as MaxMaxPerMatch
-		UNION ALL	SELECT 164 as sporttype, @MaxPerMatchv164 as MaxPerMatch, @MaxMaxPerMatchv164 as MaxMaxPerMatch
-    ) as b on sports.ID = b.sporttype
-    WHERE MaxMaxPerMatch>0 and MaxPerMatch>0 and MaxPerMatch>MaxMaxPerMatch
-
-	
-    if @ErrType <>''
-    BEGIN
-	    SELECT
-		    @ErrMsg =	case @Language 
-							    when 'E' then 'Max Per Match must be equal to or less than master agent Max Per Match ('+@ErrType+').'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](10021,@Language) + ' ('+@ErrType+').'
-					    END
-    										
-	    SELECT @ErrCode = 107
-	    return
-    END
-
-    if @MaxPerBallv161 > @MaxMaxPerBallv161 and @MaxMaxPerBallv161 > 0
-    begin
-	    SELECT
-		    @ErrMsg =	case @Language 
-							    when 'E' then 'Max Per Ball must be equal to or less than Master Agent Max Per Ball (Number Game).'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](10011,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](161,@Language) + ')'
-					    END										
-	    SELECT @ErrCode = 201
-	    return
-    END
     --Auto Master PT
 
     select	@isauto_mpositiontaking_1 	= case when	@auto_mpositiontaking_1 	>0 then 1 else 0 END,
@@ -1882,23 +1650,7 @@ BEGIN
 	    @DisableCasino = @DisableCasino,	
 	    @IsInternal = @IsInternal,
 	    @DisableNumber = @DisableNumber,
-	
-	    @MaxPerMatch = @MaxPerMatch,
-	    @MaxPerMatchv2 = @MaxPerMatchv2,
-	    @MaxPerMatchv3 = @MaxPerMatchv3,
-	    @MaxPerMatchv5 = @MaxPerMatchv5,
-	    @MaxPerMatchv8 = @MaxPerMatchv8,
-	    @MaxPerMatchv10 = @MaxPerMatchv10,
-	    @MaxPerMatchv11 = @MaxPerMatchv11,
-	    @MaxPerMatchv99 = @MaxPerMatchv99,
-
-	    @MaxPerMatchv99MP = @MaxPerMatchv99mp,
-	    
-	    @MaxPerMatchv1MP = @MaxPerMatchv1mp,
-	
-	    @MaxPerMatchv161 = @MaxPerMatchv161,	
-	    @MaxPerBallv161 = @MaxPerBallv161,
-		@MaxPerMatchv164 = @MaxPerMatchv164,	
+		
     	@SystemID=@SystemID,
 	    @credit = @credit,
 	    @maxcredit = @maxcredit,
@@ -2258,42 +2010,15 @@ BEGIN
 	    @isauto_v161mlivepositiontaking_86 = @isauto_v161mlivepositiontaking_86,	
 	    @isauto_v161mlivepositiontaking_87  = @isauto_v161mlivepositiontaking_87,
 	    @isauto_v161mlivepositiontaking_89  = @isauto_v161mlivepositiontaking_89,
-	    @isauto_v161mlivepositiontaking_90  = @isauto_v161mlivepositiontaking_90,
-    	
-	    @MinBet = @MinBet,
-	    @MaxBet = @MaxBet,	
-	    @MinBetv2 = @MinBetv2,
-	    @MaxBetv2 = @MaxBetv2,		
-	    @MinBetv3 = @MinBetv3,
-	    @MaxBetv3 = @MaxBetv3,	
-	    @MinBetv5 = @MinBetv5,
-	    @MaxBetv5 = @MaxBetv5,	
-	    @MinBetv8 = @MinBetv8,
-	    @MaxBetv8 = @MaxBetv8,	
-	    @MinBetv10 = @MinBetv10,
-	    @MaxBetv10 = @MaxBetv10,	
-	    @MinBetv11 = @MinBetv11,
-	    @MaxBetv11 = @MaxBetv11,	
-	    @MinBetv99 = @MinBetv99,
-	    @MaxBetv99 = @MaxBetv99,		
-	    --Mix Parlay mix sports
-	    @MinBetv99MP = @MinBetv99MP,
-	    @MaxBetv99MP = @MaxBetv99MP,		
-	    
-	    --Mix Parlay soccer sports
-	    @MinBetv1MP = @MinBetv1MP,
-	    @MaxBetv1MP = @MaxBetv1MP,		
-
-	    --Number game
-	    @MinBetv161 = @MinBetv161,
-	    @MaxBetv161 = @MaxBetv161,
-		
-		@MinBetv164 = @MinBetv164,
-	    @MaxBetv164 = @MaxBetv164,		
+	    @isauto_v161mlivepositiontaking_90  = @isauto_v161mlivepositiontaking_90,	
 
 	    @discountcs = @discountcs, 
 	    --comm 1x2
 	    @discount1x2 = @discount1x2,
+
+		--BetSetting
+		@BetSettingXML = @BetSettingXML,
+
 	    -- MyanmarOdds
 	    @IsMyanmarOdds=@IsMyanmarOdds,
 	    @discountMyanmarOdds = @discountMyanmarOdds,
@@ -2435,47 +2160,64 @@ BEGIN
 
     --log bet Setting
     SELECT @LogSPData = '<Acc_CustomerInsMember_MAg custid="'+ COALESCE(CAST(@custid as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MinB="'+ COALESCE(CAST(@MinBet as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxB="'+ COALESCE(CAST(@MaxBet as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPM="'+ COALESCE(CAST(@MaxPerMatch as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MinBv2="'+ COALESCE(CAST(@MinBetv2 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv2="'+ COALESCE(CAST(@MaxBetv2 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv2="'+ COALESCE(CAST(@MaxPerMatchv2 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MinBv3="'+ COALESCE(CAST(@MinBetv3 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv3="'+ COALESCE(CAST(@MaxBetv3 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv3="'+ COALESCE(CAST(@MaxPerMatchv3 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MinBv5="'+ COALESCE(CAST(@MinBetv5 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv5="'+ COALESCE(CAST(@MaxBetv5 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv5="'+ COALESCE(CAST(@MaxPerMatchv5 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MinBv8="'+ COALESCE(CAST(@MinBetv8 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv8="'+ COALESCE(CAST(@MaxBetv8 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv8="'+ COALESCE(CAST(@MaxPerMatchv8 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MinBv10="'+ COALESCE(CAST(@MinBetv10 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv10="'+ COALESCE(CAST(@MaxBetv10 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv10="'+ COALESCE(CAST(@MaxPerMatchv10 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MinBv11="'+ COALESCE(CAST(@MinBetv11 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv11="'+ COALESCE(CAST(@MaxBetv11 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv11="'+ COALESCE(CAST(@MaxPerMatchv11 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MinBv99="'+ COALESCE(CAST(@MinBetv99 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv99="'+ COALESCE(CAST(@MaxBetv99 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv99="'+ COALESCE(CAST(@MaxPerMatchv99 as VARCHAR(50)), SPACE(1)) + '" ' +
+    'MinB="'+ COALESCE(CAST(@minbet AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxB="'+ COALESCE(CAST(@maxbet AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPM="'+ COALESCE(CAST(@maxpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPPM="'+ COALESCE(CAST(@maxPOpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
 
-    'MinBv99mp="'+ COALESCE(CAST(@MinBetv99mp as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv99mp="'+ COALESCE(CAST(@MaxBetv99mp as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv99mp="'+ COALESCE(CAST(@MaxPerMatchv99mp as VARCHAR(50)), SPACE(1)) + '" ' +
+	'MinBv2="'+ COALESCE(CAST(@minbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv2="'+ COALESCE(CAST(@maxbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv2="'+ COALESCE(CAST(@maxpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPPMv2="'+ COALESCE(CAST(@maxPOpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+	'MinBv3="'+ COALESCE(CAST(@minbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv3="'+ COALESCE(CAST(@maxbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv3="'+ COALESCE(CAST(@maxpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPPMv3="'+ COALESCE(CAST(@maxPOpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+	'MinBv5="'+ COALESCE(CAST(@minbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv5="'+ COALESCE(CAST(@maxbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv5="'+ COALESCE(CAST(@maxpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPPMv5="'+ COALESCE(CAST(@maxPOpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+	'MinBv8="'+ COALESCE(CAST(@minbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv8="'+ COALESCE(CAST(@maxbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv8="'+ COALESCE(CAST(@maxpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPPMv8="'+ COALESCE(CAST(@maxPOpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+	'MinBv10="'+ COALESCE(CAST(@minbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv10="'+ COALESCE(CAST(@maxbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv10="'+ COALESCE(CAST(@maxpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPPMv10="'+ COALESCE(CAST(@maxPOpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+	'MinBv11="'+ COALESCE(CAST(@minbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv11="'+ COALESCE(CAST(@maxbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv11="'+ COALESCE(CAST(@maxpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPPMv11="'+ COALESCE(CAST(@maxPOpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+	'MinBv99="'+ COALESCE(CAST(@minbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv99="'+ COALESCE(CAST(@maxbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv99="'+ COALESCE(CAST(@maxpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPPMv99="'+ COALESCE(CAST(@maxPOpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+	'MinBv99MP="'+ COALESCE(CAST(@minbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv99MP="'+ COALESCE(CAST(@maxbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPM99MP="'+ COALESCE(CAST(@maxpermatchv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+	COALESCE('MPPMv99MP="'+ CAST(@maxPOpermatchv99MP AS VARCHAR(50))+ '" ',SPACE(1)) +
     
-    'MinBv1mp="'+ COALESCE(CAST(@MinBetv1mp as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv1mp="'+ COALESCE(CAST(@MaxBetv1mp as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv1mp="'+ COALESCE(CAST(@MaxPerMatchv1mp as VARCHAR(50)), SPACE(1)) + '" ' +
+	'MinBv1MP="'+ COALESCE(CAST(@minbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv1MP="'+ COALESCE(CAST(@maxbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv1MP="'+ COALESCE(CAST(@maxpermatchv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+	COALESCE('MPPMv1MP="'+ CAST(@maxPOpermatchv1MP AS VARCHAR(50))+ '" ',SPACE(1)) +
 	
-	'MinBv164="'+ COALESCE(CAST(@MinBetv164 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv164="'+ COALESCE(CAST(@MaxBetv164 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv164="'+ COALESCE(CAST(@MaxPerMatchv164 as VARCHAR(50)), SPACE(1)) + '" ' +
+	'MinBv164="' + COALESCE(CAST(@minbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv164="' + COALESCE(CAST(@maxbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv164="' + COALESCE(CAST(@maxpermatchv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
 	
-    'MinBv161="'+ COALESCE(CAST(@MinBetv161 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MaxBv161="'+ COALESCE(CAST(@MaxBetv161 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPMv161="'+ COALESCE(CAST(@MaxPerMatchv161 as VARCHAR(50)), SPACE(1)) + '" ' +
-    'MPBv161="' + COALESCE(CAST(@MaxPerBallv161 as VARCHAR(50)), space(1)) + '" />'
+	'MinBv161="' + COALESCE(CAST(@minbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MaxBv161="' + COALESCE(CAST(@maxbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPMv161="' + COALESCE(CAST(@maxpermatchv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'MPBv161="' + COALESCE(CAST(@maxperballv161 AS VARCHAR(50)), space(1)) + '" />'
 
     BEGIN TRY
 	    EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
@@ -2487,46 +2229,64 @@ BEGIN
     END TRY
     BEGIN CATCH
 	    SELECT @LogSPData = '<Acc_CustomerInsMember_MAg custid="'+ COALESCE(CAST(@custid as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinB="'+ COALESCE(CAST(@MinBet as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxB="'+ COALESCE(CAST(@MaxBet as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPM="'+ COALESCE(CAST(@MaxPerMatch as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinBv2="'+ COALESCE(CAST(@MinBetv2 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv2="'+ COALESCE(CAST(@MaxBetv2 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv2="'+ COALESCE(CAST(@MaxPerMatchv2 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinBv3="'+ COALESCE(CAST(@MinBetv3 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv3="'+ COALESCE(CAST(@MaxBetv3 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv3="'+ COALESCE(CAST(@MaxPerMatchv3 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinBv5="'+ COALESCE(CAST(@MinBetv5 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv5="'+ COALESCE(CAST(@MaxBetv5 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv5="'+ COALESCE(CAST(@MaxPerMatchv5 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinBv8="'+ COALESCE(CAST(@MinBetv8 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv8="'+ COALESCE(CAST(@MaxBetv8 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv8="'+ COALESCE(CAST(@MaxPerMatchv8 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinBv10="'+ COALESCE(CAST(@MinBetv10 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv10="'+ COALESCE(CAST(@MaxBetv10 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv10="'+ COALESCE(CAST(@MaxPerMatchv10 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinBv11="'+ COALESCE(CAST(@MinBetv11 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv11="'+ COALESCE(CAST(@MaxBetv11 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv11="'+ COALESCE(CAST(@MaxPerMatchv11 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinBv99="'+ COALESCE(CAST(@MinBetv99 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv99="'+ COALESCE(CAST(@MaxBetv99 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv99="'+ COALESCE(CAST(@MaxPerMatchv99 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MinBv99mp="'+ COALESCE(CAST(@MinBetv99mp as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv99mp="'+ COALESCE(CAST(@MaxBetv99mp as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv99mp="'+ COALESCE(CAST(@MaxPerMatchv99mp as VARCHAR(50)), SPACE(1)) + '" ' +
-	    
-	    'MinBv1mp="'+ COALESCE(CAST(@MinBetv1mp as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv1mp="'+ COALESCE(CAST(@MaxBetv1mp as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv1mp="'+ COALESCE(CAST(@MaxPerMatchv1mp as VARCHAR(50)), SPACE(1)) + '" ' +
-		
-		'MinBv164="'+ COALESCE(CAST(@MinBetv164 as VARCHAR(50)), SPACE(1)) + '" ' +
-		'MaxBv164="'+ COALESCE(CAST(@MaxBetv164 as VARCHAR(50)), SPACE(1)) + '" ' +
-		'MPMv164="'+ COALESCE(CAST(@MaxPerMatchv164 as VARCHAR(50)), SPACE(1)) + '" ' +
-		
-	    'MinBv161="'+ COALESCE(CAST(@MinBetv161 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MaxBv161="'+ COALESCE(CAST(@MaxBetv161 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPMv161="'+ COALESCE(CAST(@MaxPerMatchv161 as VARCHAR(50)), SPACE(1)) + '" ' +
-	    'MPBv161="' + COALESCE(CAST(@MaxPerBallv161 as VARCHAR(50)), space(1)) + '" '+
+	    'MinB="'+ COALESCE(CAST(@minbet AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxB="'+ COALESCE(CAST(@maxbet AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPM="'+ COALESCE(CAST(@maxpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPM="'+ COALESCE(CAST(@maxPOpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv2="'+ COALESCE(CAST(@minbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv2="'+ COALESCE(CAST(@maxbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv2="'+ COALESCE(CAST(@maxpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv2="'+ COALESCE(CAST(@maxPOpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv3="'+ COALESCE(CAST(@minbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv3="'+ COALESCE(CAST(@maxbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv3="'+ COALESCE(CAST(@maxpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv3="'+ COALESCE(CAST(@maxPOpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv5="'+ COALESCE(CAST(@minbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv5="'+ COALESCE(CAST(@maxbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv5="'+ COALESCE(CAST(@maxpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv5="'+ COALESCE(CAST(@maxPOpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv8="'+ COALESCE(CAST(@minbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv8="'+ COALESCE(CAST(@maxbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv8="'+ COALESCE(CAST(@maxpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv8="'+ COALESCE(CAST(@maxPOpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv10="'+ COALESCE(CAST(@minbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv10="'+ COALESCE(CAST(@maxbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv10="'+ COALESCE(CAST(@maxpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv10="'+ COALESCE(CAST(@maxPOpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv11="'+ COALESCE(CAST(@minbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv11="'+ COALESCE(CAST(@maxbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv11="'+ COALESCE(CAST(@maxpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv11="'+ COALESCE(CAST(@maxPOpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv99="'+ COALESCE(CAST(@minbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv99="'+ COALESCE(CAST(@maxbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv99="'+ COALESCE(CAST(@maxpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv99="'+ COALESCE(CAST(@maxPOpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv99MP="'+ COALESCE(CAST(@minbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv99MP="'+ COALESCE(CAST(@maxbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPM99MP="'+ COALESCE(CAST(@maxpermatchv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		COALESCE('MPPMv99MP="'+ CAST(@maxPOpermatchv99MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+    
+		'MinBv1MP="'+ COALESCE(CAST(@minbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv1MP="'+ COALESCE(CAST(@maxbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv1MP="'+ COALESCE(CAST(@maxpermatchv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		COALESCE('MPPMv1MP="'+ CAST(@maxPOpermatchv1MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+	
+		'MinBv164="' + COALESCE(CAST(@minbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv164="' + COALESCE(CAST(@maxbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv164="' + COALESCE(CAST(@maxpermatchv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	
+		'MinBv161="' + COALESCE(CAST(@minbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv161="' + COALESCE(CAST(@maxbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv161="' + COALESCE(CAST(@maxpermatchv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPBv161="' + COALESCE(CAST(@maxperballv161 AS VARCHAR(50)), space(1)) + '" ' +
 	    'ErrMsg="'+ ERROR_MESSAGE() + '" />'
     	
 	    EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 

@@ -44,22 +44,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	
 	@autosuspend BIT = 0,
 	@autosuspend2 BIT = 0,
-
-	@MaxPerMatch MONEY,
-	@MaxPerMatchv2 MONEY,
-	@MaxPerMatchv3 MONEY,
-	@MaxPerMatchv5 MONEY,
-	@MaxPerMatchv8 MONEY,
-	@MaxPerMatchv10 MONEY,
-	@MaxPerMatchv11 MONEY,
-	@MaxPerMatchv99 MONEY,
-	@MaxPerMatchv99MP MONEY,	
-	
-	@MaxPerMatchv1MP MONEY = 0,	
-	
-	@MaxPerMatchv161 MONEY,	
-	@MaxPerBallv161 MONEY = 0,	
-	@MaxPerMatchv164 MONEY = 0,
 	
 	@DisableNumber BIT = 0,
 
@@ -163,6 +147,7 @@ Revisions:
 	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
+	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	
 	Param's Explanation:
 • @ErrCode:
@@ -509,23 +494,26 @@ BEGIN
 		  , danger, danger2, danger3, danger4, danger5, Abnormal
 		  ,  DoubleCommLosing
 		  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
-		  , MaxPerMatch1MP,maxpermatch164)
+		  , MaxPerMatch1MP
+		  --,maxpermatch164
+		  )
 		VALUES
 		(
 			@custid, @currency--,1
-		  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11
-		  , @MaxPerMatchv99
+		  , 0, 0, 0, 0, 0, 0, 0
+		  , 0
 		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2
 		  --, ISNULL(@suspended, 0)
 		  , @credit
 		  --, ISNULL(@closed, 0)
 		  , @username
 		  , @matchlimit, @virtualmultiplier
-		  , @DisableOutright, @DisableCasino, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
+		  , @DisableOutright, @DisableCasino, @DisableNumber,  0, 0, 0
 		  , @danger, @danger2, @danger3, @danger4, @danger5, @Abnormal
 		  ,  @DoubleCommLosing	
 		  , @HideKeno, @DisableEsports, @DisableGoldDeluxe, @HideGoldDeluxe, @DisableSuperLive
-		  , @MaxPerMatchv1MP, @maxpermatchv164
+		  , 0
+		  --, 0
 		)
 
 		IF @roleid <> 4

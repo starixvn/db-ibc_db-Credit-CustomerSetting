@@ -91,6 +91,7 @@ AS
 	- 20210319@Winfred: Check Site to limit create accounts [Redmine: #151526]
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
+	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -456,7 +457,7 @@ BEGIN
 				,maxpermatch161
 		
 				,MaxPerBall161			
-				,maxpermatch164		
+				--,maxpermatch164		
 				,DoubleCommLosing				
 				,HideKeno
 			
@@ -486,27 +487,27 @@ BEGIN
 				--,closed
 				,MatchLimit
 				,@virtualmultiplier
-				,maxpermatch
-				,maxpermatch2
-				,maxpermatch3
-				,maxpermatch5
-				,maxpermatch8
-				,maxpermatch10
-				,maxpermatch11
-				,maxpermatch12
-				,maxpermatch99
+				,0
+				,0
+				,0
+				,0
+				,0
+				,0
+				,0
+				,0
+				,0
 				,@enableUpline as Enabled          	
 			
 				,DisableCasino
 				,0 as SyncCasino           
 				,DisableOutright		
-				,MaxPerMatch99MP
+				,0
 				,DisableNumber
 			
-				,maxpermatch161
+				,0
 			
-				,MaxPerBall161			
-				,maxpermatch164	
+				,0			
+				--,0	
 				,@doubleCommLosingUpline as DoubleCommLosing
 				--,1			
 				,HideKeno
@@ -514,7 +515,7 @@ BEGIN
 				,HideGoldDeluxe
 				,DisableGoldDeluxe
 				,DisableSuperLive
-				,MaxPerMatch1MP
+				,0
 				--,1
 				,@DangerMaster
 				,@DangerMaster2
