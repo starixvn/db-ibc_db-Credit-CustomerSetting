@@ -18,6 +18,7 @@ AS
 		- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 		- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 			
 	Explanation's Param:
 */
@@ -59,20 +60,22 @@ BEGIN
 			
 	---------- bet setting section---------------------------------------------------------------------------------------
 		--Minbet, maxbet, MaxPerMatch for soccer
-		,v1minbet_1=MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=1 THEN cs.minbet ELSE 0 END)
-		,v1maxbet_1=MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=1 THEN cs.maxbet ELSE 0 END)
-		,v1maxpermatch_1=ci.MaxPerMatch
+		,v1minbet_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=1 THEN cb.minbet ELSE 0 END)
+		,v1maxbet_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=1 THEN cb.maxbet ELSE 0 END)
+		,v1maxpermatch_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=1 THEN cb.MaxPerMatch ELSE 0 END)
+		,v1maxpayoutpermatch_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=1 THEN cb.MaxPayoutPerMatch ELSE 0 END)
 		
 		--Minbet, maxbet, MaxPerMatch for basketball
-		,v2minbet_1=MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=2 THEN cs.minbet ELSE 0 END)
-		,v2maxbet_1=MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=2 THEN cs.maxbet ELSE 0 END)
-		,v2maxpermatch_1=ci.MaxPerMatch2
+		,v2minbet_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.minbet ELSE 0 END)
+		,v2maxbet_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.maxbet ELSE 0 END)
+		,v2maxpermatch_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.MaxPerMatch ELSE 0 END)
+		,v2maxpayoutpermatch_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.MaxPayoutPerMatch ELSE 0 END)
 		
 		--Minbet, maxbet, MaxPerMatch for NumberGame
-		,v161minbet_81=MAX(CASE WHEN cs3rd.bettype=81 AND cs3rd.sporttype=161 THEN cs3rd.minbet ELSE 0 END)
-		,v161maxbet_81=MAX(CASE WHEN cs3rd.bettype=81 AND cs3rd.sporttype=161 THEN cs3rd.maxbet ELSE 0 END)
-		,v161maxpermatch_81=ci.MaxPerMatch161
-		
+		,v161minbet_81=MAX(CASE WHEN cb.bettype=81 AND cb.sporttype=161 THEN cb.minbet ELSE 0 END)
+		,v161maxbet_81=MAX(CASE WHEN cb.bettype=81 AND cb.sporttype=161 THEN cb.maxbet ELSE 0 END)
+		,v161maxpermatch_81=MAX(CASE WHEN cb.bettype=81 AND cb.sporttype=161 THEN cb.MaxPerMatch ELSE 0 END)
+		,v161maxperball_81=MAX(CASE WHEN cb.bettype=81 AND cb.sporttype=161 THEN cb.MaxPerNumber ELSE 0 END)
 		
 	---------- position taking section---------------------------------------------------------------------------------------
 		--PT of soccers (on behalf of HDP)
@@ -121,11 +124,9 @@ BEGIN
 								) AS cps
 		LEFT JOIN dbo.custoverride AS csOv WITH (NOLOCK) on csOv.custid = cs.custid AND csOv.sporttype = cs.sporttype AND csOv.bettype = cs.bettype
 		LEFT JOIN dbo.custoverride3rd AS csOv3rd WITH (NOLOCK) ON csOv3rd.custid = cs3rd.custid AND csOv3rd.sporttype = cs3rd.sporttype AND csOv3rd.bettype = cs3rd.bettype
+		INNER JOIN CustBetSetting_Agent cb WITH(NOLOCK) ON ci.custid = cb.CustID
 	GROUP BY cps.closed
 			,cps.reject
-			,MaxPerMatch
-			,MaxPerMatch2
-			,MaxPerMatch161
 			,TransferOption
 	SET NOCOUNT OFF
 

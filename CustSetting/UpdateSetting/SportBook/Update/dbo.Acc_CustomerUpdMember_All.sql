@@ -70,6 +70,18 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@MinBetv164 MONEY=0,  
 	@MaxBetv164 MONEY=0,  
 	@MaxPerMatchv164 MONEY=0, 
+
+	--Max Payout Per Match
+	@maxPOpermatch money = NULL,
+	@maxPOpermatchv2 money = NULL,
+	@maxPOpermatchv3 money = NULL,
+	@maxPOpermatchv5 money = NULL,
+	@maxPOpermatchv8 money = NULL,
+	@maxPOpermatchv10 money = NULL,
+	@maxPOpermatchv11 money = NULL,
+	@maxPOpermatchv99 money = NULL,
+	@maxPOpermatchv99mp money = NULL,
+	@maxPOpermatchv1mp money = NULL,
 	
 	@UpdateMinMaxBet BIT = 1,   
 	@UpdateMinMaxBetv2 BIT = 1,   
@@ -237,7 +249,8 @@ Revisions:
 	- 20190903@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
-	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
+	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
+	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 		
 Param's Explanation:  
 • @ErrCode:  
@@ -417,6 +430,21 @@ BEGIN
 	END  
 	  
 	----------------------------------------------  
+	IF @UpdateMultiple = 0
+	BEGIN
+		SELECT @UpdateMinMaxBet = 1
+			,@UpdateMinMaxBetv2 = 1
+			,@UpdateMinMaxBetv3 = 1
+			,@UpdateMinMaxBetv5 = 1
+			,@UpdateMinMaxBetv8 = 1
+			,@UpdateMinMaxBetv10 = 1
+			,@UpdateMinMaxBetv11 = 1
+			,@UpdateMinMaxBetv99 = 1
+			,@UpdateMinMaxBetv99MP = 1
+			,@UpdateMinMaxBetv1MP = 1
+			,@UpdateMinMaxBetv161 = 1
+			,@UpdateMinMaxBetv164 = 1
+	END
 	--Update MinBet, MaxBet, MaxPerMatch  
 	if  @UpdateMinMaxBet  = 1 or  
 		@UpdateMinMaxBetv2  = 1 or  
@@ -433,7 +461,7 @@ BEGIN
 		@UpdateMinMaxBetv164 = 1  	
 	BEGIN  
 	 Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''  
-	 EXEC dbo.Acc_CustomerUpdMember_MinMaxBet   
+	 EXEC dbo.Acc_CustomerUpd_BetSetting   
 	  @custid = @custid,  
 	  @minbet = @minbet,  
 	  @maxbet = @maxbet,  
@@ -476,6 +504,17 @@ BEGIN
 	  @minbetv164 = @minbetv164,  
 	  @maxbetv164 = @maxbetv164,  
 	  @maxpermatchv164 = @maxpermatchv164,
+	  --MaxPayOutPerMatch
+	  @maxPOpermatch      = @maxPOpermatch,
+	  @maxPOpermatchv2    = @maxPOpermatchv2,    
+	  @maxPOpermatchv3    = @maxPOpermatchv3,    
+	  @maxPOpermatchv5    = @maxPOpermatchv5,   
+	  @maxPOpermatchv8    = @maxPOpermatchv8,    
+	  @maxPOpermatchv10   = @maxPOpermatchv10,   
+	  @maxPOpermatchv11   = @maxPOpermatchv11,   
+	  @maxPOpermatchv99   = @maxPOpermatchv99,   
+	  @maxPOpermatchv99mp = @maxPOpermatchv99mp, 
+	  @maxPOpermatchv1mp  = @maxPOpermatchv1mp, 
 	  
 	  @UpdateMultiple = @UpdateMultiple,  
 	  @UpdateMinMaxBet = @UpdateMinMaxBet,  

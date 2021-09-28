@@ -13,6 +13,7 @@ AS
     Revisions:
 		- 20210518@Winfred: Update Parlay Max Payout for SMA  [RedmineID:#154104]
 		- 20210813@Eden: Enhance - Update Parlay Max Payout for downlines by batch  [RedmineID:#160135]
+		- 20210816@Eden: Max Payout Per Match [redmine: #158073]
     Param's Explanation:
             
 */
@@ -194,6 +195,213 @@ BEGIN
 							OR (tmp.Combo35 > 0 AND (mps.Combo35 > tmp.Combo35))
 							OR (tmp.ComboOver6 > 0 AND (mps.ComboOver6 > tmp.ComboOver6)) 
 						) 
+			END
+		END
+	END
+	ELSE IF (@Mode='SB_BetSetting')
+	BEGIN
+		IF dbo.f_CheckRepTable('CustBetSetting_Agent') = 0 RETURN
+		IF dbo.f_CheckRepTable('CustBetSetting_Member') = 0 RETURN
+		
+		IF ISNULL(@XML,'') = ''
+			RETURN
+
+		DECLARE @NewMaxBet MONEY, @NewMaxPerNumber MONEY, @NewMaxPerMatch MONEY, @NewMaxPayoutPerMatch MONEY
+		DECLARE @BetSetting TABLE(
+				SportType         SMALLINT, 
+				BetType           SMALLINT, 
+				MinBet            MONEY, 
+				MaxBet            MONEY, 
+				MaxPerMatch       MONEY, 
+				MaxPerNumber      MONEY, 
+				MaxPayoutPerMatch MONEY
+			);
+
+		--Parse SB Bet Setting from XML
+		EXEC sp_xml_preparedocument @iDoc OUTPUT, @XML
+
+		INSERT INTO @BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+		SELECT SportType        
+			,BetType          
+			,MinBet           
+			,MaxBet           
+			,MaxPerMatch      
+			,MaxPerNumber     
+			,MaxPayoutPerMatch
+		FROM OPENXML (@iDoc, '/Root/Row',1) 
+		WITH (
+			SportType         SMALLINT, 
+			BetType           SMALLINT, 
+			MinBet            MONEY, 
+			MaxBet            MONEY, 
+			MaxPerMatch       MONEY, 
+			MaxPerNumber      MONEY, 
+			MaxPayoutPerMatch MONEY
+		) AS Data
+
+		EXEC sp_xml_removedocument @iDoc
+
+		SELECT @SportbettypeCount = COUNT(1) FROM CustBetSetting_Agent WITH(NOLOCK) WHERE CustID = @CustId
+
+		IF @SportbettypeCount = 0
+			SET @SportbettypeCount = 1
+
+		SET @Batch_Num = 5000/@SportbettypeCount
+
+		IF @RoleId = 4
+		BEGIN
+			INSERT INTO #Agent(custid,RoleID)
+			SELECT custid,roleid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE srecommend = @CustId AND roleid IN(2,3) AND Enabled = 1
+			
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE srecommend = @CustId AND roleid = 1 AND Enabled = 1					
+		END
+		ELSE IF @RoleId = 3
+		BEGIN
+			INSERT INTO #Agent(custid,RoleID)
+			SELECT custid,roleid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE mrecommend = @CustId AND roleid = 2 AND Enabled = 1	
+			
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE mrecommend = @CustId AND roleid = 1 AND Enabled = 1
+		END
+		ELSE IF @RoleId = 2
+		BEGIN
+			INSERT INTO #Member(custid)
+			SELECT custid
+			FROM custInfo c WITH(NOLOCK) 
+			WHERE recommend = @CustId AND roleid = 1 AND Enabled = 1
+		END
+
+		--downline_maxbet = min (downline_maxbet, @NEW_MAXBET,@NEW_MAXPERMATCH,@NEW_MAXPERBALL)
+		--downline_maxpermatch = min (downline_maxpermatch, @NEW_MAXPERMATCH,@NEW_MAXPAYOUTPERMATCH)
+		--downline_maxpayoutpermatch = min (downline_maxpayoutpermatch, @NEW_MAXPAYOUTPERMATCH)
+		--downline_maxperball = min (downline_maxperball, @NEW_MAXPERBALL,@NEW_MAXPERMATCH)
+		--downline_minbet = min (downline_minbet, @NEW_MAXBET)
+
+		IF @RoleId = 4
+		BEGIN
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #AgentTmpBatch
+				DELETE TOP (@Batch_Num) a
+				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				FROM #Agent a
+				WHERE a.RoleID = 3
+
+				IF @@ROWCOUNT = 0 
+					BREAK;
+
+				UPDATE b
+				SET @NewMaxBet = CASE WHEN (b.MaxBet > new.MaxBet AND new.MaxBet > 0) THEN new.MaxBet ELSE b.MaxBet END,
+					@NewMaxPerNumber = CASE WHEN (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0) THEN new.MaxPerNumber ELSE b.MaxPerNumber END,
+					@NewMaxPerMatch = CASE WHEN (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0) THEN new.MaxPerMatch ELSE b.MaxPerMatch END,
+					@NewMaxPayoutPerMatch = CASE WHEN (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0) THEN new.MaxPayoutPerMatch ELSE b.MaxPayoutPerMatch END,
+					--
+					@NewMaxPerMatch = CASE WHEN @NewMaxPerMatch > @NewMaxPayoutPerMatch THEN @NewMaxPayoutPerMatch ELSE @NewMaxPerMatch END,
+					@NewMaxPerNumber = CASE WHEN @NewMaxPerNumber > @NewMaxPerMatch THEN @NewMaxPerMatch ELSE @NewMaxPerNumber END,
+					@NewMaxBet = CASE WHEN @NewMaxBet > @NewMaxPerMatch THEN @NewMaxPerMatch ELSE @NewMaxBet END,
+					@NewMaxBet = CASE WHEN @NewMaxBet > @NewMaxPerNumber AND @NewMaxPerNumber > 0 THEN @NewMaxPerNumber ELSE @NewMaxBet END,
+					--
+					b.MinBet = CASE WHEN @NewMaxBet < b.MinBet THEN @NewMaxBet ELSE b.MinBet END,
+					b.MaxBet = @NewMaxBet,
+					b.MaxPerMatch = @NewMaxPerMatch,
+					b.MaxPerNumber = @NewMaxPerNumber,
+					b.MaxPayoutPerMatch = @NewMaxPayoutPerMatch
+				FROM dbo.CustBetSetting_Agent b WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
+					INNER JOIN #AgentTmpBatch ci
+						ON b.custid = ci.custid
+				WHERE ( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
+						OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
+						OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
+						OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0))
+			END
+		END
+
+		IF @RoleId IN (3,4)
+		BEGIN
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #AgentTmpBatch
+				DELETE TOP (@Batch_Num) a
+				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				FROM #Agent a
+				WHERE a.RoleID = 2
+
+				IF @@ROWCOUNT = 0 
+					BREAK;
+
+				UPDATE b
+				SET @NewMaxBet = CASE WHEN (b.MaxBet > new.MaxBet AND new.MaxBet > 0) THEN new.MaxBet ELSE b.MaxBet END,
+					@NewMaxPerNumber = CASE WHEN (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0) THEN new.MaxPerNumber ELSE b.MaxPerNumber END,
+					@NewMaxPerMatch = CASE WHEN (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0) THEN new.MaxPerMatch ELSE b.MaxPerMatch END,
+					@NewMaxPayoutPerMatch = CASE WHEN (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0) THEN new.MaxPayoutPerMatch ELSE b.MaxPayoutPerMatch END,
+					--
+					@NewMaxPerMatch = CASE WHEN @NewMaxPerMatch > @NewMaxPayoutPerMatch THEN @NewMaxPayoutPerMatch ELSE @NewMaxPerMatch END,
+					@NewMaxPerNumber = CASE WHEN @NewMaxPerNumber > @NewMaxPerMatch THEN @NewMaxPerMatch ELSE @NewMaxPerNumber END,
+					@NewMaxBet = CASE WHEN @NewMaxBet > @NewMaxPerMatch THEN @NewMaxPerMatch ELSE @NewMaxBet END,
+					@NewMaxBet = CASE WHEN @NewMaxBet > @NewMaxPerNumber AND @NewMaxPerNumber > 0 THEN @NewMaxPerNumber ELSE @NewMaxBet END,
+					--
+					b.MinBet = CASE WHEN @NewMaxBet < b.MinBet THEN @NewMaxBet ELSE b.MinBet END,
+					b.MaxBet = @NewMaxBet,
+					b.MaxPerMatch = @NewMaxPerMatch,
+					b.MaxPerNumber = @NewMaxPerNumber,
+					b.MaxPayoutPerMatch = @NewMaxPayoutPerMatch
+				FROM dbo.CustBetSetting_Agent b WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
+					INNER JOIN #AgentTmpBatch ci
+						ON b.custid = ci.custid
+				WHERE ( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
+						OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
+						OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
+						OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0))
+			END
+		END
+
+		IF @RoleId IN (2,3,4)
+		BEGIN
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #MemberTmpBatch
+				DELETE TOP (@Batch_Num) a
+				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+				FROM #Member a
+
+				IF @@ROWCOUNT = 0 
+					BREAK;
+
+				UPDATE b
+				SET @NewMaxBet = CASE WHEN (b.MaxBet > new.MaxBet AND new.MaxBet > 0) THEN new.MaxBet ELSE b.MaxBet END,
+					@NewMaxPerNumber = CASE WHEN (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0) THEN new.MaxPerNumber ELSE b.MaxPerNumber END,
+					@NewMaxPerMatch = CASE WHEN (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0) THEN new.MaxPerMatch ELSE b.MaxPerMatch END,
+					@NewMaxPayoutPerMatch = CASE WHEN (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0) THEN new.MaxPayoutPerMatch ELSE b.MaxPayoutPerMatch END,
+					--
+					@NewMaxPerMatch = CASE WHEN @NewMaxPerMatch > @NewMaxPayoutPerMatch THEN @NewMaxPayoutPerMatch ELSE @NewMaxPerMatch END,
+					@NewMaxPerNumber = CASE WHEN @NewMaxPerNumber > @NewMaxPerMatch THEN @NewMaxPerMatch ELSE @NewMaxPerNumber END,
+					@NewMaxBet = CASE WHEN @NewMaxBet > @NewMaxPerMatch THEN @NewMaxPerMatch ELSE @NewMaxBet END,
+					@NewMaxBet = CASE WHEN @NewMaxBet > @NewMaxPerNumber AND @NewMaxPerNumber > 0 THEN @NewMaxPerNumber ELSE @NewMaxBet END,
+					--
+					b.MinBet = CASE WHEN @NewMaxBet < b.MinBet THEN @NewMaxBet ELSE b.MinBet END,
+					b.MaxBet = @NewMaxBet,
+					b.MaxPerMatch = @NewMaxPerMatch,
+					b.MaxPerNumber = @NewMaxPerNumber,
+					b.MaxPayoutPerMatch = @NewMaxPayoutPerMatch
+				FROM dbo.CustBetSetting_Member b WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
+					INNER JOIN #MemberTmpBatch ci
+						ON b.custid = ci.custid
+				WHERE ( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
+						OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
+						OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
+						OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0))
 			END
 		END
 	END

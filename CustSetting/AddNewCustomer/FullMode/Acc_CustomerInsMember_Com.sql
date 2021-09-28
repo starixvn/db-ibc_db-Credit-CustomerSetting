@@ -81,6 +81,18 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@MinBetv164 MONEY,
 	@MaxBetv164 MONEY,
 	@MaxPerMatchv164 MONEY,	
+
+	--Max Payout Per Match
+	@maxPOpermatch money = NULL,
+	@maxPOpermatchv2 money = NULL,
+	@maxPOpermatchv3 money = NULL,
+	@maxPOpermatchv5 money = NULL,
+	@maxPOpermatchv8 money = NULL,
+	@maxPOpermatchv10 money = NULL,
+	@maxPOpermatchv11 money = NULL,
+	@maxPOpermatchv99 money = NULL,
+	@maxPOpermatchv99mp money = NULL,
+	@maxPOpermatchv1mp money = NULL,
 	
 	@spositiontaking_1 SMALLMONEY,
 	@spositiontaking_2 SMALLMONEY,
@@ -419,6 +431,8 @@ Revisions:
 	- 20210308@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]
 	- 20210616@Tina: Lock account & indirect close account [redmine: #148600]
+	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -518,53 +532,6 @@ BEGIN
 				@groupd = @groupd,
 				@discountcs = @discountcs,	
 				@discount1x2 = @discount1x2, --1x2		
-				
-				@MinBet = @MinBet,
-				@MaxBet = @MaxBet,
-				@MaxPerMatch = @MaxPerMatch,
-				@MinBetv2 = @MinBetv2,
-				@MaxBetv2 = @MaxBetv2,
-				@MaxPerMatchv2 = @MaxPerMatchv2,
-				@MinBetv3 = @MinBetv3,
-				@MaxBetv3 = @MaxBetv3,
-				@MaxPerMatchv3 = @MaxPerMatchv3,
-				@MinBetv5 = @MinBetv5,
-				@MaxBetv5 = @MaxBetv5,
-				@MaxPerMatchv5 = @MaxPerMatchv5,
-				@MinBetv8 = @MinBetv8,
-				@MaxBetv8 = @MaxBetv8,
-				@MaxPerMatchv8 = @MaxPerMatchv8,
-				@MinBetv10 = @MinBetv10,
-				@MaxBetv10 = @MaxBetv10,
-				@MaxPerMatchv10 = @MaxPerMatchv10,
-				@MinBetv11 = @MinBetv11,
-				@MaxBetv11 = @MaxBetv11,
-				@MaxPerMatchv11 = @MaxPerMatchv11,
-
-				@MinBetv99 = @MinBetv99,
-				@MaxBetv99 = @MaxBetv99,
-				@MaxPerMatchv99 = @MaxPerMatchv99,
-				
-				--Mix Parlay mix sports
-				@MinBetv99MP = @MinBetv99MP,
-				@MaxBetv99MP = @MaxBetv99MP,
-				@MaxPerMatchv99MP = @MaxPerMatchv99MP,
-				
-				--Mix Parlay Soccer sports
-				@MinBetv1MP = @MinBetv1MP,
-				@MaxBetv1MP = @MaxBetv1MP,
-				@MaxPerMatchv1MP = @MaxPerMatchv1MP,				
-
-				--Number game
-				@MinBetv161 = @MinBetv161,
-				@MaxBetv161 = @MaxBetv161,
-				@MaxPerMatchv161 = @MaxPerMatchv161,
-
-				@MaxPerBallv161 = @MaxPerBallv161,
-				
-				@MinBetv164 = @MinBetv164,
-				@MaxBetv164 = @MaxBetv164,
-				@MaxPerMatchv164 = @MaxPerMatchv164,
 				
 				@spositiontaking_1 = @spositiontaking_1,
 				@spositiontaking_2 = @spositiontaking_2,
@@ -783,6 +750,81 @@ BEGIN
 	BEGIN	
 		RETURN
 	END
+
+	DECLARE @BetSettingXML VARCHAR(8000) = ''
+
+	EXEC Acc_CustomerInsMember_CheckBetSetting
+		 @custid			= NULL
+		,@minbet			= @minbet
+		,@maxbet			= @maxbet
+		,@maxpermatch		= @maxpermatch
+
+		,@minbetv2			= @minbetv2
+		,@maxbetv2			= @maxbetv2
+		,@maxpermatchv2		= @maxpermatchv2
+
+		,@minbetv3			= @minbetv3
+		,@maxbetv3			= @maxbetv3
+		,@maxpermatchv3		= @maxpermatchv3
+
+		,@minbetv5			= @minbetv5
+		,@maxbetv5			= @maxbetv5
+		,@maxpermatchv5		= @maxpermatchv5
+
+		,@minbetv8			= @minbetv8
+		,@maxbetv8			= @maxbetv8
+		,@maxpermatchv8		= @maxpermatchv8
+
+		,@minbetv10			= @minbetv10
+		,@maxbetv10			= @maxbetv10
+		,@maxpermatchv10	= @maxpermatchv10
+
+		,@minbetv11			= @minbetv11
+		,@maxbetv11			= @maxbetv11
+		,@maxpermatchv11	= @maxpermatchv11
+
+		,@minbetv99			= @minbetv99
+		,@maxbetv99			= @maxbetv99
+		,@maxpermatchv99	= @maxpermatchv99
+
+		,@minbetv99mp		= @minbetv99mp
+		,@maxbetv99mp		= @maxbetv99mp
+		,@maxpermatchv99mp	= @maxpermatchv99mp
+
+		,@minbetv1mp		= @minbetv1mp
+		,@maxbetv1mp		= @maxbetv1mp
+		,@maxpermatchv1mp	= @maxpermatchv1mp
+
+		,@minbetv161		= @minbetv161
+		,@maxbetv161		= @maxbetv161
+		,@maxpermatchv161	= @maxpermatchv161
+		,@MaxPerBallv161	= @MaxPerBallv161
+
+		,@minbetv164		= @minbetv164
+		,@maxbetv164		= @maxbetv164
+		,@maxpermatchv164	= @maxpermatchv164
+
+		,@maxPOpermatch		= @maxPOpermatch
+		,@maxPOpermatchv2	= @maxPOpermatchv2
+		,@maxPOpermatchv3	= @maxPOpermatchv3
+		,@maxPOpermatchv5	= @maxPOpermatchv5
+		,@maxPOpermatchv8	= @maxPOpermatchv8
+		,@maxPOpermatchv10	= @maxPOpermatchv10
+		,@maxPOpermatchv11	= @maxPOpermatchv11
+		,@maxPOpermatchv99	= @maxPOpermatchv99
+		,@maxPOpermatchv99mp= @maxPOpermatchv99mp
+		,@maxPOpermatchv1mp	= @maxPOpermatchv1mp
+
+		,@language			= @language
+		,@SystemID			= @SystemID
+		,@ErrCode			= @ErrCode OUTPUT
+		,@ErrMsg			= @ErrMsg OUTPUT
+		,@BetSettingXML		= @BetSettingXML OUTPUT
+
+	IF @ErrCode <> 0
+    BEGIN
+	    RETURN
+    END
 	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	DECLARE @IsExists BIT 
@@ -871,20 +913,6 @@ BEGIN
 		
 		@DisableSuperLive = @DisableSuperLive,
 
-		@MaxPerMatch = @MaxPerMatch,
-		@MaxPerMatchv2 = @MaxPerMatchv2,
-		@MaxPerMatchv3 = @MaxPerMatchv3,
-		@MaxPerMatchv5 = @MaxPerMatchv5,
-		@MaxPerMatchv8 = @MaxPerMatchv8,
-		@MaxPerMatchv10 = @MaxPerMatchv10,
-		@MaxPerMatchv11 = @MaxPerMatchv11,
-		@MaxPerMatchv99 = @MaxPerMatchv99,
-		@MaxPerMatchv99MP = @MaxPerMatchv99MP,
-		
-		@MaxPerMatchv1MP = @MaxPerMatchv1MP,
-		@MaxPerMatchv161 = @MaxPerMatchv161,	
-		@MaxPerBallv161 = @MaxPerBallv161,	
-		@MaxPerMatchv164 = @MaxPerMatchv164,
 		--keno
 		@HideKeno = @HideKeno,
 
@@ -1156,40 +1184,12 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
 		@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
 						
-		@MinBet = @MinBet,
-		@MaxBet = @MaxBet,	
-		@MinBetv2 = @MinBetv2,
-		@MaxBetv2 = @MaxBetv2,		
-		@MinBetv3 = @MinBetv3,
-		@MaxBetv3 = @MaxBetv3,	
-		@MinBetv5 = @MinBetv5,
-		@MaxBetv5 = @MaxBetv5,	
-		@MinBetv8 = @MinBetv8,
-		@MaxBetv8 = @MaxBetv8,	
-		@MinBetv10 = @MinBetv10,
-		@MaxBetv10 = @MaxBetv10,	
-		@MinBetv11 = @MinBetv11,
-		@MaxBetv11 = @MaxBetv11,	
-		@MinBetv99 = @MinBetv99,
-		@MaxBetv99 = @MaxBetv99,		
-		--Mix Parlay mix sports
-		@MinBetv99MP = @MinBetv99MP,
-		@MaxBetv99MP = @MaxBetv99MP,		
-		
-		--Mix Parlay Soccer sports
-		@MinBetv1MP = @MinBetv1MP,
-		@MaxBetv1MP = @MaxBetv1MP,	
-
-		--Number game
-		@MinBetv161 = @MinBetv161,
-		@MaxBetv161 = @MaxBetv161,	
-		
-		@MinBetv164 = @MinBetv164,
-		@MaxBetv164 = @MaxBetv164,
-		
 		@discountcs = @discountcs, 
 		--comm 1x2
 		@discount1x2 = @discount1x2,
+
+		--BetSetting
+		@BetSettingXML = @BetSettingXML,
 
 		@SettingStatus = @SettingStatus,
 	
@@ -1491,47 +1491,64 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 	--Write Bet setting log
 	SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinB="'+ COALESCE(CAST(@MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxB="'+ COALESCE(CAST(@MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPM="'+ COALESCE(CAST(@MaxPerMatch AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv2="'+ COALESCE(CAST(@MinBetv2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv2="'+ COALESCE(CAST(@MaxBetv2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv2="'+ COALESCE(CAST(@MaxPerMatchv2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv3="'+ COALESCE(CAST(@MinBetv3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv3="'+ COALESCE(CAST(@MaxBetv3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv3="'+ COALESCE(CAST(@MaxPerMatchv3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv5="'+ COALESCE(CAST(@MinBetv5 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv5="'+ COALESCE(CAST(@MaxBetv5 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv5="'+ COALESCE(CAST(@MaxPerMatchv5 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv8="'+ COALESCE(CAST(@MinBetv8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv8="'+ COALESCE(CAST(@MaxBetv8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv8="'+ COALESCE(CAST(@MaxPerMatchv8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv10="'+ COALESCE(CAST(@MinBetv10 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv10="'+ COALESCE(CAST(@MaxBetv10 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv10="'+ COALESCE(CAST(@MaxPerMatchv10 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv11="'+ COALESCE(CAST(@MinBetv11 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv11="'+ COALESCE(CAST(@MaxBetv11 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv11="'+ COALESCE(CAST(@MaxPerMatchv11 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv99="'+ COALESCE(CAST(@MinBetv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv99="'+ COALESCE(CAST(@MaxBetv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv99="'+ COALESCE(CAST(@MaxPerMatchv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'MinB="'+ COALESCE(CAST(@minbet AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxB="'+ COALESCE(CAST(@maxbet AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPM="'+ COALESCE(CAST(@maxpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPM="'+ COALESCE(CAST(@maxPOpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv2="'+ COALESCE(CAST(@minbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv2="'+ COALESCE(CAST(@maxbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv2="'+ COALESCE(CAST(@maxpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv2="'+ COALESCE(CAST(@maxPOpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv3="'+ COALESCE(CAST(@minbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv3="'+ COALESCE(CAST(@maxbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv3="'+ COALESCE(CAST(@maxpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv3="'+ COALESCE(CAST(@maxPOpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv5="'+ COALESCE(CAST(@minbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv5="'+ COALESCE(CAST(@maxbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv5="'+ COALESCE(CAST(@maxpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv5="'+ COALESCE(CAST(@maxPOpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv8="'+ COALESCE(CAST(@minbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv8="'+ COALESCE(CAST(@maxbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv8="'+ COALESCE(CAST(@maxpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv8="'+ COALESCE(CAST(@maxPOpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv10="'+ COALESCE(CAST(@minbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv10="'+ COALESCE(CAST(@maxbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv10="'+ COALESCE(CAST(@maxpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv10="'+ COALESCE(CAST(@maxPOpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv11="'+ COALESCE(CAST(@minbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv11="'+ COALESCE(CAST(@maxbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv11="'+ COALESCE(CAST(@maxpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv11="'+ COALESCE(CAST(@maxPOpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv99="'+ COALESCE(CAST(@minbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv99="'+ COALESCE(CAST(@maxbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv99="'+ COALESCE(CAST(@maxpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv99="'+ COALESCE(CAST(@maxPOpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv99MP="'+ COALESCE(CAST(@minbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv99MP="'+ COALESCE(CAST(@maxbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv99MP="'+ COALESCE(CAST(@maxpermatchv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		COALESCE('MPPMv99MP="'+ CAST(@maxPOpermatchv99MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+    
+		'MinBv1MP="'+ COALESCE(CAST(@minbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv1MP="'+ COALESCE(CAST(@maxbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv1MP="'+ COALESCE(CAST(@maxpermatchv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+		COALESCE('MPPMv1MP="'+ CAST(@maxPOpermatchv1MP AS VARCHAR(50))+ '" ',SPACE(1)) +
 	
-	'MinBv99MP="'+ COALESCE(CAST(@MinBetv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv99MP="'+ COALESCE(CAST(@MaxBetv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv99MP="'+ COALESCE(CAST(@MaxPerMatchv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
+		'MinBv164="' + COALESCE(CAST(@minbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv164="' + COALESCE(CAST(@maxbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv164="' + COALESCE(CAST(@maxpermatchv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
 	
-	'MinBv1MP="'+ COALESCE(CAST(@MinBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv1MP="'+ COALESCE(CAST(@MaxBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv1MP="'+ COALESCE(CAST(@MaxPerMatchv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-	
-	'MinBv164="'+ COALESCE(CAST(@MinBetv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv164="'+ COALESCE(CAST(@MaxBetv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv164="'+ COALESCE(CAST(@MaxPerMatchv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	
-	'MinBv161="'+ COALESCE(CAST(@MinBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv161="'+ COALESCE(CAST(@MaxBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv161="'+ COALESCE(CAST(@MaxPerMatchv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPBv161="' + COALESCE(CAST(@MaxPerBallv161 AS VARCHAR(50)),SPACE(1)) + '" />' 
+		'MinBv161="' + COALESCE(CAST(@minbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv161="' + COALESCE(CAST(@maxbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv161="' + COALESCE(CAST(@maxpermatchv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPBv161="' + COALESCE(CAST(@maxperballv161 AS VARCHAR(50)), space(1)) + '" />'
 
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
@@ -1543,47 +1560,65 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	END TRY
 	BEGIN CATCH
 		SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinB="'+ COALESCE(CAST(@MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxB="'+ COALESCE(CAST(@MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPM="'+ COALESCE(CAST(@MaxPerMatch AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinBv2="'+ COALESCE(CAST(@MinBetv2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv2="'+ COALESCE(CAST(@MaxBetv2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv2="'+ COALESCE(CAST(@MaxPerMatchv2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinBv3="'+ COALESCE(CAST(@MinBetv3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv3="'+ COALESCE(CAST(@MaxBetv3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv3="'+ COALESCE(CAST(@MaxPerMatchv3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinBv5="'+ COALESCE(CAST(@MinBetv5 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv5="'+ COALESCE(CAST(@MaxBetv5 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv5="'+ COALESCE(CAST(@MaxPerMatchv5 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinBv8="'+ COALESCE(CAST(@MinBetv8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv8="'+ COALESCE(CAST(@MaxBetv8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv8="'+ COALESCE(CAST(@MaxPerMatchv8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinBv10="'+ COALESCE(CAST(@MinBetv10 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv10="'+ COALESCE(CAST(@MaxBetv10 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv10="'+ COALESCE(CAST(@MaxPerMatchv10 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinBv11="'+ COALESCE(CAST(@MinBetv11 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv11="'+ COALESCE(CAST(@MaxBetv11 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv11="'+ COALESCE(CAST(@MaxPerMatchv11 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinBv99="'+ COALESCE(CAST(@MinBetv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv99="'+ COALESCE(CAST(@MaxBetv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv99="'+ COALESCE(CAST(@MaxPerMatchv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MinBv99MP="'+ COALESCE(CAST(@MinBetv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv99MP="'+ COALESCE(CAST(@MaxBetv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv99MP="'+ COALESCE(CAST(@MaxPerMatchv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
-		'MinBv1MP="'+ COALESCE(CAST(@MinBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv1MP="'+ COALESCE(CAST(@MaxBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv1MP="'+ COALESCE(CAST(@MaxPerMatchv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
-		'MinBv164="'+ COALESCE(CAST(@MinBetv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv164="'+ COALESCE(CAST(@MaxBetv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv164="'+ COALESCE(CAST(@MaxPerMatchv164 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		
-		'MinBv161="'+ COALESCE(CAST(@MinBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MaxBv161="'+ COALESCE(CAST(@MaxBetv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPMv161="'+ COALESCE(CAST(@MaxPerMatchv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'MPBv161="' + COALESCE(CAST(@MaxPerBallv161 AS VARCHAR(50)),SPACE(1)) + '" ' +
-		'ErrMsg="' + ERROR_MESSAGE() + '" />'
+			'MinB="'+ COALESCE(CAST(@minbet AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxB="'+ COALESCE(CAST(@maxbet AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPM="'+ COALESCE(CAST(@maxpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPPM="'+ COALESCE(CAST(@maxPOpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+			'MinBv2="'+ COALESCE(CAST(@minbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv2="'+ COALESCE(CAST(@maxbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv2="'+ COALESCE(CAST(@maxpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPPMv2="'+ COALESCE(CAST(@maxPOpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+			'MinBv3="'+ COALESCE(CAST(@minbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv3="'+ COALESCE(CAST(@maxbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv3="'+ COALESCE(CAST(@maxpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPPMv3="'+ COALESCE(CAST(@maxPOpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+			'MinBv5="'+ COALESCE(CAST(@minbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv5="'+ COALESCE(CAST(@maxbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv5="'+ COALESCE(CAST(@maxpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPPMv5="'+ COALESCE(CAST(@maxPOpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+			'MinBv8="'+ COALESCE(CAST(@minbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv8="'+ COALESCE(CAST(@maxbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv8="'+ COALESCE(CAST(@maxpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPPMv8="'+ COALESCE(CAST(@maxPOpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+			'MinBv10="'+ COALESCE(CAST(@minbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv10="'+ COALESCE(CAST(@maxbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv10="'+ COALESCE(CAST(@maxpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPPMv10="'+ COALESCE(CAST(@maxPOpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+			'MinBv11="'+ COALESCE(CAST(@minbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv11="'+ COALESCE(CAST(@maxbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv11="'+ COALESCE(CAST(@maxpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPPMv11="'+ COALESCE(CAST(@maxPOpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+			'MinBv99="'+ COALESCE(CAST(@minbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv99="'+ COALESCE(CAST(@maxbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv99="'+ COALESCE(CAST(@maxpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPPMv99="'+ COALESCE(CAST(@maxPOpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+			'MinBv99MP="'+ COALESCE(CAST(@minbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv99MP="'+ COALESCE(CAST(@maxbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv99MP="'+ COALESCE(CAST(@maxpermatchv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+			COALESCE('MPPMv99MP="'+ CAST(@maxPOpermatchv99MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+    
+			'MinBv1MP="'+ COALESCE(CAST(@minbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv1MP="'+ COALESCE(CAST(@maxbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv1MP="'+ COALESCE(CAST(@maxpermatchv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
+			COALESCE('MPPMv1MP="'+ CAST(@maxPOpermatchv1MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+	
+			'MinBv164="' + COALESCE(CAST(@minbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv164="' + COALESCE(CAST(@maxbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv164="' + COALESCE(CAST(@maxpermatchv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
+	
+			'MinBv161="' + COALESCE(CAST(@minbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MaxBv161="' + COALESCE(CAST(@maxbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPMv161="' + COALESCE(CAST(@maxpermatchv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
+			'MPBv161="' + COALESCE(CAST(@maxperballv161 AS VARCHAR(50)), space(1)) + '" ' +
+			'ErrMsg="' + ERROR_MESSAGE() + '" />'
 		
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 			@UserID = @Creator,

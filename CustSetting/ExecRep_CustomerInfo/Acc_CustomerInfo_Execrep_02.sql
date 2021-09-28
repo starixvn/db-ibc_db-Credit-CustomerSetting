@@ -28,6 +28,7 @@ AS
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20210518@Winfred: Add new Parlay Max Payout [RedmineID:#154104]
+		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	Parameter's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */ 
@@ -41,11 +42,41 @@ BEGIN
 		  AND dbo.f_CheckRepTable('CustSettingGame') = 1 
 		  AND dbo.f_CheckRepTable('CustOverrideGame') = 1
 		  AND dbo.f_CheckRepTable('CustGameType') = 1		 
-		  AND dbo.f_CheckRepTable('AgentCommRate') = 1		 
+		  AND dbo.f_CheckRepTable('AgentCommRate') = 1	
+		  AND dbo.f_CheckRepTable('CustBetSetting_Agent') = 1	 
+		  AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1	
 	   )
 	BEGIN	
 		-- insert custSetting info
-		INSERT INTO dbo.custSetting
+		INSERT INTO dbo.custSetting(
+			 custid
+			,bettype
+			,sporttype
+			,apositiontaking
+			,mpositiontaking
+			,spositiontaking
+			,alivepositiontaking
+			,mlivepositiontaking
+			,slivepositiontaking
+			,playerdiscount
+			,discount
+			,adiscount
+			,sdiscount
+			,groupa
+			,groupb
+			,groupc
+			,groupd
+			,groupe
+			,groupf
+			,autopositiontaking
+			,autolivepositiontaking
+			,isautopositiontaking
+			,isautolivepositiontaking
+			,autompositiontaking
+			,autolivempositiontaking
+			,isautompositiontaking
+			,isautolivempositiontaking
+		)
 		SELECT
 			@Custid
 			,bettype
@@ -66,8 +97,6 @@ BEGIN
 			,groupd
 			,groupe
 			,groupf
-			,minbet
-			,maxbet
 			,autopositiontaking
 			,autolivepositiontaking
 			,isautopositiontaking
@@ -87,7 +116,29 @@ BEGIN
 		END
 		
 		-- insert custSetting3rd info
-		INSERT INTO dbo.CustSetting3rd
+		INSERT INTO dbo.CustSetting3rd(
+			 custid
+			,bettype
+			,sporttype
+			,apositiontaking
+			,mpositiontaking
+			,spositiontaking
+			,playerdiscount
+			,discount
+			,adiscount
+			,sdiscount
+			,autopositiontaking
+			,isautopositiontaking
+			,autompositiontaking
+			,isautompositiontaking
+			,alivepositiontaking
+			,mlivepositiontaking
+			,slivepositiontaking
+			,autolivepositiontaking
+			,isautolivepositiontaking
+			,autolivempositiontaking
+			,isautolivempositiontaking
+		)
 		SELECT
 			@Custid
 			,bettype
@@ -99,8 +150,6 @@ BEGIN
 			,discount
 			,adiscount
 			,sdiscount
-			,minbet
-			,maxbet
 			,autopositiontaking
 			,isautopositiontaking
 			,autompositiontaking
@@ -408,6 +457,39 @@ BEGIN
 			DELETE dbo.CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE custid = @CustID 
 			RETURN
 		END	
+		
+		--Sportbook and NumberGames Bet setting
+		INSERT INTO CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+		SELECT @custid
+			,SportType        
+			,BetType          
+			,MinBet           
+			,MaxBet           
+			,MaxPerMatch      
+			,MaxPerNumber     
+			,MaxPayoutPerMatch
+		FROM CustBetSetting_Agent WITH(NOLOCK)
+		WHERE custid = @ExistingCustid
+
+		IF @@ERROR <> 0
+		BEGIN
+			--Error Occurs
+			SELECT @ErrCode = 158
+				
+			-- ROLLBACK MANUALLY
+			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
+			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
+			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
+			
+			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
+			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
+			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
+			DELETE dbo.CustMaxPayoutSetting_Agent WITH(ROWLOCK) WHERE custid = @CustID 
+			DELETE dbo.CustBetSetting_Agent WITH(ROWLOCK) WHERE custid = @CustID 
+
+			RETURN
+		END		
 	END
 
 	DECLARE @DCSErrCode INT = 0
@@ -433,6 +515,8 @@ BEGIN
 		IF(dbo.f_CheckRepTable('custsettingGame') = 1) DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
 		IF(dbo.f_CheckRepTable('CustGameType') = 1) DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
 		IF(dbo.f_CheckRepTable('AgentCommRate') = 1) DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
+		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1) DELETE CustMaxPayoutSetting_Agent WITH (ROWLOCK) WHERE custId  = @custid
+		IF(dbo.f_CheckRepTable('CustBetSetting_Agent') = 1) DELETE CustBetSetting_Agent WITH (ROWLOCK) WHERE custId  = @custid
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/
 END
