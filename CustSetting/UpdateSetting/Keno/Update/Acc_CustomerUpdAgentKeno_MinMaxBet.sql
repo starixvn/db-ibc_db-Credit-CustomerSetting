@@ -33,6 +33,8 @@ AS
 		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 		- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
+		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
+
 	Param's Explanation:
 	• @ErrCode:
 		= 0: Update successfully.
@@ -58,7 +60,7 @@ BEGIN
 	DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT
 	SELECT @ErrCode = 0, @ErrMsg = '', @startRun = GETDATE()
 
-	DECLARE @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY, @UserName VARCHAR(50), @mrecommend INT, @srecommend INT, @currency INT
+	DECLARE @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY, @UserName VARCHAR(50), @mrecommend INT, @srecommend INT, @currency INT, @IsAdjustDownline BIT = 0
 	SELECT @UserName = username, @mrecommend = mrecommend, @srecommend = srecommend, @currency = currency
 	FROM dbo.customer WITH (NOLOCK) WHERE CustID = @CustID AND roleid = 2
 
@@ -196,6 +198,31 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 		RETURN
 	END
 
+	IF EXISTS (	SELECT 1
+				FROM dbo.CustGameType bsm WITH(NOLOCK)
+					INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+														AND ci.recommend = @CustID
+														AND ci.roleid = 1
+				WHERE bsm.GameTypeID =  @GameTypeID 
+					AND ((bsm.MaxBet > @MaxBet AND @MaxBet > 0) OR (bsm.MaxPerGameType > @MaxPerMatch AND @MaxPerMatch > 0)))
+			SELECT @IsAdjustDownline = 1
+
+	IF @IsAdjustDownline = 1
+	BEGIN
+		-- Correct downlines via ExecRep
+		EXECUTE	Acc_CustSetting3rd_02
+			@CustID			= @CustID,
+			@RoleID			= @RoleID,
+			@Sporttype		= @Sporttype,
+			@bettype		= @GameTypeID,
+			@MinBet			= @MinBet,
+			@MaxBet			= @MaxBet,
+			@MaxPerMatch	= @MaxPerMatch,
+			@Mode			= 'Keno',
+			@ErrCode		= @ErrCode OUTPUT,
+			@ErrMsg			= @ErrMsg OUTPUT
+	END
+
 	-- Compare old value & new value Betting Limit: Popup Message For Betting Limit 
 	IF @MinBet <> @Old_MinBet OR @MaxBet <> @Old_MaxBet OR @MaxPerMatch <> @Old_MaxPerGame
 	BEGIN
@@ -204,65 +231,57 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 			, @TypeID = 2
 	END
 
-	DECLARE @LogSPData VARCHAR(MAX), @TrackingValueDB VARCHAR(4000)
+	DECLARE @LogSPData VARCHAR (MAX), @TrackingValueDB VARCHAR(4000), @logSpData_Indirectly VARCHAR (MAX), @TrackingValueDB_Indirectly VARCHAR(4000)  
+		
+	SELECT @logSpData_Indirectly ='<Acc_CustomerUpdAgentKeno_MinMaxBet CustId="' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) 
+								+ '" ' + 'SourceAccount="' + COALESCE(@UserName,SPACE(1)) 
+								+ '" ' + 'SportType="' + COALESCE(CAST(@SportType AS VARCHAR(50)), SPACE(1)) 
+								+ '" ' + 'BetType="' + COALESCE(CAST(@BetType AS VARCHAR(50)), SPACE(1)) 
+								+ '" ' + 'MinB="' + COALESCE(CAST(@MinBet AS VARCHAR(50)), SPACE(1)) 
+								+ '" ' + 'MaxB="' + COALESCE(CAST(@MaxBet AS VARCHAR(50)), SPACE(1)) 
+								+ '" ' + 'MPM="' + COALESCE(CAST(@MaxPerMatch AS VARCHAR(50)), SPACE(1)) 
+								+ '" ' + 'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1))
+								+ '" ' + 'UserID="' + COALESCE(CAST(@UserID AS VARCHAR(50)), SPACE(1)) 
+								+ '" ' + 'Language="' + COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) 
+								+ '" ' + 'IP="' + COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) 
+								+ '" ' + 'ErrCode="' + COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1))
+								+ '" ' + 'ErrMsg="' + COALESCE(CAST(@ErrMsg AS VARCHAR(5000)), SPACE(1)) + '" />'
 
-	SELECT @LogSPData = '<Acc_CustomerUpdAgentKeno_MinMaxBet CustId="' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'SportType="' + COALESCE(CAST(@SportType AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'BetType="' + COALESCE(CAST(@BetType AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MinB="' + COALESCE(CAST(@MinBet AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MaxB="' + COALESCE(CAST(@MaxBet AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MPM="' + COALESCE(CAST(@MaxPerMatch AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1))
-		+ '" ' + 'UserID="' + COALESCE(CAST(@UserID AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'Language="' + COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) 
-		+ '" ' + 'IP="' + COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) 
-		+ '" ' + 'ErrCode="' + COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'ErrMsg="' + COALESCE(CAST(@ErrMsg AS VARCHAR(5000)), SPACE(1)) + '" />'
+	SELECT @TrackingValueDB_Indirectly =  '<Acc_CustomerUpdAgentKeno_MinMaxBet CustId="' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) 
+										+ '" ' + 'SourceAccount="' + COALESCE(@UserName,SPACE(1)) 
+										+ '" ' + 'SportType="' + COALESCE(CAST(@SportType AS VARCHAR(50)), SPACE(1)) 
+										+ '" ' + 'BetType="' + COALESCE(CAST(@BetType AS VARCHAR(50)), SPACE(1)) 
+										+ '" ' + 'MinB="' + COALESCE(CAST(@Old_MinBet AS VARCHAR(50)), SPACE(1)) 
+										+ '" ' + 'MaxB="' + COALESCE(CAST(@Old_MaxBet AS VARCHAR(50)), SPACE(1)) 
+										+ '" ' + 'MPM="' + COALESCE(CAST(@Old_MaxPerGame AS VARCHAR(50)), SPACE(1)) 
+										+ '" ' + 'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1))
+										+ '" ' + 'UserID="' + COALESCE(CAST(@UserID AS VARCHAR(50)), SPACE(1)) 
+										+ '" ' + 'Language="' + COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) 
+										+ '" ' + 'IP="' + COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) 
+										+ '" ' + 'ErrCode="' + COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1))
+										+ '" ' + 'ErrMsg="' + COALESCE(CAST(@ErrMsg AS VARCHAR(5000)), SPACE(1)) + '" />'
 
-	SELECT @TrackingValueDB = '<Acc_CustomerUpdAgentKeno_MinMaxBet CustId="' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'SportType="' + COALESCE(CAST(@SportType AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'BetType="' + COALESCE(CAST(@BetType AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MinB="' + COALESCE(CAST(@Old_MinBet AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MaxB="' + COALESCE(CAST(@Old_MaxBet AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MPM="' + COALESCE(CAST(@Old_MaxPerGame AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1))
-		+ '" ' + 'UserID="' + COALESCE(CAST(@UserID AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'Language="' + COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) 
-		+ '" ' + 'IP="' + COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) 
-		+ '" ' + 'ErrCode="' + COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'ErrMsg="' + COALESCE(CAST(@ErrMsg AS VARCHAR(5000)), SPACE(1)) + '" />'
+	SET @logSpData = REPLACE(@logSpData_Indirectly, 'SourceAccount="'+ @UserName +'"', '')
+	SET @TrackingValueDB = REPLACE(@TrackingValueDB_Indirectly, 'SourceAccount="'+ @UserName +'"', '')
 
 	SELECT @endRun = GETDATE(), @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-			, @CustID = @CustID
-			, @ActionID = 381
-			, @TrackingValue = @LogSPData
-			, @TrackingValue2 = @TrackingValueDB
-			, @duration = @duration
-	END TRY
-	BEGIN CATCH
-		SELECT @LogSPData = '<Acc_CustomerUpdAgentKeno_MinMaxBet CustId="' + COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'SportType="' + COALESCE(CAST(@SportType AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'BetType="' + COALESCE(CAST(@BetType AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MinB="' + COALESCE(CAST(@MinBet AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MaxB="' + COALESCE(CAST(@MaxBet AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'MPM="' + COALESCE(CAST(@MaxPerMatch AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1))
-		+ '" ' + 'UserID="' + COALESCE(CAST(@UserID AS VARCHAR(50)), SPACE(1)) 
-		+ '" ' + 'Language="' + COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) 
-		+ '" ' + 'IP="' + COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) 
-		+ '" ' + 'ErrCode="' + COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1))
-		+ '" ' + 'ErrMsg="' + ERROR_MESSAGE() + '" />'
+	
+	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @UserID,  
+		@CustID = @CustID,  
+		@ActionID = 381,  
+		@TrackingValue = @LogSPData,  
+		@TrackingValue2 = @TrackingValueDB,  
+		@duration = @duration  
 
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-			, @CustID = @CustID
-			, @ActionID = 381
-			, @TrackingValue = @LogSPData
-			, @TrackingValue2 = @TrackingValueDB
-			, @duration = @duration
-	END CATCH
-		---------------------------------------------------------
+	IF @IsAdjustDownline = 1
+		EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
+			@UserID = @UserID,  
+			@CustID = @CustID,  
+			@ActionID = 220019,  
+			@TrackingValue = @logSpData_Indirectly,  
+			@TrackingValue2 = @TrackingValueDB_Indirectly,  
+			@duration = @duration  
 END
 
 GO

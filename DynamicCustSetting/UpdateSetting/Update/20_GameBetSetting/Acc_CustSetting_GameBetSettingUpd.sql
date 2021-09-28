@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetSettingUpd] 
+ALTER PROCEDURE Acc_CustSetting_GameBetSettingUpd
 	  @CustID		INT
 	, @BetLimit		VARCHAR(MAX)
 	, @SubAccID		INT				= 0
@@ -18,7 +18,7 @@ AS
 
 	Revisions: 
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
-
+		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]  
 	Param's Explanation:
 	- @BetLimit:
 		<ROOT>
@@ -33,20 +33,24 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
-
+	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
 		, @duration		INT
+		, @ActionID		INT
 		
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
+		, @logSpData_Indirectly	NVARCHAR(MAX)
+		, @logSpData_Old_Indirectly	NVARCHAR(MAX)
 		, @xml				XML
+		, @UserName			NVARCHAR(50)
 		
 	DECLARE @AgentID		INT
 		, @MasterID			INT
 		, @SuperID			INT
 		, @RoleID			INT
-		
+		, @IsAdjustDownline	BIT = 0
 	DECLARE @OldBetSettingTbl TABLE (
 		SportType			SMALLINT
 		, BetType			SMALLINT
@@ -92,6 +96,7 @@ BEGIN
 		, @MasterID = mrecommend
 		, @SuperID	= srecommend
 		, @RoleID	= RoleID
+		, @UserName = username
 	FROM dbo.custInfo WITH (NOLOCK)
 	WHERE custid = @CustID
 
@@ -222,7 +227,7 @@ BEGIN
 		UPDATE main
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
-		FROM dbo.CustBetSetting3rd_Agent main WITH(ROWLOCK,UPDLOCK)
+		FROM dbo.CustBetSetting3rd_Agent main WITH(ROWLOCK)
 		INNER JOIN @NewBetSettingTbl tmp
 			ON tmp.SportType	= main.sporttype
 				AND tmp.BetType = main.bettype
@@ -231,6 +236,44 @@ BEGIN
 					main.minbet		<> tmp.MinBet
 				OR main.maxbet		<> tmp.MaxBet
 				)
+
+		IF EXISTS (	SELECT 1
+					FROM dbo.CustBetSetting3rd_Agent bsm WITH(NOLOCK)
+						INNER JOIN @NewBetSettingTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+						INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+															AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid IN (3,2))
+																OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid IN (2)))
+					WHERE bsm.MaxBet > fil.MaxBet AND fil.MaxBet > 0) 
+		OR EXISTS (	SELECT 1
+				FROM dbo.CustBetSetting3rd_Member bsm WITH(NOLOCK)
+					INNER JOIN @NewBetSettingTbl fil ON bsm.sporttype = fil.sporttype AND bsm.bettype = fil.bettype
+					INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON bsm.custid = ci.custid
+														AND ((@RoleID = 4 AND ci.srecommend = @CustID AND ci.roleid = 1)
+															OR (@RoleID = 3 AND ci.mrecommend = @CustID AND ci.roleid = 1)
+															OR (@RoleID = 2 AND ci.recommend = @CustID AND ci.roleid = 1))
+				WHERE bsm.MaxBet > fil.MaxBet AND fil.MaxBet > 0) 
+			SELECT @IsAdjustDownline = 1
+
+		IF @IsAdjustDownline = 1
+		BEGIN
+			--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
+			SET	@BetLimit =	(
+								SELECT	SportType,			
+										BetType,			
+										MinBet,
+										MaxBet
+								FROM	@NewBetSettingTbl
+								WHERE NOT (MinBet = 0 AND MaxBet = 0)
+								FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
+							)
+					
+			-- Correct downlines via ExecRep
+			EXECUTE	Acc_DynamicCustSetting3rd_02
+						@CustID		= @CustID,
+						@RoleID		= @RoleID,
+						@BetLimit	= @BetLimit,
+						@Mode		= 'GameBetSetting'
+		END
 	END
 
 	--START LOGGING
@@ -252,6 +295,18 @@ BEGIN
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 	WHERE p.ProductID = @ProductID
 
+	DECLARE @SPName varchar(100) = 'Acc_CustSetting_GameBetSettingUpd'
+
+	SELECT @SPName = LogStr 
+	FROM f_CustSetting_FormatLog (@SPName)
+
+	INSERT INTO @LogAction (ActionID)
+	SELECT 399 UNION ALL
+	SELECT l.ActionID
+	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
+		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
+	WHERE l.SPName = @SPName AND ld.ProductID IS NULL AND ld.Level = @RoleID
+
 	-- Log old data
 	IF @SettingLevel = 1			-- Product setting level
 	BEGIN
@@ -259,6 +314,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -270,7 +326,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -280,6 +336,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -291,7 +348,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -301,6 +358,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -312,7 +370,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -322,6 +380,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -334,11 +393,11 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
-	SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+	SET @logSpData_Old_Indirectly = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
 	-- Log new updated data
 	IF @SettingLevel = 1			-- Product setting level
@@ -347,6 +406,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -358,7 +418,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -368,6 +428,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -379,7 +440,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -389,6 +450,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -400,7 +462,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
@@ -410,6 +472,7 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
+				@UserName						AS '@SourceAccount',
 				@UserID							AS '@UserID',
 				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
@@ -422,35 +485,51 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_CustSetting_GameBetSettingUpd'),
+		FOR XML PATH('R'),
 		TYPE
 	)
 	END
-	SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+	SET @logSpData_Indirectly = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 
-	SELECT @logSpData_Old = LogStr 
-	FROM f_CustSetting_FormatLog (@logSpData_Old)
-	SELECT @logSpData = LogStr 
-	FROM f_CustSetting_FormatLog (@logSpData)
+	SELECT @logSpData_Old_Indirectly = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Old_Indirectly)
+	SELECT @logSpData_Indirectly = LogStr 
+	FROM f_CustSetting_FormatLog (@logSpData_Indirectly)
+
+	SET @logSpData = REPLACE(@logSpData_Indirectly, 'SourceAccount="'+ @UserName +'"', '')
+	SET @logSpData_Old = REPLACE(@logSpData_Old_Indirectly, 'SourceAccount="'+ @UserName +'"', '')
 
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @CustID
-						, @ActionID			= 399
-						, @TrackingValue	= @logSpData
-						, @TrackingValue2	= @logSpData_Old
-						, @duration			= @duration
-	END TRY
-	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @CustID
-						, @ActionID			= 399
-						, @TrackingValue	= @logSpData
-						, @TrackingValue2	= @logSpData_Old
-						, @duration			= @duration
-	END CATCH
+	WHILE (1=1)
+	BEGIN
+		UPDATE TOP (1) @LogAction
+		SET IsFinished = 1, @ActionID = ActionID
+		WHERE IsFinished = 0
+
+		IF @@ROWCOUNT = 0 BREAK
+		
+		IF @ActionID = 399
+		BEGIN
+			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+				@UserID = @UserID,
+				@CustID = @CustID,
+				@ActionID = @ActionID,
+				@TrackingValue = @LogSPData,
+				@TrackingValue2 = @logSPData_Old,
+				@duration = @duration	
+		END
+		ELSE IF @IsAdjustDownline = 1
+		BEGIN
+			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+				@UserID = @UserID,
+				@CustID = @CustID,
+				@ActionID = @ActionID,
+				@TrackingValue = @logSpData_Indirectly,
+				@TrackingValue2 = @logSpData_Old_Indirectly,
+				@duration = @duration	
+		END
+	END
 END
 GO
