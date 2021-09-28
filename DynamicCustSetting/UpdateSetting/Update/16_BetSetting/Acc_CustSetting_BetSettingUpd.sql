@@ -273,26 +273,25 @@ BEGIN
 		SELECT @IsAdjustDownline = 1
 
 	IF @IsAdjustDownline = 1
-		BEGIN
-			--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
-			SET	@BetLimit =	(
-								SELECT	SportType,			
-										BetType,			
-										MinBet,
-										MaxBet,
-										MaxPerNumber
-								FROM	@NewBetSettingTbl
-								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
-								FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
-							)
+	BEGIN
+		--Updating upline to 0/0/0/0 does not count reducing Bet setting, downline's bet setting will not be changed.
+		SET	@BetLimit =	(
+							SELECT	SportType,			
+									BetType,			
+									MinBet,
+									MaxBet,
+									MaxPerMatch
+							FROM	@NewBetSettingTbl
+							WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
+							FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
+						)
 					
-			-- Correct downlines via ExecRep
-			EXECUTE	Acc_DynamicCustSetting3rd_02
-						@CustID		= @CustID,
-						@RoleID		= @RoleID,
-						@BetLimit	= @BetLimit,
-						@Mode		= 'BetSetting16'
-		END
+		-- Correct downlines via ExecRep
+		EXECUTE	Acc_DynamicCustSetting3rd_02
+					@CustID		= @CustID,
+					@RoleID		= @RoleID,
+					@BetLimit	= @BetLimit,
+					@Mode		= 'BetSetting16'
 	END
 	--START LOGGING
 
