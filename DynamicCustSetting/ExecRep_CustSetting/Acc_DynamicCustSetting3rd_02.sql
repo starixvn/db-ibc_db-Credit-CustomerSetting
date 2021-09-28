@@ -554,14 +554,6 @@ BEGIN
 		IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 OR dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0
 			RETURN
 		
-		DECLARE @NewBetLimitTbl TABLE (
-			SportType			SMALLINT
-			, BetType			SMALLINT
-			, MinBet			MONEY
-			, MaxBet			MONEY
-			, MaxPerMatch		MONEY
-		)
-
 		IF @BetLimit IS NULL OR @BetLimit='' RETURN
 
 		--Parse XML	
