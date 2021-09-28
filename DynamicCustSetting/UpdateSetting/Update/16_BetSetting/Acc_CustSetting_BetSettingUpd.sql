@@ -49,7 +49,8 @@ BEGIN
 		, @logSpData_Indirectly		NVARCHAR(MAX)
 		, @logSpData_Old_Indirectly	NVARCHAR(MAX)
 		, @xml						XML
-		
+		, @UserName					NVARCHAR(50)
+
 	DECLARE @AgentID		INT
 		, @MasterID			INT
 		, @SuperID			INT
@@ -103,6 +104,7 @@ BEGIN
 		, @MasterID = mrecommend
 		, @SuperID	= srecommend
 		, @RoleID	= RoleID
+		, @UserName = username
 	FROM dbo.custInfo WITH (NOLOCK)
 	WHERE custid = @CustID
 
