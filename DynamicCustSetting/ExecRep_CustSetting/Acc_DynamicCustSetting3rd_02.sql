@@ -554,12 +554,20 @@ BEGIN
 		IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 0 OR dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0
 			RETURN
 		
+		DECLARE @NewBetLimit16Tbl TABLE (
+			SportType			SMALLINT
+			, BetType			SMALLINT
+			, MinBet			MONEY
+			, MaxBet			MONEY
+			, MaxPerMatch		MONEY
+		)
+
 		IF @BetLimit IS NULL OR @BetLimit='' RETURN
 
 		--Parse XML	
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @BetLimit
 	
-		INSERT @NewBetLimitTbl
+		INSERT @NewBetLimit16Tbl
 		SELECT SportType,BetType,
 			CAST(MinBet AS MONEY) AS MinBet,
 			CAST(MaxBet AS MONEY) AS MaxBet,
@@ -569,7 +577,7 @@ BEGIN
 	
 		EXEC sp_xml_removedocument @iDoc
 
-		SELECT @SportbettypeCount = COUNT(1) FROM @NewBetLimitTbl
+		SELECT @SportbettypeCount = COUNT(1) FROM @NewBetLimit16Tbl
 
 		IF @SportbettypeCount = 0
 			RETURN
@@ -635,7 +643,7 @@ BEGIN
 					bsm.MaxBet = @NewMaxBet,
 					bsm.MaxPerMatch = @NewMaxPerMatch
 				FROM dbo.CustBetSetting3rd_Agent bsm WITH(ROWLOCK)
-					INNER JOIN @NewBetLimitTbl new ON bsm.sporttype = new.sporttype AND bsm.bettype = new.bettype
+					INNER JOIN @NewBetLimit16Tbl new ON bsm.sporttype = new.sporttype AND bsm.bettype = new.bettype
 					INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON bsm.custid = ci.custid
 			END
 		END
@@ -667,7 +675,7 @@ BEGIN
 					bsa.MaxBet = @NewMaxBet,
 					bsa.MaxPerMatch = @NewMaxPerMatch
 				FROM dbo.CustBetSetting3rd_Agent bsa WITH(ROWLOCK, UPDLOCK)
-					INNER JOIN @NewBetLimitTbl new ON bsa.sporttype = new.sporttype AND bsa.bettype = new.bettype
+					INNER JOIN @NewBetLimit16Tbl new ON bsa.sporttype = new.sporttype AND bsa.bettype = new.bettype
 					INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON bsa.custid = ci.custid		
 			END									
 		END
@@ -698,7 +706,7 @@ BEGIN
 					bsmem.MaxBet = @NewMaxBet,
 					bsmem.MaxPerMatch = @NewMaxPerMatch
 				FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
-					INNER JOIN @NewBetLimitTbl new ON bsmem.sporttype = new.sporttype AND bsmem.bettype = new.bettype
+					INNER JOIN @NewBetLimit16Tbl new ON bsmem.sporttype = new.sporttype AND bsmem.bettype = new.bettype
 					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid												  
 			END
 		END
