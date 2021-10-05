@@ -79,7 +79,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpd_BetSetting]
 	@UpdateMinMaxBetv99 bit = 1,
 	-- mixed sports
 	@UpdateMinMaxBetv99MP bit = 1,
-	@UpdateMinMaxBetv1MP bit = 1,
+	@UpdateMinMaxBetMP bit = 1,
 	-- number game
 	@UpdateMinMaxBetv161 bit = 1,
 	@UpdateMinMaxBetv164 bit = 1,
@@ -99,6 +99,7 @@ AS
 
 	Revisions:
 		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+		- 20211005@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -159,7 +160,7 @@ BEGIN
 	--Soccer
 	SELECT 1, 1, @minbet, @maxbet, @maxpermatch, NULL, @maxPOpermatch, @UpdateMinMaxBet, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
 	--Soccer Parlay
-	SELECT 1, 9, @minbetv1mp, @maxbetv1mp, @maxpermatchv1mp, NULL, @maxPOpermatchv1mp, @UpdateMinMaxBetv1mp, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
+	SELECT 1, 9, @minbetv1mp, @maxbetv1mp, @maxpermatchv1mp, NULL, @maxPOpermatchv1mp, @UpdateMinMaxBetMP, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
 	--Basketball
 	SELECT 2, 1, @minbetv2, @maxbetv2, @maxpermatchv2, NULL, @maxPOpermatchv2, @UpdateMinMaxBetv2, [dbo].[f_Get_SportNameBySporttype](2,@Language) UNION ALL
 	--Football

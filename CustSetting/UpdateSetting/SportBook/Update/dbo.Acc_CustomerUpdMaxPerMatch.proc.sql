@@ -24,7 +24,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaxPerMatch]
 	@UpdateMinMaxBetv11 bit = 1,
 	@UpdateMinMaxBetv99 bit = 1,
 	@UpdateMinMaxBetv99MP bit = 1,
-	@UpdateMinMaxBetMP bit = 1,
+	@UpdateMinMaxBetv1MP bit = 1,
 	
 	@UpdateMinMaxBetv161 bit = 1,
 	@UpdateMinMaxBetv164 bit = 1,
@@ -48,7 +48,6 @@ Revisions:
     - 20161109@Helen: Separate Bet Setting for Soccer - Parlay - [Redmine:66265]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
-	- 20210910@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -68,7 +67,7 @@ set
 	MaxPerMatch11=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv11=1 then @MaxPerMatchv11 else MaxPerMatch11 end,
 	MaxPerMatch99=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv99=1 then @MaxPerMatchv99 else MaxPerMatch99 end,
 	MaxPerMatch99MP=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv99MP=1 then @MaxPerMatchv99MP else MaxPerMatch99MP end,
-	MaxPerMatch1MP=case when @UpdateMultiple = 0 or @UpdateMinMaxBetMP=1 then @MaxPerMatchv1MP else MaxPerMatch1MP end,
+	MaxPerMatch1MP=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv1MP=1 then @MaxPerMatchv1MP else MaxPerMatch1MP end,
 	
 	MaxPerMatch161=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv161=1 then @MaxPerMatchv161 else MaxPerMatch161 end,
 	MaxPerMatch164=case when @UpdateMultiple = 0 or @UpdateMinMaxBetv164=1 then @MaxPerMatchv164 else MaxPerMatch164 end
