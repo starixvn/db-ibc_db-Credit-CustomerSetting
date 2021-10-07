@@ -5,7 +5,8 @@ ALTER PROCEDURE dbo.Acc_CustomerWinLimitUpd @CustId INT
 	, @SportType SMALLINT
 	, @BetType SMALLINT
 	, @MaxLossLimit MONEY = 0
-
+	
+	, @SourceUsername VARCHAR(50) = NULL
 	, @SubAccId INT = 0 -- Sub Account  
 	, @IP VARCHAR(50) = ''
 	, @UserId INT = 0
@@ -22,6 +23,7 @@ AS
 	- 20151223@Patrick: Add Max/Loss limit for RnG Casino [Redmine: #49528]
 	- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 	- 20200720@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+	- 20210906@Johnson: write log SourceUsername [redmine:#158174]
   Parameters Explanation:    
  */
 BEGIN
@@ -238,6 +240,9 @@ BEGIN
 		+ CASE WHEN @SportType = 208 THEN 'MaxLossLimit="' + COALESCE(CAST(@MaxLossLimit AS VARCHAR(50)), SPACE(1)) + '" ' ELSE '' END --only write log for One-RnG
 		+ 'SportType="' + COALESCE(CAST(@SportType AS VARCHAR(50)), SPACE(1)) + '" ' 
 		--+ 'BetType="' + COALESCE(CAST(@BetType AS VARCHAR(50)), SPACE(1)) + '" ' 
+		+ CASE WHEN @SourceUsername IS NOT NULL 
+				THEN 'SourceUsername="' + COALESCE(CAST(@SourceUsername AS VARCHAR(50)), SPACE(1)) + '" ' 
+				ELSE '' END
 		+ 'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' 
 		+ 'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)), SPACE(1)) + '" ' 
 		+ 'Language="' + COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' 
@@ -255,6 +260,9 @@ BEGIN
 		+ CASE WHEN @SportType = 208 THEN 'MaxLossLimit="' + COALESCE(CAST(@MaxLossLimit_Old AS VARCHAR(50)), SPACE(1)) + '" ' ELSE '' END --only write log for One-RnG
 		+ 'SportType="' + COALESCE(CAST(@SportType AS VARCHAR(50)), SPACE(1)) + '" ' 
 		--+ 'BetType="' + COALESCE(CAST(@BetType AS VARCHAR(50)), SPACE(1)) + '" ' 
+		+ CASE WHEN @SourceUsername IS NOT NULL 
+				THEN 'SourceUsername="' + COALESCE(CAST(@SourceUsername AS VARCHAR(50)), SPACE(1)) + '" ' 
+				ELSE '' END
 		+ 'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' 
 		+ 'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)), SPACE(1)) + '" ' 
 		+ 'Language="' + COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' 
@@ -286,6 +294,9 @@ BEGIN
 			+ 'MaxLossLimit="' + COALESCE(CAST(@MaxLossLimit AS VARCHAR(50)), SPACE(1)) + '" ' 
 			+ 'SportType="' + COALESCE(CAST(@SportType AS VARCHAR(50)), SPACE(1)) + '" ' 
 			--+ 'BetType="' + COALESCE(CAST(@BetType AS VARCHAR(50)), SPACE(1)) + '" ' 
+			+ CASE WHEN @SourceUsername IS NOT NULL 
+				THEN 'SourceUsername="' + COALESCE(CAST(@SourceUsername AS VARCHAR(50)), SPACE(1)) + '" ' 
+				ELSE '' END
 			+ 'SubAccName="' + COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' 
 			+ 'userid="' + COALESCE(CAST(@userid AS VARCHAR(50)), SPACE(1)) + '" ' 
 			+ 'Language="' + COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' 

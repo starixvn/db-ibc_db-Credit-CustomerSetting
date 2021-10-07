@@ -3,12 +3,13 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitUpd]
 	  @CustID		INT
 	, @Limit		VARCHAR(MAX)
 	, @SettingType	SMALLINT		= 6
+	, @SourceUsername VARCHAR(50) = NULL
 	, @SubAccID		INT				= 0
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT				= 0		OUTPUT
-	, @ErrMsg		NVARCHAR(200)	= ''	OUTPUT
+	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20160108@Elodie
@@ -18,6 +19,7 @@ AS
 	Revisions:
 			- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+			- 20210906@Johnson: write log SourceUsername [redmine:#158174]
 	Param's Explanation:
 	- @Limit:
 		6: WinLossLimit
@@ -352,6 +354,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
@@ -378,6 +381,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -404,6 +408,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
@@ -430,6 +435,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -460,6 +466,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
@@ -486,6 +493,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -512,6 +520,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
@@ -538,6 +547,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -571,6 +581,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
@@ -594,6 +605,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -617,6 +629,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
@@ -640,6 +653,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -667,6 +681,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
@@ -690,6 +705,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -713,6 +729,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
@@ -736,6 +753,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -766,6 +784,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
@@ -789,6 +808,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -812,6 +832,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
@@ -835,6 +856,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -862,6 +884,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	@ProductID			AS '@ProductID',
@@ -885,6 +908,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
@@ -908,6 +932,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	BetType				AS '@BetType',
@@ -931,6 +956,7 @@ BEGIN
 					@CustID							AS '@CustID',
 					@UserID							AS '@UserID',
 					dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
+					CASE WHEN @SourceUsername IS NOT NULL THEN @SourceUsername END AS '@SourceUsername',
 					@IP								AS '@IP',
 					(
 						SELECT	SportType			AS '@SportType',
