@@ -25,7 +25,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @xml XML = CAST (@Log as XML)
-	
+	CREATE TABLE #tblCustLog(custid INT PRIMARY KEY, soccer TINYINT, basketball TINYINT, updateSoccer BIT, updateBasketball BIT, OldSoccer TINYINT, OldBasketball TINYINT)
 	IF @ActionID = 1187 
 	BEGIN
 		CREATE TABLE #tblCustLog(custid INT PRIMARY KEY, soccer TINYINT, basketball TINYINT, updateSoccer BIT, updateBasketball BIT, OldSoccer TINYINT, OldBasketball TINYINT, WinlossSoccer MONEY, WinlossBasketball MONEY)
@@ -46,7 +46,7 @@ BEGIN
 		SELECT custid,
 			(SELECT 
 				CASE WHEN UpdateSoccer = 1 THEN soccer END as '@Soccer',
-				CASE WHEN UpdateBasketball = 1 THEN basketball END as '@Basketball',
+			CASE WHEN UpdateBasketball = 1 THEN basketball END as '@basketball',
 				CASE WHEN UpdateSoccer = 1 THEN WinlossSoccer END as '@WinlossSoccer',
 				CASE WHEN UpdateBasketball = 1 THEN WinlossBasketball END as '@WinlossBasketball',
 				@IP as '@IP'
@@ -56,7 +56,7 @@ BEGIN
 			) as LogNew,
 			(SELECT 
 				CASE WHEN UpdateSoccer = 1 THEN OldSoccer END as '@Soccer',
-				CASE WHEN UpdateBasketball = 1 THEN OldBasketball END as '@Basketball',
+			CASE WHEN UpdateBasketball = 1 THEN OldBasketball END as '@basketball',
 				CASE WHEN UpdateSoccer = 1 THEN WinlossSoccer END as '@WinlossSoccer',
 				CASE WHEN UpdateBasketball = 1 THEN WinlossBasketball END as '@WinlossBasketball',
 				@IP as '@IP'

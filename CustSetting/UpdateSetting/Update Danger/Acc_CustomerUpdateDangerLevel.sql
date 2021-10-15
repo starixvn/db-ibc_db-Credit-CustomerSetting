@@ -29,7 +29,7 @@ BEGIN
 
 	CREATE TABLE #tblCustWinloss (custid INT, sporttype SMALLINT, isParlay BIT, winloss MONEY)
 	CREATE TABLE #tblCustDangerInfo (Custid INT PRIMARY KEY, Soccer TINYINT, Basketball TINYINT, WinlossSoccer MONEY, WinlossBasketball MONEY, UpdateSoccer BIT, UpdateBasketball BIT)
-	CREATE TABLE #tblCustDangerOld (Custid INT PRIMARY KEY, Soccer TINYINT, Basketball TINYINT, IsManualSoccer BIT, IsManualBasketball BIT)
+	CREATE TABLE #tblCustDangerOld (Custid INT PRIMARY KEY, DangerLevel BIGINT, Soccer TINYINT, Basketball TINYINT, IsManualSoccer BIT, IsManualBasketball BIT)
 	CREATE TABLE #tblCustUpdate (Custid INT PRIMARY KEY, DangerLevel BIGINT, Soccer TINYINT, Basketball TINYINT, SoccerOld TINYINT, BasketballOld TINYINT, UpdateSoccer BIT, UpdateBasketball BIT, WinlossSoccer MONEY, WinlossBasketball MONEY)
 	
 	DECLARE @xml XML = CAST (@CustList as XML)
@@ -44,6 +44,8 @@ BEGIN
 	
 	SELECT @batchNo = MAX(batchNo) + 1 
 	FROM CustDangerWinlossInfo WITH(NOLOCK)
+
+	SELECT @batchNo = ISNULL(@batchNo,1)
 	
 	INSERT INTO CustDangerWinlossInfo(Custid,
 				SportType,
@@ -66,7 +68,7 @@ BEGIN
 	GROUP BY custid
 	)
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
-	SELECT custid,
+	SELECT t.custid,
 		CASE WHEN soccer + soccerParlay < 100000 THEN
 				CASE WHEN soccer < -200000 THEN 1
 					WHEN soccer <-140000 AND soccer >= -200000 THEN 2
@@ -96,7 +98,7 @@ BEGIN
 					CASE WHEN soccer + soccerParlay < 150000 THEN 14
 						ELSE 15 END
 				END
-			END level1,
+			END SoccerLevel,
 		CASE WHEN basketball < -200000 THEN 1
 			WHEN basketball < -140000 AND basketball >= -200000 THEN 2
 			WHEN basketball < -100000 AND basketball >= -140000 THEN 3
@@ -109,7 +111,7 @@ BEGIN
 			WHEN basketball < 40000 AND basketball >= 20000 THEN 10
 			WHEN basketball < 60000 AND basketball >= 40000 THEN 11
 			WHEN basketball < 100000 AND basketball >= 60000 THEN 12
-			ELSE 13 END as Level2,
+			ELSE 13 END as BasketballLevel,
 		Soccer + SoccerParlay as WinlossSoccer,
 		Basketball as WinlossBasketball,
 		IsSoccer,
@@ -119,24 +121,24 @@ BEGIN
 		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON ci.srecommend = s.custid
 	
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball)
-	SELECT custid, DangerLevel, soccer, basketball, IsManualSoccer, IsManualBasketball
-	FROM custifno c WITH(NOLOCK)
-		CROSS APPLY dbo.f_GetDangerLevelInfo(DangerLevel) t
+	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball, IsManualSoccer, IsManualBasketball
+	FROM custinfo c WITH(NOLOCK)
+		CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
 	WHERE custid IN (SELECT custid FROM #tblCustDangerInfo)
 	
-	INSERT INTO #tblCustUpdate(custid, Soccer, Basketball, UpdateSoccer, UpdateBasketball, DangerLevel, OldSoccer, OldBasketball, WinlossSoccer, WinlossBasketball)
-	SELECT t1.custid, t1.Level1 as Soccer, t1.Level2 as Basketball,
-		CASE WHEN IsManualSoccer = 0 AND IsSoccer = 1 AND t1.Level1 <> t2.soccer THEN 1 ELSE 0 END as UpdateSoccer,
-		CASE WHEN IsManualBasketball = 0 AND IsBasketball = 1 AND t1.level2 <> t2.Basketball THEN 1 ELSE 0 END as UpdateBasketball,
+	INSERT INTO #tblCustUpdate(custid, Soccer, Basketball, UpdateSoccer, UpdateBasketball, DangerLevel, SoccerOld, BasketballOld, WinlossSoccer, WinlossBasketball)
+	SELECT t1.custid, t1.Soccer , t1.Basketball,
+		CASE WHEN IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer THEN 1 ELSE 0 END as UpdateSoccer,
+		CASE WHEN IsManualBasketball = 0 AND UpdateBasketball = 1 AND t1.Basketball <> t2.Basketball THEN 1 ELSE 0 END as UpdateBasketball,
 		t2.DangerLevel,
-		t2.soccer as OldSoccer,
-		t2.basketball as OldBasketball,
+		t2.soccer as SoccerOld,
+		t2.basketball as BasketballOld,
 		t1.WinlossSoccer,
 		t1.WinlossBasketball		
 	FROM #tblCustDangerInfo t1
 		INNER JOIN #tblCustDangerOld t2 ON t1.custid = t2.Custid
-	WHERE (IsManualSoccer = 0 AND IsSoccer = 1 AND t1.Level1 <> t2.soccer)
-		OR (IsManualBasketball = 0 AND IsBasketball = 1 AND t1.level2 <> t2.Basketball)
+	WHERE (IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer)
+		OR (IsManualBasketball = 0 AND UpdateBasketball = 1 AND t1.Basketball <> t2.Basketball)
 	
 	DECLARE @CustUpdate VARCHAR(MAX) 
 	
@@ -187,8 +189,8 @@ BEGIN
 			basketball as '@b',
 			UpdateSoccer as '@us',
 			UpdateBasketball as '@ub',
-			OldSoccer as '@os',
-			OldBasketball as '@ob',
+			SoccerOld as '@os',
+			BasketballOld as '@ob',
 			WinlossSoccer as '@wls',
 			WinlossBasketball as '@wlb'
 		FROM #tblCustUpdate t			
@@ -211,7 +213,7 @@ BEGIN
 			@ActionId	= 1187,
 			@Log		= @Log,		
 			@IP			= '125.227.140.97',	
-			@Duration	= @Duration
+			@Duration	= @Duration			
 	END CATCH
 	
 	DROP TABLE #tblCustDangerInfo
