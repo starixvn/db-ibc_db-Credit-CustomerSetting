@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDangerLevel]
-	@CustList	VARCHAR(MAX) = '',		
+	@CustList	VARCHAR(MAX) = '',
+	@Enviroment VARCHAR(100) = 'PRO',
 	@ErrCode	INT = 0	OUTPUT,
 	@ErrMsg		NVARCHAR(200) = '' OUTPUT	
 AS
@@ -19,6 +20,7 @@ SET NOCOUNT ON
 					<r id="100" sport="1" parlay="1" winloss="-1000"/>
 					<r id="101" sport="2" parlay="0" winloss="10000"/>
 					</Root>'
+		-@Enviroment = 'UAT/PRO'			
 */	
 BEGIN
 	SET NOCOUNT ON
@@ -44,7 +46,13 @@ BEGIN
 	
 	SELECT @batchNo = MAX(batchNo) + 1 
 	FROM CustDangerWinlossInfo WITH(NOLOCK)
-
+	
+	DELETE t
+	FROM #tblCustWinloss t
+		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
+	WHERE 1 = CASE WHEN @Enviroment = 'UAT' AND ci.currency <> 20 THEN 1
+				ELSE 0 END	
+	
 	SELECT @batchNo = ISNULL(@batchNo,1)
 	
 	INSERT INTO CustDangerWinlossInfo(Custid,
@@ -54,7 +62,7 @@ BEGIN
 				CreatedDate,
 				BatchNo)
 	SELECT Custid, SportType, IsParlay, Winloss, GETDATE(), @BatchNo
-	FROM #tblCustWinloss
+	FROM #tblCustWinloss t	
 	
 	;WITH T AS (
 	SELECT custid,	
