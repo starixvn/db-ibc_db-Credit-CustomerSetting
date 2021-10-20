@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDangerLevel]
 	@CustList	VARCHAR(MAX) = '',
 	@Enviroment VARCHAR(100) = 'PRO',
+	@IncludeUUS BIT = 1,
 	@ErrCode	INT = 0	OUTPUT,
 	@ErrMsg		NVARCHAR(200) = '' OUTPUT	
 AS
@@ -51,6 +52,7 @@ BEGIN
 	FROM #tblCustWinloss t
 		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
 	WHERE 1 = CASE WHEN @Enviroment = 'UAT' AND ci.currency <> 20 THEN 1
+				WHEN @Enviroment = 'PRO' AND @IncludeUUS = 0 AND ci.currency = 20 THEN 1
 				ELSE 0 END	
 	
 	SELECT @batchNo = ISNULL(@batchNo,1)
@@ -64,6 +66,9 @@ BEGIN
 	SELECT Custid, SportType, IsParlay, Winloss, GETDATE(), @BatchNo
 	FROM #tblCustWinloss t	
 	
+	IF @@ROWCOUNT = 0
+		RETURN;
+		
 	;WITH T AS (
 	SELECT custid,	
 		SUM(CASE WHEN sporttype = 1 AND isParlay = 0 THEN winloss ELSE 0 END) soccer,
