@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-bodb_CustomerLog,DBLOG-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_CustomerLog,DBLOG-bodb_CustomerLog" executers="bodbAdminNet,Dot_Admin" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_WriteLog_UserLog_RunSP_MultipleLog]
 	@UserID INT,	
 	@ActionID INT = NULL,	
@@ -15,17 +15,23 @@ AS
 		- 20211014@Johnson: Initial sp [redmine:#161351]
     Param's Explaination:    	
 		- @UserID: UserId perform this action
-		- @Log = '<Root>
+		-@ActionID = 1187
+			@Log = '<Root>
 					<r id="1" s="10" b="11" us="1" ub="0" os="5" ob="11">
 					<r id="2" s="15" b="10" us="1" ub="1" os="5" ob="11">
 				</Root>
 				'
+		-@ActionID = 1188
+			@Log = '<Root>
+					<r id="1" sport="0" newflag="1" oldflag="0" newlevel="10" oldlevel="5" />
+					<r id="2" sport="1" newflag="1" oldflag="0" newlevel="10" oldlevel="15" />
+				</Root>
+				'		
 */
 BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @xml XML = CAST (@Log as XML)
-	
 	IF @ActionID = 1187 
 	BEGIN
 		CREATE TABLE #tblCustLog(custid INT PRIMARY KEY, soccer TINYINT, basketball TINYINT, updateSoccer BIT, updateBasketball BIT, OldSoccer TINYINT, OldBasketball TINYINT, WinlossSoccer MONEY, WinlossBasketball MONEY)
@@ -46,7 +52,7 @@ BEGIN
 		SELECT custid,
 			(SELECT 
 				CASE WHEN UpdateSoccer = 1 THEN soccer END as '@Soccer',
-				CASE WHEN UpdateBasketball = 1 THEN basketball END as '@Basketball',
+			CASE WHEN UpdateBasketball = 1 THEN basketball END as '@Basketball',
 				CASE WHEN UpdateSoccer = 1 THEN WinlossSoccer END as '@WinlossSoccer',
 				CASE WHEN UpdateBasketball = 1 THEN WinlossBasketball END as '@WinlossBasketball',
 				@IP as '@IP'
@@ -56,7 +62,7 @@ BEGIN
 			) as LogNew,
 			(SELECT 
 				CASE WHEN UpdateSoccer = 1 THEN OldSoccer END as '@Soccer',
-				CASE WHEN UpdateBasketball = 1 THEN OldBasketball END as '@Basketball',
+			CASE WHEN UpdateBasketball = 1 THEN OldBasketball END as '@Basketball',
 				CASE WHEN UpdateSoccer = 1 THEN WinlossSoccer END as '@WinlossSoccer',
 				CASE WHEN UpdateBasketball = 1 THEN WinlossBasketball END as '@WinlossBasketball',
 				@IP as '@IP'
