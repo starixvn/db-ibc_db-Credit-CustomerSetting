@@ -6,7 +6,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember]
 	, @SubAccID			INT				= 0
 	, @IP				VARCHAR(50)		= ''
 	, @UserID			INT				= 0
-	, @SystemID TINYINT = 1 --20200305@Tiara
+	, @SystemID TINYINT = 1 --20200305@Tiara  
+    , @IsCountPT			BIT = 0
 	, @ErrCode			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
 	, @SettingStatus TINYINT = 0
@@ -38,7 +39,8 @@ AS
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
-
+		- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
+		
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 	
 	*/
@@ -153,6 +155,8 @@ BEGIN
 				, @SubAccID = @SubAccID
 				, @IP = @IP
 				, @UserID = @UserID
+				, @SystemID	 = @SystemID,
+				, @IsCountPT = 0
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
@@ -264,6 +268,8 @@ BEGIN
 				, @SubAccID = @SubAccID
 				, @IP = @IP
 				, @UserID = @UserID
+				, @SystemID	 = @SystemID,
+				, @IsCountPT = 0
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END

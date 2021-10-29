@@ -6,6 +6,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTUpd]
 	@SubAccID			INT = 0,
 	@UserID				INT = 0,       
     @IP					VARCHAR(15)='',
+    @SystemID			TINYINT = 1,
+    @IsCountPT			BIT = 0,     
     @ErrCode			INT = 0 OUTPUT,
     @MsgType			INT = 0 OUTPUT,
     @ErrMsg				NVARCHAR(MAX) = '' OUTPUT
@@ -25,8 +27,10 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTUpd]
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
+			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 
 		Parameter's Explanation:
+			- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 			@PT = <ROOT>
 					<PT SportType="1" BetType="1" IsLive="0" MasterPT="70" IsAutoMasterPT = "0" AutoMasterPT = "0" AgentPT ="30" MinPT="0" IsUpdAllMems="0" UpdAllMems_Value="0"/>
 					<PT SportType="1" BetType="1" IsLive="1" MasterPT="70" IsAutoMasterPT = "0" AutoMasterPT = "0" AgentPT ="30" MinPT="0" IsUpdAllMems="0" UpdAllMems_Value="0"/>
@@ -47,6 +51,7 @@ BEGIN
 			@SubAccID	= @SubAccID,
 			@UserID		= @UserID,
 			@IP			= @IP,
+			@SystemID	= @SystemID,
 			@MsgType	= @MsgType OUTPUT,		
 			@ErrCode	= @ErrCode OUTPUT,
 			@ErrMsg		= @ErrMsg OUTPUT
@@ -180,6 +185,23 @@ BEGIN
 					@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
 
 			RETURN
+		END
+		
+		 -- check Limit Daily PT Update
+		DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
+		IF @SystemID = 2 AND @IsCountPT = 1
+		BEGIN
+			EXEC dbo.Age_LimitPTDailyCheck    
+				 @custid			= @custid
+				,@Actorid		= @UserID
+				,@UpdatePT		= @PT
+				,@isLimit		= @isLimit OUTPUT
+				,@isCancel		= @isCancel OUTPUT
+			IF @isCancel > 0	
+			BEGIN
+				SELECT @MsgType = 10068 ,@ErrMsg =  REPLACE( [dbo].[f_Get_MsgNamebyMsgID](10068,'E'),'<mm/dd/yyyy>', CAST(CAST(GETDATE() AS DATE) AS Varchar(20))) 
+				RETURN
+			END
 		END
 		
 		-- Select ProductID and SettingLevel
@@ -449,6 +471,17 @@ BEGIN
 				,@SportBettypeXML = @PT
 		END	
 	
+		IF @SystemID = 2 AND @isLimit > 0
+		BEGIN
+			EXEC dbo.Age_LimitPTDailyLog    
+				 @custid			= @custid
+				,@Actorid		= @UserID
+				,@UpdatePT		= @PT
+				,@ErrCode	= @ErrCode OUTPUT
+				,@ErrMsg		= @ErrMsg OUTPUT
+			IF @ErrCode > 0
+			RETURN
+		END 
 		-- Log new updated data
 		IF @SettingLevel = 1			-- Product setting level
 		BEGIN

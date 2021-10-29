@@ -6,6 +6,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTOnMemberUpd]
 	@UserID		INT = 0,    
 	@SubAccID	INT = 0, --Sub-AccountID  
     @IP			VARCHAR(15)='',
+    @SystemID			TINYINT = 1,
+    @IsCountPT			BIT = 0,
     @ErrCode	INT = 0 OUTPUT,
     @MsgType	INT = 0 OUTPUT,
     @ErrMsg		NVARCHAR(4000) = '' OUTPUT
@@ -23,7 +25,10 @@ AS
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
+			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
+			
 		Parameter's Explanation:
+		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT	
 			@PT =<Root>
 					<PT SportType="1" BetType="1" IsLive="0" SuperPT="50" AutoSuperPT="0" IsAutoSuperPT="0" />
 					<PT SportType="1" BetType="1" IsLive="1" SuperPT="30" AutoSuperPT="0" IsAutoSuperPT="0" />
@@ -198,6 +203,23 @@ BEGIN
 
 		RETURN
 	END
+		
+	-- check Limit Daily PT Update
+	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
+	IF @SystemID = 2 AND @IsCountPT = 1
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyCheck    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@isLimit		= @isLimit OUTPUT
+			,@isCancel		= @isCancel OUTPUT
+		IF @isCancel > 0	
+		BEGIN
+			SELECT @MsgType = 10068 ,@ErrMsg =  REPLACE( [dbo].[f_Get_MsgNamebyMsgID](10068,'E'),'<mm/dd/yyyy>', CAST(CAST(GETDATE() AS DATE) AS Varchar(20))) 
+			RETURN
+		END
+	END 	
 		
 	SELECT @SettingMode = IsGrouped
 	FROM dbo.CustSettingMode3rd
@@ -942,7 +964,17 @@ BEGIN
 			END
 		END
 	END
-	
+	IF @SystemID = 2 AND @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyLog    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@ErrCode		= @ErrCode OUTPUT
+			,@ErrMsg		= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+		RETURN
+	END 
 	SELECT @logSpData_Old = LogStr 
 	FROM f_CustSetting_FormatLog (@logSpData_Old)
 	SELECT @logSpData = LogStr 
