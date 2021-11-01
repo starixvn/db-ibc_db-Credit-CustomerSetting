@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Age_LimitPTDailyCheck]
 	-- Add the parameters for the stored procedure here
 	  @Actorid				INT,
