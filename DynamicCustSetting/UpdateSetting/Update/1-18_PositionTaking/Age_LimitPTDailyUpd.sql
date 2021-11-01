@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Age_LimitPTDailyLog]
+CREATE PROCEDURE [dbo].[Age_LimitPTDailyUpd]
 	-- Add the parameters for the stored procedure here
 	  @Actorid				INT,
 	  @custid				INT,

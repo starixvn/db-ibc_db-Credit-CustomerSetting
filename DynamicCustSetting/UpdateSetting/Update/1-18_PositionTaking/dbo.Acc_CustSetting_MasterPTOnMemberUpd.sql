@@ -217,7 +217,7 @@ BEGIN
 			,@isCancel		= @isCancel OUTPUT
 		IF @isCancel > 0	
 		BEGIN
-			SELECT @MsgType = 10068 ,@ErrMsg =  REPLACE( [dbo].[f_Get_MsgNamebyMsgID](10068,'E'),'<mm/dd/yyyy>', CAST(CAST(GETDATE() AS DATE) AS Varchar(20))) 
+			SELECT @ErrCode = 10068 ,@ErrMsg =   [dbo].[f_Get_MsgNamebyMsgID](10068,'E')
 			RETURN
 		END
 	END 
@@ -1029,7 +1029,7 @@ BEGIN
 	
 	IF @SystemID = 2 AND @isLimit > 0
 	BEGIN
-		EXEC dbo.Age_LimitPTDailyLog    
+		EXEC dbo.Age_LimitPTDailyUpd    
 			 @custid		= @custid
 			,@Actorid		= @UserID
 			,@UpdatePT		= @PT
