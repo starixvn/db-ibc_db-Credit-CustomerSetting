@@ -6,7 +6,6 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTUpd]
 	@SubAccID			INT = 0,
 	@UserID				INT = 0,        
     @IP					VARCHAR(15)='', 
-    @SystemID			TINYINT = 1,   
     @IsCountPT			BIT = 1,     
     @ErrCode			INT = 0 OUTPUT,
     @MsgType			INT = 0 OUTPUT,
@@ -29,7 +28,6 @@ AS
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 
 		Parameter's Explanation:
-		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 			@PT = <ROOT>
 					<PT SportType="1" BetType="1" IsLive="0" SuperPT="30" IsAutoSuperPT = "0" AutoSuperPT = "0" MasterPT ="60" MinPT="0" IsUpdAllMems="1" UpdAllMems_Value="20"/>
 					<PT SportType="1" BetType="1" IsLive="1" SuperPT="30" IsAutoSuperPT = "0" AutoSuperPT = "0" MasterPT ="60" MinPT="0" IsUpdAllMems="0" UpdAllMems_Value="0"/>
@@ -50,7 +48,6 @@ BEGIN
 			@SubAccID	= @SubAccID,
 			@UserID		= @UserID,
 			@IP			= @IP,
-			@SystemID	= @SystemID,
 			@MsgType	= @MsgType OUTPUT,		
 			@ErrCode	= @ErrCode OUTPUT,
 			@ErrMsg		= @ErrMsg OUTPUT
@@ -185,7 +182,7 @@ BEGIN
 	   
 	   -- check Limit Daily PT Update
 		DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
-		IF @SystemID = 2 AND @IsCountPT = 1
+		IF @IsCountPT = 1
 		BEGIN
 			EXEC dbo.Age_LimitPTDailyCheck    
 				 @custid			= @custid
@@ -195,7 +192,9 @@ BEGIN
 				,@isCancel		= @isCancel OUTPUT
 			IF @isCancel > 0	
 			BEGIN
-				SELECT @ErrCode = 10068 ,@ErrMsg =   [dbo].[f_Get_MsgNamebyMsgID](10068,'E')
+				SELECT @ErrMsg = '<Root MsgID="10068" Msg="You have reached the maximum 2 times of daily allowed times of updating position taking. Please try again after <mm/dd/yyyy> 12:00 PM GMT +8."> </Root>'
+                    , @ErrCode = 10068
+                    , @MsgType = 6   
 				RETURN
 			END
 		END 
@@ -467,7 +466,7 @@ BEGIN
 				,@SportBettypeXML = @PT
 		END
 	
-		IF @SystemID = 2 AND @isLimit > 0
+		IF @isLimit > 0
 		BEGIN
 			EXEC dbo.Age_LimitPTDailyUpd    
 				 @custid			= @custid

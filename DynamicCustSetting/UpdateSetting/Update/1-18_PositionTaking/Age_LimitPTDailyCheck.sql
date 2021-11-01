@@ -22,8 +22,15 @@ BEGIN
 			@recommend	INT , 
 			@Currency	TINYINT,
 			@site		NVARCHAR(50),
-			@SiteID		INT	
+			@SiteID		INT	,
+			@roleActorid TINYINT = 5
 
+	SELECT	@roleActorid = roleid FROM Customer WITH(NOLOCK)	WHERE custid = @Actorid
+	IF @roleActorid > 4 
+	BEGIN
+		RETURN
+	END 
+	
 	SELECT	@srecommend = srecommend,
 			@mrecommend = mrecommend,
 			@recommend  = recommend,

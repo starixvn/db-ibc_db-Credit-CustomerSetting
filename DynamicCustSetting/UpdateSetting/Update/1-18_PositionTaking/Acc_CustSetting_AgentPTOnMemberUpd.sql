@@ -5,7 +5,6 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMemberUpd]
 	, @SubAccID			INT				= 0
 	, @IP				VARCHAR(50)		= ''
 	, @UserID			INT				= 0
-	, @SystemID			TINYINT			= 1
     , @IsCountPT		BIT				= 1   
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
@@ -25,7 +24,6 @@ AS
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 		Parameter's Explanation:
-		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT	
 		• @PT:
 					<ROOT>
 							<PT 
@@ -226,7 +224,7 @@ BEGIN
 	
 	-- check Limit Daily PT Update
 	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
-	IF @SystemID = 2 AND @IsCountPT = 1
+	IF @IsCountPT = 1
 	BEGIN
 		EXEC dbo.Age_LimitPTDailyCheck    
 			 @custid		= @custid
@@ -236,8 +234,10 @@ BEGIN
 			,@isCancel		= @isCancel OUTPUT
 		IF @isCancel > 0	
 		BEGIN
-			SELECT @ErrCode = 10068 ,@ErrMsg =   [dbo].[f_Get_MsgNamebyMsgID](10068,'E')
-			RETURN
+			SELECT @ErrMsg = '<Root MsgID="10068" Msg="You have reached the maximum 2 times of daily allowed times of updating position taking. Please try again after <mm/dd/yyyy> 12:00 PM GMT +8."> </Root>'
+                    , @ErrCode = 10068
+                    , @MsgType = 6   
+				RETURN
 		END
 	END 
 	
@@ -625,7 +625,7 @@ BEGIN
 			WHERE CustID = @CustID
 		END
 	END
-	IF @SystemID = 2 AND @isLimit > 0
+	IF @isLimit > 0
 	BEGIN
 		EXEC dbo.Age_LimitPTDailyUpd    
 			 @custid		= @custid
