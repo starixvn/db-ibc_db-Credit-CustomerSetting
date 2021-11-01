@@ -6,7 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMemberUpd]
 	, @IP				VARCHAR(50)		= ''
 	, @UserID			INT				= 0
 	, @SystemID			TINYINT			= 1
-    , @IsCountPT		BIT				= 0   
+    , @IsCountPT		BIT				= 1   
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT

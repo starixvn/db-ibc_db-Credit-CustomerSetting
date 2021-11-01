@@ -7,7 +7,7 @@ ALTER PROCEDURE dbo.Acc_CustSetting_MasterMinPTUpd
 	@UserID				INT = 0,        
     @IP					VARCHAR(15)='',  
     @SystemID			TINYINT = 1,
-    @IsCountPT			BIT = 0,     
+    @IsCountPT			BIT = 1,     
     @ErrCode			INT = 0 OUTPUT,
     @MsgType			INT = 0 OUTPUT,
     @ErrMsg				NVARCHAR(MAX) = '' OUTPUT

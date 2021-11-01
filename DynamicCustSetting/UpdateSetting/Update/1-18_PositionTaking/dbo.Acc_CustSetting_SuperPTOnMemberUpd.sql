@@ -7,7 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTOnMemberUpd]
 	@SubAccID	INT = 0, --Sub-AccountID  
     @IP			VARCHAR(15)='',
     @SystemID			TINYINT = 1,
-    @IsCountPT			BIT = 0,
+    @IsCountPT			BIT = 1,
     @ErrCode	INT = 0 OUTPUT,
     @MsgType	INT = 0 OUTPUT,
     @ErrMsg		NVARCHAR(4000) = '' OUTPUT
