@@ -21,7 +21,7 @@ BEGIN
 			@mrecommend INT,
 			@recommend	INT , 
 			@Currency	TINYINT,
-			@site		varchar(10),
+			@site		NVARCHAR(50),
 			@SiteID		INT	
 
 	SELECT	@srecommend = srecommend,
