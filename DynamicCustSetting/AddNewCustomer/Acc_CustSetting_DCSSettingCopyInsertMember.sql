@@ -155,7 +155,6 @@ BEGIN
 				, @SubAccID = @SubAccID
 				, @IP = @IP
 				, @UserID = @UserID
-				, @SystemID	 = @SystemID
 				, @IsCountPT = 0
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
@@ -268,7 +267,6 @@ BEGIN
 				, @SubAccID = @SubAccID
 				, @IP = @IP
 				, @UserID = @UserID
-				, @SystemID	 = @SystemID
 				, @IsCountPT = 0
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
