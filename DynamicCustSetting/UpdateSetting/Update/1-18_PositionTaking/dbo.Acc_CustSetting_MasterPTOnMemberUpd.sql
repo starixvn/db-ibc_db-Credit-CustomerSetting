@@ -215,7 +215,7 @@ BEGIN
 			,@isCancel		= @isCancel OUTPUT
 		IF @isCancel > 0	
 		BEGIN
-			SELECT @ErrMsg = '<Root MsgID="10068" Msg="You have reached the maximum 2 times of daily allowed times of updating position taking. Please try again after <mm/dd/yyyy> 12:00 PM GMT +8."> </Root>'
+			SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ [dbo].[f_Get_MsgNamebyMsgID](10068,'E') +'"> </Root>'
                     , @ErrCode = 10068
                     , @MsgType = 6   
 				RETURN
