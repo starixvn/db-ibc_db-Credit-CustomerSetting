@@ -58,6 +58,7 @@ BEGIN
 	FROM dbo.f_DCS_PT_XMLParse(@UpdatePT)	
 	
 	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency TINYINT,SiteID INT,MaxCount TINYINT) 
+	 INSERT INTO #TempLimit(ProductID , SportType , BetType ,CustID ,Currency ,SiteID ,MaxCount )  
 	SELECT l.ProductID,b.SportType,b.BetType,l.CustID,l.Currency,l.SiteID,l.MaxCount 
 	FROM LimitPTDailySetting l WITH(NOLOCK) 
 	INNER JOIN ProductSettingDetail b  WITH(NOLOCK) ON l.ProductID = b.ProductID
