@@ -458,7 +458,7 @@ Revisions:
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-
+	- 20211104@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 Param's Explanation:
 • @ErrCode:
     = 0: super create master successfully.
@@ -2114,14 +2114,14 @@ BEGIN
     'email="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@email AS VARCHAR(100)), SPACE(1))) + '" ' +
     'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS VARCHAR(100)), SPACE(1))) + '" ' +
     'address="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@address AS VARCHAR(160)), SPACE(1))) + '" ' +
-    'city="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@city AS VARCHAR(100)), SPACE(1))) + '" ' +
-    'state="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@state AS VARCHAR(100)), SPACE(1))) + '" ' +
-    'country="'+ COALESCE(CAST(@country AS VARCHAR(100)), SPACE(1)) + '" ' +
-    'postal="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@postal AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'city="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@city AS VARCHAR(100)), SPACE(1))) + '" ' +    
+    'country="'+ COALESCE(CAST(@country AS VARCHAR(100)), SPACE(1)) + '" ' +    
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
     'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
+	'review="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@postal AS VARCHAR(100)), SPACE(1))) + '" ' +
+	'review2="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@state AS VARCHAR(100)), SPACE(1))) + '" ' +
     'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
-    'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
+    'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
     'srecommend="'+ COALESCE(CAST(@srecommend AS VARCHAR(50)), SPACE(1)) + '" ' +
     'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +
     'site="'+ COALESCE(CAST(@site AS VARCHAR(50)), SPACE(1)) + '" ' +
@@ -2147,12 +2147,12 @@ BEGIN
 	    'email="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@email AS VARCHAR(100)), SPACE(1))) + '" ' +
 	    'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS VARCHAR(100)), SPACE(1))) + '" ' +
 	    'address="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@address AS VARCHAR(160)), SPACE(1))) + '" ' +
-	    'city="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@city AS VARCHAR(100)), SPACE(1))) + '" ' +
-	    'state="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@state AS VARCHAR(100)), SPACE(1))) + '" ' +
-	    'country="'+ COALESCE(CAST(@country AS VARCHAR(100)), SPACE(1)) + '" ' +
-	    'postal="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@postal AS VARCHAR(100)), SPACE(1))) + '" ' +
+	    'city="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@city AS VARCHAR(100)), SPACE(1))) + '" ' +	    
+	    'country="'+ COALESCE(CAST(@country AS VARCHAR(100)), SPACE(1)) + '" ' +	    
 	    'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
 	    'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
+		'review="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@postal AS VARCHAR(100)), SPACE(1))) + '" ' +
+		'review2="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@state AS VARCHAR(100)), SPACE(1))) + '" ' +
 	    'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
 	    'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +
 	    'srecommend="'+ COALESCE(CAST(@srecommend AS VARCHAR(50)), SPACE(1)) + '" ' +

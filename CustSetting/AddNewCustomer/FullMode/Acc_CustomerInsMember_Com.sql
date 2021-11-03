@@ -432,7 +432,7 @@ Revisions:
 	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]
 	- 20210616@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-
+	- 20211104@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -1260,10 +1260,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 	'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)),SPACE(1))) + '" ' +
 	'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)),SPACE(1))) + '" ' +
-	'address="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@address AS VARCHAR(160)),SPACE(1))) + '" ' +
-	'postal="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@postal AS VARCHAR(100)),SPACE(1))) + '" ' +
-	'city="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@city AS VARCHAR(100)),SPACE(1))) + '" ' +
-	'state="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@state AS VARCHAR(100)),SPACE(1))) + '" ' +
+	'address="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@address AS VARCHAR(160)),SPACE(1))) + '" ' +	
+	'city="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@city AS VARCHAR(100)),SPACE(1))) + '" ' +	
 	'country="'+ COALESCE(CAST(@country AS VARCHAR(100)),SPACE(1)) + '" ' +
 	'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS VARCHAR(100)),SPACE(1))) + '" ' +
 	'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)),SPACE(1))) + '" ' +
@@ -1276,6 +1274,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'currency="'+ COALESCE(CAST(@currency AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
+	'review="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@postal AS VARCHAR(100)),SPACE(1))) + '" ' +
+	'review2="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@state AS VARCHAR(100)),SPACE(1))) + '" ' +
 	'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
 	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 	'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1294,10 +1294,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 
 		'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)),SPACE(1))) + '" ' +
 		'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)),SPACE(1))) + '" ' +
-		'address="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@address AS VARCHAR(160)),SPACE(1))) + '" ' +
-		'postal="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@postal AS VARCHAR(100)),SPACE(1))) + '" ' +
-		'city="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@city AS VARCHAR(100)),SPACE(1))) + '" ' +
-		'state="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@state AS VARCHAR(100)),SPACE(1))) + '" ' +
+		'address="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@address AS VARCHAR(160)),SPACE(1))) + '" ' +		
+		'city="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@city AS VARCHAR(100)),SPACE(1))) + '" ' +		
 		'country="'+ COALESCE(CAST(@country AS VARCHAR(100)),SPACE(1)) + '" ' +
 		'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS VARCHAR(100)),SPACE(1))) + '" ' +
 		'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)),SPACE(1))) + '" ' +
@@ -1310,6 +1308,8 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'currency="'+ COALESCE(CAST(@currency AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)),SPACE(1)) + '" ' +
 		'MaxMember="'+ coalesce(@MaxMemberLog,space(1)) + '" ' +	
+		'review="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@postal AS VARCHAR(100)),SPACE(1))) + '" ' +
+		'review2="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@state AS VARCHAR(100)),SPACE(1))) + '" ' +
 		'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +
 		'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +
 		'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +

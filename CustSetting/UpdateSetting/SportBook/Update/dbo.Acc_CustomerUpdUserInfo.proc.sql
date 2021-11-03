@@ -56,7 +56,7 @@ Revisions:
 	- 20160903@Winnie: Fix bug #53634 [Log is still generated when Updating without any changed for a customer that does not have any log record for today]
 	- 20190425@Johnson: update info for headline cn88 [redmine: #105338]
 	- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
-
+	- 20211103@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -241,10 +241,8 @@ BEGIN
 	Select @LogSPData = '<Acc_CustomerUpdUserInfo CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1))+ '" ' + 
 						'fname="'+ dbo.f_EncodeXMLValue(coalesce(cast(@firstname as nvarchar(50)),space(1)))+ '" ' +
 						'lname="'+ dbo.f_EncodeXMLValue(coalesce(cast(@lastname as nvarchar(50)),space(1)))+ '" ' +
-						'address="'+ dbo.f_EncodeXMLValue(coalesce(cast(@address as nvarchar(80)),space(1))) + '" ' +
-						'postal="'+ dbo.f_EncodeXMLValue(coalesce(cast(@postal as nvarchar(50)),space(1)))+ '" ' +
-						'city="'+ dbo.f_EncodeXMLValue(coalesce(cast(@city as nvarchar(50)),space(1)))+ '" ' +
-						'state="'+ dbo.f_EncodeXMLValue(coalesce(cast(@state as nvarchar(50)),space(1)))+ '" ' +
+						'address="'+ dbo.f_EncodeXMLValue(coalesce(cast(@address as nvarchar(80)),space(1))) + '" ' +						
+						'city="'+ dbo.f_EncodeXMLValue(coalesce(cast(@city as nvarchar(50)),space(1)))+ '" ' +						
 						'country="'+ coalesce(cast(@country as nvarchar(50)),space(1))+ '" ' +
 						'phone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@phone as nvarchar(50)),space(1)))+ '" ' +
 						'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as nvarchar(50)),space(1)))+ '" ' +
@@ -254,7 +252,9 @@ BEGIN
 						'refcode1="'+ dbo.f_EncodeXMLValue(coalesce(cast(@refcode1 as nvarchar(50)),space(1)))+ '" ' +
 						'refcode2="'+ dbo.f_EncodeXMLValue(coalesce(cast(@refcode2 as nvarchar(50)),space(1)))+ '" ' +
 						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as nvarchar(50)),space(1)))+ '" ' +
-						'important="'+ coalesce(cast(@important as varchar(50)),space(1))+ '" ' +
+						'review="'+ dbo.f_EncodeXMLValue(coalesce(cast(@postal as nvarchar(50)),space(1)))+ '" ' +
+						'review2="'+ dbo.f_EncodeXMLValue(coalesce(cast(@state as nvarchar(50)),space(1)))+ '" ' +
+						'checked="'+ coalesce(cast(@important as varchar(50)),space(1))+ '" ' +
 						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1))+ '" ' +
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
@@ -265,10 +265,8 @@ BEGIN
 	Select @TrackingValue2 = '<Acc_CustomerUpdUserInfo CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1))+ '" ' + 
 						'fname="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_firstname as nvarchar(50)),space(1)))+ '" ' +
 						'lname="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_lastname as nvarchar(50)),space(1)))+ '" ' +
-						'address="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_address as nvarchar(80)),space(1)))+ '" ' +
-						'postal="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_postal as nvarchar(50)),space(1)))+ '" ' +
-						'city="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_city as nvarchar(50)),space(1)))+ '" ' +
-						'state="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_state as nvarchar(50)),space(1)))+ '" ' +
+						'address="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_address as nvarchar(80)),space(1)))+ '" ' +						
+						'city="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_city as nvarchar(50)),space(1)))+ '" ' +						
 						'country="'+ coalesce(cast(@old_country as nvarchar(50)),space(1))+ '" ' +
 						'phone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_phone as nvarchar(50)),space(1)))+ '" ' +
 						'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_mobilephone as nvarchar(50)),space(1)))+ '" ' +
@@ -278,7 +276,9 @@ BEGIN
 						'refcode1="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_refcode1 as nvarchar(50)),space(1)))+ '" ' +
 						'refcode2="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_refcode2 as nvarchar(50)),space(1)))+ '" ' +
 						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_remark as nvarchar(50)),space(1)))+ '" ' +
-						'important="'+ coalesce(cast(@old_important as varchar(50)),space(1))+ '" ' +
+						'review="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_postal as nvarchar(50)),space(1)))+ '" ' +
+						'review2="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_state as nvarchar(50)),space(1)))+ '" ' +
+						'checked="'+ coalesce(cast(@old_important as varchar(50)),space(1))+ '" ' +
 						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1))+ '" ' +
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
