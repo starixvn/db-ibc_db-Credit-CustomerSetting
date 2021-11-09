@@ -24,7 +24,22 @@ BEGIN
 			@site		NVARCHAR(50),
 			@SiteID		INT	,
 			@roleActorid TINYINT = 5
+	DECLARE @isTest BIT,@SQL NVARCHAR(100) = OBJECT_NAME(@@PROCID)
 
+	IF  (@SQL like '%_xtest%' 
+			OR  @SQL like '%_xpre%' 
+			OR  @SQL like '%_uat1%'
+			OR  @SQL like '%_uat2%'
+			OR  @SQL like '%_uat3%'
+			OR  @SQL like '%_uat4%')
+	BEGIN
+		SELECT @isTest = 1
+	END
+	ELSE
+	BEGIN
+		SELECT @isTest = 0
+	END
+	
 	SELECT	@roleActorid = roleid FROM Customer WITH(NOLOCK)	WHERE custid = @Actorid
 	IF @roleActorid > 4 
 	BEGIN
@@ -57,9 +72,9 @@ BEGIN
 		BetType
 	FROM dbo.f_DCS_PT_XMLParse(@UpdatePT)	
 	
-	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency TINYINT,SiteID INT,MaxCount TINYINT) 
-	 INSERT INTO #TempLimit(ProductID , SportType , BetType ,CustID ,Currency ,SiteID ,MaxCount )  
-	SELECT l.ProductID,b.SportType,b.BetType,l.CustID,l.Currency,l.SiteID,l.MaxCount 
+	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency TINYINT,SiteID INT,MaxCount TINYINT, SettingStatus TINYINT) 
+	 INSERT INTO #TempLimit(ProductID , SportType , BetType ,CustID ,Currency ,SiteID ,MaxCount , SettingStatus )  
+	SELECT l.ProductID,b.SportType,b.BetType,l.CustID,l.Currency,l.SiteID,l.MaxCount , l.SettingStatus
 	FROM LimitPTDailySetting l WITH(NOLOCK) 
 	INNER JOIN ProductSettingDetail b  WITH(NOLOCK) ON l.ProductID = b.ProductID
 	WHERE b.SportType IN (SELECT SportType FROM @tblPT)
@@ -67,7 +82,7 @@ BEGIN
 	IF EXISTS( SELECT TOP 1 1 FROM #TempLimit t
 									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
 							  WHERE  (Currency = @Currency OR Currency = 0)
-							  AND (SiteID = @SiteID OR SiteID = 0)
+							  AND (SiteID = @SiteID OR SiteID = 0) AND SettingStatus <= CASE WHEN @isTest = 1 THEN 1 ELSE 0 END
 							  AND (CustID = 0 OR  CustID IN (@srecommend,@mrecommend,@recommend)))
 	BEGIN
 		SET @isLimit = 1
