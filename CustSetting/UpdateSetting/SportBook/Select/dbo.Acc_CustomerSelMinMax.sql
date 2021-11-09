@@ -1,6 +1,6 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
-	@custid					INT,	
+	@custid					INT, 
 	@minbet                 MONEY = 0 OUTPUT, 
 	@maxbet                 MONEY = 0 OUTPUT, 
 	@maxpermatch            MONEY = 0 OUTPUT, 
@@ -47,7 +47,18 @@ ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
 	@MaxPayoutPerMatchv11   MONEY = 0 OUTPUT, 
 	@MaxPayoutPerMatchv99   MONEY = 0 OUTPUT, 
 	@MaxPayoutPerMatchv99mp MONEY = 0 OUTPUT, 
-	@MaxPayoutPerMatchv1mp  MONEY = 0 OUTPUT
+	@MaxPayoutPerMatchv1mp  MONEY = 0 OUTPUT,
+	--Saba
+	--- Saba soccer
+	@minbetv1saba				MONEY = 0 OUTPUT, 
+	@maxbetv1saba				MONEY = 0 OUTPUT, 
+	@maxpermatchv1saba			MONEY = 0 OUTPUT, 
+	@maxPayoutpermatchv1saba    MONEY = 0 OUTPUT,
+	--- Saba basketball
+	@minbetv2saba				MONEY = 0 OUTPUT, 
+	@maxbetv2saba				MONEY = 0 OUTPUT, 
+	@maxpermatchv2saba			MONEY = 0 OUTPUT, 
+	@maxPayoutpermatchv2saba	MONEY = 0 OUTPUT
 AS
 /*
 Created: 20110427@Simon
@@ -61,6 +72,7 @@ Revisions:
     - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 Param's Explanation:
 • @custid: custid that need to be viewed.   
 */
@@ -130,7 +142,17 @@ BEGIN
 			
 			,@MinBetv164  			= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.minbet else 0 end)				
 			,@MaxBetv164  			= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.maxbet else 0 end)				
-			,@MaxPerMatchv164  		= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.MaxPerMatch else 0 end)			
+			,@MaxPerMatchv164  		= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.MaxPerMatch else 0 end)	
+			
+			,@minbetv1saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.minbet else 0 end)					
+			,@maxbetv1saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.maxbet else 0 end)					
+			,@maxpermatchv1saba  		= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.MaxPerMatch else 0 end)				
+			,@maxPayoutpermatchv1saba  	= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.MaxPayoutPerMatch else 0 end)
+
+			,@minbetv2saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9902 then cbs.minbet else 0 end)					
+			,@maxbetv2saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9902 then cbs.maxbet else 0 end)					
+			,@maxpermatchv2saba  		= max(case when cbs.bettype = 1 and cbs.sporttype=9902 then cbs.MaxPerMatch else 0 end)				
+			,@maxPayoutpermatchv2saba  	= max(case when cbs.bettype = 1 and cbs.sporttype=9902 then cbs.MaxPayoutPerMatch else 0 end)
 		FROM CustBetSetting_Member cbs WITH(NOLOCK) 
 		WHERE CustID = @CustId
 	END
@@ -194,7 +216,17 @@ BEGIN
 			
 			,@MinBetv164  			= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.minbet else 0 end)				
 			,@MaxBetv164  			= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.maxbet else 0 end)				
-			,@MaxPerMatchv164  		= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.MaxPerMatch else 0 end)			
+			,@MaxPerMatchv164  		= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.MaxPerMatch else 0 end)
+				
+			,@minbetv1saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.minbet else 0 end)					
+			,@maxbetv1saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.maxbet else 0 end)					
+			,@maxpermatchv1saba  		= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.MaxPerMatch else 0 end)				
+			,@maxPayoutpermatchv1saba  	= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.MaxPayoutPerMatch else 0 end)
+
+			,@minbetv2saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9902 then cbs.minbet else 0 end)					
+			,@maxbetv2saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9902 then cbs.maxbet else 0 end)					
+			,@maxpermatchv2saba  		= max(case when cbs.bettype = 1 and cbs.sporttype=9902 then cbs.MaxPerMatch else 0 end)				
+			,@maxPayoutpermatchv2saba  	= max(case when cbs.bettype = 1 and cbs.sporttype=9902 then cbs.MaxPayoutPerMatch else 0 end)			
 		FROM CustBetSetting_Agent cbs WITH(NOLOCK) 
 		WHERE CustID = @CustId
 	END

@@ -72,6 +72,18 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
 	@maxPOpermatchv99 money = NULL,
 	@maxPOpermatchv99mp money = NULL,
 	@maxPOpermatchv1mp money = NULL,
+
+	--- Saba soccer
+	@minbetv1saba money = NULL,
+	@maxbetv1saba money = NULL,
+	@maxpermatchv1saba money  = NULL,
+	@maxPOpermatchv1saba money = NULL,
+
+	--- Saba basketball
+	@minbetv2saba money = NULL,
+	@maxbetv2saba money = NULL,
+	@maxpermatchv2saba money  = NULL,
+	@maxPOpermatchv2saba money = NULL,
 	
     @credit money,
     @Language varchar(2),
@@ -362,7 +374,8 @@ Revisions:
 	- 20200724@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-	
+	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -589,6 +602,17 @@ Revisions:
 		@maxPOpermatchv99   = @maxPOpermatchv99,   
 		@maxPOpermatchv99mp = @maxPOpermatchv99mp, 
 		@maxPOpermatchv1mp  = @maxPOpermatchv1mp, 
+
+		--Saba
+	    @minbetv1saba              	= @minbetv1saba,
+	    @maxbetv1saba              	= @maxbetv1saba,
+	    @maxpermatchv1saba         	= @maxpermatchv1saba ,
+	    @MaxPOpermatchv1saba   		= @MaxPOpermatchv1saba ,
+	     
+	    @minbetv2saba              	= @minbetv2saba,
+	    @maxbetv2saba              	= @maxbetv2saba,
+	    @maxpermatchv2saba         	= @maxpermatchv2saba ,
+	    @MaxPOpermatchv2saba   		= @MaxPOpermatchv2saba ,
 		
 		@UserID = @UserID,
 		@Language = @Language,

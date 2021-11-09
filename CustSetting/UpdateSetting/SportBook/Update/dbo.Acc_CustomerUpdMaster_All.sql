@@ -173,6 +173,21 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
 
     @UpdateMinMaxBetv161 bit = 1,
 	@UpdateMinMaxBetv164 bit = 1,
+
+	--- Saba soccer
+	@minbetv1saba money = NULL,
+	@maxbetv1saba money = NULL,
+	@maxpermatchv1saba money  = NULL,
+	@maxPOpermatchv1saba money = NULL,
+
+	--- Saba basketball
+	@minbetv2saba money = NULL,
+	@maxbetv2saba money = NULL,
+	@maxpermatchv2saba money  = NULL,
+	@maxPOpermatchv2saba money = NULL,
+
+	@UpdateMinMaxBetv1saba bit = 0,
+	@UpdateMinMaxBetv2saba bit = 0,
 	
     @UpdatePositiontaking bit = 1,
     @UpdatePositiontakingv2 bit = 1,
@@ -486,6 +501,7 @@ Revisions:
 	- 20210707@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210910@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
+	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -679,6 +695,8 @@ BEGIN
 			,@UpdateMinMaxBetMP = 1
 			,@UpdateMinMaxBetv161 = 1
 			,@UpdateMinMaxBetv164 = 1
+			,@UpdateMinMaxBetv1saba = 1
+			,@UpdateMinMaxBetv2saba = 1
 	END
 
 	--Update MinBet, MaxBet, MaxPerMatch
@@ -693,7 +711,9 @@ BEGIN
 		@UpdateMinMaxBetv99MP = 1 or
 		@UpdateMinMaxBetMP = 1 or	
 		@UpdateMinMaxBetv161 = 1 or
-		@UpdateMinMaxBetv164 = 1
+		@UpdateMinMaxBetv164 = 1 OR
+		@UpdateMinMaxBetv1saba = 1 OR
+		@UpdateMinMaxBetv2saba = 1
 	BEGIN
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
 		EXEC dbo.Acc_CustomerUpd_BetSetting
@@ -771,6 +791,20 @@ BEGIN
 			
 			@UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,
 			@UpdateMinMaxBetv164 = @UpdateMinMaxBetv164,
+
+			--Saba
+			@minbetv1saba              	= @minbetv1saba,
+			@maxbetv1saba              	= @maxbetv1saba,
+			@maxpermatchv1saba         	= @maxpermatchv1saba ,
+			@MaxPOpermatchv1saba   		= @MaxPOpermatchv1saba ,
+	  
+			@minbetv2saba              	= @minbetv2saba,
+			@maxbetv2saba              	= @maxbetv2saba,
+			@maxpermatchv2saba         	= @maxpermatchv2saba ,
+			@MaxPOpermatchv2saba   		= @MaxPOpermatchv2saba ,
+	  
+			@UpdateMinMaxBetv1saba		= @UpdateMinMaxBetv1saba,
+			@UpdateMinMaxBetv2saba		= @UpdateMinMaxBetv2saba,
 
 			@SubAccID = @SubAccID,
 			@UserID = @UserID,
