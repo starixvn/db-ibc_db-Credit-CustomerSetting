@@ -37,6 +37,7 @@ Revisions:
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 
 Param's Explanation:
 • @CustID: master ID
@@ -407,7 +408,30 @@ DECLARE @minbet                 MONEY = 0,
         @MaxPayoutPerMatchv11   MONEY = 0, 
         @MaxPayoutPerMatchv99   MONEY = 0, 
         @MaxPayoutPerMatchv99mp MONEY = 0, 
-        @MaxPayoutPerMatchv1mp  MONEY = 0
+        @MaxPayoutPerMatchv1mp  MONEY = 0,
+		--- Saba soccer
+		@minbetv1saba				MONEY = 0, 
+		@maxbetv1saba				MONEY = 0, 
+		@maxpermatchv1saba			MONEY = 0, 
+		@maxPayoutpermatchv1saba    MONEY = 0,
+		--- Saba basketball
+		@minbetv2saba				MONEY = 0, 
+		@maxbetv2saba				MONEY = 0, 
+		@maxpermatchv2saba			MONEY = 0, 
+		@maxPayoutpermatchv2saba	MONEY = 0,
+
+		--- Saba soccer
+		@MinBetv1saba_Max            MONEY = 0, 
+		@MaxBetv1saba_Min            MONEY = 0, 
+		@MaxPerMatchv1saba_Min       MONEY = 0, 
+		@MaxPerMatchv1saba_Max       MONEY = 0, 
+		@MaxPayoutPerMatchv1saba_max MONEY = 0,
+		--- Saba Basketball
+		@MinBetv2saba_Max            MONEY = 0, 
+		@MaxBetv2saba_Min            MONEY = 0, 
+		@MaxPerMatchv2saba_Min       MONEY = 0, 
+		@MaxPerMatchv2saba_Max       MONEY = 0, 
+		@MaxPayoutPerMatchv2saba_max MONEY = 0
 
 Select @Credit_AllOtherMaster = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where srecommend = @SRecommend and RoleID = 3 and custid <> @CustId
 select @Credit_SAg = isnull(credit, 0) from CustInfo as ci with (NOLOCK) where CustID = @SRecommend
@@ -455,7 +479,12 @@ EXEC Age_CustomerSelMinMaxLimit @custid = @custid,
 	@MaxPayoutPerMatchv11_max   = @MaxPayoutPerMatchv11_max   OUTPUT,
 	@MaxPayoutPerMatchv99_max   = @MaxPayoutPerMatchv99_max   OUTPUT,
 	@MaxPayoutPerMatchv99mp_max = @MaxPayoutPerMatchv99mp_max OUTPUT,
-	@MaxPayoutPerMatchv1mp_max  = @MaxPayoutPerMatchv1mp_max  OUTPUT
+	@MaxPayoutPerMatchv1mp_max  = @MaxPayoutPerMatchv1mp_max  OUTPUT,
+	--saba
+	@MinBetv1saba_Max = @MinBetv1saba_Max output, @MaxBetv1saba_Min = @MaxBetv1saba_Min output, @MaxPerMatchv1saba_Min = @MaxPerMatchv1saba_Min output, 
+	@MaxPerMatchv1saba_Max = @MaxPerMatchv1saba_Max output, @MaxPayoutPerMatchv1saba_max = @MaxPayoutPerMatchv1saba_max OUTPUT,
+	@MinBetv2saba_Max = @MinBetv2saba_Max output, @MaxBetv2saba_Min = @MaxBetv2saba_Min output, @MaxPerMatchv2saba_Min = @MaxPerMatchv2saba_Min output, 
+	@MaxPerMatchv2saba_Max = @MaxPerMatchv2saba_Max output, @MaxPayoutPerMatchv2saba_max = @MaxPayoutPerMatchv2saba_max OUTPUT
 
 --> Get BetSetting
 EXEC Acc_CustomerSelMinMax
@@ -506,7 +535,17 @@ EXEC Acc_CustomerSelMinMax
 	@MaxPayoutPerMatchv11  		= @MaxPayoutPerMatchv11  	OUTPUT,
 	@MaxPayoutPerMatchv99  		= @MaxPayoutPerMatchv99  	OUTPUT,
 	@MaxPayoutPerMatchv99mp		= @MaxPayoutPerMatchv99mp	OUTPUT,
-	@MaxPayoutPerMatchv1mp 		= @MaxPayoutPerMatchv1mp 	OUTPUT
+	@MaxPayoutPerMatchv1mp 		= @MaxPayoutPerMatchv1mp 	OUTPUT,
+	--Saba
+	@minbetv1saba              	= @minbetv1saba             OUTPUT,
+	@maxbetv1saba              	= @maxbetv1saba             OUTPUT,
+	@maxpermatchv1saba         	= @maxpermatchv1saba        OUTPUT,
+	@MaxPayoutPerMatchv1saba   	= @MaxPayoutPerMatchv1saba  OUTPUT,
+
+	@minbetv2saba              	= @minbetv2saba             OUTPUT,
+	@maxbetv2saba              	= @maxbetv2saba             OUTPUT,
+	@maxpermatchv2saba         	= @maxpermatchv2saba        OUTPUT,
+	@MaxPayoutPerMatchv2saba   	= @MaxPayoutPerMatchv2saba  OUTPUT
 
 -- Myanmar Odds
 
@@ -1758,7 +1797,28 @@ select
     @MaxPayoutPerMatchv11 AS MaxPayoutPerMatchv11, 
     @MaxPayoutPerMatchv99 AS MaxPayoutPerMatchv99, 
     @MaxPayoutPerMatchv99mp AS MaxPayoutPerMatchv99mp, 
-    @MaxPayoutPerMatchv1mp AS MaxPayoutPerMatchv1mp
+    @MaxPayoutPerMatchv1mp AS MaxPayoutPerMatchv1mp,
+	--saba
+	@minbetv1saba					AS minbetv1saba,
+	@maxbetv1saba					AS maxbetv1saba,
+	@maxpermatchv1saba				AS maxpermatchv1saba,
+	@maxPayoutpermatchv1saba		AS maxPayoutpermatchv1saba,
+
+	@minbetv2saba					AS minbetv2saba,
+	@maxbetv2saba					AS maxbetv2saba,
+	@maxpermatchv2saba				AS maxpermatchv2saba,
+	@maxPayoutpermatchv2saba		AS maxPayoutpermatchv2saba,
+
+	ISNULL(@MinBetv1saba_Max			,0)	AS MinBetv1saba_Max,
+	ISNULL(@MaxBetv1saba_Min			,0)	AS MaxBetv1saba_Min,
+	ISNULL(@MaxPerMatchv1saba_Min 		,0)	AS MaxPerMatchv1saba_Min ,
+	ISNULL(@MaxPerMatchv1saba_Max 		,0)	AS MaxPerMatchv1saba_Max ,
+	ISNULL(@MaxPayoutPerMatchv1saba_max	,0) AS MaxPayoutPerMatchv1saba_max,
+	ISNULL(@MinBetv2saba_Max			,0)	AS MinBetv2saba_Max,
+	ISNULL(@MaxBetv2saba_Min			,0)	AS MaxBetv2saba_Min,
+	ISNULL(@MaxPerMatchv2saba_Min 		,0)	AS MaxPerMatchv2saba_Min ,
+	ISNULL(@MaxPerMatchv2saba_Max 		,0)	AS MaxPerMatchv2saba_Max ,
+	ISNULL(@MaxPayoutPerMatchv2saba_max	,0)	AS MaxPayoutPerMatchv2saba_max
 from 
 	customer as c with (nolock) 
 	INNER JOIN custinfo as ci with (NOLOCK) on c.custid = ci.custid

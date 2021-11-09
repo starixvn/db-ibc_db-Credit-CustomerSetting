@@ -35,6 +35,7 @@ Revisions:
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 
 Param's Explanation:
  - @CustID: super ID
@@ -103,7 +104,17 @@ DECLARE @minbet                 MONEY = 0,
         @MaxPayoutPerMatchv11   MONEY = 0, 
         @MaxPayoutPerMatchv99   MONEY = 0, 
         @MaxPayoutPerMatchv99mp MONEY = 0, 
-        @MaxPayoutPerMatchv1mp  MONEY = 0
+        @MaxPayoutPerMatchv1mp  MONEY = 0,
+		--- Saba soccer
+		@minbetv1saba				MONEY = 0, 
+		@maxbetv1saba				MONEY = 0, 
+		@maxpermatchv1saba			MONEY = 0, 
+		@maxPayoutpermatchv1saba    MONEY = 0,
+		--- Saba basketball
+		@minbetv2saba				MONEY = 0, 
+		@maxbetv2saba				MONEY = 0, 
+		@maxpermatchv2saba			MONEY = 0, 
+		@maxPayoutpermatchv2saba	MONEY = 0
 	
 select @Credit_SAg_Min = max(c.credit)
 from
@@ -366,7 +377,17 @@ EXEC Acc_CustomerSelMinMax
 	@MaxPayoutPerMatchv11  		= @MaxPayoutPerMatchv11  	OUTPUT,
 	@MaxPayoutPerMatchv99  		= @MaxPayoutPerMatchv99  	OUTPUT,
 	@MaxPayoutPerMatchv99mp		= @MaxPayoutPerMatchv99mp	OUTPUT,
-	@MaxPayoutPerMatchv1mp 		= @MaxPayoutPerMatchv1mp 	OUTPUT
+	@MaxPayoutPerMatchv1mp 		= @MaxPayoutPerMatchv1mp 	OUTPUT,
+	--Saba
+	@minbetv1saba              	= @minbetv1saba             OUTPUT,
+	@maxbetv1saba              	= @maxbetv1saba             OUTPUT,
+	@maxpermatchv1saba         	= @maxpermatchv1saba        OUTPUT,
+	@MaxPayoutPerMatchv1saba   	= @MaxPayoutPerMatchv1saba  OUTPUT,
+
+	@minbetv2saba              	= @minbetv2saba             OUTPUT,
+	@maxbetv2saba              	= @maxbetv2saba             OUTPUT,
+	@maxpermatchv2saba         	= @maxpermatchv2saba        OUTPUT,
+	@MaxPayoutPerMatchv2saba   	= @MaxPayoutPerMatchv2saba  OUTPUT
 	
 select 
 	cps.closed, 
@@ -888,7 +909,17 @@ select
     @MaxPayoutPerMatchv11 AS MaxPayoutPerMatchv11, 
     @MaxPayoutPerMatchv99 AS MaxPayoutPerMatchv99, 
     @MaxPayoutPerMatchv99mp AS MaxPayoutPerMatchv99mp, 
-    @MaxPayoutPerMatchv1mp AS MaxPayoutPerMatchv1mp
+    @MaxPayoutPerMatchv1mp AS MaxPayoutPerMatchv1mp,
+	--saba
+	@minbetv1saba					AS minbetv1saba,
+	@maxbetv1saba					AS maxbetv1saba,
+	@maxpermatchv1saba				AS maxpermatchv1saba,
+	@maxPayoutpermatchv1saba		AS maxPayoutpermatchv1saba,
+
+	@minbetv2saba					AS minbetv2saba,
+	@maxbetv2saba					AS maxbetv2saba,
+	@maxpermatchv2saba				AS maxpermatchv2saba,
+	@maxPayoutpermatchv2saba		AS maxPayoutpermatchv2saba
 from 
 	custinfo as ci with (NOLOCK)
 	INNER JOIN custsetting as cs with (NOLOCK) on ci.custid = cs.custid

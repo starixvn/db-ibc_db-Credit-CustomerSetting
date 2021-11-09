@@ -77,6 +77,18 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@maxPOpermatchv99 money = NULL,
 	@maxPOpermatchv99mp money = NULL,
 	@maxPOpermatchv1mp money = NULL,
+
+	--- Saba soccer
+	@minbetv1saba money = NULL,
+	@maxbetv1saba money = NULL,
+	@maxpermatchv1saba money  = NULL,
+	@maxPOpermatchv1saba money = NULL,
+
+	--- Saba basketball
+	@minbetv2saba money = NULL,
+	@maxbetv2saba money = NULL,
+	@maxpermatchv2saba money  = NULL,
+	@maxPOpermatchv2saba money = NULL,
 	
 	@credit MONEY,
 		
@@ -333,6 +345,7 @@ Revisions:
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600] 
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 
 Param's Explanation:	
 • @ErrCode:
@@ -1709,6 +1722,17 @@ BEGIN
 		,@maxPOpermatchv99	= @maxPOpermatchv99
 		,@maxPOpermatchv99mp= @maxPOpermatchv99mp
 		,@maxPOpermatchv1mp	= @maxPOpermatchv1mp
+
+		--Saba
+	    ,@minbetv1saba              	= @minbetv1saba
+	    ,@maxbetv1saba              	= @maxbetv1saba
+	    ,@maxpermatchv1saba         	= @maxpermatchv1saba 
+	    ,@MaxPOpermatchv1saba   		= @MaxPOpermatchv1saba 
+	    
+	    ,@minbetv2saba              	= @minbetv2saba
+	    ,@maxbetv2saba              	= @maxbetv2saba
+	    ,@maxpermatchv2saba         	= @maxpermatchv2saba 
+	    ,@MaxPOpermatchv2saba   		= @MaxPOpermatchv2saba 
 
 		,@language			= @language
 		,@SystemID			= @SystemID
@@ -3367,6 +3391,17 @@ BEGIN
 		'MPMv2="'+ COALESCE(CAST(@maxpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPPMv2="'+ COALESCE(CAST(@maxPOpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
 
+		--saba
+	  	'MinBv1saba="'+ COALESCE(CAST(@minbetv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv1saba="'+ COALESCE(CAST(@maxbetv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv1saba="'+ COALESCE(CAST(@maxpermatchv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv1saba="'+ COALESCE(CAST(@maxPOpermatchv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv2saba="'+ COALESCE(CAST(@minbetv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv2saba="'+ COALESCE(CAST(@maxbetv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv2saba="'+ COALESCE(CAST(@maxpermatchv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv2saba="'+ COALESCE(CAST(@maxPOpermatchv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+
 		'MinBv3="'+ COALESCE(CAST(@minbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv3="'+ COALESCE(CAST(@maxbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPMv3="'+ COALESCE(CAST(@maxpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
@@ -3400,12 +3435,12 @@ BEGIN
 		'MinBv99MP="'+ COALESCE(CAST(@minbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv99MP="'+ COALESCE(CAST(@maxbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPMv99MP="'+ COALESCE(CAST(@maxpermatchv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-		COALESCE('MPPMv99MP="'+ CAST(@maxPOpermatchv99MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+		'MPPMv99MP="'+ COALESCE(CAST(@maxPOpermatchv99MP AS VARCHAR(50)), SPACE(1)) + '" ' +
     
 		'MinBv1MP="'+ COALESCE(CAST(@minbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv1MP="'+ COALESCE(CAST(@maxbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPMv1MP="'+ COALESCE(CAST(@maxpermatchv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-		COALESCE('MPPMv1MP="'+ CAST(@maxPOpermatchv1MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+		'MPPMv1MP="'+ COALESCE(CAST(@maxPOpermatchv1MP AS VARCHAR(50)), SPACE(1)) + '" ' +
 	
 		'MinBv164="' + COALESCE(CAST(@minbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv164="' + COALESCE(CAST(@maxbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
@@ -3437,6 +3472,17 @@ BEGIN
 		'MPMv2="'+ COALESCE(CAST(@maxpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPPMv2="'+ COALESCE(CAST(@maxPOpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
 
+		--saba
+	  	'MinBv1saba="'+ COALESCE(CAST(@minbetv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv1saba="'+ COALESCE(CAST(@maxbetv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv1saba="'+ COALESCE(CAST(@maxpermatchv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv1saba="'+ COALESCE(CAST(@maxPOpermatchv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+
+		'MinBv2saba="'+ COALESCE(CAST(@minbetv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MaxBv2saba="'+ COALESCE(CAST(@maxbetv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPMv2saba="'+ COALESCE(CAST(@maxpermatchv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+		'MPPMv2saba="'+ COALESCE(CAST(@maxPOpermatchv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
+
 		'MinBv3="'+ COALESCE(CAST(@minbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv3="'+ COALESCE(CAST(@maxbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPMv3="'+ COALESCE(CAST(@maxpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
@@ -3470,12 +3516,12 @@ BEGIN
 		'MinBv99MP="'+ COALESCE(CAST(@minbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv99MP="'+ COALESCE(CAST(@maxbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPMv99MP="'+ COALESCE(CAST(@maxpermatchv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-		COALESCE('MPPMv99MP="'+ CAST(@maxPOpermatchv99MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+		'MPPMv99MP="'+ COALESCE(CAST(@maxPOpermatchv99MP AS VARCHAR(50)), SPACE(1)) + '" ' +
     
 		'MinBv1MP="'+ COALESCE(CAST(@minbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv1MP="'+ COALESCE(CAST(@maxbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPMv1MP="'+ COALESCE(CAST(@maxpermatchv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-		COALESCE('MPPMv1MP="'+ CAST(@maxPOpermatchv1MP AS VARCHAR(50))+ '" ',SPACE(1)) +
+		'MPPMv1MP="'+ COALESCE(CAST(@maxPOpermatchv1MP AS VARCHAR(50)), SPACE(1)) + '" ' +
 	
 		'MinBv164="' + COALESCE(CAST(@minbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv164="' + COALESCE(CAST(@maxbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +

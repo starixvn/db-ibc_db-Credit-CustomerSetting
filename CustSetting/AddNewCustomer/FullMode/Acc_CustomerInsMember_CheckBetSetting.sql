@@ -55,6 +55,19 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CheckBetSetting]
 	@maxbetv164 money=0,
 	@maxpermatchv164 money=0,
 
+	--Saba
+	--- Saba soccer
+	@minbetv1saba money = NULL,
+	@maxbetv1saba money = NULL,
+	@maxpermatchv1saba money  = NULL,
+	@maxPOpermatchv1saba money = NULL,
+
+	--- Saba basketball
+	@minbetv2saba money = NULL,
+	@maxbetv2saba money = NULL,
+	@maxpermatchv2saba money  = NULL,
+	@maxPOpermatchv2saba money = NULL,
+
 	--Max Payout Per Match
 	@maxPOpermatch money = NULL,
 	@maxPOpermatchv2 money = NULL,
@@ -80,6 +93,7 @@ DB: DBCUST/CUSTDB
 
 Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -140,7 +154,11 @@ BEGIN
 	--Number Game
 	SELECT 161, 81, @minbetv161, @maxbetv161, @maxpermatchv161, @MaxPerBallv161, NULL, [dbo].[f_Get_SportNameBySporttype](161,@Language) UNION ALL
 	--Happy 5
-	SELECT 164, 8101, @minbetv164, @maxbetv164, @maxpermatchv164, NULL, NULL, [dbo].[f_Get_SportNameBySporttype](164,@Language)
+	SELECT 164, 8101, @minbetv164, @maxbetv164, @maxpermatchv164, NULL, NULL, [dbo].[f_Get_SportNameBySporttype](164,@Language) UNION ALL
+	--Saba Soccer
+	SELECT 9901, 1, @minbetv1saba, @maxbetv1saba, @maxpermatchv1saba, NULL, @maxPOpermatchv1saba, NULL UNION ALL
+	--Saba Basketball
+	SELECT 9902, 1, @minbetv2saba, @maxbetv2saba, @maxpermatchv2saba, NULL, @maxPOpermatchv2saba, NULL
 
 	--Correct sportname for Mix Sports Parlay 
 	UPDATE t
@@ -169,6 +187,34 @@ BEGIN
 					 end
 	FROM @BetSetting t
 	WHERE sporttype = 1 AND bettype = 9
+
+	--Correct sportname for Saba Soccer
+	UPDATE t
+	SET t.SportName = case @Language 
+						when 'CS' then N'沙巴足球'
+						when 'CT' then N'沙巴足球'
+						when 'TH' then N'ฟุตบอล Saba'
+						when 'J' then N'Saba Soccer'
+						when 'KO' then N'Saba Soccer'
+						when 'VI' then N'Saba Soccer'
+						else N'Saba Soccer' 
+					 end
+	FROM @BetSetting t
+	WHERE sporttype = 9901 AND bettype = 1
+
+	--Correct sportname for Saba Basketball
+	UPDATE t
+	SET t.SportName = case @Language 
+						when 'CS' then N'沙巴篮球'
+						when 'CT' then N'沙巴籃球'
+						when 'TH' then N'บาสเกตบอล Saba'
+						when 'J' then N'Saba Basketball'
+						when 'KO' then N'Saba Basketball'
+						when 'VI' then N'Saba Basketball'
+						else N'Saba Basketball' 
+					 end
+	FROM @BetSetting t
+	WHERE sporttype = 9902 AND bettype = 1
 			
 	Select @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend, @RoleID=RoleID, @Site = site
 	from customer with (NOLOCK)

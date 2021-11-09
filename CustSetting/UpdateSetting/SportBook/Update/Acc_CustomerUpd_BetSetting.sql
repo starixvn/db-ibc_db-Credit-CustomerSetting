@@ -67,6 +67,22 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpd_BetSetting]
 	@maxPOpermatchv99mp money = NULL,
 	@maxPOpermatchv1mp money = NULL,
 
+	--Saba
+	--- Saba soccer
+	@minbetv1saba money = NULL,
+	@maxbetv1saba money = NULL,
+	@maxpermatchv1saba money  = NULL,
+	@maxPOpermatchv1saba money = NULL,
+
+	--- Saba basketball
+	@minbetv2saba money = NULL,
+	@maxbetv2saba money = NULL,
+	@maxpermatchv2saba money  = NULL,
+	@maxPOpermatchv2saba money = NULL,
+
+	@UpdateMinMaxBetv1saba bit = 1,
+	@UpdateMinMaxBetv2saba bit = 1,
+
 	@UpdateMultiple bit = 0,	
 
 	@UpdateMinMaxBet bit = 1,
@@ -100,6 +116,8 @@ AS
 	Revisions:
 		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 		- 20211005@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
+		- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -130,7 +148,8 @@ BEGIN
 		MaxPayoutPerMatch MONEY,
 		IsUpdate		  BIT,
 		SportName		  NVARCHAR(50),
-		IsSpecial		  BIT DEFAULT (0)
+		IsSpecial		  BIT DEFAULT (0),
+		LogOrder		  TINYINT
 		PRIMARY KEY(sporttype, Bettype)
 	);
 
@@ -156,31 +175,35 @@ BEGIN
 		PRIMARY KEY(sporttype, Bettype)
 	);
 
-	INSERT INTO @BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,IsUpdate,SportName)
+	INSERT INTO @BetSetting(LogOrder,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,IsUpdate,SportName)
 	--Soccer
-	SELECT 1, 1, @minbet, @maxbet, @maxpermatch, NULL, @maxPOpermatch, @UpdateMinMaxBet, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
+	SELECT 10,1, 1, @minbet, @maxbet, @maxpermatch, NULL, @maxPOpermatch, @UpdateMinMaxBet, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
+	--Saba Soccer
+	SELECT 20,9901, 1, @minbetv1saba, @maxbetv1saba, @maxpermatchv1saba, NULL, @maxPOpermatchv1saba, @UpdateMinMaxBetv1saba, NULL UNION ALL
 	--Soccer Parlay
-	SELECT 1, 9, @minbetv1mp, @maxbetv1mp, @maxpermatchv1mp, NULL, @maxPOpermatchv1mp, @UpdateMinMaxBetMP, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
+	SELECT 30,1, 9, @minbetv1mp, @maxbetv1mp, @maxpermatchv1mp, NULL, @maxPOpermatchv1mp, @UpdateMinMaxBetmp, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
 	--Basketball
-	SELECT 2, 1, @minbetv2, @maxbetv2, @maxpermatchv2, NULL, @maxPOpermatchv2, @UpdateMinMaxBetv2, [dbo].[f_Get_SportNameBySporttype](2,@Language) UNION ALL
+	SELECT 40,2, 1, @minbetv2, @maxbetv2, @maxpermatchv2, NULL, @maxPOpermatchv2, @UpdateMinMaxBetv2, [dbo].[f_Get_SportNameBySporttype](2,@Language) UNION ALL
+	--Saba Basketball
+	SELECT 50,9902, 1, @minbetv2saba, @maxbetv2saba, @maxpermatchv2saba, NULL, @maxPOpermatchv2saba, @UpdateMinMaxBetv2saba, NULL UNION ALL
 	--Football
-	SELECT 3, 1, @minbetv3, @maxbetv3, @maxpermatchv3, NULL, @maxPOpermatchv3, @UpdateMinMaxBetv3, [dbo].[f_Get_SportNameBySporttype](3,@Language) UNION ALL
+	SELECT 60,3, 1, @minbetv3, @maxbetv3, @maxpermatchv3, NULL, @maxPOpermatchv3, @UpdateMinMaxBetv3, [dbo].[f_Get_SportNameBySporttype](3,@Language) UNION ALL
 	--Tennis
-	SELECT 5, 1, @minbetv5, @maxbetv5, @maxpermatchv5, NULL, @maxPOpermatchv5, @UpdateMinMaxBetv5, [dbo].[f_Get_SportNameBySporttype](5,@Language) UNION ALL
+	SELECT 70,5, 1, @minbetv5, @maxbetv5, @maxpermatchv5, NULL, @maxPOpermatchv5, @UpdateMinMaxBetv5, [dbo].[f_Get_SportNameBySporttype](5,@Language) UNION ALL
 	--Baseball
-	SELECT 8, 1, @minbetv8, @maxbetv8, @maxpermatchv8, NULL, @maxPOpermatchv8, @UpdateMinMaxBetv8, [dbo].[f_Get_SportNameBySporttype](8,@Language) UNION ALL
+	SELECT 80,8, 1, @minbetv8, @maxbetv8, @maxpermatchv8, NULL, @maxPOpermatchv8, @UpdateMinMaxBetv8, [dbo].[f_Get_SportNameBySporttype](8,@Language) UNION ALL
 	--Golf
-	SELECT 10, 1, @minbetv10, @maxbetv10, @maxpermatchv10, NULL, @maxPOpermatchv10, @UpdateMinMaxBetv10, [dbo].[f_Get_SportNameBySporttype](10,@Language) UNION ALL
+	SELECT 90,10, 1, @minbetv10, @maxbetv10, @maxpermatchv10, NULL, @maxPOpermatchv10, @UpdateMinMaxBetv10, [dbo].[f_Get_SportNameBySporttype](10,@Language) UNION ALL
 	--Motorsports
-	SELECT 11, 1, @minbetv11, @maxbetv11, @maxpermatchv11, NULL, @maxPOpermatchv11, @UpdateMinMaxBetv11, [dbo].[f_Get_SportNameBySporttype](11,@Language) UNION ALL
+	SELECT 100,11, 1, @minbetv11, @maxbetv11, @maxpermatchv11, NULL, @maxPOpermatchv11, @UpdateMinMaxBetv11, [dbo].[f_Get_SportNameBySporttype](11,@Language) UNION ALL
 	--Other Sports
-	SELECT 99, 1, @minbetv99, @maxbetv99, @maxpermatchv99, NULL, @maxPOpermatchv99, @UpdateMinMaxBetv99, [dbo].[f_Get_SportNameBySporttype](99,@Language) UNION ALL
+	SELECT 110,99, 1, @minbetv99, @maxbetv99, @maxpermatchv99, NULL, @maxPOpermatchv99, @UpdateMinMaxBetv99, [dbo].[f_Get_SportNameBySporttype](99,@Language) UNION ALL
 	--Mix Sports Parlay
-	SELECT 99, 9, @minbetv99mp, @maxbetv99mp, @maxpermatchv99mp, NULL, @maxPOpermatchv99mp, @UpdateMinMaxBetv99mp, NULL UNION ALL
+	SELECT 120,99, 9, @minbetv99mp, @maxbetv99mp, @maxpermatchv99mp, NULL, @maxPOpermatchv99mp, @UpdateMinMaxBetv99mp, NULL UNION ALL
 	--Number Game
-	SELECT 161, 81, @minbetv161, @maxbetv161, @maxpermatchv161, @MaxPerBallv161, NULL, @UpdateMinMaxBetv161, [dbo].[f_Get_SportNameBySporttype](161,@Language) UNION ALL
+	SELECT 130,161, 81, @minbetv161, @maxbetv161, @maxpermatchv161, @MaxPerBallv161, NULL, @UpdateMinMaxBetv161, [dbo].[f_Get_SportNameBySporttype](161,@Language) UNION ALL
 	--Happy 5
-	SELECT 164, 8101, @minbetv164, @maxbetv164, @maxpermatchv164, NULL, NULL, @UpdateMinMaxBetv164, [dbo].[f_Get_SportNameBySporttype](164,@Language)
+	SELECT 140,164, 8101, @minbetv164, @maxbetv164, @maxpermatchv164, NULL, NULL, @UpdateMinMaxBetv164, [dbo].[f_Get_SportNameBySporttype](164,@Language)
 
 	DELETE FROM @BetSetting WHERE ISNULL(IsUpdate,0) = 0
 
@@ -211,6 +234,34 @@ BEGIN
 					 end
 	FROM @BetSetting t
 	WHERE sporttype = 1 AND bettype = 9
+
+	--Correct sportname for Saba Soccer
+	UPDATE t
+	SET t.SportName = case @Language 
+						when 'CS' then N'沙巴足球'
+						when 'CT' then N'沙巴足球'
+						when 'TH' then N'ฟุตบอล Saba'
+						when 'J' then N'Saba Soccer'
+						when 'KO' then N'Saba Soccer'
+						when 'VI' then N'Saba Soccer'
+						else N'Saba Soccer' 
+					 end
+	FROM @BetSetting t
+	WHERE sporttype = 9901 AND bettype = 1
+
+	--Correct sportname for Saba Basketball
+	UPDATE t
+	SET t.SportName = case @Language 
+						when 'CS' then N'沙巴篮球'
+						when 'CT' then N'沙巴籃球'
+						when 'TH' then N'บาสเกตบอล Saba'
+						when 'J' then N'Saba Basketball'
+						when 'KO' then N'Saba Basketball'
+						when 'VI' then N'Saba Basketball'
+						else N'Saba Basketball' 
+					 end
+	FROM @BetSetting t
+	WHERE sporttype = 9902 AND bettype = 1
 
 	--> Check rule : Wrong Min bet/ Max bet/ Max per match
 	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10003,@Language) + ' (' + SportName + ')'
@@ -641,6 +692,7 @@ BEGIN
 				FROM @BetSetting t
 					INNER JOIN @Old_BetSetting old ON t.SportType = old.SportType AND t.BetType = old.BetType
 				WHERE (t.IsUpdate = 1)
+				ORDER BY LogOrder 
 				FOR XML PATH('BetLimit'),
 				TYPE
 			)
@@ -668,6 +720,7 @@ BEGIN
 						CONVERT(DECIMAL(20,2), MaxPayoutPerMatch)	AS '@MaxPayoutPerMatch'
 				FROM @BetSetting t
 				WHERE (t.IsUpdate = 1)
+				ORDER BY LogOrder 
 				FOR XML PATH('BetLimit'),
 				TYPE
 			)

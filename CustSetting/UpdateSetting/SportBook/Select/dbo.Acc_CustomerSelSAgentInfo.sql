@@ -41,7 +41,8 @@ Revisions:
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]	
-	
+	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+
 */
 SET NOCOUNT ON
 
@@ -107,6 +108,18 @@ Declare @MinBet_Max money, @MaxBet_Min money,
 		@MaxPayoutPerMatchv99mp_max money = 0,
 		@MaxPayoutPerMatchv1mp_max money = 0,
 
+		--- Saba soccer
+		@MinBetv1saba_Max            MONEY = 0, 
+		@MaxBetv1saba_Min            MONEY = 0, 
+		@MaxPerMatchv1saba_Min       MONEY = 0, 
+		@MaxPerMatchv1saba_Max       MONEY = 0, 
+		@MaxPayoutPerMatchv1saba_max MONEY = 0,
+		--- Saba Basketball
+		@MinBetv2saba_Max            MONEY = 0, 
+		@MaxBetv2saba_Min            MONEY = 0, 
+		@MaxPerMatchv2saba_Min       MONEY = 0, 
+		@MaxPerMatchv2saba_Max       MONEY = 0, 
+		@MaxPayoutPerMatchv2saba_max MONEY = 0,
 		
 		@Credit_AllOtherMaster money, @Credit_SAg money, @Credit_MAg_Max money,
 		@AllowedCurr bit,
@@ -150,7 +163,12 @@ EXEC Age_CustomerSelMinMaxLimit @custid = @custid, @IsCreatedDowline = 1,
 	@MaxPayoutPerMatchv11_max   = @MaxPayoutPerMatchv11_max   OUTPUT,
 	@MaxPayoutPerMatchv99_max   = @MaxPayoutPerMatchv99_max   OUTPUT,
 	@MaxPayoutPerMatchv99mp_max = @MaxPayoutPerMatchv99mp_max OUTPUT,
-	@MaxPayoutPerMatchv1mp_max  = @MaxPayoutPerMatchv1mp_max  OUTPUT
+	@MaxPayoutPerMatchv1mp_max  = @MaxPayoutPerMatchv1mp_max  OUTPUT,
+	--saba
+	@MinBetv1saba_Max = @MinBetv1saba_Max output, @MaxBetv1saba_Min = @MaxBetv1saba_Min output, @MaxPerMatchv1saba_Min = @MaxPerMatchv1saba_Min output, 
+	@MaxPerMatchv1saba_Max = @MaxPerMatchv1saba_Max output, @MaxPayoutPerMatchv1saba_max = @MaxPayoutPerMatchv1saba_max OUTPUT,
+	@MinBetv2saba_Max = @MinBetv2saba_Max output, @MaxBetv2saba_Min = @MaxBetv2saba_Min output, @MaxPerMatchv2saba_Min = @MaxPerMatchv2saba_Min output, 
+	@MaxPerMatchv2saba_Max = @MaxPerMatchv2saba_Max output, @MaxPayoutPerMatchv2saba_max = @MaxPayoutPerMatchv2saba_max OUTPUT
 
 -- Myanmar Odds
 
@@ -685,7 +703,18 @@ Select
     @MaxPayoutPerMatchv11_max AS MaxPayoutPerMatchv11_max, 
     @MaxPayoutPerMatchv99_max AS MaxPayoutPerMatchv99_max, 
     @MaxPayoutPerMatchv99mp_max AS MaxPayoutPerMatchv99mp_max, 
-    @MaxPayoutPerMatchv1mp_max AS MaxPayoutPerMatchv1mp_max
+    @MaxPayoutPerMatchv1mp_max AS MaxPayoutPerMatchv1mp_max,
+	--saba
+	ISNULL(@MinBetv1saba_Max			,0)	AS MinBetv1saba_Max,
+	ISNULL(@MaxBetv1saba_Min			,0)	AS MaxBetv1saba_Min,
+	ISNULL(@MaxPerMatchv1saba_Min 		,0)	AS MaxPerMatchv1saba_Min ,
+	ISNULL(@MaxPerMatchv1saba_Max 		,0)	AS MaxPerMatchv1saba_Max ,
+	ISNULL(@MaxPayoutPerMatchv1saba_max	,0) AS MaxPayoutPerMatchv1saba_max,
+	ISNULL(@MinBetv2saba_Max			,0)	AS MinBetv2saba_Max,
+	ISNULL(@MaxBetv2saba_Min			,0)	AS MaxBetv2saba_Min,
+	ISNULL(@MaxPerMatchv2saba_Min 		,0)	AS MaxPerMatchv2saba_Min ,
+	ISNULL(@MaxPerMatchv2saba_Max 		,0)	AS MaxPerMatchv2saba_Max ,
+	ISNULL(@MaxPayoutPerMatchv2saba_max	,0)	AS MaxPayoutPerMatchv2saba_max
 From 
 	CustSetting as cs with (NOLOCK)
 	LEFT JOIN custoverride as co with (NOLOCK) on cs.custid = co.custid and cs.sporttype=co.sporttype and cs.bettype=co.bettype
