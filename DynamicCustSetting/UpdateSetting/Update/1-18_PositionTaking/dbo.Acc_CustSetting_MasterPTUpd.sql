@@ -48,6 +48,7 @@ BEGIN
 			@SubAccID	= @SubAccID,
 			@UserID		= @UserID,
 			@IP			= @IP,
+			@IsCountPT	= @IsCountPT,
 			@MsgType	= @MsgType OUTPUT,		
 			@ErrCode	= @ErrCode OUTPUT,
 			@ErrMsg		= @ErrMsg OUTPUT
