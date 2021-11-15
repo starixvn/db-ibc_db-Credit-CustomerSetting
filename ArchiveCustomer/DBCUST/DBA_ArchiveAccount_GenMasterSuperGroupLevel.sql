@@ -18,6 +18,7 @@ AS
 		- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210825@Eden: Exclude Direct Masters/Agents/Members from Archiving Credit Account process (Stage 3 and Stage 4) [RedmineID: #160690]
+		- 20211021@Eden: Exclude SuperID: 45937167 [RedmineID: #163543]
 		
 	Param's Explanation:
 */
@@ -187,10 +188,10 @@ BEGIN
 		INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
 		INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
 
-	--Exclude SuperID: 44671646
+	--Exclude SuperID: 44671646,45937167
 	INSERT INTO #Super_Exception(srecommend)
 	SELECT t.custid
-	FROM (VALUES(44671646)) AS t(custID)
+	FROM (VALUES(44671646),(45937167)) AS t(custID)
 	WHERE NOT EXISTS( SELECT 1 FROM #Super_Exception WHERE srecommend = t.custID)
 	
 	INSERT INTO tmpCustGroupLevelArchived (custid, roleid, GroupLevelName, StageID)	
