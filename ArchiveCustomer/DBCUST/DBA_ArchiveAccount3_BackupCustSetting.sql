@@ -19,7 +19,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
-
+		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -108,14 +108,14 @@ BEGIN
 	)
 	select	@Now, 
 			username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
-						  VirtualMultiplier, maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11, maxpermatch12, 
-						  maxpermatch99, Enabled, danger, DisableCasino, SyncCasino, danger2, 
-						  danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161, 
-						  MaxPerBall161,
+						  VirtualMultiplier, 0, 0, 0, 0, 0, 0, 0, 0, 
+						  0, Enabled, danger, DisableCasino, SyncCasino, danger2, 
+						  danger3, DisableOutright, 0, DisableNumber, 0, 
+						  0,
 						  Abnormal, DoubleCommLosing,
 						  autosuspend2, HideKeno, DisableEsports, HideGoldDeluxe, DisableGoldDeluxe,  
 						  DisableSuperLive, DisableColossusBet, HideColossusBet, 
-						  LockUpd, MaxPerMatch1MP, BonusWalletFlag   
+						  LockUpd, 0, BonusWalletFlag   
 	from	custinfo (nolock)
 	where	recommend = @AgentID
 
@@ -170,8 +170,8 @@ BEGIN
 			groupd, 
 			groupe, 
 			groupf, 
-			minbet, 
-			maxbet, 
+			0, 
+			0, 
 			autopositiontaking,
 			autolivepositiontaking, 
 			isautopositiontaking, 
@@ -220,8 +220,8 @@ BEGIN
 		   ,[discount]
 		   ,[adiscount]
 		   ,[sdiscount]
-		   ,[minbet]
-		   ,[maxbet]
+		   ,0
+		   ,0
 		   ,[autopositiontaking]
 		   ,[isautopositiontaking]
 		   ,[autompositiontaking]
@@ -367,6 +367,97 @@ BEGIN
 	SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
 	FROM	custsub WITH (NOLOCK)
 	WHERE	custid = @AgentID
+
+	--> MORE TABLES
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBetSetting3rd_Agent_old(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
+	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
+	FROM CustBetSetting3rd_Agent WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Agent_old(CustID,SportType,BetType,Discount)
+	SELECT CustID,SportType,BetType,Discount
+	FROM CustDiscount3rd_Agent WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.custOverride_old(custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking)
+	SELECT custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking
+	FROM custOverride WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.custOverride3rd_old(custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking)
+	SELECT custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking
+	FROM custOverride3rd WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustOverrideGame_old(CustID,Bettype,Sporttype,minpositiontaking)
+	SELECT CustID,Bettype,Sporttype,minpositiontaking
+	FROM CustOverrideGame WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTSetting3rd_Agent_old(CustID,SportType,BetType,IsLive,IsAutoMasterPT,IsAutoSuperPT
+		,SuperPT,MasterPT,AgentPT,AutoSuperPT,AutoMasterPT,MinPT,MaxPT)
+	SELECT CustID,SportType,BetType,IsLive,IsAutoMasterPT,IsAutoSuperPT
+		,SuperPT,MasterPT,AgentPT,AutoSuperPT,AutoMasterPT,MinPT,MaxPT
+	FROM CustPTSetting3rd_Agent WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustStakeLevel_Agent_old(CustID,SportType,BetType,StakeLevelList)
+	SELECT CustID,SportType,BetType,StakeLevelList
+	FROM CustStakeLevel_Agent WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustWinLossLimit_Agent_old(CustId,SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset)
+	SELECT CustId,SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+	FROM CustWinLossLimit_Agent WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.AgentCommRate_old(CustId,Sporttype,Bettype,CommRate)
+	SELECT CustId,Sporttype,Bettype,CommRate
+	FROM AgentCommRate WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBetSetting_Agent_old(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
+	FROM CustBetSetting_Agent WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTGroupSetting3rd_Member_old(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT
+		,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT)
+	SELECT AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT
+		,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT
+	FROM CustPTGroupSetting3rd_Member WITH(NOLOCK)
+	WHERE AgentID = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustAgent_old(custid,MaxCredit,IsInternal,TransferOption,LimitPerIP,SelectedBetting
+		,NicknameLoginOnly,site,creationRemark,IsMonitorPT)
+	SELECT custid,MaxCredit,IsInternal,TransferOption,LimitPerIP,SelectedBetting
+		,NicknameLoginOnly,site,creationRemark,IsMonitorPT
+	FROM CustAgent WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustLoginInfo_old(CustID,OldUserPwd,LastChangedPwdDate,isFirstLogin,SecurityCode,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode
+		,VerifyOTPCount,ClosedReason,FunctionInfo,ProtectionCode,IsProtectedMode)
+	SELECT CustID,OldUserPwd,LastChangedPwdDate,isFirstLogin,SecurityCode,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode
+	,VerifyOTPCount,ClosedReason,FunctionInfo,ProtectionCode,IsProtectedMode
+	FROM CustLoginInfo WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustLoginInfoSub_old(SubAccID,CustID,OldUserPwd,PwdExpiry,LastChangedPwdDate,isFirstLogin,SecurityCode
+		,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode,VerifyOTPCount,FunctionInfo,ProtectionCode)
+	SELECT SubAccID,CustID,OldUserPwd,PwdExpiry,LastChangedPwdDate,isFirstLogin,SecurityCode
+		,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode,VerifyOTPCount,FunctionInfo,ProtectionCode
+	FROM CustLoginInfoSub WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustCommRate_old(CustId,Sporttype,Bettype,sdiscount,adiscount,discount,playerdiscount)
+	SELECT CustId,Sporttype,Bettype,sdiscount,adiscount,discount,playerdiscount
+	FROM CustCommRate WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBetSetting_Member_old(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
+	FROM CustBetSetting_Member WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
 	
 	-----------------------------------------------------------------------------------------------------------
 

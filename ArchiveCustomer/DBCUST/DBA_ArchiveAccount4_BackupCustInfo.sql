@@ -19,6 +19,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20210713@Tina: backup CustProductStatus and delete for stage 4 [RedmineID: #148600]
+		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 
 */
     
@@ -95,14 +96,14 @@ insert into DBARCCUST.bodb_Customer.dbo.custinfo_old(
 )
 select	@Now, 
 		username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
-                      VirtualMultiplier, maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11, maxpermatch12, 
-                      maxpermatch99, Enabled, danger, DisableCasino, SyncCasino, danger2, 
-                      danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161, 
-                      MaxPerBall161,
+                      VirtualMultiplier, 0, 0, 0, 0, 0, 0, 0, 0, 
+                      0, Enabled, danger, DisableCasino, SyncCasino, danger2, 
+                      danger3, DisableOutright, 0, DisableNumber, 0, 
+                      0,
                       Abnormal, DoubleCommLosing,
                       autosuspend2, HideKeno, DisableEsports, HideGoldDeluxe, DisableGoldDeluxe,  
                       DisableSuperLive, DisableColossusBet, HideColossusBet, 
-                      LockUpd, MaxPerMatch1MP, BonusWalletFlag 
+                      LockUpd, 0, BonusWalletFlag 
 from	custinfo (nolock)
 where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
 
@@ -131,5 +132,26 @@ SELECT	 cs.CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInf
 FROM	CustProductStatus cs WITH(NOLOCK) 
 	INNER JOIN  custinfo ci WITH (NOLOCK) ON ci.custid = cs.custID 
 WHERE	ci.recommend = @AgentID
+
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustAgent_old(custid,MaxCredit,IsInternal,TransferOption,LimitPerIP,SelectedBetting
+	,NicknameLoginOnly,site,creationRemark,IsMonitorPT)
+SELECT custid,MaxCredit,IsInternal,TransferOption,LimitPerIP,SelectedBetting
+	,NicknameLoginOnly,site,creationRemark,IsMonitorPT
+FROM CustAgent WITH(NOLOCK)
+WHERE custid = @AgentID
+
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustLoginInfo_old(CustID,OldUserPwd,LastChangedPwdDate,isFirstLogin,SecurityCode,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode
+	,VerifyOTPCount,ClosedReason,FunctionInfo,ProtectionCode,IsProtectedMode)
+SELECT CustID,OldUserPwd,LastChangedPwdDate,isFirstLogin,SecurityCode,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode
+,VerifyOTPCount,ClosedReason,FunctionInfo,ProtectionCode,IsProtectedMode
+FROM CustLoginInfo WITH(NOLOCK)
+WHERE custid = @AgentID
+
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustLoginInfoSub_old(SubAccID,CustID,OldUserPwd,PwdExpiry,LastChangedPwdDate,isFirstLogin,SecurityCode
+	,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode,VerifyOTPCount,FunctionInfo,ProtectionCode)
+SELECT SubAccID,CustID,OldUserPwd,PwdExpiry,LastChangedPwdDate,isFirstLogin,SecurityCode
+	,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode,VerifyOTPCount,FunctionInfo,ProtectionCode
+FROM CustLoginInfoSub WITH(NOLOCK)
+WHERE custid = @AgentID
 
 print  @AccName +':'+ 'END Backup cust info:' + convert(varchar(50), getdate(), 113) 
