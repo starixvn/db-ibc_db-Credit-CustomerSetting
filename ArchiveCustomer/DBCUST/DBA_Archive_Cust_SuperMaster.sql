@@ -15,6 +15,8 @@ AS
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 			- 20210810@Eden: Enhance Performance for stage 1 [RedmineID: #155969]
+			- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
+
 */
 BEGIN
 	DECLARE @RoleID INT
@@ -156,6 +158,77 @@ BEGIN
 					
 		END
 
+		--#162050 : more tables
+		IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 1 
+		BEGIN
+			DELETE dbo.CustBetSetting3rd_Agent WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1 
+		BEGIN
+			DELETE dbo.CustDiscount3rd_Agent WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('custOverride') = 1 
+		BEGIN
+			DELETE dbo.custOverride WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('custOverride3rd') = 1 
+		BEGIN
+			DELETE dbo.custOverride3rd WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('CustOverrideGame') = 1 
+		BEGIN
+			DELETE dbo.CustOverrideGame WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1 
+		BEGIN
+			DELETE dbo.CustPTSetting3rd_Agent WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1 
+		BEGIN
+			DELETE dbo.CustStakeLevel_Agent WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 1 
+		BEGIN
+			DELETE dbo.CustWinLossLimit_Agent WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('AgentCommRate') = 1 
+		BEGIN
+			DELETE dbo.AgentCommRate WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('CustBetSetting_Agent') = 1 
+		BEGIN
+			DELETE dbo.CustBetSetting_Agent WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
 	END 
 	ELSE IF @Stage = 4
 	BEGIN
@@ -183,6 +256,28 @@ BEGIN
 			DELETE  dbo.CustProductStatus WITH (ROWLOCK)
 			WHERE	custid = @CustID
 		END	
+
+		--#162050 : more tables
+		IF dbo.f_CheckRepTable('CustMaster') = 1 
+		BEGIN
+			DELETE dbo.CustMaster WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('CustLoginInfo') = 1 
+		BEGIN
+			DELETE dbo.CustLoginInfo WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF dbo.f_CheckRepTable('CustLoginInfoSub') = 1 
+		BEGIN
+			DELETE dbo.CustLoginInfoSub WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
 				
 	END 
 END
