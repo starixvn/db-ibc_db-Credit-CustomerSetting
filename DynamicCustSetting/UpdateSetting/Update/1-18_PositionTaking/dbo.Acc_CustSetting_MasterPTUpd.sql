@@ -5,7 +5,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTUpd]
 	@OnlyMinPT			VARCHAR(MAX) = NULL,
 	@SubAccID			INT = 0,
 	@UserID				INT = 0,        
-    @IP					VARCHAR(15)='',    
+    @IP					VARCHAR(15)='', 
+    @IsCountPT			BIT = 1,     
     @ErrCode			INT = 0 OUTPUT,
     @MsgType			INT = 0 OUTPUT,
     @ErrMsg				NVARCHAR(MAX) = '' OUTPUT
@@ -24,6 +25,7 @@ AS
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
+			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -46,6 +48,7 @@ BEGIN
 			@SubAccID	= @SubAccID,
 			@UserID		= @UserID,
 			@IP			= @IP,
+			@IsCountPT	= @IsCountPT,
 			@MsgType	= @MsgType OUTPUT,		
 			@ErrCode	= @ErrCode OUTPUT,
 			@ErrMsg		= @ErrMsg OUTPUT
@@ -177,6 +180,25 @@ BEGIN
 
 			RETURN
 		END
+	   
+	   -- check Limit Daily PT Update
+		DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
+		IF @IsCountPT = 1
+		BEGIN
+			EXEC dbo.Age_LimitPTDailyCheck    
+				 @custid			= @custid
+				,@Actorid		= @UserID
+				,@UpdatePT		= @PT
+				,@isLimit		= @isLimit OUTPUT
+				,@isCancel		= @isCancel OUTPUT
+			IF @isCancel > 0	
+			BEGIN
+				SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ [dbo].[f_Get_MsgNamebyMsgID](10068,'E') +'"> </Root>'
+                    , @ErrCode = 10068
+                    , @MsgType = 6   
+				RETURN
+			END
+		END 
 	   
 	   -- Select ProductID and SettingLevel
 		SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
@@ -444,6 +466,18 @@ BEGIN
 				,@RoleID = 3
 				,@SportBettypeXML = @PT
 		END
+	
+		IF @isLimit > 0
+		BEGIN
+			EXEC dbo.Age_LimitPTDailyUpd    
+				 @custid			= @custid
+				,@Actorid		= @UserID
+				,@UpdatePT		= @PT
+				,@ErrCode	= @ErrCode OUTPUT
+				,@ErrMsg		= @ErrMsg OUTPUT
+			IF @ErrCode > 0
+			RETURN
+		END 
 	
 		-- Log new updated data
 		IF @SettingLevel = 1			-- Product setting level

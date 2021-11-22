@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMemberUpd]
 	, @SubAccID			INT				= 0
 	, @IP				VARCHAR(50)		= ''
 	, @UserID			INT				= 0
+    , @IsCountPT		BIT				= 1   
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
@@ -21,7 +22,8 @@ AS
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
-		Parameter's Explanation:	
+			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
+		Parameter's Explanation:
 		• @PT:
 					<ROOT>
 							<PT 
@@ -219,6 +221,25 @@ BEGIN
 
 		RETURN
 	END
+	
+	-- check Limit Daily PT Update
+	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
+	IF @IsCountPT = 1
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyCheck    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@isLimit		= @isLimit OUTPUT
+			,@isCancel		= @isCancel OUTPUT
+		IF @isCancel > 0	
+		BEGIN
+			SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ [dbo].[f_Get_MsgNamebyMsgID](10068,'E') +'"> </Root>'
+                    , @ErrCode = 10068
+                    , @MsgType = 6   
+				RETURN
+		END
+	END 
 	
 	--Get setting mode
 	SELECT @SettingMode = IsGrouped
@@ -604,7 +625,17 @@ BEGIN
 			WHERE CustID = @CustID
 		END
 	END
-				
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyUpd    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@ErrCode		= @ErrCode OUTPUT
+			,@ErrMsg		= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+		RETURN
+	END 			
 	--**START LOGGING**		
 	
 	-- Select ProductID and SettingLevel

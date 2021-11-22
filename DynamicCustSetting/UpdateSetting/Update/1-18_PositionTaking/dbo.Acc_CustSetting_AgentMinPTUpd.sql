@@ -4,7 +4,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentMinPTUpd]
 	@PT					VARCHAR(MAX),
 	@SubAccID			INT = 0,
 	@UserID				INT = 0,       
-    @IP					VARCHAR(15)='',
+    @IP					VARCHAR(15)='', 
+    @IsCountPT			BIT = 1,     
     @ErrCode			INT = 0 OUTPUT,
     @MsgType			INT = 0 OUTPUT,
     @ErrMsg				NVARCHAR(MAX) = '' OUTPUT
@@ -20,7 +21,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentMinPTUpd]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
-
+		- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
+		
 	Parameter's Explanation:
 		@PT = <ROOT>
 				<PT SportType="1" BetType="1" IsLive="0" MinPT="0"/>
@@ -131,7 +133,24 @@ BEGIN
 
 		RETURN
 	END
-	
+	-- check Limit Daily PT Update
+	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
+	IF @IsCountPT = 1
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyCheck    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@isLimit		= @isLimit OUTPUT
+			,@isCancel		= @isCancel OUTPUT
+		IF @isCancel > 0	
+		BEGIN
+			SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ [dbo].[f_Get_MsgNamebyMsgID](10068,'E') +'"> </Root>'
+                    , @ErrCode = 10068
+                    , @MsgType = 6   
+				RETURN
+		END
+	END 
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
@@ -299,6 +318,18 @@ BEGIN
 
 	-- The minimum position taking value of agent was modified by agent's upline
 	EXEC dbo.Age_MessageNoticeUpd_Wrapper @custID = @custid, @userID = @UserID 
+	
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyUpd    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@ErrCode		= @ErrCode OUTPUT
+			,@ErrMsg		= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+		RETURN
+	END 
 	
     -- Log new updated data
 	IF @SettingLevel = 1			-- Product setting level

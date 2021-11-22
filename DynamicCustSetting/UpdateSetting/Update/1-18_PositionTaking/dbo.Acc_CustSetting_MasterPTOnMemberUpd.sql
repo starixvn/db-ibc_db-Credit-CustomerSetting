@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMemberUpd]
 	@UserID		INT = 0,    
 	@SubAccID	INT = 0, --Sub-AccountID     
     @IP			VARCHAR(15)='',
+    @IsCountPT			BIT = 1,     
     @ErrCode	INT = 0 OUTPUT,
 	@MsgType	INT = 0 OUTPUT,
     @ErrMsg		NVARCHAR(4000) = '' OUTPUT
@@ -22,6 +23,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMemberUpd]
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
+			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 		Parameter's Explanation:
 			@PT =<ROOT>
 					<PT SportType="1" BetType="1" IsLive="0" MasterPT="50" AutoMasterPT="0" IsAutoMasterPT="0" />
@@ -200,6 +202,25 @@ BEGIN
 
 		RETURN
 	END
+	
+	-- check Limit Daily PT Update
+	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
+	IF @IsCountPT = 1
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyCheck    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@isLimit		= @isLimit OUTPUT
+			,@isCancel		= @isCancel OUTPUT
+		IF @isCancel > 0	
+		BEGIN
+			SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ [dbo].[f_Get_MsgNamebyMsgID](10068,'E') +'"> </Root>'
+                    , @ErrCode = 10068
+                    , @MsgType = 6   
+				RETURN
+		END
+	END 
 	
 	SELECT @SettingMode = IsGrouped
 	FROM dbo.CustSettingMode3rd
@@ -1005,6 +1026,18 @@ BEGIN
 			END
 		END
 	END			 
+	
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyUpd    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@ErrCode		= @ErrCode OUTPUT
+			,@ErrMsg		= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+		RETURN
+	END 
 	
 	SELECT @logSpData_Old = LogStr 
 	FROM f_CustSetting_FormatLog (@logSpData_Old)
