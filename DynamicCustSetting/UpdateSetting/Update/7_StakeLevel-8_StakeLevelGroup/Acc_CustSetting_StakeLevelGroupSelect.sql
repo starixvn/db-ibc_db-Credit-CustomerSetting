@@ -15,6 +15,7 @@ AS
 		- 20200819@Elodie: Only show stake level setting if site and currency of customer is offered [Redmine: #137768]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20201112@Eden: Saba.club - Offer more stake levels for 789y market - add default sort [Redmine: #147941]
+		- 20211213@Winfred: Support setting Buy Bonus for product RedmineID:#165393
     
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -34,6 +35,7 @@ BEGIN
 	CREATE TABLE	#SportBetTypeFilter (
 						SportType			SMALLINT
 					,	BetType				INT
+					,	typedesc NVARCHAR(128)
 					);
 
 	CREATE TABLE	#CustStakeLevel (
@@ -42,6 +44,7 @@ BEGIN
 					,	StakeLevelID		INT
 					,	StakeLevelGroupID	INT
 					,	isChecked			BIT
+					,	typedesc			NVARCHAR(128)
 					,	PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID)
 					);
 
@@ -76,12 +79,17 @@ BEGIN
 		INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
 	WHERE (ssc.Currency = @Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @SiteID	
 
+	UPDATE ts
+	SET ts.typedesc=b.typedesc
+	FROM #SportBetTypeFilter ts
+		INNER JOIN DBAGE.bodb02.dbo.bettype b WITH (NOLOCK) ON ts.Bettype=b.typeid
+
 	-- Select available stake levels
 	IF	@RoleID = 4
 	BEGIN
 		INSERT INTO	#CustStakeLevel
-			(	SportType     , BetType     , StakeLevelID   , StakeLevelGroupID, isChecked)
-		SELECT	sbtf.SportType, sbtf.BetType, sl.StakeLevelID, sl.GameGroupID   , 0
+			(	SportType     , BetType     , StakeLevelID   , StakeLevelGroupID, isChecked,typedesc)
+		SELECT	sbtf.SportType, sbtf.BetType, sl.StakeLevelID, sl.GameGroupID   , 0 , typedesc
 		FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
 		INNER JOIN	#SportBetTypeFilter AS sbtf
 				ON	sbtf.BetType = sl.GameTypeID
@@ -90,8 +98,8 @@ BEGIN
 	ELSE IF	@RoleID IN (3, 2, 1)
 	BEGIN
 	    INSERT INTO	#CustStakeLevel
-			(	SportType     , BetType     , StakeLevelID   , StakeLevelGroupID, isChecked)
-		SELECT	csla.SportType,	csla.BetType, sl.StakeLevelID, sl.GameGroupID   , 0
+			(	SportType     , BetType     , StakeLevelID   , StakeLevelGroupID, isChecked,typedesc)
+		SELECT	csla.SportType,	csla.BetType, sl.StakeLevelID, sl.GameGroupID   , 0 , typedesc
 		FROM		dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
 		INNER JOIN	#SportBetTypeFilter AS sbtf
 				ON	sbtf.SportType = csla.SportType
@@ -146,6 +154,7 @@ BEGIN
 		,	csl.StakeLevelID
 		,	csl.StakeLevelGroupID
 		,	csl.isChecked
+		,	csl.typedesc
 	FROM	#CustStakeLevel AS csl
 		INNER JOIN GameGroup g WITH(NOLOCK)
 			ON g.GameGroupID = csl.StakeLevelGroupID

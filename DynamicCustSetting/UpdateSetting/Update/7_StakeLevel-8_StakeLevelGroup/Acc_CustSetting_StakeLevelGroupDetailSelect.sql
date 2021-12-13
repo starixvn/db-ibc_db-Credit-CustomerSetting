@@ -19,6 +19,7 @@ AS
 		- 20200506@Elodie: Offer HILO for 789y site only [Redmine: #133597]
 		- 20200819@Elodie: Only show stake level setting if site and currency of customer is offered [Redmine: #137768]
 		- 20201029@Winfred: Move offer for 789y site to SportNonOfferedSiteCurrency   [Redmine: #141926]
+		- 20211213@Winfred: Support setting Buy Bonus for product RedmineID:#165393
 
 	Param's Explanation:
 */
@@ -32,7 +33,7 @@ BEGIN
 		,	@SiteID			INT
 		,	@RoleID			TINYINT
 
-	DECLARE	@StakeLevelList	TABLE (StakeLevelID	INT, GameTypeID INT)
+	DECLARE	@StakeLevelList	TABLE (StakeLevelID	INT, GameTypeID INT, typedesc NVARCHAR(128))
 
 	SELECT	@UplineID =	CASE	WHEN c.roleid = 1 THEN c.recommend
 								WHEN c.roleid = 2 THEN c.mrecommend
@@ -85,6 +86,11 @@ BEGIN
 			AND	csla.SportType = @SportType
 	END
 
+	UPDATE ts
+	SET ts.typedesc=b.typedesc
+	FROM @StakeLevelList ts
+		INNER JOIN DBAGE.bodb02.dbo.bettype b WITH (NOLOCK) ON ts.Bettype=b.typeid
+
 	SELECT	@NoOfRows = COUNT(DISTINCT sd.GameTypeID)
 		,	@TotalRows = COUNT(1)
 	FROM		@StakeLevelList AS sll
@@ -101,6 +107,7 @@ BEGIN
 		,	sd.GameTypeID							BetType
 		,	gg.GameGroupID							StakeLevelGroupID
 		,	sd.MinLabel + N' - ' + sd.MaxLabel	StakeLevel
+		,	Sll.typedesc
 	FROM		@StakeLevelList AS sll
 		INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.StakeLevelID = sll.StakeLevelID
 		INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK) ON gg.GameGroupID = sl.GameGroupID
