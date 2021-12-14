@@ -82,7 +82,7 @@ BEGIN
 	UPDATE ts
 	SET ts.typedesc=b.typedesc
 	FROM #SportBetTypeFilter ts
-		INNER JOIN DBAGE.bodb02.dbo.bettype b WITH (NOLOCK) ON ts.Bettype=b.typeid
+		INNER JOIN bettype b WITH (NOLOCK) ON ts.Bettype=b.typeid
 
 	-- Select available stake levels
 	IF	@RoleID = 4

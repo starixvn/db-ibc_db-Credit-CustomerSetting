@@ -89,7 +89,7 @@ BEGIN
 	UPDATE ts
 	SET ts.typedesc=b.typedesc
 	FROM @StakeLevelList ts
-		INNER JOIN DBAGE.bodb02.dbo.bettype b WITH (NOLOCK) ON ts.GameTypeID=b.typeid
+		INNER JOIN bettype b WITH (NOLOCK) ON ts.GameTypeID=b.typeid
 
 	SELECT	@NoOfRows = COUNT(DISTINCT sd.GameTypeID)
 		,	@TotalRows = COUNT(1)
