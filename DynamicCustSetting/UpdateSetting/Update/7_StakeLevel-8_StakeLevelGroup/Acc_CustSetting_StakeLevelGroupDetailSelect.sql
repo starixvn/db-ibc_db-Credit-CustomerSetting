@@ -33,7 +33,7 @@ BEGIN
 		,	@SiteID			INT
 		,	@RoleID			TINYINT
 
-	DECLARE	@StakeLevelList	TABLE (StakeLevelID	INT, GameTypeID INT, typedesc NVARCHAR(128))
+	DECLARE	@StakeLevelList	TABLE (StakeLevelID	INT, GameTypeID INT, IsBuyBonus	BIT)
 
 	SELECT	@UplineID =	CASE	WHEN c.roleid = 1 THEN c.recommend
 								WHEN c.roleid = 2 THEN c.mrecommend
@@ -87,7 +87,7 @@ BEGIN
 	END
 
 	UPDATE ts
-	SET ts.typedesc=b.typedesc
+	SET ts.IsBuyBonus= CASE WHEN b.typedesc  = 'BuyBonus' THEN 1 ELSE 0 END
 	FROM @StakeLevelList ts
 		INNER JOIN bettype b WITH (NOLOCK) ON ts.GameTypeID=b.typeid
 
@@ -107,7 +107,7 @@ BEGIN
 		,	sd.GameTypeID							BetType
 		,	gg.GameGroupID							StakeLevelGroupID
 		,	sd.MinLabel + N' - ' + sd.MaxLabel	StakeLevel
-		,	Sll.typedesc
+		,	Sll.IsBuyBonus
 	FROM		@StakeLevelList AS sll
 		INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.StakeLevelID = sll.StakeLevelID
 		INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK) ON gg.GameGroupID = sl.GameGroupID

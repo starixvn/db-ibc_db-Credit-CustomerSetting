@@ -35,7 +35,7 @@ BEGIN
 	CREATE TABLE	#SportBetTypeFilter (
 						SportType			SMALLINT
 					,	BetType				INT
-					,	typedesc NVARCHAR(128)
+					,	IsBuyBonus			BIT
 					);
 
 	CREATE TABLE	#CustStakeLevel (
@@ -44,7 +44,7 @@ BEGIN
 					,	StakeLevelID		INT
 					,	StakeLevelGroupID	INT
 					,	isChecked			BIT
-					,	typedesc			NVARCHAR(128)
+					,	IsBuyBonus			BIT
 					,	PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID)
 					);
 
@@ -80,7 +80,7 @@ BEGIN
 	WHERE (ssc.Currency = @Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @SiteID	
 
 	UPDATE ts
-	SET ts.typedesc=b.typedesc
+	SET ts.IsBuyBonus= CASE WHEN b.typedesc  = 'BuyBonus' THEN 1 ELSE 0 END
 	FROM #SportBetTypeFilter ts
 		INNER JOIN bettype b WITH (NOLOCK) ON ts.Bettype=b.typeid
 
@@ -88,8 +88,8 @@ BEGIN
 	IF	@RoleID = 4
 	BEGIN
 		INSERT INTO	#CustStakeLevel
-			(	SportType     , BetType     , StakeLevelID   , StakeLevelGroupID, isChecked,typedesc)
-		SELECT	sbtf.SportType, sbtf.BetType, sl.StakeLevelID, sl.GameGroupID   , 0 , typedesc
+			(	SportType     , BetType     , StakeLevelID   , StakeLevelGroupID, isChecked,IsBuyBonus)
+		SELECT	sbtf.SportType, sbtf.BetType, sl.StakeLevelID, sl.GameGroupID   , 0 , IsBuyBonus
 		FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
 		INNER JOIN	#SportBetTypeFilter AS sbtf
 				ON	sbtf.BetType = sl.GameTypeID
@@ -98,8 +98,8 @@ BEGIN
 	ELSE IF	@RoleID IN (3, 2, 1)
 	BEGIN
 	    INSERT INTO	#CustStakeLevel
-			(	SportType     , BetType     , StakeLevelID   , StakeLevelGroupID, isChecked,typedesc)
-		SELECT	csla.SportType,	csla.BetType, sl.StakeLevelID, sl.GameGroupID   , 0 , typedesc
+			(	SportType     , BetType     , StakeLevelID   , StakeLevelGroupID, isChecked,IsBuyBonus)
+		SELECT	csla.SportType,	csla.BetType, sl.StakeLevelID, sl.GameGroupID   , 0 , IsBuyBonus
 		FROM		dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
 		INNER JOIN	#SportBetTypeFilter AS sbtf
 				ON	sbtf.SportType = csla.SportType
@@ -154,7 +154,7 @@ BEGIN
 		,	csl.StakeLevelID
 		,	csl.StakeLevelGroupID
 		,	csl.isChecked
-		,	csl.typedesc
+		,	csl.IsBuyBonus
 	FROM	#CustStakeLevel AS csl
 		INNER JOIN GameGroup g WITH(NOLOCK)
 			ON g.GameGroupID = csl.StakeLevelGroupID
