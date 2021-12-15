@@ -33,7 +33,7 @@ BEGIN
 		,	@SiteID			INT
 		,	@RoleID			TINYINT
 
-	DECLARE	@StakeLevelList	TABLE (StakeLevelID	INT, GameTypeID INT, IsBuyBonus	BIT)
+	DECLARE	@StakeLevelList	TABLE (StakeLevelID	INT, GameTypeID INT)
 
 	SELECT	@UplineID =	CASE	WHEN c.roleid = 1 THEN c.recommend
 								WHEN c.roleid = 2 THEN c.mrecommend
@@ -86,11 +86,6 @@ BEGIN
 			AND	csla.SportType = @SportType
 	END
 
-	UPDATE ts
-	SET ts.IsBuyBonus= CASE WHEN b.typedesc  = 'BuyBonus' THEN 1 ELSE 0 END
-	FROM @StakeLevelList ts
-		INNER JOIN bettype b WITH (NOLOCK) ON ts.GameTypeID=b.typeid
-
 	SELECT	@NoOfRows = COUNT(DISTINCT sd.GameTypeID)
 		,	@TotalRows = COUNT(1)
 	FROM		@StakeLevelList AS sll
@@ -107,11 +102,12 @@ BEGIN
 		,	sd.GameTypeID							BetType
 		,	gg.GameGroupID							StakeLevelGroupID
 		,	sd.MinLabel + N' - ' + sd.MaxLabel	StakeLevel
-		,	Sll.IsBuyBonus
+		,	CASE WHEN bt.typedesc  = 'BuyBonus' THEN 1 ELSE 0 END AS IsBuyBonus
 	FROM		@StakeLevelList AS sll
 		INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.StakeLevelID = sll.StakeLevelID
 		INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK) ON gg.GameGroupID = sl.GameGroupID
 		INNER JOIN	dbo.StakeLevelGroupDetail AS sd WITH (NOLOCK) ON sd.StakeLevelID = sl.StakeLevelID
+		INNER JOIN	dbo.bettype AS bt WITH (NOLOCK) ON sd.GameTypeID = bt.typeid
 	WHERE NOT EXISTS(SELECT 1 FROM SportNonOfferedSiteCurrency cso 
 					 WHERE cso.SportType = gg.RefSportType AND cso.BetType = sd.GameTypeID AND cso.Currency = @ExchangeID AND (cso.SiteID = @SiteID OR cso.SiteID = 0)) 	
 	AND NOT EXISTS(SELECT 1 FROM SportNonOfferedSiteCurrency cso 

@@ -35,7 +35,7 @@ BEGIN
 	CREATE TABLE	#SportBetTypeFilter (
 						SportType			SMALLINT
 					,	BetType				INT
-					,	IsBuyBonus			BIT
+					,	IsBuyBonus			BIT  DEFAULT(0)
 					);
 
 	CREATE TABLE	#CustStakeLevel (
@@ -44,7 +44,7 @@ BEGIN
 					,	StakeLevelID		INT
 					,	StakeLevelGroupID	INT
 					,	isChecked			BIT
-					,	IsBuyBonus			BIT
+					,	IsBuyBonus			BIT  DEFAULT(0)
 					,	PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID)
 					);
 
@@ -80,9 +80,13 @@ BEGIN
 	WHERE (ssc.Currency = @Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @SiteID	
 
 	UPDATE ts
-	SET ts.IsBuyBonus= CASE WHEN b.typedesc  = 'BuyBonus' THEN 1 ELSE 0 END
+	SET ts.IsBuyBonus= 1
 	FROM #SportBetTypeFilter ts
-		INNER JOIN bettype b WITH (NOLOCK) ON ts.Bettype=b.typeid
+	where EXISTS (SELECT TOP 1 1 
+					FROM dbo.StakeLevel AS sl WITH (NOLOCK) 
+					INNER JOIN	dbo.StakeLevelGroupDetail AS sd WITH (NOLOCK) ON sd.StakeLevelID = sl.StakeLevelID
+					INNER JOIN	dbo.bettype AS bt WITH (NOLOCK) ON sd.GameTypeID = bt.typeid
+					WHERE sl.GameTypeID = ts.BetType AND bt.typedesc  = 'BuyBonus')
 
 	-- Select available stake levels
 	IF	@RoleID = 4
