@@ -92,6 +92,7 @@ BEGIN
 		INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.StakeLevelID = sll.StakeLevelID
 		INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK) ON gg.GameGroupID = sl.GameGroupID
 		INNER JOIN	dbo.StakeLevelGroupDetail AS sd WITH (NOLOCK) ON sd.StakeLevelID = sl.StakeLevelID
+		INNER JOIN	dbo.bettype AS bt WITH (NOLOCK) ON sd.GameTypeID = bt.typeid
 	WHERE NOT EXISTS(SELECT 1 FROM SportNonOfferedSiteCurrency cso 
 					 WHERE cso.SportType = gg.RefSportType AND cso.BetType = sd.GameTypeID AND cso.Currency = @ExchangeID AND (cso.SiteID = @SiteID OR cso.SiteID = 0)) 	
 	AND NOT EXISTS(SELECT 1 FROM SportNonOfferedSiteCurrency cso 
