@@ -1,0 +1,54 @@
+<DTSConfiguration>
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB04ADMIN1].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=db233\sqlserver2008r2;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+	
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB04ADMIN2].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=db233\sqlserver2008r2;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+	
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB05].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=db233\sqlserver2008r2;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+	
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB052].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=DB215;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+	
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB053].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=DB215;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+ 
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB054C2\DB054].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=db233\sqlserver2008r2;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+  
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB055].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=db233\sqlserver2008r2;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+  
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB05BK1].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=db233\sqlserver2008r2;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+  
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB061].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=DB234;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+  
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DB06C2\DB06].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=DB234;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+ 
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DBCUST].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=DB233;Initial Catalog=CustDB;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+  
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DBTP].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=DB234;Initial Catalog=bodb02;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+
+  <Configuration ConfiguredType="Property" Path="\Package.Connections[DBTXN].Properties[ConnectionString]" ValueType="String">
+    <ConfiguredValue>Data Source=DB206;Initial Catalog=CustDB;Provider=SQLNCLI10.1;Integrated Security=SSPI;Auto Translate=False;</ConfiguredValue>
+  </Configuration>
+	
+</DTSConfiguration>
