@@ -25,6 +25,8 @@ AS
 */
 BEGIN
     SET NOCOUNT ON
+	
+	DECLARE @tmp_Bettype TABLE (typeid	INT, typedesc NVARCHAR(128))	BEGIN TRY				INSERT INTO @tmp_Bettype (typeid, typedesc)		SELECT typeid, typedesc FROM DBAGE.bodb02.dbo.bettype WITH (NOLOCK)	END TRY	BEGIN CATCH				INSERT INTO @tmp_Bettype (typeid, typedesc)		SELECT typeid, typedesc FROM DBTXN.bodb02.dbo.bettype WITH (NOLOCK)	END CATCH
 
 	DECLARE	@TotalRows		INT
 	DECLARE	@UplineID		INT
@@ -92,7 +94,7 @@ BEGIN
 		INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.StakeLevelID = sll.StakeLevelID
 		INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK) ON gg.GameGroupID = sl.GameGroupID
 		INNER JOIN	dbo.StakeLevelGroupDetail AS sd WITH (NOLOCK) ON sd.StakeLevelID = sl.StakeLevelID
-		INNER JOIN	dbo.bettype AS bt WITH (NOLOCK) ON sd.GameTypeID = bt.typeid
+		INNER JOIN	@tmp_Bettype AS bt ON sd.GameTypeID = bt.typeid
 	WHERE NOT EXISTS(SELECT 1 FROM SportNonOfferedSiteCurrency cso 
 					 WHERE cso.SportType = gg.RefSportType AND cso.BetType = sd.GameTypeID AND cso.Currency = @ExchangeID AND (cso.SiteID = @SiteID OR cso.SiteID = 0)) 	
 	AND NOT EXISTS(SELECT 1 FROM SportNonOfferedSiteCurrency cso 
@@ -108,7 +110,7 @@ BEGIN
 		INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK) ON sl.StakeLevelID = sll.StakeLevelID
 		INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK) ON gg.GameGroupID = sl.GameGroupID
 		INNER JOIN	dbo.StakeLevelGroupDetail AS sd WITH (NOLOCK) ON sd.StakeLevelID = sl.StakeLevelID
-		INNER JOIN	dbo.bettype AS bt WITH (NOLOCK) ON sd.GameTypeID = bt.typeid
+		INNER JOIN	@tmp_Bettype AS bt ON sd.GameTypeID = bt.typeid
 	WHERE NOT EXISTS(SELECT 1 FROM SportNonOfferedSiteCurrency cso 
 					 WHERE cso.SportType = gg.RefSportType AND cso.BetType = sd.GameTypeID AND cso.Currency = @ExchangeID AND (cso.SiteID = @SiteID OR cso.SiteID = 0)) 	
 	AND NOT EXISTS(SELECT 1 FROM SportNonOfferedSiteCurrency cso 

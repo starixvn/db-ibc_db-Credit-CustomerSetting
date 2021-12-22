@@ -47,7 +47,8 @@ BEGIN
 					,	IsBuyBonus			BIT  DEFAULT(0)
 					,	PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID)
 					);
-
+	DECLARE @tmp_Bettype TABLE (typeid	INT, typedesc NVARCHAR(128))	BEGIN TRY				INSERT INTO @tmp_Bettype (typeid, typedesc)		SELECT typeid, typedesc FROM DBAGE.bodb02.dbo.bettype WITH (NOLOCK)	END TRY	BEGIN CATCH				INSERT INTO @tmp_Bettype (typeid, typedesc)		SELECT typeid, typedesc FROM DBTXN.bodb02.dbo.bettype WITH (NOLOCK)	END CATCH
+	
 	-- Stake Level Group Member Single Selection
 	SELECT	@SettingType = 8;
 
@@ -85,7 +86,7 @@ BEGIN
 	where EXISTS (SELECT TOP 1 1 
 					FROM dbo.StakeLevel AS sl WITH (NOLOCK) 
 					INNER JOIN	dbo.StakeLevelGroupDetail AS sd WITH (NOLOCK) ON sd.StakeLevelID = sl.StakeLevelID
-					INNER JOIN	dbo.bettype AS bt WITH (NOLOCK) ON sd.GameTypeID = bt.typeid
+					INNER JOIN	@tmp_Bettype bt ON sd.GameTypeID = bt.typeid
 					WHERE sl.GameTypeID = ts.BetType AND bt.typedesc  = 'BuyBonus')
 
 	-- Select available stake levels
