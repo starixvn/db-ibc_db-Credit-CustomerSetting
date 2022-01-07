@@ -29,12 +29,24 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @EnableStatus_Step BIT = 0
+	DECLARE @IsInsertUpdateSetting_Step BIT = 0
 
 	TRUNCATE TABLE Initial_StepByConfig
 
-	INSERT Initial_StepByConfig(StepID, IsScanCustomer)
-	SELECT 1,1 UNION ALL
-	SELECT 2,1
+	IF EXISTS(
+		SELECT 1
+		FROM Initial_ProductConfig_Detail i WITH(NOLOCK)
+			INNER JOIN ProductSettingType t WITH(NOLOCK) ON i.SettingType = t.SettingType AND t.SettingName != 'Product Status'
+		WHERE i.ConfigID = @ConfigID
+	)
+		SET @IsInsertUpdateSetting_Step = 1
+
+	IF @IsInsertUpdateSetting_Step = 1
+	BEGIN
+		INSERT Initial_StepByConfig(StepID, IsScanCustomer)
+		SELECT 1,1 UNION ALL
+		SELECT 2,1
+	END
 
 	IF EXISTS(
 		SELECT 1
@@ -49,15 +61,17 @@ BEGIN
 		SELECT 3,1
 	END
 
-	INSERT Initial_StepByConfig(StepID, IsScanCustomer)
-	SELECT 4,0
+	IF @IsInsertUpdateSetting_Step = 1
+		INSERT Initial_StepByConfig(StepID, IsScanCustomer)
+		SELECT 4,0
 	
 	IF @EnableStatus_Step = 1
 		INSERT Initial_StepByConfig(StepID, IsScanCustomer)
 		SELECT 5,0
 
-	INSERT Initial_StepByConfig(StepID, IsScanCustomer)
-	SELECT 6,0
+	IF @IsInsertUpdateSetting_Step = 1
+		INSERT Initial_StepByConfig(StepID, IsScanCustomer)
+		SELECT 6,0
 
 	IF EXISTS(
 		SELECT 1
