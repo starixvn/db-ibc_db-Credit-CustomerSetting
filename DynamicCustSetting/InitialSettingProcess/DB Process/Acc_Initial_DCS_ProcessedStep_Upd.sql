@@ -31,7 +31,7 @@ BEGIN
 	SET @StartRun = GETDATE()
 	
 	UPDATE Initial_ProductConfig WITH(ROWLOCK,UPDLOCK)
-	SET ProcessedStep =  CASE WHEN @CurrentStep = 1 THEN '1' ELSE ProcessedStep  + ',' + CONVERT(VARCHAR,@CurrentStep) END
+	SET ProcessedStep =  CASE WHEN ProcessedStep IS NULL THEN CONVERT(VARCHAR,@CurrentStep) ELSE ProcessedStep  + ',' + CONVERT(VARCHAR,@CurrentStep) END
 	WHERE ConfigID = @ConfigID
 
 	SET @EndRun = GETDATE()
