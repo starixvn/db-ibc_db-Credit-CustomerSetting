@@ -272,6 +272,11 @@ BEGIN
 			WHERE it.RoleID = 4
 			ORDER BY ci.custid DESC
 		)topx
+
+		--Delete direct acc > @MaxcustID
+		DELETE 
+		FROM Initial_Customer WITH(ROWLOCK,UPDLOCK) 
+		WHERE CustID > @MaxcustID
 	END
 
 	ReturnLB:
