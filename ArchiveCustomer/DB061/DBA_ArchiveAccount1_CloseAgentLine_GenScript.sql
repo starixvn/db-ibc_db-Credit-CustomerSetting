@@ -16,6 +16,7 @@ AS
 		- 20210825@Eden: Exclude SuperID: 44671646 [RedmineID: #160690]
 		- 20211021@Eden: Exclude SuperID: 45937167 [RedmineID: #163543]
 		- 20211207@Eden: Exclude SuperID: 58561925 [RedmineID: #165800]
+		- 20220214@Eden: Exclude SuperID: 46195971 [RedmineID: #168423]
 
 		
 	Param's Explanation:
@@ -51,10 +52,10 @@ FROM phonebettingCustomerList p WITH(NOLOCK)
 	INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
 	INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
 
---Exclude SuperID: 44671646,45937167,58561925
+--Exclude SuperID: 44671646,45937167,58561925,46195971
 INSERT INTO #Super_Exception(srecommend)
 SELECT t.custid
-FROM (VALUES(44671646),(45937167),(58561925)) AS t(custID)
+FROM (VALUES(44671646),(45937167),(58561925),(46195971)) AS t(custID)
 WHERE NOT EXISTS( SELECT 1 FROM #Super_Exception WHERE srecommend = t.custID)
 
 INSERT INTO bodb_report.dbo.tempCustID
