@@ -95,6 +95,7 @@ AS
 		- 20210426@Tina: Add VGaming [Redmine: #153938]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210809@Winfred: add Bitcoin Betting  / not used HideUpline [RedmineID: #159039]
+		- 20220211@Winfred: add Spadegaming Jackpot [RedmineID: #167128]
 		
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -150,7 +151,8 @@ BEGIN
 		,	@bitmapOrder_SportsLottery	INT  
 		,	@bitmapOrder_PPLive			INT
 		,	@bitmapOrder_VGaming		INT
-		,	@bitmapOrder_Bitcoin		INT   
+		,	@bitmapOrder_Bitcoin		INT 
+		,	@bitmapOrder_SGJackpot		INT   
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)   
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)   
@@ -177,6 +179,7 @@ BEGIN
     SELECT	@bitmapOrder_AllBetVIP = (SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE psp.Sporttype = 211 AND	psp.Bettype = 2402)
 	SET @bitmapOrder_VGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 171 AND Bettype = 3801)
     SET @bitmapOrder_Bitcoin = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 175 AND Bettype = 7901)
+    SET @bitmapOrder_SGJackpot = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9904 AND Bettype = 4001 )
 
     DECLARE	@IsHidden_MuayThai			INT = 1
 		,	@IsHidden_Esports			INT = 1
@@ -201,7 +204,7 @@ BEGIN
 		,	@IsHidden_SportsLottery		INT = 1
 		,	@IsHidden_PPLive			INT = 1
 		,	@IsHidden_VGaming			INT = 1
-		,	@IsHidden_Bitcoin		INT = 1
+		,	@IsHidden_Bitcoin			INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_MuayThai OUTPUT	
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
@@ -921,7 +924,14 @@ BEGIN
 									AND	ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Bitcoin)), 1) = 0 
 									THEN 0
 								ELSE 1 
-						END AS BIT) AS HideBitcoin,						
+						END AS BIT) AS HideBitcoin,	
+				-- For SpadeGaming Jackpot
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SGJackpot)) AS DisableSGJackpot,			
+				CAST(	CASE	WHEN	@IsHidden_VoidBridge = 0 								
+									AND	ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SGJackpot)), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideSGJackpot,							
 				cm.IsInternal, cm.DisableAutoMPT,
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate,ISNULL(cps.Locked,0) AS Locked 
 		FROM dbo.Customer c WITH(NOLOCK)
@@ -1108,6 +1118,9 @@ BEGIN
 			--Bitcoin
 			ctm.DisableBitcoin,
 			ctm.HideBitcoin,
+			--SpadeGaming Jackpot
+			ctm.DisableSGJackpot,
+			ctm.HideSGJackpot,
 			ISNULL(cl.ClosedReason,0)  AS ClosedReason,
 			ctm.Locked,
 			RowNumber	
