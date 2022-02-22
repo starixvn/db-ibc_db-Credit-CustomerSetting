@@ -580,33 +580,7 @@ BEGIN
 	BEGIN TRY
 		
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-		SELECT	@Custid, 
-				seqNo,
-				(
-					SELECT TOP 1 bitmap
-					FROM dbo.f_GenerateVirtualSetting_multiple(0x00, CONVERT(VARCHAR(MAX), virtualXML))
-				) AS virtualXML
-		FROM (
-			SELECT DISTINCT seqNo
-			FROM ProfileVirtualSetting WITH(NOLOCK)
-		) pvs
-		CROSS APPLY (
-			SELECT (
-				SELECT	(
-							SELECT	ipvs.profileID			AS '@p',
-									vr.virtualMultiplier	AS '@v'
-							FROM	ProfileVirtualSetting	AS ipvs WITH(NOLOCK)
-							CROSS APPLY (
-								SELECT CAST(1.00 AS SMALLMONEY) AS virtualMultiplier
-							) vr
-							WHERE	ipvs.seqNo = pvs.seqNo
-							FOR XML PATH ('r'), 
-							TYPE
-						)
-				FOR XML PATH ('root'), 
-				TYPE
-			) AS virtualXML
-		) p	   
+		SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrMsg = CASE @Language 
