@@ -446,6 +446,8 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20211104@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -458,8 +460,9 @@ BEGIN
 	SET NOCOUNT ON
 
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
-	DECLARE @SiteID int
+	DECLARE @SiteID int, @EnableVR BIT
 	SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
+	SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
 
 	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
 	
@@ -923,10 +926,7 @@ BEGIN
 		@autosuspend = @autosuspend,
 		@autosuspend2 = @autosuspend2,		
 		@matchlimit = 1,
-		--@Johnson: Disable virtual rate status as default
-		@virtualmultiplier = 0,	
-	
-		
+		@virtualmultiplier = @EnableVR,	
 	
 		@DisableCasino = @DisableCasino,
 		@DisableNumber = @DisableNumber,

@@ -76,7 +76,8 @@ AS
 	- 20210202@Winfred : Virtual Rate for Basketball - New 611111 site super must have VR setting = 0%   [Redmine: #149369]	
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-	
+	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -104,8 +105,9 @@ BEGIN
 	WHERE custid = @ExistingCustid
 	
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
-	DECLARE @SiteID int
+	DECLARE @SiteID int, @EnableVR BIT
 	SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
+	SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
 
 	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
 	
@@ -423,7 +425,7 @@ BEGIN
 				,@Credit AS Credit
 				--,closed
 				,MatchLimit
-				,0 AS VirtualMultiplier
+				,@EnableVR AS VirtualMultiplier
 				,0
 				,0
 				,0

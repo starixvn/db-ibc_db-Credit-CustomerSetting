@@ -148,7 +148,8 @@ Revisions:
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-	
+	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+
 	Param's Explanation:
 • @ErrCode:
 		= 0: Insert successfully.
