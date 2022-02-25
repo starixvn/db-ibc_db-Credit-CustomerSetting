@@ -858,10 +858,7 @@ BEGIN
      WHERE CustID = @mrecommend
 
 	--Virtual rate
-	IF EXISTS(	SELECT 1
-				FROM Customer ci WITH(NOLOCK)
-				WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
-					AND ci.mrecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK)))
+	IF EXISTS (SELECT 1 FROM Acc_CustDirect WITH(NOLOCK) WHERE custid = @mrecommend)		
 	BEGIN
 		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
 	END	
