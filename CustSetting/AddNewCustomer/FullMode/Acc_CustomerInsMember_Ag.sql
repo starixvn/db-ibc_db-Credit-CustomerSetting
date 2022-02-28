@@ -1483,7 +1483,7 @@ BEGIN
 	--Virtual rate
 	IF EXISTS (SELECT 1 FROM Acc_CustDirect WITH(NOLOCK) WHERE custid = @recommend)		
 	BEGIN
-		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
+		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@_Site)
 	END	
 
     IF @isSearchAndCopy = 1
