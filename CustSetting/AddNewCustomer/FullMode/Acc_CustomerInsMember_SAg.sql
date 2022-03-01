@@ -472,6 +472,8 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20211104@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+
 Param's Explanation:
 • @ErrCode:
     = 0: super create master successfully.
@@ -483,7 +485,7 @@ Param's Explanation:
 BEGIN
     SET NOCOUNT ON   
 
-	DECLARE @Super_site VARCHAR(50), @currency INT
+	DECLARE @Super_site VARCHAR(50), @currency INT, @EnableVR BIT
 	SELECT @Super_site = site,
 		@currency = currency
 	FROM customer WITH(NOLOCK) 
@@ -877,8 +879,7 @@ BEGIN
 	    @isauto_v161slivepositiontaking_86 BIT,
 	    @isauto_v161slivepositiontaking_87 BIT,
 	    @isauto_v161slivepositiontaking_89 BIT,
-	    @isauto_v161slivepositiontaking_90 BIT,
-	    @virtualmultiplier SMALLMONEY,
+	    @isauto_v161slivepositiontaking_90 BIT,	
 	    @DoubleCommLosing	BIT,
 
 	    --Keno
@@ -911,7 +912,7 @@ BEGIN
 	    @DisableOutright = DisableOutright,
 	    
 	    @DoubleCommLosing = DoubleCommLosing,
-	    @virtualmultiplier = ISNULL(virtualmultiplier,1),	  
+	    @EnableVR = ISNULL(virtualmultiplier,1),	  
 	    @autosuspend = ISNULL(autosuspend, 0 ),
 	    @autosuspend2 = ISNULL(autosuspend2, 0),
 	    --Keno
@@ -933,6 +934,12 @@ BEGIN
 					WHERE CustID = ci.custid
 					) AS cs	
     WHERE CustID = @srecommend
+
+	--Virtual rate
+	IF EXISTS (SELECT 1 FROM Acc_CustDirect WITH(NOLOCK) WHERE custid = @srecommend)				
+	BEGIN
+		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
+	END	
 
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1696,7 +1703,7 @@ BEGIN
 	    @autosuspend2 = @autosuspend2,
 	    @DisableOutright = @DisableOutright,
 	    @matchlimit = @matchlimit,
-	    @virtualmultiplier = @virtualmultiplier,
+	    @virtualmultiplier = @EnableVR,
 	    @DisableCasino = @DisableCasino,
 	    @DisableAutoMPT = @DisableAutoMPT,
 	    @DisableNumber = @DisableNumber,
@@ -2490,7 +2497,7 @@ BEGIN
 	'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
+	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' + 
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
@@ -2526,7 +2533,7 @@ BEGIN
 		'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
+		'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 		'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 		'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' + 
 		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +

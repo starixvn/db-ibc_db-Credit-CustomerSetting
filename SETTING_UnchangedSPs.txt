@@ -1,4 +1,0 @@
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno_BetSetting.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno_BetSetting.sql
-CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno_BetSetting.sql
-DynamicCustSetting\AddNewCustomer\Acc_CustSetting_DCSSettingCopyInsertMember.sql

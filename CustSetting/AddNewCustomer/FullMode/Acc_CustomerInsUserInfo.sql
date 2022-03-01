@@ -148,7 +148,8 @@ Revisions:
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-	
+	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+
 	Param's Explanation:
 • @ErrCode:
 		= 0: Insert successfully.
@@ -254,33 +255,7 @@ BEGIN
 		
 			--Virtual rate
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-		SELECT	@Custid, 
-				seqNo,
-				(
-					SELECT TOP 1 bitmap
-					FROM dbo.f_GenerateVirtualSetting_multiple(0x00, CONVERT(VARCHAR(MAX), virtualXML))
-				) AS bitmapVirtual
-		FROM (
-			SELECT DISTINCT seqNo
-			FROM ProfileVirtualSetting WITH(NOLOCK)
-		) pvs
-		CROSS APPLY (
-			SELECT (
-				SELECT	(
-							SELECT	ipvs.profileID			AS '@p',
-									vr.virtualMultiplier	AS '@v'
-							FROM	ProfileVirtualSetting	AS ipvs WITH(NOLOCK)
-							CROSS APPLY (
-								SELECT CAST(1.00 AS SMALLMONEY) AS virtualMultiplier
-							) vr
-							WHERE	ipvs.seqNo = pvs.seqNo
-							FOR XML PATH ('r'), 
-							TYPE
-						)
-				FOR XML PATH ('root'), 
-				TYPE
-			) AS virtualXML
-		) p	 
+		SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
     END
     ELSE IF @roleid = 3
     BEGIN
@@ -309,10 +284,22 @@ BEGIN
 		)
 	
 		--Virtual rate
-		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-		SELECT @Custid, seqNo, bitmapVirtual
-		FROM CustVirtualSetting WITH(NOLOCK)
-		WHERE custid = @srecommend
+		IF EXISTS(	SELECT 1
+					FROM Customer ci WITH(NOLOCK)
+					WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
+						AND ci.srecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK)))
+		BEGIN
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+			SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
+		END
+		ELSE
+		BEGIN
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+			SELECT @Custid, seqNo, bitmapVirtual
+			FROM CustVirtualSetting WITH(NOLOCK)
+			WHERE custid = @srecommend
+		END
+		
     END
     ELSE IF @roleid = 2
     BEGIN
@@ -329,17 +316,40 @@ BEGIN
 	    VALUES(@CustID, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, @site)
 		
 		--Virtual rate
-		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-		SELECT @Custid, seqNo, bitmapVirtual
-		FROM CustVirtualSetting WITH(NOLOCK)
-		WHERE custid = @mrecommend  
+		IF EXISTS(	SELECT 1
+					FROM Customer ci WITH(NOLOCK)
+					WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
+						AND ci.mrecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK)))
+		BEGIN
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+			SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
+		END
+		ELSE
+		BEGIN
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+			SELECT @Custid, seqNo, bitmapVirtual
+			FROM CustVirtualSetting WITH(NOLOCK)
+			WHERE custid = @mrecommend
+		END
     END
 	ELSE IF @roleid = 1
 	BEGIN		
-		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-		SELECT @Custid, seqNo, bitmapVirtual
-		FROM CustVirtualSetting WITH(NOLOCK)
-		WHERE custid = @recommend  
+		--Virtual rate
+		IF EXISTS(	SELECT 1
+					FROM Customer ci WITH(NOLOCK)
+					WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
+						AND ci.recommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK)))
+		BEGIN
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+			SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
+		END
+		ELSE
+		BEGIN
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+			SELECT @Custid, seqNo, bitmapVirtual
+			FROM CustVirtualSetting WITH(NOLOCK)
+			WHERE custid = @recommend
+		END  
 	END
     IF @@ERROR <> 0
     BEGIN

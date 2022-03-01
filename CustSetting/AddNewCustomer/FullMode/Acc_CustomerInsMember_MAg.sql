@@ -485,6 +485,8 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20211104@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create agent successfully.
@@ -552,7 +554,7 @@ BEGIN
 		END
 	END CATCH
 ----- /Elodie @ 01 JUN 2015 -------------------
-	DECLARE @Site NVARCHAR(50)
+	DECLARE @Site NVARCHAR(50), @EnableVR BIT
 	SELECT @Site = site FROM customer WITH(NOLOCK) WHERE CustID = @mrecommend
 
     ----- 20130717@Lukas -------------------
@@ -807,7 +809,6 @@ BEGIN
 	    @isauto_v161mlivepositiontaking_87 BIT,
 	    @isauto_v161mlivepositiontaking_89 BIT,
 	    @isauto_v161mlivepositiontaking_90 BIT,
-        @virtualmultiplier SMALLMONEY,
 
 	    --Keno
 	    @HideKeno BIT = 1,
@@ -833,7 +834,7 @@ BEGIN
          , @DisableNumber = CASE WHEN DisableNumber = 1 THEN 1 ELSE @DisableNumber END
          , @DoubleCommLosing = DoubleCommLosing
  
-         , @virtualmultiplier = ISNULL(virtualmultiplier,1)
+         , @EnableVR = ISNULL(virtualmultiplier,1)
          , @autosuspend = ISNULL(autosuspend, 0)
          , @autosuspend2 = ISNULL(autosuspend2, 0)
          , @HideKeno = HideKeno
@@ -856,6 +857,11 @@ BEGIN
 					) AS cs
      WHERE CustID = @mrecommend
 
+	--Virtual rate
+	IF EXISTS (SELECT 1 FROM Acc_CustDirect WITH(NOLOCK) WHERE custid = @mrecommend)		
+	BEGIN
+		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
+	END	
 
     SELECT @ErrCode = 0
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1670,7 +1676,7 @@ BEGIN
 
 	    @DisableOutright = @DisableOutright,	
 	    @matchlimit = @matchlimit,
-	    @virtualmultiplier = @virtualmultiplier,
+	    @virtualmultiplier = @EnableVR,
 	   
 	    @DisableCasino = @DisableCasino,	
 	    @IsInternal = @IsInternal,
@@ -2432,7 +2438,7 @@ BEGIN
 	'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
+	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
     'DisableCasino="'+ COALESCE(CAST(@DisableCasino as VARCHAR(1)), SPACE(1)) + '" ' +
@@ -2465,7 +2471,7 @@ BEGIN
 		'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'virtualmultiplier="'+ COALESCE(CAST(@virtualmultiplier AS VARCHAR(10)),SPACE(1)) + '" ' +
+		'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 		'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 		'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	    'DisableCasino="'+ COALESCE(CAST(@DisableCasino as VARCHAR(1)), SPACE(1)) + '" ' +
