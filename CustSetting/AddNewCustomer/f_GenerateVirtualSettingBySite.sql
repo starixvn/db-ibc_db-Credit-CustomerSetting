@@ -31,7 +31,7 @@ RETURN
 							CASE WHEN @site IN ('789y') THEN CASE	WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 1 THEN 0.12 
 																	WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 0 THEN 0.1 
 																	WHEN ipvs.bettype IN (3,8) THEN 0.08
-																	ELSE 0.15 END
+																	ELSE 0.12 END
 								ELSE 1 END AS '@v'
 						FROM ProfileVirtualSetting AS ipvs WITH(NOLOCK)
 						WHERE	ipvs.seqNo = pvs.seqNo
