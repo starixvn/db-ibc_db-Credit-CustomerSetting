@@ -14,6 +14,7 @@ AS
 		- 20200901@Johnson: Initial sp [redmine:#140809]
 		- 20210420@Johnson: sync category for PA [redmine:#153617]
 		- 20210607@Johnson: sync category PA for LAP [redmine:#155692]
+		- 20220228@Johnson: add new category for good/bad robot[redmine:#167726]
 	Parameter's Explanation: 
 		@custList = '<Root>
 					<r id="100" c="10" t="1" />
@@ -71,7 +72,7 @@ BEGIN
 		INSERT INTO [Dep_CustCategoryHistory](custid,CategoryID,CustomerClass,CreatedDate)
 		SELECT custid, CategoryID, CustomerClass, GETDATE()
 		FROM @tmp
-		WHERE CustomerClass BETWEEN 8 AND 13
+		WHERE (CustomerClass BETWEEN 8 AND 13 OR CustomerClass IN (131,132))
 			AND CategoryID > 0
 		
 		WAITFOR DELAY '0:0:1'
