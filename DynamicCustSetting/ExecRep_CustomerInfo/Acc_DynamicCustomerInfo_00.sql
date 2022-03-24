@@ -1364,8 +1364,8 @@ BEGIN
 					OUTER APPLY (
 						SELECT TOP(1) ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS LowestStakeLevel
 						FROM (
-							SELECT	CAST(val AS INT) AS val
-							FROM	dbo.strSplit(csla.StakeLevelList, ',')
+							SELECT	CAST(value AS INT) AS val
+							FROM	STRING_SPLIT(csla.StakeLevelList, ',')
 						) AS ss
 						INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 								ON	ss.val = sl.StakeLevelID

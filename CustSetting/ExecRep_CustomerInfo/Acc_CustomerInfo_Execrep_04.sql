@@ -867,8 +867,8 @@ BEGIN
 		DECLARE @tmpCust TABLE(CustID INT)
 			    
 		INSERT INTO @tmpCust(custid)	
-		SELECT val
-		FROM dbo.strSplit(@custlist,',')
+		SELECT value
+		FROM STRING_SPLIT(@custlist,',')
 		
 		UPDATE	CustInfo with (ROWLOCK, UPDLOCK) 
 		SET	Reject = @Suspended
@@ -1323,9 +1323,9 @@ BEGIN
 		END;	
 		
 		INSERT INTO #tblCustomer (CustID)
-		SELECT ss.val
+		SELECT ss.value
 		FROM @tblEnableVirtualrate AS tv
-			CROSS APPLY	dbo.strSplit(tv.CustIDs, ',') AS ss;							
+			CROSS APPLY	STRING_SPLIT(tv.CustIDs, ',') AS ss							
 
 		UPDATE	dbo.custInfo WITH (ROWLOCK, UPDLOCK)
 		SET	virtualmultiplier = 1
