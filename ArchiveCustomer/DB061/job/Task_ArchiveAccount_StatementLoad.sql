@@ -9,7 +9,7 @@ AS
 	Revisions:
 		- 20190519@Daniel: Created
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
-
+		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -62,8 +62,8 @@ BEGIN
 
 	SELECT 
 		TOP 1 @to = winlostdate--balance-up date
-	FROM bodb02.dbo.Bettrans WITH(NOLOCK)
-	WHERE bettype = 20000 and matchid = 0 and custid = 3
+	FROM bodb02.dbo.transfer WITH(NOLOCK)
+	WHERE bettype = 20000 and custid = 3
 
 	--select @from, @to, @status
 

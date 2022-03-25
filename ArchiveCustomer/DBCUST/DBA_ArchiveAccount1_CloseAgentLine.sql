@@ -21,6 +21,7 @@ Revisions:
 	- 20200911@Helen: Fix stage 1 - M0 - [Redmine:130032]  
 	- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
 	- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+	- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 
 */
 
@@ -76,7 +77,15 @@ END
 
 --== Check new active trans ==========================
 
-IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
+IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID and custid <> 0)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
+	print @ErrMsg
+	return
+END
+
+IF EXISTS(select 1 from DBTXN.bodb02.dbo.transfer with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 

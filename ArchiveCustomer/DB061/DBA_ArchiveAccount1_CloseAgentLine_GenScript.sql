@@ -17,6 +17,7 @@ AS
 		- 20211021@Eden: Exclude SuperID: 45937167 [RedmineID: #163543]
 		- 20211207@Eden: Exclude SuperID: 58561925 [RedmineID: #165800]
 		- 20220214@Eden: Exclude SuperID: 46195971 [RedmineID: #168423]
+		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 
 		
 	Param's Explanation:
@@ -60,8 +61,12 @@ WHERE NOT EXISTS( SELECT 1 FROM #Super_Exception WHERE srecommend = t.custID)
 
 INSERT INTO bodb_report.dbo.tempCustID
 SELECT custid
-FROM bettrans with (NOLOCK)
+FROM transfer with (NOLOCK)
 WHERE bettype <> 20000 AND custid NOT IN(select custid from bodb_report.dbo.tempCustID)
+UNION
+SELECT custid
+FROM bettrans with (NOLOCK)
+WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
 UNION
 SELECT custid
 FROM translog with (NOLOCK) WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)

@@ -15,6 +15,7 @@ AS
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 		- 20210302@Eden: Just process Agent on stage 3 when they processed successfully on stage 2  [RedmineID: #149262]
 		- 20210825@Eden: Exclude Direct Masters/Agents/Members from Archiving Credit Account process (Stage 3 and Stage 4) [RedmineID: #160690]
+		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		
 	Param's Explanation:
 */
@@ -60,8 +61,12 @@ WHERE ci.roleid IN (1,2)
 
 INSERT INTO bodb_report.dbo.tempCustID
 SELECT custid
-FROM bettrans with (NOLOCK)
+FROM transfer with (NOLOCK)
 WHERE bettype <> 20000 AND custid NOT IN(select custid from bodb_report.dbo.tempCustID)
+UNION
+SELECT custid
+FROM bettrans with (NOLOCK)
+WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
 UNION
 SELECT custid
 FROM translog with (NOLOCK) WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
@@ -76,7 +81,8 @@ FROM bettransLC with (NOLOCK) WHERE custid NOT IN(select custid from bodb_report
 --update exception list
 EXEC dbo.DBA_ArchiveAccount_UpdateException
 
-SELECT ag.custid, isnull(MemCount, 0) [Member Count], isnull(TransCount, 0) [Trans Count]
+SELECT ag.custid, isnull(MemCount, 0) [Member Count]
+--, isnull(TransCount, 0) [Trans Count]
 INTO #tmpAg
 FROM customer ag WITH (NOLOCK)
 	INNER JOIN bodb_report.dbo.tmpCustArchived tmp WITH (NOLOCK) ON ag.custid = tmp.recommend AND tmp.IsFinished = 1 AND (ISNULL(tmp.ErrMsg,'') = '' OR tmp.ErrMsg LIKE '%archived%')
@@ -90,13 +96,13 @@ FROM customer ag WITH (NOLOCK)
 		WHERE roleid = 1
 		GROUP BY recommend
 		) mem ON mem.recommend = agci.custid
-	LEFT JOIN (
-		SELECT recommend
-			,COUNT(*) TransCount
-		FROM bettrans b WITH (NOLOCK)
-		WHERE custid <> recommend
-		GROUP BY recommend
-		) b ON b.recommend = agci.custid
+	--LEFT JOIN (
+	--	SELECT recommend
+	--		,COUNT(*) TransCount
+	--	FROM bettrans b WITH (NOLOCK)
+	--	WHERE custid <> recommend
+	--	GROUP BY recommend
+	--	) b ON b.recommend = agci.custid
 	LEFT JOIN #Super_Exception se ON se.srecommend = ag.srecommend
 WHERE ag.roleid = 2
 	--AND isnull(MemCount, 0) > 0-- AND isnull(TransCount, 0) > 0
