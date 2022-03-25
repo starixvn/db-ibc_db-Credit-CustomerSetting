@@ -16,6 +16,7 @@ AS
 			- 20210128@Winfred: Check exists bettype 20000 in bettrans [RedmineID: #149262]
 			- 20210225@Winfred: Check exists bettype 20000 and matchid = 0 ( use clustered index ) in bettrans [RedmineID: #149262]
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+			- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 */
 BEGIN
 	    
@@ -67,10 +68,10 @@ BEGIN
 		WHERE	custid = @CustID
 	END
 	
-	--Pre-check: Make sure @CustID not exists bettype 20000 in bettrans
-	IF EXISTS(select 1 from DBACC.bodb02.dbo.bettrans with (nolock) where custid = @CustID AND bettype = 20000 AND matchid = 0)
+	--Pre-check: Make sure @CustID not exists bettype 20000 in transfer
+	IF EXISTS(select 1 from DBACC.bodb02.dbo.transfer with (nolock) where custid = @CustID AND bettype = 20000)
 	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'This master exists bettype 20000 in bettrans!', @ErrCode = 11
+		Select @ErrMsg = @AccName +':'+ 'This master exists bettype 20000 in transfer!', @ErrCode = 11
 		print @ErrMsg
 		return
 	END

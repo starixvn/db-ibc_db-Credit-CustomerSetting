@@ -13,6 +13,7 @@ AS
 		- 20201105@Helen: Phase 2&3 - Include transfer A1, A0, M1, M0 to upline [Redmine: #130032]
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210128@Winfred: Check startrun when log master / Super [RedmineID: #149262]
+		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 */
 BEGIN
 
@@ -59,6 +60,8 @@ BEGIN
 			--IF (@ErrMsg <> '') BREAK
 		END
 		
+		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = 3
+
 		-- from agent to master
 		CREATE TABLE #AgentToMaster_Transfer (recommend INT, mrecommend INT,srecommend INT, agentName VARCHAR (50), masterName VARCHAR(50)
 					, currency INT,currencyName nvarchar(10), actualrate float, Isfinished BIT DEFAULT 0
@@ -74,6 +77,7 @@ BEGIN
 		FROM dbo.tmpCustArchived t WITH (NOLOCK)
 			INNER JOIN dbo.CustInfo CI WITH (NOLOCK) ON t.recommend = CI.custid
 			INNER JOIN dbo.exchange e ON e.exchangeid = ci.currency
+		WHERE ISNULL(t.ErrMsg,'') = '' OR t.ErrMsg LIKE '%archived%'
 		ORDER BY ci.mrecommend
 		
 		INSERT INTO #Master_tmp (CustID,username)

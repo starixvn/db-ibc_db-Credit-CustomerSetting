@@ -32,7 +32,7 @@ AS
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
-
+		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 */
     
 SET NOCOUNT ON
@@ -95,7 +95,15 @@ BEGIN
 END
 --== Check new active trans ==========================
 
-IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
+IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID and custid <> 0)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
+	print @ErrMsg
+	return
+END
+
+IF EXISTS(select 1 from DBTXN.bodb02.dbo.transfer with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 

@@ -17,7 +17,8 @@ AS
 		- 20210225@Winfred: Check exists bettype 20000 and matchid = 0 ( use clustered index ) in bettrans [RedmineID: #149262]
 		- 20210302@Eden: Just process Agent on stage 4 when they processed successfully on stage 3  [RedmineID: #149262]
 		- 20210825@Eden: Exclude Direct Masters/Agents/Members from Archiving Credit Account process (Stage 3 and Stage 4) [RedmineID: #160690]
-		
+		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
+
 	Param's Explanation:
 */
 IF (1 = 0)-- dummy code to trick ssis load result set
@@ -68,8 +69,12 @@ SELECT @DDiff = DATEADD(week, -2, @DDiff)
 
 INSERT INTO bodb_report.dbo.tempCustID
 SELECT custid
-FROM bettrans with (NOLOCK)
+FROM transfer with (NOLOCK)
 WHERE bettype <> 20000 AND custid NOT IN(select custid from bodb_report.dbo.tempCustID)
+UNION
+SELECT custid
+FROM bettrans with (NOLOCK)
+WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
 UNION
 SELECT custid
 FROM translog with (NOLOCK) WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
@@ -85,7 +90,8 @@ EXEC dbo.DBA_ArchiveAccount_UpdateException
 
 
 --Get cust from s3
-SELECT ag.recommend custid, isnull(MemCount, 0) [Member Count], isnull(TransCount, 0) [Trans Count]
+SELECT ag.recommend custid, isnull(MemCount, 0) [Member Count]
+--, isnull(TransCount, 0) [Trans Count]
 INTO #tmpAg
 FROM bodb_report.dbo.tmpCustArchived ag WITH (NOLOCK)
 	INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.recommend
@@ -96,17 +102,17 @@ FROM bodb_report.dbo.tmpCustArchived ag WITH (NOLOCK)
 		WHERE roleid = 1
 		GROUP BY recommend
 		) mem ON mem.recommend = agci.custid
-	LEFT JOIN (
-		SELECT recommend
-			,COUNT(*) TransCount
-		FROM bettrans b WITH (NOLOCK)
-		WHERE custid <> recommend
-		GROUP BY recommend
-		) b ON b.recommend = agci.custid	
+	--LEFT JOIN (
+	--	SELECT recommend
+	--		,COUNT(*) TransCount
+	--	FROM bettrans b WITH (NOLOCK)
+	--	WHERE custid <> recommend
+	--	GROUP BY recommend
+	--	) b ON b.recommend = agci.custid	
 	LEFT JOIN #Super_Exception se ON se.srecommend = agci.srecommend
 WHERE ag.isFinished = 1
 	--AND isnull(MemCount, 0) > 0 
-	AND isnull(TransCount, 0) = 0
+	--AND isnull(TransCount, 0) = 0
 	AND agci.enabled = 0
 	AND ag.recommend NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
 	AND ag.recommend NOT IN(SELECT recommend FROM #Exclude_Agents)
@@ -125,50 +131,6 @@ WHERE ag.isFinished = 1
 	AND se.srecommend IS NULL
 	AND ag.IsFinished = 1 AND (ISNULL(ag.ErrMsg,'') = '' OR ag.ErrMsg LIKE '%archived%')
 
-----Get more other cust based on s4 condition
---INSERT INTO #tmpAg
---SELECT ag.custid, isnull(MemCount, 0) [Member Count], isnull(TransCount, 0) [Trans Count]
---FROM customer ag WITH (NOLOCK)
---	INNER JOIN [site] s WITH (NOLOCK) ON ag.site = s.site AND s.isLicensee = 0
---	INNER JOIN CustAgent ca WITH (NOLOCK) ON ag.custid = ca.custid
---	INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ag.custid
---	LEFT JOIN (
---		SELECT recommend
---			,COUNT(*) MemCount
---		FROM custinfo mem WITH (NOLOCK)
---		WHERE roleid = 1
---		GROUP BY recommend
---		) mem ON mem.recommend = agci.custid
---	LEFT JOIN (
---		SELECT recommend
---			,COUNT(*) TransCount
---		FROM bettrans b WITH (NOLOCK)
---		WHERE custid <> recommend
---		GROUP BY recommend
---		) b ON b.recommend = agci.custid	
---	LEFT JOIN #Super_Exception se ON se.srecommend = agci.srecommend
---WHERE ag.roleid = 2
---	--AND isnull(MemCount, 0) > 0 
---	AND isnull(TransCount, 0) = 0
---	AND (ag.creatdate < @DDiff)
---	AND agci.enabled = 0
---	AND ca.isInternal = 0
---	AND ag.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
---	AND ag.custid NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
---	AND agci.custid NOT IN (
---		SELECT DISTINCT recommend
---		FROM bodb_report.dbo.tempCustID tc
---		INNER JOIN custinfo ci WITH (NOLOCK) ON tc.custid = ci.custid
---		--WHERE ci.roleid = 1
---		)
---	AND agci.custid NOT IN (
---		SELECT DISTINCT recommend
---		FROM customer c WITH (NOLOCK)
---		WHERE --roleid = 1 AND
---			creatdate >= @DDiff
---		)
---	AND agci.custid NOT IN (SELECT recommend FROM bodb_report.dbo.tmpCustArchived)
---	AND se.srecommend IS NULL
 SELECT sag.username Super
 	,mag.username Master
 	,ag.username Agent
@@ -180,7 +142,7 @@ FROM customer ag WITH (NOLOCK)
 	INNER JOIN #tmpAg t WITH (NOLOCK) ON ag.custid = t.custid
 	INNER JOIN customer mag WITH (NOLOCK) ON ag.mrecommend = mag.custid AND mag.roleid = 3
 	INNER JOIN customer sag WITH (NOLOCK) ON ag.srecommend = sag.custid AND sag.roleid = 4
-	LEFT JOIN  dbo.bettrans bt WITH(NOLOCK) ON ag.custid = bt.custid  AND bt.bettype = 20000 AND matchid = 0
+	LEFT JOIN  dbo.transfer bt WITH(NOLOCK) ON ag.custid = bt.custid  AND bt.bettype = 20000
 WHERE bt.custid IS NULL	
 ORDER BY [Member Count] DESC
 

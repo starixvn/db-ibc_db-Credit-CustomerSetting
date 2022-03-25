@@ -19,6 +19,7 @@ AS
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210302@Eden: Just process Agent on stage 2 when they processed successfully on stage 1  [RedmineID: #149262]
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		
 	Param's Explanation:
 */
@@ -59,8 +60,12 @@ SET @startdate = DATEADD(mm, - 4, GETDATE())
 
 INSERT INTO bodb_report.dbo.tempCustID
 SELECT custid
-FROM bettrans with (NOLOCK)
+FROM transfer with (NOLOCK)
 WHERE bettype <> 20000 AND custid NOT IN(select custid from bodb_report.dbo.tempCustID)
+UNION
+SELECT custid
+FROM bettrans with (NOLOCK)
+WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
 UNION
 SELECT custid
 FROM translog with (NOLOCK) WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
@@ -70,7 +75,6 @@ FROM bettransRNG with (NOLOCK) WHERE custid NOT IN(select custid from bodb_repor
 UNION
 SELECT custid
 FROM bettransLC with (NOLOCK) WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
-
 
 --update exception list
 EXEC dbo.DBA_ArchiveAccount_UpdateException
