@@ -15,6 +15,7 @@ AS
 		- 20210420@Johnson: sync category for PA [redmine:#153617]
 		- 20210607@Johnson: sync category PA for LAP [redmine:#155692]
 		- 20220228@Johnson: add new category for good/bad robot[redmine:#167726]
+		- 20220329@Johnson: Add new category/class for PA Probation [redmine:#170468]
 		- 20220405@Johnson: Add OldCustomerClass column [redmine:#170182]
 	Parameter's Explanation: 
 		@custList = '<Root>
@@ -26,6 +27,15 @@ AS
 BEGIN
 	SET NOCOUNT ON 
 	
+	DECLARE @CategoryList VARCHAR(MAX) 
+
+	SELECT @CategoryList = CAST((
+						SELECT DISTINCT CustomerClass c 
+						FROM CategoryConfig WITH(NOLOCK)
+						WHERE CustomerClass IS NOT NULL
+						FOR XML PATH('') , ROOT('Root')
+						) AS VARCHAR(MAX))
+
 	--import categroy for deposit customers
 	CREATE TABLE #tblDep_CustClass (custid INT, CustomerClass SMALLINT, CategoryID SMALLINT, OldCustomerClass SMALLINT, isFinished BIT DEFAULT(0))
 	DECLARE @tmp TABLE (custid INT, CustomerClass SMALLINT, CategoryID SMALLINT, OldCustomerClass SMALLINT)
@@ -51,7 +61,8 @@ BEGIN
 		
 	BEGIN TRY	
 		EXEC Acc_CustomerInfo_Execrep_03 @CustList = @CustList,
-										@mode = 'CustomerClass'	
+										@mode = 'CustomerClass',
+										@CategoryList = @CategoryList	
 	END TRY
 	BEGIN CATCH 
 		SELECT @ErrCode = 100,
@@ -59,7 +70,6 @@ BEGIN
 		
 		RETURN;
 	END CATCH 
-					
 	WHILE (1=1)
 	BEGIN
 		DELETE @tmp
@@ -77,7 +87,9 @@ BEGIN
 		INSERT INTO [Dep_CustCategoryHistory](custid,CategoryID,CustomerClass,CreatedDate,OldCustomerClass)
 		SELECT custid, CategoryID, CustomerClass, GETDATE(), OldCustomerClass
 		FROM @tmp
-		WHERE (CustomerClass BETWEEN 8 AND 13 OR CustomerClass IN (131,132))
+		WHERE CustomerClass IN (SELECT DISTINCT CustomerClass c 
+								FROM CategoryConfig WITH(NOLOCK)
+								WHERE CustomerClass IS NOT NULL)
 			AND CategoryID > 0
 		
 		WAITFOR DELAY '0:0:1'
