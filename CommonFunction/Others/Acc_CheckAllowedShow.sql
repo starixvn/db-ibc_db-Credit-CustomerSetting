@@ -55,6 +55,7 @@ Revisions:
 	- 20201012@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20210426@Tina: Add VGaming [Redmine: #153938]
 	- 20210809@Winfred: add Bitcoin Betting [RedmineID: #159039]
+	- 20220211@Johnson: add FGG under Virtual Games - change productID to 64 [RedmineID: #165684]
 	
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -65,7 +66,8 @@ Revisions:
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
 	Declare @srecommend int, @mrecommend int, @recommend int 
 	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT, @AllowedGTCasino BIT, @AllowedBBIN BIT, @AllowedLottery BIT, @AllowedTableGames BIT, @AllowedRNGWar BIT, @AllowedION BIT
-		
+			,@AllowedVirtualGames2 BIT, @AllowedFGG BIT
+			
 	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
@@ -73,6 +75,8 @@ Revisions:
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
 		,	@IsHideVG				INT
+		,	@IsHideVG2				INT
+		,	@IsHideFGG				INT
 		,	@IsHideSaba				INT
 		,	@IsHideSAGaming			INT
 		,	@IsHideSexyGaming		INT
@@ -91,6 +95,7 @@ Revisions:
 		,	@bitOrderLottery		INT 
 		,   @bitOrderVS				INT
 		,	@bitmapOrder_VG			INT
+		,	@bitmapOrder_FGG		INT
 		,	@bitmapOrder_Saba		INT
 		,	@bitmapOrder_SAGaming	INT
 		,	@bitmapOrder_SexyGaming	INT 
@@ -109,6 +114,7 @@ Revisions:
 	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 180 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
+	SET @bitmapOrder_FGG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 176 AND Bettype = 8201)
 	SET @bitmapOrder_Saba = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 200 AND Bettype = 1611)
 	SET @bitmapOrder_SAGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 244 AND Bettype = 3001)
 	SET @bitmapOrder_SexyGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 243 AND Bettype = 3101)
@@ -329,14 +335,23 @@ Revisions:
 	WHERE	cps.CustID = @CustID
 
 	-- For Virtual games
-	EXEC Acc_CheckShowProduct @ProductID = 38, @SettingStatus = @SettingStatus, @IsHide = @IsHideVG OUTPUT
-	SELECT	@AllowedVirtualGames = CASE	WHEN @RoleID = 4 AND @IsHideVG = 0 THEN 1
-								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitmapOrder_VG) = 0 AND @IsHideVG = 0 THEN 1
-								ELSE 0
-						END
+	EXEC Acc_CheckShowProduct @ProductID = 64, @sportType = 245, @SettingStatus = @SettingStatus, @IsHide = @IsHideVG2 OUTPUT
+	SELECT	@AllowedVirtualGames2 = CASE WHEN @IsHideVG2 = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_VG)) = 0 THEN 1
+								ELSE 0 END
 	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
 	WHERE	cps.CustID = @CustID
-
+	
+	--For FGG
+	EXEC Acc_CheckShowProduct @ProductID = 64, @sportType = 176, @SettingStatus = @SettingStatus, @IsHide = @IsHideFGG OUTPUT
+	SELECT	@AllowedFGG = CASE WHEN @IsHideFGG = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_FGG)) = 0 THEN 1
+								ELSE 0 END
+	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
+	WHERE	cps.CustID = @CustID
+	
+	--For Virtual Games (Virtual Games + FGG)
+	SELECT @AllowedVirtualGames = CASE WHEN @AllowedFGG = 1 OR @AllowedVirtualGames2 = 1 THEN 1
+								ELSE 0 END
+								
 	-- For Saba
 	EXEC Acc_CheckShowProduct @ProductID = 42, @SettingStatus = @SettingStatus, @IsHide = @IsHideSaba OUTPUT
 	IF @RoleID = 4
