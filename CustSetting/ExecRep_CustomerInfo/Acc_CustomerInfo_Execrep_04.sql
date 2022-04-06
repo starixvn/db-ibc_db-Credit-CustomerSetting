@@ -72,6 +72,7 @@ AS
 		- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 		- 20210308@Eden: Copy and apply VR settings to multiple member accounts [Redmine:#149372]
 		- 20210325@Eden: Implement option to override Lock VR status and values for Master/Agent and even unlocked status of members [Redmine:#152094]
+		- 20220406@Elodie: Apply STRING_SPLIT() instead of strSplit UDF [Redmine: #168783]
 
 	Param's Explanation:
 		@Action: 
