@@ -45,7 +45,7 @@ AS
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
-
+		- 20220406@Elodie: Apply STRING_SPLIT() instead of strSplit UDF [Redmine: #168783]
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -1364,8 +1364,8 @@ BEGIN
 					OUTER APPLY (
 						SELECT TOP(1) ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS LowestStakeLevel
 						FROM (
-							SELECT	CAST(val AS INT) AS val
-							FROM	dbo.strSplit(csla.StakeLevelList, ',')
+							SELECT	CAST(value AS INT) AS val
+							FROM	STRING_SPLIT(csla.StakeLevelList, ',')
 						) AS ss
 						INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 								ON	ss.val = sl.StakeLevelID

@@ -72,6 +72,7 @@ AS
 		- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 		- 20210308@Eden: Copy and apply VR settings to multiple member accounts [Redmine:#149372]
 		- 20210325@Eden: Implement option to override Lock VR status and values for Master/Agent and even unlocked status of members [Redmine:#152094]
+		- 20220406@Elodie: Apply STRING_SPLIT() instead of strSplit UDF [Redmine: #168783]
 
 	Param's Explanation:
 		@Action: 
@@ -867,8 +868,8 @@ BEGIN
 		DECLARE @tmpCust TABLE(CustID INT)
 			    
 		INSERT INTO @tmpCust(custid)	
-		SELECT val
-		FROM dbo.strSplit(@custlist,',')
+		SELECT value
+		FROM STRING_SPLIT(@custlist,',')
 		
 		UPDATE	CustInfo with (ROWLOCK, UPDLOCK) 
 		SET	Reject = @Suspended
@@ -1323,9 +1324,9 @@ BEGIN
 		END;	
 		
 		INSERT INTO #tblCustomer (CustID)
-		SELECT ss.val
+		SELECT ss.value
 		FROM @tblEnableVirtualrate AS tv
-			CROSS APPLY	dbo.strSplit(tv.CustIDs, ',') AS ss;							
+			CROSS APPLY	STRING_SPLIT(tv.CustIDs, ',') AS ss							
 
 		UPDATE	dbo.custInfo WITH (ROWLOCK, UPDLOCK)
 		SET	virtualmultiplier = 1
