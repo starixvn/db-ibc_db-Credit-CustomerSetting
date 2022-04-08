@@ -15,6 +15,7 @@ AS
 		- 20210420@Johnson: sync category for PA [redmine:#153617]
 		- 20210607@Johnson: sync category PA for LAP [redmine:#155692]
 		- 20220228@Johnson: add new category for good/bad robot[redmine:#167726]
+		- 20220405@Johnson: Add OldCustomerClass column [redmine:#170182]
 	Parameter's Explanation: 
 		@custList = '<Root>
 					<r id="100" c="10" t="1" />
@@ -25,6 +26,29 @@ AS
 BEGIN
 	SET NOCOUNT ON 
 	
+	--import categroy for deposit customers
+	CREATE TABLE #tblDep_CustClass (custid INT, CustomerClass SMALLINT, CategoryID SMALLINT, OldCustomerClass SMALLINT, isFinished BIT DEFAULT(0))
+	DECLARE @tmp TABLE (custid INT, CustomerClass SMALLINT, CategoryID SMALLINT, OldCustomerClass SMALLINT)
+	
+	DECLARE @xml XML = CAST (@CustList as XML),
+			@cnt INT
+	
+	INSERT INTO #tblDep_CustClass (custid, CustomerClass, CategoryID)
+	SELECT t.c.value('@id[1]','int'),
+		t.c.value('@c[1]','int'),
+		t.c.value('@t[1]','int')
+	FROM @xml.nodes('Root/r')as t(c)
+		
+	DELETE t
+	FROM #tblDep_CustClass t
+		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
+	WHERE ci.srecommend NOT IN (SELECT custid FROM Dep_Custsuper s WITH(NOLOCK))
+	
+	UPDATE t
+	SET t.OldCustomerClass = ci.CustomerClass
+	FROM #tblDep_CustClass t
+		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
+		
 	BEGIN TRY	
 		EXEC Acc_CustomerInfo_Execrep_03 @CustList = @CustList,
 										@mode = 'CustomerClass'	
@@ -35,42 +59,23 @@ BEGIN
 		
 		RETURN;
 	END CATCH 
-	
-	--import categroy for deposit customers
-	CREATE TABLE #tblDep_CustClass (custid INT, CustomerClass SMALLINT, CategoryID SMALLINT, isFinished BIT DEFAULT(0))
-	DECLARE @tmp TABLE (custid INT, CustomerClass SMALLINT, CategoryID SMALLINT)
-	
-	DECLARE @xml XML = CAST (@CustList as XML),
-			@cnt INT
-	
-	INSERT INTO #tblDep_CustClass (custid, CustomerClass, CategoryID)
-	SELECT t.c.value('@id[1]','int'),
-		t.c.value('@c[1]','int'),
-		t.c.value('@t[1]','int')
-	FROM @xml.nodes('Root/r')as t(c)		
-	
-	DELETE t
-	FROM #tblDep_CustClass t
-		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
-	WHERE ci.srecommend NOT IN (SELECT custid FROM Dep_Custsuper s WITH(NOLOCK))
-	
-		
+					
 	WHILE (1=1)
 	BEGIN
 		DELETE @tmp
 		
 		UPDATE TOP (200) t
 		SET isFinished = 1
-		OUTPUT DELETED.custid, DELETED.CustomerClass, DELETED.CategoryID
-		INTO @tmp(custid,CustomerClass,CategoryID)
+		OUTPUT DELETED.custid, DELETED.CustomerClass, DELETED.CategoryID, DELETED.OldCustomerClass
+		INTO @tmp(custid,CustomerClass,CategoryID,OldCustomerClass)
 		FROM #tblDep_CustClass t
 		WHERE isFinished = 0			
 		
 		IF @@ROWCOUNT = 0
 			BREAK;
 			
-		INSERT INTO [Dep_CustCategoryHistory](custid,CategoryID,CustomerClass,CreatedDate)
-		SELECT custid, CategoryID, CustomerClass, GETDATE()
+		INSERT INTO [Dep_CustCategoryHistory](custid,CategoryID,CustomerClass,CreatedDate,OldCustomerClass)
+		SELECT custid, CategoryID, CustomerClass, GETDATE(), OldCustomerClass
 		FROM @tmp
 		WHERE (CustomerClass BETWEEN 8 AND 13 OR CustomerClass IN (131,132))
 			AND CategoryID > 0
