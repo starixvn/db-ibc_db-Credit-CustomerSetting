@@ -77,6 +77,7 @@ AS
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 
  Explanation's Param:  
 	- @ErrCode:
@@ -682,7 +683,7 @@ BEGIN
 	END CATCH	
 		
 	BEGIN TRY
-	 --New 611111 super must have VR setting = 0% (Basketball level)
+	 --New 611111 super must have VR setting = 0% (Basketball level) + Esport
 	 IF @site = '611111'
 	 BEGIN
 		DECLARE @VirtualMultiplier VARCHAR(MAX) = ''
@@ -705,6 +706,33 @@ BEGIN
 			, @IP  = @IP
 			, @ErrCode = @ErrCode OUTPUT 
 			, @ErrMsg = @ErrMsg OUTPUT
+
+		DECLARE @VirtualRateMultiplier2 VARCHAR(MAX) = '' --Esports
+		SELECT @VirtualRateMultiplier2 = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
+															FROM VRSettingHierarchy b WITH(NOLOCK) 
+																CROSS APPLY VRValueMapping vr (NOLOCK)
+															WHERE b.SportType = 43 
+																AND b.VRLeagueGroupID = -1 
+																AND b.BetType = -1 
+																AND vr.Value = 1
+															FOR XML RAW('Row'), ROOT ('Root'))
+											)
+
+		EXEC [Acc_CustVirtualMultiplier_Upd]
+			  @CustID = @CustID
+			, @SportType = 43
+			, @VirtualMultiplier = @VirtualRateMultiplier2
+			, @UserID  = @creator
+			, @IP  = @IP
+			, @ErrCode = @ErrCode OUTPUT 
+			, @ErrMsg = @ErrMsg OUTPUT
+
+		INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
+		SELECT @CustID,2 AS SportType
+		WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 2)
+		UNION ALL
+		SELECT @CustID,43 AS SportType
+		WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
 	 END
 	END TRY
 	BEGIN CATCH
@@ -731,6 +759,7 @@ BEGIN
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
 		RETURN	
 	END CATCH	
 		

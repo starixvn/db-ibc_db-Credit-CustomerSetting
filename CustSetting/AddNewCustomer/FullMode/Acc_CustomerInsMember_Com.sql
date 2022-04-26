@@ -447,6 +447,7 @@ Revisions:
 	- 20211104@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 
 Param's Explanation:
 • @ErrCode:
@@ -1268,7 +1269,39 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 				DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
 				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
 			RETURN
-		END		
+		END
+		
+		DECLARE @VirtualRateMultiplier2 VARCHAR(MAX) = '' --Esports
+		SELECT @VirtualRateMultiplier2 = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
+															FROM VRSettingHierarchy b WITH(NOLOCK) 
+																CROSS APPLY VRValueMapping vr (NOLOCK)
+															WHERE b.SportType = 43 
+																AND b.VRLeagueGroupID = -1 
+																AND b.BetType = -1 
+																AND vr.Value = 1
+															FOR XML RAW('Row'), ROOT ('Root'))
+											)
+
+		EXEC [Acc_CustVirtualMultiplier_Upd]
+			  @CustID = @CustID
+			, @SportType = 43
+			, @VirtualMultiplier = @VirtualRateMultiplier2
+			, @UserID  = @creator
+			, @IP  = @IP
+			, @ErrCode = @ErrCode OUTPUT 
+			, @ErrMsg = @ErrMsg OUTPUT	
+			
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								when 'E' then 'Create customer fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END
+				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+				DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
+				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+			RETURN
+		END	
 	 END
 	
 

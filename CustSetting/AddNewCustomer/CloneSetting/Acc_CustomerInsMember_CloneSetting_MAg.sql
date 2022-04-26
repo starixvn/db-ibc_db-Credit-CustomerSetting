@@ -92,6 +92,7 @@ AS
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -806,6 +807,46 @@ BEGIN
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+							
+		RETURN	
+	END CATCH
+
+	BEGIN TRY
+		 IF @site = '611111'
+		 BEGIN
+			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
+			SELECT @CustID,2 AS SportType
+			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 2)
+			UNION ALL
+			SELECT @CustID,43 AS SportType
+			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
+		 END
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+				,@ErrCode = 106
+			
+		-- ROLLBACK MANUALLY
+		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
+		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
+		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
+		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
+	
+		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
+		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
+		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
+		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
 							
 		RETURN	
 	END CATCH
