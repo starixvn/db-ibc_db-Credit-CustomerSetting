@@ -1,4 +1,3 @@
-CustSetting\ExecRep_CustomerInfo\Acc_CustomerInfo_Execrep_00.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql

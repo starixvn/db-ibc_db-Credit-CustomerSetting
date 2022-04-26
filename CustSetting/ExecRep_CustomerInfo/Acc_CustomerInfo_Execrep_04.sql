@@ -73,6 +73,7 @@ AS
 		- 20210308@Eden: Copy and apply VR settings to multiple member accounts [Redmine:#149372]
 		- 20210325@Eden: Implement option to override Lock VR status and values for Master/Agent and even unlocked status of members [Redmine:#152094]
 		- 20220406@Elodie: Apply STRING_SPLIT() instead of strSplit UDF [Redmine: #168783]
+		- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 
 	Param's Explanation:
 		@Action: 
@@ -1732,6 +1733,149 @@ BEGIN
 
 		DROP TABLE #tmpCustBatchVR_Additional
 		DROP TABLE #tblCustVR_Additional
+	END
+	ELSE IF @Action = ('DisableVR2Downline')
+	BEGIN
+		IF dbo.f_CheckRepTable('VRSettingManualUpdAcc') = 0 RETURN
+		IF dbo.f_CheckRepTable('VRCustSetting') = 0 RETURN
+		IF dbo.f_CheckRepTable('CustSettingAutoSuspend') = 0 RETURN
+
+		CREATE TABLE #tmpCustVR2Downline (CustID INT PRIMARY KEY,RoleID TINYINT)
+
+		--> Get all downline of direct account
+		IF @RoleId = 4
+		BEGIN
+			INSERT INTO #tmpCustVR2Downline(CustID,roleid)
+			SELECT ci.custid,ci.roleid
+			FROM custinfo ci WITH(NOLOCK)
+			WHERE ci.roleid IN (1,2,3)
+				AND ci.srecommend = @CustId
+				AND ci.enabled = 1
+		END
+		ELSE IF @RoleId = 3
+		BEGIN
+			INSERT INTO #tmpCustVR2Downline(CustID,roleid)
+			SELECT ci.custid,ci.roleid
+			FROM custinfo ci WITH(NOLOCK)
+			WHERE ci.roleid IN (1,2)
+				AND ci.mrecommend = @CustId
+				AND ci.enabled = 1
+		END
+		ELSE IF @RoleId = 2
+		BEGIN
+			INSERT INTO #tmpCustVR2Downline(CustID,roleid)
+			SELECT ci.custid,ci.roleid
+			FROM custinfo ci WITH(NOLOCK)
+			WHERE ci.roleid IN (1)
+				AND ci.recommend = @CustId
+				AND ci.enabled = 1
+		END
+
+		--Set Manual VR for all downline
+		WHILE 1 = 1
+		BEGIN
+			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
+			SELECT TOP (5000) t.CustID, @Sporttype AS SportType
+			FROM #tmpCustVR2Downline t
+				LEFT JOIN [VRSettingManualUpdAcc] v WITH(NOLOCK)
+					ON t.CustID = v.CustID 
+					AND v.SportType = @Sporttype
+			WHERE v.CustID IS NULL
+
+			IF @@ROWCOUNT = 0
+				BREAK;
+		END
+
+		DECLARE @VRCustSetting TABLE (CustID int, LevelID int)
+		DECLARE @VRCustSettingBatch TABLE (CustID int, LevelID int)
+
+		DeletePrivateVR: --Step Delete all private VR of Master/Agent/Member
+
+		INSERT INTO @VRCustSetting(CustID,LevelID)
+		SELECT vr.CustID,vr.LevelID
+		FROM VRCustSetting vr WITH(NOLOCK)
+			INNER JOIN VRSettingHierarchy h WITH(NOLOCK) ON vr.LevelID = h.LevelID
+			INNER JOIN #tmpCustVR2Downline t ON vr.CustID = t.CustID
+		WHERE h.SportType = @Sporttype
+		ORDER by vr.CustID,VR.LevelID
+
+		--Delete all private VR of Master/Agent/Member( VR will follow  their Super)
+		WHILE 1 = 1
+		BEGIN
+			DELETE FROM @VRCustSettingBatch
+
+			DELETE TOP(5000) t
+			OUTPUT deleted.CustID,deleted.LevelID INTO @VRCustSettingBatch(CustID,LevelID)
+			FROM @VRCustSetting t
+
+			IF @@ROWCOUNT = 0
+				BREAK;
+
+			DELETE vr
+			FROM VRCustSetting vr WITH(ROWLOCK,UPDLOCK)
+				INNER JOIN @VRCustSettingBatch t 
+					ON vr.CustID = t.CustID
+					AND vr.LevelID = t.LevelID
+		END
+
+		IF EXISTS(
+			SELECT TOP 1 1
+			FROM VRCustSetting vr WITH(NOLOCK)
+				INNER JOIN VRSettingHierarchy h WITH(NOLOCK) ON vr.LevelID = h.LevelID
+				INNER JOIN #tmpCustVR2Downline t ON vr.CustID = t.CustID
+			WHERE h.SportType = @Sporttype
+		)
+		BEGIN
+			PRINT 'Delete Again'
+			GOTO DeletePrivateVR --Delete Again
+		END
+
+		--Set OverrideAS = 1 ( Esport Level) for all members
+		IF @Sporttype = 43
+		BEGIN
+			IF @roleid = 1
+			BEGIN
+				INSERT INTO #tmpCustVR2Downline(CustID,roleid)
+				SELECT @custid, 1
+			END
+
+			DECLARE @OverrideAS_True varbinary(30)  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+			WHILE 1 = 1
+			BEGIN
+				UPDATE TOP (5000) v
+				SET OverrideASLive = @OverrideAS_True
+					,OverrideASNonLive = @OverrideAS_True
+				FROM #tmpCustVR2Downline t
+					INNER JOIN CustSettingAutoSuspend v WITH(NOLOCK)
+						ON t.CustID = v.CustID 
+						AND v.SportType = @Sporttype
+				WHERE t.roleid = 1
+				AND NOT(  
+						OverrideASLive = @OverrideAS_True
+						AND OverrideASNonLive = @OverrideAS_True
+					)
+
+				IF @@ROWCOUNT = 0
+					BREAK;
+			END
+
+			WHILE 1 = 1
+			BEGIN
+				INSERT INTO CustSettingAutoSuspend(CustID,SportType,AutoSuspendLive,AutoSuspendNonLive,OverrideASLive,OverrideASNonLive)
+				SELECT TOP (5000) t.CustID, @Sporttype AS SportType, @OverrideAS_True, @OverrideAS_True, @OverrideAS_True, @OverrideAS_True
+				FROM #tmpCustVR2Downline t
+					LEFT JOIN CustSettingAutoSuspend v WITH(NOLOCK)
+						ON t.CustID = v.CustID 
+						AND v.SportType = @Sporttype
+				WHERE v.CustID IS NULL
+					AND t.roleid = 1
+
+				IF @@ROWCOUNT = 0
+					BREAK;
+			END	
+		END
+		DROP TABLE #tmpCustVR2Downline
 	END
 END
 

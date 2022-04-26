@@ -149,6 +149,7 @@ Revisions:
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 
 	Param's Explanation:
 • @ErrCode:
@@ -796,6 +797,87 @@ BEGIN
 			EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 			
 			RETURN
+		END
+
+		--Set Manual VR for Site = '611111'
+		IF @site = '611111'
+		BEGIN
+			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
+			SELECT @CustID,2 AS SportType
+			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 2)
+			UNION ALL
+			SELECT @CustID,43 AS SportType
+			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
+
+			IF @@ERROR <> 0
+			BEGIN 
+			--	DELETE customer with (ROWLOCK) where custid =  @custid
+				SELECT @ErrMsg = CASE @Language
+								   WHEN 'E' THEN 'Create customer failed. Please try again.'
+								   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+								 END,
+					   @ErrCode = 113
+
+				-- ROLLBACK MANUALLY
+				IF @RoleID = 4
+				BEGIN
+					DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+					DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
+					DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
+				END
+				ELSE IF @RoleID = 3
+				BEGIN
+					DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+					DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
+					DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
+				END
+				ELSE IF @RoleID = 2
+				BEGIN
+					DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
+					DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
+					DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
+				END
+
+				DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
+				DELETE FROM ProblemAccount WITH (ROWLOCK) WHERE CustId = @custid
+				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+				DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
+				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
+				DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+				EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
+			
+				RETURN
+			END
+
+			IF @RoleID = 1 --Set OverrideAS = 1 (Esport Level) for members
+			BEGIN
+				DECLARE @InitBitmap varbinary(30)  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+				INSERT INTO CustSettingAutoSuspend(CustID,SportType,AutoSuspendLive,AutoSuspendNonLive,OverrideASLive,OverrideASNonLive)
+				SELECT @custid, 43 AS SportType, @InitBitmap, @InitBitmap, @InitBitmap, @InitBitmap
+
+				IF @@ERROR <> 0
+				BEGIN 
+				--	DELETE customer with (ROWLOCK) where custid =  @custid
+					SELECT @ErrMsg = CASE @Language
+									   WHEN 'E' THEN 'Create customer failed. Please try again.'
+									   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+									 END,
+						   @ErrCode = 113
+
+					-- ROLLBACK MANUALLY
+					DELETE FROM CustSettingAutoSuspend WITH (ROWLOCK) WHERE CustId = @custid
+					DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
+					DELETE FROM ProblemAccount WITH (ROWLOCK) WHERE CustId = @custid
+					DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+					DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
+					DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
+					DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+					EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
+			
+					RETURN
+				END
+			END
 		END
     END
 END

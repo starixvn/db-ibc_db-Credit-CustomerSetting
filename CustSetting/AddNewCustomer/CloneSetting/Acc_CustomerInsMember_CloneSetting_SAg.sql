@@ -95,6 +95,7 @@ AS
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -767,10 +768,10 @@ BEGIN
 	END CATCH	
 	
 	BEGIN TRY
-	 --New 611111 super must have VR setting = 0% (Basketball level)
+	 --New 611111 super must have VR setting = 0% (Basketball level) + ESport
 	 IF @site = '611111'
 	 BEGIN
-		DECLARE @VirtualRateMultiplier VARCHAR(MAX) = ''
+		DECLARE @VirtualRateMultiplier VARCHAR(MAX) = '' --Basketball
 
 		SELECT @VirtualRateMultiplier = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
 															FROM VRSettingHierarchy b WITH(NOLOCK) 
@@ -790,6 +791,33 @@ BEGIN
 			, @IP  = @IP
 			, @ErrCode = @ErrCode OUTPUT 
 			, @ErrMsg = @ErrMsg OUTPUT
+
+		DECLARE @VirtualRateMultiplier2 VARCHAR(MAX) = '' --Esports
+		SELECT @VirtualRateMultiplier2 = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
+															FROM VRSettingHierarchy b WITH(NOLOCK) 
+																CROSS APPLY VRValueMapping vr (NOLOCK)
+															WHERE b.SportType = 43 
+																AND b.VRLeagueGroupID = -1 
+																AND b.BetType = -1 
+																AND vr.Value = 1
+															FOR XML RAW('Row'), ROOT ('Root'))
+											)
+
+		EXEC [Acc_CustVirtualMultiplier_Upd]
+			  @CustID = @CustID
+			, @SportType = 43
+			, @VirtualMultiplier = @VirtualRateMultiplier2
+			, @UserID  = @creator
+			, @IP  = @IP
+			, @ErrCode = @ErrCode OUTPUT 
+			, @ErrMsg = @ErrMsg OUTPUT
+
+		INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
+		SELECT @CustID,2 AS SportType
+		WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 2)
+		UNION ALL
+		SELECT @CustID,43 AS SportType
+		WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
 	 END
 	END TRY
 	BEGIN CATCH
@@ -816,6 +844,7 @@ BEGIN
 		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
 		RETURN	
 	END CATCH	
 
