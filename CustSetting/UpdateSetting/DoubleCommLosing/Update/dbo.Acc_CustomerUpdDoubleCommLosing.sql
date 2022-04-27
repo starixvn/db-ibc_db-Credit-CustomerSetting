@@ -194,8 +194,3 @@ SET NOCOUNT ON
 			@duration = @duration			
 	END CATCH
 GO
-GRANT EXECUTE ON [dbo].[Acc_customerUpdDoubleCommLosing] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_customerUpdDoubleCommLosing] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_customerUpdDoubleCommLosing] TO [bodbDownlineNet]
