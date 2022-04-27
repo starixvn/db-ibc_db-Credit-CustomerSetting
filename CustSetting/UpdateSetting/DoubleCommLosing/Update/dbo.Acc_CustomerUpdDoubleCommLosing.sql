@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 
  ALTER PROCEDURE [dbo].[Acc_CustomerUpdDoubleCommLosing]
 	@custid		INT,
@@ -15,7 +15,7 @@
 		Created: Johnson
 		Date: 2012-09-27
 		Task: Update status double commission for customer
-		DB: DBTXN/bodb02
+		DB: DBCUST/CustDB
 		
 		Revisions:
 			- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
