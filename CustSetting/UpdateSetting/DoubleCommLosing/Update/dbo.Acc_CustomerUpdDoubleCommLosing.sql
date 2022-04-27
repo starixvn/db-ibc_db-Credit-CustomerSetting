@@ -1,4 +1,6 @@
-﻿ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDoubleCommLosing]
+﻿/*<info serverAlias="DBTXN-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" isFunction="0"></info>*/
+
+ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDoubleCommLosing]
 	@custid		INT,
 	@DoubleCommLosing BIT = 1,
 	
@@ -19,21 +21,31 @@
 			- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
 			- 20130218@Dan: Write more log on DBTXN server in case of DBLOG server failure
 			- 20130507@Elodie: Correct the content of error message (MsgID=60021)
+			- 20220427@Tacy: Add check belonging - [Redmine:156312]
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
-	DECLARE @startRun DATETIME
-	DECLARE @endRun DATETIME
-	DECLARE @duration INT
+	DECLARE @startRun	DATETIME
+	DECLARE @endRun		DATETIME
+	DECLARE @duration	INT
+		,	@RoleID		TINYINT
+
 	SET @startRun = GETDATE()
 	
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
 	IF @ErrCode <>0 RETURN
 	
-	
-	DECLARE @roleid					TINYINT,
-			@uplineID				INT,
+	--Check Belonging
+	EXEC Age_CustomerSelCheckBelongingByCustID   
+		@SessionCustID = @Userid,   
+		@Custid   = @custid,  
+		@roleid   = @roleid OUTPUT  
+
+	IF (@roleid = 0)   
+		RETURN
+
+	DECLARE @uplineID				INT,
 			@DoubleCommLosingUpline BIT,
 			@UpdatedDownlines		BIT,	
 			@DoubleCommLosing_Old	BIT
