@@ -1,4 +1,6 @@
-﻿ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDoubleCommLosing]
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
+
+ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDoubleCommLosing]
 	@custid		INT,
 	@DoubleCommLosing BIT = 1,
 	
@@ -13,27 +15,37 @@
 		Created: Johnson
 		Date: 2012-09-27
 		Task: Update status double commission for customer
-		DB: DBTXN/bodb02
+		DB: DBCUST/CustDB
 		
 		Revisions:
 			- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
 			- 20130218@Dan: Write more log on DBTXN server in case of DBLOG server failure
 			- 20130507@Elodie: Correct the content of error message (MsgID=60021)
+			- 20220427@Tacy: Add check belonging - [Redmine:171928]
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
-	DECLARE @startRun DATETIME
-	DECLARE @endRun DATETIME
-	DECLARE @duration INT
+	DECLARE @startRun	DATETIME
+	DECLARE @endRun		DATETIME
+	DECLARE @duration	INT
+		,	@RoleID		TINYINT
+
 	SET @startRun = GETDATE()
 	
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
 	IF @ErrCode <>0 RETURN
 	
-	
-	DECLARE @roleid					TINYINT,
-			@uplineID				INT,
+	--Check Belonging
+	EXEC Age_CustomerSelCheckBelongingByCustID   
+		@SessionCustID = @Userid,   
+		@Custid   = @custid,  
+		@roleid   = @roleid OUTPUT  
+
+	IF (@roleid = 0)   
+		RETURN
+
+	DECLARE @uplineID				INT,
 			@DoubleCommLosingUpline BIT,
 			@UpdatedDownlines		BIT,	
 			@DoubleCommLosing_Old	BIT
@@ -182,8 +194,3 @@ SET NOCOUNT ON
 			@duration = @duration			
 	END CATCH
 GO
-GRANT EXECUTE ON [dbo].[Acc_customerUpdDoubleCommLosing] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_customerUpdDoubleCommLosing] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_customerUpdDoubleCommLosing] TO [bodbDownlineNet]
