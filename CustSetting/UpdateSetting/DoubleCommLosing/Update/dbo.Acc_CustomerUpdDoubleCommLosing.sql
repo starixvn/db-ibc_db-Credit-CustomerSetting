@@ -21,7 +21,7 @@
 			- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
 			- 20130218@Dan: Write more log on DBTXN server in case of DBLOG server failure
 			- 20130507@Elodie: Correct the content of error message (MsgID=60021)
-			- 20220427@Tacy: Add check belonging - [Redmine:156312]
+			- 20220427@Tacy: Add check belonging - [Redmine:171928]
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
