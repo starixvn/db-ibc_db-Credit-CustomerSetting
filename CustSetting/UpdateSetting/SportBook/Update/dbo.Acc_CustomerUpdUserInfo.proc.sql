@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdUserInfo]
 	@CustID         int,	
 	@firstname      nvarchar(50) = NULL,
@@ -19,7 +18,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdUserInfo]
 	@remark         nvarchar(300) = NULL,
 	@important      bit = NULL,
 	@gender         bit = NULL,
-	@disCasino      bit = 0,
 	@SubAccID       int = 0, --Sub-AccountID
 	@UserID         int,
 	@Language       varchar(2) = 'E',
@@ -57,6 +55,7 @@ Revisions:
 	- 20190425@Johnson: update info for headline cn88 [redmine: #105338]
 	- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 	- 20211103@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -96,24 +95,6 @@ EXEC dbo.Acc_CustomerSelCheckEnable
      @ErrMsg=@ErrMsg output
 if @ErrCode <> 0 return
 --end		
-
-IF exists(select 1 
-            from custinfo with(nolock)
-           where synccasino = 1
-             and custid = @CustID
-         )
-BEGIN
-	IF @disCasino = 1
-		BEGIN	
-			Select @ErrMsg = case @Language 
-								when 'E' then 'This USER INFO function is temporarily unavailable, please update later.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40005,@Language)
-							end	,
-				   @ErrCode = 100
-
-			return
-		END
-END
 
 declare @roleid int
  

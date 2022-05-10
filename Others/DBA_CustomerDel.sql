@@ -1,6 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0"></info>*/ 
- 
-ALTER PROCEDURE [dbo].[DBA_CustomerDel]
+ ALTER PROCEDURE [dbo].[DBA_CustomerDel]
 	@username VARCHAR(30),
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg VARCHAR(200) = '' OUTPUT
@@ -25,11 +24,12 @@ AS
 		- 20171225@Elodie: Delete customer from setting tables of DCS
 		- 20190327@Daniel: Migrate bodb_Licensee to DBCUST: Remove linked server DBLIC for deleting data in bodb_Licensee
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
 */		
-DECLARE @roleid INT, @custid INT, @syncCasino BIT
+DECLARE @roleid INT, @custid INT
 SELECT @roleid = 0 
 
 SELECT	@roleid=roleid, 
@@ -46,14 +46,6 @@ IF @@ROWCOUNT = 0
 IF @roleid = 0
 	SELECT @ErrMsg = N'USERNAME not existed!'
 	
----Check Horse Racing, Financials, Casino
-/*
-if @syncCasino = 1
-BEGIN
-	raisError ('This customer is already enabled Casino. Cannot delete', 16, 1)
-		RETURN
-END
-*/
 
 DECLARE @tmp_custID TABLE (CustID int)
 
@@ -110,7 +102,6 @@ BEGIN
 	
 	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
 
-	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -216,7 +207,6 @@ BEGIN
 	
 	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
 
-	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -319,7 +309,6 @@ BEGIN
 	
 	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
 	
-	DELETE CustWinLimit WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -406,7 +395,6 @@ BEGIN
 	
 	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE custid = @custid
 	
-	DELETE CustWinLimit WHERE custid = @custid
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid = @custid

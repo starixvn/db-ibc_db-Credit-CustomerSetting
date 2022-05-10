@@ -1,7 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
-    @custid int,-- masterid    
-    @disCasino bit = 0,    
+    @custid int,-- masterid      
     @firstname nvarchar(50),
     @lastname nvarchar(50),
     @phone nvarchar(50),    
@@ -502,6 +501,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210910@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -558,8 +558,7 @@ BEGIN
 					@mobilephone = @mobilephone,
 					@fax = @fax,
 					@email = @email,
-					@SubAccID = @SubAccID,
-					@disCasino = @disCasino,                
+					@SubAccID = @SubAccID,              
 					@UserID = @UserID,
 					@ErrMsg = @ErrMsg_Cur OUTPUT,
 					@ErrCode = @ErrCode_Cur OUTPUT,

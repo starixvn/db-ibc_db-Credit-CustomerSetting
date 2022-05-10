@@ -96,6 +96,7 @@ AS
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -427,9 +428,7 @@ BEGIN
 				,dangercust
 				,autosuspend
 				,autosuspend2
-				--,reject
 				,credit
-				--,closed
 				,MatchLimit
 				,VirtualMultiplier
 				,maxpermatch
@@ -439,11 +438,9 @@ BEGIN
 				,maxpermatch8
 				,maxpermatch10
 				,maxpermatch11
-				,maxpermatch12
 				,maxpermatch99
 				,Enabled   		
-				,DisableCasino
-				,SyncCasino           
+				         
 				,DisableOutright		
 				,MaxPerMatch99MP
 				,DisableNumber
@@ -451,12 +448,11 @@ BEGIN
 				,maxpermatch161
 		
 				,MaxPerBall161
-				--,maxpermatch164	
+				
 				,DoubleCommLosing		
 				,HideKeno
 			
-				,HideGoldDeluxe
-				,DisableGoldDeluxe
+				
 				,DisableSuperLive
 				,MaxPerMatch1MP
 				,Danger
@@ -476,9 +472,7 @@ BEGIN
 				,0 AS dangercust
 				,@autosuspend AS autosuspend
 				,@autosuspend2 as autosuspend2
-				--,reject
 				,@Credit AS Credit
-				--,closed
 				,MatchLimit
 				,@virtualmultiplier
 				,0
@@ -489,27 +483,21 @@ BEGIN
 				,0
 				,0
 				,0
-				,0
 				,@enableUpline as Enabled 		
-				,DisableCasino
-				,0 as SyncCasino           
+				          
 				,DisableOutright
 				,0
 				,DisableNumber
 		
 				,0
 			
-				,0
-				--,0			
-				,@doubleCommLosingUpline as doubleCommLosing
-				--,1			
+				,0		
+				,@doubleCommLosingUpline as doubleCommLosing		
 				,HideKeno
 			
-				,HideGoldDeluxe
-				,DisableGoldDeluxe
+				
 				,DisableSuperLive
 				,0
-				--,1
 				,@DangerSuper
 				,@DangerSuper2
 				,@DangerSuper3
@@ -550,22 +538,6 @@ BEGIN
 		SELECT @CustId, 1, 0
 	END
 
-	--insert default value from upline
-	EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
-		, @UplineId = @ExistingCustid
-		, @IP = @IP
-		, @UserId = @Creator
-		, @ErrCode = @ErrCode OUTPUT
-		, @ErrMsg = @ErrMsg OUTPUT
-	
-	IF @ErrCode <> 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
 	
 		EXEC dbo.Acc_CustomerInfo_Execrep_02
 			@custid = @custid,
@@ -585,7 +557,6 @@ BEGIN
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
 		
 		RETURN
 	END
@@ -652,7 +623,6 @@ BEGIN
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  		
 		
 		RETURN	
 	END	
@@ -684,7 +654,6 @@ BEGIN
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID	
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
 							
 		RETURN	
 	END CATCH				
@@ -761,7 +730,6 @@ BEGIN
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 							
 		RETURN	
@@ -841,7 +809,6 @@ BEGIN
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
 		DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
@@ -877,7 +844,6 @@ BEGIN
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
 		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID

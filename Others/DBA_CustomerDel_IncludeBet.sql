@@ -1,8 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="vnteam" viewers="vnteam" isFunction="0"></info>*/ 
-
-USE [CustDB]
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0"></info>*/ 
 ALTER PROCEDURE [dbo].[DBA_CustomerDel_IncludeBet]
 	@username varchar(40),
 	@ErrCode int = 0 OUTPUT,
@@ -24,30 +20,21 @@ AS
 		- 20131108@Elodie: Splitting bodb02 into CustDB (Move delete balance's customer to DBA_CustomerDel_IncludeBet_Balance)
 		- 20150622@Daniel: Separated custDB to server DBCUST
 		- 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
+		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
 */		
-Declare @roleid int, @custid int, @syncCasino bit
+Declare @roleid int, @custid int
 select @roleid = 0 
 select	@roleid=roleid, 
-		@custid = custid, 
-		@syncCasino = SyncCasino
+		@custid = custid
 from custinfo with (NOLOCK)
 where username = @username
 
 if @roleid = 0
 	select @ErrMsg = N'USERNAME not existed!'
 	
-
----Check Horse Racing, Financials, Casino
-/*
-if @syncCasino = 1
-BEGIN
-	raisError ('This customer is already enabled Casino. Cannot delete', 16, 1)
-		RETURN
-END
-*/
 
 DECLARE @tmp_custID TABLE (CustID int)
 

@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO 
 ALTER PROCEDURE [dbo].[Acc_CustomerSelUnSyncProducts]
 	@custid INT
 AS
@@ -12,6 +10,7 @@ AS
 		
 		Revisions:
 			- 20170922@Johnson: Create sp [Redmine: #72973]
+			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		Parameter's Explanations:
 		
 	*/
@@ -21,17 +20,13 @@ BEGIN
 	CREATE TABLE #UnSyncProduct (ProductID INT)
 	
 	DECLARE @roleid INT,
-		@isSyncGD 	BIT,
-		@isSyncCS	BIT,
 		@isSyncAB 	BIT,
 		@isSyncVB	BIT,
 		
 		@bitmapOrderAB TINYINT,
 		@bitmapOrderVB TINYINT
 		
-	SELECT @roleid = roleid, 
-		@isSyncGD = CASE WHEN HideGoldDeluxe = 0 THEN 1 ELSE 0 END,
-		@isSyncCS = SyncCasino
+	SELECT @roleid = roleid
 	FROM dbo.CustInfo WITH(NOLOCK)
 	WHERE custid = @custid
 	
@@ -49,30 +44,6 @@ BEGIN
 		
 	IF @roleid = 4
 	BEGIN	
-		--check GD
-		IF @isSyncGD = 1
-		BEGIN
-			IF EXISTS(SELECT TOP 1 1 
-					FROM dbo.CustInfo WITH(NOLOCK)
-					WHERE srecommend = @custid
-						AND roleid = 3
-						AND HideGoldDeluxe = 1
-					)
-			INSERT INTO #UnSyncProduct (productID)
-			SELECT 12
-		END
-		--Check Casino
-		IF @isSyncCS = 1
-		BEGIN
-			IF EXISTS(SELECT TOP 1 1 
-					FROM dbo.CustInfo WITH(NOLOCK)
-					WHERE srecommend = @custid
-						AND roleid = 3
-						AND SyncCasino = 0
-					)
-			INSERT INTO #UnSyncProduct (productID)
-			SELECT 6
-		END		
 		--Check AB
 		IF @isSyncAB = 1
 		BEGIN
@@ -101,31 +72,7 @@ BEGIN
 		END
 	END
 	ELSE IF @roleid = 3
-	BEGIN
-		--check GD
-		IF @isSyncGD = 1
-		BEGIN
-			IF EXISTS(SELECT TOP 1 1 
-					FROM dbo.CustInfo WITH(NOLOCK)
-					WHERE mrecommend = @custid
-						AND roleid = 2
-						AND HideGoldDeluxe = 1
-					)
-			INSERT INTO #UnSyncProduct (productID)
-			SELECT 12
-		END
-		--Check Casino
-		IF @isSyncCS = 1
-		BEGIN
-			IF EXISTS(SELECT TOP 1 1 
-					FROM dbo.CustInfo WITH(NOLOCK)
-					WHERE mrecommend = @custid
-						AND roleid = 2
-						AND SyncCasino = 0
-					)
-			INSERT INTO #UnSyncProduct (productID)
-			SELECT 6
-		END		
+	BEGIN	
 		--Check AB
 		IF @isSyncAB = 1
 		BEGIN
@@ -154,31 +101,7 @@ BEGIN
 		END
 	END
 	ELSE IF @roleid = 2
-	BEGIN
-		--check GD
-		IF @isSyncGD = 1
-		BEGIN
-			IF EXISTS(SELECT TOP 1 1 
-					FROM dbo.CustInfo WITH(NOLOCK)
-					WHERE recommend = @custid
-						AND roleid = 1
-						AND HideGoldDeluxe = 1
-					)
-			INSERT INTO #UnSyncProduct (productID)
-			SELECT 12
-		END
-		--Check Casino
-		IF @isSyncCS = 1
-		BEGIN
-			IF EXISTS(SELECT TOP 1 1 
-					FROM dbo.CustInfo WITH(NOLOCK)
-					WHERE recommend = @custid
-						AND roleid = 1
-						AND SyncCasino = 0
-					)
-			INSERT INTO #UnSyncProduct (productID)
-			SELECT 6
-		END		
+	BEGIN		
 		--Check AB
 		IF @isSyncAB = 1
 		BEGIN

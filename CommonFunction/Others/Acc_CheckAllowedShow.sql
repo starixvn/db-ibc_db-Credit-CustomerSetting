@@ -1,7 +1,6 @@
 /*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 					@CustID					INT
-				,	@AllowedCS				BIT = 0		OUTPUT
 				,	@AllowedVS				BIT = 0		OUTPUT
 				,	@AllowedLiveCasino		BIT = 0		OUTPUT
 				,	@AllowedVoidBridge		BIT = 0		OUTPUT
@@ -12,6 +11,7 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedSabaClub		BIT = 0		OUTPUT
 				,	@AllowedVGaming			BIT = 0		OUTPUT
 				,	@AllowedBitcoin			BIT = 0		OUTPUT
+				,	@AllowedSabaCasino		BIT = 0		OUTPUT
 				,   @SettingStatus          TINYINT = 0
 
 AS
@@ -56,6 +56,7 @@ Revisions:
 	- 20210426@Tina: Add VGaming [Redmine: #153938]
 	- 20210809@Winfred: add Bitcoin Betting [RedmineID: #159039]
 	- 20220211@Johnson: add FGG under Virtual Games - change productID to 64 [RedmineID: #165684]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -87,6 +88,7 @@ Revisions:
 		,	@IsHideRNGWar			INT
 		,	@IsHideVGamming			INT
 		,	@IsHideBitcoin			INT
+		,	@IsHideSabaCasino		INT
 
 	DECLARE @bitmapOrder_Allbet		INT
 		,	@bitOrderVB				INT 
@@ -105,7 +107,8 @@ Revisions:
 		,	@bitmapOrder_GTCasino	INT 
 		,	@bitmapOrder_RNGWar		INT 
 		,	@bitmapOrder_VGaming	INT 
-		,	@bitmapOrder_Bitcoin		INT  
+		,	@bitmapOrder_Bitcoin	INT  
+		,   @bitmapOrder_SabaCasino INT
 
 	SET @bitmapOrder_Allbet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 211 AND Bettype = 2401)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
@@ -125,6 +128,7 @@ Revisions:
 	SET @bitmapOrder_RNGWar = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 224 AND Bettype = 5500)
 	SET @bitmapOrder_VGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 171 AND Bettype = 3801)
 	SET @bitmapOrder_Bitcoin = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 175 AND Bettype = 7901)
+	SET @bitmapOrder_SabaCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 208 AND Bettype = 2101)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -170,32 +174,8 @@ Revisions:
 	
 	If @RoleID=4
 	BEGIN	
-		SET @AllowedCS=1
 		SET @AllowedVS = 1
 	END
-	ELSE 
-	BEGIN 
-		-- Check if Replicate run slowly.
-		If (@RoleID is null) 
-		Begin 
-			set @AllowedCS=0
-			return
-		End
-		-- For Casino (Check Upline allowed Casino)
-		if @RoleID=3
-			Select @SyncCasino=SyncCasino  FROM custinfo with (nolock) where CustID=@srecommend	
-		Else if @RoleID=2
-			Select @SyncCasino=SyncCasino  from custinfo with (nolock) where CustID=@mrecommend	
-		Else if @RoleID=1
-			Select @SyncCasino=SyncCasino  from custinfo with (nolock) where CustID=@recommend		
-		
-		-- For Casino
-		if @SyncCasino!=1
-			set @AllowedCS=0
-		else
-			set @AllowedCS=1
-					
-	End
 
 	-- For AllBet
 	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 211, @SettingStatus = @SettingStatus, @IsHide = @IsHideAllBet OUTPUT
@@ -409,6 +389,26 @@ Revisions:
 		WHERE	cps.CustID = @CustID
 			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
 									WHEN @RoleID = 2 THEN @mrecommend
-									ELSE @recommend END									
+									ELSE @recommend END		
+									
+	-- For Saba Casino
+	EXEC Acc_CheckShowProduct @ProductID = 6, @SettingStatus = @SettingStatus, @IsHide = @IsHideSabaCasino OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedSabaCasino =	CASE	WHEN @IsHideSabaCasino = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SabaCasino)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedSabaCasino =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SabaCasino)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_SabaCasino)) = 1
+											AND @IsHideSabaCasino = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END										
 END
 GO

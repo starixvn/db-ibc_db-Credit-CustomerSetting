@@ -24,7 +24,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_MAg]
 	@groupc DECIMAL(9, 8),
 	@groupd DECIMAL(9, 8),
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in case direct master add new agent
-	@DisableCasino BIT = 0, 	
+	 	
 	--@IsInternal BIT = 0,
 	
 	--  & number game status
@@ -486,6 +486,7 @@ Revisions:
 	- 20211104@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 Param's Explanation:
 • @ErrCode:
@@ -812,8 +813,7 @@ BEGIN
 
 	    --Keno
 	    @HideKeno BIT = 1,
-		@DisableGoldDeluxe BIT = 0,
-		@HideGoldDeluxe BIT = 1,	
+		
 		@DisableSuperLive BIT = 0,
 		@DangerMaster TINYINT = 0,
 		@DangerMaster2 TINYINT = 0,
@@ -828,7 +828,6 @@ BEGIN
          , @Credit_MAg = isnull(credit, 0)
          , @srecommend = srecommend
          , @matchlimit = matchlimit
-         , @DisableCasino = CASE WHEN DisableCasino = 1 THEN 1 ELSE @DisableCasino END
          , @DisableOutright = DisableOutright
      
          , @DisableNumber = CASE WHEN DisableNumber = 1 THEN 1 ELSE @DisableNumber END
@@ -839,10 +838,6 @@ BEGIN
          , @autosuspend2 = ISNULL(autosuspend2, 0)
          , @HideKeno = HideKeno
        
-         
-         , @DisableGoldDeluxe = DisableGoldDeluxe
-		 , @HideGoldDeluxe = HideGoldDeluxe
-		 
 		 , @DisableSuperLive = DisableSuperLive
 		 , @DangerMaster = Danger
 		 , @DangerMaster2 = Danger2
@@ -1678,7 +1673,6 @@ BEGIN
 	    @matchlimit = @matchlimit,
 	    @virtualmultiplier = @EnableVR,
 	   
-	    @DisableCasino = @DisableCasino,	
 	    @IsInternal = @IsInternal,
 	    @DisableNumber = @DisableNumber,
 		
@@ -1690,8 +1684,6 @@ BEGIN
 	    --Keno
 
 	    @HideKeno = @HideKeno,
-		@DisableGoldDeluxe = @DisableGoldDeluxe,
-		@HideGoldDeluxe = @HideGoldDeluxe,
 		
 		@DisableSuperLive = @DisableSuperLive,
 		@Danger = @DangerMaster,
@@ -1708,24 +1700,6 @@ BEGIN
 
     if @ErrCode <> 0
 	    return
-
-	--insert default value from upline
-	EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
-		, @UplineId = @mrecommend
-		, @IP = @IP
-		, @UserId = @Creator
-		, @ErrCode = @ErrCode OUTPUT
-		, @ErrMsg = @ErrMsg OUTPUT
-	
-	IF @ErrCode <> 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Create customer fail. Please try again'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
-
 
     EXEC dbo.Acc_CustomerInfo_Execrep_00
 	    @custid = @custid,
@@ -2064,7 +2038,7 @@ BEGIN
 					    END
 
 		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-    		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
+    		
 	    return
     END
 	
@@ -2441,7 +2415,7 @@ BEGIN
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
-    'DisableCasino="'+ COALESCE(CAST(@DisableCasino as VARCHAR(1)), SPACE(1)) + '" ' +
+   
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright as VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableNumber="' + COALESCE(CAST(@DisableNumber as VARCHAR(1)), SPACE(1)) + '" ' +
  
@@ -2474,7 +2448,7 @@ BEGIN
 		'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 		'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 		'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
-	    'DisableCasino="'+ COALESCE(CAST(@DisableCasino as VARCHAR(1)), SPACE(1)) + '" ' +
+	   
 	    'DisableOutright="'+ COALESCE(CAST(@DisableOutright as VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableNumber="' + COALESCE(CAST(@DisableNumber as VARCHAR(1)), SPACE(1)) + '" ' +
 	   

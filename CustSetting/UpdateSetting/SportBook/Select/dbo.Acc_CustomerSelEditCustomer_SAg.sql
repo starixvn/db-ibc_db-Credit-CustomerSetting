@@ -41,6 +41,7 @@ Revisions:
 	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 */
 	SET NOCOUNT ON  
@@ -851,7 +852,7 @@ Revisions:
 	SELECT  
 		ISNULL(c.fax,'') AS fax, c.firstname, c.lastname,c.username2,   
 		cps.reject AS suspended, 
-		ci.synccasino,
+		
 		sp.SuperStatus AS Ssuspended,
 		@AllowedCurr AS AllowedCurr,
 		CASE WHEN (cl.SuperStatus + cl.MasterStatus + cl.AgentStatus) > 0 THEN 1 ELSE 0 END AS UplineClosed,
@@ -1718,7 +1719,7 @@ Revisions:
 		c.custid=@custId AND c.recommend=@agentId  
 	GROUP BY   
 		c.fax, c.firstname, c.lastname, c.username2, c.mobilephone, c.email, c.phone, c.ugroup, c.username,   
-		ci.synccasino,
+		
 		exchange.minbet, cps.closed, ci.credit,cps.reject,
 		cps.closed,
 		sp.SuperStatus,sp.MasterStatus,sp.AgentStatus,

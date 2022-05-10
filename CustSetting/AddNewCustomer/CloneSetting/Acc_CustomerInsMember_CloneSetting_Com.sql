@@ -78,6 +78,7 @@ AS
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
  Explanation's Param:  
 	- @ErrCode:
@@ -380,9 +381,9 @@ BEGIN
 				,recommend
 				,dangercust
 				,autosuspend
-				--,reject
+		
 				,credit
-				--,closed
+			
 				,MatchLimit
 				,VirtualMultiplier
 				,maxpermatch
@@ -392,23 +393,21 @@ BEGIN
 				,maxpermatch8
 				,maxpermatch10
 				,maxpermatch11
-				,maxpermatch12
+				
 				,maxpermatch99
 				,Enabled   							
-				,DisableCasino
-				,SyncCasino           
+				        
 				,DisableOutright				
 				,MaxPerMatch99MP
 				,DisableNumber
 				,maxpermatch161
 				
 				,MaxPerBall161				
-				--,maxpermatch164			
+							
 				,DoubleCommLosing	
 				,HideKeno
 				
-				,HideGoldDeluxe
-				,DisableGoldDeluxe
+				
 				,DisableSuperLive
 				,MaxPerMatch1MP
 				)
@@ -422,9 +421,9 @@ BEGIN
 				,0 as recommend
 				,dangercust
 				,0 AS autosuspend
-				--,reject
+				
 				,@Credit AS Credit
-				--,closed
+				
 				,MatchLimit
 				,@EnableVR AS VirtualMultiplier
 				,0
@@ -434,11 +433,10 @@ BEGIN
 				,0
 				,0
 				,0
-				,0
+				
 				,0
 				,Enabled  						
-				,DisableCasino
-				,0 as SyncCasino           
+		         
 				,DisableOutright				
 				,0
 				,DisableNumber
@@ -446,15 +444,13 @@ BEGIN
 				,0
 				
 				,0				
-				--,0				
+							
 				,doubleCommLosing		
 				,HideKeno
 				
-				,HideGoldDeluxe 
-				,DisableGoldDeluxe
 				,DisableSuperLive
 				,0
-				--,1
+				
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 		
@@ -481,30 +477,6 @@ BEGIN
 		RETURN
 	END CATCH
 
-	BEGIN TRY
-		--insert default value from upline
-		EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
-			, @UplineId = @ExistingCustid
-			, @IP = @IP
-			, @UserId = @Creator
-			, @ErrCode = @ErrCode OUTPUT
-			, @ErrMsg = @ErrMsg OUTPUT
-
-	END TRY
-	BEGIN CATCH
-		SELECT @ErrMsg = CASE @Language 
-								WHEN 'E' THEN 'Create customer failed. Please try again.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							end
-				,@ErrCode = 106
-					
-		-- ROLLBACK MANUALLY			
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	    
-		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID 
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID  
-	END CATCH
-
 	
 	BEGIN TRY
 				EXEC dbo.Acc_CustomerInfo_Execrep_02
@@ -526,7 +498,7 @@ BEGIN
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID  
+		
 		
 		RETURN
 	END CATCH
@@ -567,7 +539,7 @@ BEGIN
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID
+		
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
@@ -597,7 +569,7 @@ BEGIN
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID
+		
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
@@ -667,7 +639,7 @@ BEGIN
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID
+		
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
@@ -747,7 +719,7 @@ BEGIN
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM dbo.CustWinlimit WITH(ROWLOCK) WHERE custId = @CustID
+		
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID

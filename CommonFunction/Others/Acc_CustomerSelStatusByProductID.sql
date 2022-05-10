@@ -15,6 +15,7 @@ AS
 		- 20170504@Winnie: [Keno] - New 6 mini games - Customer Setting Development [RedmineID: #93796]
 		- 20190820@Eden: Hide setting of inactive products - Colossus Bet [RedmineID: #117439]
 		- 20190903@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	Parameters Explanation
 */ 
 
@@ -64,61 +65,6 @@ BEGIN
 		VALUES(@ProductID,204,18000,@IsDisabled,@IsDisabledDownline,@HasDownline,@IsSync,@isHidden,@IsDisabledUpline,@IsHiddenUpline,@IsSyncedUpline,@IsSyncedDownline)		
 	END 	
 	
-	
-	ELSE IF @ProductID=6 -- Casino
-	BEGIN
-		SELECT @RoleID=RoleID,@IsDisabled=DisableCasino,@IsSync=ISNULL(SyncCasino,0),@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend FROM custInfo WITH(NOLOCK) WHERE custid=@custid
-		IF @RoleID=2
-		BEGIN
-			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@mrecommend
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE recommend = @CustID AND roleid=1 AND SyncCasino=1)
-					SELECT @HasDownline=1
-			IF @HasDownline=1
-			BEGIN
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND DisableCasino=1 AND SyncCasino=1)
-					SELECT @IsDisabledDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE recommend=@custid AND roleid=1 AND ISNULL(SyncCasino,0)=0)
-					SELECT @IsSyncedDownline=0
-			END
-		END		
-		ELSE IF @RoleID=3
-		BEGIN	
-			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@srecommend
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE mrecommend = @CustID AND roleid=2 AND SyncCasino=1)
-				SELECT @HasDownline=1
-			IF @HasDownline=1
-			BEGIN
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND DisableCasino=1 AND SyncCasino=1)
-					SELECT @IsDisabledDownline=1
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE mrecommend=@custid AND roleid=2 AND ISNULL(SyncCasino,0)=0)
-					SELECT @IsSyncedDownline=0
-			END
-		END
-		ELSE IF @RoleID=4	
-		BEGIN	
-			
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK)	WHERE srecommend = @CustID AND roleid=3 AND SyncCasino=1)
-				SELECT @HasDownline=1
-			IF @HasDownline=1
-			BEGIN
-				
-				IF EXISTS(SELECT 1 FROM custInfo WITH(NOLOCK) WHERE srecommend=@custid AND DisableCasino=1  AND SyncCasino=1)
-				BEGIN
-				
-					SELECT @IsDisabledDownline=1
-						
-				END
-				IF EXISTS(SELECT 1 FROM  custInfo WITH(NOLOCK) WHERE srecommend=@custid AND roleid=3 AND ISNULL(SyncCasino,0)=0)
-					SELECT @IsSyncedDownline=0
-			END
-		END
-		ELSE IF @RoleID=1
-		BEGIN	
-			SELECT @IsSyncedUpline=ISNULL(SyncCasino,0),@IsDisabledUpline=DisableCasino FROM dbo.CustInfo WITH (NOLOCK)  WHERE custid=@recommend
-		END
-		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline)
-		VALUES(@ProductID,208,2101,@IsDisabled,@IsDisabledDownline,@HasDownline,@IsSync,@isHidden,@IsDisabledUpline,@IsHiddenUpline,@IsSyncedUpline,@IsSyncedDownline)			
-	END 	
 	ELSE IF @ProductID=8--Keno
 	BEGIN	
 		SELECT @Ishidden=HideKeno,@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend,@RoleID=roleid FROM custInfo  WITH (NOLOCK)  WHERE custid=@custid

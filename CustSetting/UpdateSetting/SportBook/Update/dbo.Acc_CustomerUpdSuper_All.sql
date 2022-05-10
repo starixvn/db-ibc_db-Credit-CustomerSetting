@@ -7,7 +7,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @mobilephone nvarchar(50),
     @email nvarchar(50)=NULL,
     @fax nvarchar(50),
-    @disCasino bit = 0,
 
     @SubAccID int = 0,
     @MinBet money,
@@ -375,6 +374,7 @@ Revisions:
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 • @ErrCode:
     = 0: Update successfully.
@@ -429,7 +429,6 @@ Revisions:
 		@fax = @fax,
 		@email = @email,
 		@UserID = @UserID,
-		@disCasino = @disCasino,
 		@ErrMsg = @ErrMsg_Cur OUTPUT,
 		@ErrCode = @ErrCode_Cur OUTPUT,
 		@IP = @IP

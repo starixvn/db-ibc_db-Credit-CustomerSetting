@@ -115,8 +115,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 
 	@credit MONEY,  
 
-	@disCasino bit = 0,  
-
 	@apositiontaking_1 SMALLMONEY,  
 	@apositiontaking_2 SMALLMONEY,  
 	@apositiontaking_3 SMALLMONEY,  
@@ -268,6 +266,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210910@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]	
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	
 Param's Explanation:  
 • @ErrCode:  
@@ -326,7 +325,6 @@ BEGIN
 		@email = @email,  
 		@SubAccID = @SubAccID,  
 		@UserID = @UserID,  
-		@disCasino = @disCasino,  
 		@ErrMsg = @ErrMsg_Cur OUTPUT,  
 		@ErrCode = @ErrCode_Cur OUTPUT,  
 		@IP = @IP  

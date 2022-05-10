@@ -323,14 +323,12 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v161alivepositiontaking_89 SMALLMONEY = 0,
 	@v161alivepositiontaking_90 SMALLMONEY = 0,
 	@SystemID		TINYINT=1,	
-	@DisableCasino BIT = 0, 
+	
 	@DisableNumber BIT = 0,
 	@DoubleCommLosing BIT = 1,
 
 	-- MyanmarOdds
 	@discountMyanmarOdds DECIMAL(9,8)=0,
-	
-	@DisableGoldDeluxe BIT = 0,
 	@DisableSuperLive BIT = 1,
 	@IP VARCHAR(15)='',
 	@Language VARCHAR(2)= 'E',
@@ -448,6 +446,7 @@ Revisions:
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 Param's Explanation:
 • @ErrCode:
@@ -884,13 +883,11 @@ BEGIN
 	--check for allow play horseracing
 	
 
-	DECLARE @HideKeno BIT, @HideGoldDeluxe  BIT
+	DECLARE @HideKeno BIT
 			
 
 	SELECT @HideKeno = 0 --Enable Keno by default for all sites
 
-	SELECT @HideGoldDeluxe = 0 -- 20151001@Elodie: Set HideGoldDeluxe = 0, DisableGoldDeluxe = 0 for real super
-		
 	DECLARE @autosuspend BIT,
 			@autosuspend2 BIT
 
@@ -928,14 +925,11 @@ BEGIN
 		@autosuspend2 = @autosuspend2,		
 		@matchlimit = 1,
 		@virtualmultiplier = @EnableVR,	
-	
-		@DisableCasino = @DisableCasino,
+
 		@DisableNumber = @DisableNumber,
 		@DoubleCommLosing = @DoubleCommLosing,		
 		
-		@DisableGoldDeluxe = @DisableGoldDeluxe,
-		@HideGoldDeluxe = @HideGoldDeluxe,
-		
+	
 		@DisableSuperLive = @DisableSuperLive,
 
 		--keno
@@ -952,23 +946,6 @@ BEGIN
 	--Error occurs
 	IF @ErrCode <> 0
 		RETURN
-
-	--insert max win limit
-EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
-	, @UplineId = NULL --for super livel
-	, @IP = @IP
-	, @UserId = @Creator
-	, @ErrCode = @ErrCode OUTPUT
-	, @ErrMsg = @ErrMsg OUTPUT
-
-	IF @ErrCode <> 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Create customer fail. Please try again'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
 	
 	DECLARE @IsMyanmarOdds BIT = 0
 
@@ -1231,7 +1208,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
+			
 		RETURN
 	END	
 
@@ -1266,7 +1243,7 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							END
 				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-				DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
+				
 				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
 			RETURN
 		END
@@ -1504,7 +1481,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
 	
-	'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
 	
 	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +
@@ -1531,7 +1507,6 @@ EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
 		'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
 		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	
-		'disableCasino="'+ COALESCE(CAST(@disableCasino AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
 		
 		'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +		

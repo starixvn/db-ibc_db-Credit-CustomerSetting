@@ -47,14 +47,10 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	
 	@DisableNumber BIT = 0,
 
-	@DisableCasino BIT = 0,
-
 	@DoubleCommLosing BIT = 0,
 
 	@DisableEsports BIT = 0,
-	@DisableGoldDeluxe BIT = 0,
-	@HideGoldDeluxe BIT = 0,
-	
+
 	@DisableSuperLive BIT = 0,
 
 	--Keno
@@ -150,6 +146,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 	Param's Explanation:
 • @ErrCode:
@@ -164,9 +161,6 @@ BEGIN
 			, @IsAutoEnableADBMaster BIT
 	
 	SET @CreateDate = GETDATE()
-	
-	IF @currency = 45 --Gold Deluxe doesn't support WON currency [Redmine: #41785]
-		SELECT @HideGoldDeluxe = 1, @DisableGoldDeluxe = 1
 
 	IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value will get site from agent
 	BEGIN
@@ -501,10 +495,10 @@ BEGIN
 		  --, closed
 		  , username
 		  , MatchLimit, VirtualMultiplier
-		  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
+		  , DisableOutright, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
 		  , danger, danger2, danger3, danger4, danger5, Abnormal
 		  ,  DoubleCommLosing
-		  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
+		  , HideKeno, DisableEsports, DisableSuperLive
 		  , MaxPerMatch1MP
 		  --,maxpermatch164
 		  )
@@ -519,10 +513,10 @@ BEGIN
 		  --, ISNULL(@closed, 0)
 		  , @username
 		  , @matchlimit, @virtualmultiplier
-		  , @DisableOutright, @DisableCasino, @DisableNumber,  0, 0, 0
+		  , @DisableOutright, @DisableNumber,  0, 0, 0
 		  , @danger, @danger2, @danger3, @danger4, @danger5, @Abnormal
 		  ,  @DoubleCommLosing	
-		  , @HideKeno, @DisableEsports, @DisableGoldDeluxe, @HideGoldDeluxe, @DisableSuperLive
+		  , @HideKeno, @DisableEsports, @DisableSuperLive
 		  , 0
 		  --, 0
 		)
