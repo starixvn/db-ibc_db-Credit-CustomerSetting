@@ -47,6 +47,7 @@ Revisions:
 	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 Param's Explanation:
 • @CustID: member ID
@@ -1260,14 +1261,8 @@ SELECT
 	isnull(@v161alivepositiontaking_86_min, 0) as minv161lpos_86,
 	isnull(@v161alivepositiontaking_87_min, 0) as minv161lpos_87,
 	isnull(@v161alivepositiontaking_89_min, 0) as minv161lpos_89,
-	isnull(@v161alivepositiontaking_90_min, 0) as minv161lpos_90
-	
-	-- Casino section
-	,ci.synccasino,
-    ci.disablecasino,
-    --ci.disablebingo,
+	isnull(@v161alivepositiontaking_90_min, 0) as minv161lpos_90,
     ci.disablenumber,
-    --ci.syncbingo,
 	-- Out right PT
 	isnull(max(case when cs.bettype = 10 and cs.sporttype=2 then cs.apositiontaking else 0 end), 0) as v2apositiontaking_10,	
 	isnull(max(case when cs.bettype = 10 and cs.sporttype=3 then cs.apositiontaking else 0 end), 0) as v3apositiontaking_10,	
@@ -1456,14 +1451,8 @@ group by
 	C.username, C.firstname, C.lastname,c.username2, cps.closed,cps.reject,ci.currency,
 	C.postal, C.email, C.phone, C.mobilephone, c.email, C.fax, 
 	C.site, C.ugroup, C.roleid,
-	exchange.minbet, C.refcode1,C.address, C.city, C.state, C.country, ci.credit
-	
-		-- Casino section
-	,ci.synccasino,
-    ci.disablecasino,
-     --ci.disablebingo,
+	exchange.minbet, C.refcode1,C.address, C.city, C.state, C.country, ci.credit,
     ci.disablenumber,
-    --ci.syncbingo
     CDA.CustID,
 	sp.SuperStatus,sp.MasterStatus,sp.AgentStatus
     

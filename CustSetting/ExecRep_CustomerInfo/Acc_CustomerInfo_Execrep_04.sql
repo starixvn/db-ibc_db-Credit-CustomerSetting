@@ -13,7 +13,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@DisableVS					BIT				= 0
 				,	@EnableVS					BIT				= 0
 				,	@DisableNumberGame			BIT				= 0
-				,	@DisableGoldDeluxe			BIT				= 0
+				
 				--20180109@Johnson: new direction for status [redmine:#87328]
 				,	@UpdateAllMasters 			BIT 			= 0
 				,	@UpdateAllAgents  			BIT 			= 0
@@ -74,6 +74,8 @@ AS
 		- 20210325@Eden: Implement option to override Lock VR status and values for Master/Agent and even unlocked status of members [Redmine:#152094]
 		- 20220406@Elodie: Apply STRING_SPLIT() instead of strSplit UDF [Redmine: #168783]
 		- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
+		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+
 
 	Param's Explanation:
 		@Action: 
@@ -947,62 +949,7 @@ BEGIN
 			END			
 		END 
     END;
-    ELSE IF @Action ='disabledCS'
-    BEGIN
-	    IF @RoleID = 4
-	    BEGIN
-			IF @DisabledCS = 1
-			BEGIN
-				UPDATE	CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET		DisableCasino = @disabledCS
-				WHERE	SyncCasino=1 AND srecommend=@custid AND roleid BETWEEN 1 AND 3; 
-			END
-			ELSE
-			BEGIN
-				UPDATE	CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET		DisableCasino = CASE WHEN @UpdateAllMasters = 1 AND roleID =3 THEN @DisableAllMasters
-											 WHEN @UpdateAllAgents = 1 AND roleID =2 THEN @DisableAllAgents
-											 WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-											 ELSE DisableCasino	END	
-				WHERE	SyncCasino=1 AND srecommend=@custid AND roleid BETWEEN 1 AND 3;
-			END
-	    END;
-	    ELSE IF @RoleID = 3
-	    BEGIN
-			IF @DisabledCS = 1
-			BEGIN
-				UPDATE	CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET		DisableCasino = @disabledCS
-				WHERE	SyncCasino=1 AND mrecommend=@custid AND roleid BETWEEN 1 AND 2; 
-			END
-			ELSE
-			BEGIN
-				UPDATE	CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET		DisableCasino = CASE WHEN @UpdateAllAgents = 1 AND roleID =2 THEN @DisableAllAgents
-											 WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-											 ELSE DisableCasino	END	
-				WHERE	SyncCasino=1 AND mrecommend=@custid AND roleid BETWEEN 1 AND 2;
-			END
-	    END;
-	    ELSE IF @RoleID = 2
-	    BEGIN
-			IF @DisabledCS = 1
-			BEGIN
-				UPDATE	CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET		DisableCasino = @disabledCS
-				WHERE	SyncCasino=1 AND recommend=@custid AND roleid = 1;
-			END
-			ELSE
-			BEGIN
-				UPDATE	CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET		DisableCasino = CASE WHEN @UpdateAllMembers = 1 THEN @DisableAllMembers
-											 ELSE DisableCasino	END
-				WHERE	SyncCasino=1 AND recommend=@custid AND roleid = 1;
-			END
-	    END;
-    END;
    
-    
     ELSE IF @Action = 'DisableNumberGame'
     BEGIN
 	    IF @RoleID = 4 
@@ -1175,75 +1122,7 @@ BEGIN
 				AND (Roleid = 1 AND @UpdateAllMembers =1);
 	    END;
     end;
-    --@20150424@Johnson: add Gold Deluxe
-    ELSE IF @Action = 'GoldDeluxe'
-    BEGIN
-	    IF (@roleID = 4)
-	    BEGIN
-			IF @DisableGoldDeluxe = 1
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableGoldDeluxe = @DisableGoldDeluxe		
-				WHERE CustID <> @CustID
-					AND SRecommend = @CustID
-					AND HideGoldDeluxe = 0;
-			END
-			ELSE
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableGoldDeluxe = CASE WHEN @UpdateAllMasters = 1 AND roleID =3 THEN @DisableAllMasters
-											 WHEN @UpdateAllAgents = 1 AND roleID =2 THEN @DisableAllAgents
-											 WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-											 ELSE DisableGoldDeluxe	END	
-				WHERE CustID <> @CustID
-					AND SRecommend = @CustID
-					AND HideGoldDeluxe = 0;
-			END
-	    END;
 
-	    IF (@roleID = 3)
-	    BEGIN
-			IF @DisableGoldDeluxe = 1
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableGoldDeluxe = @DisableGoldDeluxe			    
-				WHERE CustID <> @CustID
-					AND MRecommend = @CustID
-					AND HideGoldDeluxe = 0;
-			END
-			ELSE
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableGoldDeluxe = CASE WHEN @UpdateAllAgents = 1 AND roleID =2 THEN @DisableAllAgents
-											 WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-											 ELSE DisableGoldDeluxe	END	
-				WHERE CustID <> @CustID
-					AND MRecommend = @CustID
-					AND HideGoldDeluxe = 0;
-			END	
-	    END;
-
-	    IF (@roleID = 2)
-	    BEGIN
-			IF @DisableGoldDeluxe = 1
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableGoldDeluxe = @DisableGoldDeluxe
-				WHERE CustID <> @CustID
-					AND Recommend = @CustID
-					AND HideGoldDeluxe = 0;
-			END
-			ELSE 
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableGoldDeluxe = CASE WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-											 ELSE DisableGoldDeluxe	END	
-				WHERE CustID <> @CustID
-					AND Recommend = @CustID
-					AND HideGoldDeluxe = 0;
-			END		
-	    END;
-    END;
 	ELSE IF @Action = 'SuperLive'
     BEGIN
 	    IF (@roleID = 4)

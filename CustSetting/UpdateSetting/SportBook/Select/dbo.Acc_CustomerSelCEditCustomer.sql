@@ -36,6 +36,7 @@ Revisions:
 	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 Param's Explanation:
  - @CustID: super ID
@@ -401,9 +402,6 @@ select
 	@Site as site,
 	ci.credit,
 	@Credit_SAg_Min as Credit_Min,
-	-- Casino
-	ci.disablecasino,
-	ci.synccasino,
 	ci.DisableNumber,
 	
 	@isInternal as isinternal,	--v151
@@ -938,9 +936,6 @@ group by
 	cps.reject, 
 	ci.username,
 	ci.credit,
-	-- Casino
-	ci.disablecasino,
-	ci.synccasino, 
 	ci.disableNumber,
 	cs3.v161spositiontaking_81_min	,
 	cs3.v161spositiontaking_83_min	,

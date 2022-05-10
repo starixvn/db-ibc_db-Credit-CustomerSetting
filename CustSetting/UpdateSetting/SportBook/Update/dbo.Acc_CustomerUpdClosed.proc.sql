@@ -3,8 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdClosed]
 	@CustID int,
 	@Closed bit,	
 	@SubAccID int = 0, --Sub-AccountID
-	@UserID int,
-	@disCasino bit =0,	
+	@UserID int,	
 	@Language varchar(2) = 'E',
 	@ErrCode int = 0 OUTPUT,
 	@ErrMsg nvarchar(500) = '' OUTPUT,
@@ -46,6 +45,7 @@ Revisions:
 	- 20200216@Elodie: Lock close/suspend for some member [Redmine: #128541]
 	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 Param's Explanation
 • @custid: custid that need to be viewed.   
@@ -117,19 +117,6 @@ BEGIN
 			
 	END
 	-----***END: PREVENT ROBOT OPENED BACK***-----
-
-	IF exists(select 1 from custinfo with (nolock) where synccasino = 1 and custid = @CustID)
-	BEGIN
-		IF @disCasino = 1
-			BEGIN	
-				Select @ErrMsg = case @Language 
-									when 'E' then 'This CLOSED function is temporarily unavailable, please update later.'
-									ELSE [dbo].[f_Get_MsgNamebyMsgID](60004,@Language)
-								end	,
-					@ErrCode = 106
-					return
-			END
-	END
 
 	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' 
 	AND (EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)

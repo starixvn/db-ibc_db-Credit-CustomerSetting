@@ -92,7 +92,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	
 	@credit MONEY,
 		
-	@DisableCasino BIT = 0, 
 	@DisableNumber BIT = 0,	
 
 	--@Disable180_1201 BIT = 0,
@@ -347,6 +346,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 Param's Explanation:	
 • @ErrCode:
@@ -1432,9 +1432,7 @@ BEGIN
 
 	    --Keno
 	    @HideKeno BIT = 1,
-		@DisableGoldDeluxe BIT = 0,
-		@HideGoldDeluxe BIT = 1,
-		
+	
 		@DisableSuperLive BIT = 0,
 
 	    @matchlimit SMALLMONEY,
@@ -1464,13 +1462,12 @@ BEGIN
          , @AgentAbnormal = Abnormal
          , @autosuspend = ISNULL(autosuspend, 0)
          , @autosuspend2 = ISNULL(autosuspend2, 0)
-         , @DisableCasino = CASE WHEN DisableCasino = 1 THEN 1 ELSE @DisableCasino END        
+         
          , @DisableOutright = DisableOutright   
          , @DisableNumber = CASE WHEN DisableNumber = 1 THEN 1 ELSE @DisableNumber END
          , @EnableVR = ISNULL(virtualmultiplier, 1)           
          , @HideKeno = HideKeno      
-		 , @DisableGoldDeluxe = DisableGoldDeluxe
-		 , @HideGoldDeluxe = HideGoldDeluxe
+		
 		 , @DisableSuperLive = DisableSuperLive
      FROM custinfo ci WITH(NOLOCK)	
 		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
@@ -2424,15 +2421,12 @@ BEGIN
 	    @matchlimit = @matchlimit,
 	    @virtualmultiplier = @EnableVR,
 	   
-	    @DisableCasino = @DisableCasino,
 		@DisableNumber = @DisableNumber,	 
 
 	    @DoubleCommLosing = 0,-- off double comm losing WHEN create new member   	 
 	  
 	    --Keno
 	    @HideKeno = @HideKeno,
-		@DisableGoldDeluxe = @DisableGoldDeluxe,
-		@HideGoldDeluxe = @HideGoldDeluxe,
 		
 		@DisableSuperLive = @DisableSuperLive,
 
@@ -2448,23 +2442,6 @@ BEGIN
 
     IF @ErrCode <> 0
 	    return
-
-	--insert default value from upline
-	EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
-		, @UplineId = @recommend
-		, @IP = @IP
-		, @UserId = @Creator
-		, @ErrCode = @ErrCode OUTPUT
-		, @ErrMsg = @ErrMsg OUTPUT
-	
-	IF @ErrCode <> 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Create customer fail. Please try again'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
     	
     --set comm of sportbook = 0 if agent of member exist in table CustNoComm
     IF EXISTS(SELECT 1 FROM CustNoComm WHERE custID = @recommend)
@@ -2776,7 +2753,7 @@ BEGIN
 					    END	
     				
 		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
+			
 
 	    RETURN
     END	
@@ -2808,7 +2785,6 @@ BEGIN
 	    DELETE custOverrideGame WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType WITH (ROWLOCK) WHERE custId = @custid
 
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -2843,7 +2819,6 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
     	
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
@@ -2878,8 +2853,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+	
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -2913,8 +2887,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+		
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -2948,8 +2921,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+	
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -2984,8 +2956,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+	
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -3019,8 +2990,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+		
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -3054,8 +3024,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+		
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -3089,8 +3058,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+	
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -3124,8 +3092,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+		
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -3159,8 +3126,7 @@ BEGIN
 	    DELETE custOverride3rd  WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH(ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType     WITH(ROWLOCK) WHERE custId = @custid
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-    	
+		
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    return
@@ -3187,9 +3153,8 @@ BEGIN
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType WITH (ROWLOCK) WHERE custId = @custid
-	    	    EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
-
+	    EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
+		
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    return
     END
@@ -3214,10 +3179,8 @@ BEGIN
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType WITH (ROWLOCK) WHERE custId = @custid
-				EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-				EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
-
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
+		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
+		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
 
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    return
@@ -3246,10 +3209,9 @@ BEGIN
 	    DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE custOverrideGame WITH (ROWLOCK) WHERE custId = @custid		
 	    DELETE CustGameType WITH (ROWLOCK) WHERE custId = @custid
-				EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-				EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
+		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
+		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
 
-		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE dbo.[CustQRCode] WITH(ROWLOCK) WHERE CustID = @CustID
 
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
@@ -3633,7 +3595,7 @@ BEGIN
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +	
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
-    'DisableCasino="'+ COALESCE(CAST(@DisableCasino AS VARCHAR(1)), SPACE(1)) + '" ' +   
+ 
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableNumber="'+ COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
    
@@ -3667,7 +3629,7 @@ BEGIN
 		'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +	 
 		'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 		'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +      
-	    'DisableCasino="'+ COALESCE(CAST(@DisableCasino AS VARCHAR(1)), SPACE(1)) + '" ' +	  
+	  
 	    'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableNumber="'+ COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' +	   
 	  

@@ -38,6 +38,7 @@ Revisions:
 	- 20210513@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 Param's Explanation:
 • @CustID: master ID
@@ -1582,10 +1583,6 @@ select
 	max(case when co3.bettype = 87 and co3.sporttype = 161 then case when @v161mlivepositiontaking_87_max < co3.maxlivepositiontaking then @v161mlivepositiontaking_87_max else co3.maxlivepositiontaking end else 0 end) as v161mlivepositiontaking_87_max,
 	max(case when co3.bettype = 89 and co3.sporttype = 161 then case when @v161mlivepositiontaking_89_max < co3.maxlivepositiontaking then @v161mlivepositiontaking_89_max else co3.maxlivepositiontaking end else 0 end) as v161mlivepositiontaking_89_max,
 	max(case when co3.bettype = 90 and co3.sporttype = 161 then case when @v161mlivepositiontaking_90_max < co3.maxlivepositiontaking then @v161mlivepositiontaking_90_max else co3.maxlivepositiontaking end else 0 end) as v161mlivepositiontaking_90_max,
-		
-	-- Casino section
-    ci.synccasino,
-    ci.disablecasino,
 	
 	-- number game
 	ci.DisableNumber,
@@ -1842,9 +1839,6 @@ group by
 	c.firstname, c.lastname, c.roleid, c.username,
 	exchange.minbet, c.phone, c.mobilephone, c.email,c.fax,
 	ci.credit,
-	-- Casino section
-	ci.synccasino,
-    ci.disablecasino,
 	-- number game
 	ci.DisableNumber
 END

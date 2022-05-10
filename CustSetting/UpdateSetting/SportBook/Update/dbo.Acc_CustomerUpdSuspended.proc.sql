@@ -2,7 +2,6 @@
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuspended]
 	@CustID int,
 	@Suspended bit,	
-	@disCasino bit =0,	
 	@SubAccID int = 0, --Sub-AccountID
 	@UserID int,
 	@Language varchar(2) = 'E',
@@ -42,6 +41,7 @@ Revisions:
 	- 20190404@Johnson: add suspendinfo [redmine: #105587]
 	- 20200216@Elodie: Lock close/suspend for some member [Redmine: #128541]
 	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	
 Param's Explanation:
 • @ErrCode:
@@ -63,19 +63,6 @@ BEGIN
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @custid, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output
 	if @ErrCode <>0 return
 	--end
-
-	IF exists(select 1 from custinfo with (nolock) where synccasino = 1 and custid = @CustID)
-	BEGIN
-	IF @disCasino = 1
-		BEGIN	
-			Select @ErrMsg = case @Language 
-								when 'E' then 'This SUSPENDED function is temporarily unavailable, please update later.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](60001,@Language)
-							end	,
-				@ErrCode = 105
-				return
-		END
-	END
 	
 	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' 
 	AND (EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)

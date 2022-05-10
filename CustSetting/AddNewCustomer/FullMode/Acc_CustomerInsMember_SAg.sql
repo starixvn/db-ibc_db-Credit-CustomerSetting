@@ -17,8 +17,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_SAg]
 	@postal     NVARCHAR(50)=NULL,
 
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in CASE dummy super add new master
-	
-	@DisableCasino    BIT = 0,
 	@DisableAutoMPT   BIT = 1,--Super allow master using auto master PT or not.
 
 	@DisableNumber    BIT = 0,
@@ -468,12 +466,12 @@ Revisions:
 	- 20210405@Johnson: Hide log Gold Deluxe Setting [redmined:#151188]	
 	- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210820@Johnson: Add 2 new Dangerous types for Basketball & Esports [redmine:#159551]
-	
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20211104@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 Param's Explanation:
 • @ErrCode:
@@ -885,8 +883,6 @@ BEGIN
 
 	    --Keno
 	    @HideKeno BIT = 1,
-		@DisableGoldDeluxe BIT = 0,
-		@HideGoldDeluxe BIT = 1,
 
 		
 		@DisableSuperLive BIT = 0,
@@ -908,8 +904,7 @@ BEGIN
 	    @Credit_SAg = isnull(credit, 0),
 	    @matchlimit = matchlimit,
 	
-	    @DisableNumber = CASE WHEN ci.DisableNumber = 1 THEN 1 ELSE @DisableNumber END,	   
-	    @DisableCasino = CASE WHEN DisableCasino = 1 THEN 1 ELSE @DisableCasino END, 	 
+	    @DisableNumber = CASE WHEN ci.DisableNumber = 1 THEN 1 ELSE @DisableNumber END,	    
 	    @DisableOutright = DisableOutright,
 	    
 	    @DoubleCommLosing = DoubleCommLosing,
@@ -918,9 +913,6 @@ BEGIN
 	    @autosuspend2 = ISNULL(autosuspend2, 0),
 	    --Keno
 	    @HideKeno = HideKeno,
-		
-		@DisableGoldDeluxe = DisableGoldDeluxe,
-		@HideGoldDeluxe = HideGoldDeluxe,
 		
 		@DisableSuperLive = DisableSuperLive,
 		@DangerSuper = Danger,
@@ -1705,7 +1697,6 @@ BEGIN
 	    @DisableOutright = @DisableOutright,
 	    @matchlimit = @matchlimit,
 	    @virtualmultiplier = @EnableVR,
-	    @DisableCasino = @DisableCasino,
 	    @DisableAutoMPT = @DisableAutoMPT,
 	    @DisableNumber = @DisableNumber,
 	     
@@ -1715,9 +1706,6 @@ BEGIN
 
 	    --Keno
 	    @HideKeno = @HideKeno,
-	    
-	    @DisableGoldDeluxe = @DisableGoldDeluxe,
-		@HideGoldDeluxe = @HideGoldDeluxe,
 		
 		@DisableSuperLive = @DisableSuperLive,
 		@Danger = @DangerSuper,
@@ -1738,23 +1726,6 @@ BEGIN
     --Error Occurs
     IF @ErrCode <> 0
 	    RETURN 
-
-	--insert default value from upline
-	EXEC dbo.Acc_CustomerWinLimitIns @CustId = @custid
-		, @UplineId = @srecommend
-		, @IP = @IP
-		, @UserId = @Creator
-		, @ErrCode = @ErrCode OUTPUT
-		, @ErrMsg = @ErrMsg OUTPUT
-	
-	IF @ErrCode <> 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Create customer fail. Please try again'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
 	  
         EXEC dbo.Acc_CustomerInfo_Execrep_00
 	    @custid = @custid,
@@ -2087,7 +2058,6 @@ BEGIN
 			    END
     				
 		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-    		DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
 
 	    return
     END
@@ -2122,7 +2092,6 @@ BEGIN
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							END
 				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-				DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
 				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
 			RETURN
 		END	
@@ -2536,7 +2505,6 @@ BEGIN
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
    
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
-    'DisableCasino="'+ COALESCE(CAST(@DisableCasino AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableAutoMPT="'+ COALESCE(CAST(@DisableAutoMPT AS VARCHAR(1)), SPACE(1)) + '" ' +
     'IsInternal="'+ COALESCE(CAST(@IsInternal AS VARCHAR(1)), SPACE(1)) + '" ' +
     'DisableNumber="' + COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' +
@@ -2572,8 +2540,6 @@ BEGIN
 		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	
 	    'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
-	
-	    'DisableCasino="'+ COALESCE(CAST(@DisableCasino AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableAutoMPT="'+ COALESCE(CAST(@DisableAutoMPT AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'IsInternal="'+ COALESCE(CAST(@IsInternal AS VARCHAR(1)), SPACE(1)) + '" ' +
 	    'DisableNumber="' + COALESCE(CAST(@DisableNumber AS VARCHAR(1)), SPACE(1)) + '" ' +
