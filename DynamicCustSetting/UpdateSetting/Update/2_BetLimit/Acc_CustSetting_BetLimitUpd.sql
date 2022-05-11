@@ -21,6 +21,8 @@ AS
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
+		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
+		
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -36,6 +38,7 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
+	DECLARE @CustList	VARCHAR(MAX) = ''
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
@@ -218,6 +221,23 @@ BEGIN
 				OR main.maxbet		<> tmp.MaxBet
 				OR main.maxpermatch <> tmp.MaxperMatch
 				)
+
+		--insert Bet Setting history
+		SET @CustList = (SELECT	@CustID		AS '@CustID	',
+								SportType	AS '@SportType',
+								BetType		AS '@BetType',
+								MaxBet		AS '@MaxBet',
+								MaxPerMatch	AS '@MaxPerMatch',
+								NULL		AS '@StakeLevelList',
+								GETDATE()	AS '@UpdateTime'
+					FROM @OldBetLimitTbl
+					FOR XML PATH('r'), ROOT ('root'), TYPE
+					)
+		
+		EXECUTE Task_DetectBet_CustMaxBetHistoryIns @CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+		IF @ErrMsg <> ''
+			RETURN
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN
