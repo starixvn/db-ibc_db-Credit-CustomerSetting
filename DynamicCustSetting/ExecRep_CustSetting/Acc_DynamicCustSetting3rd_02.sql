@@ -4,7 +4,6 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_02]
 	@RoleID		INT,
 	@StakeLevel	VARCHAR(MAX) = NULL,
 	@BetLimit	VARCHAR(MAX) = NULL,
-	@OldBetLimit VARCHAR(MAX) = NULL,
 	@Mode		VARCHAR(20) = 'StakeLevel'
 AS
 /*
@@ -16,7 +15,7 @@ AS
 	Revisions:
 		- 20161005@Elodie: Update LastUpdated field - [Redmine: #54994]
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
-		- 20220511@Tacy: add @OldBetLimit, insert history of member bet setting [RedmineID: #170739]
+		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -97,14 +96,6 @@ BEGIN
 			, MaxPerMatch		MONEY
 		)
 
-		DECLARE @HistoryBetLimitTbl TABLE (
-			SportType			SMALLINT
-			, BetType			SMALLINT
-			, MaxBet			MONEY
-			, MaxPerMatch		MONEY
-			, UpdateTime		DATETIME
-		)
-
 		IF @BetLimit IS NULL OR @BetLimit='' RETURN
 
 		--Parse XML	into @NewBetLimitTbl
@@ -119,24 +110,6 @@ BEGIN
 		WITH(SportType SMALLINT, BetType SMALLINT, MinBet VARCHAR(15), MaxBet VARCHAR(15), MaxPerMatch VARCHAR(15))	
 	
 		EXEC sp_xml_removedocument @iDoc
-
-		--Parse XML	into @OldBetLimitTbl
-		EXEC sp_xml_preparedocument @iDoc OUTPUT, @OldBetLimitTbl
-	
-		INSERT @HistoryBetLimitTbl
-		SELECT SportType,BetType,
-			CAST(MaxBet AS MONEY) AS MaxBet,
-			CAST(MaxPerMatch AS MONEY) AS MaxPerMatch,
-			UpdateTime
-		FROM OPENXML (@iDoc, '/ROOT/BetLimit',1) 
-		WITH(SportType SMALLINT, 
-			 BetType SMALLINT,
-			 MaxBet VARCHAR(15), 
-			 MaxPerMatch VARCHAR(15),
-			 UpdateTime	DATETIME)	
-	
-		EXEC sp_xml_removedocument @iDoc
-
 
 		SELECT @SportbettypeCount = COUNT(1) FROM @NewBetLimitTbl
 
@@ -247,6 +220,15 @@ BEGIN
 			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)		
 			--downline_member_maxbet = min (@NEW_MAXPERMATCH, downline_member_maxbet)	
+			DECLARE @HistoryBetSettingTbl TABLE (
+					CustID				INT
+					, SportType			SMALLINT
+					, BetType			SMALLINT
+					, MaxBet			MONEY
+					, MaxPerMatch		MONEY
+					, UpdateTime		DATETIME
+					)
+
 			WHILE 1 = 1
 			BEGIN
 				TRUNCATE TABLE #MemberTmpBatch
@@ -266,6 +248,8 @@ BEGIN
 					bsmem.MinBet = @NewMinBet,
 					bsmem.MaxBet = @NewMaxBet,
 					bsmem.MaxPerMatch = @NewMaxPerMatch
+				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+					INTO @HistoryBetSettingTbl
 				FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
 					INNER JOIN @NewBetLimitTbl new ON bsmem.sporttype = new.sporttype AND bsmem.bettype = new.bettype
 					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid
@@ -278,7 +262,7 @@ BEGIN
 										MaxPerMatch	AS '@MaxPerMatch',
 										NULL		AS '@StakeLevelList',
 										UpdateTime	AS '@UpdateTime'
-							FROM @HistoryBetLimitTbl, #MemberTmpBatch
+							FROM @HistoryBetSettingTbl
 							FOR XML PATH('r'), ROOT ('root'), TYPE
 							)
 		

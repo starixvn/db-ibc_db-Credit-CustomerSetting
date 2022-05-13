@@ -39,7 +39,6 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @CustList	VARCHAR(MAX) = ''
-		, @OldBetLimit	VARCHAR(MAX) = ''
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
@@ -221,7 +220,7 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
-		OUTPUT @CustID, tmp.SportType, tmp.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+		OUTPUT @CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 			INTO @HistoryBetSettingTbl
 		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewBetLimitTbl tmp
@@ -316,24 +315,12 @@ BEGIN
 								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
 								FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
 							)
-
-			SET @OldBetLimit =	(
-								SELECT	DISTINCT 
-										SportType,			
-										BetType,			
-										MaxBet,
-										MaxPerMatch,
-										UpdateTime
-								FROM	@HistoryBetSettingTbl
-								FOR XML RAW ('r'), ROOT ('root') 
-							)
 				
 			-- Correct downlines via ExecRep
 			EXECUTE	Acc_DynamicCustSetting3rd_02
 						@CustID		= @CustID,
 						@RoleID		= @RoleID,
 						@BetLimit	= @BetLimit,
-						@OldBetLimit= @OldBetLimit,
 						@Mode		= 'BetSetting'
 		END
 	END
