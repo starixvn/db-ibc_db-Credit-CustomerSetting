@@ -37,6 +37,15 @@ BEGIN
 	CREATE TABLE #AgentTmpBatch(custid INT)
 	CREATE TABLE #MemberTmpBatch(custid INT)
 
+	DECLARE @HistoryBetSettingTbl TABLE (
+			CustID				INT
+			, SportType			SMALLINT
+			, BetType			SMALLINT
+			, MaxBet			MONEY
+			, MaxPerMatch		MONEY
+			, UpdateTime		DATETIME
+		)
+
 	IF @Mode = 'StakeLevel'
 	BEGIN
 		IF dbo.f_CheckRepTable('CustStakeLevel_Agent') = 0
@@ -220,15 +229,6 @@ BEGIN
 			--downline_member_maxpermatch = min (downline_member_maxpermatch, @NEW_MAXPERMATCH)
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)		
 			--downline_member_maxbet = min (@NEW_MAXPERMATCH, downline_member_maxbet)	
-			DECLARE @HistoryBetSettingTbl TABLE (
-					CustID				INT
-					, SportType			SMALLINT
-					, BetType			SMALLINT
-					, MaxBet			MONEY
-					, MaxPerMatch		MONEY
-					, UpdateTime		DATETIME
-					)
-
 			WHILE 1 = 1
 			BEGIN
 				TRUNCATE TABLE #MemberTmpBatch
