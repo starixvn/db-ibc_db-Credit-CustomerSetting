@@ -1,9 +1,10 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_02]
 	@CustID		INT,
 	@RoleID		INT,
 	@StakeLevel	VARCHAR(MAX) = NULL,
 	@BetLimit	VARCHAR(MAX) = NULL,
+	@OldBetLimit VARCHAR(MAX) = NULL,
 	@Mode		VARCHAR(20) = 'StakeLevel'
 AS
 /*
@@ -15,6 +16,8 @@ AS
 	Revisions:
 		- 20161005@Elodie: Update LastUpdated field - [Redmine: #54994]
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
+		- 20220511@Tacy: add @OldBetLimit, insert history of member bet setting [RedmineID: #170739]
+
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -27,6 +30,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
+	DECLARE @CustList VARCHAR(MAX), @ErrMsg VARCHAR(MAX)
 	DECLARE	@iDoc INT, @BatchNo INT, @SportbettypeCount INT
 	DECLARE @NewMinBet MONEY, @NewMaxBet MONEY, @NewMaxPerMatch	MONEY, @NewMaxPerNumber MONEY
 	CREATE TABLE #Agent(custid INT, RoleID INT)
@@ -93,9 +97,17 @@ BEGIN
 			, MaxPerMatch		MONEY
 		)
 
+		DECLARE @HistoryBetLimitTbl TABLE (
+			SportType			SMALLINT
+			, BetType			SMALLINT
+			, MaxBet			MONEY
+			, MaxPerMatch		MONEY
+			, UpdateTime		DATETIME
+		)
+
 		IF @BetLimit IS NULL OR @BetLimit='' RETURN
 
-		--Parse XML	
+		--Parse XML	into @NewBetLimitTbl
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @BetLimit
 	
 		INSERT @NewBetLimitTbl
@@ -107,6 +119,24 @@ BEGIN
 		WITH(SportType SMALLINT, BetType SMALLINT, MinBet VARCHAR(15), MaxBet VARCHAR(15), MaxPerMatch VARCHAR(15))	
 	
 		EXEC sp_xml_removedocument @iDoc
+
+		--Parse XML	into @OldBetLimitTbl
+		EXEC sp_xml_preparedocument @iDoc OUTPUT, @OldBetLimitTbl
+	
+		INSERT @HistoryBetLimitTbl
+		SELECT SportType,BetType,
+			CAST(MaxBet AS MONEY) AS MaxBet,
+			CAST(MaxPerMatch AS MONEY) AS MaxPerMatch,
+			UpdateTime
+		FROM OPENXML (@iDoc, '/ROOT/BetLimit',1) 
+		WITH(SportType SMALLINT, 
+			 BetType SMALLINT,
+			 MaxBet VARCHAR(15), 
+			 MaxPerMatch VARCHAR(15),
+			 UpdateTime	DATETIME)	
+	
+		EXEC sp_xml_removedocument @iDoc
+
 
 		SELECT @SportbettypeCount = COUNT(1) FROM @NewBetLimitTbl
 
@@ -238,8 +268,26 @@ BEGIN
 					bsmem.MaxPerMatch = @NewMaxPerMatch
 				FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
 					INNER JOIN @NewBetLimitTbl new ON bsmem.sporttype = new.sporttype AND bsmem.bettype = new.bettype
-					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid												  
-		END
+					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid
+				
+				--insert Bet Setting history
+				SET @CustList = (SELECT	CustID		AS '@CustID	',
+										SportType	AS '@SportType',
+										BetType		AS '@BetType',
+										MaxBet		AS '@MaxBet',
+										MaxPerMatch	AS '@MaxPerMatch',
+										NULL		AS '@StakeLevelList',
+										UpdateTime	AS '@UpdateTime'
+							FROM @HistoryBetLimitTbl, #MemberTmpBatch
+							FOR XML PATH('r'), ROOT ('root'), TYPE
+							)
+		
+				EXECUTE Task_DetectBet_CustMaxBetHistoryIns @CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+				IF @ErrMsg <> ''
+					RETURN
+
+				END
 	END
 	END
 	ELSE IF @Mode = 'GameBetLimit' -- Acc_CustSetting_GameBetLimitUpd settingtype 9

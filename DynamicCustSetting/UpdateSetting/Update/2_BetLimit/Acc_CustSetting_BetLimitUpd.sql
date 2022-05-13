@@ -39,6 +39,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @CustList	VARCHAR(MAX) = ''
+		, @OldBetLimit	VARCHAR(MAX) = ''
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
@@ -71,6 +72,15 @@ BEGIN
 		, MinBet			MONEY
 		, MaxBet			MONEY
 		, MaxPerMatch		MONEY
+		)
+
+	DECLARE @HistoryBetSettingTbl TABLE (
+		CustID				INT
+		, SportType			SMALLINT
+		, BetType			SMALLINT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, UpdateTime		DATETIME
 		)
 
 	DECLARE @ProductID		TINYINT,
@@ -211,6 +221,8 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
+		OUTPUT @CustID, tmp.SportType, tmp.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+			INTO @HistoryBetSettingTbl
 		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewBetLimitTbl tmp
 			ON tmp.SportType	= main.sporttype
@@ -221,16 +233,16 @@ BEGIN
 				OR main.maxbet		<> tmp.MaxBet
 				OR main.maxpermatch <> tmp.MaxperMatch
 				)
-
+		
 		--insert Bet Setting history
-		SET @CustList = (SELECT	@CustID		AS '@CustID	',
+		SET @CustList = (SELECT	CustID		AS '@CustID	',
 								SportType	AS '@SportType',
 								BetType		AS '@BetType',
 								MaxBet		AS '@MaxBet',
 								MaxPerMatch	AS '@MaxPerMatch',
 								NULL		AS '@StakeLevelList',
-								GETDATE()	AS '@UpdateTime'
-					FROM @OldBetLimitTbl
+								UpdateTime	AS '@UpdateTime'
+					FROM @HistoryBetSettingTbl
 					FOR XML PATH('r'), ROOT ('root'), TYPE
 					)
 		
@@ -259,6 +271,8 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
+		OUTPUT tmp.SportType, tmp.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+			INTO @HistoryBetSettingTbl
 		FROM dbo.CustBetSetting3rd_Agent main WITH(ROWLOCK)
 		INNER JOIN @NewBetLimitTbl tmp
 			ON tmp.SportType	= main.sporttype
@@ -302,12 +316,24 @@ BEGIN
 								WHERE NOT (MinBet = 0 AND MaxBet = 0 AND MaxPerMatch = 0)
 								FOR XML RAW ('BetLimit'), ROOT ('ROOT') 
 							)
+
+			SET @OldBetLimit =	(
+								SELECT	DISTINCT 
+										SportType,			
+										BetType,			
+										MaxBet,
+										MaxPerMatch,
+										UpdateTime
+								FROM	@HistoryBetSettingTbl
+								FOR XML RAW ('r'), ROOT ('root') 
+							)
 				
 			-- Correct downlines via ExecRep
 			EXECUTE	Acc_DynamicCustSetting3rd_02
 						@CustID		= @CustID,
 						@RoleID		= @RoleID,
 						@BetLimit	= @BetLimit,
+						@OldBetLimit= @OldBetLimit,
 						@Mode		= 'BetSetting'
 		END
 	END
