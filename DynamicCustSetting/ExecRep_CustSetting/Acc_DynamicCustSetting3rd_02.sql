@@ -283,8 +283,8 @@ BEGIN
 										NULL		AS '@StakeLevelList',
 										UpdateTime	AS '@UpdateTime'
 							FROM @HistoryBetSettingTbl
-							FOR XML PATH('r'), ROOT ('root'), TYPE
-							)
+								FOR XML PATH('r'), ROOT ('root')
+								)
 		
 				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
 
@@ -772,7 +772,7 @@ BEGIN
 										NULL		AS '@StakeLevelList',
 										UpdateTime	AS '@UpdateTime'
 							FROM @HistoryBetSettingTbl
-							FOR XML PATH('r'), ROOT ('root'), TYPE
+							FOR XML PATH('r'), ROOT ('root')
 							)
 		
 				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;

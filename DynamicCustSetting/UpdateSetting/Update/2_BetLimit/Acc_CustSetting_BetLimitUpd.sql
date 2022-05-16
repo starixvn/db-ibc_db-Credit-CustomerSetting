@@ -242,8 +242,8 @@ BEGIN
 								NULL		AS '@StakeLevelList',
 								UpdateTime	AS '@UpdateTime'
 					FROM @HistoryBetSettingTbl
-					FOR XML PATH('r'), ROOT ('root'), TYPE
-					)
+						FOR XML PATH('r'), ROOT ('root')
+						)
 		
 		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
 
@@ -270,8 +270,6 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
-		OUTPUT tmp.SportType, tmp.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
-			INTO @HistoryBetSettingTbl
 		FROM dbo.CustBetSetting3rd_Agent main WITH(ROWLOCK)
 		INNER JOIN @NewBetLimitTbl tmp
 			ON tmp.SportType	= main.sporttype
