@@ -43,6 +43,7 @@ BEGIN
 			, BetType			SMALLINT
 			, MaxBet			MONEY
 			, MaxPerMatch		MONEY
+			, StakeLevelList	VARCHAR(200)
 			, UpdateTime		DATETIME
 		)
 
@@ -85,10 +86,29 @@ BEGIN
 		UPDATE cslm
 		SET	cslm.StakeLevelList = sl.StakeLevelList
 			, cslm.LastUpdated = GETDATE()
+		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
+			INTO @HistoryBetSettingTbl(CustID, SportType, BetType, StakeLevelList, UpdateTime)
 		FROM		dbo.CustStakeLevel_Member AS cslm WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN	#StakeLevel AS sl
 				ON	sl.CustID = cslm.CustID
 				AND	sl.BetType = cslm.BetType
+
+		--insert Bet Setting history
+		SET @CustList = (SELECT	CustID			AS '@CustID	',
+								SportType		AS '@SportType',
+								BetType			AS '@BetType',
+								NULL			AS '@MaxBet',
+								NULL			AS '@MaxPerMatch',
+								StakeLevelList	AS '@StakeLevelList',
+								UpdateTime		AS '@UpdateTime'
+					FROM @HistoryBetSettingTbl
+					FOR XML PATH('r'), ROOT ('root'), TYPE
+					)
+		
+		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+		IF @ErrMsg <> ''
+			RETURN
 
 		DROP TABLE #StakeLevel
 	END
@@ -249,7 +269,7 @@ BEGIN
 					bsmem.MaxBet = @NewMaxBet,
 					bsmem.MaxPerMatch = @NewMaxPerMatch
 				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
-					INTO @HistoryBetSettingTbl
+					INTO @HistoryBetSettingTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 				FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
 					INNER JOIN @NewBetLimitTbl new ON bsmem.sporttype = new.sporttype AND bsmem.bettype = new.bettype
 					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid
@@ -266,7 +286,7 @@ BEGIN
 							FOR XML PATH('r'), ROOT ('root'), TYPE
 							)
 		
-				EXECUTE Task_DetectBet_CustMaxBetHistoryIns @CustList, @ErrMsg = @ErrMsg OUTPUT;
+				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 				IF @ErrMsg <> ''
 					RETURN
@@ -737,9 +757,28 @@ BEGIN
 					bsmem.MinBet = @NewMinBet,
 					bsmem.MaxBet = @NewMaxBet,
 					bsmem.MaxPerMatch = @NewMaxPerMatch
+				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+					INTO @HistoryBetSettingTbl (CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 				FROM dbo.CustBetSetting3rd_Member bsmem WITH(ROWLOCK, UPDLOCK)
 					INNER JOIN @NewBetLimit16Tbl new ON bsmem.sporttype = new.sporttype AND bsmem.bettype = new.bettype
-					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid												  
+					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid	
+				
+				--insert Bet Setting history
+				SET @CustList = (SELECT	CustID		AS '@CustID	',
+										SportType	AS '@SportType',
+										BetType		AS '@BetType',
+										MaxBet		AS '@MaxBet',
+										MaxPerMatch	AS '@MaxPerMatch',
+										NULL		AS '@StakeLevelList',
+										UpdateTime	AS '@UpdateTime'
+							FROM @HistoryBetSettingTbl
+							FOR XML PATH('r'), ROOT ('root'), TYPE
+							)
+		
+				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+				IF @ErrMsg <> ''
+					RETURN
 			END
 		END
 	END

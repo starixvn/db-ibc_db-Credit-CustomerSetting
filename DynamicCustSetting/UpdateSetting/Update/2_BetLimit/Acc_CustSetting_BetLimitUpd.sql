@@ -245,7 +245,7 @@ BEGIN
 					FOR XML PATH('r'), ROOT ('root'), TYPE
 					)
 		
-		EXECUTE Task_DetectBet_CustMaxBetHistoryIns @CustList, @ErrMsg = @ErrMsg OUTPUT;
+		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 		IF @ErrMsg <> ''
 			RETURN
