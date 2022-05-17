@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" ></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_12]
 	@CustId			INT,
     @RoleId			INT,
@@ -14,11 +14,16 @@ AS
 		- 20210518@Winfred: Update Parlay Max Payout for SMA  [RedmineID:#154104]
 		- 20210813@Eden: Enhance - Update Parlay Max Payout for downlines by batch  [RedmineID:#160135]
 		- 20210816@Eden: Max Payout Per Match [redmine: #158073]
+		- 20220516@Tacy: Insert history of member bet setting: Number Game, Happy5 [RedmineID: #170739]
+
     Param's Explanation:
             
 */
 BEGIN
 	SET NOCOUNT ON;
+
+	DECLARE @CustList	VARCHAR(MAX),
+			@ErrMsg		NVARCHAR(MAX)
 
 	DECLARE @Batch_Num INT, @SportbettypeCount INT
 	DECLARE @iDoc INT
@@ -26,6 +31,15 @@ BEGIN
 	CREATE TABLE #Member(custid INT)
 	CREATE TABLE #AgentTmpBatch(custid int)
 	CREATE TABLE #MemberTmpBatch(custid INT)
+
+	CREATE TABLE #History_BetSetting(
+				CustID		INT,
+				SportType   SMALLINT, 
+				BetType     SMALLINT, 
+				MaxBet      MONEY, 
+				MaxPerMatch	MONEY, 
+				UpdateTime	DATETIME
+			)
 
     -- check existing tables
 	IF (@Mode='MaxPayout')
@@ -394,6 +408,8 @@ BEGIN
 					b.MaxPerMatch = @NewMaxPerMatch,
 					b.MaxPerNumber = @NewMaxPerNumber,
 					b.MaxPayoutPerMatch = @NewMaxPayoutPerMatch
+				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+					INTO #History_BetSetting
 				FROM dbo.CustBetSetting_Member b WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #MemberTmpBatch ci
@@ -402,6 +418,26 @@ BEGIN
 						OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
 						OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
 						OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0))
+
+				--Insert history bet setting
+				DELETE #History_BetSetting
+				WHERE SportType NOT IN (161, 164)
+
+				SET @CustList = (SELECT CustID		AS '@CustID',
+										SportType	AS '@SportType',
+										BetType		AS '@BetType',
+										MaxBet		AS '@MaxBet',
+										MaxPerMatch	AS '@MaxPerMatch',
+										'NULL'		AS '@StakeLevelList',
+										UpdateTime	AS '@UpdateTime'
+								 FROM #History_BetSetting
+								 FOR XML PATH ('r'), ROOT ('root')
+								 )
+
+				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+				IF @ErrMsg <> ''
+					RETURN
 			END
 		END
 	END

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberKeno_MinMaxBet] 
 	@CustID INT
 	,@Bettype INT
@@ -28,6 +28,7 @@ AS
 		- 20160613@Helen: Security Prevention Step 1 - Cross level update -  [Redmine:55377]
 		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 		- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
+		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
 
 	Param's Explanation:
 	* @ErrCode:
@@ -38,6 +39,18 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @CustList	VARCHAR(MAX) = ''
+
+	DECLARE @HistoryBetSettingTbl TABLE (
+		CustID				INT
+		, SportType			SMALLINT
+		, BetType			SMALLINT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, UpdateTime		DATETIME
+		)
+
 ----- David @ 09 JUN 2015 -------------------
 	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
 
@@ -178,8 +191,28 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 	
 	UPDATE cg
 	SET MinBet = @MinBet, MaxBet = @MaxBet, MaxPerGameType = @MaxPerMatch
+	OUTPUT deleted.CustID, deleted.MaxBet, deleted.MaxPerGameType, GETDATE()
+		INTO @HistoryBetSettingTbl(CustID, MaxBet, MaxPerMatch, UpdateTime)
 	FROM CustGameType cg WITH (ROWLOCK, UPDLOCK)
 	WHERE custid = @CustID AND gametypeid = @GameTypeID
+
+	--insert Bet Setting history
+	SET @CustList = (SELECT	CustID		AS '@CustID',
+							@sporttype	AS '@SportType',
+							@Bettype	AS '@BetType',
+							MaxBet		AS '@MaxBet',
+							MaxPerMatch	AS '@MaxPerMatch',
+							'NULL'		AS '@StakeLevelList',
+							UpdateTime	AS '@UpdateTime'
+					FROM @HistoryBetSettingTbl
+					FOR XML PATH('r'), ROOT ('root')
+					)
+		
+	EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+	IF @ErrMsg <> ''
+		RETURN
+
 
 	IF (@@error <> 0)
 	BEGIN
