@@ -480,7 +480,6 @@ BEGIN
 	ELSE
 	BEGIN
 		INSERT INTO @Old_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		OUTPUT inserted.SportType, inserted.BetType, inserted.MaxBet, inserted.MaxPerMatch 
 		SELECT cb.SportType,cb.BetType,cb.MinBet,cb.MaxBet,cb.MaxPerMatch,cb.MaxPerNumber,cb.MaxPayoutPerMatch
 		FROM CustBetSetting_Member cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
