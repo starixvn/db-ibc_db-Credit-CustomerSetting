@@ -1434,6 +1434,8 @@ BEGIN
 	--INSERT HISTORY BET SETTING
 	DELETE @HistoryBetSettingTbl
 	WHERE SportType NOT IN  (161, 164)
+		OR (MaxBet=@MaxBetv161 AND MaxPerMatch=@MaxPerMatchv161)
+		OR (MaxBet=@MaxBetv164 AND MaxPerMatch=@MaxPerMatchv164)
 
 	SET @CustList = (SELECT CustID		AS '@CustID',
 							SportType	AS '@SportType',
@@ -1449,6 +1451,10 @@ BEGIN
 					 FROM @HistoryBetSettingTbl
 					 FOR XML PATH('r'), ROOT ('root')
 					)
+	EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+	IF @ErrMsg <> ''
+		RETURN  
 
 	Declare @LogSPData varchar(8000)
 	Declare @TrackingValue2 varchar(8000)

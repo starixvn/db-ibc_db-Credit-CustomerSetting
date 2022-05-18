@@ -480,6 +480,7 @@ BEGIN
 	ELSE
 	BEGIN
 		INSERT INTO @Old_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+		OUTPUT inserted.SportType, inserted.BetType, inserted.MaxBet, inserted.MaxPerMatch 
 		SELECT cb.SportType,cb.BetType,cb.MinBet,cb.MaxBet,cb.MaxPerMatch,cb.MaxPerNumber,cb.MaxPayoutPerMatch
 		FROM CustBetSetting_Member cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
@@ -589,8 +590,13 @@ BEGIN
 			AND t.IsUpdate = 1
 
 		--Insert history bet setting
-		DELETE @History_BetSetting
-		WHERE SportType NOT IN (161, 164)
+		DELETE hbs
+		FROM @History_BetSetting hbs
+			INNER JOIN @BetSetting bs ON bs.SportType=hbs.SportType
+										AND bs.BetType=hbs.BetType
+		WHERE hbs.SportType NOT IN (161, 164) OR
+			(bs.MaxBet=hbs.MaxBet
+			 AND bs.MaxPerMatch=hbs.MaxPerMatch)
 
 		SET @CustList = (SELECT CustID		AS '@CustID',
 								SportType	AS '@SportType',
@@ -603,7 +609,7 @@ BEGIN
 						 FOR XML PATH ('r'), ROOT ('root')
 						 )
 
-		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 		IF @ErrMsg <> ''
 			RETURN

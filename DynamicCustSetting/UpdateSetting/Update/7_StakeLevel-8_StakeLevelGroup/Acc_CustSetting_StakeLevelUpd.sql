@@ -234,6 +234,7 @@ BEGIN
 		SET		cslm.StakeLevelList = ts.StakeLevelList
 				, cslm.LastUpdated = GETDATE()
 		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
+			INTO #HistoryStakeLevelTbl(CustID, SportType, BetType, StakeLevelList, UpdateTime)
 		FROM		dbo.CustStakeLevel_Member AS cslm
 		INNER JOIN	#tmpStake ts
 				ON	ts.BetType = cslm.BetType
@@ -251,7 +252,7 @@ BEGIN
 						FOR XML PATH('r'), ROOT ('root')
 						)
 		
-		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 		IF @ErrMsg <> ''
 			RETURN

@@ -208,7 +208,7 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 					FOR XML PATH('r'), ROOT ('root')
 					)
 		
-	EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+	EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 	IF @ErrMsg <> ''
 		RETURN

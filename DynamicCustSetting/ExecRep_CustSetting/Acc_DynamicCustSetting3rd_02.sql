@@ -105,7 +105,7 @@ BEGIN
 					FOR XML PATH('r'), ROOT ('root'), TYPE
 					)
 		
-		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 		IF @ErrMsg <> ''
 			RETURN
@@ -286,7 +286,7 @@ BEGIN
 								FOR XML PATH('r'), ROOT ('root')
 								)
 		
-				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 				IF @ErrMsg <> ''
 					RETURN
@@ -468,7 +468,7 @@ BEGIN
 								FOR XML PATH('r'), ROOT ('root')
 								)
 		
-				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 				IF @ErrMsg <> ''
 					RETURN
@@ -632,7 +632,7 @@ BEGIN
 								FOR XML PATH('r'), ROOT ('root')
 								)
 		
-				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 				IF @ErrMsg <> ''
 					RETURN
@@ -813,7 +813,7 @@ BEGIN
 							FOR XML PATH('r'), ROOT ('root')
 							)
 		
-				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
 				IF @ErrMsg <> ''
 					RETURN
