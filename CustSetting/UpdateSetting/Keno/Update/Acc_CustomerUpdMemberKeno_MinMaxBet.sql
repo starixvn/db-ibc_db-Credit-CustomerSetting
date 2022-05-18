@@ -197,21 +197,29 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 	WHERE custid = @CustID AND gametypeid = @GameTypeID
 
 	--insert Bet Setting history
-	SET @CustList = (SELECT	CustID		AS '@CustID',
-							@sporttype	AS '@SportType',
-							@Bettype	AS '@BetType',
-							MaxBet		AS '@MaxBet',
-							MaxPerMatch	AS '@MaxPerMatch',
-							'NULL'		AS '@StakeLevelList',
-							UpdateTime	AS '@UpdateTime'
+	IF NOT EXISTS (	SELECT 1					
 					FROM @HistoryBetSettingTbl
-					FOR XML PATH('r'), ROOT ('root')
-					)
+					WHERE custid=@CustID
+					 AND MaxBet=@MaxBet 
+					 AND MaxPerMatch=@MaxPerMatch
+				)
+	BEGIN
+		SET @CustList = (SELECT	CustID		AS '@CustID',
+								@sporttype	AS '@SportType',
+								@Bettype	AS '@BetType',
+								MaxBet		AS '@MaxBet',
+								MaxPerMatch	AS '@MaxPerMatch',
+								'NULL'		AS '@StakeLevelList',
+								UpdateTime	AS '@UpdateTime'
+						FROM @HistoryBetSettingTbl
+						FOR XML PATH('r'), ROOT ('root')
+						)
 		
-	EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
-	IF @ErrMsg <> ''
-		RETURN
+		IF @ErrMsg <> ''
+			RETURN
+	END
 
 
 	IF (@@error <> 0)

@@ -223,21 +223,30 @@ BEGIN
 				)
 
 		--insert Bet Setting history
-		SET @CustList = (SELECT	CustID		AS '@CustID',
-								SportType	AS '@SportType',
-								BetType		AS '@BetType',
-								MaxBet		AS '@MaxBet',
-								'NULL'	AS '@MaxPerMatch',
-								'NULL'		AS '@StakeLevelList',
-								UpdateTime	AS '@UpdateTime'
-						FROM @HistoryBetSettingTbl
-						FOR XML PATH('r'), ROOT ('root')
-						)
+		IF NOT EXISTS (	SELECT 1					
+						FROM @HistoryBetSettingTbl old
+							INNER JOIN @NewBetSettingTbl new ON new.SportType=old.SportType
+															AND new.BetType=old.BetType
+															AND new.MaxBet=old.MaxBet
+						WHERE old.CustID=@CustID
+					)
+		BEGIN
+			SET @CustList = (SELECT	CustID		AS '@CustID',
+									SportType	AS '@SportType',
+									BetType		AS '@BetType',
+									MaxBet		AS '@MaxBet',
+									'NULL'		AS '@MaxPerMatch',
+									'NULL'		AS '@StakeLevelList',
+									UpdateTime	AS '@UpdateTime'
+							FROM @HistoryBetSettingTbl
+							FOR XML PATH('r'), ROOT ('root')
+							)
 		
-		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
+			EXECUTE Acc_DynamicCustSetting3rd_08 @CustList, @ErrMsg = @ErrMsg OUTPUT;
 
-		IF @ErrMsg <> ''
-			RETURN
+			IF @ErrMsg <> ''
+				RETURN
+		END
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN

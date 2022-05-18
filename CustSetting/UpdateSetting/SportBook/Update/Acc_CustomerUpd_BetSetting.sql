@@ -597,21 +597,24 @@ BEGIN
 			(bs.MaxBet=hbs.MaxBet
 			 AND bs.MaxPerMatch=hbs.MaxPerMatch)
 
-		SET @CustList = (SELECT CustID		AS '@CustID',
-								SportType	AS '@SportType',
-								BetType		AS '@BetType',
-								MaxBet		AS '@MaxBet',
-								MaxPerMatch	AS '@MaxPerMatch',
-								'NULL'		AS '@StakeLevelList',
-								UpdateTime	AS '@UpdateTime'
-						 FROM @History_BetSetting
-						 FOR XML PATH ('r'), ROOT ('root')
-						 )
+		IF EXISTS (SELECT 1 FROM @History_BetSetting)
+		BEGIN
+			SET @CustList = (SELECT CustID		AS '@CustID',
+									SportType	AS '@SportType',
+									BetType		AS '@BetType',
+									MaxBet		AS '@MaxBet',
+									MaxPerMatch	AS '@MaxPerMatch',
+									'NULL'		AS '@StakeLevelList',
+									UpdateTime	AS '@UpdateTime'
+							 FROM @History_BetSetting
+							 FOR XML PATH ('r'), ROOT ('root')
+							 )
 
-		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+			EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
-		IF @ErrMsg <> ''
-			RETURN
+			IF @ErrMsg <> ''
+				RETURN
+		END
 	END
 
 	IF (@@ERROR <> 0)

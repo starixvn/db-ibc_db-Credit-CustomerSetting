@@ -275,24 +275,33 @@ BEGIN
 					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid
 				
 				--insert Bet Setting history
-				SET @CustList = (SELECT	CustID		AS '@CustID	',
-										SportType	AS '@SportType',
-										BetType		AS '@BetType',
-										MaxBet		AS '@MaxBet',
-										MaxPerMatch	AS '@MaxPerMatch',
+				DELETE old				
+				FROM @HistoryTbl old
+					INNER JOIN @NewBetLimitTbl new ON new.SportType=old.SportType
+													AND new.BetType=old.BetType
+													AND new.MaxBet=old.MaxBet
+													AND new.MaxPerMatch=old.MaxPerMatch
+
+				IF EXISTS (SELECT 1 FROM @HistoryTbl)
+				BEGIN
+				SET @CustList = (SELECT	CustID		AS '@CustID',
+											SportType	AS '@SportType',
+											BetType		AS '@BetType',
+											MaxBet		AS '@MaxBet',
+											MaxPerMatch	AS '@MaxPerMatch',
 										NULL		AS '@StakeLevelList',
-										UpdateTime	AS '@UpdateTime'
-								FROM @HistoryTbl
-								FOR XML PATH('r'), ROOT ('root')
-								)
+											UpdateTime	AS '@UpdateTime'
+									FROM @HistoryTbl
+									FOR XML PATH('r'), ROOT ('root')
+									)
 		
-				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+					EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
-				IF @ErrMsg <> ''
-					RETURN
-
+					IF @ErrMsg <> ''
+						RETURN
 				END
-	END
+			END
+		END
 	END
 	ELSE IF @Mode = 'GameBetLimit' -- Acc_CustSetting_GameBetLimitUpd settingtype 9
 	BEGIN
@@ -457,21 +466,31 @@ BEGIN
 					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid
 			
 				--insert Bet Setting history
-				SET @CustList = (SELECT	CustID		AS '@CustID',
-										SportType	AS '@SportType',
-										BetType		AS '@BetType',
-										MaxBet		AS '@MaxBet',
-										MaxPerMatch	AS '@MaxPerMatch',
-										'NULL'		AS '@StakeLevelList',
-										UpdateTime	AS '@UpdateTime'
-								FROM @HistoryTbl
-								FOR XML PATH('r'), ROOT ('root')
-								)
-		
-				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+				DELETE old				
+				FROM @HistoryTbl old
+					INNER JOIN @NewGameBetLimitTbl new ON new.SportType=old.SportType
+													AND new.BetType=old.BetType
+													AND new.MaxBet=old.MaxBet
+													AND new.MaxPerNumber=old.MaxPerMatch
 
-				IF @ErrMsg <> ''
-					RETURN
+				IF EXISTS (SELECT 1 FROM @HistoryTbl)
+				BEGIN
+					SET @CustList = (SELECT	CustID		AS '@CustID',
+											SportType	AS '@SportType',
+											BetType		AS '@BetType',
+											MaxBet		AS '@MaxBet',
+											MaxPerMatch	AS '@MaxPerMatch',
+											'NULL'		AS '@StakeLevelList',
+											UpdateTime	AS '@UpdateTime'
+									FROM @HistoryTbl
+									FOR XML PATH('r'), ROOT ('root')
+									)
+		
+					EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+					IF @ErrMsg <> ''
+						RETURN
+				END
 			END
 		END
 	END
@@ -621,21 +640,30 @@ BEGIN
 					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid
 
 				--insert Bet Setting history
-				SET @CustList = (SELECT	CustID		AS '@CustID',
-										SportType	AS '@SportType',
-										BetType		AS '@BetType',
-										MaxBet		AS '@MaxBet',
-										'NULL'		AS '@MaxPerMatch',
-										'NULL'		AS '@StakeLevelList',
-										UpdateTime	AS '@UpdateTime'
-								FROM @HistoryTbl
-								FOR XML PATH('r'), ROOT ('root')
-								)
-		
-				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+				DELETE old					
+				FROM @HistoryTbl old
+					INNER JOIN @NewGameBetSetting new ON new.SportType=old.SportType
+													AND new.BetType=old.BetType
+													AND new.MaxBet=old.MaxBet
 
-				IF @ErrMsg <> ''
-					RETURN
+				IF EXISTS (SELECT 1 FROM @HistoryTbl)
+				BEGIN
+					SET @CustList = (SELECT	CustID		AS '@CustID',
+											SportType	AS '@SportType',
+											BetType		AS '@BetType',
+											MaxBet		AS '@MaxBet',
+											'NULL'		AS '@MaxPerMatch',
+											'NULL'		AS '@StakeLevelList',
+											UpdateTime	AS '@UpdateTime'
+									FROM @HistoryTbl
+									FOR XML PATH('r'), ROOT ('root')
+									)
+		
+					EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+					IF @ErrMsg <> ''
+						RETURN
+				END
 			END
 		END									  
 	END
@@ -802,21 +830,31 @@ BEGIN
 					INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON bsmem.custid = ci.custid	
 				
 				--insert Bet Setting history
-				SET @CustList = (SELECT	CustID		AS '@CustID	',
-										SportType	AS '@SportType',
-										BetType		AS '@BetType',
-										MaxBet		AS '@MaxBet',
-										MaxPerMatch	AS '@MaxPerMatch',
+				DELETE old					
+				FROM @HistoryTbl old
+					INNER JOIN @NewBetLimit16Tbl new ON new.SportType=old.SportType
+													AND new.BetType=old.BetType
+													AND new.MaxBet=old.MaxBet
+													AND new.MaxPerMatch=old.MaxPerMatch
+							
+				IF EXISTS (SELECT 1 FROM @HistoryTbl)
+				BEGIN
+				SET @CustList = (SELECT	CustID		AS '@CustID',
+											SportType	AS '@SportType',
+											BetType		AS '@BetType',
+											MaxBet		AS '@MaxBet',
+											MaxPerMatch	AS '@MaxPerMatch',
 										NULL		AS '@StakeLevelList',
-										UpdateTime	AS '@UpdateTime'
-							FROM @HistoryTbl
-							FOR XML PATH('r'), ROOT ('root')
-							)
+											UpdateTime	AS '@UpdateTime'
+								FROM @HistoryTbl
+								FOR XML PATH('r'), ROOT ('root')
+								)
 		
-				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+					EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
-				IF @ErrMsg <> ''
-					RETURN
+					IF @ErrMsg <> ''
+						RETURN
+				END
 			END
 		END
 	END

@@ -1437,24 +1437,27 @@ BEGIN
 		OR (MaxBet=@MaxBetv161 AND MaxPerMatch=@MaxPerMatchv161)
 		OR (MaxBet=@MaxBetv164 AND MaxPerMatch=@MaxPerMatchv164)
 
-	SET @CustList = (SELECT CustID		AS '@CustID',
-							SportType	AS '@SportType',
-							BetType		AS '@BetType',
-							MaxBet		AS '@MaxBet',
-							CASE SportType WHEN 161 
-								THEN @Old_MaxPerMatchv161 
-								ELSE @Old_MaxPerMatchv164 
-							END
-										AS '@MaxPerMatch',
-							'NULL'		AS '@StakeLevelList',
-							UpdateTime	AS '@UpdateTime'
-					 FROM @HistoryBetSettingTbl
-					 FOR XML PATH('r'), ROOT ('root')
-					)
-	EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+	IF EXISTS (SELECT 1 FROM @HistoryBetSettingTbl)
+	BEGIN
+		SET @CustList = (SELECT CustID		AS '@CustID',
+								SportType	AS '@SportType',
+								BetType		AS '@BetType',
+								MaxBet		AS '@MaxBet',
+								CASE SportType WHEN 161 
+									THEN @Old_MaxPerMatchv161 
+									ELSE @Old_MaxPerMatchv164 
+								END
+											AS '@MaxPerMatch',
+								'NULL'		AS '@StakeLevelList',
+								UpdateTime	AS '@UpdateTime'
+						 FROM @HistoryBetSettingTbl
+						 FOR XML PATH('r'), ROOT ('root')
+						)
+		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
-	IF @ErrMsg <> ''
-		RETURN  
+		IF @ErrMsg <> ''
+			RETURN  
+	END
 
 	Declare @LogSPData varchar(8000)
 	Declare @TrackingValue2 varchar(8000)
