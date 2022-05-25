@@ -84,7 +84,7 @@ BEGIN
 	)
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
 	SELECT t.custid,
-		CASE WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW')  THEN -- Flow C : 4 Licensees: IG128/SM88/SL88SW/LIVV88SW
+		CASE WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW','Athena000')  THEN -- Flow C : 4 Licensees: IG128/SM88/SL88SW/LIVV88SW
 					CASE WHEN soccer + soccerParlay < 50000 OR isSoccerParlay = 0 THEN
 						CASE WHEN soccer < -250000 THEN 1
 							WHEN soccer <-200000 AND soccer >= -250000 THEN 2
