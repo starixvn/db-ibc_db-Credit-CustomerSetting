@@ -94,7 +94,7 @@ AS
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-	
+	- 20220527@Johnson: Remove Problem Account [RedmineID:#173304]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -516,12 +516,8 @@ BEGIN
 				,@DangerMaster4
 				,@DangerMaster5
 		FROM dbo.custinfo WITH(NOLOCK)
-		WHERE custid=@ExistingCustid  
+		WHERE custid=@ExistingCustid 
 		
-		INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, VoidTime, LimitAmount)
-		SELECT @CustId, ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, ActionId, VoidTime, 0
-		FROM ProblemAccount WITH (NOLOCK)
-		WHERE CustId = @mrecommend
 	END TRY
 	BEGIN CATCH   
 		SELECT @ErrMsg = case @Language 
@@ -533,8 +529,7 @@ BEGIN
 		-- ROLLBACK MANUALLY			
 		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
-		DELETE FROM dbo.custInfo WITH(ROWLOCK) WHERE custId = @CustID  
-		DELETE FROM dbo.ProblemAccount WITH(ROWLOCK) WHERE custId = @CustID  
+		DELETE FROM dbo.custInfo WITH(ROWLOCK) WHERE custId = @CustID  		  
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		
 		RETURN
