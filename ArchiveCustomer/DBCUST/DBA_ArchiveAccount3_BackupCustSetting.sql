@@ -20,6 +20,7 @@ AS
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
+		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -109,11 +110,11 @@ BEGIN
 	select	@Now, 
 			username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
 						  VirtualMultiplier, 0, 0, 0, 0, 0, 0, 0, 0, 
-						  0, Enabled, danger, DisableCasino, SyncCasino, danger2, 
+						  0, Enabled, danger, 0, 0, danger2, 
 						  danger3, DisableOutright, 0, DisableNumber, 0, 
 						  0,
 						  Abnormal, DoubleCommLosing,
-						  autosuspend2, HideKeno, DisableEsports, HideGoldDeluxe, DisableGoldDeluxe,  
+						  autosuspend2, HideKeno, DisableEsports, 0, 0,  
 						  DisableSuperLive, DisableColossusBet, HideColossusBet, 
 						  LockUpd, 0, BonusWalletFlag   
 	from	custinfo (nolock)
