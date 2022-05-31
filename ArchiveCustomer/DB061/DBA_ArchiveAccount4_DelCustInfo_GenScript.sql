@@ -18,6 +18,7 @@ AS
 		- 20210302@Eden: Just process Agent on stage 4 when they processed successfully on stage 3  [RedmineID: #149262]
 		- 20210825@Eden: Exclude Direct Masters/Agents/Members from Archiving Credit Account process (Stage 3 and Stage 4) [RedmineID: #160690]
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
+		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
 
 	Param's Explanation:
 */
@@ -38,19 +39,6 @@ BEGIN
 	RETURN
 
 END
-
-CREATE TABLE #Super_Exception (srecommend INT PRIMARY KEY)
-
-INSERT INTO #Super_Exception (srecommend)
-SELECT ci.srecommend		
-FROM CustGroupHeadline gl (nolock)		
-	INNER JOIN Customer ci (nolock) ON gl.CustID = ci.custid		
-WHERE GroupID > 0 and ci.roleid in (1,2,3,4)
-UNION
-SELECT ag.custid
-FROM phonebettingCustomerList p WITH(NOLOCK)
-	INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
-	INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
 
 CREATE TABLE #Exclude_Agents(recommend INT PRIMARY KEY)
 
@@ -109,12 +97,13 @@ FROM bodb_report.dbo.tmpCustArchived ag WITH (NOLOCK)
 	--	WHERE custid <> recommend
 	--	GROUP BY recommend
 	--	) b ON b.recommend = agci.custid	
-	LEFT JOIN #Super_Exception se ON se.srecommend = agci.srecommend
 WHERE ag.isFinished = 1
 	--AND isnull(MemCount, 0) > 0 
 	--AND isnull(TransCount, 0) = 0
 	AND agci.enabled = 0
-	AND ag.recommend NOT IN(SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
+	AND agci.srecommend NOT IN (SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
+	AND agci.mrecommend NOT IN (SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
+	AND agci.custid NOT IN (SELECT custid FROM bodb_report.dbo.Task_Cust_ArchiveAcc_Exception WITH(NOLOCK))
 	AND ag.recommend NOT IN(SELECT recommend FROM #Exclude_Agents)
 	AND agci.custid NOT IN (
 		SELECT DISTINCT recommend
@@ -128,7 +117,6 @@ WHERE ag.isFinished = 1
 		WHERE --roleid = 1 AND
 			creatdate >= @DDiff
 		)
-	AND se.srecommend IS NULL
 	AND ag.IsFinished = 1 AND (ISNULL(ag.ErrMsg,'') = '' OR ag.ErrMsg LIKE '%archived%')
 
 SELECT sag.username Super
@@ -147,5 +135,4 @@ WHERE bt.custid IS NULL
 ORDER BY [Member Count] DESC
 
 DROP TABLE #tmpAg
-DROP TABLE #Super_Exception
 DROP TABLE #Exclude_Agents

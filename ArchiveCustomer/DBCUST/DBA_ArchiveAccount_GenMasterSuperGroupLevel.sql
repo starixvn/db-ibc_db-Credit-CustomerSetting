@@ -22,6 +22,7 @@ AS
 		- 20211207@Eden: Exclude SuperID: 58561925 [RedmineID: #165800]
 		- 20220214@Eden: Exclude SuperID: 46195971 [RedmineID: #168423]
 		- 20220422@Eden: Exclude SuperID: 46379016 [RedmineID: #171821]
+		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
 		
 	Param's Explanation:
 */
@@ -162,6 +163,14 @@ BEGIN
 			WHERE ci.roleid = 1 AND ci.recommend = t.recommend
 			)AS tmp
 	WHERE ISNULL(tmp.MemCount,0) = 0 AND ar.GroupLevelName NOT IN ('M1')
+
+	CREATE TABLE #SuperMaster_Exception (custid INT PRIMARY KEY)
+
+	INSERT INTO #SuperMaster_Exception (custid)
+	SELECT d.CustID
+	FROM DBACC.bodb_report.dbo.[Task_Cust_ArchiveAcc_Exception] d WITH(NOLOCK)
+		INNER JOIN dbo.Custinfo ci WITH(NOLOCK) ON d.CustID = ci.custid
+	WHERE ci.RoleID IN (4,3)
 	
 	-- INSERT M0 IF S1
 	INSERT INTO tmpCustGroupLevelArchived (custid, roleid, GroupLevelName, StageID)
@@ -175,27 +184,11 @@ BEGIN
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0
 					ELSE 1 
 				END
+		AND ci.mrecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
+		AND ci.srecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
 						
 	-- Master have no downline, its Super not in list processing
 	-- Insert M0 - Master have no downline, its Super not in list processing
-	CREATE TABLE #Super_Exception (srecommend INT PRIMARY KEY)
-
-	INSERT INTO #Super_Exception (srecommend)
-	SELECT ci.srecommend		
-	FROM DBCUST.CUSTDB.dbo.CustGroupHeadline gl WITH(NOLOCK)		
-		INNER JOIN Customer ci WITH(NOLOCK) ON gl.CustID = ci.custid		
-	WHERE GroupID > 0 and ci.roleid in (1,2,3,4)
-	UNION
-	SELECT ag.custid
-	FROM DBCUST.CUSTDB.dbo.phonebettingCustomerList p WITH(NOLOCK)
-		INNER JOIN custinfo c WITH(NOLOCK) ON p.username = c.username
-		INNER JOIN custinfo ag WITH(NOLOCK) ON ag.custid = c.srecommend
-
-	--Exclude SuperID: 44671646,45937167,58561925,46195971,46379016
-	INSERT INTO #Super_Exception(srecommend)
-	SELECT t.custid
-	FROM (VALUES(44671646),(45937167),(58561925),(46195971),(46379016)) AS t(custID)
-	WHERE NOT EXISTS( SELECT 1 FROM #Super_Exception WHERE srecommend = t.custID)
 	
 	INSERT INTO tmpCustGroupLevelArchived (custid, roleid, GroupLevelName, StageID)	
 	SELECT ma.custid, 3, 'M0', @StageId
@@ -208,14 +201,12 @@ BEGIN
 			FROM custinfo mem WITH (NOLOCK)
 			WHERE roleid = 2 AND mem.mrecommend = ma.custid
 			) AS Downline
-		LEFT JOIN #Super_Exception se ON se.srecommend = ma.srecommend
 		LEFT JOIN #tmpSuper st ON st.custid = ma.srecommend
 		LEFT JOIN tmpCustGroupLevelArchived ar WITH (NOLOCK) ON ar.custid = ma.custid
 	WHERE ma.roleid = 3
 		AND Downline.recommend IS NULL
 		AND st.custid IS NULL
 		AND ma.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
-		AND se.srecommend IS NULL
 		AND ar.custid IS NULL
 		AND 1 = CASE WHEN @StageId = 1 AND ma.creatdate < DATEADD(mm, -3, GETDATE()) THEN 1
 						 WHEN @StageId = 2 AND ma.creatdate < DATEADD(mm, - 4, GETDATE()) THEN 1
@@ -230,6 +221,8 @@ BEGIN
 					 WHEN @StageId IN (3,4) AND agci.enabled = 1 THEN 0
 					ELSE 1 
 				END			
+		AND ma.mrecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
+		AND ma.srecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
 		
 	-- Insert S1 - Master have no downline, its Super not in list processing 
 	INSERT INTO #tmpSuper_M0 (custID)
@@ -238,12 +231,10 @@ BEGIN
 		INNER JOIN customer c WITH (NOLOCK) ON t.custid = c.custid 
 		INNER JOIN customer super WITH (NOLOCK) ON super.custid = c.srecommend
 		INNER JOIN DBCUST.CUSTDB.dbo.CustSuper cm WITH (NOLOCK) ON cm.custid = c.srecommend
-		LEFT JOIN #Super_Exception se ON se.srecommend = c.custid
 		LEFT JOIN tmpCustGroupLevelArchived ts WITH (NOLOCK) ON ts.custid = c.srecommend
 	WHERE t.Roleid = 3 AND t.GroupLevelName = 'M0' 
 		AND ts.custid IS NULL
 		AND cm.IsInternal = 0
-		AND se.srecommend IS NULL
 		AND c.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
 		AND c.currency NOT IN (20, 72)	
 		AND c.site <> 'cn88'
@@ -256,6 +247,8 @@ BEGIN
 		AND super.username NOT LIKE 'STEST%'
 		AND super.username NOT LIKE 'SIBC%'
 		AND super.username NOT LIKE '%ACCSuper%'
+		AND c.mrecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
+		AND c.srecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
 		
 	INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
 	SELECT DISTINCT t.custid, 4
@@ -373,7 +366,7 @@ BEGIN
 	DROP TABLE #tmpMaster
 	DROP TABLE #tmpSuper
 	DROP TABLE #tmpMaster_DetectM0
-	DROP TABLE #Super_Exception
+	DROP TABLE #SuperMaster_Exception
 	DROP TABLE #tmpSuper_M0
 	DROP TABLE #M0NotInPreviousStage
 	DROP TABLE #Cust_ArchiveAccount_Master
