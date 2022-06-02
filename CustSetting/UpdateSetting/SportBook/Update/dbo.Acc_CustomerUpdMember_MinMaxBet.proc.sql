@@ -102,7 +102,6 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]	
 	- 20181107@Johnson: add Happy 5 [Redmine: #104006]
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
-	- 20220516@Tacy: Insert history of member bet setting: Number Game, Happy 5 [RedmineID: #170739] 
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -113,21 +112,11 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @CustList VARCHAR(MAX)
 	declare @startRun datetime
 	declare @endRun datetime
 	declare @duration int
 	DECLARE @Site NVARCHAR (50), @RoleID TINYINT
 	set @startRun = getdate()
-
-	DECLARE @HistoryBetSettingTbl TABLE (
-			CustID		INT,
-			SportType	SMALLINT,
-			BetType		SMALLINT,
-			MaxBet		MONEY,
-			MaxPerMatch	MONEY,
-			UpdateTime	DATETIME
-	)
 
 	Declare 
 		@MinMinBet money, @MaxMaxBet money,	@MaxMaxPerMatch money,
@@ -1359,11 +1348,7 @@ BEGIN
 													OR (@UpdateMinMaxBetv164 = 0 AND sporttype=164)
 													) THEN MaxBet 
 					ELSE CASE sporttype WHEN 161 THEN @MaxBetv161 WHEN 164 THEN @MaxBetv164 ELSE MaxBet END END
-	OUTPUT deleted.custid, deleted.sporttype, deleted.bettype, deleted.maxbet, GETDATE()
-		INTO @HistoryBetSettingTbl(CustID, SportType, BetType, MaxBet, UpdateTime)
 	WHERE custid = @custid
-
-	
 	
 	SELECT @err2 = @@error
 	
@@ -1430,35 +1415,7 @@ BEGIN
 	begin
 		return
 	end
-	
-	--INSERT HISTORY BET SETTING
-	DELETE @HistoryBetSettingTbl
-	WHERE SportType NOT IN  (161, 164)
-		OR (MaxBet=@MaxBetv161 AND MaxPerMatch=@MaxPerMatchv161)
-		OR (MaxBet=@MaxBetv164 AND MaxPerMatch=@MaxPerMatchv164)
-
-	IF EXISTS (SELECT 1 FROM @HistoryBetSettingTbl)
-	BEGIN
-		SET @CustList = (SELECT CustID		AS '@CustID',
-								SportType	AS '@SportType',
-								BetType		AS '@BetType',
-								MaxBet		AS '@MaxBet',
-								CASE SportType WHEN 161 
-									THEN @Old_MaxPerMatchv161 
-									ELSE @Old_MaxPerMatchv164 
-								END
-											AS '@MaxPerMatch',
-								'NULL'		AS '@StakeLevelList',
-								UpdateTime	AS '@UpdateTime'
-						 FROM @HistoryBetSettingTbl
-						 FOR XML PATH('r'), ROOT ('root')
-						)
-		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
-
-		IF @ErrMsg <> ''
-			RETURN  
-	END
-
+		
 	Declare @LogSPData varchar(8000)
 	Declare @TrackingValue2 varchar(8000)
 
