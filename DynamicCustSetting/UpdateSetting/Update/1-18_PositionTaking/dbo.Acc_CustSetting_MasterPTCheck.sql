@@ -22,6 +22,7 @@ AS
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
+			- 20220609@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
 
 		Parameter's Explanations:
 			@PT = <ROOT>
@@ -450,6 +451,7 @@ BEGIN
 			WHERE b.rn<= 10
 			FOR XML RAW('Row'), TYPE
 		)
+		OPTION( FORCE ORDER)
 
 		IF @ErrType IS NOT NULL
 		BEGIN         
