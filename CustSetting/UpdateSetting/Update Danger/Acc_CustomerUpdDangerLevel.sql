@@ -177,7 +177,7 @@ BEGIN
 				CASE WHEN basketball + basketballParlay < 75000 THEN 14 ELSE 15 END
 			END AS BasketballLevel,
 		Soccer + SoccerParlay as WinlossSoccer,
-		Basketball as WinlossBasketball,
+		Basketball + basketballParlay as WinlossBasketball,
 		IsSoccer,
 		IsBasketball
 	FROM T
