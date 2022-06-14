@@ -147,7 +147,7 @@ Revisions:
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-
+	- 20220527@Johnson: Remove Problem Account [RedmineID:#173304]
 	Param's Explanation:
 • @ErrCode:
 		= 0: Insert successfully.
@@ -521,19 +521,6 @@ BEGIN
 		  --, 0
 		)
 
-		IF @roleid <> 4
-		BEGIN
-			INSERT INTO dbo.ProblemAccount (CustId, ProblemStatus, ReasonId, Comment, MaxBet, MaxPerEvent, CreatedDate, IsReviewed, IsAbnormalMember, ActionId, SubIssueTypeId,VoidTime,LimitAmount)
-			SELECT @CustId, pa.ProblemStatus, NULL, NULL, NULL, NULL, GETDATE(), 0, 0, pa.ActionId,
-				CASE WHEN @roleid = 1 THEN a.SubIssueTypeId ELSE NULL END, 
-				pa.VoidTime, 0
-			FROM ProblemAccount pa WITH (NOLOCK)	
-				INNER JOIN ProblemAccountAction a WITH (NOLOCK) ON a.ActionID = pa.ActionId 		
-			WHERE CustId = CASE WHEN @roleid = 3 THEN @srecommend 
-								WHEN @roleid = 2 THEN @mrecommend
-								WHEN @roleid = 1 THEN @recommend END
-		END
-
 		SELECT @CreditRM = @credit * actualrate
 		FROM dbo.exchange WITH (NOLOCK) 
 		WHERE exchangeid = @currency
@@ -567,8 +554,7 @@ BEGIN
 			DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
 		END
-
-		DELETE FROM ProblemAccount WITH (ROWLOCK) WHERE CustId = @custid
+		
 		DELETE FROM SuspiciousCust WITH (ROWLOCK) WHERE CustId = @custid
 		DELETE FROM custInfo WITH (ROWLOCK) WHERE CustId = @custid
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
@@ -782,8 +768,7 @@ BEGIN
 				DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
 				DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
 			END
-
-			DELETE FROM ProblemAccount WITH (ROWLOCK) WHERE CustId = @custid
+			
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
@@ -832,8 +817,7 @@ BEGIN
 					DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
 				END
 
-				DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
-				DELETE FROM ProblemAccount WITH (ROWLOCK) WHERE CustId = @custid
+				DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid				
 				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
@@ -861,8 +845,7 @@ BEGIN
 
 					-- ROLLBACK MANUALLY
 					DELETE FROM CustSettingAutoSuspend WITH (ROWLOCK) WHERE CustId = @custid
-					DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
-					DELETE FROM ProblemAccount WITH (ROWLOCK) WHERE CustId = @custid
+					DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid					
 					DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 					DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
 					DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
