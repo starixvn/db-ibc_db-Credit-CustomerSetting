@@ -46,6 +46,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20220406@Elodie: Apply STRING_SPLIT() instead of strSplit UDF [Redmine: #168783]
+		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -64,11 +65,12 @@ BEGIN
 		DECLARE @xmlStrDisabled XML
 		DECLARE @xmlStrHidden XML
 		DECLARE @xmlStrSync XML
-
+		CREATE TABLE #SportBettypeFilter4(SportType INT, Bettype INT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
+		
 		/*********************** Product Status: SettingType = 4 & New Product Status: SettingType = 13**************************/
 		--Get sporttype/Bettype for this setting type	
+		INSERT INTO #SportBettypeFilter4(SportType,Bettype,IsLive, SettingType,IsDisabled,IsHidden,IsSync,bitmapOrder)
 		SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-		INTO #SportBettypeFilter4
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.[SportType] = psd.[SportType]	AND pbs.[BetType] = psd.[BetType]
 			INNER JOIN (SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
@@ -211,9 +213,11 @@ BEGIN
 		END CATCH
 
 		/********************************************* Game Status: SettingType = 11 ************************************/
+		CREATE TABLE #SportBettypeFilter11(SportType INT, Bettype INT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
+		
 		--Get sporttype/Bettype for this setting type	
-		SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-		INTO #SportBettypeFilter11
+		INSERT INTO #SportBettypeFilter11(SportType,Bettype,IsLive, SettingType,IsDisabled,IsHidden,IsSync,bitmapOrder)
+		SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 		
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus) t ON pbs.SportType = t.SportType	AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
@@ -368,11 +372,14 @@ BEGIN
 		END
 
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
-		SELECT t.* INTO #SportBettypeFilter1
+		CREATE TABLE #SportBettypeFilter1 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		
+		INSERT INTO #SportBettypeFilter1(ProductID, SportType,Bettype,IsLive, SettingType, RealProductId)
+		SELECT ProductID, SportType,Bettype,IsLive, SettingType, RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus) t
 
-		INSERT INTO #SportBettypeFilter1
-		SELECT * 
+		INSERT INTO #SportBettypeFilter1(ProductID, SportType,Bettype,IsLive, SettingType, RealProductId)
+		SELECT ProductID, SportType,Bettype,IsLive, SettingType, RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
 		
 		BEGIN TRY
@@ -793,8 +800,10 @@ BEGIN
 			RETURN
 		END CATCH
 		/********************************************* Bet Limit : SettingType = 2 ****************************************/
-	
-		SELECT t.* INTO #SportBettypeFilter2
+		CREATE TABLE #SportBettypeFilter2 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		
+		INSERT INTO #SportBettypeFilter2(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,2,@SettingStatus) t			
 	
 		BEGIN TRY
@@ -945,13 +954,18 @@ BEGIN
 		END CATCH
 	
 		/********************************************* Commision : SettingType = 3, Ticket Commision : SettingType = 14 ****************************************/
-		SELECT * INTO #SportBettypeFilter3
+		CREATE TABLE #SportBettypeFilter3 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		
+		INSERT INTO #SportBettypeFilter3(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus)
-		INSERT INTO #SportBettypeFilter3
-		SELECT * 
+		
+		INSERT INTO #SportBettypeFilter3(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus)
-		INSERT INTO #SportBettypeFilter3
-		SELECT * 
+		
+		INSERT INTO #SportBettypeFilter3(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus)
 
 		BEGIN TRY
@@ -1054,7 +1068,10 @@ BEGIN
 		END CATCH
 		
 		/*********************************************Charge Commision : SettingType = 5 ****************************************/
-		SELECT * INTO #SportBettypeFilter5
+		CREATE TABLE #SportBettypeFilter5 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		
+		INSERT INTO #SportBettypeFilter5(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus)
 	
 		BEGIN TRY
@@ -1167,10 +1184,14 @@ BEGIN
 
 		/********************************************* SMA WinLimit : SettingType = 6 ****************************************/
 		/********************************************* SMA LossLimit : SettingType = 12 ****************************************/
-		SELECT * INTO #SportBettypeFilter6
+		CREATE TABLE #SportBettypeFilter6 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		
+		INSERT INTO #SportBettypeFilter6(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,6,@SettingStatus)
-		INSERT INTO #SportBettypeFilter6
-		SELECT * 
+		
+		INSERT INTO #SportBettypeFilter6(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,12,@SettingStatus)
 		
 		BEGIN TRY
@@ -1297,14 +1318,17 @@ BEGIN
 		/****************************** Stake Level Member Single Selection : SettingType = 7 ******************************/
 		/****************************** Stake Level Member Multiple Selection : SettingType = 17 ******************************/
 		/*************************** Group Stake Level Member Single Selection : SettingType = 8 ***************************/
-
-		SELECT * INTO #SportBettypeFilter7
+		CREATE TABLE #SportBettypeFilter7 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		
+		INSERT INTO #SportBettypeFilter7(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,7,@SettingStatus)
-		INSERT INTO #SportBettypeFilter7
-		SELECT * 
+		
+		INSERT INTO #SportBettypeFilter7(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,17,@SettingStatus)
 		UNION ALL
-		SELECT * 
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId 
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,8,@SettingStatus)
 
 		DELETE sb		
@@ -1398,12 +1422,14 @@ BEGIN
 		END CATCH
 		
 		/********************************************* Bet Game Limit : SettingType = 9,16,20 ****************************************/
-	
-		SELECT t.* INTO #SportBettypeFilter9
+		CREATE TABLE #SportBettypeFilter9 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		
+		INSERT INTO #SportBettypeFilter9(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9,@SettingStatus) t
 
-		INSERT INTO #SportBettypeFilter9
-		SELECT * 
+		INSERT INTO #SportBettypeFilter9(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
 		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16,@SettingStatus)
 
 		BEGIN TRY
