@@ -11,7 +11,9 @@ AS
   
 	Revisions: 
 		- 20170328@Elodie: Expand the range of VR setting [RedmineID:#73808]
-		- 20170915@Winnie: Update logic to VR auto-adjustment job Phase 2 [RedmineID:#82312]
+		- 20170915@Winnie: Update logic to VR auto-adjustment job Phase 2 [RedmineID:#82312
+		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
+
 	Param's Explanation:  
 		- @VirtualMultiplier = '<ROOT>
 									<Rate CustIds="1,2,3,4,5,6" VirtualMultiplier="0.7" />	
@@ -52,39 +54,39 @@ BEGIN
 	
 	INSERT INTO #tblVirtualRate 
 		(	CustID, VirtualMultiplier)
-	SELECT	CAST(ss.val AS INT)
+	SELECT	CAST(ss.value AS INT)
 		,	CASE WHEN CAST(Data.VirtualMultiplier * 100 AS INT) > 200 THEN (CAST(Data.VirtualMultiplier * 100 AS INT)-200)/5+200 ELSE CAST(Data.VirtualMultiplier * 100 AS INT) END
 	FROM OPENXML (@DocHandler, '/ROOT/Rate',1) 
 	WITH (
 		CustIds				NVARCHAR(MAX)
 	,	VirtualMultiplier	SMALLMONEY	
 	) AS Data
-	CROSS APPLY	dbo.strSplit(Data.CustIds, ',') AS ss
+	CROSS APPLY	string_split(Data.CustIds, ',') AS ss
 		
 	IF (@SportType=1)	
 	BEGIN
 			INSERT INTO #Temp(CustID,sporttype,bettype,isLive,virtualRate)			
-			SELECT	CAST(ss.val AS INT),aa.sporttype,aa.bettype,aa.isLive
+			SELECT	CAST(ss.value AS INT),aa.sporttype,aa.bettype,aa.isLive
 			, Data.VirtualMultiplier
 			FROM OPENXML (@DocHandler, '/ROOT/Rate',1) 
 			WITH (
 				CustIds				NVARCHAR(MAX)
 			,	VirtualMultiplier	SMALLMONEY	
 			) AS Data
-			CROSS APPLY	dbo.strSplit(Data.CustIds, ',') AS ss		
+			CROSS APPLY	string_split(Data.CustIds, ',') AS ss		
 			CROSS APPLY (SELECT sporttype,bettype,islive FROM [ProfileVirtualSetting] WITH(NOLOCK) WHERE sporttype=1) aa
 	END
 	ELSE IF (@SportType=2)			
 	BEGIN
 			INSERT INTO #Temp(CustID,sporttype,bettype,isLive,virtualRate)			
-			SELECT	CAST(ss.val AS INT),aa.sporttype,aa.bettype,aa.isLive
+			SELECT	CAST(ss.value AS INT),aa.sporttype,aa.bettype,aa.isLive
 			, Data.VirtualMultiplier
 			FROM OPENXML (@DocHandler, '/ROOT/Rate',1) 
 			WITH (
 				CustIds				NVARCHAR(MAX)
 			,	VirtualMultiplier	SMALLMONEY	
 			) AS Data
-			CROSS APPLY	dbo.strSplit(Data.CustIds, ',') AS ss		
+			CROSS APPLY	string_split(Data.CustIds, ',') AS ss		
 			CROSS APPLY (SELECT sporttype,bettype,islive FROM [ProfileVirtualSetting] WITH(NOLOCK) WHERE sporttype<>1) aa
 	END 
 	

@@ -16,6 +16,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20201112@Eden: Saba.club - Offer more stake levels for 789y market - add default sort [Redmine: #147941]
 		- 20211213@Winfred: Support setting Buy Bonus for product RedmineID:#165393
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
     
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -109,10 +110,10 @@ BEGIN
 		INNER JOIN	#SportBetTypeFilter AS sbtf
 				ON	sbtf.SportType = csla.SportType
 				AND	sbtf.BetType = csla.BetType
-		CROSS APPLY	dbo.strSplit(ISNULL(csla.StakeLevelList, ''), ',') AS ss
+		CROSS APPLY	STRING_SPLIT(ISNULL(csla.StakeLevelList, ''), ',') AS ss
 		INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 				ON	sl.GameTypeID = sbtf.BetType
-				AND	sl.StakeLevelID = CAST(ss.val AS INT)
+				AND	sl.StakeLevelID = CAST(ss.value AS INT)
 		WHERE	csla.CustID =	CASE	WHEN @RoleID = 3 THEN @srecommend
 										WHEN @RoleID = 2 THEN @mrecommend
 										WHEN @RoleID = 1 THEN @recommend
@@ -123,9 +124,9 @@ BEGIN
 	IF	@RoleID IN (4, 3, 2)
 	BEGIN
 		WITH ccsl AS (
-			SELECT csla.SportType, csla.BetType, CAST(ss.val AS INT) AS StakeLevelID
+			SELECT csla.SportType, csla.BetType, CAST(ss.value AS INT) AS StakeLevelID
 			FROM		dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
-			CROSS APPLY	dbo.strSplit(ISNULL(csla.StakeLevelList, ''), ',') AS ss
+			CROSS APPLY	STRING_SPLIT(ISNULL(csla.StakeLevelList, ''), ',') AS ss
 			WHERE	csla.CustID = @CustID
 		)
 	    UPDATE	csl
@@ -139,9 +140,9 @@ BEGIN
 	ELSE IF @RoleID = 1
 	BEGIN
 		WITH ccsl AS (
-			SELECT cslm.SportType, cslm.BetType, CAST(ss.val AS INT) AS StakeLevelID
+			SELECT cslm.SportType, cslm.BetType, CAST(ss.value AS INT) AS StakeLevelID
 			FROM		dbo.CustStakeLevel_Member AS cslm WITH(NOLOCK)
-			CROSS APPLY	dbo.strSplit(ISNULL(cslm.StakeLevelList, ''), ',') AS ss
+			CROSS APPLY	STRING_SPLIT(ISNULL(cslm.StakeLevelList, ''), ',') AS ss
 			WHERE	cslm.CustID = @CustID
 		)
 	    UPDATE	csl

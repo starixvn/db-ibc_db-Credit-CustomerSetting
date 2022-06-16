@@ -1,9 +1,4 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_GroupedPTMemberLstSelect]   
    @CustIDList VARCHAR(MAX) 
 AS  
@@ -13,6 +8,9 @@ AS
  DB:  DBCUST/CustDB  
  Original:  
   
+ Revisions: 
+	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+
  Param's Explanation:  
  • @CustID: Comma seperated list of Member ID
    
@@ -22,8 +20,9 @@ BEGIN
 	
 	DECLARE @tblCust TABLE (CustID INT)
 	INSERT INTO @tblCust (CustID)
-	SELECT CONVERT(INT, val)
-	FROM dbo.strSplit(@CustIDList, ',')
+	SELECT CONVERT(INT, value)
+	FROM STRING_SPLIT(@CustIDList, ',')
+	WHERE value <> ''
 	
 	SELECT cm.CustID
 	FROM dbo.CustSettingMode3rd cm WITH(NOLOCK)
@@ -35,8 +34,3 @@ END
   
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GroupedPTMemberLstSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GroupedPTMemberLstSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_GroupedPTMemberLstSelect] TO [bodbExtAccNet]

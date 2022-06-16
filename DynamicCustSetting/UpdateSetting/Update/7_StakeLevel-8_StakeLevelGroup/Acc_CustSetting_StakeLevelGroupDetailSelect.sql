@@ -20,6 +20,7 @@ AS
 		- 20200819@Elodie: Only show stake level setting if site and currency of customer is offered [Redmine: #137768]
 		- 20201029@Winfred: Move offer for 789y site to SportNonOfferedSiteCurrency   [Redmine: #141926]
 		- 20211213@Winfred: Support setting Buy Bonus for product RedmineID:#165393
+		- 20614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 
 	Param's Explanation:
 */
@@ -81,9 +82,9 @@ BEGIN
 	ELSE
 	BEGIN
 	    INSERT INTO	@StakeLevelList (StakeLevelID, GameTypeID)
-	    SELECT	CAST(ss.val AS INT), Bettype
+	    SELECT	CAST(ss.value AS INT), Bettype
 		FROM	dbo.CustStakeLevel_Agent AS csla WITH (NOLOCK)
-		CROSS APPLY	dbo.strSplit(csla.StakeLevelList, ',') AS ss
+		CROSS APPLY	STRING_SPLIT(csla.StakeLevelList, ',') AS ss
 		WHERE	csla.CustID = @UplineID
 			AND	csla.SportType = @SportType
 	END

@@ -23,6 +23,7 @@ AS
 		- 20200330@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP applied for SB2 [Redmine: #131163]
 		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 
 	Param's Explanation:
 		@StakeLevel:
@@ -134,10 +135,10 @@ BEGIN
 				IF EXISTS (SELECT 1 
 						FROM  #tmpStakeCheck T WITH (NOLOCK)
 							INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON T.SportType = P.SportType AND T.BetType = P.BetType
-							CROSS APPLY dbo.strSplit(T.StakeLevelList,',') 
+							CROSS APPLY STRING_SPLIT(T.StakeLevelList,',') 
 						WHERE P.SettingType = @SettingType AND P.ProductID = @ProductID
 						GROUP BY P.SportType, P.BetType, P.MaxChoice
-						HAVING COUNT(VAL) > P.MaxChoice
+						HAVING COUNT(value) > P.MaxChoice
 					)
 				BEGIN
 				--Select Product Name
@@ -210,9 +211,9 @@ BEGIN
 					AND	BetType = @BetType;			
 			END
 
-			SELECT TOP(1) @invalidStakeLevelID = ISNULL(val,0)    
-			FROM dbo.strSplit(@StakeLevelList,',')  
-			WHERE val NOT IN (SELECT val FROM dbo.strSplit(@UplineStakeLevelList,','));  
+			SELECT TOP(1) @invalidStakeLevelID = ISNULL(value,0)    
+			FROM STRING_SPLIT(@StakeLevelList,',')  
+			WHERE value NOT IN (SELECT value FROM STRING_SPLIT(@UplineStakeLevelList,','));  
 
 			IF @invalidStakeLevelID > 0  
 			BEGIN

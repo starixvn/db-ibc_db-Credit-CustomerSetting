@@ -10,6 +10,7 @@ AS
 
 	Revisions:  
 	- 20211011@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
+	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 
 	Parameter Definition
 
@@ -55,8 +56,8 @@ BEGIN
 									THEN (SELECT STUFF(
 													REPLACE(
 														REPLACE((	SELECT c.username AS 'XMLHeadlineList'
-																	FROM dbo.f_StringSplit(cf.SpecialRequirement,',') t
-																		INNER JOIN CustInfo c(NOLOCK) ON t.val = c.custid
+																	FROM STRING_SPLIT(cf.SpecialRequirement,',') t
+																		INNER JOIN CustInfo c(NOLOCK) ON t.value = c.custid
 																	ORDER BY c.custid
 																	FOR XML PATH('')
 															),'<XMLHeadlineList>',','),'</XMLHeadlineList>', ''),1,1,'')) 

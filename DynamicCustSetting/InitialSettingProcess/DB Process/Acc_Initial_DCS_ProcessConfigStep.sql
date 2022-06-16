@@ -12,6 +12,7 @@ AS
 
 	Revisions:  
 	- 20210713@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
+	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 
 	Parameter Definition
 		StepID = :
@@ -46,18 +47,16 @@ BEGIN
 	INSERT INTO @TBL_site(SiteID,Site)
 	SELECT DISTINCT s.siteid, s.site
 	FROM Site s WITH(NOLOCK)
-		INNER JOIN dbo.f_StringSplit(@Site,',') t ON s.siteid = t.val OR @Site = '0'
+		INNER JOIN STRING_SPLIT(@Site,',') t ON s.siteid = t.value OR @Site = '0'
 	WHERE s.isActive = 1
 		AND s.isLicensee = 0
 		AND s.siteid NOT IN (329)--CN88
-	OPTION (MAXRECURSION 0)
 
 	INSERT INTO @TBL_Currency(Currency)
 	SELECT DISTINCT e.ExchangeId
 	FROM exchange e WITH(NOLOCK)
-		INNER JOIN dbo.f_StringSplit(@Currency,',') t ON e.ExchangeId = t.val OR @Currency = '0'
+		INNER JOIN STRING_SPLIT(@Currency,',') t ON e.ExchangeId = t.value OR @Currency = '0'
 	WHERE e.IsActive = 1
-	OPTION (MAXRECURSION 0)
 
 	CREATE TABLE #DirectAcc( CustID INT PRIMARY KEY, srecommend INT, mrecommend INT, recommend INT, RoleID TINYINT, currency INT)
 	CREATE NONCLUSTERED INDEX ix_TmpDirectAcc_recommend ON #DirectAcc(recommend)
@@ -2131,10 +2130,9 @@ BEGIN
 			TRUNCATE TABLE #tmp_ExcludeHeadline
 
 			INSERT INTO #tmp_ExcludeHeadline(custid)
-			SELECT val
-			FROM dbo.f_StringSplit(@HeadLineList,',') 
-			WHERE val <> ''
-			OPTION (MAXRECURSION 0)
+			SELECT value
+			FROM STRING_SPLIT(@HeadLineList,',') 
+			WHERE value <> ''
 
 			INSERT INTO #HeadlineSBOnly (CustID, Groupid)
 			SELECT c.custid, groupid  
