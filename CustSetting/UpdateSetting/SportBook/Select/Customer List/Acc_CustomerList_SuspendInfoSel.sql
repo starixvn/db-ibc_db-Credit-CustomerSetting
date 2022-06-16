@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20190409@Johnson: initial sp [redmine:#105587]
 		- 20210510@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 	Parameter's Explanation:
 		
 */	
@@ -22,8 +23,9 @@ BEGIN
 	DECLARE @tblCust TABLE(custid INT)
 		
 	INSERT INTO @tblCust(custid)
-	SELECT val 
-	FROM dbo.strSplit(@custidList,',')
+	SELECT value 
+	FROM STRING_SPLIT(@custidList,',')
+	WHERE value <> ''
 	
 	IF @roleid > 1
 	BEGIN

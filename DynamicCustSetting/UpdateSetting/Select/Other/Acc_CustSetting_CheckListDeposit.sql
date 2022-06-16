@@ -12,6 +12,7 @@ AS
  Revisions: 
         - 20180713@Vicky: NAP - Add new permission control to view Licensee Account [Redmine: #96118]
         - 20200930@Johnson: get isInternal status [redmine:#161998]
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
  Param's Explanation:
         - @UserNameList: 'MKW2RMB26, MKW3RMB, ITSA0341'
         
@@ -26,8 +27,9 @@ BEGIN
     IF @UserNameList != ''
     BEGIN
         INSERT INTO @tblCust (CustInfo)
-        SELECT RTRIM(LTRIM(val)) 
-        FROM dbo.strSplit(@UserNameList,',') 
+        SELECT RTRIM(LTRIM(value)) 
+        FROM STRING_SPLIT(@UserNameList,',') 
+		WHERE value <> ''
         
         UPDATE tc
         SET srecommend = ci.srecommend,
@@ -82,7 +84,7 @@ BEGIN
     ELSE 
     BEGIN
         INSERT INTO @tblCust (CustInfo )
-        SELECT RTRIM(LTRIM(val)) FROM dbo.strSplit(@CustIDList,',') 
+        SELECT RTRIM(LTRIM(value)) FROM STRING_SPLIT(@CustIDList,',') WHERE value <> ''
         
         SELECT tmpCust.CustInfo, 
             (CASE WHEN dep.CustId IS NULL THEN 0 ELSE 1 END) AS IsDeposit,

@@ -11,6 +11,7 @@ AS
     Revisions:
         - 20190529@Kan: NAP - Add new permission control to view CN88 Accounts [Redmine: #114215]
         - 20190610@Winnie: Revise SP for selecting site NAP - Add new permission control to view CN88 Accounts [Redmine: #114215]
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
     Param's Explanation:
         - @UserNameList: 'MKW2RMB26, MKW3RMB, ITSA0341'
     
@@ -24,8 +25,9 @@ BEGIN
     IF @UserNameList <> ''
     BEGIN
         INSERT INTO @tblCust (CustInfo)
-        SELECT RTRIM(LTRIM(val)) 
-        FROM dbo.strSplit(@UserNameList, ',') 
+        SELECT RTRIM(LTRIM(value)) 
+        FROM STRING_SPLIT(@UserNameList, ',') 
+		WHERE value <> ''
         
         UPDATE tc
         SET srecommend = ci.srecommend, Site = ci.Site
@@ -52,8 +54,9 @@ BEGIN
     ELSE 
     BEGIN
         INSERT INTO @tblCust (CustInfo)
-        SELECT RTRIM(LTRIM(val))
-        FROM dbo.strSplit(@CustIDList, ',') 
+        SELECT RTRIM(LTRIM(value))
+        FROM STRING_SPLIT(@CustIDList, ',') 
+		WHERE value <> ''
         
         SELECT tmpCust.CustInfo, ci.Site,1 AS IsValid     
         FROM @tblCust tmpCust

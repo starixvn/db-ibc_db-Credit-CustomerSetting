@@ -17,6 +17,8 @@ AS
     
 	Revisions:
 		- 20200608@Johnson: enable product NG2 when update sync [redmine:#135489] 	
+		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
+
 	Parameters Explanation:  
 
 	Example: 
@@ -56,8 +58,9 @@ BEGIN
 	SET	@startRun = GETDATE()
 
 	INSERT INTO #CustList(CustID)
-	SELECT val AS CustID
-	FROM strSplit(@CustIDs, ',')
+	SELECT value AS CustID
+	FROM string_split(@CustIDs, ',')
+	WHERE value <> ''
 
 	INSERT INTO	#NewSyncStatTbl (
 					SportType

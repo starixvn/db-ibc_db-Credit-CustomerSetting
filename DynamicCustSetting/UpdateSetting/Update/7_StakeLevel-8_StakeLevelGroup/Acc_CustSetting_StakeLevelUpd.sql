@@ -25,6 +25,7 @@ AS
 		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 		- 20200827@Winfred: Update log on SP version [Redmine: #137763]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -393,8 +394,8 @@ BEGIN
 			CROSS APPLY (
 				SELECT TOP(1) ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS LowestStakeLevel
 				FROM (
-					SELECT	CAST(val AS INT) AS val
-					FROM	dbo.strSplit(csld.StakeLevelList_Upline, ',')
+					SELECT	CAST(value AS INT) AS val
+					FROM	STRING_SPLIT(csld.StakeLevelList_Upline, ',')
 				) AS ss
 				INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 						ON	ss.val = sl.StakeLevelID
@@ -411,8 +412,8 @@ BEGIN
 				CROSS APPLY (
 					SELECT TOP(1) ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS LowestStakeLevel
 					FROM (
-						SELECT	CAST(val AS INT) AS val
-						FROM	dbo.strSplit(csld.StakeLevelList_Upline, ',')
+						SELECT	CAST(value AS INT) AS val
+						FROM	STRING_SPLIT(csld.StakeLevelList_Upline, ',')
 					) AS ss
 					INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 							ON	ss.val = sl.StakeLevelID
@@ -435,8 +436,8 @@ BEGIN
 				CROSS APPLY (
 					SELECT TOP(1) ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS LowestStakeLevel
 					FROM (
-						SELECT	CAST(val AS INT) AS val
-						FROM	dbo.strSplit(csld_upline.StakeLevelList_New, ',')
+						SELECT	CAST(value AS INT) AS val
+						FROM	STRING_SPLIT(csld_upline.StakeLevelList_New, ',')
 					) AS ss
 					INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 							ON	ss.val = sl.StakeLevelID
@@ -453,8 +454,8 @@ BEGIN
 				CROSS APPLY (
 					SELECT TOP(1) ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS LowestStakeLevel
 					FROM (
-						SELECT	CAST(val AS INT) AS val
-						FROM	dbo.strSplit(csld.StakeLevelList_Upline, ',')
+						SELECT	CAST(value AS INT) AS val
+						FROM	STRING_SPLIT(csld.StakeLevelList_Upline, ',')
 					) AS ss
 					INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 							ON	ss.val = sl.StakeLevelID
@@ -477,8 +478,8 @@ BEGIN
 				CROSS APPLY (
 					SELECT TOP(1) ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS LowestStakeLevel
 					FROM (
-						SELECT	CAST(val AS INT) AS val
-						FROM	dbo.strSplit(csld_upline.StakeLevelList_New, ',')
+						SELECT	CAST(value AS INT) AS val
+						FROM	STRING_SPLIT(csld_upline.StakeLevelList_New, ',')
 					) AS ss
 					INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 							ON	ss.val = sl.StakeLevelID
@@ -495,8 +496,8 @@ BEGIN
 				CROSS APPLY (
 					SELECT TOP(1) ISNULL(CONVERT(VARCHAR(20), sl.StakeLevelID), '') AS LowestStakeLevel
 					FROM (
-						SELECT	CAST(val AS INT) AS val
-						FROM	dbo.strSplit(csld.StakeLevelList_Upline, ',')
+						SELECT	CAST(value AS INT) AS val
+						FROM	STRING_SPLIT(csld.StakeLevelList_Upline, ',')
 					) AS ss
 					INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
 							ON	ss.val = sl.StakeLevelID
@@ -604,9 +605,9 @@ BEGIN
 			FROM		#StakeLevelList_Excluded AS slle
 			CROSS APPLY	(	SELECT TOP(1)	CAST(sl.StakeLevelID AS VARCHAR(10)) AS StakeLevelID
 										,	CAST(sl.MinLabel AS VARCHAR(20)) + '-' + CAST(sl.MaxLabel AS VARCHAR(20)) AS StakeLevelValue
-							FROM		dbo.strSplit(slle.StakeLevelList_old, ';') AS ss
+							FROM		STRING_SPLIT(slle.StakeLevelList_old, ';') AS ss
 							INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK)
-									ON	ss.val = CAST(sl.StakeLevelID AS NVARCHAR(10))
+									ON	ss.value = CAST(sl.StakeLevelID AS NVARCHAR(10))
 							WHERE sl.GameGroupID=0
 						) sl;
 
@@ -621,9 +622,9 @@ BEGIN
 			FROM		#tmpStake AS ts
 			CROSS APPLY	(	SELECT TOP(1)	CAST(sl.StakeLevelID AS VARCHAR(10)) AS StakeLevelID
 										,	CAST(sl.MinLabel AS VARCHAR(20)) + '-' + CAST(sl.MaxLabel AS VARCHAR(20)) AS StakeLevelValue
-							FROM		dbo.strSplit(ts.StakeLevelList, ';') AS ss
+							FROM		STRING_SPLIT(ts.StakeLevelList, ';') AS ss
 							INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK)
-									ON	ss.val = CAST(sl.StakeLevelID AS NVARCHAR(10))
+									ON	ss.value = CAST(sl.StakeLevelID AS NVARCHAR(10))
 							WHERE sl.GameGroupID=0
 						) sl;
 
@@ -653,9 +654,9 @@ BEGIN
 			FROM		#StakeLevelList_Excluded AS slle
 			CROSS APPLY	(	SELECT TOP(1)	CAST(sl.StakeLevelID AS VARCHAR(10)) AS StakeLevelID
 										,	gg.GroupName AS StakeLevelValue
-							FROM		dbo.strSplit(slle.StakeLevelList_old, ',') AS ss
+							FROM		STRING_SPLIT(slle.StakeLevelList_old, ',') AS ss
 							INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK)
-									ON	ss.val = CAST(sl.StakeLevelID AS NVARCHAR(10))
+									ON	ss.value = CAST(sl.StakeLevelID AS NVARCHAR(10))
 							INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK)
 									ON	gg.GameGroupID = sl.GameGroupID
 						) sl;
@@ -671,9 +672,9 @@ BEGIN
 			FROM		#tmpStake AS ts
 			CROSS APPLY	(	SELECT TOP(1)	CAST(sl.StakeLevelID AS VARCHAR(10)) AS StakeLevelID
 										,	gg.GroupName AS StakeLevelValue
-							FROM		dbo.strSplit(ts.StakeLevelList, ',') AS ss
+							FROM		STRING_SPLIT(ts.StakeLevelList, ',') AS ss
 							INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK)
-									ON	ss.val = CAST(sl.StakeLevelID AS NVARCHAR(10))
+									ON	ss.value = CAST(sl.StakeLevelID AS NVARCHAR(10))
 							INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK)
 									ON	gg.GameGroupID = sl.GameGroupID
 						) sl;

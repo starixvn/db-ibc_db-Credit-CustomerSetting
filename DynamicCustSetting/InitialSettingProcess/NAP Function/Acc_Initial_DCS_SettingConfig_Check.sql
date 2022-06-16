@@ -19,7 +19,8 @@ AS
 	Original:
 
 	Revisions:  
-	- 20211011@Eden:  Flexible Initializing Customer Setting [RedmineID: #15666r7]
+	- 20211011@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
+	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 
 	Parameter Definition
 
@@ -115,14 +116,14 @@ BEGIN
 	END	
 
 	INSERT INTO @SporttypeTbl(SportType)
-	SELECT val 
-	FROM dbo.f_StringSplit(@SportTypeList,',') t
-	OPTION (MAXRECURSION 0)
+	SELECT value 
+	FROM STRING_SPLIT(@SportTypeList,',') t
+	WHERE value <> ''
 
 	INSERT INTO @BettypeTbl(BetType)
-	SELECT val 
-	FROM dbo.f_StringSplit(@BetTypeList,',') t
-	OPTION (MAXRECURSION 0)
+	SELECT value 
+	FROM STRING_SPLIT(@BetTypeList,',') t
+	WHERE value <> ''
 
 	--> Wrong Config
 	IF EXISTS(	SELECT 1 
@@ -389,18 +390,16 @@ BEGIN
 	INSERT INTO @TBL_site(SiteID,Site)
 	SELECT DISTINCT s.siteid, s.site
 	FROM Site s WITH(NOLOCK)
-		INNER JOIN dbo.f_StringSplit(@Site,',') t ON s.siteid = t.val OR @Site = '0'
+		INNER JOIN STRING_SPLIT(@Site,',') t ON s.siteid = t.value OR @Site = '0'
 	WHERE s.isActive = 1
 		AND s.isLicensee = 0
 		AND s.siteid NOT IN (329)--CN88
-	OPTION (MAXRECURSION 0)
 
 	INSERT INTO @TBL_Currency(Currency)
 	SELECT DISTINCT e.ExchangeId
 	FROM exchange e WITH(NOLOCK)
-		INNER JOIN dbo.f_StringSplit(@Currency,',') t ON e.ExchangeId = t.val OR @Currency = '0'
+		INNER JOIN STRING_SPLIT(@Currency,',') t ON e.ExchangeId = t.value OR @Currency = '0'
 	WHERE e.IsActive = 1
-	OPTION (MAXRECURSION 0)
 
 	DECLARE @TempConfig_Status TABLE (ID INT, SpecialRequirement VARCHAR(MAX), IsFinished BIT DEFAULT 0)
 	INSERT INTO @TempConfig_Status(ID,SpecialRequirement)
@@ -427,9 +426,9 @@ BEGIN
 		SET @ErrType = ''
 
 		INSERT INTO @tmpHeadline(Username)
-		SELECT hl.val
-		FROM dbo.f_StringSplit(@SpecialRequirement,',') hl
-		OPTION (MAXRECURSION 0)
+		SELECT hl.value
+		FROM STRING_SPLIT(@SpecialRequirement,',') hl
+		WHERE value <> ''
 
 		SELECT @ErrType =  @ErrType + ', ' + hl.Username
 		FROM @tmpHeadline hl
@@ -482,10 +481,10 @@ BEGIN
 			SELECT TOP(1) @TmpStatus = cf.Status
 			FROM Initial_ProductConfig cf WITH(NOLOCK)
 				INNER JOIN @ExistingConfig t ON cf.ConfigID = t.ConfigID
-				CROSS APPLY dbo.f_StringSplit(cf.Site,',') s 
-				INNER JOIN @TBL_site ts ON s.val = ts.SiteID OR cf.Site = '0'
-				CROSS APPLY dbo.f_StringSplit(cf.Currency,',') cr 
-				INNER JOIN @TBL_Currency tcr ON cr.val = tcr.Currency OR cf.Currency = '0'
+				CROSS APPLY STRING_SPLIT(cf.Site,',') s 
+				INNER JOIN @TBL_site ts ON s.value = ts.SiteID OR cf.Site = '0'
+				CROSS APPLY STRING_SPLIT(cf.Currency,',') cr 
+				INNER JOIN @TBL_Currency tcr ON cr.value = tcr.Currency OR cf.Currency = '0'
 			ORDER BY cf.Status
 			OPTION (MAXRECURSION 0)
 
@@ -530,8 +529,8 @@ BEGIN
 	SET SpecialRequirement =  STUFF(
 									REPLACE(
 										REPLACE((	SELECT c.custid AS 'XMLHeadlineList'
-													FROM dbo.f_StringSplit(t.SpecialRequirement,',') t
-														INNER JOIN CustInfo c(NOLOCK) ON t.val = c.username
+													FROM STRING_SPLIT(t.SpecialRequirement,',') t
+														INNER JOIN CustInfo c(NOLOCK) ON t.value = c.username
 													ORDER BY c.custid
 													FOR XML PATH('')
 											),'<XMLHeadlineList>',','),'</XMLHeadlineList>', ''),1,1,'')
