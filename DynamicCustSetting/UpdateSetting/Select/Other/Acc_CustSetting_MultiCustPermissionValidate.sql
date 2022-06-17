@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/ 
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MultiCustPermissionValidate]  
 	@CustID INT 
 	,@TargetCustIDLst VARCHAR(MAX)
@@ -11,6 +13,7 @@ AS
 	Original:   
 	  
 	Revisions:  
+		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
 */  
 BEGIN  
 	SET NOCOUNT ON  
@@ -21,8 +24,9 @@ BEGIN
 	SELECT @ErrCode=0,@ErrMsg=''
 	
 	INSERT INTO @tblCust (CustID)
-	SELECT CONVERT(INT, val)
-	FROM dbo.strSplit(@TargetCustIDLst, ',') 
+	SELECT CONVERT(INT, value)
+	FROM string_split(@TargetCustIDLst, ',') 
+	WHERE value <> ''
 	
 	SELECT @FakeCustCnt = COUNT(1)
 	FROM @tblCust c
@@ -102,10 +106,4 @@ BEGIN
 		RETURN 
 	END  
 END   
-  
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MultiCustPermissionValidate] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MultiCustPermissionValidate] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MultiCustPermissionValidate] TO [bodbExtAccNet]

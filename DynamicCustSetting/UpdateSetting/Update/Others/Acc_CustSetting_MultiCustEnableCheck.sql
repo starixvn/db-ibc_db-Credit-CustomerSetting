@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/ 
+
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MultiCustEnableCheck] 
 	  @CustIDList	VARCHAR(MAX)	= ''
 	, @ErrCode		INT				= 0		OUTPUT
@@ -8,6 +10,8 @@ AS
 		Date: 2014-12-08
 		Task: Check enabled status for a list of costumers
 		DB: DBCUST/CustDB
+		Revisions:	
+			- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
 */
 BEGIN
 	SET NOCOUNT ON
@@ -17,8 +21,9 @@ BEGIN
 
 	--Parse CustID
 	INSERT INTO @tblCust (CustID)
-	SELECT CONVERT(INT, val)
-	FROM dbo.strSplit(@CustIDList, ',')
+	SELECT CONVERT(INT, value)
+	FROM string_split(@CustIDList, ',')
+	WHERE value <> ''
 
 	SELECT TOP 100 @UserNames = @UserNames + ci.username + ','
 	FROM custinfo ci WITH (NOLOCK)
@@ -42,10 +47,4 @@ BEGIN
 		RETURN
 	END
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MultiCustEnableCheck] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MultiCustEnableCheck] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_MultiCustEnableCheck] TO [bodbExtAccNet]
