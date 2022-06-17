@@ -347,7 +347,7 @@ Revisions:
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-
+	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -369,47 +369,51 @@ BEGIN
 	IF @ErrCode <> 0 RETURN
 
 ----- Elodie @ 01 JUN 2015 -------------------	
+	CREATE TABLE #tmp_Sports(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_Bettype(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_GameType(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	
 	BEGIN TRY
-		SELECT *
-		INTO #tmp_Sports
+		INSERT INTO #tmp_Sports(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
 		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_Sports
-			INSERT INTO #tmp_Sports
-			SELECT *
+			INSERT INTO #tmp_Sports(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY			
-		SELECT *
-		INTO #tmp_Bettype
+		INSERT INTO #tmp_Bettype(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
 		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_Bettype
-			INSERT INTO #tmp_Bettype
-			SELECT *
+			INSERT INTO #tmp_Bettype(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY		
-		SELECT *
-		INTO #tmp_GameType
+		INSERT INTO #tmp_GameType(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID		
 		FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
 		IF OBJECT_ID(N'tempdb..#tmp_GameType') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_GameType
-			INSERT INTO #tmp_GameType
-			SELECT *
+			INSERT INTO #tmp_GameType(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBTXN')	
 		END
 	END CATCH
@@ -3526,8 +3530,10 @@ BEGIN
 	DECLARE @LogDataSP2 VARCHAR(4000)
 	SET @LogDataSP2 = ''
 	
-	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
-	INTO #temSportbettypeSetting
+	CREATE TABLE #temSportbettypeSetting(ProductID TINYINT,SportType SMALLINT, Bettype SMALLINT, SettingType SMALLINT)
+		
+	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
+	SELECT DISTINCT ProductID,SportType,Bettype,SettingType	
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus)
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)

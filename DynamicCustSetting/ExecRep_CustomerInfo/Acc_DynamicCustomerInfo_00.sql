@@ -65,7 +65,7 @@ BEGIN
 		DECLARE @xmlStrDisabled XML
 		DECLARE @xmlStrHidden XML
 		DECLARE @xmlStrSync XML
-		CREATE TABLE #SportBettypeFilter4(SportType INT, Bettype INT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
+		CREATE TABLE #SportBettypeFilter4(SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
 		
 		/*********************** Product Status: SettingType = 4 & New Product Status: SettingType = 13**************************/
 		--Get sporttype/Bettype for this setting type	
@@ -213,7 +213,7 @@ BEGIN
 		END CATCH
 
 		/********************************************* Game Status: SettingType = 11 ************************************/
-		CREATE TABLE #SportBettypeFilter11(SportType INT, Bettype INT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
+		CREATE TABLE #SportBettypeFilter11(SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
 		
 		--Get sporttype/Bettype for this setting type	
 		INSERT INTO #SportBettypeFilter11(SportType,Bettype,IsLive, SettingType,IsDisabled,IsHidden,IsSync,bitmapOrder)
@@ -372,7 +372,7 @@ BEGIN
 		END
 
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
-		CREATE TABLE #SportBettypeFilter1 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		CREATE TABLE #SportBettypeFilter1 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		
 		INSERT INTO #SportBettypeFilter1(ProductID, SportType,Bettype,IsLive, SettingType, RealProductId)
 		SELECT ProductID, SportType,Bettype,IsLive, SettingType, RealProductId
@@ -800,7 +800,7 @@ BEGIN
 			RETURN
 		END CATCH
 		/********************************************* Bet Limit : SettingType = 2 ****************************************/
-		CREATE TABLE #SportBettypeFilter2 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		CREATE TABLE #SportBettypeFilter2 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		
 		INSERT INTO #SportBettypeFilter2(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
@@ -954,7 +954,7 @@ BEGIN
 		END CATCH
 	
 		/********************************************* Commision : SettingType = 3, Ticket Commision : SettingType = 14 ****************************************/
-		CREATE TABLE #SportBettypeFilter3 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		CREATE TABLE #SportBettypeFilter3 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		
 		INSERT INTO #SportBettypeFilter3(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
@@ -1068,7 +1068,7 @@ BEGIN
 		END CATCH
 		
 		/*********************************************Charge Commision : SettingType = 5 ****************************************/
-		CREATE TABLE #SportBettypeFilter5 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		CREATE TABLE #SportBettypeFilter5 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		
 		INSERT INTO #SportBettypeFilter5(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
@@ -1184,7 +1184,7 @@ BEGIN
 
 		/********************************************* SMA WinLimit : SettingType = 6 ****************************************/
 		/********************************************* SMA LossLimit : SettingType = 12 ****************************************/
-		CREATE TABLE #SportBettypeFilter6 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		CREATE TABLE #SportBettypeFilter6 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		
 		INSERT INTO #SportBettypeFilter6(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
@@ -1318,7 +1318,7 @@ BEGIN
 		/****************************** Stake Level Member Single Selection : SettingType = 7 ******************************/
 		/****************************** Stake Level Member Multiple Selection : SettingType = 17 ******************************/
 		/*************************** Group Stake Level Member Single Selection : SettingType = 8 ***************************/
-		CREATE TABLE #SportBettypeFilter7 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		CREATE TABLE #SportBettypeFilter7 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		
 		INSERT INTO #SportBettypeFilter7(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
@@ -1422,7 +1422,7 @@ BEGIN
 		END CATCH
 		
 		/********************************************* Bet Game Limit : SettingType = 9,16,20 ****************************************/
-		CREATE TABLE #SportBettypeFilter9 (ProductID INT, SportType INT,Bettype INT,IsLive BIT, SettingType INT, RealProductId TINYINT)
+		CREATE TABLE #SportBettypeFilter9 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		
 		INSERT INTO #SportBettypeFilter9(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId

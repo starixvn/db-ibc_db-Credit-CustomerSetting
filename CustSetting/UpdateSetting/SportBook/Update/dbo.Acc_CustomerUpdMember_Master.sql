@@ -396,6 +396,7 @@ Revisions:
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20210111@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]
 	- 20210714@Tina: Lock account & indirect close account [redmine: #148600]
+	- 20220620@Johnson: define temp table to avoid dump db [redmine:#174035]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -421,32 +422,35 @@ BEGIN
 	END
 	*/
 	----- Elodie @ 01 JUN 2015 -------------------
+	CREATE TABLE #tmp_Sports(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_Bettype(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	
 	BEGIN TRY
-		SELECT *
-		INTO #tmp_Sports
+		INSERT INTO #tmp_Sports(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
 		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_Sports
-			INSERT INTO #tmp_Sports
-			SELECT *
+			INSERT INTO #tmp_Sports(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY			
-		SELECT *
-		INTO #tmp_Bettype
+		INSERT INTO #tmp_Bettype(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID		
 		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
 		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_Bettype
-			INSERT INTO #tmp_Bettype
-			SELECT *
+			INSERT INTO #tmp_Bettype(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID	
 			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
 		END
 	END CATCH
@@ -8186,6 +8190,10 @@ if	@UpdatePositiontaking   = 1  or
 		END CATCH
 
 	END--UpdatePositiontaking
+	
+	DROP TABLE #tmp_Sports
+	DROP TABLE #tmp_Bettype
+
 END
 
 GO

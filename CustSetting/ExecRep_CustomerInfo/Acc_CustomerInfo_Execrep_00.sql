@@ -695,7 +695,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20210324@Johnson: Hide GoldDeluxe settings [redmine:#151188]
 			- 20210518@Winfred: Add new Parlay Max Payout [RedmineID:#154104]
 			- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-
+			- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -2259,9 +2259,10 @@ BEGIN
 	BEGIN
 		IF (@IsMyanmarOdds = 1)
 		BEGIN
-		
+			CREATE TABLE #CustCommRate_MOtemp (CustID INT, SportType SMALLINT, BetType SMALLINT,CommRate decimal(9,8),roleid TINYINT)
+			
+			INSERT INTO #CustCommRate_MOtemp(CustID,SportType,BetType,CommRate,roleid )
 			SELECT @CustID AS CustID,AC.SportType,AC.BetType,AC.CommRate,CI.roleid 
-			INTO #CustCommRate_MOtemp
 			FROM AgentCommRate ac WITH (NOLOCK)
 				JOIN custInfo ci WITH (NOLOCK) ON ac.CustID = ci.custid
 			WHERE ac.CustID IN (@srecommend,@mrecommend,@recommend) AND ac.Sporttype = 1 AND ac.Bettype = 1

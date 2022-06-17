@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MaxPayoutSelect] 
 	  @CustID		INT
 	, @SettingStatus TINYINT = 0
@@ -14,7 +11,7 @@ AS
 
 	Revision: 
 		- 20210518@Winfred: Initial SP [RedmineID:#154104]
-
+		- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 		
@@ -27,6 +24,8 @@ BEGIN
 			@AgentID	INT
 	
 	DECLARE @MatchParlayUnlimit TABLE(SportType SMALLINT, BetType SMALLINT, SingleMatchParlay_IsAllowUnlimit BIT, Combo2_IsAllowUnlimit BIT, Combo35_IsAllowUnlimit BIT, ComboOver6_IsAllowUnlimit BIT)
+	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT)
+	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
 		,	@RoleID     = c.roleid
@@ -36,8 +35,8 @@ BEGIN
 	FROM	dbo.Customer AS c WITH(NOLOCK)
 	WHERE	c.custid = @CustID
 	
-	SELECT DISTINCT SportType,Bettype 
-	INTO #SportBettypeFilter
+	INSERT INTO #SportBettypeFilter(SportType,Bettype)
+	SELECT DISTINCT SportType,Bettype 	
 	FROM dbo.MaxPayoutGlobalSetting WITH(NOLOCK)
 	WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
 	

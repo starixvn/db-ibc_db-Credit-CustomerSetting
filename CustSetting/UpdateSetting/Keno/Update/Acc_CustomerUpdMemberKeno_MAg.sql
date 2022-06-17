@@ -30,6 +30,7 @@ AS
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20210108@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]
+		- 20220620@Johnson: define temp table to avoid dump db [redmine:#174035]
 	Parameters Explanation:
 	• @ErrCode:  
 		<= 0: Update successfully.  
@@ -50,32 +51,35 @@ BEGIN
 	SET @ErrCode = ''
 
 	----- David @ 09 JUN 2015 -------------------
+	CREATE TABLE #tmp_Sports(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_Bettype(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	
 	BEGIN TRY
-		SELECT *
-		INTO #tmp_Sports
+		INSERT INTO #tmp_Sports(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
 		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_Sports
-			INSERT INTO #tmp_Sports
-			SELECT *
+			INSERT INTO #tmp_Sports(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY			
-		SELECT *
-		INTO #tmp_Bettype
+		INSERT INTO #tmp_Bettype(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID		
 		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
 		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_Bettype
-			INSERT INTO #tmp_Bettype
-			SELECT *
+			INSERT INTO #tmp_Bettype(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID	
 			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
 		END
 	END CATCH
@@ -91,13 +95,13 @@ BEGIN
 
 	DECLARE @mpos smallmoney, @apos smallmoney, @spos smallmoney, @mapos1 smallmoney, @mapos2 smallmoney, @mapos smallmoney, @maxspos smallmoney, @maxmapos smallmoney, @MaxPositionTaking smallmoney
 
-	DECLARE @tmp_cs TABLE (custid INT, sporttype INT, bettype INT, 
+	DECLARE @tmp_cs TABLE (custid INT, sporttype SMALLINT, bettype SMALLINT, 
 				spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, 
 				isautopositiontaking BIT, isautompositiontaking BIT, autopositiontaking SMALLMONEY, autompositiontaking SMALLMONEY)	
 
-	DECLARE @tmp_sag TABLE(custid INT, sporttype INT, bettype INT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, minpositiontaking SMALLMONEY)
-	DECLARE @tmp_mag TABLE(custid INT, sporttype INT, bettype INT, mpositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, minpositiontaking SMALLMONEY)
-	DECLARE @tmp_ag TABLE(custid INT, sporttype INT, bettype INT, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, minpositiontaking SMALLMONEY)
+	DECLARE @tmp_sag TABLE(custid INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, minpositiontaking SMALLMONEY)
+	DECLARE @tmp_mag TABLE(custid INT, sporttype SMALLINT, bettype SMALLINT, mpositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, minpositiontaking SMALLMONEY)
+	DECLARE @tmp_ag TABLE(custid INT, sporttype SMALLINT, bettype SMALLINT, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, minpositiontaking SMALLMONEY)
 	
 	DECLARE @APositionTaking SMALLMONEY--a1
 		, @APositionTaking_Max SMALLMONEY--a2
@@ -674,6 +678,8 @@ BEGIN
 			, @TrackingValue2 = @TrackingValueDB
 			, @duration = @duration
 	END CATCH
-
+	
+	DROP TABLE #tmp_Sports
+	DROP TABLE #tmp_Bettype
 END
 GO
