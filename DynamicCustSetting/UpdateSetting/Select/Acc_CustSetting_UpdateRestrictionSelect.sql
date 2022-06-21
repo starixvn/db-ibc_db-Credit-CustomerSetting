@@ -17,6 +17,7 @@ AS
 
  Revisions: 
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
   
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
@@ -24,9 +25,16 @@ AS
    
  */  
 BEGIN   
-	
+	CREATE TABLE #tmp (
+			ProductID	TINYINT ,
+			SettingType SMALLINT,
+			SystemID	TINYINT,
+			TargetID	INT,
+			ActorRoleID TINYINT,
+			TargetRoleID TINYINT)
+
+	INSERT INTO #tmp(ProductID, SettingType, SystemID, TargetID, ActorRoleID, TargetRoleID)
 	SELECT DISTINCT @ProductID ProductID,fil.SettingType,@SystemID SystemID,@TargetID TargetID,@ActorRoleID ActorRoleID,@TargetRoleID TargetRoleID
-	INTO #tmp
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus) fil
 	
 	
@@ -36,5 +44,6 @@ BEGIN
 		ON rs.ProductID = t.ProductID AND rs.SettingType = t.SettingType AND rs.SystemID = t.SystemID 
 		AND rs.ActorRoleID = t.ActorRoleID AND rs.TargetRoleID = t.TargetRoleID
 	
+	DROP TABLE #tmp
 END  
   

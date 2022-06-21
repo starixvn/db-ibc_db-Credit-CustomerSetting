@@ -16,6 +16,7 @@ AS
 	Revision:
 		- 20200702@Winfred: Get enabled status of Cust when SettingType = 4 (ProductStatus)  (ProductStatus) [RedmineID:#136210]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -31,8 +32,10 @@ BEGIN
 			@MasterID	INT,
 			@AgentID	INT
 
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
+	
+	INSERT INTO #SportBettypeFilter(SportType,Bettype)
 	SELECT SportType,Bettype
-	INTO #SportBettypeFilter
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
 	
 	-- Select customer's information

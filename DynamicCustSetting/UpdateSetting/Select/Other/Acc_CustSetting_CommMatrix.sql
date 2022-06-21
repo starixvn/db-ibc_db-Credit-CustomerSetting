@@ -16,26 +16,30 @@ AS
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 		
    
  */  
 BEGIN  
+	CREATE TABLE #SportBettypeFilter (SportType SMALLINT, Bettype SMALLINT)
 
-	SELECT * INTO #SportBettypeFilter
+	INSERT INTO #SportBettypeFilter (SportType, Bettype)
+	SELECT SportType, Bettype
 	FROM (
-	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) -- comm
-	UNION
-	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus)  
-	UNION
-	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus) 
-	UNION
-	SELECT *
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus)) tmp
+			SELECT SportType, Bettype
+			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) -- comm
+			UNION
+			SELECT SportType, Bettype
+			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus)  
+			UNION
+			SELECT SportType, Bettype
+			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus) 
+			UNION
+			SELECT SportType, Bettype
+			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus)
+			) tmp
 	
 	SET NOCOUNT ON
 	DECLARE @CustID INT

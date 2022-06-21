@@ -16,6 +16,7 @@ AS
 	Revision:
 		- 20180118@Elodie: Get Game Status setting values of a product on NAP & ExtNAP [RedmineID:#87328]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -40,8 +41,11 @@ BEGIN
 											TotalDisabledMasters INT,
 											TotalDisabledAgents INT,
 											TotalDisabledMembers INT)
+	
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
+
+	INSERT INTO #SportBettypeFilter(SportType,Bettype)
 	SELECT SportType,Bettype
-	INTO #SportBettypeFilter
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
 	
 	-- Select customer's information
@@ -220,4 +224,5 @@ BEGIN
 	DROP TABLE #DownlineDisableStatus
 	DROP TABLE #DownlineEnableStatus
 END
+
 GO
