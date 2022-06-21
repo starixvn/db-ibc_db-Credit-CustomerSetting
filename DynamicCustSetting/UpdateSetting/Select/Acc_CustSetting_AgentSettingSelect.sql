@@ -10,7 +10,6 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentSettingSelect]
 	, @SettingStatus TINYINT = 0
 AS  
 /*  
-/*  
  Created: 20141104@Dominic  
  Task : Get Agent'setting values of a product  
  DB:  DBCUST/CustDB  
