@@ -24,7 +24,8 @@ AS
 			- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 			- 20200414@Tiara: Offer Allbet/GD multiple stakelevels for member [Redmine: #131171]
 			- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
-
+			- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+	
 		Parameter's Explanation:
 			* @StakeLevel = <ROOT>
 								<Row ID="1701" Stake="1,2,3,4"/>
@@ -66,7 +67,9 @@ BEGIN
 				,StakeLevelList_Upline VARCHAR(100)
 				, PRIMARY KEY CLUSTERED (CustID,GameTypeID)
 		)
-		
+	
+	CREATE TABLE #StakeLevelList_Excluded (GameTypeID INT, StakeLevelList_old VARCHAR(100), ExcludedLevel VARCHAR(100))
+
 	SET @startRun = GETDATE()
 
 	--> Check UM config
@@ -241,14 +244,16 @@ BEGIN
 	--end validate
 	--update stake level
 	BEGIN
+
 		-- Downline Processing: only processing if being different.
 		DELETE T
 		FROM #tmpStake T
 			JOIN CustGameType cg WITH(NOLOCK)  ON T.GameTypeID = cg.GameTypeID
 		WHERE cg.CustID = @custid AND T.StakeLevelList = cg.StakeLevelList
-		
+
+		-- Get excluded level compared with old
+		INSERT INTO  #StakeLevelList_Excluded (GameTypeID, StakeLevelList_old, ExcludedLevel)
 		SELECT CG.GameTypeID,CG.StakeLevelList AS StakeLevelList_old , (SELECT * FROM dbo.f_StakeLevelcorrectString (cg.StakeLevelList,s.StakeLevelList)) AS ExcludedLevel--string,excludeString()
-		INTO  #StakeLevelList_Excluded -- Get excluded level compared with old 
 		FROM CustGameType CG WITH (NOLOCK)
 			JOIN #tmpStake S ON CG.GameTypeID = S.GameTypeID
 		WHERE custid = @custid 
@@ -530,5 +535,9 @@ BEGIN
 			SET @minGameTypeRow = @minGameTypeRow + 1
 		END
 	END	
+
+	DROP TABLE #CustGameTypeDownlines
+	DROP TABLE #StakeLevelList_Excluded
+	DROP TABLE #tmpStake
 END
 GO

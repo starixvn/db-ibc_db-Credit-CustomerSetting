@@ -18,6 +18,7 @@ AS
 	- 20171214@Vicky: NAP - System show duplicate data when viewing PT of Cricket - [Redmine: #87939]
 	- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
  Param's Explanation:  
 
@@ -54,8 +55,10 @@ BEGIN
 		[MaxPT] SMALLMONEY
 	)	
 	
+	CREATE TABLE #SportList (ProductID TINYINT, SportType SMALLINT, BetType SMALLINT, IsLive BIT)
+
+	INSERT INTO #SportList (ProductID, SportType, BetType, IsLive)
 	SELECT ProductID, SportType, BetType, IsLive
-	INTO #SportList
 	FROM dbo.ProductSettingDetail
 	WHERE SettingType IN (1, 18)
 		AND ProductID = CASE WHEN @ProductID = 0 THEN ProductID ELSE @ProductID END
@@ -203,5 +206,7 @@ BEGIN
 		, [BetType]
 		, [IsLive]
 		, [RoleID] DESC
+
+	DROP TABLE #SportList
 END
 GO
