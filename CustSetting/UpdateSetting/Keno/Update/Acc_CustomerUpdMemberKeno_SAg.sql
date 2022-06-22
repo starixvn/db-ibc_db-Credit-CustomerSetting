@@ -28,6 +28,7 @@ AS
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 			
 	Param's Explanation:  
 	• @ErrCode:  
@@ -38,6 +39,10 @@ AS
 */  
 BEGIN
 	SET NOCOUNT ON
+
+	CREATE TABLE #tmp_Sports (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_Bettype (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+
 	----- David @ 09 JUN 2015 -------------------
 
 	--> Check UM config
@@ -52,8 +57,8 @@ BEGIN
 	SET @ErrCode = ''
 
 	BEGIN TRY
-		SELECT *
-		INTO #tmp_Sports
+		INSERT INTO #tmp_Sports (ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
@@ -61,14 +66,14 @@ BEGIN
 		BEGIN
 			TRUNCATE TABLE #tmp_Sports
 			INSERT INTO #tmp_Sports
-			SELECT *
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY			
-		SELECT *
-		INTO #tmp_Bettype
+		INSERT INTO #tmp_Bettype (ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
@@ -76,7 +81,7 @@ BEGIN
 		BEGIN
 			TRUNCATE TABLE #tmp_Bettype
 			INSERT INTO #tmp_Bettype
-			SELECT *
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
 		END
 	END CATCH
@@ -614,5 +619,8 @@ BEGIN
 			, @TrackingValue2 = @TrackingValueDB
 			, @duration = @duration
 	END CATCH	
+
+	DROP TABLE #tmp_Bettype
+	DROP TABLE #tmp_Sports
 END
 GO

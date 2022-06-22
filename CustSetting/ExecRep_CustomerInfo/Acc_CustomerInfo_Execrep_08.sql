@@ -14,6 +14,7 @@ AS
 	
 	Revisions:
 		- 20170703@Percy: Initialize SP [RedmineID: #111365]
+		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 */
 
 BEGIN
@@ -30,9 +31,11 @@ BEGIN
 
 	DECLARE @SuperIdXML XML
 	SELECT  @SuperIdXML = CAST(@SuperIdList AS XML)
-
-	SELECT t.c.value('@c', 'INT') AS CustId
-	INTO #tmpSuper
+	
+	CREATE TABLE #tmpSuper(custid INT)
+	
+	INSERT INTO #tmpSuper(custid)
+	SELECT t.c.value('@c', 'INT') AS CustId	
 	FROM @SuperIdXML.nodes('/r') AS t(c)
 
 	-- CustSuper

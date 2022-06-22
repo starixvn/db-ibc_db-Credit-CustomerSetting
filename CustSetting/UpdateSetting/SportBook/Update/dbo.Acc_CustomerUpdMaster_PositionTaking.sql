@@ -376,6 +376,8 @@ Revisions:
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
+	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -387,14 +389,17 @@ Param's Explanation:
 
 SET NOCOUNT ON
 
+CREATE TABLE #tmp_Sports (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+CREATE TABLE #tmp_Bettype (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+
 declare @startRun datetime
 declare @endRun datetime
 declare @duration int
 set @startRun = getdate()
 ----- Elodie @ 01 JUN 2015 -------------------
 	BEGIN TRY
-		SELECT *
-		INTO #tmp_Sports
+		INSERT INTO #tmp_Sports (ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
@@ -402,14 +407,14 @@ set @startRun = getdate()
 		BEGIN
 			TRUNCATE TABLE #tmp_Sports
 			INSERT INTO #tmp_Sports
-			SELECT *
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY			
-		SELECT *
-		INTO #tmp_Bettype
+		INSERT INTO #tmp_Bettype (ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
@@ -417,7 +422,7 @@ set @startRun = getdate()
 		BEGIN
 			TRUNCATE TABLE #tmp_Bettype
 			INSERT INTO #tmp_Bettype
-			SELECT *
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
 		END
 	END CATCH
@@ -7265,4 +7270,6 @@ BEGIN CATCH
         @duration = @duration
 END CATCH
 
+DROP TABLE #tmp_Sports
+DROP TABLE #tmp_Bettype
 GO 

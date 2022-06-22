@@ -17,16 +17,22 @@ AS
 	 Revisions: 
 		- 20190116@Johnson: grant permission for bodbDownlineNetView [redmine:#106601]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
 	 Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 	
  */  
 BEGIN   
-	SELECT * INTO #SportBettypeFilter
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
+
+	CREATE TABLE #ProductSettingSiteDisplay(ProductID TINYINT, SettingType SMALLINT,SystemID TINYINT,DisplayMode TINYINT)
+
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+	SELECT SportType,Bettype,IsLive, SettingType 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
 	
+	INSERT INTO #ProductSettingSiteDisplay(ProductID,SettingType,SystemID,DisplayMode)
 	SELECT ProductID,SettingType,SystemID,DisplayMode
-	INTO #ProductSettingSiteDisplay
 	FROM dbo.ProductSettingSystemDisplay WITH(NOLOCK)
 	WHERE ProductID = @ProductID AND SystemID = @SystemID
 	
@@ -46,5 +52,6 @@ BEGIN
 	ORDER BY pdt.DisplayOrder
 	
 	DROP TABLE #SportBettypeFilter
+	DROP TABLE #ProductSettingSiteDisplay
 END  
 GO

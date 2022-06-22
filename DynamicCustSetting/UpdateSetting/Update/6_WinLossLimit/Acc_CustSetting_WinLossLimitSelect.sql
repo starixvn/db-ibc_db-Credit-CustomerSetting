@@ -16,6 +16,7 @@ AS
 	Revisions:
 	- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 	
 	Param's Explanation:
 		• @SettingType: 6: WinLossLimit
@@ -30,8 +31,14 @@ BEGIN
 			@MasterID	INT,
 			@AgentID	INT
 
-	SELECT SportType,Bettype,IsLive, SettingType 
-	INTO #SportBettypeFilter
+	CREATE TABLE #SportBettypeFilter (
+			sporttype SMALLINT, 
+			bettype SMALLINT, 
+			IsLive BIT, 
+			SettingType SMALLINT)
+
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingType)
+	SELECT SportType,Bettype,IsLive,SettingType 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
 	
 	-- Select customer's information
@@ -200,4 +207,3 @@ BEGIN
 	
 	DROP TABLE #SportBettypeFilter
 END
-GO

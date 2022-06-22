@@ -447,7 +447,7 @@ Revisions:
 	- 20220222@Elodie: Default VR for 789y site [Redmine: #168885]
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-
+	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -465,9 +465,10 @@ BEGIN
 	SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
 
 	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
-	
-	SELECT t.SportType,t.SiteID,t.Currency,t.BeginTime,t.EndTime
-	INTO #UMConfig
+	CREATE TABLE #UMConfig(SportType SMALLINT,SiteID INT, Currency INT ,BeginTime smalldatetime,EndTime smalldatetime)
+		
+	INSERT INTO #UMConfig(SportType,SiteID,Currency,BeginTime,EndTime)
+	SELECT t.SportType,t.SiteID,t.Currency,t.BeginTime,t.EndTime	
 	FROM UMConfig t WITH(NOLOCK)
 	WHERE CONVERT(SMALLDATETIME,GETDATE()) BETWEEN t.BeginTime AND t.EndTime
 		AND t.Currency IN (0,@currency)
@@ -1423,8 +1424,10 @@ BEGIN
 
 	DECLARE @LogDataSP2 VARCHAR(4000)
 	
+	CREATE TABLE #temSportbettypeSetting(ProductID TINYINT,SportType SMALLINT, Bettype SMALLINT, SettingType SMALLINT)
+		
+	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
-	INTO #temSportbettypeSetting
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus)
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)

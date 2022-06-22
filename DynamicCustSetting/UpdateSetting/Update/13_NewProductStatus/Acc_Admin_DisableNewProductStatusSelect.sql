@@ -15,6 +15,7 @@ AS
 		- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
 		- 20200702@Winfred: Get enabled status of Cust when SettingType = 4 (ProductStatus)  (ProductStatus) [RedmineID:#136210]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -40,8 +41,10 @@ BEGIN
 											TotalDisabledAgents INT,
 											TotalDisabledMembers INT)
 
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
+
+	INSERT INTO #SportBettypeFilter(SportType,Bettype)
 	SELECT SportType,Bettype
-	INTO #SportBettypeFilter
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 	
 	INSERT INTO #SportBettypeFilter (SportType,Bettype)
@@ -230,7 +233,10 @@ BEGIN
 			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @AgentID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 	END
+
 	DROP TABLE #SportBettypeFilter
+	DROP TABLE #DownlineDisableStatus
+	DROP TABLE #DownlineEnableStatus
 END
 GO
 

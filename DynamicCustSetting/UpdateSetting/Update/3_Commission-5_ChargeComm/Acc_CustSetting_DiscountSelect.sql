@@ -15,6 +15,7 @@ AS
 	Revision:
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -26,15 +27,17 @@ BEGIN
 			@MasterID	INT,
 			@AgentID	INT
 
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, SettingType SMALLINT)
+
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
 	SELECT SportType,Bettype,SettingType
-	INTO #SportBettypeFilter
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) --Commission
 	
-	INSERT #SportBettypeFilter (SportType,Bettype,SettingType)
+	INSERT INTO #SportBettypeFilter (SportType,Bettype,SettingType)
 	SELECT SportType,Bettype,SettingType
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus) --Commission
 
-	INSERT #SportBettypeFilter (SportType,Bettype,SettingType)
+	INSERT INTO #SportBettypeFilter (SportType,Bettype,SettingType)
 	SELECT SportType,Bettype,SettingType
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus) --Charge Commission
 
@@ -122,4 +125,5 @@ BEGIN
 	END
 	DROP TABLE #SportBettypeFilter
 END
+
 GO

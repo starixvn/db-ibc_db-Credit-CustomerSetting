@@ -13,6 +13,7 @@ AS
 
 	Revisions: 
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
 	Param's Explanation:
 	- @ProductID: ID of a product
@@ -20,7 +21,10 @@ AS
 	
 	*/
 BEGIN
-	SELECT * INTO #SportBettypeFilter
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
+
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+	SELECT SportType,Bettype,IsLive, SettingType 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus) -- comm
 	
 	SELECT pdt.[SettingType]

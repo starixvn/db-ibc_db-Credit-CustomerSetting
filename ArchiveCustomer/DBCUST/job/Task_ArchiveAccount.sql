@@ -20,7 +20,7 @@ AS
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210614@Eden: All sites - Dormant SMA Account List [RedmineID: #155969]
 		- 20210810@Eden: Edit stage 1 to resume when archive Agent Process [RedmineID: #155969]
-		
+		- 20220620@Johnson: define temp table to avoid dump db [redmine:#174035]
 	Param:
 		+ @stage: input stage to run archive
 */
@@ -468,15 +468,17 @@ BEGIN
 		PRINT 'ArchivedMasterAgent_Stage3: Begin'
 		-- insert data for table ArchivedMasterAgent_Stage3 - tw will refer to delete data for Casino DB
 		TRUNCATE TABLE ArchivedMasterAgent_Stage3
+		CREATE TABLE #Masterlist_Stage3(custid INT)
+		CREATE TABLE #AgentList_Stage3(custid INT)
 		
-		SELECT DISTINCT ar.custid 
-		INTO #Masterlist_Stage3
+		INSERT INTO #Masterlist_Stage3(custid)
+		SELECT DISTINCT ar.custid
 		FROM tmpCustGroupLevelArchived ar WITH(NOLOCK) 
 			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.custid = ca.CustID AND ca.ArchivedDate = @ArchivedDate
 		WHERE GroupLevelName IN ('M1','M0')
 			
-		SELECT DISTINCT ar.recommend AS CustID
-		INTO #AgentList_Stage3
+		INSERT INTO #AgentList_Stage3(custid)
+		SELECT DISTINCT ar.recommend AS CustID		
 		FROM tmpCustArchived ar WITH(NOLOCK) 
 			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.recommend = ca.CustID AND ca.ArchivedDate = @ArchivedDate
 		WHERE IsFinished = 1 AND ISNULL(ErrMsg,'') = ''

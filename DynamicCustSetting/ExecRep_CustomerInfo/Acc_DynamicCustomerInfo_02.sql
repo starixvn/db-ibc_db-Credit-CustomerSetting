@@ -33,7 +33,7 @@ AS
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
-
+		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -114,8 +114,10 @@ BEGIN
 
 			/********************************************* Product Status: SettingType = 4 ************************************/
 			--Get sporttype/Bettype for this setting type	
-			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-			INTO #SportBettypeFilter4
+			CREATE TABLE #SportBettypeFilter4(SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
+		
+			INSERT INTO #SportBettypeFilter4(SportType,Bettype,IsLive,SettingType,IsDisabled,IsHidden,IsSync,bitmapOrder)
+			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 			
 			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
@@ -197,8 +199,10 @@ BEGIN
 
 				/********************************************* NewProductStatus: SettingType = 13 ************************************/
 			--Get sporttype/Bettype for this setting type	
+			CREATE TABLE #SportBettypeFilter13(SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
+		
+			INSERT INTO #SportBettypeFilter13(SportType, Bettype, IsLive, SettingType, IsDisabled, IsHidden, IsSync, bitmapOrder)
 			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-			INTO #SportBettypeFilter13
 			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
@@ -280,8 +284,10 @@ BEGIN
 			
 			/********************************************* Game Status: SettingType = 11 ************************************/
 			--Get sporttype/Bettype for this setting type	
+			CREATE TABLE #SportBettypeFilter11(SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
+			
+			INSERT INTO #SportBettypeFilter11(SportType,Bettype,IsLive, SettingType,IsDisabled,IsHidden,IsSync,bitmapOrder)		
 			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-			INTO #SportBettypeFilter11
 			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype

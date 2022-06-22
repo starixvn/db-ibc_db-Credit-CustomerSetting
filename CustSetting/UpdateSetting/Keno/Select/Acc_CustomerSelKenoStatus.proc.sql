@@ -17,6 +17,8 @@ AS
 		- 20140806@Johnson: put WITH(NOLOCK) for missing SELECT commands
 		- 20150610@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB, use temp table for GameType)
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+
 */
 BEGIN
 	SET NOCOUNT ON
@@ -36,6 +38,8 @@ BEGIN
 
 	DECLARE @custRoleid INT, @srecommend INT, @mrecommend INT, @recommend INT
 	DECLARE @kenoGameType TABLE (gametypeid INT, isdisabled BIT DEFAULT 0)
+
+	CREATE TABLE #kenoDownlines (gametypeid INT, isdisabled BIT)
 
 	SELECT TOP 1 @custRoleid = roleid, @srecommend = srecommend, @mrecommend = mrecommend, @recommend = recommend
 	FROM dbo.custinfo WITH (NOLOCK)
@@ -57,8 +61,8 @@ BEGIN
 	ORDER BY gametypeid
 
 	--check keno-downline
-	SELECT *
-	INTO #kenoDownlines
+	INSERT INTO #kenoDownlines (gametypeid, isdisabled)
+	SELECT gametypeid, isdisabled
 	FROM @kenoGameType
 
 	IF (@custRoleid = 4)
@@ -181,7 +185,6 @@ BEGIN
 
 	DROP TABLE #kenoDownlines
 END
-
 
 
 GO

@@ -16,6 +16,7 @@ AS
 	Revisions: 
 		- 20171017@Elodie: Implementing BetSetting Plugin - [Redmine #83729]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -27,10 +28,13 @@ BEGIN
 			@SuperID	INT,
 			@MasterID	INT,
 			@AgentID	INT
+
 	DECLARE @BetSettingUnlimit TABLE(SportType SMALLINT, BetType SMALLINT, IsAllowUnlimit BIT)
 
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
+
+	INSERT INTO #SportBettypeFilter(SportType,Bettype)
 	SELECT SportType,Bettype 
-	INTO #SportBettypeFilter
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,16,@SettingStatus)
 	
 	-- Select customer's information
