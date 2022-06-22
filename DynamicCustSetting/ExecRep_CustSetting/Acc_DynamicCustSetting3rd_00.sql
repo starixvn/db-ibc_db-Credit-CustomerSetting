@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_00]
 	@CustId			INT,
     @RoleId			INT,
