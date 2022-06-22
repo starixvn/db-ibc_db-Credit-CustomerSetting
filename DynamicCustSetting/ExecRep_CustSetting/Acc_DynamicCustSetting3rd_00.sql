@@ -152,7 +152,7 @@ BEGIN
 		
 		EXEC sp_xml_removedocument @iDoc
 
-		SELECT @SettingRow = COUNT(1) FROM @NewLimitTbl12
+		SELECT @SettingRow = COUNT(1) FROM @NewLimitTbl
 		IF @SettingRow = 0 RETURN
 
 		SELECT @BatchNo = @BatchNo / @SettingRow
