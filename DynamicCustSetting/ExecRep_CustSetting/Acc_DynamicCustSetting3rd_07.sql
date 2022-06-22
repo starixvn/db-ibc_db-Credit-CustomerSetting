@@ -14,8 +14,8 @@ AS
     Original versions: Acc_CustSetting3rd_07
         
     Revisions:
-			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
-			                              
+		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20220622@Elodie:  Run by batch [RedmineID: #174131]                             
     Parameter's Explanation:        
 
 */
