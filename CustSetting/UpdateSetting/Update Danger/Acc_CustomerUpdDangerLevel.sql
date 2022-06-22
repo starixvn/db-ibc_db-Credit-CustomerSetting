@@ -16,6 +16,7 @@ SET NOCOUNT ON
 		- 20211007@Johnson: initial sp [redmine:#161351]
 		- 20220119@Johnson: update DangerLevel (TB currency & Licensees' customers)	[redmine:#167686]
 		- 20220524@Winfred: update DangerLevel IG128/SM88/SL88SW/LIVV88SW with All Currencies [redmine:#172982]
+		- 20220607@Winfred: NAP CM - scan and update DangerLevel according to Winloss of Saba Basketball Sport [redmine:#173752]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -78,13 +79,15 @@ BEGIN
 		SUM(CASE WHEN sporttype = 1 AND isParlay = 1 THEN winloss ELSE 0 END) soccerParlay,
 		MAX(CASE WHEN sporttype = 1 AND isParlay = 1 THEN 1 ELSE 0 END) isSoccerParlay,
 		SUM(CASE WHEN sporttype = 2 AND isParlay = 0 THEN winloss ELSE 0 END) basketball,
-		MAX(CASE WHEN sporttype = 2 THEN 1 ELSE 0 END) isBasketball
+		MAX(CASE WHEN sporttype = 2 THEN 1 ELSE 0 END) isBasketball,
+		SUM(CASE WHEN sporttype = 2 AND isParlay = 1 THEN winloss ELSE 0 END) basketballParlay,
+		MAX(CASE WHEN sporttype = 2 AND isParlay = 1 THEN 1 ELSE 0 END) isBasketballParlay
 	FROM #tblCustWinloss t1
 	GROUP BY custid
 	)
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
 	SELECT t.custid,
-		CASE WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW')  THEN -- Flow C : 4 Licensees: IG128/SM88/SL88SW/LIVV88SW
+		CASE WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88')  THEN -- Flow C : 8 Licensees: IG128/SM88/SL88SW/LIVV88SW/365Online/SKY88/Sin88/One88
 					CASE WHEN soccer + soccerParlay < 50000 OR isSoccerParlay = 0 THEN
 						CASE WHEN soccer < -250000 THEN 1
 							WHEN soccer <-200000 AND soccer >= -250000 THEN 2
@@ -156,21 +159,25 @@ BEGIN
 						END 
 				END	
 			END	SoccerLevel,
-		CASE WHEN basketball < -200000 THEN 1
-			WHEN basketball < -140000 AND basketball >= -200000 THEN 2
-			WHEN basketball < -100000 AND basketball >= -140000 THEN 3
-			WHEN basketball < -80000 AND basketball >= -100000 THEN 4
-			WHEN basketball < -60000 AND basketball >= -80000 THEN 5
-			WHEN basketball < -40000 AND basketball >= -60000 THEN 6
-			WHEN basketball < -20000 AND basketball >= -40000 THEN 7
-			WHEN basketball < 0 AND basketball >= -20000 THEN 8
-			WHEN basketball < 20000 AND basketball >= 0 THEN 9
-			WHEN basketball < 40000 AND basketball >= 20000 THEN 10
-			WHEN basketball < 60000 AND basketball >= 40000 THEN 11
-			WHEN basketball < 100000 AND basketball >= 60000 THEN 12
-			ELSE 13 END as BasketballLevel,
+		CASE WHEN basketball + basketballParlay < 50000 OR isBasketballParlay = 0  THEN 
+				CASE WHEN basketball < -140000 THEN 1
+					WHEN basketball < -120000 AND basketball >= -140000 THEN 2
+					WHEN basketball < -100000 AND basketball >= -120000 THEN 3
+					WHEN basketball < -80000 AND basketball >= -100000 THEN 4
+					WHEN basketball < -60000 AND basketball >= -80000 THEN 5
+					WHEN basketball < -40000 AND basketball >= -60000 THEN 6
+					WHEN basketball < -20000 AND basketball >= -40000 THEN 7
+					WHEN basketball < 0 AND basketball >= -20000 THEN 8
+					WHEN basketball < 20000 AND basketball >= 0 THEN 9
+					WHEN basketball < 40000 AND basketball >= 20000 THEN 10
+					WHEN basketball < 60000 AND basketball >= 40000 THEN 11
+					WHEN basketball < 80000 AND basketball >= 60000 THEN 12
+					ELSE 13 END 
+			ELSE 
+				CASE WHEN basketball + basketballParlay < 75000 THEN 14 ELSE 15 END
+			END AS BasketballLevel,
 		Soccer + SoccerParlay as WinlossSoccer,
-		Basketball as WinlossBasketball,
+		Basketball + basketballParlay as WinlossBasketball,
 		IsSoccer,
 		IsBasketball
 	FROM T
