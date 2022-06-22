@@ -2,7 +2,7 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_00]
 	@CustId			INT,
     @RoleId			INT,
 	@Limit_XML	VARCHAR(MAX) = NULL,
-	@SettingType	SMALLINT		= 6
+	@SettingType	SMALLINT = 6
 AS
 /*
     Created: 20160108@Elodie
@@ -11,6 +11,7 @@ AS
     
     Revisions:
 		- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
+		- 20220622@Elodie:  Run by batch
     Param's Explanation:
             
 */
@@ -21,6 +22,44 @@ BEGIN
     IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
 	
+	DECLARE @BatchNo INT = 5000, @SettingRow TINYINT
+	CREATE TABLE #Agent(custid INT)
+	CREATE TABLE #Member(custid INT)
+	CREATE TABLE #AgentTmpBatch(custid INT)
+	CREATE TABLE #MemberTmpBatch(custid INT)	
+
+	IF @RoleId = 4
+	BEGIN
+		INSERT INTO #Agent(custid)
+		SELECT custid
+		FROM custInfo c WITH(NOLOCK) 
+		WHERE srecommend = @CustId AND roleid IN (2,3) AND Enabled = 1
+
+		INSERT INTO #Member(custid)
+		SELECT custid
+		FROM custInfo c WITH(NOLOCK) 
+		WHERE srecommend = @CustId AND roleid = 1 AND Enabled = 1					
+	END
+	ELSE IF @RoleId = 3
+	BEGIN
+		INSERT INTO #Agent(custid)
+		SELECT custid
+		FROM custInfo c WITH(NOLOCK) 
+		WHERE mrecommend = @CustId AND roleid = 2 AND Enabled = 1	
+			
+		INSERT INTO #Member(custid)
+		SELECT custid
+		FROM custInfo c WITH(NOLOCK) 
+		WHERE mrecommend = @CustId AND roleid = 1 AND Enabled = 1
+	END
+	ELSE IF @RoleId = 2
+	BEGIN
+		INSERT INTO #Member(custid)
+		SELECT custid
+		FROM custInfo c WITH(NOLOCK) 
+		WHERE recommend = @CustId AND roleid = 1 AND Enabled = 1
+	END
+
 	IF(@SettingType=12)
 	BEGIN
 		DECLARE @NewLimitTbl12 TABLE(
@@ -40,9 +79,22 @@ BEGIN
 		FROM OPENXML (@iDoc12, '/ROOT/Limit',1) 
 		WITH(SportType SMALLINT, BetType SMALLINT, MaxLossLimit MONEY, IsAutoReset BIT)		
 		EXEC sp_xml_removedocument @iDoc12
+		
+		SELECT @SettingRow = COUNT(1) FROM @NewLimitTbl12
+		IF @SettingRow = 0 RETURN
 
-		IF @RoleId = 4
+		SELECT @BatchNo = @BatchNo / @SettingRow
+
+		WHILE 1 = 1
 		BEGIN
+			TRUNCATE TABLE #AgentTmpBatch
+			DELETE TOP (@BatchNo) a
+			OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+			FROM #Agent a
+
+			IF @@ROWCOUNT = 0 
+				BREAK;
+
 			UPDATE cwl
 			SET 
 				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
@@ -51,8 +103,18 @@ BEGIN
 									THEN 0 ELSE cwl.IsAutoReset END			
 			FROM dbo.CustWinLossLimit_Agent cwl WITH (ROWLOCK, UPDLOCK)
 				INNER JOIN @NewLimitTbl12 wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.srecommend = @CustId AND cwl.CustId <> @CustId
+				INNER JOIN #AgentTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId
+		END
+
+		WHILE 1 = 1
+		BEGIN
+			TRUNCATE TABLE #MemberTmpBatch
+			DELETE TOP (@BatchNo) a
+			OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+			FROM #Member a
+
+			IF @@ROWCOUNT = 0 
+				BREAK;
 
 			UPDATE cwl
 			SET 
@@ -62,60 +124,8 @@ BEGIN
 									THEN 0 ELSE cwl.IsAutoReset END			
 			FROM dbo.CustWinLossLimit_Member cwl WITH (ROWLOCK, UPDLOCK)
 				INNER JOIN @NewLimitTbl12 wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.srecommend = @CustId AND cwl.CustId <> @CustId
-			
-		END
-		ELSE IF @RoleID = 3
-		BEGIN
-			UPDATE cwl
-			SET 
-				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
-									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
-				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
-			FROM dbo.CustWinLossLimit_Agent cwl WITH (ROWLOCK, UPDLOCK)
-				INNER JOIN @NewLimitTbl12 wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.mrecommend = @CustId AND cwl.CustId <> @CustId
-
-			UPDATE cwl
-			SET 
-				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
-									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
-				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
-			FROM dbo.CustWinLossLimit_Member cwl WITH (ROWLOCK, UPDLOCK)
-				INNER JOIN @NewLimitTbl12 wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.mrecommend = @CustId AND cwl.CustId <> @CustId
-			
-		END
-		ELSE IF @RoleID = 2
-		BEGIN
-			UPDATE cwl
-			SET 
-				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
-									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
-				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
-			FROM dbo.CustWinLossLimit_Agent cwl WITH (ROWLOCK, UPDLOCK)
-				INNER JOIN @NewLimitTbl12 wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.recommend = @CustId AND cwl.CustId <> @CustId
-
-			UPDATE cwl
-			SET 
-				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
-									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
-				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
-			FROM dbo.CustWinLossLimit_Member cwl WITH (ROWLOCK, UPDLOCK)
-				INNER JOIN @NewLimitTbl12 wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.recommend = @CustId AND cwl.CustId <> @CustId
-		END
-
+				INNER JOIN #MemberTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId
+		END		
 	END
 	ELSE IF(@SettingType=6)
 	BEGIN
@@ -140,8 +150,21 @@ BEGIN
 		
 		EXEC sp_xml_removedocument @iDoc
 
-		IF @RoleId = 4
+		SELECT @SettingRow = COUNT(1) FROM @NewLimitTbl12
+		IF @SettingRow = 0 RETURN
+
+		SELECT @BatchNo = @BatchNo / @SettingRow
+
+		WHILE 1 = 1
 		BEGIN
+			TRUNCATE TABLE #AgentTmpBatch
+			DELETE TOP (@BatchNo) a
+			OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+			FROM #Agent a
+
+			IF @@ROWCOUNT = 0 
+				BREAK;
+
 			UPDATE cwl
 			SET MaxWinLimit = CASE WHEN (wl.MaxWinLimit > 0 AND (cwl.MaxWinLimit = 0 OR cwl.MaxWinLimit > wl.MaxWinLimit)) 
 									THEN wl.MaxWinLimit ELSE cwl.MaxWinLimit END,
@@ -151,35 +174,18 @@ BEGIN
 									THEN 0 ELSE cwl.IsAutoReset END			
 			FROM dbo.CustWinLossLimit_Agent cwl WITH (ROWLOCK, UPDLOCK)
 				INNER JOIN @NewLimitTbl wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.srecommend = @CustId AND cwl.CustId <> @CustId
-
-			UPDATE cwl
-			SET MaxWinLimit = CASE WHEN (wl.MaxWinLimit > 0 AND (cwl.MaxWinLimit = 0 OR cwl.MaxWinLimit > wl.MaxWinLimit)) 
-									THEN wl.MaxWinLimit ELSE cwl.MaxWinLimit END,
-				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
-									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
-				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
-			FROM dbo.CustWinLossLimit_Member cwl WITH (ROWLOCK, UPDLOCK)
-				INNER JOIN @NewLimitTbl wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.srecommend = @CustId AND cwl.CustId <> @CustId
-			
+				INNER JOIN #AgentTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId
 		END
-		ELSE IF @RoleID = 3
+
+		WHILE 1 = 1
 		BEGIN
-			UPDATE cwl
-			SET MaxWinLimit = CASE WHEN (wl.MaxWinLimit > 0 AND (cwl.MaxWinLimit = 0 OR cwl.MaxWinLimit > wl.MaxWinLimit)) 
-									THEN wl.MaxWinLimit ELSE cwl.MaxWinLimit END,
-				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
-									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
-				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
-			FROM dbo.CustWinLossLimit_Agent cwl WITH (ROWLOCK, UPDLOCK)
-				INNER JOIN @NewLimitTbl wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.mrecommend = @CustId AND cwl.CustId <> @CustId
+			TRUNCATE TABLE #MemberTmpBatch
+			DELETE TOP (@BatchNo) a
+			OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+			FROM #Member a
+
+			IF @@ROWCOUNT = 0 
+				BREAK;
 
 			UPDATE cwl
 			SET MaxWinLimit = CASE WHEN (wl.MaxWinLimit > 0 AND (cwl.MaxWinLimit = 0 OR cwl.MaxWinLimit > wl.MaxWinLimit)) 
@@ -190,35 +196,7 @@ BEGIN
 									THEN 0 ELSE cwl.IsAutoReset END			
 			FROM dbo.CustWinLossLimit_Member cwl WITH (ROWLOCK, UPDLOCK)
 				INNER JOIN @NewLimitTbl wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.mrecommend = @CustId AND cwl.CustId <> @CustId
-			
-		END
-		ELSE IF @RoleID = 2
-		BEGIN
-			UPDATE cwl
-			SET MaxWinLimit = CASE WHEN (wl.MaxWinLimit > 0 AND (cwl.MaxWinLimit = 0 OR cwl.MaxWinLimit > wl.MaxWinLimit)) 
-									THEN wl.MaxWinLimit ELSE cwl.MaxWinLimit END,
-				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
-									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
-				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
-			FROM dbo.CustWinLossLimit_Agent cwl WITH (ROWLOCK, UPDLOCK)
-				INNER JOIN @NewLimitTbl wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.recommend = @CustId AND cwl.CustId <> @CustId
-
-			UPDATE cwl
-			SET MaxWinLimit = CASE WHEN (wl.MaxWinLimit > 0 AND (cwl.MaxWinLimit = 0 OR cwl.MaxWinLimit > wl.MaxWinLimit)) 
-									THEN wl.MaxWinLimit ELSE cwl.MaxWinLimit END,
-				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
-									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
-				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
-			FROM dbo.CustWinLossLimit_Member cwl WITH (ROWLOCK, UPDLOCK)
-				INNER JOIN @NewLimitTbl wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
-				INNER JOIN dbo.CustInfo c WITH(NOLOCK) ON cwl.CustId = c.CustId
-			WHERE c.recommend = @CustId AND cwl.CustId <> @CustId
+				INNER JOIN #MemberTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId
 		END
 	END
 END
