@@ -12,8 +12,8 @@ AS
     DB: DBCust/CustDB
     
     Revisions:
-		- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
-		- 20220622@Elodie:  Run by batch
+		- 20161011@Winnie:  Implement for Loss limit setting type [RedmineID: #65472]
+		- 20220622@Elodie:  Run by batch [RedmineID: #174131]
     Param's Explanation:
             
 */
