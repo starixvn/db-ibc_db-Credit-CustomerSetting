@@ -68,36 +68,36 @@ BEGIN
 		INSERT INTO #Agent(custid, srecommend, mrecommend, recommend)
 		SELECT custid, srecommend, mrecommend, recommend
 		FROM custInfo c WITH(NOLOCK) 
-		WHERE srecommend = @CustId AND roleid = 2 AND Enabled = 1
+		WHERE srecommend = @SuperID AND roleid = 2 AND Enabled = 1
 
 		INSERT INTO #Member(custid, srecommend, mrecommend, recommend)
 		SELECT custid, srecommend, mrecommend, recommend
 		FROM custInfo c WITH(NOLOCK) 
-		WHERE srecommend = @CustId AND roleid = 1 AND Enabled = 1					
+		WHERE srecommend = @SuperID AND roleid = 1 AND Enabled = 1					
 	END
 	ELSE IF @RoleId = 3
 	BEGIN
 		INSERT INTO #Agent(custid, srecommend, mrecommend, recommend)
 		SELECT custid, srecommend, mrecommend, recommend
 		FROM custInfo c WITH(NOLOCK) 
-		WHERE mrecommend = @CustId AND roleid = 2 AND Enabled = 1	
+		WHERE mrecommend = @MasterID AND roleid = 2 AND Enabled = 1	
 			
 		INSERT INTO #Member(custid, srecommend, mrecommend, recommend)
 		SELECT custid, srecommend, mrecommend, recommend
 		FROM custInfo c WITH(NOLOCK) 
-		WHERE mrecommend = @CustId AND roleid = 1 AND Enabled = 1
+		WHERE mrecommend = @MasterID AND roleid = 1 AND Enabled = 1
 	END
 	ELSE IF @RoleId = 2
 	BEGIN
 		INSERT INTO #Agent(custid, srecommend, mrecommend, recommend)
 		SELECT custid, srecommend, mrecommend, recommend
 		FROM custInfo c WITH(NOLOCK)
-		WHERE custid = @CustId
+		WHERE custid = @AgentID
 
 		INSERT INTO #Member(custid, srecommend, mrecommend, recommend)
 		SELECT custid, srecommend, mrecommend, recommend
 		FROM custInfo c WITH(NOLOCK) 
-		WHERE recommend = @CustId AND roleid = 1 AND Enabled = 1
+		WHERE recommend = @AgentID AND roleid = 1 AND Enabled = 1
 	END
 
 	INSERT INTO @temp_sag (custid, bettype, sporttype, islive, a4, m4, s4, n4, l4)
