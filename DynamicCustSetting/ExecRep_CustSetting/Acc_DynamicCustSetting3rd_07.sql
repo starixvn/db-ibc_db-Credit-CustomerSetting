@@ -117,7 +117,7 @@ BEGIN
 		BEGIN
 			TRUNCATE TABLE #MemberTmpBatch
 			DELETE TOP (@BatchNo) a
-			OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+			OUTPUT deleted.custid, deleted.srecommend, deleted.mrecommend, deleted.recommend INTO #MemberTmpBatch(custid, srecommend, mrecommend, recommend)
 			FROM #Member a
 
 			IF @@ROWCOUNT = 0 
@@ -162,7 +162,7 @@ BEGIN
 		BEGIN
 			TRUNCATE TABLE #AgentTmpBatch
 			DELETE TOP (@BatchNo) a
-			OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+			OUTPUT deleted.custid, deleted.srecommend, deleted.mrecommend, deleted.recommend INTO #AgentTmpBatch(custid, srecommend, mrecommend, recommend)
 			FROM #Agent a
 
 			IF @@ROWCOUNT = 0 
@@ -219,7 +219,7 @@ BEGIN
 				TRUNCATE TABLE #MemberTmpBatch
 				UPDATE TOP (@BatchNo) a
 				SET a.IsUpdFirst = 1
-				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+				OUTPUT deleted.custid, deleted.srecommend, deleted.mrecommend, deleted.recommend INTO #MemberTmpBatch(custid, srecommend, mrecommend, recommend)
 				FROM #Member a
 				WHERE a.IsUpdFirst = 0
 
@@ -261,7 +261,7 @@ BEGIN
 				TRUNCATE TABLE #AgentTmpBatch
 				UPDATE TOP (@BatchNo) a
 				SET a.IsUpdFirst = 1
-				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+				OUTPUT deleted.custid, deleted.srecommend, deleted.mrecommend, deleted.recommend INTO #AgentTmpBatch(custid, srecommend, mrecommend, recommend)
 				FROM #Agent a
 				WHERE a.IsUpdFirst = 0
 
@@ -304,7 +304,7 @@ BEGIN
 			TRUNCATE TABLE #MemberTmpBatch
 			UPDATE TOP (@BatchNo) a
 			SET a.IsUpdSecond = 1
-			OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+			OUTPUT deleted.custid, deleted.srecommend, deleted.mrecommend, deleted.recommend INTO #MemberTmpBatch(custid, srecommend, mrecommend, recommend)
 			FROM #Member a
 			WHERE a.IsUpdSecond = 0
 
@@ -421,7 +421,7 @@ BEGIN
 			TRUNCATE TABLE #AgentTmpBatch
 			UPDATE TOP (@BatchNo) a
 			SET a.IsUpdSecond = 1
-			OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
+			OUTPUT deleted.custid, deleted.srecommend, deleted.mrecommend, deleted.recommend INTO #AgentTmpBatch(custid, srecommend, mrecommend, recommend)
 			FROM #Agent a
 			WHERE a.IsUpdSecond = 0
 
