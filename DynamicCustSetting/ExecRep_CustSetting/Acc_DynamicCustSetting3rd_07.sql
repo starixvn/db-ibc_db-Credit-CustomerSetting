@@ -29,8 +29,8 @@ BEGIN
 	
 	DECLARE @tmpSportBettype TABLE(sporttype SMALLINT, bettype SMALLINT, islive BIT)
 	DECLARE @BatchNo INT = 5000, @SettingRow TINYINT
-	CREATE TABLE #Agent(custid INT, srecommend INT, mrecommend INT, recommend INT)
-	CREATE TABLE #Member(custid INT, srecommend INT, mrecommend INT, recommend INT)
+	CREATE TABLE #Agent(custid INT, srecommend INT, mrecommend INT, recommend INT, IsUpdFirst BIT DEFAULT(0), IsUpdSecond BIT DEFAULT(0))
+	CREATE TABLE #Member(custid INT, srecommend INT, mrecommend INT, recommend INT, IsUpdFirst BIT DEFAULT(0), IsUpdSecond BIT DEFAULT(0))
 	CREATE TABLE #AgentTmpBatch(custid INT, srecommend INT, mrecommend INT, recommend INT)
 	CREATE TABLE #MemberTmpBatch(custid INT, srecommend INT, mrecommend INT, recommend INT)
 
@@ -217,9 +217,11 @@ BEGIN
 			WHILE 1 = 1
 			BEGIN
 				TRUNCATE TABLE #MemberTmpBatch
-				DELETE TOP (@BatchNo) a
+				UPDATE TOP (@BatchNo) a
+				SET a.IsUpdFirst = 1
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
+				WHERE a.IsUpdFirst = 0
 
 				IF @@ROWCOUNT = 0 
 					BREAK
@@ -257,9 +259,11 @@ BEGIN
 			WHILE 1 = 1
 			BEGIN
 				TRUNCATE TABLE #AgentTmpBatch
-				DELETE TOP (@BatchNo) a
+				UPDATE TOP (@BatchNo) a
+				SET a.IsUpdFirst = 1
 				OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
 				FROM #Agent a
+				WHERE a.IsUpdFirst = 0
 
 				IF @@ROWCOUNT = 0 
 					BREAK
@@ -298,9 +302,11 @@ BEGIN
 		WHILE 1 = 1
 		BEGIN
 			TRUNCATE TABLE #MemberTmpBatch
-			DELETE TOP (@BatchNo) a
+			UPDATE TOP (@BatchNo) a
+			SET a.IsUpdSecond = 1
 			OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 			FROM #Member a
+			WHERE a.IsUpdSecond = 0
 
 			IF @@ROWCOUNT = 0 
 				BREAK
@@ -413,9 +419,11 @@ BEGIN
 		WHILE 1 = 1
 		BEGIN
 			TRUNCATE TABLE #AgentTmpBatch
-			DELETE TOP (@BatchNo) a
+			UPDATE TOP (@BatchNo) a
+			SET a.IsUpdSecond = 1
 			OUTPUT deleted.custid INTO #AgentTmpBatch(custid)
 			FROM #Agent a
+			WHERE a.IsUpdSecond = 0
 
 			IF @@ROWCOUNT = 0 
 				BREAK
