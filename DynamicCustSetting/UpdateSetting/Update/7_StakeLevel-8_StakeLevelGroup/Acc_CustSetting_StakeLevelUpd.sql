@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE dbo.Acc_CustSetting_StakeLevelUpd 
 		@CustID			INT
 	,	@StakeLevel		VARCHAR(MAX)
@@ -26,6 +26,8 @@ AS
 		- 20200827@Winfred: Update log on SP version [Redmine: #137763]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
+
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -39,6 +41,8 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON;
+
+	DECLARE @CustList	VARCHAR(MAX) = ''
 
 	DECLARE @iDoc INT;
 	
@@ -86,6 +90,14 @@ BEGIN
 					,	StakeLevelList_Upline	VARCHAR(200)
 					,	PRIMARY KEY CLUSTERED (CustID, BetType)
 					);
+
+	CREATE TABLE #HistoryStakeLevelTbl (
+						CustID			INT
+					,	SportType		SMALLINT
+					,	BetType			INT
+					,	StakeLevelList	VARCHAR(200)
+					,	UpdateTime		DATETIME
+					)
 
 	--Check if XML is null or empty
 	IF	@StakeLevel IS NULL OR @StakeLevel = ''
@@ -221,10 +233,29 @@ BEGIN
 		UPDATE	cslm	WITH(ROWLOCK,UPDLOCK)
 		SET		cslm.StakeLevelList = ts.StakeLevelList
 				, cslm.LastUpdated = GETDATE()
+		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
+			INTO #HistoryStakeLevelTbl(CustID, SportType, BetType, StakeLevelList, UpdateTime)
 		FROM		dbo.CustStakeLevel_Member AS cslm
 		INNER JOIN	#tmpStake ts
 				ON	ts.BetType = cslm.BetType
 		WHERE	cslm.CustID = @CustID;
+
+		--insert Bet Setting history
+		SET @CustList = (SELECT	CustID			AS '@CustID',
+								SportType		AS '@SportType',
+								BetType			AS '@BetType',
+								'NULL'			AS '@MaxBet',
+								'NULL'			AS '@MaxPerMatch',
+								StakeLevelList	AS '@StakeLevelList',
+								UpdateTime		AS '@UpdateTime'
+						FROM #HistoryStakeLevelTbl
+						FOR XML PATH('r'), ROOT ('root')
+						)
+		
+		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+		IF @ErrMsg <> ''
+			RETURN
 	END;
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN

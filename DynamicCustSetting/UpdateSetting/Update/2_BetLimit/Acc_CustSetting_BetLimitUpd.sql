@@ -21,6 +21,8 @@ AS
 		- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
+		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
+		
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -36,6 +38,7 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
+	DECLARE @CustList	VARCHAR(MAX) = ''
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
@@ -68,6 +71,15 @@ BEGIN
 		, MinBet			MONEY
 		, MaxBet			MONEY
 		, MaxPerMatch		MONEY
+		)
+
+	DECLARE @HistoryBetSettingTbl TABLE (
+		CustID				INT
+		, SportType			SMALLINT
+		, BetType			SMALLINT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, UpdateTime		DATETIME
 		)
 
 	DECLARE @ProductID		TINYINT,
@@ -208,6 +220,8 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
+		OUTPUT @CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+			INTO @HistoryBetSettingTbl
 		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewBetLimitTbl tmp
 			ON tmp.SportType	= main.sporttype
@@ -218,6 +232,33 @@ BEGIN
 				OR main.maxbet		<> tmp.MaxBet
 				OR main.maxpermatch <> tmp.MaxperMatch
 				)
+		
+		--insert Bet Setting history
+		IF NOT EXISTS (	SELECT 1					
+						FROM @HistoryBetSettingTbl old
+							INNER JOIN @NewBetLimitTbl new ON new.SportType=old.SportType
+														AND new.BetType=old.BetType
+														AND new.MaxBet=old.MaxBet
+														AND new.MaxPerMatch=old.MaxPerMatch
+						WHERE old.CustID=@CustID
+					)
+		BEGIN
+		SET @CustList = (SELECT	CustID		AS '@CustID',
+									SportType	AS '@SportType',
+									BetType		AS '@BetType',
+									MaxBet		AS '@MaxBet',
+									MaxPerMatch	AS '@MaxPerMatch',
+								NULL		AS '@StakeLevelList',
+									UpdateTime	AS '@UpdateTime'
+						FROM @HistoryBetSettingTbl
+							FOR XML PATH('r'), ROOT ('root')
+							)
+		
+			EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+			IF @ErrMsg <> ''
+				RETURN
+		END
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN
