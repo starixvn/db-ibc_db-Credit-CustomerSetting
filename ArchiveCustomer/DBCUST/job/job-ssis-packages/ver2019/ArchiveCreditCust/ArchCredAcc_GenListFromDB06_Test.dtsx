@@ -1,0 +1,203 @@
+﻿<?xml version="1.0"?>
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationDate="6/5/2019 4:04:52 AM"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorComputerName="DBDWCSS"
+  DTS:CreatorName="DBDWCSS\vnDaniel"
+  DTS:DTSID="{5FFCA558-5C20-46EA-B0EF-D0EEDDD8AE9C}"
+  DTS:EnableConfig="True"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LastModifiedProductVersion="15.0.2000.167"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="ArchCredAcc_GenListFromDB06"
+  DTS:PackageType="5"
+  DTS:ProtectionLevel="2"
+  DTS:VersionBuild="36"
+  DTS:VersionGUID="{4A4EE2D8-B748-4B94-8CE6-4780F1CBB5AC}">
+  <DTS:Property
+    DTS:Name="PackageFormatVersion">8</DTS:Property>
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[ArchCredAcc_s2_GenListFromDB06_Test.dtsx]"
+      DTS:CreationName="FILE"
+      DTS:DTSID="{F2EEA81E-5A31-4661-9ED9-54B77537216A}"
+      DTS:ObjectName="ArchCredAcc_s2_GenListFromDB06_Test.dtsx">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="G:\Daniel\Prj\ArchiveCreditCust\ArchiveCreditCust\ArchCredAcc_s2_GenListFromDB06_Test.dtsx" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[DBDWCSS.bodb02.vndaniel]"
+      DTS:CreationName="OLEDB"
+      DTS:DTSID="{54FDD69E-C0F7-4A10-A88A-193D5BD07834}"
+      DTS:ObjectName="DBDWCSS.bodb02.vndaniel">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectRetryCount="1"
+          DTS:ConnectRetryInterval="5"
+          DTS:ConnectionString="Data Source=DBDWCSS;User ID=vndaniel;Initial Catalog=bodb02;Provider=SQLNCLI11.1;Persist Security Info=True;Auto Translate=False;">
+          <EncryptedData
+            Type="http://www.w3.org/2001/04/xmlenc#Element"
+            Salt="JoT6eKObokw="
+            IV="Tc5JWo2WLaX8DBjVatzE1w==" xmlns="http://www.w3.org/2001/04/xmlenc#">
+            <EncryptionMethod
+              Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc" />
+            <CipherData>
+              <CipherValue>Tc5JWo2WLaX8DBjVatzE1/s+7ws3+2BltHd2KBGSshIjnu3ugJVYhj2bgsdzUjGlQX0OvY6RS5I7EfkP10d8omAULPbw2k2DzDYoExnflgFGMUEqZcf+A5ZLtrukkSL2MyQ65ixuwlPeZlaH+N0PCtoQ0/WiMgPysFfZ6rOlnNmK9ZBemYL24yWJl7QZIqSx</CipherValue>
+            </CipherData>
+          </EncryptedData>
+        </DTS:ConnectionManager>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+  <DTS:Configurations>
+    <DTS:Configuration
+      DTS:ConfigurationString="G:\Daniel\Prj\ArchiveCreditCust\ArchiveCreditCust\AA_TestConfig.dtsConfig"
+      DTS:ConfigurationType="1"
+      DTS:CreationName=""
+      DTS:DTSID="{3E7C1E96-7115-4F1B-9663-0B9E9754671F}"
+      DTS:ObjectName="AA_Test" />
+  </DTS:Configurations>
+  <DTS:Variables>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{F4EF077D-2A14-4F78-9FD6-4AC008407620}"
+      DTS:EvaluateAsExpression="True"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="aa_status">
+      <DTS:VariableValue
+        DTS:DataType="8"
+        xml:space="preserve"></DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{FDE2464E-5CB4-47EE-90FA-44003CED47C2}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="Variable">
+      <DTS:VariableValue
+        DTS:DataType="3">0</DTS:VariableValue>
+    </DTS:Variable>
+  </DTS:Variables>
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\Ex Execute Package ArchCredAcc_s2_GenListFromDB06_test"
+      DTS:CreationName="Microsoft.ExecutePackageTask"
+      DTS:Description="Execute Package Task"
+      DTS:DTSID="{8f80942b-a510-4420-82f0-62e931c61e47}"
+      DTS:ExecutableType="Microsoft.ExecutePackageTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Ex Execute Package ArchCredAcc_s2_GenListFromDB06_test"
+      DTS:TaskContact="Microsoft Corporation; Microsoft SQL Server v10; (C) 2007 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <ExecutePackageTask>
+          <EncryptedData
+            Type="http://www.w3.org/2001/04/xmlenc#Element"
+            Salt="PecuNMhq608="
+            IV="tDWyY3i6FxiYVpWj/Edt4Q==" xmlns="http://www.w3.org/2001/04/xmlenc#">
+            <EncryptionMethod
+              Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc" />
+            <CipherData>
+              <CipherValue>tDWyY3i6FxiYVpWj/Edt4R1s4gkp0/IA9w7RS3iWpGglyV0HUxPxoEWNQoUfN/fLRcd89gZDMh+taFgQ75u3MR/gRUFBTULMRPUnZLOhx8c=</CipherValue>
+            </CipherData>
+          </EncryptedData>
+          <Connection>{F2EEA81E-5A31-4661-9ED9-54B77537216A}</Connection>
+        </ExecutePackageTask>
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\Execute SQL Task - Get Archive status"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{0AF12D40-8E8D-4E0D-8966-F2B5115C70E9}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Execute SQL Task - Get Archive status"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; Microsoft SQL Server 2008 R2; © 2007 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{54FDD69E-C0F7-4A10-A88A-193D5BD07834}"
+          SQLTask:SqlStatementSource="select VValue from dbo.systemsettings with (nolock) where VName = 'aa_status'"
+          SQLTask:ResultType="ResultSetType_SingleRow" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="VValue"
+            SQLTask:DtsVariableName="User::aa_status" />
+        </SQLTask:SqlTaskData>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+  <DTS:PrecedenceConstraints>
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 1]"
+      DTS:CreationName=""
+      DTS:DTSID="{B738299D-C67C-40E8-9002-750B12C6AB75}"
+      DTS:From="Package\Execute SQL Task - Get Archive status"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 1"
+      DTS:To="Package\Ex Execute Package ArchCredAcc_s2_GenListFromDB06_test" />
+  </DTS:PrecedenceConstraints>
+  <DTS:DesignTimeProperties><![CDATA[<?xml version="1.0"?>
+<!--This CDATA section contains the layout information of the package. The section includes information such as (x,y) coordinates, width, and height.-->
+<!--If you manually edit this section and make a mistake, you can delete it. -->
+<!--The package will still be able to load normally but the previous layout information will be lost and the designer will automatically re-arrange the elements on the design surface.-->
+<Objects
+  Version="8">
+  <!--Each node below will contain properties that do not affect runtime behavior.-->
+  <Package
+    design-time-name="Package">
+    <LayoutInfo>
+      <GraphLayout
+        Capacity="4" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml">
+        <NodeLayout
+          Size="387,42"
+          Id="Package\Ex Execute Package ArchCredAcc_s2_GenListFromDB06_test"
+          TopLeft="464,288" />
+        <NodeLayout
+          Size="163,44"
+          Id="Package\Execute SQL Task - Get Archive status"
+          TopLeft="333.952830188679,5.5" />
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 1]"
+          TopLeft="441.286163522012,49.5">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="216.213836477988,238.5"
+              Start="0,0"
+              End="216.213836477988,231">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,92.7910085054678" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,92.7910085054678"
+                    Point2="0,96.7910085054678"
+                    Point3="4,96.7910085054678" />
+                  <mssgle:LineSegment
+                    End="212.213836477988,96.7910085054678" />
+                  <mssgle:CubicBezierSegment
+                    Point1="212.213836477988,96.7910085054678"
+                    Point2="216.213836477988,96.7910085054678"
+                    Point3="216.213836477988,100.791008505468" />
+                  <mssgle:LineSegment
+                    End="216.213836477988,231" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+      </GraphLayout>
+    </LayoutInfo>
+  </Package>
+</Objects>]]></DTS:DesignTimeProperties>
+</DTS:Executable>
