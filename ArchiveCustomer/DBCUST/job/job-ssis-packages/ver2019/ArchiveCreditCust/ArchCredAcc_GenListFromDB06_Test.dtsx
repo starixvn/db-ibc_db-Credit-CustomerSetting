@@ -6,15 +6,14 @@
   DTS:CreatorComputerName="DBDWCSS"
   DTS:CreatorName="DBDWCSS\vnDaniel"
   DTS:DTSID="{5FFCA558-5C20-46EA-B0EF-D0EEDDD8AE9C}"
-  DTS:EnableConfig="True"
   DTS:ExecutableType="Microsoft.Package"
   DTS:LastModifiedProductVersion="15.0.2000.167"
   DTS:LocaleID="1033"
   DTS:ObjectName="ArchCredAcc_GenListFromDB06"
   DTS:PackageType="5"
   DTS:ProtectionLevel="2"
-  DTS:VersionBuild="36"
-  DTS:VersionGUID="{4A4EE2D8-B748-4B94-8CE6-4780F1CBB5AC}">
+  DTS:VersionBuild="39"
+  DTS:VersionGUID="{ED36BDA8-D982-4ECD-BF34-0DB6C53CA5A9}">
   <DTS:Property
     DTS:Name="PackageFormatVersion">8</DTS:Property>
   <DTS:ConnectionManagers>
@@ -25,7 +24,7 @@
       DTS:ObjectName="ArchCredAcc_s2_GenListFromDB06_Test.dtsx">
       <DTS:ObjectData>
         <DTS:ConnectionManager
-          DTS:ConnectionString="G:\Daniel\Prj\ArchiveCreditCust\ArchiveCreditCust\ArchCredAcc_s2_GenListFromDB06_Test.dtsx" />
+          DTS:ConnectionString="H:\ArchiveAccount_SSIS_Packages\ArchCredAcc_s2_GenListFromDB06_Test.dtsx" />
       </DTS:ObjectData>
     </DTS:ConnectionManager>
     <DTS:ConnectionManager
@@ -40,26 +39,18 @@
           DTS:ConnectionString="Data Source=DBDWCSS;User ID=vndaniel;Initial Catalog=bodb02;Provider=SQLNCLI11.1;Persist Security Info=True;Auto Translate=False;">
           <EncryptedData
             Type="http://www.w3.org/2001/04/xmlenc#Element"
-            Salt="JoT6eKObokw="
-            IV="Tc5JWo2WLaX8DBjVatzE1w==" xmlns="http://www.w3.org/2001/04/xmlenc#">
+            Salt="No+XF6uxIys="
+            IV="dt9qeypJh2AH0oYI5SIY+g==" xmlns="http://www.w3.org/2001/04/xmlenc#">
             <EncryptionMethod
               Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc" />
             <CipherData>
-              <CipherValue>Tc5JWo2WLaX8DBjVatzE1/s+7ws3+2BltHd2KBGSshIjnu3ugJVYhj2bgsdzUjGlQX0OvY6RS5I7EfkP10d8omAULPbw2k2DzDYoExnflgFGMUEqZcf+A5ZLtrukkSL2MyQ65ixuwlPeZlaH+N0PCtoQ0/WiMgPysFfZ6rOlnNmK9ZBemYL24yWJl7QZIqSx</CipherValue>
+              <CipherValue>dt9qeypJh2AH0oYI5SIY+jHdgNA0xl9fvTXZJz1I/ByIFUv9Hx5toJI+0xlqetQTQxQyOzoWs8i6PGjf3BhvIa+0A/WjblbH4S5b9Ys1VI9Ee2ueIjpeaN9g01j5eD1Fbsi0pS12dAA+pu0/m7C8xGYFr3sBgBVCeLb9NFmKPiTgivfYjviUvgG1/Hbd9pY2</CipherValue>
             </CipherData>
           </EncryptedData>
         </DTS:ConnectionManager>
       </DTS:ObjectData>
     </DTS:ConnectionManager>
   </DTS:ConnectionManagers>
-  <DTS:Configurations>
-    <DTS:Configuration
-      DTS:ConfigurationString="G:\Daniel\Prj\ArchiveCreditCust\ArchiveCreditCust\AA_TestConfig.dtsConfig"
-      DTS:ConfigurationType="1"
-      DTS:CreationName=""
-      DTS:DTSID="{3E7C1E96-7115-4F1B-9663-0B9E9754671F}"
-      DTS:ObjectName="AA_Test" />
-  </DTS:Configurations>
   <DTS:Variables>
     <DTS:Variable
       DTS:CreationName=""
@@ -97,12 +88,12 @@
         <ExecutePackageTask>
           <EncryptedData
             Type="http://www.w3.org/2001/04/xmlenc#Element"
-            Salt="PecuNMhq608="
-            IV="tDWyY3i6FxiYVpWj/Edt4Q==" xmlns="http://www.w3.org/2001/04/xmlenc#">
+            Salt="14SAFiDV8j0="
+            IV="SD3ZgKq221BCdtOtEtH/lQ==" xmlns="http://www.w3.org/2001/04/xmlenc#">
             <EncryptionMethod
               Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc" />
             <CipherData>
-              <CipherValue>tDWyY3i6FxiYVpWj/Edt4R1s4gkp0/IA9w7RS3iWpGglyV0HUxPxoEWNQoUfN/fLRcd89gZDMh+taFgQ75u3MR/gRUFBTULMRPUnZLOhx8c=</CipherValue>
+              <CipherValue>SD3ZgKq221BCdtOtEtH/lXW2U2GWmn1LlorrB1NfR0p4Km+aLGSaC9MsRV6unNQbktDjeXXsVvqLZIfM4WGK9JrmCi71PrZDjjsb/TzBkwc=</CipherValue>
             </CipherData>
           </EncryptedData>
           <Connection>{F2EEA81E-5A31-4661-9ED9-54B77537216A}</Connection>
