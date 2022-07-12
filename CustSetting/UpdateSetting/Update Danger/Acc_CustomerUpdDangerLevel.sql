@@ -206,9 +206,8 @@ BEGIN
 		IsSoccer,
 		IsBasketball
 	FROM T
-		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
-		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON ci.srecommend = s.custid
-		INNER JOIN Customer c WITH(NOLOCK) ON ci.srecommend = c.custid
+		INNER JOIN Customer c WITH(NOLOCK) ON c.custid = t.custid
+		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
 	
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball)
 	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball, IsManualSoccer, IsManualBasketball
