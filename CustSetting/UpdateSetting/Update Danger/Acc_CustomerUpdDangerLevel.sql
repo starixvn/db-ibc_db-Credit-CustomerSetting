@@ -17,6 +17,7 @@ SET NOCOUNT ON
 		- 20220119@Johnson: update DangerLevel (TB currency & Licensees' customers)	[redmine:#167686]
 		- 20220524@Winfred: update DangerLevel IG128/SM88/SL88SW/LIVV88SW with All Currencies [redmine:#172982]
 		- 20220607@Winfred: NAP CM - scan and update DangerLevel according to Winloss of Saba Basketball Sport [redmine:#173752]
+		- 20220711@Tacy: update DangerLevel for Haifa, 789y site and USDT currency of Saba Basketball Sport [redmine:#175247]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -159,30 +160,54 @@ BEGIN
 						END 
 				END	
 			END	SoccerLevel,
-		CASE WHEN basketball + basketballParlay < 50000 OR isBasketballParlay = 0  THEN 
-				CASE WHEN basketball < -140000 THEN 1
-					WHEN basketball < -120000 AND basketball >= -140000 THEN 2
-					WHEN basketball < -100000 AND basketball >= -120000 THEN 3
-					WHEN basketball < -80000 AND basketball >= -100000 THEN 4
-					WHEN basketball < -60000 AND basketball >= -80000 THEN 5
-					WHEN basketball < -40000 AND basketball >= -60000 THEN 6
-					WHEN basketball < -20000 AND basketball >= -40000 THEN 7
-					WHEN basketball < 0 AND basketball >= -20000 THEN 8
-					WHEN basketball < 20000 AND basketball >= 0 THEN 9
-					WHEN basketball < 40000 AND basketball >= 20000 THEN 10
-					WHEN basketball < 60000 AND basketball >= 40000 THEN 11
-					WHEN basketball < 80000 AND basketball >= 60000 THEN 12
-					ELSE 13 END 
-			ELSE 
-				CASE WHEN basketball + basketballParlay < 75000 THEN 14 ELSE 15 END
-			END AS BasketballLevel,
+		CASE WHEN (s.custid IS NOT NULL AND s.site='haifa')
+				OR (s.custid IS NULL AND c.site='789y')		
+				OR s.currency=96															 THEN -- Flow B : Haifa, 789y site and USDT currency
+					CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
+						CASE 
+							WHEN basketball <-140000								THEN 1
+							WHEN basketball <-110000	AND basketball >=-140000	THEN 2
+							WHEN basketball <-80000		AND basketball >=-110000	THEN 3
+							WHEN basketball <-60000		AND basketball >=-80000		THEN 4
+							WHEN basketball <-35000		AND basketball >=-60000		THEN 5
+							WHEN basketball <-20000		AND basketball >=-35000		THEN 6 
+							WHEN basketball <-10000		AND basketball >=-20000		THEN 7
+							WHEN basketball <-5000		AND basketball >=-10000		THEN 8
+							WHEN basketball < 0			AND basketball >=-5000		THEN 9
+							WHEN basketball < 1500		AND basketball >= 0			THEN 10
+							WHEN basketball < 3000		AND basketball >= 1500		THEN 11
+							WHEN basketball < 8000		AND basketball >= 3000		THEN 12
+							WHEN basketball >=8000									THEN 13 END
+					ELSE	
+						CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 25000 THEN 14 ELSE 15 END
+					END
+			ELSE
+				CASE WHEN (basketball + basketballParlay < 50000 OR isbasketballParlay = 0) THEN 
+						CASE 
+							WHEN basketball <-140000								THEN 1
+							WHEN basketball <-120000	AND basketball >=-140000	THEN 2
+							WHEN basketball <-100000	AND basketball >=-120000	THEN 3
+							WHEN basketball <-80000		AND basketball >=-100000	THEN 4
+							WHEN basketball <-60000		AND basketball >=-80000		THEN 5
+							WHEN basketball <-40000		AND basketball >=-60000		THEN 6
+							WHEN basketball <-20000		AND basketball >=-40000		THEN 7
+							WHEN basketball < 0			AND basketball >=-20000		THEN 8
+							WHEN basketball < 20000		AND basketball >= 0			THEN 9
+							WHEN basketball < 40000		AND basketball >= 20000		THEN 10
+							WHEN basketball < 60000		AND basketball >= 40000		THEN 11
+							WHEN basketball < 80000		AND basketball >= 60000		THEN 12
+							WHEN basketball >=80000									THEN 13 END
+				ELSE
+					CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 75000 THEN 14 ELSE 15 END
+				END
+			END	BasketballLevel,
 		Soccer + SoccerParlay as WinlossSoccer,
 		Basketball + basketballParlay as WinlossBasketball,
 		IsSoccer,
 		IsBasketball
 	FROM T
-		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
-		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON ci.srecommend = s.custid
+		INNER JOIN Customer c WITH(NOLOCK) ON c.custid = t.custid
+		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
 	
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball)
 	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball, IsManualSoccer, IsManualBasketball
