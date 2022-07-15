@@ -184,7 +184,7 @@ BEGIN
 					END
 			WHEN s.custid IS NOT NULL AND 
 				((s.site IN ('Happy8','SM88','AEUG','368cash','365online') AND s.currency=51) 
-				  OR (s.site IN ('WINCLUB88 ') AND s.currency=15))							THEN	-- Flow C: (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site)
+				  OR (s.site IN ('WINCLUB88') AND s.currency=15))							THEN	-- Flow C: (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site)
 					CASE WHEN basketball + basketballParlay < 25000 OR isbasketballParlay = 0 THEN
 						CASE 
 							WHEN basketball <-140000								THEN 1
