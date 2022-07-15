@@ -18,6 +18,7 @@ SET NOCOUNT ON
 		- 20220524@Winfred: update DangerLevel IG128/SM88/SL88SW/LIVV88SW with All Currencies [redmine:#172982]
 		- 20220607@Winfred: NAP CM - scan and update DangerLevel according to Winloss of Saba Basketball Sport [redmine:#173752]
 		- 20220711@Tacy: update DangerLevel for Haifa, 789y site and USDT currency of Saba Basketball Sport [redmine:#175247]
+		- 20220715@Tacy: update DangerLevel for (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site) of Saba Basketball Sport [redmine:#175505]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -181,6 +182,27 @@ BEGIN
 					ELSE	
 						CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 25000 THEN 14 ELSE 15 END
 					END
+			WHEN s.custid IS NOT NULL AND 
+				((s.site IN ('Happy8','SM88','AEUG','368cash','365online') AND s.currency=51) 
+				  OR (s.site IN ('WINCLUB88 ') AND s.currency=15))							THEN	-- Flow C: (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site)
+					CASE WHEN basketball + basketballParlay < 25000 OR isbasketballParlay = 0 THEN
+						CASE 
+							WHEN basketball <-140000								THEN 1
+							WHEN basketball <-110000	AND basketball >=-140000	THEN 2
+							WHEN basketball <-80000		AND basketball >=-110000	THEN 3
+							WHEN basketball <-60000		AND basketball >=-80000		THEN 4
+							WHEN basketball <-35000		AND basketball >=-60000		THEN 5
+							WHEN basketball <-20000		AND basketball >=-35000		THEN 6 
+							WHEN basketball <-10000		AND basketball >=-20000		THEN 7
+							WHEN basketball <-5000		AND basketball >=-10000		THEN 8
+							WHEN basketball < 0			AND basketball >=-5000		THEN 9
+							WHEN basketball < 5000		AND basketball >= 0			THEN 10
+							WHEN basketball < 10000		AND basketball >= 5000		THEN 11
+							WHEN basketball < 30000		AND basketball >= 10000		THEN 12
+							WHEN basketball >=30000									THEN 13 END
+					ELSE	
+						CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 50000 THEN 14 ELSE 15 END
+					END 
 			ELSE
 				CASE WHEN (basketball + basketballParlay < 50000 OR isbasketballParlay = 0) THEN 
 						CASE 
