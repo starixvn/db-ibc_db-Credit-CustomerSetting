@@ -97,8 +97,8 @@ BEGIN
 		SET @CustList = (SELECT	CustID			AS '@CustID',
 								SportType		AS '@SportType',
 								BetType			AS '@BetType',
-								NULL			AS '@MaxBet',
-								NULL			AS '@MaxPerMatch',
+								'NULL'			AS '@MaxBet',
+								'NULL'			AS '@MaxPerMatch',
 								StakeLevelList	AS '@StakeLevelList',
 								UpdateTime		AS '@UpdateTime'
 					FROM @HistoryTbl
@@ -291,7 +291,7 @@ BEGIN
 											BetType		AS '@BetType',
 											MaxBet		AS '@MaxBet',
 											MaxPerMatch	AS '@MaxPerMatch',
-										NULL		AS '@StakeLevelList',
+											'NULL'		AS '@StakeLevelList',
 											UpdateTime	AS '@UpdateTime'
 									FROM @HistoryTbl
 									FOR XML PATH('r'), ROOT ('root')
@@ -852,7 +852,7 @@ BEGIN
 											BetType		AS '@BetType',
 											MaxBet		AS '@MaxBet',
 											MaxPerMatch	AS '@MaxPerMatch',
-										NULL		AS '@StakeLevelList',
+											'NULL'		AS '@StakeLevelList',
 											UpdateTime	AS '@UpdateTime'
 								FROM @HistoryTbl
 								FOR XML PATH('r'), ROOT ('root')
