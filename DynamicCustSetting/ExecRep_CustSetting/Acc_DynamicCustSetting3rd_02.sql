@@ -251,7 +251,9 @@ BEGIN
 			--downline_member_maxbet = min (@NEW_MAXPERMATCH, downline_member_maxbet)	
 			WHILE 1 = 1
 			BEGIN
+				DELETE FROM @HistoryTbl
 				TRUNCATE TABLE #MemberTmpBatch
+			
 				DELETE TOP (@BatchNo) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
@@ -300,8 +302,6 @@ BEGIN
 					IF @ErrMsg <> ''
 						RETURN
 				END
-
-				DELETE FROM @HistoryTbl
 			END
 		END
 	END
@@ -444,7 +444,9 @@ BEGIN
 			--downline_member_maxbet = min (@NEW_MAXPERMATCH, downline_member_maxbet)		
 			WHILE 1 = 1
 			BEGIN
+				DELETE FROM @HistoryTbl
 				TRUNCATE TABLE #MemberTmpBatch
+			
 				DELETE TOP (@BatchNo) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
@@ -493,8 +495,6 @@ BEGIN
 					IF @ErrMsg <> ''
 						RETURN
 				END
-
-				DELETE FROM @HistoryTbl
 			END
 		END
 	END
@@ -623,7 +623,9 @@ BEGIN
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)
 			WHILE 1 = 1
 			BEGIN
+				DELETE FROM @HistoryTbl
 				TRUNCATE TABLE #MemberTmpBatch
+				
 				DELETE TOP (@BatchNo) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
@@ -668,8 +670,6 @@ BEGIN
 					IF @ErrMsg <> ''
 						RETURN
 				END
-
-				DELETE FROM @HistoryTbl
 			END
 		END									  
 	END
@@ -812,7 +812,9 @@ BEGIN
 			--downline_member_maxbet = min (@NEW_MAXPERMATCH, downline_member_maxbet)	
 			WHILE 1 = 1
 			BEGIN
+				DELETE FROM @HistoryTbl
 				TRUNCATE TABLE #MemberTmpBatch
+				
 				DELETE TOP (@BatchNo) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
@@ -861,8 +863,6 @@ BEGIN
 					IF @ErrMsg <> ''
 						RETURN
 				END
-				
-				DELETE FROM @HistoryTbl
 			END
 		END
 	END
