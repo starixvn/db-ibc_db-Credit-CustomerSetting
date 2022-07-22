@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+ï»¿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_BetLimitUpd] 
 	  @CustID		INT
 	, @BetLimit VARCHAR(MAX)
@@ -24,7 +24,7 @@ AS
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
 		
 	Param's Explanation:
-	• @BetLimit:
+	ï¿½ @BetLimit:
 		<ROOT>
 				<BetLimit 
 						SportType="1" 
@@ -220,7 +220,7 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
-		OUTPUT @CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 			INTO @HistoryBetSettingTbl
 		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewBetLimitTbl tmp
@@ -243,14 +243,14 @@ BEGIN
 						WHERE old.CustID=@CustID
 					)
 		BEGIN
-		SET @CustList = (SELECT	CustID		AS '@CustID',
+			SET @CustList = (SELECT	CustID		AS '@CustID',
 									SportType	AS '@SportType',
 									BetType		AS '@BetType',
 									MaxBet		AS '@MaxBet',
 									MaxPerMatch	AS '@MaxPerMatch',
-								NULL		AS '@StakeLevelList',
+									'NULL'		AS '@StakeLevelList',
 									UpdateTime	AS '@UpdateTime'
-						FROM @HistoryBetSettingTbl
+							FROM @HistoryBetSettingTbl
 							FOR XML PATH('r'), ROOT ('root')
 							)
 		
