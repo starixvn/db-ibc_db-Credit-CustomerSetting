@@ -94,7 +94,7 @@ BEGIN
 				AND	sl.BetType = cslm.BetType
 
 		--insert Bet Setting history
-		SET @CustList = (SELECT	CustID			AS '@CustID	',
+		SET @CustList = (SELECT	CustID			AS '@CustID',
 								SportType		AS '@SportType',
 								BetType			AS '@BetType',
 								NULL			AS '@MaxBet',
@@ -102,7 +102,7 @@ BEGIN
 								StakeLevelList	AS '@StakeLevelList',
 								UpdateTime		AS '@UpdateTime'
 					FROM @HistoryTbl
-					FOR XML PATH('r'), ROOT ('root'), TYPE
+					FOR XML PATH('r'), ROOT ('root')
 					)
 		
 		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
@@ -284,7 +284,7 @@ BEGIN
 
 				IF EXISTS (SELECT 1 FROM @HistoryTbl)
 				BEGIN
-				SET @CustList = (SELECT	CustID		AS '@CustID',
+					SET @CustList = (SELECT	CustID		AS '@CustID',
 											SportType	AS '@SportType',
 											BetType		AS '@BetType',
 											MaxBet		AS '@MaxBet',
@@ -300,6 +300,8 @@ BEGIN
 					IF @ErrMsg <> ''
 						RETURN
 				END
+
+				DELETE FROM @HistoryTbl
 			END
 		END
 	END
@@ -491,6 +493,8 @@ BEGIN
 					IF @ErrMsg <> ''
 						RETURN
 				END
+
+				DELETE FROM @HistoryTbl
 			END
 		END
 	END
@@ -664,6 +668,8 @@ BEGIN
 					IF @ErrMsg <> ''
 						RETURN
 				END
+
+				DELETE FROM @HistoryTbl
 			END
 		END									  
 	END
@@ -839,7 +845,7 @@ BEGIN
 							
 				IF EXISTS (SELECT 1 FROM @HistoryTbl)
 				BEGIN
-				SET @CustList = (SELECT	CustID		AS '@CustID',
+					SET @CustList = (SELECT	CustID		AS '@CustID',
 											SportType	AS '@SportType',
 											BetType		AS '@BetType',
 											MaxBet		AS '@MaxBet',
@@ -855,6 +861,8 @@ BEGIN
 					IF @ErrMsg <> ''
 						RETURN
 				END
+				
+				DELETE FROM @HistoryTbl
 			END
 		END
 	END
