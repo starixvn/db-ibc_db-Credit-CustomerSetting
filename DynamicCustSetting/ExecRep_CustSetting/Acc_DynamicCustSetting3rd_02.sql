@@ -94,15 +94,15 @@ BEGIN
 				AND	sl.BetType = cslm.BetType
 
 		--insert Bet Setting history
-		SET @CustList = (SELECT	CustID			AS '@CustID	',
+		SET @CustList = (SELECT	CustID			AS '@CustID',
 								SportType		AS '@SportType',
 								BetType			AS '@BetType',
-								NULL			AS '@MaxBet',
-								NULL			AS '@MaxPerMatch',
+								'NULL'			AS '@MaxBet',
+								'NULL'			AS '@MaxPerMatch',
 								StakeLevelList	AS '@StakeLevelList',
 								UpdateTime		AS '@UpdateTime'
 					FROM @HistoryTbl
-					FOR XML PATH('r'), ROOT ('root'), TYPE
+					FOR XML PATH('r'), ROOT ('root')
 					)
 		
 		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
@@ -251,7 +251,9 @@ BEGIN
 			--downline_member_maxbet = min (@NEW_MAXPERMATCH, downline_member_maxbet)	
 			WHILE 1 = 1
 			BEGIN
+				DELETE FROM @HistoryTbl
 				TRUNCATE TABLE #MemberTmpBatch
+			
 				DELETE TOP (@BatchNo) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
@@ -284,12 +286,12 @@ BEGIN
 
 				IF EXISTS (SELECT 1 FROM @HistoryTbl)
 				BEGIN
-				SET @CustList = (SELECT	CustID		AS '@CustID',
+					SET @CustList = (SELECT	CustID		AS '@CustID',
 											SportType	AS '@SportType',
 											BetType		AS '@BetType',
 											MaxBet		AS '@MaxBet',
 											MaxPerMatch	AS '@MaxPerMatch',
-										NULL		AS '@StakeLevelList',
+											'NULL'		AS '@StakeLevelList',
 											UpdateTime	AS '@UpdateTime'
 									FROM @HistoryTbl
 									FOR XML PATH('r'), ROOT ('root')
@@ -442,7 +444,9 @@ BEGIN
 			--downline_member_maxbet = min (@NEW_MAXPERMATCH, downline_member_maxbet)		
 			WHILE 1 = 1
 			BEGIN
+				DELETE FROM @HistoryTbl
 				TRUNCATE TABLE #MemberTmpBatch
+			
 				DELETE TOP (@BatchNo) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
@@ -619,7 +623,9 @@ BEGIN
 			--downline_member_minbet = min (downline_member_minbet, @NEW_MAXBET)
 			WHILE 1 = 1
 			BEGIN
+				DELETE FROM @HistoryTbl
 				TRUNCATE TABLE #MemberTmpBatch
+				
 				DELETE TOP (@BatchNo) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
@@ -806,7 +812,9 @@ BEGIN
 			--downline_member_maxbet = min (@NEW_MAXPERMATCH, downline_member_maxbet)	
 			WHILE 1 = 1
 			BEGIN
+				DELETE FROM @HistoryTbl
 				TRUNCATE TABLE #MemberTmpBatch
+				
 				DELETE TOP (@BatchNo) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
@@ -839,12 +847,12 @@ BEGIN
 							
 				IF EXISTS (SELECT 1 FROM @HistoryTbl)
 				BEGIN
-				SET @CustList = (SELECT	CustID		AS '@CustID',
+					SET @CustList = (SELECT	CustID		AS '@CustID',
 											SportType	AS '@SportType',
 											BetType		AS '@BetType',
 											MaxBet		AS '@MaxBet',
 											MaxPerMatch	AS '@MaxPerMatch',
-										NULL		AS '@StakeLevelList',
+											'NULL'		AS '@StakeLevelList',
 											UpdateTime	AS '@UpdateTime'
 								FROM @HistoryTbl
 								FOR XML PATH('r'), ROOT ('root')
