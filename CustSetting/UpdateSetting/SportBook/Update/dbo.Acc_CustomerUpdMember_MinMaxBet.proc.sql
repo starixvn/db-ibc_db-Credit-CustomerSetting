@@ -1431,12 +1431,13 @@ BEGIN
 		return
 	end
 	
-	--INSERT HISTORY BET SETTING
+	--Delete: update minbet only
 	DELETE @HistoryBetSettingTbl
 	WHERE SportType NOT IN  (161, 164)
-		OR (MaxBet=@MaxBetv161 AND MaxPerMatch=@MaxPerMatchv161)
-		OR (MaxBet=@MaxBetv164 AND MaxPerMatch=@MaxPerMatchv164)
-
+		OR (SportType=161 AND MaxBet=@MaxBetv161 AND MaxPerMatch=@MaxPerMatchv161)
+		OR (SportType=164 AND MaxBet=@MaxBetv164 AND MaxPerMatch=@MaxPerMatchv164)
+	
+	--INSERT HISTORY BET SETTING
 	IF EXISTS (SELECT 1 FROM @HistoryBetSettingTbl)
 	BEGIN
 		SET @CustList = (SELECT CustID		AS '@CustID',

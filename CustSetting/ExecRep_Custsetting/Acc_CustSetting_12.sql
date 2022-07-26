@@ -15,6 +15,7 @@ AS
 		- 20210813@Eden: Enhance - Update Parlay Max Payout for downlines by batch  [RedmineID:#160135]
 		- 20210816@Eden: Max Payout Per Match [redmine: #158073]
 		- 20220516@Tacy: Insert history of member bet setting: Number Game, Happy5 [RedmineID: #170739]
+		- 20220716@Tacy: HotFix - Error when update big line NG/Happy5/Keno bet setting [RedmineID: #175836]
 
     Param's Explanation:
             
@@ -384,7 +385,9 @@ BEGIN
 		BEGIN
 			WHILE 1 = 1
 			BEGIN
+				TRUNCATE TABLE #History_BetSetting
 				TRUNCATE TABLE #MemberTmpBatch
+
 				DELETE TOP (@Batch_Num) a
 				OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
 				FROM #Member a
