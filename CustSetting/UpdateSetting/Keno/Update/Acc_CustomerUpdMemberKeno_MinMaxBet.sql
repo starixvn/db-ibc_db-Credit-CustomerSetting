@@ -29,6 +29,7 @@ AS
 		- 20180525@Winnie: Inquiry Bet Limit Rule of Products -  [Redmine:95867]
 		- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
+		- 20220716@Tacy: HotFix - Error when update big line NG/Happy5/Keno bet setting [RedmineID: #175836]
 
 	Param's Explanation:
 	* @ErrCode:
@@ -196,13 +197,12 @@ INNER JOIN dbo.custinfo ci WITH(NOLOCK) ON cg.CustID = ci.custid
 	FROM CustGameType cg WITH (ROWLOCK, UPDLOCK)
 	WHERE custid = @CustID AND gametypeid = @GameTypeID
 
+	--delete: update minbet only
+	DELETE FROM @HistoryBetSettingTbl
+	WHERE MaxBet=@MaxBet AND MaxPerMatch=@MaxPerMatch
+
 	--insert Bet Setting history
-	IF NOT EXISTS (	SELECT 1					
-					FROM @HistoryBetSettingTbl
-					WHERE custid=@CustID
-					 AND MaxBet=@MaxBet 
-					 AND MaxPerMatch=@MaxPerMatch
-				)
+	IF EXISTS (	SELECT 1 FROM @HistoryBetSettingTbl)
 	BEGIN
 		SET @CustList = (SELECT	CustID		AS '@CustID',
 								@sporttype	AS '@SportType',

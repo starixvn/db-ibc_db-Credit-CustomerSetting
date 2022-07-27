@@ -103,6 +103,8 @@ Revisions:
 	- 20181107@Johnson: add Happy 5 [Redmine: #104006]
 	- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20220516@Tacy: Insert history of member bet setting: Number Game, Happy 5 [RedmineID: #170739] 
+	- 20220716@Tacy: HotFix - Error when update big line NG/Happy5/Keno bet setting [RedmineID: #175836]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -1431,12 +1433,13 @@ BEGIN
 		return
 	end
 	
-	--INSERT HISTORY BET SETTING
+	--Delete: update minbet only
 	DELETE @HistoryBetSettingTbl
 	WHERE SportType NOT IN  (161, 164)
-		OR (MaxBet=@MaxBetv161 AND MaxPerMatch=@MaxPerMatchv161)
-		OR (MaxBet=@MaxBetv164 AND MaxPerMatch=@MaxPerMatchv164)
-
+		OR (SportType=161 AND MaxBet=@MaxBetv161 AND MaxPerMatch=@MaxPerMatchv161)
+		OR (SportType=164 AND MaxBet=@MaxBetv164 AND MaxPerMatch=@MaxPerMatchv164)
+	
+	--INSERT HISTORY BET SETTING
 	IF EXISTS (SELECT 1 FROM @HistoryBetSettingTbl)
 	BEGIN
 		SET @CustList = (SELECT CustID		AS '@CustID',
