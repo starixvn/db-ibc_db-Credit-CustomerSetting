@@ -19,6 +19,7 @@ SET NOCOUNT ON
 		- 20220607@Winfred: NAP CM - scan and update DangerLevel according to Winloss of Saba Basketball Sport [redmine:#173752]
 		- 20220711@Tacy: update DangerLevel for Haifa, 789y site and USDT currency of Saba Basketball Sport [redmine:#175247]
 		- 20220715@Tacy: update DangerLevel for (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site) of Saba Basketball Sport [redmine:#175505]
+		- 20220802@Tacy: Update Danger Level if Problem Customer Class [RedmineId: #175857]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -230,7 +231,10 @@ BEGIN
 	FROM T
 		INNER JOIN Customer c WITH(NOLOCK) ON c.custid = t.custid
 		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
-	
+		LEFT JOIN CustDangerJobExclusion cc WITH (NOLOCK) ON cc.custid=t.custid
+	WHERE NOT ((t.isSoccer=1 AND cc.custid IS NOT NULL AND cc.CategoryID IN (52,54,58)) OR
+			   (t.isBasketball=1 AND cc.custid IS NOT NULL))
+
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball)
 	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball, IsManualSoccer, IsManualBasketball
 	FROM custinfo c WITH(NOLOCK)
@@ -272,6 +276,14 @@ BEGIN
 			@ErrMsgLog = ERROR_MESSAGE(),
 			@ErrMsg = 'Update unsuccessfully'		
 	END CATCH 
+
+	--update dangerlevel=13 For Customer Class 8,9,10,131
+	UPDATE c
+	SET c.DangerLevel=13
+	FROM custInfo c WITH (UPDLOCK, ROWLOCK)
+		INNER JOIN CustDangerJobExclusion cd WITH (NOLOCK)
+				ON c.custid=cd.CustID
+	WHERE c.DangerLevel<>13
 
 	--logging
 	INSERT INTO CustDangerLevelInfo(Custid,

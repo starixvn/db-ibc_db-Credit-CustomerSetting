@@ -13,6 +13,8 @@ AS
 
 	Revisions:
 		- 20211014@Johnson: Initial sp [redmine:#161351]
+		- 20220803@Tacy: Add ActionID 1189; 1190 [RedmineID: #175857]
+
     Param's Explaination:    	
 		- @UserID: UserId perform this action
 		-@ActionID = 1187
@@ -141,5 +143,69 @@ BEGIN
 		FROM Tmp
 		
 		DROP TABLE #tblCustLogManual
+	END
+	ELSE IF @ActionID=1189
+	BEGIN
+		CREATE TABLE #tblCustLog(
+				CustID		INT
+			,	CategoryID	INT
+			,	CreateDate	DATETIME
+		)
+		
+		INSERT INTO #tblCustLog(custid,CategoryID,CreateDate)
+		SELECT	t.c.value('@CustID[1]','int'),
+				t.c.value('@CategoryID[1]','int'),
+				t.c.value('@CreateDate[1]','datetime')
+		FROM @xml.nodes('Root/r')as t(c)
+		
+		;WITH Tmp AS (
+		SELECT custid,
+			(SELECT 
+				CategoryID	AS '@CategoryID',
+				CreateDate	AS '@CreateDate',
+				@IP as '@IP'
+			FROM #tblCustLog t1
+			WHERE t1.custid = t.custid
+			FOR XML PATH('R')
+			) as LogAdd
+		FROM #tblCustLog t
+		)
+		INSERT INTO dbo.UserLog_RunSP(UserID,CustID,ActionID,TrackingValue,Duration)
+		SELECT @UserID,CustID,@ActionID,LogAdd,@Duration
+		FROM Tmp
+		
+		DROP TABLE #tblCustLog
+	END
+	ELSE IF @ActionID=1190
+	BEGIN
+		CREATE TABLE #tblCustLog(
+				CustID		INT
+			,	CategoryID	INT
+			,	CreateDate	DATETIME
+		)
+		
+		INSERT INTO #tblCustLog(custid,CategoryID,CreateDate)
+		SELECT	t.c.value('@CustID[1]','int'),
+				t.c.value('@CategoryID[1]','int'),
+				t.c.value('@RemoveDate[1]','datetime')
+		FROM @xml.nodes('Root/r')as t(c)
+
+		;WITH Tmp AS (
+		SELECT custid,
+			(SELECT 
+				CategoryID	AS '@CategoryID',
+				CreateDate	AS '@CreateDate',
+				@IP as '@IP'
+			FROM #tblCustLog t1
+			WHERE t1.custid = t.custid
+			FOR XML PATH('R')
+			) as LogAdd
+		FROM #tblCustLog t
+		)
+		INSERT INTO dbo.UserLog_RunSP(UserID,CustID,ActionID,TrackingValue2,Duration)
+		SELECT @UserID,CustID,@ActionID,LogAdd,@Duration
+		FROM Tmp
+		
+		DROP TABLE #tblCustLog
 	END
 END
