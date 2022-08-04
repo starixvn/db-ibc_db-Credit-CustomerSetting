@@ -47,6 +47,7 @@ AS
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20220406@Elodie: Apply STRING_SPLIT() instead of strSplit UDF [Redmine: #168783]
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -73,9 +74,12 @@ BEGIN
 		SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
 		FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.[SportType] = psd.[SportType]	AND pbs.[BetType] = psd.[BetType]
-			INNER JOIN (SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
-						UNION ALL SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus))t ON pbs.[SportType] = t.[SportType]	AND pbs.[BetType] = t.[BetType]
-		WHERE psd.SettingType = 4 OR psd.SettingType = 13
+			INNER JOIN (		  SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
+						UNION ALL SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
+						UNION ALL SELECT Sporttype, bettype FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
+						)t 
+						ON pbs.[SportType] = t.[SportType]	AND pbs.[BetType] = t.[BetType]
+		WHERE psd.SettingType IN (4,13,21)
 			
 		----Hard code to hide CF if Upline is a dummy Super or Master
 		DECLARE @DirectUplineID INT, @IsDirect BIT = 0
@@ -129,7 +133,7 @@ BEGIN
 				
 					SET @xmlStrDisabled = (
 							SELECT (
-									SELECT ft.bitmapOrder	AS '@b'
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
 										, ft.IsDisabled	AS '@s'
 									FROM #SportBettypeFilter4 ft 	
 									FOR XML PATH('r')
@@ -141,7 +145,7 @@ BEGIN
 						
 					SET @xmlStrHidden = (
 							SELECT (
-									SELECT ft.bitmapOrder	AS '@b'
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
 										, ft.IsHidden	AS '@s'
 									FROM #SportBettypeFilter4 ft 	
 									FOR XML PATH('r')
@@ -153,7 +157,7 @@ BEGIN
 						
 					SET @xmlStrSync = (
 						SELECT (
-								SELECT ft.bitmapOrder	AS '@b'
+								SELECT DISTINCT ft.bitmapOrder	AS '@b'
 									, ft.IsSync	AS '@s'
 								FROM #SportBettypeFilter4 ft 	
 								FOR XML PATH('r')
@@ -252,7 +256,7 @@ BEGIN
 				--Enable/Disable: default status setting
 				SET @xmlStrDisabled = (
 						SELECT (
-								SELECT ft.bitmapOrder	AS '@b'
+								SELECT DISTINCT ft.bitmapOrder	AS '@b'
 									, ft.IsDisabled	AS '@s'
 								FROM #SportBettypeFilter11 ft 	
 								FOR XML PATH('r')
@@ -264,7 +268,7 @@ BEGIN
 						
 				SET @xmlStrHidden = (
 						SELECT (
-								SELECT ft.bitmapOrder	AS '@b'
+								SELECT DISTINCT ft.bitmapOrder	AS '@b'
 									, ft.IsHidden	AS '@s'
 								FROM #SportBettypeFilter11 ft 	
 								FOR XML PATH('r')
@@ -276,7 +280,7 @@ BEGIN
 						
 				SET @xmlStrSync = (
 					SELECT (
-							SELECT ft.bitmapOrder	AS '@b'
+							SELECT DISTINCT ft.bitmapOrder	AS '@b'
 								, ft.IsSync	AS '@s'
 							FROM #SportBettypeFilter11 ft 	
 							FOR XML PATH('r')
@@ -342,7 +346,7 @@ BEGIN
 			INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden)
 			SELECT RealProductId, SportType, BetType, IsHidden
 			FROM dbo.ProductSettingDetail WITH (NOLOCK)
-			WHERE SettingType IN (4,11,13)
+			WHERE SettingType IN (4,11,13,21)
 		
 			UPDATE op
 			SET op.IsHidden = stt.IsHidden
@@ -368,7 +372,7 @@ BEGIN
 				  ,IsLive
 			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 				INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
-			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
+			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13,21)
 		END
 
 		/********************************************* Position Taking: SettingType = 1 ***********************************/

@@ -20,6 +20,7 @@ AS
 		- 20200408@Tiara: Betradar Virtual Sport - Phase 4 - New sporttype 197 [RedmineID: #132040]
 		- 20210512@Eden: MaxGame - Support can-see [RedmineID: #154951]
 		- 20210810@Elodie: Add NOLOCK [RedmineID: #159964]
+		- 20220627@Eden: Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
 BEGIN
@@ -75,7 +76,7 @@ BEGIN
 								WHEN 237 THEN 212
 				                ELSE psc.Sporttype END) = ps.Sporttype
 		CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
-	WHERE sd.SettingType IN (4,11,13)
+	WHERE sd.SettingType IN (4,11,13,21)
 		AND SettingStatus <= CASE WHEN @IsTest = 1 THEN 1 ELSE 0 END
 		AND cs.CustID = @CustID
 END

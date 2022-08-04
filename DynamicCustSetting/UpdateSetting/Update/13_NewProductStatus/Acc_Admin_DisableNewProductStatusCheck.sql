@@ -8,6 +8,8 @@ ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusCheck]
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
+	, @Settingtype		TINYINT = 13
+	, @CustID			INT = NULL
 AS
 /*
 	Created: 20180118@ELodie
@@ -18,6 +20,7 @@ AS
 	Revision: 
 		- 20180118@Elodie: Validate enable status on NAP & ExtNAP [RedmineID:#87328]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -50,6 +53,8 @@ BEGIN
 			, DisableAllMasters		BIT
 			, DisableAllAgents		BIT
 			, DisableAllMembers		BIT
+			, ParentSporttype   SMALLINT
+			, ParentBetType		SMALLINT
 	)
 	CREATE TABLE #OldDisableStatTbl 
 	(
@@ -65,9 +70,11 @@ BEGIN
 	)
 	CREATE TABLE #ErrorSportTypeTbl
 	(
-			SportType	SMALLINT
+			 SportType	SMALLINT
 			, BetType	SMALLINT
 			, MsgID		INT
+			, ParentSporttype   SMALLINT
+			, ParentBetType		SMALLINT
 	)
 	DECLARE @xml XML, @iDoc INT
 
@@ -77,10 +84,28 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @IsDisabled
 
-	INSERT INTO #NewDisableStatTblCheck
-	SELECT *
+	INSERT INTO #NewDisableStatTblCheck(
+		  SportType			
+		, BetType			
+		, IsDisabled		
+		, UpdateAllMasters	
+		, UpdateAllAgents	
+		, UpdateAllMembers	
+		, DisableAllMasters	
+		, DisableAllAgents	
+		, DisableAllMembers
+	)
+	SELECT    SportType			
+			, BetType			
+			, IsDisabled		
+			, UpdateAllMasters	
+			, UpdateAllAgents	
+			, UpdateAllMembers	
+			, DisableAllMasters	
+			, DisableAllAgents	
+			, DisableAllMembers
 	FROM OPENXML(@iDoc, '/ROOT/ProductStatus', 1) WITH (
-			SportType				SMALLINT
+			  SportType				SMALLINT
 			, BetType				SMALLINT
 			, IsDisabled			BIT
 			, UpdateAllMasters		BIT
@@ -93,7 +118,6 @@ BEGIN
 
 	EXEC sp_xml_removedocument @iDoc
 
-	DECLARE @custID INT 
 	IF @RoleID = 4
 		SET @custID = @SuperID
 	IF @RoleID = 3
@@ -110,7 +134,7 @@ BEGIN
 			ON u.SportType IN( t.SportType,0)
 			AND u.SettingType IN (ps.SettingType,0)
 			AND u.ProductID  IN (ps.ProductID, 0)
-	WHERE ps.SettingType IN( 13, 4)
+	WHERE ps.SettingType IN (13, 4, 21)
 		AND u.FunctionType = 1 --Edit Customer
 
 	--Get error data
@@ -279,13 +303,465 @@ BEGIN
 			WHERE UpdateAllMembers = 1 AND DisableAllMembers = 0 AND IsDisabled = 1
 		END
 	END
-		
+
 	--IF there's no error data then return
-	IF NOT EXISTS (
+	IF EXISTS (
 			SELECT TOP 1 1
 			FROM #ErrorSportTypeTbl
 			)
-		RETURN
+	BEGIN
+		GOTO RETURNTBL;
+	END
+
+	IF @Settingtype = 21 -- Check status dependency
+	BEGIN
+		UPDATE t 
+		SET t.ParentSporttype = par.SportType, t.ParentBetType = par.BetType
+		FROM #NewDisableStatTblCheck t
+			INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+				ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
+			INNER JOIN ProductSettingDetail par WITH(NOLOCK) 
+				ON d.Parent_ProductSettingID = par.ProductSettingID
+
+		INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+		SELECT TOP(1) t.SportType
+				, t.BetType
+				, 60037 AS MsgID
+				, t.ParentSporttype
+				, t.ParentBetType
+		FROM #NewDisableStatTblCheck t
+			LEFT JOIN #NewDisableStatTblCheck par 
+				ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType
+			INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+				ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
+			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = @custID
+			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+		WHERE t.IsDisabled < ISNULL(par.IsDisabled,s.value)
+
+		IF @@ROWCOUNT > 0
+		BEGIN
+			GOTO RETURNTBL;
+		END
+		
+		INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+		SELECT TOP(1) t.SportType
+				, t.BetType
+				, 60037 AS MsgID
+				, t.ParentSporttype
+				, t.ParentBetType
+		FROM #NewDisableStatTblCheck t
+			INNER JOIN #NewDisableStatTblCheck par 
+				ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType
+		WHERE (t.UpdateAllMasters = 1 AND t.DisableAllMasters = 0 AND par.DisableAllMasters = 1)
+			OR (t.UpdateAllAgents = 1 AND t.DisableAllAgents = 0 AND par.DisableAllAgents = 1)
+			OR (t.UpdateAllMembers = 1 AND t.DisableAllMembers = 0 AND par.DisableAllMembers = 1)
+
+		IF @@ROWCOUNT > 0
+		BEGIN
+			GOTO RETURNTBL;
+		END
+
+		IF @RoleID = 4
+		BEGIN
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) t.SportType
+					, t.BetType
+					, 60037 AS MsgID
+					, t.ParentSporttype
+					, t.ParentBetType
+			FROM #NewDisableStatTblCheck t
+				LEFT JOIN #NewDisableStatTblCheck par 
+					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND par.UpdateAllMasters = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
+				CROSS APPLY (   SELECT TOP 1 1 AS IsDisabled
+								FROM custInfo ci WITH(NOLOCK) 
+									INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+									CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+								WHERE ci.srecommend = @custID
+									AND roleid = 3
+									AND s.value = 1
+									AND par.SportType IS NULL
+									AND t.UpdateAllMasters = 1 
+									AND t.DisableAllMasters = 0 
+							) st -- check if any disabled Master
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) t.SportType
+					, t.BetType
+					, 60037 AS MsgID
+					, t.ParentSporttype
+					, t.ParentBetType
+			FROM #NewDisableStatTblCheck t
+				LEFT JOIN #NewDisableStatTblCheck par 
+					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND par.UpdateAllAgents = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
+				CROSS APPLY (   SELECT TOP 1 1 AS IsDisabled
+								FROM custInfo ci WITH(NOLOCK) 
+									INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+									CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+								WHERE ci.srecommend = @custID
+									AND roleid = 2
+									AND s.value = 1
+									AND par.SportType IS NULL
+									AND t.UpdateAllAgents = 1 
+									AND t.DisableAllAgents = 0 
+							) st -- check if any disabled Agent
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) t.SportType
+					, t.BetType
+					, 60037 AS MsgID
+					, t.ParentSporttype
+					, t.ParentBetType
+			FROM #NewDisableStatTblCheck t
+				LEFT JOIN #NewDisableStatTblCheck par 
+					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND par.UpdateAllMembers = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
+				CROSS APPLY (   SELECT TOP 1 1 AS IsDisabled
+								FROM custInfo ci WITH(NOLOCK) 
+									INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+									CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+								WHERE ci.srecommend = @custID
+									AND roleid = 1
+									AND s.value = 1
+									AND par.SportType IS NULL
+									AND t.UpdateAllMembers = 1 
+									AND t.DisableAllMembers = 0 
+							) st -- check if any disabled Member
+				
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+		END
+		ELSE IF @RoleID = 3
+		BEGIN
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) t.SportType
+					, t.BetType
+					, 60037 AS MsgID
+					, t.ParentSporttype
+					, t.ParentBetType
+			FROM #NewDisableStatTblCheck t
+				LEFT JOIN #NewDisableStatTblCheck par 
+					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND par.UpdateAllAgents = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
+				CROSS APPLY (   SELECT TOP 1 1 AS IsDisabled
+								FROM custInfo ci WITH(NOLOCK) 
+									INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+									CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+								WHERE ci.mrecommend = @custID
+									AND roleid = 2
+									AND s.value = 1
+									AND par.SportType IS NULL
+									AND t.UpdateAllAgents = 1 
+									AND t.DisableAllAgents = 0 
+							) st -- check if any disabled Agent
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) t.SportType
+					, t.BetType
+					, 60037 AS MsgID
+					, t.ParentSporttype
+					, t.ParentBetType
+			FROM #NewDisableStatTblCheck t
+				LEFT JOIN #NewDisableStatTblCheck par 
+					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND par.UpdateAllMembers = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
+				CROSS APPLY (   SELECT TOP 1 1 AS IsDisabled
+								FROM custInfo ci WITH(NOLOCK) 
+									INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+									CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+								WHERE ci.mrecommend = @custID
+									AND roleid = 1
+									AND s.value = 1
+									AND par.SportType IS NULL
+									AND t.UpdateAllMembers = 1 
+									AND t.DisableAllMembers = 0 
+							) st -- check if any disabled Member
+				
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+		END
+		ELSE IF @RoleID = 2
+		BEGIN
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) t.SportType
+					, t.BetType
+					, 60037 AS MsgID
+					, t.ParentSporttype
+					, t.ParentBetType
+			FROM #NewDisableStatTblCheck t
+				LEFT JOIN #NewDisableStatTblCheck par 
+					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND par.UpdateAllMembers = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
+				CROSS APPLY (   SELECT TOP 1 1 AS IsDisabled
+								FROM custInfo ci WITH(NOLOCK) 
+									INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+									CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+								WHERE ci.recommend = @custID
+									AND roleid = 1
+									AND s.value = 1
+									AND par.SportType IS NULL
+									AND t.UpdateAllMembers = 1 
+									AND t.DisableAllMembers = 0 
+							) st -- check if any disabled Member
+				
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+		END
+
+		INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+		SELECT TOP(1) de.SportType
+				, de.BetType
+				, 60037 AS MsgID
+				, t.Sporttype AS ParentSporttype
+				, t.BetType AS ParentBetType
+		FROM #NewDisableStatTblCheck t
+			INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+				ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
+			INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+				ON d.ProductSettingID = de.Parent_ProductSettingID 
+			LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
+				ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType
+			INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+				ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
+			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = @custID
+			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+		WHERE tempde.SportType IS NULL 
+			AND t.IsDisabled > s.value
+
+		IF @@ROWCOUNT > 0
+		BEGIN
+			GOTO RETURNTBL;
+		END
+		
+		IF @RoleID = 4
+		BEGIN
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) de.SportType
+					, de.BetType
+					, 60037 AS MsgID
+					, t.Sporttype AS ParentSporttype
+					, t.BetType AS ParentBetType
+			FROM #NewDisableStatTblCheck t
+				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
+				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+					ON d.ProductSettingID = de.Parent_ProductSettingID 
+				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
+					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMasters = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
+				CROSS APPLY (       SELECT TOP 1 1 AS IsDisabled
+									FROM custInfo ci WITH(NOLOCK) 
+										INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+										CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+									WHERE ci.srecommend = @custID
+										AND roleid = 3
+										AND s.value = 0
+										AND tempde.SportType IS NULL
+										AND t.UpdateAllMasters = 1 
+										AND t.DisableAllMasters = 1 
+								) st -- check if any Enabled Master
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) de.SportType
+					, de.BetType
+					, 60037 AS MsgID
+					, t.Sporttype AS ParentSporttype
+					, t.BetType AS ParentBetType
+			FROM #NewDisableStatTblCheck t
+				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
+				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+					ON d.ProductSettingID = de.Parent_ProductSettingID 
+				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
+					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllAgents = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
+				CROSS APPLY (       SELECT TOP 1 1 AS IsDisabled
+									FROM custInfo ci WITH(NOLOCK) 
+										INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+										CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+									WHERE ci.srecommend = @custID
+										AND roleid = 2
+										AND s.value = 0
+										AND tempde.SportType IS NULL
+										AND t.UpdateAllAgents = 1 
+										AND t.DisableAllAgents = 1 
+								) st -- check if any Enabled Master
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) de.SportType
+					, de.BetType
+					, 60037 AS MsgID
+					, t.Sporttype AS ParentSporttype
+					, t.BetType AS ParentBetType
+			FROM #NewDisableStatTblCheck t
+				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
+				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+					ON d.ProductSettingID = de.Parent_ProductSettingID 
+				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
+					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMembers = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
+				CROSS APPLY (       SELECT TOP 1 1 AS IsDisabled
+									FROM custInfo ci WITH(NOLOCK) 
+										INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+										CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+									WHERE ci.srecommend = @custID
+										AND roleid = 1
+										AND s.value = 0
+										AND tempde.SportType IS NULL
+										AND t.UpdateAllMembers = 1 
+										AND t.DisableAllMembers = 1 
+								) st -- check if any Enabled Master
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+		END
+		ELSE IF @RoleID = 3
+		BEGIN
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) de.SportType
+					, de.BetType
+					, 60037 AS MsgID
+					, t.Sporttype AS ParentSporttype
+					, t.BetType AS ParentBetType
+			FROM #NewDisableStatTblCheck t
+				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
+				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+					ON d.ProductSettingID = de.Parent_ProductSettingID 
+				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
+					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllAgents = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
+				CROSS APPLY (       SELECT TOP 1 1 AS IsDisabled
+									FROM custInfo ci WITH(NOLOCK) 
+										INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+										CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+									WHERE ci.mrecommend = @custID
+										AND roleid = 2
+										AND s.value = 0
+										AND tempde.SportType IS NULL
+										AND t.UpdateAllAgents = 1 
+										AND t.DisableAllAgents = 1 
+								) st -- check if any Enabled Master
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) de.SportType
+					, de.BetType
+					, 60037 AS MsgID
+					, t.Sporttype AS ParentSporttype
+					, t.BetType AS ParentBetType
+			FROM #NewDisableStatTblCheck t
+				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
+				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+					ON d.ProductSettingID = de.Parent_ProductSettingID 
+				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
+					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMembers = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
+				CROSS APPLY (       SELECT TOP 1 1 AS IsDisabled
+									FROM custInfo ci WITH(NOLOCK) 
+										INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+										CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+									WHERE ci.mrecommend = @custID
+										AND roleid = 1
+										AND s.value = 0
+										AND tempde.SportType IS NULL
+										AND t.UpdateAllMembers = 1 
+										AND t.DisableAllMembers = 1 
+								) st -- check if any Enabled Master
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+		END
+		ELSE IF @RoleID = 2
+		BEGIN
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
+			SELECT TOP(1) de.SportType
+					, de.BetType
+					, 60037 AS MsgID
+					, t.Sporttype AS ParentSporttype
+					, t.BetType AS ParentBetType
+			FROM #NewDisableStatTblCheck t
+				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
+				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+					ON d.ProductSettingID = de.Parent_ProductSettingID 
+				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
+					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMembers = 1
+				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
+					ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
+				CROSS APPLY (       SELECT TOP 1 1 AS IsDisabled
+									FROM custInfo ci WITH(NOLOCK) 
+										INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID = ci.custid
+										CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled,p.bitmapOrder) s
+									WHERE ci.recommend = @custID
+										AND roleid = 1
+										AND s.value = 0
+										AND tempde.SportType IS NULL
+										AND t.UpdateAllMembers = 1 
+										AND t.DisableAllMembers = 1 
+								) st -- check if any Enabled Master
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				GOTO RETURNTBL;
+			END
+		END
+	END
+	
+	RETURNTBL:
 
 	IF EXISTS(SELECT TOP 1 1 FROM #ErrorSportTypeTbl WHERE MsgID = 60033)
 	BEGIN
@@ -331,8 +807,33 @@ BEGIN
 		
 		RETURN
 	END
+	ELSE IF EXISTS(SELECT TOP 1 1 FROM #ErrorSportTypeTbl WHERE MsgID = 60037)
+	BEGIN
+		SET @xml = (
+				SELECT 60037 AS '@MsgID'
+					, 'You cannot Enable {ChildSport} when {ParentSport} is Disabled.' AS '@Msg'
+					, (
+						SELECT SportType AS '@SportType'
+							, BetType AS '@BetType'
+							, ParentSportType AS '@ParentSportType'
+							, ParentBetType AS '@ParentBetType'
+						FROM #ErrorSportTypeTbl
+						WHERE MsgID = 60037
+						FOR XML PATH('Row')
+							, TYPE
+						)
+				FOR XML PATH('Root')
+					, TYPE
+				)		
+		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+		SET @MsgType = 92
+		SET @ErrCode = 103
+		
+		RETURN
+	END
+
 	DROP TABLE #ErrorSportTypeTbl
 	DROP TABLE #NewDisableStatTblCheck
-	
+	DROP TABLE #OldDisableStatTbl
 END
 GO

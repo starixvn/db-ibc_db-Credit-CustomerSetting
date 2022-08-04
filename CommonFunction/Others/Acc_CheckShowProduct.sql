@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CheckShowProduct]
 	@ProductID	TINYINT,
 	@Sporttype	SMALLINT = NULL,
@@ -19,6 +18,7 @@ AS
 		- 20200303@Tiara: Add SA Gaming Product [Redmine: #128058]
 		- 20200403@Elodie: Add Table Games Product [Redmine: #129440]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 
 	Explanation's Param:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -35,7 +35,7 @@ BEGIN
 	SELECT @SettingType = SettingType, @RealProductID = RealProductId
 	FROM dbo.ProductSettingDetail WITH (NOLOCK) 
 	WHERE ProductID = @ProductID 
-		AND SettingType IN (4,11,13)
+		AND SettingType IN (4,11,13,21)
 		AND SportType = CASE WHEN @Sporttype IS NULL THEN SportType ELSE @Sporttype END
 
 	IF EXISTS( SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus) WHERE RealProductId = @RealProductID)

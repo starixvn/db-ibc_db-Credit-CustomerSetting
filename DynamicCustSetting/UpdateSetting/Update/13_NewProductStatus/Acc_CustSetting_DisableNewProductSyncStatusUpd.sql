@@ -11,11 +11,12 @@ AS
 	Created: Elodie  
 	Date: 20170613
 	DB: DBCUST/CustDB
-	Task: Update synchronize status on a product (Setting Type 13)
+	Task: Update synchronize status on a product (Setting Type 13, 21)
     
 	Revisions:
 		- 20170919@Johnson: fix the unsynchronized setting (settingType = 13), do not update sync for downlines [Redmine: #72973]	
-		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]						 	
+		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]	
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	Parameters Explanation:  
 	
  */
@@ -53,7 +54,7 @@ BEGIN
 				,	psd.BetType
 	FROM	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
 	WHERE	psd.ProductID = @ProductID
-		AND	psd.SettingType = 13
+		AND	psd.SettingType IN(13,21)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
@@ -64,7 +65,7 @@ BEGIN
 			ON u.SportType IN( t.SportType,0)
 			AND u.SettingType IN (ps.SettingType,0)
 			AND u.ProductID  IN (ps.ProductID, 0)
-	WHERE ps.SettingType = 13
+	WHERE ps.SettingType IN(13,21)
 		AND u.FunctionType = 1 --Edit Customer
 
 	IF NOT EXISTS( SELECT 1 FROM #NewSyncStatTbl)
@@ -123,7 +124,7 @@ BEGIN
 					AND	psd.BetType = tmp.BetType
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType = 13	-- Product Status
+				AND psd.SettingType IN(13,21)	-- Product Status
 		 ) iq
 
 	-- Select ProductName

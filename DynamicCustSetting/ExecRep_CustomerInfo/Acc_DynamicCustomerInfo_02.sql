@@ -34,6 +34,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -54,7 +55,7 @@ BEGIN
 
 		SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
 
-		/********************** Product Status: SettingType = 4, Game Status: SettingType = 11, NewProductStatus = 13*************/
+		/********************** Product Status: SettingType = 4, Game Status: SettingType = 11, NewProductStatus = 13, NewProductStatus = 21*************/
 		--Copy all status from source super
 		BEGIN TRY
 			IF EXISTS(SELECT 1 FROM [dbo].[CustProductStatus] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
@@ -86,7 +87,7 @@ BEGIN
 			INSERT INTO @OfferedProduct (Sporttype, Bettype, IsHiddenSource, IsHiddenDes)
 			SELECT Sporttype, Bettype, IsHidden, IsHidden
 			FROM ProductSettingDetail WITH (NOLOCK)
-			WHERE SettingType IN (4,11,13)
+			WHERE SettingType IN (4,11,13,21)
 
 			UPDATE op
 			SET IsHiddenSource = ps.IsHidden
@@ -147,7 +148,7 @@ BEGIN
 					--Enable/Disable: default status setting
 					SET @xmlStrDisabled = (
 							SELECT (
-									SELECT ft.bitmapOrder	AS '@b'
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
 										, ft.IsDisabled	AS '@s'
 									FROM #SportBettypeFilter4 ft 	
 									FOR XML PATH('r')
@@ -159,7 +160,7 @@ BEGIN
 						
 					SET @xmlStrHidden = (
 							SELECT (
-									SELECT ft.bitmapOrder	AS '@b'
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
 										, ft.IsHidden	AS '@s'
 									FROM #SportBettypeFilter4 ft 	
 									FOR XML PATH('r')
@@ -171,7 +172,7 @@ BEGIN
 						
 					SET @xmlStrSync = (
 						SELECT (
-								SELECT ft.bitmapOrder	AS '@b'
+								SELECT DISTINCT ft.bitmapOrder	AS '@b'
 									, ft.IsSync	AS '@s'
 								FROM #SportBettypeFilter4 ft 	
 								FOR XML PATH('r')
@@ -232,7 +233,7 @@ BEGIN
 					--Enable/Disable: default status setting
 					SET @xmlStrDisabled = (
 							SELECT (
-									SELECT ft.bitmapOrder	AS '@b'
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
 										, ft.IsDisabled	AS '@s'
 									FROM #SportBettypeFilter13 ft 	
 									FOR XML PATH('r')
@@ -244,7 +245,7 @@ BEGIN
 						
 					SET @xmlStrHidden = (
 							SELECT (
-									SELECT ft.bitmapOrder	AS '@b'
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
 										, ft.IsHidden	AS '@s'
 									FROM #SportBettypeFilter13 ft 	
 									FOR XML PATH('r')
@@ -256,7 +257,7 @@ BEGIN
 						
 					SET @xmlStrSync = (
 						SELECT (
-								SELECT ft.bitmapOrder	AS '@b'
+								SELECT DISTINCT ft.bitmapOrder	AS '@b'
 									, ft.IsSync	AS '@s'
 								FROM #SportBettypeFilter13 ft 	
 								FOR XML PATH('r')
@@ -276,6 +277,91 @@ BEGIN
 				END TRY
 				BEGIN CATCH
 					SELECT @ErrCode = 13
+
+					DELETE FROM CustProductStatus WHERE CustID = @CustID
+					RETURN
+				END CATCH
+			END
+
+			/********************************************* NewProductStatus: SettingType = 21 ************************************/
+			--Get sporttype/Bettype for this setting type	
+			CREATE TABLE #SportBettypeFilter21(SportType SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,IsSync BIT, bitmapOrder TINYINT)
+		
+			INSERT INTO #SportBettypeFilter21(SportType, Bettype, IsLive, SettingType, IsDisabled, IsHidden, IsSync, bitmapOrder)
+			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
+			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
+				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
+				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
+				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,21,@SettingStatus) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
+			WHERE op.IsHiddenSource <> 0 OR op.IsHiddenDes <> 0
+
+			IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter21)
+			BEGIN							
+				UPDATE main
+				SET main.IsDisabled = stt.IsDisabled, 
+					main.IsHidden = stt.IsHidden
+				FROM #SportBettypeFilter21 main
+					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
+				WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0)
+			
+				UPDATE main
+				SET main.IsDisabled = stt.IsDisabled, 
+					main.IsHidden = stt.IsHidden
+				FROM #SportBettypeFilter21 main
+					INNER JOIN dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON main.SportType = stt.SportType AND main.Bettype = stt.Bettype
+				WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID
+		
+				BEGIN TRY				
+					--Get from default status values
+					--Sync: default status setting
+					--Hide: default status setting
+					--Enable/Disable: default status setting
+					SET @xmlStrDisabled = (
+							SELECT (
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
+										, ft.IsDisabled	AS '@s'
+									FROM #SportBettypeFilter21 ft 	
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
+								, TYPE
+							)
+						
+					SET @xmlStrHidden = (
+							SELECT (
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
+										, ft.IsHidden	AS '@s'
+									FROM #SportBettypeFilter21 ft 	
+									FOR XML PATH('r')
+										, TYPE
+									)
+							FOR XML PATH('root')
+								, TYPE
+							)
+						
+					SET @xmlStrSync = (
+						SELECT (
+								SELECT DISTINCT ft.bitmapOrder	AS '@b'
+									, ft.IsSync	AS '@s'
+								FROM #SportBettypeFilter21 ft 	
+								FOR XML PATH('r')
+									, TYPE
+								)
+						FOR XML PATH('root')
+							, TYPE
+						)
+				
+					UPDATE cs
+					SET bitmapIsDisabled = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
+						bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
+						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
+					FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
+					WHERE cs.CustID = @CustID     
+
+				END TRY
+				BEGIN CATCH
+					SELECT @ErrCode = 21
 
 					DELETE FROM CustProductStatus WHERE CustID = @CustID
 					RETURN
@@ -317,7 +403,7 @@ BEGIN
 					--Enable/Disable: default status setting
 					SET @xmlStrDisabled = (
 							SELECT (
-									SELECT ft.bitmapOrder	AS '@b'
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
 										, ft.IsDisabled	AS '@s'
 									FROM #SportBettypeFilter11 ft 	
 									FOR XML PATH('r')
@@ -329,7 +415,7 @@ BEGIN
 						
 					SET @xmlStrHidden = (
 							SELECT (
-									SELECT ft.bitmapOrder	AS '@b'
+									SELECT DISTINCT ft.bitmapOrder	AS '@b'
 										, ft.IsHidden	AS '@s'
 									FROM #SportBettypeFilter11 ft 	
 									FOR XML PATH('r')
@@ -341,7 +427,7 @@ BEGIN
 						
 					SET @xmlStrSync = (
 						SELECT (
-								SELECT ft.bitmapOrder	AS '@b'
+								SELECT DISTINCT ft.bitmapOrder	AS '@b'
 									, ft.IsSync	AS '@s'
 								FROM #SportBettypeFilter11 ft 	
 								FOR XML PATH('r')
@@ -410,7 +496,7 @@ BEGIN
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ps.BetType AND psp.Sporttype = ps.SportType
 			CROSS APPLY dbo.CustProductStatus cps WITH (NOLOCK) 
 			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(cps.bitmapHasSynced, psp.bitmapOrder) st
-		WHERE SettingType IN (4,11,13) AND cps.CustID = @ExistingCustID	
+		WHERE SettingType IN (4,11,13,21) AND cps.CustID = @ExistingCustID	
 		
 		UPDATE op
 		SET op.IsHidden = stt.IsHidden
@@ -457,7 +543,7 @@ BEGIN
 		FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource 
 						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID			
-		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13)
+		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13,21)
 
 		UPDATE op
 		SET op.IsHiddenSource = 1, HasSyncSource = 0  

@@ -3,6 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusSelect]
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @SettingStatus TINYINT = 0
+	, @SettingType	TINYINT = NULL
 AS
 /*
 	Created: 20180118@Elodie
@@ -16,6 +17,7 @@ AS
 		- 20200702@Winfred: Get enabled status of Cust when SettingType = 4 (ProductStatus)  (ProductStatus) [RedmineID:#136210]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -41,15 +43,35 @@ BEGIN
 											TotalDisabledAgents INT,
 											TotalDisabledMembers INT)
 
-	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT)
 
-	INSERT INTO #SportBettypeFilter(SportType,Bettype)
-	SELECT SportType,Bettype
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
-	
-	INSERT INTO #SportBettypeFilter (SportType,Bettype)
-	SELECT SportType,Bettype
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
+	IF @SettingType IS NULL
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype)
+		SELECT SportType,Bettype
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
+
+		INSERT INTO #SportBettypeFilter (SportType,Bettype)
+		SELECT SportType,Bettype
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
+	END
+	ELSE 
+	BEGIN
+		INSERT INTO #SportBettypeFilter (SportType,Bettype)
+		SELECT SportType,Bettype
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
+	END
+
+	UPDATE t
+	SET t.ParentSportType = par.SportType
+		, t.ParentBetType = par.BetType
+	FROM #SportBettypeFilter t 
+		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
+			ON t.sporttype = d.SportType
+			AND t.bettype = d.BetType
+			AND d.SettingType = @SettingType
+		INNER JOIN ProductSettingDetail par WITH(NOLOCK) 
+				ON d.Parent_ProductSettingID = par.ProductSettingID
 	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
@@ -102,7 +124,9 @@ BEGIN
 				ISNULL(TotalDisabledAgents,0) AS TotalDisabledAgents, 
 				ISNULL(TotalEnabledAgents,0) AS TotalEnabledAgents, 
 				ISNULL(TotalDisabledMembers,0) AS TotalDisabledMembers,
-				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers
+				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers,
+				ft.ParentSportType,
+				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
@@ -152,7 +176,9 @@ BEGIN
 				ISNULL(TotalDisabledAgents,0) AS TotalDisabledAgents, 
 				ISNULL(TotalEnabledAgents,0) AS TotalEnabledAgents, 
 				ISNULL(TotalDisabledMembers,0) AS TotalDisabledMembers,
-				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers
+				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers,
+				ft.ParentSportType,
+				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
@@ -203,7 +229,9 @@ BEGIN
 				ISNULL(TotalDisabledAgents,0) AS TotalDisabledAgents, 
 				ISNULL(TotalEnabledAgents,0) AS TotalEnabledAgents, 
 				ISNULL(TotalDisabledMembers,0) AS TotalDisabledMembers,
-				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers
+				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers,
+				ft.ParentSportType,
+				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
@@ -226,7 +254,9 @@ BEGIN
 				0 AS TotalDisabledAgents, 
 				0 AS TotalEnabledAgents, 
 				0 AS TotalDisabledMembers,
-				0 AS TotalEnabledMembers
+				0 AS TotalEnabledMembers,
+				ft.ParentSportType,
+				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID

@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusUpd]
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
+	, @Settingtype		TINYINT = 13
 AS
 /*
 	Created: 20180118@Elodie
@@ -19,6 +20,7 @@ AS
 		- 20200702@Winfred: Update status setting values of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]  
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -174,7 +176,7 @@ BEGIN
 			ON u.SportType IN( t.SportType,0)
 			AND u.SettingType IN (ps.SettingType,0)
 			AND u.ProductID  IN (ps.ProductID, 0)
-	WHERE ps.SettingType IN( 13, 4)
+	WHERE ps.SettingType IN( 13, 4, 21)
 		AND u.FunctionType = 1 --Edit Customer
 
 	IF NOT EXISTS( SELECT 1 FROM #NewDisableStatTbl)
@@ -220,6 +222,8 @@ BEGIN
 		, @ErrCode	= @ErrCode	OUTPUT
 		, @MsgType	= @MsgType  OUTPUT
 		, @ErrMsg	= @ErrMsg	OUTPUT
+		, @Settingtype = @Settingtype
+		, @CustID = @CustID
 
 	IF @ErrCode <> 0
 		RETURN
@@ -281,7 +285,7 @@ BEGIN
 	SELECT TOP 1 @ProductID = ps.ProductID
 	FROM #NewDisableStatTbl dis 
 		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
-	WHERE ps.SettingType IN ( 13, 4)
+	WHERE ps.SettingType IN ( 13, 4, 21)
 
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 	BEGIN
@@ -292,7 +296,7 @@ BEGIN
 					FROM ProductStatusProfile psp (NOLOCK)
 						INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 						LEFT JOIN #NewDisableStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
-					WHERE ps.SettingType IN ( 13, 4) AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewDisableStatTbl WHERE IsDisabled = 0)
+					WHERE ps.SettingType IN ( 13, 4, 21) AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewDisableStatTbl WHERE IsDisabled = 0)
 					FOR XML PATH('r')
 						, TYPE
 					)
@@ -380,7 +384,7 @@ BEGIN
 					AND	psd.BetType = tmp.BetType
 			WHERE	psd.ProductID IS NOT NULL
 				AND	psd.SettingLevel IS NOT NULL
-				AND psd.SettingType IN ( 13, 4)	
+				AND psd.SettingType IN ( 13, 4, 21)	
 		 ) iq
 
 	-- Select ProductName
