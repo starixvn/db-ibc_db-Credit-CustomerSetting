@@ -1,7 +1,8 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUdpDanger_JobExclusion]
 	@CustList	VARCHAR(MAX) = '',
-	@ErrMsg		NVARCHAR(200) = '' OUTPUT	
+	@ErrCode	INT = 0	OUTPUT,
+	@ErrMsg		NVARCHAR(200) = '' OUTPUT		
 AS
 SET NOCOUNT ON
 /*
@@ -23,7 +24,7 @@ SET NOCOUNT ON
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @StartRun DATETIME, @Duration INT, @LogDataNew VARCHAR(500), @LogDataOld VARCHAR(500)
+	DECLARE @StartRun DATETIME, @Duration INT
 	DECLARE @xml XML = NULL
 
 	CREATE TABLE #tblCustCategoryOld (
@@ -35,10 +36,28 @@ BEGIN
 		,	PRIMARY KEY CLUSTERED (CustID)
 	)
 
-	CREATE TABLE #tblCustUpd (
+	CREATE TABLE #tblCustDangerOld (
+			Custid				INT
+		,	DangerLevel			BIGINT
+		,	Soccer				TINYINT
+		,	Basketball			TINYINT
+		,	PRIMARY KEY CLUSTERED (CustID)
+	)
+
+	CREATE TABLE #tblCustList (
 			CustID		INT
 		,	CategoryID	INT
 		,	Action		VARCHAR(5)	
+		,	PRIMARY KEY CLUSTERED (CustID)
+	)
+
+	CREATE TABLE #tblCustUpdate(
+			CustID				INT 
+		,	DangerLevel			BIGINT
+		,	Soccer				TINYINT 
+		,	Basketball			TINYINT
+		,	UpdateSoccer		BIT
+		,	UpdateBasketball	BIT
 		,	PRIMARY KEY CLUSTERED (CustID)
 	)
 
@@ -59,7 +78,7 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @xml
 
-	INSERT INTO #tblCustUpd(CustID, CategoryID, Action)
+	INSERT INTO #tblCustList(CustID, CategoryID, Action)
 	SELECT CustID, CategoryID, Action
 	FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 			CustID		INT
@@ -74,28 +93,54 @@ BEGIN
 	OUTPUT deleted.CustID, deleted.CategoryID, GETDATE(), '-1'
 		INTO #tblCustCategoryOld (CustID, CategoryID, RemoveDate, Action)
 	FROM CustDangerJobExclusion cd WITH (ROWLOCK)
-		INNER JOIN #tblCustUpd t ON t.CustID=cd.CustID
+		INNER JOIN #tblCustList t ON t.CustID=cd.CustID
 	WHERE t.Action='-1'
 	
-	--Insert new customer:
+	--Add new customer:
 	INSERT INTO CustDangerJobExclusion(CustID, CategoryID, CreateDate)
 	OUTPUT inserted.CustID, inserted.CategoryID, inserted.CreateDate, '1'
 		INTO #tblCustCategoryOld (CustID, CategoryID, CreateDate, Action)
 	SELECT t.CustID, t.CategoryID, GETDATE()
-	FROM #tblCustUpd t
+	FROM #tblCustList t
 		LEFT JOIN CustDangerJobExclusion cd WITH (NOLOCK) ON t.CustID=cd.CustID
 	WHERE t.CustID IS NULL AND t.Action='1'
 
-	--update dangerlevel=13
-	UPDATE c
-	SET c.DangerLevel=13
-	FROM custInfo c WITH (UPDLOCK, ROWLOCK)
-		INNER JOIN CustDangerJobExclusion cd WITH (NOLOCK)
-				ON c.custid=cd.CustID
-	WHERE c.DangerLevel<>13
+	--get dangerlevel old:
+	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball)
+	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball
+	FROM custinfo c WITH(NOLOCK)
+		CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
+	WHERE custid IN (SELECT custid FROM #tblCustList WHERE Action='1')
 
-	--WRITE LOG
-	DECLARE @LogAdd		VARCHAR(MAX), 
+	--update dangerlevel=13
+	;WITH PAList_level AS (
+		SELECT cd.CustID
+			, CASE WHEN cd.CategoryID IN (52,54,58) THEN 13 END SoccerLevel
+			, 13 AS BasketballLevel
+			, CASE WHEN cd.CategoryID IN (52,54,58) THEN 1 ELSE 0 END UpdateSoccer
+			, 1 AS UpdateBasketball
+		FROM CustDangerJobExclusion cd WITH (NOLOCK)
+			INNER JOIN #tblCustList t ON t.CustID=cd.CustID
+		WHERE t.Action='1'
+	)
+	INSERT INTO #tblCustUpdate(CustID, Soccer, Basketball, UpdateSoccer, UpdateBasketball, DangerLevel)
+	SELECT pa.CustID, pa.SoccerLevel, pa.BasketballLevel, UpdateSoccer, UpdateBasketball, ci.DangerLevel
+	FROM PAList_level pa 
+		INNER JOIN custInfo ci WITH (NOLOCK) ON pa.CustID=ci.custid
+
+	;WITH tmp AS (
+		SELECT custid,
+			dbo.f_GenerateDangerLevelInfo(DangerLevel,Soccer,Basketball,UpdateSoccer,UpdateBasketball) DangerLevel
+		FROM #tblCustUpdate
+	)
+	UPDATE ci
+	SET ci.DangerLevel=t.DangerLevel
+	FROM custInfo ci WITH(UPDLOCK, ROWLOCK)
+		INNER JOIN tmp t ON t.CustID=ci.custid
+
+	--WriteLog Add/Remove PA List, update DangerLevel
+	DECLARE @Log		VARCHAR(MAX),
+			@LogAdd		VARCHAR(MAX), 
 			@LogRemove	VARCHAR(MAX)
 
 	SELECT @LogAdd = CAST((
@@ -115,9 +160,25 @@ BEGIN
 		WHERE Action='-1'
 		FOR XML PATH('r'), ROOT('Root')
 	) AS VARCHAR(MAX))
+
+	SELECT @Log = CAST((
+		SELECT	new.custid			as '@id',
+				new.soccer			as '@s',
+				new.basketball		as '@b',
+				UpdateSoccer		as '@us',
+				UpdateBasketball	as '@ub',
+				old.Soccer			as '@os',
+				old.Basketball		as '@ob',
+				'NULL'				as '@wls',
+				'NULL'				as '@wlb'
+		FROM #tblCustUpdate new
+			INNER JOIN #tblCustDangerOld old ON old.Custid=new.CustID
+		FOR XML PATH('r'), ROOT('Root')
+	) AS VARCHAR(MAX))	
 	
 	SELECT @Duration = DATEDIFF (MILLISECOND, @StartRun, GETDATE())
 	
+	--log add 
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
 			@UserId		= 10278938,	--StarixIT	
@@ -135,6 +196,7 @@ BEGIN
 			@Duration	= @Duration			
 	END CATCH
 
+	--log remove
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
 			@UserId		= 10278938,	--StarixIT	
@@ -152,7 +214,27 @@ BEGIN
 			@Duration	= @Duration			
 	END CATCH
 	
+	--log update dangerlevel
+	BEGIN TRY
+		EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+			@UserId		= 10278938,	--StarixIT	
+			@ActionId	= 1187,
+			@Log		= @Log,		
+			@IP			= '125.227.140.97',	
+			@Duration	= @Duration
+	END TRY
+	BEGIN CATCH
+		EXEC bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+			@UserId		= 10278938,	--StarixIT
+			@ActionId	= 1187,
+			@Log		= @Log,		
+			@IP			= '125.227.140.97',	
+			@Duration	= @Duration			
+	END CATCH
+	
 	DROP TABLE #tblCustCategoryOld
-	DROP TABLE #tblCustUpd
+	DROP TABLE #tblCustDangerOld
+	DROP TABLE #tblCustList
+	DROP TABLE #tblCustUpdate
 END
 GO

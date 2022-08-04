@@ -31,16 +31,18 @@ SET NOCOUNT ON
 */	
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @StartRun DATETIME, @Duration INT, @LogDataNew VARCHAR(500), @LogDataOld VARCHAR(500)
+	DECLARE @StartRun DATETIME, 
+			@ScanDate DATETIME,
+			@Duration INT, @LogDataNew VARCHAR(500), @LogDataOld VARCHAR(500)
 
-	SET @startRun = GETDATE()
-
+	SET @StartRun = GETDATE()
+	SET @ScanDate = DATEADD(HH,-1,@StartRun)
 
 	CREATE TABLE #tblCustWinloss (custid INT, sporttype SMALLINT, isParlay BIT, winloss MONEY)
 	CREATE TABLE #tblCustDangerInfo (Custid INT PRIMARY KEY, Soccer TINYINT, Basketball TINYINT, WinlossSoccer MONEY, WinlossBasketball MONEY, UpdateSoccer BIT, UpdateBasketball BIT)
 	CREATE TABLE #tblCustDangerOld (Custid INT PRIMARY KEY, DangerLevel BIGINT, Soccer TINYINT, Basketball TINYINT, IsManualSoccer BIT, IsManualBasketball BIT)
 	CREATE TABLE #tblCustUpdate (Custid INT PRIMARY KEY, DangerLevel BIGINT, Soccer TINYINT, Basketball TINYINT, SoccerOld TINYINT, BasketballOld TINYINT, UpdateSoccer BIT, UpdateBasketball BIT, WinlossSoccer MONEY, WinlossBasketball MONEY)
-	
+
 	DECLARE @xml XML = CAST (@CustList as XML)
 	DECLARE @batchNo INT
 	
@@ -240,7 +242,23 @@ BEGIN
 	FROM custinfo c WITH(NOLOCK)
 		CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
 	WHERE custid IN (SELECT custid FROM #tblCustDangerInfo)
-	
+	UNION ALL
+	SELECT c.custid, ISNULL(DangerLevel,0), soccer, basketball
+	FROM custinfo c WITH(NOLOCK)
+		INNER JOIN CustDangerJobExclusion cd WITH (NOLOCK) ON cd.CustID=c.custid
+		CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
+	WHERE cd.CreateDate>=@ScanDate
+
+	;WITH PA_List AS (
+		SELECT cd.CustID
+			, CASE WHEN cd.CategoryID IN (52,54,58) THEN 13 END SoccerLevel
+			, 13 AS BasketballLevel
+			, CASE WHEN cd.CategoryID IN (52,54,58) THEN 1 ELSE 0 END UpdateSoccer
+			, 1 AS UpdateBasketball
+		FROM CustDangerJobExclusion cd WITH (NOLOCK)
+			INNER JOIN custInfo ci WITH (NOLOCK) ON ci.custid=cd.CustID
+		WHERE cd.CreateDate>=@ScanDate
+	)
 	INSERT INTO #tblCustUpdate(custid, Soccer, Basketball, UpdateSoccer, UpdateBasketball, DangerLevel, SoccerOld, BasketballOld, WinlossSoccer, WinlossBasketball)
 	SELECT t1.custid, t1.Soccer , t1.Basketball,
 		CASE WHEN IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer THEN 1 ELSE 0 END as UpdateSoccer,
@@ -254,7 +272,11 @@ BEGIN
 		INNER JOIN #tblCustDangerOld t2 ON t1.custid = t2.Custid
 	WHERE (IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer)
 		OR (IsManualBasketball = 0 AND UpdateBasketball = 1 AND t1.Basketball <> t2.Basketball)
-	
+	UNION ALL
+	SELECT t1.CustID, t1.SoccerLevel, t1.BasketballLevel, t1.UpdateSoccer, t1.UpdateBasketball, t2.DangerLevel, t2.Soccer, t2.Basketball, NULL, NULL
+	FROM PA_List t1
+		INNER JOIN #tblCustDangerOld t2 ON t1.custid = t2.Custid
+
 	DECLARE @CustUpdate VARCHAR(MAX) 
 	
 	SELECT @CustUpdate = CAST((
@@ -277,14 +299,6 @@ BEGIN
 			@ErrMsg = 'Update unsuccessfully'		
 	END CATCH 
 
-	--update dangerlevel=13 For Customer Class 8,9,10,131
-	UPDATE c
-	SET c.DangerLevel=13
-	FROM custInfo c WITH (UPDLOCK, ROWLOCK)
-		INNER JOIN CustDangerJobExclusion cd WITH (NOLOCK)
-				ON c.custid=cd.CustID
-	WHERE c.DangerLevel<>13
-
 	--logging
 	INSERT INTO CustDangerLevelInfo(Custid,
 									BatchNo,
@@ -299,7 +313,8 @@ BEGIN
 		CASE WHEN @ErrCode > 0 THEN 'fail' ELSE 'completed' END status,
 		@ErrMsgLog as Description,
 		GETDATE() as CreatedDate
-	FROM #tblCustUpdate
+	FROM #tblCustUpdate t
+	WHERE EXISTS (SELECT 1 FROM #tblCustDangerInfo WHERE t.Custid=Custid)
 	
 	IF @ErrCode > 0
 		RETURN;
@@ -314,8 +329,8 @@ BEGIN
 			UpdateBasketball as '@ub',
 			SoccerOld as '@os',
 			BasketballOld as '@ob',
-			WinlossSoccer as '@wls',
-			WinlossBasketball as '@wlb'
+			ISNULL(WinlossSoccer,'NULL') as '@wls',
+			ISNULL(WinlossBasketball,'NULL') as '@wlb'
 		FROM #tblCustUpdate t			
 		FOR XML PATH('r'), ROOT('Root')
 	) AS VARCHAR(MAX))	

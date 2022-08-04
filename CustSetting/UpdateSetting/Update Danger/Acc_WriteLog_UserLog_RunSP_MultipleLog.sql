@@ -32,7 +32,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	
+
 	DECLARE @xml XML = CAST (@Log as XML)
 	IF @ActionID = 1187 
 	BEGIN
@@ -46,17 +46,17 @@ BEGIN
 			t.c.value('@ub[1]','bit'),
 			t.c.value('@os[1]','tinyint'),
 			t.c.value('@ob[1]','tinyint'),
-			t.c.value('@wls[1]','money'),
-			t.c.value('@wlb[1]','money')
+			CASE WHEN ISNUMERIC(t.c.value('@wls[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wls[1]','money') END,
+			CASE WHEN ISNUMERIC(t.c.value('@wlb[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wlb[1]','money') END
 		FROM @xml.nodes('Root/r')as t(c)
 		
 		;WITH Tmp AS (
 		SELECT custid,
 			(SELECT 
 				CASE WHEN UpdateSoccer = 1 THEN soccer END as '@Soccer',
-			CASE WHEN UpdateBasketball = 1 THEN basketball END as '@Basketball',
-				CASE WHEN UpdateSoccer = 1 THEN WinlossSoccer END as '@WinlossSoccer',
-				CASE WHEN UpdateBasketball = 1 THEN WinlossBasketball END as '@WinlossBasketball',
+				CASE WHEN UpdateBasketball = 1 THEN basketball END as '@Basketball',
+				CASE WHEN UpdateSoccer = 1 THEN ISNULL(WinlossSoccer,'') END as '@WinlossSoccer',
+				CASE WHEN UpdateBasketball = 1 THEN ISNULL(WinlossBasketball,'') END as '@WinlossBasketball',
 				@IP as '@IP'
 			FROM #tblCustLog t1
 			WHERE t1.custid = t.custid
@@ -64,9 +64,9 @@ BEGIN
 			) as LogNew,
 			(SELECT 
 				CASE WHEN UpdateSoccer = 1 THEN OldSoccer END as '@Soccer',
-			CASE WHEN UpdateBasketball = 1 THEN OldBasketball END as '@Basketball',
-				CASE WHEN UpdateSoccer = 1 THEN WinlossSoccer END as '@WinlossSoccer',
-				CASE WHEN UpdateBasketball = 1 THEN WinlossBasketball END as '@WinlossBasketball',
+				CASE WHEN UpdateBasketball = 1 THEN OldBasketball END as '@Basketball',
+				CASE WHEN UpdateSoccer = 1 THEN ISNULL(WinlossSoccer,'') END as '@WinlossSoccer',
+				CASE WHEN UpdateBasketball = 1 THEN ISNULL(WinlossBasketball,'') END as '@WinlossBasketball',
 				@IP as '@IP'
 			FROM #tblCustLog t2
 			WHERE t2.custid = t.custid
@@ -146,13 +146,13 @@ BEGIN
 	END
 	ELSE IF @ActionID=1189
 	BEGIN
-		CREATE TABLE #tblCustLog(
+		CREATE TABLE #tblCustLogAdd(
 				CustID		INT
 			,	CategoryID	INT
 			,	CreateDate	DATETIME
 		)
 		
-		INSERT INTO #tblCustLog(custid,CategoryID,CreateDate)
+		INSERT INTO #tblCustLogAdd(custid,CategoryID,CreateDate)
 		SELECT	t.c.value('@CustID[1]','int'),
 				t.c.value('@CategoryID[1]','int'),
 				t.c.value('@CreateDate[1]','datetime')
@@ -164,27 +164,27 @@ BEGIN
 				CategoryID	AS '@CategoryID',
 				CreateDate	AS '@CreateDate',
 				@IP as '@IP'
-			FROM #tblCustLog t1
+			FROM #tblCustLogAdd t1
 			WHERE t1.custid = t.custid
 			FOR XML PATH('R')
 			) as LogAdd
-		FROM #tblCustLog t
+		FROM #tblCustLogAdd t
 		)
 		INSERT INTO dbo.UserLog_RunSP(UserID,CustID,ActionID,TrackingValue,Duration)
 		SELECT @UserID,CustID,@ActionID,LogAdd,@Duration
 		FROM Tmp
 		
-		DROP TABLE #tblCustLog
+		DROP TABLE #tblCustLogAdd
 	END
 	ELSE IF @ActionID=1190
 	BEGIN
-		CREATE TABLE #tblCustLog(
+		CREATE TABLE #tblCustLogRemove(
 				CustID		INT
 			,	CategoryID	INT
-			,	CreateDate	DATETIME
+			,	RemoveDate	DATETIME
 		)
 		
-		INSERT INTO #tblCustLog(custid,CategoryID,CreateDate)
+		INSERT INTO #tblCustLogRemove(custid,CategoryID,RemoveDate)
 		SELECT	t.c.value('@CustID[1]','int'),
 				t.c.value('@CategoryID[1]','int'),
 				t.c.value('@RemoveDate[1]','datetime')
@@ -194,18 +194,18 @@ BEGIN
 		SELECT custid,
 			(SELECT 
 				CategoryID	AS '@CategoryID',
-				CreateDate	AS '@CreateDate',
+				RemoveDate	AS '@RemoveDate',
 				@IP as '@IP'
-			FROM #tblCustLog t1
+			FROM #tblCustLogRemove t1
 			WHERE t1.custid = t.custid
 			FOR XML PATH('R')
-			) as LogAdd
-		FROM #tblCustLog t
+			) as LogRemove
+		FROM #tblCustLogRemove t
 		)
-		INSERT INTO dbo.UserLog_RunSP(UserID,CustID,ActionID,TrackingValue2,Duration)
-		SELECT @UserID,CustID,@ActionID,LogAdd,@Duration
+		INSERT INTO dbo.UserLog_RunSP(UserID,CustID,ActionID,TrackingValue,Duration)
+		SELECT @UserID,CustID,@ActionID,LogRemove,@Duration
 		FROM Tmp
 		
-		DROP TABLE #tblCustLog
+		DROP TABLE #tblCustLogRemove
 	END
 END
