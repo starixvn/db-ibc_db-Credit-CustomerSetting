@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableNewProductSyncStatusSelect]   
 	@CustID	INT, 
 	@ProductID INT
@@ -14,6 +11,7 @@ AS
 	
 	Revisions: 
 		- 20170919@Johnson: fix the unsynchronized setting, remove IsHidden,IsDownlineSynced [Redmine: #72973]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 					
 	Param's Explanation:  
    
@@ -24,7 +22,7 @@ BEGIN
 	SELECT @BitmapOrder = PSP.bitmapOrder
 	FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
 		INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = psd.SportType AND psp.Bettype = psd.BetType
-	WHERE psd.SettingType = 13 AND psd.ProductID = @ProductID
+	WHERE psd.SettingType IN(13,21) AND psd.ProductID = @ProductID
 
 	SELECT	dbo.f_GetProductStatus(cps.bitmapHasSynced, @BitmapOrder) IsSynced
 	FROM dbo.CustProductStatus cps  WITH (NOLOCK)			

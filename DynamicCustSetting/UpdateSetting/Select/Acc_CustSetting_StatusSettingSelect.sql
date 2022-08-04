@@ -27,6 +27,7 @@ AS
 									=0 : all downlines not sync	
 	- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
  Param's Explanation:  
 	- @CustID: 
 	- @SettingStatus: 0: Pro, 1: UAT
@@ -61,6 +62,11 @@ BEGIN
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 13	
+
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
+	WHERE @SettingType IS NULL OR @SettingType = 21
 
 	--DELETE sbf  
 	--FROM  #SportBettypeFilter sbf  
@@ -103,7 +109,7 @@ BEGIN
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
-		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
+		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
     
 	END  
@@ -143,7 +149,7 @@ BEGIN
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @SuperID  
-		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
+		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 	END     
 	ELSE IF @RoleID = 2  
@@ -181,7 +187,7 @@ BEGIN
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @MasterID  
-		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
+		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 	END   
 	ELSE IF @RoleID = 1  
@@ -201,7 +207,7 @@ BEGIN
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @AgentID  
-		WHERE pdt.SettingType IN (4,11,13) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
+		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 	END   
 END

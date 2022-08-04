@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB, DBAGE-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSelect]   
    @CustID  INT  
  , @ProductID TINYINT = NULL  
@@ -17,6 +15,7 @@ AS
  Revisions:  
 	- 20180611@Elodie: Setting status of a product [Redmine: #58776]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
+	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
  
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
@@ -52,6 +51,11 @@ BEGIN
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 13	
+
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
+	WHERE @SettingType IS NULL OR @SettingType = 21
 
 	IF @RoleID = 4  
 	BEGIN  

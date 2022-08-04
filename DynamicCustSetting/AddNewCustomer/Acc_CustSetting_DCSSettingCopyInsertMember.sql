@@ -40,7 +40,8 @@ AS
 		- 20201118@Eden: Insert New SettingType = 20 [Redmine: #131370]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
-		
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 	
 	*/
@@ -1348,6 +1349,77 @@ BEGIN
 					, @ErrMsg = @ErrMsg OUTPUT
 			END
 			DELETE FROM	#TempBetSetting20 WHERE ProductID=@ProductID20
+		END
+	END
+
+	/********************************************* New Product Status: SettingType = 21 ************************************/
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus))
+	BEGIN
+		DECLARE @ProductID21 INT
+		CREATE TABLE #TempProductStatus21 (ProductID INT)
+		DECLARE @NewDisableProductStatTbl21 TABLE(
+			SportType				SMALLINT
+			, BetType				SMALLINT
+			, IsDisabled			BIT
+			, IsDisabledDownline	BIT
+			)
+	
+		INSERT INTO @NewDisableProductStatTbl21 (SportType,BetType,IsDisabled,IsDisabledDownline)
+		SELECT psp.SportType
+			, psp.BetType		
+			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
+			, 0 AS IsDisabledDownline
+		FROM dbo.CustProductStatus stt WITH (NOLOCK) 
+			CROSS JOIN ProductStatusProfile PSP WITH (NOLOCK)
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus) fil ON fil.SportType = PSP.SportType AND fil.BetType = PSP.BetType 
+		WHERE stt.CustID = @ExistingCustID
+
+		INSERT INTO #TempProductStatus21(ProductID)	
+			SELECT 
+					DISTINCT
+					psd.ProductID				
+			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			INNER JOIN	@NewDisableProductStatTbl21 AS ts
+					ON	ts.SportType = psd.SportType
+					AND	ts.BetType = psd.BetType
+			WHERE psd.SettingType = 21
+				AND	psd.ProductID IS NOT NULL
+				AND	psd.SettingLevel IS NOT NULL
+				
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempProductStatus21)
+		BEGIN
+			SELECT TOP 1 @ProductID21 = ProductID FROM #TempProductStatus21		
+			SET @xmlStatus = (SELECT (
+									SELECT nslt.SportType	AS '@SportType'
+										, nslt.BetType		AS '@BetType'
+										, nslt.IsDisabled	AS '@IsDisabled'
+										, nslt.IsDisabledDownline AS '@IsDisabledDownline'
+									FROM @NewDisableProductStatTbl21 nslt								
+										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+											WHERE psd.SettingType = 21 AND psd.ProductID = @ProductID21
+									FOR XML PATH('ProductStatus')
+										, TYPE
+									)
+							FOR XML PATH('ROOT')
+								, TYPE
+							)
+
+			SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlStatus)
+
+			IF EXISTS(SELECT TOP 1 1 FROM @NewDisableProductStatTbl21)
+			BEGIN
+				EXEC Acc_CustSetting_DisableNewProductStatusUpd
+					  @CustID = @CustID
+					, @IsDisabled = @xmlStr
+					, @SubAccID = @SubAccID
+					, @IP = @IP
+					, @SystemID = 1
+					, @UserID = @UserID
+					, @ErrCode = @ErrCode OUTPUT
+					, @ErrMsg = @ErrMsg OUTPUT
+					, @Settingtype = 21
+			END
+			DELETE FROM	#TempProductStatus21 WHERE ProductID = @ProductID21
 		END
 	END
 END

@@ -24,6 +24,7 @@ AS
 		- 20200702@Winfred: Update enable status of Cust when SettingType = 4[RedmineID:#136210]  
 		- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -118,7 +119,7 @@ BEGIN
 	
 		SET @xmlStrDisabled = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.IsDisabled	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #DisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -139,7 +140,7 @@ BEGIN
 
 			SET @xmlStrHidden = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, 0	AS '@s'
 						FROM dbo.ProductStatusProfile psp (NOLOCK)
 							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
@@ -216,7 +217,7 @@ BEGIN
 			END
 		END
 	END
-	IF @Action = 'NewProductStatus' --Setting type in (4,13)
+	IF @Action = 'NewProductStatus' --Setting type in (4,13,21)
 	BEGIN
 		CREATE TABLE #NewStatTbl(
 				SportType			SMALLINT,
@@ -250,12 +251,12 @@ BEGIN
 		BEGIN
 			SET @xmlStrHidden = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, 0	AS '@s'
 						FROM dbo.ProductStatusProfile psp (NOLOCK)
 							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 							LEFT JOIN #NewStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
-						WHERE ps.SettingType  IN ( 13, 4) AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewStatTbl WHERE IsDisabled = 0)
+						WHERE ps.SettingType  IN ( 13, 4, 21) AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewStatTbl WHERE IsDisabled = 0)
 						FOR XML PATH('r')
 							, TYPE
 						)
@@ -268,13 +269,13 @@ BEGIN
 		FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 			INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType		
 			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
-		WHERE ps.SettingType IN ( 13, 4)
+		WHERE ps.SettingType IN ( 13, 4, 21)
 		
 		IF @RoleID=4
 		BEGIN			
 			SET @xmlStrDisabledMasters = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMasters	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -288,7 +289,7 @@ BEGIN
 
 			SET @xmlStrDisabledAgents = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllAgents	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -302,7 +303,7 @@ BEGIN
 			
 			SET @xmlStrDisabledMembers = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -349,7 +350,7 @@ BEGIN
 		BEGIN
 			SET @xmlStrDisabledAgents = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllAgents	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -363,7 +364,7 @@ BEGIN
 			
 			SET @xmlStrDisabledMembers = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -403,7 +404,7 @@ BEGIN
 		BEGIN
 			SET @xmlStrDisabledMembers = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -466,7 +467,7 @@ BEGIN
 
 			SET @xmlStrHidden = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, 0	AS '@s'
 						FROM ProductStatusProfile psp (NOLOCK)
 							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
@@ -490,7 +491,7 @@ BEGIN
 		BEGIN
 			SET @xmlStrDisabledMasters = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMasters	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #GameDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -504,7 +505,7 @@ BEGIN
 
 			SET @xmlStrDisabledAgents = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllAgents	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #GameDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -518,7 +519,7 @@ BEGIN
 			
 			SET @xmlStrDisabledMembers = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #GameDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -566,7 +567,7 @@ BEGIN
 		BEGIN
 			SET @xmlStrDisabledAgents = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllAgents	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #GameDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -580,7 +581,7 @@ BEGIN
 			
 			SET @xmlStrDisabledMembers = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #GameDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
@@ -620,7 +621,7 @@ BEGIN
 		BEGIN
 			SET @xmlStrDisabledMembers = (
 				SELECT (
-						SELECT psp.bitmapOrder	AS '@b'
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, tmp.DisableAllMembers	AS '@s'
 						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 							INNER JOIN #GameDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType

@@ -1,11 +1,9 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
- 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableNewProductStatusSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @SettingStatus TINYINT = 0
+	, @SettingType	TINYINT = 13
 AS
 /*
 	Created: 20170125@Elodie
@@ -24,6 +22,7 @@ AS
 		- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -39,11 +38,22 @@ BEGIN
 			@MasterID	INT,
 			@AgentID	INT
 
-	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT)
 
 	INSERT INTO #SportBettypeFilter(SportType,Bettype)
 	SELECT SportType,Bettype
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
+
+	UPDATE t
+	SET t.ParentSportType = par.SportType
+		, t.ParentBetType = par.BetType
+	FROM #SportBettypeFilter t 
+		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
+			ON t.sporttype = d.SportType
+			AND t.bettype = d.BetType
+			AND d.SettingType = @SettingType
+		INNER JOIN ProductSettingDetail par WITH(NOLOCK) 
+				ON d.Parent_ProductSettingID = par.ProductSettingID
 	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
@@ -61,7 +71,9 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) as IsSync,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
-				CAST(0 AS BIT) AS isDisabledUpline
+				CAST(0 AS BIT) AS isDisabledUpline,
+				ft.ParentSportType,
+				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
@@ -74,7 +86,9 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) as IsSync,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,
+				ft.ParentSportType,
+				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
@@ -88,7 +102,9 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) as IsSync,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,
+				ft.ParentSportType,
+				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
@@ -102,7 +118,9 @@ BEGIN
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) as IsSync,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
-				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,
+				ft.ParentSportType,
+				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
