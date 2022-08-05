@@ -6,7 +6,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDangerLevel]
 	@ErrCode	INT = 0	OUTPUT,
 	@ErrMsg		NVARCHAR(200) = '' OUTPUT	
 AS
-SET NOCOUNT ON
 /*
 	Created: 20211007@Johnson
 	Task : Service update DangerLevel for saba performance[Redmine:#161351]
@@ -238,16 +237,19 @@ BEGIN
 			   (t.isBasketball=1 AND cc.custid IS NOT NULL))
 
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball)
-	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball, IsManualSoccer, IsManualBasketball
-	FROM custinfo c WITH(NOLOCK)
-		CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
-	WHERE custid IN (SELECT custid FROM #tblCustDangerInfo)
-	UNION ALL
-	SELECT c.custid, ISNULL(DangerLevel,0), soccer, basketball
-	FROM custinfo c WITH(NOLOCK)
-		INNER JOIN CustDangerJobExclusion cd WITH (NOLOCK) ON cd.CustID=c.custid
-		CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
-	WHERE cd.CreateDate>=@ScanDate
+	SELECT custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball
+	FROM (
+			SELECT custid, ISNULL(DangerLevel,0) DangerLevel, soccer, basketball, IsManualSoccer, IsManualBasketball
+			FROM custinfo c WITH(NOLOCK)
+				CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
+			WHERE custid IN (SELECT custid FROM #tblCustDangerInfo)
+			UNION ALL
+			SELECT c.custid, ISNULL(DangerLevel,0) DangerLevel, soccer, basketball, IsManualSoccer, IsManualBasketball
+			FROM custinfo c WITH(NOLOCK)
+				INNER JOIN CustDangerJobExclusion cd WITH (NOLOCK) ON cd.CustID=c.custid
+				CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
+			WHERE cd.CreateDate>=@ScanDate
+		) AS a
 
 	;WITH PA_List AS (
 		SELECT cd.CustID
@@ -260,22 +262,25 @@ BEGIN
 		WHERE cd.CreateDate>=@ScanDate
 	)
 	INSERT INTO #tblCustUpdate(custid, Soccer, Basketball, UpdateSoccer, UpdateBasketball, DangerLevel, SoccerOld, BasketballOld, WinlossSoccer, WinlossBasketball)
-	SELECT t1.custid, t1.Soccer , t1.Basketball,
-		CASE WHEN IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer THEN 1 ELSE 0 END as UpdateSoccer,
-		CASE WHEN IsManualBasketball = 0 AND UpdateBasketball = 1 AND t1.Basketball <> t2.Basketball THEN 1 ELSE 0 END as UpdateBasketball,
-		t2.DangerLevel,
-		t2.soccer as SoccerOld,
-		t2.basketball as BasketballOld,
-		t1.WinlossSoccer,
-		t1.WinlossBasketball		
-	FROM #tblCustDangerInfo t1
-		INNER JOIN #tblCustDangerOld t2 ON t1.custid = t2.Custid
-	WHERE (IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer)
-		OR (IsManualBasketball = 0 AND UpdateBasketball = 1 AND t1.Basketball <> t2.Basketball)
-	UNION ALL
-	SELECT t1.CustID, t1.SoccerLevel, t1.BasketballLevel, t1.UpdateSoccer, t1.UpdateBasketball, t2.DangerLevel, t2.Soccer, t2.Basketball, NULL, NULL
-	FROM PA_List t1
-		INNER JOIN #tblCustDangerOld t2 ON t1.custid = t2.Custid
+	SELECT custid, Soccer, Basketball, UpdateSoccer, UpdateBasketball, DangerLevel, SoccerOld, BasketballOld, WinlossSoccer, WinlossBasketball
+	FROM (
+			SELECT t1.custid, t1.Soccer , t1.Basketball,
+				CASE WHEN IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer THEN 1 ELSE 0 END as UpdateSoccer,
+				CASE WHEN IsManualBasketball = 0 AND UpdateBasketball = 1 AND t1.Basketball <> t2.Basketball THEN 1 ELSE 0 END as UpdateBasketball,
+				t2.DangerLevel,
+				t2.soccer as SoccerOld,
+				t2.basketball as BasketballOld,
+				t1.WinlossSoccer,
+				t1.WinlossBasketball		
+			FROM #tblCustDangerInfo t1
+				INNER JOIN #tblCustDangerOld t2 ON t1.custid = t2.Custid
+			WHERE (IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer)
+				OR (IsManualBasketball = 0 AND UpdateBasketball = 1 AND t1.Basketball <> t2.Basketball)
+			UNION ALL
+			SELECT t1.CustID, t1.SoccerLevel, t1.BasketballLevel, t1.UpdateSoccer, t1.UpdateBasketball, t2.DangerLevel, t2.Soccer, t2.Basketball, NULL, NULL
+			FROM PA_List t1
+				INNER JOIN #tblCustDangerOld t2 ON t1.custid = t2.Custid
+		) AS a
 
 	DECLARE @CustUpdate VARCHAR(MAX) 
 	
@@ -329,8 +334,8 @@ BEGIN
 			UpdateBasketball as '@ub',
 			SoccerOld as '@os',
 			BasketballOld as '@ob',
-			ISNULL(WinlossSoccer,'NULL') as '@wls',
-			ISNULL(WinlossBasketball,'NULL') as '@wlb'
+			CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wls',
+			CASE WHEN WinlossBasketball IS NULL THEN 'NULL' ELSE CAST(WinlossBasketball AS VARCHAR) END  as '@wlb'
 		FROM #tblCustUpdate t			
 		FOR XML PATH('r'), ROOT('Root')
 	) AS VARCHAR(MAX))	
