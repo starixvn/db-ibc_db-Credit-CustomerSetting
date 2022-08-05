@@ -24,7 +24,7 @@ SET NOCOUNT ON
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @StartRun DATETIME, @Duration INT
+	DECLARE @StartRun DATETIME, @Duration INT, @batchNo INT
 	DECLARE @xml XML = NULL
 
 	CREATE TABLE #tblCustCategoryOld (
@@ -122,16 +122,50 @@ BEGIN
 		INNER JOIN #tblCustList t ON t.CustID=cd.CustID
 	WHERE t.Action='1'
 
-	;WITH tmp AS (
-		SELECT new.custid,
-			dbo.f_GenerateDangerLevelInfo(old.DangerLevel,new.Soccer,new.Basketball,UpdateSoccer,UpdateBasketball) DangerLevel
+	--Update Danger Level
+	DECLARE @CustUpdate VARCHAR(MAX) 
+	
+	SELECT @CustUpdate = CAST((
+		SELECT new.custid as '@id',
+			dbo.f_GenerateDangerLevelInfo(DangerLevel,new.Soccer,new.Basketball,UpdateSoccer,UpdateBasketball) as '@value'
 		FROM #tblCustUpdate new
 			INNER JOIN #tblCustDangerOld old ON old.Custid=new.CustID
-	)
-	UPDATE ci
-	SET ci.DangerLevel=t.DangerLevel
-	FROM custInfo ci WITH(UPDLOCK, ROWLOCK)
-		INNER JOIN tmp t ON t.CustID=ci.custid
+		FOR XML PATH('r'),ROOT('Root')
+	) AS VARCHAR(MAX))
+	
+	DECLARE @ErrMsgLog VARCHAR(1000)
+	
+	BEGIN TRY	
+		EXEC Acc_CustomerInfo_Execrep_03 @CustList = @CustUpdate,										
+										@mode = 'SabaDangerLevel'	
+	END TRY
+	BEGIN CATCH 
+		SELECT @ErrCode = 100,
+			@ErrMsgLog = ERROR_MESSAGE(),
+			@ErrMsg = 'Update unsuccessfully'		
+	END CATCH 
+
+	--logging
+	SELECT @batchNo = MAX(batchNo) + 1 
+	FROM CustDangerLevelInfo WITH(NOLOCK)
+
+	INSERT INTO CustDangerLevelInfo(Custid,
+									BatchNo,
+									Soccer,
+									Basketball,
+									UpdateSoccer,
+									UpdateBasketball,
+									Status,
+									Description,		
+									CreatedDate)
+	SELECT custid, @BatchNo, Soccer, Basketball, UpdateSoccer, UpdateBasketball, 
+		CASE WHEN @ErrCode > 0 THEN 'fail' ELSE 'completed' END status,
+		CASE WHEN @ErrMsgLog IS NOT NULL THEN @ErrMsgLog ELSE 'PA List' END Description,
+		GETDATE() as CreatedDate
+	FROM #tblCustUpdate t
+	
+	IF @ErrCode > 0
+		RETURN;
 
 	--WriteLog Add/Remove PA List, update DangerLevel
 	DECLARE @Log		VARCHAR(MAX),
