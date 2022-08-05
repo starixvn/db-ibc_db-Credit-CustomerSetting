@@ -29,7 +29,7 @@ BEGIN
 
 	CREATE TABLE #tblCustCategoryOld (
 			CustID		INT
-		,	CategoryID	INT
+		,	CategoryID	SMALLINT
 		,	CreateDate	DATETIME
 		,	RemoveDate	DATETIME
 		,	Action		VARCHAR(5)	
@@ -46,7 +46,7 @@ BEGIN
 
 	CREATE TABLE #tblCustList (
 			CustID		INT
-		,	CategoryID	INT
+		,	CategoryID	SMALLINT
 		,	Action		VARCHAR(5)	
 		,	PRIMARY KEY CLUSTERED (CustID, Action)
 	)
@@ -81,7 +81,7 @@ BEGIN
 	SELECT CustID, CategoryID, Action
 	FROM OPENXML(@iDoc, '/Root/r', 1) WITH (
 			CustID		INT
-		,	CategoryID	INT
+		,	CategoryID	SMALLINT
 		,	Action		VARCHAR(5)
 		)
 	
