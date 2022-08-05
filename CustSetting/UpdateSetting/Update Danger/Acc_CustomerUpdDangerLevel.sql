@@ -53,7 +53,7 @@ BEGIN
 	FROM @xml.nodes('Root/r')as t(c)
 	
 	SELECT @batchNo = MAX(batchNo) + 1 
-	FROM CustDangerWinlossInfo WITH(NOLOCK)
+	FROM CustDangerLevelInfo WITH(NOLOCK)
 	
 	DELETE t
 	FROM #tblCustWinloss t
@@ -300,14 +300,11 @@ BEGIN
 									Status,
 									Description,		
 									CreatedDate)
-	SELECT t.custid, @BatchNo, Soccer, Basketball, UpdateSoccer, UpdateBasketball, 
+	SELECT custid, @BatchNo, Soccer, Basketball, UpdateSoccer, UpdateBasketball, 
 		CASE WHEN @ErrCode > 0 THEN 'fail' ELSE 'completed' END status,
-		CASE WHEN @ErrMsgLog IS NOT NULL THEN @ErrMsgLog
-			 WHEN cd.CustID IS NOT NULL	THEN 'PA List'
-		END Description,
+		@ErrMsgLog as Description,
 		GETDATE() as CreatedDate
-	FROM #tblCustUpdate t
-		LEFT JOIN CustDangerJobExclusion cd WITH (NOLOCK) ON cd.custid=t.custid
+	FROM #tblCustUpdate 
 
 	IF @ErrCode > 0
 		RETURN;
