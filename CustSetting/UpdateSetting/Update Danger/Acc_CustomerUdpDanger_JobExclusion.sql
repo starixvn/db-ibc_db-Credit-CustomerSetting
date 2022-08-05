@@ -33,7 +33,7 @@ BEGIN
 		,	CreateDate	DATETIME
 		,	RemoveDate	DATETIME
 		,	Action		VARCHAR(5)	
-		,	PRIMARY KEY CLUSTERED (CustID)
+		,	PRIMARY KEY CLUSTERED (CustID, Action)
 	)
 
 	CREATE TABLE #tblCustDangerOld (
@@ -48,12 +48,11 @@ BEGIN
 			CustID		INT
 		,	CategoryID	INT
 		,	Action		VARCHAR(5)	
-		,	PRIMARY KEY CLUSTERED (CustID)
+		,	PRIMARY KEY CLUSTERED (CustID, Action)
 	)
 
 	CREATE TABLE #tblCustUpdate(
 			CustID				INT 
-		,	DangerLevel			BIGINT
 		,	Soccer				TINYINT 
 		,	Basketball			TINYINT
 		,	UpdateSoccer		BIT
@@ -80,7 +79,7 @@ BEGIN
 
 	INSERT INTO #tblCustList(CustID, CategoryID, Action)
 	SELECT CustID, CategoryID, Action
-	FROM OPENXML(@iDoc, '/root/r', 1) WITH (
+	FROM OPENXML(@iDoc, '/Root/r', 1) WITH (
 			CustID		INT
 		,	CategoryID	INT
 		,	Action		VARCHAR(5)
@@ -103,7 +102,7 @@ BEGIN
 	SELECT t.CustID, t.CategoryID, GETDATE()
 	FROM #tblCustList t
 		LEFT JOIN CustDangerJobExclusion cd WITH (NOLOCK) ON t.CustID=cd.CustID
-	WHERE t.CustID IS NULL AND t.Action='1'
+	WHERE cd.CustID IS NULL AND t.Action='1'
 
 	--get dangerlevel old:
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball)
@@ -113,25 +112,21 @@ BEGIN
 	WHERE custid IN (SELECT custid FROM #tblCustList WHERE Action='1')
 
 	--update dangerlevel=13
-	;WITH PAList_level AS (
-		SELECT cd.CustID
-			, CASE WHEN cd.CategoryID IN (52,54,58) THEN 13 END SoccerLevel
-			, 13 AS BasketballLevel
-			, CASE WHEN cd.CategoryID IN (52,54,58) THEN 1 ELSE 0 END UpdateSoccer
-			, 1 AS UpdateBasketball
-		FROM CustDangerJobExclusion cd WITH (NOLOCK)
-			INNER JOIN #tblCustList t ON t.CustID=cd.CustID
-		WHERE t.Action='1'
-	)
-	INSERT INTO #tblCustUpdate(CustID, Soccer, Basketball, UpdateSoccer, UpdateBasketball, DangerLevel)
-	SELECT pa.CustID, pa.SoccerLevel, pa.BasketballLevel, UpdateSoccer, UpdateBasketball, ci.DangerLevel
-	FROM PAList_level pa 
-		INNER JOIN custInfo ci WITH (NOLOCK) ON pa.CustID=ci.custid
+	INSERT INTO #tblCustUpdate(CustID, Soccer, Basketball, UpdateSoccer, UpdateBasketball)
+	SELECT cd.CustID
+		, CASE WHEN cd.CategoryID IN (52,54,58) THEN 13 END SoccerLevel
+		, 13 AS BasketballLevel
+		, CASE WHEN cd.CategoryID IN (52,54,58) THEN 1 ELSE 0 END UpdateSoccer
+		, 1 AS UpdateBasketball
+	FROM CustDangerJobExclusion cd WITH (NOLOCK)
+		INNER JOIN #tblCustList t ON t.CustID=cd.CustID
+	WHERE t.Action='1'
 
 	;WITH tmp AS (
-		SELECT custid,
-			dbo.f_GenerateDangerLevelInfo(DangerLevel,Soccer,Basketball,UpdateSoccer,UpdateBasketball) DangerLevel
-		FROM #tblCustUpdate
+		SELECT new.custid,
+			dbo.f_GenerateDangerLevelInfo(old.DangerLevel,new.Soccer,new.Basketball,UpdateSoccer,UpdateBasketball) DangerLevel
+		FROM #tblCustUpdate new
+			INNER JOIN #tblCustDangerOld old ON old.Custid=new.CustID
 	)
 	UPDATE ci
 	SET ci.DangerLevel=t.DangerLevel
