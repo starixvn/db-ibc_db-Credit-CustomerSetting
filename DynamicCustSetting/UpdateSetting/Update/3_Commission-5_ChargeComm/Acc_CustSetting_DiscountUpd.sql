@@ -1,12 +1,13 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountUpd] 
-	  @CustID				INT
+	  @CustID			INT
 	, @Discount			VARCHAR(MAX)
-	, @SubAccID				INT				= 0
-	, @UserID				INT
-	, @SettingType			SMALLINT		=	3
-	, @IP					VARCHAR(50)		= ''
+	, @SubAccID			INT				= 0
+	, @UserID			INT
+	, @SettingType		SMALLINT		=	3
+	, @IP				VARCHAR(50)		= ''
+	, @isSearchAndCopy	BIT				= 0
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(200)	= ''	OUTPUT
@@ -22,6 +23,7 @@ AS
 		- 20160104@Dominic: Implementing Charge Commission Plugin - [Redmine: #49689]
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20220808@Tacy: update member's betsetting by execrep when using Search & Copy New member function [RedmineID: #176225]
 
 	Param's Explanation:
 		• @Discount:
@@ -240,18 +242,29 @@ BEGIN
 	END
 	ELSE IF @RoleID = 1 AND @SettingType IN (3,19)
 	BEGIN
-		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, agent_discount)
-		UPDATE tmp
-		SET tmp.Discount = CASE 
-				WHEN tmp.Discount < dca.Discount
-					THEN tmp.Discount
-				ELSE dca.Discount
-				END
-		FROM @NewDiscountTbl tmp
-		INNER JOIN dbo.CustDiscount3rd_Agent dca WITH (NOLOCK)
-			ON dca.SportType	= tmp.SportType
-				AND dca.BetType = tmp.BetType
-				AND dca.custid	= @AgentID
+		IF @isSearchAndCopy=1
+		BEGIN
+			EXECUTE Acc_DynamicCustomerInfo_01 
+						@CustID=@CustID,
+						@SettingList=@Discount,
+						@Mode='Commission',
+						@UserID=@UserID
+		END
+		ELSE 
+		BEGIN
+			--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, agent_discount)
+			UPDATE tmp
+			SET tmp.Discount = CASE 
+					WHEN tmp.Discount < dca.Discount
+						THEN tmp.Discount
+					ELSE dca.Discount
+					END
+			FROM @NewDiscountTbl tmp
+			INNER JOIN dbo.CustDiscount3rd_Agent dca WITH (NOLOCK)
+				ON dca.SportType	= tmp.SportType
+					AND dca.BetType = tmp.BetType
+					AND dca.custid	= @AgentID
+		END
 	END
 
 	--Return XML result

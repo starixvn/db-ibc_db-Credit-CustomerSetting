@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitUpd]
 	, @SubAccID		INT				= 0
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
+	, @isSearchAndCopy	BIT				= 0
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT				= 0		OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
@@ -21,6 +22,8 @@ AS
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20210906@Johnson: write log SourceUsername [redmine:#158174]
 			- 20211007@Johnson: write log by product incase update multiple super[redmine:#162853]
+			- 20220808@Tacy: update member's betsetting by execrep when using Search & Copy New member function [RedmineID: #176225]
+
 	Param's Explanation:
 	- @Limit:
 		6: WinLossLimit
@@ -249,36 +252,47 @@ BEGIN
 			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = wl.sporttype AND tmp.BetType = wl.bettype
 		WHERE wl.custid = @CustID
 
-		IF @SettingType = 6
-			--update new settings
-			UPDATE main
-			SET main.MaxWinLimit = tmp.MaxWinLimit
-				, main.IsAutoReset = tmp.IsAutoReset
-				, main.MaxLossLimit = tmp.MaxLossLimit
-			FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
-			WHERE main.custid = @CustID
-				AND (main.MaxWinLimit <> tmp.MaxWinLimit OR main.IsAutoReset <> tmp.IsAutoReset OR main.MaxLossLimit <> tmp.MaxLossLimit)
+		IF @isSearchAndCopy=1
+		BEGIN
+			EXECUTE Acc_DynamicCustomerInfo_01 
+						@CustID=@CustID,
+						@SettingList=@Limit,
+						@Mode='WinLossLimit',
+						@UserID=@UserID
+		END
+		ELSE
+		BEGIN
+			IF @SettingType = 6
+				--update new settings
+				UPDATE main
+				SET main.MaxWinLimit = tmp.MaxWinLimit
+					, main.IsAutoReset = tmp.IsAutoReset
+					, main.MaxLossLimit = tmp.MaxLossLimit
+				FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
+				INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+				WHERE main.custid = @CustID
+					AND (main.MaxWinLimit <> tmp.MaxWinLimit OR main.IsAutoReset <> tmp.IsAutoReset OR main.MaxLossLimit <> tmp.MaxLossLimit)
 
-		IF @SettingType = 8
-			--update new settings
-			UPDATE main
-			SET main.MaxWinLimit = tmp.MaxWinLimit
-				, main.IsAutoReset = tmp.IsAutoReset
-			FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
-			WHERE main.custid = @CustID
-				AND (main.MaxWinLimit <> tmp.MaxWinLimit OR main.IsAutoReset <> tmp.IsAutoReset)
+			IF @SettingType = 8
+				--update new settings
+				UPDATE main
+				SET main.MaxWinLimit = tmp.MaxWinLimit
+					, main.IsAutoReset = tmp.IsAutoReset
+				FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
+				INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+				WHERE main.custid = @CustID
+					AND (main.MaxWinLimit <> tmp.MaxWinLimit OR main.IsAutoReset <> tmp.IsAutoReset)
 
-		IF @SettingType = 12
-			--update new settings
-			UPDATE main
-			SET main.MaxLossLimit = tmp.MaxLossLimit
-				, main.IsAutoReset = tmp.IsAutoReset
-			FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
-			WHERE main.custid = @CustID
-				AND (main.MaxLossLimit <> tmp.MaxLossLimit OR main.IsAutoReset <> tmp.IsAutoReset)
+			IF @SettingType = 12
+				--update new settings
+				UPDATE main
+				SET main.MaxLossLimit = tmp.MaxLossLimit
+					, main.IsAutoReset = tmp.IsAutoReset
+				FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
+				INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+				WHERE main.custid = @CustID
+					AND (main.MaxLossLimit <> tmp.MaxLossLimit OR main.IsAutoReset <> tmp.IsAutoReset)
+		END
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN
@@ -325,9 +339,8 @@ BEGIN
 				AND (main.MaxLossLimit <> tmp.MaxLossLimit OR main.IsAutoReset <> tmp.IsAutoReset)
 	END
 
-	
-				EXEC dbo.Acc_DynamicCustSetting3rd_00 
-		@CustId = @CustId
+	EXEC dbo.Acc_DynamicCustSetting3rd_00 
+		 @CustId = @CustId
 		,@RoleId = @RoleId
 		,@Limit_XML = @Limit
 		,@SettingType=@SettingType

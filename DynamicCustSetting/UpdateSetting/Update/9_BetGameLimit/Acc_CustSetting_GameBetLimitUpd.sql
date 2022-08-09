@@ -6,6 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetLimitUpd]
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
 	, @SystemID     TINYINT = 1 --20200305@Tiara
+	, @isSearchAndCopy	BIT			= 0
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT				= 0		OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
@@ -22,6 +23,7 @@ AS
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
+		- 20220808@Tacy: update member's betsetting by SP execrep when using Search & Copy New member function [RedmineID: #176225]
 
 	Param's Explanation:
 	• @GameBetLimit:
@@ -215,49 +217,62 @@ BEGIN
 				AND tmp.BetType = bl.bettype
 		WHERE bl.custid = @CustID
 
-		--update new settings
-		UPDATE main
-		SET main.minbet			= tmp.MinBet
-			, main.maxbet		= tmp.MaxBet
-			, main.maxpermatch	= tmp.MaxPerNumber
-		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
-			INTO @HistoryBetSettingTbl
-		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
-		INNER JOIN @NewBetLimitTbl tmp
-			ON tmp.SportType	= main.sporttype
-				AND tmp.BetType = main.bettype
-		WHERE main.custid = @CustID
-			AND (
-					main.minbet		<> tmp.MinBet
-				OR main.maxbet		<> tmp.MaxBet
-				OR main.maxpermatch <> tmp.MaxPerNumber
-				)
-
-		--insert Bet Setting history
-		IF NOT EXISTS (	SELECT 1					
-						FROM @HistoryBetSettingTbl old
-							INNER JOIN @NewBetLimitTbl new ON new.SportType=old.SportType
-														AND new.BetType=old.BetType
-														AND new.MaxBet=old.MaxBet
-														AND new.MaxPerNumber=old.MaxPerMatch
-						WHERE old.CustID=@CustID
-					)
+		IF @isSearchAndCopy=1
 		BEGIN
-			SET @CustList = (SELECT	CustID		AS '@CustID',
-									SportType	AS '@SportType',
-									BetType		AS '@BetType',
-									MaxBet		AS '@MaxBet',
-									MaxPerMatch	AS '@MaxPerMatch',
-									'NULL'		AS '@StakeLevelList',
-									UpdateTime	AS '@UpdateTime'
-							FROM @HistoryBetSettingTbl
-							FOR XML PATH('r'), ROOT ('root')
-							)
-		
-			EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+			SET	@GameBetLimit =	REPLACE(@GameBetLimit, 'MaxPerNumber', 'MaxPerMatch')
 
-			IF @ErrMsg <> ''
-				RETURN
+			EXECUTE Acc_DynamicCustomerInfo_01 
+						@CustID=@CustID,
+						@SettingList=@BetLimit,
+						@Mode='BetSetting',
+						@UserID=@UserID
+		END
+		ELSE
+		BEGIN
+			--update new settings
+			UPDATE main
+			SET main.minbet			= tmp.MinBet
+				, main.maxbet		= tmp.MaxBet
+				, main.maxpermatch	= tmp.MaxPerNumber
+			OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+				INTO @HistoryBetSettingTbl
+			FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN @NewBetLimitTbl tmp
+				ON tmp.SportType	= main.sporttype
+					AND tmp.BetType = main.bettype
+			WHERE main.custid = @CustID
+				AND (
+						main.minbet		<> tmp.MinBet
+					OR main.maxbet		<> tmp.MaxBet
+					OR main.maxpermatch <> tmp.MaxPerNumber
+					)
+
+			--insert Bet Setting history
+			IF NOT EXISTS (	SELECT 1					
+							FROM @HistoryBetSettingTbl old
+								INNER JOIN @NewBetLimitTbl new ON new.SportType=old.SportType
+															AND new.BetType=old.BetType
+															AND new.MaxBet=old.MaxBet
+															AND new.MaxPerNumber=old.MaxPerMatch
+							WHERE old.CustID=@CustID
+						)
+			BEGIN
+				SET @CustList = (SELECT	CustID		AS '@CustID',
+										SportType	AS '@SportType',
+										BetType		AS '@BetType',
+										MaxBet		AS '@MaxBet',
+										MaxPerMatch	AS '@MaxPerMatch',
+										'NULL'		AS '@StakeLevelList',
+										UpdateTime	AS '@UpdateTime'
+								FROM @HistoryBetSettingTbl
+								FOR XML PATH('r'), ROOT ('root')
+								)
+		
+				EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+
+				IF @ErrMsg <> ''
+					RETURN
+			END
 		END
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
