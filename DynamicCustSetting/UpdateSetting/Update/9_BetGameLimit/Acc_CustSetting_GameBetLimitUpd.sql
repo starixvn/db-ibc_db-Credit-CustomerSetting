@@ -219,7 +219,14 @@ BEGIN
 
 		IF @isSearchAndCopy=1
 		BEGIN
-			SET	@GameBetLimit =	REPLACE(@GameBetLimit, 'MaxPerNumber', 'MaxPerMatch')
+			SET	@GameBetLimit = (SELECT	SportType	AS '@SportType',
+										BetType		AS '@BetType',
+										MinBet		AS '@MinBet',
+										MaxBet		AS '@MaxBet',
+										MaxPerNumber AS '@MaxPerMatch'
+							FROM @NewBetLimitTbl
+							FOR XML PATH('r'), ROOT ('root')
+							)
 
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,

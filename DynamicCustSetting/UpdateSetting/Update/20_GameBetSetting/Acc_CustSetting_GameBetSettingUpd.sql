@@ -210,6 +210,15 @@ BEGIN
 
 		IF @isSearchAndCopy=1
 		BEGIN
+			SET @BetLimit = (SELECT	SportType	AS '@SportType',
+									BetType		AS '@BetType',
+									MinBet		AS '@MinBet',
+									MaxBet		AS '@MaxBet',
+									'NULL'		AS '@MaxPerMatch'
+							FROM @NewBetSettingTbl
+							FOR XML PATH('r'), ROOT ('root')
+							)
+
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,
 						@SettingList=@BetLimit,

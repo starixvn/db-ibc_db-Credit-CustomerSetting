@@ -244,6 +244,13 @@ BEGIN
 	BEGIN
 		IF @isSearchAndCopy=1
 		BEGIN
+			SET @Discount = (SELECT	SportType	AS '@SportType',
+									BetType		AS '@BetType',
+									Discount	AS '@Discount'
+							FROM @NewDiscountTbl
+							FOR XML PATH('r'), ROOT ('root')
+							)
+
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,
 						@SettingList=@Discount,

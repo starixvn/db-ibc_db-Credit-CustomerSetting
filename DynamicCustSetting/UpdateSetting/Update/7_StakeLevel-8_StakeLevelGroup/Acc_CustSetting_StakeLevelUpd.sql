@@ -234,6 +234,13 @@ BEGIN
 
 		IF @isSearchAndCopy=1
 		BEGIN
+			SET @StakeLevel = (SELECT SportType		AS '@SportType',
+									BetType			AS '@BetType',
+									StakeLevelList AS '@StakeLevelList'
+							FROM #tmpStake
+							FOR XML PATH('r'), ROOT ('root')
+							)
+
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,
 						@SettingList=@StakeLevel,
