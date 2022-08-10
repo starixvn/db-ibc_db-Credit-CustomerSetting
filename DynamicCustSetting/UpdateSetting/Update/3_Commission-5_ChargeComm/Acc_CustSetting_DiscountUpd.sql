@@ -242,36 +242,18 @@ BEGIN
 	END
 	ELSE IF @RoleID = 1 AND @SettingType IN (3,19)
 	BEGIN
-		IF @isSearchAndCopy=1
-		BEGIN
-			SET @Discount = (SELECT	SportType	AS '@SportType',
-									BetType		AS '@BetType',
-									Discount	AS '@Discount'
-							FROM @NewDiscountTbl
-							FOR XML PATH('r'), ROOT ('root')
-							)
-
-			EXECUTE Acc_DynamicCustomerInfo_01 
-						@CustID=@CustID,
-						@SettingList=@Discount,
-						@Mode='Commission',
-						@UserID=@UserID
-		END
-		ELSE 
-		BEGIN
-			--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, agent_discount)
-			UPDATE tmp
-			SET tmp.Discount = CASE 
-					WHEN tmp.Discount < dca.Discount
-						THEN tmp.Discount
-					ELSE dca.Discount
-					END
-			FROM @NewDiscountTbl tmp
-			INNER JOIN dbo.CustDiscount3rd_Agent dca WITH (NOLOCK)
-				ON dca.SportType	= tmp.SportType
-					AND dca.BetType = tmp.BetType
-					AND dca.custid	= @AgentID
-		END
+		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, agent_discount)
+		UPDATE tmp
+		SET tmp.Discount = CASE 
+				WHEN tmp.Discount < dca.Discount
+					THEN tmp.Discount
+				ELSE dca.Discount
+				END
+		FROM @NewDiscountTbl tmp
+		INNER JOIN dbo.CustDiscount3rd_Agent dca WITH (NOLOCK)
+			ON dca.SportType	= tmp.SportType
+				AND dca.BetType = tmp.BetType
+				AND dca.custid	= @AgentID
 	END
 
 	--Return XML result
@@ -284,12 +266,23 @@ BEGIN
 	SELECT @CorrectedDiscount_XML = '<ROOT>' + @CorrectedDiscount_XML + '</ROOT>'
 
 	--execrept to update commission
-	EXEC dbo.Acc_DynamicCustSetting3rd_06
-			@CustId			= @custid
-			, @RoleId		= @RoleId
-			, @SettingType  = @SettingType
-			, @Discount_XML = @CorrectedDiscount_XML
-			
+	IF @isSearchAndCopy=1
+	BEGIN
+		EXECUTE Acc_DynamicCustomerInfo_01 
+						@CustID=@CustID,
+						@SettingList=@CorrectedDiscount_XML,
+						@SettingType=@SettingType,
+						@Mode='Commission',
+						@AgentID=@AgentID
+	END
+	ELSE
+	BEGIN
+		EXEC dbo.Acc_DynamicCustSetting3rd_06
+				@CustId			= @custid
+				, @RoleId		= @RoleId
+				, @SettingType  = @SettingType
+				, @Discount_XML = @CorrectedDiscount_XML
+	END		
 
 	--START LOGGING		
 

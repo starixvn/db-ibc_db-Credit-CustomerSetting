@@ -556,7 +556,7 @@ BEGIN
 					@CustID=@CustID,
 					@SettingList=@SettingList,
 					@Mode='PT',
-					@UserID=@UserID
+					@AgentID=@AgentID
 	END
 	ELSE 
 	BEGIN

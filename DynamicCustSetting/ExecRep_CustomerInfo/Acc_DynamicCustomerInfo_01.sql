@@ -1,10 +1,10 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet" viewers="" isFunction="0" isNested="1"></info>*/
 CREATE PROCEDURE [dbo].[Acc_DynamicCustomerInfo_01]
 		@CustID			INT,
-		@SettingList	VARCHAR(MAX) = NULL,
-		@SettingType	SMALLINT = NULL,
-		@Mode			VARCHAR(50) = '',
-		@UserID			INT	= 0
+		@SettingList	VARCHAR(MAX)=NULL,
+		@Mode			VARCHAR(50)='',
+		@AgentID		INT=NULL,
+		@SettingType	SMALLINT = NULL
 AS
 /*
 	Created: 20220808@Tacy
@@ -20,13 +20,9 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 	
-	DECLARE @AgentID INT, @iDoc INT
+	DECLARE @iDoc INT
 
 	IF @SettingList IS NULL OR @SettingList='' RETURN
-
-	SELECT @AgentID = recommend
-	FROM dbo.custInfo WITH (NOLOCK)
-	WHERE custid = @CustID
 
 	IF @Mode='PT'
 	BEGIN
@@ -154,6 +150,16 @@ BEGIN
 	END
 	ELSE IF @Mode='Commission'
 	BEGIN
+		IF dbo.f_CheckRepTable('custinfo') = 0 RETURN
+		IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 0 RETURN
+		IF dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 0 RETURN
+
+		DECLARE @SuperDiscount DECIMAL(9,8),
+				@MasterDiscount DECIMAL(9,8),
+				@AgentDiscount DECIMAL(9,8),
+				@PlayerDiscount DECIMAL(9,8),
+				@SuperID INT, @MasterID INT
+
 		DECLARE @NewDiscountTbl TABLE (
 				SportType	SMALLINT
 			,	BetType		SMALLINT
@@ -165,25 +171,34 @@ BEGIN
 	
 		INSERT @NewDiscountTbl (SportType, BetType, Discount)
 		SELECT SportType, BetType, Discount
-		FROM OPENXML (@iDoc, '/root/r',1) 
+		FROM OPENXML (@iDoc, '/ROOT/Discount',1) 
 		WITH(SportType	SMALLINT, 
 				BetType	SMALLINT, 
 				Discount	DECIMAL(9, 8))	
 	
 		EXEC sp_xml_removedocument @iDoc
 
-		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, agent_discount)
-		UPDATE tmp
-		SET tmp.Discount = CASE 
-				WHEN tmp.Discount < dca.Discount
-					THEN tmp.Discount
-				ELSE dca.Discount
-				END
-		FROM @NewDiscountTbl tmp
-		INNER JOIN dbo.CustDiscount3rd_Agent dca WITH (NOLOCK)
-			ON dca.SportType	= tmp.SportType
-				AND dca.BetType = tmp.BetType
-				AND dca.custid	= @AgentID
+		--Update 
+		SELECT @SuperID = srecommend, @MasterID = mrecommend FROM Custinfo WITH (NOLOCK) WHERE custid = @CustId
+
+		UPDATE dcmem  
+		SET @SuperDiscount = dcs.Discount,
+			@MasterDiscount = dcm.Discount,
+			@AgentDiscount = dca.Discount,
+			@PlayerDiscount = tmp.Discount,	
+			@SuperDiscount = CASE WHEN @SuperDiscount < @PlayerDiscount THEN @PlayerDiscount ELSE @SuperDiscount END,
+			@MasterDiscount= CASE WHEN @MasterDiscount < @PlayerDiscount THEN @PlayerDiscount ELSE @MasterDiscount END,
+			@AgentDiscount= CASE WHEN @AgentDiscount < @PlayerDiscount THEN @PlayerDiscount ELSE @AgentDiscount END,
+			dcmem.SuperDiscount = @SuperDiscount,
+			dcmem.MasterDiscount = @MasterDiscount,
+			dcmem.AgentDiscount = @AgentDiscount,
+			dcmem.PlayerDiscount = @PlayerDiscount
+		FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)  
+			INNER JOIN @NewDiscountTbl tmp ON tmp.SportType=dcmem.SportType AND tmp.BetType=dcmem.BetType  
+			INNER JOIN dbo.CustDiscount3rd_Agent dca WITH(NOLOCK) ON dca.sporttype = dcmem.sporttype AND dca.bettype = dcmem.bettype AND dca.custid=@AgentID
+			INNER JOIN dbo.CustDiscount3rd_Agent dcm WITH(NOLOCK) ON dcm.sporttype = dcmem.sporttype AND dcm.bettype = dcmem.bettype AND dcm.custid=@MasterID
+			INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
+		WHERE dcmem.CustID=@CustID AND @SettingType IN (3,19)
 	END
 	ELSE IF @Mode='BetSetting'
 	BEGIN

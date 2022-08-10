@@ -266,9 +266,7 @@ BEGIN
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,
 						@SettingList=@Limit,
-						@SettingType=@SettingType,
-						@Mode='WinLossLimit',
-						@UserID=@UserID
+						@Mode='WinLossLimit'
 		END
 		ELSE
 		BEGIN

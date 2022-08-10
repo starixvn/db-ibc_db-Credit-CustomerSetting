@@ -231,8 +231,7 @@ BEGIN
 			EXECUTE Acc_DynamicCustomerInfo_01
 						@CustID=@CustID,
 						@SettingList=@BetLimit,
-						@Mode='BetSetting',
-						@UserID=@UserID
+						@Mode='BetSetting'
 		END
 		ELSE
 		BEGIN

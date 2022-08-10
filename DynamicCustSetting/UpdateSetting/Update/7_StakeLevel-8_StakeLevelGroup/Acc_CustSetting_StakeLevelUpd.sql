@@ -244,8 +244,7 @@ BEGIN
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,
 						@SettingList=@StakeLevel,
-						@Mode='StakeLevel',
-						@UserID=@UserID
+						@Mode='StakeLevel'
 		END
 		ELSE
 		BEGIN
