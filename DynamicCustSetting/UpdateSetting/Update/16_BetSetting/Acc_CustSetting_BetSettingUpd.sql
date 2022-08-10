@@ -156,8 +156,8 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @BetLimit
 
-	INSERT @NewBetSettingTbl
-	SELECT *
+	INSERT @NewBetSettingTbl (SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+	SELECT SportType, BetType, MinBet, MaxBet, MaxPerMatch
 	FROM OPENXML(@iDoc, '/ROOT/BetLimit', 1) WITH (
 			SportType		SMALLINT
 			, BetType		SMALLINT

@@ -23,7 +23,7 @@ AS
 		- 20160104@Dominic: Implementing Charge Commission Plugin - [Redmine: #49689]
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
-		- 20220808@Tacy: update member's betsetting by execrep when using Search & Copy New member function [RedmineID: #176225]
+		- 20220808@Tacy: update member's Comm setting by execrep when using Search & Copy New member function [RedmineID: #176225]
 
 	Param's Explanation:
 		• @Discount:

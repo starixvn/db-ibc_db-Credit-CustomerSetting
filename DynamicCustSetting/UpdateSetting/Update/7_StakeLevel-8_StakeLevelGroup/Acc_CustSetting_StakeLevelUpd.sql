@@ -29,7 +29,7 @@ AS
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
 		- 20220725@Tacy: change strSplit() UFD to STRING_SPLIT() SQL Function
-		- 20220808@Tacy: update member's betsetting by execrep when using Search & Copy New member function [RedmineID: #176225]
+		- 20220808@Tacy: update member's StakeLevel by execrep when using Search & Copy New member function [RedmineID: #176225]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -234,11 +234,11 @@ BEGIN
 
 		IF @isSearchAndCopy=1
 		BEGIN
-			SET @StakeLevel = (SELECT SportType		AS '@SportType',
-									BetType			AS '@BetType',
-									StakeLevelList AS '@StakeLevelList'
-							FROM #tmpStake
-							FOR XML PATH('r'), ROOT ('root')
+			SET @StakeLevel = (SELECT SportType		 AS '@SportType',
+									  BetType		 AS '@BetType',
+									  StakeLevelList AS '@StakeLevelList'
+								FROM #tmpStake
+								FOR XML PATH('r'), ROOT ('root')
 							)
 
 			EXECUTE Acc_DynamicCustomerInfo_01 

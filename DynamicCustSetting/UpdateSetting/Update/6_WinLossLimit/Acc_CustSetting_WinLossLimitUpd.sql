@@ -22,7 +22,7 @@ AS
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20210906@Johnson: write log SourceUsername [redmine:#158174]
 			- 20211007@Johnson: write log by product incase update multiple super[redmine:#162853]
-			- 20220808@Tacy: update member's betsetting by execrep when using Search & Copy New member function [RedmineID: #176225]
+			- 20220808@Tacy: update member's WinLossLimit by execrep when using Search & Copy New member function [RedmineID: #176225]
 
 	Param's Explanation:
 	- @Limit:

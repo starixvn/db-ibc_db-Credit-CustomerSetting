@@ -549,7 +549,7 @@ BEGIN
 									IsAutoSuperPT,
 									AutoSuperPT
 							FROM	@NewPTTble
-							FOR XML RAW ('r'), ROOT ('Root') 
+							FOR XML RAW ('PT'), ROOT ('ROOT') 
 						)
 
 		EXECUTE Acc_DynamicCustomerInfo_01 
@@ -659,11 +659,11 @@ BEGIN
 	IF @isLimit > 0
 	BEGIN
 		EXEC dbo.Age_LimitPTDailyUpd    
-				@custid		= @custid
-			,@Actorid		= @UserID
-			,@UpdatePT		= @PT
-			,@ErrCode		= @ErrCode OUTPUT
-			,@ErrMsg		= @ErrMsg OUTPUT
+				 @custid	= @custid
+				,@Actorid	= @UserID
+				,@UpdatePT	= @PT
+				,@ErrCode	= @ErrCode OUTPUT
+				,@ErrMsg	= @ErrMsg OUTPUT
 		IF @ErrCode > 0
 		RETURN
 	END 	

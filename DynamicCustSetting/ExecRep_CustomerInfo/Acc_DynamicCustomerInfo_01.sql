@@ -55,7 +55,7 @@ BEGIN
 		--Get setting mode
 		SELECT @SettingMode = IsGrouped
 		FROM dbo.CustSettingMode3rd
-		WHERE CustID= @CustID
+		WHERE CustID = @CustID
 		
 		IF ISNULL(@SettingMode,0)=0
 			BEGIN
@@ -224,7 +224,7 @@ BEGIN
 		WHERE main.custid = @CustID
 			AND (
 					main.minbet		<> tmp.MinBet
-				OR main.maxbet		<> tmp.MaxBet
+				OR  main.maxbet		<> tmp.MaxBet
 				OR (main.maxpermatch <> tmp.MaxperMatch AND tmp.MaxPerMatch IS NOT NULL)
 				)
 	END
@@ -273,8 +273,7 @@ BEGIN
 	ELSE IF @Mode='StakeLevel'
 	BEGIN
 		CREATE TABLE #tmpStake (
-				ID				INT IDENTITY (1,1)
-			,	SportType		SMALLINT
+				SportType		SMALLINT
 			,	BetType			INT
 			,	StakeLevelList	VARCHAR(200)
 			,	PRIMARY KEY CLUSTERED (SportType, BetType)

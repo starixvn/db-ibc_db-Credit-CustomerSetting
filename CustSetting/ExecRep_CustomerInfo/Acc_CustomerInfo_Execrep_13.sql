@@ -12,7 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_13]
 AS
 /*
 	Created: 20220808@Tacy
-	Task : Correct PT after SMA update pt on member when using Search&Copy New member function
+	Task : update PT on member when using Search&Copy New member function
 	DB: DBCust/CustDB
 	Original:
 
