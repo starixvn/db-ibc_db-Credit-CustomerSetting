@@ -230,7 +230,7 @@ BEGIN
 
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,
-						@SettingList=@BetLimit,
+						@SettingList=@GameBetLimit,
 						@Mode='BetSetting',
 						@UserID=@UserID
 		END
