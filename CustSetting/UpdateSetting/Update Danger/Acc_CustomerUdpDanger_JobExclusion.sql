@@ -114,9 +114,9 @@ BEGIN
 	--update dangerlevel=13
 	INSERT INTO #tblCustUpdate(CustID, Soccer, Basketball, UpdateSoccer, UpdateBasketball)
 	SELECT cd.CustID
-		, CASE WHEN cd.CategoryID IN (52,54,58) THEN 13 END SoccerLevel
+		, CASE WHEN cd.CategoryID IN (52,54,58,92,94,98) THEN 13 END SoccerLevel
 		, 13 AS BasketballLevel
-		, CASE WHEN cd.CategoryID IN (52,54,58) THEN 1 ELSE 0 END UpdateSoccer
+		, CASE WHEN cd.CategoryID IN (52,54,58,92,94,98) THEN 1 ELSE 0 END UpdateSoccer
 		, 1 AS UpdateBasketball
 	FROM CustDangerJobExclusion cd WITH (NOLOCK)
 		INNER JOIN #tblCustList t ON t.CustID=cd.CustID

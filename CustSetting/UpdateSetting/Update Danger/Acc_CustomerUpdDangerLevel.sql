@@ -233,17 +233,17 @@ BEGIN
 		INNER JOIN Customer c WITH(NOLOCK) ON c.custid = t.custid
 		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
 		LEFT JOIN CustDangerJobExclusion cc WITH (NOLOCK) ON cc.custid=t.custid
-	WHERE NOT ((t.isSoccer=1 AND cc.custid IS NOT NULL AND cc.CategoryID IN (52,54,58)) OR --Customer class: 8,9
+	WHERE NOT ((t.isSoccer=1 AND cc.custid IS NOT NULL AND cc.CategoryID IN (52,54,58,92,94,98)) OR --Customer class: 8,9,86,96
 				(t.isBasketball=1 AND cc.custid IS NOT NULL))
 			
 	--PA List
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
 	SELECT CustID
-		, CASE WHEN CategoryID IN (52,54,58) THEN 13 END SoccerLevel
+		, CASE WHEN CategoryID IN (52,54,58,92,94,98) THEN 13 END SoccerLevel
 		, 13 AS BasketballLevel
 		, NULL AS WinlossSoccer
 		, NULL AS WinlossBasketball
-		, CASE WHEN CategoryID IN (52,54,58) THEN 1 ELSE 0 END UpdateSoccer
+		, CASE WHEN CategoryID IN (52,54,58,92,94,98) THEN 1 ELSE 0 END UpdateSoccer
 		, 1 AS UpdateBasketball
 	FROM CustDangerJobExclusion WITH (NOLOCK)
 	WHERE CreateDate>=@ScanDate 
