@@ -232,21 +232,25 @@ BEGIN
 	FROM T
 		INNER JOIN Customer c WITH(NOLOCK) ON c.custid = t.custid
 		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
-		LEFT JOIN CustDangerJobExclusion cc WITH (NOLOCK) ON cc.custid=t.custid
-	WHERE NOT ((t.isSoccer=1 AND cc.custid IS NOT NULL AND cc.CategoryID IN (52,54,58,92,94,98)) OR --Customer class: 8,9,86,96
-				(t.isBasketball=1 AND cc.custid IS NOT NULL))
+		LEFT JOIN CustDangerJobExclusion sc WITH (NOLOCK) ON sc.custid=t.custid AND sc.SportType=1
+		LEFT JOIN CustDangerJobExclusion bb WITH (NOLOCK) ON bb.custid=t.custid AND bb.SportType=2
+	WHERE NOT (sc.custid IS NOT NULL  --Customer class: 8,9,86,96
+			OR bb.custid IS NOT NULL)
 			
 	--PA List
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
-	SELECT CustID
-		, CASE WHEN CategoryID IN (52,54,58,92,94,98) THEN 13 END SoccerLevel
-		, 13 AS BasketballLevel
+	SELECT DISTINCT 
+		  cd.CustID
+		, CASE WHEN sc.CustID IS NOT NULL THEN 13 END SoccerLevel
+		, CASE WHEN bb.CustID IS NOT NULL THEN 13 END BasketballLevel
 		, NULL AS WinlossSoccer
 		, NULL AS WinlossBasketball
-		, CASE WHEN CategoryID IN (52,54,58,92,94,98) THEN 1 ELSE 0 END UpdateSoccer
-		, 1 AS UpdateBasketball
-	FROM CustDangerJobExclusion WITH (NOLOCK)
-	WHERE CreateDate>=@ScanDate 
+		, CASE WHEN sc.CustID IS NOT NULL THEN 1 ELSE 0 END UpdateSoccer
+		, CASE WHEN bb.CustID IS NOT NULL THEN 1 ELSE 0 END UpdateBasketball
+	FROM CustDangerJobExclusion cd WITH (NOLOCK)
+		OUTER APPLY (SELECT TOP (1) sc.CustID FROM CustDangerJobExclusion sc WITH (NOLOCK) WHERE sc.custid=cd.custid AND sc.SportType=1 AND sc.CreateDate>=@ScanDate) sc
+		OUTER APPLY (SELECT TOP (1) bb.CustID FROM CustDangerJobExclusion bb WITH (NOLOCK) WHERE bb.custid=cd.custid AND bb.SportType=2 AND bb.CreateDate>=@ScanDate) bb
+	WHERE cd.CreateDate>=@ScanDate 
 
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball)
 	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball, IsManualSoccer, IsManualBasketball
