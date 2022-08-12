@@ -148,20 +148,21 @@ BEGIN
 	BEGIN
 		CREATE TABLE #tblCustLogAdd(
 				CustID		INT
-			,	CategoryID	INT
+			,	SportType	TINYINT
 			,	CreateDate	DATETIME
 		)
 		
-		INSERT INTO #tblCustLogAdd(custid,CategoryID,CreateDate)
+		INSERT INTO #tblCustLogAdd(custid,SportType,CreateDate)
 		SELECT	t.c.value('@CustID[1]','int'),
-				t.c.value('@CategoryID[1]','int'),
+				t.c.value('@SportType[1]','tinyint'),
 				t.c.value('@CreateDate[1]','datetime')
 		FROM @xml.nodes('Root/r')as t(c)
 		
 		;WITH Tmp AS (
-		SELECT custid,
+		SELECT DISTINCT 
+			custid,
 			(SELECT 
-				CategoryID	AS '@CategoryID',
+				SportType	AS '@SportType',
 				CreateDate	AS '@CreateDate',
 				@IP as '@IP'
 			FROM #tblCustLogAdd t1
@@ -180,20 +181,21 @@ BEGIN
 	BEGIN
 		CREATE TABLE #tblCustLogRemove(
 				CustID		INT
-			,	CategoryID	INT
+			,	SportType	TINYINT
 			,	RemoveDate	DATETIME
 		)
 		
-		INSERT INTO #tblCustLogRemove(custid,CategoryID,RemoveDate)
+		INSERT INTO #tblCustLogRemove(custid,SportType,RemoveDate)
 		SELECT	t.c.value('@CustID[1]','int'),
-				t.c.value('@CategoryID[1]','int'),
+				t.c.value('@SportType[1]','tinyint'),
 				t.c.value('@RemoveDate[1]','datetime')
 		FROM @xml.nodes('Root/r')as t(c)
 
 		;WITH Tmp AS (
-		SELECT custid,
+		SELECT DISTINCT 
+			custid,
 			(SELECT 
-				CategoryID	AS '@CategoryID',
+				SportType	AS '@SportType',
 				RemoveDate	AS '@RemoveDate',
 				@IP as '@IP'
 			FROM #tblCustLogRemove t1

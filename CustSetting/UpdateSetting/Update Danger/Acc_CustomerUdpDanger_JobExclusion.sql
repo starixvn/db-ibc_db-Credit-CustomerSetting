@@ -4,7 +4,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUdpDanger_JobExclusion]
 	@ErrCode	INT = 0	OUTPUT,
 	@ErrMsg		NVARCHAR(200) = '' OUTPUT		
 AS
-SET NOCOUNT ON
 /*
 	Created: 20220802@Tacy
 	Task : Update list Customers belong to Customer Class 8,9,10,131,86,96,106,132 to update saba danger level 13 [RedmineId: #175857]
@@ -113,7 +112,8 @@ BEGIN
 
 	--get dangerlevel update
 	INSERT INTO #tblCustUpdate(CustID, Soccer, Basketball, UpdateSoccer, UpdateBasketball)
-	SELECT cd.CustID
+	SELECT DISTINCT 
+		  cd.CustID
 		, CASE WHEN sc.CustID IS NOT NULL THEN 13 END SoccerLevel
 		, CASE WHEN bb.CustID IS NOT NULL THEN 13 END BasketballLevel
 		, CASE WHEN sc.CustID IS NOT NULL THEN 1 ELSE 0 END UpdateSoccer
