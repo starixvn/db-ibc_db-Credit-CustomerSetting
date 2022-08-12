@@ -33,7 +33,7 @@ BEGIN
 		,	CreateDate	DATETIME
 		,	RemoveDate	DATETIME
 		,	Action		SMALLINT	
-		,	PRIMARY KEY CLUSTERED (CustID, Action)
+		,	PRIMARY KEY CLUSTERED (CustID, SportType)
 	)
 
 	CREATE TABLE #tblCustDangerOld (
@@ -48,7 +48,7 @@ BEGIN
 			CustID		INT
 		,	SportType	TINYINT
 		,	Action		SMALLINT	
-		,	PRIMARY KEY CLUSTERED (CustID, Action)
+		,	PRIMARY KEY CLUSTERED (CustID, SportType)
 	)
 
 	CREATE TABLE #tblCustUpdate(
@@ -109,7 +109,7 @@ BEGIN
 	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball
 	FROM custinfo c WITH(NOLOCK)
 		CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
-	WHERE custid IN (SELECT custid FROM #tblCustList WHERE Action=1)
+	WHERE custid IN (SELECT DISTINCT custid FROM #tblCustList WHERE Action=1)
 
 	--get dangerlevel update
 	INSERT INTO #tblCustUpdate(CustID, Soccer, Basketball, UpdateSoccer, UpdateBasketball)
