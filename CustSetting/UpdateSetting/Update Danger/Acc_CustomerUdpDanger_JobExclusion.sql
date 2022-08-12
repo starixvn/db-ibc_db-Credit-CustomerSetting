@@ -91,7 +91,7 @@ BEGIN
 	OUTPUT deleted.CustID, deleted.SportType, GETDATE(), -1
 		INTO #tblCustOld (CustID, SportType, RemoveDate, Action)
 	FROM CustDangerJobExclusion cd WITH (ROWLOCK)
-		INNER JOIN #tblCustList t ON t.CustID=cd.CustID
+		INNER JOIN #tblCustList t ON t.CustID=cd.CustID AND t.SportType=cd.SportType
 	WHERE t.Action=-1
 	
 	--Add new customer:
@@ -100,7 +100,7 @@ BEGIN
 		INTO #tblCustOld (CustID, SportType, CreateDate, Action)
 	SELECT t.CustID, t.SportType, GETDATE()
 	FROM #tblCustList t
-		LEFT JOIN CustDangerJobExclusion cd WITH (NOLOCK) ON t.CustID=cd.CustID
+		LEFT JOIN CustDangerJobExclusion cd WITH (NOLOCK) ON t.CustID=cd.CustID AND t.SportType=cd.SportType
 	WHERE cd.CustID IS NULL AND t.Action=1
 
 	--get dangerlevel old:
