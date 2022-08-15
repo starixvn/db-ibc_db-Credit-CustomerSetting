@@ -14,9 +14,9 @@ AS
 
 	Parameter's Explanation:		
 		- @CustList  =  '<Root>
-							<r custid="100" SportType="1" action="1"/>
-							<r custid="100" SportType="2" action="1"/>
-							<r custid="102" SportType="1" action="-1"/>
+							<r CustID="100" SportType="1" Action="1"/>
+							<r CustID="100" SportType="2" Action="1"/>
+							<r CustID="102" SportType="1" Action="-1"/>
 						</Root>'
 		- action: -1 ~ remove, <>-1 ~ insert
 */	
