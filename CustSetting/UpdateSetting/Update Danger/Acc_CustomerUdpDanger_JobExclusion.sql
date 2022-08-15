@@ -150,6 +150,9 @@ BEGIN
 	SELECT @batchNo = MAX(batchNo) + 1 
 	FROM CustDangerLevelInfo WITH(NOLOCK)
 
+	SELECT @batchNo = CASE WHEN @batchNo < (MAX(batchNo) + 1) THEN MAX(batchNo) + 1 ELSE @batchNo END
+	FROM CustDangerWinlossInfo WITH(NOLOCK)
+
 	INSERT INTO CustDangerLevelInfo(Custid,
 									BatchNo,
 									Soccer,
