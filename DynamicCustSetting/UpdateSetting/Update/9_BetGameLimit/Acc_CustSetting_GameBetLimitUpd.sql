@@ -41,6 +41,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @CustList	VARCHAR(MAX) = ''
+
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
@@ -223,7 +224,7 @@ BEGIN
 										BetType		AS '@BetType',
 										MinBet		AS '@MinBet',
 										MaxBet		AS '@MaxBet',
-										MaxPerNumber AS '@MaxPerMatch'
+										MaxPerNumber AS '@MaxPerNumber'
 							FROM @NewBetLimitTbl
 							FOR XML PATH('r'), ROOT ('root')
 							)
@@ -231,7 +232,7 @@ BEGIN
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,
 						@SettingList=@GameBetLimit,
-						@Mode='BetSetting'
+						@SettingType=9
 		END
 		ELSE
 		BEGIN

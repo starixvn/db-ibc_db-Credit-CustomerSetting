@@ -1,10 +1,9 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet" viewers="" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [dbo].[Acc_DynamicCustomerInfo_01]
+CREATE PROCEDURE [dbo].[Acc_DynamicCustomerInfo_01_TACY]
 		@CustID			INT,
 		@SettingList	VARCHAR(MAX)=NULL,
-		@Mode			VARCHAR(50)='',
-		@AgentID		INT=NULL,
-		@SettingType	SMALLINT = NULL
+		@SettingType	SMALLINT = NULL,
+		@AgentID		INT=NULL
 AS
 /*
 	Created: 20220808@Tacy
@@ -24,7 +23,23 @@ BEGIN
 
 	IF @SettingList IS NULL OR @SettingList='' RETURN
 
-	IF @Mode='PT'
+	DECLARE @NewBetLimitTbl TABLE (
+			SportType			SMALLINT
+			, BetType			SMALLINT
+			, MinBet			MONEY
+			, MaxBet			MONEY
+			, MaxPerMatch		MONEY
+	)
+
+	DECLARE @NewLimitTbl TABLE (
+			  SportType		SMALLINT
+			, BetType		SMALLINT
+			, MaxWinLimit	SMALLMONEY 
+			, MaxLossLimit	MONEY 
+			, IsAutoReset	BIT
+	)
+	
+	IF @SettingType IN (1,18) -- PT
 	BEGIN
 		DECLARE @SettingMode	BIT = 0, 
 				@MemGroup		INT
@@ -148,7 +163,7 @@ BEGIN
 			END
 		END
 	END
-	ELSE IF @Mode='Commission'
+	ELSE IF @SettingType IN (3,19) --Commission
 	BEGIN
 		IF dbo.f_CheckRepTable('custinfo') = 0 RETURN
 		IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 0 RETURN
@@ -200,30 +215,19 @@ BEGIN
 			INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
 		WHERE dcmem.CustID=@CustID AND @SettingType IN (3,19)
 	END
-	ELSE IF @Mode='BetSetting'
+	ELSE IF @SettingType=2 --BetSetting
 	BEGIN
-		DECLARE @NewBetLimitTbl TABLE (
-			SportType			SMALLINT
-			, BetType			SMALLINT
-			, MinBet			MONEY
-			, MaxBet			MONEY
-			, MaxPerMatch		MONEY
-		)
-
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
 		INSERT @NewBetLimitTbl (SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT SportType,BetType,
-			CAST(MinBet AS MONEY) AS MinBet,
-			CAST(MaxBet AS MONEY) AS MaxBet,
-			CASE WHEN ISNUMERIC(MaxPerMatch)=0 THEN NULL ELSE CAST(MaxPerMatch AS MONEY) END AS MaxPerMatch
+		SELECT SportType, BetType, MinBet, MaxBet, MaxPerMatch
 		FROM OPENXML (@iDoc, '/root/r',1) 
-		WITH(SportType	SMALLINT, 
-			 BetType	SMALLINT, 
-			 MinBet		VARCHAR(15), 
-			 MaxBet		VARCHAR(15), 
-			 MaxPerMatch VARCHAR(15))	
+		WITH(SportType		SMALLINT
+			, BetType		SMALLINT
+			, MinBet		MONEY
+			, MaxBet		MONEY
+			, MaxPerMatch	MONEY)	
 	
 		EXEC sp_xml_removedocument @iDoc
 
@@ -231,7 +235,7 @@ BEGIN
 		UPDATE main
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
-			, main.maxpermatch	= CASE WHEN tmp.MaxperMatch IS NULL THEN main.MaxPerMatch ELSE tmp.MaxPerMatch END
+			, main.maxpermatch	= tmp.MaxperMatch
 		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewBetLimitTbl tmp
 			ON tmp.SportType	= main.sporttype
@@ -239,33 +243,115 @@ BEGIN
 		WHERE main.custid = @CustID
 			AND (
 					main.minbet		<> tmp.MinBet
-				OR  main.maxbet		<> tmp.MaxBet
-				OR (main.maxpermatch <> tmp.MaxperMatch AND tmp.MaxPerMatch IS NOT NULL)
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxperMatch
 				)
 	END
-	ELSE IF @Mode='WinLossLimit'
+	ELSE IF @SettingType=9
 	BEGIN
-		DECLARE @NewLimitTbl TABLE (
-			  SportType		SMALLINT
+		--Parse XML
+		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
+	
+		INSERT @NewBetLimitTbl (SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT SportType, BetType, MinBet, MaxBet, MaxPerNumber
+		FROM OPENXML (@iDoc, '/root/r',1) 
+		WITH(SportType		SMALLINT
 			, BetType		SMALLINT
-			, MaxWinLimit	SMALLMONEY 
-			, MaxLossLimit	MONEY 
-			, IsAutoReset	BIT
-		)
+			, MinBet		MONEY
+			, MaxBet		MONEY
+			, MaxPerNumber	MONEY)	
+	
+		EXEC sp_xml_removedocument @iDoc
 
+		--update new settings
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+			, main.maxpermatch	= tmp.MaxPerMatch
+		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+		INNER JOIN @NewBetLimitTbl tmp
+			ON tmp.SportType	= main.sporttype
+				AND tmp.BetType = main.bettype
+		WHERE main.custid = @CustID
+			AND (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxPerMatch
+				)
+	END
+	ELSE IF @SettingType=16
+	BEGIN
+		--Parse XML
+		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
+	
+		INSERT @NewBetLimitTbl (SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT SportType, BetType, MinBet, MaxBet, MaxPerMatch
+		FROM OPENXML (@iDoc, '/root/r',1) 
+		WITH(SportType		SMALLINT
+			, BetType		SMALLINT
+			, MinBet		MONEY
+			, MaxBet		MONEY
+			, MaxPerMatch	MONEY)	
+	
+		EXEC sp_xml_removedocument @iDoc
+
+		--update new settings
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+			, main.maxpermatch	= tmp.MaxPerMatch
+		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+		INNER JOIN @NewBetLimitTbl tmp
+			ON tmp.SportType	= main.sporttype
+				AND tmp.BetType = main.bettype
+		WHERE main.custid = @CustID
+			AND (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxPerMatch
+				)
+	END
+	ELSE IF @SettingType=20
+	BEGIN
+		--Parse XML
+		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
+	
+		INSERT @NewBetLimitTbl (SportType, BetType, MinBet, MaxBet)
+		SELECT SportType, BetType, MinBet, MaxBet
+		FROM OPENXML (@iDoc, '/root/r',1) 
+		WITH(SportType		SMALLINT
+			, BetType		SMALLINT
+			, MinBet		MONEY
+			, MaxBet		MONEY)
+	
+		EXEC sp_xml_removedocument @iDoc
+
+		--update new settings
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+		INNER JOIN @NewBetLimitTbl tmp
+			ON tmp.SportType	= main.sporttype
+				AND tmp.BetType = main.bettype
+		WHERE main.custid = @CustID
+			AND (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				)
+	END
+	ELSE IF @SettingType=6 --WinLossLimit
+	BEGIN
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
 		INSERT @NewLimitTbl (SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
-		SELECT SportType, BetType
-			, CASE WHEN ISNUMERIC(MaxWinLimit)=0 THEN NULL ELSE CAST(MaxWinLimit AS SMALLMONEY) END MaxWinLimit
-			, CASE WHEN ISNUMERIC(MaxLossLimit)=0 THEN NULL ELSE CAST(MaxLossLimit AS MONEY) END MaxLossLimit
-			, IsAutoReset
+		SELECT SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset
 		FROM OPENXML (@iDoc, '/root/r',1) 
 		WITH(SportType		SMALLINT
 			, BetType		SMALLINT
-			, MaxWinLimit	VARCHAR(50)
-			, MaxLossLimit	VARCHAR(50)
+			, MaxWinLimit	SMALLMONEY
+			, MaxLossLimit	MONEY
 			, IsAutoReset	BIT
 		)	
 	
@@ -273,19 +359,42 @@ BEGIN
 
 		--update new settings
 		UPDATE main
-		SET main.MaxWinLimit = CASE WHEN tmp.MaxWinLimit IS NOT NULL THEN tmp.MaxWinLimit ELSE main.MaxWinLimit END
+		SET main.MaxWinLimit = tmp.MaxWinLimit
 			, main.IsAutoReset = tmp.IsAutoReset
-			, main.MaxLossLimit = CASE WHEN tmp.MaxLossLimit IS NOT NULL THEN tmp.MaxLossLimit ELSE main.MaxLossLimit END
+			, main.MaxLossLimit = tmp.MaxLossLimit
 		FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID
-			AND (
-					(main.MaxWinLimit <> tmp.MaxWinLimit AND tmp.MaxLossLimit IS NULL) 
-				 OR (main.MaxLossLimit <> tmp.MaxLossLimit AND tmp.MaxLossLimit IS NULL)
-				 OR  main.IsAutoReset <> tmp.IsAutoReset 
-				)
+			AND (main.MaxWinLimit <> tmp.MaxWinLimit OR main.IsAutoReset <> tmp.IsAutoReset OR main.MaxLossLimit <> tmp.MaxLossLimit)
+
 	END
-	ELSE IF @Mode='StakeLevel'
+	ELSE IF @SettingType=12 --Losslimit
+	BEGIN
+		--Parse XML
+		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
+	
+		INSERT @NewLimitTbl (SportType, BetType, MaxLossLimit, IsAutoReset)
+		SELECT SportType, BetType, MaxLossLimit, IsAutoReset
+		FROM OPENXML (@iDoc, '/root/r',1) 
+		WITH(SportType		SMALLINT
+			, BetType		SMALLINT
+			, MaxLossLimit	MONEY
+			, IsAutoReset	BIT
+		)	
+	
+		EXEC sp_xml_removedocument @iDoc
+
+		--update new settings
+		UPDATE main
+		SET main.MaxLossLimit = tmp.MaxLossLimit
+			, main.IsAutoReset = tmp.IsAutoReset
+		FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
+		INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+		WHERE main.custid = @CustID
+			AND (main.MaxLossLimit <> tmp.MaxLossLimit OR main.IsAutoReset <> tmp.IsAutoReset)
+
+	END
+	ELSE IF @SettingType IN (7,8) --Stakelevel
 	BEGIN
 		CREATE TABLE #tmpStake (
 				SportType		SMALLINT

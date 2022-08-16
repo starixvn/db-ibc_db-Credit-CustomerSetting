@@ -537,6 +537,14 @@ BEGIN
 		
 	IF @isSearchAndCopy=1
 	BEGIN
+		DECLARE @SettingType SMALLINT
+
+		SELECT @SettingType = ps.SettingType
+		FROM @NewPTTble t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		WHERE ps.SettingType IN (1,18)
+
 		SET	@SettingList =	(
 							SELECT	SportType,			
 									BetType,
@@ -555,7 +563,7 @@ BEGIN
 		EXECUTE Acc_DynamicCustomerInfo_01 
 					@CustID=@CustID,
 					@SettingList=@SettingList,
-					@Mode='PT',
+					@SettingType=@SettingType,
 					@AgentID=@AgentID
 	END
 	ELSE 

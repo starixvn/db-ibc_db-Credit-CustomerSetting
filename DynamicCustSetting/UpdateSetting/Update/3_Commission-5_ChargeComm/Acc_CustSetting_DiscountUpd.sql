@@ -272,7 +272,6 @@ BEGIN
 						@CustID=@CustID,
 						@SettingList=@CorrectedDiscount_XML,
 						@SettingType=@SettingType,
-						@Mode='Commission',
 						@AgentID=@AgentID
 	END
 	ELSE

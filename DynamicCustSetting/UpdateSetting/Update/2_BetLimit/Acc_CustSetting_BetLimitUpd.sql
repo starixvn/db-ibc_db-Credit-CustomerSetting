@@ -40,13 +40,14 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
+
 	DECLARE @CustList	VARCHAR(MAX) = ''
+
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
 		, @duration		INT
 		, @ActionID		INT
-		
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
 		, @logSpData_Indirectly	NVARCHAR(MAX)
@@ -231,7 +232,7 @@ BEGIN
 			EXECUTE Acc_DynamicCustomerInfo_01
 						@CustID=@CustID,
 						@SettingList=@BetLimit,
-						@Mode='BetSetting'
+						@SettingType=2
 		END
 		ELSE
 		BEGIN

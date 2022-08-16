@@ -254,19 +254,29 @@ BEGIN
 
 		IF @isSearchAndCopy=1
 		BEGIN
-			SET @Limit = (SELECT SportType		AS '@SportType',
-								BetType			AS '@BetType',
-								CASE WHEN MaxWinLimit IS NULL THEN 'NULL' ELSE CAST(MaxWinLimit AS VARCHAR) END AS '@MaxWinLimit',
-								CASE WHEN MaxLossLimit IS NULL THEN 'NULL' ELSE CAST(MaxLossLimit AS VARCHAR) END AS '@MaxLossLimit',
-								IsAutoReset		AS '@IsAutoReset'
-						FROM @NewLimitTbl
-						FOR XML PATH('r'), ROOT ('root')
-						)
+			IF @SettingType = 6
+				SET @Limit = (SELECT SportType		AS '@SportType',
+									BetType			AS '@BetType',
+									MaxWinLimit		AS '@MaxWinLimit',
+									MaxLossLimit	AS '@MaxLossLimit',
+									IsAutoReset		AS '@IsAutoReset'
+							FROM @NewLimitTbl
+							FOR XML PATH('r'), ROOT ('root')
+							)
+
+			IF @SettingType = 12
+				SET @Limit = (SELECT SportType		AS '@SportType',
+									BetType			AS '@BetType',
+									MaxLossLimit	AS '@MaxLossLimit',
+									IsAutoReset		AS '@IsAutoReset'
+							FROM @NewLimitTbl
+							FOR XML PATH('r'), ROOT ('root')
+							)
 
 			EXECUTE Acc_DynamicCustomerInfo_01 
 						@CustID=@CustID,
 						@SettingList=@Limit,
-						@Mode='WinLossLimit'
+						@SettingType=@SettingType
 		END
 		ELSE
 		BEGIN
