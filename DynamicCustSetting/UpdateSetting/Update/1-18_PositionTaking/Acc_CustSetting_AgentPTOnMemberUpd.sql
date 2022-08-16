@@ -564,7 +564,7 @@ BEGIN
 					@CustID=@CustID,
 					@SettingList=@SettingList,
 					@SettingType=@SettingType,
-					@AgentID=@AgentID
+					@AgentID=@_AgentID
 	END
 	ELSE 
 	BEGIN
