@@ -41,6 +41,9 @@ BEGIN
 	
 	IF @SettingType IN (1,18) -- PT
 	BEGIN
+		IF dbo.f_CheckRepTable('CustSettingMode3rd') = 0 RETURN
+		IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 0 RETURN
+
 		DECLARE @SettingMode	BIT = 0, 
 				@MemGroup		INT
 
@@ -217,6 +220,8 @@ BEGIN
 	END
 	ELSE IF @SettingType=2 --BetSetting
 	BEGIN
+		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
+		
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -249,6 +254,8 @@ BEGIN
 	END
 	ELSE IF @SettingType=9
 	BEGIN
+		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
+
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -281,6 +288,8 @@ BEGIN
 	END
 	ELSE IF @SettingType=16
 	BEGIN
+		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
+
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -313,6 +322,8 @@ BEGIN
 	END
 	ELSE IF @SettingType=20
 	BEGIN
+		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
+
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -342,6 +353,8 @@ BEGIN
 	END
 	ELSE IF @SettingType=6 --WinLossLimit
 	BEGIN
+		IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
+
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -370,6 +383,8 @@ BEGIN
 	END
 	ELSE IF @SettingType=12 --Losslimit
 	BEGIN
+		IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
+
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -396,6 +411,8 @@ BEGIN
 	END
 	ELSE IF @SettingType IN (7,8) --Stakelevel
 	BEGIN
+		IF dbo.f_CheckRepTable('CustStakeLevel_Member') = 0 RETURN
+
 		CREATE TABLE #tmpStake (
 				SportType		SMALLINT
 			,	BetType			INT
