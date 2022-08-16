@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbadminNet" viewers="" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [dbo].[Acc_DynamicCustomerInfo_01_TACY]
+CREATE PROCEDURE [dbo].[Acc_DynamicCustomerInfo_01]
 		@CustID			INT,
 		@SettingList	VARCHAR(MAX)=NULL,
 		@SettingType	SMALLINT = NULL,
