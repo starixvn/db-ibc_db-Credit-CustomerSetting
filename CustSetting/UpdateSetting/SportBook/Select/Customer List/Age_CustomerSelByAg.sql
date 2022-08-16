@@ -25,7 +25,7 @@ BEGIN
 	Revisions: 		
 		- 20200724@winfred: Remove Status games for customer list smartphone [redmine: #137130]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
-		
+		- 20220816@Johnson: enhance sp [redmine: #176641]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -173,27 +173,32 @@ BEGIN
 		WHERE ac.Sporttype = 1 AND ac.Bettype = 1	
 	
 	END
-	;WITH src AS (
-		SELECT c.custid as custid
-			,rn
-			,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.discount else 0 end) as discount
-			,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.discount else 0 end) as discountcs
-			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.discount else 0 end) as discount1x2	
+	
+	CREATE TABLE #Result (custid INT PRIMARY KEY, rn INT, discount DECIMAL(9,8), discountcs DECIMAL(9,8), discount1x2 DECIMAL(9,8),
+		playerdiscount DECIMAL(9,8), playerdiscountcs DECIMAL(9,8), playerdiscount1x2 DECIMAL(9,8),
+		playerdiscountMyanmarOdds DECIMAL (9,8), adiscountMyanmarOdds DECIMAL (9,8) 
+		)
+	
+	INSERT INTO #Result(custid, rn, discount, discountcs, discount1x2, playerdiscount, playerdiscountcs, playerdiscount1x2,
+					playerdiscountMyanmarOdds, adiscountMyanmarOdds)
+	SELECT c.custid as custid
+		,rn
+		,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.discount else 0 end) as discount
+		,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.discount else 0 end) as discountcs
+		,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.discount else 0 end) as discount1x2	
 
-			,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.playerdiscount else 0 end) as playerdiscount
-			,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.playerdiscount else 0 end) as playerdiscountcs
-			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.playerdiscount else 0 end) as playerdiscount1x2
-			
-			,ISNULL(C.playerdiscountMyanmarOdds,0) AS playerdiscountMyanmarOdds
-			,ISNULL(C.adiscountMyanmarOdds,0) AS adiscountMyanmarOdds		
-		FROM #memberList c
-			LEFT JOIN CustSetting cs with(nolock) 
-				on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) )
-			LEFT JOIN CustSetting3rd cs3 with(nolock) on c.custid = cs3.custid and cs3.sporttype = 161 and cs3.bettype = 81
-			LEFT JOIN CustGameType cg with(nolock) on c.custid = cg.custid
-		WHERE rn between @rowstart and @rowend
-		GROUP BY c.custid, rn,c.playerdiscountMyanmarOdds,c.adiscountMyanmarOdds
-	)
+		,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.playerdiscount else 0 end) as playerdiscount
+		,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.playerdiscount else 0 end) as playerdiscountcs
+		,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.playerdiscount else 0 end) as playerdiscount1x2
+		
+		,ISNULL(C.playerdiscountMyanmarOdds,0) AS playerdiscountMyanmarOdds
+		,ISNULL(C.adiscountMyanmarOdds,0) AS adiscountMyanmarOdds		
+	FROM #memberList c
+		LEFT JOIN CustSetting cs with(nolock) 
+			on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) )		
+	WHERE rn between @rowstart and @rowend
+	GROUP BY c.custid, rn,c.playerdiscountMyanmarOdds,c.adiscountMyanmarOdds
+	
 	
 	SELECT   
 		ci.enabled, cps.closed, isnull(cps.reject,0) as suspended, isnull(ci.DisableOutright,0) as DisableOutright, ci.virtualmultiplier-1 as VirtualMultiplier,   
@@ -215,10 +220,10 @@ BEGIN
 		rn as RowNumber,
 		ISNULL(cl.ClosedReason,0) AS ClosedReason,
 		ISNULL(cps.Locked,0) AS Locked
-		FROM src m  
+		FROM #Result m  
 			INNER JOIN customer c (nolock) on m.custid = c.custid  
 			INNER JOIN Custinfo ci (nolock) on m.custid = ci.custid      
-			CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+			CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
