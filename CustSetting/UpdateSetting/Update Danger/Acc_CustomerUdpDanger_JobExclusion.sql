@@ -201,7 +201,8 @@ BEGIN
 				old.Soccer			as '@os',
 				old.Basketball		as '@ob',
 				'NULL'				as '@wls',
-				'NULL'				as '@wlb'
+				'NULL'				as '@wlb',
+				'1'					as '@IsPA'
 		FROM #tblCustUpdate new
 			INNER JOIN #tblCustDangerOld old ON old.Custid=new.CustID
 		FOR XML PATH('r'), ROOT('Root')

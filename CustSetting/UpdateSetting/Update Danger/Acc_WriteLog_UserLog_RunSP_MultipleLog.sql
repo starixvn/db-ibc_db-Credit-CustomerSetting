@@ -36,9 +36,19 @@ BEGIN
 	DECLARE @xml XML = CAST (@Log as XML)
 	IF @ActionID = 1187 
 	BEGIN
-		CREATE TABLE #tblCustLog(custid INT PRIMARY KEY, soccer TINYINT, basketball TINYINT, updateSoccer BIT, updateBasketball BIT, OldSoccer TINYINT, OldBasketball TINYINT, WinlossSoccer MONEY, WinlossBasketball MONEY)
+		CREATE TABLE #tblCustLog(
+				custid				INT PRIMARY KEY, 
+				soccer				TINYINT, 
+				basketball			TINYINT, 
+				updateSoccer		BIT, 
+				updateBasketball	BIT, 
+				OldSoccer			TINYINT, 
+				OldBasketball		TINYINT, 
+				WinlossSoccer		MONEY, 
+				WinlossBasketball	MONEY, 
+				IsupdatebyPA		BIT)
 		
-		INSERT INTO #tblCustLog(custid,soccer,basketball,updateSoccer,updateBasketball,OldSoccer,OldBasketball,WinlossSoccer,WinlossBasketball)
+		INSERT INTO #tblCustLog(custid,soccer,basketball,updateSoccer,updateBasketball,OldSoccer,OldBasketball,WinlossSoccer,WinlossBasketball,IsupdatebyPA)
 		SELECT t.c.value('@id[1]','int'),
 			t.c.value('@s[1]','tinyint'),
 			t.c.value('@b[1]','tinyint'),
@@ -47,7 +57,8 @@ BEGIN
 			t.c.value('@os[1]','tinyint'),
 			t.c.value('@ob[1]','tinyint'),
 			CASE WHEN ISNUMERIC(t.c.value('@wls[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wls[1]','money') END,
-			CASE WHEN ISNUMERIC(t.c.value('@wlb[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wlb[1]','money') END
+			CASE WHEN ISNUMERIC(t.c.value('@wlb[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wlb[1]','money') END,
+			t.c.value('@IsPA[1]','bit')
 		FROM @xml.nodes('Root/r')as t(c)
 		
 		;WITH Tmp AS (
@@ -57,6 +68,7 @@ BEGIN
 				CASE WHEN UpdateBasketball = 1 THEN basketball END as '@Basketball',
 				CASE WHEN UpdateSoccer = 1 THEN ISNULL(WinlossSoccer,'') END as '@WinlossSoccer',
 				CASE WHEN UpdateBasketball = 1 THEN ISNULL(WinlossBasketball,'') END as '@WinlossBasketball',
+				IsupdatebyPA as '@IsupdatebyPA',
 				@IP as '@IP'
 			FROM #tblCustLog t1
 			WHERE t1.custid = t.custid

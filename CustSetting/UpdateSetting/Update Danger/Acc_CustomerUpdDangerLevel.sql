@@ -319,15 +319,16 @@ BEGIN
 	DECLARE @Log VARCHAR(MAX)
 	
 	SELECT @Log = CAST((
-		SELECT custid as '@id',
-			soccer as '@s',
-			basketball as '@b',
-			UpdateSoccer as '@us',
+		SELECT custid		as '@id',
+			soccer			as '@s',
+			basketball		as '@b',
+			UpdateSoccer	as '@us',
 			UpdateBasketball as '@ub',
-			SoccerOld as '@os',
-			BasketballOld as '@ob',
+			SoccerOld		as '@os',
+			BasketballOld	as '@ob',
 			CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wls',
-			CASE WHEN WinlossBasketball IS NULL THEN 'NULL' ELSE CAST(WinlossBasketball AS VARCHAR) END  as '@wlb'
+			CASE WHEN WinlossBasketball IS NULL THEN 'NULL' ELSE CAST(WinlossBasketball AS VARCHAR) END  as '@wlb',
+			'0'				as '@IsPA'
 		FROM #tblCustUpdate t			
 		FOR XML PATH('r'), ROOT('Root')
 	) AS VARCHAR(MAX))	
