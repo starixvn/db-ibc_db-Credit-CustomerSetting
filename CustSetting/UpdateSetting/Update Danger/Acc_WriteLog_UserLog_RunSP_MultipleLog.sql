@@ -167,7 +167,7 @@ BEGIN
 				@IP as '@IP'
 			FROM #tblCustLogAdd t1
 			WHERE t1.custid = t.custid
-			FOR XML PATH('R')
+			FOR XML PATH('R'), ROOT ('ROOT')
 			) as LogAdd
 		FROM #tblCustLogAdd t
 		)
@@ -200,7 +200,7 @@ BEGIN
 				@IP as '@IP'
 			FROM #tblCustLogRemove t1
 			WHERE t1.custid = t.custid
-			FOR XML PATH('R')
+			FOR XML PATH('R'), ROOT ('ROOT')
 			) as LogRemove
 		FROM #tblCustLogRemove t
 		)
