@@ -19,6 +19,7 @@ AS
 		- 20220711@Tacy: update DangerLevel for Haifa, 789y site and USDT currency of Saba Basketball Sport [redmine:#175247]
 		- 20220715@Tacy: update DangerLevel for (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site) of Saba Basketball Sport [redmine:#175505]
 		- 20220802@Tacy: Update Danger Level if Problem Customer Class [RedmineId: #175857]
+		- 20220817@Tacy: scan and update DangerLevel according to Winloss of Saba Basketball Sport (Livv88sw site) [redmine:#176712]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -170,7 +171,7 @@ BEGIN
 		CASE WHEN bb.CustID IS NOT NULL THEN 13
 			WHEN (s.custid IS NOT NULL AND s.site='haifa')
 				OR (s.custid IS NULL AND c.site='789y')		
-				OR s.currency=96															 THEN -- Flow B : Haifa, 789y site and USDT currency
+				OR s.currency=96															 THEN -- Flow B : Haifa, 789y, Livv88sw site and USDT currency
 					CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
 						CASE 
 							WHEN basketball <-140000								THEN 1
