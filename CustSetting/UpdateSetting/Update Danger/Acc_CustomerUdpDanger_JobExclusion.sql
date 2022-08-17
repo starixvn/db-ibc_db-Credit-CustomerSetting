@@ -178,8 +178,7 @@ BEGIN
 
 	SELECT @LogAdd = CAST((
 		SELECT	custid		AS '@CustID',
-				SportType	AS '@SportType',
-				CreateDate	AS '@CreateDate'
+				SportType	AS '@SportType'
 		FROM #tblCustOld t
 		WHERE Action=1
 		FOR XML PATH('r'), ROOT('Root')
@@ -187,8 +186,7 @@ BEGIN
 
 	SELECT @LogRemove = CAST((
 		SELECT	custid		AS '@CustID',
-				SportType	AS '@SportType',
-				RemoveDate	AS '@RemoveDate'
+				SportType	AS '@SportType'
 		FROM #tblCustOld t
 		WHERE Action=-1
 		FOR XML PATH('r'), ROOT('Root')
