@@ -319,7 +319,7 @@ BEGIN
 	DECLARE @Log VARCHAR(MAX)
 	
 	SELECT @Log = CAST((
-		SELECT custid		as '@id',
+		SELECT t.custid		as '@id',
 			soccer			as '@s',
 			basketball		as '@b',
 			UpdateSoccer	as '@us',
@@ -328,8 +328,10 @@ BEGIN
 			BasketballOld	as '@ob',
 			CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wls',
 			CASE WHEN WinlossBasketball IS NULL THEN 'NULL' ELSE CAST(WinlossBasketball AS VARCHAR) END  as '@wlb',
-			'0'				as '@IsPA'
-		FROM #tblCustUpdate t			
+			CASE WHEN cd.CustID IS NOT NULL THEN '1' ELSE '0' END as '@IsPA'
+		FROM #tblCustUpdate t		
+			OUTER APPLY (SELECT TOP (1) CustID FROM CustDangerJobExclusion cd WITH (NOLOCK)
+						 WHERE cd.CustID=t.Custid AND cd.CreateDate>=@ScanDate) cd
 		FOR XML PATH('r'), ROOT('Root')
 	) AS VARCHAR(MAX))	
 	
