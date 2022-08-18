@@ -35,7 +35,7 @@ BEGIN
 			@Duration INT, @LogDataNew VARCHAR(500), @LogDataOld VARCHAR(500)
 
 	SET @StartRun = GETDATE()
-	SET @ScanDate = DATEADD(HH,-1,@StartRun)
+	SET @ScanDate = (SELECT MAX(CreatedDate) FROM CustDangerWinlossInfo WITH (NOLOCK))
 
 	CREATE TABLE #tblCustWinloss (custid INT, sporttype SMALLINT, isParlay BIT, winloss MONEY)
 	CREATE TABLE #tblCustDangerInfo (Custid INT PRIMARY KEY, Soccer TINYINT, Basketball TINYINT, WinlossSoccer MONEY, WinlossBasketball MONEY, UpdateSoccer BIT, UpdateBasketball BIT)
