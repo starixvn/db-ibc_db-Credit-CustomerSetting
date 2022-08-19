@@ -64,6 +64,7 @@ BEGIN
 	--Check if XML is null or empty
 	IF @CustList IS NULL OR @CustList=''
 	BEGIN
+		SET @ErrCode=101
 		SET @ErrMsg='Customer list is invalid.'
 		RETURN
 	END
