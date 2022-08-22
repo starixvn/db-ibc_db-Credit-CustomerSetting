@@ -55,13 +55,18 @@ BEGIN
 			,@isIMBC				BIT = 0
 	
 	CREATE TABLE #tempRef (Bettype INT,GroupTypeId INT)	
+
 	DECLARE @SearchQuery varchar(1024)
+
 	SELECT @SearchQuery = 'SELECT * 
 	FROM OPENQUERY(DBAGE, 
 	''SELECT Bettype , GroupTypeId FROM bodb02.dbo.f_GroupBettype( )'')'
+
 	INSERT INTO #tempRef
 	EXECUTE(@SearchQuery)
-	DELETE FROM #tempRef WHERE bettype=GroupTypeId
+
+	DELETE FROM #tempRef 
+	WHERE bettype=GroupTypeId OR BetType IN (3915,3900)  
 
 	IF @RoleID = 1 AND ISNULL(@CustID, 0) <> 0
 		IF (SELECT [Site] FROM DBCUST.CustDB.dbo.Customer WITH (NOLOCK)
@@ -140,7 +145,7 @@ BEGIN
 		UNION ALL 
 		SELECT DISTINCT Sporttype, Bettype, SporttypeRefPT, BettypeRefPT ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
 		FROM Sport_Bettype_Reference_Setting b WITH(NOLOCK)
-		WHERE   (bettype NOT IN(SELECT Bettype FROM #tempRef) OR BetType IN (3915,3900))
+		WHERE   bettype NOT IN (SELECT Bettype FROM #tempRef)
 				AND isLicensee = 0
 				AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
 				AND (SportType<>SporttypeRefPT OR bettype <>BettypeRefPT)
