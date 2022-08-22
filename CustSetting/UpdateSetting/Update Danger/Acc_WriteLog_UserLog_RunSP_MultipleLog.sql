@@ -46,9 +46,9 @@ BEGIN
 				OldBasketball		TINYINT, 
 				WinlossSoccer		MONEY, 
 				WinlossBasketball	MONEY, 
-				IsupdatebyPA		BIT)
+				IsUpdatedByPA		BIT)
 		
-		INSERT INTO #tblCustLog(custid,soccer,basketball,updateSoccer,updateBasketball,OldSoccer,OldBasketball,WinlossSoccer,WinlossBasketball,IsupdatebyPA)
+		INSERT INTO #tblCustLog(custid,soccer,basketball,updateSoccer,updateBasketball,OldSoccer,OldBasketball,WinlossSoccer,WinlossBasketball,IsUpdatedByPA)
 		SELECT t.c.value('@id[1]','int'),
 			t.c.value('@s[1]','tinyint'),
 			t.c.value('@b[1]','tinyint'),
@@ -68,7 +68,7 @@ BEGIN
 				CASE WHEN UpdateBasketball = 1 THEN basketball END as '@Basketball',
 				CASE WHEN UpdateSoccer = 1 THEN ISNULL(WinlossSoccer,'') END as '@WinlossSoccer',
 				CASE WHEN UpdateBasketball = 1 THEN ISNULL(WinlossBasketball,'') END as '@WinlossBasketball',
-				IsupdatebyPA as '@IsupdatebyPA',
+				IsUpdatedByPA as '@IsUpdatedByPA',
 				@IP as '@IP'
 			FROM #tblCustLog t1
 			WHERE t1.custid = t.custid
