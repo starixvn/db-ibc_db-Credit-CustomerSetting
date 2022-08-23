@@ -237,8 +237,8 @@ BEGIN
 		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
 		LEFT JOIN CustDangerJobExclusion sc WITH (NOLOCK) ON sc.custid=t.custid AND sc.SportType=1
 		LEFT JOIN CustDangerJobExclusion bb WITH (NOLOCK) ON bb.custid=t.custid AND bb.SportType=2
-	WHERE NOT (sc.custid IS NOT NULL  --Customer class: 8,9,86,96
-			OR bb.custid IS NOT NULL)
+	WHERE NOT ((isSoccer=1 AND sc.custid IS NOT NULL)  --Customer class: 8,9,86,96
+			OR ((isBasketball=1 AND bb.custid IS NOT NULL)))
 			
 	--PA List
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
