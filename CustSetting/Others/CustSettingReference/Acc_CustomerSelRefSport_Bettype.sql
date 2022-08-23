@@ -33,6 +33,8 @@ AS
 		- 20210104@Winfred: Add Happy 5 Linked game [Redmine: #146965]
 		- 20201209@winfred: get Disable Keno for customer list smartphone [redmine: #137130]
 		- 20211112@Johnson: rollback code for revision 20201209@winfred [redmine:#163077]
+		- 20220822@Tacy: hardcode show PT setting info for bettype: 3915, 3900 [RedmineID: #173861]
+
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
 		@isShowAll: 0: Show Active Bettype, 1: Show ALL 
@@ -53,13 +55,18 @@ BEGIN
 			,@isIMBC				BIT = 0
 	
 	CREATE TABLE #tempRef (Bettype INT,GroupTypeId INT)	
+
 	DECLARE @SearchQuery varchar(1024)
+
 	SELECT @SearchQuery = 'SELECT * 
 	FROM OPENQUERY(DBAGE, 
 	''SELECT Bettype , GroupTypeId FROM bodb02.dbo.f_GroupBettype( )'')'
+
 	INSERT INTO #tempRef
 	EXECUTE(@SearchQuery)
-	DELETE FROM #tempRef WHERE bettype=GroupTypeId
+
+	DELETE FROM #tempRef 
+	WHERE bettype=GroupTypeId OR BetType IN (3915,3900)  
 
 	IF @RoleID = 1 AND ISNULL(@CustID, 0) <> 0
 		IF (SELECT [Site] FROM DBCUST.CustDB.dbo.Customer WITH (NOLOCK)
@@ -110,53 +117,61 @@ BEGIN
 	IF @RoleID = 0
 		SET @IsMyanmarOdds = 1
 			
-	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
-	FROM	dbo.Sport_Bettype_Reference WITH (NOLOCK)
-	WHERE	Sporttype NOT IN (
-				 --CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
-				CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
-				,CASE WHEN @IsMyanmarOdds = 0 AND Bettype IN (1,3,7,8) THEN 1 ELSE 0 END -- MyanmarOdds
-				,27, 50 -- Cricket
-			)
-			AND bettype NOT IN(SELECT Bettype FROM #tempRef)
-			AND isLicensee = 0 
-			AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
-	UNION ALL
-	SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
-	FROM Sport_Bettype_Reference WITH (NOLOCK)
-	WHERE   Sporttype IN (27, 50)
-			AND [Site] IN (
-				 CASE WHEN ISNULL(@CustID, 0) = 0 THEN 'IMBC' END -- ALL
-				,CASE WHEN ISNULL(@CustID, 0) = 0 THEN 'ALL'  END -- ALL
-				,CASE WHEN ISNULL(@CustID, 0) <> 0 AND @isIMBC = 1 THEN 'IMBC' END -- IMBC only
-				,CASE WHEN ISNULL(@CustID, 0) <> 0 AND @isIMBC = 0 THEN 'ALL'  END -- MBC  only
-			)
-			AND isLicensee = 0
-			AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
+	;WITH CTE AS (
+		SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
+		FROM	dbo.Sport_Bettype_Reference WITH (NOLOCK)
+		WHERE	Sporttype NOT IN (
+					 --CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
+					CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
+					,CASE WHEN @IsMyanmarOdds = 0 AND Bettype IN (1,3,7,8) THEN 1 ELSE 0 END -- MyanmarOdds
+					,27, 50 -- Cricket
+				)
+				AND bettype NOT IN(SELECT Bettype FROM #tempRef)
+				AND isLicensee = 0 
+				AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
+		UNION ALL
+		SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
+		FROM Sport_Bettype_Reference WITH (NOLOCK)
+		WHERE   Sporttype IN (27, 50)
+				AND [Site] IN (
+					 CASE WHEN ISNULL(@CustID, 0) = 0 THEN 'IMBC' END -- ALL
+					,CASE WHEN ISNULL(@CustID, 0) = 0 THEN 'ALL'  END -- ALL
+					,CASE WHEN ISNULL(@CustID, 0) <> 0 AND @isIMBC = 1 THEN 'IMBC' END -- IMBC only
+					,CASE WHEN ISNULL(@CustID, 0) <> 0 AND @isIMBC = 0 THEN 'ALL'  END -- MBC  only
+				)
+				AND isLicensee = 0
+				AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
 	
-	UNION ALL 
-	SELECT DISTINCT Sporttype, Bettype, SporttypeRefPT, BettypeRefPT ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
-	FROM Sport_Bettype_Reference_Setting b WITH(NOLOCK)
-	WHERE   bettype NOT IN(SELECT Bettype FROM #tempRef)
-			AND isLicensee = 0
-			AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
-			AND (SportType<>SporttypeRefPT OR bettype <>BettypeRefPT)
-			AND NOT EXISTS (SELECT TOP 1 1 FROM Sport_Bettype_Reference a (NOLOCK) WHERE a.Sporttype=b.SportType AND a.Bettype=b.BetType)
-			AND (SportType<=99 -- Sportbook	
-					OR b.SportType BETWEEN 213 AND 218 --NG2
-					OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) --Virtual Sport
-					OR b.SportType = 220 -- Lottery
-					OR b.sportType = 164--Happy 5
-					OR b.sportType = 168--Happy 5 linked games
-					OR b.SportType = 202 --Keno
-					OR b.SportType = 161 -- Number Game
-					) 
-			AND 1 = CASE WHEN @DisableNumber = 1 AND b.SportType = 161 THEN 0 ELSE 1 END
-			AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
-			AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
-			AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
-			AND 1 = CASE WHEN (@HideKeno = 1 OR @DisableKeno = 1) AND b.SportType = 202 THEN 0 ELSE 1 END
-			AND b.Site <> 'CN88'
+		UNION ALL 
+		SELECT DISTINCT Sporttype, Bettype, SporttypeRefPT, BettypeRefPT ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
+		FROM Sport_Bettype_Reference_Setting b WITH(NOLOCK)
+		WHERE   bettype NOT IN (SELECT Bettype FROM #tempRef)
+				AND isLicensee = 0
+				AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
+				AND (SportType<>SporttypeRefPT OR bettype <>BettypeRefPT)
+				AND NOT EXISTS (SELECT TOP 1 1 FROM Sport_Bettype_Reference a (NOLOCK) WHERE a.Sporttype=b.SportType AND a.Bettype=b.BetType)
+				AND (SportType<=99 -- Sportbook	
+						OR b.SportType BETWEEN 213 AND 218 --NG2
+						OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) --Virtual Sport
+						OR b.SportType = 220 -- Lottery
+						OR b.sportType = 164--Happy 5
+						OR b.sportType = 168--Happy 5 linked games
+						OR b.SportType = 202 --Keno
+						OR b.SportType = 161 -- Number Game
+						) 
+				AND 1 = CASE WHEN @DisableNumber = 1 AND b.SportType = 161 THEN 0 ELSE 1 END
+				AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
+				AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
+				AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
+				AND 1 = CASE WHEN (@HideKeno = 1 OR @DisableKeno = 1) AND b.SportType = 202 THEN 0 ELSE 1 END
+				AND b.Site <> 'CN88'
+	)
+	SELECT Sporttype 
+		, CASE WHEN Sporttype=6 and bettype=3900 THEN 4 ELSE bettype END Bettype
+		, SporttypeRef, BettypeRef, IsMyanmarOdds
+	FROM CTE
 	ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
+
+	DROP TABLE #tempRef
 END
 GO
