@@ -94,7 +94,8 @@ BEGIN
 	)
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
 	SELECT t.custid,
-		CASE WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88')  THEN -- Flow C : 8 Licensees: IG128/SM88/SL88SW/LIVV88SW/365Online/SKY88/Sin88/One88
+		CASE WHEN sc.CustID IS NOT NULL THEN 13
+			WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88')  THEN -- Flow C : 8 Licensees: IG128/SM88/SL88SW/LIVV88SW/365Online/SKY88/Sin88/One88
 					CASE WHEN soccer + soccerParlay < 50000 OR isSoccerParlay = 0 THEN
 						CASE WHEN soccer < -250000 THEN 1
 							WHEN soccer <-200000 AND soccer >= -250000 THEN 2
@@ -166,7 +167,8 @@ BEGIN
 						END 
 				END	
 			END	SoccerLevel,
-		CASE WHEN (s.custid IS NOT NULL AND s.site='haifa')
+		CASE WHEN bb.CustID IS NOT NULL THEN 13
+			WHEN (s.custid IS NOT NULL AND s.site='haifa')
 				OR (s.custid IS NULL AND c.site='789y')		
 				OR s.currency=96															 THEN -- Flow B : Haifa, 789y site and USDT currency
 					CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
@@ -230,15 +232,13 @@ BEGIN
 			END	BasketballLevel,
 		Soccer + SoccerParlay as WinlossSoccer,
 		Basketball + basketballParlay as WinlossBasketball,
-		IsSoccer UpdateSoccer,
-		IsBasketball UpdateBasketball
+		CASE WHEN sc.CustID IS NOT NULL THEN 1 ELSE IsSoccer END UpdateSoccer,
+		CASE WHEN bb.CustID IS NOT NULL THEN 1 ELSE IsBasketball END UpdateBasketball
 	FROM T
 		INNER JOIN Customer c WITH(NOLOCK) ON c.custid = t.custid
 		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
 		LEFT JOIN CustDangerJobExclusion sc WITH (NOLOCK) ON sc.custid=t.custid AND sc.SportType=1
 		LEFT JOIN CustDangerJobExclusion bb WITH (NOLOCK) ON bb.custid=t.custid AND bb.SportType=2
-	WHERE NOT ((isSoccer=1 AND sc.custid IS NOT NULL)  --Customer class: 8,9,86,96
-			OR ((isBasketball=1 AND bb.custid IS NOT NULL)))
 			
 	--PA List
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
@@ -254,6 +254,7 @@ BEGIN
 		OUTER APPLY (SELECT TOP (1) sc.CustID FROM CustDangerJobExclusion sc WITH (NOLOCK) WHERE sc.custid=cd.custid AND sc.SportType=1 AND sc.CreateDate>=@ScanDate) sc
 		OUTER APPLY (SELECT TOP (1) bb.CustID FROM CustDangerJobExclusion bb WITH (NOLOCK) WHERE bb.custid=cd.custid AND bb.SportType=2 AND bb.CreateDate>=@ScanDate) bb
 	WHERE cd.CreateDate>=@ScanDate 
+		AND NOT EXISTS (SELECT 1 FROM #tblCustDangerInfo WHERE cd.CustID=Custid)
 
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball)
 	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball, IsManualSoccer, IsManualBasketball
