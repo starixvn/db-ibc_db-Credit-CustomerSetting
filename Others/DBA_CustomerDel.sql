@@ -25,6 +25,7 @@ AS
 		- 20190327@Daniel: Migrate bodb_Licensee to DBCUST: Remove linked server DBLIC for deleting data in bodb_Licensee
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
@@ -121,8 +122,6 @@ BEGIN
 	DELETE CustPTGroupSetting3rd_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 
 	--Delete setting deposit	
-	DELETE Dep_CustSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE Dep_CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
@@ -141,8 +140,10 @@ BEGIN
 	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Dep_CustBetSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustBetSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustBetSettingGame_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustBetSettingGame_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 
-	
+	DELETE dbo.Dep_CustBetSettingGameGroup_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)
 	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 	DELETE Dep_LicenseeProductSetting WHERE custid = @custid
@@ -226,8 +227,6 @@ BEGIN
 	DELETE CustPTGroupSetting3rd_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE mrecommend = @custid and roleid = 2)	
 
 	--Delete setting deposit
-	DELETE Dep_CustSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE Dep_CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
@@ -246,7 +245,10 @@ BEGIN
 	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Dep_CustBetSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustBetSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
+	DELETE dbo.Dep_CustBetSettingGame_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustBetSettingGame_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
+
+	DELETE dbo.Dep_CustBetSettingGameGroup_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE mrecommend = @custid and roleid = 2)
 	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE mrecommend = @custid and roleid = 2)		
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE mrecommend = @custid and roleid = 2)	
 
@@ -328,8 +330,6 @@ BEGIN
 	DELETE CustPTGroupSetting3rd_Member WHERE AgentID = @custid
 
 	--Delete setting deposit
-	DELETE Dep_CustSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE Dep_CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
@@ -348,8 +348,10 @@ BEGIN
 	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Dep_CustBetSetting_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustBetSetting_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustBetSettingGame_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
+	DELETE dbo.Dep_CustBetSettingGame_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 
-	
+	DELETE dbo.Dep_CustBetSettingGameGroup_Member WHERE AgentID = @custid
 	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID = @custid	
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID = @custid
 
@@ -407,8 +409,6 @@ BEGIN
 	DELETE dbo.CustDiscount3rd_Member WHERE custid = @custid
 
 	--Delete setting deposit
-	DELETE Dep_CustSetting WHERE custid = @custid
-	DELETE Dep_CustSetting3rd WHERE custid = @custid
 	DELETE Dep_CustProductSetting WHERE custid = @custid
 	DELETE Dep_CustSetting_AGCasino WHERE custid = @custid
 
@@ -422,6 +422,7 @@ BEGIN
 	DELETE dbo.Dep_CustStakeLevel_Member WHERE custid = @custid
 	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid = @custid
 	DELETE dbo.Dep_CustBetSetting_Member WHERE custid = @custid
+	DELETE dbo.Dep_CustBetSettingGame_Member WHERE custid = @custid
 		
 	--Delete balance table
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
