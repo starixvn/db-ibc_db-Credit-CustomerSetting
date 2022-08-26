@@ -21,6 +21,7 @@ AS
 		- 20150622@Daniel: Separated custDB to server DBCUST
 		- 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
@@ -60,8 +61,6 @@ BEGIN
 	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustSettingGame where custid IN (SELECT custID FROM @tmp_custID)
-	delete Dep_CustSetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete Dep_CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
 	
 	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustOverride3rd where custid IN (SELECT custID FROM @tmp_custID)
@@ -103,8 +102,6 @@ BEGIN
 	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustSettingGame where custid IN (SELECT custID FROM @tmp_custID)
-	delete Dep_CustSetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete Dep_CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
 	
 	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustOverride3rd where custid IN (SELECT custID FROM @tmp_custID)
@@ -144,8 +141,6 @@ BEGIN
 	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustSettingGame where custid IN (SELECT custID FROM @tmp_custID)
-	delete Dep_CustSetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete Dep_CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
 	
 	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
 	delete CustOverride3rd where custid IN (SELECT custID FROM @tmp_custID)
@@ -191,8 +186,6 @@ BEGIN
 	delete custsetting where custid = @custid
 	delete CustSetting3rd where custid = @custid
 	delete custsettingGame where custid = @custid
-	delete Dep_custsetting where custid = @custid
-	delete Dep_custsetting3rd where custid = @custid
 	/*
 	delete P2PGameSetting where custid = @custid
 	delete P2PGroupComm where custid = @custid
