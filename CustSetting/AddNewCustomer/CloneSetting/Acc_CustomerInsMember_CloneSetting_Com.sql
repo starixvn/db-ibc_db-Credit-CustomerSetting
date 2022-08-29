@@ -746,17 +746,21 @@ BEGIN
 	IF @_Site = '789y' AND @Site = '789y' AND @Currency <> 20
 	BEGIN			
 		--auto transfer 
-		SELECT @transferType = TransferType
+		SELECT @transferType = TransferType,
+			@IsLogDateLimit = 1
 		FROM Acc_ClearBalanceList WITH(NOLOCK)
 		WHERE custid = @ExistingCustid
 		
-		INSERT INTO [dbo].[Acc_ClearBalanceList]
-			   ([custid] 
-			   ,[status]
-			   ,[LastTransfer]           
-			   ,[transferType])       
-		SELECT @custid,'', GETDATE()-1, @TransferType
-				
+		IF @@ROWCOUNT > 0
+		BEGIN
+			INSERT INTO [dbo].[Acc_ClearBalanceList]
+				   ([custid] 
+				   ,[status]
+				   ,[LastTransfer]           
+				   ,[transferType])       
+			SELECT @custid,'', GETDATE()-1, @TransferType
+		END
+		
 		--copy Date limit value	
 		SELECT @MinDate = MinDate,
 			@LimitDays = LimitDays,
@@ -764,11 +768,14 @@ BEGIN
 		FROM Age_CustDateLimit WITH(NOLOCK)
 		WHERE custid = @ExistingCustid
 		
-		INSERT INTO [dbo].[Age_CustDateLimit]
-			   ([CustId]
-			   ,[MinDate]
-			   ,[LimitDays])
-		SELECT @custId, @MinDate, @LimitDays
+		IF @@ROWCOUNT > 0
+		BEGIN
+			INSERT INTO [dbo].[Age_CustDateLimit]
+				   ([CustId]
+				   ,[MinDate]
+				   ,[LimitDays])
+			SELECT @custId, @MinDate, @LimitDays
+		END
 		
 	END
 	
