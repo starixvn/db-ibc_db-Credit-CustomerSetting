@@ -6,7 +6,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDangerLevel]
 	@ErrCode	INT = 0	OUTPUT,
 	@ErrMsg		NVARCHAR(200) = '' OUTPUT	
 AS
-SET NOCOUNT ON
 /*
 	Created: 20211007@Johnson
 	Task : Service update DangerLevel for saba performance[Redmine:#161351]
@@ -19,6 +18,7 @@ SET NOCOUNT ON
 		- 20220607@Winfred: NAP CM - scan and update DangerLevel according to Winloss of Saba Basketball Sport [redmine:#173752]
 		- 20220711@Tacy: update DangerLevel for Haifa, 789y site and USDT currency of Saba Basketball Sport [redmine:#175247]
 		- 20220715@Tacy: update DangerLevel for (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site) of Saba Basketball Sport [redmine:#175505]
+		- 20220802@Tacy: Update Danger Level if Problem Customer Class [RedmineId: #175857]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -30,16 +30,18 @@ SET NOCOUNT ON
 */	
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @StartRun DATETIME, @Duration INT, @LogDataNew VARCHAR(500), @LogDataOld VARCHAR(500)
+	DECLARE @StartRun DATETIME, 
+			@ScanDate DATETIME,
+			@Duration INT, @LogDataNew VARCHAR(500), @LogDataOld VARCHAR(500)
 
-	SET @startRun = GETDATE()
-
+	SET @StartRun = GETDATE()
+	SET @ScanDate = (SELECT MAX(CreatedDate) FROM CustDangerWinlossInfo WITH (NOLOCK))
 
 	CREATE TABLE #tblCustWinloss (custid INT, sporttype SMALLINT, isParlay BIT, winloss MONEY)
 	CREATE TABLE #tblCustDangerInfo (Custid INT PRIMARY KEY, Soccer TINYINT, Basketball TINYINT, WinlossSoccer MONEY, WinlossBasketball MONEY, UpdateSoccer BIT, UpdateBasketball BIT)
 	CREATE TABLE #tblCustDangerOld (Custid INT PRIMARY KEY, DangerLevel BIGINT, Soccer TINYINT, Basketball TINYINT, IsManualSoccer BIT, IsManualBasketball BIT)
 	CREATE TABLE #tblCustUpdate (Custid INT PRIMARY KEY, DangerLevel BIGINT, Soccer TINYINT, Basketball TINYINT, SoccerOld TINYINT, BasketballOld TINYINT, UpdateSoccer BIT, UpdateBasketball BIT, WinlossSoccer MONEY, WinlossBasketball MONEY)
-	
+
 	DECLARE @xml XML = CAST (@CustList as XML)
 	DECLARE @batchNo INT
 	
@@ -51,6 +53,9 @@ BEGIN
 	FROM @xml.nodes('Root/r')as t(c)
 	
 	SELECT @batchNo = MAX(batchNo) + 1 
+	FROM CustDangerLevelInfo WITH(NOLOCK)
+
+	SELECT @batchNo = CASE WHEN @batchNo < (MAX(batchNo) + 1) THEN MAX(batchNo) + 1 ELSE @batchNo END
 	FROM CustDangerWinlossInfo WITH(NOLOCK)
 	
 	DELETE t
@@ -70,7 +75,7 @@ BEGIN
 				BatchNo)
 	SELECT Custid, SportType, IsParlay, Winloss, GETDATE(), @BatchNo
 	FROM #tblCustWinloss t	
-	
+
 	IF @@ROWCOUNT = 0
 		RETURN;
 		
@@ -89,7 +94,8 @@ BEGIN
 	)
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
 	SELECT t.custid,
-		CASE WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88')  THEN -- Flow C : 8 Licensees: IG128/SM88/SL88SW/LIVV88SW/365Online/SKY88/Sin88/One88
+		CASE WHEN sc.CustID IS NOT NULL THEN 13
+			WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88')  THEN -- Flow C : 8 Licensees: IG128/SM88/SL88SW/LIVV88SW/365Online/SKY88/Sin88/One88
 					CASE WHEN soccer + soccerParlay < 50000 OR isSoccerParlay = 0 THEN
 						CASE WHEN soccer < -250000 THEN 1
 							WHEN soccer <-200000 AND soccer >= -250000 THEN 2
@@ -161,7 +167,8 @@ BEGIN
 						END 
 				END	
 			END	SoccerLevel,
-		CASE WHEN (s.custid IS NOT NULL AND s.site='haifa')
+		CASE WHEN bb.CustID IS NOT NULL THEN 13
+			WHEN (s.custid IS NOT NULL AND s.site='haifa')
 				OR (s.custid IS NULL AND c.site='789y')		
 				OR s.currency=96															 THEN -- Flow B : Haifa, 789y site and USDT currency
 					CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
@@ -184,7 +191,7 @@ BEGIN
 					END
 			WHEN s.custid IS NOT NULL AND 
 				((s.site IN ('Happy8','SM88','AEUG','368cash','365online') AND s.currency=51) 
-				  OR (s.site IN ('WINCLUB88') AND s.currency=15))							THEN	-- Flow C: (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site)
+					OR (s.site IN ('WINCLUB88') AND s.currency=15))							THEN	-- Flow C: (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site)
 					CASE WHEN basketball + basketballParlay < 25000 OR isbasketballParlay = 0 THEN
 						CASE 
 							WHEN basketball <-140000								THEN 1
@@ -225,18 +232,36 @@ BEGIN
 			END	BasketballLevel,
 		Soccer + SoccerParlay as WinlossSoccer,
 		Basketball + basketballParlay as WinlossBasketball,
-		IsSoccer,
-		IsBasketball
+		CASE WHEN sc.CustID IS NOT NULL THEN 1 ELSE IsSoccer END UpdateSoccer,
+		CASE WHEN bb.CustID IS NOT NULL THEN 1 ELSE IsBasketball END UpdateBasketball
 	FROM T
 		INNER JOIN Customer c WITH(NOLOCK) ON c.custid = t.custid
 		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
-	
+		LEFT JOIN CustDangerJobExclusion sc WITH (NOLOCK) ON sc.custid=t.custid AND sc.SportType=1
+		LEFT JOIN CustDangerJobExclusion bb WITH (NOLOCK) ON bb.custid=t.custid AND bb.SportType=2
+			
+	--PA List
+	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
+	SELECT DISTINCT 
+		  cd.CustID
+		, CASE WHEN sc.CustID IS NOT NULL THEN 13 END SoccerLevel
+		, CASE WHEN bb.CustID IS NOT NULL THEN 13 END BasketballLevel
+		, NULL AS WinlossSoccer
+		, NULL AS WinlossBasketball
+		, CASE WHEN sc.CustID IS NOT NULL THEN 1 ELSE 0 END UpdateSoccer
+		, CASE WHEN bb.CustID IS NOT NULL THEN 1 ELSE 0 END UpdateBasketball
+	FROM CustDangerJobExclusion cd WITH (NOLOCK)
+		OUTER APPLY (SELECT TOP (1) sc.CustID FROM CustDangerJobExclusion sc WITH (NOLOCK) WHERE sc.custid=cd.custid AND sc.SportType=1 AND sc.CreateDate>=@ScanDate) sc
+		OUTER APPLY (SELECT TOP (1) bb.CustID FROM CustDangerJobExclusion bb WITH (NOLOCK) WHERE bb.custid=cd.custid AND bb.SportType=2 AND bb.CreateDate>=@ScanDate) bb
+	WHERE cd.CreateDate>=@ScanDate 
+		AND NOT EXISTS (SELECT 1 FROM #tblCustDangerInfo WHERE cd.CustID=Custid)
+
 	INSERT INTO #tblCustDangerOld(custid,DangerLevel,Soccer,Basketball,IsManualSoccer,IsManualBasketball)
 	SELECT custid, ISNULL(DangerLevel,0), soccer, basketball, IsManualSoccer, IsManualBasketball
 	FROM custinfo c WITH(NOLOCK)
 		CROSS APPLY dbo.f_GetDangerLevelInfo(ISNULL(DangerLevel,0)) t
 	WHERE custid IN (SELECT custid FROM #tblCustDangerInfo)
-	
+
 	INSERT INTO #tblCustUpdate(custid, Soccer, Basketball, UpdateSoccer, UpdateBasketball, DangerLevel, SoccerOld, BasketballOld, WinlossSoccer, WinlossBasketball)
 	SELECT t1.custid, t1.Soccer , t1.Basketball,
 		CASE WHEN IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer THEN 1 ELSE 0 END as UpdateSoccer,
@@ -250,7 +275,7 @@ BEGIN
 		INNER JOIN #tblCustDangerOld t2 ON t1.custid = t2.Custid
 	WHERE (IsManualSoccer = 0 AND UpdateSoccer = 1 AND t1.Soccer <> t2.soccer)
 		OR (IsManualBasketball = 0 AND UpdateBasketball = 1 AND t1.Basketball <> t2.Basketball)
-	
+
 	DECLARE @CustUpdate VARCHAR(MAX) 
 	
 	SELECT @CustUpdate = CAST((
@@ -287,24 +312,27 @@ BEGIN
 		CASE WHEN @ErrCode > 0 THEN 'fail' ELSE 'completed' END status,
 		@ErrMsgLog as Description,
 		GETDATE() as CreatedDate
-	FROM #tblCustUpdate
-	
+	FROM #tblCustUpdate 
+
 	IF @ErrCode > 0
 		RETURN;
 	
 	DECLARE @Log VARCHAR(MAX)
 	
 	SELECT @Log = CAST((
-		SELECT custid as '@id',
-			soccer as '@s',
-			basketball as '@b',
-			UpdateSoccer as '@us',
+		SELECT t.custid		as '@id',
+			soccer			as '@s',
+			basketball		as '@b',
+			UpdateSoccer	as '@us',
 			UpdateBasketball as '@ub',
-			SoccerOld as '@os',
-			BasketballOld as '@ob',
-			WinlossSoccer as '@wls',
-			WinlossBasketball as '@wlb'
-		FROM #tblCustUpdate t			
+			SoccerOld		as '@os',
+			BasketballOld	as '@ob',
+			CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wls',
+			CASE WHEN WinlossBasketball IS NULL THEN 'NULL' ELSE CAST(WinlossBasketball AS VARCHAR) END  as '@wlb',
+			CASE WHEN cd.CustID IS NOT NULL THEN '1' ELSE '0' END as '@IsPA'
+		FROM #tblCustUpdate t		
+			OUTER APPLY (SELECT TOP (1) CustID FROM CustDangerJobExclusion cd WITH (NOLOCK)
+						 WHERE cd.CustID=t.Custid AND cd.CreateDate>=@ScanDate) cd
 		FOR XML PATH('r'), ROOT('Root')
 	) AS VARCHAR(MAX))	
 	
