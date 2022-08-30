@@ -169,7 +169,7 @@ BEGIN
 				END	
 			END	SoccerLevel,
 		CASE WHEN bb.CustID IS NOT NULL THEN 13
-			WHEN (s.custid IS NOT NULL AND s.site='haifa')
+			WHEN (s.custid IS NOT NULL AND s.site in ('haifa','livv88sw'))
 				OR (s.custid IS NULL AND c.site='789y')		
 				OR s.currency=96															 THEN -- Flow B : Haifa, 789y, Livv88sw site and USDT currency
 					CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
