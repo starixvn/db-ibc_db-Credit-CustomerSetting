@@ -22,8 +22,8 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON;
-	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','DB233','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at all replicated servers
-	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','DB233','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at dbcust only
+	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at dbcust only
 
 	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
 	IF dbo.f_CheckRepTable('ProductStatusProfile') = 0 RETURN
