@@ -409,7 +409,7 @@ BEGIN
 			AND (main.MaxLossLimit <> tmp.MaxLossLimit OR main.IsAutoReset <> tmp.IsAutoReset)
 
 	END
-	ELSE IF @SettingType IN (7,8) --Stakelevel
+	ELSE IF @SettingType IN (7,8,17) --Stakelevel
 	BEGIN
 		IF dbo.f_CheckRepTable('CustStakeLevel_Member') = 0 RETURN
 
