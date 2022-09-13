@@ -488,7 +488,8 @@ BEGIN
 	BEGIN TRY
 		DECLARE @DangeLevel BIGINT
 
-		SELECT @DangeLevel=f_CustSetting_DangerLevel(@custid, @site, @currency)
+		SELECT @DangeLevel=DangerLevel
+		FROM dbo.f_CustSetting_DangerLevel(@site, @currency)
 
 		INSERT INTO [dbo].[custinfo]
 		(

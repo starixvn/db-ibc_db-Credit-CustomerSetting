@@ -1,9 +1,8 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="1" isNested="1"></info>*/
 ALTER FUNCTION [dbo].[f_CustSetting_DangerLevel]
-	(@custid	INT,
-	 @currency	INT,
+	(@currency	INT,
 	 @site		NVARCHAR(50))
-RETURNS BIGINT	
+RETURNS @DangerLevel TABLE (DangerLevel BIGINT)
 AS
 /*
 	Created: 20220913@Tacy
@@ -16,11 +15,14 @@ AS
 	Parameter's Explanation:		
 */	
 BEGIN
-RETURN
-	(
-	 SELECT dbo.f_GenerateDangerLevelInfo(0,
-										  10,	--SoccerLevel 
-										  CASE WHEN @site='789y' OR @currency=96 THEN 10 ELSE 9 END,	--BasketballLevel 
-										  1,1)
-	)
+	DECLARE @SoccerLevel TINYINT,
+            @BasketballLevel TINYINT
+
+	SELECT	@SoccerLevel=10,
+            @BasketballLevel=CASE WHEN @site='789y' OR @currency=96 THEN 10 ELSE 9 END
+
+	INSERT INTO @DangerLevel(DangerLevel)
+    SELECT dbo.f_GenerateDangerLevelInfo(0,@SoccerLevel,@BasketballLevel,1,1)
+
+	RETURN
 END
