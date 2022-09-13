@@ -6,8 +6,9 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_StakeLevelUpd]
 	,	@SubAccID		INT				= 0
 	,	@UserID			INT
 	,	@IP				VARCHAR(50)		= ''
-	,	@SystemID TINYINT = 1 --20200305@Tiara
-	,   @SettingType SMALLINT --20200414@Tiara
+	,	@SystemID		TINYINT = 1 --20200305@Tiara
+	,   @SettingType	SMALLINT --20200414@Tiara
+	,	@isSearchAndCopy BIT			= 0
 	,	@ErrCode		INT				= 0		OUTPUT
 	,	@MsgType		INT				= 0		OUTPUT
 	,	@ErrMsg			NVARCHAR(200)	= ''	OUTPUT
@@ -27,7 +28,8 @@ AS
 		- 20200827@Winfred: Update log on SP version [Redmine: #137763]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
-						& change strSplit() UFD to STRING_SPLIT() SQL Function
+		- 20220725@Tacy: change strSplit() UFD to STRING_SPLIT() SQL Function
+		- 20220808@Tacy: update member's StakeLevel by execrep when using Search & Copy New member function [RedmineID: #176225]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -230,34 +232,51 @@ BEGIN
 				ON	ts.BetType = cslm.BetType
 		WHERE	cslm.CustID = @CustID;
 
-		-- Update current customer's stake level
-		UPDATE	cslm	WITH(ROWLOCK,UPDLOCK)
-		SET		cslm.StakeLevelList = ts.StakeLevelList
-				, cslm.LastUpdated = GETDATE()
-		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
-			INTO #HistoryStakeLevelTbl(CustID, SportType, BetType, StakeLevelList, UpdateTime)
-		FROM		dbo.CustStakeLevel_Member AS cslm
-		INNER JOIN	#tmpStake ts
-				ON	ts.BetType = cslm.BetType
-		WHERE	cslm.CustID = @CustID;
+		IF @isSearchAndCopy=1
+		BEGIN
+			SET @StakeLevel = (SELECT SportType		 AS '@SportType',
+									  BetType		 AS '@BetType',
+									  StakeLevelList AS '@StakeLevelList'
+								FROM #tmpStake
+								FOR XML PATH('r'), ROOT ('root')
+							)
 
-		--insert Bet Setting history
-		SET @CustList = (SELECT	CustID			AS '@CustID',
-								SportType		AS '@SportType',
-								BetType			AS '@BetType',
-								'NULL'			AS '@MaxBet',
-								'NULL'			AS '@MaxPerMatch',
-								StakeLevelList	AS '@StakeLevelList',
-								UpdateTime		AS '@UpdateTime'
-						FROM #HistoryStakeLevelTbl
-						FOR XML PATH('r'), ROOT ('root')
-						)
+			EXECUTE Acc_DynamicCustomerInfo_01 
+						@CustID=@CustID,
+						@SettingList=@StakeLevel,
+						@SettingType=@SettingType
+		END
+		ELSE
+		BEGIN
+			-- Update current customer's stake level
+			UPDATE	cslm	WITH(ROWLOCK,UPDLOCK)
+			SET		cslm.StakeLevelList = ts.StakeLevelList
+					, cslm.LastUpdated = GETDATE()
+			OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
+				INTO #HistoryStakeLevelTbl(CustID, SportType, BetType, StakeLevelList, UpdateTime)
+			FROM		dbo.CustStakeLevel_Member AS cslm
+			INNER JOIN	#tmpStake ts
+					ON	ts.BetType = cslm.BetType
+			WHERE	cslm.CustID = @CustID;
+
+			--insert Bet Setting history
+			SET @CustList = (SELECT	CustID			AS '@CustID',
+									SportType		AS '@SportType',
+									BetType			AS '@BetType',
+									'NULL'			AS '@MaxBet',
+									'NULL'			AS '@MaxPerMatch',
+									StakeLevelList	AS '@StakeLevelList',
+									UpdateTime		AS '@UpdateTime'
+							FROM #HistoryStakeLevelTbl
+							FOR XML PATH('r'), ROOT ('root')
+							)
 		
-		EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
+			EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
 
-		IF @ErrMsg <> ''
-			RETURN
-	END;
+			IF @ErrMsg <> ''
+				RETURN
+		END
+	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN
 		---- Downline Processing: only processing if being different.

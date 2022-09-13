@@ -1,12 +1,13 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountUpd] 
-	  @CustID				INT
+	  @CustID			INT
 	, @Discount			VARCHAR(MAX)
-	, @SubAccID				INT				= 0
-	, @UserID				INT
-	, @SettingType			SMALLINT		=	3
-	, @IP					VARCHAR(50)		= ''
+	, @SubAccID			INT				= 0
+	, @UserID			INT
+	, @SettingType		SMALLINT		=	3
+	, @IP				VARCHAR(50)		= ''
+	, @isSearchAndCopy	BIT				= 0
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(200)	= ''	OUTPUT
@@ -22,6 +23,7 @@ AS
 		- 20160104@Dominic: Implementing Charge Commission Plugin - [Redmine: #49689]
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20220808@Tacy: update member's Comm setting by execrep when using Search & Copy New member function [RedmineID: #176225]
 
 	Param's Explanation:
 		• @Discount:
@@ -264,12 +266,22 @@ BEGIN
 	SELECT @CorrectedDiscount_XML = '<ROOT>' + @CorrectedDiscount_XML + '</ROOT>'
 
 	--execrept to update commission
-	EXEC dbo.Acc_DynamicCustSetting3rd_06
-			@CustId			= @custid
-			, @RoleId		= @RoleId
-			, @SettingType  = @SettingType
-			, @Discount_XML = @CorrectedDiscount_XML
-			
+	IF @isSearchAndCopy=1
+	BEGIN
+		EXECUTE Acc_DynamicCustomerInfo_01 
+						@CustID=@CustID,
+						@SettingList=@CorrectedDiscount_XML,
+						@SettingType=@SettingType,
+						@AgentID=@AgentID
+	END
+	ELSE
+	BEGIN
+		EXEC dbo.Acc_DynamicCustSetting3rd_06
+				@CustId			= @custid
+				, @RoleId		= @RoleId
+				, @SettingType  = @SettingType
+				, @Discount_XML = @CorrectedDiscount_XML
+	END		
 
 	--START LOGGING		
 

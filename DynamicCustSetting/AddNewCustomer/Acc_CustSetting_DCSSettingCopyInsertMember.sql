@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember]
 	, @UserID			INT				= 0
 	, @SystemID TINYINT = 1 --20200305@Tiara  
     , @IsCountPT			BIT = 0
+	, @isSearchAndCopy	BIT				= 0
 	, @ErrCode			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
 	, @SettingStatus TINYINT = 0
@@ -41,6 +42,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20220808@Tacy: Resolve replication errors when using Search & Copy New member function [RedmineID: #176225]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 	
@@ -157,6 +159,7 @@ BEGIN
 				, @IP = @IP
 				, @UserID = @UserID
 				, @IsCountPT = 0
+				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
@@ -269,6 +272,7 @@ BEGIN
 				, @IP = @IP
 				, @UserID = @UserID
 				, @IsCountPT = 0
+				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
@@ -341,6 +345,7 @@ BEGIN
 				, @IP = @IP
 				, @UserID = @UserID
 				, @SystemID = @SystemID --20200305@Tiara
+				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
@@ -405,6 +410,7 @@ BEGIN
 				, @SubAccID = @SubAccID
 				, @IP = @IP
 				, @UserID = @UserID
+				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
@@ -471,6 +477,7 @@ BEGIN
 				, @SubAccID = @SubAccID
 				, @IP = @IP
 				, @UserID = @UserID
+				, @isSearchAndCopy = @isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
@@ -537,6 +544,7 @@ BEGIN
 				, @IP = @IP
 				, @UserID = @UserID
 				, @SettingType = 5
+				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 		END
@@ -669,13 +677,14 @@ BEGIN
 	
 		SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlWinLossLimit)
 
-				EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
+		EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
 			  @CustID = @CustID
 			, @Limit = @xmlStr
 			, @SettingType = 6
 			, @SubAccID = @SubAccID
 			, @IP = @IP
 			, @UserID = @UserID
+			, @isSearchAndCopy=@isSearchAndCopy
 			, @ErrCode = @ErrCode OUTPUT
 			, @ErrMsg = @ErrMsg OUTPUT
 		DELETE FROM	#TempWLLimit WHERE ProductID=@ProductID6
@@ -739,6 +748,7 @@ BEGIN
 				,	@IP			= @IP
 				,   @SystemID = @SystemID --20200305@Tiara
 				,   @SettingType = 7 
+				,	@isSearchAndCopy=@isSearchAndCopy
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
 		DELETE FROM	#TempStakeLevel WHERE ProductID=@ProductID7			
@@ -801,6 +811,7 @@ BEGIN
 				,	@IP			= @IP
 				,   @SystemID = @SystemID --20200305@Tiara
 				,   @SettingType = 17 
+				,	@isSearchAndCopy=@isSearchAndCopy
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
 		DELETE FROM	#TempStakeLevel17 WHERE ProductID=@ProductID17			
@@ -861,6 +872,7 @@ BEGIN
 				,	@IP			= @IP
 				,   @SystemID   =  @SystemID --20200305@Tiara
 				,   @SettingType = 8
+				,	@isSearchAndCopy=@isSearchAndCopy
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
 				
@@ -933,6 +945,7 @@ BEGIN
 					, @IP = @IP
 					, @UserID = @UserID
 					, @SystemID = @SystemID --20200305@Tiara
+					, @isSearchAndCopy=@isSearchAndCopy
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
 			END
@@ -1063,13 +1076,14 @@ BEGIN
 		
 			SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlLossLimit)
 
-						EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
+			EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
 				  @CustID = @CustID
 				, @Limit = @xmlStr
 				, @SettingType = 12
 				, @SubAccID = @SubAccID
 				, @IP = @IP
 				, @UserID = @UserID
+				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
 			DELETE FROM	#TempLLimit WHERE ProductID=@ProductID12
@@ -1277,6 +1291,7 @@ BEGIN
 					, @IP = @IP
 					, @UserID = @UserID
 					, @SystemID = @SystemID --20200305@Tiara
+					, @isSearchAndCopy=@isSearchAndCopy
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
 			END
@@ -1345,6 +1360,7 @@ BEGIN
 					, @IP = @IP
 					, @UserID = @UserID
 					, @SystemID = @SystemID
+					, @isSearchAndCopy=@isSearchAndCopy
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
 			END

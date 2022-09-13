@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMemberUpd] 
 	  @CustID			INT
 	, @PT				VARCHAR(MAX)
@@ -6,6 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMemberUpd]
 	, @IP				VARCHAR(50)		= ''
 	, @UserID			INT				= 0
     , @IsCountPT		BIT				= 1   
+	, @isSearchAndCopy	BIT				= 0
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
@@ -23,6 +24,8 @@ AS
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
+			- 20220808@Tacy: Resolve replication errors when using Search & Copy New member function [RedmineID: #176225]
+
 		Parameter's Explanation:
 		• @PT:
 					<ROOT>
@@ -137,7 +140,8 @@ BEGIN
 
 	DECLARE @ProductID		TINYINT,
 			@ProductName	VARCHAR(50),
-			@SettingLevel	TINYINT
+			@SettingLevel	TINYINT,
+			@SettingList	VARCHAR(MAX)
     
 
 --******************************************PERMISSION CHECKING*************************************** 		
@@ -531,111 +535,147 @@ BEGIN
 	))
 		RETURN
 		
-	IF ISNULL(@SettingMode,0)=0
+	IF @isSearchAndCopy=1
 	BEGIN
-		--Update Adjusted PT for indiviual setting
-		UPDATE main
-		SET main.SuperPT=npt.SuperPT,
-			main.MasterPT=npt.MasterPT,
-			main.AgentPT=npt.AgentPT
-		FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
-				AND npt.BetType=main.BetType
-				AND npt.IsLive=main.IsLive
-		WHERE main.CustID = @CustID AND
-			(npt.SuperPT <> main.SuperPT
-				OR npt.MasterPT <> main.MasterPT
-				OR npt.AgentPT <> main.AgentPT)
+		DECLARE @SettingType SMALLINT
+
+		SELECT @SettingType = ps.SettingType
+		FROM @NewPTTble t
+		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		WHERE ps.SettingType IN (1,18)
+
+		SET	@SettingList =	(
+							SELECT	SportType,			
+									BetType,
+									IsLive,
+									SuperPT,
+									MasterPT,
+									AgentPT,
+									IsAutoMasterPT,
+									AutoMasterPT,
+									IsAutoSuperPT,
+									AutoSuperPT
+							FROM	@NewPTTble
+							FOR XML RAW ('PT'), ROOT ('ROOT') 
+						)
+
+		EXECUTE Acc_DynamicCustomerInfo_01 
+					@CustID=@CustID,
+					@SettingList=@SettingList,
+					@SettingType=@SettingType,
+					@AgentID=@_AgentID
 	END
-	ELSE
-	BEGIN			
-		SELECT @MemGroup = count(1) 
-		FROM CustSettingMode3rd sm WITH (NOLOCK) 
-			INNER JOIN CustInfo ci WITH (NOLOCK) ON ci.custid = sm.CustID 
-		WHERE ci.recommend = @_AgentID AND sm.IsGrouped = 1
-		
-		IF @MemGroup = 1
-		BEGIN
-			UPDATE main
-			SET main.SuperPT=npt.SuperPT,
-				main.MasterPT=npt.MasterPT,
-				main.AgentPT=npt.AgentPT
-			FROM dbo.CustPTGroupSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
-					AND npt.BetType=main.BetType
-					AND npt.IsLive=main.IsLive
-			WHERE main.AgentID = @_AgentID AND
-				(npt.SuperPT <> main.SuperPT
-				OR npt.MasterPT <> main.MasterPT
-				OR npt.AgentPT <> main.AgentPT)
+	ELSE 
+	BEGIN
+		IF ISNULL(@SettingMode,0)=0
+			BEGIN
+				--Update Adjusted PT for indiviual setting
+				UPDATE main
+				SET main.SuperPT=npt.SuperPT,
+					main.MasterPT=npt.MasterPT,
+					main.AgentPT=npt.AgentPT
+				FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
+						AND npt.BetType=main.BetType
+						AND npt.IsLive=main.IsLive
+				WHERE main.CustID = @CustID AND
+					(npt.SuperPT <> main.SuperPT
+						OR npt.MasterPT <> main.MasterPT
+						OR npt.AgentPT <> main.AgentPT)
 		END
 		ELSE
-		BEGIN
-			--Move to Individual Setting
-			INSERT INTO dbo.CustPTSetting3rd_Member(					
-					   [CustID]
-					   ,[SportType]
-					   ,[BetType]
-					   ,[IsLive]
-					   ,[IsAutoMasterPT]
-					   ,[IsAutoSuperPT]
-					   ,[SuperPT]
-					   ,[MasterPT]
-					   ,[AgentPT]
-					   ,[AutoSuperPT]
-					   ,[AutoMasterPT]
-					)
-			SELECT
-				@CustID,
-				grpt.SportType,
-				grpt.BetType,
-				grpt.IsLive,						
-				grpt.IsAutoMasterPT,
-				grpt.IsAutoSuperPT,
-				grpt.SuperPT,
-				grpt.MasterPT,
-				grpt.AgentPT,
-				grpt.AutoSuperPT,
-				grpt.AutoMasterPT
-			FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
-				LEFT JOIN dbo.CustPTSetting3rd_Member mempt
-					ON mempt.CustID = @CustID
-					AND grpt.SportType=mempt.SportType
-					AND grpt.BetType=mempt.BetType
-					AND grpt.IsLive=mempt.IsLive
-			WHERE grpt.AgentID=@_AgentID AND mempt.CustID IS NULL
+		BEGIN			
+			SELECT @MemGroup = count(1) 
+			FROM CustSettingMode3rd sm WITH (NOLOCK) 
+				INNER JOIN CustInfo ci WITH (NOLOCK) ON ci.custid = sm.CustID 
+			WHERE ci.recommend = @_AgentID AND sm.IsGrouped = 1
 		
-			--Update Adjusted PT for indiviual setting
-			UPDATE main
-			SET main.SuperPT=npt.SuperPT,
-				main.MasterPT=npt.MasterPT,
-				main.AgentPT=npt.AgentPT
-			FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
-					AND npt.BetType=main.BetType
-					AND npt.IsLive=main.IsLive
-			WHERE main.CustID = @CustID AND
-				(npt.SuperPT <> main.SuperPT
-				OR npt.MasterPT <> main.MasterPT
-				OR npt.AgentPT <> main.AgentPT)
+			IF @MemGroup = 1
+			BEGIN
+				UPDATE main
+				SET main.SuperPT=npt.SuperPT,
+					main.MasterPT=npt.MasterPT,
+					main.AgentPT=npt.AgentPT
+				FROM dbo.CustPTGroupSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
+						AND npt.BetType=main.BetType
+						AND npt.IsLive=main.IsLive
+				WHERE main.AgentID = @_AgentID AND
+					(npt.SuperPT <> main.SuperPT
+					OR npt.MasterPT <> main.MasterPT
+					OR npt.AgentPT <> main.AgentPT)
+			END
+			ELSE
+			BEGIN
+				--Move to Individual Setting
+				INSERT INTO dbo.CustPTSetting3rd_Member(					
+							[CustID]
+							,[SportType]
+							,[BetType]
+							,[IsLive]
+							,[IsAutoMasterPT]
+							,[IsAutoSuperPT]
+							,[SuperPT]
+							,[MasterPT]
+							,[AgentPT]
+							,[AutoSuperPT]
+							,[AutoMasterPT]
+						)
+				SELECT
+					@CustID,
+					grpt.SportType,
+					grpt.BetType,
+					grpt.IsLive,						
+					grpt.IsAutoMasterPT,
+					grpt.IsAutoSuperPT,
+					grpt.SuperPT,
+					grpt.MasterPT,
+					grpt.AgentPT,
+					grpt.AutoSuperPT,
+					grpt.AutoMasterPT
+				FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
+					LEFT JOIN dbo.CustPTSetting3rd_Member mempt
+						ON mempt.CustID = @CustID
+						AND grpt.SportType=mempt.SportType
+						AND grpt.BetType=mempt.BetType
+						AND grpt.IsLive=mempt.IsLive
+				WHERE grpt.AgentID=@_AgentID AND mempt.CustID IS NULL
 		
-			---Update setting mode
-			UPDATE dbo.CustSettingMode3rd WITH(ROWLOCK,UPDLOCK)
-			SET IsGrouped = 0
-			WHERE CustID = @CustID
+				--Update Adjusted PT for indiviual setting
+				UPDATE main
+				SET main.SuperPT=npt.SuperPT,
+					main.MasterPT=npt.MasterPT,
+					main.AgentPT=npt.AgentPT
+				FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
+						AND npt.BetType=main.BetType
+						AND npt.IsLive=main.IsLive
+				WHERE main.CustID = @CustID AND
+					(npt.SuperPT <> main.SuperPT
+					OR npt.MasterPT <> main.MasterPT
+					OR npt.AgentPT <> main.AgentPT)
+		
+				---Update setting mode
+				UPDATE dbo.CustSettingMode3rd WITH(ROWLOCK,UPDLOCK)
+				SET IsGrouped = 0
+				WHERE CustID = @CustID
+			END
 		END
 	END
+
 	IF @isLimit > 0
 	BEGIN
 		EXEC dbo.Age_LimitPTDailyUpd    
-			 @custid		= @custid
-			,@Actorid		= @UserID
-			,@UpdatePT		= @PT
-			,@ErrCode		= @ErrCode OUTPUT
-			,@ErrMsg		= @ErrMsg OUTPUT
+				 @custid	= @custid
+				,@Actorid	= @UserID
+				,@UpdatePT	= @PT
+				,@ErrCode	= @ErrCode OUTPUT
+				,@ErrMsg	= @ErrMsg OUTPUT
 		IF @ErrCode > 0
 		RETURN
-	END 			
+	END 	
+	
 	--**START LOGGING**		
 	
 	-- Select ProductID and SettingLevel

@@ -1,15 +1,14 @@
 ﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE  [dbo].[Acc_CustomerUpdMemberKeno_Positiontaking]
 	@custid		INT,	
-	@sporttype INT = 202,
-	@bettype INT,
-
-	@a1 SMALLMONEY,
-	
+	@sporttype	INT = 202,
+	@bettype	INT,
+	@a1			SMALLMONEY,
 	@SubAccID	INT = 0,
 	@IP			VARCHAR(50)='',	
 	@UserID		INT = 0,
-	@Language	VARCHAR(20) = 'E',		
+	@Language	VARCHAR(20) = 'E',
+	@isSearchAndCopy	BIT = 0,
 	@ErrCode	INT = 0 OUTPUT,
 	@ErrMsg		NVARCHAR(4000) = '' OUTPUT	
 AS
@@ -26,6 +25,7 @@ AS
 		- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]	
 		- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20220808@Tacy: Resolve replication errors when using Search & Copy New member function [RedmineID: #176225]
 
 	Parameter's Explanation:	
 */
@@ -283,14 +283,29 @@ DECLARE @startRun	DATETIME,
 		RETURN	
 	END	
 	
-	EXEC dbo.Acc_CustSetting3rd_00
-		@custid = @custid, 
-		@recommend = @recommend, 
-		@mrecommend = @mrecommend, 
-		@srecommend = @srecommend,
-		@mode = 'Keno',
-		@sporttype =  @sporttype,   
-		@bettype = @bettype
+	IF @isSearchAndCopy=1 
+	BEGIN
+		EXEC dbo.Acc_CustomerInfo_Execrep_13
+				@custid = @custid, 
+				@recommend = @recommend, 
+				@mrecommend = @mrecommend, 
+				@srecommend = @srecommend,
+				@mode = 'Keno',
+				@sporttype =  @sporttype,   
+				@bettype = @bettype
+	END
+	ELSE
+	BEGIN
+		EXEC dbo.Acc_CustSetting3rd_00
+				@custid = @custid, 
+				@recommend = @recommend, 
+				@mrecommend = @mrecommend, 
+				@srecommend = @srecommend,
+				@mode = 'Keno',
+				@sporttype =  @sporttype,   
+				@bettype = @bettype
+	END
+	
 	
 	IF (@@error <> 0)
 	BEGIN		
