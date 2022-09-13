@@ -486,9 +486,9 @@ BEGIN
 	END
 
 	BEGIN TRY
-		DECLARE @DangeLevel BIGINT
+		DECLARE @DangerLevel BIGINT
 
-		SELECT @DangeLevel=DangerLevel
+		SELECT @DangerLevel=DangerLevel
 		FROM dbo.f_CustSetting_DangerLevel(@site, @currency)
 
 		INSERT INTO [dbo].[custinfo]
@@ -527,7 +527,7 @@ BEGIN
 		  , @HideKeno, @DisableEsports, @DisableSuperLive
 		  , 0
 		  --, 0
-		  , @DangeLevel
+		  , @DangerLevel
 		)
 
 		SELECT @CreditRM = @credit * actualrate
