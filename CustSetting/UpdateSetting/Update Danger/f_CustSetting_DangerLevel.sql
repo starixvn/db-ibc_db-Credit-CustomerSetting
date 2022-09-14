@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="1" isNested="1"></info>*/
 ALTER FUNCTION [dbo].[f_CustSetting_DangerLevel]
-	(@currency	INT,
-	 @site		NVARCHAR(50))
+	(@site		NVARCHAR(50),
+	 @currency	INT)
 RETURNS @DangerLevel TABLE (DangerLevel BIGINT)
 AS
 /*
