@@ -11,6 +11,7 @@ AS
 		Revisions:
 			- 20170922@Johnson: Create sp [Redmine: #72973]
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+			- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 		Parameter's Explanations:
 		
 	*/
@@ -33,9 +34,9 @@ BEGIN
 	IF @roleid NOT IN (2,3,4) RETURN
 	
 	SELECT @bitmapOrderAB = MAX(CASE WHEN sporttype = 211 THEN bitmapOrder ELSE 0 END),
-		@bitmapOrderVB = MAX(CASE WHEN sporttype = 212 THEN bitmapOrder ELSE 0 END)
+		@bitmapOrderVB = MAX(CASE WHEN sporttype = 9906 THEN bitmapOrder ELSE 0 END)
 	FROM dbo.ProductStatusProfile WITH(NOLOCK)
-	WHERE sporttype IN (211,212)
+	WHERE sporttype IN (211,9906)
 	
 	SELECT @isSyncAB = CAST(CASE WHEN ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderAB),0) = 0 THEN 0 ELSE 1 END AS BIT),
 		@isSyncVB = CAST(CASE WHEN ISNULL(dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB),0) = 0 THEN 0 ELSE 1 END AS BIT)
@@ -68,7 +69,7 @@ BEGIN
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
 					)
 			INSERT INTO #UnSyncProduct (productID)
-			SELECT 22
+			SELECT 53
 		END
 	END
 	ELSE IF @roleid = 3
@@ -97,7 +98,7 @@ BEGIN
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
 					)
 			INSERT INTO #UnSyncProduct (productID)
-			SELECT 22
+			SELECT 53
 		END
 	END
 	ELSE IF @roleid = 2
@@ -126,7 +127,7 @@ BEGIN
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
 					)
 			INSERT INTO #UnSyncProduct (productID)
-			SELECT 22
+			SELECT 53
 		END
 	END
 	
