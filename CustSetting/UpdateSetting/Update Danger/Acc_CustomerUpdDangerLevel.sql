@@ -20,6 +20,7 @@ AS
 		- 20220715@Tacy: update DangerLevel for (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site) of Saba Basketball Sport [redmine:#175505]
 		- 20220802@Tacy: Update Danger Level if Problem Customer Class [RedmineId: #175857]
 		- 20220817@Tacy: scan and update DangerLevel according to Winloss of Saba Basketball Sport (Livv88sw site) [redmine:#176712]
+		- 20220922@Tacy: NAP CM - Update flow for All sites - Basketball and Remove Dengerlevel 14, 15 [RedmineID: #178053]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -81,158 +82,156 @@ BEGIN
 		RETURN;
 		
 	;WITH T AS (
-	SELECT custid,	
-		SUM(CASE WHEN sporttype = 1 AND isParlay = 0 THEN winloss ELSE 0 END) soccer,
-		MAX(CASE WHEN sporttype = 1 THEN 1 ELSE 0 END) isSoccer,
-		SUM(CASE WHEN sporttype = 1 AND isParlay = 1 THEN winloss ELSE 0 END) soccerParlay,
-		MAX(CASE WHEN sporttype = 1 AND isParlay = 1 THEN 1 ELSE 0 END) isSoccerParlay,
-		SUM(CASE WHEN sporttype = 2 AND isParlay = 0 THEN winloss ELSE 0 END) basketball,
-		MAX(CASE WHEN sporttype = 2 THEN 1 ELSE 0 END) isBasketball,
-		SUM(CASE WHEN sporttype = 2 AND isParlay = 1 THEN winloss ELSE 0 END) basketballParlay,
-		MAX(CASE WHEN sporttype = 2 AND isParlay = 1 THEN 1 ELSE 0 END) isBasketballParlay
-	FROM #tblCustWinloss t1
-	GROUP BY custid
+		SELECT custid,	
+			 SUM(CASE WHEN sporttype = 1 AND isParlay = 0 THEN winloss ELSE 0 END) soccer
+			,MAX(CASE WHEN sporttype = 1 THEN 1 ELSE 0 END) isSoccer
+			--,SUM(CASE WHEN sporttype = 1 AND isParlay = 1 THEN winloss ELSE 0 END) soccerParlay
+			--,MAX(CASE WHEN sporttype = 1 AND isParlay = 1 THEN 1 ELSE 0 END) isSoccerParlay
+			,SUM(CASE WHEN sporttype = 2 AND isParlay = 0 THEN winloss ELSE 0 END) basketball
+			,MAX(CASE WHEN sporttype = 2 THEN 1 ELSE 0 END) isBasketball
+			--,SUM(CASE WHEN sporttype = 2 AND isParlay = 1 THEN winloss ELSE 0 END) basketballParlay
+			--,MAX(CASE WHEN sporttype = 2 AND isParlay = 1 THEN 1 ELSE 0 END) isBasketballParlay
+		FROM #tblCustWinloss t1
+		GROUP BY custid
 	)
 	INSERT INTO #tblCustDangerInfo(custid,Soccer,Basketball,WinlossSoccer,WinlossBasketball,UpdateSoccer,UpdateBasketball)
 	SELECT t.custid,
-		CASE WHEN sc.CustID IS NOT NULL THEN 13
+		CASE 
+			WHEN sc.CustID IS NOT NULL THEN 13
 			WHEN s.custid IS NOT NULL AND s.site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88')  THEN -- Flow C : 8 Licensees: IG128/SM88/SL88SW/LIVV88SW/365Online/SKY88/Sin88/One88
-					CASE WHEN soccer + soccerParlay < 50000 OR isSoccerParlay = 0 THEN
-						CASE WHEN soccer < -250000 THEN 1
-							WHEN soccer <-200000 AND soccer >= -250000 THEN 2
-							WHEN soccer <-140000 AND soccer >= -200000 THEN 3
-							WHEN soccer <-120000 AND soccer >= -140000 THEN 4
-							WHEN soccer <-100000 AND soccer >= -120000 THEN 5
-							WHEN soccer <-80000 AND soccer >= -100000 THEN 6 
-							WHEN soccer <-60000 AND soccer >= -80000 THEN 7
-							WHEN soccer <-40000 AND soccer >= -60000 THEN 8
-							WHEN soccer <0 AND soccer >= -40000 THEN 9
-							WHEN soccer <45000 AND soccer >= 0 THEN 10
-							WHEN soccer <100000 AND soccer >= 45000 THEN 11
-							WHEN soccer <200000 AND soccer >= 100000 THEN 12
-							WHEN Soccer >=200000 THEN 13 END
-					ELSE	
-						CASE WHEN isSoccerParlay = 1 AND Soccer + SoccerParlay < 150000 THEN 14 ELSE 15 END
-					END
+				--CASE WHEN soccer + soccerParlay < 50000 OR isSoccerParlay = 0 THEN
+				CASE WHEN soccer <-250000						THEN 1
+					 WHEN soccer <-200000 AND soccer >= -250000	THEN 2
+					 WHEN soccer <-140000 AND soccer >= -200000	THEN 3
+					 WHEN soccer <-120000 AND soccer >= -140000	THEN 4
+					 WHEN soccer <-100000 AND soccer >= -120000	THEN 5
+					 WHEN soccer <-80000  AND soccer >= -100000	THEN 6 
+					 WHEN soccer <-60000  AND soccer >= -80000	THEN 7
+					 WHEN soccer <-40000  AND soccer >= -60000	THEN 8
+					 WHEN soccer < 0	  AND soccer >= -40000	THEN 9
+					 WHEN soccer < 45000  AND soccer >=  0		THEN 10
+					 WHEN soccer < 100000 AND soccer >=  45000	THEN 11
+					 WHEN soccer < 200000 AND soccer >=  100000	THEN 12
+					 WHEN Soccer >=200000						THEN 13 END
+				--ELSE	
+					--CASE WHEN isSoccerParlay = 1 AND Soccer + SoccerParlay < 150000 THEN 14 ELSE 15 END
+				--END
+			WHEN s.custid IS NOT NULL AND s.currency IN (4) THEN ---- Flow B : ALL Licensee & currency = TB
+				--CASE WHEN soccer + soccerParlay < 50000 THEN
+				CASE WHEN soccer <-300000						THEN 1
+					 WHEN soccer <-250000 AND soccer >= -300000	THEN 2
+					 WHEN soccer <-200000 AND soccer >= -250000	THEN 3
+					 WHEN soccer <-140000 AND soccer >= -200000 THEN 4
+					 WHEN soccer <-120000 AND soccer >= -140000 THEN 5
+					 WHEN soccer <-100000 AND soccer >= -120000 THEN 6
+					 WHEN soccer <-80000  AND soccer >= -100000 THEN 7 
+					 WHEN soccer <-60000  AND soccer >= -80000	THEN 8
+					 WHEN soccer <-40000  AND soccer >= -60000	THEN 9
+					 WHEN soccer < 0	  AND soccer >= -40000	THEN 10
+					 WHEN soccer < 30000  AND soccer >=  0		THEN 11
+					 WHEN soccer < 50000  AND soccer >=  30000	THEN 12
+					 WHEN Soccer >=50000						THEN 13 END
+				--ELSE	
+				--	CASE WHEN isSoccerParlay = 0 THEN 13
+				--		--ELSE CASE WHEN Soccer +SoccerParlay < 100000 THEN 14								
+				--		--		ELSE 15 END
+				--		END
+				--END 
+				--ELSE CASE WHEN soccer + soccerParlay < 100000 THEN 
 			ELSE
-				CASE WHEN s.custid IS NOT NULL AND s.currency IN (4,20) THEN ---- Flow B : ALL Licensee & currency = TB
-					CASE WHEN soccer + soccerParlay < 50000 THEN
-						CASE WHEN soccer < -300000 THEN 1
-							WHEN soccer <-250000 AND soccer >= -300000 THEN 2
-							WHEN soccer <-200000 AND soccer >= -250000 THEN 3
-							WHEN soccer <-140000 AND soccer >= -200000 THEN 4
-							WHEN soccer <-120000 AND soccer >= -140000 THEN 5
-							WHEN soccer <-100000 AND soccer >= -120000 THEN 6
-							WHEN soccer <-80000 AND soccer >= -100000 THEN 7 
-							WHEN soccer <-60000 AND soccer >= -80000 THEN 8
-							WHEN soccer <-40000 AND soccer >= -60000 THEN 9
-							WHEN soccer <0 AND soccer >= -40000 THEN 10
-							WHEN soccer <30000 AND soccer >= 0 THEN 11
-							WHEN soccer <50000 AND soccer >= 30000 THEN 12
-							WHEN Soccer >=50000 THEN 13 END
-						ELSE	
-							CASE WHEN isSoccerParlay = 0 THEN 13
-								ELSE CASE WHEN Soccer +SoccerParlay < 100000 THEN 14								
-										ELSE 15 END
-								END
-						END 
-				ELSE CASE WHEN soccer + soccerParlay < 100000 THEN -- ALL License
-							CASE WHEN soccer < -200000 THEN 1
-								WHEN soccer <-140000 AND soccer >= -200000 THEN 2
-								WHEN soccer <-120000 AND soccer >= -140000 THEN 3
-								WHEN soccer <-100000 AND soccer >= -120000 THEN 4
-								WHEN soccer <-80000 AND soccer >= -100000 THEN 5
-								WHEN soccer <-60000 AND soccer >= -80000 THEN 6
-								WHEN soccer <-40000 AND soccer >= -60000 THEN 7 
-							ELSE
-								CASE WHEN s.custid IS NULL THEN	-- Credit
-									CASE WHEN soccer <-20000 AND soccer >= -40000 THEN 8
-										WHEN soccer <0 AND soccer >= -20000 THEN 9
-										WHEN soccer <60000 AND soccer >= 0 THEN 10
-										ELSE 11 END
-								ELSE 
-									CASE WHEN soccer <0 AND soccer >= -40000 THEN 8
-										WHEN soccer <60000 AND soccer >= 0 THEN 9 
-										ELSE 10 END
-								END	
-							END					
-						ELSE 	
-							CASE WHEN isSoccerParlay = 0 THEN
-								CASE WHEN Soccer < 150000 THEN 11
-									WHEN soccer < 250000 AND soccer >= 150000 THEN 12
-									ELSE 13 END
-							ELSE 
-								CASE WHEN soccer + soccerParlay < 150000 THEN 14
-									ELSE 15 END
-							END
-						END 
+				CASE WHEN soccer <-200000									THEN 1
+					 WHEN soccer <-140000	AND soccer >= -200000			THEN 2
+					 WHEN soccer <-120000	AND soccer >= -140000			THEN 3
+					 WHEN soccer <-100000	AND soccer >= -120000			THEN 4
+					 WHEN soccer <-80000	AND soccer >= -100000			THEN 5
+					 WHEN soccer <-60000	AND soccer >= -80000			THEN 6
+					 WHEN soccer <-40000	AND soccer >= -60000			THEN 7
+					 WHEN soccer < 100000	AND soccer >= -40000		THEN
+						 CASE WHEN s.custid IS NULL THEN	-- Credit
+							CASE WHEN soccer <-20000  AND soccer >= -40000	THEN 8
+								 WHEN soccer < 0	  AND soccer >= -20000	THEN 9
+								 WHEN soccer < 60000  AND soccer >=  0		THEN 10
+																			ELSE 11 END
+						 ELSE
+							CASE WHEN soccer < 0	  AND soccer >= -40000	THEN 8
+								 WHEN soccer < 60000  AND soccer >=	0		THEN 9 
+																			ELSE 10 END
+						 END
+					 WHEN soccer < 150000 AND soccer >= 100000				THEN 11
+					 WHEN soccer < 250000 AND soccer >= 150000				THEN 12
+					 WHEN soccer >=250000									THEN 13 
 				END	
-			END	SoccerLevel,
-		CASE WHEN bb.CustID IS NOT NULL THEN 13
+				--	CASE WHEN soccer + soccerParlay < 150000 THEN 14
+				--		ELSE 15 END
+				--END
+			--END 
+		--END	
+		END	SoccerLevel,
+		CASE 
+			WHEN bb.CustID IS NOT NULL THEN 13
 			WHEN (s.custid IS NOT NULL AND s.site in ('haifa','livv88sw'))
 				OR (s.custid IS NULL AND c.site='789y')		
-				OR s.currency=96															 THEN -- Flow B : Haifa, 789y, Livv88sw site and USDT currency
-					CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
-						CASE 
-							WHEN basketball <-140000								THEN 1
-							WHEN basketball <-110000	AND basketball >=-140000	THEN 2
-							WHEN basketball <-80000		AND basketball >=-110000	THEN 3
-							WHEN basketball <-60000		AND basketball >=-80000		THEN 4
-							WHEN basketball <-35000		AND basketball >=-60000		THEN 5
-							WHEN basketball <-20000		AND basketball >=-35000		THEN 6 
-							WHEN basketball <-10000		AND basketball >=-20000		THEN 7
-							WHEN basketball <-5000		AND basketball >=-10000		THEN 8
-							WHEN basketball < 0			AND basketball >=-5000		THEN 9
-							WHEN basketball < 1500		AND basketball >= 0			THEN 10
-							WHEN basketball < 3000		AND basketball >= 1500		THEN 11
-							WHEN basketball < 8000		AND basketball >= 3000		THEN 12
-							WHEN basketball >=8000									THEN 13 END
-					ELSE	
-						CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 25000 THEN 14 ELSE 15 END
-					END
-			WHEN s.custid IS NOT NULL AND 
-				((s.site IN ('Happy8','SM88','AEUG','368cash','365online') AND s.currency=51) 
-					OR (s.site IN ('WINCLUB88') AND s.currency=15))							THEN	-- Flow C: (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site)
-					CASE WHEN basketball + basketballParlay < 25000 OR isbasketballParlay = 0 THEN
-						CASE 
-							WHEN basketball <-140000								THEN 1
-							WHEN basketball <-110000	AND basketball >=-140000	THEN 2
-							WHEN basketball <-80000		AND basketball >=-110000	THEN 3
-							WHEN basketball <-60000		AND basketball >=-80000		THEN 4
-							WHEN basketball <-35000		AND basketball >=-60000		THEN 5
-							WHEN basketball <-20000		AND basketball >=-35000		THEN 6 
-							WHEN basketball <-10000		AND basketball >=-20000		THEN 7
-							WHEN basketball <-5000		AND basketball >=-10000		THEN 8
-							WHEN basketball < 0			AND basketball >=-5000		THEN 9
-							WHEN basketball < 5000		AND basketball >= 0			THEN 10
-							WHEN basketball < 10000		AND basketball >= 5000		THEN 11
-							WHEN basketball < 30000		AND basketball >= 10000		THEN 12
-							WHEN basketball >=30000									THEN 13 END
-					ELSE	
-						CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 50000 THEN 14 ELSE 15 END
-					END 
+				OR s.currency=96											THEN -- Flow B : Haifa, 789y, Livv88sw site and USDT currency
+					--CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
+					CASE 
+						WHEN basketball <-140000								THEN 1
+						WHEN basketball <-110000	AND basketball >=-140000	THEN 2
+						WHEN basketball <-80000		AND basketball >=-110000	THEN 3
+						WHEN basketball <-60000		AND basketball >=-80000		THEN 4
+						WHEN basketball <-35000		AND basketball >=-60000		THEN 5
+						WHEN basketball <-20000		AND basketball >=-35000		THEN 6 
+						WHEN basketball <-10000		AND basketball >=-20000		THEN 7
+						WHEN basketball <-5000		AND basketball >=-10000		THEN 8
+						WHEN basketball < 0			AND basketball >=-5000		THEN 9
+						WHEN basketball < 1500		AND basketball >= 0			THEN 10
+						WHEN basketball < 3000		AND basketball >= 1500		THEN 11
+						WHEN basketball < 8000		AND basketball >= 3000		THEN 12
+						WHEN basketball >=8000									THEN 13 END
+					--ELSE	
+					--	CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 25000 THEN 14 ELSE 15 END
+					--END
+			WHEN s.custid IS NOT NULL AND ((s.site IN ('Happy8','SM88','AEUG','368cash','365online') AND s.currency=51) 
+				OR (s.site IN ('WINCLUB88') AND s.currency=15))							THEN	-- Flow C: (INH currency and Happy8/SM88/AEUG/368cash/365online site) or (IN currency and WINCLUB88 site)
+				--CASE WHEN basketball + basketballParlay < 25000 OR isbasketballParlay = 0 THEN
+					CASE 
+						WHEN basketball <-140000								THEN 1
+						WHEN basketball <-110000	AND basketball >=-140000	THEN 2
+						WHEN basketball <-80000		AND basketball >=-110000	THEN 3
+						WHEN basketball <-60000		AND basketball >=-80000		THEN 4
+						WHEN basketball <-35000		AND basketball >=-60000		THEN 5
+						WHEN basketball <-20000		AND basketball >=-35000		THEN 6 
+						WHEN basketball <-10000		AND basketball >=-20000		THEN 7
+						WHEN basketball <-5000		AND basketball >=-10000		THEN 8
+						WHEN basketball < 0			AND basketball >=-5000		THEN 9
+						WHEN basketball < 5000		AND basketball >= 0			THEN 10
+						WHEN basketball < 10000		AND basketball >= 5000		THEN 11
+						WHEN basketball < 30000		AND basketball >= 10000		THEN 12
+						WHEN basketball >=30000									THEN 13 END
+				--ELSE	
+				--	CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 50000 THEN 14 ELSE 15 END
+				--END 
 			ELSE
-				CASE WHEN (basketball + basketballParlay < 50000 OR isbasketballParlay = 0) THEN 
-						CASE 
-							WHEN basketball <-140000								THEN 1
-							WHEN basketball <-120000	AND basketball >=-140000	THEN 2
-							WHEN basketball <-100000	AND basketball >=-120000	THEN 3
-							WHEN basketball <-80000		AND basketball >=-100000	THEN 4
-							WHEN basketball <-60000		AND basketball >=-80000		THEN 5
-							WHEN basketball <-40000		AND basketball >=-60000		THEN 6
-							WHEN basketball <-20000		AND basketball >=-40000		THEN 7
-							WHEN basketball < 0			AND basketball >=-20000		THEN 8
-							WHEN basketball < 20000		AND basketball >= 0			THEN 9
-							WHEN basketball < 40000		AND basketball >= 20000		THEN 10
-							WHEN basketball < 60000		AND basketball >= 40000		THEN 11
-							WHEN basketball < 80000		AND basketball >= 60000		THEN 12
-							WHEN basketball >=80000									THEN 13 END
-				ELSE
-					CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 75000 THEN 14 ELSE 15 END
-				END
+				--CASE WHEN (basketball + basketballParlay < 50000 OR isbasketballParlay = 0) THEN 
+					CASE 
+						WHEN basketball <-140000								THEN 1
+						WHEN basketball <-120000	AND basketball >=-140000	THEN 2
+						WHEN basketball <-100000	AND basketball >=-120000	THEN 3
+						WHEN basketball <-80000		AND basketball >=-100000	THEN 4
+						WHEN basketball <-60000		AND basketball >=-80000		THEN 5
+						WHEN basketball <-40000		AND basketball >=-60000		THEN 6
+						WHEN basketball <-20000		AND basketball >=-40000		THEN 7
+						WHEN basketball < 0			AND basketball >=-20000		THEN 8
+						WHEN basketball < 10000		AND basketball >= 0			THEN 9
+						WHEN basketball < 20000		AND basketball >= 10000		THEN 10
+						WHEN basketball < 30000		AND basketball >= 20000		THEN 11
+						WHEN basketball < 40000		AND basketball >= 30000		THEN 12
+						WHEN basketball >=40000									THEN 13 END
+				--ELSE
+				--	CASE WHEN isbasketballParlay = 1 AND basketball + basketballParlay < 75000 THEN 14 ELSE 15 END
+				--END
 			END	BasketballLevel,
-		Soccer + SoccerParlay as WinlossSoccer,
-		Basketball + basketballParlay as WinlossBasketball,
+		Soccer as WinlossSoccer,
+		Basketball as WinlossBasketball,
 		CASE WHEN sc.CustID IS NOT NULL THEN 1 ELSE IsSoccer END UpdateSoccer,
 		CASE WHEN bb.CustID IS NOT NULL THEN 1 ELSE IsBasketball END UpdateBasketball
 	FROM T
