@@ -148,6 +148,8 @@ Revisions:
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220527@Johnson: Remove Problem Account [RedmineID:#173304]
+	- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
+
 	Param's Explanation:
 • @ErrCode:
 		= 0: Insert successfully.
@@ -484,6 +486,14 @@ BEGIN
 	END
 
 	BEGIN TRY
+		DECLARE @DangerLevel BIGINT = NULL
+
+		IF @roleid=1
+		BEGIN
+			SELECT @DangerLevel=DangerLevel
+			FROM dbo.f_CustSetting_DangerLevel(@site, @currency)
+		END
+
 		INSERT INTO [dbo].[custinfo]
 		(
 			custid, currency
@@ -501,6 +511,7 @@ BEGIN
 		  , HideKeno, DisableEsports, DisableSuperLive
 		  , MaxPerMatch1MP
 		  --,maxpermatch164
+		  , DangerLevel
 		  )
 		VALUES
 		(
@@ -519,6 +530,7 @@ BEGIN
 		  , @HideKeno, @DisableEsports, @DisableSuperLive
 		  , 0
 		  --, 0
+		  , @DangerLevel
 		)
 
 		SELECT @CreditRM = @credit * actualrate
