@@ -21,6 +21,8 @@ AS
 		- 20210512@Eden: MaxGame - Support can-see [RedmineID: #154951]
 		- 20210810@Elodie: Add NOLOCK [RedmineID: #159964]
 		- 20220627@Eden: Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20220830@Tacy: Add code to control CANSEE for SEAL Entertainment [RedmineID: #176209]
+
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
 BEGIN
@@ -34,8 +36,8 @@ BEGIN
 	WHERE c.custid = @CustID
 
 	--Get Product Status
-	declare @BetType20 SMALLINT, @BetType2701 SMALLINT,@BetType2801 SMALLINT, @BetType4101 SMALLINT ,@Bettype5401 SMALLINT
-	SELECT @BetType20=20, @BetType2701 = 2701, @BetType2801 = 2801, @BetType4101 = 4101, @Bettype5401 = 5401
+	declare @BetType20 SMALLINT, @BetType2701 SMALLINT,@BetType2801 SMALLINT, @BetType4101 SMALLINT ,@Bettype5401 SMALLINT ,@Bettype8900 SMALLINT
+	SELECT @BetType20=20, @BetType2701 = 2701, @BetType2801 = 2801, @BetType4101 = 4101, @Bettype5401 = 5401, @Bettype8900=8900
 
 	SELECT cs.CustID, psc.Sporttype, CASE psc.Sporttype	
 	                                    WHEN 44  THEN @BetType20 
@@ -48,6 +50,7 @@ BEGIN
 										WHEN 197 THEN @BetType2701
 										WHEN 248 THEN @BetType4101
 										WHEN 237 THEN @Bettype5401
+										WHEN 156 THEN @Bettype8900
 										ELSE ps.Bettype END AS Bettype, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) AS IsHidden, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsDisabled, ps.bitmapOrder)) AS IsDisabled, 
@@ -74,6 +77,7 @@ BEGIN
 								WHEN 197 THEN 180
 				                WHEN 248 THEN 212
 								WHEN 237 THEN 212
+								WHEN 156 THEN 212
 				                ELSE psc.Sporttype END) = ps.Sporttype
 		CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
 	WHERE sd.SettingType IN (4,11,13,21)
