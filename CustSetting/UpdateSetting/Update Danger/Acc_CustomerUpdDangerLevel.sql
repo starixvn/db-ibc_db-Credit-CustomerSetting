@@ -118,7 +118,7 @@ BEGIN
 						--ELSE	
 							--CASE WHEN isSoccerParlay = 1 AND Soccer + SoccerParlay < 150000 THEN 14 ELSE 15 END
 						--END
-					WHEN s.custid IS NOT NULL AND s.currency IN (4,20) THEN ---- Flow B : ALL Licensee & currency = TB
+					WHEN s.custid IS NOT NULL AND s.currency IN (4) THEN ---- Flow B : ALL Licensee & currency = TB
 						--CASE WHEN soccer + soccerParlay < 50000 THEN
 						CASE WHEN soccer <-300000						THEN 1
 							 WHEN soccer <-250000 AND soccer >= -300000	THEN 2
