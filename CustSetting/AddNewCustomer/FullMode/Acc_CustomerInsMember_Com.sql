@@ -448,6 +448,7 @@ Revisions:
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
+	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -1437,6 +1438,10 @@ BEGIN
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13,@SettingStatus)
+
+	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
+	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,21,@SettingStatus)
 	
 	DECLARE @_Site VARCHAR(10)
 	SELECT @_Site = site
@@ -1451,7 +1456,7 @@ BEGIN
 					FROM ProductSettingDetail psd WITH(NOLOCK)
 						INNER JOIN	ProductStatusProfile psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype
 																			AND	psd.BetType = psp.Bettype
-																			AND psd.SettingType IN (4,11,13)		-- Product Status
+																			AND psd.SettingType IN (4,11,13,21)		-- Product Status
 						INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
 					WHERE psd.ProductID <> 20 
@@ -1470,7 +1475,7 @@ BEGIN
 			INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 			CROSS APPLY CustProductStatus WITH(NOLOCK)
 		WHERE CustID = @custid AND (psd.ProductID <> 20)
-			AND psd.SettingType IN (4,11,13)-- Product Status, Game Status
+			AND psd.SettingType IN (4,11,13,21)-- Product Status, Game Status
 	)iq
 
 	SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2200,4 +2205,5 @@ BEGIN
 	END CATCH
 END
 GO
+
 
