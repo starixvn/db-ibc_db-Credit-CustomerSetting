@@ -473,12 +473,13 @@ Revisions:
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
+	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 Param's Explanation:
-• @ErrCode:
+- @ErrCode:
     = 0: super create master successfully.
     > 0: Specific Error.
   
-• @ErrMsg: Error description.
+- @ErrMsg: Error description.
 - @SettingStatus: 0: Pro, 1: UAT
 */
 BEGIN
@@ -2453,13 +2454,17 @@ BEGIN
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13,@SettingStatus)
 
+	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
+	SELECT DISTINCT ProductID,SportType,Bettype,SettingType
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,21,@SettingStatus)
+
 	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
 	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK) 
 		INNER JOIN (SELECT psd.ProductID, MIN(CAST(Hi.[Value] AS INT)) AS custIsHidden
 					FROM ProductSettingDetail psd WITH(NOLOCK)
 						INNER JOIN	ProductStatusProfile psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype
 																			AND	psd.BetType = psp.Bettype
-																			AND psd.SettingType IN (4,11,13)		-- Product Status
+																			AND psd.SettingType IN (4,11,13,21)		-- Product Status
 						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
 						INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 						CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
@@ -2479,7 +2484,7 @@ BEGIN
 			INNER JOIN #temSportbettypeSetting t WITH(NOLOCK) ON  psp.SportType = t.SportType	AND psp.BetType = t.BetType AND psd.SettingType = t.SettingType
 			CROSS APPLY CustProductStatus WITH(NOLOCK)
 		WHERE CustID = @custid AND (psd.ProductID <> 20)
-			AND psd.SettingType IN (4,11,13)-- Product Status, Game Status
+			AND psd.SettingType IN (4,11,13,21)-- Product Status, Game Status
 	)iq
 
 	--Log for VR lock Status
@@ -3068,4 +3073,3 @@ BEGIN
     END CATCH
 END
 GO
-
