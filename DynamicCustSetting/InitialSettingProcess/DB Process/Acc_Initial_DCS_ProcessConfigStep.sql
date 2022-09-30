@@ -13,6 +13,7 @@ AS
 	Revisions:  
 	- 20210713@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
 	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+	- 20220927@Eden: Adjust UM config - block add new mode [Redmine: #178245] 
 
 	Parameter Definition
 		StepID = :
@@ -383,6 +384,14 @@ BEGIN
 				AND u.EndTime >= @CurrentDTS
 				AND u.BeginTime >= @CurrentDTS
 				AND u.SuperID = 0
+
+			UPDATE u
+			SET u.BeginTime = @CurrentDTS
+			FROM UMConfig u WITH(ROWLOCK,UPDLOCK)
+			WHERE u.FunctionType = 2
+				AND u.EndTime >= @CurrentDTS
+				AND u.BeginTime >= @CurrentDTS
+				AND u.SuperID = 0
 		END
 		ELSE --@Currency = 20
 		BEGIN
@@ -399,6 +408,15 @@ BEGIN
 									AND u.ProductID IN( t.ProductID,t.CopyFrom_ProductID)
 					) tmp
 			WHERE u.FunctionType = 1
+				AND u.EndTime >= @CurrentDTS
+				AND u.BeginTime >= @CurrentDTS
+				AND u.SuperID = 0
+				AND u.Currency = 20
+
+			UPDATE u
+			SET u.BeginTime = @CurrentDTS
+			FROM UMConfig u WITH(ROWLOCK,UPDLOCK)
+			WHERE u.FunctionType = 2
 				AND u.EndTime >= @CurrentDTS
 				AND u.BeginTime >= @CurrentDTS
 				AND u.SuperID = 0
