@@ -262,7 +262,7 @@ BEGIN
 				WHERE ci.MRecommend = @MRecommend 
 					AND ci.roleid=2
 					AND 1 =(CASE WHEN (@ProductUnSync = 41 AND (SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapHasSynced,@bitmapOrder_AllBet)) = 0)
-									OR (@ProductUnSync = 22 AND (SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapHasSynced,@bitmapOrder_VoidBridge)) = 0)
+									OR (@ProductUnSync = 53 AND (SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapHasSynced,@bitmapOrder_VoidBridge)) = 0)
 								THEN 1 ELSE 0 END	
 							)
 			END		

@@ -169,7 +169,7 @@ Revisions:
 	SELECT @AllowedRNGLottery = CASE WHEN @AllowedLottery = 1 OR @AllowedTableGames = 1  OR @AllowedRNGWar = 1 THEN 1 ELSE 0 END
 
 	--For VoidBridge
-	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT, @SettingStatus = @SettingStatus
+	EXEC Acc_CheckShowProduct @ProductID = 53, @IsHide = @IsHideVoidBridge OUTPUT, @SettingStatus = @SettingStatus
 	SET @AllowedVoidBridge = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderVB) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideVoidBridge = 0 THEN 1 ELSE 0 END
 	

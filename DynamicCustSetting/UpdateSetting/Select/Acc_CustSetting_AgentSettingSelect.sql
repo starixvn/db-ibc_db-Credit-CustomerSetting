@@ -102,12 +102,6 @@ BEGIN
 	ELSE IF @SettingType = 2
 	BEGIN 
 	
-		DECLARE @Currency TINYINT  
-
-		SELECT @Currency = Currency  
-		FROM dbo.Customer c  
-		WHERE c.custID = @CustID
-		
 		SELECT pdt.SportType  
 			, pdt.BetType  
 			, bl.MinBet  
