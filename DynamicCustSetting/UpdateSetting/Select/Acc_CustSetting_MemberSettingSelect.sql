@@ -132,15 +132,7 @@ BEGIN
 				AND pdt.IsLive = ptgr.islive  
 				AND ptgr.AgentID = @AgentID  
 	END
-	ELSE IF @SettingType = 2
-	BEGIN
-		DECLARE @Currency TINYINT  
 
-		SELECT @Currency = Currency  
-		FROM dbo.Customer c  
-		WHERE c.custID = @CustID 
-	END
-	
 	IF @RoleID = 4  
 	BEGIN  
 		IF @SettingType = 1
