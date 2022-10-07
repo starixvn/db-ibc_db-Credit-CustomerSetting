@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="1"></info>*/
 CREATE FUNCTION [dbo].[f_CustSetting_ProductHiddenStatusSettingSelect](@ProductID TINYINT, @SiteID INT, @Currency INT, @SettingType SMALLINT, @SettingStatus TINYINT) 
 RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Bettype SMALLINT, IsLive BIT)
 /*
