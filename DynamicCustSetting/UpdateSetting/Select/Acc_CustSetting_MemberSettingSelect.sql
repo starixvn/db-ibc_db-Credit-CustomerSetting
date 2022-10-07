@@ -6,6 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MemberSettingSelect]
 	 , @SettingType	SMALLINT
 	 , @DisableAutoMPT BIT = 0 OUTPUT
 	 , @SettingStatus TINYINT = 0
+	 , @SystemID	TINYINT = 1
 AS  
 /*  
  Created: 20141104@Dominic  
@@ -19,6 +20,7 @@ AS
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+	- 20221006@Winfred: Don't show setting of products which are not offered to a credit site [Redmine: #174744]
 
  Param's Explanation:  
 	- @CustID: Member's ID  
@@ -26,23 +28,35 @@ AS
 		3-Master select  
 		4-Super select  
 	- @SettingStatus: 0: Pro, 1: UAT
+	- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
    
  */  
 BEGIN  
 	IF @RoleID NOT IN (2, 3, 4)  
 		RETURN  
   
-	DECLARE @SuperID INT, @MasterID INT, @AgentID INT  
+	DECLARE @SuperID INT, @MasterID INT, @AgentID INT  , @Currency	TINYINT, @Siteid		INT
 	
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
 
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
-	SELECT SportType,Bettype,IsLive, SettingType 
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
-	
-	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend  
-	FROM dbo.custInfo ci WITH(NOLOCK)  
+	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend , @Currency = ci.currency, @Siteid = s.siteid
+	FROM dbo.Customer ci WITH(NOLOCK)  
+		INNER JOIN Site s  WITH(NOLOCK) ON ci.site = s.site
 	WHERE ci.custid=@CustID 
+	
+	IF @SystemID IN (2, 4)
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+		SELECT a.SportType, a.Bettype ,a.IsLive, a.SettingType
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus) a
+			INNER JOIN dbo.f_CustSetting_ProductHiddenStatusSettingSelect(@ProductID,@Siteid,@currency,@SettingType,@SettingStatus) b ON a.SportType  = b.SportType AND a.Bettype = b.Bettype AND a.IsLive = b.IsLive
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+		SELECT SportType,Bettype,IsLive, SettingType 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
+	END
 	
 	IF @SettingType = 1
 	BEGIN

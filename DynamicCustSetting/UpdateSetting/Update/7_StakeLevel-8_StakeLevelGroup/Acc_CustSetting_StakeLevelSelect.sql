@@ -5,6 +5,7 @@ ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevelSelect
 				,	@ProductID		TINYINT
 				,   @SettingType	SMALLINT --20200414@Tiara
 				,   @SettingStatus  TINYINT = 0
+				,	@SystemID	TINYINT = 1
 AS
 /*
 	Created: 20160121@Billy
@@ -21,9 +22,11 @@ AS
 		- 20200909@Winfred: Sort by sport, bettype, MaxStake [Redmine: #131589]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+		- 20221006@Winfred: Don't show setting of products which are not offered to a credit site [Redmine: #174744]
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
+		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 */
 BEGIN
     SET NOCOUNT ON;
@@ -33,6 +36,7 @@ BEGIN
 		,	@srecommend					INT
 		,	@mrecommend					INT
 		,	@recommend					INT
+		,	@Siteid						INT
 
 	CREATE TABLE	#SportBetTypeFilter (
 						SportType		SMALLINT
@@ -49,25 +53,37 @@ BEGIN
 					,	MaxStake		DECIMAL(19,8)
 					)
 
-
-	-- Select SportType & BetType of current ProductID
-	INSERT INTO #SportBetTypeFilter
-		(	SportType         , BetType)
-	SELECT	fcssbtss.SportType, fcssbtss.Bettype
-	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType,@SettingStatus) AS fcssbtss;
-
-	UPDATE S
-	SET S.MaxChoice = CASE WHEN @SettingType = 17 THEN P.MaxChoice ELSE 0 END --MaxChoice = 0: unlimit selected stake level
-	FROM #SportBetTypeFilter S WITH (ROWLOCK,UPDLOCK)
-	INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON P.SportType = S.SportType AND P.BetType = S.BetType
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
 		,	@RoleID     = c.roleid
 		,	@srecommend = c.srecommend
 		,	@mrecommend = c.mrecommend
 		,	@recommend  = c.recommend
+		,	@Siteid		= s.siteid
 	FROM	dbo.Customer AS c WITH(NOLOCK)
+		INNER JOIN Site s  WITH(NOLOCK) ON c.site = s.site
 	WHERE	c.custid = @CustID
+
+	IF @SystemID IN (2, 4)
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype)
+		SELECT a.SportType, a.Bettype 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus) a
+			INNER JOIN dbo.f_CustSetting_ProductHiddenStatusSettingSelect(@ProductID,@Siteid,@currency,@SettingType,@SettingStatus) b ON a.SportType  = b.SportType AND a.Bettype = b.Bettype AND a.IsLive = b.IsLive
+	END
+	ELSE
+	BEGIN
+		-- Select SportType & BetType of current ProductID
+		INSERT INTO #SportBetTypeFilter
+			(	SportType         , BetType)
+		SELECT	fcssbtss.SportType, fcssbtss.Bettype
+		FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType,@SettingStatus) AS fcssbtss;
+	END
+
+	UPDATE S
+	SET S.MaxChoice = CASE WHEN @SettingType = 17 THEN P.MaxChoice ELSE 0 END --MaxChoice = 0: unlimit selected stake level
+	FROM #SportBetTypeFilter S WITH (ROWLOCK,UPDLOCK)
+	INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON P.SportType = S.SportType AND P.BetType = S.BetType
 
 	-- Select available stake levels
 	IF	@RoleID = 4

@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperSettingSelect]
 	, @ProductID	TINYINT
 	, @SettingType	SMALLINT
 	, @SettingStatus TINYINT = 0
+	, @SystemID	TINYINT = 1
 AS
 /*
 	Created: 20141104@Dominic
@@ -20,19 +21,38 @@ AS
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20221006@Winfred: Don't show setting of products which are not offered to a credit site [Redmine: #174744]
 		
 	Param's Explanation:
 	- @CustID: Super's ID
 	- @SettingStatus: 0: Pro, 1: UAT
+	- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	
 	*/
 BEGIN
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
 
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
-	SELECT SportType,Bettype,IsLive, SettingType 
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
+	DECLARE @Currency TINYINT, @Siteid INT
 	
+	SELECT @Currency = Currency, @Siteid = s.siteid
+	FROM dbo.Customer c WITH(NOLOCK)
+		INNER JOIN Site s  WITH(NOLOCK) ON c.site = s.site
+	WHERE c.custID = @CustID
+
+	IF @SystemID IN (2, 4)
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+		SELECT a.SportType, a.Bettype ,a.IsLive, SettingType
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus) a
+			INNER JOIN dbo.f_CustSetting_ProductHiddenStatusSettingSelect(@ProductID,@Siteid,@currency,@SettingType,@SettingStatus) b ON a.SportType  = b.SportType AND a.Bettype = b.Bettype AND a.IsLive = b.IsLive
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+		SELECT SportType,Bettype,IsLive, SettingType 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
+	END
+
 	--PT Setting
 	IF @SettingType = 1
 	BEGIN		
@@ -59,12 +79,7 @@ BEGIN
 	--Bet Limit Setting
 	ELSE IF @SettingType = 2
 	BEGIN
-		DECLARE @Currency TINYINT
-	
-		SELECT @Currency = Currency
-		FROM dbo.Customer c WITH(NOLOCK)
-		WHERE c.custID = @CustID
-	
+		
 		SELECT pdt.SportType
 			, pdt.BetType
 			, bl.MinBet

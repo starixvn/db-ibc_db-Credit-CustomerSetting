@@ -4,6 +4,7 @@ ALTER PROCEDURE Acc_CustSetting_SuperPTSelect
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @SettingStatus TINYINT = 0
+	, @SystemID	TINYINT = 1
 AS
 /*
 	Created: 20200612@Elodie
@@ -15,19 +16,37 @@ AS
 		- 20200612@Elodie: Initial SP for setting type 18 [Redmine: #135363]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20221006@Winfred: Don't show setting of products which are not offered to a credit site [Redmine: #174744]
 		
 	Param's Explanation:
 		- @CustID: Super's ID
 		- @SettingStatus: 0: Pro, 1: UAT
+		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	
 */
 BEGIN
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
-
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
-	SELECT SportType, Bettype, IsLive, SettingType 
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
 	
+	DECLARE @Siteid INT, @currency	TINYINT
+	SELECT @Siteid=s.siteid, @currency = ci.currency  
+	FROM dbo.Customer ci WITH(NOLOCK)  
+	INNER JOIN Site s  WITH(NOLOCK) ON ci.site = s.site
+	WHERE ci.custid=@CustID 
+	
+	IF @SystemID IN (2, 4)
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+		SELECT a.SportType, a.Bettype, a.IsLive, a.SettingType 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus) a
+			INNER JOIN dbo.f_CustSetting_ProductHiddenStatusSettingSelect(@ProductID,@Siteid,@currency,18,@SettingStatus) b ON a.SportType  = b.SportType AND a.Bettype = b.Bettype AND a.IsLive = b.IsLive
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+		SELECT SportType, Bettype, IsLive, SettingType 
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
+	END
+		
 	SELECT pdt.SportType
 		, pdt.BetType
 		, pdt.IsLive
