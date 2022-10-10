@@ -48,18 +48,15 @@ BEGIN
 	BEGIN
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
 		SELECT a.SportType, a.Bettype ,a.SettingType
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) a
-			INNER JOIN dbo.f_CustSetting_ProductHiddenStatusSettingSelect(@ProductID,@Siteid,@currency,3,@SettingStatus) b ON a.SportType  = b.SportType AND a.Bettype = b.Bettype AND a.IsLive = b.IsLive  --Commission
+		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,3,@SettingStatus) b --Commission
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
 		SELECT a.SportType, a.Bettype ,a.SettingType
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus) a
-			INNER JOIN dbo.f_CustSetting_ProductHiddenStatusSettingSelect(@ProductID,@Siteid,@currency,19,@SettingStatus) b ON a.SportType  = b.SportType AND a.Bettype = b.Bettype AND a.IsLive = b.IsLive  --Commission
+		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,19,@SettingStatus) b  --Commission
 
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
 		SELECT a.SportType, a.Bettype ,a.SettingType
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus) a
-			INNER JOIN dbo.f_CustSetting_ProductHiddenStatusSettingSelect(@ProductID,@Siteid,@currency,5,@SettingStatus) b ON a.SportType  = b.SportType AND a.Bettype = b.Bettype AND a.IsLive = b.IsLive  --Charge Commission
+		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,5,@SettingStatus) b --Charge Commission
 	END
 	ELSE
 	BEGIN
