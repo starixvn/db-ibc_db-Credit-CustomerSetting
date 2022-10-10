@@ -68,7 +68,7 @@ BEGIN
 	BEGIN
 		INSERT INTO #SportBettypeFilter(SportType,Bettype)
 		SELECT a.SportType, a.Bettype 
-		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,@SettingType,@SettingStatus) b
+		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,@SettingType,@SettingStatus) a
 	END
 	ELSE
 	BEGIN

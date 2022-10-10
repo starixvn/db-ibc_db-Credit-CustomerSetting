@@ -48,15 +48,15 @@ BEGIN
 	BEGIN
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
 		SELECT a.SportType, a.Bettype ,a.SettingType
-		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,3,@SettingStatus) b --Commission
+		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,3,@SettingStatus) a --Commission
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
 		SELECT a.SportType, a.Bettype ,a.SettingType
-		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,19,@SettingStatus) b  --Commission
+		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,19,@SettingStatus) a  --Commission
 
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
 		SELECT a.SportType, a.Bettype ,a.SettingType
-		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,5,@SettingStatus) b --Charge Commission
+		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,5,@SettingStatus) a --Charge Commission
 	END
 	ELSE
 	BEGIN

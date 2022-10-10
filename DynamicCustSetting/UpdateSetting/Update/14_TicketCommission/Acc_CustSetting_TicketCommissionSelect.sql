@@ -50,7 +50,7 @@ BEGIN
 	BEGIN
 		INSERT INTO #SportBettypeFilter(SportType,Bettype)
 		SELECT a.SportType, a.Bettype 
-		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,14,@SettingStatus) b  --Commission
+		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,14,@SettingStatus) a  --Commission
 	END
 	ELSE
 	BEGIN
