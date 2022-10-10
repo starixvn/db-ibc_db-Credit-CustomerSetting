@@ -13,7 +13,6 @@ AS
 		- 20221006@Winfred: Get setting hidden status of product [Redmine: #174744]
 	Explanation's Param:
 		@SettingStatus: 0: Pro, 1: UAT
-		--@SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Bettype SMALLINT, IsLive BIT)
 		
 */ 
 RETURN (SELECT DISTINCT p.ProductID, p.SportType, p.Bettype, p.IsLive , p.SettingType, p.RealProductId
@@ -23,5 +22,5 @@ RETURN (SELECT DISTINCT p.ProductID, p.SportType, p.Bettype, p.IsLive , p.Settin
 		WHERE (@ProductID IS NULL OR ProductID = @ProductID ) 
 				AND p.SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
 				AND (@SettingType IS NULL OR SettingType = @SettingType) 
-				AND ((ps.SiteID IS NULL AND ps.Currency IS NULL ) OR  ps.IsHidden = 0))
+				AND ((ps.SportType IS NULL ) OR  ps.IsHidden = 0))
 
