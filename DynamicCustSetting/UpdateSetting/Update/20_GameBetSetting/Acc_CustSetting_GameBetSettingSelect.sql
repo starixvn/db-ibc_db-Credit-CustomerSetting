@@ -19,7 +19,6 @@ AS
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
-		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 		
 */
 BEGIN
@@ -45,7 +44,7 @@ BEGIN
 
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
 
-	IF @SystemID IN (2, 4)
+	IF @SystemID <> 1
 	BEGIN
 		INSERT INTO #SportBettypeFilter(SportType,Bettype)
 		SELECT a.SportType, a.Bettype 

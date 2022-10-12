@@ -26,7 +26,6 @@ AS
 					3-Master select  
 					4-Super select  
 		- @SettingStatus: 0: Pro, 1: UAT
-		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
  */  
 BEGIN  
 	IF @RoleID NOT IN (2, 3, 4)  
@@ -41,7 +40,7 @@ BEGIN
 	
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
 
-	IF @SystemID IN (2, 4)
+	IF @SystemID <> 1
 	BEGIN
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
 		SELECT a.SportType, a.Bettype, a.IsLive, a.SettingType 

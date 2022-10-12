@@ -25,7 +25,6 @@ AS
 						8: WinLimit
 						12: LossLimit
 		- @SettingStatus: 0: Pro, 1: UAT
-		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
 BEGIN
 	DECLARE	@Currency	TINYINT,
@@ -52,7 +51,7 @@ BEGIN
 		INNER JOIN Site s  WITH(NOLOCK) ON c.site = s.site
 	WHERE	c.custid = @CustID
 
-	IF @SystemID IN (2, 4)
+	IF @SystemID <> 1
 	BEGIN
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
 		SELECT a.SportType, a.Bettype, a.IsLive, a.SettingType 
