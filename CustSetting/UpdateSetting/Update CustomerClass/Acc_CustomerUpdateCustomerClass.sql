@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdateCustomerClass]  
-	@custList	VARCHAR(MAX) = '',
+	@custList	VARCHAR(MAX) = '',	
 	@ErrCode 	INT = 0 OUTPUT,	
 	@ErrMsg		VARCHAR(500) = '' OUTPUT
 AS  
@@ -17,17 +17,27 @@ AS
 		- 20220228@Johnson: add new category for good/bad robot[redmine:#167726]
 		- 20220329@Johnson: Add new category/class for PA Probation [redmine:#170468]
 		- 20220405@Johnson: Add OldCustomerClass column [redmine:#170182]
+		- 20220630@Johnson: write log for LAP [redmine:#174357]
 	Parameter's Explanation: 
 		@custList = '<Root>
 					<r id="100" c="10" t="1" />
 					<r id="101" c="11" t="2" />
 					<r id="102" c="12" t="3" />
 					</Root>'
+					
+		id: custid
+		c: customerClass
+		t: category
+		u: userid
 */
 BEGIN
 	SET NOCOUNT ON 
 	
-	DECLARE @CategoryList VARCHAR(MAX) 
+	DECLARE @CategoryList VARCHAR(MAX),
+			@startRun DATETIME, 
+			@duration INT
+	
+	SELECT @startRun = GETDATE()
 
 	SELECT @CategoryList = CAST((
 						SELECT DISTINCT CustomerClass c 
@@ -70,6 +80,7 @@ BEGIN
 		
 		RETURN;
 	END CATCH 
+	
 	WHILE (1=1)
 	BEGIN
 		DELETE @tmp
@@ -95,6 +106,26 @@ BEGIN
 		WAITFOR DELAY '0:0:1'
 		
 	END
+	
+	IF EXISTS (SELECT 1 FROM #tblDep_CustClass)
+	BEGIN
+		DECLARE @LogData NVARCHAR(MAX),
+			@ActionID INT = 5566
+		
+		SELECT @LogData = 
+		CAST((SELECT custid '@id', CustomerClass '@c', OldCustomerClass '@o'
+			FROM #tblDep_CustClass
+			FOR XML PATH('r'), ROOT('Root')) AS VARCHAR(MAX)
+			)
+		
+		SELECT @Duration = DATEDIFF (MILLISECOND, @startRun, GETDATE())
+			
+		EXEC DBLOG.bodb_CustomerLog.[dbo].[WriteLog_UserLog_UserControl_Multiple] 
+			@LogData = @LogData, 			
+			@TypeID = 2, 
+			@actionid = @ActionID, 
+			@duration = @Duration
+	END 
 	
 	DROP TABLE #tblDep_CustClass
 END	
