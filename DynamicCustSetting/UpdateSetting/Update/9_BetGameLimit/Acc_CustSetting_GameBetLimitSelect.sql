@@ -6,7 +6,6 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_GameBetLimitSelect]
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @SettingStatus TINYINT = 0
-	, @SystemID	TINYINT = 1
 AS
 /*
 	Created: 20160108@Elodie
@@ -18,7 +17,6 @@ AS
 		- 20171109@Elodie: Cannot update Bet Setting of Super with value <> 0 when global setting = 0 [RedmineID:#86041]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
-		- 20221006@Winfred: Don't show setting of products which are not offered to a credit site [Redmine: #174744]
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -29,37 +27,25 @@ BEGIN
 			@RoleID		TINYINT,
 			@SuperID	INT,
 			@MasterID	INT,
-			@AgentID	INT, 
-			@Siteid		INT
+			@AgentID	INT
 	
 	DECLARE @BetGameUnlimit TABLE(SportType SMALLINT, BetType SMALLINT, IsAllowUnlimit BIT)
 
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
+
+	INSERT INTO #SportBettypeFilter(SportType,Bettype)
+	SELECT SportType,Bettype 
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9,@SettingStatus)
+	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
 		,	@RoleID     = c.roleid
 		,	@SuperID	= c.srecommend
 		,	@MasterID	= c.mrecommend
 		,	@AgentID	= c.recommend
-		,	@Siteid		= s.siteid
 	FROM	dbo.Customer AS c WITH(NOLOCK)
-		INNER JOIN Site s  WITH(NOLOCK) ON c.site = s.site
 	WHERE	c.custid = @CustID
-
-	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT)
-
-	IF @SystemID <> 1
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype)
-		SELECT a.SportType, a.Bettype 
-		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,9,@SettingStatus) a
-	END
-	ELSE
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype)
-		SELECT SportType,Bettype 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,9,@SettingStatus)
-	END
-
+	
 	IF @RoleID BETWEEN 1 AND 3
 	BEGIN
 		INSERT INTO @BetGameUnlimit

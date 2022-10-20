@@ -7,7 +7,6 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitSelect]
 	, @ProductID	TINYINT
 	, @SettingType	SMALLINT = 6
 	, @SettingStatus TINYINT = 0
-	, @SystemID	TINYINT = 1
 AS
 /*
 	Created: 20160108@Elodie
@@ -18,7 +17,6 @@ AS
 	- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
-	- 20221006@Winfred: Don't show setting of products which are not offered to a credit site [Redmine: #174744]
 	
 	Param's Explanation:
 		• @SettingType: 6: WinLossLimit
@@ -31,8 +29,7 @@ BEGIN
 			@RoleID		TINYINT,
 			@SuperID	INT,
 			@MasterID	INT,
-			@AgentID	INT, 
-			@Siteid		INT
+			@AgentID	INT
 
 	CREATE TABLE #SportBettypeFilter (
 			sporttype SMALLINT, 
@@ -40,29 +37,18 @@ BEGIN
 			IsLive BIT, 
 			SettingType SMALLINT)
 
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingType)
+	SELECT SportType,Bettype,IsLive,SettingType 
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
+	
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
 		,	@RoleID     = c.roleid
 		,	@SuperID	= c.srecommend
 		,	@MasterID	= c.mrecommend
 		,	@AgentID	= c.recommend
-		,	@Siteid		= s.siteid
 	FROM	dbo.Customer AS c WITH(NOLOCK)
-		INNER JOIN Site s  WITH(NOLOCK) ON c.site = s.site
 	WHERE	c.custid = @CustID
-
-	IF @SystemID <> 1
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
-		SELECT a.SportType, a.Bettype, a.IsLive, a.SettingType 
-		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,@SettingType,@SettingStatus) a
-	END
-	ELSE
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingType)
-		SELECT SportType,Bettype,IsLive,SettingType 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
-	END
 
 	--WinLossLimit Setting
 	IF @SettingType = 6

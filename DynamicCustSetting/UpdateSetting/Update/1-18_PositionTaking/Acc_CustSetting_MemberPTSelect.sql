@@ -5,7 +5,6 @@ ALTER PROCEDURE Acc_CustSetting_MemberPTSelect
 	 , @RoleID		INT  
 	 , @DisableAutoMPT BIT = 0 OUTPUT
 	 , @SettingStatus TINYINT = 0
-	 , @SystemID	TINYINT = 1
 AS  
 /*  
 	Created: 20200612@Elodie
@@ -18,7 +17,6 @@ AS
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
-		- 20221006@Winfred: Don't show setting of products which are not offered to a credit site [Redmine: #174744]
 
 	Param's Explanation:  
 		- @CustID: Member's ID  
@@ -31,28 +29,18 @@ BEGIN
 	IF @RoleID NOT IN (2, 3, 4)  
 		RETURN  
   
-	DECLARE @SuperID INT, @MasterID INT, @AgentID INT, @Siteid INT, @currency	TINYINT  
-
-	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend , @Siteid=s.siteid, @currency = ci.currency  
-	FROM dbo.Customer ci WITH(NOLOCK)  
-	INNER JOIN Site s  WITH(NOLOCK) ON ci.site = s.site
-	WHERE ci.custid=@CustID 
+	DECLARE @SuperID INT, @MasterID INT, @AgentID INT  
 	
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
 
-	IF @SystemID <> 1
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
-		SELECT a.SportType, a.Bettype, a.IsLive, a.SettingType 
-		FROM dbo.f_CustSetting_ProductOfferedSelect(@ProductID,@Siteid,@currency,18,@SettingStatus) a
-	END
-	ELSE
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
-		SELECT SportType,Bettype,IsLive, SettingType 
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
-	END 
-
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
+	SELECT SportType,Bettype,IsLive, SettingType 
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
+	
+	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend  
+	FROM dbo.custInfo ci WITH(NOLOCK)  
+	WHERE ci.custid=@CustID 
+	
 	DECLARE @MemberPT TABLE (  
 							SportType  SMALLINT  
 							, BetType  SMALLINT  
