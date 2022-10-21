@@ -48,6 +48,7 @@ AS
 		- 20220406@Elodie: Apply STRING_SPLIT() instead of strSplit UDF [Redmine: #168783]
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20221006@Winfred: Don't show setting of products which are not offered to a credit site [Redmine: #174744] 
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -373,6 +374,9 @@ BEGIN
 			FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 				INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
 			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13,21)
+				INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
+			WHERE (ssc.Currency = @_Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @_SiteID
+
 		END
 
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
