@@ -36,7 +36,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @SuperID AND [Site] = 'IMBC')  
 		SET @IsIMBC = 1  
     
-	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, Child_DisplayOrder INT)
+	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, ChildDisplayOrder INT)
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
@@ -59,7 +59,7 @@ BEGIN
 	WHERE @SettingType IS NULL OR @SettingType = 21
 
 	UPDATE t
-	SET t.Child_DisplayOrder = d.Child_DisplayOrder
+	SET t.ChildDisplayOrder = d.ChildDisplayOrder
 	FROM #SportBettypeFilter t 
 		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
 			ON t.sporttype = d.SportType
@@ -95,7 +95,7 @@ BEGIN
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK)
 		WHERE stt.CustID = @CustID  
-		ORDER BY ft.ProductID, ft.Child_DisplayOrder
+		ORDER BY ft.ProductID, ft.ChildDisplayOrder
     
 	END  
 	ELSE IF @RoleID = 3  
@@ -127,7 +127,7 @@ BEGIN
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)
 		WHERE stt.CustID = @CustID AND stt_UPLINE.CustID = @SuperID  
-		ORDER BY ft.ProductID, ft.Child_DisplayOrder
+		ORDER BY ft.ProductID, ft.ChildDisplayOrder
 	END     
 	ELSE IF @RoleID = 2  
 	BEGIN  
@@ -158,7 +158,7 @@ BEGIN
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) 
 		WHERE stt.CustID = @CustID AND stt_UPLINE.CustID = @MasterID
-		ORDER BY ft.ProductID, ft.Child_DisplayOrder
+		ORDER BY ft.ProductID, ft.ChildDisplayOrder
 	END   
 	ELSE IF @RoleID = 1  
 	BEGIN  
@@ -178,7 +178,7 @@ BEGIN
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK)
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)
 		WHERE stt.CustID = @CustID AND stt_UPLINE.CustID = @AgentID
-		ORDER BY ft.ProductID, ft.Child_DisplayOrder
+		ORDER BY ft.ProductID, ft.ChildDisplayOrder
 	END   
 END
 GO

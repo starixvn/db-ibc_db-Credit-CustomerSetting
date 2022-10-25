@@ -39,7 +39,7 @@ BEGIN
 			@MasterID	INT,
 			@AgentID	INT
 
-	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT, Child_DisplayOrder INT)
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT, ChildDisplayOrder INT)
 
 	INSERT INTO #SportBettypeFilter(SportType,Bettype)
 	SELECT SportType,Bettype
@@ -48,7 +48,7 @@ BEGIN
 	UPDATE t
 	SET t.ParentSportType = par.SportType
 		, t.ParentBetType = par.BetType
-		, t.Child_DisplayOrder = d.Child_DisplayOrder
+		, t.ChildDisplayOrder = d.ChildDisplayOrder
 	FROM #SportBettypeFilter t 
 		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
 			ON t.sporttype = d.SportType
@@ -80,7 +80,7 @@ BEGIN
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.ChildDisplayOrder
 	END	
 	ELSE IF @RoleID = 3
 	BEGIN
@@ -97,7 +97,7 @@ BEGIN
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @SuperID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.ChildDisplayOrder
 	END
 	ELSE IF @RoleID = 2
 	BEGIN
@@ -114,7 +114,7 @@ BEGIN
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @MasterID	
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.ChildDisplayOrder
 	END	
 	ELSE 
 	BEGIN
@@ -131,7 +131,7 @@ BEGIN
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @AgentID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.ChildDisplayOrder
 	END
 	DROP TABLE #SportBettypeFilter
 END

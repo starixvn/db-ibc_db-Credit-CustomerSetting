@@ -47,7 +47,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @SuperID AND [Site] = 'IMBC')  
 		SET @IsIMBC = 1  
     
-	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, Child_DisplayOrder INT)
+	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, ChildDisplayOrder INT)
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
@@ -76,7 +76,7 @@ BEGIN
 	--WHERE sbhsc.IsHidden = 1  
    
    UPDATE t
-	SET t.Child_DisplayOrder = d.Child_DisplayOrder
+	SET t.ChildDisplayOrder = d.ChildDisplayOrder
 	FROM #SportBettypeFilter t 
 		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
 			ON t.sporttype = d.SportType
@@ -121,7 +121,7 @@ BEGIN
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
+		ORDER BY pdt.ProductID, ft.ChildDisplayOrder
 	END  
 	ELSE IF @RoleID = 3  
 	BEGIN  
@@ -161,7 +161,7 @@ BEGIN
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @SuperID  
 		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
+		ORDER BY pdt.ProductID, ft.ChildDisplayOrder
 	END     
 	ELSE IF @RoleID = 2  
 	BEGIN  
@@ -200,7 +200,7 @@ BEGIN
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @MasterID  
 		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
+		ORDER BY pdt.ProductID, ft.ChildDisplayOrder
 	END   
 	ELSE IF @RoleID = 1  
 	BEGIN  
@@ -221,7 +221,7 @@ BEGIN
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @AgentID  
 		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
+		ORDER BY pdt.ProductID, ft.ChildDisplayOrder
 	END   
 END
 
