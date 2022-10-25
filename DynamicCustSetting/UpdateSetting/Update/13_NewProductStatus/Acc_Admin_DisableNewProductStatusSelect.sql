@@ -18,6 +18,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -43,7 +44,7 @@ BEGIN
 											TotalDisabledAgents INT,
 											TotalDisabledMembers INT)
 
-	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT)
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT, Child_DisplayOrder INT)
 
 	IF @SettingType IS NULL
 	BEGIN
@@ -65,6 +66,7 @@ BEGIN
 	UPDATE t
 	SET t.ParentSportType = par.SportType
 		, t.ParentBetType = par.BetType
+		, t.Child_DisplayOrder = d.Child_DisplayOrder
 	FROM #SportBettypeFilter t 
 		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
 			ON t.sporttype = d.SportType
@@ -133,6 +135,7 @@ BEGIN
 			LEFT JOIN #DownlineEnableStatus dse ON dse.Bettype = ft.BetType AND dse.Sporttype = ft.SportType		
 			LEFT JOIN #DownlineDisableStatus dsd ON dsd.Bettype = ft.BetType AND dsd.Sporttype = ft.SportType
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+		ORDER BY ft.Child_DisplayOrder
 	END	
 	ELSE IF @RoleID = 3
 	BEGIN
@@ -186,6 +189,7 @@ BEGIN
 			LEFT JOIN #DownlineEnableStatus dse ON dse.Bettype = ft.BetType AND dse.Sporttype = ft.SportType		
 			LEFT JOIN #DownlineDisableStatus dsd ON dsd.Bettype = ft.BetType AND dsd.Sporttype = ft.SportType		
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+		ORDER BY ft.Child_DisplayOrder
 	END
 	ELSE IF @RoleID = 2
 	BEGIN
@@ -239,6 +243,7 @@ BEGIN
 			LEFT JOIN #DownlineEnableStatus dse ON dse.Bettype = ft.BetType AND dse.Sporttype = ft.SportType		
 			LEFT JOIN #DownlineDisableStatus dsd ON dsd.Bettype = ft.BetType AND dsd.Sporttype = ft.SportType
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+		ORDER BY ft.Child_DisplayOrder
 	END	
 	ELSE 
 	BEGIN
@@ -262,6 +267,7 @@ BEGIN
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @AgentID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+		ORDER BY ft.Child_DisplayOrder
 	END
 
 	DROP TABLE #SportBettypeFilter
