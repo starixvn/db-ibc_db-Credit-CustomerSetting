@@ -28,6 +28,7 @@ AS
 	- 20200325@Elodie: Only show sport is unhided [RedmineID:#128058]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+	- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
  Param's Explanation:  
 	- @CustID: 
 	- @SettingStatus: 0: Pro, 1: UAT
@@ -46,7 +47,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @SuperID AND [Site] = 'IMBC')  
 		SET @IsIMBC = 1  
     
-	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT)
+	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, Child_DisplayOrder INT)
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
@@ -74,6 +75,15 @@ BEGIN
 	--  ON sbhsc.ProductID = sbf.ProductID  
 	--WHERE sbhsc.IsHidden = 1  
    
+   UPDATE t
+	SET t.Child_DisplayOrder = d.Child_DisplayOrder
+	FROM #SportBettypeFilter t 
+		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
+			ON t.sporttype = d.SportType
+			AND t.bettype = d.BetType
+			AND t.IsLive = d.IsLive
+			AND d.SettingType = t.SettingType
+
 	IF @RoleID = 4  
 	BEGIN  
 		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)  
@@ -111,7 +121,7 @@ BEGIN
 			LEFT JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID  
 		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-    
+		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
 	END  
 	ELSE IF @RoleID = 3  
 	BEGIN  
@@ -151,6 +161,7 @@ BEGIN
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @SuperID  
 		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
 	END     
 	ELSE IF @RoleID = 2  
 	BEGIN  
@@ -189,6 +200,7 @@ BEGIN
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @MasterID  
 		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
 	END   
 	ELSE IF @RoleID = 1  
 	BEGIN  
@@ -209,6 +221,7 @@ BEGIN
 			LEFT JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) ON stt_UPLINE.CustID = @AgentID  
 		WHERE pdt.SettingType IN (4,11,13,21) AND (@SettingType IS NULL OR ft.SettingType = @SettingType)
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
 	END   
 END
 
