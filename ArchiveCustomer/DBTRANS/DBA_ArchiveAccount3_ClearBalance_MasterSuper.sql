@@ -25,6 +25,7 @@ AS
 			- 20201109@Helen: Stage 3 - Tuning - [Redmine:130032]
 			- 20210817@Elodie: Change data type of Refno  to bigint instead [Redmine: #160262]
 			- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
+			- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
 */
 BEGIN
 
@@ -37,7 +38,7 @@ BEGIN
 	
 	print  'Start:' + convert(varchar(50), getdate(), 113)
 
-	Declare @refno bigint, @grefno bigint, @Now datetime, @Enabled bit, @MasterBalance MONEY
+	Declare @refno bigint, @TransID bigint, @TransID2 bigint, @Now datetime, @Enabled bit, @MasterBalance MONEY
 
 	CREATE TABLE #temp_recommend (recommend INT PRIMARY KEY)
 	
@@ -81,46 +82,40 @@ BEGIN
 		
 	print @mastername +':'+ 'Master-Super-->Master:' + @mastername + ' ' + cast(@MasterBalance as varchar(30))
 
-	UPDATE ref with (rowlock, UPDLOCK)  SET   @grefno=transcode=transcode+1
-	WHERE  refid='acc'
-	if @@Error <> 0
-	BEGIN
-		delete transfer WITH(ROWLOCK, UPDLOCK) where refno = @refno
-		return
-	END
-	select @refno=200000000000+@grefno
+	EXEC Get_Refno_Transid @RefNo = @RefNo OUTPUT
+	EXEC Get_Bettrans_TransID @TransID = @TransID OUTPUT
+	EXEC Get_Bettrans_TransID @TransID = @TransID2 OUTPUT
 
 	IF (@MasterBalance > 0) 
 	BEGIN
 		-- insert Super
 		INSERT INTO transfer 
-		   (creator, custid, username, refno, transdate, bettype, transdesc, winlost, actual_stake, 
+		   (TransId, creator, custid, username, refno, transdate, bettype, transdesc, winlost, actual_stake, 
 			statusID, winlostdate, currency, actualrate, currencyName, 
 			recommend, mrecommend, srecommend, scomm, swinlost,ip)
-		VALUES (@UserID, @srecommend, @supername, @refno, @Now, 21004, 'For Delete Account - From Customer::'+@mastername, @MasterBalance, 0, 
+		VALUES (@TransID, @UserID, @srecommend, @supername, @refno, @Now, 21004, 'For Delete Account - From Customer::'+@mastername, @MasterBalance, 0, 
 			131, convert(nvarchar(10), @Now,120), @currency, @actualrate, @currencyName,
 			0, 0, @srecommend, 0, 0,'')
 		if @@Error <> 0
 		BEGIN
 			RaisError (@ErrMsg, 16, 1)
-			delete transfer WITH(ROWLOCK, UPDLOCK) where refno = @refno
+			DELETE transfer WITH(ROWLOCK,UPDLOCK) WHERE TransId = @TransID
 			return
 		END
 		
 		-- insert Master
 		INSERT INTO transfer
-		   (creator, custid, username, refno, transdate, bettype, transdesc, winlost, actual_stake, 
+		   (TransId, creator, custid, username, refno, transdate, bettype, transdesc, winlost, actual_stake, 
 			statusID, winlostdate, currency, actualrate, currencyName,
 			recommend, mrecommend, srecommend, scomm, swinlost,ip)
 		VALUES 
-		   (@UserID, @mrecommend, @mastername, @refno, @Now, 21004, 'For Delete Account - To Customer::'+ @supername, 0, @MasterBalance,
+		   (@TransID2, @UserID, @mrecommend, @mastername, @refno, @Now, 21004, 'For Delete Account - To Customer::'+ @supername, 0, @MasterBalance,
 			131, convert(nvarchar(10), @Now,120), @currency, @actualrate, @currencyName,
 			0, @MRecommend, @srecommend, 0, 0,'')
 		if @@Error <> 0
 		BEGIN
 			RaisError (@ErrMsg, 16, 1)
-			delete transfer WITH(ROWLOCK, UPDLOCK) where refno = @refno
-			
+			DELETE transfer WITH(ROWLOCK,UPDLOCK) WHERE TransId IN (@TransID, @TransID2)
 			return
 		END			
 		
@@ -130,33 +125,33 @@ BEGIN
 		SET @MasterBalance = abs(@MasterBalance) 
 		-- insert for super			
 		INSERT INTO transfer 
-		   (creator, custid, username, refno, transdate, bettype, transdesc, winlost, actual_stake, 
+		   (TransId, creator, custid, username, refno, transdate, bettype, transdesc, winlost, actual_stake, 
 			statusID, winlostdate, currency, actualrate, currencyName, 
 			recommend, mrecommend, srecommend, scomm, swinlost,ip)
 		VALUES 
-		   (@UserID, @srecommend, @supername, @refno, CURRENT_TIMESTAMP, 21004, 'For Delete Account - To Customer::'+ @mastername, 0, @MasterBalance,
+		   (@TransId, @UserID, @srecommend, @supername, @refno, CURRENT_TIMESTAMP, 21004, 'For Delete Account - To Customer::'+ @mastername, 0, @MasterBalance,
 			131, convert(nvarchar(10), @Now,120), @currency, @actualrate, @currencyName,
 			0, 0, @srecommend, 0, 0,'')
 		if @@Error <> 0
 		BEGIN
 			RaisError (@ErrMsg, 16, 1)
-			delete transfer WITH(ROWLOCK, UPDLOCK) where refno = @refno
+			DELETE transfer WITH(ROWLOCK,UPDLOCK) WHERE TransId = @TransID
 			return
 		END
 		-- insert for master
 		INSERT INTO transfer
-		   (creator, custid, username, refno, transdate, bettype, transdesc, winlost, actual_stake, 
+		   (TransId, creator, custid, username, refno, transdate, bettype, transdesc, winlost, actual_stake, 
 			statusID, winlostdate, currency, actualrate, currencyName,
 			recommend, mrecommend, srecommend, scomm, swinlost,ip)
 		VALUES 
-		   (@UserID, @mrecommend, @mastername, @refno, CURRENT_TIMESTAMP, 21004, 'For Delete Account - From Customer::'+ @supername, @MasterBalance, 0,
+		   (@TransID2, @UserID, @mrecommend, @mastername, @refno, CURRENT_TIMESTAMP, 21004, 'For Delete Account - From Customer::'+ @supername, @MasterBalance, 0,
 			131, convert(nvarchar(10), @Now,120), @currency, @actualrate, @currencyName,
 			0, @MRecommend, @srecommend, 0, 0,'')
 		
 		if @@Error <> 0
 		BEGIN
 			RAISERROR (@ErrMsg, 16, 1)
-			delete transfer WITH(ROWLOCK, UPDLOCK) where refno = @refno
+			DELETE transfer WITH(ROWLOCK,UPDLOCK) WHERE TransId IN (@TransID, @TransID2)
 			RETURN
 		END
 		
