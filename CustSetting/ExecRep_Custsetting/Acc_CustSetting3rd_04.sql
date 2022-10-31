@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting3rd_04] 
     @srecommend INT = 0,
     @mrecommend INT =0,
@@ -36,6 +35,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting3rd_04]
 			- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 			- 20190924@Elodie: 3rd party products - Remove Inactive Products Phase 2 [Redmine: #118699]
 			- 20200729@Johnson: hot fix Number Game wrong bettype [redmine:#138441]
+			- 20221031@Eden: Optimize executed plan of sp getting customer's pt [redmine:#174131]
         Parameter's Explanation:        
     */ 
 BEGIN
@@ -51,14 +51,21 @@ BEGIN
     
      
     declare @mpos smallmoney, @apos smallmoney, @spos smallmoney, @mapos1 smallmoney, @mapos2 smallmoney, @mapos smallmoney, @maxmapos smallmoney
+	DECLARE @_srecommend INT, 
+		@_mrecommend INT,
+		@_recommend INT,
+		@_custid INT
+
+    SELECT @_srecommend = @srecommend, 
+		@_mrecommend = @mrecommend,
+		@_recommend = @recommend,
+		@_custid = @custid
     
     --UPDATE min pt ON super
     IF @roleid = 4
     BEGIN   
         IF @mode = 'number'
         BEGIN
-            DECLARE @_srecommend INT
-            SELECT @_srecommend = @srecommend
 
             --s1=min(s1,s4-m3) if i=0
             
@@ -621,10 +628,10 @@ BEGIN
         INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = ci.mrecommend
                                                    AND mcs.sporttype = cs.sporttype
                                                    AND mcs.bettype = cs.bettype
-        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                    AND scs.sporttype = cs.sporttype
                                                    AND scs.bettype = cs.bettype
-             WHERE ci.srecommend = @srecommend
+             WHERE ci.srecommend = @_srecommend
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -653,7 +660,7 @@ BEGIN
         INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = ci.mrecommend
                                                    AND mcs.sporttype = cs.sporttype
                                                    AND mcs.bettype = cs.bettype
-             WHERE ci.srecommend = @srecommend
+             WHERE ci.srecommend = @_srecommend
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -684,7 +691,7 @@ BEGIN
         INNER JOIN CustSettingGame acs WITH(NOLOCK) ON acs.custid = ci.recommend
                                                    AND acs.sporttype = cs.sporttype
                                                    AND acs.bettype = cs.bettype
-             WHERE ci.srecommend = @srecommend
+             WHERE ci.srecommend = @_srecommend
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -707,7 +714,7 @@ BEGIN
         INNER JOIN CustOverrideGame mco WITH(NOLOCK) ON mco.custid = ci.mrecommend
                                                     AND mco.sporttype = cs.sporttype
                                                     AND mco.bettype = cs.bettype
-             WHERE ci.srecommend = @srecommend
+             WHERE ci.srecommend = @_srecommend
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -734,10 +741,10 @@ BEGIN
         INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = ci.mrecommend
                                                    AND mcs.sporttype = cs.sporttype
                                                    AND mcs.bettype = cs.bettype 
-        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                    AND scs.sporttype = cs.sporttype
                                                    AND scs.bettype = cs.bettype 
-              WHERE ci.srecommend = @srecommend
+              WHERE ci.srecommend = @_srecommend
                 AND ci.roleid = 1
                 AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -753,10 +760,10 @@ BEGIN
                SET spositiontaking = sco.minpositiontaking - cs.mpositiontaking - cs.apositiontaking
               FROM CustSettingGame cs
         INNER JOIN CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
-        INNER JOIN CustOverrideGame sco WITH(NOLOCK) ON sco.custid = @srecommend
+        INNER JOIN CustOverrideGame sco WITH(NOLOCK) ON sco.custid = @_srecommend
                                                     AND sco.sporttype = cs.sporttype
                                                     AND sco.bettype = cs.bettype
-             WHERE ci.srecommend = @srecommend
+             WHERE ci.srecommend = @_srecommend
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -821,10 +828,10 @@ BEGIN
         INNER JOIN CustOverrideGame aco WITH(NOLOCK) ON aco.custid = ci.recommend
                                                     AND aco.sporttype = cs.sporttype
                                                     AND aco.bettype = cs.bettype 
-        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                    AND scs.sporttype = cs.sporttype
                                                    AND scs.bettype = cs.bettype 
-             WHERE ci.srecommend = @srecommend
+             WHERE ci.srecommend = @_srecommend
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -855,10 +862,10 @@ BEGIN
                      END
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend
                                                   AND mcs.sporttype = cs3.sporttype
                                                   AND mcs.bettype = cs3.bettype
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = mb.recommend
@@ -877,10 +884,10 @@ BEGIN
                      END
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend
                                                   AND mcs.sporttype = cs3.sporttype
                                                   AND mcs.bettype = cs3.bettype
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = mb.recommend
@@ -897,7 +904,7 @@ BEGIN
                SET apositiontaking = aco.maxpositiontaking
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = mb.recommend
@@ -911,7 +918,7 @@ BEGIN
                SET alivepositiontaking = aco.maxlivepositiontaking
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = mb.recommend
@@ -950,13 +957,13 @@ BEGIN
                      END
               FROM custsetting3rd c3d
         INNER JOIN custinfo mb WITH(NOLOCK) ON c3d.custid    = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid     = 2
                                            AND mb.Enabled    = 1
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid    = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid    = @_mrecommend
                                                   AND mcs.sporttype = c3d.sporttype
                                                   AND mcs.bettype   = c3d.bettype
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid    = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid    = @_mrecommend
                                                    AND mco.sporttype = c3d.sporttype
                                                    AND mco.bettype   = c3d.bettype
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid    = mb.recommend
@@ -990,13 +997,13 @@ BEGIN
                      END
               FROM custsetting3rd c3d
         INNER JOIN custinfo mb WITH(NOLOCK) ON c3d.custid    = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid     = 2
                                            AND mb.Enabled    = 1
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid    = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid    = @_mrecommend
                                                   AND mcs.sporttype = c3d.sporttype
                                                   AND mcs.bettype   = c3d.bettype
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid    = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid    = @_mrecommend
                                                    AND mco.sporttype = c3d.sporttype
                                                    AND mco.bettype   = c3d.bettype
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid    = mb.recommend
@@ -1018,13 +1025,13 @@ BEGIN
                  , autompositiontaking = @maxmapos
               FROM custsetting3rd c3d
         INNER JOIN custinfo mb WITH(NOLOCK) ON c3d.custid    = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid     = 2
                                            AND mb.Enabled    = 1
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid    = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid    = @_mrecommend
                                                   AND mcs.sporttype = c3d.sporttype
                                                   AND mcs.bettype   = c3d.bettype
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid    = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid    = @_mrecommend
                                                    AND mco.sporttype = c3d.sporttype
                                                    AND mco.bettype   = c3d.bettype
              WHERE c3d.sporttype = 161
@@ -1041,13 +1048,13 @@ BEGIN
                  , autolivempositiontaking = @maxmapos
               FROM custsetting3rd c3d
         INNER JOIN custinfo mb WITH(NOLOCK) ON c3d.custid    = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid     = 2
                                            AND mb.Enabled    = 1
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid    = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid    = @_mrecommend
                                                   AND mcs.sporttype = c3d.sporttype
                                                   AND mcs.bettype   = c3d.bettype
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid    = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid    = @_mrecommend
                                                    AND mco.sporttype = c3d.sporttype
                                                    AND mco.bettype   = c3d.bettype
              WHERE c3d.sporttype = 161
@@ -1080,7 +1087,7 @@ BEGIN
         INNER JOIN custsetting3rd acs WITH(NOLOCK) ON acs.custid = c.recommend
                                                   AND acs.sporttype = cs3.sporttype
                                                   AND acs.bettype = cs3.bettype
-             WHERE c.mrecommend = @mrecommend
+             WHERE c.mrecommend = @_mrecommend
                AND c.roleid = 1
                AND c.Enabled = 1
                AND cs3.sporttype = 161
@@ -1111,7 +1118,7 @@ BEGIN
         INNER JOIN custsetting3rd acs WITH(NOLOCK) ON acs.custid = c.recommend
                                                   AND acs.sporttype = cs3.sporttype
                                                   AND acs.bettype = cs3.bettype
-             WHERE c.mrecommend = @mrecommend
+             WHERE c.mrecommend = @_mrecommend
                AND c.roleid = 1
                AND c.Enabled = 1
                AND cs3.sporttype = 161
@@ -1128,10 +1135,10 @@ BEGIN
                SET mpositiontaking = mco.minpositiontaking - cs3.apositiontaking
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend
                                                    AND mco.sporttype = cs3.sporttype
                                                    AND mco.bettype = cs3.bettype
              WHERE cs3.sporttype = 161
@@ -1142,10 +1149,10 @@ BEGIN
                SET mlivepositiontaking = mco.minlivepositiontaking - cs3.alivepositiontaking
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend
                                                    AND mco.sporttype = cs3.sporttype
                                                    AND mco.bettype = cs3.bettype
              WHERE cs3.sporttype = 161
@@ -1180,13 +1187,13 @@ BEGIN
                      END
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend
                                                   AND mcs.sporttype = cs3.sporttype
                                                   AND mcs.bettype = cs3.bettype
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend
                                                    AND mco.sporttype = cs3.sporttype
                                                    AND mco.bettype = cs3.bettype
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = mb.recommend
@@ -1220,13 +1227,13 @@ BEGIN
                      END
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend
                                                   AND mcs.sporttype = cs3.sporttype
                                                   AND mcs.bettype = cs3.bettype
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend
                                                    AND mco.sporttype = cs3.sporttype
                                                    AND mco.bettype = cs3.bettype
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = mb.recommend
@@ -1259,10 +1266,10 @@ BEGIN
         INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = c.mrecommend
                                                   AND mcs.sporttype = cs3.sporttype
                                                   AND mcs.bettype = cs3.bettype
-        INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                   AND scs.sporttype = cs3.sporttype
                                                   AND scs.bettype = cs3.bettype
-             WHERE c.mrecommend = @mrecommend
+             WHERE c.mrecommend = @_mrecommend
                AND c.roleid = 1
                AND c.Enabled = 1
                AND cs3.sporttype = 161
@@ -1290,10 +1297,10 @@ BEGIN
         INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = c.mrecommend
                                                   AND mcs.sporttype = cs3.sporttype
                                                   AND mcs.bettype = cs3.bettype
-        INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                   AND scs.sporttype = cs3.sporttype
                                                   AND scs.bettype = cs3.bettype
-             WHERE c.mrecommend = @mrecommend
+             WHERE c.mrecommend = @_mrecommend
                AND c.roleid = 1
                AND c.Enabled = 1
                AND cs3.sporttype = 161
@@ -1310,10 +1317,10 @@ BEGIN
                SET spositiontaking = sco.minpositiontaking - cs3.mpositiontaking - cs3.apositiontaking
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @srecommend
+        INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @_srecommend
                                                    AND sco.sporttype = cs3.sporttype
                                                    AND sco.bettype = cs3.bettype
              WHERE cs3.sporttype = 161
@@ -1324,10 +1331,10 @@ BEGIN
                SET slivepositiontaking = sco.minlivepositiontaking - cs3.mlivepositiontaking-cs3.alivepositiontaking
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @srecommend
+        INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @_srecommend
                                                    AND sco.sporttype = cs3.sporttype
                                                    AND sco.bettype = cs3.bettype
              WHERE cs3.sporttype = 161
@@ -1389,16 +1396,16 @@ BEGIN
                      END
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                   AND scs.sporttype = cs3.sporttype
                                                   AND scs.bettype = cs3.bettype
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend
                                                   AND mcs.sporttype = cs3.sporttype
                                                   AND mcs.bettype = cs3.bettype
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend
                                                    AND mco.sporttype = cs3.sporttype
                                                    AND mco.bettype = cs3.bettype
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = mb.recommend
@@ -1452,17 +1459,17 @@ BEGIN
                      END
               FROM custsetting3rd cs3
         INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid
-                                           AND mb.mrecommend = @mrecommend
+                                           AND mb.mrecommend = @_mrecommend
                                            AND mb.roleid = 1
                                            AND mb.Enabled = 1
-        INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                   AND scs.sporttype = cs3.sporttype
                                                   AND scs.bettype = cs3.bettype
-        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
+        INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend
                                                   AND mcs.sporttype = cs3.sporttype
                                                   AND mcs.bettype = cs3.bettype
-                --INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @srecommend  AND sco.sporttype = cs3.sporttype AND sco.bettype = cs3.bettype
-        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend
+                --INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @_srecommend  AND sco.sporttype = cs3.sporttype AND sco.bettype = cs3.bettype
+        INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend
                                                    AND mco.sporttype = cs3.sporttype
                                                    AND mco.bettype = cs3.bettype
         INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = mb.recommend
@@ -1490,10 +1497,10 @@ BEGIN
         INNER JOIN CustOverrideGame aco WITH(NOLOCK) ON aco.custid = ci.recommend
                                                 AND cs.sporttype = aco.sporttype
                                                 AND cs.bettype = aco.bettype
-        INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @custid
+        INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @_custid
                                                    AND mcs.sporttype = cs.sporttype
                                                    AND mcs.bettype = cs.bettype 
-             WHERE ci.mrecommend = @custid
+             WHERE ci.mrecommend = @_custid
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -1518,13 +1525,13 @@ BEGIN
                      END
               FROM CustSettingGame cs
         INNER JOIN CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
-        INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @custid
+        INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @_custid
                                                    AND mcs.sporttype = cs.sporttype
                                                    AND mcs.bettype = cs.bettype 
         INNER JOIN CustSettingGame acs WITH(NOLOCK) ON acs.custid = ci.recommend
                                                    AND acs.sporttype = cs.sporttype
                                                    AND acs.bettype = cs.bettype 
-             WHERE ci.mrecommend = @custid
+             WHERE ci.mrecommend = @_custid
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -1540,13 +1547,13 @@ BEGIN
                SET cs.mpositiontaking = mco.minpositiontaking - cs.apositiontaking
               FROM CustSettingGame cs
         INNER JOIN CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
-        INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @custid
+        INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @_custid
                                                    AND mcs.sporttype = cs.sporttype
                                                    AND mcs.bettype = cs.bettype 
-        INNER JOIN CustOverrideGame mco WITH(NOLOCK) ON mco.custid = @custid
+        INNER JOIN CustOverrideGame mco WITH(NOLOCK) ON mco.custid = @_custid
                                                     AND mco.sporttype = cs.sporttype
                                                     AND mco.bettype = cs.bettype
-             WHERE ci.mrecommend = @custid
+             WHERE ci.mrecommend = @_custid
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -1572,13 +1579,13 @@ BEGIN
                      END
               FROM CustSettingGame cs
         INNER JOIN CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
-        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                    AND scs.sporttype = cs.sporttype
                                                    AND scs.bettype = cs.bettype 
-        INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @custid
+        INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @_custid
                                                    AND mcs.sporttype = cs.sporttype
                                                    AND mcs.bettype = cs.bettype 
-             WHERE ci.mrecommend = @custid
+             WHERE ci.mrecommend = @_custid
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -1594,10 +1601,10 @@ BEGIN
                SET cs.spositiontaking = sco.minpositiontaking - cs.mpositiontaking - cs.apositiontaking
               FROM CustSettingGame cs
         INNER JOIN CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
-        INNER JOIN CustOverrideGame sco WITH(NOLOCK) ON sco.custid = @srecommend
+        INNER JOIN CustOverrideGame sco WITH(NOLOCK) ON sco.custid = @_srecommend
                                                     AND sco.sporttype = cs.sporttype
                                                     AND sco.bettype = cs.bettype 
-             WHERE ci.mrecommend = @custid
+             WHERE ci.mrecommend = @_custid
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -1653,7 +1660,7 @@ BEGIN
                      END
               FROM CustSettingGame cs
         INNER JOIN CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
-        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @srecommend
+        INNER JOIN CustSettingGame scs WITH(NOLOCK) ON scs.custid = @_srecommend
                                                    AND scs.sporttype = cs.sporttype
                                                    AND scs.bettype = cs.bettype
         INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = ci.mrecommend
@@ -1665,7 +1672,7 @@ BEGIN
         INNER JOIN CustOverrideGame aco WITH(NOLOCK) ON aco.custid = ci.recommend
                                                     AND aco.sporttype = cs.sporttype
                                                     AND aco.bettype = cs.bettype
-             WHERE ci.mrecommend = @custid
+             WHERE ci.mrecommend = @_custid
                AND ci.roleid = 1
                AND ci.Enabled = 1
                AND cs.sporttype = @sporttype
@@ -1687,9 +1694,9 @@ BEGIN
                 apositiontaking = aco.minpositiontaking,
                 cs3.mpositiontaking = CASE WHEN cs3.mpositiontaking + aco.minpositiontaking > mcs.mpositiontaking THEN mcs.mpositiontaking-aco.minpositiontaking ELSE cs3.mpositiontaking END
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
-                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
+                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
             WHERE cs3.sporttype = 161 AND cs3.bettype IN (81,83,86,88) AND cs3.apositiontaking<aco.minpositiontaking
 
 
@@ -1698,9 +1705,9 @@ BEGIN
                 alivepositiontaking = aco.minlivepositiontaking,
                 cs3.mlivepositiontaking = CASE WHEN cs3.mlivepositiontaking + aco.minlivepositiontaking > mcs.mlivepositiontaking THEN mcs.mlivepositiontaking-aco.minlivepositiontaking ELSE cs3.mlivepositiontaking END
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
-                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
+                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
             WHERE cs3.sporttype=161 AND cs3.bettype IN (85,86,87,89,90) AND cs3.alivepositiontaking<aco.minlivepositiontaking
 
             -- UPDATE a1 WHEN a1>l2
@@ -1710,8 +1717,8 @@ BEGIN
                SET 
                 apositiontaking = aco.maxpositiontaking
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
             WHERE cs3.sporttype = 161 AND cs3.bettype IN (81,83,86,88) AND cs3.apositiontaking>aco.maxpositiontaking
 
 
@@ -1719,8 +1726,8 @@ BEGIN
                SET 
                 alivepositiontaking = aco.maxlivepositiontaking
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
             WHERE cs3.sporttype=161 AND cs3.bettype IN (85,86,87,89,90) AND cs3.alivepositiontaking>aco.maxlivepositiontaking
 
             --Recal AUTO MPT 
@@ -1737,7 +1744,7 @@ BEGIN
                 INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = c.mrecommend AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
                 INNER JOIN custsetting3rd acs WITH(NOLOCK) ON acs.custid = c.recommend AND acs.sporttype=cs3.sporttype AND acs.bettype=cs3.bettype
             where
-                c.recommend = @recommend
+                c.recommend = @_recommend
                 and c.roleid = 1
                 and cs3.sporttype = 161
                 and cs3.bettype IN (81,83,86,88)
@@ -1754,7 +1761,7 @@ BEGIN
                 INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = c.mrecommend AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
                 INNER JOIN custsetting3rd acs WITH(NOLOCK) ON acs.custid = c.recommend AND acs.sporttype=cs3.sporttype AND acs.bettype=cs3.bettype
             where
-                c.recommend = @recommend
+                c.recommend = @_recommend
                 and c.roleid = 1
                 and cs3.sporttype = 161
                 and cs3.bettype IN (85,86,87,89,90)
@@ -1768,8 +1775,8 @@ BEGIN
                SET 
                 mpositiontaking = mco.minpositiontaking-cs3.apositiontaking
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
             WHERE cs3.sporttype = 161 AND cs3.bettype IN (81,83,86,88) AND cs3.apositiontaking+cs3.mpositiontaking<mco.minpositiontaking
 
 
@@ -1777,8 +1784,8 @@ BEGIN
                SET 
                 mlivepositiontaking = mco.minlivepositiontaking-cs3.alivepositiontaking
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
             WHERE cs3.sporttype=161 AND cs3.bettype IN (85,86,87,89,90) AND cs3.alivepositiontaking+cs3.mlivepositiontaking<mco.minlivepositiontaking
 
             -- UPDATE m1,a1 WHEN m1+a1>l3
@@ -1793,10 +1800,10 @@ BEGIN
                 @apos = CASE WHEN cs3.apositiontaking + @mpos>@maxmapos THEN @maxmapos-@mpos ELSE cs3.apositiontaking END,
                 apositiontaking = CASE WHEN @apos<aco.minpositiontaking THEN aco.minpositiontaking ELSE @apos END
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
-                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
-                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
+                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
+                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
             WHERE cs3.sporttype = 161  AND cs3.bettype IN (81,83,86,88) AND  cs3.apositiontaking+cs3.mpositiontaking>mco.maxpositiontaking
 
             UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
@@ -1807,10 +1814,10 @@ BEGIN
                 @apos = CASE WHEN cs3.alivepositiontaking + @mpos>@maxmapos THEN @maxmapos-@mpos ELSE cs3.alivepositiontaking END,
                 alivepositiontaking = CASE WHEN @apos<aco.minlivepositiontaking THEN aco.minlivepositiontaking ELSE @apos END
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
-                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
-                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
+                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
+                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
             WHERE cs3.sporttype=161 AND cs3.bettype IN (85,86,87,89,90) AND cs3.alivepositiontaking+cs3.mlivepositiontaking>mco.maxlivepositiontaking
 
             --s1=min(s4-m1-a1,u)
@@ -1823,9 +1830,9 @@ BEGIN
                 custsetting3rd cs3
                 INNER JOIN custinfo c WITH(NOLOCK) ON cs3.custid = c.custid
                 INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = c.mrecommend AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
-                INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @srecommend AND scs.sporttype=cs3.sporttype AND scs.bettype=cs3.bettype
+                INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @_srecommend AND scs.sporttype=cs3.sporttype AND scs.bettype=cs3.bettype
             where
-                c.recommend = @recommend
+                c.recommend = @_recommend
                 and c.roleid = 1
                 and cs3.sporttype = 161
                 and cs3.bettype IN (81,83,86,88)
@@ -1838,9 +1845,9 @@ BEGIN
                 custsetting3rd cs3
                 INNER JOIN custinfo c WITH(NOLOCK) ON cs3.custid = c.custid
                 INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = c.mrecommend AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
-                INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @srecommend AND scs.sporttype=cs3.sporttype AND scs.bettype=cs3.bettype
+                INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @_srecommend AND scs.sporttype=cs3.sporttype AND scs.bettype=cs3.bettype
             where
-                c.recommend = @recommend
+                c.recommend = @_recommend
                 and c.roleid = 1
                 and cs3.sporttype = 161
                 and cs3.bettype IN (85,86,87,89,90)
@@ -1854,16 +1861,16 @@ BEGIN
                SET 
                 spositiontaking = sco.minpositiontaking-cs3.mpositiontaking-cs3.apositiontaking
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @srecommend  AND sco.sporttype=cs3.sporttype AND sco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @_srecommend  AND sco.sporttype=cs3.sporttype AND sco.bettype=cs3.bettype
             WHERE cs3.sporttype = 161 AND cs3.bettype IN (81,83,86,88) AND cs3.apositiontaking+cs3.mpositiontaking+cs3.spositiontaking<sco.minpositiontaking
 
             UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
                SET 
                 slivepositiontaking = sco.minlivepositiontaking-cs3.mlivepositiontaking-cs3.alivepositiontaking
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @srecommend  AND sco.sporttype=cs3.sporttype AND sco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custoverride3rd sco WITH(NOLOCK) ON sco.custid = @_srecommend  AND sco.sporttype=cs3.sporttype AND sco.bettype=cs3.bettype
             WHERE cs3.sporttype=161 AND cs3.bettype IN (85,86,87,89,90) AND cs3.alivepositiontaking+cs3.mlivepositiontaking+cs3.slivepositiontaking<sco.minlivepositiontaking
 
             --UPDATE s1,m1,a1 IN CASE s1+m1+a1>s4
@@ -1888,11 +1895,11 @@ BEGIN
                 @apos = CASE WHEN cs3.apositiontaking + @mpos>@mapos THEN @mapos-@mpos ELSE cs3.apositiontaking END,
                 apositiontaking = CASE WHEN @apos<aco.minpositiontaking THEN aco.minpositiontaking ELSE @apos END
             FROM 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @srecommend  AND scs.sporttype=cs3.sporttype AND scs.bettype=cs3.bettype
-                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
-                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
-                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @_srecommend  AND scs.sporttype=cs3.sporttype AND scs.bettype=cs3.bettype
+                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
+                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
+                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
             WHERE cs3.sporttype = 161 AND cs3.bettype IN  (81,83,86,88) AND  cs3.spositiontaking+cs3.apositiontaking+cs3.mpositiontaking>scs.spositiontaking
 
             UPDATE cs3 WITH(ROWLOCK, UPDLOCK)
@@ -1909,20 +1916,20 @@ BEGIN
                 alivepositiontaking = CASE WHEN @apos<aco.minlivepositiontaking THEN aco.minlivepositiontaking ELSE @apos END
             FROM 
 
-                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @srecommend  AND scs.sporttype=cs3.sporttype AND scs.bettype=cs3.bettype
-                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
-                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
-                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
+                custsetting3rd cs3 INNER JOIN custinfo mb WITH(NOLOCK) ON cs3.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custsetting3rd scs WITH(NOLOCK) ON scs.custid = @_srecommend  AND scs.sporttype=cs3.sporttype AND scs.bettype=cs3.bettype
+                INNER JOIN custsetting3rd mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend  AND mcs.sporttype=cs3.sporttype AND mcs.bettype=cs3.bettype
+                INNER JOIN custoverride3rd mco WITH(NOLOCK) ON mco.custid = @_mrecommend  AND mco.sporttype=cs3.sporttype AND mco.bettype=cs3.bettype
+                INNER JOIN custoverride3rd aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=cs3.sporttype AND aco.bettype=cs3.bettype
             WHERE cs3.sporttype=161 AND cs3.bettype IN (85,86,87,89,90) AND cs3.slivepositiontaking+cs3.alivepositiontaking+cs3.mlivepositiontaking>scs.slivepositiontaking
         END
         
         IF @mode = 'Keno' OR @mode = 'GoldDeluxe'
         BEGIN    
-            SELECT    @recommend = custid,
-                    @srecommend = srecommend
+            SELECT    @_recommend = custid,
+                    @_srecommend = srecommend
             FROM custinfo WITH(NOLOCK)
-            WHERE custid = @custid
+            WHERE custid = @_custid
 
             --check agent min/max
             -- UPDATE a1 WHEN a1<n2
@@ -1932,9 +1939,9 @@ BEGIN
                 apositiontaking = aco.minpositiontaking,
                 mpositiontaking = CASE WHEN csg.mpositiontaking + aco.minpositiontaking > mcs.mpositiontaking THEN mcs.mpositiontaking-aco.minpositiontaking ELSE csg.mpositiontaking END
             FROM custsettingGame csg 
-                INNER JOIN custinfo mb WITH(NOLOCK) ON csg.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custsettingGame mcs WITH(NOLOCK) ON mcs.custid = @mrecommend  AND mcs.sporttype=csg.sporttype AND mcs.bettype=csg.bettype
-                INNER JOIN custoverridegame aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=csg.sporttype AND aco.bettype=csg.bettype
+                INNER JOIN custinfo mb WITH(NOLOCK) ON csg.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custsettingGame mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend  AND mcs.sporttype=csg.sporttype AND mcs.bettype=csg.bettype
+                INNER JOIN custoverridegame aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=csg.sporttype AND aco.bettype=csg.bettype
             WHERE csg.apositiontaking < aco.minpositiontaking
                 AND csg.sporttype = @sporttype AND csg.bettype = @bettype
 
@@ -1951,7 +1958,7 @@ BEGIN
                 INNER JOIN custsettingGame mcs WITH(NOLOCK) ON mcs.custid = c.mrecommend AND mcs.sporttype=custsettingGame.sporttype AND mcs.bettype=custsettingGame.bettype
                 INNER JOIN custsettingGame acs WITH(NOLOCK) ON acs.custid = c.recommend AND acs.sporttype=custsettingGame.sporttype AND acs.bettype=custsettingGame.bettype
             where
-                c.recommend = @recommend
+                c.recommend = @_recommend
                 and c.roleid = 1 
                 and custsettingGame.sporttype = @sporttype AND custsettingGame.bettype = @bettype
             and (acs.isautompositiontaking = 1 OR custsettingGame.isautompositiontaking = 1)
@@ -1964,8 +1971,8 @@ BEGIN
                 mpositiontaking = mco.minpositiontaking-custsettingGame.apositiontaking
             FROM 
                 custsettingGame 
-                INNER JOIN custinfo mb WITH(NOLOCK) ON custsettingGame.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1 
-                INNER JOIN custoverrideGame mco WITH(NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=custsettingGame.sporttype AND mco.bettype=custsettingGame.bettype
+                INNER JOIN custinfo mb WITH(NOLOCK) ON custsettingGame.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1 
+                INNER JOIN custoverrideGame mco WITH(NOLOCK) ON mco.custid = @_mrecommend  AND mco.sporttype=custsettingGame.sporttype AND mco.bettype=custsettingGame.bettype
             WHERE custsettingGame.apositiontaking+custsettingGame.mpositiontaking<mco.minpositiontaking
                 and custsettingGame.sporttype = @sporttype AND custsettingGame.bettype = @bettype
 
@@ -1978,9 +1985,9 @@ BEGIN
                 custsettingGame
                 INNER JOIN custinfo c WITH(NOLOCK) ON custsettingGame.custid = c.custid
                 INNER JOIN custsettingGame mcs WITH(NOLOCK) ON mcs.custid = c.mrecommend AND mcs.sporttype=custsettingGame.sporttype AND mcs.bettype=custsettingGame.bettype
-                INNER JOIN custsettingGame scs WITH(NOLOCK) ON scs.custid = @srecommend AND scs.sporttype=custsettingGame.sporttype AND scs.bettype=custsettingGame.bettype
+                INNER JOIN custsettingGame scs WITH(NOLOCK) ON scs.custid = @_srecommend AND scs.sporttype=custsettingGame.sporttype AND scs.bettype=custsettingGame.bettype
             where
-                c.recommend = @recommend
+                c.recommend = @_recommend
                 and c.roleid = 1 
                 and custsettingGame.sporttype = @sporttype AND custsettingGame.bettype = @bettype
                 and (custsettingGame.isautopositiontaking=1 OR mcs.isautopositiontaking=1)
@@ -1992,8 +1999,8 @@ BEGIN
                SET 
                 spositiontaking = sco.minpositiontaking-custsettingGame.mpositiontaking-custsettingGame.apositiontaking
             FROM 
-                custsettingGame INNER JOIN custinfo mb WITH(NOLOCK) ON custsettingGame.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1
-                INNER JOIN custoverrideGame sco WITH(NOLOCK) ON sco.custid = @srecommend  AND sco.sporttype=custsettingGame.sporttype AND sco.bettype=custsettingGame.bettype
+                custsettingGame INNER JOIN custinfo mb WITH(NOLOCK) ON custsettingGame.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1
+                INNER JOIN custoverrideGame sco WITH(NOLOCK) ON sco.custid = @_srecommend  AND sco.sporttype=custsettingGame.sporttype AND sco.bettype=custsettingGame.bettype
             WHERE custsettingGame.apositiontaking+custsettingGame.mpositiontaking+custsettingGame.spositiontaking<sco.minpositiontaking
                 and custsettingGame.sporttype = @sporttype AND custsettingGame.bettype = @bettype
 
@@ -2018,11 +2025,11 @@ BEGIN
                 @apos = CASE WHEN custsettingGame.apositiontaking + @mpos>@mapos THEN @mapos-@mpos ELSE custsettingGame.apositiontaking END,
                 apositiontaking = CASE WHEN @apos<aco.minpositiontaking THEN aco.minpositiontaking ELSE @apos END
             FROM 
-                custsettingGame INNER JOIN custinfo mb WITH(NOLOCK) ON custsettingGame.custid = mb.custid AND mb.recommend=@recommend AND mb.roleid=1 
-                INNER JOIN custsettingGame scs WITH(NOLOCK) ON scs.custid = @srecommend  AND scs.sporttype=custsettingGame.sporttype AND scs.bettype=custsettingGame.bettype
-                INNER JOIN custsettingGame mcs WITH(NOLOCK) ON mcs.custid = @mrecommend  AND mcs.sporttype=custsettingGame.sporttype AND mcs.bettype=custsettingGame.bettype
-                INNER JOIN custoverrideGame mco WITH(NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=custsettingGame.sporttype AND mco.bettype=custsettingGame.bettype
-                INNER JOIN custoverrideGame aco WITH(NOLOCK) ON aco.custid = @recommend  AND aco.sporttype=custsettingGame.sporttype AND aco.bettype=custsettingGame.bettype
+                custsettingGame INNER JOIN custinfo mb WITH(NOLOCK) ON custsettingGame.custid = mb.custid AND mb.recommend=@_recommend AND mb.roleid=1 
+                INNER JOIN custsettingGame scs WITH(NOLOCK) ON scs.custid = @_srecommend  AND scs.sporttype=custsettingGame.sporttype AND scs.bettype=custsettingGame.bettype
+                INNER JOIN custsettingGame mcs WITH(NOLOCK) ON mcs.custid = @_mrecommend  AND mcs.sporttype=custsettingGame.sporttype AND mcs.bettype=custsettingGame.bettype
+                INNER JOIN custoverrideGame mco WITH(NOLOCK) ON mco.custid = @_mrecommend  AND mco.sporttype=custsettingGame.sporttype AND mco.bettype=custsettingGame.bettype
+                INNER JOIN custoverrideGame aco WITH(NOLOCK) ON aco.custid = @_recommend  AND aco.sporttype=custsettingGame.sporttype AND aco.bettype=custsettingGame.bettype
             WHERE custsettingGame.spositiontaking+custsettingGame.apositiontaking+custsettingGame.mpositiontaking>scs.spositiontaking
                 and custsettingGame.sporttype = @sporttype AND custsettingGame.bettype = @bettype
 
