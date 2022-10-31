@@ -22,6 +22,7 @@ AS
 		- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
+		- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
 		
 	Param's Explanation:
 		@Type: 
@@ -400,7 +401,9 @@ BEGIN
 	END 
 	ELSE IF @Type = 2  --Stage 4
 	BEGIN
-		IF @@SERVERNAME = 'DBTRANS' -- @DBTRANS => delete balance tables
+		IF @@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','TESTDB053\TESTSITEDB')  
+		   OR  @@SERVERNAME LIKE 'DBGRP%'   
+		   OR  @@SERVERNAME LIKE 'SITDBGRP%'   -- @DBTRANS => delete balance tables
 		BEGIN
 
 			WHILE (1=1)
