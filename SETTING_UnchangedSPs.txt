@@ -1,7 +1,6 @@
 CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno_MinMaxBet.sql
 CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno_MinMaxBet.sql
 CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno_MinMaxBet.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdNGEnableBetSetting.sql
 CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno_BetSetting.sql
 CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno_BetSetting.sql
 CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno_BetSetting.sql
