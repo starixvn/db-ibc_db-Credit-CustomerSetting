@@ -16,7 +16,7 @@ AS
 BEGIN
     SET NOCOUNT ON     
     
-    SELECT sbm.productid, gls.SportType, gls.BetType
+    SELECT sbm.productid, gls.SportType, gls.BetType, gls.SiteID
     FROM GameLaunchPerSite gls                   
         INNER JOIN DBAGE.bodb02.dbo.SportBettypeMatrix sbm ON sbm.SportType = gls.SportType AND sbm.BetType = gls.BetType
     WHERE gls.IsLaunched = 1 AND gls.isTest <= @isTest
