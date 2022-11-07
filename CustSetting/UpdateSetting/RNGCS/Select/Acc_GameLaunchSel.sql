@@ -16,14 +16,15 @@ AS
 BEGIN
     SET NOCOUNT ON     
     
-    SELECT sbm.productid, gls.SportType, gls.BetType, gls.SiteID
-    FROM GameLaunchPerSite gls                   
-        INNER JOIN DBAGE.bodb02.dbo.SportBettypeMatrix sbm ON sbm.SportType = gls.SportType AND sbm.BetType = gls.BetType
+    SELECT sbm.productid, gls.SportType, gls.BetType, s.site
+    FROM GameLaunchPerSite gls WITH (NOLOCK)     
+		INNER JOIN site s WITH (NOLOCK) ON gls.SiteID = s.siteid
+        INNER JOIN DBAGE.bodb02.dbo.SportBettypeMatrix sbm WITH (NOLOCK) ON sbm.SportType = gls.SportType AND sbm.BetType = gls.BetType
     WHERE gls.IsLaunched = 1 AND gls.isTest <= @isTest
 
 	 SELECT sbm.productid, glc.SportType, glc.BetType, glc.Currency
-    FROM GameLaunchPerCurrency glc                 
-        INNER JOIN DBAGE.bodb02.dbo.SportBettypeMatrix sbm ON sbm.SportType = glc.SportType AND sbm.BetType = glc.BetType
+    FROM GameLaunchPerCurrency glc WITH (NOLOCK)                 
+        INNER JOIN DBAGE.bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) sbm ON sbm.SportType = glc.SportType AND sbm.BetType = glc.BetType
     WHERE glc.IsLaunched = 1 AND glc.isTest <= @isTest
 END
 GO
