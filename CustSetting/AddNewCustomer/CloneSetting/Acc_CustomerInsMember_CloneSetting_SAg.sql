@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 (
 	@Custid INT OUTPUT
@@ -98,6 +98,7 @@ AS
 	- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220527@Johnson: Remove Problem Account [RedmineID:#173304]
+	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -431,30 +432,12 @@ BEGIN
 				,credit
 				,MatchLimit
 				,VirtualMultiplier
-				,maxpermatch
-				,maxpermatch2
-				,maxpermatch3
-				,maxpermatch5
-				,maxpermatch8
-				,maxpermatch10
-				,maxpermatch11
-				,maxpermatch99
 				,Enabled   		
-				         
 				,DisableOutright		
-				,MaxPerMatch99MP
 				,DisableNumber
-			
-				,maxpermatch161
-		
-				,MaxPerBall161
-				
 				,DoubleCommLosing		
 				,HideKeno
-			
-				
 				,DisableSuperLive
-				,MaxPerMatch1MP
 				,Danger
 				,Danger2
 				,Danger3
@@ -475,29 +458,12 @@ BEGIN
 				,@Credit AS Credit
 				,MatchLimit
 				,@virtualmultiplier
-				,0
-				,0
-				,0
-				,0
-				,0
-				,0
-				,0
-				,0
 				,@enableUpline as Enabled 		
-				          
 				,DisableOutright
-				,0
-				,DisableNumber
-		
-				,0
-			
-				,0		
+				,DisableNumber		
 				,@doubleCommLosingUpline as doubleCommLosing		
 				,HideKeno
-			
-				
 				,DisableSuperLive
-				,0
 				,@DangerSuper
 				,@DangerSuper2
 				,@DangerSuper3

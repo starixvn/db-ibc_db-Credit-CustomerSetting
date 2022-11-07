@@ -1,9 +1,0 @@
-<<<<<<< HEAD
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
-=======
-DynamicCustSetting\InitialSettingProcess\NAP Function\Acc_Initial_DCS_SettingConfig_Upd.sql
-DynamicCustSetting\InitialSettingProcess\NAP Function\Acc_Initial_DCS_SettingConfig_Ins.sql
->>>>>>> 171831_DBCUSTIssue
