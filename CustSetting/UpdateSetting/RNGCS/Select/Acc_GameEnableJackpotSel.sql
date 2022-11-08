@@ -22,8 +22,7 @@ BEGIN
 
     SELECT @var_curr = c.currency, @var_siteid = s.siteid
     FROM customer c WITH (NOLOCK)
-        LEFT JOIN  customer ca WITH (NOLOCK) ON c.recommend = ca.custid
-        INNER JOIN [site] s    WITH (NOLOCK) ON s.[site]    = (CASE WHEN c.roleid = 1 THEN ca.[site] ELSE c.[site] END)
+        INNER JOIN [site] s WITH (NOLOCK) ON s.[site] = c.[site]
     WHERE c.custid = @custid
     
     SELECT sbm.productid, gls.SportType, gls.BetType
