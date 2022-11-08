@@ -149,13 +149,14 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220527@Johnson: Remove Problem Account [RedmineID:#173304]
 	- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
+	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 
 	Param's Explanation:
-• @ErrCode:
+- @ErrCode:
 		= 0: Insert successfully.
 		> 0: Specific Error.
   
-• @ErrMsg: Error description.
+- @ErrMsg: Error description.
 */
 BEGIN
     SET NOCOUNT ON 
@@ -497,39 +498,27 @@ BEGIN
 		INSERT INTO [dbo].[custinfo]
 		(
 			custid, currency
-		  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11
-		  , maxpermatch99
 		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2
-		 -- , reject
 		  , credit
-		  --, closed
 		  , username
 		  , MatchLimit, VirtualMultiplier
-		  , DisableOutright, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
+		  , DisableOutright, DisableNumber
 		  , danger, danger2, danger3, danger4, danger5, Abnormal
-		  ,  DoubleCommLosing
+		  , DoubleCommLosing
 		  , HideKeno, DisableEsports, DisableSuperLive
-		  , MaxPerMatch1MP
-		  --,maxpermatch164
 		  , DangerLevel
 		  )
 		VALUES
 		(
-			@custid, @currency--,1
-		  , 0, 0, 0, 0, 0, 0, 0
-		  , 0
+			@custid, @currency
 		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2
-		  --, ISNULL(@suspended, 0)
 		  , @credit
-		  --, ISNULL(@closed, 0)
 		  , @username
 		  , @matchlimit, @virtualmultiplier
-		  , @DisableOutright, @DisableNumber,  0, 0, 0
+		  , @DisableOutright, @DisableNumber
 		  , @danger, @danger2, @danger3, @danger4, @danger5, @Abnormal
-		  ,  @DoubleCommLosing	
+		  , @DoubleCommLosing	
 		  , @HideKeno, @DisableEsports, @DisableSuperLive
-		  , 0
-		  --, 0
 		  , @DangerLevel
 		)
 
