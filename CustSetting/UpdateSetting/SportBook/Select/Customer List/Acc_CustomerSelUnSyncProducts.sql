@@ -69,7 +69,7 @@ BEGIN
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
 					)
 			INSERT INTO #UnSyncProduct (productID)
-			SELECT 53
+			SELECT 18
 		END
 	END
 	ELSE IF @roleid = 3
@@ -98,7 +98,7 @@ BEGIN
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
 					)
 			INSERT INTO #UnSyncProduct (productID)
-			SELECT 53
+			SELECT 18
 		END
 	END
 	ELSE IF @roleid = 2
@@ -127,7 +127,7 @@ BEGIN
 						AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitmapOrderVB) = 0
 					)
 			INSERT INTO #UnSyncProduct (productID)
-			SELECT 53
+			SELECT 18
 		END
 	END
 	
