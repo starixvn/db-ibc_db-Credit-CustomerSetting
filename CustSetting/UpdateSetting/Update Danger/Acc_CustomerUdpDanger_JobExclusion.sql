@@ -11,7 +11,7 @@ AS
 	
 	Revisions:
 		- 20220802@Tacy: Create SP
-
+		- 20221110@Tacy: LAP - Support Danger Level report, modify ActionID writelog [RedmineID: #179078]
 	Parameter's Explanation:		
 		- @CustList  =  '<Root>
 							<r CustID="100" SportType="1" Action="1"/>
@@ -173,9 +173,10 @@ BEGIN
 		RETURN;
 
 	--WriteLog Add/Remove PA List, update DangerLevel
-	DECLARE @Log		VARCHAR(MAX),
-			@LogAdd		VARCHAR(MAX), 
-			@LogRemove	VARCHAR(MAX)
+	DECLARE @LogSoccer		VARCHAR(MAX),	--1191
+			@LogBasketball	VARCHAR(MAX),	--1192
+			@LogAdd			VARCHAR(MAX),	--1189
+			@LogRemove		VARCHAR(MAX)	--1190
 
 	SELECT @LogAdd = CAST((
 		SELECT	custid		AS '@CustID',
@@ -193,22 +194,30 @@ BEGIN
 		FOR XML PATH('r'), ROOT('Root')
 	) AS VARCHAR(MAX))
 
-	SELECT @Log = CAST((
-		SELECT	new.custid			as '@id',
-				new.soccer			as '@s',
-				new.basketball		as '@b',
-				UpdateSoccer		as '@us',
-				UpdateBasketball	as '@ub',
-				old.Soccer			as '@os',
-				old.Basketball		as '@ob',
-				'NULL'				as '@wls',
-				'NULL'				as '@wlb',
-				'1'					as '@IsPA'
+	SELECT @LogSoccer = CAST((
+		SELECT	new.custid	as '@id',
+				new.soccer	as '@s',
+				old.Soccer	as '@os',
+				'NULL'		as '@wls',
+				'1'			as '@IsPA'
 		FROM #tblCustUpdate new
 			INNER JOIN #tblCustDangerOld old ON old.Custid=new.CustID
+		WHERE UpdateSoccer=1
 		FOR XML PATH('r'), ROOT('Root')
 	) AS VARCHAR(MAX))	
 	
+	SELECT @LogBasketball = CAST((
+		SELECT	new.custid		as '@id',
+				new.basketball	as '@b',
+				old.Basketball	as '@ob',
+				'NULL'			as '@wlb',
+				'1'				as '@IsPA'
+		FROM #tblCustUpdate new
+			INNER JOIN #tblCustDangerOld old ON old.Custid=new.CustID
+		WHERE UpdateBasketball=1
+		FOR XML PATH('r'), ROOT('Root')
+	) AS VARCHAR(MAX))	
+
 	SELECT @Duration = DATEDIFF (MILLISECOND, @StartRun, GETDATE())
 	
 	--log add 
@@ -249,22 +258,66 @@ BEGIN
 	
 	--log update dangerlevel
 	BEGIN TRY
+		-- Log Soccer
 		EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
 			@UserId		= 10278938,	--StarixIT	
-			@ActionId	= 1187,
-			@Log		= @Log,		
+			@ActionId	= 1191,
+			@Log		= @LogSoccer,		
 			@IP			= '125.227.140.97',	
 			@Duration	= @Duration
+
+		--Log Basketball
+		EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+			@UserId		= 10278938,	--StarixIT	
+			@ActionId	= 1192,
+			@Log		= @LogBasketball,		
+			@IP			= '125.227.140.97',	
+			@Duration	= @Duration
+
+		--LAP
+		EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+			@LogData = @LogSoccer,	
+			@ActionID = 1191,
+			@Duration = @Duration,
+			@UserID	= 10278938
+
+		EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+			@LogData = @LogBasketball,	
+			@ActionID = 1192,
+			@Duration = @Duration,
+			@UserID	= 10278938
 	END TRY
 	BEGIN CATCH
+		-- Log Soccer
 		EXEC bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
-			@UserId		= 10278938,	--StarixIT
-			@ActionId	= 1187,
-			@Log		= @Log,		
+			@UserId		= 10278938,	--StarixIT	
+			@ActionId	= 1191,
+			@Log		= @LogSoccer,		
 			@IP			= '125.227.140.97',	
-			@Duration	= @Duration			
+			@Duration	= @Duration
+
+		--Log Basketball
+		EXEC bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+			@UserId		= 10278938,	--StarixIT	
+			@ActionId	= 1192,
+			@Log		= @LogBasketball,		
+			@IP			= '125.227.140.97',	
+			@Duration	= @Duration		
+
+		--LAP
+		EXEC bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+			@LogData = @LogSoccer,	
+			@ActionID = 1191,
+			@Duration = @Duration,
+			@UserID	= 10278938
+
+		EXEC bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+			@LogData = @LogBasketball,	
+			@ActionID = 1192,
+			@Duration = @Duration,
+			@UserID	= 10278938
 	END CATCH
-	
+
 	DROP TABLE #tblCustOld
 	DROP TABLE #tblCustDangerOld
 	DROP TABLE #tblCustList

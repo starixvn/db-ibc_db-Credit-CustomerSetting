@@ -14,6 +14,7 @@ AS
 	Revisions:
 		- 20211014@Johnson: Initial sp [redmine:#161351]
 		- 20220803@Tacy: Add ActionID 1189; 1190 [RedmineID: #175857]
+		- 20221110@Tacy: Add ActionID 1191-1194 [RedmineId: #179078]
 
     Param's Explaination:    	
 		- @UserID: UserId perform this action
@@ -33,10 +34,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @xml XML = CAST (@Log as XML)
-	IF @ActionID = 1187 
-	BEGIN
-		CREATE TABLE #tblCustLog(
+	CREATE TABLE #tblCustLog(
 				custid				INT PRIMARY KEY, 
 				soccer				TINYINT, 
 				basketball			TINYINT, 
@@ -47,7 +45,11 @@ BEGIN
 				WinlossSoccer		MONEY, 
 				WinlossBasketball	MONEY, 
 				IsUpdatedByPA		BIT)
-		
+	
+
+	DECLARE @xml XML = CAST (@Log as XML)
+	IF @ActionID = 1187 
+	BEGIN
 		INSERT INTO #tblCustLog(custid,soccer,basketball,updateSoccer,updateBasketball,OldSoccer,OldBasketball,WinlossSoccer,WinlossBasketball,IsUpdatedByPA)
 		SELECT t.c.value('@id[1]','int'),
 			t.c.value('@s[1]','tinyint'),
@@ -103,7 +105,7 @@ BEGIN
 		
 		DROP TABLE #tblCustLog
 	END
-	ELSE IF @ActionID = 1188
+	ELSE IF @ActionID IN (1188, 1193, 1194)	-- Update manual dangerlevel
 	BEGIN
 		CREATE TABLE #tblCustLogManual(custid INT PRIMARY KEY, sport TINYINT, OldFlag BIT, NewFlag BIT, OldLevel TINYINT, NewLevel TINYINT)
 		
@@ -215,5 +217,101 @@ BEGIN
 		FROM Tmp
 		
 		DROP TABLE #tblCustLogRemove
+	END
+	IF @ActionID = 1191	--writelog update Soccer's dangerlevel 
+	BEGIN		
+		INSERT INTO #tblCustLog(custid,soccer,OldSoccer,WinlossSoccer,IsUpdatedByPA)
+		SELECT	t.c.value('@id[1]','int'),
+				t.c.value('@s[1]','tinyint'),
+				t.c.value('@os[1]','tinyint'),
+				CASE WHEN ISNUMERIC(t.c.value('@wls[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wls[1]','money') END,
+				t.c.value('@IsPA[1]','bit')
+		FROM @xml.nodes('Root/r')as t(c)
+		
+		;WITH Tmp AS (
+		SELECT custid,
+			(SELECT 
+				soccer  as '@Soccer',
+				ISNULL(WinlossSoccer,'') as '@WinlossSoccer',
+				IsUpdatedByPA as '@IsUpdatedByPA',
+				@IP as '@IP'
+			FROM #tblCustLog t1
+			WHERE t1.custid = t.custid
+			FOR XML PATH('R')
+			) as LogNew,
+			(SELECT 
+				OldSoccer as '@Soccer',
+				ISNULL(WinlossSoccer,'') as '@WinlossSoccer',
+				@IP as '@IP'
+			FROM #tblCustLog t2
+			WHERE t2.custid = t.custid
+			FOR XML PATH('R')
+			) as LogOld
+		FROM #tblCustLog t
+		)
+		INSERT INTO dbo.UserLog_RunSP(	UserID, 
+									CustID, 								
+									ActionID, 
+									TrackingValue,
+									TrackingValue2,
+									Duration
+									)
+		SELECT @UserID,
+			CustID,
+			@ActionID,
+			LogNew,
+			LogOld,
+			@Duration
+		FROM Tmp
+		
+		DROP TABLE #tblCustLog
+	END
+	IF @ActionID = 1192	--writelog update Basketball's dangerlevel 
+	BEGIN
+		INSERT INTO #tblCustLog(custid,basketball,OldBasketball,WinlossBasketball,IsUpdatedByPA)
+		SELECT t.c.value('@id[1]','int'),
+			t.c.value('@b[1]','tinyint'),
+			t.c.value('@ob[1]','tinyint'),
+			CASE WHEN ISNUMERIC(t.c.value('@wlb[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wlb[1]','money') END,
+			t.c.value('@IsPA[1]','bit')
+		FROM @xml.nodes('Root/r')as t(c)
+		
+		;WITH Tmp AS (
+		SELECT custid,
+			(SELECT 
+				basketball as '@Basketball',
+				ISNULL(WinlossBasketball,'') as '@WinlossBasketball',
+				IsUpdatedByPA as '@IsUpdatedByPA',
+				@IP as '@IP'
+			FROM #tblCustLog t1
+			WHERE t1.custid = t.custid
+			FOR XML PATH('R')
+			) as LogNew,
+			(SELECT 
+				OldBasketball as '@Basketball',
+				ISNULL(WinlossBasketball,'') as '@WinlossBasketball',
+				@IP as '@IP'
+			FROM #tblCustLog t2
+			WHERE t2.custid = t.custid
+			FOR XML PATH('R')
+			) as LogOld
+		FROM #tblCustLog t
+		)
+		INSERT INTO dbo.UserLog_RunSP(	UserID, 
+									CustID, 								
+									ActionID, 
+									TrackingValue,
+									TrackingValue2,
+									Duration
+									)
+		SELECT @UserID,
+			CustID,
+			@ActionID,
+			LogNew,
+			LogOld,
+			@Duration
+		FROM Tmp
+		
+		DROP TABLE #tblCustLog
 	END
 END
