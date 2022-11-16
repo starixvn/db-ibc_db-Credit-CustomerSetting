@@ -18,13 +18,13 @@ AS
 
     Param's Explaination:    	
 		- @UserID: UserId perform this action
-		-@ActionID = 1187
+		-@ActionID = 1191,1192
 			@Log = '<Root>
-					<r id="1" s="10" b="11" us="1" ub="0" os="5" ob="11">
-					<r id="2" s="15" b="10" us="1" ub="1" os="5" ob="11">
+					<r id="1" sport="0" newlevel="10" oldlevel="11" wl="1000" IsPA="1">
+					<r id="2" sport="1" newlevel="10" oldlevel="11" wl="1000" IsPA="1">
 				</Root>
 				'
-		-@ActionID = 1188
+		-@ActionID = 1193,1194
 			@Log = '<Root>
 					<r id="1" sport="0" newflag="1" oldflag="0" newlevel="10" oldlevel="5" />
 					<r id="2" sport="1" newflag="1" oldflag="0" newlevel="10" oldlevel="15" />
@@ -35,130 +35,19 @@ BEGIN
 	SET NOCOUNT ON
 
 	CREATE TABLE #tblCustLog(
-				custid				INT PRIMARY KEY, 
-				soccer				TINYINT, 
-				basketball			TINYINT, 
-				updateSoccer		BIT, 
-				updateBasketball	BIT, 
-				OldSoccer			TINYINT, 
-				OldBasketball		TINYINT, 
-				WinlossSoccer		MONEY, 
-				WinlossBasketball	MONEY, 
-				IsUpdatedByPA		BIT)
+				custid			INT PRIMARY KEY, 
+				sport			TINYINT, 
+				NewFlag			BIT,
+				OldFlag			BIT, 
+				NewLevel		TINYINT, 
+				OldLevel		TINYINT, 
+				Winloss			MONEY, 
+				IsUpdatedByPA	BIT)
 	
-
+	
 	DECLARE @xml XML = CAST (@Log as XML)
-	IF @ActionID = 1187 
-	BEGIN
-		INSERT INTO #tblCustLog(custid,soccer,basketball,updateSoccer,updateBasketball,OldSoccer,OldBasketball,WinlossSoccer,WinlossBasketball,IsUpdatedByPA)
-		SELECT t.c.value('@id[1]','int'),
-			t.c.value('@s[1]','tinyint'),
-			t.c.value('@b[1]','tinyint'),
-			t.c.value('@us[1]','bit'),
-			t.c.value('@ub[1]','bit'),
-			t.c.value('@os[1]','tinyint'),
-			t.c.value('@ob[1]','tinyint'),
-			CASE WHEN ISNUMERIC(t.c.value('@wls[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wls[1]','money') END,
-			CASE WHEN ISNUMERIC(t.c.value('@wlb[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wlb[1]','money') END,
-			t.c.value('@IsPA[1]','bit')
-		FROM @xml.nodes('Root/r')as t(c)
-		
-		;WITH Tmp AS (
-		SELECT custid,
-			(SELECT 
-				CASE WHEN UpdateSoccer = 1 THEN soccer END as '@Soccer',
-				CASE WHEN UpdateBasketball = 1 THEN basketball END as '@Basketball',
-				CASE WHEN UpdateSoccer = 1 THEN ISNULL(WinlossSoccer,'') END as '@WinlossSoccer',
-				CASE WHEN UpdateBasketball = 1 THEN ISNULL(WinlossBasketball,'') END as '@WinlossBasketball',
-				IsUpdatedByPA as '@IsUpdatedByPA',
-				@IP as '@IP'
-			FROM #tblCustLog t1
-			WHERE t1.custid = t.custid
-			FOR XML PATH('R')
-			) as LogNew,
-			(SELECT 
-				CASE WHEN UpdateSoccer = 1 THEN OldSoccer END as '@Soccer',
-				CASE WHEN UpdateBasketball = 1 THEN OldBasketball END as '@Basketball',
-				CASE WHEN UpdateSoccer = 1 THEN ISNULL(WinlossSoccer,'') END as '@WinlossSoccer',
-				CASE WHEN UpdateBasketball = 1 THEN ISNULL(WinlossBasketball,'') END as '@WinlossBasketball',
-				@IP as '@IP'
-			FROM #tblCustLog t2
-			WHERE t2.custid = t.custid
-			FOR XML PATH('R')
-			) as LogOld
-		FROM #tblCustLog t
-		)
-		INSERT INTO dbo.UserLog_RunSP(	UserID, 
-									CustID, 								
-									ActionID, 
-									TrackingValue,
-									TrackingValue2,
-									Duration
-									)
-		SELECT @UserID,
-			CustID,
-			@ActionID,
-			LogNew,
-			LogOld,
-			@Duration
-		FROM Tmp
-		
-		DROP TABLE #tblCustLog
-	END
-	ELSE IF @ActionID IN (1188, 1193, 1194)	-- Update manual dangerlevel
-	BEGIN
-		CREATE TABLE #tblCustLogManual(custid INT PRIMARY KEY, sport TINYINT, OldFlag BIT, NewFlag BIT, OldLevel TINYINT, NewLevel TINYINT)
-		
-		INSERT INTO #tblCustLogManual(custid,sport,newflag,oldflag,newlevel,oldlevel)
-		SELECT t.c.value('@id[1]','int'),
-			t.c.value('@sport[1]','tinyint'),
-			t.c.value('@newflag[1]','bit'),
-			t.c.value('@oldflag[1]','bit'),
-			t.c.value('@newlevel[1]','tinyint'),
-			t.c.value('@oldlevel[1]','tinyint')
-		FROM @xml.nodes('Root/r')as t(c)
-		
-		
-		;WITH Tmp AS (
-		SELECT custid,
-			(SELECT 
-				CASE WHEN sport = 0 THEN 'Soccer' WHEN sport= 1 THEN 'Basketball' END as '@SportType',
-				NewLevel as '@DangerLevel',
-				NewFlag as '@ManualDangerLevel',
-				@IP as '@IP'
-			FROM #tblCustLogManual t1
-			WHERE t1.custid = t.custid
-			FOR XML PATH('R')
-			) as LogNew,
-			(SELECT 
-				CASE WHEN sport = 0 THEN 'Soccer' WHEN sport= 1 THEN 'Basketball' END as '@SportType',
-				OldLevel as '@DangerLevel',
-				OldFlag as '@ManualDangerLevel',
-				@IP as '@IP'
-			FROM #tblCustLogManual t2
-			WHERE t2.custid = t.custid
-			FOR XML PATH('R')
-			) as LogOld
-		FROM #tblCustLogManual t
-		)
-		INSERT INTO dbo.UserLog_RunSP(	UserID, 
-									CustID, 								
-									ActionID, 
-									TrackingValue,
-									TrackingValue2,
-									Duration
-									)
-		SELECT @UserID,
-			CustID,
-			@ActionID,
-			LogNew,
-			LogOld,
-			@Duration
-		FROM Tmp
-		
-		DROP TABLE #tblCustLogManual
-	END
-	ELSE IF @ActionID=1189
+	
+	IF @ActionID=1189
 	BEGIN
 		CREATE TABLE #tblCustLogAdd(
 				CustID		INT
@@ -218,31 +107,34 @@ BEGIN
 		
 		DROP TABLE #tblCustLogRemove
 	END
-	IF @ActionID = 1191	--writelog update Soccer's dangerlevel 
+	ELSE IF @ActionID IN (1191, 1192)	--auto update dangerlevel 
 	BEGIN		
-		INSERT INTO #tblCustLog(custid,soccer,OldSoccer,WinlossSoccer,IsUpdatedByPA)
-		SELECT	t.c.value('@id[1]','int'),
-				t.c.value('@s[1]','tinyint'),
-				t.c.value('@os[1]','tinyint'),
-				CASE WHEN ISNUMERIC(t.c.value('@wls[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wls[1]','money') END,
+		INSERT INTO #tblCustLog(custid,sport,newlevel,oldlevel,Winloss,IsUpdatedByPA)
+		SELECT t.c.value('@id[1]','int'),
+				t.c.value('@sport[1]','tinyint'),
+				t.c.value('@newlevel[1]','tinyint'),
+				t.c.value('@oldlevel[1]','tinyint'),
+				CASE WHEN ISNUMERIC(t.c.value('@wl[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wl[1]','money') END,
 				t.c.value('@IsPA[1]','bit')
 		FROM @xml.nodes('Root/r')as t(c)
-		
+
 		;WITH Tmp AS (
 		SELECT custid,
 			(SELECT 
-				soccer  as '@Soccer',
-				ISNULL(WinlossSoccer,'') as '@WinlossSoccer',
-				IsUpdatedByPA as '@IsUpdatedByPA',
-				@IP as '@IP'
+				CASE WHEN sport = 0 THEN 'Soccer' WHEN sport= 1 THEN 'Basketball' END as '@SportType',
+				NewLevel			as '@NewLevel',
+				ISNULL(Winloss,'')	as '@Winloss',
+				IsUpdatedByPA		as '@IsUpdatedByPA',
+				@IP					as '@IP'
 			FROM #tblCustLog t1
 			WHERE t1.custid = t.custid
 			FOR XML PATH('R')
 			) as LogNew,
 			(SELECT 
-				OldSoccer as '@Soccer',
-				ISNULL(WinlossSoccer,'') as '@WinlossSoccer',
-				@IP as '@IP'
+				CASE WHEN sport = 0 THEN 'Soccer' WHEN sport= 1 THEN 'Basketball' END as '@SportType',
+				OldLevel			as '@OldLevel',
+				ISNULL(Winloss,'')	as '@Winloss',
+				@IP					as '@IP'
 			FROM #tblCustLog t2
 			WHERE t2.custid = t.custid
 			FOR XML PATH('R')
@@ -266,30 +158,33 @@ BEGIN
 		
 		DROP TABLE #tblCustLog
 	END
-	IF @ActionID = 1192	--writelog update Basketball's dangerlevel 
+	ELSE IF @ActionID IN (1193, 1194)	-- manual update  dangerlevel
 	BEGIN
-		INSERT INTO #tblCustLog(custid,basketball,OldBasketball,WinlossBasketball,IsUpdatedByPA)
+		INSERT INTO #tblCustLog(custid,sport,newflag,oldflag,newlevel,oldlevel)
 		SELECT t.c.value('@id[1]','int'),
-			t.c.value('@b[1]','tinyint'),
-			t.c.value('@ob[1]','tinyint'),
-			CASE WHEN ISNUMERIC(t.c.value('@wlb[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wlb[1]','money') END,
-			t.c.value('@IsPA[1]','bit')
+				t.c.value('@sport[1]','tinyint'),
+				t.c.value('@newflag[1]','bit'),
+				t.c.value('@oldflag[1]','bit'),
+				t.c.value('@newlevel[1]','tinyint'),
+				t.c.value('@oldlevel[1]','tinyint')
 		FROM @xml.nodes('Root/r')as t(c)
+		
 		
 		;WITH Tmp AS (
 		SELECT custid,
 			(SELECT 
-				basketball as '@Basketball',
-				ISNULL(WinlossBasketball,'') as '@WinlossBasketball',
-				IsUpdatedByPA as '@IsUpdatedByPA',
+				CASE WHEN sport = 0 THEN 'Soccer' WHEN sport= 1 THEN 'Basketball' END as '@SportType',
+				NewLevel as '@DangerLevel',
+				NewFlag as '@ManualDangerLevel',
 				@IP as '@IP'
 			FROM #tblCustLog t1
 			WHERE t1.custid = t.custid
 			FOR XML PATH('R')
 			) as LogNew,
 			(SELECT 
-				OldBasketball as '@Basketball',
-				ISNULL(WinlossBasketball,'') as '@WinlossBasketball',
+				CASE WHEN sport = 0 THEN 'Soccer' WHEN sport= 1 THEN 'Basketball' END as '@SportType',
+				OldLevel as '@DangerLevel',
+				OldFlag as '@ManualDangerLevel',
 				@IP as '@IP'
 			FROM #tblCustLog t2
 			WHERE t2.custid = t.custid

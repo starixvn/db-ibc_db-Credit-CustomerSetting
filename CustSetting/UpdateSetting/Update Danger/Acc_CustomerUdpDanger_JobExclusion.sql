@@ -196,9 +196,10 @@ BEGIN
 
 	SELECT @LogSoccer = CAST((
 		SELECT	new.custid	as '@id',
-				new.soccer	as '@s',
-				old.Soccer	as '@os',
-				'NULL'		as '@wls',
+				0			as '@sport',
+				new.soccer	as '@newlevel',
+				old.Soccer	as '@oldlevel',
+				'NULL'		as '@wl',
 				'1'			as '@IsPA'
 		FROM #tblCustUpdate new
 			INNER JOIN #tblCustDangerOld old ON old.Custid=new.CustID
@@ -208,9 +209,10 @@ BEGIN
 	
 	SELECT @LogBasketball = CAST((
 		SELECT	new.custid		as '@id',
-				new.basketball	as '@b',
-				old.Basketball	as '@ob',
-				'NULL'			as '@wlb',
+				1				as '@sport',
+				new.basketball	as '@newlevel',
+				old.Basketball	as '@oldlevel',
+				'NULL'			as '@wl',
 				'1'				as '@IsPA'
 		FROM #tblCustUpdate new
 			INNER JOIN #tblCustDangerOld old ON old.Custid=new.CustID
@@ -259,63 +261,75 @@ BEGIN
 	--log update dangerlevel
 	BEGIN TRY
 		-- Log Soccer
-		EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
-			@UserId		= 10278938,	--StarixIT	
-			@ActionId	= 1191,
-			@Log		= @LogSoccer,		
-			@IP			= '125.227.140.97',	
-			@Duration	= @Duration
+		IF @LogSoccer IS NOT NULL OR @LogSoccer<>''
+		BEGIN
+			EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+				@UserId		= 10278938,	--StarixIT	
+				@ActionId	= 1191,
+				@Log		= @LogSoccer,		
+				@IP			= '125.227.140.97',	
+				@Duration	= @Duration
+
+			--LAP
+			EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+				@LogData = @LogSoccer,	
+				@ActionID = 1191,
+				@Duration = @Duration,
+				@UserID	= 10278938
+		END
 
 		--Log Basketball
-		EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
-			@UserId		= 10278938,	--StarixIT	
-			@ActionId	= 1192,
-			@Log		= @LogBasketball,		
-			@IP			= '125.227.140.97',	
-			@Duration	= @Duration
+		IF @LogBasketball IS NOT NULL OR @LogBasketball<>''
+		BEGIN
+			EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+				@UserId		= 10278938,	--StarixIT	
+				@ActionId	= 1192,
+				@Log		= @LogBasketball,		
+				@IP			= '125.227.140.97',	
+				@Duration	= @Duration
 
-		--LAP
-		EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
-			@LogData = @LogSoccer,	
-			@ActionID = 1191,
-			@Duration = @Duration,
-			@UserID	= 10278938
-
-		EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
-			@LogData = @LogBasketball,	
-			@ActionID = 1192,
-			@Duration = @Duration,
-			@UserID	= 10278938
+			EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+				@LogData = @LogBasketball,	
+				@ActionID = 1192,
+				@Duration = @Duration,
+				@UserID	= 10278938
+		END
 	END TRY
 	BEGIN CATCH
 		-- Log Soccer
-		EXEC bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
-			@UserId		= 10278938,	--StarixIT	
-			@ActionId	= 1191,
-			@Log		= @LogSoccer,		
-			@IP			= '125.227.140.97',	
-			@Duration	= @Duration
+		IF @LogSoccer IS NOT NULL OR @LogSoccer<>''
+		BEGIN
+			EXEC bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+				@UserId		= 10278938,	--StarixIT	
+				@ActionId	= 1191,
+				@Log		= @LogSoccer,		
+				@IP			= '125.227.140.97',	
+				@Duration	= @Duration
+
+			--LAP
+			EXEC bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+				@LogData = @LogSoccer,	
+				@ActionID = 1191,
+				@Duration = @Duration,
+				@UserID	= 10278938
+		END
 
 		--Log Basketball
-		EXEC bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
-			@UserId		= 10278938,	--StarixIT	
-			@ActionId	= 1192,
-			@Log		= @LogBasketball,		
-			@IP			= '125.227.140.97',	
-			@Duration	= @Duration		
+		IF @LogBasketball IS NOT NULL OR @LogBasketball<>''
+		BEGIN
+			EXEC bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+				@UserId		= 10278938,	--StarixIT	
+				@ActionId	= 1192,
+				@Log		= @LogBasketball,		
+				@IP			= '125.227.140.97',	
+				@Duration	= @Duration
 
-		--LAP
-		EXEC bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
-			@LogData = @LogSoccer,	
-			@ActionID = 1191,
-			@Duration = @Duration,
-			@UserID	= 10278938
-
-		EXEC bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
-			@LogData = @LogBasketball,	
-			@ActionID = 1192,
-			@Duration = @Duration,
-			@UserID	= 10278938
+			EXEC bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+				@LogData = @LogBasketball,	
+				@ActionID = 1192,
+				@Duration = @Duration,
+				@UserID	= 10278938
+		END
 	END CATCH
 
 	DROP TABLE #tblCustOld
