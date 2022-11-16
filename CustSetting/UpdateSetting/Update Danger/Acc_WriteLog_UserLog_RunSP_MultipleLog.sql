@@ -34,6 +34,8 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
+	DECLARE @xml XML = CAST (@Log as XML)
+
 	CREATE TABLE #tblCustLog(
 				custid			INT PRIMARY KEY, 
 				sport			TINYINT, 
@@ -43,9 +45,6 @@ BEGIN
 				OldLevel		TINYINT, 
 				Winloss			MONEY, 
 				IsUpdatedByPA	BIT)
-	
-	
-	DECLARE @xml XML = CAST (@Log as XML)
 	
 	IF @ActionID=1189
 	BEGIN

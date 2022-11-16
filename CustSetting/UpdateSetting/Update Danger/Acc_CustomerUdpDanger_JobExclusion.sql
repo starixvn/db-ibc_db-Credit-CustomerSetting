@@ -196,7 +196,7 @@ BEGIN
 
 	SELECT @LogSoccer = CAST((
 		SELECT	new.custid	as '@id',
-				0			as '@sport',
+				'0'			as '@sport',
 				new.soccer	as '@newlevel',
 				old.Soccer	as '@oldlevel',
 				'NULL'		as '@wl',
@@ -209,7 +209,7 @@ BEGIN
 	
 	SELECT @LogBasketball = CAST((
 		SELECT	new.custid		as '@id',
-				1				as '@sport',
+				'1'				as '@sport',
 				new.basketball	as '@newlevel',
 				old.Basketball	as '@oldlevel',
 				'NULL'			as '@wl',

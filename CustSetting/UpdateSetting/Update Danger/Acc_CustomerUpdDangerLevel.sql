@@ -327,7 +327,7 @@ BEGIN
 			@LogBasketball	VARCHAR(MAX)	--1192
 	
 	SELECT @LogSoccer = CAST((SELECT t.custid	as '@id',
-									0			as '@sport',
+									'0'			as '@sport',
 									soccer		as '@newlevel',
 									SoccerOld	as '@oldlevel',
 									CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wl',
@@ -339,7 +339,7 @@ BEGIN
 								FOR XML PATH('r'), ROOT('Root')
 							) AS VARCHAR(MAX)),
 	@LogBasketball = CAST((SELECT t.custid	as '@id',
-								1			as '@sport',
+								'1'			as '@sport',
 								soccer		as '@newlevel',
 								SoccerOld	as '@oldlevel',
 								CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wl',
