@@ -37,14 +37,15 @@ BEGIN
 	DECLARE @xml XML = CAST (@Log as XML)
 
 	CREATE TABLE #tblCustLog(
-				custid			INT PRIMARY KEY, 
+				custid			INT, 
 				sporttype		TINYINT, 
 				NewFlag			BIT,
 				OldFlag			BIT, 
 				NewLevel		TINYINT, 
 				OldLevel		TINYINT, 
 				Winloss			MONEY, 
-				IsUpdatedByPA	BIT)
+				IsUpdatedByPA	BIT,
+				PRIMARY KEY (CustID, SportType))
 	
 	IF @ActionID=1189
 	BEGIN

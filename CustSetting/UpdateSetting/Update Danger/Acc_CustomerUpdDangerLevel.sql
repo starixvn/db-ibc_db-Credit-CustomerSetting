@@ -340,8 +340,8 @@ BEGIN
 							) AS VARCHAR(MAX)),
 	@LogBasketball = CAST((SELECT t.custid	as '@id',
 								'1'			as '@sport',
-								soccer		as '@newlevel',
-								SoccerOld	as '@oldlevel',
+								Basketball		as '@newlevel',
+								BasketballOld	as '@oldlevel',
 								CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wl',
 								CASE WHEN cd.CustID IS NOT NULL THEN '1' ELSE '0' END as '@IsPA'
 							FROM #tblCustUpdate t		
