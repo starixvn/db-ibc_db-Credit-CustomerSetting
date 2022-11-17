@@ -115,7 +115,7 @@ BEGIN
 			(SELECT 
 				CASE WHEN SportType = 0 THEN 'Soccer' 
 					 WHEN SportType = 1 THEN 'Basketball' END as '@SportType',
-				NewLevel			as '@NewLevel',
+				NewLevel			as '@DangerLevel',
 				ISNULL(Winloss,'')	as '@Winloss',
 				IsUpdatedByPA		as '@IsUpdatedByPA',
 				@IP					as '@IP'
@@ -126,7 +126,7 @@ BEGIN
 			(SELECT 
 				CASE WHEN SportType = 0 THEN 'Soccer' 
 					 WHEN SportType = 1 THEN 'Basketball' END as '@SportType',
-				OldLevel			as '@OldLevel',
+				OldLevel			as '@DangerLevel',
 				ISNULL(Winloss,'')	as '@Winloss',
 				@IP					as '@IP'
 			FROM #tblCustLog t2
