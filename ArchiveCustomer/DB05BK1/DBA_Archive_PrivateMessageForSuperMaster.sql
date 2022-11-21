@@ -12,6 +12,8 @@ AS
 
 	Revisions:
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
+		- 20221121@Tacy: adjust [Dot_Msg_SetUsrMessage] --> [Age_Msg_SetUsrMessage] [RedmineID: #180704]
+
 	Param's Explanation:
 		@SMList: list Super, Master ID
 		@Stage: kind of message when sending
@@ -95,7 +97,7 @@ BEGIN
 			@IsTest		= 0,			 -- Is test or not 
 			@IsBatch	= 0			 -- normal message (no need to replace the symbol @@ by transid when display)
 
-		EXEC dbo.Dot_Msg_SetUsrMessage
+		EXEC dbo.Age_Msg_SetUsrMessage
 		@MessageId	= @MessageId,
 		@TargetId	= @CustID,
 		@TargetName = @UserName,

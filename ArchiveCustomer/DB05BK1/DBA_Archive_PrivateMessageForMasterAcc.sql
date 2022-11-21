@@ -11,6 +11,8 @@ AS
 	Revisions:
 		- 20180109@Harper: Initialize SP[RedmineID: #88794]
 		- 201901216@Daniel: Add case for informing regarding agents data were removed
+		- 20221121@Tacy: adjust [Dot_Msg_SetUsrMessage] --> [Age_Msg_SetUsrMessage] [RedmineID: #180704]
+
 	Param's Explanation:
 		@MasterIDs: list master ID
 		@Stage: kind of message when sending
@@ -193,7 +195,7 @@ BEGIN
 	BEGIN
 		SELECT @CustID = custid, @UserName = username FROM @TempMember WHERE ID = @i
 
-		EXEC dbo.Dot_Msg_SetUsrMessage
+		EXEC dbo.Age_Msg_SetUsrMessage
 		@MessageId	= @MessageId,
 		@TargetId	= @CustID,
 		@TargetName = @UserName,

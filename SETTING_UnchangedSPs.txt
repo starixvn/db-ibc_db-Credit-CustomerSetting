@@ -1,4 +1,2 @@
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
+ArchiveCustomer\DBCUST\job\Task_ArchiveAccount_DisableAgents_NoBal_SendMsg.sql
+ArchiveCustomer\DBCUST\job\Task_ArchiveAccount_SendMsg.sql
