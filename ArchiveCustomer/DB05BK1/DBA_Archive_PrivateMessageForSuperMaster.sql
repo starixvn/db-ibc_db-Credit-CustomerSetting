@@ -1,5 +1,5 @@
 /*<info serverAlias="DBMSG-bodb_Message" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [DBA_Archive_PrivateMessageForSuperMaster]
+ALTER PROCEDURE [DBA_Archive_PrivateMessageForSuperMaster_xpre]
 (
 	@SMList			VARCHAR(MAX) = NULL,	
 	@Stage				TINYINT = 1
@@ -60,7 +60,6 @@ BEGIN
 	BEGIN CATCH
 		SELECT ErrCode = 100
 			,ErrMsg = N'Paramter invalid.'
-Age_Msg_SetMessage2
 		RETURN
 	END CATCH;	
 	
