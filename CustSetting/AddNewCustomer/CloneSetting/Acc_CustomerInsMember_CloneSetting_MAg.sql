@@ -96,6 +96,8 @@ AS
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220527@Johnson: Remove Problem Account [RedmineID:#173304]
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
+	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
+	
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -340,19 +342,19 @@ BEGIN
 		RETURN
 	END	
 	
-	EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @Custid, 0, 2, @ErrCode, @ErrMsg
-	IF @ErrCode <> 0
-	BEGIN
-			SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create customer failed. Please try again.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
-						    END
-				, @ErrCode = 107
-		 -- ROLLBACK MANUALLY
-			DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
+	--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @Custid, 0, 2, @ErrCode, @ErrMsg
+--	IF @ErrCode <> 0
+--	BEGIN
+--			SELECT @ErrMsg = CASE @Language 
+--							    WHEN 'E' THEN 'Create customer failed. Please try again.'
+--							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
+--						    END
+--				, @ErrCode = 107
+--		 -- ROLLBACK MANUALLY
+--			DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
 			
-			RETURN
-	END
+--			RETURN
+--	END
 	
 	SET @recommend = @custid
 	UPDATE Customer WITH (ROWLOCK, UPDLOCK) 
@@ -369,7 +371,7 @@ BEGIN
 			
 		-- ROLLBACK MANUALLY
 		DELETE FROM dbo.customer With (ROWLOCK) WHERE CustID = @CustID			
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		
 		RETURN
 	END	
@@ -396,7 +398,7 @@ BEGIN
 
 		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		
 		RETURN  
 	END  
@@ -490,7 +492,7 @@ BEGIN
 		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM dbo.custInfo WITH(ROWLOCK) WHERE custId = @CustID  		  
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		
 		RETURN
 	END CATCH
@@ -520,7 +522,7 @@ BEGIN
 
 		-- ROLLBACK MANUALLY	
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  
 				
@@ -587,7 +589,7 @@ BEGIN
 		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID				
 		DELETE FROM custAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID		
 		
 		
@@ -609,7 +611,7 @@ BEGIN
 			
 		-- ROLLBACK MANUALLY
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
@@ -686,7 +688,7 @@ BEGIN
 			
 		-- ROLLBACK MANUALLY
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
@@ -722,7 +724,7 @@ BEGIN
 			
 		-- ROLLBACK MANUALLY
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
@@ -761,7 +763,7 @@ BEGIN
 			
 		-- ROLLBACK MANUALLY
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
