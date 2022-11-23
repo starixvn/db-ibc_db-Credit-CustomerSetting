@@ -1,5 +1,5 @@
 /*<info serverAlias="DBMSG-bodb_Message" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [DBA_Archive_PrivateMessageForSuperMaster_xpre]
+ALTER PROCEDURE [DBA_Archive_PrivateMessageForSuperMaster]
 (
 	@SMList			VARCHAR(MAX) = NULL,	
 	@Stage				TINYINT = 1
