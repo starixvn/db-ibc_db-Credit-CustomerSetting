@@ -12,7 +12,7 @@ AS
 
 	Revisions:
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
-		- 20221121@Tacy: adjust [Dot_Msg_SetUsrMessage] --> [Age_Msg_SetUsrMessage] [RedmineID: #180704]
+		- 20221121@Tacy: adjust [Dot_Msg_xxx] --> [Age_Msg_xxx] [RedmineID: #180704]
 
 	Param's Explanation:
 		@SMList: list Super, Master ID
@@ -60,7 +60,7 @@ BEGIN
 	BEGIN CATCH
 		SELECT ErrCode = 100
 			,ErrMsg = N'Paramter invalid.'
-
+Age_Msg_SetMessage2
 		RETURN
 	END CATCH;	
 	
@@ -83,7 +83,7 @@ BEGIN
 			AND cm.GroupLevelName = @GroupLevelName
 		
 		-- Insert message
-		EXEC dbo.Dot_Msg_SetMessage2 
+		EXEC dbo.Age_Msg_SetMessage2 
 			@MessageId	= @MessageId OUTPUT,
 			@Content_en = @Content_en,
 			@Content_ch = @Content_ch,

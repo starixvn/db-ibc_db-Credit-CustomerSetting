@@ -11,7 +11,7 @@ AS
 	Revisions:
 		- 20180109@Harper: Initialize SP[RedmineID: #88794]
 		- 201901216@Daniel: Add case for informing regarding agents data were removed
-		- 20221121@Tacy: adjust [Dot_Msg_SetUsrMessage] --> [Age_Msg_SetUsrMessage] [RedmineID: #180704]
+		- 20221121@Tacy: adjust [Dot_Msg_xxx] --> [Age_Msg_xxx] [RedmineID: #180704]
 
 	Param's Explanation:
 		@MasterIDs: list master ID
@@ -152,7 +152,7 @@ BEGIN
 		
 	
 	-- Insert message
-	EXEC dbo.Dot_Msg_SetMessage2 
+	EXEC dbo.Age_Msg_SetMessage2 
 		@MessageId	= @MessageId OUTPUT,
 		@Content_en = @Content_en,
 		@Content_ch = @Content_ch,
