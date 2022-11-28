@@ -18,6 +18,7 @@ AS
 		- 20220329@Johnson: Add new category/class for PA Probation [redmine:#170468]
 		- 20220405@Johnson: Add OldCustomerClass column [redmine:#170182]
 		- 20220630@Johnson: write log for LAP [redmine:#174357]
+		- 20221128@Johnson: dont write log when cc not change [redmine:#180957]
 	Parameter's Explanation: 
 		@custList = '<Root>
 					<r id="100" c="10" t="1" />
@@ -68,7 +69,10 @@ BEGIN
 	SET t.OldCustomerClass = ci.CustomerClass
 	FROM #tblDep_CustClass t
 		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
-		
+	
+	DELETE FROM #tblDep_CustClass 
+	WHERE OldCustomerClass = CustomerClass
+	
 	BEGIN TRY	
 		EXEC Acc_CustomerInfo_Execrep_03 @CustList = @CustList,
 										@mode = 'CustomerClass',
@@ -114,7 +118,7 @@ BEGIN
 		
 		SELECT @LogData = 
 		CAST((SELECT custid '@id', CustomerClass '@c', OldCustomerClass '@o'
-			FROM #tblDep_CustClass
+			FROM #tblDep_CustClass			
 			FOR XML PATH('r'), ROOT('Root')) AS VARCHAR(MAX)
 			)
 		
