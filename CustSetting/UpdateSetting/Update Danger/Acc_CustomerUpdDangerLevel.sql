@@ -342,7 +342,7 @@ BEGIN
 								'1'			as '@sport',
 								Basketball		as '@newlevel',
 								BasketballOld	as '@oldlevel',
-								CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wl',
+								CASE WHEN WinlossBasketball IS NULL THEN 'NULL' ELSE CAST(WinlossBasketball AS VARCHAR) END  as '@wl',
 								CASE WHEN cd.CustID IS NOT NULL THEN '1' ELSE '0' END as '@IsPA'
 							FROM #tblCustUpdate t		
 								OUTER APPLY (SELECT TOP (1) CustID FROM CustDangerJobExclusion cd WITH (NOLOCK)
