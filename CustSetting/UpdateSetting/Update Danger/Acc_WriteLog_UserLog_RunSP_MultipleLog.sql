@@ -14,7 +14,7 @@ AS
 	Revisions:
 		- 20211014@Johnson: Initial sp [redmine:#161351]
 		- 20220803@Tacy: Add ActionID 1189; 1190 [RedmineID: #175857]
-		- 20221110@Tacy: Add ActionID 1191-1194, remove 1187,1188 [RedmineId: #179078]
+		- 20221110@Tacy: Add ActionID 1191-1196, remove 1187,1188 [RedmineId: #179078]
 
     Param's Explaination:    	
 		- @UserID: UserId perform this action
