@@ -76,6 +76,7 @@ AS
 		- 20220419@Eden: Turn off VR Basketball & E-sports for 611111 site [Redmine: #171609]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20221103@Johnson: Change data type of CustSettingAutoSuspend [Redmine: #179782]
+		- 20221207@Johnson: update setting for sub-bettype for Esport is 'Follow parent' [redmine: #177594]
 
 	Param's Explanation:
 		@Action: 
@@ -128,7 +129,7 @@ BEGIN
 		EXEC sp_xml_removedocument @DocHandlerSport
 	END
 
-	DELETE FROM #New_VRCustSetting WHERE ValueIDLive = 0 AND ValueIDNonLive = 0
+	--DELETE FROM #New_VRCustSetting WHERE ValueIDLive = 0 AND ValueIDNonLive = 0
 
 	IF(dbo.f_CheckRepTable('VRCustSetting') = 1 AND dbo.f_CheckRepTable('VRSettingHierarchy') = 1)
 	BEGIN
@@ -144,8 +145,9 @@ BEGIN
 		DELETE V
 		FROM VRCustSetting V WITH (ROWLOCK) INNER JOIN VRSettingHierarchy H WITH (NOLOCK) ON V.LevelID = H.LevelID
 		WHERE custid = @custid
-			AND V.LevelID NOT IN
-							(SELECT LevelID FROM #New_VRCustSetting)
+			AND (V.LevelID NOT IN (SELECT LevelID FROM #New_VRCustSetting)
+				OR (ValueIDLive = 0 AND ValueIDNonLive = 0)
+				)
 			AND H.SportType = @Sporttype
 			
 		INSERT INTO [dbo].[VRCustSetting]
@@ -160,7 +162,7 @@ BEGIN
 		FROM #New_VRCustSetting VR WITH (NOLOCK) INNER JOIN VRSettingHierarchy H WITH (NOLOCK) ON VR.LevelID = H.LevelID
 		WHERE VR.[LevelID] NOT IN (SELECT LevelID FROM [VRCustSetting] WITH (NOLOCK) WHERE CustID=@custid)
 			AND H.SportType = @Sporttype
-			
+			AND (VR.ValueIDLive <> 0 OR VR.ValueIDNonLive <> 0)
 	END
 END
 ELSE IF	@action = 'VirtualMultiplier'
