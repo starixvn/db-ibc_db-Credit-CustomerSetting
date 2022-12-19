@@ -21,6 +21,7 @@ AS
 		- 20220802@Tacy: Update Danger Level if Problem Customer Class [RedmineId: #175857]
 		- 20220817@Tacy: scan and update DangerLevel according to Winloss of Saba Basketball Sport (Livv88sw site) [redmine:#176712]
 		- 20220922@Tacy: NAP CM - Update flow for All sites - Basketball and Remove Dengerlevel 14, 15 [RedmineID: #178053]
+		- 20221110@Tacy: LAP - Support Danger Level report, modify ActionID writelog [RedmineID: #179078]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -34,7 +35,7 @@ BEGIN
 	SET NOCOUNT ON
 	DECLARE @StartRun DATETIME, 
 			@ScanDate DATETIME,
-			@Duration INT, @LogDataNew VARCHAR(500), @LogDataOld VARCHAR(500)
+			@Duration INT--, @LogDataNew VARCHAR(500), @LogDataOld VARCHAR(500)
 
 	SET @StartRun = GETDATE()
 	SET @ScanDate = (SELECT MAX(CreatedDate) FROM CustDangerWinlossInfo WITH (NOLOCK))
@@ -322,44 +323,109 @@ BEGIN
 	IF @ErrCode > 0
 		RETURN;
 	
-	DECLARE @Log VARCHAR(MAX)
+	DECLARE @LogSoccer		VARCHAR(MAX),	--1191
+			@LogBasketball	VARCHAR(MAX)	--1192
 	
-	SELECT @Log = CAST((
-		SELECT t.custid		as '@id',
-			soccer			as '@s',
-			basketball		as '@b',
-			UpdateSoccer	as '@us',
-			UpdateBasketball as '@ub',
-			SoccerOld		as '@os',
-			BasketballOld	as '@ob',
-			CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wls',
-			CASE WHEN WinlossBasketball IS NULL THEN 'NULL' ELSE CAST(WinlossBasketball AS VARCHAR) END  as '@wlb',
-			CASE WHEN cd.CustID IS NOT NULL THEN '1' ELSE '0' END as '@IsPA'
-		FROM #tblCustUpdate t		
-			OUTER APPLY (SELECT TOP (1) CustID FROM CustDangerJobExclusion cd WITH (NOLOCK)
-						 WHERE cd.CustID=t.Custid AND cd.CreateDate>=@ScanDate) cd
-		FOR XML PATH('r'), ROOT('Root')
-	) AS VARCHAR(MAX))	
+	SELECT @LogSoccer = CAST((SELECT t.custid	as '@id',
+									'0'			as '@sport',
+									soccer		as '@newlevel',
+									SoccerOld	as '@oldlevel',
+									CASE WHEN WinlossSoccer IS NULL THEN 'NULL' ELSE CAST(WinlossSoccer AS VARCHAR) END  as '@wl',
+									CASE WHEN cd.CustID IS NOT NULL THEN '1' ELSE '0' END as '@IsPA'
+								FROM #tblCustUpdate t		
+									OUTER APPLY (SELECT TOP (1) CustID FROM CustDangerJobExclusion cd WITH (NOLOCK)
+												 WHERE cd.CustID=t.Custid AND cd.CreateDate>=@ScanDate) cd
+								WHERE UpdateSoccer=1
+								FOR XML PATH('r'), ROOT('Root')
+							) AS VARCHAR(MAX)),
+	@LogBasketball = CAST((SELECT t.custid	as '@id',
+								'1'			as '@sport',
+								Basketball		as '@newlevel',
+								BasketballOld	as '@oldlevel',
+								CASE WHEN WinlossBasketball IS NULL THEN 'NULL' ELSE CAST(WinlossBasketball AS VARCHAR) END  as '@wl',
+								CASE WHEN cd.CustID IS NOT NULL THEN '1' ELSE '0' END as '@IsPA'
+							FROM #tblCustUpdate t		
+								OUTER APPLY (SELECT TOP (1) CustID FROM CustDangerJobExclusion cd WITH (NOLOCK)
+												WHERE cd.CustID=t.Custid AND cd.CreateDate>=@ScanDate) cd
+							WHERE UpdateBasketball=1
+							FOR XML PATH('r'), ROOT('Root')
+						) AS VARCHAR(MAX))
 	
 	SELECT @Duration = DATEDIFF (MILLISECOND, @startRun, GETDATE())
 	
 	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
-			@UserId		= 10278938,	--StarixIT	
-			@ActionId	= 1187,
-			@Log		= @Log,		
-			@IP			= '125.227.140.97',	
-			@Duration	= @Duration
+		-- Log Soccer
+		IF @LogSoccer IS NOT NULL OR @LogSoccer<>''
+		BEGIN
+			EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+				@UserId		= 10278938,	--StarixIT	
+				@ActionId	= 1191,
+				@Log		= @LogSoccer,		
+				@IP			= '125.227.140.97',	
+				@Duration	= @Duration
+
+			--LAP
+			EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+				@LogData = @LogSoccer,	
+				@ActionID = 1191,
+				@Duration = @Duration,
+				@UserID	= 10278938
+		END
+
+		--Log Basketball
+		IF @LogBasketball IS NOT NULL OR @LogBasketball<>''
+		BEGIN
+			EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+				@UserId		= 10278938,	--StarixIT	
+				@ActionId	= 1192,
+				@Log		= @LogBasketball,		
+				@IP			= '125.227.140.97',	
+				@Duration	= @Duration
+
+			EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+				@LogData = @LogBasketball,	
+				@ActionID = 1192,
+				@Duration = @Duration,
+				@UserID	= 10278938
+		END
 	END TRY
 	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
-			@UserId		= 10278938,	--StarixIT
-			@ActionId	= 1187,
-			@Log		= @Log,		
-			@IP			= '125.227.140.97',	
-			@Duration	= @Duration			
+		-- Log Soccer
+		IF @LogSoccer IS NOT NULL OR @LogSoccer<>''
+		BEGIN
+			EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+				@UserId		= 10278938,	--StarixIT	
+				@ActionId	= 1191,
+				@Log		= @LogSoccer,		
+				@IP			= '125.227.140.97',	
+				@Duration	= @Duration
+
+			--LAP
+			EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+				@LogData = @LogSoccer,	
+				@ActionID = 1191,
+				@Duration = @Duration,
+				@UserID	= 10278938
+		END
+
+		--Log Basketball
+		IF @LogBasketball IS NOT NULL OR @LogBasketball<>''
+		BEGIN
+			EXEC DBLOG.bodb_CustomerLog.dbo.Acc_WriteLog_UserLog_RunSP_MultipleLog
+				@UserId		= 10278938,	--StarixIT	
+				@ActionId	= 1192,
+				@Log		= @LogBasketball,		
+				@IP			= '125.227.140.97',	
+				@Duration	= @Duration
+
+			EXEC DBLOG.bodb_CustomerLog.dbo.Lrf_WriteLog_UserLog_UserControl_Multiple
+				@LogData = @LogBasketball,	
+				@ActionID = 1192,
+				@Duration = @Duration,
+				@UserID	= 10278938
+		END
 	END CATCH
-	
+
 	DROP TABLE #tblCustDangerInfo
 	DROP TABLE #tblCustDangerOld
 	DROP TABLE #tblCustWinloss

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="1" isNested="1"></info>*/
 ALTER FUNCTION [dbo].[f_GetDangerLevelInfo]
 	(@DangerLevel BIGINT)
 RETURNS TABLE
@@ -6,7 +6,7 @@ AS
 /*
 	Created: 20211011@Johnson
 	Task : Get danger level for saba sport
-	DB: DBCUST/CUSTDB
+	DB: DBCUST/CUSTDB,DBLOG/bodb_CustomerLog
 	
 	Revisions:
 		- 20211011@Johnson: initial sp [redmine:#161351]
