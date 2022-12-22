@@ -57,6 +57,7 @@ Revisions:
 	- 20210809@Winfred: add Bitcoin Betting [RedmineID: #159039]
 	- 20220211@Johnson: add FGG under Virtual Games - change productID to 64 [RedmineID: #165684]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+	- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 	
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -111,7 +112,7 @@ Revisions:
 		,   @bitmapOrder_SabaCasino INT
 
 	SET @bitmapOrder_Allbet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 211 AND Bettype = 2401)
-	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
+	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1021)
 	SET @bitOrderNG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
 	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
@@ -168,7 +169,7 @@ Revisions:
 	SELECT @AllowedRNGLottery = CASE WHEN @AllowedLottery = 1 OR @AllowedTableGames = 1  OR @AllowedRNGWar = 1 THEN 1 ELSE 0 END
 
 	--For VoidBridge
-	EXEC Acc_CheckShowProduct @ProductID = 22, @IsHide = @IsHideVoidBridge OUTPUT, @SettingStatus = @SettingStatus
+	EXEC Acc_CheckShowProduct @ProductID = 18, @IsHide = @IsHideVoidBridge OUTPUT, @SettingStatus = @SettingStatus
 	SET @AllowedVoidBridge = CASE WHEN (SELECT dbo.f_GetProductStatus (bitmapIsHidden,@bitOrderVB) FROM CustProductStatus WITH (NOLOCK) WHERE CustID = @CustID) = 0 
 										AND @IsHideVoidBridge = 0 THEN 1 ELSE 0 END
 	

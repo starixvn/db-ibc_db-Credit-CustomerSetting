@@ -23,6 +23,7 @@ AS
 	Revisions:
 		- 20200724@winfred: Remove Status games for customer list smartphone [redmine: #137130]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 		
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -40,7 +41,7 @@ BEGIN
 	-- For DCS Product
     DECLARE	@bitmapOrder_AllBet			INT
 		,	@bitmapOrder_VoidBridge		INT 
-	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 212 AND Bettype = 4001)
+	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
 		  
 	CREATE TABLE #customer(custid INT primary key, RowNumber INT, adiscountMyanmarOdds DECIMAL (9,8), IsMyanmarOdds BIT)

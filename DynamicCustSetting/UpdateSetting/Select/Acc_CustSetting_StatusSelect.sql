@@ -16,6 +16,7 @@ AS
 	- 20180611@Elodie: Setting status of a product [Redmine: #58776]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+	- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
  
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
@@ -35,7 +36,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @SuperID AND [Site] = 'IMBC')  
 		SET @IsIMBC = 1  
     
-	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT)
+	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, Child_DisplayOrder INT)
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
@@ -56,6 +57,15 @@ BEGIN
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 21
+
+	UPDATE t
+	SET t.Child_DisplayOrder = d.Child_DisplayOrder
+	FROM #SportBettypeFilter t 
+		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
+			ON t.sporttype = d.SportType
+			AND t.bettype = d.BetType
+			AND t.IsLive = d.IsLive
+			AND d.SettingType = t.SettingType
 
 	IF @RoleID = 4  
 	BEGIN  
@@ -85,6 +95,7 @@ BEGIN
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK)
 		WHERE stt.CustID = @CustID  
+		ORDER BY ft.ProductID, ft.Child_DisplayOrder
     
 	END  
 	ELSE IF @RoleID = 3  
@@ -116,6 +127,7 @@ BEGIN
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)
 		WHERE stt.CustID = @CustID AND stt_UPLINE.CustID = @SuperID  
+		ORDER BY ft.ProductID, ft.Child_DisplayOrder
 	END     
 	ELSE IF @RoleID = 2  
 	BEGIN  
@@ -146,6 +158,7 @@ BEGIN
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) 
 		WHERE stt.CustID = @CustID AND stt_UPLINE.CustID = @MasterID
+		ORDER BY ft.ProductID, ft.Child_DisplayOrder
 	END   
 	ELSE IF @RoleID = 1  
 	BEGIN  
@@ -165,6 +178,7 @@ BEGIN
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK)
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)
 		WHERE stt.CustID = @CustID AND stt_UPLINE.CustID = @AgentID
+		ORDER BY ft.ProductID, ft.Child_DisplayOrder
 	END   
 END
 GO
