@@ -22,6 +22,7 @@ AS
 		- 20210810@Elodie: Add NOLOCK [RedmineID: #159964]
 		- 20220627@Eden: Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20220830@Tacy: Add code to control CANSEE for SEAL Entertainment [RedmineID: #176209]
+		- 20221222@Winfred: Update Cansee for RNG SLOT [RedmineID: #181929]
 
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
@@ -75,9 +76,9 @@ BEGIN
 								WHEN 195 THEN 180
 								WHEN 196 THEN 180
 								WHEN 197 THEN 180
-				                WHEN 248 THEN 212
-								WHEN 237 THEN 212
-								WHEN 156 THEN 212
+				                WHEN 248 THEN 9906
+								WHEN 237 THEN 9906
+								WHEN 156 THEN 9906
 				                ELSE psc.Sporttype END) = ps.Sporttype
 		CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
 	WHERE sd.SettingType IN (4,11,13,21)
