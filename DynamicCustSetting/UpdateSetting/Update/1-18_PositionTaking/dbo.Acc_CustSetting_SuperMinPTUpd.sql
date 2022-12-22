@@ -18,6 +18,7 @@ AS
         - 20200626@Elodie: Initial SP [Redmine:#135363]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
+		- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
 
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -256,7 +257,7 @@ BEGIN
 
 	SET @logSPData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 	
-	IF NOT EXISTS (SELECT 1 FROM @tblPT WHERE SportType IN (211,212)) 
+	IF NOT EXISTS (SELECT 1 FROM @tblPT WHERE SportType IN (211,9906)) 
 		AND NOT EXISTS (SELECT TOP 1 1
 					FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
