@@ -22,6 +22,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentMinPTUpd]
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 		- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
+		- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
 		
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -274,7 +275,7 @@ BEGIN
 	
     SET @logSPData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 	
-	IF NOT EXISTS (SELECT 1 FROM @tblPT WHERE SportType IN (211,212)) 
+	IF NOT EXISTS (SELECT 1 FROM @tblPT WHERE SportType IN (211,9906)) 
 		AND NOT EXISTS (SELECT TOP 1 1
 					FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 						INNER JOIN @tblPT t ON cs.sporttype = t.SportType 
