@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Age_LimitPTDailyCheck]
+ALTER PROCEDURE [dbo].[Age_LimitPTDailyCheck]
 	-- Add the parameters for the stored procedure here
 	  @Actorid				INT,
 	  @custid				INT,
@@ -104,8 +104,7 @@ BEGIN
 	IF EXISTS( SELECT TOP 1 1 FROM CustLimitPTSetting t WITH(NOLOCK) 
 									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
 							  WHERE  t.CustID = @custid AND ActorID = @Actorid AND PTCount >= p.MaxCount
-							  AND MONTH(CAST(LastUpdated AS  DATE)) = MONTH(CAST(GETDATE() AS  DATE))
-							  AND YEAR(CAST(LastUpdated AS  DATE)) = YEAR(CAST(GETDATE() AS  DATE)))
+							  AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE))
 	BEGIN
 		SET @isCancel = 1
 	END	
