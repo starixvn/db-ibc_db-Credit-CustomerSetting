@@ -4,6 +4,7 @@ ALTER PROCEDURE [dbo].[Age_LimitPTDailyCheck]
 	  @Actorid				INT,
 	  @custid				INT,
 	  @UpdatePT				VARCHAR(MAX),
+	  @LastUpdated			DATE OUTPUT,
 	  @isLimit				BIT = 0 OUTPUT,
 	  @isCancel				BIT = 0 OUTPUT
 AS
@@ -107,6 +108,12 @@ BEGIN
 							  AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE))
 	BEGIN
 		SET @isCancel = 1
+
+		SELECT @LastUpdated = (SELECT MAX(LastUpdated) FROM CustLimitPTSetting t WITH(NOLOCK) 
+									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
+							  WHERE  t.CustID = @custid AND ActorID = @Actorid AND PTCount >= p.MaxCount
+							  AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE))
+
 	END	
 	
 	DROP TABLE #TempLimit

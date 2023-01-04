@@ -25,6 +25,7 @@ AS
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20220808@Tacy: Resolve replication errors when using Search & Copy New member function [RedmineID: #176225]
+			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 
 		Parameter's Explanation:
 		• @PT:
@@ -227,18 +228,20 @@ BEGIN
 	END
 	
 	-- check Limit Daily PT Update
-	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
+	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0, @LastUpdated DATE
 	IF @IsCountPT = 1
 	BEGIN
 		EXEC dbo.Age_LimitPTDailyCheck    
 			 @custid		= @custid
 			,@Actorid		= @UserID
 			,@UpdatePT		= @PT
+			,@LastUpdated	= @LastUpdated OUTPUT
 			,@isLimit		= @isLimit OUTPUT
 			,@isCancel		= @isCancel OUTPUT
 		IF @isCancel > 0	
 		BEGIN
-			SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ [dbo].[f_Get_MsgNamebyMsgID](10068,'E') +'"> </Root>'
+			IF @LastUpdated IS NULL SET @LastUpdated = GETDATE()
+			SELECT @ErrMsg = '<Root MsgID="10068" Msg="{'+ CAST (@LastUpdated AS VARCHAR(10)) +'}"> </Root>'
                     , @ErrCode = 10068
                     , @MsgType = 6   
 				RETURN

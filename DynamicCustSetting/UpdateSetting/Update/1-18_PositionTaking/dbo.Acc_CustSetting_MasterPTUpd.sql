@@ -27,6 +27,7 @@ AS
 			- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
+			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -183,18 +184,20 @@ BEGIN
 		END
 	   
 	   -- check Limit Daily PT Update
-		DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0
+		DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0 , @LastUpdated DATE
 		IF @IsCountPT = 1
 		BEGIN
 			EXEC dbo.Age_LimitPTDailyCheck    
 				 @custid			= @custid
 				,@Actorid		= @UserID
 				,@UpdatePT		= @PT
+				,@LastUpdated	= @LastUpdated OUTPUT
 				,@isLimit		= @isLimit OUTPUT
 				,@isCancel		= @isCancel OUTPUT
 			IF @isCancel > 0	
 			BEGIN
-				SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ [dbo].[f_Get_MsgNamebyMsgID](10068,'E') +'"> </Root>'
+				IF @LastUpdated IS NULL SET @LastUpdated = GETDATE()
+				SELECT @ErrMsg = '<Root MsgID="10068" Msg="{'+ CAST (@LastUpdated AS VARCHAR(10)) +'}"> </Root>'
                     , @ErrCode = 10068
                     , @MsgType = 6   
 				RETURN
