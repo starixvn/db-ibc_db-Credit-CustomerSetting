@@ -13,6 +13,7 @@ AS
 		Original: 
 		Revisions:
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
+			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	*/
 BEGIN
 	SET NOCOUNT ON;
@@ -37,7 +38,8 @@ BEGIN
 							  WHERE   CustID = @custid AND ActorID = @Actorid )
 		BEGIN
 			UPDATE t
-			SET t.PTCount = CASE WHEN CAST(LastUpdated AS  DATE) = CAST(GETDATE() AS  DATE) THEN  t.PTCount + 1  ELSE 1 END,
+			SET t.PTCount = CASE WHEN MONTH(CAST(LastUpdated AS  DATE)) = MONTH(CAST(GETDATE() AS  DATE))
+							  AND YEAR(CAST(LastUpdated AS  DATE)) = YEAR(CAST(GETDATE() AS  DATE)) THEN  t.PTCount + 1  ELSE 1 END,
 				t.LastUpdated = CAST(GETDATE() AS  DATE)
 			FROM CustLimitPTSetting t WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType 
