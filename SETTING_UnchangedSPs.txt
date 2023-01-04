@@ -5,3 +5,4 @@ DynamicCustSetting\UpdateSetting\Update\1-18_PositionTaking\dbo.Acc_CustSetting_
 DynamicCustSetting\UpdateSetting\Update\1-18_PositionTaking\dbo.Acc_CustSetting_MasterPTUpd.sql
 DynamicCustSetting\UpdateSetting\Update\1-18_PositionTaking\dbo.Acc_CustSetting_AgentMinPTUpd.sql
 DynamicCustSetting\UpdateSetting\Update\1-18_PositionTaking\dbo.Acc_CustSetting_MasterMinPTUpd.sql
+DynamicCustSetting\UpdateSetting\Update\1-18_PositionTaking\Acc_CustSetting_AgentPTOnMemberUpd.sql
