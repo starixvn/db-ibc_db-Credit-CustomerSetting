@@ -216,7 +216,7 @@ BEGIN
 			,@isCancel		= @isCancel OUTPUT
 		IF @isCancel > 0	
 		BEGIN
-			IF @LastUpdated IS NULL SET @LastUpdated = GETDATE()
+			
 			SELECT @ErrMsg = '<Root MsgID="10068" Msg="{'+ CAST (@LastUpdated AS VARCHAR(10)) +'}"> </Root>'
                     , @ErrCode = 10068
                     , @MsgType = 6   

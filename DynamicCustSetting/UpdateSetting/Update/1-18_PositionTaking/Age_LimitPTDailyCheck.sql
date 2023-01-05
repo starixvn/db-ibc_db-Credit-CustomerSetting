@@ -109,11 +109,11 @@ BEGIN
 	BEGIN
 		SET @isCancel = 1
 
-		SELECT @LastUpdated = (SELECT MAX(LastUpdated) FROM CustLimitPTSetting t WITH(NOLOCK) 
+		SELECT @LastUpdated = ISNULL((SELECT MAX(LastUpdated) FROM CustLimitPTSetting t WITH(NOLOCK) 
 									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
 							  WHERE  t.CustID = @custid AND ActorID = @Actorid AND PTCount >= p.MaxCount
-							  AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE))
-
+							  AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE)), GETDATE())
+		SELECT @LastUpdated  = DATEADD(DAY,30,@LastUpdated)
 	END	
 	
 	DROP TABLE #TempLimit
