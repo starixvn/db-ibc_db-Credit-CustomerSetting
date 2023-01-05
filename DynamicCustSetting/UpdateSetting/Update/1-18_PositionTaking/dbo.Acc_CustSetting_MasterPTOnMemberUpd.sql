@@ -218,7 +218,7 @@ BEGIN
 		IF @isCancel > 0	
 		BEGIN
 			
-			SELECT @ErrMsg = '<Root MsgID="10068" Msg="{'+ CAST (@LastUpdated AS VARCHAR(10)) +'}"> </Root>'
+			SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
                     , @ErrCode = 10068
                     , @MsgType = 6   
 				RETURN
