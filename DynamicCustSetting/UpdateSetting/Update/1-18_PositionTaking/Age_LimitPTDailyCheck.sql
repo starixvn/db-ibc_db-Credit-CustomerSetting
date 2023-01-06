@@ -1,9 +1,10 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Age_LimitPTDailyCheck]
+ALTER PROCEDURE [dbo].[Age_LimitPTDailyCheck]
 	-- Add the parameters for the stored procedure here
 	  @Actorid				INT,
 	  @custid				INT,
 	  @UpdatePT				VARCHAR(MAX),
+	  @LastUpdated			DATE OUTPUT,
 	  @isLimit				BIT = 0 OUTPUT,
 	  @isCancel				BIT = 0 OUTPUT
 AS
@@ -13,6 +14,7 @@ AS
 		Original: 
 		Revisions:
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
+			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	*/
 BEGIN
 	SET NOCOUNT ON;
@@ -103,9 +105,15 @@ BEGIN
 	IF EXISTS( SELECT TOP 1 1 FROM CustLimitPTSetting t WITH(NOLOCK) 
 									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
 							  WHERE  t.CustID = @custid AND ActorID = @Actorid AND PTCount >= p.MaxCount
-							  AND CAST(LastUpdated AS  DATE) = CAST(GETDATE() AS  DATE))
+							  AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE))
 	BEGIN
 		SET @isCancel = 1
+
+		SELECT @LastUpdated = ISNULL((SELECT MAX(LastUpdated) FROM CustLimitPTSetting t WITH(NOLOCK) 
+									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
+							  WHERE  t.CustID = @custid AND ActorID = @Actorid AND PTCount >= p.MaxCount
+							  AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE)), GETDATE())
+		SELECT @LastUpdated  = DATEADD(DAY,30,@LastUpdated)
 	END	
 	
 	DROP TABLE #TempLimit
