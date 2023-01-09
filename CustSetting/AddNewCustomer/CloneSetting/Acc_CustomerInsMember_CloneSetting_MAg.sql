@@ -641,6 +641,7 @@ BEGIN
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 		
 		
 		RETURN	
@@ -720,7 +721,7 @@ BEGIN
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
-							
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid					
 		RETURN	
 	END CATCH	
 
@@ -757,7 +758,7 @@ BEGIN
 		
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-							
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid						
 		RETURN	
 	END CATCH
 
@@ -797,7 +798,7 @@ BEGIN
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 		DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
-							
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid						
 		RETURN	
 	END CATCH
 	

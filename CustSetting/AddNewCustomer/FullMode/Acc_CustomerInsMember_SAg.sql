@@ -2116,6 +2116,7 @@ BEGIN
 							END
 				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+				DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 			RETURN
 		END	
 
@@ -2148,6 +2149,7 @@ BEGIN
 				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 				DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
 				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+				DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 			RETURN
 		END
 	 END
