@@ -3227,7 +3227,7 @@ BEGIN
 	
 	If @SystemID = 2 -- ALPHA
 	BEGIN
-		EXEC Age_CountLimitUpdatePT @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
 		IF @ErrCode > 0
 		BEGIN
 			SELECT @ErrMsg = CASE @Language 
