@@ -1,5 +1,6 @@
 /*<info serverAlias="DBCUST-CustDB" executers="Dot_Member,Dot_Intg" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Intg_GetCustCreditInfo] @custid INT
+ALTER PROCEDURE [dbo].[Intg_GetCustCreditInfo] 
+	@custid INT
     ,@sporttype SMALLINT
     ,@bettype SMALLINT = 0
     ,@liveindicator BIT = 0
@@ -31,6 +32,7 @@ AS
   
     Revisions: 
 		-- 20220916@EricFu(CUSTDB):  Copy frmo Dot_Member_GetCustCreditInfo and add more condition @IsLicensee = 0 for sporttype 161 and 164
+		-- 2022-11-01@EricFu(CUSTDB): Remove Maxperxxx columns from VN requeset
 
 	--------------------------------------------------------------------------------
     -- !!!!!!!!!!!!!!! include UM function !!!!!!!!!!!!!!!!!!!!!!!!
@@ -46,12 +48,10 @@ BEGIN
         ,@recommend INT
         ,@mrecommend INT
         ,@srecommend INT
-        ,@credit MONEY
-        ,@MaxPerBall161 MONEY
+        ,@credit MONEY      
         ,@actualrate FLOAT
         ,@currencyname NVARCHAR(50)
-        ,@virtualrate SMALLMONEY
-        ,@maxpermatch MONEY
+        ,@virtualrate SMALLMONEY        
         ,@autosuspend BIT
         ,@currency INT
         ,@closed BIT
@@ -167,65 +167,11 @@ BEGIN
                         ELSE @Zero
                         END
             ELSE ci.credit
-            END
-        ,@MaxPerBall161 = ci.maxperball161
+            END     
         ,@actualrate = ex.actualrate
         ,@currencyname = ex.currency
         ,@virtualrate = ci.virtualmultiplier
-        ,@BonusWalletFlag = Isnull(ci.bonuswalletflag, @False)
-        ,@maxpermatch = Isnull(CASE 
-                WHEN @usertype = 2
-                    THEN @Zero
-                WHEN @isparlay = 0
-                    AND @sporttype = 1
-                    THEN ci.maxpermatch
-                WHEN @isparlay = 0
-                    AND @sporttype = 2
-                    THEN ci.maxpermatch2
-                WHEN @isparlay = 0
-                    AND @sporttype = 3
-                    THEN ci.maxpermatch3
-                WHEN @isparlay = 0
-                    AND @sporttype = 5
-                    THEN ci.maxpermatch5
-                WHEN @isparlay = 0
-                    AND @sporttype = 8
-                    THEN ci.maxpermatch8
-                WHEN @isparlay = 0
-                    AND @sporttype = 10
-                    THEN ci.maxpermatch10
-                WHEN @isparlay = 0
-                    AND @sporttype = 11
-                    THEN ci.maxpermatch11
-                WHEN @isparlay = 0
-                    AND @sporttype = 161
-                    THEN ci.maxpermatch161
-                WHEN @isparlay = 0
-                    AND @sporttype = 164
-                    AND @isLicensee = 0
-                    THEN 0
-                WHEN @isparlay = 0
-                    AND @sporttype = 164
-                    AND @isLicensee = 1
-                    THEN ci.maxpermatch161
-                WHEN @isparlay = 0
-                    AND @sporttype = 32
-                    THEN ci.maxpermatch2
-                WHEN @isparlay = 0
-                    AND @sporttype = 44
-                    THEN ci.maxpermatch99
-                WHEN @isparlay = 1
-                    AND @sporttype = 1
-                    THEN ci.maxpermatch1mp
-                WHEN @isparlay = 1
-                    AND @sporttype = 2
-                    AND @bettype = 38
-                    THEN ci.maxpermatch99mp
-                WHEN @isparlay = 1
-                    AND @sporttype = 99
-                    THEN ci.maxpermatch99mp
-                ELSE ci.maxpermatch99
-                END, 0)
+        ,@BonusWalletFlag = Isnull(ci.bonuswalletflag, @False)      
         ,@autosuspend = CASE 
             WHEN @sporttype = 1
                 THEN Isnull(ci.autosuspend, @False)
@@ -331,16 +277,7 @@ BEGIN
         END
     END
 
-    ------------------------------------------------
-    IF @sporttype IN (44)
-        AND @isLicensee = 0 --MuayThai for Credit
-    BEGIN
-        SELECT @MaxperMatch = Isnull(maxpermatch, @Zero)
-        FROM dbo.custbetsetting3rd_member bs WITH (NOLOCK)
-        WHERE bs.custid = @custid
-            AND bs.bettype = 3
-            AND bs.sporttype = @Sporttype
-    END
+    ------------------------------------------------    
 
     DECLARE @new_virtualrate FLOAT = 1
 
@@ -719,12 +656,10 @@ BEGIN
         ,@recommend recommend
         ,@mrecommend mrecommend
         ,@srecommend srecommend
-        ,@credit credit
-        ,@MaxPerBall161 MaxPerBall161
+        ,@credit credit     
         ,@actualrate actualrate
         ,@currencyname currencyname
-        ,@virtualrate virtualrate
-        ,@maxpermatch maxpermatch
+        ,@virtualrate virtualrate       
         ,@autosuspend autosuspend
         ,@currency currency
         ,@closed closed
