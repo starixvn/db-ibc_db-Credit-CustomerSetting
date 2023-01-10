@@ -21,6 +21,7 @@ AS
      -- 2019/06/13 @Sobi(CUSTDB): CN88 User Check reject,closed setting from CS_CustomerStatus
      -- 2021/07/05 @EricFU(CUSTDB) : add Reject/Close Account for credit user, remove CB88 logic
      -- 2021/07/13 @EricFU(CUSTDB) : modify @CloseInfo,@Locked,@SuspendInfo > 0
+	 -- 2022/11/01 @EricFu(CUSTDB) : Remove DisableCasino column from VN requeset
 
 	--------------------------------------------------------------------------------
     -- !!!!!!!!!!!!!!! include UM function !!!!!!!!!!!!!!!!!!!!!!!!
@@ -28,6 +29,11 @@ AS
     --------------------------------------------------------------------------------    
 */
 BEGIN
+    --------------------------------------------------------------------------------
+    -- !!!!!!!!!!!!!!! include UM function !!!!!!!!!!!!!!!!!!!!!!!!
+    -- durning UM time alert function [f_CheckUMStatus]
+    --------------------------------------------------------------------------------    
+
     SET NOCOUNT ON;
 
     -- 1 Declare variable
@@ -90,8 +96,7 @@ BEGIN
                     else 0 end) as reject,
                 @MaxWinVendorGame as MaxWinVendorGame,
                 @MaxLoseVendorGame as MaxLoseVendorGame,
-                @IsDisabled as DisableProdcut,
-                c.DisableCasino as DisableCasino
+                @IsDisabled as DisableProdcut
         from CustInfo c with (nolock)   
         inner join exchange e with (nolock) on c.currency = e.exchangeid
         where c.custid = @custid
@@ -126,8 +131,7 @@ BEGIN
                     else isnull(c.reject,0) end) as reject,
                 @MaxWinVendorGame as MaxWinVendorGame,
                 @MaxLoseVendorGame as MaxLoseVendorGame,
-                @DisBetSetting as DisableProdcut,
-                c.DisableCasino as DisableCasino
+                @DisBetSetting as DisableProdcut
         from CustInfo c with (nolock)   
         inner join exchange e with (nolock) on c.currency = e.exchangeid
         where c.custid = @custid
