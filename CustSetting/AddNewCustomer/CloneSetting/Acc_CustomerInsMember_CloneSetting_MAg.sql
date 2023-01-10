@@ -608,7 +608,8 @@ BEGIN
 		DELETE FROM custAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID		
+		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID	
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid			
 		
 		
 		RETURN	
