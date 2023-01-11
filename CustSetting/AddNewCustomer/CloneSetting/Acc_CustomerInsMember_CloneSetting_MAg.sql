@@ -97,6 +97,7 @@ AS
 	- 20220527@Johnson: Remove Problem Account [RedmineID:#173304]
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
+	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -529,6 +530,23 @@ BEGIN
 		RETURN
 	END
 	
+	If @SystemID = 2 -- ALPHA
+	BEGIN
+		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								when 'E' then 'Create customer fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END
+			DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  
+			DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
+			RETURN
+		END	
+	END
+
 	DECLARE	@UplineSecurityCode			VARCHAR(50)
 		  , @isForcedChangeSecurityCode	BIT, @ClosedReason TINYINT=0,@Closed BIT
 	SELECT TOP 1 @Closed= CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END
@@ -590,7 +608,8 @@ BEGIN
 		DELETE FROM custAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID		
+		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID	
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid			
 		
 		
 		RETURN	
@@ -623,6 +642,7 @@ BEGIN
 		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
 		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 		
 		
 		RETURN	
@@ -702,7 +722,7 @@ BEGIN
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
-							
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid					
 		RETURN	
 	END CATCH	
 
@@ -739,7 +759,7 @@ BEGIN
 		
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-							
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid						
 		RETURN	
 	END CATCH
 
@@ -779,7 +799,7 @@ BEGIN
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 		DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
-							
+		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid						
 		RETURN	
 	END CATCH
 	

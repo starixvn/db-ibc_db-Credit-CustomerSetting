@@ -474,6 +474,8 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+
 Param's Explanation:
 - @ErrCode:
     = 0: super create master successfully.
@@ -2068,6 +2070,21 @@ BEGIN
 	    return
     END
 	
+	If @SystemID = 2 -- ALPHA
+	BEGIN
+		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								when 'E' then 'Create customer fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END
+				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+				DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
+			RETURN
+		END	
+	END	
+
 	 IF @srecommend < 100 AND @site = '611111' -- For Direct Master
 	 BEGIN
 		DECLARE @VirtualRateMultiplier VARCHAR(MAX) = ''
@@ -2099,6 +2116,7 @@ BEGIN
 							END
 				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+				DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 			RETURN
 		END	
 
@@ -2131,6 +2149,7 @@ BEGIN
 				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 				DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
 				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+				DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 			RETURN
 		END
 	 END

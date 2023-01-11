@@ -349,6 +349,8 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -3223,6 +3225,34 @@ BEGIN
 	    return
     END
 	
+	If @SystemID = 2 -- ALPHA
+	BEGIN
+		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								when 'E' then 'Create member fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
+							END
+					, @success = 0, @ErrCode=216
+			Delete custsetting with (ROWLOCK) WHERE custid  =@custid
+			Delete CustSetting3rd with (ROWLOCK) WHERE custid  =@custid	  
+			DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
+			DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
+			DELETE custOverride3rd WITH (ROWLOCK) WHERE custId = @custid		
+			DELETE custOverrideGame WITH (ROWLOCK) WHERE custId = @custid		
+			DELETE CustGameType WITH (ROWLOCK) WHERE custId = @custid
+			EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
+			EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
+
+			DELETE dbo.[CustQRCode] WITH(ROWLOCK) WHERE CustID = @CustID
+
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
+			RETURN
+		END	
+	END
+
     SELECT @Success = 1
 
     set @endRun = getdate()
