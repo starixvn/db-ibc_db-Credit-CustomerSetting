@@ -118,7 +118,7 @@ AS
 		- 20211005@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
 		- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 		- 20220516@Tacy: Insert history of member bet setting (Number Game, Happy 5) [redmineID: #170739]
-
+		- 20220113@Elodie: Check param IS NULL [RedmineID:#182866]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -279,7 +279,7 @@ BEGIN
 	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10003,@Language) + ' (' + SportName + ')'
 				, @ErrCode = 3
 	FROM @BetSetting
-	WHERE (MinBet < 0 or MaxBet < 0 or MaxPerMatch < 0)
+	WHERE (MinBet < 0 or MaxBet < 0 or MaxPerMatch < 0 OR MinBet IS NULL OR MaxBet IS NULL OR MaxPerMatch IS NULL)
 		AND IsUpdate = 1
 
 	IF @ErrCode <> 0
@@ -289,7 +289,7 @@ BEGIN
 	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10059,@Language) + ' (' + SportName + ')'
 				, @ErrCode = 3
 	FROM @BetSetting
-	WHERE (MaxPayoutPerMatch < 0)
+	WHERE (MaxPayoutPerMatch < 0 OR MaxPayoutPerMatch IS NULL)
 		AND IsUpdate = 1
 
 	IF @ErrCode <> 0
