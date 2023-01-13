@@ -290,7 +290,7 @@ BEGIN
 				, @ErrCode = 3
 	FROM @BetSetting
 	WHERE (MaxPayoutPerMatch < 0 OR MaxPayoutPerMatch IS NULL)
-		AND IsUpdate = 1
+		AND IsUpdate = 1 AND SportType NOT IN (161,164)
 
 	IF @ErrCode <> 0
 		RETURN
