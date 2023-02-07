@@ -34,7 +34,8 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
-		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20220627@Eden: Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20230207@Eden: Alpha - User can not see the new create agent's account in the Agent List [Redmine: #183486]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -497,6 +498,7 @@ BEGIN
 			CROSS APPLY dbo.CustProductStatus cps WITH (NOLOCK) 
 			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(cps.bitmapHasSynced, psp.bitmapOrder) st
 		WHERE SettingType IN (4,11,13,21) AND cps.CustID = @ExistingCustID	
+			 AND ps.SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
 		
 		UPDATE op
 		SET op.IsHidden = stt.IsHidden
@@ -544,6 +546,7 @@ BEGIN
 			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource 
 						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13,21)
+			AND ps.SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
 
 		UPDATE op
 		SET op.IsHiddenSource = 1, HasSyncSource = 0  
