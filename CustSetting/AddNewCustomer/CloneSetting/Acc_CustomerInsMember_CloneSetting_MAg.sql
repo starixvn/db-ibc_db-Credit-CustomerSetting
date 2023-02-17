@@ -20,6 +20,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_MAg]
 	,@ErrCode int = 0 output
 	,@ErrMsg nvarchar(4000) = '' output
 	,@SystemID TINYINT=1
+	,@CreatedMode TINYINT = 0
 	,@SettingStatus TINYINT = 0
 )
 AS
@@ -99,7 +100,7 @@ AS
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
-	
+	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -107,6 +108,8 @@ AS
 	  
 	• @ErrMsg: Error description.	
 	- @SettingStatus: 0: Pro, 1: UAT
+	- @CreatedMode: = 0: single customer
+				= 1: multiple customers
   
 */
 BEGIN
@@ -247,8 +250,8 @@ BEGIN
 	IF @Credit_AllOtherAgent + @Credit >@Credit_MAg
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Sorry, credit update is not successful, You have exceeded your master credit.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](70011,@Language)
+							WHEN 'E' THEN 'Your credit limit has been exceeded.'  
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language)
 						END,
 			@ErrCode = 101
 		return
@@ -258,8 +261,8 @@ BEGIN
 	if (isnull(@maxcredit ,0) > @credit )
 	BEGIN 
 		Select @ErrMsg = case @Language
-			when 'E' then 'Sorry, credit update is not successful, You have exceeded your agent credit.'  
-			ELSE [dbo].[f_Get_MsgNamebyMsgID](70012,@Language) 
+			WHEN 'E' THEN 'Your credit limit has been exceeded.'  
+			ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language) 
 		 end,  
 	  @ErrCode = 102  
 	 return  
@@ -833,11 +836,17 @@ BEGIN
 	FROM dbo.customer AS c WITH(NOLOCK) 
 	WHERE custid=@ExistingCustid
 	
+	DECLARE @ActionID INT 
+	SELECT @ActionID = CASE WHEN @systemID = 10 THEN 95081 --telegram chatbot
+							ELSE CASE WHEN @CreatedMode = 1 THEN 95082 --Multiple customers
+									ELSE 629 END --single customer
+							END		
+		
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 629,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 	END TRY
@@ -868,7 +877,7 @@ BEGIN
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 629,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 	END CATCH

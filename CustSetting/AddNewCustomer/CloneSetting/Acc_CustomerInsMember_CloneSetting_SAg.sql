@@ -19,6 +19,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 	,@ErrCode INT = 0 OUTPUT
 	,@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	,@SystemID TINYINT=1
+	,@CreatedMode TINYINT = 0
 	,@SettingStatus TINYINT = 0
 )
 AS
@@ -101,6 +102,7 @@ AS
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
  Explanation's Param:  
 	• @ErrCode:
@@ -109,6 +111,8 @@ AS
 	  
 	• @ErrMsg: Error description.	
 	- @SettingStatus: 0: Pro, 1: UAT
+	- @CreatedMode: = 0: single customer
+				= 1: multiple customers
   
 */
 BEGIN
@@ -244,7 +248,7 @@ BEGIN
 	IF @Credit_AllOtherMaster + @Credit > @Credit_SAg
 	BEGIN  
 		SET @ErrMsg = CASE @Language   
-		  WHEN 'E' THEN 'Sorry, credit update is not successful, You have exceeded your super agent credit.'  
+		  WHEN 'E' THEN 'Your credit limit has been exceeded.'  
 		  ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language) 
 		 END   
 		SELECT @ErrCode = 101  
@@ -843,11 +847,17 @@ BEGIN
 	FROM dbo.customer AS c WITH(NOLOCK) 
 	WHERE custid=@ExistingCustid
 	
+	DECLARE @ActionID INT 
+	SELECT @ActionID = CASE WHEN @systemID = 10 THEN 95079 --telegram chatbot					
+						ELSE CASE WHEN @CreatedMode = 1 THEN 95080 --Mulitple customers
+								ELSE 630 END --old mode
+						END		
+	
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 630,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 	END TRY
@@ -878,7 +888,7 @@ BEGIN
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 630,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration		
 	END CATCH
