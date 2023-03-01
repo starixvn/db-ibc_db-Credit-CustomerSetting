@@ -26,6 +26,7 @@ AS
 			- 20210817@Elodie: Change data type of Refno  to bigint instead [Redmine: #160262]
 			- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 			- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
+			- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 */
 BEGIN
 
@@ -39,6 +40,13 @@ BEGIN
 	print  'Start:' + convert(varchar(50), getdate(), 113)
 
 	Declare @refno bigint, @TransID bigint, @TransID2 bigint, @Now datetime, @Enabled bit, @MasterBalance MONEY
+
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC dbo.Age_SelBalanceUpDay
+
+	DECLARE @BalanceUpDate SMALLDATETIME
+	SELECT  @BalanceUpDate = BalanceUpDay FROM @MBBU
 
 	CREATE TABLE #temp_recommend (recommend INT PRIMARY KEY)
 	
@@ -61,11 +69,17 @@ BEGIN
 	SELECT @Balance_Recommend = ISNULL(SUM(winlost - actual_stake + mwinlost + acomm + awinlost), 0) 
 	FROM #temp_recommend r
 		INNER JOIN dbo.transfer b WITH (NOLOCK, INDEX = IX_recommend) ON r.recommend = b.recommend
+	WHERE 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+					 WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+					 ELSE 1 END
 	OPTION (MAXDOP 1)	
 		
 	SELECT @Balance_master =  ISNULL(SUM(winlost - actual_stake + mwinlost + acomm + awinlost), 0) 
 	FROM transfer b WITH (NOLOCK)
 	WHERE custid = @mrecommend
+		AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+					 WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+					 ELSE 1 END
 
 	--==========================================================
 	--CREATING TEMP TABLES

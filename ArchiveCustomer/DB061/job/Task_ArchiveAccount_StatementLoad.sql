@@ -10,6 +10,7 @@ AS
 		- 20190519@Daniel: Created
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
+		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -60,10 +61,9 @@ BEGIN
 
 	update bodb02.dbo.Systemsettings with(rowlock, updlock) set VValue = @status where VName = 'aa_Stmt_Status'
 
-	SELECT 
-		TOP 1 @to = winlostdate--balance-up date
-	FROM bodb02.dbo.transfer WITH(NOLOCK)
-	WHERE bettype = 20000 and custid = 3
+	SELECT TOP 1 @to = CONVERT(SMALLDATETIME, VValue) --balance-up date
+	FROM bodb02.dbo.MBUSettings
+	WHERE VName = 'BalanceUpDate'
 
 	--select @from, @to, @status
 
