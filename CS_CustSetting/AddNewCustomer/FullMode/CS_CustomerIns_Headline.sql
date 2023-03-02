@@ -23,6 +23,7 @@ AS
 		- 20190819@Johnson: HF missing custAccount, CustGroupHeadline [redmine:#118868]
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200309@Sophia: Allow to set Headline PT up to 5% [Redmine: #129665]
+		- 20230302@Tacy: Demo - CN88 Site
 	
 	-Parameter's Explanations:
 		- @ExtraPTSetting:	<ROOT>
@@ -63,32 +64,11 @@ BEGIN
 		@autosuspend BIT = 0,
 		@autosuspend2 BIT = 0,
 
-		@MaxPerMatch MONEY =0,
-		@MaxPerMatchv2 MONEY=0,
-		@MaxPerMatchv3 MONEY=0,
-		@MaxPerMatchv5 MONEY=0,
-		@MaxPerMatchv8 MONEY=0,
-		@MaxPerMatchv10 MONEY=0,
-		@MaxPerMatchv11 MONEY=0,
-		
-		@MaxPerMatchv99 MONEY = 0,
-		@MaxPerMatchv99MP MONEY = 0,	
-		
-		@MaxPerMatchv1MP MONEY = 0,	
-		
-		@MaxPerMatchv161 MONEY = 0,	
-		@MaxPerBallv161 MONEY = 0,	
-		@MaxPerMatchv164 MONEY = 0,
-		
 		@DisableNumber BIT = 0,
-
-		@DisableCasino BIT = 0,
 
 		@DoubleCommLosing BIT = 0,
 		
 		@DisableEsports BIT = 0,
-		@DisableGoldDeluxe BIT = 0,
-		@HideGoldDeluxe BIT = 0,
 		
 		@DisableSuperLive BIT = 0,
 		
@@ -255,27 +235,22 @@ BEGIN
 	INSERT INTO [dbo].[custinfo]
 		(
 			custid, currency
-		  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11
-		  , maxpermatch99
 		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
 		  , MatchLimit, VirtualMultiplier
-		  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
+		  , DisableOutright, DisableNumber
 		  , danger, danger2, danger3, Abnormal
 		  ,  DoubleCommLosing	 
-		  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
-		  , MaxPerMatch1MP,maxpermatch164)
+		  , HideKeno, DisableEsports, DisableSuperLive
+		)
 		VALUES
 		(
 			@custid, @currency
-		  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11
-		  , @MaxPerMatchv99
 		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), @credit, ISNULL(@closed, 0), @username
 		  , @matchlimit, @virtualmultiplier
-		  , @DisableOutright, @DisableCasino, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
+		  , @DisableOutright, @DisableNumber
 		  , @danger, @danger2, @danger3, @Abnormal
 		  ,  @DoubleCommLosing	
-		  , @HideKeno, @DisableEsports, @DisableGoldDeluxe, @HideGoldDeluxe, @DisableSuperLive
-		  , @MaxPerMatchv1MP, @maxpermatchv164
+		  , @HideKeno, @DisableEsports, @DisableSuperLive
 		)
 
 	IF @@ERROR > 0

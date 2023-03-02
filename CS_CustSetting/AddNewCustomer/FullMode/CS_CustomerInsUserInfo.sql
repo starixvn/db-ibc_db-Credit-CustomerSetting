@@ -63,6 +63,7 @@ AS
 		- 20190808@Elodie: Add problem account [Redmine:#116814]
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200219@Max: Support Separate setting and notification into Live/Non-Live major and minor bettypes [Redmine: #126841]
+		- 20230302@Tacy: Demo - CN88 Site
 
 	Param's Explanation:
 		• @ErrCode:
@@ -364,25 +365,22 @@ BEGIN
     INSERT INTO [dbo].[custinfo]
     (
 	    custid, currency
-	  , maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11
-	  , maxpermatch99
 	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
 	  , MatchLimit, VirtualMultiplier
-	  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
+	  , DisableOutright, DisableNumber
 	  , danger, danger2, danger3, Abnormal
 	  ,  DoubleCommLosing	 
-	  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive
-	  , MaxPerMatch1MP,maxpermatch164)
+	  , HideKeno, DisableEsports, DisableSuperLive
+	)
     VALUES
     (
 	    @custid, @currency
-	  , NULL, NULL, NULL, NULL, NULL, NULL, NULL
-	  , NULL
 	  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), @credit, ISNULL(@closed, 0), @username
 	  , @matchlimit, @virtualmultiplier
-	  , @DisableOutright, 1, 1,  0, 0, 0
+	  , @DisableOutright, 1
 	  , @danger, @danger2, @danger3, @Abnormal
-	  , 0, 1, 1, 1, 1, 1, NULL, NULL
+	  , 0
+	  , 1, 1, 1
     )
 
     IF @@ERROR <> 0
