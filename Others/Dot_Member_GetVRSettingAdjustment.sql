@@ -25,6 +25,7 @@ AS
   
 	Revisions:  
 	    - 20210425@Eden: First commit [Redmine:#136423]
+		- 20230301@Eden: Wrong VR of Basketball and Esport [Redmine:#184585]
 
 	Param's Explanation:  
 	DECLARE @VRValue SMALLMONEY = 0.5
@@ -112,7 +113,7 @@ BEGIN
 		AND r.StakeRM_To >= CASE WHEN r.StakeRM_To = 0 THEN r.StakeRM_To ELSE @StakeRM END
 		AND r.VR_From <= @VRValue
 		AND r.VR_To > = CASE WHEN r.VR_To = 0 THEN r.VR_To ELSE @VRValue END
-		AND r.VRStatus IN( 2,@VRStatus)
+		AND r.VRStatus IN( 2,ISNULL(@VRStatus,r.VRStatus))
 		AND rd0.ruleid IS NULL
 		AND r.Status <= @Istest
 	ORDER BY r.Priority
