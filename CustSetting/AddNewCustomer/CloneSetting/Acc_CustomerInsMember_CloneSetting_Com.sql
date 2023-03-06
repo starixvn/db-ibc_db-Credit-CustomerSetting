@@ -83,7 +83,7 @@ AS
 	- 20220823@Johnson: Copy Date Limit range and  Auto Transfer Type for real currency 789y [redmine:#176778] 
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
-	
+	- 20230302@Johnson: Return Basketball VR to its original state [redmine:#184339]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -622,27 +622,6 @@ BEGIN
 	 --New 611111 super must have VR setting = 0% (Basketball level) + Esport
 	 IF @site = '611111'
 	 BEGIN
-		DECLARE @VirtualMultiplier VARCHAR(MAX) = ''
-
-		SELECT @VirtualMultiplier = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
-															FROM VRSettingHierarchy b WITH(NOLOCK) 
-																CROSS APPLY VRValueMapping vr (NOLOCK)
-															WHERE b.SportType = 2 
-																AND b.VRLeagueGroupID = -1 
-																AND b.BetType = -1 
-																AND vr.Value = 1
-															FOR XML RAW('Row'), ROOT ('Root'))
-											)
-
-		EXEC [Acc_CustVirtualMultiplier_Upd]
-			  @CustID = @CustID
-			, @SportType = 2
-			, @VirtualMultiplier = @VirtualMultiplier
-			, @UserID  = @creator
-			, @IP  = @IP
-			, @ErrCode = @ErrCode OUTPUT 
-			, @ErrMsg = @ErrMsg OUTPUT
-
 		DECLARE @VirtualRateMultiplier2 VARCHAR(MAX) = '' --Esports
 		SELECT @VirtualRateMultiplier2 = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
 															FROM VRSettingHierarchy b WITH(NOLOCK) 
@@ -663,10 +642,7 @@ BEGIN
 			, @ErrCode = @ErrCode OUTPUT 
 			, @ErrMsg = @ErrMsg OUTPUT
 
-		INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
-		SELECT @CustID,2 AS SportType
-		WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 2)
-		UNION ALL
+		INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)		
 		SELECT @CustID,43 AS SportType
 		WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
 	 END

@@ -98,6 +98,7 @@ AS
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
 	
  Explanation's Param:  
 	• @ErrCode:
@@ -407,6 +408,7 @@ BEGIN
 	DECLARE @enableUpline bit, @doubleCommLosingUpline bit, @virtualmultiplier SMALLMONEY
 	Declare @autosuspend BIT,
 			@autosuspend2 BIT,
+			@autosuspend3 BIT,
 			@DangerMaster TINYINT = 0,
 			@DangerMaster2 TINYINT = 0,
 			@DangerMaster3 TINYINT = 0,
@@ -416,6 +418,7 @@ BEGIN
 	select @enableUpline = isnull(enabled,0), @doubleCommLosingUpline = DoubleCommLosing,
 		@autosuspend = ISNULL(autosuspend, 0),
 		@autosuspend2 = ISNULL(autosuspend2, 0),
+		@autosuspend3 = ISNULL(autosuspend3, 0),
 		@virtualmultiplier = ISNULL(virtualmultiplier,1),
 		@DangerMaster = Danger,
 		@DangerMaster2 = Danger2,
@@ -438,6 +441,7 @@ BEGIN
 				,dangercust
 				,autosuspend
 				,autosuspend2
+				,autosuspend3
 				,credit
 				,MatchLimit
 				,VirtualMultiplier
@@ -464,6 +468,7 @@ BEGIN
 				,0 AS dangercust
 				,@autosuspend AS autosuspend
 				,@autosuspend2 as autosuspend2
+				,@autosuspend3 AS autosuspend3
 				,@Credit AS Credit
 				,MatchLimit
 				,@virtualmultiplier
@@ -766,10 +771,7 @@ BEGIN
 	BEGIN TRY
 		 IF @site = '611111'
 		 BEGIN
-			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
-			SELECT @CustID,2 AS SportType
-			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 2)
-			UNION ALL
+			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)			
 			SELECT @CustID,43 AS SportType
 			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
 		 END

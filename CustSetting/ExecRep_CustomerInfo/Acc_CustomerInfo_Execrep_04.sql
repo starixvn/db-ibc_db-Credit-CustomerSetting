@@ -27,6 +27,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@DisableColossusBet			BIT				= 0				
 				,	@AutoSuspendSoccer			BIT				= 0
 				,	@AutoSuspendOtherSports		BIT				= 0
+				,	@AutoSuspendBasketball		BIT				= 0
 				,	@rowcount					INT				= 0		OUTPUT
 				,	@SystemID TINYINT=1
 				--20200206@Tiara: New VR structure for Soccer [Redmine: #126243]
@@ -77,7 +78,7 @@ AS
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20221103@Johnson: Change data type of CustSettingAutoSuspend [Redmine: #179782]
 		- 20221207@Johnson: update setting for sub-bettype for Esport is 'Follow parent' [redmine: #177594]
-
+		- 20230302@Johnson: Add auto suspend for basketball and return Basketball VR to its original state [redmine:#184339]
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -483,7 +484,7 @@ BEGIN
 						ON	tmp.sporttype	= ipvs.sporttype
 							AND	tmp.bettype		= ipvs.bettype
 							AND	tmp.isLive		= ipvs.islive
-				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType NOT IN (1, 2, 43)
+				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType NOT IN (1, 43)
 				FOR XML PATH ('')						
 			), 2) AS Pos
 		) p1
@@ -495,7 +496,7 @@ BEGIN
 						ON	tmp.sporttype	= ipvs.sporttype
 							AND	tmp.bettype		= ipvs.bettype
 							AND	tmp.isLive		= ipvs.islive
-				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType NOT IN (1, 2, 43)
+				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType NOT IN (1, 43)
 				FOR XML PATH ('')						
 			), 2) AS Val
 		) p2;
@@ -1017,7 +1018,8 @@ BEGIN
 	    BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
 		    SET	autosuspend2 = @AutoSuspendOtherSports, 
-			    autosuspend = @AutoSuspendSoccer
+			    autosuspend = @AutoSuspendSoccer,
+				autosuspend3 = @AutoSuspendBasketball
 		    WHERE srecommend = @custID; 
 	    END;
 
@@ -1025,7 +1027,8 @@ BEGIN
 	    BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
 		    SET	autosuspend2 = @AutoSuspendOtherSports,	
-			    autosuspend = @AutoSuspendSoccer
+			    autosuspend = @AutoSuspendSoccer,
+				autosuspend3 = @AutoSuspendBasketball
 		    WHERE mrecommend = @custID; 
 	    END;
 
@@ -1033,7 +1036,8 @@ BEGIN
 	    BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
 		    SET	autosuspend2 = @AutoSuspendOtherSports,	
-			    autosuspend = @AutoSuspendSoccer
+			    autosuspend = @AutoSuspendSoccer,
+				autosuspend3 = @AutoSuspendBasketball
 		    WHERE recommend = @custID; 
 	    END;
     END;
@@ -1057,6 +1061,29 @@ BEGIN
 	    BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
 		    SET	autosuspend = @AutoSuspendSoccer	
+		    WHERE recommend = @custID; 
+	    END;
+    end;
+	else IF @Action = 'AutoSuspendBasketball'
+    begin 
+	    IF @roleID = 4 
+	    BEGIN
+		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
+		    SET	autosuspend3 = @AutoSuspendBasketball	
+		    WHERE srecommend = @custID; 
+	    END;
+
+	    IF @roleID = 3 
+	    BEGIN
+		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
+		    SET	autosuspend3 = @AutoSuspendBasketball	
+		    WHERE mrecommend = @custID; 
+	    END;
+
+	    IF @roleID = 2 
+	    BEGIN
+		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
+		    SET	autosuspend3 = @AutoSuspendBasketball	
 		    WHERE recommend = @custID; 
 	    END;
     end;

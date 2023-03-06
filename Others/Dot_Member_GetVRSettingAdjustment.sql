@@ -26,7 +26,7 @@ AS
 	Revisions:  
 	    - 20210425@Eden: First commit [Redmine:#136423]
 		- 20230301@Eden: Wrong VR of Basketball and Esport [Redmine:#184585]
-
+		- 20230307@Johnson: Return Basketball VR to its original state [redmine:#184339]
 	Param's Explanation:  
 	DECLARE @VRValue SMALLMONEY = 0.5
 	EXEC Dot_Member_GetVRSettingAdjustment
@@ -120,7 +120,7 @@ BEGIN
 
 	SELECT @VRValue = CASE WHEN @Adjustmenttype = 1 THEN @AdjustmentValue
 							WHEN @Adjustmenttype = 2 THEN @AdjustmentValue + @VRValue
-							WHEN @VRStatus = 0 AND @Sporttype NOT IN( 2,43) THEN 1.00
+							WHEN @VRStatus = 0 AND @Sporttype NOT IN(43) THEN 1.00
 							ELSE @VRValue END
 END
 

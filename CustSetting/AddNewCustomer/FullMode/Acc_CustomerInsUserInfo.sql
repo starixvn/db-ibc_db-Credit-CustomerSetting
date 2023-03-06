@@ -44,6 +44,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	
 	@autosuspend BIT = 0,
 	@autosuspend2 BIT = 0,
+	@autosuspend3 BIT = 0,
 	
 	@DisableNumber BIT = 0,
 
@@ -151,7 +152,7 @@ Revisions:
 	- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
-	
+	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -499,7 +500,8 @@ BEGIN
 		INSERT INTO [dbo].[custinfo]
 		(
 			custid, currency
-		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2
+		  , roleid, srecommend, mrecommend, recommend, dangercust
+		  , autosuspend, autosuspend2, autosuspend3
 		  , credit
 		  , username
 		  , MatchLimit, VirtualMultiplier
@@ -512,7 +514,8 @@ BEGIN
 		VALUES
 		(
 			@custid, @currency
-		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2
+		  , @roleid, @srecommend, @mrecommend, @recommend, 0
+		  , @autosuspend, @autosuspend2, @autosuspend3
 		  , @credit
 		  , @username
 		  , @matchlimit, @virtualmultiplier
@@ -783,10 +786,7 @@ BEGIN
 		--Set Manual VR for Site = '611111'
 		IF @site = '611111'
 		BEGIN
-			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
-			SELECT @CustID,2 AS SportType
-			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 2)
-			UNION ALL
+			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)			
 			SELECT @CustID,43 AS SportType
 			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
 
