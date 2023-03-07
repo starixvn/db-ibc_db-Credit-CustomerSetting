@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionUpd]
 	, @ErrCode				INT				= 0		OUTPUT
 	, @MsgType				INT				= 0		OUTPUT
 	, @ErrMsg				NVARCHAR(MAX)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20170424@Elodie
@@ -18,6 +19,7 @@ AS
 	Revisions:
 		- 20170424@Elodie: Update Customer's Ticket Commission [Redmine: #75221]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 		• @Commission:
@@ -143,6 +145,20 @@ BEGIN
 
 	EXEC sp_xml_removedocument @iDoc
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewCommTbl t
@@ -173,6 +189,7 @@ BEGIN
 						, @ErrCode			= @ErrCode	OUTPUT
 						, @MsgType			= @MsgType  OUTPUT
 						, @ErrMsg			= @ErrMsg	OUTPUT
+						, @SettingStatus = @SettingStatus
 
 	IF @ErrCode <> 0
 		RETURN
@@ -256,7 +273,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	@NewCommTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -465,6 +482,8 @@ BEGIN
 			, @TrackingValue2	= @logSpData_Old
 			, @duration			= @duration
 	END CATCH
+
+	DROP TABLE #ProductSettingDetail
 END
 
 GO

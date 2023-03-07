@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionCheck]
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20170424@Elodie
@@ -19,6 +20,7 @@ AS
 	Revisions:
 		- 20170424@Elodie: First commit
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 
 	Param's Explanation:
@@ -71,6 +73,21 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
+
+	CREATE TABLE #ProductSettingDetail_Check(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+		MaxDiscount	decimal(9,8),
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
@@ -136,7 +153,7 @@ BEGIN
 	--Check if new Commission <0 or > default Max Commission
 	IF EXISTS (select TOP 1 1 
 					FROM @NewCommTbl tmp
-					INNER JOIN dbo.ProductSettingDetail pdt WITH (NOLOCK)
+					INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
 						ON pdt.SportType	= tmp.SportType
 							AND pdt.BetType = tmp.BetType
 							AND pdt.SettingType = 14
@@ -153,7 +170,7 @@ BEGIN
 						SELECT pdt.SportType AS '@SportType'
 							, pdt.BetType AS '@BetType'
 						FROM @NewCommTbl tmp
-						INNER JOIN dbo.ProductSettingDetail pdt WITH (NOLOCK)
+						INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
 							ON pdt.SportType	= tmp.SportType
 								AND pdt.BetType = tmp.BetType
 								AND pdt.SettingType = 14
@@ -205,5 +222,6 @@ BEGIN
 			RETURN
 		END
 	END
+	DROP TABLE #ProductSettingDetail_Check
 END
 GO

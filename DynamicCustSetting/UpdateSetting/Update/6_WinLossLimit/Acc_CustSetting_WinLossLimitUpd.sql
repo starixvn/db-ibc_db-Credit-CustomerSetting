@@ -11,6 +11,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitUpd]
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT				= 0		OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160108@Elodie
@@ -23,6 +24,7 @@ AS
 			- 20210906@Johnson: write log SourceUsername [redmine:#158174]
 			- 20211007@Johnson: write log by product incase update multiple super[redmine:#162853]
 			- 20220808@Tacy: update member's WinLossLimit by execrep when using Search & Copy New member function [RedmineID: #176225]
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 	- @Limit:
@@ -57,7 +59,7 @@ AS
 				/>
 		</ROOT>
 
-	- @SettingType: 6: WinLossLimit
+	- @SettingType: 6,22: WinLossLimit
 					8: WinLimit
 					12: LossLimit
 
@@ -101,6 +103,16 @@ BEGIN
 	DECLARE @ProductID		TINYINT,
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
 
 	--Check if XML is null or empty
 	IF @Limit IS NULL OR @Limit = ''
@@ -159,13 +171,17 @@ BEGIN
 		SET @MsgType = 101
 		RETURN
 	END
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	--Parse XML	
 	DECLARE @iDoc INT
 
 	EXEC sp_xml_preparedocument @iDoc OUTPUT, @Limit
 
-	IF @SettingType = 6
+	IF @SettingType IN(6,22)
 	BEGIN
 		INSERT @NewLimitTbl (SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
 		SELECT SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset
@@ -206,7 +222,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewLimitTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -254,7 +270,7 @@ BEGIN
 
 		IF @isSearchAndCopy=1
 		BEGIN
-			IF @SettingType = 6
+			IF @SettingType IN(6,22)
 				SET @Limit = (SELECT SportType		AS '@SportType',
 									BetType			AS '@BetType',
 									MaxWinLimit		AS '@MaxWinLimit',
@@ -280,7 +296,7 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			IF @SettingType = 6
+			IF @SettingType IN(6,22)
 				--update new settings
 				UPDATE main
 				SET main.MaxWinLimit = tmp.MaxWinLimit
@@ -325,7 +341,7 @@ BEGIN
 			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = wl.sporttype AND tmp.BetType = wl.bettype
 		WHERE wl.custid = @CustID
 
-		IF @SettingType = 6
+		IF @SettingType IN(6,22)
 			--update new settings
 			UPDATE main
 			SET main.MaxWinLimit = tmp.MaxWinLimit
@@ -367,7 +383,7 @@ BEGIN
 	UPDATE tmp
 	SET tmp.ProductID = psd.ProductID,
 		tmp.SettingLevel = psd.SettingLevel
-	FROM ProductSettingDetail AS psd WITH(NOLOCK)
+	FROM #ProductSettingDetail AS psd WITH(NOLOCK)
 		INNER JOIN	@NewLimitTbl AS tmp ON psd.SportType = tmp.SportType AND psd.BetType = tmp.BetType
 	WHERE	psd.ProductID IS NOT NULL
 			AND	psd.SettingLevel IS NOT NULL
@@ -376,7 +392,7 @@ BEGIN
 	UPDATE tmp
 	SET tmp.ProductID = psd.ProductID,
 		tmp.SettingLevel = psd.SettingLevel
-	FROM ProductSettingDetail AS psd WITH(NOLOCK)
+	FROM #ProductSettingDetail AS psd WITH(NOLOCK)
 		INNER JOIN	@OldLimitTbl AS tmp ON psd.SportType = tmp.SportType AND psd.BetType = tmp.BetType
 	WHERE	psd.ProductID IS NOT NULL
 			AND	psd.SettingLevel IS NOT NULL
@@ -399,7 +415,7 @@ BEGIN
 		FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 		WHERE p.ProductID = @ProductID
 
-		IF @SettingType = 6
+		IF @SettingType IN(6,22)
 		BEGIN
 			-- Log old data
 			IF @SettingLevel = 1			-- Product setting level
@@ -1134,6 +1150,8 @@ BEGIN
 		WHERE ProductID = @ProductID
 			AND SettingLevel = @SettingLevel
 	END	
+
+	DROP TABLE #ProductSettingDetail
 END
 
 GO

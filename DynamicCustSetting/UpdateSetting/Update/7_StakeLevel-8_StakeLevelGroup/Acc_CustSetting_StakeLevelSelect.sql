@@ -21,6 +21,7 @@ AS
 		- 20200909@Winfred: Sort by sport, bettype, MaxStake [Redmine: #131589]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -49,6 +50,17 @@ BEGIN
 					,	MaxStake		DECIMAL(19,8)
 					)
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+		MaxChoice	tinyint,
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
 
 	-- Select SportType & BetType of current ProductID
 	INSERT INTO #SportBetTypeFilter
@@ -56,10 +68,15 @@ BEGIN
 	SELECT	fcssbtss.SportType, fcssbtss.Bettype
 	FROM	dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID, @SettingType,@SettingStatus) AS fcssbtss;
 
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxChoice)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel ,MaxChoice
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	UPDATE S
 	SET S.MaxChoice = CASE WHEN @SettingType = 17 THEN P.MaxChoice ELSE 0 END --MaxChoice = 0: unlimit selected stake level
 	FROM #SportBetTypeFilter S WITH (ROWLOCK,UPDLOCK)
-	INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON P.SportType = S.SportType AND P.BetType = S.BetType
+	INNER JOIN #ProductSettingDetail P WITH (NOLOCK) ON P.SportType = S.SportType AND P.BetType = S.BetType
+
 	-- Select customer's information
 	SELECT	@Currency   = c.currency
 		,	@RoleID     = c.roleid
@@ -153,5 +170,6 @@ BEGIN
 	-- Cleanup
 	DROP TABLE #CustStakeLevel
 	DROP TABLE #SportBetTypeFilter
+	DROP TABLE #ProductSettingDetail
 END
 

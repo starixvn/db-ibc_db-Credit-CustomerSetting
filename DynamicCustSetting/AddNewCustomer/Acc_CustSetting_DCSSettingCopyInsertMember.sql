@@ -43,6 +43,7 @@ AS
 		- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20220808@Tacy: Resolve replication errors when using Search & Copy New member function [RedmineID: #176225]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 	
@@ -53,6 +54,20 @@ BEGIN
 	DECLARE @xmlStr VARCHAR(MAX)
 	DECLARE @SettingMode BIT, @AgentID INT
 	SELECT @ErrCode = 0		
+
+	CREATE TABLE #ProductSettingDetail_tbl(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_tbl(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	/********************************************* Position Taking: SettingType = 1 ***********************************/
 	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus))
@@ -120,7 +135,7 @@ BEGIN
 		SELECT 
 				DISTINCT
 				psd.ProductID				
-		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 		INNER JOIN	@NewPTTble AS ts
 				ON	ts.SportType = psd.SportType
 				AND	ts.BetType = psd.BetType
@@ -139,7 +154,7 @@ BEGIN
 								, nslt.IsLive		AS '@IsLive'
 								, AgentPT		AS '@AgentPT'
 							FROM @NewPTTble nslt
-							INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType AND nslt.IsLive=psd.IsLive
+							INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType AND nslt.IsLive=psd.IsLive
 										WHERE psd.SettingType = 1 AND psd.ProductID=@ProductID1
 							FOR XML PATH('PT')
 								, TYPE
@@ -162,6 +177,7 @@ BEGIN
 				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
 		END
 		
 		DELETE FROM	#TempPT WHERE ProductID=@ProductID1
@@ -233,7 +249,7 @@ BEGIN
 		SELECT 
 				DISTINCT
 				psd.ProductID				
-		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 		INNER JOIN	@NewPTTble18 AS ts
 				ON	ts.SportType = psd.SportType
 				AND	ts.BetType = psd.BetType
@@ -252,7 +268,7 @@ BEGIN
 								, nslt.IsLive		AS '@IsLive'
 								, AgentPT		AS '@AgentPT'
 							FROM @NewPTTble18 nslt
-							INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType AND nslt.IsLive=psd.IsLive
+							INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType AND nslt.IsLive=psd.IsLive
 										WHERE psd.SettingType = 18 AND psd.ProductID=@ProductID18
 							FOR XML PATH('PT')
 								, TYPE
@@ -275,6 +291,7 @@ BEGIN
 				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
 		END
 		
 		DELETE FROM	#TempPT18 WHERE ProductID=@ProductID18
@@ -307,7 +324,7 @@ BEGIN
 		SELECT 
 				DISTINCT
 				psd.ProductID				
-		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 		INNER JOIN	@NewBetLimitTbl AS ts
 				ON	ts.SportType = psd.SportType
 				AND	ts.BetType = psd.BetType
@@ -325,7 +342,7 @@ BEGIN
 										, MaxBet		AS '@MaxBet'
 										, MaxPerMatch	AS '@MaxPerMatch'
 									FROM @NewBetLimitTbl nslt
-									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
+									INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
 										WHERE psd.SettingType=2 AND psd.ProductID=@ProductID2
 									FOR XML PATH('BetLimit')
 										, TYPE
@@ -348,6 +365,7 @@ BEGIN
 				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
 		END
 		DELETE FROM	#TempBetlimit WHERE ProductID=@ProductID2
 		END
@@ -375,7 +393,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewDiscountTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -391,7 +409,7 @@ BEGIN
 										, nslt.BetType AS '@BetType'
 										, Discount AS '@Discount'
 									FROM @NewDiscountTbl nslt
-									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+									INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE psd.SettingType = 3 AND psd.ProductID=@ProductID3
 									FOR XML PATH('Discount')
 										, TYPE
@@ -413,6 +431,7 @@ BEGIN
 				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
 		END
 		DELETE FROM	#TempComm WHERE ProductID=@ProductID3
 		END
@@ -441,7 +460,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewDiscountTbl19 AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -457,7 +476,7 @@ BEGIN
 										, nslt.BetType AS '@BetType'
 										, Discount AS '@Discount'
 									FROM @NewDiscountTbl19 nslt
-									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+									INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE psd.SettingType = 19 AND psd.ProductID=@ProductID19
 									FOR XML PATH('Discount')
 										, TYPE
@@ -480,6 +499,7 @@ BEGIN
 				, @isSearchAndCopy = @isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
 		END
 		DELETE FROM	#TempComm19 WHERE ProductID=@ProductID19
 		END
@@ -508,7 +528,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewChargeCommTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -524,7 +544,7 @@ BEGIN
 										, nslt.BetType AS '@BetType'
 										, Discount AS '@Discount'
 									FROM @NewChargeCommTbl nslt
-									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+									INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE psd.SettingType =5 AND psd.ProductID=@ProductID5
 									FOR XML PATH('Discount')
 										, TYPE
@@ -547,6 +567,7 @@ BEGIN
 				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
 		END
 		DELETE FROM	#TempChargeComm WHERE ProductID=@ProductID5
 		END
@@ -577,7 +598,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewDisableStatTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -594,7 +615,7 @@ BEGIN
 									, nslt.IsDisabled	AS '@IsDisabled'
 									--, nslt.IsDisabledDownline AS '@IsDisabledDownline'
 								FROM @NewDisableStatTbl nslt								
-									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+									INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE psd.SettingType =4 AND psd.ProductID=@ProductID4
 								FOR XML PATH('ProductStatus')
 									, TYPE
@@ -615,7 +636,8 @@ BEGIN
 				, @SystemID = @SystemID
 				, @UserID = @UserID
 				, @ErrCode = @ErrCode OUTPUT
-				, @ErrMsg = @ErrMsg OUTPUT			
+				, @ErrMsg = @ErrMsg OUTPUT	
+				, @SettingStatus = @SettingStatus
 		END
 		DELETE FROM	#TempStatus WHERE ProductID=@ProductID4
 		END
@@ -648,7 +670,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewWinLossLimitTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -666,7 +688,7 @@ BEGIN
 										, nslt.MaxLossLimit	AS '@MaxLossLimit'
 										, nslt.IsAutoReset	AS '@IsAutoReset'
 									FROM @NewWinLossLimitTbl nslt
-									INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+									INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE psd.SettingType =6 AND psd.ProductID=@ProductID6
 									FOR XML PATH('Limit')
 										, TYPE
@@ -687,6 +709,7 @@ BEGIN
 			, @isSearchAndCopy=@isSearchAndCopy
 			, @ErrCode = @ErrCode OUTPUT
 			, @ErrMsg = @ErrMsg OUTPUT
+			, @SettingStatus = @SettingStatus
 		DELETE FROM	#TempWLLimit WHERE ProductID=@ProductID6
 		END
 			
@@ -714,7 +737,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewStakeLevelTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -730,9 +753,8 @@ BEGIN
 											,	nslt.BetType			AS '@BetType'
 											,	nslt.StakeLevelList		AS '@StakeLevelList'
 										FROM	@NewStakeLevelTbl AS nslt
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE SettingType=7 AND  psd.ProductID=@ProductID7
-											AND settingStatus IN (0,1) --active bettype
 										FOR XML PATH('StakeLevel')
 									,	ROOT('ROOT')
 									,	TYPE
@@ -751,6 +773,8 @@ BEGIN
 				,	@isSearchAndCopy=@isSearchAndCopy
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
+				,   @SettingStatus = @SettingStatus
+
 		DELETE FROM	#TempStakeLevel WHERE ProductID=@ProductID7			
 	END
 	END
@@ -777,7 +801,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewStakeLevelTbl17 AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -793,9 +817,8 @@ BEGIN
 											,	nslt.BetType			AS '@BetType'
 											,	nslt.StakeLevelList		AS '@StakeLevelList'
 										FROM	@NewStakeLevelTbl17 AS nslt
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE SettingType=17 AND  psd.ProductID=@ProductID17
-											AND settingStatus IN (0,1) --active bettype
 										FOR XML PATH('StakeLevel')
 									,	ROOT('ROOT')
 									,	TYPE
@@ -814,6 +837,7 @@ BEGIN
 				,	@isSearchAndCopy=@isSearchAndCopy
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
+				,   @SettingStatus = @SettingStatus
 		DELETE FROM	#TempStakeLevel17 WHERE ProductID=@ProductID17			
 	END
 	END
@@ -839,7 +863,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewStakeLevelTbl8 AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -855,7 +879,7 @@ BEGIN
 											,	nslt.BetType			AS '@BetType'
 											,	nslt.StakeLevelList		AS '@StakeLevelList'
 										FROM	@NewStakeLevelTbl8 AS nslt
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 										WHERE SettingType=8 AND psd.ProductID=@ProductID8 
 										FOR XML PATH('StakeLevel')
 									,	ROOT('ROOT')
@@ -875,6 +899,7 @@ BEGIN
 				,	@isSearchAndCopy=@isSearchAndCopy
 				,	@ErrCode	= @ErrCode		OUTPUT
 				,	@ErrMsg		= @ErrMsg		OUTPUT	
+				,   @SettingStatus = @SettingStatus
 				
 		DELETE FROM	#TempStakeLevel8 WHERE ProductID=@ProductID8
 	
@@ -907,7 +932,7 @@ BEGIN
 		SELECT 
 				DISTINCT
 				psd.ProductID				
-		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 		INNER JOIN	@NewGameBetLimitTbl AS ts
 				ON	ts.SportType = psd.SportType
 				AND	ts.BetType = psd.BetType
@@ -925,7 +950,7 @@ BEGIN
 											, MaxBet			AS '@MaxBet'
 											, MaxPerMatch		AS '@MaxPerNumber'
 										FROM @NewGameBetLimitTbl nslt
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
 											WHERE psd.SettingType = 9 AND psd.ProductID = @ProductID9
 										FOR XML PATH('GameBetLimit')
 											, TYPE
@@ -948,6 +973,7 @@ BEGIN
 					, @isSearchAndCopy=@isSearchAndCopy
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
+					, @SettingStatus = @SettingStatus
 			END
 			DELETE FROM	#TempGameBetlimit WHERE ProductID=@ProductID9
 		END
@@ -979,7 +1005,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewDisableGameStatTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -996,7 +1022,7 @@ BEGIN
 										, nslt.IsDisabled	AS '@IsDisabled'
 										, nslt.IsDisabledDownline AS '@IsDisabledDownline'
 									FROM @NewDisableGameStatTbl nslt								
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 											WHERE psd.SettingType = 11 AND psd.ProductID = @ProductID11
 									FOR XML PATH('GameStatus')
 										, TYPE
@@ -1017,7 +1043,8 @@ BEGIN
 					, @IP = @IP
 					, @UserID = @UserID
 					, @ErrCode = @ErrCode OUTPUT
-					, @ErrMsg = @ErrMsg OUTPUT			
+					, @ErrMsg = @ErrMsg OUTPUT	
+					, @SettingStatus = @SettingStatus
 			END
 			DELETE FROM	#TempGameStatus WHERE ProductID = @ProductID11
 		END
@@ -1048,7 +1075,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewLossLimitTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -1065,7 +1092,7 @@ BEGIN
 											, nslt.MaxLossLimit	AS '@MaxLossLimit'
 											, nslt.IsAutoReset	AS '@IsAutoReset'
 										FROM @NewLossLimitTbl nslt
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 											WHERE psd.SettingType =12 AND psd.ProductID=@ProductID12
 										FOR XML PATH('Limit')
 											, TYPE
@@ -1086,6 +1113,7 @@ BEGIN
 				, @isSearchAndCopy=@isSearchAndCopy
 				, @ErrCode = @ErrCode OUTPUT
 				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
 			DELETE FROM	#TempLLimit WHERE ProductID=@ProductID12
 		END
 			
@@ -1117,7 +1145,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewDisableProductStatTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -1134,7 +1162,7 @@ BEGIN
 										, nslt.IsDisabled	AS '@IsDisabled'
 										, nslt.IsDisabledDownline AS '@IsDisabledDownline'
 									FROM @NewDisableProductStatTbl nslt								
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 											WHERE psd.SettingType = 13 AND psd.ProductID = @ProductID13
 									FOR XML PATH('ProductStatus')
 										, TYPE
@@ -1155,7 +1183,8 @@ BEGIN
 					, @SystemID = 1
 					, @UserID = @UserID
 					, @ErrCode = @ErrCode OUTPUT
-					, @ErrMsg = @ErrMsg OUTPUT			
+					, @ErrMsg = @ErrMsg OUTPUT	
+					, @SettingStatus = @SettingStatus
 			END
 			DELETE FROM	#TempProductStatus WHERE ProductID = @ProductID13
 		END
@@ -1184,7 +1213,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewCommTbl AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -1200,7 +1229,7 @@ BEGIN
 											, nslt.BetType AS '@BetType'
 											, Discount AS '@Commission'
 										FROM @NewCommTbl nslt
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 											WHERE psd.SettingType = 14 AND psd.ProductID=@ProductID14
 										FOR XML PATH('Commission')
 											, TYPE
@@ -1221,6 +1250,7 @@ BEGIN
 					, @UserID = @UserID
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
+					, @SettingStatus = @SettingStatus
 			END
 			DELETE FROM	#TicketComm WHERE ProductID=@ProductID14
 		END
@@ -1253,7 +1283,7 @@ BEGIN
 		SELECT 
 				DISTINCT
 				psd.ProductID				
-		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 		INNER JOIN	@NewBetSettingTbl AS ts
 				ON	ts.SportType = psd.SportType
 				AND	ts.BetType = psd.BetType
@@ -1271,7 +1301,7 @@ BEGIN
 											, MaxBet			AS '@MaxBet'
 											, MaxPerMatch		AS '@MaxPerMatch'
 										FROM @NewBetSettingTbl nslt
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
 											WHERE psd.SettingType = 16 AND psd.ProductID = @ProductID16
 										FOR XML PATH('BetLimit')
 											, TYPE
@@ -1294,6 +1324,7 @@ BEGIN
 					, @isSearchAndCopy=@isSearchAndCopy
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
+					, @SettingStatus = @SettingStatus
 			END
 			DELETE FROM	#TempBetSetting WHERE ProductID=@ProductID16
 		END
@@ -1323,7 +1354,7 @@ BEGIN
 		SELECT 
 				DISTINCT
 				psd.ProductID				
-		FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+		FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 		INNER JOIN	@NewBetSettingTbl20 AS ts
 				ON	ts.SportType = psd.SportType
 				AND	ts.BetType = psd.BetType
@@ -1340,7 +1371,7 @@ BEGIN
 											, MinBet			AS '@MinBet'
 											, MaxBet			AS '@MaxBet'
 										FROM @NewBetSettingTbl20 nslt
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
 											WHERE psd.SettingType = 20 AND psd.ProductID = @ProductID20
 										FOR XML PATH('BetLimit')
 											, TYPE
@@ -1363,6 +1394,7 @@ BEGIN
 					, @isSearchAndCopy=@isSearchAndCopy
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
+			
 			END
 			DELETE FROM	#TempBetSetting20 WHERE ProductID=@ProductID20
 		END
@@ -1394,7 +1426,7 @@ BEGIN
 			SELECT 
 					DISTINCT
 					psd.ProductID				
-			FROM	ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
 			INNER JOIN	@NewDisableProductStatTbl21 AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -1411,7 +1443,7 @@ BEGIN
 										, nslt.IsDisabled	AS '@IsDisabled'
 										, nslt.IsDisabledDownline AS '@IsDisabledDownline'
 									FROM @NewDisableProductStatTbl21 nslt								
-										INNER JOIN ProductSettingDetail AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
 											WHERE psd.SettingType = 21 AND psd.ProductID = @ProductID21
 									FOR XML PATH('ProductStatus')
 										, TYPE
@@ -1434,10 +1466,87 @@ BEGIN
 					, @ErrCode = @ErrCode OUTPUT
 					, @ErrMsg = @ErrMsg OUTPUT
 					, @Settingtype = 21
+					, @SettingStatus = @SettingStatus
 			END
 			DELETE FROM	#TempProductStatus21 WHERE ProductID = @ProductID21
 		END
 	END
+
+	/********************************************* SMA Win Loss Limit : SettingType = 22 ****************************************/
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,22,@SettingStatus))
+	BEGIN
+		DECLARE @ProductID22 INT
+		CREATE TABLE #TempWLLimit22 (ProductID INT)
+		DECLARE @NewWinLossLimitTbl22 TABLE (
+			SportType			SMALLINT
+			, BetType			INT
+			, MaxWinLimit		SMALLMONEY
+			, MaxLossLimit		MONEY
+			, IsAutoReset		BIT
+			)
+
+		INSERT INTO @NewWinLossLimitTbl22(SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset)
+		SELECT wl.SportType
+			, wl.BetType
+			, wl.MaxWinLimit
+			, wl.MaxLossLimit
+			, wl.IsAutoReset
+		FROM dbo.CustWinLossLimit_Member wl WITH (NOLOCK)	
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,22,@SettingStatus) fil ON fil.SportType = wl.SportType AND fil.BetType = wl.BetType	
+		WHERE wl.custid = @ExistingCustID
+		
+		INSERT INTO #TempWLLimit22(ProductID)	
+		SELECT 
+				DISTINCT
+				psd.ProductID				
+		FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
+		INNER JOIN	@NewWinLossLimitTbl22 AS ts
+				ON	ts.SportType = psd.SportType
+				AND	ts.BetType = psd.BetType
+		WHERE	psd.SettingType = 22
+			AND psd.ProductID IS NOT NULL
+			AND	psd.SettingLevel IS NOT NULL
+				
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempWLLimit22)
+		BEGIN
+			SELECT TOP 1 @ProductID22=ProductID FROM #TempWLLimit22
+
+			SET @xmlWinLossLimit = (SELECT (
+										SELECT nslt.SportType	AS '@SportType'
+											, nslt.BetType		AS '@BetType'
+											, nslt.MaxWinLimit	AS '@MaxWinLimit'
+											, nslt.MaxLossLimit	AS '@MaxLossLimit'
+											, nslt.IsAutoReset	AS '@IsAutoReset'
+										FROM @NewWinLossLimitTbl22 nslt
+										INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType 
+											WHERE psd.SettingType =22 AND psd.ProductID=@ProductID22
+										FOR XML PATH('Limit')
+											, TYPE
+										)
+								FOR XML PATH('ROOT')
+									, TYPE
+								)
+	
+			SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlWinLossLimit)
+
+			EXEC dbo.Acc_CustSetting_WinLossLimitUpd 
+				  @CustID = @CustID
+				, @Limit = @xmlStr
+				, @SettingType = 22
+				, @SubAccID = @SubAccID
+				, @IP = @IP
+				, @UserID = @UserID
+				, @isSearchAndCopy=@isSearchAndCopy
+				, @ErrCode = @ErrCode OUTPUT
+				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
+
+			DELETE FROM	#TempWLLimit22 WHERE ProductID=@ProductID22
+		END
+			
+	END
+
+	DROP TABLE #ProductSettingDetail_tbl
 END
 
 

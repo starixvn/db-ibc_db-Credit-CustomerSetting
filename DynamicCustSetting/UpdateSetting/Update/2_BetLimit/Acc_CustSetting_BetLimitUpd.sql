@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_BetLimitUpd]
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(200)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20141111@Dominic
@@ -24,9 +25,10 @@ AS
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
 		- 20220808@Tacy: update member's betsetting by execrep when using Search & Copy New member function [RedmineID: #176225]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		
 	Param's Explanation:
-	� @BetLimit:
+	- @BetLimit:
 		<ROOT>
 				<BetLimit 
 						SportType="1" 
@@ -89,6 +91,16 @@ BEGIN
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
 	--Check if XML is null or empty
 	IF @BetLimit IS NULL
 		OR @BetLimit = ''
@@ -148,6 +160,10 @@ BEGIN
 		SET @MsgType = 101
 		RETURN
 	END
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	--Parse XML	
 	DECLARE @iDoc INT
@@ -170,7 +186,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewBetLimitTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -360,7 +376,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	@NewBetLimitTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -618,5 +634,7 @@ BEGIN
 				@duration = @duration	
 		END
 	END
+
+	DROP TABLE #ProductSettingDetail
 END
 GO

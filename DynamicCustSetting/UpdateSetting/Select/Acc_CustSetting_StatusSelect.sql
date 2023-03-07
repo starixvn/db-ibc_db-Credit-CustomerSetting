@@ -17,6 +17,7 @@ AS
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
+	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
  
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
@@ -38,34 +39,25 @@ BEGIN
     
 	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, Child_DisplayOrder INT)
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder  
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 4
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder   
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 11
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder  
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 13	
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder  
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 21
-
-	UPDATE t
-	SET t.Child_DisplayOrder = d.Child_DisplayOrder
-	FROM #SportBettypeFilter t 
-		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
-			ON t.sporttype = d.SportType
-			AND t.bettype = d.BetType
-			AND t.IsLive = d.IsLive
-			AND d.SettingType = t.SettingType
 
 	IF @RoleID = 4  
 	BEGIN  

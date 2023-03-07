@@ -8,7 +8,8 @@ ALTER PROCEDURE Acc_CustSetting_SuperPTUpd
     @IP					VARCHAR(15)='',
     @ErrCode			INT = 0 OUTPUT,
     @MsgType			INT = 0 OUTPUT,
-    @ErrMsg				NVARCHAR(MAX) = '' OUTPUT
+    @ErrMsg				NVARCHAR(MAX) = '' OUTPUT, 
+	@SettingStatus TINYINT = 0
 AS
 	/*
 		Created: Johnson
@@ -26,6 +27,7 @@ AS
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 			- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -50,7 +52,8 @@ BEGIN
 			@IP			= @IP,
 			@MsgType	= @MsgType OUTPUT,		
 			@ErrCode	= @ErrCode OUTPUT,
-			@ErrMsg		= @ErrMsg OUTPUT
+			@ErrMsg		= @ErrMsg OUTPUT,
+			@SettingStatus = @SettingStatus
 
 			IF @ErrCode > 0	AND @ErrCode <> 90017
 				RETURN
@@ -152,6 +155,21 @@ BEGIN
 			AgentPT,
 			MinPT
 		FROM dbo.f_DCS_PT_XMLParse(@PT)
+
+		CREATE TABLE #ProductSettingDetail(
+			[SettingType] [smallint],
+			[SportType] [smallint],
+			[BetType] [smallint],
+			[IsLive] [bit] ,
+			[ProductID] [tinyint],
+			[SettingLevel] [tinyint],
+			[MaxPT]	[smallmoney],
+		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+		)
+
+		INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+		SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
+		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 		-- end read xml	
 
@@ -178,7 +196,7 @@ BEGIN
 		-- Select ProductID and SettingLevel
 		SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 		FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-				FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+				FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 				INNER JOIN	@tblPT AS tmp
 						ON	psd.SportType = tmp.SportType
 						AND	psd.BetType = tmp.BetType
@@ -352,7 +370,8 @@ BEGIN
 				@UpdatePresetPT = @UpdatePresetPT,	
 				@MsgType	= @MsgType OUTPUT,		
 				@ErrCode	= @ErrCode OUTPUT,
-				@ErrMsg		= @ErrMsg OUTPUT
+				@ErrMsg		= @ErrMsg OUTPUT,
+				@SettingStatus = @SettingStatus
 	
 		IF @ErrCode > 0
 			RETURN		
@@ -415,7 +434,7 @@ BEGIN
 						@IP				AS '@IP',
 						(
 							SELECT  @ProductID									AS '@ProductID',
-									cs.BetType									AS '@BetType',
+									--cs.BetType									AS '@BetType',
 									cs.IsLive									AS '@IsLive',
 									dbo.f_FomatNumericToChar(cs.SuperPT   /100.0)	AS '@SuperPT',
 									dbo.f_FomatNumericToChar(cs.MasterPT  /100.0)	AS '@MasterPT',
@@ -517,7 +536,9 @@ BEGIN
 				@ActionID = 448,
 				@TrackingValue = @LogSPData,
 				@TrackingValue2 = @logSPData_Old,
-				@duration = @duration		
+				@duration = @duration	
+				
+		DROP TABLE #ProductSettingDetail
 	END
 END
 GO

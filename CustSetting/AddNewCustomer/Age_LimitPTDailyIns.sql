@@ -13,6 +13,7 @@ AS
 	Original: 
 	Revisions:
 		- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -49,13 +50,12 @@ BEGIN
 					)			
 	
 		-- For read xml 				
-		CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency TINYINT,SiteID INT,MaxCount TINYINT, SettingStatus TINYINT) 
 	
 		INSERT INTO @tblPT( SportType , BetType ,MaxCount  )  
 		SELECT b.SportType,b.BetType,MIN(l.MaxCount) AS MaxCoun
 		FROM LimitPTDailySetting l WITH(NOLOCK) 
-		INNER JOIN ProductSettingDetail b WITH(NOLOCK) ON l.ProductID = b.ProductID AND b.SettingStatus = b.SettingStatus
-		WHERE b.SettingType IN (1,18) AND b.SettingStatus <= @SettingStatus
+			INNER JOIN dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) b ON l.ProductID = b.ProductID
+		WHERE b.SettingType IN (1,18)
 		AND (l.Currency = @Currency OR l.Currency = 0) AND (l.SiteID = @SiteID OR l.SiteID = 0)
 		 AND (l.CustID = 0 OR  l.CustID IN (@srecommend,@mrecommend,@recommend))
 		GROUP BY b.SportType,b.BetType

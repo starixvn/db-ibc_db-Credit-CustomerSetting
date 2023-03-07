@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
@@ -17,9 +14,10 @@ AS
 	- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	
 	Param's Explanation:
-		• @SettingType: 6: WinLossLimit
+		• @SettingType: 6,22: WinLossLimit
 						8: WinLimit
 						12: LossLimit
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -51,7 +49,7 @@ BEGIN
 	WHERE	c.custid = @CustID
 
 	--WinLossLimit Setting
-	IF @SettingType = 6
+	IF @SettingType IN(6,22)
 	BEGIN		
 		IF @RoleID = 4
 			SELECT	wl.SportType,

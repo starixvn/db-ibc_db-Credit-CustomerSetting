@@ -6,7 +6,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTCheck]
 	@UpdatePresetPT INT = 0,	
 	@ErrCode	INT = 0 OUTPUT,
 	@MsgType	INT = 0 OUTPUT,
-	@ErrMsg		NVARCHAR(4000)='' OUTPUT
+	@ErrMsg		NVARCHAR(4000)='' OUTPUT, 
+	@SettingStatus TINYINT = 0
 AS
 	/*
 		Created: Johnson
@@ -18,6 +19,7 @@ AS
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 		Parameter's Explanations:
 			- @PT = <ROOT>
@@ -71,6 +73,21 @@ BEGIN
 		MinPT
 	FROM dbo.f_DCS_PT_XMLParse(@PT)	
 	-- end read xml	
+
+	CREATE TABLE #ProductSettingDetail_SCheck(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+		[MaxPT]	[smallmoney],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+ 
+	INSERT INTO #ProductSettingDetail_SCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	--Exclude Update for Sport is having UM
 	DELETE t
@@ -97,7 +114,7 @@ BEGIN
 								WHEN s.SuperPT < s.SuperMinPT THEN 199 --check n4<=s4								
 								ELSE 0 END)
 	FROM @tblPT s
-		INNER JOIN ProductSettingDetail ps WITH(NOLOCK) ON s.SportType = ps.Sporttype AND s.BetType = ps.bettype AND s.IsLive = ps.IsLive
+		INNER JOIN #ProductSettingDetail_SCheck ps WITH(NOLOCK) ON s.SportType = ps.Sporttype AND s.BetType = ps.bettype AND s.IsLive = ps.IsLive
 	WHERE ps.SettingType IN (1,18)
 
 	SELECT @ErrCode = ISNULL(@ErrCode,0)
@@ -108,7 +125,7 @@ BEGIN
 			(
 				SELECT t.SportType, t.BetType, t.IsLive
 					FROM @tblPT t
-						INNER JOIN ProductSettingDetail ps WITH(NOLOCK) ON t.SportType = ps.Sporttype AND t.BetType = ps.bettype AND t.IsLive = ps.IsLive
+						INNER JOIN #ProductSettingDetail_SCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype AND t.BetType = ps.bettype AND t.IsLive = ps.IsLive
 				WHERE ps.SettingType IN (1,18)--PT
 					AND (t.SuperPT < 0 OR t.SuperPT > ps.MaxPT
 						OR t.MasterPT < 0 OR t.MasterPT > ps.MaxPT
@@ -512,4 +529,6 @@ BEGIN
 	END	
 	
 	SELECT @ErrCode = 0
+
+	DROP TABLE #ProductSettingDetail_SCheck
 END	 

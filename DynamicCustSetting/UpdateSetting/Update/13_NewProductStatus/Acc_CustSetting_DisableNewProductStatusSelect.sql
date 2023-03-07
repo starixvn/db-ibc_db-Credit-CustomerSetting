@@ -24,6 +24,7 @@ AS
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -41,6 +42,21 @@ BEGIN
 
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT, Child_DisplayOrder INT)
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[Parent_ProductSettingID] [int],
+		[ProductSettingID] [int],
+		Child_DisplayOrder INT,
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder)
+	SELECT SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	INSERT INTO #SportBettypeFilter(SportType,Bettype)
 	SELECT SportType,Bettype
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
@@ -50,11 +66,11 @@ BEGIN
 		, t.ParentBetType = par.BetType
 		, t.Child_DisplayOrder = d.Child_DisplayOrder
 	FROM #SportBettypeFilter t 
-		INNER JOIN ProductSettingDetail d WITH(NOLOCK)
+		INNER JOIN #ProductSettingDetail d WITH(NOLOCK)
 			ON t.sporttype = d.SportType
 			AND t.bettype = d.BetType
 			AND d.SettingType = @SettingType
-		INNER JOIN ProductSettingDetail par WITH(NOLOCK) 
+		INNER JOIN #ProductSettingDetail par WITH(NOLOCK) 
 				ON d.Parent_ProductSettingID = par.ProductSettingID
 	
 	-- Select customer's information
@@ -134,6 +150,7 @@ BEGIN
 		ORDER BY ft.Child_DisplayOrder
 	END
 	DROP TABLE #SportBettypeFilter
+	DROP TABLE #ProductSettingDetail
 END
 GO
 

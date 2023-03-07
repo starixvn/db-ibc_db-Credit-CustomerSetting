@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentSettingSelect]   
 	@CustID			INT  
 	, @ProductID	TINYINT = NULL 
@@ -20,6 +17,7 @@ AS
 	- 20160801@Elodie: Move commission part to Acc_CustSetting_DiscountSelect [Redmine: #60809]
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	 
  Param's Explanation:  
  - @CustID: Agent's ID  
@@ -34,6 +32,20 @@ BEGIN
 	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
 	SELECT SportType,Bettype,IsLive, SettingType 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[MaxPT]	[smallmoney],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,MaxPT)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,MaxPT 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 		
 	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend  
 	FROM dbo.custInfo ci WITH(NOLOCK)  
@@ -62,7 +74,7 @@ BEGIN
 			END AS M3  
 			, masterpt.minPT AS N3  
 			, superpt.agentPT AS A4
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
+		FROM #ProductSettingDetail pdt WITH (NOLOCK)  
 		INNER JOIN #SportBettypeFilter ft 
 				ON pdt.SportType = ft.sporttype
 					AND pdt.BetType = ft.bettype
@@ -120,7 +132,7 @@ BEGIN
 				THEN sbl.MaxPerMatch  
 				ELSE mbl.MaxPerMatch  
 			END AS MaxPerMatchMax  
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
+		FROM #ProductSettingDetail pdt WITH (NOLOCK)  
 		INNER JOIN #SportBettypeFilter ft 
 				ON pdt.SportType = ft.sporttype
 					AND pdt.BetType = ft.bettype
@@ -143,28 +155,6 @@ BEGIN
 			AND pdt.BetType = sbl.bettype  
 			AND sbl.custid = @SuperID  
 	END
-	----Discount Setting / Charge Comm
-	--ELSE IF @SettingType IN (3,5)
-	--BEGIN  
-	--	SELECT pdt.SportType  
-	--		, pdt.BetType  
-	--		, dc.Discount AS AgentDiscount  
-	--		, mdc.Discount AS MasterDiscount  
-	--	FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
-	--	INNER JOIN #SportBettypeFilter ft 
-	--			ON pdt.SportType = ft.sporttype
-	--				AND pdt.BetType = ft.bettype
-	--				AND pdt.IsLive = ft.islive
-	--				AND pdt.SettingType = ft.SettingType
-	--	INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK)  
-	--		ON pdt.SportType = dc.sporttype  
-	--		AND pdt.BetType = dc.bettype  
-	--		AND dc.custid = @CustID  
-	--	INNER JOIN dbo.CustDiscount3rd_Agent mdc WITH (NOLOCK)  
-	--		ON pdt.SportType = mdc.sporttype  
-	--		AND pdt.BetType = mdc.bettype  
-	--		AND mdc.custid = @MasterID  
-	--END
 	--Product Status  
 	ELSE IF @SettingType = 4
 	BEGIN  
@@ -197,7 +187,7 @@ BEGIN
 			 
 			 , dbo.f_GetProductStatus(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder) as IsDisabledUpline
 		
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)
+		FROM #ProductSettingDetail pdt WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype
 												AND pdt.BetType = ft.bettype
 												AND pdt.IsLive = ft.islive
@@ -210,5 +200,6 @@ BEGIN
 	END  
 	
 	DROP TABLE #SportBettypeFilter
+	DROP TABLE #ProductSettingDetail
 END  
 GO

@@ -6,7 +6,8 @@ ALTER PROCEDURE Acc_CustSetting_SuperMinPTUpd
     @IP			VARCHAR(15)='',
     @ErrCode	INT = 0 OUTPUT,
     @MsgType	INT = 0 OUTPUT,
-    @ErrMsg		NVARCHAR(MAX) = '' OUTPUT
+    @ErrMsg		NVARCHAR(MAX) = '' OUTPUT, 
+	@SettingStatus TINYINT = 0
 AS
 /*
 	Created: Elodie
@@ -19,6 +20,7 @@ AS
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 		- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -114,6 +116,21 @@ BEGIN
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
 	-- end read xml
 
+	CREATE TABLE #ProductSettingDetail_SMinUpd(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+		[MaxPT]	[smallmoney],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_SMinUpd(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @tblPT t
@@ -137,7 +154,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail_SMinUpd AS psd WITH(NOLOCK)
 			INNER JOIN	@tblPT AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -406,5 +423,7 @@ BEGIN
 			@TrackingValue = @LogSPData,
 			@TrackingValue2 = @logSPData_Old,
 			@duration = @duration
+
+	DROP TABLE #ProductSettingDetail_SMinUpd
 END
 GO

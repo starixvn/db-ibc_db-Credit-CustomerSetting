@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0" isNested="1"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountUpd] 
 	  @CustID			INT
 	, @Discount			VARCHAR(MAX)
@@ -11,6 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountUpd]
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(200)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20141111@Dominic
@@ -24,6 +24,7 @@ AS
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20200701@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20220808@Tacy: update member's Comm setting by execrep when using Search & Copy New member function [RedmineID: #176225]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 		• @Discount:
@@ -74,6 +75,16 @@ BEGIN
 	DECLARE @ProductID		TINYINT,
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
 
 	--Check if XML is null or empty
 	IF @Discount IS NULL
@@ -134,6 +145,10 @@ BEGIN
 		RETURN
 	END
 
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	--Parse XML
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @Discount
@@ -153,7 +168,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewDiscountTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -180,6 +195,7 @@ BEGIN
 						, @ErrCode		= @ErrCode	OUTPUT
 						, @MsgType		= @MsgType  OUTPUT
 						, @ErrMsg		= @ErrMsg	OUTPUT
+						, @SettingStatus = @SettingStatus
 
 	IF @ErrCode <> 0
 		RETURN
@@ -288,7 +304,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	@NewDiscountTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -498,4 +514,6 @@ BEGIN
 			, @TrackingValue	= @logSpData
 			, @TrackingValue2	= @logSpData_Old
 			, @duration			= @duration
+
+	DROP TABLE #ProductSettingDetail
 END

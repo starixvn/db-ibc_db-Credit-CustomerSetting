@@ -10,7 +10,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTCheck]
 		
 	@ErrCode		INT = 0 OUTPUT,
 	@MsgType		INT = 0 OUTPUT,
-	@ErrMsg			VARCHAR(4000)='' OUTPUT
+	@ErrMsg			VARCHAR(4000)='' OUTPUT,
+	@SettingStatus TINYINT = 0
 AS
 	/*
 		Created: Johnson
@@ -22,7 +23,8 @@ AS
 			- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 			- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
-			- 20210112@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]		
+			- 20210112@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]	
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		Parameter's Explanations:
 		
 	*/
@@ -74,6 +76,21 @@ BEGIN
 	FROM dbo.f_DCS_PT_XMLParse(@PT) b
 		INNER JOIN CustPTSetting3rd_Agent AS acs WITH (NOLOCK) ON acs.sporttype = b.sporttype AND acs.bettype = b.bettype AND acs.isLive = b.IsLive					
 	WHERE acs.custid = @AgentID
+
+	CREATE TABLE #ProductSettingDetail_ACheck(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+		[MaxPT]	[smallmoney],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_ACheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	-- end read xml	
 
@@ -95,7 +112,7 @@ BEGIN
 		( 			
 			SELECT t.SportType, t.BetType, t.IsLive
 			FROM @tblPT t
-				INNER JOIN ProductSettingDetail ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+				INNER JOIN #ProductSettingDetail_ACheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																	AND t.BetType = ps.bettype 
 																	AND t.IsLive = ps.IsLive		
 			WHERE ps.SettingType IN (1,18) --PT
@@ -540,5 +557,7 @@ BEGIN
 				RETURN
 			END  
 		END
-	 END-- end check      	 
+	 END-- end check    
+	 
+	 DROP TABLE #ProductSettingDetail_ACheck
 END
