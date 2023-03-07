@@ -7,6 +7,7 @@ ALTER PROCEDURE	Acc_CustSetting_SyncGameStatusUpd_Multiple
 ,	@IP				VARCHAR(50)		= ''
 ,	@ErrCode		INT				= 0		OUTPUT
 ,	@ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
+,	@SettingStatus  TINYINT = 0
 
 AS
 /*  
@@ -18,6 +19,7 @@ AS
 	Revisions:
 		- 20200608@Johnson: enable product NG2 when update sync [redmine:#135489] 	
 		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Parameters Explanation:  
 
@@ -55,6 +57,20 @@ BEGIN
 					,	IsDisabled_new BIT 
 					)
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	SET	@startRun = GETDATE()
 
 	INSERT INTO #CustList(CustID)
@@ -62,15 +78,9 @@ BEGIN
 	FROM string_split(@CustIDs, ',')
 	WHERE value <> ''
 
-	INSERT INTO	#NewSyncStatTbl (
-					SportType
-				,	BetType
-				)
-	SELECT			psd.SportType
-				,	psd.BetType
-	FROM	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
-	WHERE	psd.ProductID = @ProductID
-		AND	psd.SettingType = 11
+	INSERT INTO	#NewSyncStatTbl (SportType,	BetType)
+	SELECT SportType, BetType
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
 
 	INSERT INTO #OldSyncStatTbl (CustID,SportType,BetType,IsSynced,isDisabled)
 	SELECT	stt.CustID
@@ -193,7 +203,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	#OldSyncStatTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType

@@ -34,6 +34,7 @@ AS
 		- 20201209@winfred: get Disable Keno for customer list smartphone [redmine: #137130]
 		- 20211112@Johnson: rollback code for revision 20201209@winfred [redmine:#163077]
 		- 20220822@Tacy: hardcode show PT setting info for bettype: 3915, 3900 [RedmineID: #173861]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -48,8 +49,8 @@ BEGIN
 			,@DisableKeno			INT = 0 
 			,@DisableNumber			BIT = 0 
 			,@HideNG2				BIT = 0 
-			,@HideVS				BIT = 0 
-			,@HideLottery			BIT = 0
+			--,@HideVS				BIT = 0 
+			--,@HideLottery			BIT = 0
 			,@IsMyanmarOdds			BIT = 0	   -- MyanmarOdds
 			,@srecommend			INT	
 			,@isIMBC				BIT = 0
@@ -99,13 +100,13 @@ BEGIN
 			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
 			WHERE CustID = @CustID	
 
-			SELECT @HideVS = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,10))
-			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
-			WHERE CustID = @CustID
+			--SELECT @HideVS = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,10))
+			--FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
+			--WHERE CustID = @CustID
 			
-			SELECT @HideLottery = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,11))
-			FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
-			WHERE CustID = @CustID		
+			--SELECT @HideLottery = (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsHidden,11))
+			--FROM DBCUST.CustDB.dbo.CustProductStatus WITH (NOLOCK)
+			--WHERE CustID = @CustID		
 
 	END
 	
@@ -125,10 +126,13 @@ BEGIN
 					CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
 					,CASE WHEN @IsMyanmarOdds = 0 AND Bettype IN (1,3,7,8) THEN 1 ELSE 0 END -- MyanmarOdds
 					,27, 50 -- Cricket
+					,220 --Lottery
 				)
 				AND bettype NOT IN(SELECT Bettype FROM #tempRef)
 				AND isLicensee = 0 
 				AND isActive = CASE WHEN @isShowAll = 0 THEN 1 ELSE isActive END
+				AND SportType NOT BETWEEN 180 AND 186 --Virtual Sport
+				AND SportType NOT BETWEEN 190 AND 198 --Virtual Sport
 		UNION ALL
 		SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
 		FROM Sport_Bettype_Reference WITH (NOLOCK)
@@ -152,8 +156,8 @@ BEGIN
 				AND NOT EXISTS (SELECT TOP 1 1 FROM Sport_Bettype_Reference a (NOLOCK) WHERE a.Sporttype=b.SportType AND a.Bettype=b.BetType)
 				AND (SportType<=99 -- Sportbook	
 						OR b.SportType BETWEEN 213 AND 218 --NG2
-						OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) --Virtual Sport
-						OR b.SportType = 220 -- Lottery
+						--OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) --Virtual Sport
+						--OR b.SportType = 220 -- Lottery
 						OR b.sportType = 164--Happy 5
 						OR b.sportType = 168--Happy 5 linked games
 						OR b.SportType = 202 --Keno
@@ -161,8 +165,8 @@ BEGIN
 						) 
 				AND 1 = CASE WHEN @DisableNumber = 1 AND b.SportType = 161 THEN 0 ELSE 1 END
 				AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
-				AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
-				AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
+				--AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
+				--AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
 				AND 1 = CASE WHEN (@HideKeno = 1 OR @DisableKeno = 1) AND b.SportType = 202 THEN 0 ELSE 1 END
 				AND b.Site <> 'CN88'
 	)

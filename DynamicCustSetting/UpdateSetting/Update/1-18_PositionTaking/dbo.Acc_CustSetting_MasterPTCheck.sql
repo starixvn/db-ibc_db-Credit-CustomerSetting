@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTCheck]
 	@custid		INT,	
 	@srecommend INT,
@@ -10,7 +9,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTCheck]
 	
 	@ErrCode	INT = 0 OUTPUT,
 	@MsgType	INT = 0 OUTPUT,
-	@ErrMsg		VARCHAR(4000)='' OUTPUT
+	@ErrMsg		VARCHAR(4000)='' OUTPUT,
+	@SettingStatus TINYINT = 0
 AS
 	/*
 		Created: Johnson
@@ -23,6 +23,7 @@ AS
 			- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 			- 20220609@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 		Parameter's Explanations:
 			@PT = <ROOT>
@@ -52,6 +53,21 @@ BEGIN
 				MasterMinPT		SMALLMONEY,
 				MasterMaxPT		SMALLMONEY
 				)
+
+	CREATE TABLE #ProductSettingDetail_MCheck(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+		[MaxPT]	[smallmoney],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_MCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	SELECT @SuperID = @srecommend, @MasterID = @custid
 	-- For read xml
@@ -113,7 +129,7 @@ BEGIN
 								ELSE 0 END)
 	FROM dbo.CustPTSetting3rd_Agent s WITH (NOLOCK) 
 		INNER JOIN @tblPT m ON s.sporttype = m.sporttype AND s.bettype = m.bettype AND s.IsLive = m.IsLive
-		INNER JOIN ProductSettingDetail ps WITH(NOLOCK) ON m.SportType = ps.Sporttype AND m.BetType = ps.bettype AND m.IsLive = ps.IsLive
+		INNER JOIN #ProductSettingDetail_MCheck ps WITH(NOLOCK) ON m.SportType = ps.Sporttype AND m.BetType = ps.bettype AND m.IsLive = ps.IsLive
 	WHERE s.custid = @SuperID AND ps.SettingType IN (1,18)
 	
 	SELECT @ErrCode = ISNULL(@ErrCode,0)
@@ -124,7 +140,7 @@ BEGIN
 			(
 				SELECT t.SportType, t.BetType, t.IsLive
 				FROM @tblPT t
-					INNER JOIN ProductSettingDetail ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+					INNER JOIN #ProductSettingDetail_MCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																		AND t.BetType = ps.bettype 
 																		AND t.IsLive = ps.IsLive
 				WHERE ps.SettingType IN (1,18)--PT
@@ -509,4 +525,7 @@ BEGIN
 		END	
 	END
 	SELECT @ErrCode = 0
+
+	DROP TABLE #AgentTbl
+	DROP TABLE #ProductSettingDetail_MCheck
 END 

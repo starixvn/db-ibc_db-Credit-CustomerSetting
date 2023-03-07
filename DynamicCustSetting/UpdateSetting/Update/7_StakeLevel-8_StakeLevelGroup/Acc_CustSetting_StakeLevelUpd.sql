@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0" isNested="1"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_StakeLevelUpd] 
 		@CustID			INT
 	,	@StakeLevel		VARCHAR(MAX)
@@ -12,6 +11,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_StakeLevelUpd]
 	,	@ErrCode		INT				= 0		OUTPUT
 	,	@MsgType		INT				= 0		OUTPUT
 	,	@ErrMsg			NVARCHAR(200)	= ''	OUTPUT
+	,	@SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160115@Billy
@@ -30,6 +30,7 @@ AS
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
 		- 20220725@Tacy: change strSplit() UFD to STRING_SPLIT() SQL Function
 		- 20220808@Tacy: update member's StakeLevel by execrep when using Search & Copy New member function [RedmineID: #176225]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -102,6 +103,16 @@ BEGIN
 					,	UpdateTime		DATETIME
 					)
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
 	--Check if XML is null or empty
 	IF	@StakeLevel IS NULL OR @StakeLevel = ''
 		RETURN;
@@ -160,6 +171,10 @@ BEGIN
 		RETURN;
 	END;
 
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	--Parse XML
 	EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @StakeLevel;
 
@@ -178,7 +193,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM #tmpStake t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -207,7 +222,8 @@ BEGIN
 			,   @ProductID  = @ProductID
 			,	@ErrCode	= @ErrCode		OUTPUT
 			,	@MsgType	= @MsgType		OUTPUT
-			,	@ErrMsg		= @ErrMsg		OUTPUT;
+			,	@ErrMsg		= @ErrMsg		OUTPUT
+			,   @SettingStatus = @SettingStatus
 
 	IF @ErrCode <> 0
 		RETURN;
@@ -619,7 +635,7 @@ BEGIN
 					psd.ProductID
 				,	psd.SettingLevel
 				,	psd.SettingType
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	#tmpStake AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -635,7 +651,7 @@ BEGIN
 
 	-- Update log value
 	IF	EXISTS (SELECT TOP 1 1
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	#tmpStake AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -690,7 +706,7 @@ BEGIN
 		SET StakeLevelList = REPLACE(StakeLevelList, ';', ',');
 	END;
 	IF	EXISTS (SELECT TOP 1 1
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	#tmpStake AS ts
 					ON	ts.SportType = psd.SportType
 					AND	ts.BetType = psd.BetType
@@ -940,5 +956,11 @@ BEGIN
 				,	@TrackingValue2	= @logSpData_Old
 				,	@duration		= @duration;
 	END CATCH;
+
+	DROP TABLE #CustStakeLevelDownlines
+	DROP TABLE #HistoryStakeLevelTbl
+	DROP TABLE #ProductSettingDetail
+	DROP TABLE #StakeLevelList_Excluded
+	DROP TABLE #tmpStake
 END
 GO

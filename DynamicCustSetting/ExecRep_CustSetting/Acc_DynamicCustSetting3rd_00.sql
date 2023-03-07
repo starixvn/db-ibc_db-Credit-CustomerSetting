@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_00]
 	@CustId			INT,
     @RoleId			INT,
@@ -14,6 +13,7 @@ AS
     Revisions:
 		- 20161011@Winnie:  Implement for Loss limit setting type [RedmineID: #65472]
 		- 20220622@Elodie:  Run by batch [RedmineID: #174131]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
     Param's Explanation:
             
 */
@@ -129,7 +129,7 @@ BEGIN
 				INNER JOIN #MemberTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId
 		END		
 	END
-	ELSE IF(@SettingType=6)
+	ELSE IF(@SettingType IN (6,22))
 	BEGIN
 		DECLARE @NewLimitTbl TABLE(
 			SportType SMALLINT,

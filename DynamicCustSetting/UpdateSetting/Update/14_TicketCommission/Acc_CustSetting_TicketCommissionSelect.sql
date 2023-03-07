@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-USE CustDB
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_TicketCommissionSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
@@ -17,6 +14,7 @@ AS
 	Revisions:
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -33,6 +31,19 @@ BEGIN
 	INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
 	SELECT SportType,Bettype,SettingType
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus) --Commission
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit],
+		[MaxDiscount] decimal(9,8),
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,MaxDiscount)
+	SELECT SportType,BetType,SettingType,IsLive,MaxDiscount
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	-- Select customer's information
 	SELECT	@RoleID     = c.roleid
@@ -47,7 +58,7 @@ BEGIN
 				pdt.BetType,
 				dc.Discount AS SuperCommission,
 				ISNULL(pdt.MaxDiscount, 0) AS MaxGivenCommission
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)
+		FROM #ProductSettingDetail pdt WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 		WHERE dc.custid = @CustID
@@ -104,6 +115,7 @@ BEGIN
 		END
 	END
 	DROP TABLE #SportBettypeFilter
+	DROP TABLE #ProductSettingDetail
 END
 
 

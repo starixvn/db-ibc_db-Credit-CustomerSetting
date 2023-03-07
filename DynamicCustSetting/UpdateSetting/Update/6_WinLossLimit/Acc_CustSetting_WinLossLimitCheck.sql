@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitCheck] 
 	  @CustID		INT
 	, @RoleID		INT
@@ -18,6 +19,7 @@ AS
 	Revisions:
 	- 20161011@Winnie:  Implement for Loss limit setting type RedmineID: #65472
 	- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	Param's Explanation:
 	- @Limit:
 		6: WinLossLimit
@@ -93,7 +95,7 @@ BEGIN
 
 	EXEC sp_xml_preparedocument @iDoc OUTPUT, @Limit
 
-	IF @SettingType = 6
+	IF @SettingType IN(6,22)
 	BEGIN
 		INSERT @NewLimitTbl (SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
 		SELECT SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset
@@ -184,7 +186,7 @@ BEGIN
 		WHERE wl.CustID	= @AgentID
 	END			
 
-	IF @SettingType = 6 OR @SettingType = 8
+	IF @SettingType IN( 6,22) OR @SettingType = 8
 	BEGIN
 		--Check Upline's win limit >= Win Limit
 		IF EXISTS(	SELECT TOP 1 1 
@@ -216,7 +218,7 @@ BEGIN
 		END
 	END
 
-	IF @SettingType = 6 OR @SettingType = 12
+	IF @SettingType IN (6,22) OR @SettingType = 12
 	BEGIN
 		--Check Upline's loss limit >= Loss Limit
 		IF EXISTS(	SELECT TOP 1 1 

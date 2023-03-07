@@ -4,7 +4,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_PTMatrix]
    @SportType SMALLINT = 0,
    @BetType SMALLINT = 0,
    @IsLive BIT = 1,
-   @UserName VARCHAR(30) = ''
+   @UserName VARCHAR(30) = '',
+   @SettingStatus TINYINT = 0
 AS  
 /*  
  Created: 20150518@Dominic  
@@ -19,6 +20,7 @@ AS
 	- 20200615@Elodie: Implement new setting type 18 [Redmine: #135363]
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
  Param's Explanation:  
 
@@ -58,11 +60,13 @@ BEGIN
 	CREATE TABLE #SportList (ProductID TINYINT, SportType SMALLINT, BetType SMALLINT, IsLive BIT)
 
 	INSERT INTO #SportList (ProductID, SportType, BetType, IsLive)
-	SELECT ProductID, SportType, BetType, IsLive
-	FROM dbo.ProductSettingDetail
-	WHERE SettingType IN (1, 18)
-		AND ProductID = CASE WHEN @ProductID = 0 THEN ProductID ELSE @ProductID END
-		AND IsLive <= @isLive
+	SELECT ProductID, SportType, BetType, IsLive 
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),1,@SettingStatus)
+	WHERE islive <= @islive
+	UNION ALL
+	SELECT ProductID, SportType, BetType, IsLive 
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),18,@SettingStatus)
+	WHERE islive <= @islive
 		
 	INSERT @PTMatrix
 	SELECT

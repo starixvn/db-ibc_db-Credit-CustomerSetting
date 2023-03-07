@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_DiscountSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
@@ -16,6 +15,7 @@ AS
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -41,6 +41,21 @@ BEGIN
 	SELECT SportType,Bettype,SettingType
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus) --Charge Commission
 
+	CREATE TABLE #ProductSettingDetail_Sel(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[IntervalValue]  [decimal](19,8),
+		[MaxDiscount] [decimal](9,8),
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_Sel(SportType,BetType,SettingType,IsLive,ProductID,IntervalValue,MaxDiscount)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,IntervalValue,MaxDiscount 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	-- Select customer's information
 	SELECT	@RoleID     = c.roleid
 		,	@SuperID	= c.srecommend
@@ -55,7 +70,7 @@ BEGIN
 				dc.Discount AS SuperDiscount,
 				ISNULL(pdt.MaxDiscount, 0) AS DefaultMaxDiscount,
 				pdt.IntervalValue AS IntervalComm
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)
+		FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 		WHERE dc.custid = @CustID
@@ -65,7 +80,7 @@ BEGIN
 				dc.Discount AS MasterDiscount,
 				sdc.Discount AS SuperDiscount,
 				pdt.IntervalValue AS IntervalComm
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
+		FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft  ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype    
 			INNER JOIN dbo.CustDiscount3rd_Agent sdc WITH (NOLOCK) ON pdt.SportType = sdc.sporttype AND pdt.BetType = sdc.bettype 
@@ -76,7 +91,7 @@ BEGIN
 				dc.Discount AS AgentDiscount,
 				mdc.Discount AS MasterDiscount,
 				pdt.IntervalValue AS IntervalComm
-		FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
+		FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			INNER JOIN dbo.CustDiscount3rd_Agent mdc WITH (NOLOCK) ON pdt.SportType = mdc.sporttype AND pdt.BetType = mdc.bettype 
@@ -91,7 +106,7 @@ BEGIN
 					dc.AgentDiscount,  
 					dc.MasterDiscount,
 					pdt.IntervalValue AS IntervalComm
-				FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
+				FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
 				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			WHERE dc.custid = @CustID
@@ -103,7 +118,7 @@ BEGIN
 					dc.PlayerDiscount, 
 					dc.AgentDiscount,
 					pdt.IntervalValue AS IntervalComm
-			FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
+			FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
 				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			WHERE dc.custid = @CustID
@@ -115,7 +130,7 @@ BEGIN
 					dc.PlayerDiscount, 
 					adc.Discount AS AgentDiscount,
 					pdt.IntervalValue AS IntervalComm
-			FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
+			FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
 				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype   
 				INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON pdt.SportType = adc.sporttype AND pdt.BetType = adc.bettype 
@@ -124,6 +139,7 @@ BEGIN
 		END
 	END
 	DROP TABLE #SportBettypeFilter
+	DROP TABLE #ProductSettingDetail_Sel
 END
 
 GO

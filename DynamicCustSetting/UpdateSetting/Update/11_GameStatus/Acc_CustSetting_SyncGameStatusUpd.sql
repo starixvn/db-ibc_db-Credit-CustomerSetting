@@ -8,6 +8,7 @@ ALTER PROCEDURE	[dbo].[Acc_CustSetting_SyncGameStatusUpd]
 ,	@IP				VARCHAR(50)		= ''
 ,	@ErrCode		INT				= 0		OUTPUT
 ,	@ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
+,	@SettingStatus TINYINT = 0
 AS
 /*  
 	Created: Elodie  
@@ -18,6 +19,7 @@ AS
 	Revisions:
 	- 20160801@Elodie: First Commit
 	- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			
 	Parameters Explanation:  
 	
@@ -60,6 +62,20 @@ BEGIN
 		,	@RoleID	= ci.roleid
 	FROM	dbo.custInfo AS ci WITH (NOLOCK)
 	WHERE	ci.custid = @CustID
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	INSERT INTO	#NewSyncStatTbl (
 					SportType
@@ -67,7 +83,7 @@ BEGIN
 				)
 	SELECT			psd.SportType
 				,	psd.BetType
-	FROM	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
+	FROM	#ProductSettingDetail AS psd WITH (NOLOCK)
 	WHERE	psd.ProductID = @ProductID
 		AND	psd.SettingType = 11
 
@@ -125,7 +141,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	#OldSyncStatTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -334,5 +350,6 @@ BEGIN
 
 	DROP TABLE #NewSyncStatTbl
 	DROP TABLE #OldSyncStatTbl
+	DROP TABLE #ProductSettingDetail
 END
 GO

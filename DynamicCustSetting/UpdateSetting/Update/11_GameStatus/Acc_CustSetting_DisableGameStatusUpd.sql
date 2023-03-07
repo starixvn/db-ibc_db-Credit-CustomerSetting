@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableGameStatusUpd]
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160801@Elodie
@@ -20,6 +21,7 @@ AS
 		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 		- 20180112@Elodie: Remove IsDisableDownline value [RedmineID:#87328]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -135,6 +137,29 @@ BEGIN
 	
 	EXEC sp_xml_removedocument @iDoc
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	IF @SettingStatus = 3
+	BEGIN 
+		INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+		SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
+		FROM ProductSettingDetail_UAT WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+		SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+		FROM ProductSettingDetail WITH(NOLOCK)
+	END
+
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM #NewDisableStatTbl t
@@ -234,7 +259,7 @@ BEGIN
 	BEGIN
 		SELECT TOP 1 @ProductID = ps.ProductID
 		FROM #NewDisableStatTbl dis 
-			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
+			INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
 		WHERE dis.IsDisabled = 0 AND ps.SettingType = 11
 
 		SET @xmlStrHidden = (
@@ -242,7 +267,7 @@ BEGIN
 					SELECT psp.bitmapOrder	AS '@b'
 						, 0	AS '@s'
 					FROM ProductStatusProfile psp (NOLOCK)
-						INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
+						INNER JOIN #ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 					WHERE ps.ProductID = @ProductID AND ps.SettingType = 13
 					FOR XML PATH('r')
 						, TYPE
@@ -292,6 +317,7 @@ BEGIN
 				, @RoleID			= @RoleID
 				, @IsDisabled_XML	= @IsDisabled_Downline_tmp
 				, @Action			= 'GameStatus'
+				, @SettingStatus = @SettingStatus
 		END
 	END
 
@@ -299,7 +325,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	#OldDisableStatTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -536,5 +562,6 @@ BEGIN
 	END
 	DROP TABLE #NewDisableStatTbl
 	DROP TABLE #OldDisableStatTbl
+	DROP TABLE #ProductSettingDetail
 END
 GO

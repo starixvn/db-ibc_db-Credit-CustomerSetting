@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTOnMemberUpd]
 	@custid		INT,
 	@PT			VARCHAR(MAX),
@@ -9,7 +8,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTOnMemberUpd]
     @IsCountPT			BIT = 1,
     @ErrCode	INT = 0 OUTPUT,
     @MsgType	INT = 0 OUTPUT,
-    @ErrMsg		NVARCHAR(4000) = '' OUTPUT
+    @ErrMsg		NVARCHAR(4000) = '' OUTPUT,
+	@SettingStatus TINYINT = 0
 AS
 	/*
 		Created: Johnson
@@ -26,6 +26,7 @@ AS
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			
 		Parameter's Explanation:
 			@PT =<Root>
@@ -183,6 +184,20 @@ BEGIN
 			,0
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @tblPT t
@@ -214,6 +229,7 @@ BEGIN
 			,@LastUpdated	= @LastUpdated OUTPUT
 			,@isLimit		= @isLimit OUTPUT
 			,@isCancel		= @isCancel OUTPUT
+			,@SettingStatus = @SettingStatus
 		IF @isCancel > 0	
 		BEGIN
 			
@@ -269,7 +285,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	@tblPT AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -724,6 +740,7 @@ BEGIN
 				, @ErrCode		= @ErrCode	OUTPUT
 				, @MsgType		= @MsgType	OUTPUT
 				, @ErrMsg		= @ErrMsg	OUTPUT
+				,@SettingStatus = @SettingStatus
 
 	IF @ErrCode <> 0
 		RETURN	
@@ -995,5 +1012,6 @@ BEGIN
 		@TrackingValue2 = @logSPData_Old,
 		@duration = @duration
 
+	DROP TABLE #ProductSettingDetail
 END
 GO

@@ -17,6 +17,7 @@ AS
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:  
 		- @CustID: Member's ID  
@@ -36,6 +37,20 @@ BEGIN
 	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
 	SELECT SportType,Bettype,IsLive, SettingType 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[MaxPT]	[smallmoney],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,MaxPT)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,MaxPT 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend  
 	FROM dbo.custInfo ci WITH(NOLOCK)  
@@ -94,7 +109,7 @@ BEGIN
 		THEN pt.AutoMasterPT  
 		ELSE ptgr.AutoMasterPT  
 		END AS UM1  
-	FROM dbo.ProductSettingDetail pdt WITH (NOLOCK)  
+	FROM #ProductSettingDetail pdt WITH (NOLOCK)  
 		INNER JOIN #SportBettypeFilter ft 
 			ON pdt.SportType = ft.sporttype
 				AND pdt.BetType = ft.bettype
@@ -242,5 +257,6 @@ BEGIN
 	END  
 	
 	DROP TABLE #SportBettypeFilter
+	DROP TABLE #ProductSettingDetail
 END  
 GO

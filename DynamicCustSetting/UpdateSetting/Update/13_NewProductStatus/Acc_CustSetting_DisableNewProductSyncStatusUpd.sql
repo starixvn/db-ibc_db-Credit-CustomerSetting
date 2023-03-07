@@ -6,6 +6,7 @@ ALTER PROCEDURE	[dbo].[Acc_CustSetting_DisableNewProductSyncStatusUpd]
 ,	@UserID			INT
 ,	@SubAccID		INT				= 0
 ,	@IP				VARCHAR(50)		= ''
+,   @SettingStatus TINYINT = 0
 AS
 /*  
 	Created: Elodie  
@@ -17,6 +18,7 @@ AS
 		- 20170919@Johnson: fix the unsynchronized setting (settingType = 13), do not update sync for downlines [Redmine: #72973]	
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]	
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	Parameters Explanation:  
 	
  */
@@ -45,21 +47,35 @@ BEGIN
 					)
 
 	SET	@startRun = GETDATE()
-	
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	INSERT INTO	#NewSyncStatTbl (
 					SportType
 				,	BetType
 				)
 	SELECT			psd.SportType
 				,	psd.BetType
-	FROM	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
+	FROM	#ProductSettingDetail AS psd WITH (NOLOCK)
 	WHERE	psd.ProductID = @ProductID
 		AND	psd.SettingType IN(13,21)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM #NewSyncStatTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -118,7 +134,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	#OldSyncStatTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -327,5 +343,6 @@ BEGIN
 
 	DROP TABLE #NewSyncStatTbl
 	DROP TABLE #OldSyncStatTbl
+	DROP TABLE #ProductSettingDetail
 END
 GO

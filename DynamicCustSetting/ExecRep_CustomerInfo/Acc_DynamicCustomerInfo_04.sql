@@ -6,7 +6,8 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_04]
 	@Suspended BIT = NULL,
 	@Closed BIT = NULL,	
 	@ClosedReason TINYINT = NULL,
-	@Action	VARCHAR(30)	= 'ProductStatus'
+	@Action	VARCHAR(30)	= 'ProductStatus', 
+	@SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20151007@Dominic
@@ -25,6 +26,7 @@ AS
 		- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -36,6 +38,21 @@ BEGIN
 		
 	--Check if XML is null or empty
 	IF @Action NOT IN ('SuspendInfo', 'CloseInfo') AND ( @IsDisabled_XML IS NULL OR @IsDisabled_XML='') RETURN
+
+	CREATE TABLE #ProductSettingDetail_tmp04(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+		[RealProductID] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_tmp04(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,RealProductID)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,RealProductID 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 		
 	DECLARE @iDoc INT, 
 			@xmlStrDisabledMasters XML, 
@@ -135,7 +152,7 @@ BEGIN
 		BEGIN
 			SELECT TOP 1 @ProductID = ps.ProductID
 			FROM #DisableStatTbl dis 
-				INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
+				INNER JOIN #ProductSettingDetail_tmp04 ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
 			WHERE dis.IsDisabled = 0 AND IsDisabledDownline = 0 AND ps.SettingType IN (4)
 
 			SET @xmlStrHidden = (
@@ -143,7 +160,7 @@ BEGIN
 						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, 0	AS '@s'
 						FROM dbo.ProductStatusProfile psp (NOLOCK)
-							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
+							INNER JOIN #ProductSettingDetail_tmp04 ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 						WHERE ps.ProductID = @ProductID AND ps.SettingType IN (4)
 						FOR XML PATH('r')
 							, TYPE
@@ -156,7 +173,7 @@ BEGIN
 		SELECT TOP 1 @BitmapOrder = psp.bitmapOrder
 		FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 			INNER JOIN #DisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType		
-			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
+			INNER JOIN #ProductSettingDetail_tmp04 ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
 		WHERE ps.SettingType IN (4)	
 		
 		IF @RoleID=4
@@ -245,7 +262,7 @@ BEGIN
 		UPDATE ns 
 		SET ns.RealProductId = ps.RealProductId
 		FROM #NewStatTbl ns
-			INNER JOIN ProductSettingDetail ps ON ns.Sporttype = ps.SportType AND ns.Bettype = ps.BetType
+			INNER JOIN #ProductSettingDetail_tmp04 ps ON ns.Sporttype = ps.SportType AND ns.Bettype = ps.BetType
 
 		IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
 		BEGIN
@@ -254,7 +271,7 @@ BEGIN
 						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, 0	AS '@s'
 						FROM dbo.ProductStatusProfile psp (NOLOCK)
-							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
+							INNER JOIN #ProductSettingDetail_tmp04 ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 							LEFT JOIN #NewStatTbl ns ON psp.Sporttype = ns.SportType AND psp.Bettype = ns.BetType
 						WHERE ps.SettingType  IN ( 13, 4, 21) AND ps.RealProductId IN (SELECT DISTINCT RealProductId FROM #NewStatTbl WHERE IsDisabled = 0)
 						FOR XML PATH('r')
@@ -268,7 +285,7 @@ BEGIN
 		SELECT TOP 1 @BitmapOrder = psp.bitmapOrder
 		FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
 			INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType		
-			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
+			INNER JOIN #ProductSettingDetail_tmp04 ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
 		WHERE ps.SettingType IN ( 13, 4, 21)
 		
 		IF @RoleID=4
@@ -462,7 +479,7 @@ BEGIN
 		BEGIN
 			SELECT TOP 1 @ProductID = ps.ProductID
 			FROM #GameDisableStatTbl dis 
-				INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
+				INNER JOIN #ProductSettingDetail_tmp04 ps WITH (NOLOCK) ON ps.BetType = dis.BetType AND ps.SportType = dis.SportType
 				WHERE dis.IsDisabled = 0 AND ps.SettingType = 11
 
 			SET @xmlStrHidden = (
@@ -470,7 +487,7 @@ BEGIN
 						SELECT DISTINCT psp.bitmapOrder	AS '@b'
 							, 0	AS '@s'
 						FROM ProductStatusProfile psp (NOLOCK)
-							INNER JOIN ProductSettingDetail ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
+							INNER JOIN #ProductSettingDetail_tmp04 ps ON PSP.Sporttype = ps.SportType AND psp.Bettype = ps.BetType
 						WHERE ps.ProductID = @ProductID AND ps.SettingType = 11
 						FOR XML PATH('r')
 							, TYPE
@@ -484,7 +501,7 @@ BEGIN
 		SELECT TOP 1 @BitmapOrder = psp.bitmapOrder
 		FROM ProductStatusProfile psp WITH (NOLOCK)
 			INNER JOIN #GameDisableStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
-			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
+			INNER JOIN #ProductSettingDetail_tmp04 ps WITH (NOLOCK) ON ps.BetType = tmp.BetType AND ps.SportType = tmp.SportType
 		WHERE ps.SettingType = 11
 
 		IF @RoleID=4
@@ -765,6 +782,7 @@ BEGIN
 
 		
 	END
+	DROP TABLE #ProductSettingDetail_tmp04
 END
 GO
 

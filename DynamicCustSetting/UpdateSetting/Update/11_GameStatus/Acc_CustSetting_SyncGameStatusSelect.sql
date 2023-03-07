@@ -1,16 +1,22 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_SyncGameStatusSelect]   
 	@CustID	INT , 
-	@ProductID INT
+	@ProductID INT, 
+	@SettingStatus TINYINT = 0
 AS  
 /*  
 	Created: 20160801@Elodie
 	Task : Get sync status of customer by game
 	DB:  DBCUST/CustDB
 	Original:  
-  
+
+	Revision:
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	
 	Param's Explanation:  
 
 	Example: EXEC Acc_CustSetting_SyncGameStatusSelect @CustID = 1275, @ProductID = 23
+	
    
  */  
 BEGIN
@@ -29,8 +35,21 @@ BEGIN
 	FROM	dbo.custInfo AS ci WITH (NOLOCK)
 	WHERE	ci.custid = @CustID
 
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+
 	SELECT TOP 1 @BitmapOrder = PSP.bitmapOrder
-	FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
+	FROM #ProductSettingDetail psd WITH(NOLOCK)  
 		INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = psd.SportType AND psp.Bettype = psd.BetType
 	WHERE psd.SettingType = 11 AND psd.ProductID = @ProductID
 
@@ -62,22 +81,9 @@ BEGIN
 	END
 
 	SELECT @IsSynced AS IsSynced, @IsSyncedUpline AS IsSyncedUpline
+
+	DROP TABLE #ProductSettingDetail
 END
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncGameStatusSelect] TO [bodbAdminNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncGameStatusSelect] TO [bodbDownlineNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncGameStatusSelect] TO [bodbDownlineNetView] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncGameStatusSelect] TO [bodbExtAccNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_SyncGameStatusSelect] TO [vnteam] AS [dbo]
 GO
 
 

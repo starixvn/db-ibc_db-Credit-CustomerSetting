@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatusCheck]
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
 	, @Settingtype		TINYINT = 13
 	, @CustID			INT = NULL
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20180118@ELodie
@@ -21,6 +22,7 @@ AS
 		- 20180118@Elodie: Validate enable status on NAP & ExtNAP [RedmineID:#87328]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 	• @IsDisabled
@@ -124,6 +126,20 @@ BEGIN
 		SET @custID = @MasterID
 	IF @RoleID = 2
 		SET @custID = @AgentID
+
+	CREATE TABLE #ProductSettingDetail_Check(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[Parent_ProductSettingID] [int],
+		[ProductSettingID] [int],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID)
+	SELECT SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
@@ -318,9 +334,9 @@ BEGIN
 		UPDATE t 
 		SET t.ParentSporttype = par.SportType, t.ParentBetType = par.BetType
 		FROM #NewDisableStatTblCheck t
-			INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+			INNER JOIN #ProductSettingDetail_Check d WITH(NOLOCK)  
 				ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
-			INNER JOIN ProductSettingDetail par WITH(NOLOCK) 
+			INNER JOIN #ProductSettingDetail_Check par WITH(NOLOCK) 
 				ON d.Parent_ProductSettingID = par.ProductSettingID
 
 		INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID,ParentSporttype,ParentBetType)
@@ -543,9 +559,9 @@ BEGIN
 				, t.Sporttype AS ParentSporttype
 				, t.BetType AS ParentBetType
 		FROM #NewDisableStatTblCheck t
-			INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+			INNER JOIN #ProductSettingDetail_Check d WITH(NOLOCK)  
 				ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
-			INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+			INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 				ON d.ProductSettingID = de.Parent_ProductSettingID 
 			LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
 				ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType
@@ -570,9 +586,9 @@ BEGIN
 					, t.Sporttype AS ParentSporttype
 					, t.BetType AS ParentBetType
 			FROM #NewDisableStatTblCheck t
-				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+				INNER JOIN #ProductSettingDetail_Check d WITH(NOLOCK)  
 					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
-				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+				INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 					ON d.ProductSettingID = de.Parent_ProductSettingID 
 				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
 					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMasters = 1
@@ -602,9 +618,9 @@ BEGIN
 					, t.Sporttype AS ParentSporttype
 					, t.BetType AS ParentBetType
 			FROM #NewDisableStatTblCheck t
-				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+				INNER JOIN #ProductSettingDetail_Check d WITH(NOLOCK)  
 					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
-				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+				INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 					ON d.ProductSettingID = de.Parent_ProductSettingID 
 				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
 					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllAgents = 1
@@ -634,9 +650,9 @@ BEGIN
 					, t.Sporttype AS ParentSporttype
 					, t.BetType AS ParentBetType
 			FROM #NewDisableStatTblCheck t
-				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+				INNER JOIN #ProductSettingDetail_Check d WITH(NOLOCK)  
 					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
-				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+				INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 					ON d.ProductSettingID = de.Parent_ProductSettingID 
 				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
 					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMembers = 1
@@ -668,9 +684,9 @@ BEGIN
 					, t.Sporttype AS ParentSporttype
 					, t.BetType AS ParentBetType
 			FROM #NewDisableStatTblCheck t
-				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+				INNER JOIN #ProductSettingDetail_Check d WITH(NOLOCK)  
 					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
-				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+				INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 					ON d.ProductSettingID = de.Parent_ProductSettingID 
 				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
 					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllAgents = 1
@@ -700,9 +716,9 @@ BEGIN
 					, t.Sporttype AS ParentSporttype
 					, t.BetType AS ParentBetType
 			FROM #NewDisableStatTblCheck t
-				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+				INNER JOIN #ProductSettingDetail_Check d WITH(NOLOCK)  
 					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
-				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+				INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 					ON d.ProductSettingID = de.Parent_ProductSettingID 
 				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
 					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMembers = 1
@@ -734,9 +750,9 @@ BEGIN
 					, t.Sporttype AS ParentSporttype
 					, t.BetType AS ParentBetType
 			FROM #NewDisableStatTblCheck t
-				INNER JOIN ProductSettingDetail d WITH(NOLOCK)  
+				INNER JOIN #ProductSettingDetail_Check d WITH(NOLOCK)  
 					ON t.SportType = d.SportType and t.BetType = d.BetType AND d.SettingType = @Settingtype
-				INNER JOIN ProductSettingDetail de WITH(NOLOCK) 
+				INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 					ON d.ProductSettingID = de.Parent_ProductSettingID 
 				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
 					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMembers = 1
@@ -835,5 +851,6 @@ BEGIN
 	DROP TABLE #ErrorSportTypeTbl
 	DROP TABLE #NewDisableStatTblCheck
 	DROP TABLE #OldDisableStatTbl
+	DROP TABLE #ProductSettingDetail_Check
 END
 GO

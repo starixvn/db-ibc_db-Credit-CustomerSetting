@@ -6,7 +6,8 @@ ALTER PROCEDURE [dbo].[Age_LimitPTDailyCheck]
 	  @UpdatePT				VARCHAR(MAX),
 	  @LastUpdated			DATE OUTPUT,
 	  @isLimit				BIT = 0 OUTPUT,
-	  @isCancel				BIT = 0 OUTPUT
+	  @isCancel				BIT = 0 OUTPUT,
+	  @SettingStatus		TINYINT = 0
 AS
 /*
 		Task : NAP CM -  Limit Daily PT Update
@@ -15,6 +16,7 @@ AS
 		Revisions:
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	*/
 BEGIN
 	SET NOCOUNT ON;
@@ -73,12 +75,26 @@ BEGIN
 		SportType,
 		BetType
 	FROM dbo.f_DCS_PT_XMLParse(@UpdatePT)	
+
+	CREATE TABLE #ProductSettingDetail_DailyCheck(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail_DailyCheck(SportType,BetType,SettingType,IsLive,ProductID)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency TINYINT,SiteID INT,MaxCount TINYINT, SettingStatus TINYINT) 
-	 INSERT INTO #TempLimit(ProductID , SportType , BetType ,CustID ,Currency ,SiteID ,MaxCount , SettingStatus )  
+
+	INSERT INTO #TempLimit(ProductID , SportType , BetType ,CustID ,Currency ,SiteID ,MaxCount , SettingStatus )  
 	SELECT l.ProductID,b.SportType,b.BetType,l.CustID,l.Currency,l.SiteID,l.MaxCount , l.SettingStatus
 	FROM LimitPTDailySetting l WITH(NOLOCK) 
-	INNER JOIN ProductSettingDetail b  WITH(NOLOCK) ON l.ProductID = b.ProductID
+	INNER JOIN #ProductSettingDetail_DailyCheck b  WITH(NOLOCK) ON l.ProductID = b.ProductID
 	WHERE b.SportType IN (SELECT SportType FROM @tblPT)
 	
 	IF EXISTS( SELECT TOP 1 1 FROM #TempLimit t
@@ -117,5 +133,6 @@ BEGIN
 	END	
 	
 	DROP TABLE #TempLimit
+	DROP TABLE #ProductSettingDetail_DailyCheck
 END
 GO

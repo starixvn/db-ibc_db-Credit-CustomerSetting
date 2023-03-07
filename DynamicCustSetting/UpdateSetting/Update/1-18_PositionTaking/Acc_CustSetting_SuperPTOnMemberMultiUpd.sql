@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTOnMemberMultiUpd]
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT = 0 OUTPUT
 	, @ErrMsg		NVARCHAR(4000)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 		Created: Dominic
@@ -22,6 +23,7 @@ AS
 			- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		Parameter's Explanation:	
 		• @PT:
 					<ROOT>
@@ -201,6 +203,20 @@ BEGIN
 			,IsAutoSuperPT
 			,AutoSuperPT
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 			
 	--Get line infor : SMA accounts
 	SELECT TOP 1 @RepresentCustID=CustID
@@ -312,6 +328,7 @@ BEGIN
 						, @ErrCode		= @ErrCode	OUTPUT
 						, @MsgType		= @MsgType	OUTPUT
 						, @ErrMsg		= @ErrMsg	OUTPUT
+						,@SettingStatus = @SettingStatus
 	IF @ErrCode <> 0
 		RETURN		
 
@@ -523,7 +540,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	@OldPTTble AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -759,5 +776,7 @@ BEGIN
 			, @OldPT_XML		= @Old_PT_XML
 			, @duration			= @duration
 	END CATCH
+
+	DROP TABLE #ProductSettingDetail
 END
 GO

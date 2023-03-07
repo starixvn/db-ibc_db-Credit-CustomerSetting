@@ -13,6 +13,7 @@ AS
 
 	Revisions:
 		- 20220808@Tacy: Initial SP [RedmineID: #176225]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 */
@@ -351,7 +352,7 @@ BEGIN
 				OR main.maxbet		<> tmp.MaxBet
 				)
 	END
-	ELSE IF @SettingType=6 --WinLossLimit
+	ELSE IF @SettingType IN (6,22) --WinLossLimit
 	BEGIN
 		IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
 

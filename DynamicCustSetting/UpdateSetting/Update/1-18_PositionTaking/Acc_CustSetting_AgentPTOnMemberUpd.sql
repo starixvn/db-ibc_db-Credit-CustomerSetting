@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMemberUpd]
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 		Created: Dominic
@@ -26,6 +27,7 @@ AS
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20220808@Tacy: Resolve replication errors when using Search & Copy New member function [RedmineID: #176225]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 		Parameter's Explanation:
 		• @PT:
@@ -144,6 +146,19 @@ BEGIN
 			@SettingLevel	TINYINT,
 			@SettingList	VARCHAR(MAX)
     
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 
 --******************************************PERMISSION CHECKING*************************************** 		
 	--Check if XML is null or empty
@@ -210,7 +225,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewPTTble t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -238,6 +253,7 @@ BEGIN
 			,@LastUpdated	= @LastUpdated OUTPUT
 			,@isLimit		= @isLimit OUTPUT
 			,@isCancel		= @isCancel OUTPUT
+			,@SettingStatus = @SettingStatus
 		IF @isCancel > 0	
 		BEGIN
 			
@@ -383,6 +399,7 @@ BEGIN
 						, @MsgType		= @MsgType	OUT
 						, @ErrCode		= @ErrCode	OUT
 						, @ErrMsg		= @ErrMsg	OUT
+						,@SettingStatus = @SettingStatus
 
 	IF @ErrCode <> 0
 		RETURN
@@ -544,7 +561,7 @@ BEGIN
 
 		SELECT @SettingType = ps.SettingType
 		FROM @NewPTTble t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		WHERE ps.SettingType IN (1,18)
 
@@ -684,7 +701,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
 			INNER JOIN	@NewPTTble AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -889,5 +906,7 @@ BEGIN
 					, @TrackingValue	= @logSpData
 					, @TrackingValue2	= @logSpData_Old
 					, @duration			= @duration
+
+	DROP TABLE #ProductSettingDetail
 END
 GO

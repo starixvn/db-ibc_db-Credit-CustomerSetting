@@ -34,8 +34,8 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
-		- 20220627@Eden: Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
-		- 20230207@Eden: Alpha - User can not see the new create agent's account in the Agent List [Redmine: #183486]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -47,6 +47,38 @@ BEGIN
 	IF @ExistingCustID = 0 RETURN
 	
 	SELECT @ErrCode = 0
+
+	CREATE TABLE #ProductSettingDetail_tmp02(
+		[SettingType] [smallint] ,
+		[SportType] [smallint] ,
+		[BetType] [smallint] ,
+		[IsLive] [bit] ,
+		[ProductID] [tinyint] ,
+		[MaxPT] [smallmoney] ,
+		[MaxDiscount] [decimal](9, 8) ,
+		[IsSync] [bit] ,
+		[IsHidden] [bit] ,
+		[IsDisabled] [bit] ,
+		[SettingLevel] [tinyint] ,
+		[DisplayOrder] [tinyint] ,
+		[SettingStatus] [tinyint] ,
+		[IntervalValue] [decimal](19, 8) ,
+		[RealProductId] [tinyint] ,
+		[MaxChoice] [tinyint] ,
+		[ProductSettingID] [int] ,
+		[Parent_ProductSettingID] [int] ,
+		[Child_DisplayOrder] [int] ,
+		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	IF dbo.f_CheckRepTable('ProductSettingDetail') = 1
+	BEGIN
+		INSERT INTO #ProductSettingDetail_tmp02(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder)
+		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder
+		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	END
 
 	if dbo.f_CheckRepTable('CustProductStatus') = 1
 	BEGIN
@@ -87,7 +119,7 @@ BEGIN
 
 			INSERT INTO @OfferedProduct (Sporttype, Bettype, IsHiddenSource, IsHiddenDes)
 			SELECT Sporttype, Bettype, IsHidden, IsHidden
-			FROM ProductSettingDetail WITH (NOLOCK)
+			FROM #ProductSettingDetail_tmp02 WITH (NOLOCK)
 			WHERE SettingType IN (4,11,13,21)
 
 			UPDATE op
@@ -120,7 +152,7 @@ BEGIN
 		
 			INSERT INTO #SportBettypeFilter4(SportType,Bettype,IsLive,SettingType,IsDisabled,IsHidden,IsSync,bitmapOrder)
 			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 			
-			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
+			FROM #ProductSettingDetail_tmp02 psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
 				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
@@ -205,7 +237,7 @@ BEGIN
 		
 			INSERT INTO #SportBettypeFilter13(SportType, Bettype, IsLive, SettingType, IsDisabled, IsHidden, IsSync, bitmapOrder)
 			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
+			FROM #ProductSettingDetail_tmp02 psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
 				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13,@SettingStatus) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
@@ -290,7 +322,7 @@ BEGIN
 		
 			INSERT INTO #SportBettypeFilter21(SportType, Bettype, IsLive, SettingType, IsDisabled, IsHidden, IsSync, bitmapOrder)
 			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
+			FROM #ProductSettingDetail_tmp02 psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
 				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,21,@SettingStatus) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
@@ -375,7 +407,7 @@ BEGIN
 			
 			INSERT INTO #SportBettypeFilter11(SportType,Bettype,IsLive, SettingType,IsDisabled,IsHidden,IsSync,bitmapOrder)		
 			SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
-			FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
+			FROM #ProductSettingDetail_tmp02 psd WITH(NOLOCK)  
 				INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 				INNER JOIN @OfferedProduct op ON op.Bettype = pbs.Bettype AND op.Sporttype = pbs.Sporttype
 				INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11,@SettingStatus) t ON pbs.SportType = t.SportType AND pbs.BetType = t.BetType AND psd.SettingType = t.SettingType
@@ -463,7 +495,7 @@ BEGIN
 		AND dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1
 	   )
 	BEGIN					
-		CREATE TABLE #ProductSettingDetail(
+		CREATE TABLE #ProductProfile(
 			[SettingType] [smallint] NOT NULL,
 			[ProductID] [tinyint] NOT NULL,
 			[SportType] [smallint] NOT NULL,
@@ -478,7 +510,8 @@ BEGIN
 			[BetType] [smallint] NOT NULL,
 			[IsHidden] [BIT] NOT NULL,
 			[IsHiddenSource] [BIT] NOT NULL,
-			[HasSyncSource] [BIT] NOT NULL
+			[HasSyncSource] [BIT] NOT NULL,
+			[DummyProductID] [tinyint] NOT NULL
 		)
 
 		SELECT @AgentID = recommend, @RoleID = roleid, @_Site = Site, @_Currency = currency FROM Customer WITH (NOLOCK) WHERE custid = @CustID
@@ -491,14 +524,13 @@ BEGIN
 
 		SELECT @_SourceSiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_SourceSite
 
-		INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden, IsHiddenSource,HasSyncSource)
-		SELECT ps.RealProductId, ps.SportType, ps.BetType, IsHidden, IsHidden, st.value
-		FROM dbo.ProductSettingDetail ps WITH (NOLOCK)
+		INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden, IsHiddenSource,HasSyncSource,DummyProductID)
+		SELECT ps.RealProductId, ps.SportType, ps.BetType, IsHidden, IsHidden, st.value, ps.ProductID
+		FROM #ProductSettingDetail_tmp02 ps WITH (NOLOCK)
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ps.BetType AND psp.Sporttype = ps.SportType
 			CROSS APPLY dbo.CustProductStatus cps WITH (NOLOCK) 
 			CROSS APPLY dbo.f_CustSetting_ProductStatusSel(cps.bitmapHasSynced, psp.bitmapOrder) st
 		WHERE SettingType IN (4,11,13,21) AND cps.CustID = @ExistingCustID	
-			 AND ps.SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
 		
 		UPDATE op
 		SET op.IsHidden = stt.IsHidden
@@ -534,7 +566,7 @@ BEGIN
 		FROM #OfferedProductList op
 		WHERE ProductID = 20
 
-		INSERT #ProductSettingDetail(SettingType,ProductID,SportType,BetType,IsLive,IsHiddenSource,HasSyncSource)
+		INSERT #ProductProfile(SettingType,ProductID,SportType,BetType,IsLive,IsHiddenSource,HasSyncSource)
 		SELECT SettingType
 				,ps.ProductId
 				,ps.SportType
@@ -542,31 +574,42 @@ BEGIN
 				,IsLive
 				,op.IsHiddenSource
 				,op.HasSyncSource
-		FROM [dbo].[ProductSettingDetail] ps WITH(NOLOCK)
+		FROM #ProductSettingDetail_tmp02 ps WITH(NOLOCK)
 			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource 
 						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13,21)
-			AND ps.SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
+		UNION
+		SELECT SettingType
+				,ps.ProductId
+				,ps.SportType
+				,ps.BetType
+				,IsLive
+				,op.IsHiddenSource
+				,op.HasSyncSource
+		FROM #ProductSettingDetail_tmp02 ps WITH(NOLOCK)
+			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource,DummyProductID
+						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.ProductID = op.DummyProductID			
+		WHERE op.IsHidden = 0 AND ps.SettingType = 22
 
 		UPDATE op
 		SET op.IsHiddenSource = 1, HasSyncSource = 0  
-		FROM #ProductSettingDetail op
+		FROM #ProductProfile op
 			INNER JOIN dbo.SportNonOfferedSiteCurrency stt WITH(NOLOCK) ON op.SportType = stt.SportType AND op.Bettype = stt.Bettype
 		WHERE stt.Currency = @_SourceCurrency AND (stt.SiteID = @_SourceSiteID OR stt.SiteID = 0)
 			
 		UPDATE op 
 		SET op.IsHiddenSource = 1, HasSyncSource = 0
-		FROM #ProductSettingDetail op
+		FROM #ProductProfile op
 			INNER JOIN dbo.SportNonOfferedSiteCurrency stt WITH(NOLOCK) ON op.SportType = stt.SportType AND op.Bettype = stt.Bettype
 		WHERE (stt.Currency = @_SourceCurrency OR stt.Currency = 0 ) AND stt.SiteID = @_SourceSiteID
 
 		DELETE sb		
-		FROM #ProductSettingDetail sb
+		FROM #ProductProfile sb
 			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
 		WHERE ssc.Currency = @_Currency AND (ssc.SiteID = @_SiteID OR ssc.SiteID = 0)
 			
 		DELETE sb		
-		FROM #ProductSettingDetail sb
+		FROM #ProductProfile sb
 			INNER JOIN dbo.SportNonOfferedSiteCurrency ssc WITH(NOLOCK) ON sb.SportType = ssc.SportType AND sb.Bettype = ssc.Bettype
 		WHERE (ssc.Currency = @_Currency OR ssc.Currency = 0 ) AND ssc.SiteID = @_SiteID
 
@@ -602,7 +645,7 @@ BEGIN
 						,[MinPT]
 						,100 --[MaxPT]
 					FROM [dbo].[CustPTSetting3rd_Agent] cs WITH(NOLOCK)
-						INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive
+						INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive
 					WHERE CustID = @ExistingCustID AND ps.SettingType IN (1,18) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
@@ -628,8 +671,8 @@ BEGIN
 					,dtl.IsLive
 					,0,0,0,0,0,0,0,0
 					,100 --dtl.MaxPT
-				FROM dbo.ProductSettingDetail dtl WITH (NOLOCK)
-					INNER JOIN #ProductSettingDetail ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive  AND ps.SettingType = dtl.SettingType
+				FROM #ProductSettingDetail_tmp02 dtl WITH (NOLOCK)
+					INNER JOIN #ProductProfile ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive  AND ps.SettingType = dtl.SettingType
 				WHERE ps.SettingType IN (1,18) AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
 			END
 		END TRY
@@ -658,7 +701,7 @@ BEGIN
 						   ,[MaxBet]
 						   ,[MaxPerMatch]
 				FROM [dbo].[CustBetSetting3rd_Agent] cs WITH (NOLOCK)
-					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
+					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
 				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9,16,20) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
@@ -677,7 +720,7 @@ BEGIN
 					,0
 					,0
 					,0
-				FROM #ProductSettingDetail t 
+				FROM #ProductProfile t 
 				WHERE t.SettingType = 2 AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 				
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
@@ -694,7 +737,7 @@ BEGIN
 					,ps.DefaultMinBet
 					,ps.DefaultMaxBet
 					,ISNULL(ps.DefaultMaxPerMatch,0)
-				FROM #ProductSettingDetail t 
+				FROM #ProductProfile t 
 					INNER JOIN dbo.ProductBetSetting ps WITH (NOLOCK) ON t.SportType = ps.Sporttype AND t.Bettype = ps.Bettype AND ps.IsDep = 0 AND ps.Currency = @_Currency
 				WHERE t.SettingType IN (9,16,20) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
@@ -721,7 +764,7 @@ BEGIN
 						   ,cs.BetType
 						   ,[Discount]
 				FROM [dbo].[CustDiscount3rd_Agent] cs WITH(NOLOCK)
-					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
+					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
 				WHERE CustID = @ExistingCustID AND ps.SettingType IN (3,5,14,19) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
@@ -736,7 +779,7 @@ BEGIN
 					,t.SportType
 					,t.BetType
 					,0 -- 0 zero by default
-				FROM #ProductSettingDetail t 
+				FROM #ProductProfile t 
 				WHERE t.SettingType IN (3,5,14,19) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
@@ -750,7 +793,7 @@ BEGIN
 			RETURN
 		END CATCH
 
-		/********************************************* SMA Win Loss Limit : SettingType = 6 SMA Loss Limit : SettingType = 12 ****************************************/
+		/********************************************* SMA Win Loss Limit : SettingType = 6, 22 SMA Loss Limit : SettingType = 12 ****************************************/
 		BEGIN TRY
 			IF EXISTS(SELECT TOP 1 1 FROM [dbo].[CustWinLossLimit_Agent] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 				INSERT INTO [dbo].[CustWinLossLimit_Agent]
@@ -767,8 +810,8 @@ BEGIN
 							,MaxLossLimit
 							,IsAutoReset
 				FROM [dbo].[CustWinLossLimit_Agent] cs WITH (NOLOCK)
-					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN( 6,12) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN( 6,12,22) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -786,10 +829,10 @@ BEGIN
 					,0
 					,gs.DefaultLossLimit
 					,1
-				FROM #ProductSettingDetail t 
+				FROM #ProductProfile t 
 					INNER JOIN LossLimit_GlobalSetting gs ON gs.ProductId = t.ProductID
 					INNER JOIN CustInfo ci WITH (NOLOCK) ON gs.ExchangeId = ci.currency
-				WHERE ci.custid = @CustID AND t.SettingType IN (6,12) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
+				WHERE ci.custid = @CustID AND t.SettingType IN (6,12,22) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
@@ -818,7 +861,7 @@ BEGIN
 					,	cs.BetType
 					,	cs.StakeLevelList
 				FROM dbo.CustStakeLevel_Agent AS cs
-					INNER JOIN #ProductSettingDetail ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
+					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
 				WHERE CustID = @ExistingCustID AND ps.SettingType IN (7,17,8) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF	@RoleID = 4
@@ -826,7 +869,7 @@ BEGIN
 				INSERT INTO	dbo.CustStakeLevel_Agent
 					(	CustID , SportType    , BetType    , StakeLevelList)
 				SELECT	@CustID, ps.SportType, ps.Bettype, LEFT(sl.list, LEN(sl.list) - 1)
-				FROM	#ProductSettingDetail ps 
+				FROM	#ProductProfile ps 
 					CROSS APPLY (
 						SELECT	CAST(sl.StakeLevelID AS VARCHAR) + ','
 						FROM		dbo.StakeLevel	AS sl WITH(NOLOCK)
@@ -851,5 +894,7 @@ BEGIN
 			RETURN
 		END CATCH
 	END	
+
+	DROP TABLE #ProductSettingDetail_tmp02
 END
 GO

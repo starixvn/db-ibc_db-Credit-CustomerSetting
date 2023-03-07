@@ -1,12 +1,11 @@
-USE CustDB
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0" IsNested = "1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_03]
 	@CustID			INT,
 	@SettingType	TINYINT = 4,
 	@IsSynced		BIT = 1,	
 	@RoleID			TINYINT,
-	@ProductID		TINYINT
+	@ProductID		TINYINT,	
+	@SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160215@Elodie
@@ -15,12 +14,26 @@ AS
 
 	Revision:
 		- 20170613@Elodie: Add Setting Type 13
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 */
 BEGIN
 	SET NOCOUNT ON 
 	IF dbo.f_CheckRepTable('custinfo') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustProductStatus') = 0 RETURN
+
+	CREATE TABLE #ProductSettingDetail_tmp03(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+ 
+	INSERT INTO #ProductSettingDetail_tmp03(SportType,BetType,SettingType,IsLive,ProductID)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
 	CREATE TABLE #NewSyncStatTbl(
 				SportType SMALLINT,
@@ -32,7 +45,7 @@ BEGIN
 				)
 	SELECT		psd.SportType
 			,	psd.BetType
-	FROM	dbo.ProductSettingDetail AS psd WITH (NOLOCK)
+	FROM	#ProductSettingDetail_tmp03 AS psd WITH (NOLOCK)
 	WHERE	psd.ProductID = @ProductID
 		AND	psd.SettingType = @SettingType
 
@@ -75,9 +88,7 @@ BEGIN
 		WHERE CI.recommend = @custid AND CI.roleid = 1
 	END
 	
+	DROP TABLE #ProductSettingDetail_tmp03
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_DynamicCustomerInfo_03] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_DynamicCustomerInfo_03] TO [vnteam] AS [dbo]

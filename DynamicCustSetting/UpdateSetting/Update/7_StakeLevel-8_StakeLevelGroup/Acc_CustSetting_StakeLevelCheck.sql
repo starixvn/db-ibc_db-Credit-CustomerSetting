@@ -12,6 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_StakeLevelCheck]
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''	OUTPUT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160118@Billy
@@ -24,6 +25,7 @@ AS
 		- 20200414@Tiara: Allbet/GD multiple stakelevels for member [Redmine: #131171]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -57,10 +59,25 @@ BEGIN
 		,	@wrongStakeLevelList	VARCHAR(100) 
 
 	DECLARE	@xml					XML
+
+	CREATE TABLE #ProductSettingDetail_Check(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		[SettingLevel] [tinyint],
+		MaxChoice	tinyint,
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
 	
 
 	IF @StakeLevel IS NULL OR @StakeLevel = ''
 		RETURN;
+
+	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxChoice)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxChoice
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 
 	SELECT	@ErrCode	= 0
 		,	@MsgType	= 0
@@ -89,7 +106,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM #tmpStakeCheck t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN #ProductSettingDetail_Check ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -115,7 +132,7 @@ BEGIN
 														FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
 														INNER JOIN	#tmpStakeCheck AS ts
 																ON	ts.BetType = sl.GameTypeID
-														INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+														INNER JOIN	#ProductSettingDetail_Check AS psd WITH(NOLOCK)
 																ON	psd.SportType = ts.SportType
 																AND	psd.BetType = ts.BetType
 																AND	psd.SettingType = @SettingType
@@ -134,7 +151,7 @@ BEGIN
 			BEGIN
 				IF EXISTS (SELECT 1 
 						FROM  #tmpStakeCheck T WITH (NOLOCK)
-							INNER JOIN ProductSettingDetail P WITH (NOLOCK) ON T.SportType = P.SportType AND T.BetType = P.BetType
+							INNER JOIN #ProductSettingDetail_Check P WITH (NOLOCK) ON T.SportType = P.SportType AND T.BetType = P.BetType
 							CROSS APPLY STRING_SPLIT(T.StakeLevelList,',') 
 						WHERE P.SettingType = @SettingType AND P.ProductID = @ProductID
 						GROUP BY P.SportType, P.BetType, P.MaxChoice
@@ -158,7 +175,7 @@ BEGIN
 														FROM		dbo.StakeLevel AS sl WITH(NOLOCK)
 														INNER JOIN	#tmpStakeCheck AS ts
 																ON	ts.BetType = sl.GameTypeID
-														INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+														INNER JOIN	#ProductSettingDetail_Check AS psd WITH(NOLOCK)
 																ON	psd.SportType = ts.SportType
 																AND	psd.BetType = ts.BetType
 																AND	psd.SettingType = @SettingType
@@ -227,7 +244,7 @@ BEGIN
 												INNER JOIN	#tmpStakeCheck AS ts
 														ON	ts.BetType = sl.GameTypeID
 														AND	sl.StakeLevelID = CAST(@invalidStakeLevelID AS INT)
-												INNER JOIN	dbo.ProductSettingDetail AS psd WITH(NOLOCK)
+												INNER JOIN	#ProductSettingDetail_Check AS psd WITH(NOLOCK)
 														ON	psd.SportType = ts.SportType
 														AND	psd.BetType = ts.BetType
 														AND	psd.SettingType = @SettingType
@@ -250,5 +267,6 @@ BEGIN
 	END;
 
 	DROP TABLE #tmpStakeCheck;
+	DROP TABLE #ProductSettingDetail_Check
 END;
 GO
