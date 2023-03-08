@@ -81,6 +81,7 @@ AS
     -- 20210427@VN-Eden: change funtion get autosuspend [Redmine: #160766]
     -- 20220477@Tw-Xinxian: Cloumn add alias
     -- 20220912@Tw-YC: remove maxpermatch164
+    -- 20221226@TW-Andy: remove usage of maxpermatch on talbe [custinfo] 
   */
 BEGIN
 	SET NOCOUNT ON
@@ -91,7 +92,6 @@ BEGIN
 		,@mrecommend INT
 		,@srecommend INT
 		,@credit MONEY
-		,@MaxPerBall161 MONEY
 		,@actualrate FLOAT
 		,@currencyname NVARCHAR(50)
 		,@virtualrate SMALLMONEY
@@ -213,64 +213,10 @@ BEGIN
 						END
 			ELSE ci.credit
 			END
-		,@MaxPerBall161 = ci.maxperball161
 		,@actualrate = ex.actualrate
 		,@currencyname = ex.currency
 		,@virtualrate = ci.virtualmultiplier
 		,@BonusWalletFlag = Isnull(ci.bonuswalletflag, @False)
-		,@maxpermatch = Isnull(CASE 
-				WHEN @usertype = 2
-					THEN @Zero
-				WHEN @isparlay = 0
-					AND @sporttype = 1
-					THEN ci.maxpermatch
-				WHEN @isparlay = 0
-					AND @sporttype = 2
-					THEN ci.maxpermatch2
-				WHEN @isparlay = 0
-					AND @sporttype = 3
-					THEN ci.maxpermatch3
-				WHEN @isparlay = 0
-					AND @sporttype = 5
-					THEN ci.maxpermatch5
-				WHEN @isparlay = 0
-					AND @sporttype = 8
-					THEN ci.maxpermatch8
-				WHEN @isparlay = 0
-					AND @sporttype = 10
-					THEN ci.maxpermatch10
-				WHEN @isparlay = 0
-					AND @sporttype = 11
-					THEN ci.maxpermatch11
-				WHEN @isparlay = 0
-					AND @sporttype = 161
-					THEN ci.maxpermatch161
-				WHEN @isparlay = 0
-					AND @sporttype = 164
-					AND @isLicensee = 0
-					THEN 0
-				WHEN @isparlay = 0
-					AND @sporttype = 164
-					AND @isLicensee = 1
-					THEN ci.maxpermatch161
-				WHEN @isparlay = 0
-					AND @sporttype = 32
-					THEN ci.maxpermatch2
-				WHEN @isparlay = 0
-					AND @sporttype = 44
-					THEN ci.maxpermatch99
-				WHEN @isparlay = 1
-					AND @sporttype = 1
-					THEN ci.maxpermatch1mp
-				WHEN @isparlay = 1
-					AND @sporttype = 2
-					AND @bettype = 38
-					THEN ci.maxpermatch99mp
-				WHEN @isparlay = 1
-					AND @sporttype = 99
-					THEN ci.maxpermatch99mp
-				ELSE ci.maxpermatch99
-				END, 0)
 		,@autosuspend = CASE 
 			WHEN @sporttype = 1
 				THEN Isnull(ci.autosuspend, @False)
@@ -790,7 +736,6 @@ BEGIN
 		,@mrecommend mrecommend
 		,@srecommend srecommend
 		,@credit credit
-		,@MaxPerBall161 MaxPerBall161
 		,@actualrate actualrate
 		,@currencyname currencyname
 		,@virtualrate virtualrate
