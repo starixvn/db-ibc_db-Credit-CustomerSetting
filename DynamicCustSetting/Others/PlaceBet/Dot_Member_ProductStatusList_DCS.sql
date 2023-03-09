@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="Dot_Member,Dot_Intg" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Member_ProductStatusList_DCS]
 	@CustID INT,
 	@IsTest BIT = 0
@@ -23,39 +23,13 @@ AS
 		- 20220627@Eden: Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20220830@Tacy: Add code to control CANSEE for SEAL Entertainment [RedmineID: #176209]
 		- 20221222@Winfred: Update Cansee for RNG SLOT [RedmineID: #181929]
-		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230118@Helios: add JiliGame [RedmineId: #182869] 
 
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
 BEGIN
 	DECLARE @SiteID INT, @Currency TINYINT, @IsLaunched BIT
 	SET @IsLaunched = 0
-
-	DECLARE @ProductSettingDetail TABLE(
-		[SportType] [smallint],
-		[BetType] [smallint],
-		PRIMARY KEY(SportType,BetType)
-	)
-
-	IF @IsTest = 1
-	BEGIN
-		INSERT INTO @ProductSettingDetail(SportType,BetType)
-		SELECT SportType,BetType
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(1)
-		WHERE SettingType IN (4,11,13,21)
-			AND SettingStatus = 1
-		UNION 
-		SELECT SportType,BetType
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(3)
-		WHERE SettingType IN (4,11,13,21)
-	END
-	ELSE
-	BEGIN
-		INSERT INTO @ProductSettingDetail(SportType,BetType)
-		SELECT SportType,BetType
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(0)
-		WHERE SettingType IN (4,11,13,21)
-	END
 
 	SELECT @SiteID = s.siteid, @Currency = c.currency
 	FROM Customer c WITH (NOLOCK)
@@ -64,19 +38,27 @@ BEGIN
 	WHERE c.custid = @CustID
 
 	--Get Product Status
-	declare @BetType20 SMALLINT, @BetType2701 SMALLINT,@BetType2801 SMALLINT, @BetType4101 SMALLINT ,@Bettype5401 SMALLINT ,@Bettype8900 SMALLINT
-	SELECT @BetType20=20, @BetType4101 = 4101, @Bettype5401 = 5401, @Bettype8900=8900
+	declare @BetType20 SMALLINT, @BetType2701 SMALLINT,@BetType2801 SMALLINT, @BetType4101 SMALLINT ,@Bettype5401 SMALLINT ,@Bettype8900 SMALLINT,@Bettype5100 SMALLINT
+	SELECT @BetType20=20, @BetType2701 = 2701, @BetType2801 = 2801, @BetType4101 = 4101, @Bettype5401 = 5401, @Bettype8900=8900 , @Bettype5100 = 5100
 
-	SELECT DISTINCT cs.CustID, psc.Sporttype, CASE psc.Sporttype	
+	SELECT cs.CustID, psc.Sporttype, CASE psc.Sporttype	
 	                                    WHEN 44  THEN @BetType20 
+										WHEN 190 THEN @BetType2701
+										WHEN 192 THEN @BetType2701
+										WHEN 194 THEN @BetType2701
+										WHEN 193 THEN @BetType2801
+										WHEN 195 THEN @BetType2701
+										WHEN 196 THEN @BetType2701
+										WHEN 197 THEN @BetType2701
 										WHEN 248 THEN @BetType4101
 										WHEN 237 THEN @Bettype5401
 										WHEN 156 THEN @Bettype8900
+										WHEN 158 THEN @Bettype5100
 										ELSE ps.Bettype END AS Bettype, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) AS IsHidden, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsDisabled, ps.bitmapOrder)) AS IsDisabled, 
 			CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) = 1 THEN @IsLaunched ELSE psc.IsLaunched END AS IsLaunched
-	FROM @ProductSettingDetail sd
+	FROM dbo.ProductSettingDetail sd WITH (NOLOCK)
 		INNER JOIN dbo.ProductStatusProfile ps WITH (NOLOCK) ON ps.Sporttype = sd.SportType AND ps.Bettype = sd.BetType
 		INNER JOIN
 					(	SELECT SportType, IsLaunched
@@ -85,15 +67,26 @@ BEGIN
 						AND psc.Currency = @Currency  
 						AND (psc.SiteID = @SiteID OR psc.SiteID = 0)
 					UNION -- NOT UNION ALL
+
 					SELECT SportType, IsLaunched
 					FROM dbo.ProductLaunchedSiteCurrency psc WITH (NOLOCK) 
 					WHERE psc.IsTest <= @IsTest AND psc.SiteID = @SiteID AND (psc.Currency = @Currency OR psc.Currency = 0) 
 				) as psc ON  (CASE psc.SportType 
+				                WHEN 190 THEN 180
+				                WHEN 192 THEN 180
+				                WHEN 193 THEN 180
+								WHEN 194 THEN 180
+								WHEN 195 THEN 180
+								WHEN 196 THEN 180
+								WHEN 197 THEN 180
 				                WHEN 248 THEN 9906
 								WHEN 237 THEN 9906
 								WHEN 156 THEN 9906
+								WHEN 158 THEN 9906
 				                ELSE psc.Sporttype END) = ps.Sporttype
 		CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
-	WHERE cs.CustID = @CustID
+	WHERE sd.SettingType IN (4,11,13,21)
+		AND SettingStatus <= CASE WHEN @IsTest = 1 THEN 1 ELSE 0 END
+		AND cs.CustID = @CustID
 END
 GO
