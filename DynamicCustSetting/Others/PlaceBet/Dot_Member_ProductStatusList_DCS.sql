@@ -38,8 +38,8 @@ BEGIN
 	WHERE c.custid = @CustID
 
 	--Get Product Status
-	declare @BetType20 SMALLINT, @BetType2701 SMALLINT,@BetType2801 SMALLINT, @BetType4101 SMALLINT ,@Bettype5401 SMALLINT ,@Bettype8900 SMALLINT,@Bettype5100 SMALLINT
-	SELECT @BetType20=20, @BetType2701 = 2701, @BetType2801 = 2801, @BetType4101 = 4101, @Bettype5401 = 5401, @Bettype8900=8900 , @Bettype5100 = 5100
+	declare @BetType20 SMALLINT, @BetType2701 SMALLINT,@BetType2801 SMALLINT, @BetType4101 SMALLINT ,@Bettype5401 SMALLINT ,@Bettype8900 SMALLINT,@Bettype5299 SMALLINT  -- Enhance Jili 5299
+	SELECT @BetType20=20, @BetType2701 = 2701, @BetType2801 = 2801, @BetType4101 = 4101, @Bettype5401 = 5401, @Bettype8900=8900 , @Bettype5299 = 5299 -- Enhance Jili 5299
 
 	SELECT cs.CustID, psc.Sporttype, CASE psc.Sporttype	
 	                                    WHEN 44  THEN @BetType20 
@@ -53,7 +53,7 @@ BEGIN
 										WHEN 248 THEN @BetType4101
 										WHEN 237 THEN @Bettype5401
 										WHEN 156 THEN @Bettype8900
-										WHEN 158 THEN @Bettype5100
+										WHEN 158 THEN @Bettype5299  -- Enhance Jili 5299
 										ELSE ps.Bettype END AS Bettype, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) AS IsHidden, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsDisabled, ps.bitmapOrder)) AS IsDisabled, 
@@ -82,7 +82,7 @@ BEGIN
 				                WHEN 248 THEN 9906
 								WHEN 237 THEN 9906
 								WHEN 156 THEN 9906
-								WHEN 158 THEN 9906
+								WHEN 158 THEN 9906  -- Enhance Jili 5299
 				                ELSE psc.Sporttype END) = ps.Sporttype
 		CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
 	WHERE sd.SettingType IN (4,11,13,21)
