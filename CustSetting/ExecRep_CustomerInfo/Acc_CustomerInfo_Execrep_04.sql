@@ -28,6 +28,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@AutoSuspendSoccer			BIT				= 0
 				,	@AutoSuspendOtherSports		BIT				= 0
 				,	@AutoSuspendBasketball		BIT				= 0
+				,	@IsUpdateAutoSuspendSoccer			BIT 	= 0
+				,	@IsUpdateAutoSuspendOtherSports		BIT 	= 0
+				,	@IsUpdateAutoSuspendBasketball 		BIT 	= 0
 				,	@rowcount					INT				= 0		OUTPUT
 				,	@SystemID TINYINT=1
 				--20200206@Tiara: New VR structure for Soccer [Redmine: #126243]
@@ -90,9 +93,8 @@ AS
 			+ 'EnableVS': Enable Virtual Sport [@EnableVS]
 			+ 'DisableNumberGame': Number game status [@DisableNumberGame]
 		
-			+ 'AutoSuspend': Auto suspend all: Soccer and Other Sports [@AutoSuspendSoccer, @AutoSuspendOtherSports]
-			+ 'AutoSuspendSoccer': Auto suspend for Soccer[@AutoSuspendSoccer]
-			+ 'AutoSuspendOther': Auto suspend for Other Sports [@AutoSuspendOtherSports]
+			+ 'AutoSuspend': update Auto suspend for Soccer, Basketball, Other Sports [@AutoSuspendSoccer, @AutoSuspendOtherSports, @AutoSuspendBasketball]
+			
 			+ 'UpdKeno-Hide' : Hide Keno gaming
 			+ 'GoldDeluxe': Gold Deluxe status
 			+ 'SuperLive': Super Live status
@@ -1017,99 +1019,30 @@ BEGIN
 	    IF @roleID = 4 
 	    BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend2 = @AutoSuspendOtherSports, 
-			    autosuspend = @AutoSuspendSoccer,
-				autosuspend3 = @AutoSuspendBasketball
+		    SET	autosuspend2 = CASE WHEN @IsUpdateAutoSuspendOtherSports = 1 THEN @AutoSuspendOtherSports ELSE autosuspend2 END, 
+			    autosuspend = CASE WHEN @IsUpdateAutoSuspendSoccer = 1 THEN @AutoSuspendSoccer ELSE autosuspend END,
+				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END
 		    WHERE srecommend = @custID; 
 	    END;
 
 	    IF @roleID = 3 
 	    BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend2 = @AutoSuspendOtherSports,	
-			    autosuspend = @AutoSuspendSoccer,
-				autosuspend3 = @AutoSuspendBasketball
+		    SET	autosuspend2 = CASE WHEN @IsUpdateAutoSuspendOtherSports = 1 THEN @AutoSuspendOtherSports ELSE autosuspend2 END, 
+			    autosuspend = CASE WHEN @IsUpdateAutoSuspendSoccer = 1 THEN @AutoSuspendSoccer ELSE autosuspend END,
+				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END
 		    WHERE mrecommend = @custID; 
 	    END;
 
 	    IF @roleID = 2 
 	    BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend2 = @AutoSuspendOtherSports,	
-			    autosuspend = @AutoSuspendSoccer,
-				autosuspend3 = @AutoSuspendBasketball
+		    SET	autosuspend2 = CASE WHEN @IsUpdateAutoSuspendOtherSports = 1 THEN @AutoSuspendOtherSports ELSE autosuspend2 END, 
+			    autosuspend = CASE WHEN @IsUpdateAutoSuspendSoccer = 1 THEN @AutoSuspendSoccer ELSE autosuspend END,
+				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END
 		    WHERE recommend = @custID; 
 	    END;
-    END;
-    else IF @Action = 'AutoSuspendSoccer'
-    begin 
-	    IF @roleID = 4 
-	    BEGIN
-		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend = @AutoSuspendSoccer	
-		    WHERE srecommend = @custID; 
-	    END;
-
-	    IF @roleID = 3 
-	    BEGIN
-		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend = @AutoSuspendSoccer	
-		    WHERE mrecommend = @custID; 
-	    END;
-
-	    IF @roleID = 2 
-	    BEGIN
-		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend = @AutoSuspendSoccer	
-		    WHERE recommend = @custID; 
-	    END;
-    end;
-	else IF @Action = 'AutoSuspendBasketball'
-    begin 
-	    IF @roleID = 4 
-	    BEGIN
-		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend3 = @AutoSuspendBasketball	
-		    WHERE srecommend = @custID; 
-	    END;
-
-	    IF @roleID = 3 
-	    BEGIN
-		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend3 = @AutoSuspendBasketball	
-		    WHERE mrecommend = @custID; 
-	    END;
-
-	    IF @roleID = 2 
-	    BEGIN
-		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend3 = @AutoSuspendBasketball	
-		    WHERE recommend = @custID; 
-	    END;
-    end;
-    else if @Action = 'AutoSuspendOther'
-    begin
-	    IF @roleID = 4 
-		    BEGIN
-			    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-			    SET	autosuspend2 = @AutoSuspendOtherSports
-			    WHERE srecommend = @custID; 	
-		    END;
-
-	    IF @roleID = 3 
-	    BEGIN
-		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend2 = @AutoSuspendOtherSports	
-		    WHERE mrecommend = @custID; 
-	    END;
-
-	    IF @roleID = 2 
-	    BEGIN
-		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
-		    SET	autosuspend2 = @AutoSuspendOtherSports	
-		    WHERE recommend = @custID; 
-	    END;
-    end;
+    END;    
     /**20140228@Bobby: Update Keno status [Redmine:#12474]**/
     else if @Action = 'UpdKeno-Hide'
     begin
