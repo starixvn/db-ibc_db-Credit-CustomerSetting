@@ -23,7 +23,7 @@ AS
 		- 20220627@Eden: Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20220830@Tacy: Add code to control CANSEE for SEAL Entertainment [RedmineID: #176209]
 		- 20221222@Winfred: Update Cansee for RNG SLOT [RedmineID: #181929]
-		- 20230118@Helios: add JiliGame [RedmineId: #182869] 
+		- 20230118@Helios: add JiliGame [RedmineId: #182869]  
 
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
