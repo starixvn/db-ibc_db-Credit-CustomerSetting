@@ -82,6 +82,7 @@ AS
     -- 20220477@Tw-Xinxian: Cloumn add alias
     -- 20220912@Tw-YC: remove maxpermatch164
     -- 20221226@TW-Andy: remove usage of maxpermatch on talbe [custinfo] 
+	-- 20230307@VN-Johnson: Add auto suspend for BasketBall and return Basketball VR to its original state [redmine:#184339]
   */
 BEGIN
 	SET NOCOUNT ON
@@ -220,6 +221,8 @@ BEGIN
 		,@autosuspend = CASE 
 			WHEN @sporttype = 1
 				THEN Isnull(ci.autosuspend, @False)
+			WHEN @sporttype = 2
+				THEN Isnull(ci.autosuspend3, @False)	
 			WHEN @isparlay = 1
 				OR @sporttype IN (
 					180
@@ -360,8 +363,6 @@ BEGIN
 				,100
 				) --Update VR = 0 for Other Sports
 		BEGIN
-			DECLARE @ValueID_0 INT
-			DECLARE @BasketBallLevelID INT
 			DECLARE @tblVirtualrate TABLE (
 				sporttype INT
 				,bettype INT
@@ -399,51 +400,6 @@ BEGIN
 					,2
 			END
 
-			SELECT @ValueID_0 = valueid
-			FROM vrvaluemapping WITH (NOLOCK)
-			WHERE value = 1.00
-
-			--Update VR = 0 for Basket Ball (using VR2)
-			SELECT @BasketBallLevelID = levelid
-			FROM vrsettinghierarchy WITH (NOLOCK)
-			WHERE sporttype = 2
-				AND vrleaguegroupid = - 1
-				AND bettype = - 1
-
-			IF EXISTS (
-					SELECT 1
-					FROM vrcustsetting WITH (NOLOCK)
-					WHERE custid = @custid
-						AND levelid = @BasketBallLevelID
-					)
-			BEGIN
-				UPDATE v
-				SET v.valueidlive = @ValueID_0
-					,v.valueidnonlive = @ValueID_0
-				FROM vrcustsetting v WITH (ROWLOCK)
-				WHERE custid = @custid
-					AND LevelID = @BasketBallLevelID
-					AND (
-						v.valueidlive != @ValueID_0
-						OR v.valueidnonlive != @ValueID_0
-						)
-			END
-			ELSE
-			BEGIN
-				INSERT INTO vrcustsetting (
-					custid
-					,levelid
-					,valueidlive
-					,valueidnonlive
-					)
-				VALUES (
-					@custid
-					,@BasketBallLevelID
-					,@ValueID_0
-					,@ValueID_0
-					)
-			END
-
 			--Update VR = 0 for Other sports (using VR1)                
 			INSERT INTO @tblVirtualrate (
 				sporttype
@@ -457,8 +413,7 @@ BEGIN
 				,1.00
 			FROM profilevirtualsetting WITH (NOLOCK)
 			WHERE sporttype NOT IN (
-					1
-					,2
+					1					
 					,43
 					)
 
@@ -624,10 +579,7 @@ BEGIN
 					,@Istest = @Istest
 			END
 		END
-		ELSE IF @sporttype IN (
-				2
-				,43
-				) --For Esports/BasketBall, get VR2
+		ELSE IF @sporttype IN (43) --For Esports get VR2
 		BEGIN
 			EXEC Dot_member_customergetvirtualratebysportbettype @custid = @custid
 				,@sporttype = @sporttype_vrate
@@ -673,10 +625,7 @@ BEGIN
 		END
 
 		IF @IsForcedVRValue = 1
-			AND @sporttype NOT IN (
-				2
-				,43
-				)
+			AND @sporttype NOT IN (43)
 		BEGIN
 			SET @new_virtualrate = CASE 
 					WHEN @ForcedVRValue > Isnull(@new_virtualrate, 1)
@@ -689,10 +638,7 @@ BEGIN
 	END
 
 	--Get Autosuspend (VR2)
-	IF @sporttype IN (
-			2
-			,43
-			)
+	IF @sporttype IN (43)
 		AND @isparlay = 0
 	BEGIN
 		SET @autosuspend = @False

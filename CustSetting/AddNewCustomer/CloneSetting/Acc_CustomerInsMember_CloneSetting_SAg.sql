@@ -101,7 +101,7 @@ AS
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
-	
+	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -401,6 +401,7 @@ BEGIN
 	-- get autosuspend's upline
 	DECLARE @autosuspend BIT,
 		@autosuspend2 BIT,
+		@autosuspend3 BIT,
 		@DangerSuper TINYINT = 0,
 		@DangerSuper2 TINYINT = 0,
 		@DangerSuper3 TINYINT = 0,
@@ -410,6 +411,7 @@ BEGIN
 	select @enableUpline = isnull(enabled,0), @doubleCommLosingUpline = DoubleCommLosing,
 		 @autosuspend = ISNULL(autosuspend, 0),
 		 @autosuspend2 = ISNULL(autosuspend2, 0),
+		 @autosuspend3 = ISNULL(autosuspend3, 0),
 		 @virtualmultiplier = ISNULL(virtualmultiplier,1),
 		 @DangerSuper = Danger,
 		 @DangerSuper2 = Danger2,
@@ -432,6 +434,7 @@ BEGIN
 				,dangercust
 				,autosuspend
 				,autosuspend2
+				,autosuspend3
 				,credit
 				,MatchLimit
 				,VirtualMultiplier
@@ -458,6 +461,7 @@ BEGIN
 				,0 AS dangercust
 				,@autosuspend AS autosuspend
 				,@autosuspend2 as autosuspend2
+				,@autosuspend3 as autosuspend3
 				,@Credit AS Credit
 				,MatchLimit
 				,@virtualmultiplier
@@ -720,30 +724,9 @@ BEGIN
 	END CATCH	
 	
 	BEGIN TRY
-	 --New 611111 super must have VR setting = 0% (Basketball level) + ESport
+	 --New 611111 super must have VR setting = 0% ESport
 	 IF @site = '611111'
 	 BEGIN
-		DECLARE @VirtualRateMultiplier VARCHAR(MAX) = '' --Basketball
-
-		SELECT @VirtualRateMultiplier = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
-															FROM VRSettingHierarchy b WITH(NOLOCK) 
-																CROSS APPLY VRValueMapping vr (NOLOCK)
-															WHERE b.SportType = 2 
-																AND b.VRLeagueGroupID = -1 
-																AND b.BetType = -1 
-																AND vr.Value = 1
-															FOR XML RAW('Row'), ROOT ('Root'))
-											)
-
-		EXEC [Acc_CustVirtualMultiplier_Upd]
-			  @CustID = @CustID
-			, @SportType = 2
-			, @VirtualMultiplier = @VirtualRateMultiplier
-			, @UserID  = @creator
-			, @IP  = @IP
-			, @ErrCode = @ErrCode OUTPUT 
-			, @ErrMsg = @ErrMsg OUTPUT
-
 		DECLARE @VirtualRateMultiplier2 VARCHAR(MAX) = '' --Esports
 		SELECT @VirtualRateMultiplier2 = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
 															FROM VRSettingHierarchy b WITH(NOLOCK) 
@@ -765,9 +748,6 @@ BEGIN
 			, @ErrMsg = @ErrMsg OUTPUT
 
 		INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)
-		SELECT @CustID,2 AS SportType
-		WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 2)
-		UNION ALL
 		SELECT @CustID,43 AS SportType
 		WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
 	 END

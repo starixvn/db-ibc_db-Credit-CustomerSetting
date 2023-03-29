@@ -62,9 +62,10 @@ BEGIN
         -- 20210309@VN-Eden: Revise @betfrom = 'a' to 'z' to VR setting for Basketball on some licensees from Desktop/China View [Redmine: #151392]
         -- 20210226@VN-Eden: Implement Lock for VR update [Redmine:#149370]
         -- 20210427@VN-Eden: Implement dedicated feature to control Global Virtual Rate adjustment on tickets [Redmine:#136423]
-        -- 20210703@TW-Andy: Credit user lock account  suspend 
+        -- 20210703@TW-Andy: Credit user lock account  suspend 	
         -- 20220419@TW-Xinxain: column add alias
 		-- 20221226@TW-Andy: remove usage of column maxpermatch on [custInfo]
+		-- 20230307@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine:#184339]
 		
       */
 	SET NOCOUNT ON;
@@ -159,6 +160,8 @@ BEGIN
 		,@autosuspend = CASE 
 			WHEN @sporttype = 1
 				THEN Isnull(ci.autosuspend, @False)
+			WHEN @sporttype = 2
+				THEN Isnull(ci.autosuspend3, @False)	
 					--when @sporttype in (180,181,182,183,184,185,186) then 0
 			ELSE Isnull(ci.autosuspend2, @False)
 			END
@@ -213,11 +216,9 @@ BEGIN
 						END
 			ELSE 0
 			END
-	FROM custinfo AS ci WITH (NOLOCK)
-								   
+	FROM custinfo AS ci WITH (NOLOCK)								   
 	JOIN exchange AS ex WITH (NOLOCK) ON ci.currency = ex.exchangeid
-	LEFT JOIN custproductstatus AS cps WITH (NOLOCK) ON ci.custid = cps.custid
-							 
+	LEFT JOIN custproductstatus AS cps WITH (NOLOCK) ON ci.custid = cps.custid							 
 	WHERE ci.custid = @custid
 
 	------------------------------------------------
@@ -263,8 +264,6 @@ BEGIN
 				,100
 				) --Update VR = 0 for Other Sports
 		BEGIN
-			DECLARE @ValueID_0 INT
-			DECLARE @BasketBallLevelID INT
 			DECLARE @tblVirtualrate TABLE (
 				sporttype INT
 				,bettype INT
@@ -301,69 +300,17 @@ BEGIN
 				SELECT @custid
 					,2
 			END
-
-			SELECT @ValueID_0 = valueid
-			FROM vrvaluemapping WITH (NOLOCK)
-			WHERE value = 1.00
-
-			--Update VR = 0 for Basket Ball (using VR2)
-			SELECT @BasketBallLevelID = levelid
-			FROM vrsettinghierarchy WITH (NOLOCK)
-			WHERE sporttype = 2
-				AND vrleaguegroupid = - 1
-				AND bettype = - 1
-
-			IF EXISTS (
-					SELECT 1
-					FROM vrcustsetting WITH (NOLOCK)
-					WHERE custid = @custid
-						AND levelid = @BasketBallLevelID
-					)
-			BEGIN
-				UPDATE v
-				SET v.valueidlive = @ValueID_0
-					,v.valueidnonlive = @ValueID_0
-				FROM vrcustsetting v WITH (ROWLOCK)
-				WHERE custid = @custid
-					AND LevelID = @BasketBallLevelID
-					AND (
-						v.valueidlive != @ValueID_0
-						OR v.valueidnonlive != @ValueID_0
-						)
-			END
-			ELSE
-			BEGIN
-				INSERT INTO vrcustsetting (
-					custid
-					,levelid
-					,valueidlive
-					,valueidnonlive
-					)
-				VALUES (
-					@custid
-					,@BasketBallLevelID
-					,@ValueID_0
-					,@ValueID_0
-					)
-			END
-
-			--Update VR = 0 for Other sports (using VR1)                
-			INSERT INTO @tblVirtualrate (
-				sporttype
-				,bettype
-				,islive
-				,virtualmultiplier
-				)
-			SELECT sporttype
-				,bettype
-				,islive
-				,1.00
-			FROM profilevirtualsetting WITH (NOLOCK)
-			WHERE sporttype NOT IN (
-					1
-					,2
-					,43
-					)
+										
+			--Update VR = 0 for Other sports (using VR1)								
+			INSERT INTO	@tblVirtualrate (
+									SportType
+								,	BetType
+								,	IsLive
+								,	VirtualMultiplier
+							)
+			SELECT	sporttype,bettype,islive,1.00
+			FROM ProfileVirtualSetting 	WITH (NOLOCK)	
+			WHERE sporttype NOT IN (1,43)
 
 			IF @AdjustmentSporttype = 100 --Update VR = 0 for Soccer (using VR1)
 			BEGIN
@@ -492,9 +439,9 @@ BEGIN
 		BEGIN
 			SET @IsForcedVRValue = 1
 
-			SELECT @ForcedVRValue = vrvalue
-			FROM dbo.F_getvrbigstakeconfig(@Site) cf
-			WHERE cf.type = 1
+			SELECT @ForcedVRValue = VRValue
+			FROM dbo.f_GetVRBigStakeConfig(@Site) cf
+			WHERE cf.Type = 1
 		END
 
 		ELSE
@@ -572,11 +519,7 @@ BEGIN
 				,@Istest = @Istest
 		END
 
-		IF @IsForcedVRValue = 1
-			AND @sporttype NOT IN (
-				2
-				,43
-				)
+		IF @IsForcedVRValue = 1 AND @sporttype NOT IN (43)
 		BEGIN
 			SET @new_virtualrate = CASE 
 					WHEN @ForcedVRValue > Isnull(@new_virtualrate, 1)

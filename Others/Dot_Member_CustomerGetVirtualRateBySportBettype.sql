@@ -46,7 +46,7 @@ AS
 		-- 20201014@VN-Eden: VR Setting for Soccer By Stake <= RM 80 [Redmine: #143314]
 		-- 20201209@VN-Eden: VR Setting for Soccer By Hours (1AM - 6AM GMT+8) [Redmine: #146787]
 		-- 20210427@VN-Eden: Implement dedicated feature to control Global Virtual Rate adjustment on tickets [Redmine:#136423]
-
+		-- 20230307@VN-Johnson: Return Basketball VR to its original state [redmine:#184339]
     Parameter's Explanation:
 */
 BEGIN
@@ -140,7 +140,7 @@ BEGIN
 		END		
 	END
 
-	ELSE IF @SportType IN(2,43)
+	ELSE IF @SportType IN(43)
 	BEGIN --For E-sports, BasketBall
 		--Base on @LeagueGroupID, get configured VRLeagueGroupID 
 		SELECT @VRLeagueGroupID = VRLeagueGroupID
@@ -199,7 +199,7 @@ BEGIN
 		ORDER BY c.RoleID,h.OrderNo
 	END
 	
-	ELSE --Not E-sports, Soccers,BasketBall
+	ELSE --Not E-sports, Soccers
 	BEGIN
 		SELECT      @virtualMultiplier=dbo.f_GetVirtualSetting(cvs.bitmapVirtual, pvs.profileID)
 		FROM        CustVirtualSetting    	AS cvs WITH (NOLOCK)

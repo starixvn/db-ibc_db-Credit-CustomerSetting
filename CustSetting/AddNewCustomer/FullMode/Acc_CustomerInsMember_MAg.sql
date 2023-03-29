@@ -491,7 +491,8 @@ Revisions:
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
-
+	- 20230303@Johnson: add auto suspend for Basketball[redmine: #184339]
+	
 Param's Explanation:
 - @ErrCode:
     = 0: Create agent successfully.
@@ -665,6 +666,7 @@ BEGIN
 	    @DoubleCommLosing BIT,
 	    @autosuspend BIT,
 	    @autosuspend2 BIT,
+		@autosuspend3 BIT,
 		@suspended BIT = 0
 		
     declare
@@ -844,6 +846,7 @@ BEGIN
          , @EnableVR = ISNULL(virtualmultiplier,1)
          , @autosuspend = ISNULL(autosuspend, 0)
          , @autosuspend2 = ISNULL(autosuspend2, 0)
+		 , @autosuspend3 = ISNULL(autosuspend3, 0)
          , @HideKeno = HideKeno
        
 		 , @DisableSuperLive = DisableSuperLive
@@ -1676,6 +1679,7 @@ BEGIN
 
 	    @autosuspend = @autosuspend,
 	    @autosuspend2 = @autosuspend2,
+		@autosuspend3 = @autosuspend3,
 
 	    @DisableOutright = @DisableOutright,	
 	    @matchlimit = @matchlimit,
@@ -2437,6 +2441,7 @@ BEGIN
 	'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
@@ -2470,6 +2475,7 @@ BEGIN
 		'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 		'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 		'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   

@@ -476,7 +476,8 @@ Revisions:
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
-
+	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
+	
 Param's Explanation:
 - @ErrCode:
     = 0: super create master successfully.
@@ -738,6 +739,7 @@ BEGIN
 	    @UplineClosed BIT,
 	    @autosuspend BIT,
 	    @autosuspend2 BIT,
+		@autosuspend3 BIT,
 		@suspended    BIT = 0,
 
 	    @max_spositiontaking_1 SMALLMONEY,
@@ -920,6 +922,7 @@ BEGIN
 	    @EnableVR = ISNULL(virtualmultiplier,1),	  
 	    @autosuspend = ISNULL(autosuspend, 0 ),
 	    @autosuspend2 = ISNULL(autosuspend2, 0),
+		@autosuspend3 = ISNULL(autosuspend3, 0 ),
 	    --Keno
 	    @HideKeno = HideKeno,
 		
@@ -1703,6 +1706,7 @@ BEGIN
     	@SystemID=@SystemID,
 	    @autosuspend = @autosuspend,
 	    @autosuspend2 = @autosuspend2,
+		@autosuspend3 = @autosuspend3,
 	    @DisableOutright = @DisableOutright,
 	    @matchlimit = @matchlimit,
 	    @virtualmultiplier = @EnableVR,
@@ -2088,39 +2092,6 @@ BEGIN
 
 	 IF @srecommend < 100 AND @site = '611111' -- For Direct Master
 	 BEGIN
-		DECLARE @VirtualRateMultiplier VARCHAR(MAX) = ''
-
-		SELECT @VirtualRateMultiplier = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
-															FROM VRSettingHierarchy b WITH(NOLOCK) 
-																CROSS APPLY VRValueMapping vr (NOLOCK)
-															WHERE b.SportType = 2 
-																AND b.VRLeagueGroupID = -1 
-																AND b.BetType = -1 
-																AND vr.Value = 1
-															FOR XML RAW('Row'), ROOT ('Root'))
-											)
-
-		EXEC [Acc_CustVirtualMultiplier_Upd]
-			  @CustID = @CustID
-			, @SportType = 2
-			, @VirtualMultiplier = @VirtualRateMultiplier
-			, @UserID  = @creator
-			, @IP  = @IP
-			, @ErrCode = @ErrCode OUTPUT 
-			, @ErrMsg = @ErrMsg OUTPUT
-		
-		IF @ErrCode > 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END
-				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
-				DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
-			RETURN
-		END	
-
 		DECLARE @VirtualRateMultiplier2 VARCHAR(MAX) = '' --Esports
 		SELECT @VirtualRateMultiplier2 = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
 															FROM VRSettingHierarchy b WITH(NOLOCK) 
@@ -2527,6 +2498,7 @@ BEGIN
 	'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' + 
@@ -2562,6 +2534,7 @@ BEGIN
 		'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+		'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 		'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 		'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 		'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' + 
