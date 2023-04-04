@@ -11,15 +11,21 @@ AS
 	
 	Revisions:
 		- 20220913@Tacy: Create Function
+		- 20221226@Tacy: NAP CM - Split 789y Site [RedmineID: #184879]
 
 	Parameter's Explanation:		
 */	
 BEGIN
 	DECLARE @SoccerLevel TINYINT,
-            @BasketballLevel TINYINT
+            @BasketballLevel TINYINT,
+			@SiteLabel VARCHAR(50)
+
+	SELECT @SiteLabel=SiteLabel
+	FROM Site WITH (NOLOCK)
+	WHERE site=@Site
 
 	SELECT	@SoccerLevel=10,
-            @BasketballLevel=CASE WHEN @site='789y' OR @currency=96 THEN 10 ELSE 9 END
+            @BasketballLevel=CASE WHEN @SiteLabel='789y' OR @currency=96 THEN 10 ELSE 9 END
 
 	INSERT INTO @DangerLevel(DangerLevel)
     SELECT dbo.f_GenerateDangerLevelInfo(0,@SoccerLevel,@BasketballLevel,1,1)

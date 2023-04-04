@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="1" isNested="1"></info>*/
 USE [CustDB]
 GO
 
@@ -10,9 +10,12 @@ AS
 	DB: DBCust/CustDB
 	Revision:      
 		- 20220222@Elodie: Generate VR status by site [RedmineID:#168885]
+		- 20221226@Tacy: NAP CM - Split 789y Site [RedmineID: #184879]
 	Example: SELECT * FROM f_GenerateVirtualStatusBySite ('789y')
 		
 */ 
 RETURN  
-	SELECT CASE WHEN @Site IN ('789y') THEN 1 ELSE 0 END AS EnableVR
+	(SELECT CASE WHEN SiteLabel IN ('789y') THEN 1 ELSE 0 END AS EnableVR
+	 FROM Site WITH (NOLOCK)
+	 WHERE SITE=@Site)
 GO
