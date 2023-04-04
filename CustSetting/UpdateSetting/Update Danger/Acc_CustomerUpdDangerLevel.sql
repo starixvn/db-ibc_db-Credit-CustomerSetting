@@ -22,6 +22,7 @@ AS
 		- 20220817@Tacy: scan and update DangerLevel according to Winloss of Saba Basketball Sport (Livv88sw site) [redmine:#176712]
 		- 20220922@Tacy: NAP CM - Update flow for All sites - Basketball and Remove Dengerlevel 14, 15 [RedmineID: #178053]
 		- 20221110@Tacy: LAP - Support Danger Level report, modify ActionID writelog [RedmineID: #179078]
+		- 20221226@Tacy: NAP CM - Split 789y Site [RedmineID: #184879]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -175,7 +176,7 @@ BEGIN
 			WHEN isBasketball=1 THEN
 				CASE
 					WHEN (s.custid IS NOT NULL AND s.site in ('haifa','livv88sw'))
-						OR (s.custid IS NULL AND c.site='789y')		
+						OR (s.custid IS NULL AND ss.SiteLabel='789y')		
 						OR s.currency=96											THEN -- Flow B : Haifa, 789y, Livv88sw site and USDT currency
 							--CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
 							CASE 
@@ -242,6 +243,7 @@ BEGIN
 		CASE WHEN bb.CustID IS NOT NULL THEN 1 ELSE IsBasketball END UpdateBasketball
 	FROM T
 		INNER JOIN Customer c WITH(NOLOCK) ON c.custid = t.custid
+		INNER JOIN Site ss WITH(NOLOCK) ON ss.site=c.site
 		LEFT JOIN Dep_custsuper s WITH(NOLOCK) ON c.srecommend = s.custid
 		LEFT JOIN CustDangerJobExclusion sc WITH (NOLOCK) ON sc.custid=t.custid AND sc.SportType=1
 		LEFT JOIN CustDangerJobExclusion bb WITH (NOLOCK) ON bb.custid=t.custid AND bb.SportType=2

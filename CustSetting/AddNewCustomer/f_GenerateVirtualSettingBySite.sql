@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="" viewers="vnteam" isFunction="1" isNested="1"></info>*/
 USE [CustDB]
 GO
 
@@ -10,6 +10,7 @@ AS
 	DB: DBCust/CustDB
 	Revision:      
 		- 20220222@Elodie: Generate VR setting by site [RedmineID:#168885]
+		- 20221226@Tacy: NAP CM - Split 789y Site [RedmineID: #184879]
 	Example: SELECT * FROM f_GenerateVirtualSettingBySite ('789y',1)
 		
 */ 
@@ -28,12 +29,14 @@ RETURN
 			SELECT (
 				SELECT	(
 							SELECT ipvs.profileID AS '@p',
-							CASE WHEN @site IN ('789y') THEN CASE	WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 1 THEN 0.12 
+							CASE WHEN SiteLabel IN ('789y') THEN CASE WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 1 THEN 0.12 
 																	WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 0 THEN 0.1 
 																	WHEN ipvs.bettype IN (3,8) THEN 0.08
 																	ELSE 0.12 END
 								ELSE 1 END AS '@v'
 						FROM ProfileVirtualSetting AS ipvs WITH(NOLOCK)
+						CROSS APPLY (SELECT s.SiteLabel FROM Site s WITH (NOLOCK)
+									 WHERE s.Site=@Site) s
 						WHERE	ipvs.seqNo = pvs.seqNo
 						FOR XML PATH ('r'), 
 						TYPE
