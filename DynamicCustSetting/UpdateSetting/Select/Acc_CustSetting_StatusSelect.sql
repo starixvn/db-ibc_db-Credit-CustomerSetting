@@ -18,7 +18,7 @@ AS
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
- 
+	- 20221207@Tacy: Alpha - API Management - Support data through API [RedmineID: #171247]
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
  
@@ -37,25 +37,25 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @SuperID AND [Site] = 'IMBC')  
 		SET @IsIMBC = 1  
     
-	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, Child_DisplayOrder INT)
+	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, RealProductID TINYINT, Child_DisplayOrder INT)
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder  
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder, RealProductID)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder, RealProductID
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 4
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder   
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder, RealProductID)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder, RealProductID
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 11
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder  
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder, RealProductID)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder, RealProductID
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 13	
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder  
+	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder, RealProductID)
+	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder, RealProductID
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 21
 
@@ -64,7 +64,7 @@ BEGIN
 		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)  
 			SET @downlines = 1     
      
-		SELECT ft.ProductID, ft.SportType, ft.BetType,  
+		SELECT ft.RealProductID, ft.ProductID, ft.SportType, ft.BetType,  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, psp.bitmapOrder)) AS IsSync,
 			CAST(CASE WHEN @IsIMBC = 0 AND ft.ProductID = 20 THEN 1 
 				ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, psp.bitmapOrder)) END AS BIT) AS isHidden,    
@@ -95,7 +95,7 @@ BEGIN
 		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE mrecommend = @CustID AND roleid = 2)  
 			SET @downlines = 1   
      
-		SELECT ft.ProductID, ft.SportType, ft.BetType, 
+		SELECT ft.RealProductID, ft.ProductID, ft.SportType, ft.BetType, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, psp.bitmapOrder)) AS IsSync,
 			CAST(CASE WHEN @IsIMBC = 0 AND ft.ProductID = 20 THEN 1 
 				ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, psp.bitmapOrder)) END AS BIT) AS isHidden,
@@ -126,7 +126,7 @@ BEGIN
 		IF EXISTS ( SELECT 1 FROM custinfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid = 1)  
 			SET @downlines = 1   
      
-		SELECT ft.ProductID, ft.SportType, ft.BetType, 
+		SELECT ft.RealProductID, ft.ProductID, ft.SportType, ft.BetType, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, psp.bitmapOrder)) AS IsSync,
 			CAST(CASE WHEN @IsIMBC = 0 AND ft.ProductID = 20 THEN 1 
 				ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, psp.bitmapOrder)) END AS BIT) AS isHidden,
@@ -154,7 +154,7 @@ BEGIN
 	END   
 	ELSE IF @RoleID = 1  
 	BEGIN  
-		SELECT ft.ProductID, ft.SportType, ft.BetType, 
+		SELECT ft.RealProductID, ft.ProductID, ft.SportType, ft.BetType, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, psp.bitmapOrder)) AS IsSync,
 			CAST(CASE WHEN @IsIMBC = 0 AND ft.ProductID = 20 THEN 1 
 				ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, psp.bitmapOrder)) END AS BIT) AS isHidden,
