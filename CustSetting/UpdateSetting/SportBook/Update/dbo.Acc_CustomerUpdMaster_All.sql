@@ -185,7 +185,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
 	@maxpermatchv2saba money  = NULL,
 	@maxPOpermatchv2saba money = NULL,
 
-	@UpdateMinMaxBetv1saba bit = 0,
+	@UpdateMinMaxBetsaba bit = 0,
 	@UpdateMinMaxBetv2saba bit = 0,
 	
     @UpdatePositiontaking bit = 1,
@@ -200,7 +200,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_All]
     @UpdatePositiontakingv99MP bit = 1,
 
     @UpdatePositiontakingv161 bit = 1,
-	@UpdatePositiontakingv164 bit = 1,
 	
     @auto_spositiontaking_1 smallmoney = 0,
     @auto_spositiontaking_2 smallmoney = 0,
@@ -502,6 +501,7 @@ Revisions:
 	- 20210910@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+	- 20230405@Eden: Change @UpdateMinMaxBetv1saba to @UpdateMinMaxBetsaba [RedmineID: #164280]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -694,7 +694,7 @@ BEGIN
 			,@UpdateMinMaxBetMP = 1
 			,@UpdateMinMaxBetv161 = 1
 			,@UpdateMinMaxBetv164 = 1
-			,@UpdateMinMaxBetv1saba = 1
+			,@UpdateMinMaxBetsaba = 1
 			,@UpdateMinMaxBetv2saba = 1
 	END
 
@@ -711,7 +711,7 @@ BEGIN
 		@UpdateMinMaxBetMP = 1 or	
 		@UpdateMinMaxBetv161 = 1 or
 		@UpdateMinMaxBetv164 = 1 OR
-		@UpdateMinMaxBetv1saba = 1 OR
+		@UpdateMinMaxBetsaba = 1 OR
 		@UpdateMinMaxBetv2saba = 1
 	BEGIN
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
@@ -802,7 +802,7 @@ BEGIN
 			@maxpermatchv2saba         	= @maxpermatchv2saba ,
 			@MaxPOpermatchv2saba   		= @MaxPOpermatchv2saba ,
 	  
-			@UpdateMinMaxBetv1saba		= @UpdateMinMaxBetv1saba,
+			@UpdateMinMaxBetv1saba		= @UpdateMinMaxBetsaba,
 			@UpdateMinMaxBetv2saba		= @UpdateMinMaxBetv2saba,
 
 			@SubAccID = @SubAccID,
@@ -835,8 +835,7 @@ BEGIN
 		@UpdatePositiontakingv11   = 1  or
 		@UpdatePositiontakingv99   = 1  or
 		@UpdatePositiontakingv99MP = 1 or		
-		@UpdatePositiontakingv161 = 1 or
-		@UpdatePositiontakingv164 = 1
+		@UpdatePositiontakingv161 = 1 
 	BEGIN
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
 		--Check Old_PT <> New_PT
