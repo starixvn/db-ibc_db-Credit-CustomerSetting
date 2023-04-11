@@ -152,6 +152,7 @@ Revisions:
 	- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
+	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	Param's Explanation:
 - @ErrCode:
@@ -163,14 +164,19 @@ Revisions:
 BEGIN
     SET NOCOUNT ON 
 	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @CreditRM MONEY
-			, @IsAutoEnableADBMaster BIT
+			, @IsAutoEnableADBMaster BIT, @SiteLabel varchar(50)
 	
 	SET @CreateDate = GETDATE()
 
+	SELECT @SiteLabel=SiteLabel
+	FROM Site WITH (NOLOCK)
+	WHERE site=@site
+
 	IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value will get site from agent
 	BEGIN
-		SELECT @site = cus.[site]
+		SELECT @site = cus.[site], @SiteLabel=s.SiteLabel
 		FROM Customer cus WITH (NOLOCK)
+		INNER JOIN Site s WITH (NOLOCK) ON s.site=cus.site
 		WHERE cus.custid = @recommend
 	END
 		
@@ -225,11 +231,9 @@ BEGIN
     IF @roleid = 4
     BEGIN
         SELECT @isForcedChangeSecurityCode = CASE
-                                               WHEN site LIKE '789y%' THEN 0
+                                               WHEN @SiteLabel='789y' THEN 0
                                                ELSE 1
                                              END
-          FROM Customer WITH(NOLOCK)
-         WHERE custid = @custid
 
 	    SET @srecommend = @custid
 	    UPDATE Customer WITH(ROWLOCK, UPDLOCK)
@@ -248,7 +252,7 @@ BEGIN
 				ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0))
 	        END,
 			CASE
-				WHEN @site = '789y' THEN 20000
+				WHEN @SiteLabel = '789y' THEN 20000
 				ELSE -1 
 	        END
         )

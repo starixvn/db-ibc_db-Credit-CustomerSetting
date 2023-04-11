@@ -14,6 +14,8 @@ AS
 		- 20170421@Helen: Enable Downline FishingWorld checkbox is ticked & disabled control although Member is disabled [RedmineID: #74421]
 		- 20180115@Johnson: Remove downlines status for new direction change[RedmineID: #87328]
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20230314@Tacy: NAP/Alpha - Split 789y site [RedmineID: #181596]
+
 	Parameters Explanations:
 			
 */
@@ -75,8 +77,9 @@ BEGIN
 	WHERE CustID = @custid
 
 	--Customer Info
-	SELECT username, firstname, lastname, phone, mobilephone, fax, @DisableAutoMPT DisableAutoMPT, Site
-	FROM dbo.Customer WITH (NOLOCK)
+	SELECT username, firstname, lastname, phone, mobilephone, fax, @DisableAutoMPT DisableAutoMPT, c.site, s.SiteLabel
+	FROM dbo.Customer c WITH (NOLOCK)
+	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE custID = @CustID 
 
 	--BetSetting & Enable status

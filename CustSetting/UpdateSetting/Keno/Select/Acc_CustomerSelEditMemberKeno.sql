@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20150608@Kos: Separate CustDB to DBCUST server (Move SP to DBCUST.CustDB, Use temp table for GameType table)
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20230314@Tacy: NAP/Alpha - Split 789y site [RedmineID: #181596]
 	Parameters Explanations:
 			
 */
@@ -120,8 +121,10 @@ BEGIN
 		,c.mobilephone
 		,c.fax
 		,ag.site
+		,s.SiteLabel
 	FROM dbo.Customer c WITH (NOLOCK)
 		INNER JOIN dbo.Customer ag WITH (NOLOCK) ON c.recommend = ag.custid
+		INNER JOIN Site s WITH (NOLOCK) ON s.site=ag.site
 	WHERE c.custID = @CustID
 
 	--select custgametype setting

@@ -48,6 +48,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+	- 20230310@Tacy: NAP/Alpha - Split 789y site [RedmineID: #181596]
 
 Param's Explanation:
 • @CustID: member ID
@@ -205,7 +206,7 @@ DECLARE @minbet                 MONEY = 0,
 		@MaxPayoutPerMatchv2saba_max MONEY = 0
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-declare @srecommend int, @mrecommend int, @recommend int  ,@site varchar(10) --, @Asuspended bit
+declare @srecommend int, @mrecommend int, @recommend int  ,@site varchar(10),@sitelabel varchar(50) --, @Asuspended bit
 select	@srecommend = srecommend ,@mrecommend = mrecommend, @recommend=recommend from custinfo with (NOLOCK) where custid = @custid
 --select	@Asuspended = isnull(reject,0)
 --from custinfo with (NOLOCK) where custid = @recommend
@@ -215,7 +216,10 @@ select	@srecommend = srecommend ,@mrecommend = mrecommend, @recommend=recommend 
 Select @Credit_AllOtherMember = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where recommend = @recommend and RoleID = 1 AND CustID <> @CustID
 select @Credit_Ag = isnull(credit, 0) from CustInfo as ci with (NOLOCK) where CustID = @recommend
 
-SELECT @MaxCredit_Mem = isnull(maxcredit,0) ,@site = site  FROM CustAgent WITH (NOLOCK) where CustID = @recommend
+SELECT @MaxCredit_Mem = isnull(maxcredit,0) ,@site = ca.site, @sitelabel=s.sitelabel
+FROM CustAgent ca WITH (NOLOCK) 
+INNER JOIN site s WITH (NOLOCK) ON s.site=ca.site
+where ca.CustID = @recommend
 
 select @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1030,7 +1034,9 @@ SELECT
 	isnull(C.email,'') as email, 
 	isnull(C.fax,'') as fax, 
 	@Credit_Mem_Max as Credit_Max,	
-	C.site as csite, C.ugroup, C.roleid,
+	C.site as csite, 
+	s.SiteLabel as sSitelabel,
+	C.ugroup, C.roleid,
 	isnull(exchange.minbet, 0) AS defaultminbet, C.refcode1,C.address, C.city, C.state, C.country, isnull(ci.credit, 0) as credit,
 	
 	isnull(max(case when cs.bettype = 1 and cs.sporttype=1 then cs.discount else 0 end), 0) as discount,
@@ -1048,7 +1054,7 @@ SELECT
 	ISNULL(@playerdiscountMyanmarOdds,0) AS playerdiscountMyanmarOdds,
 	ISNULL(@discountMyanmarOdds,0) AS discountMyanmarOdds,
 	@site as site,
-	
+	@sitelabel as sitelabel,
 	isnull(max(case when cs.bettype = 1 and cs.sporttype=1 then cs.apositiontaking else 0 end), 0) as apositiontaking_1,
 	isnull(max(case when cs.bettype = 2 and cs.sporttype=1 then cs.apositiontaking else 0 end), 0) as apositiontaking_2,
 	isnull(max(case when cs.bettype = 3 and cs.sporttype=1 then cs.apositiontaking else 0 end), 0) as apositiontaking_3,
@@ -1290,6 +1296,7 @@ SELECT
 	isnull(@v99apositiontaking_10_min, 0) as minv99pos_10
 	,CASE WHEN CDA.CustID IS NOT NULL THEN 1 ELSE 0 END AS IsDirectCustomer,
 	ISNULL(NULLIF(MAX(c.site),''), MAX(ag.site)) AS Site,
+	ISNULL(NULLIF(MAX(s.sitelabel),''), MAX(ags.SiteLabel)) AS SiteLabel,
 	IsNull(@MinBet_Max, 0) as MinBet_Max,
 	IsNull(@MaxBet_Min, 0) as MaxBet_Min,
 	IsNull(@MaxPerMatch_Min, 0) as MaxPerMatch_Min,
@@ -1433,6 +1440,7 @@ SELECT
 	ISNULL(@MaxPayoutPerMatchv2saba_max	,0)	AS MaxPayoutPerMatchv2saba_max
 from 
 	customer as C with (NOLOCK) 
+	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	INNER JOIN CustInfo as ci with (NOLOCK) on c.custid = ci.custid
 	INNER JOIN CustSetting as cs with (NOLOCK) on c.custid = cs.custid
 	INNER JOIN exchange with (NOLOCK) ON C.currency=exchange.exchangeid
@@ -1446,11 +1454,12 @@ from
 	CROSS APPLY (SELECT * FROM f_GetInfoStatus(cps.SuspendInfo)) AS sp
 	LEFT JOIN CustDirectAccount CDA WITH (NOLOCK) ON C.custid = CDA.CustID
 	LEFT JOIN dbo.Customer ag WITH (NOLOCK) ON c.recommend = ag.custid
+	LEFT JOIN Site ags WITH (NOLOCK) ON ag.site=ags.site
 where C.custid=@CustID
 group by 
 	C.username, C.firstname, C.lastname,c.username2, cps.closed,cps.reject,ci.currency,
 	C.postal, C.email, C.phone, C.mobilephone, c.email, C.fax, 
-	C.site, C.ugroup, C.roleid,
+	C.site, s.SiteLabel, C.ugroup, C.roleid,
 	exchange.minbet, C.refcode1,C.address, C.city, C.state, C.country, ci.credit,
     ci.disablenumber,
     CDA.CustID,

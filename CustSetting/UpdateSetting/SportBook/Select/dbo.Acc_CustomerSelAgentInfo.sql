@@ -42,7 +42,7 @@ Revisions:
 	- 20210510@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
-
+	- 20230310@Tacy: NAP/Alpha - Split 789y site [RedmineID: #181596]
 */
 BEGIN
 SET NOCOUNT ON
@@ -388,6 +388,7 @@ Select
 	max(case when cs3.bettype = 89 and cs3.sporttype=161 then co3.minlivepositiontaking else 0 end) as v161alivepositiontaking_89_min,
 	max(case when cs3.bettype = 90 and cs3.sporttype=161 then co3.minlivepositiontaking else 0 end) as v161alivepositiontaking_90_min,
 	MAX(Customer.site) AS Site,
+	MAX(s.SiteLabel) AS SiteLabel,
 	IsNull(@MinBet_Max, 0) as MinBet_Max,
 	IsNull(@MaxBet_Min, 0) as MaxBet_Min,
 	IsNull(@MaxPerMatch_Min, 0) as MaxPerMatch_Min,
@@ -473,6 +474,7 @@ Select
 	ISNULL(@MaxPayoutPerMatchv2saba_max	,0)	AS MaxPayoutPerMatchv2saba_max
 From 
 	Customer with (NOLOCK)
+	INNER JOIN Site s WITH (NOLOCK) ON s.site=customer.site
 	INNER JOIN custinfo as ci with (NOLOCK) on Customer.CustID = ci.CustID
 	INNER JOIN CustSetting as cs with (NOLOCK) on Customer.CustID = CS.CustID
 	INNER JOIN custsetting as scs with(NOLOCK) on ci.srecommend = scs.custid and cs.sporttype = scs.sporttype and cs.bettype = scs.bettype

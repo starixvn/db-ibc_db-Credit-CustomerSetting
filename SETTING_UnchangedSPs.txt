@@ -1,9 +1,11 @@
-CustSetting\AddNewCustomer\CloneSetting\Acc_CustomerInsMember_CloneSetting_Com.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsUserInfo.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
-DynamicCustSetting\Others\PlaceBet\Dot_Member_CustCreditInfo_Cust_DCS.sql
-Others\Dot_Member_GetCustCreditInfo.sql
-Others\Intg_GetCustCreditInfo.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMember_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_All.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdAgentKeno_BetSetting.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMasterKeno_BetSetting.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdMemberKeno_BetSetting.sql
+CustSetting\UpdateSetting\Keno\Update\Acc_CustomerUpdSuperKeno_BetSetting.sql

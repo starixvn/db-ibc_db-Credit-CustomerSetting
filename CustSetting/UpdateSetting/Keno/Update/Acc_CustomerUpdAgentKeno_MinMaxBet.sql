@@ -34,6 +34,7 @@ AS
 		- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
+		- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 
 	Param's Explanation:
 	• @ErrCode:
@@ -73,20 +74,31 @@ BEGIN
 	END
 	IF (@UserName IS NULL) RETURN
 	--Get site info
-	DECLARE @Site NVARCHAR (50), @RoleID TINYINT, @recommend INT
+	DECLARE @SiteLabel VARCHAR (50), @RoleID TINYINT, @recommend INT
+
 	SELECT @RoleID=RoleID  FROM custinfo(NOLOCK) WHERE custid=@custid
+
 	IF @RoleID IN (2,3,4)
-		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @custid
+	BEGIN
+		SELECT @SiteLabel = s.SiteLabel
+		FROM customer c with (NOLOCK)
+		INNER JOIN Site s with (nolock) ON s.site=c.site 
+		WHERE C.custid = @custid
+	END
 	ELSE IF @RoleID = 1
 	BEGIN
 		SELECT @recommend = recommend FROM custinfo (NOLOCK) WHERE custid=@custid
-		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @recommend
+
+		SELECT @SiteLabel = s.SiteLabel
+		FROM customer c with (NOLOCK)
+		INNER JOIN Site s with (nolock) ON s.site=c.site 
+		WHERE C.custid = @recommend
 	END
 
 	IF (@MinBet < 0 OR @MaxBet < 0 OR @MaxPerMatch < 0
-		OR (@MinBet < 1 AND @SystemID!=1 AND @Site IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
-		OR (@MaxBet < 1 AND @SystemID!=1 AND @Site IN ('789y'))
-		OR (@MaxPerMatch < 1 AND @SystemID!=1 AND @Site IN ('789y')))
+		OR (@MinBet < 1 AND @SystemID!=1 AND @SiteLabel IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
+		OR (@MaxBet < 1 AND @SystemID!=1 AND @SiteLabel IN ('789y'))
+		OR (@MaxPerMatch < 1 AND @SystemID!=1 AND @SiteLabel IN ('789y')))
 	BEGIN
 		SELECT @ErrCode = 101
 		SELECT @ErrMsg = CASE @Language

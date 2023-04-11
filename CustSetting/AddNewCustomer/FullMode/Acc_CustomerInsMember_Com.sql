@@ -450,7 +450,9 @@ Revisions:
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -463,8 +465,12 @@ BEGIN
 	SET NOCOUNT ON
 
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
-	DECLARE @SiteID int, @EnableVR BIT
-	SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
+	DECLARE @SiteID int, @SiteLabel varchar(50), @EnableVR BIT
+
+	SELECT @SiteID = siteid, @SiteLabel=SiteLabel
+	FROM site WITH(NOLOCK)
+	WHERE site = @site
+
 	SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
 
 	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
@@ -871,7 +877,7 @@ BEGIN
 		RETURN
 	END
 	
-	IF @Site  = '789y'	
+	IF @SiteLabel  = '789y'	
 	BEGIN
 		IF EXISTS(SELECT 1 FROM Acc_SuperPrefix WITH(NOLOCK)
 			WHERE GroupName IN ('ACCUT','ACCYEN789','ACCYEN889','ACCTEST')
@@ -1260,7 +1266,7 @@ BEGIN
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)
 
 	DECLARE @MaxMemberLog VARCHAR(50)
-	SELECT @MaxMemberLog = CASE WHEN @Site = '789y' THEN '20000' ELSE 'Unlimited' END
+	SELECT @MaxMemberLog = CASE WHEN @SiteLabel = '789y' THEN '20000' ELSE 'Unlimited' END
 
 	DECLARE @LogSPData VARCHAR(MAX)
 	--Write general info
