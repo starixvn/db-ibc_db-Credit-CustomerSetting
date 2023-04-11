@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableKeno] 
 	@CustID INT
 	,@Bettype INT
@@ -31,6 +31,8 @@ AS
 		- 20200225@Tiara: Don't allow SMA under 789y headline to update status [Redmine: #124311]
 		- 20200610@Johnson: add param isSC to allow SC status from i7 [redmine:#135489]
 		- 20200722@Eden: Minimize UM Time - Lock updating customer settings [#136464]
+		- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
+
 	Param's Explanation:
 		• @custid: customer id.   
 		• @Disable: status of HideKeno		
@@ -42,7 +44,7 @@ BEGIN
 	DECLARE @startRun DATETIME
 	DECLARE @endRun DATETIME
 	DECLARE @duration INT
-	DECLARE @Site NVARCHAR (50)
+	DECLARE @SiteLabel VARCHAR (50)
 
 	SET @startRun = GETDATE()
 
@@ -56,11 +58,12 @@ BEGIN
 		RETURN
 
 	--Check if user is SMA under 789y headline and call update action from ALPHA/EXT - 20200225@Tiara
-	SELECT @Site = C.site
-	FROM Customer C WITH (NOLOCK)
+	SELECT @SiteLabel = s.SiteLabel
+	FROM customer c with (NOLOCK)
+	INNER JOIN Site s with (nolock) ON s.site=c.site
 	WHERE C.custid = @UserID
 
-	IF @SystemID != 1 AND @Site IN ('789y') AND @IsSC = 0
+	IF @SystemID != 1 AND @SiteLabel IN ('789y') AND @IsSC = 0
 		RETURN
 	
 	DECLARE @RoleID TINYINT

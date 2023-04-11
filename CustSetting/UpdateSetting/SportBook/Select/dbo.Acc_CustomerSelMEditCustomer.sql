@@ -43,6 +43,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+	- 20230310@Tacy: NAP/Alpha - Split 789y site [RedmineID: #181596]
 
 Param's Explanation:
 • @CustID: AgentID
@@ -1713,7 +1714,7 @@ select
 	max(case when co.bettype = 10 and co.sporttype=11 then case when co.maxpositiontaking<@v11apositiontaking_10_max then co.maxpositiontaking else @v11apositiontaking_10_max end else 0 end) as v11apositiontaking_10_max, 
 	max(case when co.bettype = 10 and co.sporttype=99 then case when co.maxpositiontaking<@v99apositiontaking_10_max then co.maxpositiontaking else @v99apositiontaking_10_max end else 0 end) as v99apositiontaking_10_max,
 	max(c.site) AS Site,
-
+	max(s.SiteLabel) as SiteLabel,
 	---------------------------------------------------------------------------------------------------------------
 
 	IsNull(@MinBet_Max, 0) as MinBet_Max,
@@ -1859,6 +1860,7 @@ select
 	ISNULL(@MaxPayoutPerMatchv2saba_max	,0)	AS MaxPayoutPerMatchv2saba_max
 from 
 	customer as c with (nolock) 
+	INNER JOIN Site s WITH (NOLOCK) ON  s.site=c.site
 	INNER JOIN custinfo as ci with (NOLOCK) on c.custid = ci.custid
 	INNER JOIN custsetting as cs with (NOLOCK) on c.custid = cs.custid
 	INNER JOIN custsetting3rd as cs3 with (NOLOCK) on c.custid = cs3.custid

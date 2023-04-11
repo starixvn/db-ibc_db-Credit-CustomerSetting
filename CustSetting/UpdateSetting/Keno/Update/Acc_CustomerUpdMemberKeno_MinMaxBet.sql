@@ -30,6 +30,7 @@ AS
 		- 20200309@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
 		- 20220716@Tacy: HotFix - Error when update big line NG/Happy5/Keno bet setting [RedmineID: #175836]
+		- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 
 	Param's Explanation:
 	* @ErrCode:
@@ -85,18 +86,29 @@ BEGIN
 	IF (@UserName IS NULL) RETURN
 
 	--Get site info
-	DECLARE @Site NVARCHAR (50), @RoleID TINYINT
+	DECLARE @SiteLabel VARCHAR (50), @RoleID TINYINT
+
 	SELECT @RoleID=RoleID  FROM custinfo(NOLOCK) WHERE custid=@custid
+
 	IF @RoleID IN (2,3,4)
-		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @custid
+	BEGIN
+		SELECT @SiteLabel = s.SiteLabel
+		FROM customer c with (NOLOCK)
+		INNER JOIN Site s with (nolock) ON s.site=c.site 
+		WHERE C.custid = @custid
+	END
 	ELSE IF @RoleID = 1
-	BEGIN		SELECT @Site = C.site FROM Customer C WITH (NOLOCK) WHERE C.custid = @recommend
+	BEGIN		
+		SELECT @SiteLabel = s.SiteLabel
+		FROM customer c with (NOLOCK)
+		INNER JOIN Site s with (nolock) ON s.site=c.site
+		WHERE C.custid = @recommend
 	END
 
 	IF @MinBet < 0 OR @MaxBet < 0 OR @MaxPerMatch < 0
-		OR (@MinBet < 1 AND @SystemID!=1 AND @Site IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
-		OR (@MaxBet < 1 AND @SystemID!=1 AND @Site IN ('789y'))
-		OR (@MaxPerMatch < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+		OR (@MinBet < 1 AND @SystemID!=1 AND @SiteLabel IN ('789y')) -- Bet Limit Restriction for 789y on Alpha/ExtNAP
+		OR (@MaxBet < 1 AND @SystemID!=1 AND @SiteLabel IN ('789y'))
+		OR (@MaxPerMatch < 1 AND @SystemID!=1 AND @SiteLabel IN ('789y'))
 	BEGIN
 		SELECT @ErrMsg = CASE @Language
 				WHEN 'E' THEN 'Wrong Min bet/ Max bet/ Max per match.'

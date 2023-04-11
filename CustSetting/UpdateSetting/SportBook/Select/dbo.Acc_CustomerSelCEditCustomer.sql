@@ -37,7 +37,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-
+	- 20230310@Tacy: NAP/Alpha - Split 789y site [RedmineID: #181596]
 Param's Explanation:
  - @CustID: super ID
 */
@@ -287,6 +287,7 @@ DECLARE	@firstname	nvarchar(50),
 		@CurrencyID INT,
 		@Currency nvarchar(50),
 		@Site varchar(10),
+		@SiteLabel varchar(50),
 		@srecommend INT
 
 SELECT	@isInternal = ISNULL(isInternal,0) FROM CustSuper WITH (NOLOCK) WHERE custID = @custID 
@@ -301,9 +302,11 @@ SELECT	@firstname	= c.firstname,
 		@CurrencyID = e.exchangeid,		
 		@Currency = e.currency,		
 		@Site = c.site,
+		@SiteLabel = s.SiteLabel,
 		@srecommend = c.srecommend
 FROM	Customer c WITH (NOLOCK)
 		INNER JOIN Exchange e WITH (NOLOCK) ON c.currency = e.exchangeID 
+		INNER JOIN Site s WITH (NOLOCK) ON s.site = c.site
 WHERE	c.custID = @CustID 
 
 --to facilitate in Web Interface
@@ -400,6 +403,7 @@ select
 	isnull(@mobilephone,'') as mobilephone, isnull(@email,'') as email, isnull(@fax,'') as fax,
 	@Currency as currencyName, @CurrencyID as currencyID,
 	@Site as site,
+	@SiteLabel as SiteLabel,
 	ci.credit,
 	@Credit_SAg_Min as Credit_Min,
 	ci.DisableNumber,

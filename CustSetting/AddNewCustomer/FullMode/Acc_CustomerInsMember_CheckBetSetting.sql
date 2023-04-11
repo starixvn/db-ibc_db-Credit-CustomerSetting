@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CheckBetSetting]
 	@custid int = NULL,
 	
@@ -94,6 +94,8 @@ DB: DBCUST/CUSTDB
 Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -104,7 +106,7 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @RoleID TINYINT, @recommend INT, @mrecommend int, @srecommend INT,  @Site NVARCHAR (50)
+	DECLARE @RoleID TINYINT, @recommend INT, @mrecommend int, @srecommend INT,  @SiteLabel VARCHAR (50)
 	DECLARE @ErrType NVARCHAR(4000) = ''
 
 	DECLARE @BetSetting TABLE(
@@ -216,8 +218,9 @@ BEGIN
 	FROM @BetSetting t
 	WHERE sporttype = 9902 AND bettype = 1
 			
-	Select @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend, @RoleID=RoleID, @Site = site
-	from customer with (NOLOCK)
+	Select @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend, @RoleID=RoleID, @SiteLabel = SiteLabel
+	from customer c with (NOLOCK)
+	inner join Site s with (nolock) on s.site=c.site
 	where CustID = @CustID
 	
 	--> Check rule : Wrong Min bet/ Max bet/ Max per match/ Credit/ Master Agent name/ user group
@@ -234,7 +237,7 @@ BEGIN
 				, @ErrCode = 410
 	FROM @BetSetting
 	WHERE (MinBet < 1 or MaxBet < 1 or MaxPerMatch < 1)
-		AND @SystemID!=1 AND @Site IN ('789y')
+		AND @SystemID!=1 AND @SiteLabel IN ('789y')
 		AND SportType IN (161, 164)
 
 	IF @ErrCode <> 0
@@ -255,7 +258,7 @@ BEGIN
 				, @ErrCode = 411
 	FROM @BetSetting
 	WHERE MaxPerNumber < 1
-		AND @SystemID!=1 AND @Site IN ('789y')
+		AND @SystemID!=1 AND @SiteLabel IN ('789y')
 		AND SportType IN (161)
 
 	IF @ErrCode <> 0

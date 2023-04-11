@@ -83,6 +83,7 @@ AS
 	- 20220823@Johnson: Copy Date Limit range and  Auto Transfer Type for real currency 789y [redmine:#176778] 
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
+	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230302@Johnson: Return Basketball VR to its original state [redmine:#184339]
  Explanation's Param:  
 	- @ErrCode:
@@ -111,8 +112,12 @@ BEGIN
 	WHERE custid = @ExistingCustid
 	
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
-	DECLARE @SiteID int, @EnableVR BIT
-	SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
+	DECLARE @SiteID int, @SiteLabel varchar(50), @EnableVR BIT
+
+	SELECT @SiteID = siteid, @SiteLabel=SiteLabel
+	FROM site WITH(NOLOCK) 
+	WHERE site = @site
+
 	SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
 
 	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
@@ -169,7 +174,7 @@ BEGIN
 		RETURN		
 	END	
 	
-	IF @Site  = '789y'	
+	IF @SiteLabel  = '789y'	
 	BEGIN
 		IF EXISTS(SELECT 1 FROM Acc_SuperPrefix WITH(NOLOCK)
 			WHERE GroupName IN ('ACCUT','ACCYEN789','ACCYEN889','ACCTEST')
@@ -184,9 +189,11 @@ BEGIN
 	END
 	
 	--Not allow to create a IMBC customer from MBC customer and and vice versa
-	DECLARE @_Site VARCHAR(10)
-	SELECT @_Site = site
-	FROM dbo.Customer WITH(NOLOCK)
+	DECLARE @_Site VARCHAR(10),@_SiteLabel VARCHAR(50)
+
+	SELECT @_Site = c.site, @_SiteLabel=s.SiteLabel
+	FROM dbo.Customer c WITH(NOLOCK)
+	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE CustID = @ExistingCustid
 	
 	IF (@_Site = 'IMBC' OR @Site = 'IMBC') AND @_Site <> @Site
@@ -348,8 +355,8 @@ BEGIN
 	BEGIN TRY
 		-- insert CustSuper info
 		DECLARE @MaxMember INT, @MaxMemberLog VARCHAR(50)
-		SELECT @MaxMember = CASE WHEN @Site = '789y' THEN 20000 ELSE -1 END
-		SELECT @MaxMemberLog = CASE WHEN @Site = '789y' THEN '20000' ELSE 'Unlimited' END
+		SELECT @MaxMember = CASE WHEN @SiteLabel = '789y' THEN 20000 ELSE -1 END
+		SELECT @MaxMemberLog = CASE WHEN @SiteLabel = '789y' THEN '20000' ELSE 'Unlimited' END
 
 		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember)  
 		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting, @MaxMember			
@@ -681,7 +688,7 @@ BEGIN
 			@NoLimitText VARCHAR(100) = 'No Limit',
 			@IsLogDateLimit BIT = 0
 	
-	IF @_Site = '789y' AND @Site = '789y' AND @Currency <> 20
+	IF @_SiteLabel = '789y' AND @SiteLabel = '789y' AND @Currency <> 20
 	BEGIN			
 		--auto transfer 
 		SELECT @transferType = TransferType,

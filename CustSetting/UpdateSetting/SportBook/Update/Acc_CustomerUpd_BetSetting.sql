@@ -118,7 +118,8 @@ AS
 		- 20211005@Johnson: change param @UpdateMinMaxBetv1MP to @UpdateMinMaxBetMP [redmine:#161425]
 		- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 		- 20220516@Tacy: Insert history of member bet setting (Number Game, Happy 5) [redmineID: #170739]
-		- 20220113@Elodie: Check param IS NULL [RedmineID:#182866]
+		- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
+		- 20230113@Elodie: Check param IS NULL [RedmineID:#182866]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -134,11 +135,12 @@ BEGIN
 	declare @startRun datetime
 	declare @endRun datetime
 	declare @duration int
-	DECLARE @Site NVARCHAR (50), @RoleID TINYINT, @recommend INT, @mrecommend int, @srecommend INT, @UserName varchar(30)
+	DECLARE @SiteLabel VARCHAR (50), @RoleID TINYINT, @recommend INT, @mrecommend int, @srecommend INT, @UserName varchar(30)
 	SET @startRun = getdate()
 
-	SELECT @UserName = username, @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend, @RoleID=RoleID, @Site = site
-	FROM customer with (NOLOCK)
+	SELECT @UserName = username, @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend, @RoleID=RoleID, @SiteLabel = s.SiteLabel
+	FROM customer c with (NOLOCK)
+	INNER JOIN Site s with (nolock) ON s.site=c.site
 	WHERE CustID = @CustID
 
 	DECLARE @BetSetting TABLE(
@@ -300,7 +302,7 @@ BEGIN
 				, @ErrCode = 3
 	FROM @BetSetting
 	WHERE (MinBet < 1 or MaxBet < 1 or MaxPerMatch < 1)
-		AND @SystemID!=1 AND @Site IN ('789y')
+		AND @SystemID!=1 AND @SiteLabel IN ('789y')
 		AND SportType IN(161, 164)
 		AND IsUpdate = 1
 
@@ -312,7 +314,7 @@ BEGIN
 				, @ErrCode = 3
 	FROM @BetSetting
 	WHERE ( (MaxPerNumber < 0) 
-			OR (MaxPerNumber < 1 AND @SystemID!=1 AND @Site IN ('789y'))
+			OR (MaxPerNumber < 1 AND @SystemID!=1 AND @SiteLabel IN ('789y'))
 		 )
 		AND SportType = 161
 		AND IsUpdate = 1
