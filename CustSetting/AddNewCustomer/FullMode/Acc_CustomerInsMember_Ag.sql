@@ -455,7 +455,7 @@ BEGIN
 
 ----- / viet @ 15 JUL 2013 -----------------
 */
-	
+	/*
 -----BEGIN: 20180703@viet: normal agent can create up to 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute
 	DECLARE @mrecommend int, @RestrictedCredit money = 100
 	IF @credit < @RestrictedCredit
@@ -527,6 +527,8 @@ BEGIN
 			END
 		END	
 	END
+	*/
+	DECLARE @mrecommend int
 -----END: 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit-member each minute. Normal agent can open up to 10 members per minute
 	DECLARE @_Site VARCHAR(10), @EnableVR BIT
 	SELECT @_Site = site
@@ -2365,7 +2367,7 @@ BEGIN
     IF @Credit + @Credit_AllOtherMember>@AgentCredit
     BEGIN
 	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Your credit limit has been exceeded.'  
+							    WHEN 'E' THEN 'You have exceeded your credit limit.'  
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language)
 						    END	
 			    ,@success = 0, @ErrCode = 204
@@ -2375,7 +2377,7 @@ BEGIN
     IF @Credit > @MaxCredit_Mem 
     BEGIN
 	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Your Member max credit limit has been exceeded.'
+							    WHEN 'E' THEN 'Member max credit has been exceeded.'
 							    ELSE [dbo].[f_Get_MsgNamebyMsgID](70009,@Language)
 						    END	
 			    ,@success = 0, @ErrCode =217

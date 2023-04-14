@@ -248,7 +248,7 @@ BEGIN
 	IF @Credit_AllOtherMaster + @Credit > @Credit_SAg
 	BEGIN  
 		SET @ErrMsg = CASE @Language   
-		  WHEN 'E' THEN 'Your credit limit has been exceeded.'  
+		  WHEN 'E' THEN 'You have exceeded your credit limit.'  
 		  ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language) 
 		 END   
 		SELECT @ErrCode = 101  
@@ -260,80 +260,83 @@ BEGIN
 		,@startRun = getdate()
 	
 	--INSERT GENERAL INFORMATION OF CUSTOMER
-	INSERT INTO dbo.customer
-		(firstname
-		,lastname
-		,address
-		,postal
-		,city
-		,state
-		,country
-		,phone
-		,mobilephone
-		,fax
-		,email
-		,birthday
-		,refcode1
-		,refcode2
-		,remark
-		,creatdate
-		,creator
-		,username
-		,currency
-		,userpwd				
-		,roleid
-		,srecommend 
-		,mrecommend
-		,recommend
-		,ugroup		
-		,site		
-		,pwdexpiry
-		)
-	SELECT
-		@firstname
-		,@lastname
-		,'-' AS address
-		,'-' AS postal
-		,'-' AS city
-		,'-' AS state
-		,'-' AS country
-		,@phone
-		,@mobilephone
-		,@fax
-		,'-' AS email
-		,NULL AS birthday
-		,NULL AS refcode1
-		,NULL AS refcode2
-		,NULL AS remark
-		,GETDATE() AS creatdate
-		,@creator
-		,@username
-		,currency
-		,@userpwd				
-		,3 AS roleid
-		,srecommend		
-		,0 AS mrecommend
-		,0 AS recommend 
-		,ugroup		
-		,site				
-		,@pwdexpiry
-	FROM dbo.customer WITH(NOLOCK)
-	WHERE custid=@ExistingCustid		
+	BEGIN TRY
+		INSERT INTO dbo.customer
+			(firstname
+			,lastname
+			,address
+			,postal
+			,city
+			,state
+			,country
+			,phone
+			,mobilephone
+			,fax
+			,email
+			,birthday
+			,refcode1
+			,refcode2
+			,remark
+			,creatdate
+			,creator
+			,username
+			,currency
+			,userpwd				
+			,roleid
+			,srecommend 
+			,mrecommend
+			,recommend
+			,ugroup		
+			,site		
+			,pwdexpiry
+			)
+		SELECT
+			@firstname
+			,@lastname
+			,'-' AS address
+			,'-' AS postal
+			,'-' AS city
+			,'-' AS state
+			,'-' AS country
+			,@phone
+			,@mobilephone
+			,@fax
+			,'-' AS email
+			,NULL AS birthday
+			,NULL AS refcode1
+			,NULL AS refcode2
+			,NULL AS remark
+			,GETDATE() AS creatdate
+			,@creator
+			,@username
+			,currency
+			,@userpwd				
+			,3 AS roleid
+			,srecommend		
+			,0 AS mrecommend
+			,0 AS recommend 
+			,ugroup		
+			,site				
+			,@pwdexpiry
+		FROM dbo.customer WITH(NOLOCK)
+		WHERE custid=@ExistingCustid		
 
-	SET @Custid = SCOPE_IDENTITY()
-	
-	IF @@error <> 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language) 
-						end
-			,@ErrCode = 103
-			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.customer WITH(ROWLOCK) WHERE CustID = @CustID			
-		RETURN
-	END	
+		SET @Custid = SCOPE_IDENTITY()
+	END TRY
+	BEGIN CATCH 
+		IF @@error <> 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language) 
+							end
+				,@ErrCode = 103
+				
+			-- ROLLBACK MANUALLY
+			DELETE FROM dbo.customer WITH(ROWLOCK) WHERE CustID = @CustID			
+			RETURN
+		END	
+	END CATCH
 	
 	--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @Custid, 0, 3, @ErrCode, @ErrMsg
 	--IF @ErrCode <> 0
