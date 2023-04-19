@@ -180,17 +180,18 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	-- MyanmarOdds
 	@playerdiscountMyanmarOdds DECIMAL(9,8)=0,
 	
-	@IP VARCHAR(15)='',
+	@IP 			VARCHAR(15)='',
 	@SystemID		TINYINT=1,
-	@success BIT = 1 OUTPUT,
-	@Language VARCHAR(2)= 'E',
-	@SubAccID INT = 0, --Sub-AccountID
+	@CreatedMode 	TINYINT = 0,
+	@success 		BIT = 1 OUTPUT,
+	@Language 		VARCHAR(2)= 'E',
+	@SubAccID 		INT = 0, --Sub-AccountID
 	@isSearchAndCopy BIT = 0,
 	@copyFromCustID INT = 0,
-	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT	,
-	@IsQRCode BIT  = 0,
-	@SettingStatus TINYINT = 0
+	@ErrCode 		INT = 0 OUTPUT,
+	@ErrMsg 		NVARCHAR(4000) = '' OUTPUT	,
+	@IsQRCode 		BIT  = 0,
+	@SettingStatus 	TINYINT = 0
 AS
 --@Source Control
 /*
@@ -351,8 +352,9 @@ Revisions:
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20230302@Johnson: add auto suspend for Basketball[redmine: #184339]	
-
+	
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -360,6 +362,8 @@ Param's Explanation:
   
 • @ErrMsg: Error description.
 - @SettingStatus: 0: Pro, 1: UAT
+- @CreatedMode: = 0: single customer
+				= 1: multiple customers
 */
 BEGIN
     SET NOCOUNT ON
@@ -451,7 +455,7 @@ BEGIN
 
 ----- / viet @ 15 JUL 2013 -----------------
 */
-	
+	/*
 -----BEGIN: 20180703@viet: normal agent can create up to 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit member each minute
 	DECLARE @mrecommend int, @RestrictedCredit money = 100
 	IF @credit < @RestrictedCredit
@@ -523,6 +527,8 @@ BEGIN
 			END
 		END	
 	END
+	*/
+	DECLARE @mrecommend int
 -----END: 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit-member each minute. Normal agent can open up to 10 members per minute
 	DECLARE @_Site VARCHAR(10), @EnableVR BIT
 	SELECT @_Site = site
@@ -2361,8 +2367,8 @@ BEGIN
     IF @Credit + @Credit_AllOtherMember>@AgentCredit
     BEGIN
 	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Sorry, credit increase unsuccessful. You have exceeded your agent credit.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](70003,@Language)
+							    WHEN 'E' THEN 'You have exceeded your credit limit.'  
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language)
 						    END	
 			    ,@success = 0, @ErrCode = 204
 	    return
@@ -2371,7 +2377,7 @@ BEGIN
     IF @Credit > @MaxCredit_Mem 
     BEGIN
 	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Sorry, increase credit unsuccessfully, You have exceeded the member max credit.'
+							    WHEN 'E' THEN 'Member max credit has been exceeded.'
 							    ELSE [dbo].[f_Get_MsgNamebyMsgID](70009,@Language)
 						    END	
 			    ,@success = 0, @ErrCode =217
@@ -3291,12 +3297,18 @@ BEGIN
 	'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
     'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1)) + '" ' +
     'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(4000)), SPACE(1)) + '" />'
-
+	
+	DECLARE @ActionID INT 
+	SELECT @ActionID = CASE WHEN @systemID = 10 THEN 95083 --telegram chatbot
+							ELSE CASE WHEN @CreatedMode = 1 THEN 95084 -- Multiple customers
+									ELSE 603 END-- single customer
+							END		
+						
     BEGIN TRY
 	    EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 		    @UserID = @Creator,
 		    @CustID = @CustID,
-		    @ActionID = 603,
+		    @ActionID = @ActionID,
 		    @TrackingValue = @LogSPData,
 		    @duration = @duration
     END TRY
@@ -3327,7 +3339,7 @@ BEGIN
 	    EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 		    @UserID = @Creator,
 		    @CustID = @CustID,
-		    @ActionID = 603,
+		    @ActionID = @ActionID,
 		    @TrackingValue = @LogSPData,
 		    @duration = @duration
     END CATCH

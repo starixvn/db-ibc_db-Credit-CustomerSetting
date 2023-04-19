@@ -19,6 +19,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 	,@ErrCode INT = 0 OUTPUT
 	,@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	,@SystemID TINYINT=1
+	,@CreatedMode TINYINT = 0
 	,@SettingStatus TINYINT = 0
 )
 AS
@@ -101,6 +102,7 @@ AS
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
  Explanation's Param:  
 	• @ErrCode:
@@ -109,6 +111,8 @@ AS
 	  
 	• @ErrMsg: Error description.	
 	- @SettingStatus: 0: Pro, 1: UAT
+	- @CreatedMode: = 0: single customer
+				= 1: multiple customers
   
 */
 BEGIN
@@ -244,7 +248,7 @@ BEGIN
 	IF @Credit_AllOtherMaster + @Credit > @Credit_SAg
 	BEGIN  
 		SET @ErrMsg = CASE @Language   
-		  WHEN 'E' THEN 'Sorry, credit update is not successful, You have exceeded your super agent credit.'  
+		  WHEN 'E' THEN 'You have exceeded your credit limit.'  
 		  ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language) 
 		 END   
 		SELECT @ErrCode = 101  
@@ -256,80 +260,83 @@ BEGIN
 		,@startRun = getdate()
 	
 	--INSERT GENERAL INFORMATION OF CUSTOMER
-	INSERT INTO dbo.customer
-		(firstname
-		,lastname
-		,address
-		,postal
-		,city
-		,state
-		,country
-		,phone
-		,mobilephone
-		,fax
-		,email
-		,birthday
-		,refcode1
-		,refcode2
-		,remark
-		,creatdate
-		,creator
-		,username
-		,currency
-		,userpwd				
-		,roleid
-		,srecommend 
-		,mrecommend
-		,recommend
-		,ugroup		
-		,site		
-		,pwdexpiry
-		)
-	SELECT
-		@firstname
-		,@lastname
-		,'-' AS address
-		,'-' AS postal
-		,'-' AS city
-		,'-' AS state
-		,'-' AS country
-		,@phone
-		,@mobilephone
-		,@fax
-		,'-' AS email
-		,NULL AS birthday
-		,NULL AS refcode1
-		,NULL AS refcode2
-		,NULL AS remark
-		,GETDATE() AS creatdate
-		,@creator
-		,@username
-		,currency
-		,@userpwd				
-		,3 AS roleid
-		,srecommend		
-		,0 AS mrecommend
-		,0 AS recommend 
-		,ugroup		
-		,site				
-		,@pwdexpiry
-	FROM dbo.customer WITH(NOLOCK)
-	WHERE custid=@ExistingCustid		
+	BEGIN TRY
+		INSERT INTO dbo.customer
+			(firstname
+			,lastname
+			,address
+			,postal
+			,city
+			,state
+			,country
+			,phone
+			,mobilephone
+			,fax
+			,email
+			,birthday
+			,refcode1
+			,refcode2
+			,remark
+			,creatdate
+			,creator
+			,username
+			,currency
+			,userpwd				
+			,roleid
+			,srecommend 
+			,mrecommend
+			,recommend
+			,ugroup		
+			,site		
+			,pwdexpiry
+			)
+		SELECT
+			@firstname
+			,@lastname
+			,'-' AS address
+			,'-' AS postal
+			,'-' AS city
+			,'-' AS state
+			,'-' AS country
+			,@phone
+			,@mobilephone
+			,@fax
+			,'-' AS email
+			,NULL AS birthday
+			,NULL AS refcode1
+			,NULL AS refcode2
+			,NULL AS remark
+			,GETDATE() AS creatdate
+			,@creator
+			,@username
+			,currency
+			,@userpwd				
+			,3 AS roleid
+			,srecommend		
+			,0 AS mrecommend
+			,0 AS recommend 
+			,ugroup		
+			,site				
+			,@pwdexpiry
+		FROM dbo.customer WITH(NOLOCK)
+		WHERE custid=@ExistingCustid		
 
-	SET @Custid = SCOPE_IDENTITY()
-	
-	IF @@error <> 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language) 
-						end
-			,@ErrCode = 103
-			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.customer WITH(ROWLOCK) WHERE CustID = @CustID			
-		RETURN
-	END	
+		SET @Custid = SCOPE_IDENTITY()
+	END TRY
+	BEGIN CATCH 
+		IF @@error <> 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language) 
+							end
+				,@ErrCode = 103
+				
+			-- ROLLBACK MANUALLY
+			DELETE FROM dbo.customer WITH(ROWLOCK) WHERE CustID = @CustID			
+			RETURN
+		END	
+	END CATCH
 	
 	--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @Custid, 0, 3, @ErrCode, @ErrMsg
 	--IF @ErrCode <> 0
@@ -843,11 +850,17 @@ BEGIN
 	FROM dbo.customer AS c WITH(NOLOCK) 
 	WHERE custid=@ExistingCustid
 	
+	DECLARE @ActionID INT 
+	SELECT @ActionID = CASE WHEN @systemID = 10 THEN 95079 --telegram chatbot					
+						ELSE CASE WHEN @CreatedMode = 1 THEN 95080 --Mulitple customers
+								ELSE 630 END --old mode
+						END		
+	
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 630,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 	END TRY
@@ -878,7 +891,7 @@ BEGIN
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 630,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration		
 	END CATCH

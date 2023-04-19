@@ -20,6 +20,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_MAg]
 	,@ErrCode int = 0 output
 	,@ErrMsg nvarchar(4000) = '' output
 	,@SystemID TINYINT=1
+	,@CreatedMode TINYINT = 0
 	,@SettingStatus TINYINT = 0
 )
 AS
@@ -99,7 +100,7 @@ AS
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
-	
+	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -107,6 +108,8 @@ AS
 	  
 	• @ErrMsg: Error description.	
 	- @SettingStatus: 0: Pro, 1: UAT
+	- @CreatedMode: = 0: single customer
+				= 1: multiple customers
   
 */
 BEGIN
@@ -247,8 +250,8 @@ BEGIN
 	IF @Credit_AllOtherAgent + @Credit >@Credit_MAg
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Sorry, credit update is not successful, You have exceeded your master credit.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](70011,@Language)
+							WHEN 'E' THEN 'You have exceeded your credit limit.'  
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language)
 						END,
 			@ErrCode = 101
 		return
@@ -258,8 +261,8 @@ BEGIN
 	if (isnull(@maxcredit ,0) > @credit )
 	BEGIN 
 		Select @ErrMsg = case @Language
-			when 'E' then 'Sorry, credit update is not successful, You have exceeded your agent credit.'  
-			ELSE [dbo].[f_Get_MsgNamebyMsgID](70012,@Language) 
+			WHEN 'E' THEN 'You have exceeded your credit limit.'  
+			ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language) 
 		 end,  
 	  @ErrCode = 102  
 	 return  
@@ -269,80 +272,83 @@ BEGIN
 		,@startRun = getdate()
 		
 	--INSERT GENERAL INFORMATION OF CUSTOMER
-	INSERT INTO dbo.customer
-		(firstname
-		,lastname
-		,address
-		,postal
-		,city
-		,state
-		,country
-		,phone
-		,mobilephone
-		,fax
-		,email
-		,birthday
-		,refcode1
-		,refcode2
-		,remark
-		,creatdate
-		,creator
-		,username
-		,currency
-		,userpwd				
-		,roleid
-		,srecommend 
-		,mrecommend
-		,recommend
-		,ugroup		
-		,site		
-		,pwdexpiry
-		)
-	SELECT
-		@firstname
-		,@lastname
-		,'-' AS address
-		,'-' AS postal
-		,'-' AS city
-		,'-' AS state
-		,'-' AS country
-		,@phone
-		,@mobilephone
-		,@fax
-		,'-' AS email
-		,NULL AS birthday
-		,NULL AS refcode1
-		,NULL AS refcode2
-		,NULL AS remark
-		,GETDATE() AS creatdate
-		,@creator
-		,@username
-		,currency
-		,@userpwd				
-		,2 AS roleid
-		,srecommend		
-		,mrecommend
-		,0 AS recommend 
-		,ugroup		
-		,site				
-		,@pwdexpiry
-	FROM dbo.customer WITH(NOLOCK)
-	WHERE custid=@ExistingCustid		
-
-	SET @Custid = SCOPE_IDENTITY()
-	
-	IF @@error <> 0
-	BEGIN
-		SELECT @ErrMsg = case @Language 
-							when 'E' then 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						end
-			,@ErrCode = 103
-			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.customer With (ROWLOCK) WHERE CustID = @CustID			
-		RETURN
-	END	
+	BEGIN TRY
+		INSERT INTO dbo.customer
+			(firstname
+			,lastname
+			,address
+			,postal
+			,city
+			,state
+			,country
+			,phone
+			,mobilephone
+			,fax
+			,email
+			,birthday
+			,refcode1
+			,refcode2
+			,remark
+			,creatdate
+			,creator
+			,username
+			,currency
+			,userpwd				
+			,roleid
+			,srecommend 
+			,mrecommend
+			,recommend
+			,ugroup		
+			,site		
+			,pwdexpiry
+			)
+		SELECT
+			@firstname
+			,@lastname
+			,'-' AS address
+			,'-' AS postal
+			,'-' AS city
+			,'-' AS state
+			,'-' AS country
+			,@phone
+			,@mobilephone
+			,@fax
+			,'-' AS email
+			,NULL AS birthday
+			,NULL AS refcode1
+			,NULL AS refcode2
+			,NULL AS remark
+			,GETDATE() AS creatdate
+			,@creator
+			,@username
+			,currency
+			,@userpwd				
+			,2 AS roleid
+			,srecommend		
+			,mrecommend
+			,0 AS recommend 
+			,ugroup		
+			,site				
+			,@pwdexpiry
+		FROM dbo.customer WITH(NOLOCK)
+		WHERE custid=@ExistingCustid
+		
+		SET @Custid = SCOPE_IDENTITY()
+	END TRY
+	BEGIN CATCH	 
+		IF @@error <> 0
+		BEGIN
+			SELECT @ErrMsg = case @Language 
+								when 'E' then 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+				,@ErrCode = 103
+				
+			-- ROLLBACK MANUALLY
+			DELETE FROM dbo.customer With (ROWLOCK) WHERE CustID = @CustID			
+			RETURN
+		END	
+	END CATCH
 	
 	--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @Custid, 0, 2, @ErrCode, @ErrMsg
 --	IF @ErrCode <> 0
@@ -833,11 +839,17 @@ BEGIN
 	FROM dbo.customer AS c WITH(NOLOCK) 
 	WHERE custid=@ExistingCustid
 	
+	DECLARE @ActionID INT 
+	SELECT @ActionID = CASE WHEN @systemID = 10 THEN 95081 --telegram chatbot
+							ELSE CASE WHEN @CreatedMode = 1 THEN 95082 --Multiple customers
+									ELSE 629 END --single customer
+							END		
+		
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 629,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 	END TRY
@@ -868,7 +880,7 @@ BEGIN
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @Creator,
 			@CustID = @CustID,
-			@ActionID = 629,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 	END CATCH

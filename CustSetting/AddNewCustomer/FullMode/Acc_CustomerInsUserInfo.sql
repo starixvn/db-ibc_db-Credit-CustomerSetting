@@ -154,6 +154,7 @@ Revisions:
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
 	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
+	- 20230414@Johnson: try catch when insert customer for case multiple clone account [redmine: #183697]
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -179,34 +180,35 @@ BEGIN
 		INNER JOIN Site s WITH (NOLOCK) ON s.site=cus.site
 		WHERE cus.custid = @recommend
 	END
+	
+	BEGIN TRY	
+		INSERT INTO Customer   			
+					(username, firstname, lastname, phone, mobilephone, fax, email, address,
+					city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
+					currency, pwdexpiry, creator, Site, creatdate, ugroup
+					) 
+				 VALUES (@username, @firstname, @lastname, @phone, @mobilephone, @fax, @email, @address, 
+					@city, @state, @country, @postal, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
+					@currency, @pwdexpiry, @creator, @site, GETDATE(), @ugroup
+					)
 		
-    INSERT INTO Customer   			
-			    (username, firstname, lastname, phone, mobilephone, fax, email, address,
-			    city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
-			    currency, pwdexpiry, creator, Site, creatdate, ugroup
-			    ) 
- 		     VALUES (@username, @firstname, @lastname, @phone, @mobilephone, @fax, @email, @address, 
-			    @city, @state, @country, @postal, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
-			    @currency, @pwdexpiry, @creator, @site, GETDATE(), @ugroup
-			    )
-	
-	
-    SELECT @custid=@@IDENTITY
-	
-    IF @@ERROR <> 0
-    BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create customer failed. Please try again.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
-						    END,
-		    @ErrCode = 111
-    		
-	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-    		
-	    RETURN
-    END
-	
+		SELECT @custid=@@IDENTITY			
+	END TRY
+	BEGIN CATCH 
+		IF @@ERROR <> 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+									WHEN 'E' THEN 'Create customer failed. Please try again.'
+									ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
+								END,
+				@ErrCode = 111
+				
+			-- ROLLBACK MANUALLY
+			DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
+				
+			RETURN
+		END
+	END CATCH
 	--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @custid, 0, @roleid, @ErrCode, @ErrMsg
 	
 	--IF @ErrCode <>0
