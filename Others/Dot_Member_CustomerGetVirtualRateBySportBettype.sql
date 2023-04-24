@@ -17,7 +17,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@CustomerClass		SMALLINT = NULL,         
 					@StakeRM			MONEY = NULL,
 					@virtualrate		SMALLMONEY = NULL,
-					@BetFrom			NVARCHAR(1) = '',
+					@BetFrom			NVARCHAR(4) = '',
 					@SiteID				INT = NULL,
 					@LeagueID			INT = -1,
 					@Istest				BIT = 0
@@ -47,6 +47,8 @@ AS
 		-- 20201209@VN-Eden: VR Setting for Soccer By Hours (1AM - 6AM GMT+8) [Redmine: #146787]
 		-- 20210427@VN-Eden: Implement dedicated feature to control Global Virtual Rate adjustment on tickets [Redmine:#136423]
 		-- 20230307@VN-Johnson: Return Basketball VR to its original state [redmine:#184339]
+		-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
+
     Parameter's Explanation:
 */
 BEGIN

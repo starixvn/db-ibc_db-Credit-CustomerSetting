@@ -8,7 +8,7 @@ ALTER PROCEDURE dbo.Dot_Member_GetVRSettingAdjustment (
 			,@DateOfWeek    TINYINT    
 			,@LeagueGroupID INT        
 			,@LeagueID      INT        
-			,@Betfrom       VARCHAR    
+			,@Betfrom       NVARCHAR(4)    
 			,@StakeRM       MONEY      
 			,@VRValue       SMALLMONEY OUTPUT
 			,@VRStatus      TINYINT  
@@ -27,6 +27,8 @@ AS
 	    - 20210425@Eden: First commit [Redmine:#136423]
 		- 20230301@Eden: Wrong VR of Basketball and Esport [Redmine:#184585]
 		- 20230307@Johnson: Return Basketball VR to its original state [redmine:#184339]
+		- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
+
 	Param's Explanation:  
 	DECLARE @VRValue SMALLMONEY = 0.5
 	EXEC Dot_Member_GetVRSettingAdjustment

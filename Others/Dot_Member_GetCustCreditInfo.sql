@@ -21,7 +21,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo] @custid INT
 	,@IsApplyVR2 BIT = 0
 	,@RefLevelID INT = NULL
 	,@IsLowVR BIT = 0
-	,@BetFrom NVARCHAR(1) = ''
+	,@BetFrom NVARCHAR(4) = ''
 	,@CustomerClass SMALLINT = NULL
 	,@StakeRM MONEY = NULL
 	,@LeagueID INT = - 1
@@ -83,6 +83,7 @@ AS
     -- 20220912@Tw-YC: remove maxpermatch164
     -- 20221226@TW-Andy: remove usage of maxpermatch on talbe [custinfo] 
 	-- 20230307@VN-Johnson: Add auto suspend for BasketBall and return Basketball VR to its original state [redmine:#184339]
+	-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
   */
 BEGIN
 	SET NOCOUNT ON
