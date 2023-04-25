@@ -12,7 +12,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustCreditInfo_Cust_DCS] @custid INT
 	,@IsApplyVR2 BIT = 0
 	,@RefLevelID INT = NULL
 	,@IsLowVR BIT = 0
-	,@BetFrom NVARCHAR(1) = ''
+	,@BetFrom NVARCHAR(4) = ''
 	,@CustomerClass SMALLINT = NULL
 	,@StakeRM MONEY = NULL
 	,@LeagueID INT = - 1
@@ -66,7 +66,7 @@ BEGIN
         -- 20220419@TW-Xinxain: column add alias
 		-- 20221226@TW-Andy: remove usage of column maxpermatch on [custInfo]
 		-- 20230307@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine:#184339]
-		
+		-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
       */
 	SET NOCOUNT ON;
 
