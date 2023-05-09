@@ -23,7 +23,8 @@ AS
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 		- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
-		
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+
 	Param's Explanation:
 		@Type: 
 			+ -1-Stage 1: update closed = 1 for whole agent line
@@ -172,9 +173,7 @@ BEGIN
 		END
 
 
-	     IF (dbo.f_CheckRepTable('CustSetting') = 1 
-		  AND dbo.f_CheckRepTable('CustSetting3rd') = 1 
-	     )
+	     IF dbo.f_CheckRepTable('CustSetting') = 1 		 	     
 		BEGIN
 			WHILE(1=1)
 			BEGIN
@@ -183,44 +182,9 @@ BEGIN
 						
 				IF @@ROWCOUNT < 10000 
 					BREAK
-			END
-			
-			WHILE(1=1)
-			BEGIN
-				DELETE TOP(10000) dbo.CustSetting3rd WITH (UPDLOCK,ROWLOCK)
-				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) WHERE recommend = @AgentID)
-							
-				IF @@ROWCOUNT < 10000
-					BREAK			
-			END
+			END						
 		END
-	
-	     IF (dbo.f_CheckRepTable('CustSettingGame') = 1 
-		  AND dbo.f_CheckRepTable('CustGameType') = 1 
-	     )
-		BEGIN			
-			WHILE(1=1)
-			BEGIN
-				DELETE TOP(10000) dbo.[CustSettingGame] WITH (UPDLOCK,ROWLOCK)
-				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-									WHERE recommend = @AgentID
-										)
-				IF @@ROWCOUNT < 10000 
-					BREAK
-			END			
-			
-			WHILE(1=1)
-			BEGIN
-				DELETE TOP(10000) dbo.[CustGameType] WITH (UPDLOCK,ROWLOCK)
-				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-										WHERE  recommend = @AgentID
-											)
-				IF @@ROWCOUNT < 10000 
-					BREAK
-			END				
-		END
-
-
+		   
 		--------- Archive more settings data (new tables/DCS)
 
 		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 1 		
@@ -347,21 +311,7 @@ BEGIN
 			DELETE dbo.custOverride WITH (UPDLOCK,ROWLOCK)
 			WHERE	custid = @AgentID 
 			
-		END
-
-		IF dbo.f_CheckRepTable('custOverride3rd') = 1 
-		BEGIN
-			DELETE dbo.custOverride3rd WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('CustOverrideGame') = 1 
-		BEGIN
-			DELETE dbo.CustOverrideGame WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
+		END		
 
 		IF dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1 
 		BEGIN

@@ -21,7 +21,7 @@ AS
 		- 20210713@Tina: backup CustProductStatus and delete for stage 4 [RedmineID: #148600]
 		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-
+		- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 */
     
 SET NOCOUNT ON
@@ -88,23 +88,23 @@ insert into DBARCCUST.bodb_Customer.dbo.custinfo_old(
 		username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
                       VirtualMultiplier, maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11, maxpermatch12, 
                       maxpermatch99, Enabled, danger, DisableCasino, SyncCasino, danger2, 
-                      danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161,  
+                      danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161, 
                       MaxPerBall161,
-                      Abnormal, DoubleCommLosing, 
+                      Abnormal, DoubleCommLosing,
                       autosuspend2, HideKeno, DisableEsports, HideGoldDeluxe, DisableGoldDeluxe,  
-                      DisableSuperLive, DisableColossusBet, HideColossusBet,  
+                      DisableSuperLive, DisableColossusBet, HideColossusBet, 
                       LockUpd, MaxPerMatch1MP, BonusWalletFlag
 )
 select	@Now, 
 		username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
                       VirtualMultiplier, 0, 0, 0, 0, 0, 0, 0, 0, 
                       0, Enabled, danger, 0, 0, danger2, 
-                      danger3, DisableOutright, 0, DisableNumber, 0, 
+                      danger3, DisableOutright, 0, 0, 0, 
                       0,
                       Abnormal, DoubleCommLosing,
-                      autosuspend2, HideKeno, DisableEsports, 0, 0,  
+                      autosuspend2, 0, DisableEsports, 0, 0,  
                       DisableSuperLive, DisableColossusBet, HideColossusBet, 
-                      LockUpd, 0, BonusWalletFlag 
+                      LockUpd, 0, BonusWalletFlag
 from	custinfo (nolock)
 where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
 

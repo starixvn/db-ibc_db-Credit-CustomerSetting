@@ -34,6 +34,8 @@ AS
 		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+		- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+
 */
     
 SET NOCOUNT ON
@@ -220,10 +222,10 @@ select	@Now,
 		username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
                       VirtualMultiplier, 0, 0, 0, 0, 0, 0, 0, 0, 
                       0, Enabled, danger, 0, 0, danger2, 
-                      danger3, DisableOutright, 0, DisableNumber, 0, 
+                      danger3, DisableOutright, 0, 0, 0, 
                       0,
                       Abnormal, DoubleCommLosing,
-                      autosuspend2, HideKeno, DisableEsports, 0, 0,  
+                      autosuspend2, 0, DisableEsports, 0, 0,  
                       DisableSuperLive, DisableColossusBet, HideColossusBet, 
                       LockUpd, 0, BonusWalletFlag
 from	custinfo (nolock)
@@ -292,98 +294,6 @@ select 	custid,
 		isautolivempositiontaking  
 from	custSetting (nolock) 
 where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
-
---Copy custSetting3rd data to bodb_Customer 
-insert into DBARCCUST.bodb_Customer.dbo.custSetting3rd_old(
-	 [custid]
-	,[bettype]
-	,[sporttype]
-	,[apositiontaking]
-	,[mpositiontaking]
-	,[spositiontaking]
-	,[playerdiscount]
-	,[discount]
-	,[adiscount]
-	,[sdiscount]
-	,[minbet]
-	,[maxbet]
-	,[autopositiontaking]
-	,[isautopositiontaking]
-	,[autompositiontaking]
-	,[isautompositiontaking]
-	,[alivepositiontaking]
-      ,[mlivepositiontaking]
-      ,[slivepositiontaking]
-      ,[autolivepositiontaking]
-      ,[isautolivepositiontaking]
-      ,[autolivempositiontaking]
-      ,[isautolivempositiontaking]
-) 
-SELECT	[custid]
-	   ,[bettype]
-	   ,[sporttype]
-	   ,[apositiontaking]
-	   ,[mpositiontaking]
-	   ,[spositiontaking]
-	   ,[playerdiscount]
-	   ,[discount]
-	   ,[adiscount]
-	   ,[sdiscount]
-	   ,0
-	   ,0
-	   ,[autopositiontaking]
-	   ,[isautopositiontaking]
-	   ,[autompositiontaking]
-	   ,[isautompositiontaking]
-	   ,[alivepositiontaking]
-      ,[mlivepositiontaking]
-      ,[slivepositiontaking]
-      ,[autolivepositiontaking]
-      ,[isautolivepositiontaking]
-      ,[autolivempositiontaking]
-      ,[isautolivempositiontaking]
-FROM	CustSetting3rd WITH (NOLOCK)
-WHERE	custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE recommend = @AgentID)		
-
---- copy DBTRANS.BODB02.dbo.CustSettingGame data to DB05.bodb_Customer.dbo.CustSettingGame_Old
-INSERT INTO DBARCCUST.bodb_Customer.dbo.CustSettingGame_Old(
-			CustID
-			,Bettype
-			,Sporttype
-			,apositiontaking
-			,mpositiontaking
-			,spositiontaking
-			,playerdiscount
-			,discount
-			,adiscount
-			,sdiscount
-			,autopositiontaking
-			,isautopositiontaking
-			,autompositiontaking
-			,isautompositiontaking)
-SELECT CustID
-		,Bettype
-		,Sporttype
-		,apositiontaking
-		,mpositiontaking
-		,spositiontaking
-		,playerdiscount
-		,discount
-		,adiscount
-		,sdiscount
-		,autopositiontaking
-		,isautopositiontaking
-		,autompositiontaking
-		,isautompositiontaking
-FROM [dbo].[CustSettingGame] WITH(NOLOCK)
-WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID)
-
---- copy DBTRANS.BODB02.dbo.CustGameType data to DB05.bodb_Customer.dbo.CustGameType_Old
-INSERT INTO DBARCCUST.bodb_Customer.dbo.CustGameType_Old(CustID, GameTypeID, StakeLevelList, MaxPerGameType, MinBet, MaxBet, IsDisabled)
-SELECT CustID, GameTypeID, StakeLevelList, MaxPerGameType, MinBet, MaxBet, IsDisabled
-FROM [dbo].CustGameType WITH(NOLOCK)
-WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE recommend = @AgentID)
-
 
 --- copy DBTRANS.BODB02.dbo.CustVirtualSetting data to DB05.bodb_Customer.dbo.CustVirtualSetting_Old
 IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustVirtualSetting_Old WITH(NOLOCK) 
@@ -476,16 +386,6 @@ WHERE custid = @AgentID
 INSERT INTO DBARCCUST.bodb_Customer.dbo.custOverride_old(custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking)
 SELECT custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking
 FROM custOverride WITH(NOLOCK)
-WHERE custid = @AgentID
-
-INSERT INTO DBARCCUST.bodb_Customer.dbo.custOverride3rd_old(custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking)
-SELECT custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking
-FROM custOverride3rd WITH(NOLOCK)
-WHERE custid = @AgentID
-
-INSERT INTO DBARCCUST.bodb_Customer.dbo.CustOverrideGame_old(CustID,Bettype,Sporttype,minpositiontaking)
-SELECT CustID,Bettype,Sporttype,minpositiontaking
-FROM CustOverrideGame WITH(NOLOCK)
 WHERE custid = @AgentID
 
 INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTSetting3rd_Agent_old(CustID,SportType,BetType,IsLive,IsAutoMasterPT,IsAutoSuperPT

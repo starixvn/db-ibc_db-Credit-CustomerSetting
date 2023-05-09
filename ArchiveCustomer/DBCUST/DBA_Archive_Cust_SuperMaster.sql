@@ -16,7 +16,7 @@ AS
 			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 			- 20210810@Eden: Enhance Performance for stage 1 [RedmineID: #155969]
 			- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
-
+			- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 */
 BEGIN
 	DECLARE @RoleID INT
@@ -132,31 +132,15 @@ BEGIN
 				
 		END
 
-	     IF (dbo.f_CheckRepTable('CustSetting') = 1 
-		  AND dbo.f_CheckRepTable('CustSetting3rd') = 1 
-	     )
+	     IF (dbo.f_CheckRepTable('CustSetting') = 1 )
 		BEGIN
 			
 			DELETE  dbo.CustSetting WITH (UPDLOCK,ROWLOCK)
 			WHERE	custid = @CustID
-		
-			DELETE  dbo.CustSetting3rd WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @CustID
+
 				
 		END
-	
-	     IF (dbo.f_CheckRepTable('CustSettingGame') = 1 
-		  AND dbo.f_CheckRepTable('CustGameType') = 1 
-	     )
-		BEGIN			
-			
-			DELETE  dbo.[CustSettingGame] WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @CustID
-		
-			DELETE  dbo.[CustGameType] WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @CustID
-					
-		END
+
 
 		--#162050 : more tables
 		IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 1 
@@ -176,20 +160,6 @@ BEGIN
 		IF dbo.f_CheckRepTable('custOverride') = 1 
 		BEGIN
 			DELETE dbo.custOverride WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @CustID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('custOverride3rd') = 1 
-		BEGIN
-			DELETE dbo.custOverride3rd WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @CustID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('CustOverrideGame') = 1 
-		BEGIN
-			DELETE dbo.CustOverrideGame WITH (UPDLOCK,ROWLOCK)
 			WHERE	custid = @CustID 
 			
 		END
