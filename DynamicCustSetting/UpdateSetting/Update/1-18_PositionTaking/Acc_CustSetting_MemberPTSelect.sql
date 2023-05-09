@@ -18,6 +18,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230317@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 	Param's Explanation:  
 		- @CustID: Member's ID  
@@ -32,10 +33,10 @@ BEGIN
   
 	DECLARE @SuperID INT, @MasterID INT, @AgentID INT  
 	
-	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT, Child_DisplayOrder INT)
 
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
-	SELECT SportType,Bettype,IsLive, SettingType 
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType, Child_DisplayOrder)
+	SELECT SportType,Bettype,IsLive, SettingType, Child_DisplayOrder 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
 
 	CREATE TABLE #ProductSettingDetail(
@@ -57,7 +58,7 @@ BEGIN
 	WHERE ci.custid=@CustID 
 	
 	DECLARE @MemberPT TABLE (  
-							SportType  SMALLINT  
+							  SportType  SMALLINT  
 							, BetType  SMALLINT  
 							, IsLive  BIT  
 							, S1   SMALLMONEY  
@@ -66,11 +67,12 @@ BEGIN
 							, IS1   BIT  
 							, US1   SMALLMONEY  
 							, IM1   BIT  
-							, UM1   SMALLMONEY  
+							, UM1   SMALLMONEY 
+							, Child_DisplayOrder INT
 							)	 
 		
 	--Get member setting from Group OR Individual Settings   
-	INSERT INTO @MemberPT  
+	INSERT INTO @MemberPT  (SportType,BetType,IsLive,S1,M1,A1,IS1,US1,IM1,UM1,Child_DisplayOrder)
 	SELECT pdt.SportType  
 		, pdt.BetType  
 		, pdt.IsLive  
@@ -109,6 +111,7 @@ BEGIN
 		THEN pt.AutoMasterPT  
 		ELSE ptgr.AutoMasterPT  
 		END AS UM1  
+		,ft.Child_DisplayOrder
 	FROM #ProductSettingDetail pdt WITH (NOLOCK)  
 		INNER JOIN #SportBettypeFilter ft 
 			ON pdt.SportType = ft.sporttype
@@ -155,6 +158,7 @@ BEGIN
 		AND mb.BetType = superpt.bettype  
 		AND mb.IsLive = superpt.islive  
 		AND superpt.custid = @SuperID 
+		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
 	END 
 	ELSE IF @RoleID = 3  
 	BEGIN  
@@ -185,7 +189,8 @@ BEGIN
 			ON mb.SportType = agentpt.sporttype  
 			AND mb.BetType = agentpt.bettype  
 			AND mb.IsLive = agentpt.islive  
-			AND agentpt.custid = @AgentID 		
+			AND agentpt.custid = @AgentID 
+		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
 	END  
 	ELSE IF @RoleID = 2  
 	BEGIN  
@@ -254,6 +259,7 @@ BEGIN
 			AND mb.BetType = superpt.bettype  
 			AND mb.IsLive = superpt.islive  
 			AND superpt.custid = @SuperID  
+		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
 	END  
 	
 	DROP TABLE #SportBettypeFilter

@@ -57,18 +57,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_PositionTaking]
 	@v99apositiontaking_3 SMALLMONEY,
 	@v99apositiontaking_9 SMALLMONEY,
 	@v99apositiontaking_20 SMALLMONEY,
-	@v99apositiontaking_9999 SMALLMONEY,
-		
-	--v161
-	@v161apositiontaking_81 smallmoney, 
-	@v161apositiontaking_83 smallmoney, 	
-	@v161apositiontaking_86 smallmoney, 
-	@v161apositiontaking_88 smallmoney = 0, 
-	@v161alivepositiontaking_85 smallmoney,
-	@v161alivepositiontaking_86 smallmoney,
-	@v161alivepositiontaking_87 smallmoney,
-	@v161alivepositiontaking_89 smallmoney = 0,
-	@v161alivepositiontaking_90 smallmoney = 0,
+	@v99apositiontaking_9999 SMALLMONEY,	
 	
 	-- Outright PT for sports
 	@v2apositiontaking_10 smallmoney = 0,
@@ -91,8 +80,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_PositionTaking]
 
 	@UpdatePositiontakingv99 BIT = 1,
 	@UpdatePositiontakingv99MP BIT = 1,
-	
-	@UpdatePositiontakingv161 BIT = 1,
 	
 	@UserID INT,	
 	
@@ -142,7 +129,7 @@ Revisions:
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
-
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -256,19 +243,7 @@ DECLARE
 	@v99mpositiontaking_3 SMALLMONEY,
 	@v99mpositiontaking_9 SMALLMONEY,
 	@v99mpositiontaking_20 SMALLMONEY,
-	@v99mpositiontaking_9999 SMALLMONEY,
-
-	--v161
-	@v161mpositiontaking_81 smallmoney, 
-	@v161mpositiontaking_83 smallmoney, 	 
-	@v161mpositiontaking_86 smallmoney, 
-	@v161mpositiontaking_88 smallmoney,
-	@v161mlivepositiontaking_85 smallmoney,
-	@v161mlivepositiontaking_86 smallmoney,
-	@v161mlivepositiontaking_87 smallmoney,
-	@v161mlivepositiontaking_89 smallmoney,
-	@v161mlivepositiontaking_90 smallmoney,
-	
+	@v99mpositiontaking_9999 SMALLMONEY,	
 	
 	--m3
 	@mapositiontaking_1_max SMALLMONEY,
@@ -325,19 +300,7 @@ DECLARE
 	@v99mapositiontaking_3_max SMALLMONEY,
 	@v99mapositiontaking_9_max SMALLMONEY,	
 	@v99mapositiontaking_20_max SMALLMONEY,	
-	@v99mapositiontaking_9999_max SMALLMONEY,	
-	
-	--v161
-	@v161mapositiontaking_81_max smallmoney, 
-	@v161mapositiontaking_83_max smallmoney, 	
-	@v161mapositiontaking_86_max smallmoney, 
-	@v161mapositiontaking_88_max smallmoney, 
-	@v161malivepositiontaking_85_max smallmoney,
-	@v161malivepositiontaking_86_max smallmoney,
-	@v161malivepositiontaking_87_max smallmoney,
-	@v161malivepositiontaking_89_max smallmoney,
-	@v161malivepositiontaking_90_max smallmoney,
-	
+	@v99mapositiontaking_9999_max SMALLMONEY,			
 	
 	--old_a1
 	@old_apositiontaking_1 SMALLMONEY,
@@ -395,20 +358,7 @@ DECLARE
 	@old_v99apositiontaking_9 SMALLMONEY,	
 	@old_v99apositiontaking_20 SMALLMONEY,	
 	@old_v99apositiontaking_9999 SMALLMONEY,	
-	
-	--v161
-	@old_v161apositiontaking_81 smallmoney, 
-	@old_v161apositiontaking_83 smallmoney, 	 
-	@old_v161apositiontaking_86 smallmoney, 
-	@old_v161apositiontaking_88 smallmoney,
-	@old_v161alivepositiontaking_85 smallmoney,
-	@old_v161alivepositiontaking_86 smallmoney,
-	@old_v161alivepositiontaking_87 smallmoney,
-	@old_v161alivepositiontaking_89 smallmoney,
-	@old_v161alivepositiontaking_90 smallmoney,
-	
-	
-	
+		
 	--s1
 	@spositiontaking_1 SMALLMONEY,
 	@spositiontaking_2 SMALLMONEY,
@@ -465,20 +415,7 @@ DECLARE
 	@v99spositiontaking_9 SMALLMONEY,
 	@v99spositiontaking_20 SMALLMONEY,	
 	@v99spositiontaking_9999 SMALLMONEY,	
-	
-	--v161
-	@v161spositiontaking_81 smallmoney, 
-	@v161spositiontaking_83 smallmoney, 	 
-	@v161spositiontaking_86 smallmoney, 
-	@v161spositiontaking_88 smallmoney,
-	@v161slivepositiontaking_85 smallmoney,
-	@v161slivepositiontaking_86 smallmoney,
-	@v161slivepositiontaking_87 smallmoney,
-	@v161slivepositiontaking_89 smallmoney,
-	@v161slivepositiontaking_90 smallmoney,
-	
-	
-	
+		
 	--u3
 	@auto_spositiontaking_1 SMALLMONEY,
 	@auto_spositiontaking_2 SMALLMONEY,
@@ -534,19 +471,7 @@ DECLARE
 	@auto_v99spositiontaking_9 SMALLMONEY,
 	@auto_v99spositiontaking_20 SMALLMONEY,
 	@auto_v99spositiontaking_9999 SMALLMONEY,
-	
-	--v161
-	@auto_v161spositiontaking_81 smallmoney, 
-	@auto_v161spositiontaking_83 smallmoney, 	 
-	@auto_v161spositiontaking_86 smallmoney, 
-	@auto_v161spositiontaking_88 smallmoney,
-	@auto_v161slivepositiontaking_85 smallmoney,
-	@auto_v161slivepositiontaking_86 smallmoney,
-	@auto_v161slivepositiontaking_87 smallmoney,
-	@auto_v161slivepositiontaking_89 smallmoney,
-	@auto_v161slivepositiontaking_90 smallmoney,
-	
-	
+		
 	--s4
 	@max_spositiontaking_1 SMALLMONEY,
 	@max_spositiontaking_2 SMALLMONEY,
@@ -603,17 +528,6 @@ DECLARE
 	@max_v99spositiontaking_9 SMALLMONEY,
 	@max_v99spositiontaking_20 SMALLMONEY,	
 	@max_v99spositiontaking_9999 SMALLMONEY,	
-	--v161
-	@max_v161spositiontaking_81 smallmoney, 
-	@max_v161spositiontaking_83 smallmoney, 	 
-	@max_v161spositiontaking_86 smallmoney, 
-	@max_v161spositiontaking_88 smallmoney,
-	@max_v161slivepositiontaking_85 smallmoney,
-	@max_v161slivepositiontaking_86 smallmoney,
-	@max_v161slivepositiontaking_87 smallmoney,
-	@max_v161slivepositiontaking_89 smallmoney,
-	@max_v161slivepositiontaking_90 smallmoney,
-	
 	
 	--u1
 	@auto_spositiontaking_mem_1 SMALLMONEY,
@@ -671,19 +585,7 @@ DECLARE
 	@auto_v99spositiontaking_mem_3 SMALLMONEY,
 	@auto_v99spositiontaking_mem_9 SMALLMONEY,
 	@auto_v99spositiontaking_mem_20 SMALLMONEY,	
-	@auto_v99spositiontaking_mem_9999 SMALLMONEY,	
-	
-	--v161
-	@auto_v161spositiontaking_mem_81 smallmoney, 
-	@auto_v161spositiontaking_mem_83 smallmoney, 	 
-	@auto_v161spositiontaking_mem_86 smallmoney, 
-	@auto_v161spositiontaking_mem_88 smallmoney,
-	@auto_v161slivepositiontaking_mem_85 smallmoney,
-	@auto_v161slivepositiontaking_mem_86 smallmoney,
-	@auto_v161slivepositiontaking_mem_87 smallmoney,
-	@auto_v161slivepositiontaking_mem_89 smallmoney,
-	@auto_v161slivepositiontaking_mem_90 smallmoney,
-	
+	@auto_v99spositiontaking_mem_9999 SMALLMONEY,			
 	
 	--i3
 	@isauto_spositiontaking_1 BIT,
@@ -741,17 +643,6 @@ DECLARE
 	@isauto_v99spositiontaking_9 BIT,
 	@isauto_v99spositiontaking_20 BIT,
 	@isauto_v99spositiontaking_9999 BIT,
-
-	@isauto_v161spositiontaking_81 BIT, 
-	@isauto_v161spositiontaking_83 BIT, 	 
-	@isauto_v161spositiontaking_86 BIT, 
-	@isauto_v161spositiontaking_88 BIT,
-	@isauto_v161slivepositiontaking_85 BIT, 
-	@isauto_v161slivepositiontaking_86 BIT, 
-	@isauto_v161slivepositiontaking_87 BIT, 
-	@isauto_v161slivepositiontaking_89 BIT, 
-	@isauto_v161slivepositiontaking_90 BIT, 
-	
 	
 	--i1
 	@isauto_spositiontaking_mem_1 BIT,
@@ -809,20 +700,7 @@ DECLARE
 	@isauto_v99spositiontaking_mem_9 BIT,
 	@isauto_v99spositiontaking_mem_20 BIT,
 	@isauto_v99spositiontaking_mem_9999 BIT,
-	
-	--v161
-	@isauto_v161spositiontaking_mem_81 BIT,
-	@isauto_v161spositiontaking_mem_83 BIT,	 
-	@isauto_v161spositiontaking_mem_86 BIT,
-	@isauto_v161spositiontaking_mem_88 BIT,
-	@isauto_v161slivepositiontaking_mem_85 BIT,
-	@isauto_v161slivepositiontaking_mem_86 BIT,
-	@isauto_v161slivepositiontaking_mem_87 BIT,
-	@isauto_v161slivepositiontaking_mem_89 BIT,
-	@isauto_v161slivepositiontaking_mem_90 BIT,
-	
-	
-
+		
 	--um2
 	@auto_mpositiontaking_1 SMALLMONEY,
 	@auto_mpositiontaking_2 SMALLMONEY,
@@ -878,20 +756,7 @@ DECLARE
 	@auto_v99mpositiontaking_9 SMALLMONEY,
 	@auto_v99mpositiontaking_20 SMALLMONEY,
 	@auto_v99mpositiontaking_9999 SMALLMONEY,
-	
-	
-	--v161
-	@auto_v161mpositiontaking_81 SMALLMONEY,
-	@auto_v161mpositiontaking_83 SMALLMONEY,	
-	@auto_v161mpositiontaking_86 SMALLMONEY,
-	@auto_v161mpositiontaking_88 SMALLMONEY, 
-	@auto_v161mlivepositiontaking_85 SMALLMONEY,
-	@auto_v161mlivepositiontaking_86 SMALLMONEY,
-	@auto_v161mlivepositiontaking_87 SMALLMONEY,
-	@auto_v161mlivepositiontaking_89 SMALLMONEY,
-	@auto_v161mlivepositiontaking_90 SMALLMONEY,
-	
-	
+		
 	--im2
 	@isauto_mpositiontaking_1 BIT,
 	@isauto_mpositiontaking_2 BIT,
@@ -947,19 +812,7 @@ DECLARE
 	@isauto_v99mpositiontaking_3 BIT,
 	@isauto_v99mpositiontaking_9 BIT,
 	@isauto_v99mpositiontaking_20 BIT,
-	@isauto_v99mpositiontaking_9999 BIT,
-	
-	--v161
-	@isauto_v161mpositiontaking_81 BIT,
-	@isauto_v161mpositiontaking_83 BIT, 
-	@isauto_v161mpositiontaking_86 BIT,
-	@isauto_v161mpositiontaking_88 BIT,
-	@isauto_v161mlivepositiontaking_85 BIT,
-	@isauto_v161mlivepositiontaking_86 BIT,
-	@isauto_v161mlivepositiontaking_87 BIT,
-	@isauto_v161mlivepositiontaking_89 BIT,
-	@isauto_v161mlivepositiontaking_90 BIT,
-	
+	@isauto_v99mpositiontaking_9999 BIT,		
 	
 	--im1
 	@isauto_mpositiontaking_mem_1 BIT,
@@ -1017,19 +870,7 @@ DECLARE
 	@isauto_v99mpositiontaking_mem_9 BIT,
 	@isauto_v99mpositiontaking_mem_20 BIT,	
 	@isauto_v99mpositiontaking_mem_9999 BIT,	
-
-	--v161
-	@isauto_v161mpositiontaking_mem_81 BIT,
-	@isauto_v161mpositiontaking_mem_83 BIT, 
-	@isauto_v161mpositiontaking_mem_86 BIT,
-	@isauto_v161mpositiontaking_mem_88 BIT,
-	@isauto_v161mlivepositiontaking_mem_85 BIT,
-	@isauto_v161mlivepositiontaking_mem_86 BIT,
-	@isauto_v161mlivepositiontaking_mem_87 BIT,
-	@isauto_v161mlivepositiontaking_mem_89 BIT,
-	@isauto_v161mlivepositiontaking_mem_90 BIT,
 	
-
 	--um1
 	@auto_mpositiontaking_mem_1 SMALLMONEY,
 	@auto_mpositiontaking_mem_2 SMALLMONEY,
@@ -1085,18 +926,7 @@ DECLARE
 	@auto_v99mpositiontaking_mem_9 SMALLMONEY,
 	@auto_v99mpositiontaking_mem_20 SMALLMONEY,
 	@auto_v99mpositiontaking_mem_9999 SMALLMONEY,
-	
-	--v161
-	@auto_v161mpositiontaking_mem_81 SMALLMONEY,
-	@auto_v161mpositiontaking_mem_83 SMALLMONEY,
-	@auto_v161mpositiontaking_mem_86 SMALLMONEY,
-	@auto_v161mpositiontaking_mem_88 SMALLMONEY, 
-	@auto_v161mlivepositiontaking_mem_85 SMALLMONEY,
-	@auto_v161mlivepositiontaking_mem_86 SMALLMONEY,
-	@auto_v161mlivepositiontaking_mem_87 SMALLMONEY,
-	@auto_v161mlivepositiontaking_mem_89 SMALLMONEY,
-	@auto_v161mlivepositiontaking_mem_90 SMALLMONEY,
-	
+		
 	--cs_ap =iff(im,a2:iif(i1|i3,m3-m1,min(m3-m1,s4-s1-m1)))
 	@cs_ap_1 smallmoney,@cs_ap_2 smallmoney,@cs_ap_3 smallmoney,@cs_ap_4 smallmoney,@cs_ap_5 smallmoney,@cs_ap_6 smallmoney,@cs_ap_7 smallmoney,@cs_ap_8 smallmoney,@cs_ap_9 smallmoney,@cs_ap_10 smallmoney,@cs_ap_9999 smallmoney,
 	@cs_alp_1 smallmoney,@cs_alp_3 smallmoney,@cs_alp_7 smallmoney,@cs_alp_8 smallmoney,
@@ -1108,9 +938,7 @@ DECLARE
 	@cs_v11ap_1 smallmoney,@cs_v11ap_20 smallmoney,
 
 	@cs_v99ap_1 smallmoney,@cs_v99ap_2 smallmoney,@cs_v99ap_3 smallmoney,@cs_v99ap_9 smallmoney,@cs_v99ap_20 smallmoney,@cs_v99ap_9999 smallmoney,
-	@cs_v161ap_81 smallmoney,@cs_v161ap_83 smallmoney,@cs_v161ap_86 smallmoney,@cs_v161ap_88 smallmoney,
-	@cs_v161alp_85 smallmoney,@cs_v161alp_86 smallmoney,@cs_v161alp_87 smallmoney,@cs_v161alp_89 smallmoney,@cs_v161alp_90 smallmoney,
-
+	
 	-- Outright PT for sports
 	@cs_v2ap_10 smallmoney,
 	@cs_v3ap_10 smallmoney,
@@ -1208,18 +1036,7 @@ DECLARE
 	@v99apositiontaking_9_max smallmoney,
 	@v99apositiontaking_20_max smallmoney,
 	@v99apositiontaking_9999_max smallmoney,
-	
-	--v161
-	@v161apositiontaking_81_max smallmoney,
-	@v161apositiontaking_83_max smallmoney,
-	@v161apositiontaking_86_max smallmoney,
-	@v161apositiontaking_88_max smallmoney,
-	@v161alivepositiontaking_85_max smallmoney,
-	@v161alivepositiontaking_86_max smallmoney,
-	@v161alivepositiontaking_87_max smallmoney,
-	@v161alivepositiontaking_89_max smallmoney,
-	@v161alivepositiontaking_90_max smallmoney,
-	
+		
 	-- Outright PT for sports
 	
 	@v2mpositiontaking_10 SMALLMONEY,
@@ -1386,25 +1203,6 @@ From
 	LEFT JOIN custoverride as co with (NOLOCK) on cs.custid = co.custid and cs.sporttype=co.sporttype and cs.bettype=co.bettype
 Where cs.CustID = @recommend
 
-
-SELECT
-	--v161
-	@v161apositiontaking_81_max = max(case when cs3.bettype = 81 and cs3.sporttype=161 then case when cs3.apositiontaking<co3.maxpositiontaking then cs3.apositiontaking else co3.maxpositiontaking end else 0 end),
-	@v161apositiontaking_83_max = max(case when cs3.bettype = 83 and cs3.sporttype=161 then case when cs3.apositiontaking<co3.maxpositiontaking then cs3.apositiontaking else co3.maxpositiontaking end else 0 end),	
-	@v161apositiontaking_86_max = max(case when cs3.bettype = 86 and cs3.sporttype=161 then case when cs3.apositiontaking<co3.maxpositiontaking then cs3.apositiontaking else co3.maxpositiontaking end else 0 end),
-	@v161apositiontaking_88_max = max(case when cs3.bettype = 88 and cs3.sporttype=161 then case when cs3.apositiontaking<co3.maxpositiontaking then cs3.apositiontaking else co3.maxpositiontaking end else 0 end),
-	
-	@v161alivepositiontaking_85_max = max(case when cs3.bettype = 85 and cs3.sporttype=161 then case when cs3.alivepositiontaking<co3.maxlivepositiontaking then cs3.alivepositiontaking else co3.maxlivepositiontaking end else 0 end),
-	@v161alivepositiontaking_86_max = max(case when cs3.bettype = 86 and cs3.sporttype=161 then case when cs3.alivepositiontaking<co3.maxlivepositiontaking then cs3.alivepositiontaking else co3.maxlivepositiontaking end else 0 end),
-	@v161alivepositiontaking_87_max = max(case when cs3.bettype = 87 and cs3.sporttype=161 then case when cs3.alivepositiontaking<co3.maxlivepositiontaking then cs3.alivepositiontaking else co3.maxlivepositiontaking end else 0 end),
-	@v161alivepositiontaking_89_max = max(case when cs3.bettype = 89 and cs3.sporttype=161 then case when cs3.alivepositiontaking<co3.maxlivepositiontaking then cs3.alivepositiontaking else co3.maxlivepositiontaking end else 0 end),
-	@v161alivepositiontaking_90_max = max(case when cs3.bettype = 90 and cs3.sporttype=161 then case when cs3.alivepositiontaking<co3.maxlivepositiontaking then cs3.alivepositiontaking else co3.maxlivepositiontaking end else 0 end)
-FROM
-	CustSetting3rd as cs3 with (NOLOCK)
-	LEFT JOIN CustOverride3rd as co3 with (NOLOCK) on co3.custid = cs3.custid and co3.sporttype = cs3.sporttype and co3.bettype = cs3.bettype
-Where cs3.CustID = @recommend
-
-
 SELECT 
 	@apositiontaking_1_max = max(case when scs.bettype = 1 and scs.sporttype=1 then case when scs.apositiontaking<@apositiontaking_1_max then scs.apositiontaking else @apositiontaking_1_max end else 0 end),
 	@apositiontaking_2_max = max(case when scs.bettype = 2 and scs.sporttype=1 then case when scs.apositiontaking<@apositiontaking_2_max then scs.apositiontaking else @apositiontaking_2_max end else 0 end),
@@ -1476,23 +1274,6 @@ From
 	Custsetting as scs WITH(NOLOCK)
 WHERE 
 	scs.custid = @srecommend
-
-SELECT
-	@v161apositiontaking_81_max = max(case when scs3.bettype = 81 and scs3.sporttype=161 then case when scs3.apositiontaking<@v161apositiontaking_81_max then scs3.apositiontaking else @v161apositiontaking_81_max end else 0 end),
-	@v161apositiontaking_83_max = max(case when scs3.bettype = 83 and scs3.sporttype=161 then case when scs3.apositiontaking<@v161apositiontaking_83_max then scs3.apositiontaking else @v161apositiontaking_83_max end else 0 end),	
-	@v161apositiontaking_86_max = max(case when scs3.bettype = 86 and scs3.sporttype=161 then case when scs3.apositiontaking<@v161apositiontaking_86_max then scs3.apositiontaking else @v161apositiontaking_86_max end else 0 end),
-	@v161apositiontaking_88_max = max(case when scs3.bettype = 88 and scs3.sporttype=161 then case when scs3.apositiontaking<@v161apositiontaking_88_max then scs3.apositiontaking else @v161apositiontaking_88_max end else 0 end),
-	
-	@v161alivepositiontaking_85_max = max(case when scs3.bettype = 85 and scs3.sporttype=161 then case when scs3.alivepositiontaking<@v161alivepositiontaking_85_max then scs3.alivepositiontaking else @v161alivepositiontaking_85_max end else 0 end),
-	@v161alivepositiontaking_86_max = max(case when scs3.bettype = 86 and scs3.sporttype=161 then case when scs3.alivepositiontaking<@v161alivepositiontaking_86_max then scs3.alivepositiontaking else @v161alivepositiontaking_86_max end else 0 end),
-	@v161alivepositiontaking_87_max = max(case when scs3.bettype = 87 and scs3.sporttype=161 then case when scs3.alivepositiontaking<@v161alivepositiontaking_87_max then scs3.alivepositiontaking else @v161alivepositiontaking_87_max end else 0 end),
-	@v161alivepositiontaking_89_max = max(case when scs3.bettype = 89 and scs3.sporttype=161 then case when scs3.alivepositiontaking<@v161alivepositiontaking_89_max then scs3.alivepositiontaking else @v161alivepositiontaking_89_max end else 0 end),
-	@v161alivepositiontaking_90_max = max(case when scs3.bettype = 90 and scs3.sporttype=161 then case when scs3.alivepositiontaking<@v161alivepositiontaking_90_max then scs3.alivepositiontaking else @v161alivepositiontaking_90_max end else 0 end)
-FROM
-	CustSetting3rd as Scs3 with (NOLOCK)
-WHERE
-	scs3.custid = @srecommend
-
 
 --=iff(im,a2:iif(i1|i3,m3-m1,min(m3-m1,s4-s1-m1)))
 Select 
@@ -1570,26 +1351,6 @@ From CustSetting as cs with (NOLOCK)
 WHERE 	
 	cs.custid = @custid
 
-
-SELECT
-	--v161
-	@cs_v161ap_81 = max(case when cs3.bettype = 81 and cs3.sporttype=161 then case when (acs3.isautompositiontaking = 1 or cs3.isautompositiontaking = 1) then acs3.apositiontaking else case when not (cs3.isautopositiontaking=0 and mcs3.isautopositiontaking=0 ) then mcs3.mpositiontaking-cs3.mpositiontaking else case when mcs3.mpositiontaking-cs3.mpositiontaking<=scs3.spositiontaking-cs3.spositiontaking-cs3.mpositiontaking then  mcs3.mpositiontaking-cs3.mpositiontaking else scs3.spositiontaking-cs3.spositiontaking-cs3.mpositiontaking end end end else 0 end),
-	@cs_v161ap_83 = max(case when cs3.bettype = 83 and cs3.sporttype=161 then case when (acs3.isautompositiontaking = 1 or cs3.isautompositiontaking = 1) then acs3.apositiontaking else case when not (cs3.isautopositiontaking=0 and mcs3.isautopositiontaking=0 ) then mcs3.mpositiontaking-cs3.mpositiontaking else case when mcs3.mpositiontaking-cs3.mpositiontaking<=scs3.spositiontaking-cs3.spositiontaking-cs3.mpositiontaking then  mcs3.mpositiontaking-cs3.mpositiontaking else scs3.spositiontaking-cs3.spositiontaking-cs3.mpositiontaking end end end else 0 end),
-	@cs_v161ap_86 = max(case when cs3.bettype = 86 and cs3.sporttype=161 then case when (acs3.isautompositiontaking = 1 or cs3.isautompositiontaking = 1) then acs3.apositiontaking else case when not (cs3.isautopositiontaking=0 and mcs3.isautopositiontaking=0 ) then mcs3.mpositiontaking-cs3.mpositiontaking else case when mcs3.mpositiontaking-cs3.mpositiontaking<=scs3.spositiontaking-cs3.spositiontaking-cs3.mpositiontaking then  mcs3.mpositiontaking-cs3.mpositiontaking else scs3.spositiontaking-cs3.spositiontaking-cs3.mpositiontaking end end end else 0 end),
-	@cs_v161ap_88 = max(case when cs3.bettype = 88 and cs3.sporttype=161 then case when (acs3.isautompositiontaking = 1 or cs3.isautompositiontaking = 1) then acs3.apositiontaking else case when not (cs3.isautopositiontaking=0 and mcs3.isautopositiontaking=0 ) then mcs3.mpositiontaking-cs3.mpositiontaking else case when mcs3.mpositiontaking-cs3.mpositiontaking<=scs3.spositiontaking-cs3.spositiontaking-cs3.mpositiontaking then  mcs3.mpositiontaking-cs3.mpositiontaking else scs3.spositiontaking-cs3.spositiontaking-cs3.mpositiontaking end end end else 0 end),
-	@cs_v161alp_85 = max(case when cs3.bettype = 85 and cs3.sporttype=161 then case when (acs3.isautolivempositiontaking = 1 or cs3.isautolivempositiontaking = 1) then acs3.alivepositiontaking else case when not (cs3.isautolivepositiontaking=0 and mcs3.isautolivepositiontaking=0 ) then mcs3.mlivepositiontaking-cs3.mlivepositiontaking else case when mcs3.mlivepositiontaking-cs3.mlivepositiontaking<=scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking then  mcs3.mlivepositiontaking-cs3.mlivepositiontaking else scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking end end end else 0 end),
-	@cs_v161alp_86 = max(case when cs3.bettype = 86 and cs3.sporttype=161 then case when (acs3.isautolivempositiontaking = 1 or cs3.isautolivempositiontaking = 1) then acs3.alivepositiontaking else case when not (cs3.isautolivepositiontaking=0 and mcs3.isautolivepositiontaking=0 ) then mcs3.mlivepositiontaking-cs3.mlivepositiontaking else case when mcs3.mlivepositiontaking-cs3.mlivepositiontaking<=scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking then  mcs3.mlivepositiontaking-cs3.mlivepositiontaking else scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking end end end else 0 end),
-	@cs_v161alp_87 = max(case when cs3.bettype = 87 and cs3.sporttype=161 then case when (acs3.isautolivempositiontaking = 1 or cs3.isautolivempositiontaking = 1) then acs3.alivepositiontaking else case when not (cs3.isautolivepositiontaking=0 and mcs3.isautolivepositiontaking=0 ) then mcs3.mlivepositiontaking-cs3.mlivepositiontaking else case when mcs3.mlivepositiontaking-cs3.mlivepositiontaking<=scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking then  mcs3.mlivepositiontaking-cs3.mlivepositiontaking else scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking end end end else 0 end),
-	@cs_v161alp_89 = max(case when cs3.bettype = 89 and cs3.sporttype=161 then case when (acs3.isautolivempositiontaking = 1 or cs3.isautolivempositiontaking = 1) then acs3.alivepositiontaking else case when not (cs3.isautolivepositiontaking=0 and mcs3.isautolivepositiontaking=0 ) then mcs3.mlivepositiontaking-cs3.mlivepositiontaking else case when mcs3.mlivepositiontaking-cs3.mlivepositiontaking<=scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking then  mcs3.mlivepositiontaking-cs3.mlivepositiontaking else scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking end end end else 0 end),
-	@cs_v161alp_90 = max(case when cs3.bettype = 90 and cs3.sporttype=161 then case when (acs3.isautolivempositiontaking = 1 or cs3.isautolivempositiontaking = 1) then acs3.alivepositiontaking else case when not (cs3.isautolivepositiontaking=0 and mcs3.isautolivepositiontaking=0 ) then mcs3.mlivepositiontaking-cs3.mlivepositiontaking else case when mcs3.mlivepositiontaking-cs3.mlivepositiontaking<=scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking then  mcs3.mlivepositiontaking-cs3.mlivepositiontaking else scs3.slivepositiontaking-cs3.slivepositiontaking-cs3.mlivepositiontaking end end end else 0 end)
-FROM
-	CustSetting3rd as cs3 WITH (NOLOCK)  
-	INNER JOIN custsetting3rd as scs3 WITH (NOLOCK) ON scs3.custid = @srecommend and scs3.bettype = cs3.bettype and scs3.sporttype = cs3.sporttype
-	INNER JOIN custsetting3rd as mcs3 WITH (NOLOCK) ON mcs3.custid = @mrecommend and mcs3.bettype = cs3.bettype and mcs3.sporttype = cs3.sporttype
-	INNER JOIN custsetting3rd as acs3 WITH (NOLOCK) ON acs3.custid = @recommend and acs3.bettype = cs3.bettype and acs3.sporttype = cs3.sporttype
-WHERE cs3.custid = @custid
-
-
 select 
 	@apositiontaking_1_max = case when @apositiontaking_1_max <= @cs_ap_1 then @apositiontaking_1_max else @cs_ap_1 end,
 	@apositiontaking_2_max = case when @apositiontaking_2_max <= @cs_ap_2 then @apositiontaking_2_max else @cs_ap_2 end,
@@ -1654,18 +1415,7 @@ select
 	@v99apositiontaking_3_max = case when @v99apositiontaking_3_max <= @cs_v99ap_3 then @v99apositiontaking_3_max else @cs_v99ap_3 end,
 	@v99apositiontaking_9_max = case when @v99apositiontaking_9_max <= @cs_v99ap_9 then @v99apositiontaking_9_max else @cs_v99ap_9 end,
 	@v99apositiontaking_20_max = case when @v99apositiontaking_20_max <= @cs_v99ap_20 then @v99apositiontaking_20_max else @cs_v99ap_20 end,
-	@v99apositiontaking_9999_max = case when @v99apositiontaking_9999_max <= @cs_v99ap_9999 then @v99apositiontaking_9999_max else @cs_v99ap_9999 end,
-	
-	--v161
-	@v161apositiontaking_81_max = case when @v161apositiontaking_81_max <= @cs_v161ap_81 then @v161apositiontaking_81_max else @cs_v161ap_81 end,
-	@v161apositiontaking_83_max = case when @v161apositiontaking_83_max <= @cs_v161ap_83 then @v161apositiontaking_83_max else @cs_v161ap_83 end,	
-	@v161apositiontaking_86_max = case when @v161apositiontaking_86_max <= @cs_v161ap_86 then @v161apositiontaking_86_max else @cs_v161ap_86 end,
-	@v161apositiontaking_88_max = case when @v161apositiontaking_88_max <= @cs_v161ap_88 then @v161apositiontaking_88_max else @cs_v161ap_88 end,
-	@v161alivepositiontaking_85_max = case when @v161alivepositiontaking_85_max <= @cs_v161alp_85 then @v161alivepositiontaking_85_max else @cs_v161alp_85 end,
-	@v161alivepositiontaking_86_max = case when @v161alivepositiontaking_86_max <= @cs_v161alp_86 then @v161alivepositiontaking_86_max else @cs_v161alp_86 end,
-	@v161alivepositiontaking_87_max = case when @v161alivepositiontaking_87_max <= @cs_v161alp_87 then @v161alivepositiontaking_87_max else @cs_v161alp_87 end,
-	@v161alivepositiontaking_89_max = case when @v161alivepositiontaking_89_max <= @cs_v161alp_89 then @v161alivepositiontaking_89_max else @cs_v161alp_89 end,
-	@v161alivepositiontaking_90_max = case when @v161alivepositiontaking_90_max <= @cs_v161alp_90 then @v161alivepositiontaking_90_max else @cs_v161alp_90 end
+	@v99apositiontaking_9999_max = case when @v99apositiontaking_9999_max <= @cs_v99ap_9999 then @v99apositiontaking_9999_max else @cs_v99ap_9999 end
 
 		
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2947,142 +2697,7 @@ BEGIN
 	END
 END
 
-
---v161
-if @UpdateMultiple = 0 or @UpdatePositiontakingv161 = 1
-BEGIN
-	if 
-		@v161apositiontaking_81  <0
-		or @v161apositiontaking_83  <0
-		or @v161apositiontaking_86  <0
-		or @v161apositiontaking_88  <0
-		or @v161alivepositiontaking_85  <0
-		or @v161alivepositiontaking_86  <0
-		or @v161alivepositiontaking_87  <0
-		or @v161alivepositiontaking_89  <0
-		or @v161alivepositiontaking_90  <0
-		
-		or @v161apositiontaking_81  >0.9
-		or @v161apositiontaking_83  >0.9
-		or @v161apositiontaking_86  >0.9
-		or @v161apositiontaking_88  >0.9
-		or @v161alivepositiontaking_85  >0.9
-		or @v161alivepositiontaking_86  >0.9
-		or @v161alivepositiontaking_87  >0.9
-		or @v161alivepositiontaking_89  >0.9
-		or @v161alivepositiontaking_90  >0.9
-	BEGIN
-		select @ErrCode = 8
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong position taking (for Number Game).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20001,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](161,@Language) + ')'
-					end
-		return
-	END
-
-	--check n2<=a1<=l2 
-	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Min: '+ dbo.f_FomatNumericToChar((co.minpositiontaking))+ '-Max: '+ dbo.f_FomatNumericToChar((co.maxpositiontaking))
-	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '--MinLive: '+ dbo.f_FomatNumericToChar((co.minlivepositiontaking))+ '-MaxLive: '+ dbo.f_FomatNumericToChar((co.maxlivepositiontaking)) else '' end + '<br>'
-	from custoverride3rd as co with (NOLOCK) inner join
-		(
-					select 81 as bettype, 161 as sporttype, @v161apositiontaking_81 as apositiontaking, 0 as alivepositiontaking
-		union all	select 83 as bettype, 161 as sporttype, @v161apositiontaking_83 as apositiontaking, 0 as alivepositiontaking
-		union all	select 88 as bettype, 161 as sporttype, @v161apositiontaking_88 as apositiontaking, 0 as alivepositiontaking
-		union all	select 85 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_85 as alivepositiontaking
-		union all	select 86 as bettype, 161 as sporttype, @v161apositiontaking_86 as apositiontaking, @v161alivepositiontaking_86 as alivepositiontaking
-		union all	select 87 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_87 as alivepositiontaking
-		union all	select 89 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_89 as alivepositiontaking
-		union all	select 90 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_90 as alivepositiontaking
-		) as b on co.sporttype=b.sporttype and co.bettype = b.bettype
-		INNER JOIN #tmp_Sports s on b.sporttype = s.ID
-		INNER JOIN #tmp_Bettype bt  on b.bettype = bt.ID
-	where co.custid = @recommend and (( (b.apositiontaking>co.maxpositiontaking or b.apositiontaking<co.minpositiontaking)) or 
-						((b.sporttype = 161 and b.bettype in (85,86,87,89,90)) and (b.alivepositiontaking>co.maxlivepositiontaking or b.alivepositiontaking<co.minlivepositiontaking)))
-	if @ErrType <>''
-	BEGIN
-		select @ErrCode = 9
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong position taking (min/max set by company).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20002,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
-
-	--check a1<=a4 
-	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((scs.apositiontaking))
-	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '-MaxLive: '+ dbo.f_FomatNumericToChar((scs.alivepositiontaking)) else '' end + '<br>'
-	from custinfo as c with (NOLOCK) inner join custsetting3rd as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
-		(
-					select 81 as bettype, 161 as sporttype, @v161apositiontaking_81 as apositiontaking, 0 as alivepositiontaking
-		union all	select 83 as bettype, 161 as sporttype, @v161apositiontaking_83 as apositiontaking, 0 as alivepositiontaking
-		union all	select 88 as bettype, 161 as sporttype, @v161apositiontaking_88 as apositiontaking, 0 as alivepositiontaking
-		union all 	select 85 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_85 as alivepositiontaking
-		union all	select 86 as bettype, 161 as sporttype, @v161apositiontaking_86 as apositiontaking, @v161alivepositiontaking_86 as alivepositiontaking
-		union all	select 87 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_87 as alivepositiontaking
-		union all	select 89 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_89 as alivepositiontaking
-		union all	select 90 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_90 as alivepositiontaking
-		) as b on scs.sporttype=b.sporttype and scs.bettype = b.bettype
-		INNER JOIN #tmp_Sports s on b.sporttype = s.ID
-		INNER JOIN #tmp_Bettype bt  on b.bettype = bt.ID
-	where c.custid = @recommend and (b.apositiontaking>scs.apositiontaking or (b.sporttype = 161 and b.bettype in (85,86,87,89,90) and b.alivepositiontaking>scs.alivepositiontaking))
-	if @ErrType <>''
-	BEGIN
-		select @ErrCode = 10
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong position taking (max set by company).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20005,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
-	
-	--check a1 with a1_max
-	select @ErrType = ''
-	select @ErrType = @ErrType + s.name + '-'+ bt.name + '-Max: '+ dbo.f_FomatNumericToChar((t.apositiontaking_max))
-	+ case when b.sporttype=161 and b.bettype in (85,86,87,89,90) then '-MaxLive: '+ dbo.f_FomatNumericToChar((t.alivepositiontaking_max)) else '' end + '<br>'
-	from 
-			(
-						select 81 as bettype, 161 as sporttype, @v161apositiontaking_81 as apositiontaking, 0 as alivepositiontaking
-				union all 	select 83 as bettype, 161 as sporttype, @v161apositiontaking_83 as apositiontaking, 0 as alivepositiontaking
-				union all 	select 88 as bettype, 161 as sporttype, @v161apositiontaking_88 as apositiontaking, 0 as alivepositiontaking
-				union all 	select 85 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_85 as alivepositiontaking
-				union all 	select 86 as bettype, 161 as sporttype, @v161apositiontaking_86 as apositiontaking, @v161alivepositiontaking_86 as alivepositiontaking
-				union all 	select 87 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_87 as alivepositiontaking
-				union all 	select 89 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_89 as alivepositiontaking
-				union all 	select 90 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_90 as alivepositiontaking
-			) b
-		INNER JOIN 
-			(
-					select 81 as bettype, 161 as sporttype, @v161apositiontaking_81_max as apositiontaking_max, 0 as alivepositiontaking_max
-				union all 	select 83 as bettype, 161 as sporttype, @v161apositiontaking_83_max as apositiontaking_max, 0 as alivepositiontaking_max
-				union all 	select 88 as bettype, 161 as sporttype, @v161apositiontaking_88_max as apositiontaking_max, 0 as alivepositiontaking_max
-				union all 	select 85 as bettype, 161 as sporttype, 0 as apositiontaking_max, @v161alivepositiontaking_85_max as alivepositiontaking_max
-				union all 	select 86 as bettype, 161 as sporttype, @v161apositiontaking_86_max as apositiontaking, @v161alivepositiontaking_86_max as alivepositiontaking_max
-				union all 	select 87 as bettype, 161 as sporttype, 0 as apositiontaking_max, @v161alivepositiontaking_87_max as alivepositiontaking_max
-				union all 	select 89 as bettype, 161 as sporttype, 0 as apositiontaking_max, @v161alivepositiontaking_89_max as alivepositiontaking_max
-				union all 	select 90 as bettype, 161 as sporttype, 0 as apositiontaking_max, @v161alivepositiontaking_90_max as alivepositiontaking_max
-			) t ON b.sporttype = t.sporttype AND b.bettype = t.bettype
-		INNER JOIN #tmp_Sports s on b.sporttype = s.ID
-		INNER JOIN #tmp_Bettype bt  on b.bettype = bt.ID
-	WHERE b.apositiontaking > t.apositiontaking_max OR b.alivepositiontaking > t.alivepositiontaking_max
-	
-	if @ErrType <>''
-	BEGIN
-		select @ErrCode = 106
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong position taking (max set by upline).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20028,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
-END
-
---------------------------------------------------------------------------------------------
-
-
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 --m1,s1,u1,i1,um1,im1
 SELECT @spositiontaking_1 = spositiontaking, @slivepositiontaking_1 = slivepositiontaking, @mpositiontaking_1 = mpositiontaking, @mlivepositiontaking_1 = mlivepositiontaking, @auto_spositiontaking_mem_1 = autopositiontaking, @auto_slivepositiontaking_mem_1 = autolivepositiontaking, @isauto_spositiontaking_mem_1 = isautopositiontaking, @isauto_slivepositiontaking_mem_1 = isautolivepositiontaking, @old_apositiontaking_1 = apositiontaking, @old_alivepositiontaking_1 = alivepositiontaking, @auto_mpositiontaking_mem_1 = autompositiontaking, @isauto_mpositiontaking_mem_1 = isautompositiontaking, @auto_mlivepositiontaking_mem_1 = autolivempositiontaking, @isauto_mlivepositiontaking_mem_1 = isautolivempositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND bettype=1 AND sporttype=1
 SELECT @spositiontaking_3 = spositiontaking, @slivepositiontaking_3 = slivepositiontaking, @mpositiontaking_3 = mpositiontaking, @mlivepositiontaking_3 = mlivepositiontaking, @auto_spositiontaking_mem_3 = autopositiontaking, @auto_slivepositiontaking_mem_3 = autolivepositiontaking, @isauto_spositiontaking_mem_3 = isautopositiontaking, @isauto_slivepositiontaking_mem_3 = isautolivepositiontaking, @old_apositiontaking_3 = apositiontaking, @old_alivepositiontaking_3 = alivepositiontaking, @auto_mpositiontaking_mem_3 = autompositiontaking, @isauto_mpositiontaking_mem_3 = isautompositiontaking, @auto_mlivepositiontaking_mem_3 = autolivempositiontaking, @isauto_mlivepositiontaking_mem_3 = isautolivempositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND bettype=3 AND sporttype=1
@@ -3145,16 +2760,6 @@ SELECT @v99spositiontaking_3 = spositiontaking, @v99mpositiontaking_3 = mpositio
 SELECT @v99spositiontaking_9 = spositiontaking, @v99mpositiontaking_9 = mpositiontaking, @auto_v99spositiontaking_mem_9 = autopositiontaking, @isauto_v99spositiontaking_mem_9 = isautopositiontaking, @old_v99apositiontaking_9 = apositiontaking, @auto_v99mpositiontaking_mem_9 = autompositiontaking, @isauto_v99mpositiontaking_mem_9 = isautompositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND bettype=9 AND sporttype=99
 SELECT @v99spositiontaking_20 = spositiontaking, @v99mpositiontaking_20 = mpositiontaking, @auto_v99spositiontaking_mem_20 = autopositiontaking, @isauto_v99spositiontaking_mem_20 = isautopositiontaking, @old_v99apositiontaking_20 = apositiontaking, @auto_v99mpositiontaking_mem_20 = autompositiontaking, @isauto_v99mpositiontaking_mem_20 = isautompositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND bettype=20 AND sporttype=99
 SELECT @v99spositiontaking_9999 = spositiontaking, @v99mpositiontaking_9999 = mpositiontaking, @auto_v99spositiontaking_mem_9999 = autopositiontaking, @isauto_v99spositiontaking_mem_9999 = isautopositiontaking, @old_v99apositiontaking_9999 = apositiontaking, @auto_v99mpositiontaking_mem_9999 = autompositiontaking, @isauto_v99mpositiontaking_mem_9999 = isautompositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @custid AND bettype=9999 AND sporttype=99
-
---v161
-SELECT @v161spositiontaking_81 = spositiontaking, @v161mpositiontaking_81 = mpositiontaking, @auto_v161spositiontaking_mem_81 = autopositiontaking, @isauto_v161spositiontaking_mem_81 = isautopositiontaking, @old_v161apositiontaking_81 = apositiontaking, @auto_v161mpositiontaking_mem_81 = autompositiontaking, @isauto_v161mpositiontaking_mem_81 = isautompositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND bettype=81 AND sporttype=161
-SELECT @v161spositiontaking_83 = spositiontaking, @v161mpositiontaking_83 = mpositiontaking, @auto_v161spositiontaking_mem_83 = autopositiontaking, @isauto_v161spositiontaking_mem_83 = isautopositiontaking, @old_v161apositiontaking_83 = apositiontaking, @auto_v161mpositiontaking_mem_83 = autompositiontaking, @isauto_v161mpositiontaking_mem_83 = isautompositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND bettype=83 AND sporttype=161
-SELECT @v161spositiontaking_88 = spositiontaking, @v161mpositiontaking_88 = mpositiontaking, @auto_v161spositiontaking_mem_88 = autopositiontaking, @isauto_v161spositiontaking_mem_88 = isautopositiontaking, @old_v161apositiontaking_88 = apositiontaking, @auto_v161mpositiontaking_mem_88 = autompositiontaking, @isauto_v161mpositiontaking_mem_88 = isautompositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND bettype=88 AND sporttype=161
-SELECT @v161slivepositiontaking_85 = slivepositiontaking,  @v161mlivepositiontaking_85 = mlivepositiontaking, @auto_v161slivepositiontaking_mem_85 = autolivepositiontaking, @isauto_v161slivepositiontaking_mem_85 = isautolivepositiontaking, @old_v161alivepositiontaking_85 = alivepositiontaking, @auto_v161mlivepositiontaking_mem_85 = autolivempositiontaking, @isauto_v161mlivepositiontaking_mem_85 = isautolivempositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND bettype=85 AND sporttype=161
-SELECT @v161spositiontaking_86 = spositiontaking, @v161slivepositiontaking_86 = slivepositiontaking, @v161mpositiontaking_86 = mpositiontaking, @v161mlivepositiontaking_86 = mlivepositiontaking, @auto_v161spositiontaking_mem_86 = autopositiontaking, @auto_v161slivepositiontaking_mem_86 = autolivepositiontaking, @isauto_v161spositiontaking_mem_86 = isautopositiontaking, @isauto_v161slivepositiontaking_mem_86 = isautolivepositiontaking, @old_v161apositiontaking_86 = apositiontaking, @old_v161alivepositiontaking_86 = alivepositiontaking, @auto_v161mpositiontaking_mem_86 = autompositiontaking, @isauto_v161mpositiontaking_mem_86 = isautompositiontaking, @auto_v161mlivepositiontaking_mem_86 = autolivempositiontaking, @isauto_v161mlivepositiontaking_mem_86 = isautolivempositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND bettype=86 AND sporttype=161
-SELECT @v161slivepositiontaking_87 = slivepositiontaking,  @v161mlivepositiontaking_87 = mlivepositiontaking, @auto_v161slivepositiontaking_mem_87 = autolivepositiontaking, @isauto_v161slivepositiontaking_mem_87 = isautolivepositiontaking, @old_v161alivepositiontaking_87 = alivepositiontaking, @auto_v161mlivepositiontaking_mem_87 = autolivempositiontaking, @isauto_v161mlivepositiontaking_mem_87 = isautolivempositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND bettype=87 AND sporttype=161
-SELECT @v161slivepositiontaking_89 = slivepositiontaking,  @v161mlivepositiontaking_89 = mlivepositiontaking, @auto_v161slivepositiontaking_mem_89 = autolivepositiontaking, @isauto_v161slivepositiontaking_mem_89 = isautolivepositiontaking, @old_v161alivepositiontaking_89 = alivepositiontaking, @auto_v161mlivepositiontaking_mem_89 = autolivempositiontaking, @isauto_v161mlivepositiontaking_mem_89 = isautolivempositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND bettype=89 AND sporttype=161
-SELECT @v161slivepositiontaking_90 = slivepositiontaking,  @v161mlivepositiontaking_90 = mlivepositiontaking, @auto_v161slivepositiontaking_mem_90 = autolivepositiontaking, @isauto_v161slivepositiontaking_mem_90 = isautolivepositiontaking, @old_v161alivepositiontaking_90 = alivepositiontaking, @auto_v161mlivepositiontaking_mem_90 = autolivempositiontaking, @isauto_v161mlivepositiontaking_mem_90 = isautolivempositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @custid AND bettype=90 AND sporttype=161
 
 ------------------------------------------------------------------------------------------------------------------------------
 --Auto Master PT
@@ -3223,18 +2828,6 @@ select @auto_v99mpositiontaking_9 = autompositiontaking, @isauto_v99mpositiontak
 select @auto_v99mpositiontaking_20 = autompositiontaking, @isauto_v99mpositiontaking_20 = isautompositiontaking from custsetting with (NOLOCK) where custid = @recommend and bettype=20 and sporttype=99
 select @auto_v99mpositiontaking_9999 = autompositiontaking, @isauto_v99mpositiontaking_9999 = isautompositiontaking from custsetting with (NOLOCK) where custid = @recommend and bettype=9999 and sporttype=99
 
-select @auto_v161mpositiontaking_81 = autompositiontaking,  @isauto_v161mpositiontaking_81 = isautompositiontaking from custsetting3rd with (NOLOCK) where custid = @recommend and bettype=81 and sporttype=161
-select @auto_v161mpositiontaking_83 = autompositiontaking,  @isauto_v161mpositiontaking_83 = isautompositiontaking from custsetting3rd with (NOLOCK) where custid = @recommend and bettype=83 and sporttype=161
-select @auto_v161mpositiontaking_88 = autompositiontaking,  @isauto_v161mpositiontaking_88 = isautompositiontaking from custsetting3rd with (NOLOCK) where custid = @recommend and bettype=88 and sporttype=161
-select @auto_v161mlivepositiontaking_85 = autolivempositiontaking, @isauto_v161mlivepositiontaking_85 = isautolivempositiontaking from custsetting3rd with (NOLOCK) where custid = @recommend and bettype=85 and sporttype=161
-select @auto_v161mpositiontaking_86 = autompositiontaking, @auto_v161mlivepositiontaking_86 = autolivempositiontaking, @isauto_v161mpositiontaking_86 = isautompositiontaking, @isauto_v161mlivepositiontaking_86 = isautolivempositiontaking from custsetting3rd with (NOLOCK) where custid = @recommend and bettype=86 and sporttype=161
-select @auto_v161mlivepositiontaking_87 = autolivempositiontaking, @isauto_v161mlivepositiontaking_87 = isautolivempositiontaking from custsetting3rd with (NOLOCK) where custid = @recommend and bettype=87 and sporttype=161
-select @auto_v161mlivepositiontaking_89 = autolivempositiontaking, @isauto_v161mlivepositiontaking_89 = isautolivempositiontaking from custsetting3rd with (NOLOCK) where custid = @recommend and bettype=89 and sporttype=161
-select @auto_v161mlivepositiontaking_90 = autolivempositiontaking, @isauto_v161mlivepositiontaking_90 = isautolivempositiontaking from custsetting3rd with (NOLOCK) where custid = @recommend and bettype=90 and sporttype=161
-------------------------------------------------------------------------------------------------------------------------------
-
-
-
 --s3,m3,u3,i3
 SELECT @mapositiontaking_1_max = mpositiontaking, @malivepositiontaking_1_max = mlivepositiontaking, @auto_spositiontaking_1 = autopositiontaking, @auto_slivepositiontaking_1 = autolivepositiontaking, @isauto_spositiontaking_1 = isautopositiontaking, @isauto_slivepositiontaking_1 = isautolivepositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=1 AND sporttype=1
 SELECT @mapositiontaking_3_max = mpositiontaking, @malivepositiontaking_3_max = mlivepositiontaking, @auto_spositiontaking_3 = autopositiontaking, @auto_slivepositiontaking_3 = autolivepositiontaking, @isauto_spositiontaking_3 = isautopositiontaking, @isauto_slivepositiontaking_3 = isautolivepositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=3 AND sporttype=1
@@ -3296,15 +2889,6 @@ SELECT @v99mapositiontaking_3_max = mpositiontaking, @auto_v99spositiontaking_3 
 SELECT @v99mapositiontaking_9_max = mpositiontaking, @auto_v99spositiontaking_9 = autopositiontaking, @isauto_v99spositiontaking_9 = isautopositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=9 AND sporttype=99
 SELECT @v99mapositiontaking_20_max = mpositiontaking, @auto_v99spositiontaking_20 = autopositiontaking, @isauto_v99spositiontaking_20 = isautopositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=20 AND sporttype=99
 SELECT @v99mapositiontaking_9999_max = mpositiontaking, @auto_v99spositiontaking_9999 = autopositiontaking, @isauto_v99spositiontaking_9999 = isautopositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=9999 AND sporttype=99
---v161
-SELECT @v161mapositiontaking_81_max = mpositiontaking, @auto_v161spositiontaking_81 = autopositiontaking, @isauto_v161spositiontaking_81 = isautopositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=81 AND sporttype=161
-SELECT @v161mapositiontaking_83_max = mpositiontaking, @auto_v161spositiontaking_83 = autopositiontaking, @isauto_v161spositiontaking_83 = isautopositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=83 AND sporttype=161
-SELECT @v161mapositiontaking_88_max = mpositiontaking, @auto_v161spositiontaking_88 = autopositiontaking, @isauto_v161spositiontaking_88 = isautopositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=88 AND sporttype=161
-SELECT @v161malivepositiontaking_85_max = mlivepositiontaking, @auto_v161slivepositiontaking_85 = autolivepositiontaking, @isauto_v161slivepositiontaking_85 = isautolivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=85 AND sporttype=161
-SELECT @v161mapositiontaking_86_max = mpositiontaking, @v161malivepositiontaking_86_max = mlivepositiontaking, @auto_v161spositiontaking_86 = autopositiontaking, @auto_v161slivepositiontaking_86 = autolivepositiontaking, @isauto_v161spositiontaking_86 = isautopositiontaking, @isauto_v161slivepositiontaking_86 = isautolivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=86 AND sporttype=161
-SELECT @v161malivepositiontaking_87_max = mlivepositiontaking, @auto_v161slivepositiontaking_87 = autolivepositiontaking, @isauto_v161slivepositiontaking_87 = isautolivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=87 AND sporttype=161
-SELECT @v161malivepositiontaking_89_max = mlivepositiontaking, @auto_v161slivepositiontaking_89 = autolivepositiontaking, @isauto_v161slivepositiontaking_89 = isautolivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=89 AND sporttype=161
-SELECT @v161malivepositiontaking_90_max = mlivepositiontaking, @auto_v161slivepositiontaking_90 = autolivepositiontaking, @isauto_v161slivepositiontaking_90 = isautolivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @mrecommend AND bettype=90 AND sporttype=161
 
 --s4
 SELECT @max_spositiontaking_1 = spositiontaking, @max_slivepositiontaking_1 = slivepositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @srecommend AND bettype=1 AND sporttype=1
@@ -3367,16 +2951,6 @@ SELECT @max_v99spositiontaking_3 = spositiontaking FROM custsetting WITH (NOLOCK
 SELECT @max_v99spositiontaking_9 = spositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @srecommend AND bettype=9 AND sporttype=99
 SELECT @max_v99spositiontaking_20 = spositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @srecommend AND bettype=20 AND sporttype=99
 SELECT @max_v99spositiontaking_9999 = spositiontaking FROM custsetting WITH (NOLOCK) WHERE custid = @srecommend AND bettype=9999 AND sporttype=99
-
---v161
-SELECT @max_v161spositiontaking_81 = spositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @srecommend AND bettype=81 AND sporttype=161
-SELECT @max_v161spositiontaking_83 = spositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @srecommend AND bettype=83 AND sporttype=161
-SELECT @max_v161spositiontaking_88 = spositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @srecommend AND bettype=88 AND sporttype=161
-SELECT @max_v161slivepositiontaking_85 = slivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @srecommend AND bettype=85 AND sporttype=161
-SELECT @max_v161spositiontaking_86 = spositiontaking, @max_v161slivepositiontaking_86 = slivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @srecommend AND bettype=86 AND sporttype=161
-SELECT @max_v161slivepositiontaking_87 = slivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @srecommend AND bettype=87 AND sporttype=161
-SELECT @max_v161slivepositiontaking_89 = slivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @srecommend AND bettype=89 AND sporttype=161
-SELECT @max_v161slivepositiontaking_90 = slivepositiontaking FROM custsetting3rd WITH (NOLOCK) WHERE custid = @srecommend AND bettype=90 AND sporttype=161
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 --CHOOSE MEMBER AUTOPOSITIONTAKING IF MEMBER IS SET AUTO (regardless of the setting in master account)
@@ -3445,19 +3019,7 @@ SELECT
 	@auto_v99spositiontaking_9 = CASE WHEN @isauto_v99spositiontaking_mem_9>0 THEN @auto_v99spositiontaking_mem_9 ELSE @auto_v99spositiontaking_9 END,
 	@auto_v99spositiontaking_20 = CASE WHEN @isauto_v99spositiontaking_mem_20>0 THEN @auto_v99spositiontaking_mem_20 ELSE @auto_v99spositiontaking_20 END,
 	@auto_v99spositiontaking_9999 = CASE WHEN @isauto_v99spositiontaking_mem_9999>0 THEN @auto_v99spositiontaking_mem_9999 ELSE @auto_v99spositiontaking_9999 END,	
-
-	--v161
-	@auto_v161spositiontaking_81 = CASE WHEN @isauto_v161spositiontaking_mem_81>0 THEN @isauto_v161spositiontaking_mem_81 ELSE @auto_v161spositiontaking_81 END,
-	@auto_v161spositiontaking_83 = CASE WHEN @isauto_v161spositiontaking_mem_83>0 THEN @isauto_v161spositiontaking_mem_83 ELSE @auto_v161spositiontaking_83 END,	
-	@auto_v161spositiontaking_86 = CASE WHEN @isauto_v161spositiontaking_mem_86>0 THEN @isauto_v161spositiontaking_mem_86 ELSE @auto_v161spositiontaking_86 END,
-	@auto_v161spositiontaking_88 = CASE WHEN @isauto_v161spositiontaking_mem_88>0 THEN @isauto_v161spositiontaking_mem_88 ELSE @auto_v161spositiontaking_88 END,
 	
-	@auto_v161slivepositiontaking_85 = CASE WHEN @isauto_v161slivepositiontaking_mem_85>0 THEN @auto_v161slivepositiontaking_mem_85 ELSE @auto_v161slivepositiontaking_85 END,	
-	@auto_v161slivepositiontaking_86 = CASE WHEN @isauto_v161slivepositiontaking_mem_86>0 THEN @auto_v161slivepositiontaking_mem_86 ELSE @auto_v161slivepositiontaking_86 END,	
-	@auto_v161slivepositiontaking_87 = CASE WHEN @isauto_v161slivepositiontaking_mem_87>0 THEN @auto_v161slivepositiontaking_mem_87 ELSE @auto_v161slivepositiontaking_87 END,	
-	@auto_v161slivepositiontaking_89 = CASE WHEN @isauto_v161slivepositiontaking_mem_89>0 THEN @auto_v161slivepositiontaking_mem_89 ELSE @auto_v161slivepositiontaking_89 END,
-	@auto_v161slivepositiontaking_90 = CASE WHEN @isauto_v161slivepositiontaking_mem_90>0 THEN @auto_v161slivepositiontaking_mem_90 ELSE @auto_v161slivepositiontaking_90 END,
-
 	@isauto_spositiontaking_1 = CASE WHEN @isauto_spositiontaking_mem_1>0 THEN @isauto_spositiontaking_mem_1 ELSE @isauto_spositiontaking_1 END,
 	@isauto_spositiontaking_2 = CASE WHEN @isauto_spositiontaking_mem_2>0 THEN @isauto_spositiontaking_mem_2 ELSE @isauto_spositiontaking_2 END,
 	@isauto_spositiontaking_3 = CASE WHEN @isauto_spositiontaking_mem_3>0 THEN @isauto_spositiontaking_mem_3 ELSE @isauto_spositiontaking_3 END,
@@ -3522,19 +3084,7 @@ SELECT
 	@isauto_v99spositiontaking_3 = CASE WHEN @isauto_v99spositiontaking_mem_3>0 THEN @isauto_v99spositiontaking_mem_3 ELSE @isauto_v99spositiontaking_3 END,
 	@isauto_v99spositiontaking_9 = CASE WHEN @isauto_v99spositiontaking_mem_9>0 THEN @isauto_v99spositiontaking_mem_9 ELSE @isauto_v99spositiontaking_9 END,
 	@isauto_v99spositiontaking_20 = CASE WHEN @isauto_v99spositiontaking_mem_20>0 THEN @isauto_v99spositiontaking_mem_20 ELSE @isauto_v99spositiontaking_20 END,
-	@isauto_v99spositiontaking_9999 = CASE WHEN @isauto_v99spositiontaking_mem_9999>0 THEN @isauto_v99spositiontaking_mem_9999 ELSE @isauto_v99spositiontaking_9999 END,
-	--v161
-	@isauto_v161spositiontaking_81 = CASE WHEN @isauto_v161spositiontaking_mem_81>0 THEN @isauto_v161spositiontaking_mem_81 ELSE @isauto_v161spositiontaking_81 END,
-	@isauto_v161spositiontaking_83 = CASE WHEN @isauto_v161spositiontaking_mem_83>0 THEN @isauto_v161spositiontaking_mem_83 ELSE @isauto_v161spositiontaking_83 END,	
-	@isauto_v161spositiontaking_86 = CASE WHEN @isauto_v161spositiontaking_mem_86>0 THEN @isauto_v161spositiontaking_mem_86 ELSE @isauto_v161spositiontaking_86 END,
-	@isauto_v161spositiontaking_88 = CASE WHEN @isauto_v161spositiontaking_mem_88>0 THEN @isauto_v161spositiontaking_mem_88 ELSE @isauto_v161spositiontaking_88 END,
-
-	@isauto_v161slivepositiontaking_85 = CASE WHEN @isauto_v161slivepositiontaking_mem_85>0 THEN @isauto_v161slivepositiontaking_mem_85 ELSE @isauto_v161slivepositiontaking_85 END,
-	@isauto_v161slivepositiontaking_86 = CASE WHEN @isauto_v161slivepositiontaking_mem_86>0 THEN @isauto_v161slivepositiontaking_mem_86 ELSE @isauto_v161slivepositiontaking_86 END,
-	@isauto_v161slivepositiontaking_87 = CASE WHEN @isauto_v161slivepositiontaking_mem_87>0 THEN @isauto_v161slivepositiontaking_mem_87 ELSE @isauto_v161slivepositiontaking_87 END,
-	@isauto_v161slivepositiontaking_89 = CASE WHEN @isauto_v161slivepositiontaking_mem_89>0 THEN @isauto_v161slivepositiontaking_mem_89 ELSE @isauto_v161slivepositiontaking_89 END,
-	@isauto_v161slivepositiontaking_90 = CASE WHEN @isauto_v161slivepositiontaking_mem_90>0 THEN @isauto_v161slivepositiontaking_mem_90 ELSE @isauto_v161slivepositiontaking_90 END
-	
+	@isauto_v99spositiontaking_9999 = CASE WHEN @isauto_v99spositiontaking_mem_9999>0 THEN @isauto_v99spositiontaking_mem_9999 ELSE @isauto_v99spositiontaking_9999 END
 	
 	
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3606,17 +3156,6 @@ SELECT
 	@auto_v99mpositiontaking_20 = CASE WHEN @isauto_v99mpositiontaking_mem_20>0 THEN @auto_v99mpositiontaking_mem_20 ELSE @auto_v99mpositiontaking_20 END,
 	@auto_v99mpositiontaking_9999 = CASE WHEN @isauto_v99mpositiontaking_mem_9999>0 THEN @auto_v99mpositiontaking_mem_9999 ELSE @auto_v99mpositiontaking_9999 END,
 
-	@auto_v161mpositiontaking_81 = CASE WHEN @isauto_v161mpositiontaking_mem_81>0 THEN @auto_v161mpositiontaking_mem_81 ELSE @auto_v161mpositiontaking_81 END,
-	@auto_v161mpositiontaking_83 = CASE WHEN @isauto_v161mpositiontaking_mem_83>0 THEN @auto_v161mpositiontaking_mem_83 ELSE @auto_v161mpositiontaking_83 END,	
-	@auto_v161mpositiontaking_86 = CASE WHEN @isauto_v161mpositiontaking_mem_86>0 THEN @auto_v161mpositiontaking_mem_86 ELSE @auto_v161mpositiontaking_86 END,
-	@auto_v161mpositiontaking_88 = CASE WHEN @isauto_v161mpositiontaking_mem_88>0 THEN @auto_v161mpositiontaking_mem_88 ELSE @auto_v161mpositiontaking_88 END,
-	
-	@auto_v161mlivepositiontaking_85 = CASE WHEN @isauto_v161mlivepositiontaking_mem_85>0 THEN @auto_v161mlivepositiontaking_mem_85 ELSE @auto_v161mlivepositiontaking_85 END,
-	@auto_v161mlivepositiontaking_86 = CASE WHEN @isauto_v161mlivepositiontaking_mem_86>0 THEN @auto_v161mlivepositiontaking_mem_86 ELSE @auto_v161mlivepositiontaking_86 END,
-	@auto_v161mlivepositiontaking_87 = CASE WHEN @isauto_v161mlivepositiontaking_mem_87>0 THEN @auto_v161mlivepositiontaking_mem_87 ELSE @auto_v161mlivepositiontaking_87 END,
-	@auto_v161mlivepositiontaking_89 = CASE WHEN @isauto_v161mlivepositiontaking_mem_89>0 THEN @auto_v161mlivepositiontaking_mem_89 ELSE @auto_v161mlivepositiontaking_89 END,
-	@auto_v161mlivepositiontaking_90 = CASE WHEN @isauto_v161mlivepositiontaking_mem_90>0 THEN @auto_v161mlivepositiontaking_mem_90 ELSE @auto_v161mlivepositiontaking_90 END,
-	
 	--im=im1>0?im1:im2
 	@isauto_mpositiontaking_1 = CASE WHEN @isauto_mpositiontaking_mem_1>0 THEN @isauto_mpositiontaking_mem_1 ELSE @isauto_mpositiontaking_1 END,
 	@isauto_mpositiontaking_2 = CASE WHEN @isauto_mpositiontaking_mem_2>0 THEN @isauto_mpositiontaking_mem_2 ELSE @isauto_mpositiontaking_2 END,
@@ -3683,19 +3222,7 @@ SELECT
 	@isauto_v99mpositiontaking_3 = CASE WHEN @isauto_v99mpositiontaking_mem_3>0 THEN @isauto_v99mpositiontaking_mem_3 ELSE @isauto_v99mpositiontaking_3 END,
 	@isauto_v99mpositiontaking_9 = CASE WHEN @isauto_v99mpositiontaking_mem_9>0 THEN @isauto_v99mpositiontaking_mem_9 ELSE @isauto_v99mpositiontaking_9 END,
 	@isauto_v99mpositiontaking_20 = CASE WHEN @isauto_v99mpositiontaking_mem_20>0 THEN @isauto_v99mpositiontaking_mem_20 ELSE @isauto_v99mpositiontaking_20 END,
-	@isauto_v99mpositiontaking_9999 = CASE WHEN @isauto_v99mpositiontaking_mem_9999>0 THEN @isauto_v99mpositiontaking_mem_9999 ELSE @isauto_v99mpositiontaking_9999 END,
-
-	--v161
-	@isauto_v161mpositiontaking_81 = CASE WHEN @isauto_v161mpositiontaking_mem_81>0 THEN @isauto_v161mpositiontaking_mem_81 ELSE @isauto_v161mpositiontaking_81 END,
-	@isauto_v161mpositiontaking_83 = CASE WHEN @isauto_v161mpositiontaking_mem_83>0 THEN @isauto_v161mpositiontaking_mem_83 ELSE @isauto_v161mpositiontaking_83 END,	
-	@isauto_v161mpositiontaking_86 = CASE WHEN @isauto_v161mpositiontaking_mem_86>0 THEN @isauto_v161mpositiontaking_mem_86 ELSE @isauto_v161mpositiontaking_86 END,
-	@isauto_v161mpositiontaking_88 = CASE WHEN @isauto_v161mpositiontaking_mem_88>0 THEN @isauto_v161mpositiontaking_mem_88 ELSE @isauto_v161mpositiontaking_88 END,
-	
-	@isauto_v161mlivepositiontaking_85 = CASE WHEN @isauto_v161mlivepositiontaking_mem_85>0 THEN @isauto_v161mlivepositiontaking_mem_85 ELSE @isauto_v161mlivepositiontaking_85 END,
-	@isauto_v161mlivepositiontaking_86 = CASE WHEN @isauto_v161mlivepositiontaking_mem_86>0 THEN @isauto_v161mlivepositiontaking_mem_86 ELSE @isauto_v161mlivepositiontaking_86 END,
-	@isauto_v161mlivepositiontaking_87 = CASE WHEN @isauto_v161mlivepositiontaking_mem_87>0 THEN @isauto_v161mlivepositiontaking_mem_87 ELSE @isauto_v161mlivepositiontaking_87 END,
-	@isauto_v161mlivepositiontaking_89 = CASE WHEN @isauto_v161mlivepositiontaking_mem_89>0 THEN @isauto_v161mlivepositiontaking_mem_89 ELSE @isauto_v161mlivepositiontaking_89 END,
-	@isauto_v161mlivepositiontaking_90 = CASE WHEN @isauto_v161mlivepositiontaking_mem_90>0 THEN @isauto_v161mlivepositiontaking_mem_90 ELSE @isauto_v161mlivepositiontaking_90 END
+	@isauto_v99mpositiontaking_9999 = CASE WHEN @isauto_v99mpositiontaking_mem_9999>0 THEN @isauto_v99mpositiontaking_mem_9999 ELSE @isauto_v99mpositiontaking_9999 END
 	
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3766,17 +3293,7 @@ SELECT
 	@v99apositiontaking_3 = CASE WHEN @v99apositiontaking_3>@v99mapositiontaking_3_max THEN @v99mapositiontaking_3_max ELSE @v99apositiontaking_3 END,
 	@v99apositiontaking_9 = CASE WHEN @v99apositiontaking_9>@v99mapositiontaking_9_max THEN @v99mapositiontaking_9_max ELSE @v99apositiontaking_9 END,
 	@v99apositiontaking_20 = CASE WHEN @v99apositiontaking_20>@v99mapositiontaking_20_max THEN @v99mapositiontaking_20_max ELSE @v99apositiontaking_20 END,
-	@v99apositiontaking_9999 = CASE WHEN @v99apositiontaking_9999>@v99mapositiontaking_9999_max THEN @v99mapositiontaking_9999_max ELSE @v99apositiontaking_9999 END,
-
-	@v161apositiontaking_81 = CASE WHEN @v161apositiontaking_81>@v161mapositiontaking_81_max THEN @v161mapositiontaking_81_max ELSE @v161apositiontaking_81 END,
-	@v161apositiontaking_83 = CASE WHEN @v161apositiontaking_83>@v161mapositiontaking_83_max THEN @v161mapositiontaking_83_max ELSE @v161apositiontaking_83 END,	
-	@v161apositiontaking_86 = CASE WHEN @v161apositiontaking_86>@v161mapositiontaking_86_max THEN @v161mapositiontaking_86_max ELSE @v161apositiontaking_86 END,
-	@v161apositiontaking_88 = CASE WHEN @v161apositiontaking_88>@v161mapositiontaking_88_max THEN @v161mapositiontaking_88_max ELSE @v161apositiontaking_88 END,
-	@v161alivepositiontaking_85 = CASE WHEN @v161alivepositiontaking_85>@v161malivepositiontaking_85_max THEN @v161malivepositiontaking_85_max ELSE @v161alivepositiontaking_85 END,
-	@v161alivepositiontaking_86 = CASE WHEN @v161alivepositiontaking_86>@v161malivepositiontaking_86_max THEN @v161malivepositiontaking_86_max ELSE @v161alivepositiontaking_86 END,
-	@v161alivepositiontaking_87 = CASE WHEN @v161alivepositiontaking_87>@v161malivepositiontaking_87_max THEN @v161malivepositiontaking_87_max ELSE @v161alivepositiontaking_87 END,
-	@v161alivepositiontaking_89 = CASE WHEN @v161alivepositiontaking_89>@v161malivepositiontaking_89_max THEN @v161malivepositiontaking_89_max ELSE @v161alivepositiontaking_89 END,
-	@v161alivepositiontaking_90 = CASE WHEN @v161alivepositiontaking_90>@v161malivepositiontaking_90_max THEN @v161malivepositiontaking_90_max ELSE @v161alivepositiontaking_90 END
+	@v99apositiontaking_9999 = CASE WHEN @v99apositiontaking_9999>@v99mapositiontaking_9999_max THEN @v99mapositiontaking_9999_max ELSE @v99apositiontaking_9999 END
 
 --a1=if(!im)if(m1+a1>m3,m3-m1)
 SELECT 
@@ -3844,20 +3361,8 @@ SELECT
 	@v99apositiontaking_3 = CASE WHEN @isauto_v99mpositiontaking_3 > 0 THEN @v99apositiontaking_3 ELSE CASE WHEN @v99apositiontaking_3+@v99mpositiontaking_3>@v99mapositiontaking_3_max THEN @v99mapositiontaking_3_max-@v99mpositiontaking_3 ELSE @v99apositiontaking_3 END END,
 	@v99apositiontaking_9 = CASE WHEN @isauto_v99mpositiontaking_9 > 0 THEN @v99apositiontaking_9 ELSE CASE WHEN @v99apositiontaking_9+@v99mpositiontaking_9>@v99mapositiontaking_9_max THEN @v99mapositiontaking_9_max-@v99mpositiontaking_9 ELSE @v99apositiontaking_9 END END,
 	@v99apositiontaking_20 = CASE WHEN @isauto_v99mpositiontaking_20 > 0 THEN @v99apositiontaking_20 ELSE CASE WHEN @v99apositiontaking_20+@v99mpositiontaking_20>@v99mapositiontaking_20_max THEN @v99mapositiontaking_20_max-@v99mpositiontaking_20 ELSE @v99apositiontaking_20 END END,
-	@v99apositiontaking_9999 = CASE WHEN @isauto_v99mpositiontaking_9999 > 0 THEN @v99apositiontaking_9999 ELSE CASE WHEN @v99apositiontaking_9999+@v99mpositiontaking_9999>@v99mapositiontaking_9999_max THEN @v99mapositiontaking_9999_max-@v99mpositiontaking_9999 ELSE @v99apositiontaking_9999 END END,
-
-	--v161
-	@v161apositiontaking_81 = CASE WHEN @isauto_v161mpositiontaking_81 > 0 THEN @v161apositiontaking_81 ELSE CASE WHEN @v161apositiontaking_81+@v161mpositiontaking_81>@v161mapositiontaking_81_max THEN @v161mapositiontaking_81_max-@v161mpositiontaking_81 ELSE @v161apositiontaking_81 END END,
-	@v161apositiontaking_83 = CASE WHEN @isauto_v161mpositiontaking_83 > 0 THEN @v161apositiontaking_83 ELSE CASE WHEN @v161apositiontaking_83+@v161mpositiontaking_83>@v161mapositiontaking_83_max THEN @v161mapositiontaking_83_max-@v161mpositiontaking_83 ELSE @v161apositiontaking_83 END END,	
-	@v161apositiontaking_86 = CASE WHEN @isauto_v161mpositiontaking_86 > 0 THEN @v161apositiontaking_86 ELSE CASE WHEN @v161apositiontaking_86+@v161mpositiontaking_86>@v161mapositiontaking_86_max THEN @v161mapositiontaking_86_max-@v161mpositiontaking_86 ELSE @v161apositiontaking_86 END END,
-	@v161apositiontaking_88 = CASE WHEN @isauto_v161mpositiontaking_88 > 0 THEN @v161apositiontaking_88 ELSE CASE WHEN @v161apositiontaking_88+@v161mpositiontaking_88>@v161mapositiontaking_88_max THEN @v161mapositiontaking_88_max-@v161mpositiontaking_88 ELSE @v161apositiontaking_88 END END,
+	@v99apositiontaking_9999 = CASE WHEN @isauto_v99mpositiontaking_9999 > 0 THEN @v99apositiontaking_9999 ELSE CASE WHEN @v99apositiontaking_9999+@v99mpositiontaking_9999>@v99mapositiontaking_9999_max THEN @v99mapositiontaking_9999_max-@v99mpositiontaking_9999 ELSE @v99apositiontaking_9999 END END
 	
-	@v161alivepositiontaking_85 = CASE WHEN @isauto_v161mlivepositiontaking_85 > 0 THEN @v161alivepositiontaking_85 ELSE CASE WHEN @v161alivepositiontaking_85+@v161mlivepositiontaking_85>@v161malivepositiontaking_85_max THEN @v161malivepositiontaking_85_max-@v161mlivepositiontaking_85 ELSE @v161alivepositiontaking_85 END END,
-	@v161alivepositiontaking_86 = CASE WHEN @isauto_v161mlivepositiontaking_86 > 0 THEN @v161alivepositiontaking_86 ELSE CASE WHEN @v161alivepositiontaking_86+@v161mlivepositiontaking_86>@v161malivepositiontaking_86_max THEN @v161malivepositiontaking_86_max-@v161mlivepositiontaking_86 ELSE @v161alivepositiontaking_86 END END,
-	@v161alivepositiontaking_87 = CASE WHEN @isauto_v161mlivepositiontaking_87 > 0 THEN @v161alivepositiontaking_87 ELSE CASE WHEN @v161alivepositiontaking_87+@v161mlivepositiontaking_87>@v161malivepositiontaking_87_max THEN @v161malivepositiontaking_87_max-@v161mlivepositiontaking_87 ELSE @v161alivepositiontaking_87 END END,
-	@v161alivepositiontaking_89 = CASE WHEN @isauto_v161mlivepositiontaking_89 > 0 THEN @v161alivepositiontaking_89 ELSE CASE WHEN @v161alivepositiontaking_89+@v161mlivepositiontaking_89>@v161malivepositiontaking_89_max THEN @v161malivepositiontaking_89_max-@v161mlivepositiontaking_89 ELSE @v161alivepositiontaking_89 END END,
-	@v161alivepositiontaking_90 = CASE WHEN @isauto_v161mlivepositiontaking_90 > 0 THEN @v161alivepositiontaking_90 ELSE CASE WHEN @v161alivepositiontaking_90+@v161mlivepositiontaking_90>@v161malivepositiontaking_90_max THEN @v161malivepositiontaking_90_max-@v161mlivepositiontaking_90 ELSE @v161alivepositiontaking_90 END END
-
 SELECT 
 	@apositiontaking_1 = CASE WHEN @apositiontaking_1<0 THEN 0 ELSE @apositiontaking_1 END,
 	@apositiontaking_2 = CASE WHEN @apositiontaking_2<0 THEN 0 ELSE @apositiontaking_2 END,
@@ -3923,19 +3428,7 @@ SELECT
 	@v99apositiontaking_3 = CASE WHEN @v99apositiontaking_3<0 THEN 0 ELSE @v99apositiontaking_3 END,
 	@v99apositiontaking_9 = CASE WHEN @v99apositiontaking_9<0 THEN 0 ELSE @v99apositiontaking_9 END,
 	@v99apositiontaking_20 = CASE WHEN @v99apositiontaking_20<0 THEN 0 ELSE @v99apositiontaking_20 END,
-	@v99apositiontaking_9999 = CASE WHEN @v99apositiontaking_9999<0 THEN 0 ELSE @v99apositiontaking_9999 END,
-	--v161
-	@v161apositiontaking_81 = CASE WHEN @v161apositiontaking_81<0 THEN 0 ELSE @v161apositiontaking_81 END,
-	@v161apositiontaking_83 = CASE WHEN @v161apositiontaking_83<0 THEN 0 ELSE @v161apositiontaking_83 END,	
-	@v161apositiontaking_86 = CASE WHEN @v161apositiontaking_86<0 THEN 0 ELSE @v161apositiontaking_86 END,
-	@v161apositiontaking_88 = CASE WHEN @v161apositiontaking_88<0 THEN 0 ELSE @v161apositiontaking_88 END,
-	
-	@v161alivepositiontaking_85 = CASE WHEN @v161alivepositiontaking_85<0 THEN 0 ELSE @v161alivepositiontaking_85 END,
-	@v161alivepositiontaking_86 = CASE WHEN @v161alivepositiontaking_86<0 THEN 0 ELSE @v161alivepositiontaking_86 END,
-	@v161alivepositiontaking_87 = CASE WHEN @v161alivepositiontaking_87<0 THEN 0 ELSE @v161alivepositiontaking_87 END,
-	@v161alivepositiontaking_89 = CASE WHEN @v161alivepositiontaking_89<0 THEN 0 ELSE @v161alivepositiontaking_89 END,
-	@v161alivepositiontaking_90 = CASE WHEN @v161alivepositiontaking_90<0 THEN 0 ELSE @v161alivepositiontaking_90 END
-
+	@v99apositiontaking_9999 = CASE WHEN @v99apositiontaking_9999<0 THEN 0 ELSE @v99apositiontaking_9999 END
 
 ---------------------------------------------------------------------------------------------------------------------------------------------
 ----------------***Use Master Auto Position Taking***----------------------------------
@@ -4012,19 +3505,6 @@ select @v99mpositiontaking_9 = case when isnull(@isauto_v99mpositiontaking_9, 0)
 select @v99mpositiontaking_20 = case when isnull(@isauto_v99mpositiontaking_20, 0)=0 then @v99mpositiontaking_20 else case when @auto_v99mpositiontaking_20 < @v99mapositiontaking_20_max - @v99apositiontaking_20 then @auto_v99mpositiontaking_20 else @v99mapositiontaking_20_max - @v99apositiontaking_20 end end
 select @v99mpositiontaking_9999 = case when isnull(@isauto_v99mpositiontaking_9999, 0)=0 then @v99mpositiontaking_9999 else case when @auto_v99mpositiontaking_9999 < @v99mapositiontaking_9999_max - @v99apositiontaking_9999 then @auto_v99mpositiontaking_9999 else @v99mapositiontaking_9999_max - @v99apositiontaking_9999 end end
 
---v161
-select @v161mpositiontaking_81 = case when isnull(@isauto_v161mpositiontaking_81, 0)=0 then @v161mpositiontaking_81 else case when @auto_v161mpositiontaking_81 < @v161mapositiontaking_81_max - @v161apositiontaking_81 then @auto_v161mpositiontaking_81 else @v161mapositiontaking_81_max - @v161apositiontaking_81 end end
-select @v161mpositiontaking_83 = case when isnull(@isauto_v161mpositiontaking_83, 0)=0 then @v161mpositiontaking_83 else case when @auto_v161mpositiontaking_83 < @v161mapositiontaking_83_max - @v161apositiontaking_83 then @auto_v161mpositiontaking_83 else @v161mapositiontaking_83_max - @v161apositiontaking_83 end end
-select @v161mpositiontaking_86 = case when isnull(@isauto_v161mpositiontaking_86, 0)=0 then @v161mpositiontaking_86 else case when @auto_v161mpositiontaking_86 < @v161mapositiontaking_86_max - @v161apositiontaking_86 then @auto_v161mpositiontaking_86 else @v161mapositiontaking_86_max - @v161apositiontaking_86 end end
-select @v161mpositiontaking_88 = case when isnull(@isauto_v161mpositiontaking_88, 0)=0 then @v161mpositiontaking_88 else case when @auto_v161mpositiontaking_88 < @v161mapositiontaking_88_max - @v161apositiontaking_88 then @auto_v161mpositiontaking_88 else @v161mapositiontaking_88_max - @v161apositiontaking_88 end end
-
-select @v161mlivepositiontaking_85 = case when isnull(@isauto_v161mlivepositiontaking_85, 0)=0 then @v161mlivepositiontaking_85 else case when @auto_v161mlivepositiontaking_85 < @v161malivepositiontaking_85_max - @v161alivepositiontaking_85 then @auto_v161mlivepositiontaking_85 else @v161malivepositiontaking_85_max - @v161alivepositiontaking_85 end end
-select @v161mlivepositiontaking_86 = case when isnull(@isauto_v161mlivepositiontaking_86, 0)=0 then @v161mlivepositiontaking_86 else case when @auto_v161mlivepositiontaking_86 < @v161malivepositiontaking_86_max - @v161alivepositiontaking_86 then @auto_v161mlivepositiontaking_86 else @v161malivepositiontaking_86_max - @v161alivepositiontaking_86 end end
-select @v161mlivepositiontaking_87 = case when isnull(@isauto_v161mlivepositiontaking_87, 0)=0 then @v161mlivepositiontaking_87 else case when @auto_v161mlivepositiontaking_87 < @v161malivepositiontaking_87_max - @v161alivepositiontaking_87 then @auto_v161mlivepositiontaking_87 else @v161malivepositiontaking_87_max - @v161alivepositiontaking_87 end end
-select @v161mlivepositiontaking_89 = case when isnull(@isauto_v161mlivepositiontaking_89, 0)=0 then @v161mlivepositiontaking_89 else case when @auto_v161mlivepositiontaking_89 < @v161malivepositiontaking_89_max - @v161alivepositiontaking_89 then @auto_v161mlivepositiontaking_89 else @v161malivepositiontaking_89_max - @v161alivepositiontaking_89 end end
-select @v161mlivepositiontaking_90 = case when isnull(@isauto_v161mlivepositiontaking_90, 0)=0 then @v161mlivepositiontaking_90 else case when @auto_v161mlivepositiontaking_90 < @v161malivepositiontaking_90_max - @v161alivepositiontaking_90 then @auto_v161mlivepositiontaking_90 else @v161malivepositiontaking_90_max - @v161alivepositiontaking_90 end end
---------------------------------------------------------------------------------------------------------------------------------------------
-
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------***Use Auto Position Taking***----------------------------------
@@ -4099,21 +3579,6 @@ SELECT @v99spositiontaking_3 = CASE WHEN ISNULL(@isauto_v99spositiontaking_3, 0)
 SELECT @v99spositiontaking_9 = CASE WHEN ISNULL(@isauto_v99spositiontaking_9, 0)<=0 THEN @v99spositiontaking_9 ELSE CASE WHEN @auto_v99spositiontaking_9 < @max_v99spositiontaking_9 - @v99mpositiontaking_9 - @v99apositiontaking_9 THEN @auto_v99spositiontaking_9 ELSE @max_v99spositiontaking_9 - @v99mpositiontaking_9 - @v99apositiontaking_9 END END
 SELECT @v99spositiontaking_20 = CASE WHEN ISNULL(@isauto_v99spositiontaking_20, 0)<=0 THEN @v99spositiontaking_20 ELSE CASE WHEN @auto_v99spositiontaking_20 < @max_v99spositiontaking_20 - @v99mpositiontaking_20 - @v99apositiontaking_20 THEN @auto_v99spositiontaking_20 ELSE @max_v99spositiontaking_20 - @v99mpositiontaking_20 - @v99apositiontaking_20 END END
 SELECT @v99spositiontaking_9999 = CASE WHEN ISNULL(@isauto_v99spositiontaking_9999, 0)<=0 THEN @v99spositiontaking_9999 ELSE CASE WHEN @auto_v99spositiontaking_9999 < @max_v99spositiontaking_9999 - @v99mpositiontaking_9999 - @v99apositiontaking_9999 THEN @auto_v99spositiontaking_9999 ELSE @max_v99spositiontaking_9999 - @v99mpositiontaking_9999 - @v99apositiontaking_9999 END END
-
-
-
---v161
-SELECT @v161spositiontaking_81 = CASE WHEN ISNULL(@isauto_v161spositiontaking_81, 0)<=0 THEN @v161spositiontaking_81 ELSE CASE WHEN @auto_v161spositiontaking_81 < @max_v161spositiontaking_81 - @v161mpositiontaking_81 - @v161apositiontaking_81 THEN @auto_v161spositiontaking_81 ELSE @max_v161spositiontaking_81 - @v161mpositiontaking_81 - @v161apositiontaking_81 END END
-SELECT @v161spositiontaking_83 = CASE WHEN ISNULL(@isauto_v161spositiontaking_83, 0)<=0 THEN @v161spositiontaking_83 ELSE CASE WHEN @auto_v161spositiontaking_83 < @max_v161spositiontaking_83 - @v161mpositiontaking_83 - @v161apositiontaking_83 THEN @auto_v161spositiontaking_83 ELSE @max_v161spositiontaking_83 - @v161mpositiontaking_83 - @v161apositiontaking_83 END END
-SELECT @v161spositiontaking_86 = CASE WHEN ISNULL(@isauto_v161spositiontaking_86, 0)<=0 THEN @v161spositiontaking_86 ELSE CASE WHEN @auto_v161spositiontaking_86 < @max_v161spositiontaking_86 - @v161mpositiontaking_86 - @v161apositiontaking_86 THEN @auto_v161spositiontaking_86 ELSE @max_v161spositiontaking_86 - @v161mpositiontaking_86 - @v161apositiontaking_86 END END
-SELECT @v161spositiontaking_88 = CASE WHEN ISNULL(@isauto_v161spositiontaking_88, 0)<=0 THEN @v161spositiontaking_88 ELSE CASE WHEN @auto_v161spositiontaking_88 < @max_v161spositiontaking_88 - @v161mpositiontaking_88 - @v161apositiontaking_88 THEN @auto_v161spositiontaking_88 ELSE @max_v161spositiontaking_88 - @v161mpositiontaking_88 - @v161apositiontaking_88 END END
-
-SELECT @v161slivepositiontaking_85 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_85, 0)<=0 THEN @v161slivepositiontaking_85 ELSE CASE WHEN @auto_v161slivepositiontaking_85 < @max_v161slivepositiontaking_85 - @v161mlivepositiontaking_85 - @v161alivepositiontaking_85 THEN @auto_v161slivepositiontaking_85 ELSE @max_v161slivepositiontaking_85 - @v161mlivepositiontaking_85 - @v161alivepositiontaking_85 END END
-SELECT @v161slivepositiontaking_86 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_86, 0)<=0 THEN @v161slivepositiontaking_86 ELSE CASE WHEN @auto_v161slivepositiontaking_86 < @max_v161slivepositiontaking_86 - @v161mlivepositiontaking_86 - @v161alivepositiontaking_86 THEN @auto_v161slivepositiontaking_86 ELSE @max_v161slivepositiontaking_86 - @v161mlivepositiontaking_86 - @v161alivepositiontaking_86 END END
-SELECT @v161slivepositiontaking_87 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_87, 0)<=0 THEN @v161slivepositiontaking_87 ELSE CASE WHEN @auto_v161slivepositiontaking_87 < @max_v161slivepositiontaking_87 - @v161mlivepositiontaking_87 - @v161alivepositiontaking_87 THEN @auto_v161slivepositiontaking_87 ELSE @max_v161slivepositiontaking_87 - @v161mlivepositiontaking_87 - @v161alivepositiontaking_87 END END
-SELECT @v161slivepositiontaking_89 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_89, 0)<=0 THEN @v161slivepositiontaking_89 ELSE CASE WHEN @auto_v161slivepositiontaking_89 < @max_v161slivepositiontaking_89 - @v161mlivepositiontaking_89 - @v161alivepositiontaking_89 THEN @auto_v161slivepositiontaking_89 ELSE @max_v161slivepositiontaking_89 - @v161mlivepositiontaking_89 - @v161alivepositiontaking_89 END END
-SELECT @v161slivepositiontaking_90 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_90, 0)<=0 THEN @v161slivepositiontaking_90 ELSE CASE WHEN @auto_v161slivepositiontaking_90 < @max_v161slivepositiontaking_90 - @v161mlivepositiontaking_90 - @v161alivepositiontaking_90 THEN @auto_v161slivepositiontaking_90 ELSE @max_v161slivepositiontaking_90 - @v161mlivepositiontaking_90 - @v161alivepositiontaking_90 END END
-
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -4246,16 +3711,6 @@ SELECT @max_v99spositiontaking_9 = CASE WHEN ISNULL(@isauto_v99spositiontaking_9
 SELECT @max_v99spositiontaking_20 = CASE WHEN ISNULL(@isauto_v99spositiontaking_20, 0)>0 THEN @max_v99spositiontaking_20 ELSE @max_v99spositiontaking_20 - @v99mpositiontaking_20 - @v99apositiontaking_20 END
 SELECT @max_v99spositiontaking_9999 = CASE WHEN ISNULL(@isauto_v99spositiontaking_9999, 0)>0 THEN @max_v99spositiontaking_9999 ELSE @max_v99spositiontaking_9999 - @v99mpositiontaking_9999 - @v99apositiontaking_9999 END
 
---v161
-SELECT @max_v161spositiontaking_81 = CASE WHEN ISNULL(@isauto_v161spositiontaking_81, 0)>0 THEN @max_v161spositiontaking_81 ELSE @max_v161spositiontaking_81 - @v161mpositiontaking_81 - @v161apositiontaking_81 END
-SELECT @max_v161spositiontaking_83 = CASE WHEN ISNULL(@isauto_v161spositiontaking_83, 0)>0 THEN @max_v161spositiontaking_83 ELSE @max_v161spositiontaking_83 - @v161mpositiontaking_83 - @v161apositiontaking_83 END
-SELECT @max_v161spositiontaking_86 = CASE WHEN ISNULL(@isauto_v161spositiontaking_86, 0)>0 THEN @max_v161spositiontaking_86 ELSE @max_v161spositiontaking_86 - @v161mpositiontaking_86 - @v161apositiontaking_86 END
-SELECT @max_v161spositiontaking_88 = CASE WHEN ISNULL(@isauto_v161spositiontaking_88, 0)>0 THEN @max_v161spositiontaking_88 ELSE @max_v161spositiontaking_88 - @v161mpositiontaking_88 - @v161apositiontaking_88 END
-SELECT @max_v161slivepositiontaking_85 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_85, 0)>0 THEN @max_v161slivepositiontaking_85 ELSE @max_v161slivepositiontaking_85 - @v161mlivepositiontaking_85 - @v161alivepositiontaking_85 END
-SELECT @max_v161slivepositiontaking_86 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_86, 0)>0 THEN @max_v161slivepositiontaking_86 ELSE @max_v161slivepositiontaking_86 - @v161mlivepositiontaking_86 - @v161alivepositiontaking_86 END
-SELECT @max_v161slivepositiontaking_87 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_87, 0)>0 THEN @max_v161slivepositiontaking_87 ELSE @max_v161slivepositiontaking_87 - @v161mlivepositiontaking_87 - @v161alivepositiontaking_87 END
-SELECT @max_v161slivepositiontaking_89 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_89, 0)>0 THEN @max_v161slivepositiontaking_89 ELSE @max_v161slivepositiontaking_89 - @v161mlivepositiontaking_89 - @v161alivepositiontaking_89 END
-SELECT @max_v161slivepositiontaking_90 = CASE WHEN ISNULL(@isauto_v161slivepositiontaking_90, 0)>0 THEN @max_v161slivepositiontaking_90 ELSE @max_v161slivepositiontaking_90 - @v161mlivepositiontaking_90 - @v161alivepositiontaking_90 END
 --//REPLACING CHECK MAX SUPER PT ON MEMBER
 
 --s1=min(s1,max_spositiontaking)
@@ -4325,20 +3780,7 @@ SELECT @v99spositiontaking_9 = CASE WHEN @v99spositiontaking_9 > @max_v99spositi
 SELECT @v99spositiontaking_20 = CASE WHEN @v99spositiontaking_20 > @max_v99spositiontaking_20 THEN @max_v99spositiontaking_20 ELSE @v99spositiontaking_20 END
 SELECT @v99spositiontaking_9999 = CASE WHEN @v99spositiontaking_9999 > @max_v99spositiontaking_9999 THEN @max_v99spositiontaking_9999 ELSE @v99spositiontaking_9999 END
 
---v161
-SELECT @v161spositiontaking_81 = CASE WHEN @v161spositiontaking_81 > @max_v161spositiontaking_81 THEN @max_v161spositiontaking_81 ELSE @v161spositiontaking_81 END
-SELECT @v161spositiontaking_83 = CASE WHEN @v161spositiontaking_83 > @max_v161spositiontaking_83 THEN @max_v161spositiontaking_83 ELSE @v161spositiontaking_83 END
-SELECT @v161spositiontaking_86 = CASE WHEN @v161spositiontaking_86 > @max_v161spositiontaking_86 THEN @max_v161spositiontaking_86 ELSE @v161spositiontaking_86 END
-SELECT @v161spositiontaking_88 = CASE WHEN @v161spositiontaking_88 > @max_v161spositiontaking_88 THEN @max_v161spositiontaking_88 ELSE @v161spositiontaking_88 END
-SELECT @v161slivepositiontaking_85 = CASE WHEN @v161slivepositiontaking_85 > @max_v161slivepositiontaking_85 THEN @max_v161slivepositiontaking_85 ELSE @v161slivepositiontaking_85 END
-SELECT @v161slivepositiontaking_86 = CASE WHEN @v161slivepositiontaking_86 > @max_v161slivepositiontaking_86 THEN @max_v161slivepositiontaking_86 ELSE @v161slivepositiontaking_86 END
-SELECT @v161slivepositiontaking_87 = CASE WHEN @v161slivepositiontaking_87 > @max_v161slivepositiontaking_87 THEN @max_v161slivepositiontaking_87 ELSE @v161slivepositiontaking_87 END
-SELECT @v161slivepositiontaking_89 = CASE WHEN @v161slivepositiontaking_89 > @max_v161slivepositiontaking_89 THEN @max_v161slivepositiontaking_89 ELSE @v161slivepositiontaking_89 END
-SELECT @v161slivepositiontaking_90 = CASE WHEN @v161slivepositiontaking_90 > @max_v161slivepositiontaking_90 THEN @max_v161slivepositiontaking_90 ELSE @v161slivepositiontaking_90 END
-
-
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ---------------------------------------
 --- 20131031@Johnson: Apply execrep when update pt on member
 		EXEC dbo.Acc_CustSetting_08
@@ -4552,168 +3994,13 @@ SELECT @v161slivepositiontaking_90 = CASE WHEN @v161slivepositiontaking_90 > @ma
 		@v10apositiontaking_10 = @v10apositiontaking_10,
 		@v11apositiontaking_10 = @v11apositiontaking_10,
 		@v99apositiontaking_10 = @v99apositiontaking_10
-	
-	
-	--v161
-	IF (@UpdateMultiple=0 OR @UpdatePositiontakingv161=1)
-	BEGIN	
-		EXEC dbo.Acc_CustSetting3rd_08
-			@custid = @custid,
-			@roleid = 2,
-			@mode = 'number',
 			
-			@v161spositiontaking_81 = @v161spositiontaking_81,
-			@v161spositiontaking_83 = @v161spositiontaking_83,
-			@v161spositiontaking_86 = @v161spositiontaking_86,
-			@v161spositiontaking_88 = @v161spositiontaking_88,
-			@v161slivepositiontaking_85 = @v161slivepositiontaking_85,
-			@v161slivepositiontaking_86 = @v161slivepositiontaking_86,
-			@v161slivepositiontaking_87 = @v161slivepositiontaking_87,
-			@v161slivepositiontaking_89 = @v161slivepositiontaking_89,
-			@v161slivepositiontaking_90 = @v161slivepositiontaking_90,
-			
-			@v161mpositiontaking_81 = @v161mpositiontaking_81,
-			@v161mpositiontaking_83 = @v161mpositiontaking_83,
-			@v161mpositiontaking_86 = @v161mpositiontaking_86,
-			@v161mpositiontaking_88 = @v161mpositiontaking_88,
-			@v161mlivepositiontaking_85 = @v161mlivepositiontaking_85,
-			@v161mlivepositiontaking_86 = @v161mlivepositiontaking_86,
-			@v161mlivepositiontaking_87 = @v161mlivepositiontaking_87,
-			@v161mlivepositiontaking_89 = @v161mlivepositiontaking_89,
-			@v161mlivepositiontaking_90 = @v161mlivepositiontaking_90,
-			
-			@v161apositiontaking_81 = @v161apositiontaking_81, 
-			@v161apositiontaking_83 = @v161apositiontaking_83, 	
-			@v161apositiontaking_86 = @v161apositiontaking_86, 
-			@v161apositiontaking_88 = @v161apositiontaking_88, 
-			@v161alivepositiontaking_85 = @v161alivepositiontaking_85,
-			@v161alivepositiontaking_86 = @v161alivepositiontaking_86,
-			@v161alivepositiontaking_87 = @v161alivepositiontaking_87,
-			@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
-			@v161alivepositiontaking_90 = @v161alivepositiontaking_90
-	END
 	EXEC dbo.Acc_CustSetting_00
 		@custid = @custid, 
 		@recommend = @recommend, 
 		@mrecommend = @mrecommend, 
-		@srecommend = @srecommend
-		
-	EXEC dbo.Acc_CustSetting3rd_00
-		@custid = @custid, 
-		@recommend = @recommend, 
-		@mrecommend = @mrecommend, 
-		@srecommend = @srecommend,
-		@mode = 'number'
+		@srecommend = @srecommend			
 	
-	---EXEC dbo.Acc_CustomerUpdMember_MinMaxPositiontaking @custid = @custid, @recommend = @recommend, @mrecommend = @mrecommend, @srecommend = @srecommend
-
-	
-/*
-BEGIN TRANSACTION
----------------------------------------
-
-UPDATE custsetting WITH (ROWLOCK, UPDLOCK)
-SET
-	apositiontaking = CASE WHEN (@UpdateMultiple = 1 AND ((sporttype=1 AND @UpdatePositiontaking = 0) OR (sporttype=2 AND @UpdatePositiontakingv2 = 0)  OR (sporttype=3 AND @UpdatePositiontakingv3 = 0) OR (sporttype=5 AND @UpdatePositiontakingv5 = 0) OR (sporttype=8 AND @UpdatePositiontakingv8 = 0) OR (sporttype=10 AND @UpdatePositiontakingv10 = 0) OR (sporttype=11 AND @UpdatePositiontakingv11 = 0) OR (sporttype=99 AND bettype<>9 AND @UpdatePositiontakingv99 = 0) OR (sporttype=99 AND bettype=9 AND @UpdatePositiontakingv99MP = 0) )) THEN apositiontaking ELSE CASE sporttype WHEN 1 THEN CASE bettype WHEN 1 THEN @apositiontaking_1 WHEN 2 THEN @apositiontaking_2 WHEN 3 THEN @apositiontaking_3 WHEN 4 THEN @apositiontaking_4 WHEN 5 THEN @apositiontaking_5 WHEN 6 THEN @apositiontaking_6 WHEN 7 THEN @apositiontaking_7 WHEN 8 THEN @apositiontaking_8 WHEN 9 THEN @apositiontaking_9 WHEN 10 THEN @apositiontaking_10 ELSE 0 END
-					WHEN 2 THEN CASE bettype WHEN 1 THEN @v2apositiontaking_1 WHEN 2 THEN @v2apositiontaking_2 WHEN 3 THEN @v2apositiontaking_3 WHEN 7 THEN @v2apositiontaking_7 WHEN 8 THEN @v2apositiontaking_8 WHEN 20 THEN @v2apositiontaking_20 ELSE 0 END
-					WHEN 3 THEN CASE bettype WHEN 1 THEN @v3apositiontaking_1 WHEN 2 THEN @v3apositiontaking_2 WHEN 3 THEN @v3apositiontaking_3 WHEN 20 THEN @v3apositiontaking_20 ELSE 0 END
-					WHEN 5 THEN CASE bettype WHEN 1 THEN @v5apositiontaking_1 WHEN 2 THEN @v5apositiontaking_2 WHEN 3 THEN @v5apositiontaking_3 WHEN 20 THEN @v5apositiontaking_20 ELSE 0 END
-					WHEN 8 THEN CASE bettype WHEN 1 THEN @v8apositiontaking_1 WHEN 3 THEN @v8apositiontaking_3 WHEN 20 THEN @v8apositiontaking_20 ELSE 0 END
-					WHEN 10 THEN CASE bettype WHEN 1 THEN @v10apositiontaking_1 WHEN 2 THEN @v10apositiontaking_2 WHEN 3 THEN @v10apositiontaking_3 WHEN 20 THEN @v10apositiontaking_20 ELSE 0 END
-					WHEN 11 THEN CASE bettype WHEN 1 THEN @v11apositiontaking_1 WHEN 20 THEN @v11apositiontaking_20 ELSE 0 END
-					WHEN 99 THEN CASE bettype WHEN 1 THEN @v99apositiontaking_1 WHEN 2 THEN @v99apositiontaking_2 WHEN 3 THEN @v99apositiontaking_3 WHEN 9 THEN @v99apositiontaking_9 WHEN 20 THEN @v99apositiontaking_20 ELSE 0 END
-						
-					ELSE apositiontaking END END,
-	alivepositiontaking = CASE WHEN (@UpdateMultiple = 1 AND ((sporttype=1 AND @UpdatePositiontaking = 0) OR (sporttype=2 AND @UpdatePositiontakingv2 = 0)  OR (sporttype=3 AND @UpdatePositiontakingv3 = 0) OR (sporttype=5 AND @UpdatePositiontakingv5 = 0) OR (sporttype=8 AND @UpdatePositiontakingv8 = 0) OR (sporttype=10 AND @UpdatePositiontakingv10 = 0) OR (sporttype=11 AND @UpdatePositiontakingv11 = 0) OR (sporttype=99 AND @UpdatePositiontakingv99 = 0))) THEN alivepositiontaking ELSE CASE sporttype 	WHEN 1 THEN CASE bettype WHEN 1 THEN @alivepositiontaking_1 WHEN 3 THEN @alivepositiontaking_3 WHEN 7 THEN @alivepositiontaking_7 WHEN 8 THEN @alivepositiontaking_8 ELSE alivepositiontaking END ELSE alivepositiontaking END END,
-	
-	--Auto Master PT
-	-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	mpositiontaking = CASE WHEN (@UpdateMultiple = 1 AND ((sporttype=1 AND @UpdatePositiontaking = 0) OR (sporttype=2 AND @UpdatePositiontakingv2 = 0)  OR (sporttype=3 AND @UpdatePositiontakingv3 = 0) OR (sporttype=5 AND @UpdatePositiontakingv5 = 0) OR (sporttype=8 AND @UpdatePositiontakingv8 = 0) OR (sporttype=10 AND @UpdatePositiontakingv10 = 0) OR (sporttype=11 AND @UpdatePositiontakingv11 = 0) OR (sporttype=99 AND bettype<>9 AND @UpdatePositiontakingv99 = 0) OR (sporttype=99 AND bettype=9 AND @UpdatePositiontakingv99MP = 0) )) THEN mpositiontaking ELSE CASE sporttype WHEN 1 THEN CASE bettype WHEN 1 THEN @mpositiontaking_1 WHEN 2 THEN @mpositiontaking_2 WHEN 3 THEN @mpositiontaking_3 WHEN 4 THEN @mpositiontaking_4 WHEN 5 THEN @mpositiontaking_5 WHEN 6 THEN @mpositiontaking_6 WHEN 7 THEN @mpositiontaking_7 WHEN 8 THEN @mpositiontaking_8 WHEN 9 THEN @mpositiontaking_9 WHEN 10 THEN @mpositiontaking_10 ELSE 0 END
-					WHEN 2 THEN CASE bettype WHEN 1 THEN @v2mpositiontaking_1 WHEN 2 THEN @v2mpositiontaking_2 WHEN 3 THEN @v2mpositiontaking_3 WHEN 7 THEN @v2mpositiontaking_7 WHEN 8 THEN @v2mpositiontaking_8 WHEN 20 THEN @v2mpositiontaking_20 ELSE 0 END
-					WHEN 3 THEN CASE bettype WHEN 1 THEN @v3mpositiontaking_1 WHEN 2 THEN @v3mpositiontaking_2 WHEN 3 THEN @v3mpositiontaking_3 WHEN 20 THEN @v3mpositiontaking_20 ELSE 0 END
-					WHEN 5 THEN CASE bettype WHEN 1 THEN @v5mpositiontaking_1 WHEN 2 THEN @v5mpositiontaking_2 WHEN 3 THEN @v5mpositiontaking_3 WHEN 20 THEN @v5mpositiontaking_20 ELSE 0 END
-					WHEN 8 THEN CASE bettype WHEN 1 THEN @v8mpositiontaking_1 WHEN 3 THEN @v8mpositiontaking_3 WHEN 20 THEN @v8mpositiontaking_20 ELSE 0 END
-					WHEN 10 THEN CASE bettype WHEN 1 THEN @v10mpositiontaking_1 WHEN 2 THEN @v10mpositiontaking_2 WHEN 3 THEN @v10mpositiontaking_3 WHEN 20 THEN @v10mpositiontaking_20 ELSE 0 END
-					WHEN 11 THEN CASE bettype WHEN 1 THEN @v11mpositiontaking_1 WHEN 20 THEN @v11mpositiontaking_20 ELSE 0 END
-					WHEN 99 THEN CASE bettype WHEN 1 THEN @v99mpositiontaking_1 WHEN 2 THEN @v99mpositiontaking_2 WHEN 3 THEN @v99mpositiontaking_3 WHEN 9 THEN @v99mpositiontaking_9 WHEN 20 THEN @v99mpositiontaking_20 ELSE 0 END
-														
-					ELSE mpositiontaking END END,
-	mlivepositiontaking = CASE WHEN ( @UpdateMultiple = 1 AND ((sporttype=1 AND @UpdatePositiontaking = 0) OR (sporttype=2 AND @UpdatePositiontakingv2 = 0) OR (sporttype=3 AND @UpdatePositiontakingv3 = 0) OR (sporttype=5 AND @UpdatePositiontakingv5 = 0) OR (sporttype=8 AND @UpdatePositiontakingv8 = 0) OR (sporttype=10 AND @UpdatePositiontakingv10 = 0) OR (sporttype=11 AND @UpdatePositiontakingv11 = 0) OR (sporttype=99 AND @UpdatePositiontakingv99 = 0))) THEN mlivepositiontaking ELSE CASE sporttype 	WHEN 1 THEN CASE bettype WHEN 1 THEN @mlivepositiontaking_1 WHEN 3 THEN @mlivepositiontaking_3 WHEN 7 THEN @mlivepositiontaking_7 WHEN 8 THEN @mlivepositiontaking_8 ELSE mlivepositiontaking END ELSE mlivepositiontaking END END,
-	-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
-	spositiontaking = CASE WHEN (@UpdateMultiple = 1 AND ((sporttype=1 AND @UpdatePositiontaking = 0) OR (sporttype=2 AND @UpdatePositiontakingv2 = 0)  OR (sporttype=3 AND @UpdatePositiontakingv3 = 0) OR (sporttype=5 AND @UpdatePositiontakingv5 = 0) OR (sporttype=8 AND @UpdatePositiontakingv8 = 0) OR (sporttype=10 AND @UpdatePositiontakingv10 = 0) OR (sporttype=11 AND @UpdatePositiontakingv11 = 0) OR (sporttype=99 AND bettype<>9  AND  @UpdatePositiontakingv99 = 0) OR (sporttype=99 AND bettype=9  AND  @UpdatePositiontakingv99MP = 0) )) THEN spositiontaking ELSE CASE sporttype WHEN 1 THEN CASE bettype WHEN 1 THEN @spositiontaking_1 WHEN 2 THEN @spositiontaking_2 WHEN 3 THEN @spositiontaking_3 WHEN 4 THEN @spositiontaking_4 WHEN 5 THEN @spositiontaking_5 WHEN 6 THEN @spositiontaking_6 WHEN 7 THEN @spositiontaking_7 WHEN 8 THEN @spositiontaking_8 WHEN 9 THEN @spositiontaking_9 WHEN 10 THEN @spositiontaking_10 ELSE 0 END
-					WHEN 2 THEN CASE bettype WHEN 1 THEN @v2spositiontaking_1 WHEN 2 THEN @v2spositiontaking_2 WHEN 3 THEN @v2spositiontaking_3 WHEN 7 THEN @v2spositiontaking_7 WHEN 8 THEN @v2spositiontaking_8 WHEN 20 THEN @v2spositiontaking_20 ELSE 0 END
-					WHEN 3 THEN CASE bettype WHEN 1 THEN @v3spositiontaking_1 WHEN 2 THEN @v3spositiontaking_2 WHEN 3 THEN @v3spositiontaking_3 WHEN 20 THEN @v3spositiontaking_20 ELSE 0 END
-					WHEN 5 THEN CASE bettype WHEN 1 THEN @v5spositiontaking_1 WHEN 2 THEN @v5spositiontaking_2 WHEN 3 THEN @v5spositiontaking_3 WHEN 20 THEN @v5spositiontaking_20 ELSE 0 END
-					WHEN 8 THEN CASE bettype WHEN 1 THEN @v8spositiontaking_1 WHEN 3 THEN @v8spositiontaking_3 WHEN 20 THEN @v8spositiontaking_20 ELSE 0 END
-					WHEN 10 THEN CASE bettype WHEN 1 THEN @v10spositiontaking_1 WHEN 2 THEN @v10spositiontaking_2 WHEN 3 THEN @v10spositiontaking_3 WHEN 20 THEN @v10spositiontaking_20 ELSE 0 END
-					WHEN 11 THEN CASE bettype WHEN 1 THEN @v11spositiontaking_1 WHEN 20 THEN @v11spositiontaking_20 ELSE 0 END
-					WHEN 99 THEN CASE bettype WHEN 1 THEN @v99spositiontaking_1 WHEN 2 THEN @v99spositiontaking_2 WHEN 3 THEN @v99spositiontaking_3 WHEN 9 THEN @v99spositiontaking_9  WHEN 20 THEN @v99spositiontaking_20 ELSE 0 END
-					
-					ELSE spositiontaking END END,
-	slivepositiontaking = CASE WHEN ( @UpdateMultiple = 1 AND ((sporttype=1 AND @UpdatePositiontaking = 0) OR (sporttype=2 AND @UpdatePositiontakingv2 = 0) OR (sporttype=3 AND @UpdatePositiontakingv3 = 0) OR (sporttype=5 AND @UpdatePositiontakingv5 = 0) OR (sporttype=8 AND @UpdatePositiontakingv8 = 0) OR (sporttype=10 AND @UpdatePositiontakingv10 = 0) OR (sporttype=11 AND @UpdatePositiontakingv11 = 0) OR (sporttype=99 AND @UpdatePositiontakingv99 = 0))) THEN slivepositiontaking ELSE CASE sporttype 	WHEN 1 THEN CASE bettype WHEN 1 THEN @slivepositiontaking_1 WHEN 3 THEN @slivepositiontaking_3 WHEN 7 THEN @slivepositiontaking_7 WHEN 8 THEN @slivepositiontaking_8 ELSE slivepositiontaking END ELSE slivepositiontaking END END
-WHERE custid=@custid
-
---v161
-IF (@UpdateMultiple=0 OR @UpdatePositiontakingv161=1)
-BEGIN	
-	
-	UPDATE custsetting3rd WITH (ROWLOCK, UPDLOCK)
-	SET 
-		apositiontaking = CASE bettype 
-						WHEN 81 then @v161apositiontaking_81
-						WHEN 83 then @v161apositiontaking_83
-						WHEN 86 then @v161apositiontaking_86
-						WHEN 88 then @v161apositiontaking_88
-						ELSE 0
-						END,
-		alivepositiontaking = CASE bettype
-						WHEN 85 then @v161alivepositiontaking_85
-						WHEN 86 then @v161alivepositiontaking_86
-						WHEN 87 then @v161alivepositiontaking_87 
-						WHEN 89 then @v161alivepositiontaking_89
-						WHEN 90 then @v161alivepositiontaking_90
-						ELSE 0
-						END,
-		mpositiontaking = CASE bettype 
-						WHEN 81 then @v161mpositiontaking_81
-						WHEN 83 then @v161mpositiontaking_83
-						WHEN 86 then @v161mpositiontaking_86
-						WHEN 88 then @v161mpositiontaking_88
-						ELSE 0
-						END, 
-		mlivepositiontaking = CASE bettype
-						WHEN 85 then @v161mlivepositiontaking_85
-						WHEN 86 then @v161mlivepositiontaking_86
-						WHEN 87 then @v161mlivepositiontaking_87 
-						WHEN 89 then @v161mlivepositiontaking_89
-						WHEN 90 then @v161mlivepositiontaking_90
-						ELSE 0
-						END,
-		spositiontaking = CASE bettype 
-						WHEN 81 then @v161spositiontaking_81
-						WHEN 83 then @v161spositiontaking_83
-						WHEN 86 then @v161spositiontaking_86
-						WHEN 88 then @v161spositiontaking_88
-						ELSE 0
-						 END,
-		slivepositiontaking = CASE bettype
-						WHEN 85 then @v161slivepositiontaking_85
-						WHEN 86 then @v161slivepositiontaking_86
-						WHEN 87 then @v161slivepositiontaking_87 
-						WHEN 89 then @v161slivepositiontaking_89
-						WHEN 90 then @v161slivepositiontaking_90
-						ELSE 0
-						END			
-	WHERE custid = @custid AND sporttype = 161
-END
-
-
-EXEC dbo.Acc_CustomerUpdMember_MinMaxPositiontaking @custid = @custid, @recommend = @recommend, @mrecommend = @mrecommend, @srecommend = @srecommend
-
-COMMIT TRANSACTION
-*/
-
 SELECT 
 	@apositiontaking_1 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontaking = 0 THEN @Old_apositiontaking_1 ELSE @apositiontaking_1 END,
 	@apositiontaking_2 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontaking = 0 THEN @Old_apositiontaking_2 ELSE @apositiontaking_2 END,
@@ -4779,20 +4066,7 @@ SELECT
 	@v99apositiontaking_3 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv99 = 0 THEN @Old_v99apositiontaking_3 ELSE @v99apositiontaking_3 END,	
 	@v99apositiontaking_20 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv99 = 0 THEN @Old_v99apositiontaking_20 ELSE @v99apositiontaking_20 END,
 	@v99apositiontaking_9999 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv99 = 0 THEN @Old_v99apositiontaking_9999 ELSE @v99apositiontaking_9999 END,
-	@v99apositiontaking_9 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv99mp = 0 THEN @Old_v99apositiontaking_9 ELSE @v99apositiontaking_9 END,
-	
-	
-	--v161
-	@v161apositiontaking_81 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161apositiontaking_81 ELSE @v161apositiontaking_81 END,
-	@v161apositiontaking_83 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161apositiontaking_83 ELSE @v161apositiontaking_83 END,
-	@v161apositiontaking_86 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161apositiontaking_86 ELSE @v161apositiontaking_86 END,
-	@v161apositiontaking_88 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161apositiontaking_88 ELSE @v161apositiontaking_88 END,
-	@v161alivepositiontaking_85 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161alivepositiontaking_85 ELSE @v161alivepositiontaking_85 END,
-	@v161alivepositiontaking_86 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161alivepositiontaking_86 ELSE @v161alivepositiontaking_86 END,
-	@v161alivepositiontaking_87 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161alivepositiontaking_87 ELSE @v161alivepositiontaking_87 END,
-	@v161alivepositiontaking_89 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161alivepositiontaking_89 ELSE @v161alivepositiontaking_89 END,
-	@v161alivepositiontaking_90 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv161 = 0 THEN @Old_v161alivepositiontaking_90 ELSE @v161alivepositiontaking_90 END
-
+	@v99apositiontaking_9 = CASE WHEN @UpdateMultiple= 1 AND @UpdatePositiontakingv99mp = 0 THEN @Old_v99apositiontaking_9 ELSE @v99apositiontaking_9 END
 
 Declare @LogSPData varchar(MAX)
 Declare @TrackingValue2 varchar(MAX)
@@ -4808,7 +4082,6 @@ Select @LogSPData = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultiple="'+
 'Updptv99="'+ coalesce(cast(@UpdatePositiontakingv99 as varchar(50)),space(1)) + '" ' +
 'Updptv99MP="'+ coalesce(cast(@UpdatePositiontakingv99MP as varchar(50)),space(1)) + '" ' +
 
-'Updptv161="'+ coalesce(cast(@UpdatePositiontakingv161 as varchar(50)),space(1)) + '" ' +
 'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
 'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
@@ -4879,17 +4152,7 @@ Select @LogSPData = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultiple="'+
 'v99apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_3),space(1)) + '" ' +
 'v99apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9),space(1)) + '" ' +
 'v99apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_20),space(1)) + '" ' +
-'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9999),space(1)) + '" ' +
-
-'v161apt_81="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_81),space(1)) + '" ' +
-'v161apt_83="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_83),space(1)) + '" ' +
-'v161apt_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_86),space(1)) + '" ' +
-'v161apt_88="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_88),space(1)) + '" ' +
-'v161alivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_85),space(1)) + '" ' +
-'v161alivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_86),space(1)) + '" ' +
-'v161alivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_87),space(1)) + '" ' +
-'v161alivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_89),space(1)) + '" ' +
-'v161alivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_90),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
+'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9999),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
 
 Select @TrackingValue2 = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultiple="'+ coalesce(cast(@UpdateMultiple as varchar(50)),space(1)) + '" ' +
 'Updpt="'+ coalesce(cast(@UpdatePositiontaking as varchar(50)),space(1)) + '" ' +
@@ -4902,7 +4165,6 @@ Select @TrackingValue2 = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultipl
 'Updptv99="'+ coalesce(cast(@UpdatePositiontakingv99 as varchar(50)),space(1)) + '" ' +
 'Updptv99MP="'+ coalesce(cast(@UpdatePositiontakingv99MP as varchar(50)),space(1)) + '" ' +
 
-'Updptv161="'+ coalesce(cast(@UpdatePositiontakingv161 as varchar(50)),space(1)) + '" ' +
 'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
 'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
@@ -4971,225 +4233,19 @@ Select @TrackingValue2 = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultipl
 'v99apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_3),space(1)) + '" ' +
 'v99apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9),space(1)) + '" ' +
 'v99apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_20),space(1)) + '" ' +
-'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9999),space(1)) + '" ' +
-
-'v161apt_81="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_81),space(1)) + '" ' +
-'v161apt_83="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_83),space(1)) + '" ' +
-'v161apt_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_86),space(1)) + '" ' +
-'v161apt_88="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_88),space(1)) + '" ' +
-'v161alivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_85),space(1)) + '" ' +
-'v161alivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_86),space(1)) + '" ' +
-'v161alivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_87),space(1)) + '" ' +
-'v161alivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_89),space(1)) + '" ' +
-'v161alivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_90),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
+'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9999),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
 
 set @endRun = getdate()
 set @duration  = datediff (millisecond,@startRun,@endRun)
 
-BEGIN TRY
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-		@UserID = @UserID,
-		@CustID = @CustID,
-		@ActionID = 413,
-		@TrackingValue = @LogSPData,
-		@TrackingValue2 = @TrackingValue2,
-		@duration = @duration
-END TRY
-BEGIN CATCH
-	Select @LogSPData = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultiple="'+ coalesce(cast(@UpdateMultiple as varchar(50)),space(1)) + '" ' +
-	'Updpt="'+ coalesce(cast(@UpdatePositiontaking as varchar(50)),space(1)) + '" ' +
-	'Updptv2="'+ coalesce(cast(@UpdatePositiontakingv2 as varchar(50)),space(1)) + '" ' +
-	'Updptv3="'+ coalesce(cast(@UpdatePositiontakingv3 as varchar(50)),space(1)) + '" ' +
-	'Updptv5="'+ coalesce(cast(@UpdatePositiontakingv5 as varchar(50)),space(1)) + '" ' +
-	'Updptv8="'+ coalesce(cast(@UpdatePositiontakingv8 as varchar(50)),space(1)) + '" ' +
-	'Updptv10="'+ coalesce(cast(@UpdatePositiontakingv10 as varchar(50)),space(1)) + '" ' +
-	'Updptv11="'+ coalesce(cast(@UpdatePositiontakingv11 as varchar(50)),space(1)) + '" ' +
-	'Updptv99="'+ coalesce(cast(@UpdatePositiontakingv99 as varchar(50)),space(1)) + '" ' +
-	'Updptv99MP="'+ coalesce(cast(@UpdatePositiontakingv99MP as varchar(50)),space(1)) + '" ' +
-
-	'Updptv161="'+ coalesce(cast(@UpdatePositiontakingv161 as varchar(50)),space(1)) + '" ' +
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
-	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
-	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
-	'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
-	'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(8000)),space(1)) + '" />' +
-
-	'<ag apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_1),space(1)) + '" ' +
-	'apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_2),space(1)) + '" ' +
-	'apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_3),space(1)) + '" ' +
-	'apt_4="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_4),space(1)) + '" ' +
-	'apt_5="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_5),space(1)) + '" ' +
-	'apt_6="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_6),space(1)) + '" ' +
-	'apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_7),space(1)) + '" ' +
-	'apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_8),space(1)) + '" ' +
-	'apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_9),space(1)) + '" ' +
-	'apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_10),space(1)) + '" ' +
-	
-	-- Outright PT for sports
-	'v2apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_10),space(1)) + '" ' +
-	'v3apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_10),space(1)) + '" ' +
-	'v5apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_10),space(1)) + '" ' +
-	'v8apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_10),space(1)) + '" ' +
-	'v10apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_10),space(1)) + '" ' +
-	'v11apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_10),space(1)) + '" ' +
-	'v99apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_10),space(1)) + '" ' +
-	
-	'apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_9999),space(1)) + '" ' +
-	'alivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_1),space(1)) + '" ' +
-	'alivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_3),space(1)) + '" ' +
-	'alivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_7),space(1)) + '" ' +
-	'alivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@alivepositiontaking_8),space(1)) + '" ' +
-
-	'v2apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_1),space(1)) + '" ' +
-	'v2apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_2),space(1)) + '" ' +
-	'v2apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_3),space(1)) + '" ' +
-	'v2apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_7),space(1)) + '" ' +
-	'v2apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_8),space(1)) + '" ' +
-	--'v2apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_9),space(1)) + '" ' +
-	'v2apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_20),space(1)) + '" ' +
-	'v2apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v2apositiontaking_9999),space(1)) + '" ' +
-
-	'v3apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_1),space(1)) + '" ' +
-	'v3apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_2),space(1)) + '" ' +
-	'v3apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_3),space(1)) + '" ' +
-	'v3apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v3apositiontaking_20),space(1)) + '" ' +
-
-	'v5apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_1),space(1)) + '" ' +
-	'v5apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_2),space(1)) + '" ' +
-	'v5apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_3),space(1)) + '" ' +
-	'v5apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_20),space(1)) + '" ' +
-	'v5apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v5apositiontaking_9999),space(1)) + '" ' +
-
-	'v8apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_1),space(1)) + '" ' +
-	'v8apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_3),space(1)) + '" ' +
-	'v8apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v8apositiontaking_20),space(1)) + '" ' +
-
-	'v10apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_1),space(1)) + '" ' +
-	'v10apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_2),space(1)) + '" ' +
-	'v10apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_3),space(1)) + '" ' +
-	'v10apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v10apositiontaking_20),space(1)) + '" ' +
-
-	'v11apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_1),space(1)) + '" ' +
-	'v11apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v11apositiontaking_20),space(1)) + '" ' +
-
-	'v99apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_1),space(1)) + '" ' +
-	'v99apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_2),space(1)) + '" ' +
-	'v99apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_3),space(1)) + '" ' +
-	'v99apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9),space(1)) + '" ' +
-	'v99apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_20),space(1)) + '" ' +
-	'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@v99apositiontaking_9999),space(1)) + '" ' +
-
-	'v161apt_81="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_81),space(1)) + '" ' +
-	'v161apt_83="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_83),space(1)) + '" ' +
-	'v161apt_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_86),space(1)) + '" ' +
-	'v161apt_88="'+ coalesce(dbo.f_FomatNumericToChar(@v161apositiontaking_88),space(1)) + '" ' +
-	'v161alivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_85),space(1)) + '" ' +
-	'v161alivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_86),space(1)) + '" ' +
-	'v161alivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_87),space(1)) + '" ' +
-	'v161alivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_89),space(1)) + '" ' +
-	'v161alivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@v161alivepositiontaking_90),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
-
-	Select @TrackingValue2 = '<Acc_CustomerUpdMember_PositionTaking><info UpdMultiple="'+ coalesce(cast(@UpdateMultiple as varchar(50)),space(1)) + '" ' +
-	'Updpt="'+ coalesce(cast(@UpdatePositiontaking as varchar(50)),space(1)) + '" ' +
-	'Updptv2="'+ coalesce(cast(@UpdatePositiontakingv2 as varchar(50)),space(1)) + '" ' +
-	'Updptv3="'+ coalesce(cast(@UpdatePositiontakingv3 as varchar(50)),space(1)) + '" ' +
-	'Updptv5="'+ coalesce(cast(@UpdatePositiontakingv5 as varchar(50)),space(1)) + '" ' +
-	'Updptv8="'+ coalesce(cast(@UpdatePositiontakingv8 as varchar(50)),space(1)) + '" ' +
-	'Updptv10="'+ coalesce(cast(@UpdatePositiontakingv10 as varchar(50)),space(1)) + '" ' +
-	'Updptv11="'+ coalesce(cast(@UpdatePositiontakingv11 as varchar(50)),space(1)) + '" ' +
-	'Updptv99="'+ coalesce(cast(@UpdatePositiontakingv99 as varchar(50)),space(1)) + '" ' +
-	'Updptv99MP="'+ coalesce(cast(@UpdatePositiontakingv99MP as varchar(50)),space(1)) + '" ' +
-
-	'Updptv161="'+ coalesce(cast(@UpdatePositiontakingv161 as varchar(50)),space(1)) + '" ' +
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
-	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
-	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" ' +
-	'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" ' +
-	'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(8000)),space(1)) + '" />' +
-
-	'<ag apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_1),space(1)) + '" ' +
-	'apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_2),space(1)) + '" ' +
-	'apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_3),space(1)) + '" ' +
-	'apt_4="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_4),space(1)) + '" ' +
-	'apt_5="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_5),space(1)) + '" ' +
-	'apt_6="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_6),space(1)) + '" ' +
-	'apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_7),space(1)) + '" ' +
-	'apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_8),space(1)) + '" ' +
-	'apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_9),space(1)) + '" ' +
-	'apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_10),space(1)) + '" ' +
-	-- Outright PT for sports
-	'v2apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_10),space(1)) + '" ' +
-	'v3apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_10),space(1)) + '" ' +
-	'v5apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_10),space(1)) + '" ' +
-	'v8apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_10),space(1)) + '" ' +
-	'v10apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_10),space(1)) + '" ' +
-	'v11apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_10),space(1)) + '" ' +
-	'v99apt_10="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_10),space(1)) + '" ' +
-	
-	'apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_apositiontaking_9999),space(1)) + '" ' +
-	'alivept_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_1),space(1)) + '" ' +
-	'alivept_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_3),space(1)) + '" ' +
-	'alivept_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_7),space(1)) + '" ' +
-	'alivept_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_alivepositiontaking_8),space(1)) + '" ' +
-
-	'v2apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_1),space(1)) + '" ' +
-	'v2apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_2),space(1)) + '" ' +
-	'v2apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_3),space(1)) + '" ' +
-	'v2apt_7="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_7),space(1)) + '" ' +
-	'v2apt_8="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_8),space(1)) + '" ' +
-	'v2apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_20),space(1)) + '" ' +
-	'v2apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v2apositiontaking_9999),space(1)) + '" ' +
-
-	'v3apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_1),space(1)) + '" ' +
-	'v3apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_2),space(1)) + '" ' +
-	'v3apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_3),space(1)) + '" ' +
-	'v3apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v3apositiontaking_20),space(1)) + '" ' +
-
-	'v5apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_1),space(1)) + '" ' +
-	'v5apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_2),space(1)) + '" ' +
-	'v5apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_3),space(1)) + '" ' +
-	'v5apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_20),space(1)) + '" ' +
-	'v5apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v5apositiontaking_9999),space(1)) + '" ' +
-
-	'v8apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_1),space(1)) + '" ' +
-	'v8apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_3),space(1)) + '" ' +
-	'v8apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v8apositiontaking_20),space(1)) + '" ' +
-
-	'v10apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_1),space(1)) + '" ' +
-	'v10apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_2),space(1)) + '" ' +
-	'v10apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_3),space(1)) + '" ' +
-	'v10apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v10apositiontaking_20),space(1)) + '" ' +
-
-	'v11apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_1),space(1)) + '" ' +
-	'v11apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v11apositiontaking_20),space(1)) + '" ' +
-
-	'v99apt_1="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_1),space(1)) + '" ' +
-	'v99apt_2="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_2),space(1)) + '" ' +
-	'v99apt_3="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_3),space(1)) + '" ' +
-	'v99apt_9="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9),space(1)) + '" ' +
-	'v99apt_20="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_20),space(1)) + '" ' +
-	'v99apt_9999="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v99apositiontaking_9999),space(1)) + '" ' +
-
-	'v161apt_81="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_81),space(1)) + '" ' +
-	'v161apt_83="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_83),space(1)) + '" ' +
-	'v161apt_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_86),space(1)) + '" ' +
-	'v161apt_88="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161apositiontaking_88),space(1)) + '" ' +
-	'v161alivept_85="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_85),space(1)) + '" ' +
-	'v161alivept_86="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_86),space(1)) + '" ' +
-	'v161alivept_87="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_87),space(1)) + '" ' +
-	'v161alivept_89="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_89),space(1)) + '" ' +
-	'v161alivept_90="'+ coalesce(dbo.f_FomatNumericToChar(@Old_v161alivepositiontaking_90),space(1)) + '" /></Acc_CustomerUpdMember_PositionTaking>'
-
-	EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
-			@UserID = @UserID,
-			@CustID = @CustID,
-			@ActionID = 413,
-			@TrackingValue = @LogSPData,
-			@TrackingValue2 = @TrackingValue2,
-			@duration = @duration
-END CATCH
+--Log positiontaking
+EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+	@UserID = @UserID,
+	@CustID = @CustID,
+	@ActionID = 413,
+	@TrackingValue = @LogSPData,
+	@TrackingValue2 = @TrackingValue2,
+	@duration = @duration
 
 DROP TABLE #tmp_Bettype
 DROP TABLE #tmp_Sports

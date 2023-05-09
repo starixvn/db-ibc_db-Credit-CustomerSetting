@@ -16,6 +16,8 @@ AS
 		- 20190820@Eden: Hide setting of inactive products - Colossus Bet [RedmineID: #117439]
 		- 20190903@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+
 	Parameters Explanation
 */ 
 
@@ -63,83 +65,7 @@ BEGIN
 		END
 		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline)
 		VALUES(@ProductID,204,18000,@IsDisabled,@IsDisabledDownline,@HasDownline,@IsSync,@isHidden,@IsDisabledUpline,@IsHiddenUpline,@IsSyncedUpline,@IsSyncedDownline)		
-	END 	
-	
-	ELSE IF @ProductID=8--Keno
-	BEGIN	
-		SELECT @Ishidden=HideKeno,@recommend=recommend,@mrecommend=mrecommend,@srecommend=srecommend,@RoleID=roleid FROM custInfo  WITH (NOLOCK)  WHERE custid=@custid
-
-		INSERT INTO @SportBettype(ProductID ,Sporttype , Bettype ,IsDisabled ,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline,GameTypeID)	
-		SELECT 8,202,IBCBetTypeID,NULL,NULL,0,1,0,0,0,1,1,GameTypeID		
-		FROM DBACC.bodb02.dbo.Gametype WHERE  IBCBetTypeID BETWEEN 1501 AND 1599 AND IBCBetTypeID NOT IN(1502,1507,1509) AND IsDisabled = 0 
-
-		UPDATE s
-		SET s.IsDisabled=ct.IsDisabled
-		FROM @SportBettype s 
-		INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
-		WHERE ct.CustID=@custid
-		
-		IF @RoleID=4		
-		BEGIN				 
-			IF EXISTS(SELECT 1	FROM dbo.CustInfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid=3)
-					SELECT @HasDownline=1
-			IF @HasDownline=1
-					UPDATE s
-					SET s.IsDisabledDownline=(SELECT TOP 1 IsDisabled FROM CustGameType ct WITH(NOLOCK) 
-									INNER JOIN  dbo.custInfo c WITH(NOLOCK) ON c.custid=ct.CustID 								
-									WHERE  srecommend= @custid AND ct.IsDisabled = 1 AND s.GameTypeID=ct.GameTypeID)
-					FROM @SportBettype s
-		END
-		IF @RoleID=3	
-		BEGIN	
-			UPDATE s
-			SET s.IsDisabledUpline=ct.IsDisabled
-			FROM @SportBettype s 
-			INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
-			WHERE ct.CustID=@srecommend	
-			SELECT @IsHiddenUpline=HideKeno FROM custInfo  WITH (NOLOCK)  WHERE custid=@srecommend
-			IF EXISTS(SELECT 1 FROM dbo.CustInfo WITH (NOLOCK) 	WHERE mrecommend = @CustID AND roleid=2)
-				SELECT @HasDownline=1
-			IF @HasDownline=1
-				UPDATE s
-				SET s.IsDisabledDownline=(SELECT TOP 1 IsDisabled FROM CustGameType ct WITH(NOLOCK) 
-										INNER JOIN  dbo.custInfo c WITH(NOLOCK) ON c.custid=ct.CustID 								
-										WHERE  mrecommend= @custid AND ct.IsDisabled = 1 AND s.GameTypeID=ct.GameTypeID)
-				FROM @SportBettype s 
-		END
-		IF @RoleID=2
-		BEGIN
-			UPDATE s
-			SET s.IsDisabledUpline=ct.IsDisabled
-			FROM @SportBettype s 
-			INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
-			WHERE ct.CustID=@mrecommend	
-			SELECT @IsHiddenUpline=HideKeno FROM custInfo  WITH (NOLOCK)  WHERE custid=@mrecommend
-			IF EXISTS(SELECT 1 	FROM dbo.CustInfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid=1)
-				SELECT @HasDownline=1
-			IF @HasDownline=1	
-			UPDATE s
-			SET s.IsDisabledDownline=(SELECT TOP 1 IsDisabled FROM CustGameType ct WITH(NOLOCK) 
-									INNER JOIN  dbo.custInfo c WITH(NOLOCK) ON c.custid=ct.CustID 								
-									WHERE  recommend= @custid AND ct.IsDisabled = 1 AND s.GameTypeID=ct.GameTypeID)
-			FROM @SportBettype s 
-		END	
-		IF @RoleID=1
-		BEGIN
-			UPDATE s
-			SET s.IsDisabledUpline=ct.IsDisabled
-			FROM @SportBettype s 
-			INNER JOIN 	CustGameType ct WITH(NOLOCK) ON ct.GameTypeID=s.GameTypeID
-			WHERE ct.CustID=@recommend	
-			SELECT @IsHiddenUpline=HideKeno FROM custInfo  WITH (NOLOCK)  WHERE custid=@recommend
-		END		
-		UPDATE s
-		SET s.HasDownline=@HasDownline,s.IsHiddenUpline=@IsHiddenUpline
-		FROM @SportBettype s	
-		
-		DELETE FROM @SportBettype WHERE IsDisabled IS NULL	
-
-	END 
+	END 			
 	
 	SELECT ProductID,Sporttype, Bettype,IsDisabled,IsDisabledDownline,HasDownline,IsSync,IsHidden,IsDisabledUpline,IsHiddenUpline,IsSyncedUpline,IsSyncedDownline FROM @SportBettype
 END

@@ -104,6 +104,7 @@ AS
 	- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -447,9 +448,7 @@ BEGIN
 				,VirtualMultiplier
 				,Enabled   		
 				,DisableOutright		
-				,DisableNumber
 				,DoubleCommLosing		
-				,HideKeno
 				,DisableSuperLive
 				,Danger
 				,Danger2
@@ -474,9 +473,7 @@ BEGIN
 				,@virtualmultiplier
 				,@enableUpline as Enabled 		
 				,DisableOutright
-				,DisableNumber		
 				,@doubleCommLosingUpline as doubleCommLosing		
-				,HideKeno
 				,DisableSuperLive
 				,@DangerSuper
 				,@DangerSuper2
@@ -603,14 +600,8 @@ BEGIN
 			@ErrCode = 115
 			
 		-- ROLLBACK MANUALLY	
-		DELETE FROM dbo.CustGameType WITH(ROWLOCK) WHERE CustID =@CustID					
-		DELETE FROM dbo.Custoverridegame WITH(ROWLOCK) WHERE CustID =@CustID					
-		DELETE FROM custsettingGame WITH(ROWLOCK) where custid =  @custid
-		
 		DELETE FROM custoverride WITH(ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH(ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM custsetting WITH(ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custsetting3rd WITH(ROWLOCK) WHERE custid =  @CustID				
 		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
@@ -639,13 +630,7 @@ BEGIN
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-	
-		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID	
+		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID			
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 							
@@ -716,13 +701,7 @@ BEGIN
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-		
-		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID		
+		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID					
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID 
 		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid 
@@ -772,13 +751,8 @@ BEGIN
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
-		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
@@ -808,13 +782,8 @@ BEGIN
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
-		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID					
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid

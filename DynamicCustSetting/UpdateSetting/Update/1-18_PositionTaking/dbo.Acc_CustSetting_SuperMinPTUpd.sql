@@ -21,6 +21,7 @@ AS
 		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 		- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -98,7 +99,8 @@ BEGIN
 				SportType	SMALLINT,
 				BetType		SMALLINT,
 				IsLive		BIT,
-				SuperMinPT	SMALLMONEY
+				SuperMinPT	SMALLMONEY,
+				RID INT Identity(1,1)
 				)	
 				
 	-- For read xml
@@ -188,6 +190,7 @@ BEGIN
 								AND cs.bettype = t.BetType 
 								AND cs.isLive = t.IsLive
 						WHERE       custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -213,6 +216,7 @@ BEGIN
 								AND cs.bettype = t.BetType 
 								AND cs.isLive = t.IsLive
 						WHERE       custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -238,6 +242,7 @@ BEGIN
 								AND cs.bettype = t.BetType 
 								AND cs.isLive = t.IsLive
 						WHERE       custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -264,6 +269,7 @@ BEGIN
 								AND cs.bettype = t.BetType 
 								AND cs.isLive = t.IsLive
 						WHERE       custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -334,7 +340,8 @@ BEGIN
 								cs.BetType									AS '@BetType',
 								cs.IsLive									AS '@IsLive',
 								dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
-						FROM    @tblPT	cs							
+						FROM    @tblPT	cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -354,7 +361,8 @@ BEGIN
 						SELECT  cs.SportType								AS '@SportType',
 								cs.IsLive									AS '@IsLive',
 								dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
-						FROM    @tblPT	cs							
+						FROM    @tblPT	cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -374,7 +382,8 @@ BEGIN
 						SELECT  cs.BetType									AS '@BetType',
 								cs.IsLive									AS '@IsLive',
 								dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
-						FROM    @tblPT	cs							
+						FROM    @tblPT	cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -395,7 +404,8 @@ BEGIN
 								cs.BetType									AS '@BetType',
 								cs.IsLive									AS '@IsLive',
 								dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
-						FROM    @tblPT	cs							
+						FROM    @tblPT	cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)

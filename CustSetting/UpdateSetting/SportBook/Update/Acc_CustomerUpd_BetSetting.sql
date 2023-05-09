@@ -42,18 +42,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpd_BetSetting]
 	--- soccer sports
 	@minbetv1mp money,
 	@maxbetv1mp money,
-	@maxpermatchv1mp money,
-
-	-- number game
-	@minbetv161 money,
-	@maxbetv161 money,
-	@maxpermatchv161 money,
-	@MaxPerBallv161 money = 0,	
-	
-	-- Happy 5
-	@minbetv164 money=0,
-	@maxbetv164 money=0,
-	@maxpermatchv164 money=0,
+	@maxpermatchv1mp money,	
 
 	--Max Payout Per Match
 	@maxPOpermatch money = NULL,
@@ -96,9 +85,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpd_BetSetting]
 	-- mixed sports
 	@UpdateMinMaxBetv99MP bit = 1,
 	@UpdateMinMaxBetMP bit = 1,
-	-- number game
-	@UpdateMinMaxBetv161 bit = 1,
-	@UpdateMinMaxBetv164 bit = 1,
+	
 	@SubAccID int = 0, --Sub-AccountID	
 	@UserID int = 0,	
 	@Language varchar(2) = 'E',
@@ -120,6 +107,7 @@ AS
 		- 20220516@Tacy: Insert history of member bet setting (Number Game, Happy 5) [redmineID: #170739]
 		- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 		- 20230113@Elodie: Check param IS NULL [RedmineID:#182866]
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -149,7 +137,6 @@ BEGIN
 		MinBet            MONEY, 
 		MaxBet            MONEY, 
 		MaxPerMatch       MONEY, 
-		MaxPerNumber      MONEY, 
 		MaxPayoutPerMatch MONEY,
 		IsUpdate		  BIT,
 		SportName		  NVARCHAR(50),
@@ -164,7 +151,6 @@ BEGIN
 		MinBet            MONEY, 
 		MaxBet            MONEY, 
 		MaxPerMatch       MONEY, 
-		MaxPerNumber      MONEY, 
 		MaxPayoutPerMatch MONEY
 		PRIMARY KEY(sporttype, Bettype)
 	);
@@ -175,49 +161,35 @@ BEGIN
 		MinBet            MONEY, 
 		MaxBet            MONEY, 
 		MaxPerMatch       MONEY, 
-		MaxPerNumber      MONEY, 
 		MaxPayoutPerMatch MONEY
 		PRIMARY KEY(sporttype, Bettype)
-	);
+	);	
 
-	DECLARE @History_BetSetting TABLE(
-		CustID			  INT,
-		SportType         SMALLINT, 
-		BetType           SMALLINT, 
-		MaxBet            MONEY, 
-		MaxPerMatch       MONEY, 
-		UpdateTime		  DATETIME
-	);
-
-	INSERT INTO @BetSetting(LogOrder,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,IsUpdate,SportName)
+	INSERT INTO @BetSetting(LogOrder,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch,IsUpdate,SportName)
 	--Soccer
-	SELECT 10,1, 1, @minbet, @maxbet, @maxpermatch, NULL, @maxPOpermatch, @UpdateMinMaxBet, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
+	SELECT 10,1, 1, @minbet, @maxbet, @maxpermatch, @maxPOpermatch, @UpdateMinMaxBet, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
 	--Saba Soccer
-	SELECT 20,9901, 1, @minbetv1saba, @maxbetv1saba, @maxpermatchv1saba, NULL, @maxPOpermatchv1saba, @UpdateMinMaxBetv1saba, NULL UNION ALL
+	SELECT 20,9901, 1, @minbetv1saba, @maxbetv1saba, @maxpermatchv1saba, @maxPOpermatchv1saba, @UpdateMinMaxBetv1saba, NULL UNION ALL
 	--Soccer Parlay
-	SELECT 30,1, 9, @minbetv1mp, @maxbetv1mp, @maxpermatchv1mp, NULL, @maxPOpermatchv1mp, @UpdateMinMaxBetmp, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
+	SELECT 30,1, 9, @minbetv1mp, @maxbetv1mp, @maxpermatchv1mp, @maxPOpermatchv1mp, @UpdateMinMaxBetmp, [dbo].[f_Get_SportNameBySporttype](1,@Language) UNION ALL
 	--Basketball
-	SELECT 40,2, 1, @minbetv2, @maxbetv2, @maxpermatchv2, NULL, @maxPOpermatchv2, @UpdateMinMaxBetv2, [dbo].[f_Get_SportNameBySporttype](2,@Language) UNION ALL
+	SELECT 40,2, 1, @minbetv2, @maxbetv2, @maxpermatchv2, @maxPOpermatchv2, @UpdateMinMaxBetv2, [dbo].[f_Get_SportNameBySporttype](2,@Language) UNION ALL
 	--Saba Basketball
-	SELECT 50,9902, 1, @minbetv2saba, @maxbetv2saba, @maxpermatchv2saba, NULL, @maxPOpermatchv2saba, @UpdateMinMaxBetv2saba, NULL UNION ALL
+	SELECT 50,9902, 1, @minbetv2saba, @maxbetv2saba, @maxpermatchv2saba, @maxPOpermatchv2saba, @UpdateMinMaxBetv2saba, NULL UNION ALL
 	--Football
-	SELECT 60,3, 1, @minbetv3, @maxbetv3, @maxpermatchv3, NULL, @maxPOpermatchv3, @UpdateMinMaxBetv3, [dbo].[f_Get_SportNameBySporttype](3,@Language) UNION ALL
+	SELECT 60,3, 1, @minbetv3, @maxbetv3, @maxpermatchv3, @maxPOpermatchv3, @UpdateMinMaxBetv3, [dbo].[f_Get_SportNameBySporttype](3,@Language) UNION ALL
 	--Tennis
-	SELECT 70,5, 1, @minbetv5, @maxbetv5, @maxpermatchv5, NULL, @maxPOpermatchv5, @UpdateMinMaxBetv5, [dbo].[f_Get_SportNameBySporttype](5,@Language) UNION ALL
+	SELECT 70,5, 1, @minbetv5, @maxbetv5, @maxpermatchv5, @maxPOpermatchv5, @UpdateMinMaxBetv5, [dbo].[f_Get_SportNameBySporttype](5,@Language) UNION ALL
 	--Baseball
-	SELECT 80,8, 1, @minbetv8, @maxbetv8, @maxpermatchv8, NULL, @maxPOpermatchv8, @UpdateMinMaxBetv8, [dbo].[f_Get_SportNameBySporttype](8,@Language) UNION ALL
+	SELECT 80,8, 1, @minbetv8, @maxbetv8, @maxpermatchv8, @maxPOpermatchv8, @UpdateMinMaxBetv8, [dbo].[f_Get_SportNameBySporttype](8,@Language) UNION ALL
 	--Golf
-	SELECT 90,10, 1, @minbetv10, @maxbetv10, @maxpermatchv10, NULL, @maxPOpermatchv10, @UpdateMinMaxBetv10, [dbo].[f_Get_SportNameBySporttype](10,@Language) UNION ALL
+	SELECT 90,10, 1, @minbetv10, @maxbetv10, @maxpermatchv10, @maxPOpermatchv10, @UpdateMinMaxBetv10, [dbo].[f_Get_SportNameBySporttype](10,@Language) UNION ALL
 	--Motorsports
-	SELECT 100,11, 1, @minbetv11, @maxbetv11, @maxpermatchv11, NULL, @maxPOpermatchv11, @UpdateMinMaxBetv11, [dbo].[f_Get_SportNameBySporttype](11,@Language) UNION ALL
+	SELECT 100,11, 1, @minbetv11, @maxbetv11, @maxpermatchv11, @maxPOpermatchv11, @UpdateMinMaxBetv11, [dbo].[f_Get_SportNameBySporttype](11,@Language) UNION ALL
 	--Other Sports
-	SELECT 110,99, 1, @minbetv99, @maxbetv99, @maxpermatchv99, NULL, @maxPOpermatchv99, @UpdateMinMaxBetv99, [dbo].[f_Get_SportNameBySporttype](99,@Language) UNION ALL
+	SELECT 110,99, 1, @minbetv99, @maxbetv99, @maxpermatchv99, @maxPOpermatchv99, @UpdateMinMaxBetv99, [dbo].[f_Get_SportNameBySporttype](99,@Language) UNION ALL
 	--Mix Sports Parlay
-	SELECT 120,99, 9, @minbetv99mp, @maxbetv99mp, @maxpermatchv99mp, NULL, @maxPOpermatchv99mp, @UpdateMinMaxBetv99mp, NULL UNION ALL
-	--Number Game
-	SELECT 130,161, 81, @minbetv161, @maxbetv161, @maxpermatchv161, @MaxPerBallv161, NULL, @UpdateMinMaxBetv161, [dbo].[f_Get_SportNameBySporttype](161,@Language) UNION ALL
-	--Happy 5
-	SELECT 140,164, 8101, @minbetv164, @maxbetv164, @maxpermatchv164, NULL, NULL, @UpdateMinMaxBetv164, [dbo].[f_Get_SportNameBySporttype](164,@Language)
+	SELECT 120,99, 9, @minbetv99mp, @maxbetv99mp, @maxpermatchv99mp, @maxPOpermatchv99mp, @UpdateMinMaxBetv99mp, NULL 
 
 	DELETE FROM @BetSetting WHERE ISNULL(IsUpdate,0) = 0
 
@@ -292,35 +264,10 @@ BEGIN
 				, @ErrCode = 3
 	FROM @BetSetting
 	WHERE (MaxPayoutPerMatch < 0 OR MaxPayoutPerMatch IS NULL)
-		AND IsUpdate = 1 AND SportType NOT IN (161,164)
-
-	IF @ErrCode <> 0
-		RETURN
-
-	--> Check rule : Wrong Min bet/ Max bet/ Max per match for NumberGame and Happy 5 (Bet Limit Restriction for 789y on Alpha/ExtNAP)
-	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10003,@Language) + ' (' + SportName + ')'
-				, @ErrCode = 3
-	FROM @BetSetting
-	WHERE (MinBet < 1 or MaxBet < 1 or MaxPerMatch < 1)
-		AND @SystemID!=1 AND @SiteLabel IN ('789y')
-		AND SportType IN(161, 164)
 		AND IsUpdate = 1
 
 	IF @ErrCode <> 0
-		RETURN
-
-	--> Check rule : Wrong Max Per Ball for NumberGame (Include Bet Limit Restriction for 789y on Alpha/ExtNAP)
-	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10002,@Language) + ' (' + SportName + ')'
-				, @ErrCode = 3
-	FROM @BetSetting
-	WHERE ( (MaxPerNumber < 0) 
-			OR (MaxPerNumber < 1 AND @SystemID!=1 AND @SiteLabel IN ('789y'))
-		 )
-		AND SportType = 161
-		AND IsUpdate = 1
-
-	IF @ErrCode <> 0
-		RETURN
+		RETURN		
 
 	--> Check rule : Min bet must be less than or equal to max bet and max bet must be less than or equal to max per match
 	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10067,@Language) + ' (' + SportName + ')'
@@ -344,31 +291,17 @@ BEGIN
 		AND IsUpdate = 1
 
 	IF @ErrCode <> 0
-		RETURN
-
-	--> Check rule : Max Per Ball must be greater than or equal to Max Bet and less than or equal to Max Per Match
-	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10061,@Language) + ' (' + SportName + ')'
-				+ char(13) + char(10) + convert(varchar(20), MaxBet) + '-' + convert(varchar(20), MaxPerNumber) + '-' + convert(varchar(20), MaxPerMatch)
-				, @ErrCode = 113
-	FROM @BetSetting
-	WHERE  ((MaxPerNumber <> 0 AND MaxBet > MaxPerNumber) 
-			OR (MaxPerNumber<> 0 AND MaxPerNumber > MaxPerMatch) 
-		  )
-		AND IsUpdate = 1
-
-	IF @ErrCode <> 0
-		RETURN
+		RETURN	
 
 	IF @RoleID IN(1,2,3) -- Validate betlimit with upline's bet limit
 	BEGIN
 		IF @RoleID = 3
 		BEGIN
-			INSERT INTO @Upline_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+			INSERT INTO @Upline_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
 			SELECT  cb.Sporttype,cb.Bettype,
 					MinBet = ISNULL((CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
 					MaxBet = ISNULL((CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
 					MaxPerMatch = ISNULL((CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0),
-					MaxPerNumber = ISNULL((CASE WHEN cb.MaxPerNumber = 0 THEN NULL ELSE cb.MaxPerNumber END),0),
 					MaxPOpermatch = ISNULL((CASE WHEN cb.MaxPayoutPerMatch = 0 THEN NULL ELSE cb.MaxPayoutPerMatch END),0)
 			FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
 				INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
@@ -376,12 +309,11 @@ BEGIN
 		END
 		IF @RoleID = 2
 		BEGIN
-			INSERT INTO @Upline_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+			INSERT INTO @Upline_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
 			SELECT  cb.Sporttype,cb.Bettype,
 					MinBet = ISNULL(MAX(CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
 					MaxBet = ISNULL(MIN(CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
 					MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0),
-					MaxPerNumber = ISNULL(MIN(CASE WHEN cb.MaxPerNumber = 0 THEN NULL ELSE cb.MaxPerNumber END),0),
 					MaxPOpermatch = ISNULL(MIN(CASE WHEN cb.MaxPayoutPerMatch = 0 THEN NULL ELSE cb.MaxPayoutPerMatch END),0)
 			FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
 				INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
@@ -390,12 +322,11 @@ BEGIN
 		END
 		IF @RoleID = 1
 		BEGIN
-			INSERT INTO @Upline_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+			INSERT INTO @Upline_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
 			SELECT  cb.Sporttype,cb.Bettype,
 					MinBet = ISNULL(MAX(CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
 					MaxBet = ISNULL(MIN(CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
 					MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0),
-					MaxPerNumber = ISNULL(MIN(CASE WHEN cb.MaxPerNumber = 0 THEN NULL ELSE cb.MaxPerNumber END),0),
 					MaxPOpermatch = ISNULL(MIN(CASE WHEN cb.MaxPayoutPerMatch = 0 THEN NULL ELSE cb.MaxPayoutPerMatch END),0)
 			FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
 				INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
@@ -453,27 +384,14 @@ BEGIN
 			AND IsUpdate = 1
 
 		IF @ErrCode <> 0
-			RETURN
-
-		--> Check rule : Max Per Ball must be equal to or less than Upline's Max Per Ball
-		SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10066,@Language) + ' (' + SportName + ')'
-					+' (' + convert(varchar(20), u.MaxPerNumber) + ').'
-					, @ErrCode = 111
-		FROM @BetSetting t
-			INNER JOIN @Upline_BetSetting u 
-				ON t.SportType = u.SportType AND t.BetType = u.BetType
-		WHERE (t.MaxPerNumber > 0 AND u.MaxPerNumber > 0 AND t.MaxPerNumber > u.MaxPerNumber)
-			AND IsUpdate = 1
-
-		IF @ErrCode <> 0
-			RETURN
+			RETURN		
 	END
 
 	--Get current Setting
 	IF @RoleID > 1
 	BEGIN
-		INSERT INTO @Old_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT cb.SportType,cb.BetType,cb.MinBet,cb.MaxBet,cb.MaxPerMatch,cb.MaxPerNumber,cb.MaxPayoutPerMatch
+		INSERT INTO @Old_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
+		SELECT cb.SportType,cb.BetType,cb.MinBet,cb.MaxBet,cb.MaxPerMatch,cb.MaxPayoutPerMatch
 		FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
 		WHERE cb.custid = @custid
@@ -481,8 +399,8 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO @Old_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT cb.SportType,cb.BetType,cb.MinBet,cb.MaxBet,cb.MaxPerMatch,cb.MaxPerNumber,cb.MaxPayoutPerMatch
+		INSERT INTO @Old_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
+		SELECT cb.SportType,cb.BetType,cb.MinBet,cb.MaxBet,cb.MaxPerMatch,cb.MaxPayoutPerMatch
 		FROM CustBetSetting_Member cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
 		WHERE cb.custid = @custid
@@ -498,7 +416,6 @@ BEGIN
 			AND (	ISNULL(t.MinBet,0)  <>  ISNULL(old.MinBet,0)
 					OR ISNULL(t.MaxBet,0)  <>  ISNULL(old.MaxBet,0)
 					OR ISNULL(t.MaxPerMatch,0)  <>  ISNULL(old.MaxPerMatch,0)
-					OR ISNULL(t.MaxPerNumber,0)  <>  ISNULL(old.MaxPerNumber,0)
 					OR ISNULL(t.MaxPayoutPerMatch,0)  <>  ISNULL(old.MaxPayoutPerMatch,0)
 				)
 	)
@@ -519,7 +436,6 @@ BEGIN
 			AND ISNULL(t.MaxBet,0) = 0 
 			AND ISNULL(t.MaxPerMatch,0) = 0 
 			AND ISNULL(t.MaxPayoutPerMatch,0) = 0 
-			AND ISNULL(t.MaxPerNumber,0) = 0 
 
 		SELECT @BetSettingXML = CONVERT( VARCHAR(MAX), 
 							(	
@@ -528,7 +444,6 @@ BEGIN
 										,MinBet 			AS	'@MinBet'
 										,MaxBet 			AS	'@MaxBet' 
 										,MaxPerMatch 		AS	'@MaxPerMatch' 
-										,MaxPerNumber 		AS	'@MaxPerNumber' 
 										,MaxPayoutPerMatch	AS	'@MaxPayoutPerMatch'
 								FROM @BetSetting
 								WHERE IsUpdate = 1
@@ -564,7 +479,6 @@ BEGIN
 		UPDATE a
 		SET a.MaxBet = t.MaxBet,
 			a.MaxPerMatch = t.MaxPerMatch,
-			a.MaxPerNumber = t.MaxPerNumber,
 			a.MaxPayoutPerMatch = t.MaxPayoutPerMatch,
 			a.MinBet = t.MinBet
 		FROM @BetSetting t
@@ -579,44 +493,13 @@ BEGIN
 		UPDATE a
 		SET a.MaxBet = t.MaxBet,
 			a.MaxPerMatch = t.MaxPerMatch,
-			a.MaxPerNumber = t.MaxPerNumber,
 			a.MaxPayoutPerMatch = t.MaxPayoutPerMatch,
 			a.MinBet = t.MinBet
-		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
-			INTO @History_BetSetting(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 		FROM @BetSetting t
 			INNER JOIN CustBetSetting_Member a WITH(ROWLOCK,UPDLOCK)
 				ON t.SportType = a.SportType AND t.BetType = a.BetType
 		WHERE a.CustID = @custid
-			AND t.IsUpdate = 1
-
-		--Insert history bet setting
-		DELETE hbs
-		FROM @History_BetSetting hbs
-			INNER JOIN @BetSetting bs ON bs.SportType=hbs.SportType
-										AND bs.BetType=hbs.BetType
-		WHERE hbs.SportType NOT IN (161, 164) OR
-			(bs.MaxBet=hbs.MaxBet
-			 AND bs.MaxPerMatch=hbs.MaxPerMatch)
-
-		IF EXISTS (SELECT 1 FROM @History_BetSetting)
-		BEGIN
-			SET @CustList = (SELECT CustID		AS '@CustID',
-									SportType	AS '@SportType',
-									BetType		AS '@BetType',
-									MaxBet		AS '@MaxBet',
-									MaxPerMatch	AS '@MaxPerMatch',
-									'NULL'		AS '@StakeLevelList',
-									UpdateTime	AS '@UpdateTime'
-							 FROM @History_BetSetting
-							 FOR XML PATH ('r'), ROOT ('root')
-							 )
-
-			EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
-
-			IF @ErrMsg <> ''
-				RETURN
-		END
+			AND t.IsUpdate = 1		
 	END
 
 	IF (@@ERROR <> 0)
@@ -653,8 +536,7 @@ BEGIN
 				AND t.IsUpdate = 1
 				AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 						OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
-						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0)
-						OR (a.MaxPerNumber > t.MaxPerNumber AND t.MaxPerNumber > 0))
+						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0))
 				AND c.roleid = 2
 				AND t.IsSpecial = 0
 				AND c.enabled = 1
@@ -671,8 +553,7 @@ BEGIN
 				AND t.IsUpdate = 1
 				AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 						OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
-						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0)
-						OR (a.MaxPerNumber > t.MaxPerNumber AND t.MaxPerNumber > 0))
+						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0))
 				AND c.roleid = 2
 				AND t.IsSpecial = 0
 				AND c.enabled = 1
@@ -731,7 +612,6 @@ BEGIN
 						CONVERT(DECIMAL(20,2), old.MinBet)			AS '@MinBet',
 						CONVERT(DECIMAL(20,2), old.MaxBet)			AS '@MaxBet',
 						CONVERT(DECIMAL(20,2), old.MaxPerMatch)		AS '@MaxPerMatch',
-						CONVERT(DECIMAL(20,2), old.MaxPerNumber)	AS '@MaxPerNumber',
 						CONVERT(DECIMAL(20,2), old.MaxPayoutPerMatch)	AS '@MaxPayoutPerMatch'
 				FROM @BetSetting t
 					INNER JOIN @Old_BetSetting old ON t.SportType = old.SportType AND t.BetType = old.BetType
@@ -760,7 +640,6 @@ BEGIN
 						CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
 						CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
 						CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch',
-						CONVERT(DECIMAL(20,2), MaxPerNumber)	AS '@MaxPerNumber',
 						CONVERT(DECIMAL(20,2), MaxPayoutPerMatch)	AS '@MaxPayoutPerMatch'
 				FROM @BetSetting t
 				WHERE (t.IsUpdate = 1)
@@ -793,7 +672,7 @@ BEGIN
 
 		IF @@ROWCOUNT = 0 BREAK
 		
-		IF @ActionID NOT IN (220021,220023,220025) -- Direct log
+		IF @ActionID NOT IN (220040,220042,220044) -- Direct log
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,

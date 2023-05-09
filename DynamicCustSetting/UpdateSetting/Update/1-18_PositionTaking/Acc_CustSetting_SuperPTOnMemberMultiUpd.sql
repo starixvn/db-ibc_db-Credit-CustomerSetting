@@ -24,6 +24,7 @@ AS
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		Parameter's Explanation:	
 		• @PT:
 					<ROOT>
@@ -62,7 +63,7 @@ BEGIN
 	
 	--Temp table variables being used for calculation
 	DECLARE @NewPTTble TABLE (
-		SportType			SMALLINT
+		  SportType			SMALLINT
 		, BetType			SMALLINT
 		, IsLive			BIT
 		, SuperPT			SMALLMONEY
@@ -72,6 +73,7 @@ BEGIN
 		, AutoMasterPT		SMALLMONEY
 		, IsAutoSuperPT		BIT
 		, AutoSuperPT		SMALLMONEY
+		, RID INT Identity(1,1)
 		)
 		
 	DECLARE @OldPTTble TABLE (
@@ -85,6 +87,7 @@ BEGIN
 		, AutoMasterPT		SMALLMONEY
 		, IsAutoSuperPT		BIT
 		, AutoSuperPT		SMALLMONEY
+		, RID INT Identity(1,1)
 		)
 		
 	--Super PT Setting Values		
@@ -191,7 +194,18 @@ BEGIN
 	
 --******************************************PREPARE SETTING FOR UPDATE*************************************** 
 	--Parse XML	for PT settings
-	INSERT @NewPTTble
+	INSERT @NewPTTble(
+		SportType		
+		,BetType		
+		,IsLive		
+		,SuperPT		
+		,MasterPT		
+		,AgentPT		
+		,IsAutoMasterPT
+		,AutoMasterPT	
+		,IsAutoSuperPT	
+		,AutoSuperPT
+	)
 	SELECT SportType
 			,BetType
 			,IsLive
@@ -262,7 +276,18 @@ BEGIN
 					AND cs.AgentID=@_AgentID
 			
 	--Backup old settings for writing logs
-	INSERT @OldPTTble
+	INSERT @OldPTTble(
+		SportType		
+		,BetType		
+		,IsLive		
+		,SuperPT		
+		,MasterPT		
+		,AgentPT		
+		,IsAutoMasterPT
+		,AutoMasterPT	
+		,IsAutoSuperPT	
+		,AutoSuperPT
+	)
 	SELECT 
 			cs.SportType 
 			, cs.BetType 
@@ -280,6 +305,7 @@ BEGIN
 							AND cs.BetType=main.BetType
 							AND cs.IsLive=main.IsLive
 							AND cs.AgentID=@_AgentID	
+	ORDER BY main.RID
 	
 	--Get Super PT Setting Values
 	INSERT @_SuperPTTbl(SportType,BetType,IsLive,S4,M4,A4
@@ -572,6 +598,7 @@ BEGIN
 							IsAutoSuperPT								AS '@IsAutoSuperPT',
 							dbo.f_FomatNumericToChar(AutoSuperPT	/100.0)	AS '@AutoSuperPT'
 					FROM @OldPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -595,6 +622,7 @@ BEGIN
 							IsAutoSuperPT								AS '@IsAutoSuperPT',
 							dbo.f_FomatNumericToChar(AutoSuperPT	/100.0)	AS '@AutoSuperPT'
 					FROM @OldPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -618,6 +646,7 @@ BEGIN
 							IsAutoSuperPT								AS '@IsAutoSuperPT',
 							dbo.f_FomatNumericToChar(AutoSuperPT	/100.0)	AS '@AutoSuperPT'
 					FROM @OldPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -642,6 +671,7 @@ BEGIN
 							IsAutoSuperPT								AS '@IsAutoSuperPT',
 							dbo.f_FomatNumericToChar(AutoSuperPT	/100.0)	AS '@AutoSuperPT'
 					FROM @OldPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -667,7 +697,8 @@ BEGIN
 							dbo.f_FomatNumericToChar(SuperPT		/100.0)	AS '@SuperPT',
 							IsAutoSuperPT								AS '@IsAutoSuperPT',
 							dbo.f_FomatNumericToChar(AutoSuperPT	/100.0)	AS '@AutoSuperPT'
-					FROM dbo.f_DCS_PT_XMLParse(@PT)
+					FROM @NewPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -690,7 +721,8 @@ BEGIN
 							dbo.f_FomatNumericToChar(SuperPT		/100.0)	AS '@SuperPT',
 							IsAutoSuperPT								AS '@IsAutoSuperPT',
 							dbo.f_FomatNumericToChar(AutoSuperPT	/100.0)	AS '@AutoSuperPT'
-					FROM dbo.f_DCS_PT_XMLParse(@PT)
+					FROM @NewPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -713,7 +745,8 @@ BEGIN
 							dbo.f_FomatNumericToChar(SuperPT		/100.0)	AS '@SuperPT',
 							IsAutoSuperPT								AS '@IsAutoSuperPT',
 							dbo.f_FomatNumericToChar(AutoSuperPT	/100.0)	AS '@AutoSuperPT'
-					FROM dbo.f_DCS_PT_XMLParse(@PT)
+					FROM @NewPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -737,7 +770,8 @@ BEGIN
 							dbo.f_FomatNumericToChar(SuperPT		/100.0)	AS '@SuperPT',
 							IsAutoSuperPT								AS '@IsAutoSuperPT',
 							dbo.f_FomatNumericToChar(AutoSuperPT	/100.0)	AS '@AutoSuperPT'
-					FROM dbo.f_DCS_PT_XMLParse(@PT)
+					FROM @NewPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)

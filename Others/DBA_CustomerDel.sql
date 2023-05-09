@@ -26,7 +26,7 @@ AS
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
-	
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
 */		
@@ -94,16 +94,8 @@ BEGIN
 
 	--Delete setting credit
 	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	
 	DELETE custoverride WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustOverride3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustOverrideGame WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
-	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
 
-	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustPTSetting3rd_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -199,15 +191,7 @@ BEGIN
 
 	--Delete setting credit
 	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
 	DELETE custoverride WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustOverride3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustOverrideGame WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
-	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
-
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -302,15 +286,7 @@ BEGIN
 
 	--Delete setting credit
 	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustSetting3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
 	DELETE custoverride WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustOverride3rd WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE CustOverrideGame WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
-	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE CustID IN (SELECT custID FROM @tmp_custID)
-	
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -391,12 +367,6 @@ BEGIN
 
 	--Delete setting credit
 	DELETE custsetting WHERE custid = @custid
-	DELETE CustSetting3rd WHERE custid = @custid
-	DELETE custsettingGame WHERE custid = @custid
-	
-	
-	DELETE CustGameType WITH(ROWLOCK,UPDLOCK) WHERE custid = @custid
-	
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid = @custid

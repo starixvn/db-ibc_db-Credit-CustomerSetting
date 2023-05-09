@@ -30,6 +30,7 @@ AS
 	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
  Param's Explanation:  
 	- @CustID: 
 	- @SettingStatus: 0: Pro, 1: UAT
@@ -89,6 +90,8 @@ BEGIN
 	--INNER JOIN dbo.f_CustSetting_SportBetTypeHiddenBySiteCurrency(@CustID, @ProductID) AS sbhsc  
 	--  ON sbhsc.ProductID = sbf.ProductID  
 	--WHERE sbhsc.IsHidden = 1  
+
+	DELETE FROM #SportBettypeFilter WHERE SportType = 161 --not show NG Status
    
    UPDATE t
 	SET t.Child_DisplayOrder = d.Child_DisplayOrder

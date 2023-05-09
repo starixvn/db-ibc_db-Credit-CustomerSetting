@@ -49,17 +49,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @MaxBetv1MP money ,
     @MaxPerMatchv1MP money,
  
-    
-    @MinBetv161 money ,
-    @MaxBetv161 money ,
-    @MaxPerMatchv161 money,
-
-    @MaxPerBallv161 money = 0,
-    
-	@MinBetv164 money =0,
-    @MaxBetv164 money =0,
-    @MaxPerMatchv164 money=0,
-
 	--Max Payout Per Match
 	@maxPOpermatch money = NULL,
 	@maxPOpermatchv2 money = NULL,
@@ -141,19 +130,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99spositiontaking_3 smallmoney,
     @v99spositiontaking_9 smallmoney,
     @v99spositiontaking_20 smallmoney,
-	@v99spositiontaking_9999 smallmoney,
-
-    @v161spositiontaking_81 smallmoney,
-    @v161spositiontaking_83 smallmoney,
-    --@v161spositiontaking_85 smallmoney,
-    @v161spositiontaking_86 smallmoney,
-    @v161spositiontaking_88 smallmoney = 0.9,
-    @v161slivepositiontaking_85 smallmoney,
-    @v161slivepositiontaking_86 smallmoney,
-    @v161slivepositiontaking_87 smallmoney,    
-    @v161slivepositiontaking_89 smallmoney = 0.9,
-    @v161slivepositiontaking_90 smallmoney = 0.9,
-    
+	@v99spositiontaking_9999 smallmoney,	  
     
     @mpositiontaking_1 smallmoney = 0.7,
     @mpositiontaking_2 smallmoney = 0.7,
@@ -211,19 +188,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99mpositiontaking_20 smallmoney = 0.7,
     @v99mpositiontaking_9 smallmoney = 0.7,
 	@v99mpositiontaking_9999 smallmoney = 0.7,
-
-    @v161mpositiontaking_81 smallmoney = 0.7,
-    @v161mpositiontaking_83 smallmoney = 0.7,
-    --@v161mpositiontaking_85 smallmoney = 0.7,
-    @v161mpositiontaking_86 smallmoney = 0.7,
-    @v161mpositiontaking_88 smallmoney = 0.7,
-    @v161mlivepositiontaking_85 smallmoney = 0.7,
-    @v161mlivepositiontaking_86 smallmoney = 0.7,
-    @v161mlivepositiontaking_87 smallmoney = 0.7,
-    @v161mlivepositiontaking_89 smallmoney = 0.7,
-    @v161mlivepositiontaking_90 smallmoney = 0.7,
-    
-    
+	    
     @apositiontaking_1 smallmoney = 0.7,
     @apositiontaking_2 smallmoney = 0.7,
     @apositiontaking_3 smallmoney = 0.7,
@@ -280,17 +245,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_All]
     @v99apositiontaking_20 smallmoney = 0.7,
 	@v99apositiontaking_9999 smallmoney = 0.7,
 
-    @v161apositiontaking_81 smallmoney = 0.7,
-    @v161apositiontaking_83 smallmoney = 0.7,
-    --@v161apositiontaking_85 smallmoney = 0.7,
-    @v161apositiontaking_86 smallmoney = 0.7,
-    @v161apositiontaking_88 smallmoney = 0.7,
-    @v161alivepositiontaking_85 smallmoney = 0.7,
-    @v161alivepositiontaking_86 smallmoney = 0.7,
-    @v161alivepositiontaking_87 smallmoney = 0.7,
-    @v161alivepositiontaking_89 smallmoney = 0.7,
-    @v161alivepositiontaking_90 smallmoney = 0.7,
-    
     @discountMyanmarOdds DECIMAL(9,8)=0, -- Myanmar Odds
     
     @groupa decimal(9,8),
@@ -375,7 +329,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -581,15 +535,6 @@ Revisions:
 		@MaxBetv1MP = @MaxBetv1MP,
 		@MaxPerMatchv1MP = @MaxPerMatchv1MP,
 	
-		@MinBetv161 = @MinBetv161,
-		@MaxBetv161 = @MaxBetv161,
-		@MaxPerMatchv161 = @MaxPerMatchv161,
-	    
-		@MaxPerBallv161 = @MaxPerBallv161,
-	    
-		@MinBetv164 = @MinBetv164,
-		@MaxBetv164 = @MaxBetv164,
-		@MaxPerMatchv164 = @MaxPerMatchv164,
 		--MaxPayoutPerMatch
 		@maxPOpermatch      = @maxPOpermatch,      
 		@maxPOpermatchv2    = @maxPOpermatchv2,    
@@ -685,18 +630,6 @@ Revisions:
 		@v99spositiontaking_20_old smallmoney,
 	    @v99spositiontaking_9999_old smallmoney,
 	
-		@v161spositiontaking_81_old smallmoney,
-		@v161spositiontaking_83_old smallmoney,
-		--@v161spositiontaking_85_old smallmoney,
-		@v161spositiontaking_86_old smallmoney,
-		@v161spositiontaking_88_old smallmoney,
-		@v161slivepositiontaking_85_old smallmoney,
-		@v161slivepositiontaking_86_old smallmoney,
-		@v161slivepositiontaking_87_old smallmoney,
-		@v161slivepositiontaking_89_old smallmoney,
-		@v161slivepositiontaking_90_old smallmoney,
-	    
-	    
 		@mpositiontaking_1_old smallmoney,
 		@mpositiontaking_2_old smallmoney,
 		@mpositiontaking_3_old smallmoney,
@@ -748,18 +681,6 @@ Revisions:
 		@v99mpositiontaking_20_old smallmoney,
 		@v99mpositiontaking_9999_old smallmoney,
 	
-		@v161mpositiontaking_81_old smallmoney,
-		@v161mpositiontaking_83_old smallmoney,
-		--@v161mpositiontaking_85_old smallmoney,
-		@v161mpositiontaking_86_old smallmoney,
-		@v161mpositiontaking_88_old smallmoney,
-		@v161mlivepositiontaking_85_old smallmoney,
-		@v161mlivepositiontaking_86_old smallmoney,
-		@v161mlivepositiontaking_87_old smallmoney,
-		@v161mlivepositiontaking_89_old smallmoney,
-		@v161mlivepositiontaking_90_old smallmoney,
-	    
-	    
 		@apositiontaking_1_old smallmoney,
 		@apositiontaking_2_old smallmoney,
 		@apositiontaking_3_old smallmoney,
@@ -810,17 +731,6 @@ Revisions:
 		@v99apositiontaking_20_old smallmoney,
 		@v99apositiontaking_9999_old smallmoney,
 	
-		@v161apositiontaking_81_old smallmoney,
-		@v161apositiontaking_83_old smallmoney,
-		--@v161apositiontaking_85_old smallmoney,
-		@v161apositiontaking_86_old smallmoney,
-		@v161apositiontaking_88_old smallmoney,
-		@v161alivepositiontaking_85_old smallmoney,
-		@v161alivepositiontaking_86_old smallmoney,
-		@v161alivepositiontaking_87_old smallmoney,
-		@v161alivepositiontaking_89_old smallmoney,
-		@v161alivepositiontaking_90_old smallmoney,
-	    
 	    -- Outright PT for sports
 	    @v2spositiontaking_10_old smallmoney,
 	    @v3spositiontaking_10_old smallmoney,
@@ -910,16 +820,6 @@ Revisions:
 	select @v99spositiontaking_20_old = spositiontaking, @v99mpositiontaking_20_old = mpositiontaking, @v99apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=99
 	select @v99spositiontaking_9999_old = spositiontaking, @v99mpositiontaking_9999_old = mpositiontaking, @v99apositiontaking_9999_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9999 and sporttype=99
 
-	--v161
-	select @v161spositiontaking_81_old = spositiontaking, @v161mpositiontaking_81_old = mpositiontaking, @v161apositiontaking_81_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=81 and sporttype=161
-	select @v161spositiontaking_83_old = spositiontaking, @v161mpositiontaking_83_old = mpositiontaking, @v161apositiontaking_83_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=83 and sporttype=161
-	select @v161slivepositiontaking_85_old = slivepositiontaking , @v161mlivepositiontaking_85_old = mlivepositiontaking ,@v161alivepositiontaking_85_old = alivepositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=85 and sporttype=161
-	select @v161spositiontaking_86_old = spositiontaking, @v161slivepositiontaking_86_old = slivepositiontaking , @v161mpositiontaking_86_old = mpositiontaking, @v161mlivepositiontaking_86_old = mlivepositiontaking , @v161apositiontaking_86_old = apositiontaking, @v161alivepositiontaking_86_old = alivepositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=86 and sporttype=161
-	select @v161slivepositiontaking_87_old = slivepositiontaking , @v161mlivepositiontaking_87_old = mlivepositiontaking ,@v161alivepositiontaking_87_old = alivepositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=87 and sporttype=161
-	select @v161spositiontaking_88_old = spositiontaking, @v161mpositiontaking_88_old = mpositiontaking, @v161apositiontaking_88_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=88 and sporttype=161
-	select @v161slivepositiontaking_89_old = slivepositiontaking , @v161mlivepositiontaking_89_old = mlivepositiontaking ,@v161alivepositiontaking_89_old = alivepositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=89 and sporttype=161
-	select @v161slivepositiontaking_90_old = slivepositiontaking , @v161mlivepositiontaking_90_old = mlivepositiontaking ,@v161alivepositiontaking_90_old = alivepositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=90 and sporttype=161
-
 	--Check if Old_PT = New_PT
 	IF     @spositiontaking_1 <> @spositiontaking_1_old or
 		@spositiontaking_2 <> @spositiontaking_2_old or
@@ -970,19 +870,7 @@ Revisions:
 		@v99spositiontaking_9 <> @v99spositiontaking_9_old or
 		@v99spositiontaking_20 <> @v99spositiontaking_20_old or
 	    @v99spositiontaking_9999 <> @v99spositiontaking_9999_old or
-	
-		@v161spositiontaking_81 <> @v161spositiontaking_81_old or
-		@v161spositiontaking_83 <> @v161spositiontaking_83_old or
-		--@v161spositiontaking_85 <> @v161spositiontaking_85_old or
-		@v161spositiontaking_86 <> @v161spositiontaking_86_old or
-		@v161spositiontaking_88 <> @v161spositiontaking_88_old or
-		@v161slivepositiontaking_85 <> @v161slivepositiontaking_85_old or
-		@v161slivepositiontaking_86 <> @v161slivepositiontaking_86_old or
-		@v161slivepositiontaking_87 <> @v161slivepositiontaking_87_old or
-		@v161slivepositiontaking_89 <> @v161slivepositiontaking_89_old or
-		@v161slivepositiontaking_90 <> @v161slivepositiontaking_90_old or
-	    
-	    
+		    
 		@mpositiontaking_1 <> @mpositiontaking_1_old or
 		@mpositiontaking_2 <> @mpositiontaking_2_old or
 		@mpositiontaking_3 <> @mpositiontaking_3_old or
@@ -1033,19 +921,7 @@ Revisions:
 		@v99mpositiontaking_9 <> @v99mpositiontaking_9_old or
 		@v99mpositiontaking_20 <> @v99mpositiontaking_20_old or
 		@v99mpositiontaking_9999 <> @v99mpositiontaking_9999_old or
-	
-		@v161mpositiontaking_81 <> @v161mpositiontaking_81_old or
-		@v161mpositiontaking_83 <> @v161mpositiontaking_83_old or
-		--@v161mpositiontaking_85 <> @v161mpositiontaking_85_old or
-		@v161mpositiontaking_86 <> @v161mpositiontaking_86_old or
-		@v161mpositiontaking_88<> @v161mpositiontaking_88_old or
-		@v161mlivepositiontaking_85 <> @v161mlivepositiontaking_85_old or
-		@v161mlivepositiontaking_86 <> @v161mlivepositiontaking_86_old or
-		@v161mlivepositiontaking_87 <> @v161mlivepositiontaking_87_old or
-		@v161mlivepositiontaking_89 <> @v161mlivepositiontaking_89_old or
-		@v161mlivepositiontaking_90 <> @v161mlivepositiontaking_90_old or
-	    
-	    
+		    
 		@apositiontaking_1 <> @apositiontaking_1_old or
 		@apositiontaking_2 <> @apositiontaking_2_old or
 		@apositiontaking_3 <> @apositiontaking_3_old or
@@ -1096,16 +972,6 @@ Revisions:
 		@v99apositiontaking_20 <> @v99apositiontaking_20_old or
 		@v99apositiontaking_9999 <> @v99apositiontaking_9999_old or
 
-		@v161apositiontaking_81 <> @v161apositiontaking_81_old or
-		@v161apositiontaking_83 <> @v161apositiontaking_83_old or
-		--@v161apositiontaking_85 <> @v161apositiontaking_85_old or
-		@v161apositiontaking_86 <> @v161apositiontaking_86_old or
-		@v161apositiontaking_88 <> @v161apositiontaking_88_old or
-		@v161alivepositiontaking_85 <> @v161alivepositiontaking_85_old or
-		@v161alivepositiontaking_86 <> @v161alivepositiontaking_86_old or
-		@v161alivepositiontaking_87 <> @v161alivepositiontaking_87_old or
-		@v161alivepositiontaking_89 <> @v161alivepositiontaking_89_old or
-		@v161alivepositiontaking_90 <> @v161alivepositiontaking_90_old or
 		-- Outright PT for Sports
 		@v2spositiontaking_10 <> @v2spositiontaking_10_old or
 		@v3spositiontaking_10 <> @v3spositiontaking_10_old or
@@ -1187,17 +1053,6 @@ Revisions:
 			@v99spositiontaking_20 = @v99spositiontaking_20,
 			@v99spositiontaking_9999 = @v99spositiontaking_9999,
 	        
-			@v161spositiontaking_81 = @v161spositiontaking_81,
-			@v161spositiontaking_83 = @v161spositiontaking_83,
-			--@v161spositiontaking_85 = @v161spositiontaking_85,
-			@v161spositiontaking_86 = @v161spositiontaking_86,
-			@v161spositiontaking_88 = @v161spositiontaking_88,
-			@v161slivepositiontaking_85 = @v161slivepositiontaking_85,
-			@v161slivepositiontaking_86 = @v161slivepositiontaking_86,
-			@v161slivepositiontaking_87 = @v161slivepositiontaking_87,
-			@v161slivepositiontaking_89 = @v161slivepositiontaking_89,
-			@v161slivepositiontaking_90 = @v161slivepositiontaking_90,
-	        
 			@mpositiontaking_1 = @mpositiontaking_1,
 			@mpositiontaking_2 = @mpositiontaking_2,
 			@mpositiontaking_3 = @mpositiontaking_3,
@@ -1249,17 +1104,6 @@ Revisions:
 			@v99mpositiontaking_20 = @v99mpositiontaking_20,
 			@v99mpositiontaking_9999 = @v99mpositiontaking_9999,
 	        
-			@v161mpositiontaking_81 = @v161mpositiontaking_81,
-			@v161mpositiontaking_83 = @v161mpositiontaking_83,
-			--@v161mpositiontaking_85 = @v161mpositiontaking_85,
-			@v161mpositiontaking_86 = @v161mpositiontaking_86,
-			@v161mpositiontaking_88 = @v161mpositiontaking_88,
-			@v161mlivepositiontaking_85 = @v161mlivepositiontaking_85,
-			@v161mlivepositiontaking_86 = @v161mlivepositiontaking_86,
-			@v161mlivepositiontaking_87 = @v161mlivepositiontaking_87,
-			@v161mlivepositiontaking_89 = @v161mlivepositiontaking_89,
-			@v161mlivepositiontaking_90 = @v161mlivepositiontaking_90,
-	        
 			@apositiontaking_1 = @apositiontaking_1,
 			@apositiontaking_2 = @apositiontaking_2,
 			@apositiontaking_3 = @apositiontaking_3,
@@ -1309,18 +1153,7 @@ Revisions:
 			@v99apositiontaking_9 = @v99apositiontaking_9,
 			@v99apositiontaking_20 = @v99apositiontaking_20,
 			@v99apositiontaking_9999 = @v99apositiontaking_9999,
-	
-			@v161apositiontaking_81 = @v161apositiontaking_81,
-			@v161apositiontaking_83 = @v161apositiontaking_83,
-			--@v161apositiontaking_85 = @v161apositiontaking_85,
-			@v161apositiontaking_86 = @v161apositiontaking_86,
-			@v161apositiontaking_88 = @v161apositiontaking_88,
-			@v161alivepositiontaking_85 = @v161alivepositiontaking_85,
-			@v161alivepositiontaking_86 = @v161alivepositiontaking_86,
-			@v161alivepositiontaking_87 = @v161alivepositiontaking_87,
-			@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
-			@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
-	        
+		        
 			-- Outright PT for sports	        
 			@v2spositiontaking_10 = @v2spositiontaking_10,
 			@v3spositiontaking_10 = @v3spositiontaking_10,

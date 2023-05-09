@@ -36,6 +36,7 @@ AS
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -68,15 +69,16 @@ BEGIN
 		[ProductSettingID] [int] ,
 		[Parent_ProductSettingID] [int] ,
 		[Child_DisplayOrder] [int] ,
+		SubType	tinyint,
 		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
 	IF dbo.f_CheckRepTable('ProductSettingDetail') = 1
 	BEGIN
 		INSERT INTO #ProductSettingDetail_tmp02(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder)
+			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
 		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder
+				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
 		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	END
 
@@ -578,19 +580,25 @@ BEGIN
 			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource 
 						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13,21)
-		UNION
-		SELECT SettingType
+		UNION -- Hidden if all hidden, Sync if any sync
+		SELECT   ps.SettingType
 				,ps.ProductId
 				,ps.SportType
 				,ps.BetType
-				,IsLive
-				,op.IsHiddenSource
-				,op.HasSyncSource
+				,ps.IsLive
+				,MIN(CAST(op.IsHiddenSource AS INT)) AS IsHiddenSource
+				,MAX(CAST(op.HasSyncSource AS INT)) AS HasSyncSource
 		FROM #ProductSettingDetail_tmp02 ps WITH(NOLOCK)
 			INNER JOIN (SELECT DISTINCT ProductID, IsHidden, IsHiddenSource, HasSyncSource,DummyProductID
 						FROM #OfferedProductList WITH (NOLOCK)) op ON ps.ProductID = op.DummyProductID			
 		WHERE op.IsHidden = 0 AND ps.SettingType = 22
+		GROUP BY ps.SettingType
+				,ps.ProductId
+				,ps.SportType
+				,ps.BetType
+				,ps.IsLive
 
+		--> Update for MacauGame Only
 		UPDATE op
 		SET op.IsHiddenSource = 1, HasSyncSource = 0  
 		FROM #ProductProfile op
@@ -684,7 +692,7 @@ BEGIN
 			RETURN
 		END CATCH
 	
-		/********************************************* Bet Limit : SettingType = 2, Bet Game Limit : SettingType = 9 ****************************************/
+		/********************************************* Bet Limit : SettingType = 2,9,16,20,23 ****************************************/
 		BEGIN TRY
 			IF EXISTS(SELECT TOP 1 1 FROM [dbo].[CustBetSetting3rd_Agent] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
@@ -702,7 +710,7 @@ BEGIN
 						   ,[MaxPerMatch]
 				FROM [dbo].[CustBetSetting3rd_Agent] cs WITH (NOLOCK)
 					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9,16,20) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9,16,20,23) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
 			IF @RoleID = 4
 			BEGIN
@@ -721,7 +729,28 @@ BEGIN
 					,0
 					,0
 				FROM #ProductProfile t 
-				WHERE t.SettingType = 2 AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
+				WHERE t.SettingType IN (2) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
+
+				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
+					   ([CustID]
+					   ,[SportType]
+					   ,[BetType]
+					   ,[MinBet]
+					   ,[MaxBet]
+					   ,[MaxPerMatch])
+				SELECT
+					@CustID
+					,t.SportType
+					,t.BetType
+					,0
+					,0
+					,0
+				FROM #ProductProfile t 
+					INNER JOIN #ProductSettingDetail_tmp02 p 
+						ON t.SportType = p.SportType 
+						AND t.BetType = p.BetType
+						AND p.SubType = 1
+				WHERE t.SettingType IN (23) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 				
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
 					   ([CustID]

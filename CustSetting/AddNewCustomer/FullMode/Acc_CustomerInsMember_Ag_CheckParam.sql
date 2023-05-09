@@ -70,16 +70,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag_CheckParam]
 	@v99apositiontaking_9 smallmoney,
 	@v99apositiontaking_20 smallmoney,	
 	@v99apositiontaking_9999 smallmoney,	
-
-	@v161apositiontaking_81 smallmoney, 
-	@v161apositiontaking_83 smallmoney, 
-	@v161apositiontaking_86 smallmoney, 
-	@v161apositiontaking_88 smallmoney, 
-	@v161alivepositiontaking_85 smallmoney,
-	@v161alivepositiontaking_86 smallmoney,
-	@v161alivepositiontaking_87 smallmoney,
-	@v161alivepositiontaking_89 smallmoney,
-	@v161alivepositiontaking_90 smallmoney,
+	
 	-- MyanmarOdds	
 	@discountMyanmarOdds DECIMAL(9,8) = 0,
 	
@@ -128,6 +119,8 @@ Revisions:
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Checking successfully.
@@ -275,18 +268,7 @@ Param's Explanation:
 		or @v99apositiontaking_3  <0
 		or @v99apositiontaking_9 <0
 		or @v99apositiontaking_20  <0
-		or @v99apositiontaking_9999  <0
-	
-		or @v161apositiontaking_81 <0
-		or @v161apositiontaking_83 <0
-		or @v161apositiontaking_86 <0
-		or @v161apositiontaking_88 <0
-		or @v161alivepositiontaking_85 <0
-		or @v161alivepositiontaking_86 <0
-		or @v161alivepositiontaking_87 <0
-		or @v161alivepositiontaking_89 <0
-		or @v161alivepositiontaking_90 <0
-		
+		or @v99apositiontaking_9999  <0					
 		
 		or @apositiontaking_1  >0.9
 		or @apositiontaking_2  >0.9
@@ -350,19 +332,7 @@ Param's Explanation:
 		or @v99apositiontaking_3  >0.9
 		or @v99apositiontaking_9 >0.9
 		or @v99apositiontaking_20  >0.9		
-		or @v99apositiontaking_9999  >0.9					
-		
-		or @v161apositiontaking_81 >0.9
-		or @v161apositiontaking_83 >0.9
-		or @v161apositiontaking_86 >0.9
-		or @v161apositiontaking_88 >0.9
-		or @v161alivepositiontaking_87 >0.9
-		or @v161alivepositiontaking_85 >0.9
-		or @v161alivepositiontaking_86 >0.9
-		or @v161alivepositiontaking_89 >0.9
-		or @v161alivepositiontaking_90 >0.9
-		
-		
+		or @v99apositiontaking_9999  >0.9													
 	BEGIN
 		select @isvalid = 0, @ErrCode = 103
 		Select @ErrMsg = 	case @Language 
@@ -449,39 +419,7 @@ Param's Explanation:
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](20002,@Language) + '<br>' + @ErrType
 					end
 		return
-	END
-
-	--v161
-	--check n2<=a1<=l2
-		select @ErrType = ''
-		select @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-		+ case when b.bettype in (85,86,87,89,90) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
-		from custoverride3rd as co with (NOLOCK) inner join
-		(
-				 		select 81 as bettype, 161 as sporttype, @v161apositiontaking_81 as apositiontaking, 0 as alivepositiontaking
-			union all 	select 83 as bettype, 161 as sporttype, @v161apositiontaking_83 as apositiontaking, 0 as alivepositiontaking
-			union all 	select 88 as bettype, 161 as sporttype, @v161apositiontaking_88 as apositiontaking, 0 as alivepositiontaking
-			union all	select 85 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_85 as alivepositiontaking
-			union all 	select 86 as bettype, 161 as sporttype, @v161apositiontaking_86 as apositiontaking, @v161alivepositiontaking_86 as alivepositiontaking
-			union all 	select 87 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_87 as alivepositiontaking
-			union all 	select 89 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_89 as alivepositiontaking
-			union all 	select 90 as bettype, 161 as sporttype, 0 as apositiontaking, @v161alivepositiontaking_90 as alivepositiontaking
-			
-		) as b on co.sporttype=b.sporttype and co.bettype = b.bettype
-		inner join #tmp_Sports sports on b.sporttype = sports.ID
-		inner join #tmp_Bettype bettype on b.bettype = bettype.ID
-	where co.custid = @recommend and (( (b.apositiontaking>co.maxpositiontaking or b.apositiontaking<co.minpositiontaking)) or 
-						((b.sporttype = 161 and b.bettype in (85,86,87,89,90)) and (b.alivepositiontaking>co.maxlivepositiontaking or b.alivepositiontaking<co.minlivepositiontaking)))
-
-	if @ErrType <>''
-	BEGIN
-		select @isvalid = 0, @ErrCode = 104
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong position taking (min/max set by company).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20002,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
+	END	
 	
 	DROP TABLE #tmp_Sports
 	DROP TABLE #tmp_Bettype

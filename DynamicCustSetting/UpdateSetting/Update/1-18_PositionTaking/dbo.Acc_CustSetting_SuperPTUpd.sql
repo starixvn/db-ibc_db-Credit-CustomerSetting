@@ -28,6 +28,7 @@ AS
 			- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 			- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -133,7 +134,8 @@ BEGIN
 					SuperPT		SMALLMONEY,
 					MasterPT	SMALLMONEY,
 					AgentPT		SMALLMONEY,
-					SuperMinPT	SMALLMONEY
+					SuperMinPT	SMALLMONEY,
+					RID INT Identity(1,1)
 					)	
 				
 		-- For read xml
@@ -233,6 +235,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       custid = @custid
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -261,6 +264,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       custid = @custid
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -289,6 +293,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       custid = @custid
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -318,6 +323,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       custid = @custid
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -440,7 +446,8 @@ BEGIN
 									dbo.f_FomatNumericToChar(cs.MasterPT  /100.0)	AS '@MasterPT',
 									dbo.f_FomatNumericToChar(cs.AgentPT   /100.0)	AS '@AgentPT',
 									dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
-							FROM    @tblPT	cs							
+							FROM    @tblPT	cs		
+							ORDER BY cs.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -463,7 +470,8 @@ BEGIN
 									dbo.f_FomatNumericToChar(cs.MasterPT  /100.0)	AS '@MasterPT',
 									dbo.f_FomatNumericToChar(cs.AgentPT   /100.0)	AS '@AgentPT',
 									dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
-							FROM    @tblPT	cs							
+							FROM    @tblPT	cs	
+							ORDER BY cs.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -486,7 +494,8 @@ BEGIN
 									dbo.f_FomatNumericToChar(cs.MasterPT  /100.0)	AS '@MasterPT',
 									dbo.f_FomatNumericToChar(cs.AgentPT   /100.0)	AS '@AgentPT',
 									dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
-							FROM    @tblPT	cs							
+							FROM    @tblPT	cs		
+							ORDER BY cs.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -510,7 +519,8 @@ BEGIN
 									dbo.f_FomatNumericToChar(cs.MasterPT  /100.0)	AS '@MasterPT',
 									dbo.f_FomatNumericToChar(cs.AgentPT   /100.0)	AS '@AgentPT',
 									dbo.f_FomatNumericToChar(cs.SuperMinPT/100.0)	AS '@SuperMinPT'
-							FROM    @tblPT	cs							
+							FROM    @tblPT	cs		
+							ORDER BY cs.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)

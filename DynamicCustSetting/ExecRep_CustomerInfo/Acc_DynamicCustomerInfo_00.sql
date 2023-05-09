@@ -49,6 +49,7 @@ AS
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -356,6 +357,8 @@ BEGIN
 		AND dbo.f_CheckRepTable('ProductSettingDetail') = 1 
 		AND	dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1
 		AND	dbo.f_CheckRepTable('CustStakeLevel_Member') = 1
+		AND	dbo.f_CheckRepTable('CustBetSetting_Agent') = 1
+		AND	dbo.f_CheckRepTable('CustBetSetting_Member') = 1
 	   )
 	 BEGIN
 		CREATE TABLE #ProductProfile(
@@ -1849,6 +1852,311 @@ BEGIN
 			RETURN
 		END CATCH
 
+		/********************************************* Bet Limit : SettingType = 23 ****************************************/
+		CREATE TABLE #SportBettypeFilter23 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT,SubType TinyINT)
+		
+		INSERT INTO #SportBettypeFilter23(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId,SubType)
+		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId,SubType
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,23,@SettingStatus) t			
+	
+		BEGIN TRY
+			IF @RoleID = 4
+			BEGIN
+				IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter23 WHERE SubType = 1)
+				BEGIN
+					--Min: 0
+					--Max: 0
+					--Max Per Match: 0
+					INSERT INTO [dbo].[CustBetSetting3rd_Agent]
+					   ([CustID]
+					   ,[SportType]
+					   ,[BetType]
+					   ,[MinBet]
+					   ,[MaxBet]
+					   ,[MaxPerMatch])
+					SELECT
+						@CustID
+						,t.SportType
+						,t.BetType
+						,0
+						,0
+						,0
+					FROM #SportBettypeFilter23 t
+						INNER JOIN #ProductProfile fil ON t.SettingType = fil.SettingType AND t.SportType = fil.SportType AND t.BetType = fil.BetType AND t.IsLive = fil.IsLive
+					WHERE t.SubType = 1
+				END
+				--
+				IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter23 WHERE SubType = 2)
+				BEGIN
+					--Min: 0
+					--Max: 0
+					--Max Per Match: 0
+					--Max Per Ball = 0 (sport = 161)
+					INSERT INTO [dbo].[CustBetSetting_Agent]
+					   ([CustID]
+					   ,[SportType]
+					   ,[BetType]
+					   ,[MinBet]
+					   ,[MaxBet]
+					   ,[MaxPerMatch]
+					   ,[MaxPerNumber]
+					   ,MaxPayoutPerMatch
+					   )
+					SELECT
+						@CustID
+						,t.SportType
+						,t.BetType
+						,0
+						,0
+						,0
+						,CASE WHEN t.SportType = 161 AND t.bettype = 81 THEN 0 END
+						,NULL
+					FROM #SportBettypeFilter23 t
+						INNER JOIN #ProductProfile fil ON t.SettingType = fil.SettingType AND t.SportType = fil.SportType AND t.BetType = fil.BetType AND t.IsLive = fil.IsLive
+					WHERE t.SubType = 2
+				END
+			END
+			ELSE IF @RoleID = 3
+			BEGIN
+				--Min: super.minbet
+				--Max: super.maxbet
+				--Max Per Match: super.maxpermatch
+				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
+				   ([CustID]
+				   ,[SportType]
+				   ,[BetType]
+				   ,[MinBet]
+				   ,[MaxBet]
+				   ,[MaxPerMatch])
+				SELECT
+					@CustID
+					,cs.SportType
+					,cs.BetType
+					,MinBet
+					,MaxBet
+					,MaxPerMatch
+				FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
+					INNER JOIN #SportBettypeFilter23 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+				WHERE custid = @SuperID
+					AND s.SubType = 1
+
+				INSERT INTO [dbo].[CustBetSetting_Agent]
+				   ([CustID]
+				   ,[SportType]
+				   ,[BetType]
+				   ,[MinBet]
+				   ,[MaxBet]
+				   ,[MaxPerMatch]
+				   ,[MaxPerNumber]
+				   ,MaxPayoutPerMatch
+				   )
+				SELECT
+					@CustID
+					,cs.SportType
+					,cs.BetType
+					,MinBet
+					,MaxBet
+					,MaxPerMatch
+					,MaxPerNumber
+					,MaxPayoutPerMatch
+				FROM dbo.CustBetSetting_Agent cs WITH (NOLOCK)
+					INNER JOIN #SportBettypeFilter23 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+				WHERE custid = @SuperID
+					AND s.SubType = 2
+			END
+			ELSE IF @RoleID = 2
+			BEGIN
+				--Min: max(master.minbet; super.minbet)
+				--Max: min(master.maxbet; super.maxbet)
+				--Max Per Match: min(master.maxpermatch; super.maxpermatch)
+				--Max Per Number: min(master.MaxPerNumber; super.MaxPerNumber)
+				DECLARE @BetlimitAgent23 TABLE(
+						SportType SMALLINT,
+						BetType SMALLINT,
+						MinBet MONEY,
+						MaxBet MONEY,
+						MaxPerMatch MONEY,
+						MaxPerNumber MONEY,
+						MaxPayoutPerMatch MONEY,
+						SubType TINYINT
+					)
+
+				INSERT INTO @BetlimitAgent23(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,SubType)
+				SELECT smcs.SportType,smcs.BetType,
+						 Max(case when MinBet = 0 then NULL else MinBet end) MinBet,
+						 Min(case when MaxBet = 0 then NULL else MaxBet end) MaxBet,
+						 Min(case when MaxPerMatch = 0 then NULL else MaxPerMatch end) MaxPerMatch,
+						 NULL AS  MaxPerNumber,
+						 1 AS SubType
+				FROM dbo.CustBetSetting3rd_Agent smcs WITH (NOLOCK)
+					INNER JOIN #SportBettypeFilter23 s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND s.SubType = 1
+				WHERE smcs.custid = @SuperID 
+						OR smcs.custid = @MasterID
+				GROUP BY smcs.SportType,smcs.BetType
+
+				INSERT INTO @BetlimitAgent23(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,SubType)
+				SELECT smcs.SportType,smcs.BetType,
+						 Max(case when MinBet = 0 then NULL else MinBet end) MinBet,
+						 Min(case when MaxBet = 0 then NULL else MaxBet end) MaxBet,
+						 Min(case when MaxPerMatch = 0 then NULL else MaxPerMatch end) MaxPerMatch,
+						 Min(case when MaxPerNumber = 0 then NULL else MaxPerNumber end) MaxPerNumber,
+						 2 AS SubType
+				FROM dbo.CustBetSetting_Agent smcs WITH (NOLOCK)
+					INNER JOIN #SportBettypeFilter23 s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND s.SubType = 2
+				WHERE smcs.custid = @SuperID 
+						OR smcs.custid = @MasterID
+				GROUP BY smcs.SportType,smcs.BetType
+			
+				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
+				   ([CustID]
+				   ,[SportType]
+				   ,[BetType]
+				   ,[MinBet]
+				   ,[MaxBet]
+				   ,[MaxPerMatch])
+				SELECT
+					@CustID
+					,SportType
+					,BetType
+					,ISNULL(MinBet,0)
+					,ISNULL(MaxBet,0)
+					,ISNULL(MaxPerMatch,0)
+				FROM @BetlimitAgent23
+				WHERE SubType = 1
+
+				INSERT INTO [dbo].[CustBetSetting_Agent]
+				   ([CustID]
+				   ,[SportType]
+				   ,[BetType]
+				   ,[MinBet]
+				   ,[MaxBet]
+				   ,[MaxPerMatch]
+				   ,MaxPerNumber
+				   ,MaxPayoutPerMatch
+				   )
+				SELECT
+					@CustID
+					,SportType
+					,BetType
+					,ISNULL(MinBet,0)
+					,ISNULL(MaxBet,0)
+					,ISNULL(MaxPerMatch,0)
+					,CASE WHEN SportType = 161 AND bettype = 81 THEN ISNULL(MaxPerNumber,0) END
+					,MaxPayoutPerMatch
+				FROM @BetlimitAgent23
+				WHERE SubType = 2
+			END
+			ELSE
+			BEGIN
+				--Min: max(agent.minbet; master.minbet; super.minbet)
+				--Max: min(agent.maxbet; master.maxbet; super.maxbet)
+				--Max Per Match: min(agent.maxpermatch; master.maxpermatch; super.maxpermatch)
+				--Max Per Number: min(agent.MaxPerNumber; master.MaxPerNumber; super.MaxPerNumber)
+			
+				DECLARE @BetlimitMember23 TABLE(
+						SportType SMALLINT,
+						BetType SMALLINT,
+						MinBet MONEY,
+						MaxBet MONEY,
+						MaxPerMatch MONEY,
+						MaxPerNumber MONEY,
+						MaxPayoutPerMatch MONEY,
+						SubType TINYINT
+					)
+				INSERT INTO @BetlimitMember23(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,SubType)
+				SELECT smcs.SportType,smcs.BetType,
+						 Max(case when MinBet = 0 then NULL else MinBet end) MinBet,
+						 Min(case when MaxBet = 0 then NULL else MaxBet end) MaxBet,
+						 Min(case when MaxPerMatch = 0 then NULL else MaxPerMatch end) MaxPerMatch,
+						 NULL AS  MaxPerNumber,
+						 1 AS SubType
+				FROM dbo.CustBetSetting3rd_Agent smcs WITH (NOLOCK)
+					INNER JOIN #SportBettypeFilter23 s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND s.SubType = 1
+				WHERE custid = @SuperID 
+						OR custid = @MasterID
+						OR custid = @AgentID
+				GROUP BY smcs.SportType,smcs.BetType
+
+				INSERT INTO @BetlimitMember23(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,SubType)
+				SELECT smcs.SportType,smcs.BetType,
+						 Max(case when MinBet = 0 then NULL else MinBet end) MinBet,
+						 Min(case when MaxBet = 0 then NULL else MaxBet end) MaxBet,
+						 Min(case when MaxPerMatch = 0 then NULL else MaxPerMatch end) MaxPerMatch,
+						 Min(case when MaxPerNumber = 0 then NULL else MaxPerNumber end) MaxPerNumber,
+						 2 AS SubType
+				FROM dbo.CustBetSetting_Agent smcs WITH (NOLOCK)
+					INNER JOIN #SportBettypeFilter23 s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND s.SubType = 2
+				WHERE custid = @SuperID 
+						OR custid = @MasterID
+						OR custid = @AgentID
+				GROUP BY smcs.SportType,smcs.BetType
+			
+				INSERT INTO [dbo].[CustBetSetting3rd_Member]
+				   ([CustID]
+				   ,[SportType]
+				   ,[BetType]
+				   ,[MinBet]
+				   ,[MaxBet]
+				   ,[MaxPerMatch])
+				SELECT
+					@CustID
+					,SportType
+					,BetType
+					,ISNULL(MinBet,0)
+					,ISNULL(MaxBet,0)
+					,ISNULL(MaxPerMatch,0)
+				FROM @BetlimitMember23
+				WHERE SubType = 1
+
+				INSERT INTO [dbo].[CustBetSetting_Member]
+				   ([CustID]
+				   ,[SportType]
+				   ,[BetType]
+				   ,[MinBet]
+				   ,[MaxBet]
+				   ,[MaxPerMatch]
+				   ,MaxPerNumber
+				   ,MaxPayoutPerMatch
+				   )
+				SELECT
+					@CustID
+					,SportType
+					,BetType
+					,ISNULL(MinBet,0)
+					,ISNULL(MaxBet,0)
+					,ISNULL(MaxPerMatch,0)
+					,CASE WHEN SportType = 161 AND bettype = 81 THEN ISNULL(MaxPerNumber,0) END
+					,MaxPayoutPerMatch
+				FROM @BetlimitMember23
+				WHERE SubType = 2
+			END
+		END TRY
+		BEGIN CATCH
+			SELECT @ErrCode = 23
+			DELETE FROM CustProductStatus WHERE CustID = @CustID
+			IF @RoleID = 1
+			BEGIN
+				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
+				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
+				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID	
+				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
+				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
+				DELETE FROM dbo.CustStakeLevel_Member WHERE CustID = @CustID
+				DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
+			END
+			ELSE --SMA
+			BEGIN
+				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
+				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
+				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
+				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
+				DELETE FROM dbo.CustStakeLevel_Agent WHERE CustID = @CustID
+				DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
+			END
+
+			RETURN
+		END CATCH
+
 		DROP TABLE #SportBettypeFilter1
 		DROP TABLE #SportBettypeFilter2
 		DROP TABLE #SportBettypeFilter3
@@ -1857,6 +2165,7 @@ BEGIN
 		DROP TABLE #SportBettypeFilter7
 		DROP TABLE #SportBettypeFilter9
 		DROP TABLE #SportBettypeFilter20
+		DROP TABLE #SportBettypeFilter23
 	END
 
 	DROP TABLE #ProductSettingDetail_tmp00

@@ -20,6 +20,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -76,8 +77,9 @@ BEGIN
 	)
 
 	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder)
-	SELECT SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	SELECT t.SportType,t.BetType,t.SettingType,t.IsLive,t.Parent_ProductSettingID,t.ProductSettingID,t.Child_DisplayOrder
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) t
+	WHERE t.SettingType IN(4,11,13,21)
 
 	UPDATE t
 	SET t.ParentSportType = par.SportType
@@ -88,7 +90,7 @@ BEGIN
 			ON t.sporttype = d.SportType
 			AND t.bettype = d.BetType
 			AND d.SettingType = @SettingType
-		INNER JOIN #ProductSettingDetail par WITH(NOLOCK) 
+		LEFT JOIN #ProductSettingDetail par WITH(NOLOCK) 
 				ON d.Parent_ProductSettingID = par.ProductSettingID
 	
 	-- Select customer's information

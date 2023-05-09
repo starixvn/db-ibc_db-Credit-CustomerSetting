@@ -27,6 +27,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMemberUpd]
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		Parameter's Explanation:
 			@PT =<ROOT>
 					<PT SportType="1" BetType="1" IsLive="0" MasterPT="50" AutoMasterPT="0" IsAutoMasterPT="0" />
@@ -57,6 +58,7 @@ BEGIN
 		, AutoSuperPT		SMALLMONEY
 		, IsAutoMasterPT	BIT
 		, AutoMasterPT		SMALLMONEY
+		, RID INT Identity(1,1)
 		)
 	
 	DECLARE @NewPT TABLE(
@@ -366,6 +368,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       custid = @custid
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -394,6 +397,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       custid = @custid
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -422,6 +426,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       custid = @custid
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -451,6 +456,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       custid = @custid
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -523,6 +529,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       AgentID = @_AgentID
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -551,6 +558,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       AgentID = @_AgentID
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -579,6 +587,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       AgentID = @_AgentID
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -608,6 +617,7 @@ BEGIN
 									AND cs.bettype = t.BetType 
 									AND cs.isLive = t.IsLive
 							WHERE       AgentID = @_AgentID
+							ORDER BY t.RID
 							FOR XML PATH('PT'), 
 							TYPE
 						)
@@ -636,7 +646,8 @@ BEGIN
 								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.IsAutoMasterPT								AS '@IsAutoMasterPT',
 								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT'
-						FROM    @tblPT cs						
+						FROM    @tblPT cs		
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -659,7 +670,8 @@ BEGIN
 								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.IsAutoMasterPT								AS '@IsAutoMasterPT',
 								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT'
-						FROM    @tblPT cs						
+						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -682,7 +694,8 @@ BEGIN
 								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.IsAutoMasterPT								AS '@IsAutoMasterPT',
 								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT'
-						FROM    @tblPT cs						
+						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -706,7 +719,8 @@ BEGIN
 								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
 								cs.IsAutoMasterPT								AS '@IsAutoMasterPT',
 								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT'
-						FROM    @tblPT cs						
+						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)

@@ -15,6 +15,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	
 	Param's Explanation:  
 		- @CustID: Master's ID  
@@ -24,10 +25,10 @@ AS
 BEGIN  
 	DECLARE @SuperID INT  
 
-	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT, Child_DisplayOrder INT)
 
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType)
-	SELECT SportType,Bettype,IsLive, SettingType 
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive, SettingType, Child_DisplayOrder)
+	SELECT SportType,Bettype,IsLive, SettingType, Child_DisplayOrder 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,18,@SettingStatus)
 
 	CREATE TABLE #ProductSettingDetail(
@@ -75,7 +76,7 @@ BEGIN
 		AND pdt.BetType = superpt.bettype  
 		AND pdt.IsLive = superpt.islive  
 		AND superpt.custid = @SuperID   
-	ORDER BY pdt.SportType, pdt.BetType, pdt.IsLive  
+	ORDER BY ft.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive  
 
 	DROP TABLE #SportBettypeFilter
 	DROP TABLE #ProductSettingDetail

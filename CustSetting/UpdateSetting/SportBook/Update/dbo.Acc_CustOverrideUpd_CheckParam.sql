@@ -1,9 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam]
     @custid int,
     @minpositiontaking_1 smallmoney,
@@ -61,18 +56,6 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam]
     @minv99positiontaking_9 smallmoney,
     @minv99positiontaking_20 smallmoney,
 	@minv99positiontaking_9999 smallmoney,
-  
-    @minv161positiontaking_81 smallmoney,
-    @minv161positiontaking_83 smallmoney,
-    --@minv161positiontaking_85 smallmoney,
-    @minv161positiontaking_86 smallmoney,
-    @minv161positiontaking_88 smallmoney,
-    
-    @minv161livepositiontaking_85 smallmoney,
-    @minv161livepositiontaking_86 smallmoney,
-    @minv161livepositiontaking_87 smallmoney,
-    @minv161livepositiontaking_89 smallmoney,
-    @minv161livepositiontaking_90 smallmoney,
     
     @maxpositiontaking_1 smallmoney,
     @maxpositiontaking_2 smallmoney,
@@ -129,18 +112,6 @@ ALTER PROCEDURE [dbo].[Acc_CustOverrideUpd_CheckParam]
     @maxv99positiontaking_9 smallmoney,
     @maxv99positiontaking_20 smallmoney,
 	@maxv99positiontaking_9999 smallmoney,
-  
-    @maxv161positiontaking_81 smallmoney,
-    @maxv161positiontaking_83 smallmoney,
-    --@maxv161positiontaking_85 smallmoney,
-    @maxv161positiontaking_86 smallmoney,
-    @maxv161positiontaking_88 smallmoney,
-    
-    @maxv161livepositiontaking_85 smallmoney,
-    @maxv161livepositiontaking_86 smallmoney,
-    @maxv161livepositiontaking_87 smallmoney,
-    @maxv161livepositiontaking_89 smallmoney,
-    @maxv161livepositiontaking_90 smallmoney,
     
     -- Outright PT for sports
     
@@ -189,6 +160,7 @@ Revisions:
     - 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
     - 20180125@Winnie: Hide inactive products [RedmineID: #86086]	 
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]	
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 Param's Explanation:
 • @ErrCode:
     = 0: check parameters successfully.
@@ -261,18 +233,6 @@ EXEC dbo.Acc_CustOverrideUpd_CheckParam_V
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
             @minv99positiontaking_9999 = @minv99positiontaking_9999,
-            --v161
-            @minv161positiontaking_81 = @minv161positiontaking_81,
-            @minv161positiontaking_83 = @minv161positiontaking_83,
-            --@minv161positiontaking_85 = @minv161positiontaking_85,
-            @minv161positiontaking_86 = @minv161positiontaking_86,
-            @minv161positiontaking_88 = @minv161positiontaking_88,
-            
-            @minv161livepositiontaking_85 = @minv161livepositiontaking_85,
-            @minv161livepositiontaking_86 = @minv161livepositiontaking_86,
-            @minv161livepositiontaking_87 = @minv161livepositiontaking_87,
-            @minv161livepositiontaking_89 = @minv161livepositiontaking_89,
-            @minv161livepositiontaking_90 = @minv161livepositiontaking_90,
             
             @maxpositiontaking_1 = @maxpositiontaking_1,
             @maxpositiontaking_2 = @maxpositiontaking_2,
@@ -333,18 +293,6 @@ EXEC dbo.Acc_CustOverrideUpd_CheckParam_V
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
 			@maxv99positiontaking_9999 = @maxv99positiontaking_9999,
-            --v161
-            @maxv161positiontaking_81 = @maxv161positiontaking_81,
-            @maxv161positiontaking_83 = @maxv161positiontaking_83,
-            --@maxv161positiontaking_85 = @maxv161positiontaking_85,
-            @maxv161positiontaking_86 = @maxv161positiontaking_86,
-            @maxv161positiontaking_88 = @maxv161positiontaking_88,
-            
-            @maxv161livepositiontaking_85 = @maxv161livepositiontaking_85,
-            @maxv161livepositiontaking_86 = @maxv161livepositiontaking_86,
-            @maxv161livepositiontaking_87 = @maxv161livepositiontaking_87,
-            @maxv161livepositiontaking_89 = @maxv161livepositiontaking_89,
-            @maxv161livepositiontaking_90 = @maxv161livepositiontaking_90,
             
             @UpdateMinPos = @UpdateMinPos,
             @UpdateMaxPos = @UpdateMaxPos,
@@ -425,19 +373,6 @@ BEGIN
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
 			@minv99positiontaking_9999 = @minv99positiontaking_9999,
-       
-            --v161
-            @minv161positiontaking_81 = @minv161positiontaking_81,
-            @minv161positiontaking_83 = @minv161positiontaking_83,
-            --@minv161positiontaking_85 = @minv161positiontaking_85,
-            @minv161positiontaking_86 = @minv161positiontaking_86,
-            @minv161positiontaking_88 = @minv161positiontaking_88,
-            
-            @minv161livepositiontaking_85 = @minv161livepositiontaking_85,
-            @minv161livepositiontaking_86 = @minv161livepositiontaking_86,
-            @minv161livepositiontaking_87 = @minv161livepositiontaking_87,
-            @minv161livepositiontaking_89 = @minv161livepositiontaking_89,
-            @minv161livepositiontaking_90 = @minv161livepositiontaking_90,
             
             @maxpositiontaking_1 = @maxpositiontaking_1,
             @maxpositiontaking_2 = @maxpositiontaking_2,
@@ -498,19 +433,6 @@ BEGIN
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
             @maxv99positiontaking_9999 = @maxv99positiontaking_9999,
-    
-            --v161
-            @maxv161positiontaking_81 = @maxv161positiontaking_81,
-            @maxv161positiontaking_83 = @maxv161positiontaking_83,
-            --@maxv161positiontaking_85 = @maxv161positiontaking_85,            
-            @maxv161positiontaking_86 = @maxv161positiontaking_86,
-            @maxv161positiontaking_88 = @maxv161positiontaking_88,
-            
-            @maxv161livepositiontaking_85 = @maxv161livepositiontaking_85,
-            @maxv161livepositiontaking_86 = @maxv161livepositiontaking_86,
-            @maxv161livepositiontaking_87 = @maxv161livepositiontaking_87,
-            @maxv161livepositiontaking_89 = @maxv161livepositiontaking_89,
-            @maxv161livepositiontaking_90 = @maxv161livepositiontaking_90,
             
             @UpdateMinPos = @UpdateMinPos,
             @UpdateMaxPos = @UpdateMaxPos,
@@ -590,18 +512,6 @@ BEGIN
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
 			@minv99positiontaking_9999 = @minv99positiontaking_9999,
-            --v161
-            @minv161positiontaking_81 = @minv161positiontaking_81,
-            @minv161positiontaking_83 = @minv161positiontaking_83,
-            --@minv161positiontaking_85 = @minv161positiontaking_85,
-            @minv161positiontaking_86 = @minv161positiontaking_86,
-            @minv161positiontaking_88 = @minv161positiontaking_88,
-            
-            @minv161livepositiontaking_85 = @minv161livepositiontaking_85,
-            @minv161livepositiontaking_86 = @minv161livepositiontaking_86,
-            @minv161livepositiontaking_87 = @minv161livepositiontaking_87,
-            @minv161livepositiontaking_89 = @minv161livepositiontaking_89,
-            @minv161livepositiontaking_90 = @minv161livepositiontaking_90,
             
             @maxpositiontaking_1 = @maxpositiontaking_1,
             @maxpositiontaking_2 = @maxpositiontaking_2,
@@ -662,19 +572,6 @@ BEGIN
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
 			@maxv99positiontaking_9999 = @maxv99positiontaking_9999,
-      
-            --v161
-            @maxv161positiontaking_81 = @maxv161positiontaking_81,
-            @maxv161positiontaking_83 = @maxv161positiontaking_83,
-            --@maxv161positiontaking_85 = @maxv161positiontaking_85,
-            @maxv161positiontaking_86 = @maxv161positiontaking_86,
-            @maxv161positiontaking_88 = @maxv161positiontaking_88,
-            
-            @maxv161livepositiontaking_85 = @maxv161livepositiontaking_85,
-            @maxv161livepositiontaking_86 = @maxv161livepositiontaking_86,
-            @maxv161livepositiontaking_87 = @maxv161livepositiontaking_87,
-            @maxv161livepositiontaking_89 = @maxv161livepositiontaking_89,
-            @maxv161livepositiontaking_90 = @maxv161livepositiontaking_90,
             
             @UpdateMinPos = @UpdateMinPos,
             @UpdateMaxPos = @UpdateMaxPos,
@@ -754,20 +651,6 @@ BEGIN
             @minv99positiontaking_9 = @minv99positiontaking_9,
             @minv99positiontaking_20 = @minv99positiontaking_20,
 			@minv99positiontaking_9999 = @minv99positiontaking_9999,
-     
-            --v161
-            @minv161positiontaking_81 = @minv161positiontaking_81,
-            @minv161positiontaking_83 = @minv161positiontaking_83,
-            --@minv161positiontaking_85 = @minv161positiontaking_85,
-            @minv161positiontaking_86 = @minv161positiontaking_86,
-            @minv161positiontaking_88 = @minv161positiontaking_88,
-            
-            @minv161livepositiontaking_85 = @minv161livepositiontaking_85,
-            @minv161livepositiontaking_86 = @minv161livepositiontaking_86,
-            @minv161livepositiontaking_87 = @minv161livepositiontaking_87,
-            @minv161livepositiontaking_89 = @minv161livepositiontaking_89,
-            @minv161livepositiontaking_90 = @minv161livepositiontaking_90,
-            
             
             @maxpositiontaking_1 = @maxpositiontaking_1,
             @maxpositiontaking_2 = @maxpositiontaking_2,
@@ -828,20 +711,6 @@ BEGIN
             @maxv99positiontaking_9 = @maxv99positiontaking_9,
             @maxv99positiontaking_20 = @maxv99positiontaking_20,
 			@maxv99positiontaking_9999 = @maxv99positiontaking_9999,
-     
-            --v161
-            @maxv161positiontaking_81 = @maxv161positiontaking_81,
-            @maxv161positiontaking_83 = @maxv161positiontaking_83,
-            --@maxv161positiontaking_85 = @maxv161positiontaking_85,
-            @maxv161positiontaking_86 = @maxv161positiontaking_86,
-            @maxv161positiontaking_88 = @maxv161positiontaking_88,
-            
-            @maxv161livepositiontaking_85 = @maxv161livepositiontaking_85,
-            @maxv161livepositiontaking_86 = @maxv161livepositiontaking_86,
-            @maxv161livepositiontaking_87 = @maxv161livepositiontaking_87,
-            @maxv161livepositiontaking_89 = @maxv161livepositiontaking_89,
-            @maxv161livepositiontaking_90 = @maxv161livepositiontaking_90,
-            
             
             @UpdateMinPos = @UpdateMinPos,
             @UpdateMaxPos = @UpdateMaxPos,
@@ -859,10 +728,4 @@ BEGIN
     return
 END
 
-
-
-
 GO
-
- GRANT EXECUTE ON [dbo].[Acc_CustOverrideUpd_CheckParam] TO [bodbAdminNet]
-GO 

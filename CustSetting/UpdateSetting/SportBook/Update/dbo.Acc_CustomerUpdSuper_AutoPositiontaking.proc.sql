@@ -1,4 +1,6 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_AutoPositiontaking]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_AutoPositiontaking]
 	@srecommend int
 AS
 --@Source Control
@@ -10,6 +12,7 @@ Original: Acc_CustomerUpdAutoPositiontaking_Com
 
 Revision: 
 	- 20101012@Jamie: Modify Number Game 
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 Param's Explanation:
 • @ErrCode:
@@ -36,22 +39,6 @@ where
 	and c.roleid = 1
 	and (custsetting.isautopositiontaking=1 or mcs.isautopositiontaking=1)
 	
---v161
- 
-Update custsetting3rd 
-	set spositiontaking = case when scs3.spositiontaking-custsetting3rd.mpositiontaking-custsetting3rd.apositiontaking >
-							(case when custsetting3rd.isautopositiontaking=1 then custsetting3rd.autopositiontaking else mcs3.autopositiontaking end) then (case when custsetting3rd.isautopositiontaking=1 then custsetting3rd.autopositiontaking else mcs3.autopositiontaking end) else scs3.spositiontaking-custsetting3rd.mpositiontaking-custsetting3rd.apositiontaking end 
-from
-	custsetting3rd 
-	inner join custinfo as c with (NOLOCK) on custsetting3rd.custid = c.custid
-	inner join custsetting3rd as mcs3 with (NOLOCK) on mcs3.custid = c.mrecommend and mcs3.sporttype=custsetting3rd.sporttype and mcs3.bettype=custsetting3rd.bettype
-	inner join custsetting3rd as scs3 with (NOLOCK) on scs3.custid = @srecommend and scs3.sporttype=custsetting3rd.sporttype and scs3.bettype=custsetting3rd.bettype
-where
-	c.srecommend = @srecommend
-	and c.roleid = 1
-	and (custsetting3rd.isautopositiontaking=1 or mcs3.isautopositiontaking=1)
-
-
 Update custsetting
 	set slivepositiontaking = case when scs.slivepositiontaking-custsetting.mlivepositiontaking-custsetting.alivepositiontaking >
 							(case when custsetting.isautolivepositiontaking=1 then custsetting.autolivepositiontaking else mcs.autolivepositiontaking end) then (case when custsetting.isautolivepositiontaking=1 then custsetting.autolivepositiontaking else mcs.autolivepositiontaking end) else scs.slivepositiontaking-custsetting.mlivepositiontaking-custsetting.alivepositiontaking end 
@@ -65,27 +52,5 @@ where
 	and c.roleid = 1
 	and (custsetting.isautolivepositiontaking=1 or mcs.isautolivepositiontaking=1)
 	
-	
---v161 
-Update custsetting3rd
-	set slivepositiontaking = case when scs3.slivepositiontaking-custsetting3rd.mlivepositiontaking-custsetting3rd.alivepositiontaking >
-							(case when custsetting3rd.isautolivepositiontaking=1 then custsetting3rd.autolivepositiontaking else mcs3.autolivepositiontaking end) then (case when custsetting3rd.isautolivepositiontaking=1 then custsetting3rd.autolivepositiontaking else mcs3.autolivepositiontaking end) else scs3.slivepositiontaking-custsetting3rd.mlivepositiontaking-custsetting3rd.alivepositiontaking end 
-from
-	custsetting3rd
-	inner join custinfo as c with (NOLOCK) on custsetting3rd.custid = c.custid
-	inner join custsetting3rd as mcs3 with (NOLOCK) on mcs3.custid = c.mrecommend and mcs3.sporttype=custsetting3rd.sporttype and mcs3.bettype=custsetting3rd.bettype
-	inner join custsetting3rd as scs3 with (NOLOCK) on scs3.custid = @srecommend and scs3.sporttype=custsetting3rd.sporttype and scs3.bettype=custsetting3rd.bettype
-where
-	c.srecommend = @srecommend
-	and c.roleid = 1
-	and (custsetting3rd.isautolivepositiontaking=1 or mcs3.isautolivepositiontaking=1)
-
---Thien20081119: No need to run this SP
---exec Acc_CustomerUpdSuper_MinMaxPositiontaking @srecommend
-
-
 GO
-GRANT EXECUTE ON [dbo].Acc_CustomerUpdSuper_AutoPositiontaking TO [bodbAdminNet]
-GO
-GRANT VIEW DEFINITION ON [dbo].Acc_CustomerUpdSuper_AutoPositiontaking TO [vnteam]
-GO
+

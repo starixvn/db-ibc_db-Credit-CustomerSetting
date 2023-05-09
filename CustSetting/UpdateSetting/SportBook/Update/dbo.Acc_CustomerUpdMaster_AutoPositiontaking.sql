@@ -1,10 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 
-/****** Object:  Stored Procedure dbo.Acc_CustomerUpdMaster_AutoPositiontaking    Script Date: 8/21/2014 2:58:11 PM ******/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking]
     @mrecommend int,
     @srecommend int,
@@ -62,20 +57,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking]
     @auto_v99spositiontaking_20 smallmoney = 0,
 	@auto_v99spositiontaking_9999 smallmoney = 0,
     --- mixed sports
-    @auto_v99spositiontaking_9 smallmoney = 0,
-
-
-    -- number game
-    @auto_v161spositiontaking_81 smallmoney = 0,
-    @auto_v161spositiontaking_83 smallmoney = 0,    
-    @auto_v161spositiontaking_86 smallmoney = 0,
-    @auto_v161spositiontaking_88 smallmoney = 0,
-    
-    @auto_v161slivepositiontaking_85 smallmoney = 0,
-    @auto_v161slivepositiontaking_86 smallmoney = 0,
-    @auto_v161slivepositiontaking_87 smallmoney = 0,
-    @auto_v161slivepositiontaking_89 smallmoney = 0,
-    @auto_v161slivepositiontaking_90 smallmoney = 0,
+    @auto_v99spositiontaking_9 smallmoney = 0,   
     
     @updatemultiple bit = 0,
     @updatepositiontaking bit = 1,
@@ -90,11 +72,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking]
 
     -- mixed sports
     @updatepositiontakingv99mp bit = 1,
-
-    -- number game
-    @updatepositiontakingv161 bit = 1,
-    
-
+   
     @language varchar(2),
     @updateallmembers bit = 0,
     @newspositiontaking smallmoney,
@@ -155,19 +133,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking]
     @isauto_v99spositiontaking_20 bit = 0,
 	@isauto_v99spositiontaking_9999 bit = 0,
     -- mixed sports
-    @isauto_v99spositiontaking_9 bit = 0,
-
-    -- number game    
-    @isauto_v161spositiontaking_81 bit = 0,
-    @isauto_v161spositiontaking_83 bit = 0,    
-    @isauto_v161spositiontaking_86 bit = 0,
-    @isauto_v161spositiontaking_88 bit = 0,
-    @isauto_v161slivepositiontaking_85 bit = 0,
-    @isauto_v161slivepositiontaking_86 bit = 0,
-    @isauto_v161slivepositiontaking_87 bit = 0,
-    @isauto_v161slivepositiontaking_89 bit = 0,
-    @isauto_v161slivepositiontaking_90 bit = 0,
-    
+    @isauto_v99spositiontaking_9 bit = 0,   
     -- Outright PT for sports
     
 	@auto_v2spositiontaking_10 smallmoney = 0,
@@ -215,6 +181,7 @@ Revisions:
 	- 20170302@Helen: BAIO - Cust setting - [Redmine: 71609]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20190910@Winnie: Other Sports - Add New "Others" PT Setting for Badminton [redmine: #119713]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -225,7 +192,7 @@ Param's Explanation:
 
 
 SET NOCOUNT ON
-if @updatepositiontaking = 0 and @updatepositiontakingv2 = 0 and @updatepositiontakingv3 = 0 and @updatepositiontakingv5 = 0 and @updatepositiontakingv8 = 0 and @updatepositiontakingv10 = 0 and @updatepositiontakingv11 = 0  and @updatepositiontakingv99 = 0 and @updatepositiontakingv99mp = 0 and @updatepositiontakingv161 = 0 and @updatemultiple=1
+if @updatepositiontaking = 0 and @updatepositiontakingv2 = 0 and @updatepositiontakingv3 = 0 and @updatepositiontakingv5 = 0 and @updatepositiontakingv8 = 0 and @updatepositiontakingv10 = 0 and @updatepositiontakingv11 = 0  and @updatepositiontakingv99 = 0 and @updatepositiontakingv99mp = 0 and @updatemultiple=1
 BEGIN
     return
 END
@@ -245,10 +212,7 @@ Declare
     @autov11positiontaking smallmoney,
     @autov99positiontaking smallmoney,
         
-    @autov99mppositiontaking smallmoney,
-
-    @autov161positiontaking smallmoney,
-    @autov161livepositiontaking smallmoney,
+    @autov99mppositiontaking smallmoney,   
     
     @old_autov2positiontaking smallmoney,
     @old_autov3positiontaking smallmoney,
@@ -259,11 +223,7 @@ Declare
     @old_autov99positiontaking smallmoney,
 
     -- mixed sports
-    @old_autov99mppositiontaking smallmoney,
- 
-    -- number game
-    @old_autov161positiontaking smallmoney,
-    @old_autov161livepositiontaking smallmoney,
+    @old_autov99mppositiontaking smallmoney, 
     
     @maxpos smallmoney,
     @isautopositiontaking bit, 
@@ -279,11 +239,6 @@ Declare
 
     -- mixed sports
     @isautov99mppositiontaking bit,
-  
-
-    -- number game
-    @isautov161positiontaking bit,
-    @isautov161livepositiontaking bit,
     
     @old_isautopositiontaking smallmoney, 
     @old_isautolivepositiontaking smallmoney, 
@@ -297,12 +252,8 @@ Declare
     @old_isautov99positiontaking smallmoney,
     
     -- mixed sports
-    @old_isautov99mppositiontaking smallmoney,
-  
-    
-    -- number game
-    @old_isautov161positiontaking smallmoney,
-    @old_isautov161livepositiontaking smallmoney
+    @old_isautov99mppositiontaking smallmoney
+
 Declare 
     @old_auto_spositiontaking_1 smallmoney,
     @old_auto_spositiontaking_2 smallmoney,
@@ -360,18 +311,6 @@ Declare
     -- mixed sports
     @old_auto_v99spositiontaking_9 smallmoney,
   
-
-    -- number game
-    @old_auto_v161spositiontaking_81 smallmoney,
-    @old_auto_v161spositiontaking_83 smallmoney,    
-    @old_auto_v161spositiontaking_86 smallmoney,
-    @old_auto_v161spositiontaking_88 smallmoney,
-    @old_auto_v161slivepositiontaking_85 smallmoney,
-    @old_auto_v161slivepositiontaking_86 smallmoney,
-    @old_auto_v161slivepositiontaking_87 smallmoney,
-    @old_auto_v161slivepositiontaking_89 smallmoney,
-    @old_auto_v161slivepositiontaking_90 smallmoney,
-
     @old_isauto_spositiontaking_1 bit,
     @old_isauto_spositiontaking_2 bit,
     @old_isauto_spositiontaking_3 bit,
@@ -428,18 +367,6 @@ Declare
 	@old_isauto_v99spositiontaking_9999 bit,
     -- mixed sports
     @old_isauto_v99spositiontaking_9 bit,
-  
-    
-    -- number game
-    @old_isauto_v161spositiontaking_81 bit,
-    @old_isauto_v161spositiontaking_83 bit,    
-    @old_isauto_v161spositiontaking_86 bit,
-    @old_isauto_v161spositiontaking_88 bit,
-    @old_isauto_v161slivepositiontaking_85 bit,
-    @old_isauto_v161slivepositiontaking_86 bit,
-    @old_isauto_v161slivepositiontaking_87 bit,
-    @old_isauto_v161slivepositiontaking_89 bit,
-    @old_isauto_v161slivepositiontaking_90 bit,
     
     @old_auto_v2spositiontaking_10 smallmoney,
     @old_auto_v3spositiontaking_10 smallmoney,
@@ -526,21 +453,6 @@ select     @old_auto_v99spositiontaking_20    =    autopositiontaking        ,  
 select     @old_auto_v99spositiontaking_9999    =    autopositiontaking        ,    @old_isauto_v99spositiontaking_9999    =    isautopositiontaking        from custsetting with (nolock) where custid = @mrecommend and sporttype=99    and bettype=    9999
 --mixed sports
 select     @old_auto_v99spositiontaking_9    =    autopositiontaking        ,    @old_isauto_v99spositiontaking_9    =    isautopositiontaking        from custsetting with (nolock) where custid = @mrecommend and sporttype=99    and bettype=    9
-
-
-
--- number game
-select     @old_auto_v161spositiontaking_81    =    autopositiontaking        ,    @old_isauto_v161spositiontaking_81    =    isautopositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype=161    and bettype=    81
-select     @old_auto_v161spositiontaking_83    =    autopositiontaking        ,    @old_isauto_v161spositiontaking_83    =    isautopositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype=161    and bettype=    83
-select     @old_auto_v161spositiontaking_86    =    autopositiontaking        ,    @old_isauto_v161spositiontaking_86    =    isautopositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype=161    and bettype=    86
-select     @old_auto_v161spositiontaking_88    =    autopositiontaking        ,    @old_isauto_v161spositiontaking_88    =    isautopositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype=161    and bettype=    88
-select     @old_auto_v161slivepositiontaking_85    =    autolivepositiontaking        ,    @old_isauto_v161slivepositiontaking_85    =    isautolivepositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype =    161    and bettype=    85
-select     @old_auto_v161slivepositiontaking_86    =    autolivepositiontaking        ,    @old_isauto_v161slivepositiontaking_86    =    isautolivepositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype =    161    and bettype=    86
-select     @old_auto_v161slivepositiontaking_87    =    autolivepositiontaking        ,    @old_isauto_v161slivepositiontaking_87    =    isautolivepositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype =    161    and bettype=    87
-select     @old_auto_v161slivepositiontaking_89    =    autolivepositiontaking        ,    @old_isauto_v161slivepositiontaking_89    =    isautolivepositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype =    161    and bettype=    89
-select     @old_auto_v161slivepositiontaking_90    =    autolivepositiontaking        ,    @old_isauto_v161slivepositiontaking_90    =    isautolivepositiontaking        from custsetting3rd with (nolock) where custid = @mrecommend and sporttype =    161    and bettype=    90
-
-
 
 if @updatepositiontaking = 1 or @updatemultiple=0
 BEGIN
@@ -796,39 +708,6 @@ BEGIN
                                                                                 else N'(Mix Sports Parlay)' END
             end    
             ,  @ErrCode=301
-        return
-    END
-END
-
-
--- number game
-if (@updatepositiontakingv161 = 1 or @updatemultiple=0)
-BEGIN
-    --Update Master Agent account
-    --For Number game
-    update cs with (ROWLOCK, UPDLOCK) set autopositiontaking = b.autopositiontaking, autolivepositiontaking = b.autolivepositiontaking, isautopositiontaking = b.isautopositiontaking, isautolivepositiontaking = b.isautolivepositiontaking
-    from custsetting3rd cs inner join 
-            (
-                            select 81 as bettype, @auto_v161spositiontaking_81 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v161spositiontaking_81 as isautopositiontaking, 0    as isautolivepositiontaking
-                union all     select 83 as bettype, @auto_v161spositiontaking_83 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v161spositiontaking_83 as isautopositiontaking, 0    as isautolivepositiontaking
-                union all     select 88 as bettype, @auto_v161spositiontaking_88 as autopositiontaking, 0    as autolivepositiontaking, @isauto_v161spositiontaking_88 as isautopositiontaking, 0    as isautolivepositiontaking
-                union all     select 85 as bettype, 0 as autopositiontaking, @auto_v161slivepositiontaking_85     as autolivepositiontaking, 0 as isautopositiontaking, @isauto_v161slivepositiontaking_85    as isautolivepositiontaking
-                union all     select 86 as bettype, @auto_v161spositiontaking_86 as autopositiontaking, @auto_v161slivepositiontaking_86     as autolivepositiontaking, @isauto_v161spositiontaking_86 as isautopositiontaking, @isauto_v161slivepositiontaking_86    as isautolivepositiontaking
-                union all     select 87 as bettype, 0 as autopositiontaking, @auto_v161slivepositiontaking_87     as autolivepositiontaking, 0 as isautopositiontaking, @isauto_v161slivepositiontaking_87    as isautolivepositiontaking
-                union all     select 89 as bettype, 0 as autopositiontaking, @auto_v161slivepositiontaking_89     as autolivepositiontaking, 0 as isautopositiontaking, @isauto_v161slivepositiontaking_89    as isautolivepositiontaking
-                union all     select 90 as bettype, 0 as autopositiontaking, @auto_v161slivepositiontaking_90     as autolivepositiontaking, 0 as isautopositiontaking, @isauto_v161slivepositiontaking_90    as isautolivepositiontaking
-
-            ) as b on b.bettype = cs.bettype
-    where cs.custid = @mrecommend and cs.sporttype=161
-    if @@Error <> 0
-    BEGIN
-        
-        SELECT @ErrMsg =  
-            case @Language 
-                when 'E' then 'Error updating auto position taking (For Number game)'
-                ELSE [dbo].[f_Get_MsgNamebyMsgID](20010,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](161,@Language) + ')'
-            end    
-            ,  @ErrCode=302
         return
     END
 END
@@ -1115,75 +994,4 @@ EXEC Acc_CustSetting_05
 	@old_auto_v11spositiontaking_10 = @old_auto_v11spositiontaking_10,
 	@old_auto_v99spositiontaking_10 = @old_auto_v99spositiontaking_10
 
-
-
-EXEC dbo.Acc_CustSetting3rd_05
-    @srecommend = @srecommend,
-    @mrecommend = @mrecommend,    
-    @roleid = 3,
-    @mode = 'number',
-    
-    @isauto_v161spositiontaking_81 = @isauto_v161spositiontaking_81,
-    @isauto_v161spositiontaking_83 = @isauto_v161spositiontaking_83,    
-    @isauto_v161spositiontaking_86 = @isauto_v161spositiontaking_86,
-    @isauto_v161spositiontaking_88 = @isauto_v161spositiontaking_88,
-    
-    @isauto_v161slivepositiontaking_85 = @isauto_v161slivepositiontaking_85,
-    @isauto_v161slivepositiontaking_86 = @isauto_v161slivepositiontaking_86,
-    @isauto_v161slivepositiontaking_87 = @isauto_v161slivepositiontaking_87,
-    @isauto_v161slivepositiontaking_89 = @isauto_v161slivepositiontaking_89,
-    @isauto_v161slivepositiontaking_90 = @isauto_v161slivepositiontaking_90,
-    
-    @old_isauto_v161spositiontaking_81 = @old_isauto_v161spositiontaking_81,
-    @old_isauto_v161spositiontaking_83 = @old_isauto_v161spositiontaking_83,    
-    @old_isauto_v161spositiontaking_86 = @old_isauto_v161spositiontaking_86,
-    @old_isauto_v161spositiontaking_88 = @old_isauto_v161spositiontaking_88,
-    
-    @old_isauto_v161slivepositiontaking_85 = @old_isauto_v161slivepositiontaking_85,
-    @old_isauto_v161slivepositiontaking_86 = @old_isauto_v161slivepositiontaking_86,
-    @old_isauto_v161slivepositiontaking_87 = @old_isauto_v161slivepositiontaking_87,
-    @old_isauto_v161slivepositiontaking_89 = @old_isauto_v161slivepositiontaking_89,
-    @old_isauto_v161slivepositiontaking_90 = @old_isauto_v161slivepositiontaking_90,
-    
-    @auto_v161spositiontaking_81 = @auto_v161spositiontaking_81,
-    @auto_v161spositiontaking_83 = @auto_v161spositiontaking_83,    
-    @auto_v161spositiontaking_86 = @auto_v161spositiontaking_86,
-    @auto_v161spositiontaking_88 = @auto_v161spositiontaking_88,
-    
-    @auto_v161slivepositiontaking_85 = @auto_v161slivepositiontaking_85,
-    @auto_v161slivepositiontaking_86 = @auto_v161slivepositiontaking_86,
-    @auto_v161slivepositiontaking_87 = @auto_v161slivepositiontaking_87,
-    @auto_v161slivepositiontaking_89 = @auto_v161slivepositiontaking_89,
-    @auto_v161slivepositiontaking_90 = @auto_v161slivepositiontaking_90,
-    
-    @old_auto_v161spositiontaking_81 = @old_auto_v161spositiontaking_81,
-    @old_auto_v161spositiontaking_83 = @old_auto_v161spositiontaking_83,    
-    @old_auto_v161spositiontaking_86 = @old_auto_v161spositiontaking_86,
-    @old_auto_v161spositiontaking_88 = @old_auto_v161spositiontaking_88,
-    
-    @old_auto_v161slivepositiontaking_85 = @old_auto_v161slivepositiontaking_85,
-    @old_auto_v161slivepositiontaking_86 = @old_auto_v161slivepositiontaking_86,
-    @old_auto_v161slivepositiontaking_87 = @old_auto_v161slivepositiontaking_87,
-    @old_auto_v161slivepositiontaking_89 = @old_auto_v161slivepositiontaking_89,
-    @old_auto_v161slivepositiontaking_90 = @old_auto_v161slivepositiontaking_90,
-    
-    @updatepositiontakingv161 = @updatepositiontakingv161,
-    @updateallmembers = @updateallmembers,
-    @updatemultiple = @updatemultiple,
-    @newspositiontaking = @newspositiontaking
-    
-
-
-
-
-
-
-
 GO
-
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking] TO [bodbDownlineNetView]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_AutoPositiontaking] TO [bodbDownlineNet]
-GO 

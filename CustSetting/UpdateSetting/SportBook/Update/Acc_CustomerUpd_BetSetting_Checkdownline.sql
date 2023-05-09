@@ -3,7 +3,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpd_BetSetting_Checkdownline]
 	@custid int,
 	@RoleID TINYINT = NULL,
 	@BetSettingXML VARCHAR(8000) = '',
-	@IsAffected BIT = 0 OUTPUT
+	@IsAffected BIT = 0 OUTPUT,
+	@IsAffected_DCS BIT = 0 OUTPUT,
+	@SettingType TINYINT = 0
 AS
 /*
 	Created: 20210802@Eden
@@ -13,12 +15,14 @@ AS
 
 	Revisions:
 		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+		- 20230310@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Param's Explanation:
 */
 BEGIN
 	SET NOCOUNT ON
 
 	SET @IsAffected = 0
+	SET @IsAffected_DCS = 0
 
 	IF ISNULL(@BetSettingXML,'') = ''
 		RETURN
@@ -75,7 +79,7 @@ BEGIN
 				)
 		BEGIN
 			SET @IsAffected = 1
-			RETURN
+			GOTO CheckDCS;
 		END
 
 		IF EXISTS(
@@ -93,7 +97,7 @@ BEGIN
 				)
 		BEGIN
 			SET @IsAffected = 1
-			RETURN
+			GOTO CheckDCS;
 		END
 		
 	END
@@ -114,7 +118,7 @@ BEGIN
 				)
 		BEGIN
 			SET @IsAffected = 1
-			RETURN
+			GOTO CheckDCS;
 		END
 
 		IF EXISTS(
@@ -132,7 +136,7 @@ BEGIN
 				)
 		BEGIN
 			SET @IsAffected = 1
-			RETURN
+			GOTO CheckDCS;
 		END
 		
 	END
@@ -153,6 +157,106 @@ BEGIN
 				)
 		BEGIN
 			SET @IsAffected = 1
+			RETURN
+		END
+		
+	END
+
+	CheckDCS:
+	IF @Settingtype <> 23 -- no need to check on those table
+		RETURN
+
+	--> check table CustBetSetting3rd_Agent, CustBetSetting3rd_Member
+	IF @RoleID = 4
+	BEGIN
+		IF EXISTS(
+					SELECT TOP 1 1
+					FROM @BetSetting t
+						INNER JOIN CustBetSetting3rd_Agent a WITH(NOLOCK)
+							ON t.SportType = a.SportType AND t.BetType = a.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
+					WHERE c.srecommend = @custid AND c.roleID IN (2,3)
+						AND c.enabled = 1
+						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
+								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
+							)
+				)
+		BEGIN
+			SET @IsAffected_DCS = 1
+			RETURN
+		END
+
+		IF EXISTS(
+					SELECT TOP 1 1
+					FROM @BetSetting t
+						INNER JOIN CustBetSetting3rd_Member a WITH(NOLOCK)
+							ON t.SportType = a.SportType AND t.BetType = a.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
+					WHERE c.srecommend = @custid AND c.roleID = 1
+						AND c.enabled = 1
+						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
+								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
+							)
+				)
+		BEGIN
+			SET @IsAffected_DCS = 1
+			RETURN
+		END
+		
+	END
+	ELSE IF @RoleID = 3
+	BEGIN
+		IF EXISTS(
+					SELECT TOP 1 1
+					FROM @BetSetting t
+						INNER JOIN CustBetSetting3rd_Agent a WITH(NOLOCK)
+							ON t.SportType = a.SportType AND t.BetType = a.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
+					WHERE c.mrecommend = @custid AND c.roleID = 2
+						AND c.enabled = 1
+						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
+								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
+							)
+				)
+		BEGIN
+			SET @IsAffected_DCS = 1
+			RETURN
+		END
+
+		IF EXISTS(
+					SELECT TOP 1 1
+					FROM @BetSetting t
+						INNER JOIN CustBetSetting3rd_Member a WITH(NOLOCK)
+							ON t.SportType = a.SportType AND t.BetType = a.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
+					WHERE c.mrecommend = @custid AND c.roleID = 1
+						AND c.enabled = 1
+						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
+								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
+							)
+				)
+		BEGIN
+			SET @IsAffected_DCS = 1
+			RETURN
+		END
+		
+	END
+	ELSE IF @RoleID = 2
+	BEGIN
+		IF EXISTS(
+					SELECT TOP 1 1
+					FROM @BetSetting t
+						INNER JOIN CustBetSetting3rd_Member a WITH(NOLOCK)
+							ON t.SportType = a.SportType AND t.BetType = a.BetType
+						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
+					WHERE c.recommend = @custid AND c.roleID = 1
+						AND c.enabled = 1
+						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
+								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
+								)
+				)
+		BEGIN
+			SET @IsAffected_DCS = 1
 			RETURN
 		END
 		

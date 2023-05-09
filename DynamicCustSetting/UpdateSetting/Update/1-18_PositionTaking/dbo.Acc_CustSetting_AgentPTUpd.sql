@@ -31,6 +31,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTUpd]
 			- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -140,7 +141,8 @@ BEGIN
 					AgentPT			SMALLMONEY,				
 					AgentMinPT		SMALLMONEY,
 					UpdAllMems		BIT,
-					NewMasterPT		SMALLMONEY
+					NewMasterPT		SMALLMONEY,
+					RID INT Identity(1,1)
 					)	
 				
 		-- For read xml
@@ -269,6 +271,7 @@ BEGIN
 													AND cs.bettype = t.BetType 
 													AND cs.isLive = t.IsLive
 						WHERE custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -300,6 +303,7 @@ BEGIN
 													AND cs.bettype = t.BetType 
 													AND cs.isLive = t.IsLive
 						WHERE custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -331,6 +335,7 @@ BEGIN
 													AND cs.bettype = t.BetType 
 													AND cs.isLive = t.IsLive
 						WHERE custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -363,6 +368,7 @@ BEGIN
 													AND cs.bettype = t.BetType 
 													AND cs.isLive = t.IsLive
 						WHERE custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -387,6 +393,7 @@ BEGIN
 										AND cs.bettype = t.BetType 
 										AND cs.isLive = t.IsLive
 			WHERE custid = @custid AND (t.IsAutoMasterPT <> cs.IsAutoMasterPT OR t.AutoMasterPT <> cs.AutoMasterPT)
+			ORDER BY t.RID
 			FOR XML PATH('PT'), ROOT('ROOT')
 		 ) 			
     
@@ -526,6 +533,7 @@ BEGIN
 								cs.UpdAllMems									AS '@UpdAllMems',
 								dbo.f_FomatNumericToChar(cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
 						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'),
 						TYPE
 					)
@@ -553,6 +561,7 @@ BEGIN
 								cs.UpdAllMems									AS '@UpdAllMems',
 								dbo.f_FomatNumericToChar(cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
 						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'),
 						TYPE
 					)
@@ -580,6 +589,7 @@ BEGIN
 								cs.UpdAllMems									AS '@UpdAllMems',
 								dbo.f_FomatNumericToChar(cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
 						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'),
 						TYPE
 					)
@@ -608,6 +618,7 @@ BEGIN
 								cs.UpdAllMems									AS '@UpdAllMems',
 								dbo.f_FomatNumericToChar(cs.NewMasterPT	/100.0)	AS '@NewMasterPT'
 						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'),
 						TYPE
 					)

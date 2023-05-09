@@ -30,6 +30,7 @@ AS
 			- 20221222@Winfred: Update Correct PT for RNG SLOT [RedmineID: #181929]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -149,7 +150,9 @@ BEGIN
 					MasterPT		SMALLMONEY,				
 					MasterMinPT		SMALLMONEY,
 					UpdAllMems		BIT,
-					NewSuperPT		SMALLMONEY
+					NewSuperPT		SMALLMONEY,
+					RID INT Identity(1,1)
+
 					)			
 	
 		-- For read xml 				
@@ -266,6 +269,7 @@ BEGIN
 								AND cs.bettype = t.BetType 
 								AND cs.isLive = t.IsLive
 						WHERE       custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -298,6 +302,7 @@ BEGIN
 								AND cs.bettype = t.BetType 
 								AND cs.isLive = t.IsLive
 						WHERE       custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -330,6 +335,7 @@ BEGIN
 								AND cs.bettype = t.BetType 
 								AND cs.isLive = t.IsLive
 						WHERE       custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -363,6 +369,7 @@ BEGIN
 								AND cs.bettype = t.BetType 
 								AND cs.isLive = t.IsLive
 						WHERE       custid = @custid
+						ORDER BY t.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -386,6 +393,7 @@ BEGIN
 										AND cs.bettype = t.BetType 
 										AND cs.isLive = t.IsLive
 			WHERE custid = @custid AND (t.IsAutoSuperPT <> cs.IsAutoSuperPT OR t.AutoSuperPT <> cs.AutoSuperPT)
+			ORDER BY t.RID
 			FOR XML PATH('PT'), ROOT('ROOT')
 		 )
 	 
@@ -522,7 +530,8 @@ BEGIN
 								dbo.f_FomatNumericToChar(cs.MasterMinPT	/100.0)	AS '@MasterMinPT',
 								cs.UpdAllMems									AS '@UpdAllMems',
 								dbo.f_FomatNumericToChar(cs.NewSuperPT	/100.0)	AS '@NewSuperPT'
-						FROM    @tblPT cs							
+						FROM    @tblPT cs		
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -549,7 +558,8 @@ BEGIN
 								dbo.f_FomatNumericToChar(cs.MasterMinPT	/100.0)	AS '@MasterMinPT',
 								cs.UpdAllMems									AS '@UpdAllMems',
 								dbo.f_FomatNumericToChar(cs.NewSuperPT	/100.0)	AS '@NewSuperPT'
-						FROM    @tblPT cs							
+						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -576,7 +586,8 @@ BEGIN
 								dbo.f_FomatNumericToChar(cs.MasterMinPT	/100.0)	AS '@MasterMinPT',
 								cs.UpdAllMems									AS '@UpdAllMems',
 								dbo.f_FomatNumericToChar(cs.NewSuperPT	/100.0)	AS '@NewSuperPT'
-						FROM    @tblPT cs							
+						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
@@ -604,7 +615,8 @@ BEGIN
 								dbo.f_FomatNumericToChar(cs.MasterMinPT	/100.0)	AS '@MasterMinPT',
 								cs.UpdAllMems									AS '@UpdAllMems',
 								dbo.f_FomatNumericToChar(cs.NewSuperPT	/100.0)	AS '@NewSuperPT'
-						FROM    @tblPT cs							
+						FROM    @tblPT cs	
+						ORDER BY cs.RID
 						FOR XML PATH('PT'), 
 						TYPE
 					)
