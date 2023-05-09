@@ -14,6 +14,7 @@ AS
 
 	Revisions:
 		- 20210716@Eden: Flexible Initializing Customer Setting - [Redmine: #156667]
+		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 	Param's Explanation:
 		@StepID = :
@@ -41,6 +42,9 @@ BEGIN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
 	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('ProductSettingDetail') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustBetSetting_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('CustBetSetting_Member') = 0 RETURN
+
 
 	CREATE TABLE #TempConfig(
 		[SportType] [smallint],
@@ -58,7 +62,8 @@ BEGIN
 		[SettingName] [varchar](30),
 		[ProductID] [TINYINT],
 		[HaveWinLimit] BIT, -- 0 : Only Loss Limit
-		[HaveMaxPerMatch] BIT -- 0: Not use MaxPerMatch
+		[HaveMaxPerMatch] BIT, -- 0: Not use MaxPerMatch
+		[HaveMaxPerNumber] BIT -- 0: Not use HaveMaxPerNumber
 	)
 	
 	DECLARE @DocHandler INT	
@@ -115,6 +120,17 @@ BEGIN
 		-- end read xml	
 	END	
 	
+	UPDATE t
+	SET t.SettingName = 'Bet Setting Game',
+		t.HaveMaxPerMatch = 1,
+		t.HaveMaxPerNumber = CASE WHEN t.SportType = 161 THEN 1 ELSE 0 END
+	FROM #TempConfig t
+		INNER JOIN ProductSettingDetail p WITH(NOLOCK) 
+			ON t.SportType = p.SportType AND t.BetType = p.BetType
+	WHERE t.SettingName = 'Bet Setting'
+		AND p.SettingType IN (23)
+		AND p.SubType = 2
+
 	-->don't set Max per match for settingtype 20
 	UPDATE t
 	SET t.HaveMaxPerMatch = CASE WHEN t.SettingType = 20 THEN 0 ELSE 1 END
@@ -392,6 +408,74 @@ BEGIN
 
 				DELETE s
 				FROM CustBetSetting3rd_Member s WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN #CustSettingTmpBatch t 
+						ON s.CustID = t.CustID
+						AND s.SportType = t.SportType 
+						AND s.BetType = t.BetType
+			END
+		END
+		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Bet Setting Game')
+		BEGIN
+			INSERT INTO #CustSettingTmp(CustID,Sporttype,Bettype)
+			SELECT s.CustID,s.SportType,s.BetType
+			FROM CustBetSetting_Agent s WITH(NOLOCK)
+					INNER JOIN #TempConfig t 
+						ON s.SportType = t.SportType 
+						AND s.BetType = t.BetType 
+					INNER JOIN #SMATemp m 
+						ON s.CustID = m.CustID
+			WHERE t.SettingName = 'Bet Setting Game' 
+
+			--Delete Agent Setting
+			WHILE 1 = 1
+			BEGIN 
+				TRUNCATE TABLE #CustSettingTmpBatch
+
+				DELETE TOP(@BatchNum) t
+				OUTPUT deleted.custid
+					,deleted.Sporttype
+					,deleted.Bettype
+				INTO #CustSettingTmpBatch(custid,Sporttype,Bettype)
+				FROM #CustSettingTmp t
+
+				IF @@ROWCOUNT = 0
+					BREAK
+
+				DELETE s
+				FROM CustBetSetting_Agent s WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN #CustSettingTmpBatch t 
+						ON s.CustID = t.CustID
+						AND s.SportType = t.SportType 
+						AND s.BetType = t.BetType
+			END
+
+			INSERT INTO #CustSettingTmp(CustID,Sporttype,Bettype)
+			SELECT s.CustID,s.SportType,s.BetType
+			FROM CustBetSetting_Member s WITH(NOLOCK)
+					INNER JOIN #TempConfig t 
+						ON s.SportType = t.SportType 
+						AND s.BetType = t.BetType 
+					INNER JOIN #MemberTemp m 
+						ON s.CustID = m.CustID
+			WHERE t.SettingName = 'Bet Setting Game' 
+
+			--Delete Member Setting
+			WHILE 1 = 1
+			BEGIN 
+				TRUNCATE TABLE #CustSettingTmpBatch
+
+				DELETE TOP(@BatchNum) t
+				OUTPUT deleted.custid
+					,deleted.Sporttype
+					,deleted.Bettype
+				INTO #CustSettingTmpBatch(custid,Sporttype,Bettype)
+				FROM #CustSettingTmp t
+
+				IF @@ROWCOUNT = 0
+					BREAK
+
+				DELETE s
+				FROM CustBetSetting_Member s WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN #CustSettingTmpBatch t 
 						ON s.CustID = t.CustID
 						AND s.SportType = t.SportType 
@@ -949,6 +1033,89 @@ BEGIN
 			END
 		END
 
+		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Bet Setting Game' AND IsDefault = 0)
+		BEGIN
+			IF @DirectCustRoleID <> 4
+			BEGIN
+				--Dummy SMA
+				UPDATE cb
+				SET	  MinBet = c.MinBet
+					, MaxBet = c.MaxBet
+					, MaxPerMatch = c.MaxPerMatch
+					, MaxPerNumber = CASE WHEN t.HaveMaxPerNumber = 1 THEN c.MaxPerNumber ELSE NULL END
+				FROM dbo.CustBetSetting_Agent c WITH(NOLOCK)
+					INNER JOIN #DummyAcc ci 
+						ON ci.custid = C.CustID
+					INNER JOIN #TempConfig t 
+						ON c.SportType = t.CopyFromSportType 
+						AND c.BetType = t.CopyFromBetType
+					INNER JOIN CustBetSetting_Agent cb WITH(ROWLOCK,UPDLOCK)
+						ON c.CustID = cb.CustID
+						AND t.SportType = cb.SportType
+						AND t.BetType = cb.BetType
+				WHERE t.SettingName = 'Bet Setting Game'
+					 AND t.IsDefault = 0
+
+				INSERT INTO dbo.CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch,MaxPerNumber)
+				SELECT c.CustID, t.SportType, t.BetType, c.MinBet, c.MaxBet, c.MaxPerMatch
+					, CASE WHEN t.HaveMaxPerNumber = 1 THEN c.MaxPerNumber ELSE NULL END
+				FROM dbo.CustBetSetting_Agent c WITH(NOLOCK)
+					INNER JOIN #DummyAcc ci 
+						ON ci.custid = C.CustID
+					INNER JOIN #TempConfig t 
+						ON c.SportType = t.CopyFromSportType 
+						AND c.BetType = t.CopyFromBetType
+					LEFT JOIN CustBetSetting_Agent cb WITH(NOLOCK)
+						ON c.CustID = cb.CustID
+						AND t.SportType = cb.SportType
+						AND t.BetType = cb.BetType
+				WHERE t.SettingName = 'Bet Setting Game'
+					 AND t.IsDefault = 0
+					 AND cb.CustID IS NULL
+			END
+
+			--SMA level
+			INSERT INTO dbo.CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber)
+			SELECT c.CustID, t.SportType, t.BetType, c.MinBet, c.MaxBet, c.MaxPerMatch
+					, CASE WHEN t.HaveMaxPerNumber = 1 THEN c.MaxPerNumber ELSE NULL END
+			FROM dbo.CustBetSetting_Agent c WITH(NOLOCK)
+				INNER JOIN #SMATemp ci  
+					ON c.CustID = ci.custid
+				INNER JOIN #TempConfig t 
+					ON c.SportType = t.CopyFromSportType 
+					AND c.BetType = t.CopyFromBetType
+			WHERE t.SettingName = 'Bet Setting Game'
+				 AND t.IsDefault = 0
+
+			--Member Level
+			UPDATE #MemberTemp SET IsFinished = 0
+
+			WHILE 1 = 1
+			BEGIN
+				TRUNCATE TABLE #MemberTemp_Batch
+
+				UPDATE TOP(@BatchNum_Ins) #MemberTemp 
+				SET IsFinished = 1
+				OUTPUT deleted.CustID,deleted.srecommend,deleted.mrecommend,deleted.recommend INTO #MemberTemp_Batch(CustID,srecommend,mrecommend,recommend)
+				WHERE IsFinished = 0
+
+				IF @@ROWCOUNT = 0
+					BREAK;
+
+				--Member Level
+				INSERT INTO dbo.CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber)
+				SELECT c.CustID, t.SportType, t.BetType, c.MinBet, c.MaxBet, c.MaxPerMatch
+					, CASE WHEN t.HaveMaxPerNumber = 1 THEN c.MaxPerNumber ELSE NULL END
+				FROM dbo.CustBetSetting_Member c WITH(NOLOCK)
+					INNER JOIN #MemberTemp_Batch ci  
+						ON c.CustID = ci.custid
+					INNER JOIN #TempConfig t 
+						ON c.SportType = t.CopyFromSportType 
+						AND c.BetType = t.CopyFromBetType
+				WHERE t.SettingName = 'Bet Setting Game'
+					 AND t.IsDefault = 0
+			END
+		END
 		-----------------------Commission------------------------------------------
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Commission' AND IsDefault = 0)
 		BEGIN

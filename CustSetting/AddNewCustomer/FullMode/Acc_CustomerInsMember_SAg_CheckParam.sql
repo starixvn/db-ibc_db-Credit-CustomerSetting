@@ -65,17 +65,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_SAg_CheckParam]
 
 	@v99spositiontaking_9 smallmoney,
 	@v99spositiontaking_9999 smallmoney,
-	
-	@v161spositiontaking_81 smallmoney,
-	@v161spositiontaking_83 smallmoney,
-	@v161spositiontaking_86 smallmoney,
-	@v161spositiontaking_88 smallmoney,
-	@v161slivepositiontaking_85 smallmoney,
-	@v161slivepositiontaking_86 smallmoney,
-	@v161slivepositiontaking_87 smallmoney,
-	@v161slivepositiontaking_89 smallmoney,
-	@v161slivepositiontaking_90 smallmoney,
-	
+		
 	@groupa decimal(9,8),
 	@groupb decimal(9,8),
 	@groupc decimal(9,8),
@@ -148,17 +138,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_SAg_CheckParam]
 
 	@auto_v99spositiontaking_9 smallmoney = 0,
 	@auto_v99spositiontaking_9999 smallmoney = 0,
-
-	@auto_v161spositiontaking_81 smallmoney = 0,
-	@auto_v161spositiontaking_83 smallmoney = 0,
-	@auto_v161spositiontaking_86 smallmoney = 0,
-	@auto_v161spositiontaking_88 smallmoney = 0,
-	
-	@auto_v161slivepositiontaking_85 smallmoney = 0,
-	@auto_v161slivepositiontaking_86 smallmoney = 0,
-	@auto_v161slivepositiontaking_87 smallmoney = 0,
-	@auto_v161slivepositiontaking_89 smallmoney = 0,
-	@auto_v161slivepositiontaking_90 smallmoney = 0,
 	
 	@mpositiontaking_1 smallmoney = 0.7,
 	@mpositiontaking_2 smallmoney = 0.7,
@@ -222,16 +201,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_SAg_CheckParam]
 
 	@v99mpositiontaking_9 smallmoney = 0.7,
 	@v99mpositiontaking_9999 smallmoney = 0.7,
-
-	@v161mpositiontaking_81 smallmoney = 0.7,
-	@v161mpositiontaking_83 smallmoney = 0.7,
-	@v161mpositiontaking_86 smallmoney = 0.7,
-	@v161mpositiontaking_88 smallmoney = 0.7,	
-	@v161mlivepositiontaking_85 smallmoney = 0.7,
-	@v161mlivepositiontaking_86 smallmoney = 0.7,
-	@v161mlivepositiontaking_87 smallmoney = 0.7,
-	@v161mlivepositiontaking_89 smallmoney = 0.7,
-	@v161mlivepositiontaking_90 smallmoney = 0.7,
 	
 	@isvalid bit OUTPUT,
 	@errmsg nvarchar(4000) OUTPUT,
@@ -285,6 +254,7 @@ Revisions:
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 Param's Explanation:
 • @ErrCode:
     = 0: check valid parameters successfully.
@@ -438,18 +408,7 @@ Param's Explanation:
 		or @v99spositiontaking_3 <0
 		or @v99spositiontaking_9 <0
 		or @v99spositiontaking_20 <0
-		or @v99spositiontaking_9999 <0
-
-		or @v161spositiontaking_81 < 0
-		or @v161spositiontaking_83 < 0
-		or @v161spositiontaking_86 < 0
-		or @v161spositiontaking_88 < 0	
-
-		or @v161slivepositiontaking_85 < 0
-		or @v161slivepositiontaking_86 < 0
-		or @v161slivepositiontaking_87 < 0
-		or @v161slivepositiontaking_89 < 0
-		or @v161slivepositiontaking_90 < 0
+		or @v99spositiontaking_9999 <0		
 
 		or @mpositiontaking_1  <0
 		or @mpositiontaking_2  <0
@@ -513,16 +472,6 @@ Param's Explanation:
 		or @v99mpositiontaking_9 <0
 		or @v99mpositiontaking_20 <0
 		or @v99mpositiontaking_9999 <0
-
-		or @v161mpositiontaking_81 < 0
-		or @v161mpositiontaking_83 < 0
-		or @v161mpositiontaking_86 < 0
-		or @v161mpositiontaking_88 < 0	
-		or @v161mlivepositiontaking_85 < 0
-		or @v161mlivepositiontaking_86 < 0
-		or @v161mlivepositiontaking_87 < 0
-		or @v161mlivepositiontaking_89 < 0
-		or @v161mlivepositiontaking_90 < 0
 		
 		or @spositiontaking_1   	+	@mpositiontaking_1 		> 0.9
 		or @spositiontaking_2   	+	@mpositiontaking_2 		> 0.9
@@ -586,17 +535,6 @@ Param's Explanation:
 		or @v99spositiontaking_9  	+	@v99mpositiontaking_9 		> 0.9
 		or @v99spositiontaking_20  	+	@v99mpositiontaking_20 		> 0.9
 		or @v99spositiontaking_9999  	+	@v99mpositiontaking_9999 		> 0.9
-
-		or @v161spositiontaking_81  +   @v161mpositiontaking_81		> 0.9
-		or @v161spositiontaking_83  +   @v161mpositiontaking_83		> 0.9
-		or @v161spositiontaking_86  +   @v161mpositiontaking_86		> 0.9
-		or @v161spositiontaking_88  +   @v161mpositiontaking_88		> 0.9
-
-		or @v161slivepositiontaking_85 + @v161mlivepositiontaking_85 > 0.9
-		or @v161slivepositiontaking_86 + @v161mlivepositiontaking_86 > 0.9
-		or @v161slivepositiontaking_87 + @v161mlivepositiontaking_87 > 0.9
-		or @v161slivepositiontaking_89 + @v161mlivepositiontaking_89 > 0.9
-		or @v161slivepositiontaking_90 + @v161mlivepositiontaking_90 > 0.9
 		
 		or @auto_spositiontaking_1 < 0 
 		or @auto_spositiontaking_2 < 0 
@@ -658,18 +596,7 @@ Param's Explanation:
 		or @auto_v99spositiontaking_3 < 0 
 		or @auto_v99spositiontaking_9 < 0 
 		or @auto_v99spositiontaking_20 < 0 
-		or @auto_v99spositiontaking_9999 < 0 
-
-		or @auto_v161spositiontaking_81 < 0
-		or @auto_v161spositiontaking_83 < 0
-		or @auto_v161spositiontaking_86 < 0
-		or @auto_v161spositiontaking_88 < 0
-		
-		or @auto_v161slivepositiontaking_85 < 0
-		or @auto_v161slivepositiontaking_86 < 0	
-		or @auto_v161slivepositiontaking_87 < 0
-		or @auto_v161slivepositiontaking_89 < 0
-		or @auto_v161slivepositiontaking_90 < 0
+		or @auto_v99spositiontaking_9999 < 0 	
 
 		or @auto_spositiontaking_1 >0.9 
 		or @auto_spositiontaking_2 >0.9 
@@ -731,19 +658,7 @@ Param's Explanation:
 		or @auto_v99spositiontaking_3 >0.9 
 		or @auto_v99spositiontaking_9 >0.9
 		or @auto_v99spositiontaking_20 >0.9 
-		or @auto_v99spositiontaking_9999 >0.9 
-
-		or @auto_v161spositiontaking_81 > 0.9
-		or @auto_v161spositiontaking_83 > 0.9
-		or @auto_v161spositiontaking_86 > 0.9
-		or @auto_v161spositiontaking_88 > 0.9
-		
-		or @auto_v161slivepositiontaking_85 > 0.9
-		or @auto_v161slivepositiontaking_86 > 0.9
-		or @auto_v161slivepositiontaking_87 > 0.9
-		or @auto_v161slivepositiontaking_89 > 0.9
-		or @auto_v161slivepositiontaking_90 > 0.9
-		
+		or @auto_v99spositiontaking_9999 >0.9 		
 	BEGIN
 		select @isvalid = 0, @ErrCode = 3
 		Select @ErrMsg = 	case @Language 
@@ -841,48 +756,7 @@ Param's Explanation:
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](20002,@Language)
 					end
 		return
-	END
-		-------- for third-party  --- number game
-		--check if(!i3)
-		--			n4<=s3+m3<=l4
-		--		else u3+m3>=n4 and m3<=l4
-		select @ErrType = ''
-		select @ErrType = @ErrType + sports.name + '-'+ bettype.name + '-Min: '+ cast((co.minpositiontaking) as varchar(10))+ '-Max: '+ cast((co.maxpositiontaking) as varchar(10))
-		+ case when b.sporttype = 161 and b.bettype in (85,86,87,89,90) then '--MinLive: '+ cast((co.minlivepositiontaking) as varchar(10))+ '-MaxLive: '+ cast((co.maxlivepositiontaking) as varchar(10)) else '' end + '<br>'
-		from custoverride3rd as co with (NOLOCK) inner join
-		(
-						select 81 as bettype, 161 as sporttype, @v161spositiontaking_81 as spositiontaking, 0 as slivepositiontaking, @v161mpositiontaking_81 as mpositiontaking, 0 as mlivepositiontaking, @auto_v161spositiontaking_81 as auto_spositiontaking, 0 as auto_slivepositiontaking
-			union all   select 83 as bettype, 161 as sporttype, @v161spositiontaking_83 as spositiontaking, 0 as slivepositiontaking, @v161mpositiontaking_83 as mpositiontaking, 0 as mlivepositiontaking, @auto_v161spositiontaking_83 as auto_spositiontaking, 0 as auto_slivepositiontaking
-			union all   select 88 as bettype, 161 as sporttype, @v161spositiontaking_88 as spositiontaking, 0 as slivepositiontaking, @v161mpositiontaking_88 as mpositiontaking, 0 as mlivepositiontaking, @auto_v161spositiontaking_88 as auto_spositiontaking, 0 as auto_slivepositiontaking
-			union all   select 85 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_85 as slivepositiontaking, 0 as mpositiontaking, @v161mlivepositiontaking_85 as mlivepositiontaking, 0 as auto_spositiontaking, @auto_v161slivepositiontaking_85 as auto_slivepositiontaking
-			union all   select 86 as bettype, 161 as sporttype, @v161spositiontaking_86 as spositiontaking, @v161slivepositiontaking_86 as slivepositiontaking, @v161mpositiontaking_86 as mpositiontaking, @v161mlivepositiontaking_86 as mlivepositiontaking, @auto_v161spositiontaking_86 as auto_spositiontaking, @auto_v161slivepositiontaking_86 as auto_slivepositiontaking
-			union all   select 87 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_87 as slivepositiontaking, 0 as mpositiontaking, @v161mlivepositiontaking_87 as mlivepositiontaking, 0 as auto_spositiontaking, @auto_v161slivepositiontaking_87 as auto_slivepositiontaking
-			union all   select 89 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_89 as slivepositiontaking, 0 as mpositiontaking, @v161mlivepositiontaking_89 as mlivepositiontaking, 0 as auto_spositiontaking, @auto_v161slivepositiontaking_89 as auto_slivepositiontaking
-			union all   select 90 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_90 as slivepositiontaking, 0 as mpositiontaking, @v161mlivepositiontaking_90 as mlivepositiontaking, 0 as auto_spositiontaking, @auto_v161slivepositiontaking_90 as auto_slivepositiontaking
-		) as b on co.sporttype=b.sporttype and co.bettype = b.bettype
-		inner join #tmp_Sports sports on b.sporttype = sports.ID
-		inner join #tmp_Bettype bettype on b.bettype = bettype.ID
-	where co.custid = @srecommend 
-		and (
-				((b.auto_spositiontaking=0) and (b.spositiontaking+b.mpositiontaking>co.maxpositiontaking or b.spositiontaking+b.mpositiontaking<co.minpositiontaking)) or 
-				((b.sporttype = 161 and b.bettype in (85,86,87,89,90) and b.auto_slivepositiontaking=0) and (b.slivepositiontaking+b.mlivepositiontaking>co.maxlivepositiontaking or b.slivepositiontaking+b.mlivepositiontaking<co.minlivepositiontaking)) or
-
-				((b.auto_spositiontaking>0) and (b.mpositiontaking>co.maxpositiontaking)) or 
-				((b.sporttype = 161 and b.bettype in (85,86,87,89,90) and b.auto_slivepositiontaking>0) and (b.mlivepositiontaking>co.maxlivepositiontaking)) or
-				
-				((b.auto_spositiontaking>0) and (b.mpositiontaking + b.auto_spositiontaking<co.minpositiontaking)) or 
-				((b.sporttype = 161 and b.bettype in (85,86,87,89,90) and b.auto_slivepositiontaking>0) and (b.mlivepositiontaking + b.auto_slivepositiontaking<co.minlivepositiontaking))
-			)
-
-	if @ErrType <>''
-	BEGIN
-		select @isvalid = 0, @ErrCode = 4
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong position taking (min/max set by company).' + '<br>' + @ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20002,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
+	END		
 
 		--check m3<=m4
 		select @ErrType = ''
@@ -964,40 +838,7 @@ Param's Explanation:
 					end
 		return
 	END
-		
-		-- for third-party  --- Number game
-		--check m3<=m4
-		select @ErrType = ''
-		select @ErrType = @ErrType + sports.name + '-' + bettype.name + '-Max:'+ cast((scs.mpositiontaking) as varchar(10))
-		+ case when b.sporttype = 161 and b.bettype in (85,86,87,89,90) then '--Live:'+ cast((scs.mlivepositiontaking) as varchar(10)) else '' end + '<br>'
-		from custsetting3rd as scs with (NOLOCK) inner join
-		(
-						select 81 as bettype, 161 as sporttype, @v161spositiontaking_81 as spositiontaking, 0 as slivepositiontaking, @v161mpositiontaking_81 as mpositiontaking, 0 as mlivepositiontaking, @auto_v161spositiontaking_81 as auto_spositiontaking, 0 as auto_slivepositiontaking
-			union all   select 83 as bettype, 161 as sporttype, @v161spositiontaking_83 as spositiontaking, 0 as slivepositiontaking, @v161mpositiontaking_83 as mpositiontaking, 0 as mlivepositiontaking, @auto_v161spositiontaking_83 as auto_spositiontaking, 0 as auto_slivepositiontaking
-			union all   select 88 as bettype, 161 as sporttype, @v161spositiontaking_88 as spositiontaking, 0 as slivepositiontaking, @v161mpositiontaking_88 as mpositiontaking, 0 as mlivepositiontaking, @auto_v161spositiontaking_88 as auto_spositiontaking, 0 as auto_slivepositiontaking
-			union all   select 85 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_85 as slivepositiontaking, 0 as mpositiontaking, @v161mlivepositiontaking_85 as mlivepositiontaking, 0 as auto_spositiontaking, @auto_v161slivepositiontaking_85 as auto_slivepositiontaking
-			union all   select 86 as bettype, 161 as sporttype, @v161spositiontaking_86 as spositiontaking, @v161slivepositiontaking_86 as slivepositiontaking, @v161mpositiontaking_86 as mpositiontaking, @v161mlivepositiontaking_86 as mlivepositiontaking, @auto_v161spositiontaking_86 as auto_spositiontaking, @auto_v161slivepositiontaking_86 as auto_slivepositiontaking
-			union all   select 87 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_87 as slivepositiontaking, 0 as mpositiontaking, @v161mlivepositiontaking_87 as mlivepositiontaking, 0 as auto_spositiontaking, @auto_v161slivepositiontaking_87 as auto_slivepositiontaking
-			union all   select 89 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_89 as slivepositiontaking, 0 as mpositiontaking, @v161mlivepositiontaking_89 as mlivepositiontaking, 0 as auto_spositiontaking, @auto_v161slivepositiontaking_89 as auto_slivepositiontaking
-			union all   select 90 as bettype, 161 as sporttype, 0 as spositiontaking, @v161slivepositiontaking_90 as slivepositiontaking, 0 as mpositiontaking, @v161mlivepositiontaking_90 as mlivepositiontaking, 0 as auto_spositiontaking, @auto_v161slivepositiontaking_90 as auto_slivepositiontaking
 				
-		) as b on scs.sporttype=b.sporttype and scs.bettype = b.bettype
-		inner join #tmp_Sports sports on b.sporttype = sports.ID
-		inner join #tmp_Bettype bettype on b.bettype = bettype.ID
-	where scs.custid = @srecommend and (
-						scs.mpositiontaking<b.mpositiontaking or (b.sporttype = 161 and b.bettype in (85,86,87,89,90) and scs.mlivepositiontaking<b.mlivepositiontaking)
-						)
-
-	if @ErrType <>''
-	BEGIN
-		select @isvalid = 0, @ErrCode = 5
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong position taking (max for master set by company).' + '<br>' + @ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20003,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
-		
 	DROP TABLE #tmp_Sports
 	DROP TABLE #tmp_Bettype
 	return

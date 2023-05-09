@@ -82,9 +82,11 @@ AS
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220823@Johnson: Copy Date Limit range and  Auto Transfer Type for real currency 789y [redmine:#176778] 
 	- 20221013@Eden: Remove unused columns from Custinfo table [RedmineID: #179014]
+	- 20221017@Tacy: NAP - Prevent search & copy Super cross site [redmineID: #179019]
 	- 20221122@Johnson: move sp Age_MsgCustReadStatus_Ins to web [RedmineID: #180730]
 	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230302@Johnson: Return Basketball VR to its original state [redmine:#184339]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -101,15 +103,20 @@ BEGIN
 			,@duration INT
 			,@srecommend INT	
 			,@CreditRM MONEY
+			,@source_SiteLabel VARCHAR(50),@_Site VARCHAR(10)
+
 	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME	
 	SET @CreateDate = GETDATE()	
 
-	-- Check role of existing super
+	-- Check role of existing super and get source site
 	DECLARE @existingUsername VARCHAR(30),@roleid tinyint, @Enabled BIT, @currency INT
 		
-	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @Enabled = ISNULL(Enabled, 0), @currency = currency
-	FROM dbo.CustInfo WITH(NOLOCK) 
-	WHERE custid = @ExistingCustid
+	SELECT @existingUsername =  ISNULL(ci.username,''), @roleid = ISNULL(ci.roleid,0), @Enabled = ISNULL(ci.Enabled, 0)
+		, @currency = ci.currency, @source_SiteLabel=s.SiteLabel, @_Site = c.site
+	FROM dbo.CustInfo ci WITH(NOLOCK) 
+		INNER JOIN Customer c WITH(NOLOCK) ON ci.custid=c.custid
+		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
+	WHERE ci.custid = @ExistingCustid
 	
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
 	DECLARE @SiteID int, @SiteLabel varchar(50), @EnableVR BIT
@@ -160,9 +167,47 @@ BEGIN
 		RETURN
 	END
 	------------------------------END----------------------------------------
+	--Check Inactive site:
+	IF EXISTS (SELECT 1 FROM Site WITH (NOLOCK) WHERE site=@_Site AND isActive=0)
+	BEGIN
+		SELECT	@ErrMsg='Cannot copy Super because Source super''s site is inactive',
+				@ErrCode=98
+		RETURN
+
+	END
+
+	-- For Myanmar Odds
+	DECLARE @IsMyanmarOdds_destination BIT = 0
+	DECLARE @IsMyanmarOdds_source BIT = 0
+	
+	SET @IsMyanmarOdds_destination = dbo.fn_IsMyanmarOddsBySite(@Site)
+	
+	SET @IsMyanmarOdds_source = dbo.fn_IsMyanmarOdds (@ExistingCustid)
+		
+	IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source and @IsMyanmarOdds_source = 1
+	BEGIN
+		SELECT @ErrMsg = 'Cannot copy Super from Myanmar Odds site(s) to ' + @Site +'.',@ErrCode = 200								
+		RETURN		
+	END	
+
+	IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source and @IsMyanmarOdds_destination = 1
+	BEGIN
+		SELECT @ErrMsg = 'Cannot copy Super from ' + @_Site +' to Myanmar Odds site(s).',@ErrCode = 201								
+		RETURN		
+	END
+
+	--Check cross-site:
+	IF ( @source_SiteLabel IN ('789y','Nova88','IBC') OR @SiteLabel IN ('789y','Nova88','IBC') )
+		AND @SiteLabel<>@source_SiteLabel
+	BEGIN
+		SELECT	@ErrMsg='Cannot copy Super from ' + @_Site + ' (' + @source_SiteLabel + ') to ' + @Site + ' (' + @SiteLabel + ')',
+				@ErrCode=99
+		RETURN
+	END
 
 	DECLARE @IsExists BIT 
 	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
+
 
 	IF @IsExists = 1
 	BEGIN		
@@ -189,38 +234,12 @@ BEGIN
 	END
 	
 	--Not allow to create a IMBC customer from MBC customer and and vice versa
-	DECLARE @_Site VARCHAR(10),@_SiteLabel VARCHAR(50)
-
-	SELECT @_Site = c.site, @_SiteLabel=s.SiteLabel
-	FROM dbo.Customer c WITH(NOLOCK)
-	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
-	WHERE CustID = @ExistingCustid
-	
 	IF (@_Site = 'IMBC' OR @Site = 'IMBC') AND @_Site <> @Site
 	BEGIN
 		SELECT @ErrMsg = 'Not allow to copy IMBC super setting to others and vice versa!',@ErrCode = 204								
 		RETURN	
 	END
 	
--- For Myanmar Odds
-	DECLARE @IsMyanmarOdds_destination BIT = 0
-	DECLARE @IsMyanmarOdds_source BIT = 0
-	
-	SET @IsMyanmarOdds_destination = dbo.fn_IsMyanmarOddsBySite(@Site)
-	
-	SET @IsMyanmarOdds_source = dbo.fn_IsMyanmarOdds (@ExistingCustid)
-		
-	IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source and @IsMyanmarOdds_source = 1
-	BEGIN
-		SELECT @ErrMsg = 'Cannot copy Super from Myanmar Odds site(s) to ' + @Site +'.',@ErrCode = 200								
-		RETURN		
-	END	
-
-	IF @IsMyanmarOdds_destination <> @IsMyanmarOdds_source and @IsMyanmarOdds_destination = 1
-	BEGIN
-		SELECT @ErrMsg = 'Cannot copy Super from ' + @_Site +' to Myanmar Odds site(s).',@ErrCode = 201								
-		RETURN		
-	END
 	
 	IF @roleid <> 4
 	BEGIN		
@@ -398,9 +417,7 @@ BEGIN
 				,VirtualMultiplier
 				,Enabled   							
 				,DisableOutright				
-				,DisableNumber			
 				,DoubleCommLosing	
-				,HideKeno
 				,DisableSuperLive
 				)
 		 SELECT
@@ -418,9 +435,7 @@ BEGIN
 				,@EnableVR AS VirtualMultiplier
 				,Enabled  						
 				,DisableOutright				
-				,DisableNumber	
 				,doubleCommLosing		
-				,HideKeno
 				,DisableSuperLive		
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
@@ -512,13 +527,7 @@ BEGIN
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-		
-		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									 
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 							
 		RETURN	
 	END CATCH
@@ -542,13 +551,8 @@ BEGIN
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
-		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									 
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		RETURN	
 	END CATCH		
@@ -612,13 +616,8 @@ BEGIN
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
-		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									   
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @Custid
 		
@@ -668,13 +667,8 @@ BEGIN
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 		
-		DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		DELETE FROM Custoverridegame WITH (ROWLOCK) WHERE CustID = @CustID									 
-		DELETE FROM CustGameType WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
@@ -688,7 +682,7 @@ BEGIN
 			@NoLimitText VARCHAR(100) = 'No Limit',
 			@IsLogDateLimit BIT = 0
 	
-	IF @_SiteLabel = '789y' AND @SiteLabel = '789y' AND @Currency <> 20
+	IF @source_SiteLabel = '789y' AND @SiteLabel = '789y' AND @Currency <> 20
 	BEGIN			
 		--auto transfer 
 		SELECT @transferType = TransferType,

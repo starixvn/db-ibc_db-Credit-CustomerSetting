@@ -44,6 +44,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20220808@Tacy: Resolve replication errors when using Search & Copy New member function [RedmineID: #176225]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230310@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 	
@@ -1544,6 +1545,96 @@ BEGIN
 			DELETE FROM	#TempWLLimit22 WHERE ProductID=@ProductID22
 		END
 			
+	END
+
+	/********************************************* Bet Limit : SettingType = 23 ****************************************/
+	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,23,@SettingStatus))
+	BEGIN
+		DECLARE @ProductID23 INT
+		CREATE TABLE #TempBetlimit23 (ProductID INT)
+		DECLARE @NewBetLimitTbl23 TABLE (
+			SportType			SMALLINT
+			, BetType			SMALLINT
+			, MinBet			MONEY
+			, MaxBet			MONEY
+			, MaxPerMatch		MONEY
+			, MaxPerNumber		MONEY
+			)
+
+		INSERT INTO @NewBetLimitTbl23(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber)
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.MinBet
+			, bl.MaxBet
+			, bl.MaxPerMatch
+			, NULL AS MaxPerNumber
+		FROM dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,23,@SettingStatus) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
+		WHERE bl.custid = @ExistingCustID
+			AND SubType = 1
+
+		INSERT INTO @NewBetLimitTbl23(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber)
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.MinBet
+			, bl.MaxBet
+			, bl.MaxPerMatch
+			, bl.MaxPerNumber
+		FROM dbo.CustBetSetting_Member bl WITH (NOLOCK)
+			INNER JOIN dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,23,@SettingStatus) fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType		
+		WHERE bl.custid = @ExistingCustID
+			AND SubType = 2
+		
+		INSERT INTO #TempBetlimit23(ProductID)	
+		SELECT 
+				DISTINCT
+				psd.ProductID				
+		FROM	#ProductSettingDetail_tbl AS psd WITH(NOLOCK)
+		INNER JOIN	@NewBetLimitTbl23 AS ts
+				ON	ts.SportType = psd.SportType
+				AND	ts.BetType = psd.BetType
+		WHERE	psd.SettingType =23
+			AND psd.ProductID IS NOT NULL
+			AND	psd.SettingLevel IS NOT NULL
+			
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempBetlimit23)
+		BEGIN
+		SELECT TOP 1 @ProductID23=ProductID FROM #TempBetlimit23		
+		SET @xmlBetLimit = (SELECT (
+									SELECT nslt.SportType	AS '@SportType'
+										, nslt.BetType		AS '@BetType'
+										, MinBet		AS '@MinBet'
+										, MaxBet		AS '@MaxBet'
+										, MaxPerMatch	AS '@MaxPerMatch'
+										, MaxPerNumber	AS '@MaxPerNumber'
+									FROM @NewBetLimitTbl23 nslt
+									INNER JOIN #ProductSettingDetail_tbl AS psd WITH(NOLOCK) ON nslt.BetType=psd.BetType AND nslt.SportType=psd.SportType
+										WHERE psd.SettingType=23 AND psd.ProductID=@ProductID23
+									FOR XML PATH('BetLimit')
+										, TYPE
+									)
+							FOR XML PATH('ROOT')
+								, TYPE
+							)
+	
+		SELECT @xmlStr = CONVERT(VARCHAR(MAX),@xmlBetLimit)
+
+		IF EXISTS(SELECT TOP 1 1 FROM @NewBetLimitTbl23)
+		BEGIN
+			EXEC Acc_CustSetting_BetSetting23Upd 
+				  @CustID = @CustID
+				, @BetLimit = @xmlStr
+				, @SubAccID = @SubAccID
+				, @IP = @IP
+				, @UserID = @UserID
+				, @SystemID = @SystemID --20200305@Tiara
+				, @isSearchAndCopy=@isSearchAndCopy
+				, @ErrCode = @ErrCode OUTPUT
+				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
+		END
+		DELETE FROM	#TempBetlimit23 WHERE ProductID=@ProductID23
+		END
 	END
 
 	DROP TABLE #ProductSettingDetail_tbl

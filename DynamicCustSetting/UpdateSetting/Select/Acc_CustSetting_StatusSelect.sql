@@ -19,6 +19,7 @@ AS
 	- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20221207@Tacy: Alpha - API Management - Support data through API [RedmineID: #171247]
+	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
  
@@ -58,6 +59,8 @@ BEGIN
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder, RealProductID
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
 	WHERE @SettingType IS NULL OR @SettingType = 21
+
+	DELETE FROM #SportBettypeFilter WHERE SportType = 161 --not show NG Status
 
 	IF @RoleID = 4  
 	BEGIN  

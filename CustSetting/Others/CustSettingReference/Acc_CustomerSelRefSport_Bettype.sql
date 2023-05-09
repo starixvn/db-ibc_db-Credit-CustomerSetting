@@ -35,6 +35,7 @@ AS
 		- 20211112@Johnson: rollback code for revision 20201209@winfred [redmine:#163077]
 		- 20220822@Tacy: hardcode show PT setting info for bettype: 3915, 3900 [RedmineID: #173861]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 	Param's Explanation: 
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -45,10 +46,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON 
-	DECLARE	 @HideKeno				BIT = 0 
-			,@DisableKeno			INT = 0 
-			,@DisableNumber			BIT = 0 
-			,@HideNG2				BIT = 0 
+	DECLARE	 @HideNG2				BIT = 0 
 			--,@HideVS				BIT = 0 
 			--,@HideLottery			BIT = 0
 			,@IsMyanmarOdds			BIT = 0	   -- MyanmarOdds
@@ -80,19 +78,7 @@ BEGIN
 			SELECT @isIMBC = 1
 	
 	IF @RoleID BETWEEN 2 AND 4 
-	BEGIN
-			SELECT	 @HideKeno			 = ci.HideKeno
-					,@DisableNumber		 = ci.DisableNumber
-					,@srecommend		 = ci.srecommend
-			FROM	CustDB.dbo.CustInfo ci WITH (NOLOCK) 
-			WHERE	ci.CustID = @CustID
-
-			SELECT	@DisableKeno = MIN(CAST(cg.IsDisabled AS INT))
-			FROM	DBCUST.CustDB.dbo.CustGameType cg WITH (NOLOCK) 
-					INNER JOIN dbo.GameType g WITH (NOLOCK) ON cg.GameTypeID = g.GameTypeID 
-			WHERE	cg.CustID = @CustID
-					AND g.IsDisabled = 0
-			
+	BEGIN	
 			-- MyanmarOdds
 			SET @IsMyanmarOdds = CustDB.dbo.fn_IsMyanmarOdds(@srecommend)
 			
@@ -122,11 +108,10 @@ BEGIN
 		SELECT	Sporttype, Bettype, SporttypeRef, BettypeRef ,ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
 		FROM	dbo.Sport_Bettype_Reference WITH (NOLOCK)
 		WHERE	Sporttype NOT IN (
-					 --CASE WHEN @DisableNumber = 1 THEN 161 ELSE 0 END					--Number Game
-					CASE WHEN @HideKeno = 1 OR @DisableKeno = 1 THEN 202 ELSE 0 END	--Keno 
-					,CASE WHEN @IsMyanmarOdds = 0 AND Bettype IN (1,3,7,8) THEN 1 ELSE 0 END -- MyanmarOdds
+					 CASE WHEN @IsMyanmarOdds = 0 AND Bettype IN (1,3,7,8) THEN 1 ELSE 0 END -- MyanmarOdds
 					,27, 50 -- Cricket
 					,220 --Lottery
+					,161,164,202
 				)
 				AND bettype NOT IN(SELECT Bettype FROM #tempRef)
 				AND isLicensee = 0 
@@ -158,16 +143,10 @@ BEGIN
 						OR b.SportType BETWEEN 213 AND 218 --NG2
 						--OR (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) --Virtual Sport
 						--OR b.SportType = 220 -- Lottery
-						OR b.sportType = 164--Happy 5
-						OR b.sportType = 168--Happy 5 linked games
-						OR b.SportType = 202 --Keno
-						OR b.SportType = 161 -- Number Game
 						) 
-				AND 1 = CASE WHEN @DisableNumber = 1 AND b.SportType = 161 THEN 0 ELSE 1 END
 				AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
 				--AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
 				--AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
-				AND 1 = CASE WHEN (@HideKeno = 1 OR @DisableKeno = 1) AND b.SportType = 202 THEN 0 ELSE 1 END
 				AND b.Site <> 'CN88'
 	)
 	SELECT Sporttype 

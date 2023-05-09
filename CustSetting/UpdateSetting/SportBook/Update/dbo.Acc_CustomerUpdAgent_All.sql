@@ -56,18 +56,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	-- soccer sports
 	@MinBetv1MP money,
 	@MaxBetv1MP money,
-	@MaxPerMatchv1MP money,	
-	
-	-- number game
-	@MinBetv161 money,
-	@MaxBetv161 money,
-	@MaxPerMatchv161 money,
-	
-	@MaxPerBallv161 money = 0,
-	
-	@MinBetv164 money=0,
-	@MaxBetv164 money=0,
-	@MaxPerMatchv164 money=0,
+	@MaxPerMatchv1MP money,		
 
 	--Max Payout Per Match
 	@maxPOpermatch money = NULL,
@@ -174,19 +163,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	-- mixed sports
 	@v99apositiontaking_9 smallmoney,
 	
-	--- number game
-	@v161apositiontaking_81 smallmoney,
-	@v161apositiontaking_83 smallmoney,
-	--@v161apositiontaking_85 smallmoney,
-	@v161apositiontaking_86 smallmoney,
-	@v161apositiontaking_88 smallmoney = 0,
-	
-	@v161alivepositiontaking_85 smallmoney,
-	@v161alivepositiontaking_86 smallmoney,
-	@v161alivepositiontaking_87 smallmoney,
-	@v161alivepositiontaking_89 smallmoney = 0,
-	@v161alivepositiontaking_90 smallmoney = 0,
-	
 	@v2mpositiontaking_1 smallmoney,
 	@v2mpositiontaking_2 smallmoney,
 	@v2mpositiontaking_3 smallmoney,
@@ -226,21 +202,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@v99mpositiontaking_9999 smallmoney,
 	-- mixed sports
 	@v99mpositiontaking_9 smallmoney,
-
-	-- number game
-	@v161mpositiontaking_81 smallmoney,
-	@v161mpositiontaking_83 smallmoney,
-	--@v161mpositiontaking_85 smallmoney,
-	@v161mpositiontaking_86 smallmoney,
-	@v161mpositiontaking_88 smallmoney = 0,
-	
-	@v161mlivepositiontaking_85 smallmoney,
-	@v161mlivepositiontaking_86 smallmoney,
-	@v161mlivepositiontaking_87 smallmoney,
-	@v161mlivepositiontaking_89 smallmoney = 0,
-	@v161mlivepositiontaking_90 smallmoney = 0,
-
-	
+		
 	--Auto Master PT
 	@auto_mpositiontaking_1 smallmoney = 0,
 	@auto_mpositiontaking_2 smallmoney = 0,
@@ -296,21 +258,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@auto_v99mpositiontaking_20 smallmoney = 0,	
 	@auto_v99mpositiontaking_9999 smallmoney = 0,	
 	-- mixed sports
-	@auto_v99mpositiontaking_9 smallmoney = 0,
-
-	-- number game
-	@auto_v161mpositiontaking_81 smallmoney = 0,
-	@auto_v161mpositiontaking_83 smallmoney = 0,
-	--@auto_v161mpositiontaking_85 smallmoney = 0,
-	@auto_v161mpositiontaking_86 smallmoney = 0,
-	@auto_v161mpositiontaking_88 smallmoney = 0,
-	
-	@auto_v161mlivepositiontaking_85 smallmoney = 0,
-	@auto_v161mlivepositiontaking_86 smallmoney = 0,
-	@auto_v161mlivepositiontaking_87 smallmoney = 0,
-	@auto_v161mlivepositiontaking_89 smallmoney = 0,
-	@auto_v161mlivepositiontaking_90 smallmoney = 0,
-	
+	@auto_v99mpositiontaking_9 smallmoney = 0,	
 	
 	@isauto_mpositiontaking_1 bit = 0,
 	@isauto_mpositiontaking_2 bit = 0,
@@ -367,20 +315,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@isauto_v99mpositiontaking_9999 bit = 0,	
 	-- mixed sports
 	@isauto_v99mpositiontaking_9 bit = 0,
-
-	-- number game
-	@isauto_v161mpositiontaking_81 bit = 0,
-	@isauto_v161mpositiontaking_83 bit = 0,
-	--@isauto_v161mpositiontaking_85 bit = 0,
-	@isauto_v161mpositiontaking_86 bit = 0,
-	@isauto_v161mpositiontaking_88 bit = 0,
-	
-	@isauto_v161mlivepositiontaking_85 bit = 0,
-	@isauto_v161mlivepositiontaking_86 bit = 0,
-	@isauto_v161mlivepositiontaking_87 bit = 0,
-	@isauto_v161mlivepositiontaking_89 bit = 0,
-	@isauto_v161mlivepositiontaking_90 bit = 0,
-	
+		
 	@UpdateCommission bit = 1,
 	@UpdateMinMaxBet bit = 1,
 	@UpdateMinMaxBetv2 bit = 1,
@@ -395,10 +330,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@UpdateMinMaxBetv99MP bit = 1,
 	
 	@UpdateMinMaxBetMP bit = 1,
-
-	-- number game
-	@UpdateMinMaxBetv161 bit = 1,
-	@UpdateMinMaxBetv164 bit = 1,
 	
 	@UpdatePositiontaking bit = 1,
 	@UpdatePositiontakingv2 bit = 1,
@@ -444,9 +375,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	--mixed sports
 	@UpdatePositiontakingv99MP bit = 1, 
 
-	-- number game
-	@UpdatePositiontakingv161 bit = 1,
-	
 	@updateallmembers bit = 0,
 	@newmpositiontaking smallmoney = 0,--equals max(m+a) - chosen(a)
 	
@@ -514,7 +442,7 @@ Revisions:
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20230405@Eden: Change @UpdateMinMaxBetv1saba to @UpdateMinMaxBetsaba [RedmineID: #164280]
-
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 Param's Explanation:
 • @ErrCode:
     = 0: Update Agent successfully.
@@ -706,9 +634,7 @@ BEGIN
 			,@UpdateMinMaxBetv11 = 1
 			,@UpdateMinMaxBetv99 = 1
 			,@UpdateMinMaxBetv99MP = 1
-			,@UpdateMinMaxBetMP = 1
-			,@UpdateMinMaxBetv161 = 1
-			,@UpdateMinMaxBetv164 = 1
+			,@UpdateMinMaxBetMP = 1			
 			,@UpdateMinMaxBetsaba = 1
 			,@UpdateMinMaxBetv2saba = 1
 	END
@@ -723,9 +649,7 @@ BEGIN
 		@UpdateMinMaxBetv11  = 1 or
 		@UpdateMinMaxBetv99  = 1 or
 		@UpdateMinMaxBetv99MP = 1 or
-		@UpdateMinMaxBetMP = 1 or		
-		@UpdateMinMaxBetv161 = 1 or
-		@UpdateMinMaxBetv164 = 1 OR
+		@UpdateMinMaxBetMP = 1 or				
 		@UpdateMinMaxBetsaba = 1 OR
 		@UpdateMinMaxBetv2saba = 1		
 	BEGIN
@@ -767,17 +691,7 @@ BEGIN
 			@minbetv1mp = @minbetv1mp,
 			@maxbetv1mp = @maxbetv1mp,
 			@maxpermatchv1mp = @maxpermatchv1mp,			
-		
-			--number game
-			@minbetv161 = @minbetv161,
-			@maxbetv161 = @maxbetv161,
-			@maxpermatchv161 = @maxpermatchv161,
-		
-			@MaxPerBallv161 = @MaxPerBallv161,
-			
-			@minbetv164 = @minbetv164,
-			@maxbetv164 = @maxbetv164,
-			@maxpermatchv164 = @maxpermatchv164,
+					
 			--MaxPayOutPerMatch
 		    @maxPOpermatch      = @maxPOpermatch,
 		    @maxPOpermatchv2    = @maxPOpermatchv2,    
@@ -801,9 +715,7 @@ BEGIN
 			@UpdateMinMaxBetv99 = @UpdateMinMaxBetv99,
 			@UpdateMinMaxBetv99MP = @UpdateMinMaxBetv99MP,
 			@UpdateMinMaxBetMP = @UpdateMinMaxBetMP,			
-			@UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,
-			@UpdateMinMaxBetv164 = @UpdateMinMaxBetv164,
-
+			
 			--Saba
 		    @minbetv1saba              	= @minbetv1saba,
 		    @maxbetv1saba              	= @maxbetv1saba,
@@ -847,8 +759,7 @@ BEGIN
 		@UpdatePositiontakingv10   = 1  or
 		@UpdatePositiontakingv11   = 1  or
 		@UpdatePositiontakingv99   = 1  or
-		@UpdatePositiontakingv99MP = 1 or		
-		@UpdatePositiontakingv161 = 1
+		@UpdatePositiontakingv99MP = 1 
 	BEGIN	
 		Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''
 		--Check Old_PT <> New_PT
@@ -924,20 +835,7 @@ BEGIN
 			@v99apositiontaking_9999_old smallmoney,
 			-- mixed sports
 			@v99apositiontaking_9_old smallmoney,
-			
-			-- number game
-			@v161apositiontaking_81_old smallmoney,
-			@v161apositiontaking_83_old smallmoney,
-			--@v161apositiontaking_85_old smallmoney,
-			@v161apositiontaking_86_old smallmoney,
-			@v161apositiontaking_88_old smallmoney,
-			
-			@v161alivepositiontaking_85_old smallmoney,
-			@v161alivepositiontaking_86_old smallmoney,
-			@v161alivepositiontaking_87_old smallmoney,
-			@v161alivepositiontaking_89_old smallmoney,
-			@v161alivepositiontaking_90_old smallmoney,
-			
+						
 			@v2mpositiontaking_1_old smallmoney,
 			@v2mpositiontaking_2_old smallmoney,
 			@v2mpositiontaking_3_old smallmoney,
@@ -978,20 +876,7 @@ BEGIN
 			@v99mpositiontaking_9999_old smallmoney,
 			--- mixed sports
 			@v99mpositiontaking_9_old smallmoney,
-		
-			-- number game
-			@v161mpositiontaking_81_old smallmoney,
-			@v161mpositiontaking_83_old smallmoney,
-			--@v161mpositiontaking_85_old smallmoney,
-			@v161mpositiontaking_86_old smallmoney,
-			@v161mpositiontaking_88_old smallmoney,
-			
-			@v161mlivepositiontaking_85_old smallmoney,
-			@v161mlivepositiontaking_86_old smallmoney,
-			@v161mlivepositiontaking_87_old smallmoney,
-			@v161mlivepositiontaking_89_old smallmoney,
-			@v161mlivepositiontaking_90_old smallmoney,
-			
+					
 			--Auto Master PT
 			@auto_mpositiontaking_1_old smallmoney ,
 			@auto_mpositiontaking_2_old smallmoney ,
@@ -1049,19 +934,6 @@ BEGIN
 			-- mixed sports
 			@auto_v99mpositiontaking_9_old smallmoney ,
 			
-			-- number game
-			@auto_v161mpositiontaking_81_old smallmoney ,
-			@auto_v161mpositiontaking_83_old smallmoney ,
-			--@auto_v161mpositiontaking_85_old smallmoney ,
-			@auto_v161mpositiontaking_86_old smallmoney ,
-			@auto_v161mpositiontaking_88_old smallmoney ,
-			
-			@auto_v161mlivepositiontaking_85_old smallmoney ,
-			@auto_v161mlivepositiontaking_86_old smallmoney ,
-			@auto_v161mlivepositiontaking_87_old smallmoney ,
-			@auto_v161mlivepositiontaking_89_old smallmoney ,
-			@auto_v161mlivepositiontaking_90_old smallmoney ,
-			
 			@isauto_mpositiontaking_1_old bit ,
 			@isauto_mpositiontaking_2_old bit ,
 			@isauto_mpositiontaking_3_old bit ,
@@ -1117,19 +989,6 @@ BEGIN
 			@isauto_v99mpositiontaking_9999_old bit,
 			-- mixed sports
 			@isauto_v99mpositiontaking_9_old bit ,
-			
-			-- number game
-			@isauto_v161mpositiontaking_81_old bit ,
-			@isauto_v161mpositiontaking_83_old bit ,
-			--@isauto_v161mpositiontaking_85_old bit ,
-			@isauto_v161mpositiontaking_86_old bit ,
-			@isauto_v161mpositiontaking_88_old bit ,
-			
-			@isauto_v161mlivepositiontaking_85_old bit ,
-			@isauto_v161mlivepositiontaking_86_old bit ,
-			@isauto_v161mlivepositiontaking_87_old bit ,
-			@isauto_v161mlivepositiontaking_89_old bit ,
-			@isauto_v161mlivepositiontaking_90_old bit,
 			
 			-- Outright PT for sports
 			@v2apositiontaking_10_old smallmoney,
@@ -1231,16 +1090,6 @@ BEGIN
 		-- mixed sports
 		select @v99mpositiontaking_9_old = mpositiontaking, @v99apositiontaking_9_old = apositiontaking, @auto_v99mpositiontaking_9_old = autompositiontaking, @isauto_v99mpositiontaking_9_old = isautompositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9 and sporttype=99
 		
-		-- number game
-		select @v161mpositiontaking_81_old = mpositiontaking, @v161apositiontaking_81_old = apositiontaking, @auto_v161mpositiontaking_81_old = autompositiontaking, @isauto_v161mpositiontaking_81_old = isautompositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=81 and sporttype=161
-		select @v161mpositiontaking_83_old = mpositiontaking, @v161apositiontaking_83_old = apositiontaking, @auto_v161mpositiontaking_83_old = autompositiontaking, @isauto_v161mpositiontaking_83_old = isautompositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=83 and sporttype=161
-		select @v161mlivepositiontaking_85_old = mlivepositiontaking, @v161alivepositiontaking_85_old = alivepositiontaking, @auto_v161mlivepositiontaking_85_old = autolivempositiontaking, @isauto_v161mlivepositiontaking_85_old = isautolivempositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=85 and sporttype=161
-		select @v161mpositiontaking_86_old = mpositiontaking, @v161mlivepositiontaking_86_old = mlivepositiontaking, @v161apositiontaking_86_old = apositiontaking, @v161alivepositiontaking_86_old = alivepositiontaking, @auto_v161mpositiontaking_86_old = autompositiontaking, @auto_v161mlivepositiontaking_86_old = autolivempositiontaking, @isauto_v161mpositiontaking_86_old = isautompositiontaking, @isauto_v161mlivepositiontaking_86_old = isautolivempositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=86 and sporttype=161
-		select @v161mlivepositiontaking_87_old = mlivepositiontaking, @v161alivepositiontaking_87_old = alivepositiontaking, @auto_v161mlivepositiontaking_87_old = autolivempositiontaking, @isauto_v161mlivepositiontaking_87_old = isautolivempositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=87 and sporttype=161
-		select @v161mpositiontaking_88_old = mpositiontaking, @v161apositiontaking_88_old = apositiontaking, @auto_v161mpositiontaking_88_old = autompositiontaking, @isauto_v161mpositiontaking_88_old = isautompositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=88 and sporttype=161
-		select @v161mlivepositiontaking_89_old = mlivepositiontaking, @v161alivepositiontaking_89_old = alivepositiontaking, @auto_v161mlivepositiontaking_89_old = autolivempositiontaking, @isauto_v161mlivepositiontaking_89_old = isautolivempositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=89 and sporttype=161
-		select @v161mlivepositiontaking_90_old = mlivepositiontaking, @v161alivepositiontaking_90_old = alivepositiontaking, @auto_v161mlivepositiontaking_90_old = autolivempositiontaking, @isauto_v161mlivepositiontaking_90_old = isautolivempositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=90 and sporttype=161
-		
 		IF @apositiontaking_1 <> @apositiontaking_1_old or
 				@apositiontaking_2 <> @apositiontaking_2_old or
 				@apositiontaking_3 <> @apositiontaking_3_old or
@@ -1307,19 +1156,6 @@ BEGIN
 				-- mixed sports
 				@v99apositiontaking_9 <> @v99apositiontaking_9_old or		
 				
-				-- number game
-				@v161apositiontaking_81 <> @v161apositiontaking_81_old or
-				@v161apositiontaking_83 <> @v161apositiontaking_83_old or
-				--@v161apositiontaking_85 <> @v161apositiontaking_85_old or
-				@v161apositiontaking_86 <> @v161apositiontaking_86_old or
-				@v161apositiontaking_88 <> @v161apositiontaking_88_old or
-				
-				@v161alivepositiontaking_85 <> @v161alivepositiontaking_85_old or
-				@v161alivepositiontaking_86 <> @v161alivepositiontaking_86_old or
-				@v161alivepositiontaking_87 <> @v161alivepositiontaking_87_old or
-				@v161alivepositiontaking_89 <> @v161alivepositiontaking_89_old or
-				@v161alivepositiontaking_90 <> @v161alivepositiontaking_90_old or
-
 				@v2mpositiontaking_1 <> @v2mpositiontaking_1_old or
 				@v2mpositiontaking_2 <> @v2mpositiontaking_2_old or
 				@v2mpositiontaking_3 <> @v2mpositiontaking_3_old or
@@ -1355,20 +1191,7 @@ BEGIN
 				@v99mpositiontaking_9999 <> @v99mpositiontaking_9999_old or
 				-- mixed sports
 				@v99mpositiontaking_9 <> @v99mpositiontaking_9_old or
-			
-				-- number game			
-				@v161mpositiontaking_81 <> @v161mpositiontaking_81_old or
-				@v161mpositiontaking_83 <> @v161mpositiontaking_83_old or
-				--@v161mpositiontaking_85 <> @v161mpositiontaking_85_old or
-				@v161mpositiontaking_86 <> @v161mpositiontaking_86_old or
-				@v161mpositiontaking_88 <> @v161mpositiontaking_88_old or
-				
-				@v161mlivepositiontaking_85 <> @v161mlivepositiontaking_85_old or
-				@v161mlivepositiontaking_86 <> @v161mlivepositiontaking_86_old or
-				@v161mlivepositiontaking_87 <> @v161mlivepositiontaking_87_old or
-				@v161mlivepositiontaking_89 <> @v161mlivepositiontaking_89_old or
-				@v161mlivepositiontaking_90 <> @v161mlivepositiontaking_90_old or
-				
+							
 				@auto_mpositiontaking_1 <> @auto_mpositiontaking_1_old or
 				@auto_mpositiontaking_2 <> @auto_mpositiontaking_2_old or
 				@auto_mpositiontaking_3 <> @auto_mpositiontaking_3_old or
@@ -1419,20 +1242,7 @@ BEGIN
 				@auto_v99mpositiontaking_9999 <> @auto_v99mpositiontaking_9999_old or
 				-- mixed sports
 				@auto_v99mpositiontaking_9 <> @auto_v99mpositiontaking_9_old or
-				
-				-- mixed sports
-				@auto_v161mpositiontaking_81 <> @auto_v161mpositiontaking_81_old or
-				@auto_v161mpositiontaking_83 <> @auto_v161mpositiontaking_83_old or
-				--@auto_v161mpositiontaking_85 <> @auto_v161mpositiontaking_85_old or
-				@auto_v161mpositiontaking_86 <> @auto_v161mpositiontaking_86_old or
-				@auto_v161mpositiontaking_88 <> @auto_v161mpositiontaking_88_old or
-				
-				@auto_v161mlivepositiontaking_85 <> @auto_v161mlivepositiontaking_85_old or
-				@auto_v161mlivepositiontaking_86 <> @auto_v161mlivepositiontaking_86_old or
-				@auto_v161mlivepositiontaking_87 <> @auto_v161mlivepositiontaking_87_old or
-				@auto_v161mlivepositiontaking_89 <> @auto_v161mlivepositiontaking_89_old or
-				@auto_v161mlivepositiontaking_90 <> @auto_v161mlivepositiontaking_90_old or
-				
+								
 				@isauto_mpositiontaking_1 <> @isauto_mpositiontaking_1_old or
 				@isauto_mpositiontaking_2 <> @isauto_mpositiontaking_2_old or
 				@isauto_mpositiontaking_3 <> @isauto_mpositiontaking_3_old or
@@ -1483,20 +1293,7 @@ BEGIN
 				@isauto_v99mpositiontaking_9999 <> @isauto_v99mpositiontaking_9999_old or
 				-- mixed sports
 				@isauto_v99mpositiontaking_9 <> @isauto_v99mpositiontaking_9_old or
-				
-				-- number game
-				@isauto_v161mpositiontaking_81 <> @isauto_v161mpositiontaking_81_old or
-				@isauto_v161mpositiontaking_83 <> @isauto_v161mpositiontaking_83_old or
-				--@isauto_v161mpositiontaking_85 <> @isauto_v161mpositiontaking_85_old or
-				@isauto_v161mpositiontaking_86 <> @isauto_v161mpositiontaking_86_old or
-				@isauto_v161mpositiontaking_88 <> @isauto_v161mpositiontaking_88_old or
-				
-				@isauto_v161mlivepositiontaking_85 <> @isauto_v161mlivepositiontaking_85_old or
-				@isauto_v161mlivepositiontaking_86 <> @isauto_v161mlivepositiontaking_86_old or
-				@isauto_v161mlivepositiontaking_87 <> @isauto_v161mlivepositiontaking_87_old or
-				@isauto_v161mlivepositiontaking_89 <> @isauto_v161mlivepositiontaking_89_old or
-				@isauto_v161mlivepositiontaking_90 <> @isauto_v161mlivepositiontaking_90_old or
-				
+								
 				@v2apositiontaking_10 <> @v2apositiontaking_10_old or
 				@v3apositiontaking_10 <> @v3apositiontaking_10_old or
 				@v5apositiontaking_10 <> @v5apositiontaking_10_old or
@@ -1600,19 +1397,6 @@ BEGIN
 				-- mixed sports
 				@v99apositiontaking_9 = @v99apositiontaking_9,
 				
-				-- number game
-				@v161apositiontaking_81 = @v161apositiontaking_81,
-				@v161apositiontaking_83 = @v161apositiontaking_83,
-				--@v161apositiontaking_85 = @v161apositiontaking_85,
-				@v161apositiontaking_86 = @v161apositiontaking_86,
-				@v161apositiontaking_88 = @v161apositiontaking_88,
-				
-				@v161alivepositiontaking_85 = @v161alivepositiontaking_85,
-				@v161alivepositiontaking_86 = @v161alivepositiontaking_86,
-				@v161alivepositiontaking_87 = @v161alivepositiontaking_87,
-				@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
-				@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
-				
 				@v2mpositiontaking_1 = @v2mpositiontaking_1,
 				@v2mpositiontaking_2 = @v2mpositiontaking_2,
 				@v2mpositiontaking_3 = @v2mpositiontaking_3,
@@ -1648,20 +1432,7 @@ BEGIN
 				@v99mpositiontaking_9999 = @v99mpositiontaking_9999,
 				-- mixed sports
 				@v99mpositiontaking_9 = @v99mpositiontaking_9,
-				
-				-- number game
-				@v161mpositiontaking_81 = @v161mpositiontaking_81,
-				@v161mpositiontaking_83 = @v161mpositiontaking_83,
-				--@v161mpositiontaking_85 = @v161mpositiontaking_85,
-				@v161mpositiontaking_86 = @v161mpositiontaking_86,
-				@v161mpositiontaking_88 = @v161mpositiontaking_88,
-				
-				@v161mlivepositiontaking_85 = @v161mlivepositiontaking_85,
-				@v161mlivepositiontaking_86 = @v161mlivepositiontaking_86,
-				@v161mlivepositiontaking_87 = @v161mlivepositiontaking_87,
-				@v161mlivepositiontaking_89 = @v161mlivepositiontaking_89,
-				@v161mlivepositiontaking_90 = @v161mlivepositiontaking_90,
-				
+								
 				@auto_mpositiontaking_1 = @auto_mpositiontaking_1,
 				@auto_mpositiontaking_2 = @auto_mpositiontaking_2,
 				@auto_mpositiontaking_3 = @auto_mpositiontaking_3,
@@ -1713,19 +1484,6 @@ BEGIN
 				--- mixed sports
 				@auto_v99mpositiontaking_9 = @auto_v99mpositiontaking_9,
 				
-				-- number game
-				@auto_v161mpositiontaking_81 = @auto_v161mpositiontaking_81,
-				@auto_v161mpositiontaking_83 = @auto_v161mpositiontaking_83,
-				--@auto_v161mpositiontaking_85 = @auto_v161mpositiontaking_85,
-				@auto_v161mpositiontaking_86 = @auto_v161mpositiontaking_86,
-				@auto_v161mpositiontaking_88 = @auto_v161mpositiontaking_88,
-				
-				@auto_v161mlivepositiontaking_85 = @auto_v161mlivepositiontaking_85,
-				@auto_v161mlivepositiontaking_86 = @auto_v161mlivepositiontaking_86,
-				@auto_v161mlivepositiontaking_87 = @auto_v161mlivepositiontaking_87,
-				@auto_v161mlivepositiontaking_89 = @auto_v161mlivepositiontaking_89,
-				@auto_v161mlivepositiontaking_90 = @auto_v161mlivepositiontaking_90,
-				
 				@isauto_mpositiontaking_1 = @isauto_mpositiontaking_1,
 				@isauto_mpositiontaking_2 = @isauto_mpositiontaking_2,
 				@isauto_mpositiontaking_3 = @isauto_mpositiontaking_3,
@@ -1775,20 +1533,7 @@ BEGIN
 				@isauto_v99mpositiontaking_9999 = @isauto_v99mpositiontaking_9999,
 				-- mixed sports
 				@isauto_v99mpositiontaking_9 = @isauto_v99mpositiontaking_9,
-				
-				-- number game
-				@isauto_v161mpositiontaking_81 = @isauto_v161mpositiontaking_81,
-				@isauto_v161mpositiontaking_83 = @isauto_v161mpositiontaking_83,
-				--@isauto_v161mpositiontaking_85 = @isauto_v161mpositiontaking_85,
-				@isauto_v161mpositiontaking_86 = @isauto_v161mpositiontaking_86,
-				@isauto_v161mpositiontaking_88 = @isauto_v161mpositiontaking_88,
-				
-				@isauto_v161mlivepositiontaking_85 = @isauto_v161mlivepositiontaking_85,
-				@isauto_v161mlivepositiontaking_86 = @isauto_v161mlivepositiontaking_86,
-				@isauto_v161mlivepositiontaking_87 = @isauto_v161mlivepositiontaking_87,
-				@isauto_v161mlivepositiontaking_89 = @isauto_v161mlivepositiontaking_89,
-				@isauto_v161mlivepositiontaking_90 = @isauto_v161mlivepositiontaking_90,
-				
+								
 				-- Outright PT for sports
 				@v2apositiontaking_10 = @v2apositiontaking_10,
 				@v3apositiontaking_10 = @v3apositiontaking_10,
@@ -1835,7 +1580,6 @@ BEGIN
 				@UpdatePositiontakingv11 = @UpdatePositiontakingv11,
 				@UpdatePositiontakingv99 = @UpdatePositiontakingv99,
 				@UpdatePositiontakingv99MP = @UpdatePositiontakingv99MP,				
-				@UpdatePositiontakingv161 = @UpdatePositiontakingv161,
 				@SubAccID = @SubAccID,
 				@UserID = @UserID,
 				@Language = @Language,

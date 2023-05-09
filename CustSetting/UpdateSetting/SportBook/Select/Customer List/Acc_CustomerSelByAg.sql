@@ -103,7 +103,7 @@ BEGIN
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
-	
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -115,20 +115,7 @@ BEGIN
 		- @SettingStatus: 0: Pro, 1: UAT
 */  
 	  
-	SET NOCOUNT ON  
-	
-	----- Elodie @ 01 JUN 2015 -------------------
-	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)	
-
-	BEGIN TRY		
-		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0 AND IBCBetTypeID BETWEEN 1501 AND 1599
-	END TRY
-	BEGIN CATCH		
-		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK) WHERE IsDisabled = 0 AND IBCBetTypeID BETWEEN 1501 AND 1599
-	END CATCH
-	----- /Elodie @ 01 JUN 2015 -------------------
+	SET NOCOUNT ON  		
 	DECLARE @IsMyanmarOdds BIT = 0
 	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
 	
@@ -160,6 +147,8 @@ BEGIN
 		,	@bitmapOrder_Bitcoin		INT	
 		,	@bitmapOrder_SGJackpot		INT    
 		,   @bitmapOrder_SabaCasino		INT  
+		,   @bitmapOrder_Keno		INT 
+		,   @bitmapOrder_NG		INT 
     
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
@@ -188,8 +177,10 @@ BEGIN
 	SET @bitmapOrder_Bitcoin = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 175 AND Bettype = 7901)
     SET @bitmapOrder_SGJackpot = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9904 AND Bettype = 4001 )
 	SET @bitmapOrder_SabaCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 208 AND Bettype = 2101)
+    SET @bitmapOrder_Keno = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 202 AND Bettype = 1501)
+	SET @bitmapOrder_NG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 161 AND Bettype = 81)
     
-    DECLARE	@IsHidden_MuayThai			INT = 1
+	DECLARE	@IsHidden_MuayThai			INT = 1
 		,	@IsHidden_Esports			INT = 1
 		,	@IsHidden_AllBet			INT = 1
 		,	@IsHidden_VoidBridge		INT = 1
@@ -214,6 +205,8 @@ BEGIN
 		,	@IsHidden_VGaming			INT = 1
 		,	@IsHidden_Bitcoin			INT = 1
 		,	@IsHidden_SabaCasino		INT = 1
+		,	@IsHidden_Keno	INT = 1
+		,	@IsHidden_NG	INT = 1
 
 	EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_MuayThai OUTPUT
 
@@ -241,7 +234,9 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 66, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_VGaming OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 69, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_Bitcoin OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 6, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_SabaCasino OUTPUT
-
+	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 202, @IsHide = @IsHidden_Keno OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 161, @IsHide = @IsHidden_NG OUTPUT
+	
 	DECLARE @RowCount int, @RowStart int, @RowEnd int  
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1   
 	SET @Username = isnull(@Username, '')  
@@ -541,19 +536,14 @@ BEGIN
 			,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.playerdiscount else 0 end) as playerdiscountcs
 			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.playerdiscount else 0 end) as playerdiscount1x2		
 
-			,min(case when g.IBCBetTypeID IS NOT NULL then cg.IsDisabled else 1 end) as DisableKeno
 			,ISNULL(C.playerdiscountMyanmarOdds,0) AS playerdiscountMyanmarOdds
 			,ISNULL(C.adiscountMyanmarOdds,0) AS adiscountMyanmarOdds
 		FROM #memberList c
 			LEFT JOIN CustSetting cs with(nolock) 
 				on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) )
-			LEFT JOIN CustSetting3rd cs3 with(nolock) on c.custid = cs3.custid and cs3.sporttype = 161 and cs3.bettype = 81
-			LEFT JOIN CustGameType cg with(nolock) on c.custid = cg.custid
-			LEFT JOIN @tmp_GameType g on cg.GameTypeID = g.GameTypeID
 		WHERE rn between @rowstart and @rowend
 		GROUP BY c.custid, rn,c.playerdiscountMyanmarOdds,c.adiscountMyanmarOdds
-	)
-	
+	)	
 	
 	SELECT   
 		ci.enabled, cps.closed, isnull(cps.reject,0) as suspended, isnull(ci.DisableOutright,0) as DisableOutright, ci.virtualmultiplier-1 as VirtualMultiplier,   
@@ -567,13 +557,8 @@ BEGIN
 		playerdiscount,  
 		playerdiscountcs,  
 		playerdiscount1x2,     		 
-		ci.DisableNumber,  
 		ci.DoubleCommLosing,
-		
-	
-		ci.HideKeno,
-		ISNULL(m.DisableKeno,0) AS DisableKeno,	
-		
+			
 		-- MyanmarOdds
 		ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds,
 		ISNULL(m.playerdiscountMyanmarOdds,0) playerdiscountMyanmarOdds,
@@ -818,7 +803,7 @@ BEGIN
 						ELSE 1 
 				END AS BIT) AS HideSGJackpot,
 
--- For Saba Casino
+		-- For Saba Casino
 		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_SabaCasino)) AS DisableSabaCasino,
 		CAST(	CASE	WHEN	@IsHidden_SabaCasino = 0 
 							AND	ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_SabaCasino)), 1) = 0 
@@ -828,6 +813,29 @@ BEGIN
 		CAST(CASE	WHEN	@IsHidden_SabaCasino = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cpsUpline.bitmapIsHidden, @bitmapOrder_SabaCasino)), 1)=0
 				THEN 0 ELSE 1
 				END AS BIT) AS HideSabaCasinoUpline,
+
+		-- For Number Games
+		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_NG)) AS DisableNG,			
+		CAST(	CASE	WHEN	@IsHidden_NG = 0 								
+							AND	ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_NG)), 1) = 0 
+							THEN 0
+						ELSE 1 
+				END AS BIT) AS HideNG,
+		CAST(CASE	WHEN	@IsHidden_NG = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cpsUpline.bitmapIsHidden, @bitmapOrder_NG)), 1)=0
+				THEN 0 ELSE 1
+				END AS BIT) AS HideNGUpline,
+
+		-- For Keno
+		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_Keno)) AS DisableKeno,			
+		CAST(	CASE	WHEN	@IsHidden_Keno = 0 								
+							AND	ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Keno)), 1) = 0 
+							THEN 0
+						ELSE 1 
+				END AS BIT) AS HideKeno,
+		CAST(CASE	WHEN	@IsHidden_Keno = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cpsUpline.bitmapIsHidden, @bitmapOrder_Keno)), 1)=0
+				THEN 0 ELSE 1
+				END AS BIT) AS HideKenoUpline,
+
 		ISNULL(cps.Locked,0) AS Locked			
 		FROM src m  
 			INNER JOIN customer c (nolock) on m.custid = c.custid  

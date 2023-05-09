@@ -18,7 +18,7 @@ AS
 		- 20190828@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
-			
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Explanation's Param:
 */
 
@@ -68,13 +68,7 @@ BEGIN
 		,v2minbet_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.minbet ELSE 0 END)
 		,v2maxbet_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.maxbet ELSE 0 END)
 		,v2maxpermatch_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.MaxPerMatch ELSE 0 END)
-		,v2maxpayoutpermatch_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.MaxPayoutPerMatch ELSE 0 END)
-		
-		--Minbet, maxbet, MaxPerMatch for NumberGame
-		,v161minbet_81=MAX(CASE WHEN cb.bettype=81 AND cb.sporttype=161 THEN cb.minbet ELSE 0 END)
-		,v161maxbet_81=MAX(CASE WHEN cb.bettype=81 AND cb.sporttype=161 THEN cb.maxbet ELSE 0 END)
-		,v161maxpermatch_81=MAX(CASE WHEN cb.bettype=81 AND cb.sporttype=161 THEN cb.MaxPerMatch ELSE 0 END)
-		,v161maxperball_81=MAX(CASE WHEN cb.bettype=81 AND cb.sporttype=161 THEN cb.MaxPerNumber ELSE 0 END)
+		,v2maxpayoutpermatch_1=MAX(CASE WHEN cb.bettype=1 AND cb.sporttype=2 THEN cb.MaxPayoutPerMatch ELSE 0 END)				
 		
 	---------- position taking section---------------------------------------------------------------------------------------
 		--PT of soccers (on behalf of HDP)		
@@ -87,13 +81,7 @@ BEGIN
 		,v2mpositiontaking_1 = MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=2 THEN cs.mpositiontaking END)
 		,v2spositiontaking_1 = MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=2 THEN cs.spositiontaking END)
 		,v2isAutoPT_1 = MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=2 AND cs.isautopositiontaking = 1 THEN 1 ELSE 0 END)
-		,v2AutoPT_1 = MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=2 THEN cs.autopositiontaking END)
-		
-		--PT of Number game (on behalf of bettype=81)		
-		,v161mpositiontaking_81 = MAX(CASE WHEN cs3rd.bettype=81 AND cs3rd.sporttype=161 THEN cs3rd.mpositiontaking END)
-		,v161spositiontaking_81 = MAX(CASE WHEN cs3rd.bettype=81 AND cs3rd.sporttype=161 THEN cs3rd.spositiontaking END)		
-		,v161isAutoPT_81 = MAX(CASE WHEN cs3rd.bettype=81 AND cs3rd.sporttype=161 AND cs3rd.isautopositiontaking = 1 THEN 1 else 0 END)
-		,v161AutoPT_81 = MAX(CASE WHEN cs3rd.bettype=81 AND cs3rd.sporttype=161 THEN cs3rd.autopositiontaking END)
+		,v2AutoPT_1 = MAX(CASE WHEN cs.bettype=1 AND cs.sporttype=2 THEN cs.autopositiontaking END)			
 		
 	-------- Min position taking section---------------------------------------------------------------------------------------
 		--min PT of soccers (on behalf of HDP)
@@ -103,12 +91,7 @@ BEGIN
 		--min PT of basketball (on behalf of HDP)
 		,v2MinPT_1 = MAX(CASE WHEN csOv.bettype=1 AND csOv.sporttype=2 THEN csOv.minpositiontaking END)
 		--,v2MinLivePT_1 = MAX(CASE WHEN csOv.bettype=1 AND csOv.sporttype=2 THEN csOv.minlivepositiontaking END)
-
-		--min PT of number game (on behalf of bettype=81)
-		,v161MinPT_81 = MAX(CASE WHEN csOv3rd.bettype=81 AND csOv3rd.sporttype=161 THEN csOv3rd.minpositiontaking END)
 		
-		--min live PT of number game (on behalf of bettype=85)
-		,v161MinLivePT_85 = MAX(CASE WHEN csOv3rd.bettype=85 AND csOv3rd.sporttype=161 THEN csOv3rd.minlivepositiontaking END)
 		-- Myanmar Odds
 		,ISNULL(@discountMyanmarOdds,0) AS discountMyanmarOdds
 
@@ -116,7 +99,6 @@ BEGIN
 		INNER JOIN dbo.CustSetting AS cs WITH(NOLOCK) ON cs.CustID=ci.CustID
 			AND ci.custid=@CustID
 			AND ci.roleid=3			
-		INNER JOIN dbo.CustSetting3rd AS cs3rd WITH(NOLOCK) ON cs3rd.CustID=ci.CustID
 		INNER JOIN dbo.CustMaster AS csMa WITH(NOLOCK) ON csMa.CustID=ci.CustID	
 		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
@@ -124,7 +106,6 @@ BEGIN
 									WHERE CustID = ci.custid
 								) AS cps			
 		LEFT JOIN dbo.custoverride AS csOv WITH (NOLOCK) on csOv.custid = cs.custid AND csOv.sporttype = cs.sporttype AND csOv.bettype = cs.bettype
-		LEFT JOIN dbo.custoverride3rd AS csOv3rd WITH (NOLOCK) ON csOv3rd.custid = cs3rd.custid AND csOv3rd.sporttype = cs3rd.sporttype AND csOv3rd.bettype = cs3rd.bettype
 		INNER JOIN CustBetSetting_Agent cb WITH(NOLOCK) ON ci.custid = cb.CustID
 	GROUP BY cps.closed
 			,cps.reject

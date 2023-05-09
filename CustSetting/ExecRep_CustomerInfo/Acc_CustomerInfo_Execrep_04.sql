@@ -82,6 +82,7 @@ AS
 		- 20221103@Johnson: Change data type of CustSettingAutoSuspend [Redmine: #179782]
 		- 20221207@Johnson: update setting for sub-bettype for Esport is 'Follow parent' [redmine: #177594]
 		- 20230302@Johnson: Add auto suspend for basketball and return Basketball VR to its original state [redmine:#184339]
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -953,66 +954,7 @@ BEGIN
 				WHERE t.CustID  NOT IN(SELECT CustID FROM [CustLoginInfo_Member] WITH(NOLOCK)) AND c.roleid=1
 			END			
 		END 
-    END;
-   
-    ELSE IF @Action = 'DisableNumberGame'
-    BEGIN
-	    IF @RoleID = 4 
-		BEGIN
-			IF @DisableNumberGame = 1
-			BEGIN
-				UPDATE CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableNumber = @DisableNumberGame 
-				WHERE SRecommend = @CustID;
-			END	
-			ELSE
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableNumber = CASE WHEN @UpdateAllMasters = 1 AND roleID =3 THEN @DisableAllMasters
-										WHEN @UpdateAllAgents = 1 AND roleID =2 THEN @DisableAllAgents
-										WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-										ELSE DisableNumber END  
-				WHERE CustID <> @CustID  
-					AND SRecommend = @CustID;
-			END
-		END 
-	    IF @RoleID = 3 
-		BEGIN
-		    IF @DisableNumberGame = 1
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableNumber = @DisableNumberGame 
-				WHERE MRecommend = @CustID;
-			END
-			ELSE 
-			BEGIN
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableNumber = CASE WHEN @UpdateAllAgents = 1 AND roleID =2 THEN @DisableAllAgents
-										WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-										ELSE DisableNumber END  
-				WHERE CustID <> @CustID  
-					AND MRecommend = @CustID;
-			END
-		END
-		
-	    IF @RoleID = 2 
-		BEGIN
-			IF @DisableNumberGame =1
-			BEGIN
-				UPDATE CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableNumber = @DisableNumberGame 
-				WHERE Recommend = @CustID;
-			END
-			ELSE
-			BEGIN
-				UPDATE CustInfo WITH (ROWLOCK, UPDLOCK) 
-				SET DisableNumber = CASE WHEN @UpdateAllMembers = 1 AND roleID =1 THEN @DisableAllMembers
-										ELSE DisableNumber END   
-				WHERE CustID <> @CustID 
-					AND Recommend = @CustID;
-			END	
-		END	
-    END;
+    END;      
 
     else if @Action = 'AutoSuspend'
     BEGIN
@@ -1043,48 +985,7 @@ BEGIN
 		    WHERE recommend = @custID; 
 	    END;
     END;    
-    /**20140228@Bobby: Update Keno status [Redmine:#12474]**/
-    else if @Action = 'UpdKeno-Hide'
-    begin
-	    IF (@roleID = 4)
-	    BEGIN
-		    UPDATE cust
-		    SET HideKeno = 0
-		    FROM dbo.CustInfo cust WITH (ROWLOCK, UPDLOCK) 
-		    WHERE CustID <> @CustID
-			    AND SRecommend = @CustID
-				AND HideKeno = 1
-				AND ((Roleid = 3 AND @UpdateAllMasters =1)
-					OR (Roleid = 2 AND @UpdateAllAgents =1)
-					OR (Roleid = 1 AND @UpdateAllMembers =1)
-					)
-	    END;
-
-	    IF (@roleID = 3)
-	    BEGIN
-		    UPDATE cust
-		    SET HideKeno = 0
-		    FROM dbo.CustInfo cust WITH (ROWLOCK, UPDLOCK) 
-		    WHERE CustID <> @CustID
-			    AND MRecommend = @CustID
-				AND HideKeno = 1
-				AND ((Roleid = 2 AND @UpdateAllAgents =1)
-					OR (Roleid = 1 AND @UpdateAllMembers =1)
-					)
-	    END;
-
-	    IF (@roleID = 2)
-	    BEGIN
-		    UPDATE cust
-		    SET HideKeno = 0
-		    FROM dbo.CustInfo cust WITH (ROWLOCK, UPDLOCK) 
-		    WHERE CustID <> @CustID
-			    AND Recommend = @CustID
-				AND HideKeno = 1
-				AND (Roleid = 1 AND @UpdateAllMembers =1);
-	    END;
-    end;
-
+    
 	ELSE IF @Action = 'SuperLive'
     BEGIN
 	    IF (@roleID = 4)

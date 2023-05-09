@@ -69,18 +69,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	--Mix Parlay soccer sports
 	@MinBetv1MP MONEY = 0,
 	@MaxBetv1MP MONEY = 0,
-	@MaxPerMatchv1MP MONEY = 0,	
-
-	--Number game
-	@MinBetv161 MONEY,
-	@MaxBetv161 MONEY,
-	@MaxPerMatchv161 MONEY,
-
-	@MaxPerBallv161 MONEY = 0,
-
-	@MinBetv164 MONEY,
-	@MaxBetv164 MONEY,
-	@MaxPerMatchv164 MONEY,	
+	@MaxPerMatchv1MP MONEY = 0,		
 
 	--Max Payout Per Match
 	@maxPOpermatch money = NULL,
@@ -166,17 +155,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99spositiontaking_3 SMALLMONEY,
 	@v99spositiontaking_9 SMALLMONEY,
 	@v99spositiontaking_20 SMALLMONEY,
-	@v99spositiontaking_9999 SMALLMONEY,
-	--v161
-	@v161spositiontaking_81 SMALLMONEY,
-	@v161spositiontaking_83 SMALLMONEY,
-	@v161spositiontaking_86 SMALLMONEY,
-	@v161spositiontaking_88 SMALLMONEY = 0,
-	@v161slivepositiontaking_85 SMALLMONEY,
-	@v161slivepositiontaking_86 SMALLMONEY,
-	@v161slivepositiontaking_87 SMALLMONEY,	
-	@v161slivepositiontaking_89 SMALLMONEY = 0,
-	@v161slivepositiontaking_90 SMALLMONEY = 0,
+	@v99spositiontaking_9999 SMALLMONEY,	
 	
 	@mpositiontaking_1 SMALLMONEY,
 	@mpositiontaking_2 SMALLMONEY,
@@ -239,17 +218,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99mpositiontaking_3 SMALLMONEY,
 	@v99mpositiontaking_9 SMALLMONEY,
 	@v99mpositiontaking_20 SMALLMONEY,	
-	@v99mpositiontaking_9999 SMALLMONEY,	
-	--v161
-	@v161mpositiontaking_81 SMALLMONEY,
-	@v161mpositiontaking_83 SMALLMONEY,
-	@v161mpositiontaking_86 SMALLMONEY,
-	@v161mpositiontaking_88 SMALLMONEY,
-	@v161mlivepositiontaking_85 SMALLMONEY,
-	@v161mlivepositiontaking_86 SMALLMONEY,
-	@v161mlivepositiontaking_87 SMALLMONEY,
-	@v161mlivepositiontaking_89 SMALLMONEY = 0,
-	@v161mlivepositiontaking_90 SMALLMONEY =0,
+	@v99mpositiontaking_9999 SMALLMONEY,		
 	
 	@apositiontaking_1 SMALLMONEY,
 	@apositiontaking_2 SMALLMONEY,
@@ -312,19 +281,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com]
 	@v99apositiontaking_9 SMALLMONEY,
 	@v99apositiontaking_20 SMALLMONEY,
 	@v99apositiontaking_9999 SMALLMONEY,
-	--v161
-	@v161apositiontaking_81 SMALLMONEY,
-	@v161apositiontaking_83 SMALLMONEY,
-	@v161apositiontaking_86 SMALLMONEY,
-	@v161apositiontaking_88 SMALLMONEY,
-	@v161alivepositiontaking_85 SMALLMONEY,
-	@v161alivepositiontaking_86 SMALLMONEY,
-	@v161alivepositiontaking_87 SMALLMONEY,
-	@v161alivepositiontaking_89 SMALLMONEY = 0,
-	@v161alivepositiontaking_90 SMALLMONEY = 0,
+	
 	@SystemID		TINYINT=1,	
 	
-	@DisableNumber BIT = 0,
 	@DoubleCommLosing BIT = 1,
 
 	-- MyanmarOdds
@@ -452,7 +411,7 @@ Revisions:
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
-
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -528,18 +487,6 @@ BEGIN
 		RETURN
 	END
 
-	----- Elodie @ 01 JUN 2015 -------------------
-		DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
-
-		BEGIN TRY		
-			INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-			SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK)
-		END TRY
-		BEGIN CATCH		
-			INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-			SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
-		END CATCH
-
 	----- /Elodie @ 01 JUN 2015 -------------------
 	DECLARE @startRun DATETIME , @endRun DATETIME , @duration INT
 	SET @startRun = GETDATE()
@@ -614,18 +561,7 @@ BEGIN
 				@v99spositiontaking_3 = @v99spositiontaking_3,
 				@v99spositiontaking_9 = @v99spositiontaking_9,
 				@v99spositiontaking_20 = @v99spositiontaking_20,
-				@v99spositiontaking_9999 = @v99spositiontaking_9999,
-				--v161
-				@v161spositiontaking_81 = @v161spositiontaking_81,
-				@v161spositiontaking_83 = @v161spositiontaking_83,
-				
-				@v161spositiontaking_86 = @v161spositiontaking_86,
-				@v161spositiontaking_88 = @v161spositiontaking_88,
-				@v161slivepositiontaking_85 = @v161slivepositiontaking_85,
-				@v161slivepositiontaking_86 = @v161slivepositiontaking_86,
-				@v161slivepositiontaking_87 = @v161slivepositiontaking_87,
-				@v161slivepositiontaking_89 = @v161slivepositiontaking_89,
-				@v161slivepositiontaking_90 = @v161slivepositiontaking_90,
+				@v99spositiontaking_9999 = @v99spositiontaking_9999,				
 
 				@mpositiontaking_1 = @mpositiontaking_1,
 				@mpositiontaking_2 = @mpositiontaking_2,
@@ -682,18 +618,7 @@ BEGIN
 				@v99mpositiontaking_3 = @v99mpositiontaking_3,
 				@v99mpositiontaking_9 = @v99mpositiontaking_9,
 				@v99mpositiontaking_20 = @v99mpositiontaking_20,
-				@v99mpositiontaking_9999 = @v99mpositiontaking_9999,				
-				--v161
-				@v161mpositiontaking_81 = @v161mpositiontaking_81,
-				@v161mpositiontaking_83 = @v161mpositiontaking_83,
-				
-				@v161mpositiontaking_86 = @v161mpositiontaking_86,
-				@v161mpositiontaking_88 = @v161mpositiontaking_88,
-				@v161mlivepositiontaking_85 = @v161mlivepositiontaking_85,
-				@v161mlivepositiontaking_86 = @v161mlivepositiontaking_86,
-				@v161mlivepositiontaking_87 = @v161mlivepositiontaking_87,
-				@v161mlivepositiontaking_89 = @v161mlivepositiontaking_89,
-				@v161mlivepositiontaking_90 = @v161mlivepositiontaking_90,
+				@v99mpositiontaking_9999 = @v99mpositiontaking_9999,								
 				
 				@apositiontaking_1 = @apositiontaking_1,
 				@apositiontaking_2 = @apositiontaking_2,
@@ -750,18 +675,7 @@ BEGIN
 				@v99apositiontaking_3 = @v99apositiontaking_3,
 				@v99apositiontaking_9 = @v99apositiontaking_9,
 				@v99apositiontaking_20 = @v99apositiontaking_20,
-				@v99apositiontaking_9999 = @v99apositiontaking_9999,
-				--v161
-				@v161apositiontaking_81 = @v161apositiontaking_81,
-				@v161apositiontaking_83 = @v161apositiontaking_83,
-				
-				@v161apositiontaking_86 = @v161apositiontaking_86,
-				@v161apositiontaking_88 = @v161apositiontaking_88,
-				@v161alivepositiontaking_85 = @v161alivepositiontaking_85,
-				@v161alivepositiontaking_86 = @v161alivepositiontaking_86,
-				@v161alivepositiontaking_87 = @v161alivepositiontaking_87,
-				@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
-				@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
+				@v99apositiontaking_9999 = @v99apositiontaking_9999,				
 				
 				@discountMyanmarOdds = @discountMyanmarOdds, -- MyanmarOdds			
 				
@@ -819,16 +733,7 @@ BEGIN
 
 		,@minbetv1mp		= @minbetv1mp
 		,@maxbetv1mp		= @maxbetv1mp
-		,@maxpermatchv1mp	= @maxpermatchv1mp
-
-		,@minbetv161		= @minbetv161
-		,@maxbetv161		= @maxbetv161
-		,@maxpermatchv161	= @maxpermatchv161
-		,@MaxPerBallv161	= @MaxPerBallv161
-
-		,@minbetv164		= @minbetv164
-		,@maxbetv164		= @maxbetv164
-		,@maxpermatchv164	= @maxpermatchv164
+		,@maxpermatchv1mp	= @maxpermatchv1mp		
 
 		,@maxPOpermatch		= @maxPOpermatch
 		,@maxPOpermatchv2	= @maxPOpermatchv2
@@ -891,12 +796,6 @@ BEGIN
 		END	
 	END
 	--check for allow play horseracing
-	
-
-	DECLARE @HideKeno BIT
-			
-
-	SELECT @HideKeno = 0 --Enable Keno by default for all sites
 
 	DECLARE @autosuspend BIT,
 			@autosuspend2 BIT,
@@ -939,14 +838,8 @@ BEGIN
 		@matchlimit = 1,
 		@virtualmultiplier = @EnableVR,	
 
-		@DisableNumber = @DisableNumber,
-		@DoubleCommLosing = @DoubleCommLosing,		
-		
-	
+		@DoubleCommLosing = @DoubleCommLosing,					
 		@DisableSuperLive = @DisableSuperLive,
-
-		--keno
-		@HideKeno = @HideKeno,
 
 		@credit = @credit,
 		@maxcredit = NULL,
@@ -1038,18 +931,7 @@ BEGIN
 		@v99spositiontaking_3 = @v99spositiontaking_3,
 		@v99spositiontaking_9 = @v99spositiontaking_9,
 		@v99spositiontaking_20 = @v99spositiontaking_20,	
-		@v99spositiontaking_9999 = @v99spositiontaking_9999,	
-		--v161
-		@v161spositiontaking_81 = @v161spositiontaking_81,
-		@v161spositiontaking_83 = @v161spositiontaking_83,
-		
-		@v161spositiontaking_86 = @v161spositiontaking_86,
-		@v161spositiontaking_88 = @v161spositiontaking_88,
-		@v161slivepositiontaking_85 = @v161slivepositiontaking_85,
-		@v161slivepositiontaking_86 = @v161slivepositiontaking_86,
-		@v161slivepositiontaking_87 = @v161slivepositiontaking_87,	
-		@v161slivepositiontaking_89 = @v161slivepositiontaking_89,
-		@v161slivepositiontaking_90 = @v161slivepositiontaking_90,
+		@v99spositiontaking_9999 = @v99spositiontaking_9999,			
 		
 		@mpositiontaking_1 = @mpositiontaking_1,
 		@mpositiontaking_2 = @mpositiontaking_2,
@@ -1112,18 +994,7 @@ BEGIN
 		@v99mpositiontaking_3 = @v99mpositiontaking_3,
 		@v99mpositiontaking_9 = @v99mpositiontaking_9,
 		@v99mpositiontaking_20 = @v99mpositiontaking_20,
-		@v99mpositiontaking_9999 = @v99mpositiontaking_9999,
-		--v161
-		@v161mpositiontaking_81 = @v161mpositiontaking_81,
-		@v161mpositiontaking_83 = @v161mpositiontaking_83,
-		
-		@v161mpositiontaking_86 = @v161mpositiontaking_86,
-		@v161mpositiontaking_88 = @v161mpositiontaking_88,
-		@v161mlivepositiontaking_85 = @v161mlivepositiontaking_85,
-		@v161mlivepositiontaking_86 = @v161mlivepositiontaking_86,
-		@v161mlivepositiontaking_87 = @v161mlivepositiontaking_87,
-		@v161mlivepositiontaking_89 = @v161mlivepositiontaking_89,
-		@v161mlivepositiontaking_90 = @v161mlivepositiontaking_90,
+		@v99mpositiontaking_9999 = @v99mpositiontaking_9999,		
 		
 		@apositiontaking_1 = @apositiontaking_1,
 		@apositiontaking_2 = @apositiontaking_2,
@@ -1186,18 +1057,7 @@ BEGIN
 		@v99apositiontaking_3 = @v99apositiontaking_3,
 		@v99apositiontaking_9 = @v99apositiontaking_9,
 		@v99apositiontaking_20 = @v99apositiontaking_20,
-		@v99apositiontaking_9999 = @v99apositiontaking_9999,
-		--v161
-		@v161apositiontaking_81 = @v161apositiontaking_81,
-		@v161apositiontaking_83 = @v161apositiontaking_83,
-		
-		@v161apositiontaking_86 = @v161apositiontaking_86,
-		@v161apositiontaking_88 = @v161apositiontaking_88,
-		@v161alivepositiontaking_85 = @v161alivepositiontaking_85,
-		@v161alivepositiontaking_86 = @v161alivepositiontaking_86,
-		@v161alivepositiontaking_87 = @v161alivepositiontaking_87,
-		@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
-		@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
+		@v99apositiontaking_9999 = @v99apositiontaking_9999,		
 						
 		@discountcs = @discountcs, 
 		--comm 1x2
@@ -1387,20 +1247,7 @@ BEGIN
 			@duration = @duration
 	END CATCH
 
-	--Write status log
-	--Get data prepare write log for Keno
-	DECLARE @LogDataKeno NVARCHAR(4000) = '', @isDisableKeno BIT
-
-	SELECT @isDisableKeno = 0 --Enable Keno by default for all sites
-
-	SELECT @LogDataKeno = COALESCE(@LogDataKeno + 'Disable202_' + CAST(IBCBetTypeID AS VARCHAR(10)) 
-		+ '=' + '"' + CAST(@isDisableKeno AS VARCHAR(1)) + '"' + SPACE(1), + 'Disable202_' + CAST(IBCBetTypeID AS VARCHAR(10)) 
-		+ '=' + '"' + CAST(@isDisableKeno AS VARCHAR(1)) + '"' + SPACE(1))
-	FROM @tmp_GameType gt
-	WHERE IBCBetTypeID BETWEEN 1501 AND 1599 AND gt.IsDisabled = 0
-
-	SET @LogDataKeno = 'HideKeno="'+ COALESCE(CAST(@HideKeno AS VARCHAR(1)), SPACE(1)) + '" ' + @LogDataKeno
-
+	--Write status log	
 	DECLARE @LogDataSP2 VARCHAR(4000)
 	
 	CREATE TABLE #temSportbettypeSetting(ProductID TINYINT,SportType SMALLINT, Bettype SMALLINT, SettingType SMALLINT)
@@ -1463,47 +1310,16 @@ BEGIN
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
-	
-	'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
-	
-	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +
-	 @LogDataKeno + @LogDataSP2 +
+		
+	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' + @LogDataSP2 +
 	'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" />'
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-			@UserID = @Creator,
-			@CustID = @CustID,
-			@ActionID = 1100,
-			@TrackingValue = @LogSPData,
-			@duration = @duration
-	END TRY
-	BEGIN CATCH
-		SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
-		--20171205@Johnson: add more log for status
-		'Special=" " ' +
-		'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
-		'VRLockStatus_Soccer="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +   
-		'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
-		'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	
-		'disablenumber="'+ COALESCE(CAST(@disablenumber AS VARCHAR(1)),SPACE(1)) + '" ' +
-		
-		'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' +		
-		'isinternal="'+ COALESCE(CAST(@isinternal AS VARCHAR(1)),SPACE(1)) + '" ' + @LogDataKeno + @LogDataSP2 +
-		'ErrMsg="'+ ERROR_MESSAGE() + '" />'
-		
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-			@UserID = @Creator,
-			@CustID = @CustID,
-			@ActionID = 1100,
-			@TrackingValue = @LogSPData,
-			@duration = @duration
-	END CATCH	
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 1100,
+		@TrackingValue = @LogSPData,
+		@duration = @duration	
 
 	--Write Bet setting log
 	SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1566,105 +1382,14 @@ BEGIN
 		'MinBv1MP="'+ COALESCE(CAST(@minbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MaxBv1MP="'+ COALESCE(CAST(@maxbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
 		'MPMv1MP="'+ COALESCE(CAST(@maxpermatchv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'MPPMv1MP="'+ COALESCE(CAST(@maxPOpermatchv1MP AS VARCHAR(50)), SPACE(1)) + '" ' +
-	
-		'MinBv164="' + COALESCE(CAST(@minbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'MaxBv164="' + COALESCE(CAST(@maxbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'MPMv164="' + COALESCE(CAST(@maxpermatchv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
-	
-		'MinBv161="' + COALESCE(CAST(@minbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'MaxBv161="' + COALESCE(CAST(@maxbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'MPMv161="' + COALESCE(CAST(@maxpermatchv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
-		'MPBv161="' + COALESCE(CAST(@maxperballv161 AS VARCHAR(50)), space(1)) + '" />'
+		'MPPMv1MP="'+ COALESCE(CAST(@maxPOpermatchv1MP AS VARCHAR(50)), SPACE(1)) + '" />'		
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-			@UserID = @Creator,
-			@CustID = @CustID,
-			@ActionID = 300,
-			@TrackingValue = @LogSPData,
-			@duration = @duration
-	END TRY
-	BEGIN CATCH
-		SELECT @LogSPData = '<Acc_CustomerInsMember_Com custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
-			'MinB="'+ COALESCE(CAST(@minbet AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxB="'+ COALESCE(CAST(@maxbet AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPM="'+ COALESCE(CAST(@maxpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPM="'+ COALESCE(CAST(@maxPOpermatch AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv2="'+ COALESCE(CAST(@minbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv2="'+ COALESCE(CAST(@maxbetv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv2="'+ COALESCE(CAST(@maxpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv2="'+ COALESCE(CAST(@maxPOpermatchv2 AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			--saba
-	  		'MinBv1saba="'+ COALESCE(CAST(@minbetv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv1saba="'+ COALESCE(CAST(@maxbetv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv1saba="'+ COALESCE(CAST(@maxpermatchv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv1saba="'+ COALESCE(CAST(@maxPOpermatchv1saba AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv2saba="'+ COALESCE(CAST(@minbetv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv2saba="'+ COALESCE(CAST(@maxbetv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv2saba="'+ COALESCE(CAST(@maxpermatchv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv2saba="'+ COALESCE(CAST(@maxPOpermatchv2saba AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv3="'+ COALESCE(CAST(@minbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv3="'+ COALESCE(CAST(@maxbetv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv3="'+ COALESCE(CAST(@maxpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv3="'+ COALESCE(CAST(@maxPOpermatchv3 AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv5="'+ COALESCE(CAST(@minbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv5="'+ COALESCE(CAST(@maxbetv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv5="'+ COALESCE(CAST(@maxpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv5="'+ COALESCE(CAST(@maxPOpermatchv5 AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv8="'+ COALESCE(CAST(@minbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv8="'+ COALESCE(CAST(@maxbetv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv8="'+ COALESCE(CAST(@maxpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv8="'+ COALESCE(CAST(@maxPOpermatchv8 AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv10="'+ COALESCE(CAST(@minbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv10="'+ COALESCE(CAST(@maxbetv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv10="'+ COALESCE(CAST(@maxpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv10="'+ COALESCE(CAST(@maxPOpermatchv10 AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv11="'+ COALESCE(CAST(@minbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv11="'+ COALESCE(CAST(@maxbetv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv11="'+ COALESCE(CAST(@maxpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv11="'+ COALESCE(CAST(@maxPOpermatchv11 AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv99="'+ COALESCE(CAST(@minbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv99="'+ COALESCE(CAST(@maxbetv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv99="'+ COALESCE(CAST(@maxpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv99="'+ COALESCE(CAST(@maxPOpermatchv99 AS VARCHAR(50)), SPACE(1)) + '" ' +
-
-			'MinBv99MP="'+ COALESCE(CAST(@minbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv99MP="'+ COALESCE(CAST(@maxbetv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv99MP="'+ COALESCE(CAST(@maxpermatchv99mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv99MP="'+ COALESCE(CAST(@maxPOpermatchv99MP AS VARCHAR(50)), SPACE(1)) + '" ' +
-    
-			'MinBv1MP="'+ COALESCE(CAST(@minbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv1MP="'+ COALESCE(CAST(@maxbetv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv1MP="'+ COALESCE(CAST(@maxpermatchv1mp AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPPMv1MP="'+ COALESCE(CAST(@maxPOpermatchv1MP AS VARCHAR(50)), SPACE(1)) + '" ' +
-	
-			'MinBv164="' + COALESCE(CAST(@minbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv164="' + COALESCE(CAST(@maxbetv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv164="' + COALESCE(CAST(@maxpermatchv164 AS VARCHAR(50)), SPACE(1)) + '" ' +
-	
-			'MinBv161="' + COALESCE(CAST(@minbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MaxBv161="' + COALESCE(CAST(@maxbetv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPMv161="' + COALESCE(CAST(@maxpermatchv161 AS VARCHAR(50)), SPACE(1)) + '" ' +
-			'MPBv161="' + COALESCE(CAST(@maxperballv161 AS VARCHAR(50)), space(1)) + '" ' +
-			'ErrMsg="' + ERROR_MESSAGE() + '" />'
-		
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-			@UserID = @Creator,
-			@CustID = @CustID,
-			@ActionID = 300,
-			@TrackingValue = @LogSPData,
-			@duration = @duration
-	END CATCH	
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 300,
+		@TrackingValue = @LogSPData,
+		@duration = @duration	
 
 	-- Write Log Credit	
 	DECLARE @LogSPCredit VARCHAR(MAX)
@@ -1775,20 +1500,8 @@ BEGIN
 	'v99spt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_3),SPACE(1)) + '" ' +
 	'v99spt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_9),SPACE(1)) + '" ' +
 	'v99spt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_20),SPACE(1)) + '" ' +
-	'v99spt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_9999),SPACE(1)) + '" ' +
-
-	'v161spt_81="'+ COALESCE(dbo.f_FomatNumericToChar(@v161spositiontaking_81),SPACE(1)) + '" ' +
-	'v161spt_83="'+ COALESCE(dbo.f_FomatNumericToChar(@v161spositiontaking_83),SPACE(1)) + '" ' +
+	'v99spt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_9999),SPACE(1)) + '" />' +
 	
-	'v161spt_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161spositiontaking_86),SPACE(1)) + '" ' +
-	'v161spt_88="'+ COALESCE(dbo.f_FomatNumericToChar(@v161spositiontaking_88),SPACE(1)) + '" ' +
-	'v161slivept_85="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_85),SPACE(1)) + '" ' +
-	'v161slivept_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_86),SPACE(1)) + '" ' +
-	'v161slivept_87="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_87),SPACE(1)) + '" ' +
-	'v161slivept_89="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_89),SPACE(1)) + '" ' +
-	'v161slivept_90="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_90),SPACE(1)) + '" />' +
-
-
 	'<m mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_1),SPACE(1)) + '" ' +
 	'mpt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_2),SPACE(1)) + '" ' +
 	'mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_3),SPACE(1)) + '" ' +
@@ -1850,18 +1563,7 @@ BEGIN
 	'v99mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_3),SPACE(1)) + '" ' +
 	'v99mpt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_9),SPACE(1)) + '" ' +
 	'v99mpt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_20),SPACE(1)) + '" ' +
-	'v99mpt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_9999),SPACE(1)) + '" ' +
-	'v161mpt_81="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mpositiontaking_81),SPACE(1)) + '" ' +
-	'v161mpt_83="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mpositiontaking_83),SPACE(1)) + '" ' +
-	
-	'v161mpt_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mpositiontaking_86),SPACE(1)) + '" ' +
-	'v161mpt_88="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mpositiontaking_88),SPACE(1)) + '" ' +
-	'v161mlivept_85="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_85),SPACE(1)) + '" ' +
-	'v161mlivept_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_86),SPACE(1)) + '" ' +
-	'v161mlivept_87="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_87),SPACE(1)) + '" ' +
-	'v161mlivept_89="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_89),SPACE(1)) + '" ' +
-	'v161mlivept_90="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_90),SPACE(1)) + '" />' +
-
+	'v99mpt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_9999),SPACE(1)) + '" />' +	
 
 	'<ag apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_1),SPACE(1)) + '" ' +
 	'apt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_2),SPACE(1)) + '" ' +
@@ -1924,261 +1626,14 @@ BEGIN
 	'v99apt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_3),SPACE(1)) + '" ' +
 	'v99apt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_9),SPACE(1)) + '" ' +
 	'v99apt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_20),SPACE(1)) + '" ' +
-	'v99apt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_9999),SPACE(1)) + '" ' +
+	'v99apt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_9999),SPACE(1)) + '" /></Acc_CustomerInsMember_Com>' 
 
-	'v161apt_81="'+ COALESCE(dbo.f_FomatNumericToChar(@v161apositiontaking_81),SPACE(1)) + '" ' +
-	'v161apt_83="'+ COALESCE(dbo.f_FomatNumericToChar(@v161apositiontaking_83),SPACE(1)) + '" ' +
-	
-	'v161apt_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161apositiontaking_86),SPACE(1)) + '" ' +
-	'v161apt_88="'+ COALESCE(dbo.f_FomatNumericToChar(@v161apositiontaking_88),SPACE(1)) + '" ' +
-	'v161alivept_85="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_85),SPACE(1)) + '" ' +
-	'v161alivept_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_86),SPACE(1)) + '" ' +
-	'v161alivept_87="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_87),SPACE(1)) + '" ' +
-	'v161alivept_89="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_89),SPACE(1)) + '" ' +
-	'v161alivept_90="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_90),SPACE(1)) + '" /></Acc_CustomerInsMember_Com>' 
-
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-			@UserID = @Creator,
-			@CustID = @CustID,
-			@ActionID = 400,
-			@TrackingValue = @LogSPData,
-			@duration = @duration
-	END TRY
-	BEGIN CATCH
-
-		SELECT @LogSPData = '<Acc_CustomerInsMember_Com><s spt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_1),SPACE(1)) + '" ' +
-		'spt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_2),SPACE(1)) + '" ' +
-		'spt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_3),SPACE(1)) + '" ' +
-		'spt_4="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_4),SPACE(1)) + '" ' +
-		'spt_5="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_5),SPACE(1)) + '" ' +
-		'spt_6="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_6),SPACE(1)) + '" ' +
-		'spt_7="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_7),SPACE(1)) + '" ' +
-		'spt_8="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_8),SPACE(1)) + '" ' +
-		'spt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_9),SPACE(1)) + '" ' +
-		'spt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_10),SPACE(1)) + '" ' +
-		'v2spt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v2spositiontaking_10),SPACE(1)) + '" ' +
-		'v3spt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v3spositiontaking_10),SPACE(1)) + '" ' +
-		'v5spt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v5spositiontaking_10),SPACE(1)) + '" ' +
-		'v8spt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v8spositiontaking_10),SPACE(1)) + '" ' +
-		'v10spt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v10spositiontaking_10),SPACE(1)) + '" ' +
-		'v11spt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v11spositiontaking_10),SPACE(1)) + '" ' +
-		'v99spt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_10),SPACE(1)) + '" ' +
-		'spt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@spositiontaking_9999),SPACE(1)) + '" ' +
-		'slivept_1="'+ COALESCE(dbo.f_FomatNumericToChar(@slivepositiontaking_1),SPACE(1)) + '" ' +
-		'slivept_3="'+ COALESCE(dbo.f_FomatNumericToChar(@slivepositiontaking_3),SPACE(1)) + '" ' +
-		'slivept_7="'+ COALESCE(dbo.f_FomatNumericToChar(@slivepositiontaking_7),SPACE(1)) + '" ' +
-		'slivept_8="'+ COALESCE(dbo.f_FomatNumericToChar(@slivepositiontaking_8),SPACE(1)) + '" ' +
-
-		'v2spt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v2spositiontaking_1),SPACE(1)) + '" ' +
-		'v2spt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v2spositiontaking_2),SPACE(1)) + '" ' +
-		'v2spt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v2spositiontaking_3),SPACE(1)) + '" ' +
-		'v2spt_7="'+ COALESCE(dbo.f_FomatNumericToChar(@v2spositiontaking_7),SPACE(1)) + '" ' +
-		'v2spt_8="'+ COALESCE(dbo.f_FomatNumericToChar(@v2spositiontaking_8),SPACE(1)) + '" ' +
-		
-		'v2spt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v2spositiontaking_20),SPACE(1)) + '" ' +
-		-- BAIO
-		'v2spt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v2spositiontaking_9999),SPACE(1)) + '" ' +
-		
-		'v3spt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v3spositiontaking_1),SPACE(1)) + '" ' +
-		'v3spt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v3spositiontaking_2),SPACE(1)) + '" ' +
-		'v3spt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v3spositiontaking_3),SPACE(1)) + '" ' +
-		'v3spt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v3spositiontaking_20),SPACE(1)) + '" ' +
-
-		'v5spt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v5spositiontaking_1),SPACE(1)) + '" ' +
-		'v5spt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v5spositiontaking_2),SPACE(1)) + '" ' +
-		'v5spt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v5spositiontaking_3),SPACE(1)) + '" ' +
-		'v5spt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v5spositiontaking_20),SPACE(1)) + '" ' +
-		'v5spt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v5spositiontaking_9999),SPACE(1)) + '" ' +
-
-		'v8spt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v8spositiontaking_1),SPACE(1)) + '" ' +
-		'v8spt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v8spositiontaking_3),SPACE(1)) + '" ' +
-		'v8spt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v8spositiontaking_20),SPACE(1)) + '" ' +
-
-		'v10spt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v10spositiontaking_1),SPACE(1)) + '" ' +
-		'v10spt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v10spositiontaking_2),SPACE(1)) + '" ' +
-		'v10spt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v10spositiontaking_3),SPACE(1)) + '" ' +
-		'v10spt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v10spositiontaking_20),SPACE(1)) + '" ' +
-
-		'v11spt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v11spositiontaking_1),SPACE(1)) + '" ' +
-		'v11spt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v11spositiontaking_20),SPACE(1)) + '" ' +
-
-		'v99spt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_1),SPACE(1)) + '" ' +
-		'v99spt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_2),SPACE(1)) + '" ' +
-		'v99spt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_3),SPACE(1)) + '" ' +
-		'v99spt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_9),SPACE(1)) + '" ' +
-		'v99spt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_20),SPACE(1)) + '" ' +
-		'v99spt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99spositiontaking_9999),SPACE(1)) + '" ' +
-
-		'v161spt_81="'+ COALESCE(dbo.f_FomatNumericToChar(@v161spositiontaking_81),SPACE(1)) + '" ' +
-		'v161spt_83="'+ COALESCE(dbo.f_FomatNumericToChar(@v161spositiontaking_83),SPACE(1)) + '" ' +
-		
-		'v161spt_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161spositiontaking_86),SPACE(1)) + '" ' +
-		'v161spt_88="'+ COALESCE(dbo.f_FomatNumericToChar(@v161spositiontaking_88),SPACE(1)) + '" ' +
-		'v161slivept_85="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_85),SPACE(1)) + '" ' +
-		'v161slivept_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_86),SPACE(1)) + '" ' +
-		'v161slivept_87="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_87),SPACE(1)) + '" ' +
-		'v161slivept_89="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_89),SPACE(1)) + '" ' +
-		'v161slivept_90="'+ COALESCE(dbo.f_FomatNumericToChar(@v161slivepositiontaking_90),SPACE(1)) + '" />' +
-
-
-		'<m mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_1),SPACE(1)) + '" ' +
-		'mpt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_2),SPACE(1)) + '" ' +
-		'mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_3),SPACE(1)) + '" ' +
-		'mpt_4="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_4),SPACE(1)) + '" ' +
-		'mpt_5="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_5),SPACE(1)) + '" ' +
-		'mpt_6="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_6),SPACE(1)) + '" ' +
-		'mpt_7="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_7),SPACE(1)) + '" ' +
-		'mpt_8="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_8),SPACE(1)) + '" ' +
-		'mpt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_9),SPACE(1)) + '" ' +
-		'mpt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_10),SPACE(1)) + '" ' +
-		'v2mpt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v2mpositiontaking_10),SPACE(1)) + '" ' +
-		'v3mpt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v3mpositiontaking_10),SPACE(1)) + '" ' +
-		'v5mpt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v5mpositiontaking_10),SPACE(1)) + '" ' +
-		'v8mpt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v8mpositiontaking_10),SPACE(1)) + '" ' +
-		'v10mpt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v10mpositiontaking_10),SPACE(1)) + '" ' +
-		'v11mpt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v11mpositiontaking_10),SPACE(1)) + '" ' +
-		'v99mpt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_10),SPACE(1)) + '" ' +
-		'mpt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@mpositiontaking_9999),SPACE(1)) + '" ' +
-		'mlivept_1="'+ COALESCE(dbo.f_FomatNumericToChar(@mlivepositiontaking_1),SPACE(1)) + '" ' +
-		'mlivept_3="'+ COALESCE(dbo.f_FomatNumericToChar(@mlivepositiontaking_3),SPACE(1)) + '" ' +
-		'mlivept_7="'+ COALESCE(dbo.f_FomatNumericToChar(@mlivepositiontaking_7),SPACE(1)) + '" ' +
-		'mlivept_8="'+ COALESCE(dbo.f_FomatNumericToChar(@mlivepositiontaking_8),SPACE(1)) + '" ' +
-
-		'v2mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v2mpositiontaking_1),SPACE(1)) + '" ' +
-		'v2mpt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v2mpositiontaking_2),SPACE(1)) + '" ' +
-		'v2mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v2mpositiontaking_3),SPACE(1)) + '" ' +
-		'v2mpt_7="'+ COALESCE(dbo.f_FomatNumericToChar(@v2mpositiontaking_7),SPACE(1)) + '" ' +
-		'v2mpt_8="'+ COALESCE(dbo.f_FomatNumericToChar(@v2mpositiontaking_8),SPACE(1)) + '" ' +
-		
-		'v2mpt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v2mpositiontaking_20),SPACE(1)) + '" ' +
-		--BAIO
-		'v2mpt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v2mpositiontaking_9999),SPACE(1)) + '" ' +
-		
-		'v3mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v3mpositiontaking_1),SPACE(1)) + '" ' +
-		'v3mpt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v3mpositiontaking_2),SPACE(1)) + '" ' +
-		'v3mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v3mpositiontaking_3),SPACE(1)) + '" ' +
-		'v3mpt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v3mpositiontaking_20),SPACE(1)) + '" ' +
-
-		'v5mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v5mpositiontaking_1),SPACE(1)) + '" ' +
-		'v5mpt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v5mpositiontaking_2),SPACE(1)) + '" ' +
-		'v5mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v5mpositiontaking_3),SPACE(1)) + '" ' +
-		'v5mpt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v5mpositiontaking_20),SPACE(1)) + '" ' +
-		'v5mpt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v5mpositiontaking_9999),SPACE(1)) + '" ' +
-
-		'v8mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v8mpositiontaking_1),SPACE(1)) + '" ' +
-		'v8mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v8mpositiontaking_3),SPACE(1)) + '" ' +
-		'v8mpt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v8mpositiontaking_20),SPACE(1)) + '" ' +
-
-		'v10mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v10mpositiontaking_1),SPACE(1)) + '" ' +
-		'v10mpt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v10mpositiontaking_2),SPACE(1)) + '" ' +
-		'v10mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v10mpositiontaking_3),SPACE(1)) + '" ' +
-		'v10mpt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v10mpositiontaking_20),SPACE(1)) + '" ' +
-
-		'v11mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v11mpositiontaking_1),SPACE(1)) + '" ' +
-		'v11mpt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v11mpositiontaking_20),SPACE(1)) + '" ' +
-
-		'v99mpt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_1),SPACE(1)) + '" ' +
-		'v99mpt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_2),SPACE(1)) + '" ' +
-		'v99mpt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_3),SPACE(1)) + '" ' +
-		'v99mpt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_9),SPACE(1)) + '" ' +
-		'v99mpt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_20),SPACE(1)) + '" ' +
-		'v99mpt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99mpositiontaking_9999),SPACE(1)) + '" ' +
-
-		'v161mpt_81="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mpositiontaking_81),SPACE(1)) + '" ' +
-		'v161mpt_83="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mpositiontaking_83),SPACE(1)) + '" ' +
-		
-		'v161mpt_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mpositiontaking_86),SPACE(1)) + '" ' +
-		'v161mpt_88="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mpositiontaking_88),SPACE(1)) + '" ' +
-		'v161mlivept_85="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_85),SPACE(1)) + '" ' +
-		'v161mlivept_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_86),SPACE(1)) + '" ' +
-		'v161mlivept_87="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_87),SPACE(1)) + '" ' +
-		'v161mlivept_89="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_89),SPACE(1)) + '" ' +
-		'v161mlivept_90="'+ COALESCE(dbo.f_FomatNumericToChar(@v161mlivepositiontaking_90),SPACE(1)) + '" />' +
-
-
-		'<ag apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_1),SPACE(1)) + '" ' +
-		'apt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_2),SPACE(1)) + '" ' +
-		'apt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_3),SPACE(1)) + '" ' +
-		'apt_4="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_4),SPACE(1)) + '" ' +
-		'apt_5="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_5),SPACE(1)) + '" ' +
-		'apt_6="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_6),SPACE(1)) + '" ' +
-		'apt_7="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_7),SPACE(1)) + '" ' +
-		'apt_8="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_8),SPACE(1)) + '" ' +
-		'apt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_9),SPACE(1)) + '" ' +
-		'apt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_10),SPACE(1)) + '" ' + 
-		'v2apt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v2apositiontaking_10),SPACE(1)) + '" ' + 
-		'v3apt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v3apositiontaking_10),SPACE(1)) + '" ' + 
-		'v5apt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v5apositiontaking_10),SPACE(1)) + '" ' + 
-		'v8apt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v8apositiontaking_10),SPACE(1)) + '" ' + 
-		'v10apt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v10apositiontaking_10),SPACE(1)) + '" ' + 
-		'v11apt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v11apositiontaking_10),SPACE(1)) + '" ' + 
-		'v99apt_10="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_10),SPACE(1)) + '" ' + 
-		'apt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@apositiontaking_9999),SPACE(1)) + '" ' +
-		'alivept_1="'+ COALESCE(dbo.f_FomatNumericToChar(@alivepositiontaking_1),SPACE(1)) + '" ' +
-		'alivept_3="'+ COALESCE(dbo.f_FomatNumericToChar(@alivepositiontaking_3),SPACE(1)) + '" ' +
-		'alivept_7="'+ COALESCE(dbo.f_FomatNumericToChar(@alivepositiontaking_7),SPACE(1)) + '" ' +
-		'alivept_8="'+ COALESCE(dbo.f_FomatNumericToChar(@alivepositiontaking_8),SPACE(1)) + '" ' +
-
-		'v2apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v2apositiontaking_1),SPACE(1)) + '" ' +
-		'v2apt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v2apositiontaking_2),SPACE(1)) + '" ' +
-		'v2apt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v2apositiontaking_3),SPACE(1)) + '" ' +
-		'v2apt_7="'+ COALESCE(dbo.f_FomatNumericToChar(@v2apositiontaking_7),SPACE(1)) + '" ' +
-		'v2apt_8="'+ COALESCE(dbo.f_FomatNumericToChar(@v2apositiontaking_8),SPACE(1)) + '" ' +
-		
-		'v2apt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v2apositiontaking_20),SPACE(1)) + '" ' +
-		--BAIO
-		'v2apt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v2apositiontaking_9999),SPACE(1)) + '" ' +
-		
-		'v3apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v3apositiontaking_1),SPACE(1)) + '" ' +
-		'v3apt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v3apositiontaking_2),SPACE(1)) + '" ' +
-		'v3apt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v3apositiontaking_3),SPACE(1)) + '" ' +
-		'v3apt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v3apositiontaking_20),SPACE(1)) + '" ' +
-
-		'v5apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v5apositiontaking_1),SPACE(1)) + '" ' +
-		'v5apt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v5apositiontaking_2),SPACE(1)) + '" ' +
-		'v5apt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v5apositiontaking_3),SPACE(1)) + '" ' +
-		'v5apt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v5apositiontaking_20),SPACE(1)) + '" ' +
-		'v5apt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v5apositiontaking_9999),SPACE(1)) + '" ' +
-
-		'v8apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v8apositiontaking_1),SPACE(1)) + '" ' +
-		'v8apt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v8apositiontaking_3),SPACE(1)) + '" ' +
-		'v8apt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v8apositiontaking_20),SPACE(1)) + '" ' +
-
-		'v10apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v10apositiontaking_1),SPACE(1)) + '" ' +
-		'v10apt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v10apositiontaking_2),SPACE(1)) + '" ' +
-		'v10apt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v10apositiontaking_3),SPACE(1)) + '" ' +
-		'v10apt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v10apositiontaking_20),SPACE(1)) + '" ' +
-
-		'v11apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v11apositiontaking_1),SPACE(1)) + '" ' +
-		'v11apt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v11apositiontaking_20),SPACE(1)) + '" ' +
-
-		'v99apt_1="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_1),SPACE(1)) + '" ' +
-		'v99apt_2="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_2),SPACE(1)) + '" ' +
-		'v99apt_3="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_3),SPACE(1)) + '" ' +
-		'v99apt_9="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_9),SPACE(1)) + '" ' +
-		'v99apt_20="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_20),SPACE(1)) + '" ' +
-		'v99apt_9999="'+ COALESCE(dbo.f_FomatNumericToChar(@v99apositiontaking_9999),SPACE(1)) + '" ' +
-
-		'v161apt_81="'+ COALESCE(dbo.f_FomatNumericToChar(@v161apositiontaking_81),SPACE(1)) + '" ' +
-		'v161apt_83="'+ COALESCE(dbo.f_FomatNumericToChar(@v161apositiontaking_83),SPACE(1)) + '" ' +
-		
-		'v161apt_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161apositiontaking_86),SPACE(1)) + '" ' +
-		'v161apt_88="'+ COALESCE(dbo.f_FomatNumericToChar(@v161apositiontaking_88),SPACE(1)) + '" ' +
-		'v161alivept_85="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_85),SPACE(1)) + '" ' +
-		'v161alivept_86="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_86),SPACE(1)) + '" ' +
-		'v161alivept_87="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_87),SPACE(1)) + '" ' +
-		'v161alivept_89="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_89),SPACE(1)) + '" ' +
-		'v161alivept_90="'+ COALESCE(dbo.f_FomatNumericToChar(@v161alivepositiontaking_90),SPACE(1)) + '" ' +
-		'ErrMsg="'+ ERROR_MESSAGE() + '" /></Acc_CustomerInsMember_Com>' 
-		
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-			@UserID = @Creator,
-			@CustID = @CustID,
-			@ActionID = 400,
-			@TrackingValue = @LogSPData,
-			@duration = @duration
-	END CATCH
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 400,
+		@TrackingValue = @LogSPData,
+		@duration = @duration	
 END
 GO
 

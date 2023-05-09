@@ -22,7 +22,7 @@ AS
 		- 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
-
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
 */		
@@ -57,19 +57,9 @@ BEGIN
 	DELETE @tmp_custID
 	INSERT INTO @tmp_custID
 	SELECT custID FROM custinfo WITH (NOLOCK) WHERE srecommend = @custid
-		
 	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustSettingGame where custid IN (SELECT custID FROM @tmp_custID)
-	
 	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustOverride3rd where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustOverrideGame where custid IN (SELECT custID FROM @tmp_custID)
-	
-	/*
-	delete P2PGameSetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete P2PGroupComm where custid IN (SELECT custID FROM @tmp_custID)
-	*/
+
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 	
 	delete custinfo where custid IN (SELECT custID FROM @tmp_custID)
@@ -98,18 +88,9 @@ BEGIN
 	DELETE @tmp_custID
 	INSERT INTO @tmp_custID
 	SELECT custID FROM custinfo WITH (NOLOCK) WHERE mrecommend = @custid
-	
 	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustSettingGame where custid IN (SELECT custID FROM @tmp_custID)
-	
 	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustOverride3rd where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustOverrideGame where custid IN (SELECT custID FROM @tmp_custID)
-	/*
-	delete P2PGameSetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete P2PGroupComm where custid IN (SELECT custID FROM @tmp_custID)
-	*/
+
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_IncludeBet_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
 	delete custinfo where custid IN (SELECT custID FROM @tmp_custID)
@@ -137,18 +118,9 @@ BEGIN
 	DELETE @tmp_custID
 	INSERT INTO @tmp_custID
 	SELECT custID FROM custinfo WITH (NOLOCK) WHERE recommend = @custid
-	
 	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustSetting3rd where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustSettingGame where custid IN (SELECT custID FROM @tmp_custID)
-	
 	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustOverride3rd where custid IN (SELECT custID FROM @tmp_custID)
-	delete CustOverrideGame where custid IN (SELECT custID FROM @tmp_custID)
-	/*
-	delete P2PGameSetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete P2PGroupComm where custid IN (SELECT custID FROM @tmp_custID)
-	*/
+
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_IncludeBet_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
 	delete custinfo where custid IN (SELECT custID FROM @tmp_custID)
@@ -184,12 +156,7 @@ BEGIN
 	END
 	
 	delete custsetting where custid = @custid
-	delete CustSetting3rd where custid = @custid
-	delete custsettingGame where custid = @custid
-	/*
-	delete P2PGameSetting where custid = @custid
-	delete P2PGroupComm where custid = @custid
-	*/
+
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_IncludeBet_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
 	delete custinfo where custid = @custid

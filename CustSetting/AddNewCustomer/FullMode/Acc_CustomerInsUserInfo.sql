@@ -46,16 +46,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	@autosuspend2 BIT = 0,
 	@autosuspend3 BIT = 0,
 	
-	@DisableNumber BIT = 0,
-
 	@DoubleCommLosing BIT = 0,
 
 	@DisableEsports BIT = 0,
 
-	@DisableSuperLive BIT = 0,
-
-	--Keno
-	@HideKeno BIT = 0,	
+	@DisableSuperLive BIT = 0,	
 	
 	@credit MONEY,
 	@maxcredit MONEY = 0,
@@ -155,6 +150,7 @@ Revisions:
 	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	- 20230414@Johnson: try catch when insert customer for case multiple clone account [redmine: #183697]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -511,10 +507,10 @@ BEGIN
 		  , credit
 		  , username
 		  , MatchLimit, VirtualMultiplier
-		  , DisableOutright, DisableNumber
+		  , DisableOutright
 		  , danger, danger2, danger3, danger4, danger5, Abnormal
 		  , DoubleCommLosing
-		  , HideKeno, DisableEsports, DisableSuperLive
+		  , DisableEsports, DisableSuperLive
 		  , DangerLevel
 		  )
 		VALUES
@@ -525,10 +521,10 @@ BEGIN
 		  , @credit
 		  , @username
 		  , @matchlimit, @virtualmultiplier
-		  , @DisableOutright, @DisableNumber
+		  , @DisableOutright
 		  , @danger, @danger2, @danger3, @danger4, @danger5, @Abnormal
 		  , @DoubleCommLosing	
-		  , @HideKeno, @DisableEsports, @DisableSuperLive
+		  , @DisableEsports, @DisableSuperLive
 		  , @DangerLevel
 		)
 

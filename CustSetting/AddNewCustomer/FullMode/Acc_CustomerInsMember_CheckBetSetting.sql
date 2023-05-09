@@ -42,18 +42,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CheckBetSetting]
 	--- soccer sports
 	@minbetv1mp money,
 	@maxbetv1mp money,
-	@maxpermatchv1mp money,
-
-	-- number game
-	@minbetv161 money,
-	@maxbetv161 money,
-	@maxpermatchv161 money,
-	@MaxPerBallv161 money = 0,	
-	
-	-- Happy 5
-	@minbetv164 money=0,
-	@maxbetv164 money=0,
-	@maxpermatchv164 money=0,
+	@maxpermatchv1mp money,	
 
 	--Saba
 	--- Saba soccer
@@ -95,6 +84,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 Param's Explanation:
 • @ErrCode:
@@ -152,11 +142,7 @@ BEGIN
 	--Other Sports
 	SELECT 99, 1, @minbetv99, @maxbetv99, @maxpermatchv99, NULL, @maxPOpermatchv99, [dbo].[f_Get_SportNameBySporttype](99,@Language) UNION ALL
 	--Mix Sports Parlay
-	SELECT 99, 9, @minbetv99mp, @maxbetv99mp, @maxpermatchv99mp, NULL, @maxPOpermatchv99mp, NULL UNION ALL
-	--Number Game
-	SELECT 161, 81, @minbetv161, @maxbetv161, @maxpermatchv161, @MaxPerBallv161, NULL, [dbo].[f_Get_SportNameBySporttype](161,@Language) UNION ALL
-	--Happy 5
-	SELECT 164, 8101, @minbetv164, @maxbetv164, @maxpermatchv164, NULL, NULL, [dbo].[f_Get_SportNameBySporttype](164,@Language) UNION ALL
+	SELECT 99, 9, @minbetv99mp, @maxbetv99mp, @maxpermatchv99mp, NULL, @maxPOpermatchv99mp, NULL UNION ALL	
 	--Saba Soccer
 	SELECT 9901, 1, @minbetv1saba, @maxbetv1saba, @maxpermatchv1saba, NULL, @maxPOpermatchv1saba, NULL UNION ALL
 	--Saba Basketball
@@ -230,39 +216,7 @@ BEGIN
 	WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)
 
 	IF @ErrCode <> 0
-		RETURN
-
-	--> Check rule of 789y site : Wrong Min bet/ Max bet/ Max per match/ Credit/ Master Agent name/ user group
-	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10001,@Language) + ' (' + SportName + ')'
-				, @ErrCode = 410
-	FROM @BetSetting
-	WHERE (MinBet < 1 or MaxBet < 1 or MaxPerMatch < 1)
-		AND @SystemID!=1 AND @SiteLabel IN ('789y')
-		AND SportType IN (161, 164)
-
-	IF @ErrCode <> 0
-		RETURN
-
-	--> Check rule : Wrong Max Per Ball
-	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10002,@Language) + ' (' + SportName + ')'
-				, @ErrCode = 411
-	FROM @BetSetting
-	WHERE MaxPerNumber < 0
-		AND SportType IN (161)
-
-	IF @ErrCode <> 0
-		RETURN
-
-	--> Check rule of 789y site : Wrong Max Per Ball
-	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10002,@Language) + ' (' + SportName + ')'
-				, @ErrCode = 411
-	FROM @BetSetting
-	WHERE MaxPerNumber < 1
-		AND @SystemID!=1 AND @SiteLabel IN ('789y')
-		AND SportType IN (161)
-
-	IF @ErrCode <> 0
-		RETURN
+		RETURN	
 
 	--> Check rule : Wrong Max Payout Per Match
 	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10059,@Language) + ' (' + SportName + ')'

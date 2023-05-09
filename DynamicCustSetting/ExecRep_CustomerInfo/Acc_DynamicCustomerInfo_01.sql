@@ -14,6 +14,7 @@ AS
 	Revisions:
 		- 20220808@Tacy: Initial SP [RedmineID: #176225]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 	Param's Explanation:
 */
@@ -30,6 +31,8 @@ BEGIN
 			, MinBet			MONEY
 			, MaxBet			MONEY
 			, MaxPerMatch		MONEY
+			, MaxPerNumber		MONEY
+			, SubType			TINYINT
 	)
 
 	DECLARE @NewLimitTbl TABLE (
@@ -444,6 +447,64 @@ BEGIN
 		WHERE	cslm.CustID = @CustID;
 
 		DROP TABLE #tmpStake
+	END
+	ELSE IF @SettingType=23 --BetSetting
+	BEGIN
+		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
+		IF dbo.f_CheckRepTable('CustBetSetting_Member') = 0 RETURN
+		
+		--Parse XML
+		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
+	
+		INSERT @NewBetLimitTbl (SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber,SubType)
+		SELECT SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber,SubType
+		FROM OPENXML (@iDoc, '/ROOT/BetLimit',1) 
+		WITH(SportType		SMALLINT
+			, BetType		SMALLINT
+			, MinBet		MONEY
+			, MaxBet		MONEY
+			, MaxPerMatch	MONEY
+			, MaxPerNumber	MONEY
+			, SubType		TINYINT
+			)	
+	
+		EXEC sp_xml_removedocument @iDoc
+
+		--update new settings CustBetSetting3rd_Member
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+			, main.maxpermatch	= tmp.MaxperMatch
+		FROM dbo.CustBetSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
+		INNER JOIN @NewBetLimitTbl tmp
+			ON tmp.SportType	= main.sporttype
+				AND tmp.BetType = main.bettype
+				AND tmp.SubType = 1
+		WHERE main.custid = @CustID
+			AND (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxperMatch
+				)
+
+		--update new settings -- CustBetSetting_Member
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+			, main.maxpermatch	= tmp.MaxperMatch
+			, main.MaxPerNumber	= tmp.MaxPerNumber
+		FROM dbo.CustBetSetting_Member main WITH(ROWLOCK,UPDLOCK)
+		INNER JOIN @NewBetLimitTbl tmp
+			ON tmp.SportType	= main.sporttype
+				AND tmp.BetType = main.bettype
+				AND tmp.SubType = 2
+		WHERE main.custid = @CustID
+			AND (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxperMatch
+				OR main.MaxPerNumber <> tmp.MaxPerNumber
+				)
 	END
 END
 GO

@@ -29,6 +29,8 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20210518@Winfred: Add new Parlay Max Payout [RedmineID:#154104]
 		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+
 	Parameter's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */ 
@@ -36,12 +38,7 @@ BEGIN
 	SET NOCOUNT ON
 
      IF (dbo.f_CheckRepTable('CustSetting') = 1 
-		  AND dbo.f_CheckRepTable('CustOverride') = 1 
-		  AND dbo.f_CheckRepTable('CustSetting3rd') = 1 
-		  AND dbo.f_CheckRepTable('CustOverride3rd') = 1 
-		  AND dbo.f_CheckRepTable('CustSettingGame') = 1 
-		  AND dbo.f_CheckRepTable('CustOverrideGame') = 1
-		  AND dbo.f_CheckRepTable('CustGameType') = 1		 
+		  AND dbo.f_CheckRepTable('CustOverride') = 1 		  
 		  AND dbo.f_CheckRepTable('AgentCommRate') = 1	
 		  AND dbo.f_CheckRepTable('CustBetSetting_Agent') = 1	 
 		  AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1	
@@ -115,65 +112,6 @@ BEGIN
 			RETURN				
 		END
 		
-		-- insert custSetting3rd info
-		INSERT INTO dbo.CustSetting3rd(
-			 custid
-			,bettype
-			,sporttype
-			,apositiontaking
-			,mpositiontaking
-			,spositiontaking
-			,playerdiscount
-			,discount
-			,adiscount
-			,sdiscount
-			,autopositiontaking
-			,isautopositiontaking
-			,autompositiontaking
-			,isautompositiontaking
-			,alivepositiontaking
-			,mlivepositiontaking
-			,slivepositiontaking
-			,autolivepositiontaking
-			,isautolivepositiontaking
-			,autolivempositiontaking
-			,isautolivempositiontaking
-		)
-		SELECT
-			@Custid
-			,bettype
-			,sporttype
-			,apositiontaking
-			,mpositiontaking
-			,spositiontaking
-			,playerdiscount
-			,discount
-			,adiscount
-			,sdiscount
-			,autopositiontaking
-			,isautopositiontaking
-			,autompositiontaking
-			,isautompositiontaking
-			,alivepositiontaking
-			,mlivepositiontaking
-			,slivepositiontaking
-			,autolivepositiontaking
-			,isautolivepositiontaking
-			,autolivempositiontaking
-			,isautolivempositiontaking
-		FROM dbo.CustSetting3rd WITH(NOLOCK)
-		WHERE custid=@ExistingCustid
-		AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
-
-		IF @@error <> 0
-		BEGIN 	
-			SELECT @ErrCode = 108
-						
-			-- ROLLBACK MANUALLY	
-			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			RETURN
-		END	
-		
 		-- insert custoverride info
 		INSERT INTO [dbo].[custoverride]
 			([custid], 
@@ -201,139 +139,9 @@ BEGIN
 				
 			-- ROLLBACK MANUALLY	
 			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID				
 			
 			RETURN
-		END	
-		
-		-- insert custoverride3rd info
-		INSERT INTO [dbo].[custoverride3rd]
-			([custid], 
-			[bettype], 
-			[sporttype], 
-			minpositiontaking, 
-			maxpositiontaking, 
-			minlivepositiontaking, 
-			maxlivepositiontaking)
-		SELECT @Custid, 
-			bettype, 
-			sporttype, 
-			minpositiontaking, 
-			maxpositiontaking, 
-			minlivepositiontaking, 
-			maxlivepositiontaking
-		FROM dbo.custOverride3rd WITH(NOLOCK)
-		WHERE custid=@ExistingCustid
-				AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
-		IF @@error <> 0
-		BEGIN
-			--Error occur
-			SELECT @ErrCode = 110
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
-			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			
-			RETURN
-		END
-	
-		
-		--- insert into CustSettingGame
-		INSERT INTO custsettingGame
-			(CustID, 
-			Bettype, 
-			Sporttype, 
-			apositiontaking, 
-			mpositiontaking, 
-			spositiontaking, 
-			playerdiscount, 
-			discount, 
-			adiscount, 
-			sdiscount, 
-			autopositiontaking, 
-			isautopositiontaking, 
-			autompositiontaking, 
-			isautompositiontaking)
-		SELECT 
-			@custid, 
-			Bettype, 
-			Sporttype, 
-			apositiontaking, 
-			mpositiontaking, 
-			spositiontaking, 
-			playerdiscount, 
-			discount, 
-			adiscount, 
-			sdiscount, 
-			autopositiontaking, 
-			isautopositiontaking, 
-			autompositiontaking, 
-			isautompositiontaking
-		FROM custsettingGame WITH(NOLOCK)
-		WHERE custid = @ExistingCustid
-				AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
-		if @@error <> 0
-		BEGIN
-
-			--Error occur
-			SELECT @ErrCode = 113
-				
-			-- ROLLBACK MANUALLY				
-			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
-			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-			
-			RETURN
-		END
-
-		--- insert into Custoverridegame
-		INSERT INTO Custoverridegame(CustID, Bettype, Sporttype, minpositiontaking)
-		SELECT @CustID, Bettype, Sporttype, minpositiontaking
-		FROM Custoverridegame WITH(NOLOCK)
-		WHERE custid = @ExistingCustid
-			AND Sporttype NOT IN(151,152,153,154,162,252,253,201)
-
-		if @@error <> 0
-		BEGIN
-			--Error occur
-			SELECT @ErrCode = 114
-				
-			-- ROLLBACK MANUALLY		
-			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
-			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-
-			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-						
-			RETURN
-		END	
-
-		--Keno, Gold Deluxe
-		INSERT INTO dbo.CustGameType(GameTypeID, Custid, MinBet, MaxBet, MaxPerGameType, IsDisabled, StakeLevelList)
-		SELECT	GameTypeID, @CustID, MinBet, MaxBet, MaxPerGameType, IsDisabled, StakeLevelList
-		FROM	dbo.CustGameType WITH(NOLOCK)
-		WHERE	Custid = @ExistingCustid
-				
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode = 156
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
-			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
-			
-			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
-				
-			RETURN
-		END
-		--End Keno
+		END				
 		
 		-- Myanmar Odds
 		DECLARE @IsMyanmarOdds BIT = 0
@@ -357,12 +165,8 @@ BEGIN
 				
 			-- ROLLBACK MANUALLY
 			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 			
-			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
 			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
 
 			RETURN
@@ -416,12 +220,8 @@ BEGIN
 				
 			-- ROLLBACK MANUALLY
 			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 			
-			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
 			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
 			DELETE dbo.CustMaxPayoutSetting_Agent WITH(ROWLOCK) WHERE custid = @CustID 
 			RETURN
@@ -447,12 +247,8 @@ BEGIN
 				
 			-- ROLLBACK MANUALLY
 			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 			
-			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
 			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
 			DELETE dbo.CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE custid = @CustID 
 			RETURN
@@ -478,12 +274,8 @@ BEGIN
 				
 			-- ROLLBACK MANUALLY
 			DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 			DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-			DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 			
-			DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-			DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
 			DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
 			DELETE dbo.CustMaxPayoutSetting_Agent WITH(ROWLOCK) WHERE custid = @CustID 
 			DELETE dbo.CustBetSetting_Agent WITH(ROWLOCK) WHERE custid = @CustID 
@@ -508,12 +300,8 @@ BEGIN
 		
 		-- ROLLBACK MANUALLY
 		IF(dbo.f_CheckRepTable('CustSetting') = 1) DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		IF(dbo.f_CheckRepTable('custsetting3rd') = 1) DELETE FROM custsetting3rd WITH (ROWLOCK) WHERE custid =  @CustID		
 		IF(dbo.f_CheckRepTable('custoverride') = 1) DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		IF(dbo.f_CheckRepTable('custoverride3rd') = 1) DELETE FROM custoverride3rd WITH (ROWLOCK) WHERE custid =  @CustID
 	
-		IF(dbo.f_CheckRepTable('custsettingGame') = 1) DELETE FROM custsettingGame with (ROWLOCK) where custid = @CustID
-		IF(dbo.f_CheckRepTable('CustGameType') = 1) DELETE dbo.CustGameType WITH(ROWLOCK) WHERE custid = @custid 
 		IF(dbo.f_CheckRepTable('AgentCommRate') = 1) DELETE dbo.AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID 
 		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1) DELETE CustMaxPayoutSetting_Agent WITH (ROWLOCK) WHERE custId  = @custid
 		IF(dbo.f_CheckRepTable('CustBetSetting_Agent') = 1) DELETE CustBetSetting_Agent WITH (ROWLOCK) WHERE custId  = @custid

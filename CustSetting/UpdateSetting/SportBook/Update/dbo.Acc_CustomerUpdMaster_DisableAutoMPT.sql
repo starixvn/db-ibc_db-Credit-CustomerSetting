@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_DisableAutoMPT]
     @CustID int,-- MasterID
     @DisableAutoMPT bit = 0,
@@ -31,7 +33,7 @@ Revisions:
                         2. Code aligning
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20151014@Helen: Customer Setting for Sportsbook 2- [Redmine: #44604]
-
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.
@@ -106,24 +108,7 @@ BEGIN
          WHERE ci.mrecommend = @CustID
            AND ci.roleid = 2
            AND ci.Enabled = 1
-           AND acs.isautompositiontaking = 1
-
-
-        UPDATE acs 
-           SET mpositiontaking =
-                 CASE
-                   WHEN acs.autompositiontaking > mcs.mpositiontaking - acs.apositiontaking THEN mcs.mpositiontaking - acs.apositiontaking
-                   ELSE acs.autompositiontaking
-                 END
-          FROM CustSetting3rd acs WITH(ROWLOCK, UPDLOCK) 
-			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = acs.custid
-			INNER JOIN CustSetting3rd mcs WITH(NOLOCK) ON acs.sporttype = mcs.sporttype
-													  AND acs.bettype = mcs.bettype
-													  AND mcs.custid = @CustID
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid = 2
-           AND ci.Enabled = 1
-           AND acs.isautompositiontaking = 1
+           AND acs.isautompositiontaking = 1       
 
 
         UPDATE acs 
@@ -140,42 +125,7 @@ BEGIN
          WHERE ci.mrecommend = @CustID
            AND ci.roleid = 2
            AND ci.Enabled = 1
-           AND acs.isautolivempositiontaking = 1
-
-
-        UPDATE acs3 
-           SET mlivepositiontaking =
-                 CASE
-                   WHEN acs3.autolivempositiontaking > mcs3.mlivepositiontaking - acs3.alivepositiontaking THEN mcs3.mlivepositiontaking - acs3.alivepositiontaking
-                   ELSE acs3.autolivempositiontaking
-                 END      
-          FROM custsetting3rd acs3 WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = acs3.custid
-			INNER JOIN custsetting3rd mcs3 WITH(NOLOCK) ON acs3.sporttype = mcs3.sporttype
-													   AND acs3.bettype = mcs3.bettype
-													   AND mcs3.custid = @CustID
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid = 2
-           AND ci.Enabled = 1
-           AND acs3.isautolivempositiontaking = 1
-
-
-        UPDATE acs
-           SET mpositiontaking =
-                 CASE
-                   WHEN acs.autompositiontaking > mcs.mpositiontaking - acs.apositiontaking THEN mcs.mpositiontaking - acs.apositiontaking
-                   ELSE acs.autompositiontaking
-                 END
-          FROM CustSettingGame acs WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN CustInfo ci WITH(NOLOCK) ON acs.custid = ci.custid 
-			INNER JOIN CustSettingGame mcs WITH(NOLOCK) ON mcs.custid = @custid
-													   AND mcs.sporttype = acs.sporttype
-													   AND mcs.bettype = acs.bettype 
-         WHERE ci.mrecommend = @custid
-           AND ci.roleid = 2
-           AND ci.Enabled = 1
-           AND acs.isautompositiontaking = 1
-
+           AND acs.isautolivempositiontaking = 1             
 
         --Reset auto master PT of all agent under this master 
         UPDATE cs
@@ -186,19 +136,7 @@ BEGIN
          WHERE ci.mrecommend = @CustID
            AND ci.roleid IN (1, 2)
            AND ci.Enabled = 1
-           AND cs.isautompositiontaking = 1
-
-
-        UPDATE cs
-           SET isautompositiontaking = 0
-             , autompositiontaking = 0
-          FROM CustSetting3rd cs WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid 
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid IN (1, 2)
-           AND ci.Enabled = 1
-           AND cs.isautompositiontaking = 1
-
+           AND cs.isautompositiontaking = 1      
 
          UPDATE cs
            SET isautolivempositiontaking = 0
@@ -208,29 +146,7 @@ BEGIN
          WHERE ci.mrecommend = @CustID
            AND ci.roleid IN (1, 2)
            AND ci.Enabled = 1
-           AND cs.isautolivempositiontaking = 1
-
-
-        UPDATE cs3
-           SET isautolivempositiontaking = 0
-             , autolivempositiontaking = 0
-          FROM custsetting3rd cs3 WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs3.custid 
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid IN (1, 2)
-           AND ci.Enabled = 1
-           AND cs3.isautolivempositiontaking = 1
-
-
-        UPDATE cs
-           SET isautompositiontaking = 0
-             , autompositiontaking = 0
-          FROM CustSettingGame cs WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid 
-         WHERE ci.mrecommend = @custid
-           AND ci.roleid IN (1, 2)
-           AND ci.Enabled = 1
-           AND cs.isautompositiontaking = 1
+           AND cs.isautolivempositiontaking = 1            
         
         -- For sportbook2: CustPTSetting3rd_Member AND CustPTSetting3rd_Agent
         --Reset m2 of all agent under this master
@@ -329,13 +245,4 @@ BEGIN
           , @duration = @duration
     END CATCH
 END
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaster_DisableAutoMPT] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_DisableAutoMPT] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_DisableAutoMPT] TO [bodbDownlineNet]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_DisableAutoMPT] TO [bodbExtAccNet]
 GO 

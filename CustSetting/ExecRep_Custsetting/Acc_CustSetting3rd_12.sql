@@ -1,8 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting3rd_12]
-	@ids VARCHAR(MAX)
-	,@Sporttype INT
-	,@ptVALUE MONEY
 AS
 /*
 	Created: Elodie
@@ -18,7 +15,7 @@ AS
 		- 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
 		- 20190924@Elodie: 3rd party products - Remove Inactive Products Phase 2 [Redmine: #118699]
 		- 20211101@Winfred: Merge Sports Lottery under Sportsbook when turn on BA [redmine:#163191]
-		
+		- 20221123@Elodie: Clean code [Redmine: #179711]
 	Param's Explanation:
 		@Sporttype: 1 = Sportbook
 					161 = Number Game
@@ -28,72 +25,6 @@ BEGIN
 
 	SET NOCOUNT ON
 	
-	if NOT(dbo.f_CheckRepTable('custinfo') = 1 
-	     AND dbo.f_CheckRepTable('Dep_Custsetting3rd') = 1 
-	     AND dbo.f_CheckRepTable('Dep_CustSetting') = 1 
-     )
-	   	RETURN              
-    			
-	
-	DECLARE @string VARCHAR(MAX), @splitter CHAR(1), @xml XML
-	SELECT @splitter = ',', @string = @ids
-
-	SET @xml = N'<root><r i=''' + REPLACE(@string, @splitter, '''/><r i=''') + '''/></root>'
-
-	--Create temp table containing all accounts belong to super, exclude fincance account
-	CREATE TABLE #tblCust (custid INT,IsBA BIT DEFAULT(0))	
-	INSERT INTO #tblCust(custid)
-	SELECT r.value('./@i','INT')
-	FROM @xml.nodes('//root/r') AS RECORDS(r)
-
-	IF @Sporttype = 1 --Sportbook
-	BEGIN
-		--Exclude BA member for SB
-		IF @Sporttype = 1
-			UPDATE t
-			SET t.IsBA = 1
-			FROM #tblCust t
-				INNER JOIN Dep_CustBAActive b WITH(NOLOCK)	ON b.CustId = t.custid
-		
-		UPDATE cs WITH(UPDLOCK,ROWLOCK)
-		SET    cs.spositiontaking = case when roleid = 4 then @ptVALUE else 0 end 
-			  ,cs.mpositiontaking = case when roleid in (4,3)  then @ptVALUE else 0 end 
-			  ,cs.apositiontaking = case when roleid = 3  then 0 else @ptVALUE end 			 
-		FROM Dep_CustSetting cs 
-			INNER JOIN CustInfo c ON c.custid = cs.custid
-		WHERE c.custid IN (SELECT custid FROM #tblCust WHERE IsBA = 0) 
-		
-		UPDATE cs WITH(UPDLOCK,ROWLOCK)
-		SET   cs.apositiontaking = @ptVALUE 			 
-		FROM Dep_CustSetting cs 
-			INNER JOIN CustInfo c ON c.custid = cs.custid 
-		WHERE c.custid IN (SELECT custid FROM #tblCust WHERE IsBA = 1) AND cs.sporttype = 2 AND cs.bettype = 2		
-	END
-
-	ELSE IF @Sporttype = 161 --NumberGame
-	BEGIN		
-		UPDATE cs WITH(UPDLOCK,ROWLOCK)
-		SET    cs.spositiontaking = case when roleid = 4 then @ptVALUE else 0 end 
-			  ,cs.mpositiontaking = case when roleid in (4,3)  then @ptVALUE else 0 end 
-			  ,cs.apositiontaking = case when roleid = 3  then 0 else @ptVALUE end 			 
-		FROM Dep_CustSetting3rd cs 
-			INNER JOIN CustInfo c ON c.custid = cs.custid
-		WHERE cs.Sporttype = 161
-			AND c.custid IN (SELECT custid FROM #tblCust)
-	END 
-
-	ELSE IF @Sporttype = 202  --Keno
-	BEGIN
-		UPDATE cs WITH(UPDLOCK,ROWLOCK)
-		SET	   cs.spositiontaking = case when roleid = 4 then @ptVALUE else 0 end 
-			  ,cs.mpositiontaking = case when roleid in (4,3)  then @ptVALUE else 0 end 
-			  ,cs.apositiontaking = case when roleid = 3  then 0 else @ptVALUE end 
-		FROM CustSettingGame cs
-			INNER JOIN CustInfo c ON c.custid = cs.custid
-		WHERE cs.Sporttype = @Sporttype
-			AND c.custid IN (SELECT custid FROM #tblCust)
-	END
-
-	DROP TABLE #tblCust
+	RETURN
 END
 GO

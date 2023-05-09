@@ -43,7 +43,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]	
 	- 20230310@Tacy: NAP/Alpha - Split 789y site [RedmineID: #181596]
-
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
  */
 BEGIN 
 SET NOCOUNT ON
@@ -98,19 +98,7 @@ Declare @MinBet_Max money,
 	@MinBetv1MP_Max money,
 	@MaxBetv1MP_Min money,	
 	@MaxPerMatchv1MP_Min money,	
-	@MaxPerMatchv1MP_Max money,	
-
-	@MinBetv161_Max money,
-	@MaxBetv161_Min money,	
-	@MaxPerMatchv161_Min money,	
-	@MaxPerMatchv161_Max money,
-
-	@MaxPerBallv161_Max money,
-	
-	@MinBetv164_Max money,
-	@MaxBetv164_Min money,	
-	@MaxPerMatchv164_Min money,	
-	@MaxPerMatchv164_Max money,
+	@MaxPerMatchv1MP_Max money,		
 
 	--Max Payout Per Match
 	@MaxPayoutPerMatch_max money = 0,
@@ -211,20 +199,7 @@ Declare
 	@v99apositiontaking_3_max smallmoney,
 	@v99apositiontaking_20_max smallmoney,
 	@v99apositiontaking_9999_max smallmoney,	
-	@v99apositiontaking_9_max smallmoney,
-
-	@v161apositiontaking_81_max smallmoney,
-	@v161apositiontaking_83_max smallmoney,
-	--@v161apositiontaking_85_max smallmoney,
-	@v161apositiontaking_86_max smallmoney,
-	@v161apositiontaking_88_max smallmoney,
-
-	@v161alivepositiontaking_85_max smallmoney,
-	@v161alivepositiontaking_86_max smallmoney,
-	@v161alivepositiontaking_87_max smallmoney,
-	@v161alivepositiontaking_89_max smallmoney,
-	@v161alivepositiontaking_90_max smallmoney
-
+	@v99apositiontaking_9_max smallmoney
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Select @Credit_AllOtherAgent = isnull(sum(credit), 0) from custinfo as ci with (NOLOCK) where mrecommend = @CustID and RoleID = 2
@@ -248,8 +223,6 @@ EXEC Age_CustomerSelMinMaxLimit @custid = @custid, @IsCreatedDowline = 1,
 	@MinBetv99_Max = @MinBetv99_Max output, @MaxBetv99_Min = @MaxBetv99_Min output, @MaxPerMatchv99_Min = @MaxPerMatchv99_Min output, @MaxPerMatchv99_Max = @MaxPerMatchv99_Max output,		
 	@MinBetv99MP_Max = @MinBetv99MP_Max output, @MaxBetv99MP_Min = @MaxBetv99MP_Min output, @MaxPerMatchv99MP_Min = @MaxPerMatchv99MP_Min output, @MaxPerMatchv99MP_Max = @MaxPerMatchv99MP_Max output,
 	@MinBetv1MP_Max = @MinBetv1MP_Max output, @MaxBetv1MP_Min = @MaxBetv1MP_Min output, @MaxPerMatchv1MP_Min = @MaxPerMatchv1MP_Min output, @MaxPerMatchv1MP_Max = @MaxPerMatchv1MP_Max output,
-	@MinBetv161_Max = @MinBetv161_Max output, @MaxBetv161_Min = @MaxBetv161_Min output, @MaxPerMatchv161_Min = @MaxPerMatchv161_Min output, @MaxPerMatchv161_Max = @MaxPerMatchv161_Max output, @MaxPerBallv161_Max = @MaxPerBallv161_Max output,
-	@MinBetv164_Max = @MinBetv164_Max output, @MaxBetv164_Min = @MaxBetv164_Min output, @MaxPerMatchv164_Min = @MaxPerMatchv164_Min output, @MaxPerMatchv164_Max = @MaxPerMatchv164_Max output,
 	@MaxPayoutPerMatch_max      = @MaxPayoutPerMatch_max      OUTPUT,
 	@MaxPayoutPerMatchv2_max    = @MaxPayoutPerMatchv2_max    OUTPUT,
 	@MaxPayoutPerMatchv3_max    = @MaxPayoutPerMatchv3_max    OUTPUT,
@@ -353,23 +326,6 @@ Select
 from custsetting as cs with (nolock)
 where custid = (select srecommend from customer with (nolock) where custid = @CustID)
 
--- number game setting
-select 
-	@v161apositiontaking_81_max = max(case when cs.bettype = 81 and cs.sporttype = 161 then cs.apositiontaking else 0 end),
-	@v161apositiontaking_83_max = max(case when cs.bettype = 83 and cs.sporttype = 161 then cs.apositiontaking else 0 end),
-	--@v161apositiontaking_85_max = max(case when cs.bettype = 85 and cs.sporttype = 161 then cs.apositiontaking else 0 end),
-	@v161apositiontaking_86_max = max(case when cs.bettype = 86 and cs.sporttype = 161 then cs.apositiontaking else 0 end),
-	@v161apositiontaking_88_max = max(case when cs.bettype = 88 and cs.sporttype = 161 then cs.apositiontaking else 0 end),
-
-	@v161alivepositiontaking_85_max = max(case when cs.bettype = 85 and cs.sporttype = 161 then cs.alivepositiontaking else 0 end),
-	@v161alivepositiontaking_86_max = max(case when cs.bettype = 86 and cs.sporttype = 161 then cs.alivepositiontaking else 0 end),
-	@v161alivepositiontaking_87_max = max(case when cs.bettype = 87 and cs.sporttype = 161 then cs.alivepositiontaking else 0 end),
-	@v161alivepositiontaking_89_max = max(case when cs.bettype = 89 and cs.sporttype = 161 then cs.alivepositiontaking else 0 end),
-	@v161alivepositiontaking_90_max = max(case when cs.bettype = 90 and cs.sporttype = 161 then cs.alivepositiontaking else 0 end)
-from custsetting3rd as cs with(nolock)
-where custid = (select srecommend from customer with(nolock) where custid = @CustID)
-
-
 Select
 	@UserName as NewUserName,
 	@Msuspended as suspended,
@@ -443,20 +399,6 @@ Select
 	-- Mix parlay of mixed sports
 	@v99apositiontaking_9_max as v99apositiontaking_9_max,
 
-
-	--number game
-	@v161apositiontaking_81_max as v161apositiontaking_81_max,
-	@v161apositiontaking_83_max as v161apositiontaking_83_max,
-	--@v161apositiontaking_85_max as v161apositiontaking_85_max,
-	@v161apositiontaking_86_max as v161apositiontaking_86_max,
-	@v161apositiontaking_88_max as v161apositiontaking_88_max,
-	
-	@v161alivepositiontaking_85_max as v161alivepositiontaking_85_max,
-	@v161alivepositiontaking_86_max as v161alivepositiontaking_86_max,
-	@v161alivepositiontaking_87_max as v161alivepositiontaking_87_max,
-	@v161alivepositiontaking_89_max as v161alivepositiontaking_89_max,
-	@v161alivepositiontaking_90_max as v161alivepositiontaking_90_max,
-	
 	--min(m3,l3)
 	max(case when cs.bettype = 1 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as mpositiontaking_1,
 	max(case when cs.bettype = 2 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as mpositiontaking_2,
@@ -522,76 +464,6 @@ Select
 	-- mix parlay of mixed sports
 	max(case when cs.bettype = 9 and cs.sporttype=99 then case when cs.mpositiontaking < co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as v99mpositiontaking_9,
 
-
-	-- number game
-	max(case when cs3.bettype = 81 and cs3.sporttype=161 then case when cs3.mpositiontaking < co3.maxpositiontaking then cs3.mpositiontaking else co3.maxpositiontaking end else 0 end) as v161mpositiontaking_81,
-	max(case when cs3.bettype = 83 and cs3.sporttype=161 then case when cs3.mpositiontaking < co3.maxpositiontaking then cs3.mpositiontaking else co3.maxpositiontaking end else 0 end) as v161mpositiontaking_83,
-	--max(case when cs3.bettype = 85 and cs3.sporttype=161 then case when cs3.mpositiontaking < co3.maxpositiontaking then cs3.mpositiontaking else co3.maxpositiontaking end else 0 end) as v161mpositiontaking_85,
-	max(case when cs3.bettype = 86 and cs3.sporttype=161 then case when cs3.mpositiontaking < co3.maxpositiontaking then cs3.mpositiontaking else co3.maxpositiontaking end else 0 end) as v161mpositiontaking_86,
-	max(case when cs3.bettype = 88 and cs3.sporttype=161 then case when cs3.mpositiontaking < co3.maxpositiontaking then cs3.mpositiontaking else co3.maxpositiontaking end else 0 end) as v161mpositiontaking_88,
-
-	max(case when cs3.bettype = 85 and cs3.sporttype=161 then case when cs3.mlivepositiontaking < co3.maxlivepositiontaking then cs3.mlivepositiontaking else co3.maxlivepositiontaking end else 0 end) as v161mlivepositiontaking_85,
-	max(case when cs3.bettype = 86 and cs3.sporttype=161 then case when cs3.mlivepositiontaking < co3.maxlivepositiontaking then cs3.mlivepositiontaking else co3.maxlivepositiontaking end else 0 end) as v161mlivepositiontaking_86,
-	max(case when cs3.bettype = 87 and cs3.sporttype=161 then case when cs3.mlivepositiontaking < co3.maxlivepositiontaking then cs3.mlivepositiontaking else co3.maxlivepositiontaking end else 0 end) as v161mlivepositiontaking_87,
-	max(case when cs3.bettype = 89 and cs3.sporttype=161 then case when cs3.mlivepositiontaking < co3.maxlivepositiontaking then cs3.mlivepositiontaking else co3.maxlivepositiontaking end else 0 end) as v161mlivepositiontaking_89,
-	max(case when cs3.bettype = 90 and cs3.sporttype=161 then case when cs3.mlivepositiontaking < co3.maxlivepositiontaking then cs3.mlivepositiontaking else co3.maxlivepositiontaking end else 0 end) as v161mlivepositiontaking_90,
-	
-	--Auto Master PT
-	--max(case when cs.bettype = 1 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_1,
-	--max(case when cs.bettype = 2 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_2,
-	--max(case when cs.bettype = 3 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_3,
-	--max(case when cs.bettype = 4 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_4,
-	--max(case when cs.bettype = 5 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_5,
-	--max(case when cs.bettype = 6 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_6,
-	--max(case when cs.bettype = 7 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_7,
-	--max(case when cs.bettype = 8 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_8,
-	--max(case when cs.bettype = 9 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_9,
-	--max(case when cs.bettype = 10 and cs.sporttype=1 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_mpositiontaking_10,
-
-	--max(case when cs.bettype = 1 and cs.sporttype=1 then case when cs.mlivepositiontaking<co.maxlivepositiontaking then cs.mlivepositiontaking else co.maxlivepositiontaking end else 0 end) as auto_mlivepositiontaking_1,
-	--max(case when cs.bettype = 3 and cs.sporttype=1 then case when cs.mlivepositiontaking<co.maxlivepositiontaking then cs.mlivepositiontaking else co.maxlivepositiontaking end else 0 end) as auto_mlivepositiontaking_3,
-	--max(case when cs.bettype = 7 and cs.sporttype=1 then case when cs.mlivepositiontaking<co.maxlivepositiontaking then cs.mlivepositiontaking else co.maxlivepositiontaking end else 0 end) as auto_mlivepositiontaking_7,
-	--max(case when cs.bettype = 8 and cs.sporttype=1 then case when cs.mlivepositiontaking<co.maxlivepositiontaking then cs.mlivepositiontaking else co.maxlivepositiontaking end else 0 end) as auto_mlivepositiontaking_8,
-
-	--max(case when cs.bettype = 1 and cs.sporttype=2 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v2mpositiontaking_1,
-	--max(case when cs.bettype = 2 and cs.sporttype=2 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v2mpositiontaking_2,
-	--max(case when cs.bettype = 3 and cs.sporttype=2 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v2mpositiontaking_3,
-	--max(case when cs.bettype = 7 and cs.sporttype=2 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v2mpositiontaking_7,
-	--max(case when cs.bettype = 8 and cs.sporttype=2 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v2mpositiontaking_8,
-	--max(case when cs.bettype = 9 and cs.sporttype=2 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v2mpositiontaking_9,
-	--max(case when cs.bettype = 20 and cs.sporttype=2 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v2mpositiontaking_20,
-
-	--max(case when cs.bettype = 1 and cs.sporttype=3 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v3mpositiontaking_1,
-	--max(case when cs.bettype = 2 and cs.sporttype=3 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v3mpositiontaking_2,
-	--max(case when cs.bettype = 3 and cs.sporttype=3 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v3mpositiontaking_3,
-	--max(case when cs.bettype = 20 and cs.sporttype=3 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v3mpositiontaking_20,
-
-	--max(case when cs.bettype = 1 and cs.sporttype=5 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v5mpositiontaking_1,
-	--max(case when cs.bettype = 2 and cs.sporttype=5 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v5mpositiontaking_2,
-	--max(case when cs.bettype = 3 and cs.sporttype=5 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v5mpositiontaking_3,
-	--max(case when cs.bettype = 20 and cs.sporttype=5 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v5mpositiontaking_20,
-
-	--max(case when cs.bettype = 1 and cs.sporttype=8 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v8mpositiontaking_1,
-	--max(case when cs.bettype = 3 and cs.sporttype=8 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v8mpositiontaking_3,
-	--max(case when cs.bettype = 20 and cs.sporttype=8 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v8mpositiontaking_20,
-
-	--max(case when cs.bettype = 1 and cs.sporttype=10 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v10mpositiontaking_1,
-	--max(case when cs.bettype = 2 and cs.sporttype=10 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v10mpositiontaking_2,
-	--max(case when cs.bettype = 3 and cs.sporttype=10 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v10mpositiontaking_3,
-	--max(case when cs.bettype = 20 and cs.sporttype=10 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v10mpositiontaking_20,
-
-	--max(case when cs.bettype = 1 and cs.sporttype=11 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v11mpositiontaking_1,
-	--max(case when cs.bettype = 20 and cs.sporttype=11 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v11mpositiontaking_20,
-
-	--max(case when cs.bettype = 2 and cs.sporttype=12 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v12mpositiontaking_2,
-	--max(case when cs.bettype = 21 and cs.sporttype=12 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v12mpositiontaking_21,
-	--max(case when cs.bettype = 22 and cs.sporttype=12 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v12mpositiontaking_22,
-
-	--max(case when cs.bettype = 1 and cs.sporttype=99 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v99mpositiontaking_1,
-	--max(case when cs.bettype = 2 and cs.sporttype=99 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v99mpositiontaking_2,
-	--max(case when cs.bettype = 3 and cs.sporttype=99 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v99mpositiontaking_3,
-	--max(case when cs.bettype = 20 and cs.sporttype=99 then case when cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end else 0 end) as auto_v99mpositiontaking_20,
-	----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	-- For MyanmarOdds
 	ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds,
 	ISNULL(@MyanmarOdds,0) AS discountMyanmarOdds,
@@ -672,20 +544,7 @@ Select
 
 	-- Mix parlay mixed sports
 	max(case when cs.bettype = 9 and cs.sporttype=99 then co.minpositiontaking else 0 end) as v99mpositiontaking_9_min,
-
-
-	-- number game
-	max(case when cs3.bettype = 81 and cs3.sporttype=161 then co3.minpositiontaking else 0 end) as v161mpositiontaking_81_min,
-	max(case when cs3.bettype = 83 and cs3.sporttype=161 then co3.minpositiontaking else 0 end) as v161mpositiontaking_83_min,
-	--max(case when cs3.bettype = 85 and cs3.sporttype=161 then co3.minpositiontaking else 0 end) as v161mpositiontaking_85_min,
-	max(case when cs3.bettype = 86 and cs3.sporttype=161 then co3.minpositiontaking else 0 end) as v161mpositiontaking_86_min,
-	max(case when cs3.bettype = 88 and cs3.sporttype=161 then co3.minpositiontaking else 0 end) as v161mpositiontaking_88_min,
-
-	max(case when cs3.bettype = 85 and cs3.sporttype=161 then co3.minlivepositiontaking else 0 end) as v161mlivepositiontaking_85_min,
-	max(case when cs3.bettype = 86 and cs3.sporttype=161 then co3.minlivepositiontaking else 0 end) as v161mlivepositiontaking_86_min,
-	max(case when cs3.bettype = 87 and cs3.sporttype=161 then co3.minlivepositiontaking else 0 end) as v161mlivepositiontaking_87_min,
-	max(case when cs3.bettype = 89 and cs3.sporttype=161 then co3.minlivepositiontaking else 0 end) as v161mlivepositiontaking_89_min,
-	max(case when cs3.bettype = 90 and cs3.sporttype=161 then co3.minlivepositiontaking else 0 end) as v161mlivepositiontaking_90_min,
+	
 	MAX(Customer.site) AS Site,
 	MAX(s.SiteLabel) AS SiteLabel,
 	IsNull(@MinBet_Max, 0) as MinBet_Max,
@@ -737,18 +596,7 @@ Select
 	IsNull(@MaxBetv1MP_Min, 0) as MaxBetv1MP_Min,	
 	IsNull(@MaxPerMatchv1MP_Min, 0) as MaxPerMatchv1MP_Min,	
 	IsNull(@MaxPerMatchv1MP_Max, 0) as MaxPerMatchv1MP_Max,
-	
-
-	IsNull(@MinBetv161_Max, 0) as MinBetv161_Max,	
-	IsNull(@MaxBetv161_Min, 0) as MaxBetv161_Min,	
-	IsNull(@MaxPerMatchv161_Min, 0) as MaxPerMatchv161_Min,	
-	IsNull(@MaxPerMatchv161_Max, 0) as MaxPerMatchv161_Max,
-	ISNull(@MaxPerBallv161_Max, 0) as MaxPerBallv161_Max,
-	
-	IsNull(@MinBetv164_Max, 0) as MinBetv164_Max,	
-	IsNull(@MaxBetv164_Min, 0) as MaxBetv164_Min,	
-	IsNull(@MaxPerMatchv164_Min, 0) as MaxPerMatchv164_Min,	
-	IsNull(@MaxPerMatchv164_Max, 0) as MaxPerMatchv164_Max,
+		
 	--> MaxMaxPayoutPerMatch
 	@MaxPayoutPerMatch_max AS MaxPayoutPerMatch_max, 
     @MaxPayoutPerMatchv2_max AS MaxPayoutPerMatchv2_max, 
@@ -776,9 +624,7 @@ From
 	INNER JOIN Site s WITH (NOLOCK) ON s.site=Customer.site
 	INNER JOIN custinfo as ci with (NOLOCK) on Customer.CustID = ci.CustID
 	INNER JOIN CustSetting as cs with (NOLOCK) on Customer.CustID = CS.CustID
-	LEFT JOIN custsetting3rd as cs3 with(nolock) on Customer.CustID = cs3.CustID
 	LEFT JOIN custoverride as co with (NOLOCK) on co.custid = cs.custid and co.sporttype=cs.sporttype and co.bettype= cs.bettype
-	LEFT JOIN custoverride3rd as co3 with(nolock) on co3.custid = cs3.custid and co3.sporttype = cs3.sporttype and co3.bettype = cs3.bettype
 Where Customer.CustID = @CustID
 
 END

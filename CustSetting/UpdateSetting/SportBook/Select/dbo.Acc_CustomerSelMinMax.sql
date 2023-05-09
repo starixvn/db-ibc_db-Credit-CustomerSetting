@@ -30,14 +30,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerSelMinMax]
 	@maxpermatchv99mp       MONEY = 0 OUTPUT, 
 	@minbetv1mp             MONEY = 0 OUTPUT, 
 	@maxbetv1mp             MONEY = 0 OUTPUT, 
-	@maxpermatchv1mp        MONEY = 0 OUTPUT, 
-	@minbetv161             MONEY = 0 OUTPUT, 
-	@maxbetv161             MONEY = 0 OUTPUT, 
-	@maxpermatchv161        MONEY = 0 OUTPUT, 
-	@MaxPerBallv161         MONEY = 0 OUTPUT, 
-	@minbetv164             MONEY = 0 OUTPUT, 
-	@maxbetv164             MONEY = 0 OUTPUT, 
-	@maxpermatchv164        MONEY = 0 OUTPUT, 
+	@maxpermatchv1mp        MONEY = 0 OUTPUT, 	
 	@MaxPayoutPerMatch      MONEY = 0 OUTPUT, 
 	@MaxPayoutPerMatchv2    MONEY = 0 OUTPUT, 
 	@MaxPayoutPerMatchv3    MONEY = 0 OUTPUT, 
@@ -73,6 +66,7 @@ Revisions:
 	- 20181106@Johnson: add Happy 5 [Redmine: #104006]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 Param's Explanation:
 • @custid: custid that need to be viewed.   
 */
@@ -133,16 +127,7 @@ BEGIN
 			,@MinBetv1MP  			= max(case when cbs.bettype = 9 and cbs.sporttype=1 then cbs.minbet else 0 end)					
 			,@MaxBetv1MP  			= max(case when cbs.bettype = 9 and cbs.sporttype=1 then cbs.maxbet else 0 end)					
 			,@MaxPerMatchv1MP  		= max(case when cbs.bettype = 9 and cbs.sporttype=1 then cbs.MaxPerMatch else 0 end)				
-			,@MaxPayoutPerMatchv1MP = max(case when cbs.bettype = 9 and cbs.sporttype=1 then cbs.MaxPayoutPerMatch else 0 end)	
-		 
-			,@MinBetv161  			= max(case when cbs.bettype = 81 and cbs.sporttype=161 then cbs.minbet else 0 end)				
-			,@MaxBetv161  			= max(case when cbs.bettype = 81 and cbs.sporttype=161 then cbs.maxbet else 0 end)				
-			,@MaxPerMatchv161  		= max(case when cbs.bettype = 81 and cbs.sporttype=161 then cbs.MaxPerMatch else 0 end)			
-			,@maxperballv161  		= max(case when cbs.bettype = 81 and cbs.sporttype=161 then cbs.MaxPerNumber else 0 end)	
-			
-			,@MinBetv164  			= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.minbet else 0 end)				
-			,@MaxBetv164  			= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.maxbet else 0 end)				
-			,@MaxPerMatchv164  		= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.MaxPerMatch else 0 end)	
+			,@MaxPayoutPerMatchv1MP = max(case when cbs.bettype = 9 and cbs.sporttype=1 then cbs.MaxPayoutPerMatch else 0 end)			 
 			
 			,@minbetv1saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.minbet else 0 end)					
 			,@maxbetv1saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.maxbet else 0 end)					
@@ -208,16 +193,7 @@ BEGIN
 			,@MaxBetv1MP  			= max(case when cbs.bettype = 9 and cbs.sporttype=1 then cbs.maxbet else 0 end)					
 			,@MaxPerMatchv1MP  		= max(case when cbs.bettype = 9 and cbs.sporttype=1 then cbs.MaxPerMatch else 0 end)				
 			,@MaxPayoutPerMatchv1MP = max(case when cbs.bettype = 9 and cbs.sporttype=1 then cbs.MaxPayoutPerMatch else 0 end)	
-		 
-			,@MinBetv161  			= max(case when cbs.bettype = 81 and cbs.sporttype=161 then cbs.minbet else 0 end)				
-			,@MaxBetv161  			= max(case when cbs.bettype = 81 and cbs.sporttype=161 then cbs.maxbet else 0 end)				
-			,@MaxPerMatchv161  		= max(case when cbs.bettype = 81 and cbs.sporttype=161 then cbs.MaxPerMatch else 0 end)			
-			,@maxperballv161  		= max(case when cbs.bettype = 81 and cbs.sporttype=161 then cbs.MaxPerNumber else 0 end)	
-			
-			,@MinBetv164  			= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.minbet else 0 end)				
-			,@MaxBetv164  			= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.maxbet else 0 end)				
-			,@MaxPerMatchv164  		= max(case when cbs.bettype = 8101 and cbs.sporttype=164 then cbs.MaxPerMatch else 0 end)
-				
+		 			
 			,@minbetv1saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.minbet else 0 end)					
 			,@maxbetv1saba  			= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.maxbet else 0 end)					
 			,@maxpermatchv1saba  		= max(case when cbs.bettype = 1 and cbs.sporttype=9901 then cbs.MaxPerMatch else 0 end)				

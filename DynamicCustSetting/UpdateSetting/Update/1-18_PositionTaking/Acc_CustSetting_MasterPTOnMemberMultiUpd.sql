@@ -24,6 +24,7 @@ AS
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		Parameter's Explanation:	
 		• @PT:
 					<ROOT>
@@ -72,6 +73,7 @@ BEGIN
 			, AutoMasterPT		SMALLMONEY
 			, IsAutoSuperPT		BIT
 			, AutoSuperPT		SMALLMONEY
+			, RID INT Identity(1,1)
 		)
 	DECLARE @OldPTTble TABLE (
 		   SportType			SMALLINT
@@ -84,6 +86,7 @@ BEGIN
 			, AutoMasterPT		SMALLMONEY
 			, IsAutoSuperPT		BIT
 			, AutoSuperPT		SMALLMONEY
+			, RID INT Identity(1,1)
 		)
 		
 	--Super PT Setting Values		
@@ -190,7 +193,18 @@ BEGIN
 	
 --******************************************PREPARE SETTING FOR UPDATE*************************************** 	
 	--Parse XML
-	INSERT @NewPTTble
+	INSERT @NewPTTble(
+		 SportType			
+		, BetType			
+		, IsLive			
+		, SuperPT			
+		, MasterPT			
+		, AgentPT			
+		, IsAutoMasterPT	
+		, AutoMasterPT		
+		, IsAutoSuperPT		
+		, AutoSuperPT	
+	)
 	SELECT SportType
 			,BetType
 			,IsLive
@@ -261,7 +275,18 @@ BEGIN
 				AND cs.AgentID = @_AgentID
 			
 	--Backup old settings for logs
-	INSERT @OldPTTble
+	INSERT @OldPTTble(
+		 SportType			
+		, BetType			
+		, IsLive			
+		, SuperPT			
+		, MasterPT			
+		, AgentPT			
+		, IsAutoMasterPT	
+		, AutoMasterPT		
+		, IsAutoSuperPT		
+		, AutoSuperPT	
+	)
 	SELECT 
 			cs.SportType 
 			, cs.BetType 
@@ -279,6 +304,7 @@ BEGIN
 					AND cs.BetType=main.BetType
 					AND cs.IsLive=main.IsLive
 					AND cs.AgentID=@_AgentID	
+	ORDER BY main.RID
 	
 	--Get Super PT Setting Values
 	INSERT @_SuperPTTbl(SportType,BetType,IsLive,S4,M4,A4
@@ -615,6 +641,7 @@ BEGIN
 							IsAutoMasterPT								AS '@IsAutoMasterPT',
 							dbo.f_FomatNumericToChar(AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM @OldPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -638,6 +665,7 @@ BEGIN
 							IsAutoMasterPT								AS '@IsAutoMasterPT',
 							dbo.f_FomatNumericToChar(AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM @OldPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -661,6 +689,7 @@ BEGIN
 							IsAutoMasterPT								AS '@IsAutoMasterPT',
 							dbo.f_FomatNumericToChar(AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM @OldPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -685,6 +714,7 @@ BEGIN
 							IsAutoMasterPT								AS '@IsAutoMasterPT',
 							dbo.f_FomatNumericToChar(AutoMasterPT	/100.0)	AS '@AutoMasterPT'
 					FROM @OldPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -710,7 +740,8 @@ BEGIN
 							dbo.f_FomatNumericToChar(MasterPT		/100.0)	AS '@MasterPT',
 							IsAutoMasterPT								AS '@IsAutoMasterPT',
 							dbo.f_FomatNumericToChar(AutoMasterPT	/100.0)	AS '@AutoMasterPT'
-					FROM dbo.f_DCS_PT_XMLParse(@PT)
+					FROM @NewPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -733,7 +764,8 @@ BEGIN
 							dbo.f_FomatNumericToChar(MasterPT		/100.0)	AS '@MasterPT',
 							IsAutoMasterPT								AS '@IsAutoMasterPT',
 							dbo.f_FomatNumericToChar(AutoMasterPT	/100.0)	AS '@AutoMasterPT'
-					FROM dbo.f_DCS_PT_XMLParse(@PT)
+					FROM @NewPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -756,7 +788,8 @@ BEGIN
 							dbo.f_FomatNumericToChar(MasterPT		/100.0)	AS '@MasterPT',
 							IsAutoMasterPT								AS '@IsAutoMasterPT',
 							dbo.f_FomatNumericToChar(AutoMasterPT	/100.0)	AS '@AutoMasterPT'
-					FROM dbo.f_DCS_PT_XMLParse(@PT)
+					FROM @NewPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -780,7 +813,8 @@ BEGIN
 							dbo.f_FomatNumericToChar(MasterPT		/100.0)	AS '@MasterPT',
 							IsAutoMasterPT								AS '@IsAutoMasterPT',
 							dbo.f_FomatNumericToChar(AutoMasterPT	/100.0)	AS '@AutoMasterPT'
-					FROM dbo.f_DCS_PT_XMLParse(@PT)
+					FROM @NewPTTble
+					ORDER BY RID
 					FOR XML PATH('PT'),
 					TYPE
 				)

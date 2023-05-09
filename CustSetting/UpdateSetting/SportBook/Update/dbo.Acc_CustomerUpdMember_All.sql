@@ -57,19 +57,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	--Mix Parlay Mixed Sports  
 	@MinBetv1MP MONEY,  
 	@MaxBetv1MP MONEY,  
-	@MaxPerMatchv1MP MONEY,  
-
-	
-	--Number Game  
-	@MinBetv161 MONEY,  
-	@MaxBetv161 MONEY,  
-	@MaxPerMatchv161 MONEY,  
-
-	@MaxPerBallv161 money = 0,
-	
-	@MinBetv164 MONEY=0,  
-	@MaxBetv164 MONEY=0,  
-	@MaxPerMatchv164 MONEY=0, 
+	@MaxPerMatchv1MP MONEY,  	
 
 	--Max Payout Per Match
 	@maxPOpermatch money = NULL,
@@ -95,9 +83,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@UpdateMinMaxBetv99MP BIT = 1,  
 	@UpdateMinMaxBetMP BIT = 1,
 	
-	@UpdateMinMaxBetv161 BIT = 1,  
-	@UpdateMinMaxBetv164 BIT = 1,  
-
 	--- Saba soccer
 	@minbetv1saba money = NULL,
 	@maxbetv1saba money = NULL,
@@ -170,18 +155,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@v99apositiontaking_9 SMALLMONEY,  
 	@v99apositiontaking_20 SMALLMONEY,  
 	@v99apositiontaking_9999 SMALLMONEY,  
-
-	--v161  
-	@v161apositiontaking_81 smallmoney,   
-	@v161apositiontaking_83 smallmoney,       
-	@v161apositiontaking_86 smallmoney,   
-	@v161apositiontaking_88 smallmoney = 0,	
-	@v161alivepositiontaking_85 smallmoney,  
-	@v161alivepositiontaking_86 smallmoney,  
-	@v161alivepositiontaking_87 smallmoney,  
-	@v161alivepositiontaking_89 smallmoney = 0,
-	@v161alivepositiontaking_90 smallmoney = 0,
-
+	
 	-- Outright PT for sports
 	
 	@v2apositiontaking_10 SMALLMONEY, 
@@ -201,8 +175,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@UpdatePositiontakingv11 BIT = 1,  
 	@UpdatePositiontakingv99 BIT = 1,  
 	@UpdatePositiontakingv99MP BIT = 1,  
-	
-	@UpdatePositiontakingv161 BIT = 1,    
 
 	@UserID INT,    
 
@@ -266,7 +238,8 @@ Revisions:
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20230405@Eden: Change @UpdateMinMaxBetv1saba to @UpdateMinMaxBetsaba [RedmineID: #164280]
-	
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+
 Param's Explanation:  
 • @ErrCode:  
     = 0: Update successfully.  
@@ -455,9 +428,7 @@ BEGIN
 			,@UpdateMinMaxBetv11 = 1
 			,@UpdateMinMaxBetv99 = 1
 			,@UpdateMinMaxBetv99MP = 1
-			,@UpdateMinMaxBetMP = 1
-			,@UpdateMinMaxBetv161 = 1
-			,@UpdateMinMaxBetv164 = 1
+			,@UpdateMinMaxBetMP = 1		
 			,@UpdateMinMaxBetsaba = 1
 			,@UpdateMinMaxBetv2saba = 1
 
@@ -472,10 +443,7 @@ BEGIN
 		@UpdateMinMaxBetv11  = 1 or  
 		@UpdateMinMaxBetv99  = 1 or  
 		@UpdateMinMaxBetv99MP = 1 or  
-		@UpdateMinMaxBetMP = 1 or  
-		
-		@UpdateMinMaxBetv161 = 1 or
-		@UpdateMinMaxBetv164 = 1 OR
+		@UpdateMinMaxBetMP = 1 or  				
 		@UpdateMinMaxBetsaba = 1 OR
 		@UpdateMinMaxBetv2saba = 1 	
 	BEGIN  
@@ -513,16 +481,7 @@ BEGIN
 	  @minbetv1MP = @minbetv1MP,  
 	  @maxbetv1MP = @maxbetv1MP,  
 	  @maxpermatchv1MP = @maxpermatchv1MP,  
-	  
-	
-	  @minbetv161 = @minbetv161,  
-	  @maxbetv161 = @maxbetv161,  
-	  @maxpermatchv161 = @maxpermatchv161,  
-	  @maxperballv161 = @maxperballv161,
-	  
-	  @minbetv164 = @minbetv164,  
-	  @maxbetv164 = @maxbetv164,  
-	  @maxpermatchv164 = @maxpermatchv164,
+	  		 
 	  --MaxPayOutPerMatch
 	  @maxPOpermatch      = @maxPOpermatch,
 	  @maxPOpermatchv2    = @maxPOpermatchv2,    
@@ -545,9 +504,7 @@ BEGIN
 	  @UpdateMinMaxBetv11 = @UpdateMinMaxBetv11,  
 	  @UpdateMinMaxBetv99 = @UpdateMinMaxBetv99,  
 	  @UpdateMinMaxBetv99MP = @UpdateMinMaxBetv99MP,  
-	  @UpdateMinMaxBetMP = @UpdateMinMaxBetMP,  
-	  @UpdateMinMaxBetv161 = @UpdateMinMaxBetv161,  
-	  @UpdateMinMaxBetv164 = @UpdateMinMaxBetv164,  
+	  @UpdateMinMaxBetMP = @UpdateMinMaxBetMP,  	
 	  --Saba
 	  @minbetv1saba              	= @minbetv1saba,
 	  @maxbetv1saba              	= @maxbetv1saba,
@@ -594,11 +551,8 @@ BEGIN
 	 @UpdatePositiontakingv11   = 1  or  
 	 @UpdatePositiontakingv99   = 1  or  
 
-	 @UpdatePositiontakingv99MP  = 1 or  
+	 @UpdatePositiontakingv99MP  = 1  
 	 
-	 
-	 
-	 @UpdatePositiontakingv161  = 1  
 	BEGIN  
 	 Select @ErrCode_Cur = 0, @ErrMsg_Cur = ''  
 	   
@@ -659,15 +613,6 @@ BEGIN
 	  @v99apositiontaking_20_old SMALLMONEY,  
 	  @v99apositiontaking_9999_old SMALLMONEY,  
 	
-	  @v161apositiontaking_81_old SMALLMONEY,   
-	  @v161apositiontaking_83_old SMALLMONEY,        
-	  @v161apositiontaking_86_old SMALLMONEY,   
-	  @v161apositiontaking_88_old SMALLMONEY,
-	  @v161alivepositiontaking_85_old SMALLMONEY,  
-	  @v161alivepositiontaking_86_old SMALLMONEY,  
-	  @v161alivepositiontaking_87_old SMALLMONEY,  
-	  @v161alivepositiontaking_89_old SMALLMONEY, 
-	  @v161alivepositiontaking_90_old SMALLMONEY,
 	  -- Outright PT sports
 	  @v2apositiontaking_10_old SMALLMONEY,
 	  @v3apositiontaking_10_old SMALLMONEY,
@@ -741,16 +686,6 @@ BEGIN
 	 select @v99apositiontaking_20_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=20 and sporttype=99  
 	 select @v99apositiontaking_9999_old = apositiontaking from custsetting with (NOLOCK) where custid = @custid and bettype=9999 and sporttype=99  
 
-	 select @v161apositiontaking_81_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=81 and sporttype=161  
-	 select @v161apositiontaking_83_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=83 and sporttype=161  
-	 select @v161apositiontaking_88_old = apositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=88 and sporttype=161  
-	 select @v161alivepositiontaking_85_old=alivepositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=85 and sporttype=161  
-	 select @v161apositiontaking_86_old = apositiontaking,@v161alivepositiontaking_86_old=alivepositiontaking from custsetting3rd with (NOLOCK) where custid = @custid and bettype=86 and sporttype=161  
-	 select @v161alivepositiontaking_87_old=alivepositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=87 and sporttype=161  
-	 select @v161alivepositiontaking_89_old=alivepositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=89 and sporttype=161  
-	 select @v161alivepositiontaking_90_old=alivepositiontaking  from custsetting3rd with (NOLOCK) where custid = @custid and bettype=90 and sporttype=161  
-	   
-	   
 	 --Check Old_PT <> New_PT  
 	 IF @apositiontaking_1 <> @apositiontaking_1_old or  
 	   @apositiontaking_2 <> @apositiontaking_2_old or  
@@ -802,15 +737,6 @@ BEGIN
 	   @v99apositiontaking_20 <> @v99apositiontaking_20_old or  
 	   @v99apositiontaking_9999 <> @v99apositiontaking_9999_old or  
 	     
-	   @v161apositiontaking_81 <> @v161apositiontaking_81_old or  
-	   @v161apositiontaking_83 <> @v161apositiontaking_83_old or    
-	   @v161apositiontaking_86 <> @v161apositiontaking_86_old or  
-	   @v161apositiontaking_88 <> @v161apositiontaking_88_old or
-	   @v161alivepositiontaking_85 <> @v161alivepositiontaking_85_old or  
-	   @v161alivepositiontaking_86 <> @v161alivepositiontaking_86_old or  
-	   @v161alivepositiontaking_87 <> @v161alivepositiontaking_87_old or  
-	   @v161alivepositiontaking_89 <> @v161alivepositiontaking_89_old or  
-	   @v161alivepositiontaking_90 <> @v161alivepositiontaking_90_old or  
 	   -- Outright PT for sports
 	   @v2apositiontaking_10 <> @v2apositiontaking_10_old or  
 	   @v3apositiontaking_10 <> @v3apositiontaking_10_old or  
@@ -875,16 +801,6 @@ BEGIN
 	   @v99apositiontaking_20 = @v99apositiontaking_20,  
 	   @v99apositiontaking_9999 = @v99apositiontaking_9999,  
 
-	   @v161apositiontaking_81 = @v161apositiontaking_81,  
-	   @v161apositiontaking_83 = @v161apositiontaking_83,  
-	   @v161apositiontaking_86 = @v161apositiontaking_86,  
-	   @v161apositiontaking_88 = @v161apositiontaking_88,  
-	   @v161alivepositiontaking_85 = @v161alivepositiontaking_85,  
-	   @v161alivepositiontaking_86 = @v161alivepositiontaking_86,  
-	   @v161alivepositiontaking_87 = @v161alivepositiontaking_87,  
-	   @v161alivepositiontaking_89 = @v161alivepositiontaking_89,  
-	   @v161alivepositiontaking_90 = @v161alivepositiontaking_90,  
-	    
 	    -- Outright PT for sports
 	   @v2apositiontaking_10 = @v2apositiontaking_10,  
 	   @v3apositiontaking_10 = @v3apositiontaking_10,  
@@ -904,7 +820,6 @@ BEGIN
 	   @UpdatePositiontakingv11 = @UpdatePositiontakingv11,  
 	   @UpdatePositiontakingv99 = @UpdatePositiontakingv99,  
 	   @UpdatePositiontakingv99MP = @UpdatePositiontakingv99MP,  	   
-	   @UpdatePositiontakingv161 = @UpdatePositiontakingv161,  
 	   @UserID = @UserID,  
 	   @IP = @IP,  
 	   @Language = @Language,  

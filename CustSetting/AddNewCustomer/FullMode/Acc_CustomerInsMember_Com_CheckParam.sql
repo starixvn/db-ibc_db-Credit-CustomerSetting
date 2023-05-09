@@ -71,19 +71,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com_CheckParam]
 	@v99spositiontaking_3 smallmoney,
 	@v99spositiontaking_9 smallmoney,
 	@v99spositiontaking_20 smallmoney,	
-	@v99spositiontaking_9999 smallmoney,	
-	--v161
-	@v161spositiontaking_81 smallmoney,
-	@v161spositiontaking_83 smallmoney,
-	--@v161spositiontaking_85 smallmoney,
-	@v161spositiontaking_86 smallmoney,
-	@v161spositiontaking_88 smallmoney = 0,
-	@v161slivepositiontaking_85 smallmoney,
-	@v161slivepositiontaking_86 smallmoney,
-	@v161slivepositiontaking_87 smallmoney,
-	@v161slivepositiontaking_89 smallmoney = 0,
-	@v161slivepositiontaking_90 smallmoney = 0,
-	
+	@v99spositiontaking_9999 smallmoney,			
 	
 	@mpositiontaking_1 smallmoney,
 	@mpositiontaking_2 smallmoney,
@@ -146,19 +134,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com_CheckParam]
 	@v99mpositiontaking_3 smallmoney,
 	@v99mpositiontaking_9 smallmoney,
 	@v99mpositiontaking_20 smallmoney,
-	@v99mpositiontaking_9999 smallmoney,
-	--v161
-	@v161mpositiontaking_81 smallmoney,
-	@v161mpositiontaking_83 smallmoney,
-	--@v161mpositiontaking_85 smallmoney,
-	@v161mpositiontaking_86 smallmoney,
-	@v161mpositiontaking_88 smallmoney = 0,
-	@v161mlivepositiontaking_85 smallmoney,
-	@v161mlivepositiontaking_86 smallmoney,
-	@v161mlivepositiontaking_87 smallmoney,	
-	@v161mlivepositiontaking_89 smallmoney = 0,
-	@v161mlivepositiontaking_90 smallmoney = 0,
-	
+	@v99mpositiontaking_9999 smallmoney,	
 		
 	@apositiontaking_1 smallmoney,
 	@apositiontaking_2 smallmoney,
@@ -222,17 +198,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Com_CheckParam]
 	@v99apositiontaking_9 smallmoney,
 	@v99apositiontaking_20 smallmoney,	
 	@v99apositiontaking_9999 smallmoney,	
-	--v161
-	@v161apositiontaking_81 smallmoney,
-	@v161apositiontaking_83 smallmoney,
-	--@v161apositiontaking_85 smallmoney,
-	@v161apositiontaking_86 smallmoney,
-	@v161apositiontaking_88 smallmoney = 0,
-	@v161alivepositiontaking_85 smallmoney,
-	@v161alivepositiontaking_86 smallmoney,
-	@v161alivepositiontaking_87 smallmoney,
-	@v161alivepositiontaking_89 smallmoney = 0,
-	@v161alivepositiontaking_90 smallmoney = 0,	
 	
 	@discountMyanmarOdds DECIMAL(9,8)=0,
 	
@@ -278,6 +243,7 @@ Revisions:
 	- 20200305@Tiara: Bet Limit Restriction for 789y on Alpha/ExtNAP [Redmine: #129429]
 	- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
+	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 Param's Explanation:
 • @ErrCode:
@@ -291,17 +257,6 @@ Param's Explanation:
 
 	--AGENT SITE
 	SET NOCOUNT ON
-	----- David @ 09 JUN 2015 -------------------
-		DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
-		
-		BEGIN TRY
-			INSERT INTO @tmp_Sports (SportType, SportName)
-			SELECT SportType, SportName FROM DBAGE.bodb02.dbo.Sports WITH (NOLOCK)		
-		END TRY
-		BEGIN CATCH
-			INSERT INTO @tmp_Sports (SportType, SportName)
-			SELECT SportType, SportName FROM DBTXN.bodb02.dbo.Sports WITH (NOLOCK)	
-		END CATCH
 
 	----- /David @ 09 JUN 2015 -------------------
 
@@ -413,20 +368,8 @@ Param's Explanation:
 		or @v99spositiontaking_3  <0
 		or @v99spositiontaking_9 <0
 		or @v99spositiontaking_20  <0			
-		or @v99spositiontaking_9999  <0			
-		--v161
-		or @v161spositiontaking_81 <0
-		or @v161spositiontaking_83 <0
-		--or @v161spositiontaking_85 <0
-		or @v161spositiontaking_86 <0
-		or @v161spositiontaking_88 <0
-		or @v161slivepositiontaking_85 <0
-		or @v161slivepositiontaking_86 <0
-		or @v161slivepositiontaking_87 <0
-		or @v161slivepositiontaking_89 <0
-		or @v161slivepositiontaking_90 <0
-		
-			
+		or @v99spositiontaking_9999  <0					
+					
 		or @mpositiontaking_1  <0
 		or @mpositiontaking_2  <0
 		or @mpositiontaking_3  <0
@@ -487,19 +430,7 @@ Param's Explanation:
 		or @v99mpositiontaking_3  <0
 		or @v99mpositiontaking_9 <0
 		or @v99mpositiontaking_20  <0		
-		or @v99mpositiontaking_9999  <0			
-		--v161
-		or @v161mpositiontaking_81 <0
-		or @v161mpositiontaking_83 <0
-		--or @v161mpositiontaking_85 <0
-		or @v161mpositiontaking_86 <0
-		or @v161mpositiontaking_88 <0
-		or @v161mlivepositiontaking_85 <0
-		or @v161mlivepositiontaking_86 <0
-		or @v161mlivepositiontaking_87 <0
-		or @v161mlivepositiontaking_89 <0
-		or @v161mlivepositiontaking_90 <0
-		
+		or @v99mpositiontaking_9999  <0					
 		
 		or @apositiontaking_1  <0
 		or @apositiontaking_2  <0
@@ -561,19 +492,7 @@ Param's Explanation:
 		or @v99apositiontaking_3  <0
 		or @v99apositiontaking_9 <0
 		or @v99apositiontaking_20  <0
-		or @v99apositiontaking_9999  <0
-		--v161
-		or @v161apositiontaking_81 <0
-		or @v161apositiontaking_83 <0
-		--or @v161apositiontaking_85 <0
-		or @v161apositiontaking_86 <0
-		or @v161apositiontaking_88 <0
-		or @v161alivepositiontaking_85 <0
-		or @v161alivepositiontaking_86 <0
-		or @v161alivepositiontaking_87 <0
-		or @v161alivepositiontaking_89 <0
-		or @v161alivepositiontaking_90 <0
-		
+		or @v99apositiontaking_9999  <0		
 		
 		or @spositiontaking_1  >0.9
 		or @spositiontaking_2  >0.9
@@ -635,20 +554,7 @@ Param's Explanation:
 		or @v99spositiontaking_3  >0.9
 		or @v99spositiontaking_9 >0.9
 		or @v99spositiontaking_20  >0.9	
-		or @v99spositiontaking_9999  >0.9	
-			
-		--v161
-		or @v161spositiontaking_81 >0.9
-		or @v161spositiontaking_83 >0.9
-		--or @v161spositiontaking_85 >0.9
-		or @v161spositiontaking_86 >0.9
-		or @v161spositiontaking_88 >0.9
-		or @v161slivepositiontaking_85 >0.9
-		or @v161slivepositiontaking_86 >0.9
-		or @v161slivepositiontaking_87 >0.9
-		or @v161slivepositiontaking_89 >0.9
-		or @v161slivepositiontaking_90 >0.9
-		
+		or @v99spositiontaking_9999  >0.9						
 		
 		or @mpositiontaking_1  >0.9
 		or @mpositiontaking_2  >0.9
@@ -711,18 +617,6 @@ Param's Explanation:
 		or @v99mpositiontaking_9 >0.9
 		or @v99mpositiontaking_20  >0.9	
 		or @v99mpositiontaking_9999  >0.9	
-
-		--v161
-		or @v161mpositiontaking_81 >0.9
-		or @v161mpositiontaking_83 >0.9
-		--or @v161mpositiontaking_85 >0.9
-		or @v161mpositiontaking_86 >0.9
-		or @v161mpositiontaking_88 >0.9
-		or @v161mlivepositiontaking_85 >0.9
-		or @v161mlivepositiontaking_86 >0.9
-		or @v161mlivepositiontaking_87 >0.9	
-		or @v161mlivepositiontaking_89 >0.9
-		or @v161mlivepositiontaking_90 >0.9
 		
 		or @apositiontaking_1  >0.9
 		or @apositiontaking_2  >0.9
@@ -785,21 +679,8 @@ Param's Explanation:
 		or @v99apositiontaking_3  >0.9
 		or @v99apositiontaking_9 >0.9
 		or @v99apositiontaking_20  >0.9	
-		or @v99apositiontaking_9999  >0.9	
-
-		--v161
-		or @v161apositiontaking_81 >0.9
-		or @v161apositiontaking_83 >0.9
-		--or @v161apositiontaking_85 >0.9
-		or @v161apositiontaking_86 >0.9
-		or @v161apositiontaking_88 >0.9
-		or @v161alivepositiontaking_85 >0.9
-		or @v161alivepositiontaking_86 >0.9
-		or @v161alivepositiontaking_87 >0.9
-		or @v161alivepositiontaking_89 >0.9
-		or @v161alivepositiontaking_90 >0.9
+		or @v99apositiontaking_9999  >0.9			
 		
-
 		or @spositiontaking_1   <  @mpositiontaking_1  
 		or @spositiontaking_2   <  @mpositiontaking_2  
 		or @spositiontaking_3   <  @mpositiontaking_3  
@@ -860,21 +741,8 @@ Param's Explanation:
 		or @v99spositiontaking_3   <  @v99mpositiontaking_3  
 		or @v99spositiontaking_9 < @v99mpositiontaking_9
 		or @v99spositiontaking_20   <  @v99mpositiontaking_20	
-		or @v99spositiontaking_9999   <  @v99mpositiontaking_9999
-
-		--v161
-		or @v161spositiontaking_81 < @v161mpositiontaking_81
-		or @v161spositiontaking_83 < @v161mpositiontaking_83
-		--or @v161spositiontaking_85 < @v161mpositiontaking_85
-		or @v161spositiontaking_86 < @v161mpositiontaking_86
-		or @v161spositiontaking_88 < @v161mpositiontaking_88
-		or @v161slivepositiontaking_85 < @v161mlivepositiontaking_85
-		or @v161slivepositiontaking_86 < @v161mlivepositiontaking_86
-		or @v161slivepositiontaking_87 < @v161mlivepositiontaking_87
-		or @v161slivepositiontaking_89 < @v161mlivepositiontaking_89
-		or @v161slivepositiontaking_90 < @v161mlivepositiontaking_90
-		
-		  
+		or @v99spositiontaking_9999   <  @v99mpositiontaking_9999		
+				  
 		or @mpositiontaking_1   <  @apositiontaking_1  
 		or @mpositiontaking_2   <  @apositiontaking_2  
 		or @mpositiontaking_3	<  @apositiontaking_3  
@@ -936,20 +804,7 @@ Param's Explanation:
 		or @v99mpositiontaking_3   <  @v99apositiontaking_3  
 		or @v99mpositiontaking_9   <  @v99apositiontaking_9
 		or @v99mpositiontaking_20   <  @v99apositiontaking_20		
-		or @v99mpositiontaking_9999   <  @v99apositiontaking_9999	
-
-		--v161
-		or @v161mpositiontaking_81 < @v161apositiontaking_81
-		or @v161mpositiontaking_83 < @v161apositiontaking_83
-		--or @v161mpositiontaking_85 < @v161apositiontaking_85
-		or @v161mpositiontaking_86 < @v161apositiontaking_86
-		or @v161mpositiontaking_88 < @v161apositiontaking_88
-		or @v161mlivepositiontaking_85 < @v161alivepositiontaking_85
-		or @v161mlivepositiontaking_86 < @v161alivepositiontaking_86
-		or @v161mlivepositiontaking_87 < @v161alivepositiontaking_87
-		or @v161mlivepositiontaking_89 < @v161alivepositiontaking_89
-		or @v161mlivepositiontaking_90 < @v161alivepositiontaking_90
-		
+		or @v99mpositiontaking_9999   <  @v99apositiontaking_9999			
 		 
 	BEGIN
 		select @isvalid = 0, @ErrCode = 3

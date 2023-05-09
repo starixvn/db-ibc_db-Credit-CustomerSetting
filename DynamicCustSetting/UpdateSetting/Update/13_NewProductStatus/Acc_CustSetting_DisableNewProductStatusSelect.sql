@@ -25,6 +25,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -50,16 +51,21 @@ BEGIN
 		[Parent_ProductSettingID] [int],
 		[ProductSettingID] [int],
 		Child_DisplayOrder INT,
+		ProductID [tinyint],
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder)
-	SELECT SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder,ProductID)
+	SELECT SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder,ProductID
 	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	WHERE SettingType IN(4,11,13,21)
 
 	INSERT INTO #SportBettypeFilter(SportType,Bettype)
 	SELECT SportType,Bettype
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
+	FROM #ProductSettingDetail 
+	WHERE SportType NOT IN (161) -- Not show NG on DCS setting Page
+		AND ProductID = ISNULL(@ProductID,ProductID)
+		AND SettingType = ISNULL(@SettingType,SettingType)
 
 	UPDATE t
 	SET t.ParentSportType = par.SportType
@@ -70,7 +76,7 @@ BEGIN
 			ON t.sporttype = d.SportType
 			AND t.bettype = d.BetType
 			AND d.SettingType = @SettingType
-		INNER JOIN #ProductSettingDetail par WITH(NOLOCK) 
+		LEFT JOIN #ProductSettingDetail par WITH(NOLOCK) 
 				ON d.Parent_ProductSettingID = par.ProductSettingID
 	
 	-- Select customer's information
