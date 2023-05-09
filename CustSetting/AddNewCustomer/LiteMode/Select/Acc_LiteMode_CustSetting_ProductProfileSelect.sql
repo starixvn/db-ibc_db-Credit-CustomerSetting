@@ -11,14 +11,25 @@ AS
 		- 20230428@Johnson: initial sp [redmine: #179159]
 
 	 Param's Explanation: 
-		- @CreationStatus: 0: Pro, 1: UAT
+		@CreationStatus: 0: Pro, 1: UAT, 3: UAT/PRO
  */  
 BEGIN   
 	SET NOCOUNT ON
 	
-	SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, CreationStatus, DisplayType, Child_DisplayOrder
-	FROM dbo.ProductSettingDetail WITH(NOLOCK)
-	WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
-		AND GroupID IS NOT NULL
-	ORDER BY GroupID, GroupTypeOrder, SubGroupOrder, Child_DisplayOrder
+	IF @CreationStatus IN (1,0)
+	BEGIN
+		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, CreationStatus, DisplayType, Child_DisplayOrder
+		FROM dbo.ProductSettingDetail WITH(NOLOCK)
+		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
+			AND GroupID IS NOT NULL
+		ORDER BY GroupID, GroupTypeOrder, SubGroupOrder, Child_DisplayOrder
+	END
+	ELSE IF @CreationStatus = 3
+	BEGIN	
+		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, CreationStatus, DisplayType, Child_DisplayOrder
+		FROM dbo.ProductSettingDetail_UAT WITH(NOLOCK)
+		WHERE CreationStatus <> 2
+			AND GroupID IS NOT NULL
+		ORDER BY GroupID, GroupTypeOrder, SubGroupOrder, Child_DisplayOrder		
+	END
 END

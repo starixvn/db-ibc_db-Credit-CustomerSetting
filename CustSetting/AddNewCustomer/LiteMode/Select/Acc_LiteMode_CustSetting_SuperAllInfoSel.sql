@@ -108,6 +108,7 @@ BEGIN
 		EXEC dbo.Age_CustomerSelSuggestUsername @prefix = @uplineusername,@custid = @custid, @roleid = 4, @seqname = @username output
 		
 		SELECT 
+			@UplineUserName AS UplineUserName,
 			@UserName AS NewUserName,
 			@Ssuspended AS suspended,
 			@Credit_MAg_Max as Credit_Max,
@@ -122,12 +123,17 @@ BEGIN
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT)
 	DECLARE	@Currency	TINYINT
 	
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
+	SELECT SportType,Bettype,IsLive,ProductID	
+	FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus) 
+	
 	----------------------------------------------------------------------------------
 	--BEGIN SB Settings
 	
 	--comm SB
 	IF  @GroupID = 1 AND @GroupType = 150
 	BEGIN
+		WITH T AS(
 		SELECT sporttype, bettype,
 			CASE WHEN bettype = 1 THEN groupA
 				WHEN bettype = 3 THEN groupB
@@ -139,15 +145,16 @@ BEGIN
 			AND sporttype = 1
 			AND bettype IN (1,3,7,8,4,5)
 		UNION SELECT 2, 1, @discountMyanmarOdds WHERE @IsMyanmarOdds = 1
+		)
+		SELECT T.*
+		FROM T
+		INNER JOIN #SportBettypeFilter s ON t.sporttype = s.sporttype
+											AND t.bettype = s.bettype
 	END
 	
 	--Bet setting SB
 	IF @GroupID = 1 AND @GroupType = 151
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType)
-		SELECT DISTINCT SportType	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
-				
+	BEGIN				
 		SELECT sporttype, bettype, MinBet, MaxBet, MaxPerMatch, MaxPayoutPerMatch
 		FROM CustBetSetting_Agent WITH(NOLOCK)
 		WHERE custid = @custid
@@ -163,11 +170,6 @@ BEGIN
 	IF @GroupID = 1 AND @GroupType = 152
 	BEGIN
 		DECLARE @MatchParlayUnlimit TABLE(SportType SMALLINT, BetType SMALLINT, SingleMatchParlay_IsAllowUnlimit BIT, Combo2_IsAllowUnlimit BIT, Combo35_IsAllowUnlimit BIT, ComboOver6_IsAllowUnlimit BIT)
-		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype)
-		SELECT DISTINCT SportType,Bettype 	
-		FROM dbo.MaxPayoutGlobalSetting WITH(NOLOCK)
-		WHERE SettingStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END  
 		
 		INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
 		SELECT cs.SportType,cs.BetType,
@@ -201,26 +203,30 @@ BEGIN
 	
 	--SB PT
 	IF @GroupID = 1 AND @GroupType = 153
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
-		SELECT DISTINCT SportType,Bettype,IsLive 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
-			
+	BEGIN			
 		SELECT cs.sporttype, cs.bettype, 0 IsLive, 
-			CASE WHEN cs.spositiontaking<co.maxpositiontaking THEN cs.spositiontaking ELSE co.maxpositiontaking END S4,
-			cs.mpositiontaking M4, 
-			co.minpositiontaking AS N4			
+			(CASE WHEN cs.spositiontaking<co.maxpositiontaking THEN cs.spositiontaking ELSE co.maxpositiontaking END)*100 S4,
+			cs.mpositiontaking*100 M4, 
+			co.minpositiontaking*100 AS N4			
 		FROM CustSetting cs WITH(NOLOCK) 
 			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype
+				AND s.IsLive = 0
 		WHERE cs.CustID = @custid
 			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
 		UNION ALL 
 		SELECT cs.sporttype, cs.bettype, 1 as IsLive,			
-			CASE WHEN cs.slivepositiontaking<co.maxlivepositiontaking THEN cs.slivepositiontaking ELSE co.maxlivepositiontaking END S4,
-			cs.mlivepositiontaking M4,
-			co.minlivepositiontaking AS N4 
+			(CASE WHEN cs.slivepositiontaking<co.maxlivepositiontaking THEN cs.slivepositiontaking ELSE co.maxlivepositiontaking END)*100 S4,
+			cs.mlivepositiontaking*100 M4,
+			co.minlivepositiontaking*100 AS N4 
 		FROM CustSetting cs WITH(NOLOCK) 
 			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype 
+				AND s.IsLive = 1
 		WHERE cs.CustID = @custid
 			AND cs.sporttype = 1
 			AND cs.bettype IN (1,3,7,8)
@@ -247,10 +253,6 @@ BEGIN
 	--Bet Setting
 	IF @GroupID = 2 AND @GroupType = 154
 	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
-		SELECT DISTINCT SportType,Bettype,IsLive 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
-		
 		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
 		FROM CustBetSetting_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
@@ -266,11 +268,7 @@ BEGIN
 	
 	--PT
 	IF @GroupID = 2 AND @GroupType = 153
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
-		SELECT DISTINCT SportType,Bettype,IsLive 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
-						
+	BEGIN						
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
@@ -289,10 +287,6 @@ BEGIN
 	BEGIN
 		SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid
 		--SELECT @ProductID = 44
-		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-		SELECT DISTINCT SportType,Bettype,IsLive,ProductID 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
 			
 		SELECT	wl.SportType,
 				wl.BetType,
@@ -316,10 +310,6 @@ BEGIN
 	--Comm
 	IF @GroupID = 3 AND @GroupType = 156
 	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
-		SELECT DISTINCT SportType,Bettype,IsLive 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
-					
 		SELECT cs.SportType, cs.Bettype, cs.Discount			
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
@@ -328,11 +318,7 @@ BEGIN
 	
 	--PT
 	IF @GroupID = 3 AND @GroupType = 153
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
-		SELECT DISTINCT SportType,Bettype,IsLive 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
-					
+	BEGIN					
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
@@ -351,10 +337,6 @@ BEGIN
 	IF @GroupID = 3 AND @GroupType = 155
 	BEGIN
 		SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid
-				
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-		SELECT DISTINCT SportType,Bettype,IsLive, ProductID 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
 			
 		SELECT	wl.SportType,
 				wl.BetType,
@@ -374,10 +356,6 @@ BEGIN
 	IF @GroupID = 3 AND @GroupType = 157
 	BEGIN
 		SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid
-				
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-		SELECT DISTINCT SportType,Bettype,IsLive, ProductID 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
 			
 		SELECT	wl.SportType,
 				wl.BetType,				
@@ -400,10 +378,6 @@ BEGIN
 	--Comm
 	IF @GroupID = 4 AND @GroupType = 158
 	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
-		SELECT DISTINCT SportType,Bettype,IsLive 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
-					
 		SELECT cs.SportType, cs.Bettype, cs.Discount			
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
@@ -416,10 +390,6 @@ BEGIN
 		DECLARE @BetGameUnlimit TABLE(SportType SMALLINT, BetType SMALLINT, IsAllowUnlimit BIT)
 		
 		SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid
-		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
-		SELECT DISTINCT SportType,Bettype,IsLive 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
 		
 		INSERT INTO @BetGameUnlimit
 		SELECT cs.SportType,cs.BetType,
@@ -447,11 +417,7 @@ BEGIN
 	
 	--PT
 	IF @GroupID = 4 AND @GroupType = 160
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
-		SELECT DISTINCT SportType,Bettype,IsLive 	
-		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @CreationStatus) 
-					
+	BEGIN					
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
