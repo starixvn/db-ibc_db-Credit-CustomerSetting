@@ -108,6 +108,7 @@ AS
 		- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 		- 20230113@Elodie: Check param IS NULL [RedmineID:#182866]
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 20230516@Eden: HF - Correct actionid  [Redmine: #188297]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -672,7 +673,7 @@ BEGIN
 
 		IF @@ROWCOUNT = 0 BREAK
 		
-		IF @ActionID NOT IN (220040,220042,220044) -- Direct log
+		IF @ActionID NOT IN (220021,220023,220025) -- Direct log
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,
