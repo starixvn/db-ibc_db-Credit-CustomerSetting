@@ -51,7 +51,7 @@ BEGIN
 
 	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(@CreationStatus)
 	
 	--check SB Discount
 	IF ISNULL(@SettingType25,'') <> ''		

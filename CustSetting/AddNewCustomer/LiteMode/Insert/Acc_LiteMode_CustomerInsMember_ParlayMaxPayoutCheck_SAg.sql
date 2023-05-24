@@ -136,7 +136,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10071 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of Single Match Parlay is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout: The setting of SingleMatchParlay is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 							FROM @NewMaxPayoutTbl tmp

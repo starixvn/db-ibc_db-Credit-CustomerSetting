@@ -482,5 +482,21 @@ BEGIN
 
 	IF @ErrCode > 0 
 		RETURN;		
+		
+	--Check PT
+	EXEC Acc_LiteMode_CustomerInsMember_PTCheck_SAg
+		@srecommend = @srecommend,
+		
+		@SettingType28 = @SettingType28,-- SB
+		@SettingType1 = @SettingType1,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
+		@SettingType18 = @SettingType18,
+		@CreationStatus = @CreationStatus,
+		
+		@ErrCode = @ErrCode OUTPUT,
+		@MsgType = @MsgType OUTPUT,
+		@ErrMsg  = @ErrMsg OUTPUT	
+
+	IF @ErrCode > 0 
+		RETURN;			
 END
 		
