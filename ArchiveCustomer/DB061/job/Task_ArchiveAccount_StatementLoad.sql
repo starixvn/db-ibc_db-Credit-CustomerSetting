@@ -61,9 +61,10 @@ BEGIN
 
 	update bodb02.dbo.Systemsettings with(rowlock, updlock) set VValue = @status where VName = 'aa_Stmt_Status'
 
-	SELECT TOP 1 @to = CONVERT(SMALLDATETIME, VValue) --balance-up date
-	FROM bodb02.dbo.MBUSettings
-	WHERE VName = 'BalanceUpDate'
+	DECLARE @BalanceUpDate SMALLDATETIME;
+	EXEC bodb02.dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @BalanceUpDate OUTPUT
+
+	SELECT @to = @BalanceUpDate
 
 	--select @from, @to, @status
 
