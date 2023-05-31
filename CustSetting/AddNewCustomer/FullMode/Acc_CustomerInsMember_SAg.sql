@@ -434,6 +434,7 @@ Revisions:
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230531@Winfred: NAP CM - Limitation to update PT for new member [Redmine: #188950]
 	
 Param's Explanation:
 - @ErrCode:
@@ -1855,21 +1856,6 @@ BEGIN
 	    return
     END
 	
-	If @SystemID = 2 -- ALPHA
-	BEGIN
-		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
-		IF @ErrCode > 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END
-				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-				DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
-			RETURN
-		END	
-	END	
-
 	 IF @srecommend < 100 AND @site = '611111' -- For Direct Master
 	 BEGIN
 		DECLARE @VirtualRateMultiplier2 VARCHAR(MAX) = '' --Esports
@@ -1901,7 +1887,6 @@ BEGIN
 				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 				DELETE dbo.CustWinLimit WITH(ROWLOCK) WHERE CustId = @CustId
 				DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
-				DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 			RETURN
 		END
 	 END

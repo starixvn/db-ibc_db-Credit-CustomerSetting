@@ -105,6 +105,7 @@ AS
 	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230531@Winfred: NAP CM - Limitation to update PT for new member [Redmine: #188950]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -533,23 +534,6 @@ BEGIN
 		RETURN
 	END
 	
-	If @SystemID = 2 -- ALPHA
-	BEGIN
-		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
-		IF @ErrCode > 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END
-			DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  
-			DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
-			RETURN
-		END	
-	END
-
 	DECLARE	@UplineSecurityCode			VARCHAR(50)
 		  , @isForcedChangeSecurityCode	BIT,@ClosedReason TINYINT=0,@Closed BIT
 	SELECT TOP 1 @Closed=CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END
@@ -606,8 +590,6 @@ BEGIN
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
-		
 		RETURN	
 	END	
 	
@@ -631,9 +613,7 @@ BEGIN
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID			
-		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
-							
+		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid			
 		RETURN	
 	END CATCH				
 	
@@ -703,9 +683,7 @@ BEGIN
 		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID					
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID 
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid 
-							
+		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID 			
 		RETURN	
 	END CATCH	
 	
@@ -757,7 +735,6 @@ BEGIN
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
 		DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 		RETURN	
 	END CATCH	
 
@@ -788,7 +765,6 @@ BEGIN
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
 		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 		RETURN	
 	END CATCH	
 	

@@ -332,6 +332,7 @@ Revisions:
 	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20230302@Johnson: add auto suspend for Basketball[redmine: #184339]	
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230531@Winfred: NAP CM - Limitation to update PT for new member [Redmine: #188950]
 	
 Param's Explanation:	
 • @ErrCode:
@@ -2424,31 +2425,7 @@ BEGIN
 	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    return
     END
-	
-	If @SystemID = 2 -- ALPHA
-	BEGIN
-		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
-		IF @ErrCode > 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create member fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-							END
-					, @success = 0, @ErrCode=216
-			Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-			DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
-			EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-			EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
-
-			DELETE dbo.[CustQRCode] WITH(ROWLOCK) WHERE CustID = @CustID
-
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
-			RETURN
-		END	
-	END
-
-    SELECT @Success = 1
+	SELECT @Success = 1
 
     set @endRun = getdate()
     set @duration  = datediff (millisecond,@startRun,@endRun)
