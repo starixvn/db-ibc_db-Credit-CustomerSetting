@@ -1,9 +1,9 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_DiscountCheck_SAg]
 	@srecommend INT,
-	@SettingType25 VARCHAR(MAX)= '', --SB
-	@SettingType19 VARCHAR(MAX)= '', --LCS
-	@SettingType3 VARCHAR(MAX)= '', --NG2
+	@SettingType25 VARCHAR(MAX)= '' OUTPUT, --SB
+	@SettingType19 VARCHAR(MAX)= '' OUTPUT, --LCS
+	@SettingType3 VARCHAR(MAX)= '' OUTPUT, --NG2
 	@IsMyanmarOdds BIT= 0,
 	@CreationStatus TINYINT = 0,
 	
@@ -22,13 +22,13 @@ AS
 
 	Param's Explanation: 
 		- @SettingType25 = '<Root>
-						<r sporttype="1" bettype="1" discount="0.0025" />
-						<r sporttype="1" bettype="3" discount="0.005" />
-						<r sporttype="1" bettype="7" discount="0.0075" />
-						<r sporttype="1" bettype="8" discount="0.01" />
-						<r sporttype="1" bettype="4" discount="0.0025" />
-						<r sporttype="1" bettype="5" discount="0.001" />
-						<r sporttype="2" bettype="1" discount="0.0025" />
+						<R SportType="1" BetType="1" Discount="0.0025" />
+						<R SportType="1" BetType="3" Discount="0.005" />
+						<R SportType="1" BetType="7" Discount="0.0075" />
+						<R SportType="1" BetType="8" Discount="0.01" />
+						<R SportType="1" BetType="4" Discount="0.0025" />
+						<R SportType="1" BetType="5" Discount="0.001" />
+						<R SportType="2" BetType="1" Discount="0.0025" />
 					</Root>'
 */	
 BEGIN
@@ -51,7 +51,7 @@ BEGIN
 
 	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
 	
 	--check SB Discount
 	IF ISNULL(@SettingType25,'') <> ''		
@@ -59,10 +59,10 @@ BEGIN
 		SELECT @xml = CONVERT(XML,@SettingType25)
 		
 		INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'tinyint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'tinyint') AS bettype,
-			T.c.query('.').value('(r/@discount)[1]', 'decimal(9,8)') AS discount
-		FROM   @xml.nodes('/Root/r') T(c) 
+		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
+		FROM   @xml.nodes('/Root/R') T(c) 
 		
 		IF @IsMyanmarOdds = 1
 		BEGIN
@@ -126,6 +126,28 @@ BEGIN
 			
 			RETURN
 		END
+		
+		--correct discount
+		UPDATE t
+		SET t.Discount = CASE WHEN t.bettype = 1 AND t.Discount > cs.groupa THEN cs.groupa
+							WHEN t.bettype = 3 AND t.Discount > cs.groupb THEN cs.groupb
+							WHEN t.bettype = 7 AND t.Discount > cs.groupc THEN cs.groupc
+							WHEN t.bettype = 8 AND t.Discount > cs.groupd THEN cs.groupd
+							WHEN t.bettype IN (4,5) AND t.Discount > cs.sdiscount THEN cs.groupd
+							ELSE t.Discount END
+		FROM @NewDiscountTbl t
+			INNER JOIN custsetting cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+													AND t.bettype = cs.bettype
+		WHERE custid = @srecommend
+			AND t.sporttype = 1
+			
+		SELECT @SettingType25 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			discount '@Discount'			
+		FROM @NewDiscountTbl
+		FOR XML PATH ('R'), ROOT('Root')
+		)		
 	END	
 	
 	--check LCS Discount
@@ -136,10 +158,10 @@ BEGIN
 		SELECT @xml = CONVERT(XML,@SettingType19)
 		
 		INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'tinyint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'tinyint') AS bettype,
-			T.c.query('.').value('(r/@discount)[1]', 'decimal(9,8)') AS discount
-		FROM   @xml.nodes('/Root/r') T(c)
+		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
+		FROM   @xml.nodes('/Root/R') T(c) 
 		
 		--Check if new discount <0 or > default Max Discount
 		IF EXISTS (SELECT TOP 1 1 
@@ -147,7 +169,7 @@ BEGIN
 						INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
 							ON pdt.SportType	= tmp.SportType
 								AND pdt.BetType = tmp.BetType
-								AND pdt.SettingType IN (3,19)
+								AND pdt.SettingType IN (19)
 								AND pdt.IsLive		= 0
 						WHERE 
 							(	tmp.Discount		< 0
@@ -182,6 +204,23 @@ BEGIN
 			
 			RETURN
 		END
+		
+		--correct discount
+		UPDATE t
+		SET t.Discount = cs.Discount
+		FROM @NewDiscountTbl t
+			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+													AND t.bettype = cs.bettype
+		WHERE custid = @srecommend			
+			AND t.Discount > cs.Discount
+			
+		SELECT @SettingType19 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			discount '@Discount'			
+		FROM @NewDiscountTbl
+		FOR XML PATH ('R'), ROOT('Root')
+		)
 	END	
 	
 	--check NG2 Discount
@@ -192,10 +231,10 @@ BEGIN
 		SELECT @xml = CONVERT(XML,@SettingType3)
 		
 		INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'tinyint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'tinyint') AS bettype,
-			T.c.query('.').value('(r/@discount)[1]', 'decimal(9,8)') AS discount
-		FROM   @xml.nodes('/Root/r') T(c)
+		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
+		FROM   @xml.nodes('/Root/R') T(c) 
 		
 		--Check if new discount <0 or > default Max Discount
 		IF EXISTS (SELECT TOP 1 1 
@@ -238,7 +277,24 @@ BEGIN
 			
 			RETURN
 		END
+		
+		--correct discount
+		UPDATE t
+		SET t.Discount = cs.Discount
+		FROM @NewDiscountTbl t
+			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+													AND t.bettype = cs.bettype
+		WHERE custid = @srecommend			
+			AND t.Discount > cs.Discount
+			
+		SELECT @SettingType3 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			discount '@Discount'			
+		FROM @NewDiscountTbl
+		FOR XML PATH ('R'), ROOT('Root')
+		)
 	END	
-	
+		
 	DROP TABLE #ProductSettingDetail_Check
 END	

@@ -22,16 +22,16 @@ AS
 
 	Param's Explanation: 
 		- @SettingType6 = '<Root>
-						<r sporttype="9908" bettype="1201" maxwinlimit="2" maxlosslimit="20000" isautoreset="0" />
+						<R SportType="9908" BetType="1201" MaxWinLimit="2" MaxLossLimit="20000" IsAutoReset="0" />
 						...
-						<r sporttype="170" bettype="3701" maxwinlimit="2" maxlosslimit="20000" isautoreset="0" />
+						<R SportType="170" BetType="3701" MaxWinLimit="2" MaxLossLimit="20000" IsAutoReset="0" />
 					</Root>'
 		- @SettingType22 = '<Root>
-						<r sporttype="9909" bettype="3700" maxwinlimit="2" maxlosslimit="20000" isautoreset="0" />
-						</Root>'
+						<R SportType="9909" BetType="3700" MaxWinLimit="2" MaxLossLimit="20000" IsAutoReset="0" />
+					</Root>'
 		- @SettingType12 = '<Root>
-						<r sporttype="241" bettype="3300" maxlosslimit="20000" isautoreset="0"  />
-						</Root>'				
+						<R SportType="241" BetType="3300" MaxLossLimit="20000" IsAutoReset="0"  />
+					</Root>'				
 */	
 BEGIN
 	SET NOCOUNT ON 
@@ -67,12 +67,12 @@ BEGIN
 			MaxLossLimit, 
 			IsAutoReset)
 		SELECT 6 as SettingType,
-			T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS bettype,
-			T.c.query('.').value('(r/@maxwinlimit)[1]', 'smallmoney') AS MaxWinLimit,
-			T.c.query('.').value('(r/@maxlosslimit)[1]', 'money') AS MaxLossLimit,
-			T.c.query('.').value('(r/@isautoreset)[1]', 'bit') AS IsAutoReset
-		FROM  @xml.nodes('/Root/r') T(c) 	
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MaxWinLimit)[1]', 'smallmoney') AS MaxWinLimit,
+			T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
+			T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+		FROM  @xml.nodes('/Root/R') T(c) 	
 	END	
 	
 	IF ISNULL(@SettingType22,'') <> ''
@@ -87,12 +87,12 @@ BEGIN
 			MaxLossLimit, 
 			IsAutoReset)
 		SELECT 22 as SettingType,
-			T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS bettype,
-			T.c.query('.').value('(r/@maxwinlimit)[1]', 'smallmoney') AS MaxWinLimit,
-			T.c.query('.').value('(r/@maxlosslimit)[1]', 'money') AS MaxLossLimit,
-			T.c.query('.').value('(r/@isautoreset)[1]', 'bit') AS IsAutoReset
-		FROM  @xml.nodes('/Root/r') T(c) 	
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MaxWinLimit)[1]', 'smallmoney') AS MaxWinLimit,
+			T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
+			T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+		FROM  @xml.nodes('/Root/R') T(c)	
 	END	
 	
 	IF ISNULL(@SettingType12,'') <> ''
@@ -106,11 +106,11 @@ BEGIN
 			MaxLossLimit, 
 			IsAutoReset)
 		SELECT 12 as SettingType,
-			T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS bettype,			
-			T.c.query('.').value('(r/@maxlosslimit)[1]', 'money') AS MaxLossLimit,
-			T.c.query('.').value('(r/@isautoreset)[1]', 'bit') AS IsAutoReset
-		FROM  @xml.nodes('/Root/r') T(c) 	
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,			
+			T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
+			T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+		FROM  @xml.nodes('/Root/R') T(c) 	
 	END	
 	
 	INSERT INTO @UplineLimitTbl(
@@ -201,8 +201,8 @@ BEGIN
 			)
 	BEGIN
 		SET @xml = (
-				SELECT 10033 AS '@MsgID'
-					, 'Maximum Loss should be less than or equal to Maximum Loss of Direct Upline!' AS '@Msg'
+				SELECT 10022 AS '@MsgID'
+					, 'You are not allowed to change Daily auto reset limit.' AS '@Msg'
 					, (
 						SELECT uwl.SportType AS '@SportType'
 							, uwl.BetType AS '@BetType'

@@ -7,7 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateCheck]
 	@Language VARCHAR(3) = 'E',
 	@ErrCode INT = 0 OUTPUT,
 	@ErrType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT
 AS
 /*
 	Created: 20230509@Johnson  
@@ -70,6 +70,7 @@ BEGIN
 			INNER JOIN #SportBettypeFilter s 
 				ON s.SportType = cs.sporttype  
 				AND s.BetType = cs.bettype 
+				AND s.IsLive = 0
 		WHERE cs.CustID = @custid
 			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
 		UNION ALL 
@@ -80,6 +81,7 @@ BEGIN
 			INNER JOIN #SportBettypeFilter s 
 				ON s.SportType = cs.sporttype  
 				AND s.BetType = cs.bettype 
+				AND s.IsLive = 1
 		WHERE cs.CustID = @custid
 			AND cs.sporttype = 1
 			AND cs.bettype IN (1,3,7,8)
@@ -98,7 +100,6 @@ BEGIN
 		WHERE cs.CustID = @custid		
 		
 		DELETE #SportBettypeFilter
-		DELETE #tmpSuperPT
 		
 		--check RNG Games
 		SELECT @GroupID = 2, @GroupType = 153, @SubGroupID = 2
@@ -121,7 +122,6 @@ BEGIN
 		WHERE custid = @custid
 						
 		DELETE #SportBettypeFilter
-		DELETE #tmpSuperPT
 		
 		--Allbet & SA Gaming
 		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 5
@@ -144,7 +144,6 @@ BEGIN
 		WHERE custid = @custid
 		
 		DELETE #SportBettypeFilter
-		DELETE #tmpSuperPT
 		
 		--Other Live Casino & RnG Games
 		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
@@ -167,8 +166,7 @@ BEGIN
 		WHERE custid = @custid
 		
 		DELETE #SportBettypeFilter
-		DELETE #tmpSuperPT
-		
+				
 		--check NG2
 		IF @SiteLabel = '789y'
 		BEGIN
@@ -192,7 +190,6 @@ BEGIN
 			WHERE custid = @custid
 			
 			DELETE #SportBettypeFilter
-			DELETE #tmpSuperPT
 		END		
 				
 		IF EXISTS (	
@@ -210,7 +207,7 @@ BEGIN
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
 									, t.IsLive AS '@IsLive'
-									, t.S4 AS '@S4'
+									, t.S4 AS '@MaxPT'
 								FROM #tmpSuperPT t
 									INNER JOIN @tmpSetting s ON t.GroupID = s.GroupID
 																AND t.SubGroupID = s.SubGroupID
@@ -222,7 +219,7 @@ BEGIN
 							, TYPE
 						)
 			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @ErrType = 11
+			SET @ErrType = 63
 			SET @ErrCode = 101			
 		END		
 	END

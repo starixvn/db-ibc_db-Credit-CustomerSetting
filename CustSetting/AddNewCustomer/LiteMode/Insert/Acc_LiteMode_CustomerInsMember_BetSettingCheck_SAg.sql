@@ -2,7 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_BetSettingCheck_SAg]
 	@srecommend INT,
 	@SettingType26 VARCHAR(MAX)= '', --SB
-	@SettingType2 VARCHAR(MAX)= '', --SB2
+	@SettingType2 VARCHAR(MAX)= '', --SB2, VS
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games
 	@SettingType9 VARCHAR(MAX)= '', --NG2
 	@SystemID TINYINT = 1,
@@ -22,28 +22,28 @@ AS
 
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
-						<r sporttype="1" bettype="1" minbet="1" maxbet="100" mpm="1000" maxpayout="1000" />
-						<r sporttype="2" bettype="1" minbet="1" maxbet="100" mpm="1000" maxpayout="1000" />
+						<R SportType="1" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
+						<R SportType="2" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
 						...
-						<r sporttype="9901" bettype="1" minbet="1" maxbet="100" mpm="1000" maxpayout="1000" />
-						<r sporttype="9902" bettype="1" minbet="1" maxbet="100" mpm="1000" maxpayout="1000" />
+						<R SportType="9901" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
+						<R SportType="9902" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
 					</Root>'
 		- @SettingType2 = '<Root>
-						<r sporttype="43" bettype="1" minbet="1" maxbet="100" mpm="1000" />
-						<r sporttype="44" bettype="3" minbet="1" maxbet="100" mpm="1000" />
+						<R SportType="43" BetType="1" MinBet="1" MaxBet="100" MPM="1000" />
+						<R SportType="44" BetType="3" MinBet="1" MaxBet="100" MPM="1000" />
+						<R SportType="9908" BetType="1201" MinBet="1" MaxBet="100" MPM="1000" />
 					</Root>'			
 		- @SettingType23 = '<Root>
-						<r sporttype="161" bettype="81" minbet="1" maxbet="100" mpm="1000" maxpernumber="100" />
-						<r sporttype="202" bettype="1501" minbet="1" maxbet="100" mpm="1000"  />
+						<R SportType="161" BetType="81" MinBet="1" MaxBet="100" MPM="1000" MaxPerNumber="100" />
+						<R SportType="202" BetType="1501" MinBet="1" MaxBet="100" MPM="1000"  />
 						...
-						<r sporttype="220" bettype="1024" minbet="1" maxbet="100" mpm="1000" />
-						<r sporttype="9908" bettype="1201" minbet="1" maxbet="100" mpm="1000" />
+						<R SportType="220" BetType="1024" MinBet="1" MaxBet="100" MPM="1000" />						
 					</Root>'
 		- @SettingType9 = '<Root>
-						<r sporttype="213" bettype="2501" minbet="1" maxbet="100" maxpernumber="1000" />
-						<r sporttype="213" bettype="2502" minbet="1" maxbet="100" maxpernumber="1000" />
+						<R SportType="213" BetType="2501" MinBet="1" MaxBet="100" MaxPerNumber="1000" />
+						<R SportType="213" BetType="2502" MinBet="1" MaxBet="100" MaxPerNumber="1000" />
 						...						
-						<r sporttype="213" bettype="2522" minbet="1" maxbet="100" maxpernumber="1000" />
+						<R SportType="213" BetType="2522" MinBet="1" MaxBet="100" MaxPerNumber="1000" />
 					</Root>'	
 		
 */	
@@ -89,13 +89,13 @@ BEGIN
 			MaxBet, 
 			MaxPerMatch, 
 			MaxPayoutPerMatch)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS bettype,
-			T.c.query('.').value('(r/@minbet)[1]', 'money') AS minbet,
-			T.c.query('.').value('(r/@maxbet)[1]', 'money') AS maxbet,
-			T.c.query('.').value('(r/@mpm)[1]', 'money') AS MaxPerMatch,
-			T.c.query('.').value('(r/@maxpayout)[1]', 'money') AS MaxPayoutPerMatch
-		FROM  @xml.nodes('/Root/r') T(c) 
+		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+			T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch,
+			T.c.query('.').value('(R/@MaxPayout)[1]', 'money') AS MaxPayoutPerMatch
+		FROM  @xml.nodes('/Root/R') T(c) 
 		
 		--> Check rule : Wrong Min bet/ Max bet/ Max per match
 		IF EXISTS(SELECT TOP 1 1
@@ -355,13 +355,13 @@ BEGIN
 			MaxBet, 
 			MaxPerMatch, 
 			MaxPerNumber)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS bettype,
-			T.c.query('.').value('(r/@minbet)[1]', 'money') AS minbet,
-			T.c.query('.').value('(r/@maxbet)[1]', 'money') AS maxbet,
-			T.c.query('.').value('(r/@mpm)[1]', 'money') AS MaxPerMatch,
-			T.c.query('.').value('(r/@maxpernumber)[1]', 'money') AS MaxPerNumber
-		FROM  @xml.nodes('/Root/r') T(c) 
+		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+			T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch,
+			T.c.query('.').value('(R/@MaxPerNumber)[1]', 'money') AS MaxPerNumber
+		FROM  @xml.nodes('/Root/R') T(c) 
 		
 		SELECT @xml = CONVERT(XML,@SettingType2)
 		
@@ -370,12 +370,12 @@ BEGIN
 			MinBet, 
 			MaxBet, 
 			MaxPerMatch)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS bettype,
-			T.c.query('.').value('(r/@minbet)[1]', 'money') AS minbet,
-			T.c.query('.').value('(r/@maxbet)[1]', 'money') AS maxbet,
-			T.c.query('.').value('(r/@mpm)[1]', 'money') AS MaxPerMatch			
-		FROM  @xml.nodes('/Root/r') T(c) 
+		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+			T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
+		FROM  @xml.nodes('/Root/R') T(c) 
 		
 		--> Check rule : Wrong Min bet/ Max bet/ Max per match
 		IF EXISTS(SELECT TOP 1 1
@@ -684,12 +684,12 @@ BEGIN
 			MinBet, 
 			MaxBet,  
 			MaxPerNumber)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS bettype,
-			T.c.query('.').value('(r/@minbet)[1]', 'money') AS minbet,
-			T.c.query('.').value('(r/@maxbet)[1]', 'money') AS maxbet,
-			T.c.query('.').value('(r/@maxpernumber)[1]', 'money') AS MaxPerNumber
-		FROM  @xml.nodes('/Root/r') T(c) 
+		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,			
+			T.c.query('.').value('(R/@MaxPerNumber)[1]', 'money') AS MaxPerNumber
+		FROM  @xml.nodes('/Root/R') T(c) 
 		
 		DECLARE @BetGameUnlimit TABLE(SportType SMALLINT, BetType SMALLINT, IsAllowUnlimit BIT)
 	
@@ -701,6 +701,15 @@ BEGIN
 			INNER JOIN @BetSetting s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 			INNER JOIN dbo.ProductBetSetting ps ON ps.Sporttype = s.SportType AND ps.Bettype = s.BetType
 		WHERE cs.custid = @srecommend AND ps.Currency = @Currency
+		
+		INSERT INTO @Upline_BetSetting (SportType,BetType,MinBet,MaxBet,MaxPerNumber)
+		SELECT  cb.Sporttype,cb.Bettype,
+				MinBet = ISNULL((CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
+				MaxBet = ISNULL((CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
+				MaxPerMatch = ISNULL((CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0)
+		FROM CustBetSetting3rd_Agent cb WITH (NOLOCK,FORCESEEK)
+			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
+		WHERE cb.custid = @srecommend
 		
 		--> Check rule :Wrong Min bet/ Max bet/ Max per number.
 		IF EXISTS(SELECT TOP 1 1 
@@ -784,15 +793,6 @@ BEGIN
 			SET @MsgType = 71
 			SET @ErrCode = 251
 		END		
-		
-		INSERT INTO @Upline_BetSetting (SportType,BetType,MinBet,MaxBet,MaxPerNumber)
-		SELECT  cb.Sporttype,cb.Bettype,
-				MinBet = ISNULL((CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
-				MaxBet = ISNULL((CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
-				MaxPerMatch = ISNULL((CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0)
-		FROM CustBetSetting3rd_Agent cb WITH (NOLOCK,FORCESEEK)
-			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
-		WHERE cb.custid = @srecommend
 		
 		--> Check rule : Min Bet must be equal to or greater than Upline's Min Bet
 		IF EXISTS (SELECT TOP 1 1

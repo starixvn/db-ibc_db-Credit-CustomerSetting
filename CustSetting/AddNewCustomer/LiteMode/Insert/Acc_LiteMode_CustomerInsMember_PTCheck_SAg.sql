@@ -2,9 +2,9 @@
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_PTCheck_SAg]
 	@srecommend INT,	
 	
-	@SettingType28 VARCHAR(MAX)= '',-- SB
-	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
-	@SettingType18 VARCHAR(MAX)= '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
+	@SettingType28 VARCHAR(MAX)= '' OUTPUT,-- SB
+	@SettingType1 VARCHAR(MAX)= ''  OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
+	@SettingType18 VARCHAR(MAX)= '' OUTPUT,-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 	@CreationStatus TINYINT = 0,
 
 	@ErrCode INT = 0 OUTPUT,
@@ -22,23 +22,23 @@ AS
 
 	Param's Explanation: 
 		- @SettingType28 = '<Root>
-						<r sporttype="1" bettype="1" islive="0" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
-						<r sporttype="1" bettype="1" islive="1" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
+						<R SportType="1" BetType="1" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
+						<R SportType="1" BetType="1" IsLive="1" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 						....
-						<r sporttype="99" bettype="9" islive="0" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
+						<R SportType="99" BetType="9" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 					</Root>'			
 		- @SettingType1 = '<Root>
-						<r sporttype="43" bettype="1" islive="0" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
-						<r sporttype="44" bettype="1" islive="0" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
+						<R SportType="43" BetType="1" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
+						<R SportType="44" BetType="1" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 						....
-						<r sporttype="9908" bettype="1201" islive="0" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
+						<R SportType="9908" BetType="1201" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 					</Root>'
 		- @SettingType18 = '<Root>
-						<r sporttype="169" bettype="3611" islive="0" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
-						<r sporttype="220" bettype="1024" islive="0" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
+						<R SportType="169" BetType="3611" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
+						<R SportType="220" BetType="1024" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 						....
-						<r sporttype="245" bettype="4601" islive="0" superpt="90" isauto="0" autopt="0" masterpt="0" minpt="0" />
-					</Root>'				
+						<R SportType="245" BetType="4601" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
+					</Root>'					
 */	
 BEGIN
 	SET NOCOUNT ON 
@@ -55,6 +55,7 @@ BEGIN
 				MasterMaxPT		SMALLMONEY
 				)		
 	DECLARE @tblPT18 TABLE (
+				SettingType		SMALLINT,
 				SportType		SMALLINT,
 				BetType			SMALLINT,
 				IsLive			BIT,
@@ -91,22 +92,23 @@ BEGIN
 			AutoSuperPT,
 			MasterPT,				
 			MasterMinPT)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS SportType,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS BetType,
-			T.c.query('.').value('(r/@islive)[1]', 'bit') AS IsLive,
-			T.c.query('.').value('(r/@superpt)[1]', 'smallmoney')/100 AS SuperPT,
-			T.c.query('.').value('(r/@isauto)[1]', 'bit') AS IsAutoSuperPT,
-			T.c.query('.').value('(r/@autopt)[1]', 'smallmoney')/100 AS AutoSuperPT,
-			T.c.query('.').value('(r/@masterpt)[1]', 'smallmoney')/100 AS MasterPT,
-			T.c.query('.').value('(r/@minpt)[1]', 'smallmoney')/100 AS MasterMinPT
-		FROM  @xml.nodes('/Root/r') T(c) 			
+		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+			T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+			T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney')/100 AS SuperPT,
+			T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+			T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney')/100 AS AutoSuperPT,
+			T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney')/100 AS MasterPT,
+			T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney')/100 AS MasterMinPT
+		FROM  @xml.nodes('/Root/R') T(c) 			
 	END	
 
 	IF ISNULL(@SettingType1,'') <> ''
 	BEGIN
 		SELECT @xml = CONVERT(XML, @SettingType1)
 		
-		INSERT INTO @tblPT18(SportType, 
+		INSERT INTO @tblPT18(SettingType,
+			SportType, 
 			BetType, 
 			IsLive,
 			SuperPT,
@@ -114,22 +116,25 @@ BEGIN
 			AutoSuperPT,
 			MasterPT,				
 			MasterMinPT)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS SportType,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS BetType,
-			T.c.query('.').value('(r/@islive)[1]', 'bit') AS IsLive,
-			T.c.query('.').value('(r/@superpt)[1]', 'smallmoney') AS SuperPT,
-			T.c.query('.').value('(r/@isauto)[1]', 'bit') AS IsAutoSuperPT,
-			T.c.query('.').value('(r/@autopt)[1]', 'smallmoney') AS AutoSuperPT,
-			T.c.query('.').value('(r/@masterpt)[1]', 'smallmoney') AS MasterPT,
-			T.c.query('.').value('(r/@minpt)[1]', 'smallmoney') AS MasterMinPT
-		FROM  @xml.nodes('/Root/r') T(c) 			
+		SELECT 1 as SettingType,
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+			T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+			T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+			T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+			T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+			T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+			T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+		FROM  @xml.nodes('/Root/R') T(c)
+		 			
 	END
 	
 	IF ISNULL(@SettingType18,'') <> ''
 	BEGIN
 		SELECT @xml = CONVERT(XML, @SettingType18)
 		
-		INSERT INTO @tblPT18(SportType, 
+		INSERT INTO @tblPT18(SettingType,
+			SportType, 
 			BetType, 
 			IsLive,
 			SuperPT,
@@ -137,20 +142,21 @@ BEGIN
 			AutoSuperPT,
 			MasterPT,				
 			MasterMinPT)
-		SELECT T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS SportType,
-			T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS BetType,
-			T.c.query('.').value('(r/@islive)[1]', 'bit') AS IsLive,
-			T.c.query('.').value('(r/@superpt)[1]', 'smallmoney') AS SuperPT,
-			T.c.query('.').value('(r/@isauto)[1]', 'bit') AS IsAutoSuperPT,
-			T.c.query('.').value('(r/@autopt)[1]', 'smallmoney') AS AutoSuperPT,
-			T.c.query('.').value('(r/@masterpt)[1]', 'smallmoney') AS MasterPT,
-			T.c.query('.').value('(r/@minpt)[1]', 'smallmoney') AS MasterMinPT
-		FROM  @xml.nodes('/Root/r') T(c) 			
+		SELECT 18 as SettingType,
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+			T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+			T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+			T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+			T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+			T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+			T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+		FROM  @xml.nodes('/Root/R') T(c)			
 	END
 	
 	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
 	
 	--check pt > 0 
 	;WITH T AS (
@@ -259,7 +265,7 @@ BEGIN
 	BEGIN
 		SELECT @ErrMsg = '<Root MsgID="20025" Msg="The position taking violates Upline Min/Max PT.">'
 						+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
-				, @MsgType = 61 
+				, @MsgType = 62 
 				, @ErrCode = 602
 		RETURN            
 	END
@@ -300,7 +306,7 @@ BEGIN
 	BEGIN           
 		SELECT @ErrMsg = '<Root MsgID="20027" Msg="The position taking violates Master Max PT set by company">'
 						+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
-				, @MsgType = 61
+				, @MsgType = 63
 				, @ErrCode = 603	
 		RETURN  
 	END
@@ -339,10 +345,89 @@ BEGIN
 	BEGIN
 		SELECT @ErrMsg = '<Root MsgID="20028" Msg="The position taking violates Super Max PT.">'
 						+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
-				, @MsgType = 61 
+				, @MsgType = 63 
 				, @ErrCode = 604
 		RETURN
 	END
+	
+	--correct i3,u3
+	UPDATE t
+	SET t.IsAutoSuperPT = 1
+	FROM @tblPT28 t
+	WHERE t.IsAutoSuperPT = 0 AND t.AutoSuperPT > 0
+	
+	UPDATE t
+	SET t.AutoSuperPT = scs.spositiontaking
+	FROM @tblPT28 t
+		INNER JOIN custsetting as scs WITH (NOLOCK) ON scs.sporttype = t.SportType
+												AND scs.bettype = t.BetType
+												AND t.IsLive = 0					
+	WHERE custid = @srecommend 
+		AND t.AutoSuperPT > scs.spositiontaking
+	
+	UPDATE t
+	SET t.AutoSuperPT = scs.slivepositiontaking
+	FROM @tblPT28 t
+		INNER JOIN custsetting as scs WITH (NOLOCK) ON scs.sporttype = t.SportType
+												AND scs.bettype = t.BetType
+												AND t.IsLive = 1					
+	WHERE custid = @srecommend 
+		AND t.AutoSuperPT > scs.slivepositiontaking
+		
+	UPDATE t
+	SET t.IsAutoSuperPT = 1
+	FROM @tblPT18 t
+	WHERE t.IsAutoSuperPT = 0 AND t.AutoSuperPT > 0
+	
+	UPDATE t
+	SET t.AutoSuperPT = scs.AutoSuperPT
+	FROM @tblPT18 t
+		INNER JOIN CustPTSetting3rd_Agent as scs WITH (NOLOCK) ON scs.sporttype = t.SportType
+												AND scs.bettype = t.BetType
+												AND scs.IsLive = t.IsLive					
+	WHERE custid = @srecommend 
+		AND t.AutoSuperPT > scs.AutoSuperPT
+		
+	SELECT @SettingType28 = (
+	SELECT SportType '@SportType', 
+		BetType '@BetType', 
+		IsLive '@IsLive',
+		SuperPT '@SuperPT',
+		IsAutoSuperPT '@IsAuto',
+		AutoSuperPT '@AutoPT',
+		MasterPT '@MasterPT',				
+		MasterMinPT '@MinPT'
+	FROM @tblPT28
+	FOR XML PATH ('R'), ROOT('Root')
+	)	
+	
+	SELECT @SettingType1 = (
+	SELECT SportType '@SportType', 
+		BetType '@BetType', 
+		IsLive '@IsLive',
+		SuperPT '@SuperPT',
+		IsAutoSuperPT '@IsAuto',
+		AutoSuperPT '@AutoPT',
+		MasterPT '@MasterPT',				
+		MasterMinPT '@MinPT'
+	FROM @tblPT18
+	WHERE SettingType = 1
+	FOR XML PATH ('R'), ROOT('Root')
+	)	
+	
+	SELECT @SettingType18 = (
+	SELECT SportType '@SportType', 
+		BetType '@BetType', 
+		IsLive '@IsLive',
+		SuperPT '@SuperPT',
+		IsAutoSuperPT '@IsAuto',
+		AutoSuperPT '@AutoPT',
+		MasterPT '@MasterPT',				
+		MasterMinPT '@MinPT'
+	FROM @tblPT18
+	WHERE SettingType = 18
+	FOR XML PATH ('R'), ROOT('Root')
+	)		
 	
 	DROP TABLE #ProductSettingDetail_PTCheck
 END		

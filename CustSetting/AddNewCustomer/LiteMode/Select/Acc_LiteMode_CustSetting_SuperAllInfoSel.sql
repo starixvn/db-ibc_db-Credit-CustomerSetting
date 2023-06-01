@@ -120,12 +120,12 @@ BEGIN
 			@IsMyanmarOdds AS IsMyanmarOdds
 	END
 	
-	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT)
+	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
 	DECLARE	@Currency	TINYINT
 	
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-	SELECT SportType,Bettype,IsLive,ProductID	
-	FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus) 
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder)
+	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder
+	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus) 
 	
 	----------------------------------------------------------------------------------
 	--BEGIN SB Settings
@@ -146,24 +146,31 @@ BEGIN
 			AND bettype IN (1,3,7,8,4,5)
 		UNION SELECT 2, 1, @discountMyanmarOdds WHERE @IsMyanmarOdds = 1
 		)
-		SELECT T.*
+		SELECT T.*, s.IntervalValue,s.Child_DisplayOrder
 		FROM T
 		INNER JOIN #SportBettypeFilter s ON t.sporttype = s.sporttype
 											AND t.bettype = s.bettype
+		ORDER BY s.Child_DisplayOrder									
 	END
 	
 	--Bet setting SB
 	IF @GroupID = 1 AND @GroupType = 151
 	BEGIN				
-		SELECT sporttype, bettype, MinBet, MaxBet, MaxPerMatch, MaxPayoutPerMatch
-		FROM CustBetSetting_Agent WITH(NOLOCK)
-		WHERE custid = @custid
-			AND sporttype IN (SELECT sporttype FROM #SportBettypeFilter)
+		WITH T AS(
+		SELECT cs.sporttype, cs.bettype, MinBet, MaxBet, MaxPerMatch, MaxPayoutPerMatch, s.Child_DisplayOrder
+		FROM CustBetSetting_Agent cs WITH(NOLOCK)
+			INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
+												AND cs.bettype = s.bettype
+		WHERE custid = @custid			
 		UNION 
-		SELECT sporttype, bettype, MinBet, MaxBet, MaxPerMatch, NULL MaxPayoutPerMatch
-		FROM CustBetSetting3rd_Agent WITH(NOLOCK)
+		SELECT cs.sporttype, cs.bettype, MinBet, MaxBet, MaxPerMatch, NULL MaxPayoutPerMatch, s.Child_DisplayOrder
+		FROM CustBetSetting3rd_Agent cs WITH(NOLOCK)
+		INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
+												AND cs.bettype = s.bettype
 		WHERE custid = @custid
-			AND sporttype IN (SELECT sporttype FROM #SportBettypeFilter)
+		)
+		SELECT * FROM T
+		ORDER BY Child_DisplayOrder
 	END
 	
 	--Parlay MaxPayoutPerMatch
@@ -180,25 +187,27 @@ BEGIN
 		FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 		WHERE cs.custid = @custid
-		
+				
 		SELECT	ft.SportType,
 				ft.BetType,					
 				CASE	WHEN bu.SingleMatchParlay_IsAllowUnlimit = 1 THEN 0
-						ELSE sbl.SingleMatchParlay END AS Upline_SingleMatchParlay,  
+						ELSE sbl.SingleMatchParlay END AS SingleMatchParlay,  
 				CASE	WHEN bu.Combo2_IsAllowUnlimit = 1 THEN 0 
-						ELSE sbl.Combo2 END AS Upline_Combo2,
+						ELSE sbl.Combo2 END AS Combo2,
 				CASE	WHEN bu.Combo35_IsAllowUnlimit = 1 THEN 0 
-						ELSE sbl.Combo35 END AS Upline_Combo35,
+						ELSE sbl.Combo35 END AS Combo35,
 				CASE	WHEN bu.ComboOver6_IsAllowUnlimit = 1 THEN 0 
-						ELSE sbl.ComboOver6 END AS Upline_ComboOver6,
+						ELSE sbl.ComboOver6 END AS ComboOver6,
 				bu.SingleMatchParlay_IsAllowUnlimit AS SingleMatchParlay_IsAllowUnlimit,
 				bu.Combo2_IsAllowUnlimit AS Combo2_IsAllowUnlimit,
 				bu.Combo35_IsAllowUnlimit AS Combo35_IsAllowUnlimit,
-				bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit		
+				bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit,
+				ft.Child_DisplayOrder	
 		FROM #SportBettypeFilter ft 
 			INNER JOIN @MatchParlayUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype			
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
 		WHERE sbl.CustID = @custid
+		ORDER BY ft.Child_DisplayOrder	
 	END
 	
 	--SB PT
@@ -253,17 +262,21 @@ BEGIN
 	--Bet Setting
 	IF @GroupID = 2 AND @GroupType = 154
 	BEGIN
-		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
+		;WITH T AS (
+		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,s.SubType,s.Child_DisplayOrder
 		FROM CustBetSetting_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
 		WHERE cs.CustID = @custid 
 		UNION ALL
-		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,NULL MaxPerNumber, NULL MaxPayoutPerMatch
+		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,NULL MaxPerNumber, NULL MaxPayoutPerMatch,s.SubType,s.Child_DisplayOrder
 		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
-		WHERE cs.CustID = @custid	
+		WHERE cs.CustID = @custid
+		)
+		SELECT * FROM T
+		ORDER BY Child_DisplayOrder
 	END
 	
 	--PT
@@ -310,10 +323,11 @@ BEGIN
 	--Comm
 	IF @GroupID = 3 AND @GroupType = 156
 	BEGIN
-		SELECT cs.SportType, cs.Bettype, cs.Discount			
+		SELECT cs.SportType, cs.Bettype, cs.Discount, s.Child_DisplayOrder			
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
-		WHERE cs.custid = @custid				
+		WHERE cs.custid = @custid	
+		ORDER BY s.Child_DisplayOrder	
 	END
 	
 	--PT
@@ -407,12 +421,14 @@ BEGIN
 				CASE	WHEN bu.IsAllowUnlimit = 1 THEN sbl.MaxBet 
 						ELSE (SELECT MIN(MaxBet) FROM (VALUES (pbs.MaxBet), (CASE WHEN sbl.MaxBet = 0 THEN NULL ELSE sbl.MaxBet END)) AS t(MaxBet)) END AS MaxBetMax,  
 				CASE	WHEN bu.IsAllowUnlimit = 1 THEN sbl.MaxPerMatch 
-						ELSE (SELECT MIN(MaxPerMatch) FROM (VALUES (pbs.MaxPerMatch), (CASE WHEN sbl.MaxPerMatch = 0 THEN NULL ELSE sbl.MaxPerMatch END)) AS t(MaxPerMatch)) END AS MaxPerNumberMax
+						ELSE (SELECT MIN(MaxPerMatch) FROM (VALUES (pbs.MaxPerMatch), (CASE WHEN sbl.MaxPerMatch = 0 THEN NULL ELSE sbl.MaxPerMatch END)) AS t(MaxPerMatch)) END AS MaxPerNumberMax,
+				ft.Child_DisplayOrder		
 		FROM #SportBettypeFilter ft 
 			INNER JOIN @BetGameUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype			
 			INNER JOIN dbo.CustBetSetting3rd_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
 			INNER JOIN dbo.ProductBetSetting pbs ON pbs.SportType = sbl.sporttype AND pbs.BetType = sbl.bettype AND pbs.Currency = @Currency
 		WHERE sbl.CustID = @custid
+		ORDER BY ft.Child_DisplayOrder
 	END
 	
 	--PT

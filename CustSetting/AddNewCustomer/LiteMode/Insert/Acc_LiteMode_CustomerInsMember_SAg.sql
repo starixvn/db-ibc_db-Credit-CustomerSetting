@@ -35,9 +35,13 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	@SettingType12 VARCHAR(MAX)= '',-- BBIN
 	
 	--PT
+	@TemplateName VARCHAR(50) = '',
 	@SettingType28 VARCHAR(MAX)= '',-- SB
 	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
 	@SettingType18 VARCHAR(MAX)= '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
+	
+	--Log all values group from UI
+	@SettingTypeAll VARCHAR(MAX) = '',
 	
 	@Language VARCHAR(2)= 'E',
 	@SubAccID INT = 0,--Sub-AccountID,
@@ -48,7 +52,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	@IP VARCHAR(15)='',
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT,
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
 	@site VARCHAR(50) = '',
 	@CreationStatus TINYINT = 0
 AS
@@ -63,52 +67,57 @@ AS
 
 	Param's Explanation: 
 		- @SettingType25 = '<Root>
-						<r sporttype="1" bettype="1" discount="0.0025" />
-						<r sporttype="1" bettype="3" discount="0.005" />
+						<R SportType="1" BetType="1" Discount="0.0025" />
+						<R SportType="1" BetType="3" Discount="0.005" />
 						...
-						<r sporttype="2" bettype="1" discount="0.0025" />
+						<R SportType="2" BetType="1" Discount="0.0025" />
 					</Root>'
 		- @SettingType26 = '<Root>
-						<r sporttype="1" bettype="1" minbet="1" maxbet="100" mpm="1000" maxpayout="1000" />
+						<R SportType="1" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
 						.....
-						<r sporttype="9902" bettype="1" minbet="1" maxbet="100" mpm="1000" maxpayout="1000" />
+						<R SportType="9902" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
 					</Root>'
 		- @SettingType27 = '<Root>
-						<r sporttype="1" bettype="9" singlemp="1000" combo2="1000" combo35="1000" combo6="1000" />
-						<r sporttype="99" bettype="1" singlemp="1000" combo2="1000" combo35="1000" combo6="1000" />
+						<R SportType="1" BetType="9" SingleMP="1000" Combo2="1000" Combo35="1000" Combo6="1000" />
+						<R SportType="99" BetType="1" SingleMP="1000" Combo2="1000" Combo35="1000" Combo6="1000" />
 					</Root>'
 		- @SettingType6 = '<Root>
-						<r sporttype="9908" bettype="1201" maxwinlimit="2" maxlosslimit="20000" isautoreset="0" />
+						<R SportType="9908" BetType="1201" MaxWinlimit="2" MaxLosslimit="20000" IsAutoReset="0" />
 						...
-						<r sporttype="170" bettype="3701" maxwinlimit="2" maxlosslimit="20000" isautoreset="0" />
+						<R SportType="170" BetType="3701" MaxWinlimit="2" MaxLosslimit="20000" IsAutoReset="0" />
 					</Root>'
 		- @SettingType22 = '<Root>
-						<r sporttype="9909" bettype="3700" maxwinlimit="2" maxlosslimit="20000" isautoreset="0" />
+						<R SportType="9909" BetType="3700" MaxWinlimit="2" MaxLosslimit="20000" IsAutoReset="0" />
 					</Root>'
 		- @SettingType12 = '<Root>
-						<r sporttype="241" bettype="3300" maxlosslimit="20000" isautoreset="0"  />
+						<R SportType="241" BetType="3300" MaxLosslimit="20000" IsAutoReset="0"  />
 					</Root>'
 		- @SettingType28 = '<Root>
-						<r sporttype="1" bettype="1" islive="0" superpt="90" isauto="0" masterpt="0" minpt="0" />
-						<r sporttype="1" bettype="1" islive="1" superpt="90" isauto="0" masterpt="0" minpt="0" />
+						<R SportType="1" BetType="1" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
+						<R SportType="1" BetType="1" IsLive="1" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 						....
-						<r sporttype="99" bettype="9" islive="0" superpt="90" isauto="0" masterpt="0" minpt="0" />
+						<R SportType="99" BetType="9" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 					</Root>'			
 		- @SettingType1 = '<Root>
-						<r sporttype="43" bettype="1" islive="0" superpt="90" isauto="0" masterpt="0" minpt="0" />
-						<r sporttype="44" bettype="1" islive="0" superpt="90" isauto="0" masterpt="0" minpt="0" />
+						<R SportType="43" BetType="1" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
+						<R SportType="44" BetType="1" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 						....
-						<r sporttype="9908" bettype="1201" islive="0" superpt="90" isauto="0" masterpt="0" minpt="0" />
+						<R SportType="9908" BetType="1201" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 					</Root>'
 		- @SettingType18 = '<Root>
-						<r sporttype="169" bettype="3611" islive="0" superpt="90" isauto="0" masterpt="0" minpt="0" />
-						<r sporttype="220" bettype="1024" islive="0" superpt="90" isauto="0" masterpt="0" minpt="0" />
+						<R SportType="169" BetType="3611" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
+						<R SportType="220" BetType="1024" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 						....
-						<r sporttype="245" bettype="4601" islive="0" superpt="90" isauto="0" masterpt="0" minpt="0" />
-					</Root>'			
+						<R SportType="245" BetType="4601" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
+					</Root>'				
 */	
 BEGIN
 	SET NOCOUNT ON
+	
+	DECLARE @startRun DATETIME
+    DECLARE @endRun DATETIME
+    DECLARE @duration INT
+    SET @startRun = GETDATE()
 	
 	DECLARE @Super_site VARCHAR(50), @currency INT, @EnableVR BIT
 	SELECT @Super_site = site,
@@ -276,11 +285,6 @@ BEGIN
 	END 
 	-----/20160120@Lukas -----------------
 		
-    DECLARE @startRun DATETIME
-    DECLARE @endRun DATETIME
-    DECLARE @duration INT
-    set @startRun = GETDATE()
-
     --NOT allow agent under KH, KR, KAR, KBR, KCR, LDR, KM, KAM to create downlines (Requested by wan 04-Dec-2008)
     --20081218_By_AhWan: KER - 1238537
     --20090112_Wan: unblock KM 194354
@@ -326,9 +330,7 @@ BEGIN
 		
 	SELECT @username = rtrim(ltrim(@username))
 
-    SELECT 
-	    --@currency = currency,
-	    --@Ssuspended = cs.reject,
+    SELECT 	    
 	    @UplineClosed = cs.closed,
 	    @Credit_SAg = isnull(credit, 0),
 	    @matchlimit = matchlimit,
@@ -426,9 +428,9 @@ BEGIN
 	--check comm
 	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_SAg
 		@srecommend = @srecommend,
-		@SettingType25 = @SettingType25, --SB
-		@SettingType19 = @SettingType19, --LCS
-		@SettingType3 = @SettingType3, --NG2
+		@SettingType25 = @SettingType25 OUTPUT, --SB
+		@SettingType19 = @SettingType19 OUTPUT, --LCS
+		@SettingType3 = @SettingType3 OUTPUT, --NG2
 		@CreationStatus = @CreationStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
@@ -455,7 +457,7 @@ BEGIN
 		RETURN;
 		
 	--Check Parlay Max Payout
-	EXEC Acc_LiteMode_CustomerInsMember_BetSettingCheck_SAg
+	EXEC Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_SAg
 		@srecommend = @srecommend,
 		@SettingType27 = @SettingType27, --SB
 				
@@ -467,7 +469,7 @@ BEGIN
 		RETURN;	
 		
 	--Check WinLoss Limit
-	EXEC Acc_LiteMode_CustomerInsMember_BetSettingCheck_SAg
+	EXEC Acc_LiteMode_CustomerInsMember_WinLossLimitCheck_SAg
 		@srecommend = @srecommend,
 		--WinLoss Limit
 		@SettingType6 = @SettingType6,-- VS
@@ -487,9 +489,9 @@ BEGIN
 	EXEC Acc_LiteMode_CustomerInsMember_PTCheck_SAg
 		@srecommend = @srecommend,
 		
-		@SettingType28 = @SettingType28,-- SB
-		@SettingType1 = @SettingType1,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
-		@SettingType18 = @SettingType18,
+		@SettingType28 = @SettingType28 OUTPUT,-- SB
+		@SettingType1 = @SettingType1 OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
+		@SettingType18 = @SettingType18 OUTPUT,
 		@CreationStatus = @CreationStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
@@ -497,6 +499,643 @@ BEGIN
 		@ErrMsg  = @ErrMsg OUTPUT	
 
 	IF @ErrCode > 0 
-		RETURN;			
+		RETURN;		
+	
+    --Insert general info
+    EXEC dbo.Acc_CustomerInsUserInfo
+	    @custid = @custid OUTPUT,
+	    @firstname = @firstname,
+	    @lastname = @lastname,
+	    @creator = @creator,
+	    @username = @username,
+	    @userpwd = @userpwd,
+	    @pwdexpiry = @pwdexpiry,
+	    @currency = @currency,
+	    @site = @site,
+	    @srecommend = @srecommend,
+	    @mrecommend = 0,
+	    @recommend = 0,
+	    @roleid = 3,
+	    @phone = @phone,
+	    @mobilephone = @mobilephone,
+	    @email = '',
+	    @fax = @fax,
+	    @address = '',
+	    @city = '',
+	    @state = '',
+	    @country = '',
+	    @postal = '',
+	    @TransferOption = @TransferOption,
+		-- @suspended = @suspended,
+	    @closed = @UplineClosed,
+    	@SystemID=@SystemID,
+	    @autosuspend = @autosuspend,
+	    @autosuspend2 = @autosuspend2,
+		@autosuspend3 = @autosuspend3,
+	    @DisableOutright = @DisableOutright,
+	    @matchlimit = @matchlimit,
+	    @virtualmultiplier = @EnableVR,
+	    @DisableAutoMPT = @DisableAutoMPT,
+	     
+	    @DoubleCommLosing = @DoubleCommLosing,  
+	  
+	    @IsInternal = @IsInternal,
+
+		@DisableSuperLive = @DisableSuperLive,
+		@Danger = @DangerSuper,
+		@Danger2 = @DangerSuper2,
+		@Danger3 = @DangerSuper3,
+		@Danger4 = @DangerSuper4,
+		@Danger5 = @DangerSuper5,
+    	
+	    @credit = @credit,
+	    @maxcredit = null,
+    	
+	    @IP = @IP,
+	    @TransferOption_dec = @TransferOption_dec,
+	    @Language = @Language,
+	    @ErrCode = @ErrCode OUTPUT,
+	    @ErrMsg = @ErrMsg OUTPUT
+
+    --Error Occurs
+    IF @ErrCode <> 0
+	    RETURN
+
+	EXEC Acc_CustomerInfo_Execrep_14
+		@custid = @custid,
+		@srecommend = @srecommend,
+		@mrecommend = 0,	
+		@recommend = 0,
+		@roleid = 3,
+		
+		--Discount	
+		@SettingType25 = @SettingType25, --SB
+		@SettingType19 = @SettingType19, --LCS
+		@SettingType3 = @SettingType3, --NG2
+		-- Myanmar Odds
+		@IsMyanmarOdds = @IsMyanmarOdds,
+		
+		--Bet Setting
+		@SettingType26 = @SettingType26, --SB
+		@SettingType2 = @SettingType2, --SB2, VS
+		@SettingType23 = @SettingType23, --RNG Games
+		@SettingType9 = @SettingType9, --NG2
+		
+		--Parlay Max Payout
+		@SettingType27 = @SettingType27, --SB Parlay Max Payout
+		
+		--WinLoss Limit
+		@SettingType6 = @SettingType6,-- VS
+		@SettingType22 = @SettingType22, -- RNG Lottery, LCS
+		
+		--Loss Limit
+		@SettingType12 = @SettingType12,-- BBIN
+		
+		--PT
+		@SettingType28 = '',-- SB
+		@SettingType1 = '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
+		@SettingType18 = '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
+				
+		@CreationStatus = @CreationStatus,
+		@ErrCode = @ErrCode OUTPUT
+
+	IF @ErrCode > 0
+    BEGIN
+	    SELECT @ErrMsg = CASE @Language 
+				    WHEN 'E' THEN 'Create customer fail. Please try again'
+				    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+			    END
+    				
+		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+
+	    RETURN
+    END	
+	
+	If @SystemID = 2 -- ALPHA
+	BEGIN
+		EXEC Age_LimitPTDailyIns @SettingStatus = @CreationStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								when 'E' then 'Create customer fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
+			DELETE FROM CustProductStatus WHERE CustID = @CustID			
+			
+			DELETE FROM CustOverride WHERE CustID = @CustID
+			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
+			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
+			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
+			DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
+			DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
+			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
+			DELETE FROM AgentCommRate WHERE CustID = @CustID
+			DELETE FROM CustMaxPayoutSetting_Agent WHERE CustID = @CustID
+			
+			RETURN
+		END	
+	END	
+
+	IF @srecommend < 100 AND @site = '611111' -- For Direct Master
+	BEGIN
+		DECLARE @VirtualRateMultiplier2 VARCHAR(MAX) = '' --Esports
+		SELECT @VirtualRateMultiplier2 = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
+															FROM VRSettingHierarchy b WITH(NOLOCK) 
+																CROSS APPLY VRValueMapping vr (NOLOCK)
+															WHERE b.SportType = 43 
+																AND b.VRLeagueGroupID = -1 
+																AND b.BetType = -1 
+																AND vr.Value = 1
+															FOR XML RAW('Row'), ROOT ('Root'))
+											)
+
+		EXEC [Acc_CustVirtualMultiplier_Upd]
+			  @CustID = @CustID
+			, @SportType = 43
+			, @VirtualMultiplier = @VirtualRateMultiplier2
+			, @UserID  = @creator
+			, @IP  = @IP
+			, @ErrCode = @ErrCode OUTPUT 
+			, @ErrMsg = @ErrMsg OUTPUT	
+
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								when 'E' then 'Create customer fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID				
+			DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+			DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
+			DELETE FROM CustProductStatus WHERE CustID = @CustID			
+			
+			DELETE FROM CustOverride WHERE CustID = @CustID
+			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
+			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
+			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
+			DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
+			DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
+			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
+			DELETE FROM AgentCommRate WHERE CustID = @CustID
+			DELETE FROM CustMaxPayoutSetting_Agent WHERE CustID = @CustID
+			RETURN
+		END
+	END
+	
+	set @endRun = GETDATE()
+    set @duration  = datediff (millisecond,@startRun,@endRun)
+
+	DECLARE @LogSPData VARCHAR(MAX)
+   
+	--Log customer info
+    SELECT @LogSPData = '<Acc_LiteMode_CustomerInsMember_SAg custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'creator="'+ COALESCE(CAST(@creator AS VARCHAR(50)), SPACE(1)) + '" ' +
+    'username="'+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + '" ' +
+    'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)), SPACE(1))) + '" ' +
+	'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
+    'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
+	'TemplateName="'+ COALESCE(CAST(@TemplateName AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
+    'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
+    'srecommend="'+ COALESCE(CAST(@srecommend AS VARCHAR(50)), SPACE(1)) + '" ' +	
+    'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +
+    'site="'+ COALESCE(CAST(@site AS VARCHAR(50)), SPACE(1)) + '" />'
+	
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 95087,
+		@TrackingValue = @LogSPData,
+		@duration = @duration 
+		
+	-- Write Log Credit	
+    DECLARE @LogSPCredit VARCHAR(MAX)
+    SELECT @LogSPCredit = 'UserName='+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + ',
+    SubAccName='+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) 
+
+	DECLARE @log xml, @SB_Error BIT = 0
+ 
+	SELECT @log = (SELECT @Creator as '@UserID',
+						@custid as '@CustID',
+						@LogSPCredit as '@Doing',						
+						@credit as '@NewValue',
+						@IP as '@IP',
+						1223 as '@ActionID',
+						getdate() as '@LogDate'
+					FOR XML PATH('Row')	
+				)
+
+	EXEC bodb_CustomerLog.sb.CustomerLog_SendMessage @xml = @log, 
+													@MessageType='MessageType_CustomerLog_UserLog_Credit', 
+													@functionName = 'UserLog_Others',
+													@SB_Error = @SB_Error out
+
+	--if ssb error
+	IF @SB_Error = 1
+	BEGIN
+		BEGIN TRY
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+				@UserID = @Creator,
+				@CustID = @CustID,
+				@Doing = @LogSPCredit,
+				@NewValue = @credit,
+				@IP = @IP,
+				@ActionID = 1223
+		END TRY
+		BEGIN CATCH
+			SELECT @LogSPCredit = 'UserName='+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + ',
+				SubAccName='+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + ',
+				ErrMsg=' + ERROR_MESSAGE()
+			
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_Credit
+				@UserID = @Creator,
+				@CustID = @CustID,
+				@Doing = @LogSPCredit,
+				@NewValue = @credit,
+				@IP = @IP,
+				@ActionID = 1223
+		END CATCH
+    END
+	
+	--write log product status
+	DECLARE @LogDataSP2 VARCHAR(4000)
+	
+	SET @LogDataSP2 = ''
+	
+	CREATE TABLE #temSportbettypeSetting(ProductID TINYINT,SportType SMALLINT, Bettype SMALLINT, SettingType SMALLINT)
+	
+	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
+	SELECT DISTINCT ProductID,SportType,Bettype,SettingType	
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	WHERE SettingType IN (4,11,13,21)
+	
+	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
+	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK) 
+		INNER JOIN (SELECT psd.ProductID, MIN(CAST(Hi.[Value] AS INT)) AS custIsHidden
+					FROM #temSportbettypeSetting psd WITH(NOLOCK)
+						INNER JOIN	ProductStatusProfile psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype
+																			AND	psd.BetType = psp.Bettype
+						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
+						CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
+					WHERE psd.ProductID <> 20 
+					GROUP BY psd.ProductID	
+					) iq ON iq.ProductID = p.ProductID
+
+	SELECT @LogDataSP2	= @LogDataSP2 
+						+ 'Disable' + CAST(Sporttype AS VARCHAR) + '_' + CAST(Bettype AS VARCHAR)
+						+ '="' + COALESCE(CAST(custIsDisable AS VARCHAR(1)), SPACE(1)) + '" '
+	FROM (
+		SELECT	psp.Sporttype,
+				psp.Bettype,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsDisabled, psp.bitmapOrder)) AS custIsDisable
+		FROM		#temSportbettypeSetting AS psd WITH(NOLOCK)
+			INNER JOIN	ProductStatusProfile AS psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype AND psd.BetType = psp.Bettype 
+			CROSS APPLY CustProductStatus WITH(NOLOCK)
+		WHERE CustID = @custid AND (psd.ProductID <> 20)
+	)iq
+
+	--Log for VR lock Status
+	DECLARE @VRLockedStatus_Soccer BIT = 0
+	DECLARE @VRLockedStatus_OS BIT = 0
+
+	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 1)
+		SET @VRLockedStatus_Soccer = 1
+
+	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 2)
+		SET @VRLockedStatus_OS = 1
+
+    --Log status
+    SELECT @LogSPData = '<Acc_LiteMode_CustomerInsMember_SAg custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    'suspended="'+ COALESCE(CAST(@suspended AS VARCHAR(1)), SPACE(1)) + '" ' +
+    'closed="'+ COALESCE(CAST(@UplineClosed AS VARCHAR(1)), SPACE(1)) + '" ' +
+	'Danger="'+ COALESCE(CAST(@DangerSuper AS VARCHAR(5)), SPACE(1)) + '" ' +
+    'Danger2="'+ COALESCE(CAST(@DangerSuper2 AS VARCHAR(5)), SPACE(1)) + '" ' +
+    'Danger3="'+ COALESCE(CAST(@DangerSuper3 AS VARCHAR(5)), SPACE(1)) + '" ' +
+	'Danger4="'+ COALESCE(CAST(@DangerSuper4 AS VARCHAR(5)), SPACE(1)) + '" ' +
+	'Danger5="'+ COALESCE(CAST(@DangerSuper5 AS VARCHAR(5)), SPACE(1)) + '" ' +
+	--20171206@Johnson: add more log for status
+	'Special=" " ' +
+	'DoubleCommLosing="'+ COALESCE(CAST(@DoubleCommLosing AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
+	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
+	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' + 
+	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
+   
+    'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
+    'DisableAutoMPT="'+ COALESCE(CAST(@DisableAutoMPT AS VARCHAR(1)), SPACE(1)) + '" ' +
+    'IsInternal="'+ COALESCE(CAST(@IsInternal AS VARCHAR(1)), SPACE(1)) + '" ' +
+ 
+	'DisableSuperLive="' + COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)), SPACE(1)) + '" ' +  @LogDataSP2 + 
+    '/>'
+
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 1197,
+		@TrackingValue = @LogSPData,
+		@duration = @duration
+		
+	CREATE TABLE #TmpProductSettingDetail(
+		[SettingType] [smallint] ,
+		[SportType] [smallint] ,
+		[BetType] [smallint] ,
+		[IsLive] [bit] ,						
+		[Child_DisplayOrder] [int] ,
+		GroupID [TINYINT],
+		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+	
+	DECLARE @BetSetting TABLE(
+		SportType         SMALLINT, 
+		BetType           SMALLINT, 
+		MinBet            MONEY, 
+		MaxBet            MONEY, 
+		MaxPerMatch       MONEY, 
+		MaxPerNumber      MONEY, 
+		MaxPayoutPerMatch MONEY,
+		GroupID			  TINYINT,
+		Child_DisplayOrder  INT
+		PRIMARY KEY(sporttype, Bettype)
+	);
+	
+	DECLARE @tblPT18 TABLE (
+			SportType		SMALLINT,
+			BetType			SMALLINT,
+			IsLive			BIT,
+			SuperPT			SMALLMONEY,
+			IsAutoSuperPT	BIT,
+			AutoSuperPT		SMALLMONEY,
+			MasterPT		SMALLMONEY,				
+			MasterMinPT		SMALLMONEY,
+			MasterMaxPT		SMALLMONEY,
+			GroupID			  TINYINT,
+			Child_DisplayOrder  INT
+			)		
+	
+	DECLARE @NewLimitTbl TABLE (
+			SettingType 		TINYINT
+			, SportType			SMALLINT
+			, BetType			SMALLINT
+			, MaxWinLimit		SMALLMONEY 
+			, MaxLossLimit		MONEY 
+			, IsAutoReset		BIT
+			, GroupID			TINYINT
+			, Child_DisplayOrder  INT
+			)
+			
+	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,Child_DisplayOrder)
+	SELECT SettingType,SportType,BetType,IsLive,Child_DisplayOrder
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)	
+	
+	DECLARE @xml XML
+	
+	--Bet setting
+	SELECT @xml = CONVERT(XML,@SettingType2)
+		
+	INSERT INTO @BetSetting(SportType, 
+		BetType, 
+		MinBet, 
+		MaxBet, 
+		MaxPerMatch)
+	SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+		T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+		T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+		T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
+	FROM  @xml.nodes('/Root/R') T(c)	
+	
+	SELECT @xml = CONVERT(XML,@SettingType23)
+		
+	INSERT INTO @BetSetting(SportType, 
+		BetType, 
+		MinBet, 
+		MaxBet, 
+		MaxPerMatch, 
+		MaxPerNumber)
+	SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+		T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+		T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+		T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch,
+		T.c.query('.').value('(R/@MaxPerNumber)[1]', 'money') AS MaxPerNumber
+	FROM  @xml.nodes('/Root/R') T(c) 
+	
+	UPDATE b
+	SET b.GroupID = p.GroupID,
+		b.Child_DisplayOrder = p.Child_DisplayOrder
+	FROM @BetSetting b
+		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
+												AND b.BetType = p.BetType
+	WHERE p.SettingType IN (2,23)											
+	
+	--PT
+	SELECT @xml = CONVERT(XML, @SettingType1)
+		
+	INSERT INTO @tblPT18(
+		SportType, 
+		BetType, 
+		IsLive,
+		SuperPT,
+		IsAutoSuperPT,
+		AutoSuperPT,
+		MasterPT,				
+		MasterMinPT)
+	SELECT 
+		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+		T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+		T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+		T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+	FROM  @xml.nodes('/Root/R') T(c)
+	
+	SELECT @xml = CONVERT(XML, @SettingType18)
+		
+	INSERT INTO @tblPT18(
+		SportType, 
+		BetType, 
+		IsLive,
+		SuperPT,
+		IsAutoSuperPT,
+		AutoSuperPT,
+		MasterPT,				
+		MasterMinPT)
+	SELECT
+		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+		T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+		T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+		T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+	FROM  @xml.nodes('/Root/R') T(c)
+		
+	UPDATE b
+	SET b.GroupID = p.GroupID,
+		b.Child_DisplayOrder = p.Child_DisplayOrder
+	FROM @tblPT18 b
+		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
+												AND b.BetType = p.BetType
+												AND b.IsLive = p.IsLive
+	WHERE p.SettingType IN (1,18)	
+	
+	--WinLoss Limit
+	SELECT @xml = CONVERT(XML,@SettingType6)
+		
+	INSERT INTO @NewLimitTbl(
+		SettingType,
+		SportType, 
+		BetType, 
+		MaxWinLimit, 
+		MaxLossLimit, 
+		IsAutoReset)
+	SELECT 6 as SettingType,
+		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+		T.c.query('.').value('(R/@MaxWinLimit)[1]', 'smallmoney') AS MaxWinLimit,
+		T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
+		T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+	FROM  @xml.nodes('/Root/R') T(c)
+	
+	SELECT @xml = CONVERT(XML,@SettingType22)
+			
+	INSERT INTO @NewLimitTbl(
+		SettingType,
+		SportType, 
+		BetType, 
+		MaxWinLimit, 
+		MaxLossLimit, 
+		IsAutoReset)
+	SELECT 22 as SettingType,
+		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+		T.c.query('.').value('(R/@MaxWinLimit)[1]', 'smallmoney') AS MaxWinLimit,
+		T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
+		T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+	FROM  @xml.nodes('/Root/R') T(c)	
+	
+	UPDATE b
+	SET b.GroupID = p.GroupID,
+		b.Child_DisplayOrder = p.Child_DisplayOrder
+	FROM @NewLimitTbl b
+		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
+												AND b.BetType = p.BetType												
+	WHERE p.SettingType IN (6,22)	
+	
+	--log all settings
+	SELECT @LogSPData = '<Acc_LiteMode_CustomerInsMember_SAg custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '">' 
+			+ '<Group ID="1">'--SB
+			+ COALESCE(REPLACE(@SettingType25,'Root','Discount'),SPACE(1))
+			+ '<BetSetting>'
+				+ COALESCE(REPLACE(REPLACE(@SettingType26,'<Root>',''),'</Root>',''), SPACE(1)) --SB
+				+ CAST((SELECT SportType,Bettype,MinBet,MaxBet, MaxPerMatch MPM	
+						FROM @BetSetting
+						WHERE GroupID = 1
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))--SB2
+			+ '</BetSetting>'
+			+ COALESCE(REPLACE(@SettingType27,'Root','ParlayMaxPayout'),SPACE(1))
+			+ '<PT>'
+				+ COALESCE(REPLACE(REPLACE(@SettingType28,'<Root>',''),'</Root>',''), SPACE(1)) --SB
+				+ CAST((SELECT SportType, 
+								BetType, 
+								IsLive,
+								SuperPT,
+								IsAutoSuperPT,
+								AutoSuperPT AutoPT,
+								MasterPT,				
+								MasterMinPT	MinPT
+						FROM @tblPT18
+						WHERE GroupID = 1
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))--SB2
+			+ '</PT>'
+			+ '</Group>'	
+			+ '<Group ID="2">'--RnG Games
+			+ '<BetSetting>'
+				+ 	CAST((SELECT SportType,Bettype,MinBet,MaxBet, MaxPerMatch MPM, MaxPerNumber	
+						FROM @BetSetting
+						WHERE GroupID = 2
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))
+			+ '</BetSetting>'
+			+ '<PT>'
+				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT,
+								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
+						FROM @tblPT18
+						WHERE GroupID = 2
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))
+			+ '</PT>'
+			+ '<WinLossLimit>'
+				+ CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+						FROM @NewLimitTbl
+						WHERE GroupID = 2
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))
+			+ '</WinLossLimit>'
+			+ '</Group>'
+			+ '<Group ID="3">'--LCS
+			+ COALESCE(REPLACE(@SettingType19,'Root','Discount'),SPACE(1))
+			+ '<PT>'
+				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT,
+								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
+						FROM @tblPT18
+						WHERE GroupID = 3
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))
+			+ '</PT>'
+			+ '<WinLossLimit>'
+				+ CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+						FROM @NewLimitTbl
+						WHERE GroupID = 3
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))
+			+ '</WinLossLimit>'
+			+ COALESCE(REPLACE(@SettingType12,'Root','LossLimit'),SPACE(1))
+			+ '</Group>'
+			+ CASE WHEN ISNULL(@SettingType3,'') <> '' OR ISNULL(@SettingType9,'') <> '' --NG2 
+				THEN 
+				'<Group ID="4">'
+				+ COALESCE(REPLACE(@SettingType3,'Root','Discount'),SPACE(1))
+				+ COALESCE(REPLACE(@SettingType9,'Root','BetSetting'),SPACE(1))
+				+ '<PT>'
+				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT,
+								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
+						FROM @tblPT18
+						WHERE GroupID = 4						
+						FOR XML RAW('R')
+						) as VARCHAR(max))
+				+ '</PT>'
+				+'</Group>'
+				ELSE '' END	
+			+ '</Acc_LiteMode_CustomerInsMember_SAg>'
+	
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 95088,
+		@TrackingValue = @LogSPData,
+		@duration = @duration  
+	
 END
 		

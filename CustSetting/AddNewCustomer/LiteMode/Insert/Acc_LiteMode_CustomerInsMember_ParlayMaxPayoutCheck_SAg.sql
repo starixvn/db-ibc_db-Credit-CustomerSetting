@@ -18,8 +18,8 @@ AS
 
 	Param's Explanation: 
 		- @SettingType27 = '<Root>
-						<r sporttype="1" bettype="9" singlemp="1000" combo2="1000" combo35="1000" combo6="1000" />
-						<r sporttype="99" bettype="1" singlemp="1000" combo2="1000" combo35="1000" combo6="1000" />
+						<R SportType="1" BetType="9" SingleMP="1000" Combo2="1000" Combo35="1000" Combo6="1000" />
+						<R SportType="99" BetType="1" SingleMP="1000" Combo2="1000" Combo35="1000" Combo6="1000" />
 					</Root>'	
 */	
 BEGIN
@@ -63,13 +63,13 @@ BEGIN
 		Combo2, 
 		Combo35, 
 		ComboOver6)
-	SELECT T.c.query('.').value('(r/@sporttype)[1]', 'smallint') AS sporttype,
-		T.c.query('.').value('(r/@bettype)[1]', 'smallint') AS bettype,
-		T.c.query('.').value('(r/@singlemp)[1]', 'money') AS SingleMatchParlay,
-		T.c.query('.').value('(r/@combo2)[1]', 'money') AS Combo2,
-		T.c.query('.').value('(r/@combo35)[1]', 'money') AS Combo35,
-		T.c.query('.').value('(r/@combo6)[1]', 'money') AS ComboOver6
-	FROM  @xml.nodes('/Root/r') T(c) 
+	SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+		T.c.query('.').value('(R/@SingleMP)[1]', 'money') AS SingleMatchParlay,
+		T.c.query('.').value('(R/@Combo2)[1]', 'money') AS Combo2,
+		T.c.query('.').value('(R/@Combo35)[1]', 'money') AS Combo35,
+		T.c.query('.').value('(R/@Combo6)[1]', 'money') AS ComboOver6
+	FROM  @xml.nodes('/Root/R') T(c) 
 			
 	INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
 	SELECT cs.SportType,cs.BetType,
