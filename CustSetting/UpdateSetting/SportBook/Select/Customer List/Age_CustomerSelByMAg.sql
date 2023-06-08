@@ -25,7 +25,7 @@ AS
 		- 20200724@winfred: Remove Status games for customer list smartphone [redmine: #137130]
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
-		
+		- 20230602@Helios: Enhance stored procedure to prevent performance issue [Redmine: #189154]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -196,7 +196,7 @@ BEGIN
 		FROM Customer c WITH(NOLOCK)
 			INNER JOIN custInfo ci WITH(NOLOCK) ON ci.custid = c.custid 
 			INNER JOIN CustAgent cm with(NOLOCK) on c.custid = cm.custid 
-			CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+			CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
