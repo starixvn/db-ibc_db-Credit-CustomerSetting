@@ -22,6 +22,7 @@ Revisions:
 	- 20210817@Elodie: Change data type of Refno  to bigint instead [Redmine: #160262]
 	- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 	- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
+	- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 Note:
 --Pre-check needed:
 	--+Closed status
@@ -50,6 +51,12 @@ Declare @roleid int, @AgentID int, @Amount MONEY,
 
 Declare @refno bigint, @TransID bigint, @TransID2 bigint, @Now datetime, @Enabled bit
 
+DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+EXEC dbo.Age_SelBalanceUpDay
+
+DECLARE @BalanceUpDate SMALLDATETIME
+SELECT  @BalanceUpDate = BalanceUpDay FROM @MBBU
 
 SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled
 FROM CustDB.dbo.custinfo (nolock)
@@ -143,6 +150,9 @@ from #Member
 	inner join (
 		Select custid, SUM(isnull(winlost-actual_stake+playercomm, 0)) as MemberBalance
 		From transfer with (NOLOCK)
+		Where 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+             WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+             ELSE 1 END
 		group by custid
 		) b on #Member.custid = b.custid	
 

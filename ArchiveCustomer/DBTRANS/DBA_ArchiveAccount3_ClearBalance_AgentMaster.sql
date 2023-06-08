@@ -23,6 +23,7 @@ ALTER PROCEDURE [DBA_ArchiveAccount3_ClearBalance_AgentMaster]
 			- 20210817@Elodie: Change data type of Refno  to bigint instead [Redmine: #160262]
 			- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 			- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
+			- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 */
 AS
 BEGIN
@@ -37,6 +38,13 @@ BEGIN
 
 	Declare @refno bigint, @TransID bigint, @TransID2 bigint, @Now datetime, @Enabled bit, @AgentBalance MONEY
 	
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC dbo.Age_SelBalanceUpDay
+
+	DECLARE @BalanceUpDate SMALLDATETIME
+	SELECT  @BalanceUpDate = BalanceUpDay FROM @MBBU
+
 	IF EXISTS(select 1 from dbo.transfer with (nolock) where Recommend = @recommend AND bettype < 20000)
 	BEGIN
 		Select @ErrMsg = @agentname +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
@@ -52,7 +60,10 @@ BEGIN
 
 	SET @AgentBalance =  (Select ISNULL(SUM(awinlost + comm + winlost - actual_stake), 0) as AgentBalance
 							FROM transfer WITH (NOLOCK)
-							WHERE recommend = @recommend
+							WHERE recommend = @recommend 
+								AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+											 WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+											 ELSE 1 END
 							)  
 	IF @AgentBalance = 0 
 		RETURN
