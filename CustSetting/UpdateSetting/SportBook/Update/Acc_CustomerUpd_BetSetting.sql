@@ -73,6 +73,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpd_BetSetting]
 	@UpdateMinMaxBetv2saba bit = 1,
 
 	@UpdateMultiple bit = 0,	
+	@UpdateMultipleSuper bit = 0,	
 
 	@UpdateMinMaxBet bit = 1,
 	@UpdateMinMaxBetv2 bit = 1,
@@ -109,6 +110,8 @@ AS
 		- 20230113@Elodie: Check param IS NULL [RedmineID:#182866]
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230516@Eden: HF - Correct actionid  [Redmine: #188297]
+		- 20230515@Tacy: EXT NAP - Allow headlines update Bet Settings on multiple supers [RedmineID: #186773]
+
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -588,7 +591,7 @@ BEGIN
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 
 	--START LOGGING
-	DECLARE @SPName varchar(100) = 'Acc_CustomerUpd_BetSetting'
+	DECLARE @SPName varchar(100) = 'Acc_CustomerUpd_BetSetting' 
 
 	SELECT @SPName = LogStr 
 	FROM f_CustSetting_FormatLog (@SPName)
@@ -598,6 +601,9 @@ BEGIN
 	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
 		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
 	WHERE l.SPName = @SPName AND ld.ProductID = 1 AND ld.Level = @RoleID
+		AND CASE WHEN @UpdateMultipleSuper=1 AND l.ActionID IN (220035,220036) THEN 1
+				 WHEN @UpdateMultipleSuper=0 AND l.ActionID NOT IN (220035,220036) THEN 1
+			ELSE 0 END = 1
 
 	SET @xml = (
 	SELECT	@custid							AS '@custid',
@@ -673,7 +679,7 @@ BEGIN
 
 		IF @@ROWCOUNT = 0 BREAK
 		
-		IF @ActionID NOT IN (220021,220023,220025) -- Direct log
+		IF @ActionID NOT IN (220021,220023,220025,220035) -- Direct log
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,
