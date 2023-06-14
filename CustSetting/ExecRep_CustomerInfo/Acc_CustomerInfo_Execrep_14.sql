@@ -9,13 +9,11 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_14]
 	--Discount	
 	@SettingType25 VARCHAR(MAX)= '', --SB
 	@SettingType19 VARCHAR(MAX)= '', --LCS
-	@SettingType3 VARCHAR(MAX)= '', --NG2
 	
 	--Bet Setting
 	@SettingType26 VARCHAR(MAX)= '', --SB
 	@SettingType2 VARCHAR(MAX)= '', --SB2, VS
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games
-	@SettingType9 VARCHAR(MAX)= '', --NG2
 	
 	--Parlay Max Payout
 	@SettingType27 VARCHAR(MAX)= '', --SB Parlay Max Payout
@@ -640,24 +638,13 @@ BEGIN
 		END CATCH
 		
 		/********************************************* Commision : SettingType = 3, Ticket Commision : SettingType = 14 ****************************************/
-		CREATE TABLE #SportBettypeFilter3 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
+		CREATE TABLE #SportBettypeFilter19 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		DECLARE @NewDiscountTbl TABLE (sporttype SMALLINT, bettype SMALLINT, discount DECIMAL(9,8))
 	
-		INSERT INTO #SportBettypeFilter3(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+		INSERT INTO #SportBettypeFilter19(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
 		FROM #ProductSettingDetail_tmp00
-		WHERE SettingType IN (3,19)
-		
-		IF ISNULL(@SettingType3,'') <> ''
-		BEGIN
-			SELECT @xml = CONVERT(XML,@SettingType3)
-			
-			INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-				T.c.query('.').value('(R/@discount)[1]', 'decimal(9,8)') AS discount
-			FROM   @xml.nodes('/Root/R') T(c) 
-		END
+		WHERE SettingType IN (19)
 		
 		IF ISNULL(@SettingType19,'') <> ''
 		BEGIN
@@ -684,7 +671,7 @@ BEGIN
 					,dc.BetType
 					,dc.discount
 				FROM @NewDiscountTbl dc
-					INNER JOIN #SportBettypeFilter3 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType
+					INNER JOIN #SportBettypeFilter19 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType
 			END		
 		END TRY
 		BEGIN CATCH 
@@ -827,69 +814,6 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 7			
-			DELETE FROM CustProductStatus WHERE CustID = @CustID			
-			IF @roleid > 1
-			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-				DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
-			END			
-			RETURN
-		END CATCH
-		
-		/********************************************* Bet Game Limit : SettingType = 9 ****************************************/
-		CREATE TABLE #SportBettypeFilter9 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
-				
-		INSERT INTO #SportBettypeFilter9(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
-		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
-		FROM #ProductSettingDetail_tmp00
-		WHERE SettingType IN (9)
-		
-		DELETE @BetSetting
-		
-		IF ISNULL(@SettingType9,'') <> ''
-		BEGIN
-			SELECT @xml = CONVERT(XML,@SettingType9)
-			
-			INSERT INTO @BetSetting(SportType, 
-				BetType, 
-				MinBet, 
-				MaxBet, 
-				MaxPerNumber)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-				T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
-				T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,			
-				T.c.query('.').value('(R/@MaxPerNumber)[1]', 'money') AS MaxPerNumber
-			FROM  @xml.nodes('/Root/R') T(c) 
-		END
-		
-		BEGIN TRY
-			IF @RoleID = 3
-			BEGIN				
-				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
-				   ([CustID]
-				   ,[SportType]
-				   ,[BetType]
-				   ,[MinBet]
-				   ,[MaxBet]
-				   ,[MaxPerMatch])
-				SELECT
-					@CustID
-					,cs.SportType
-					,cs.BetType
-					,MinBet
-					,MaxBet
-					,MaxPerNumber
-				FROM @BetSetting cs
-					INNER JOIN #SportBettypeFilter9 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType				
-			END
-		END TRY
-		BEGIN CATCH 
-			SELECT @ErrCode = 9			
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
@@ -1360,10 +1284,9 @@ BEGIN
 		
 		DROP TABLE #SportBettypeFilter1
 		DROP TABLE #SportBettypeFilter2
-		DROP TABLE #SportBettypeFilter3				
+		DROP TABLE #SportBettypeFilter19				
 		DROP TABLE #SportBettypeFilter6
-		DROP TABLE #SportBettypeFilter7
-		DROP TABLE #SportBettypeFilter9		
+		DROP TABLE #SportBettypeFilter7			
 		DROP TABLE #SportBettypeFilter16
 		DROP TABLE #SportBettypeFilter20
 		DROP TABLE #SportBettypeFilter23

@@ -3,7 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_PTCheck_SAg]
 	@srecommend INT,	
 	
 	@SettingType28 VARCHAR(MAX)= '' OUTPUT,-- SB
-	@SettingType1 VARCHAR(MAX)= ''  OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
+	@SettingType1 VARCHAR(MAX)= ''  OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 	@SettingType18 VARCHAR(MAX)= '' OUTPUT,-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 	@CreationStatus TINYINT = 0,
 

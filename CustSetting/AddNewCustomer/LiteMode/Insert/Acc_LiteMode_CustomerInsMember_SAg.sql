@@ -16,14 +16,12 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	--Discount	
 	@SettingType25 VARCHAR(MAX)= '', --SB
 	@SettingType19 VARCHAR(MAX)= '', --LCS
-	@SettingType3 VARCHAR(MAX)= '', --NG2
-	
+		
 	--Bet Setting
 	@SettingType26 VARCHAR(MAX)= '', --SB
 	@SettingType2 VARCHAR(MAX)= '', --SB2
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games
-	@SettingType9 VARCHAR(MAX)= '', --NG2
-	
+		
 	--Parlay Max Payout
 	@SettingType27 VARCHAR(MAX)= '', --SB Parlay Max Payout
 	
@@ -37,7 +35,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	--PT
 	@TemplateName VARCHAR(50) = '',
 	@SettingType28 VARCHAR(MAX)= '',-- SB
-	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
+	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 	@SettingType18 VARCHAR(MAX)= '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 	
 	--Log all values group from UI
@@ -429,8 +427,7 @@ BEGIN
 	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_SAg
 		@srecommend = @srecommend,
 		@SettingType25 = @SettingType25 OUTPUT, --SB
-		@SettingType19 = @SettingType19 OUTPUT, --LCS
-		@SettingType3 = @SettingType3 OUTPUT, --NG2
+		@SettingType19 = @SettingType19 OUTPUT, --LCS		
 		@CreationStatus = @CreationStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
@@ -445,8 +442,7 @@ BEGIN
 		@srecommend = @srecommend,
 		@SettingType26 = @SettingType26, --SB
 		@SettingType2 = @SettingType2, --SB2
-		@SettingType23 = @SettingType23, --RNG Games
-		@SettingType9 = @SettingType9, --NG2		
+		@SettingType23 = @SettingType23, --RNG Games			
 		@SystemID = @SystemID,
 		
 		@ErrCode = @ErrCode OUTPUT,
@@ -490,7 +486,7 @@ BEGIN
 		@srecommend = @srecommend,
 		
 		@SettingType28 = @SettingType28 OUTPUT,-- SB
-		@SettingType1 = @SettingType1 OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
+		@SettingType1 = @SettingType1 OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 		@SettingType18 = @SettingType18 OUTPUT,
 		@CreationStatus = @CreationStatus,
 		
@@ -570,8 +566,7 @@ BEGIN
 		
 		--Discount	
 		@SettingType25 = @SettingType25, --SB
-		@SettingType19 = @SettingType19, --LCS
-		@SettingType3 = @SettingType3, --NG2
+		@SettingType19 = @SettingType19, --LCS		
 		-- Myanmar Odds
 		@IsMyanmarOdds = @IsMyanmarOdds,
 		
@@ -579,8 +574,7 @@ BEGIN
 		@SettingType26 = @SettingType26, --SB
 		@SettingType2 = @SettingType2, --SB2, VS
 		@SettingType23 = @SettingType23, --RNG Games
-		@SettingType9 = @SettingType9, --NG2
-		
+			
 		--Parlay Max Payout
 		@SettingType27 = @SettingType27, --SB Parlay Max Payout
 		
@@ -593,7 +587,7 @@ BEGIN
 		
 		--PT
 		@SettingType28 = '',-- SB
-		@SettingType1 = '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
+		@SettingType1 = '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 		@SettingType18 = '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 				
 		@CreationStatus = @CreationStatus,
@@ -1113,21 +1107,6 @@ BEGIN
 			+ '</WinLossLimit>'
 			+ COALESCE(REPLACE(@SettingType12,'Root','LossLimit'),SPACE(1))
 			+ '</Group>'
-			+ CASE WHEN ISNULL(@SettingType3,'') <> '' OR ISNULL(@SettingType9,'') <> '' --NG2 
-				THEN 
-				'<Group ID="4">'
-				+ COALESCE(REPLACE(@SettingType3,'Root','Discount'),SPACE(1))
-				+ COALESCE(REPLACE(@SettingType9,'Root','BetSetting'),SPACE(1))
-				+ '<PT>'
-				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT,
-								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
-						FROM @tblPT18
-						WHERE GroupID = 4						
-						FOR XML RAW('R')
-						) as VARCHAR(max))
-				+ '</PT>'
-				+'</Group>'
-				ELSE '' END	
 			+ '</Acc_LiteMode_CustomerInsMember_SAg>'
 	
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
@@ -1137,5 +1116,16 @@ BEGIN
 		@TrackingValue = @LogSPData,
 		@duration = @duration  
 	
+	--Log UI settings
+	SELECT @LogSPData = '<Acc_LiteMode_CustomerInsMember_SAg custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '">' 
+						+ COALESCE(@SettingTypeAll,SPACE(1))
+						+ '</Acc_LiteMode_CustomerInsMember_SAg>'
+	
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 95089,
+		@TrackingValue = @LogSPData,
+		@duration = @duration
 END
 		

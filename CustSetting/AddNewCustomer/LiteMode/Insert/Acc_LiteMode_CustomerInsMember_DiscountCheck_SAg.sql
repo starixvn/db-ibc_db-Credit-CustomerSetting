@@ -2,8 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_DiscountCheck_SAg]
 	@srecommend INT,
 	@SettingType25 VARCHAR(MAX)= '' OUTPUT, --SB
-	@SettingType19 VARCHAR(MAX)= '' OUTPUT, --LCS
-	@SettingType3 VARCHAR(MAX)= '' OUTPUT, --NG2
+	@SettingType19 VARCHAR(MAX)= '' OUTPUT, --LCS	
 	@IsMyanmarOdds BIT= 0,
 	@CreationStatus TINYINT = 0,
 	
@@ -222,79 +221,6 @@ BEGIN
 		FOR XML PATH ('R'), ROOT('Root')
 		)
 	END	
-	
-	--check NG2 Discount
-	IF ISNULL(@SettingType3,'') <> ''		
-	BEGIN
-		DELETE @NewDiscountTbl
-		
-		SELECT @xml = CONVERT(XML,@SettingType3)
-		
-		INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
-		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
-		FROM   @xml.nodes('/Root/R') T(c) 
-		
-		--Check if new discount <0 or > default Max Discount
-		IF EXISTS (SELECT TOP 1 1 
-						FROM @NewDiscountTbl tmp
-						INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
-							ON pdt.SportType	= tmp.SportType
-								AND pdt.BetType = tmp.BetType
-								AND pdt.SettingType IN (3)
-								AND pdt.IsLive		= 0
-						WHERE 
-							(	tmp.Discount		< 0
-								OR	tmp.Discount	> pdt.maxDiscount
-							))
-		BEGIN
-			SET @xml = (
-					SELECT 1 AS '@MsgID'
-						, 'Invalid commission rate.' AS '@Msg'
-						, (
-							SELECT pdt.SportType AS '@SportType'
-								, pdt.BetType AS '@BetType'
-							FROM @NewDiscountTbl tmp
-							INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
-								ON pdt.SportType	= tmp.SportType
-									AND pdt.BetType = tmp.BetType
-									AND pdt.SettingType IN (3)
-									AND pdt.IsLive		= 0
-							WHERE 
-								(	tmp.Discount		< 0
-									OR	tmp.Discount	> pdt.maxDiscount
-								)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @MsgType = 51
-			SET @ErrCode = 103
 			
-			RETURN
-		END
-		
-		--correct discount
-		UPDATE t
-		SET t.Discount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-													AND t.bettype = cs.bettype
-		WHERE custid = @srecommend			
-			AND t.Discount > cs.Discount
-			
-		SELECT @SettingType3 = (
-		SELECT SportType '@SportType', 
-			BetType '@BetType', 
-			discount '@Discount'			
-		FROM @NewDiscountTbl
-		FOR XML PATH ('R'), ROOT('Root')
-		)
-	END	
-		
 	DROP TABLE #ProductSettingDetail_Check
 END	
