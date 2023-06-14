@@ -412,6 +412,7 @@ Revisions:
 	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -1309,6 +1310,7 @@ BEGIN
 	'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
+	'VRLockStatus_Basketball="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
 		
 	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)),SPACE(1)) + '" ' + @LogDataSP2 +
