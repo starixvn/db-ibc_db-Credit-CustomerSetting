@@ -102,6 +102,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230602@Helios: Enhance stored procedure to prevent performance issue [Redmine: #189154]
+		- 20230519@Luke: YeeBet - Integrate new Live Casino product [Redmine: #186046]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -144,11 +145,12 @@ BEGIN
 		,	@bitmapOrder_SportsLottery	INT 
 		,	@bitmapOrder_PPLive			INT
 		,	@bitmapOrder_VGaming		INT 
-		,	@bitmapOrder_Bitcoin	INT
+		,	@bitmapOrder_Bitcoin		INT
 		,	@bitmapOrder_SGJackpot		INT  
 		,   @bitmapOrder_SabaCasino		INT
-		,   @bitmapOrder_Keno		INT 
-		,   @bitmapOrder_NG		INT 
+		,   @bitmapOrder_Keno			INT 
+		,   @bitmapOrder_NG				INT 
+		,	@bitmapOrder_YeeBet			INT
 
     SET @bitmapOrder_MuayThai = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 44 AND Bettype = 3)
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
@@ -180,7 +182,8 @@ BEGIN
 	SET @bitmapOrder_SabaCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 208 AND Bettype = 2101)
 	SET @bitmapOrder_Keno = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 202 AND Bettype = 1501)
 	SET @bitmapOrder_NG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 161 AND Bettype = 81)
-    
+    SET @bitmapOrder_YeeBet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 159 AND Bettype = 3151)
+
     DECLARE	@IsHidden_MuayThai			INT = 1		
 		,	@IsHidden_ESports			INT = 1	
 		,	@IsHidden_AllBet			INT = 1
@@ -206,8 +209,9 @@ BEGIN
 		,	@IsHidden_VGaming			INT = 1
 		,	@IsHidden_Bitcoin			INT = 1
 		,	@IsHidden_SabaCasino		INT = 1
-		,	@IsHidden_Keno	INT = 1
-		,	@IsHidden_NG	INT = 1
+		,	@IsHidden_Keno				INT = 1
+		,	@IsHidden_NG				INT = 1
+		,	@IsHidden_YeeBet			INT = 1
 
     EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_MuayThai OUTPUT	
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
@@ -236,6 +240,7 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 6, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_SabaCasino OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 202, @IsHide = @IsHidden_Keno OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 161, @IsHide = @IsHidden_NG OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 159, @IsHide = @IsHidden_YeeBet OUTPUT
 	
 	CREATE TABLE #customer(custid INT, RowNumber INT ,discountMyanmarOdds DECIMAL (9,8),IsMyanmarOdds BIT)
 
@@ -843,6 +848,17 @@ BEGIN
 						THEN 0 ELSE 1
 						END AS BIT) AS HideKenoUpline,
 
+				-- For YeeBet
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_YeeBet)) AS DisableYeeBet,			
+				CAST(	CASE	WHEN	@IsHidden_YeeBet = 0 								
+									AND	ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_YeeBet)), 1) = 0 
+									THEN 0
+								ELSE 1 
+						END AS BIT) AS HideYeeBet,
+				CAST(CASE	WHEN	@IsHidden_YeeBet = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cpsUpline.bitmapIsHidden, @bitmapOrder_YeeBet)), 1) = 0
+							THEN 0 ELSE 1
+							END AS BIT) AS HideYeeBetUpline,
+
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate, ISNULL(cps.Locked,0) AS Locked
 
 		FROM Customer c WITH(NOLOCK)
@@ -1028,6 +1044,10 @@ BEGIN
 			ctm.DisableKeno,
 			ctm.HideKeno,
 			ctm.HideKenoUpline,
+			--YeeBet
+			ctm.DisableYeeBet,
+			ctm.HideYeeBet,
+			ctm.HideYeeBetUpline,
 			-- MyanmarOdds
 			ISNULL(t.IsMyanmarOdds,0) AS IsMyanmarOdds,
 			ISNULL(t.discountMyanmarOdds,0) AS discountMyanmarOdds,

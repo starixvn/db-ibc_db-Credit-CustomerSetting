@@ -59,7 +59,7 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
-	
+	- 20230519@Luke: YeeBet - Integrate new Live Casino product [Redmine: #186046]
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */
@@ -69,7 +69,7 @@ Revisions:
 	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
 	Declare @srecommend int, @mrecommend int, @recommend int 
 	DECLARE @AllowedSAGaming BIT, @AllowedAllBet BIT, @AllowedSexyGaming BIT, @AllowedGTCasino BIT, @AllowedBBIN BIT, @AllowedLottery BIT, @AllowedTableGames BIT, @AllowedRNGWar BIT, @AllowedION BIT
-			,@AllowedVirtualGames2 BIT, @AllowedFGG BIT
+			,@AllowedVirtualGames2 BIT, @AllowedFGG BIT, @AllowedYeeBet BIT
 			
 	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
@@ -91,6 +91,7 @@ Revisions:
 		,	@IsHideVGamming			INT
 		,	@IsHideBitcoin			INT
 		,	@IsHideSabaCasino		INT
+		,	@IsHide_YeeBet			INT = 1
 
 	DECLARE @bitmapOrder_Allbet		INT
 		,	@bitOrderVB				INT 
@@ -111,6 +112,7 @@ Revisions:
 		,	@bitmapOrder_VGaming	INT 
 		,	@bitmapOrder_Bitcoin	INT  
 		,   @bitmapOrder_SabaCasino INT
+		,   @bitmapOrder_YeeBet		INT
 
 	SET @bitmapOrder_Allbet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 211 AND Bettype = 2401)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
@@ -131,6 +133,7 @@ Revisions:
 	SET @bitmapOrder_VGaming = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 171 AND Bettype = 3801)
 	SET @bitmapOrder_Bitcoin = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 175 AND Bettype = 7901)
 	SET @bitmapOrder_SabaCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 208 AND Bettype = 2101)
+	SET @bitmapOrder_YeeBet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 159 AND Bettype = 3151)
 
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
@@ -284,8 +287,8 @@ Revisions:
 									WHEN @RoleID = 2 THEN @mrecommend
 									ELSE @recommend END
 
-	--For Live Casino (Allbet + SA Gaming + SexyGaming + BBIN + GTCasino + ION)
-	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 OR @AllowedSexyGaming = 1 OR @AllowedBBIN = 1 OR @AllowedGTCasino = 1 OR @AllowedION = 1 THEN 1
+	--For Live Casino (Allbet + SA Gaming + SexyGaming + BBIN + GTCasino + ION + YeeBet)
+	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 OR @AllowedSexyGaming = 1 OR @AllowedBBIN = 1 OR @AllowedGTCasino = 1 OR @AllowedION = 1 OR @AllowedYeeBet = 1 THEN 1
 								ELSE 0 END
 	-- For NG2
 	EXEC Acc_CheckShowProduct @ProductID = 23, @SettingStatus = @SettingStatus, @IsHide = @IsHideNG2 OUTPUT
@@ -411,6 +414,26 @@ Revisions:
 		WHERE	cps.CustID = @CustID
 			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
 									WHEN @RoleID = 2 THEN @mrecommend
-									ELSE @recommend END										
+									ELSE @recommend END	
+
+	-- For YeeBet
+	EXEC Acc_CheckShowProduct @ProductID = 41, @Sporttype = 159, @SettingStatus = @SettingStatus, @IsHide = @IsHide_YeeBet OUTPUT
+	IF @RoleID = 4
+		SELECT	@AllowedYeeBet =	CASE WHEN @IsHide_YeeBet = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_YeeBet)) = 0 THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+		WHERE	cps.CustID = @CustID
+	ELSE 
+		SELECT	@AllowedYeeBet =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_YeeBet)) = 0
+											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_YeeBet)) = 1
+											AND @IsHide_YeeBet = 0 
+											THEN 1
+										ELSE 0 END
+		FROM	CustProductStatus AS cps WITH (NOLOCK)
+			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
+		WHERE	cps.CustID = @CustID
+			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
+									WHEN @RoleID = 2 THEN @mrecommend
+									ELSE @recommend END
 END
 GO
