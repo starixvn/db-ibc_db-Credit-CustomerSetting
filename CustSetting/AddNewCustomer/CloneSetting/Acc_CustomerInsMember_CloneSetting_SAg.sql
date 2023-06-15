@@ -105,6 +105,7 @@ AS
 	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230615@Johnson: Check Problem Account  Limit New Downline Per Day [redmine: #189792]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -128,8 +129,26 @@ BEGIN
 
 	IF @ErrCode <> 0 RETURN
 	
+	
 --20140619@Johnson: Check IP to create downline-----------------
-	DECLARE @isValidIP bit
+	DECLARE @isValidIP bit,@isAllowed  BIT
+	
+	IF @CreatedMode = 1 
+	BEGIN
+		EXEC Acc_ProblemAccountLimitDownlineCheck
+			@custid = @srecommend,
+			@isAllowed = @isAllowed OUTPUT
+		
+		IF @isAllowed = 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+					WHEN 'E' THEN 'Sorry, you can only create 3 masters per day, please try again tomorrow.'
+						ELSE [dbo].[f_Get_MsgNamebyMsgID](40064, @Language)
+					end,
+				@ErrCode = 1002
+		return
+		END
+	END
 	
 	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @IsAutoEnableADBMaster BIT
 	

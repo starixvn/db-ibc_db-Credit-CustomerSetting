@@ -354,7 +354,26 @@ BEGIN
 		,@Language = @Language
 
 	IF @ErrCode <> 0 RETURN
-
+	
+	DECLARE @isAllowed  BIT
+	
+	IF @CreatedMode = 1 
+	BEGIN
+		EXEC Acc_ProblemAccountLimitDownlineCheck
+			@custid = @recommend,
+			@isAllowed = @isAllowed OUTPUT
+		
+		IF @isAllowed = 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+						WHEN 'E' THEN 'Sorry, you can only create 5 members per day, please try again tomorrow.'
+						ELSE [dbo].[f_Get_MsgNamebyMsgID](40062, @Language)
+					end,
+				@ErrCode = 1002
+		return
+		END
+	END
+	
 ----- Elodie @ 01 JUN 2015 -------------------	
 	CREATE TABLE #tmp_Sports(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
 	CREATE TABLE #tmp_Bettype(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
