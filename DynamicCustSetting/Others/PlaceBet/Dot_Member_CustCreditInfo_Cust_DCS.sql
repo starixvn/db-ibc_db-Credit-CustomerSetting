@@ -67,6 +67,8 @@ BEGIN
 		-- 20221226@TW-Andy: remove usage of column maxpermatch on [custInfo]
 		-- 20230307@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine:#184339]
 		-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
+		-- 20230427@VN-Luke: Separate lock function for Basketball [Redmine: #185991]
+
       */
 	SET NOCOUNT ON;
 
@@ -299,6 +301,22 @@ BEGIN
 					)
 				SELECT @custid
 					,2
+			END
+
+			--lock VR status Basketball
+			IF NOT EXISTS (
+					SELECT 1
+					FROM vrcustlockstatus(NOLOCK)
+					WHERE custid = @custid
+						AND type = 3
+					)
+			BEGIN
+				INSERT INTO vrcustlockstatus (
+					custid
+					,type
+					)
+				SELECT @custid
+					,3
 			END
 										
 			--Update VR = 0 for Other sports (using VR1)								
