@@ -22,8 +22,7 @@ AS
 						<r group="1" sub="1" pt="85" />
 						<r group="2" sub="2" pt="85" />
 						<r group="3" sub="5" pt="85" />
-						<r group="3" sub="6" pt="85" />
-						<r group="4" sub="0" pt="85" />
+						<r group="3" sub="6" pt="85" />						
 					</Root>'
 		- group: Product Group/sub: Sub Group			
 */	
@@ -40,11 +39,10 @@ BEGIN
 		T.c.query('.').value('(r/@pt)[1]', 'smallmoney') AS PT
 	FROM   @xml.nodes('/Root/r') T(c) 
 	
-	DECLARE @SiteLabel VARCHAR(10), @roleid TINYINT
+	DECLARE @roleid TINYINT
 	
-	SELECT @roleid = roleid, @SiteLabel=s.SiteLabel 
-	FROM customer c WITH(NOLOCK) 
-		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
+	SELECT @roleid = roleid
+	FROM customer c WITH(NOLOCK) 		
 	WHERE CustID = @custid
 		
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT)
@@ -166,31 +164,6 @@ BEGIN
 		WHERE custid = @custid
 		
 		DELETE #SportBettypeFilter
-				
-		--check NG2
-		IF @SiteLabel = '789y'
-		BEGIN
-			SELECT @GroupID = 4, @GroupType = 160, @SubGroupID = NULL
-		
-			INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-			SELECT SportType,Bettype,IsLive,ProductID	
-			FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
-			
-			INSERT INTO #tmpSuperPT(sporttype, bettype, IsLive,GroupID,SubGroupID, S4)
-			SELECT cs.SportType  
-				, cs.BetType  
-				, cs.IsLive  
-				, @GroupID 
-				, 0 SubGroupID
-				, cs.SuperPT AS S4  			 
-			FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
-				INNER JOIN #SportBettypeFilter ft ON cs.SportType = ft.sporttype
-													AND cs.BetType = ft.bettype
-													AND cs.IsLive = ft.islive
-			WHERE custid = @custid
-			
-			DELETE #SportBettypeFilter
-		END		
 				
 		IF EXISTS (	
 			SELECT TOP 1 1

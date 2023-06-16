@@ -246,7 +246,21 @@ BEGIN
 	END
 	
 	--20140619@Johnson: Check IP to create downline-----------------
-	DECLARE @isValidIP BIT
+	DECLARE @isValidIP BIT, @isAllowed  BIT
+		
+	EXEC Acc_ProblemAccountLimitDownlineCheck
+		@custid = @srecommend,
+		@isAllowed = @isAllowed OUTPUT
+	
+	IF @isAllowed = 0
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+				WHEN 'E' THEN 'Sorry, you can only create 3 masters per day, please try again tomorrow.'
+					ELSE [dbo].[f_Get_MsgNamebyMsgID](40064, @Language)
+				end,
+			@ErrCode = 1002
+	return
+	END
 	
 	EXEC Acc_CustomerInsMember_CheckIP 
 			@IP = @IP,
@@ -586,9 +600,9 @@ BEGIN
 		@SettingType12 = @SettingType12,-- BBIN
 		
 		--PT
-		@SettingType28 = '',-- SB
-		@SettingType1 = '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
-		@SettingType18 = '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
+		@SettingType28 = @SettingType28,-- SB
+		@SettingType1 = @SettingType1,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
+		@SettingType18 = @SettingType18,-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 				
 		@CreationStatus = @CreationStatus,
 		@ErrCode = @ErrCode OUTPUT
@@ -684,7 +698,7 @@ BEGIN
 	DECLARE @LogSPData VARCHAR(MAX)
    
 	--Log customer info
-    SELECT @LogSPData = '<Acc_LiteMode_CustomerInsMember_SAg custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
     'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)), SPACE(1))) + '" ' +
     'creator="'+ COALESCE(CAST(@creator AS VARCHAR(50)), SPACE(1)) + '" ' +
@@ -704,7 +718,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 95087,
+		@ActionID = 95090,
 		@TrackingValue = @LogSPData,
 		@duration = @duration 
 		
@@ -805,7 +819,7 @@ BEGIN
 		SET @VRLockedStatus_OS = 1
 
     --Log status
-    SELECT @LogSPData = '<Acc_LiteMode_CustomerInsMember_SAg custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'suspended="'+ COALESCE(CAST(@suspended AS VARCHAR(1)), SPACE(1)) + '" ' +
     'closed="'+ COALESCE(CAST(@UplineClosed AS VARCHAR(1)), SPACE(1)) + '" ' +
 	'Danger="'+ COALESCE(CAST(@DangerSuper AS VARCHAR(5)), SPACE(1)) + '" ' +
@@ -886,8 +900,8 @@ BEGIN
 			, Child_DisplayOrder  INT
 			)
 			
-	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,Child_DisplayOrder)
-	SELECT SettingType,SportType,BetType,IsLive,Child_DisplayOrder
+	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder)
+	SELECT SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)	
 	
 	DECLARE @xml XML
@@ -947,11 +961,11 @@ BEGIN
 		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
 		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
 		T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
-		T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+		T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney')/100 AS SuperPT,
 		T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
-		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
-		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
-		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney')/100 AS AutoSuperPT,
+		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney')/100 AS MasterPT,
+		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney')/100 AS MasterMinPT
 	FROM  @xml.nodes('/Root/R') T(c)
 	
 	SELECT @xml = CONVERT(XML, @SettingType18)
@@ -969,11 +983,11 @@ BEGIN
 		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
 		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
 		T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
-		T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+		T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney')/100 AS SuperPT,
 		T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
-		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
-		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
-		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney')/100 AS AutoSuperPT,
+		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney')/100 AS MasterPT,
+		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney')/100 AS MasterMinPT
 	FROM  @xml.nodes('/Root/R') T(c)
 		
 	UPDATE b
@@ -1029,10 +1043,12 @@ BEGIN
 	WHERE p.SettingType IN (6,22)	
 	
 	--log all settings
-	SELECT @LogSPData = '<Acc_LiteMode_CustomerInsMember_SAg custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '">' 
+	SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '">' 
 			+ '<Group ID="1">'--SB
-			+ COALESCE(REPLACE(@SettingType25,'Root','Discount'),SPACE(1))
-			+ '<BetSetting>'
+			+ '<Discount GroupType="150">' 
+				+ COALESCE(REPLACE(REPLACE(@SettingType25,'<Root>',''),'</Root>',''),SPACE(1))
+			+ '</Discount>'
+			+ '<BetSetting GroupType="151">'
 				+ COALESCE(REPLACE(REPLACE(@SettingType26,'<Root>',''),'</Root>',''), SPACE(1)) --SB
 				+ CAST((SELECT SportType,Bettype,MinBet,MaxBet, MaxPerMatch MPM	
 						FROM @BetSetting
@@ -1041,8 +1057,10 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max))--SB2
 			+ '</BetSetting>'
-			+ COALESCE(REPLACE(@SettingType27,'Root','ParlayMaxPayout'),SPACE(1))
-			+ '<PT>'
+			+ '<ParlayMaxPayout GroupType="152">' 
+				+ COALESCE(REPLACE(REPLACE(@SettingType27,'<Root>',''),'</Root>',''),SPACE(1))
+			+ '</ParlayMaxPayout>'	
+			+ '<PT GroupType="153">'
 				+ COALESCE(REPLACE(REPLACE(@SettingType28,'<Root>',''),'</Root>',''), SPACE(1)) --SB
 				+ CAST((SELECT SportType, 
 								BetType, 
@@ -1060,7 +1078,7 @@ BEGIN
 			+ '</PT>'
 			+ '</Group>'	
 			+ '<Group ID="2">'--RnG Games
-			+ '<BetSetting>'
+			+ '<BetSetting GroupType="154">'
 				+ 	CAST((SELECT SportType,Bettype,MinBet,MaxBet, MaxPerMatch MPM, MaxPerNumber	
 						FROM @BetSetting
 						WHERE GroupID = 2
@@ -1068,7 +1086,7 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max))
 			+ '</BetSetting>'
-			+ '<PT>'
+			+ '<PT GroupType="153">'
 				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT,
 								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
 						FROM @tblPT18
@@ -1077,7 +1095,7 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max))
 			+ '</PT>'
-			+ '<WinLossLimit>'
+			+ '<WinLossLimit GroupType="155">'
 				+ CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
 						FROM @NewLimitTbl
 						WHERE GroupID = 2
@@ -1087,8 +1105,10 @@ BEGIN
 			+ '</WinLossLimit>'
 			+ '</Group>'
 			+ '<Group ID="3">'--LCS
-			+ COALESCE(REPLACE(@SettingType19,'Root','Discount'),SPACE(1))
-			+ '<PT>'
+			+ '<Discount GroupType="156">' 
+				+ COALESCE(REPLACE(REPLACE(@SettingType19,'<Root>',''),'</Root>',''),SPACE(1))
+			+ '</Discount>'
+			+ '<PT GroupType="153">'
 				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT,
 								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
 						FROM @tblPT18
@@ -1097,7 +1117,7 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max))
 			+ '</PT>'
-			+ '<WinLossLimit>'
+			+ '<WinLossLimit GroupType="155">'
 				+ CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
 						FROM @NewLimitTbl
 						WHERE GroupID = 3
@@ -1105,9 +1125,11 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max))
 			+ '</WinLossLimit>'
-			+ COALESCE(REPLACE(@SettingType12,'Root','LossLimit'),SPACE(1))
+			+ '<LossLimit GroupType="157">' 
+				+ COALESCE(REPLACE(REPLACE(@SettingType12,'<Root>',''),'</Root>',''),SPACE(1))
+			+ '</LossLimit>'			
 			+ '</Group>'
-			+ '</Acc_LiteMode_CustomerInsMember_SAg>'
+			+ '</Root>'
 	
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
@@ -1117,9 +1139,9 @@ BEGIN
 		@duration = @duration  
 	
 	--Log UI settings
-	SELECT @LogSPData = '<Acc_LiteMode_CustomerInsMember_SAg custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '">' 
+	SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '">' 
 						+ COALESCE(@SettingTypeAll,SPACE(1))
-						+ '</Acc_LiteMode_CustomerInsMember_SAg>'
+						+ '</Root>'
 	
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,

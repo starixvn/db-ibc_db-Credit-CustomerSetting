@@ -86,6 +86,7 @@ BEGIN
 		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
 		FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+
 	END
 		
 	IF (dbo.f_CheckRepTable('CustProductStatus') = 1
@@ -93,7 +94,7 @@ BEGIN
 		AND dbo.f_CheckRepTable('ProductStatusProfile') = 1
 		AND dbo.f_CheckRepTable('ProductStatusSiteCurrency') = 1
 	)
-	BEGIN
+	BEGIN	
 		DECLARE @xmlStrDisabled XML
 		DECLARE @xmlStrHidden XML
 		DECLARE @xmlStrSync XML
@@ -433,11 +434,11 @@ BEGIN
 			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
 				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
 				T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
-				T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney')/100 AS SuperPT,
+				T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
 				T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
-				T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney')/100 AS AutoSuperPT,
-				T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney')/100 AS MasterPT,
-				T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney')/100 AS MasterMinPT
+				T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+				T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+				T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
 			FROM  @xml.nodes('/Root/R') T(c) 			
 		END
 		
@@ -466,7 +467,7 @@ BEGIN
 		
 		IF ISNULL(@SettingType18,'') <> ''
 		BEGIN
-			SELECT @xml = CONVERT(XML, @SettingType1)
+			SELECT @xml = CONVERT(XML, @SettingType18)
 			
 			INSERT INTO @tblPT18(SportType, 
 				BetType, 
@@ -489,7 +490,7 @@ BEGIN
 				
 		BEGIN TRY
 			IF @RoleID = 3
-			BEGIN
+			BEGIN				
 				INSERT INTO #tmpcustsetting([custid], [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
 				SELECT @custid, sporttype, bettype, SuperPT, MasterPT, 0 as apositiontaking, 0 as slivepositiontaking, 0 as mlivepositiontaking, 0 alivepositiontaking, 0 as autolivepositiontaking, AutoSuperPT, 0 as adiscount, 0 as sdiscount, 0 as groupa, 0 as groupb, 0 as groupc, 0 as groupd, 0 groupe, 0 groupf, 0 playerdiscount, 0 discount, IsAutoSuperPT, 0 as isautolivepositiontaking, 0 as autompositiontaking, 0 as autolivempositiontaking, 0 as isautompositiontaking, 0 as isautolivempositiontaking
 				FROM @tblPT28
@@ -505,11 +506,11 @@ BEGIN
 					INNER JOIN @tblPT28 t ON cs.sporttype = t.sporttype
 											AND cs.bettype = t.bettype
 											AND t.IsLive = 1
-				
+			
 				INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
 				SELECT @custid, sporttype, bettype, MasterMinPT, 0.9 as maxpositiontaking, 
-						(SELECT MasterMinPT FROM @tblPT28 t2 
-						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1) as minlivepositiontaking
+						ISNULL((SELECT MasterMinPT FROM @tblPT28 t2 
+						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1),0) as minlivepositiontaking
 						, 0.9 as maxlivepositiontaking
 				FROM @tblPT28 t
 				WHERE IsLive = 0
@@ -517,8 +518,8 @@ BEGIN
 				IF @@Error <> 0
 				BEGIN
 					--Error Occurs
-					SELECT @ErrCode=118
-					
+					SELECT @ErrCode=118				
+
 					-- ROLLBACK MANUALLY				
 					DELETE custoverride with (ROWLOCK) where custid =  @custid
 								
@@ -554,7 +555,7 @@ BEGIN
 					,t.MasterMinPT
 					,100 MaxPT
 				FROM @tblPT18 t
-					INNER JOIN #SportBettypeFilter1 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive
+					INNER JOIN #SportBettypeFilter1 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
 			END
 		END TRY
 		BEGIN CATCH 

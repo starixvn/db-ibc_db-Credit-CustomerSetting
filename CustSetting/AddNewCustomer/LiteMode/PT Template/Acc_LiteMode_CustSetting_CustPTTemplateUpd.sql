@@ -127,26 +127,26 @@ BEGIN
     SELECT @LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
 						'TemplateName="'+ coalesce(cast(@TemplateName as VARCHAR(50)),space(1)) + '" ' +
 						'IsDefault="'+ coalesce(cast(@IsDefault as VARCHAR(1)),space(1)) + '" ' +
-						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" ' +
+						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
 						CAST((
-							SELECT GroupID, SubGroupID, PT
+							SELECT GroupID AS '@GroupID', SubGroupID AS '@SubGroupID', PT AS '@PT'
 							FROM @tmpSetting
 							FOR XML PATH('r'), 
 							TYPE
 						) AS VARCHAR(MAX))+
-						'/>'
+						'</Root>'
 	
 	SELECT @Old_LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
 						'TemplateName="'+ coalesce(cast(@TemplateName as VARCHAR(50)),space(1)) + '" ' +
-						'IsDefault="'+ coalesce(cast(@IsDefault as VARCHAR(1)),space(1)) + '" ' +
-						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" ' +
+						'IsDefault="'+ coalesce(cast(@Old_IsDefault as VARCHAR(1)),space(1)) + '" ' +
+						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
 						CAST((
-							SELECT GroupID, SubGroupID, Old_PT as PT
+							SELECT GroupID AS '@GroupID', SubGroupID AS '@SubGroupID', Old_PT as '@PT'
 							FROM @tmpSetting
 							FOR XML PATH('r'), 
 							TYPE
 						) AS VARCHAR(MAX))+
-						'/>'
+						'</Root>'
 						
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @CustID,

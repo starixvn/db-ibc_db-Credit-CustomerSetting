@@ -108,14 +108,14 @@ BEGIN
     SELECT @LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
 						'TemplateName="'+ coalesce(cast(@TemplateName as VARCHAR(50)),space(1)) + '" ' +
 						'IsDefault="'+ coalesce(cast(@IsDefault as VARCHAR(1)),space(1)) + '" ' +
-						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" ' +
+						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
 						CAST((
-							SELECT GroupID, SubGroupID, PT
+							SELECT GroupID AS '@GroupID', SubGroupID as '@SubGroupID', PT as '@PT'
 							FROM @tmpSetting
 							FOR XML PATH('r'), 
 							TYPE
 						) AS VARCHAR(MAX))+
-						'/>'
+						'</Root>'
 						
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @CustID,
