@@ -333,6 +333,7 @@ Revisions:
 	- 20230302@Johnson: add auto suspend for Basketball[redmine: #184339]	
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]	
+	- 20230615@Johnson: Check Problem Account  Limit New Downline Per Day [redmine: #189792]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
