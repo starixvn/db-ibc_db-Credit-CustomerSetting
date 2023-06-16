@@ -33,6 +33,7 @@ AS
     Revisions: 
 		-- 20220916@EricFu(CUSTDB):  Copy frmo Dot_Member_GetCustCreditInfo and add more condition @IsLicensee = 0 for sporttype 161 and 164
 		-- 2022-11-01@EricFu(CUSTDB): Remove Maxperxxx columns from VN requeset
+		-- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
 
 	--------------------------------------------------------------------------------
     -- !!!!!!!!!!!!!!! include UM function !!!!!!!!!!!!!!!!!!!!!!!!
@@ -343,6 +344,22 @@ BEGIN
                     )
                 SELECT @custid
                     ,2
+            END
+
+			--lock VR status Basketball
+			IF NOT EXISTS (
+					SELECT 1
+					FROM vrcustlockstatus(NOLOCK)
+					WHERE custid = @custid
+						AND type = 3
+					)
+            BEGIN
+                INSERT INTO vrcustlockstatus (
+                    custid
+                    ,type
+                    )
+                SELECT @custid
+                    ,3
             END
 
             SELECT @ValueID_0 = valueid
