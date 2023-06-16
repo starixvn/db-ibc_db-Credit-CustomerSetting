@@ -6,7 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@EnableVirtualrate			BIT				= 0
 				,	@virtualmultiplier			VARCHAR(MAX)	= ''
 				,	@EnableVirtualMultiplier	VARCHAR(MAX)	= ''
-				,   @VRlockStatusType			TINYINT			= NULL -- 0: all, 1:soccer, 2: Other sports
+				,   @VRlockStatusType			TINYINT			= NULL -- 0: all, 1:soccer, 2: Other sports, 3: Basketball 
 				,	@Suspended					BIT				= 0
 				,	@Closed						BIT				= 0
 				,	@disabledCS					BIT				= 0				
@@ -83,6 +83,8 @@ AS
 		- 20221207@Johnson: update setting for sub-bettype for Esport is 'Follow parent' [redmine: #177594]
 		- 20230302@Johnson: Add auto suspend for basketball and return Basketball VR to its original state [redmine:#184339]
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
+
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -186,11 +188,17 @@ BEGIN
 								,	Pos			VARBINARY(64)
 								,	Val			VARBINARY(64)
 								);
+	DECLARE	@virtualXML_Basketball		TABLE ( --Basketball
+									seqNo				TINYINT PRIMARY KEY
+								,	Pos			VARBINARY(64)
+								,	Val			VARBINARY(64)
+								);
 	DECLARE	@virtualXML_OS		TABLE ( --other sport except basketball and Esport
 									seqNo				TINYINT PRIMARY KEY
 								,	Pos			VARBINARY(64)
 								,	Val			VARBINARY(64)
 								);
+
 
 	CREATE TABLE #tblCustVR (custID INT)
 	CREATE TABLE #tmpCustBatchVR (CustID INT PRIMARY KEY)	
@@ -471,7 +479,37 @@ BEGIN
 				FOR XML PATH ('')						
 			), 2) AS Val
 		) p2;
-
+		INSERT INTO @virtualXML_Basketball																														
+			(	seqNo, Pos, Val                       )																				
+		SELECT	seqNo, p1.Pos, p2.Val																	
+		FROM (																							
+			SELECT	DISTINCT seqNo																		
+			FROM	ProfileVirtualSetting WITH (NOLOCK)													
+		) pvs																																			
+		CROSS APPLY (																					
+			SELECT CONVERT(VARBINARY(64), (																
+				SELECT	CONVERT(VARCHAR, CAST(ipvs.profileID - 64 * (ipvs.seqNo - 1) AS BINARY(1)), 2)	
+				FROM		@tblVirtualrate			AS tmp												
+					INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)							
+						ON	tmp.sporttype	= ipvs.sporttype											
+							AND	tmp.bettype		= ipvs.bettype											
+							AND	tmp.isLive		= ipvs.islive											
+				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType = 2									
+				FOR XML PATH ('')																		
+			), 2) AS Pos																				
+		) p1																							
+		CROSS APPLY (																					
+			SELECT CONVERT(VARBINARY(64), (																
+				SELECT	CONVERT(VARCHAR, CAST(CASE WHEN CAST(VirtualMultiplier * 100 AS INT) > 200 THEN ((CAST(VirtualMultiplier * 100 AS INT) - 200) / 5 + 200) ELSE CAST(VirtualMultiplier * 100 AS INT) END AS BINARY(1)), 2)	
+				FROM		@tblVirtualrate			AS tmp												
+					INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)							
+						ON	tmp.sporttype	= ipvs.sporttype											
+							AND	tmp.bettype		= ipvs.bettype											
+							AND	tmp.isLive		= ipvs.islive											
+				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType = 2									
+				FOR XML PATH ('')																						
+			), 2) AS Val																				
+		) p2;																							
 		INSERT INTO @virtualXML_OS 
 			(	seqNo, Pos, Val                       )
 		SELECT	seqNo, p1.Pos, p2.Val
@@ -487,7 +525,7 @@ BEGIN
 						ON	tmp.sporttype	= ipvs.sporttype
 							AND	tmp.bettype		= ipvs.bettype
 							AND	tmp.isLive		= ipvs.islive
-				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType NOT IN (1, 43)
+				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType NOT IN (1, 2, 43)								
 				FOR XML PATH ('')						
 			), 2) AS Pos
 		) p1
@@ -499,7 +537,7 @@ BEGIN
 						ON	tmp.sporttype	= ipvs.sporttype
 							AND	tmp.bettype		= ipvs.bettype
 							AND	tmp.isLive		= ipvs.islive
-				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType NOT IN (1, 43)
+				WHERE	ipvs.seqNo = pvs.seqNo AND tmp.SportType NOT IN (1, 2, 43)								
 				FOR XML PATH ('')						
 			), 2) AS Val
 		) p2;
@@ -514,6 +552,17 @@ BEGIN
 				ON	cvs.seqNo = tmp.seqNo
 		CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
 		WHERE	ci.custid = @custid;
+
+		--> Update VR for itself --Basketball									
+		UPDATE cvs																
+		SET cvs.bitmapVirtual = bm.bitmap										
+		FROM		CustVirtualSetting	AS cvs WITH(UPDLOCK, ROWLOCK)			
+		INNER JOIN	custInfo			AS ci WITH(NOLOCK)						
+				ON	ci.custid = cvs.custid										
+		INNER JOIN	@virtualXML_Basketball			AS tmp						
+				ON	cvs.seqNo = tmp.seqNo										
+		CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm	
+		WHERE	ci.custid = @custid;											
 
 		--> Update VR for itself --Other sports
 		UPDATE cvs
@@ -535,6 +584,7 @@ BEGIN
 		END
 		ELSE IF NOT EXISTS (SELECT 1 FROM @virtualXML_Soccer) 
 				AND NOT EXISTS (SELECT 1 FROM @virtualXML_OS)
+				AND NOT EXISTS (SELECT 1 FROM @virtualXML_Basketball)			
 		BEGIN
 			RETURN --Not update VR for its downline
 		END
@@ -555,7 +605,7 @@ BEGIN
 			FROM #tblCustVR t
 				INNER JOIN VRCustLockStatus l1 WITH(NOLOCK) ON t.custID = l1.CustID AND l1.Type = 1
 				INNER JOIN VRCustLockStatus l2 WITH(NOLOCK) ON t.custID = l2.CustID AND l2.Type = 2
-	
+				INNER JOIN VRCustLockStatus l3 WITH(NOLOCK) ON t.custID = l3.CustID AND l3.Type = 3		
 			WHILE(1=1)
 			BEGIN
 				TRUNCATE TABLE #tmpCustBatchVR
@@ -589,6 +639,28 @@ BEGIN
 								AND lm.Type = 1
 					)
 
+				--> Update Basketball VR												
+				UPDATE cvs																
+				SET cvs.bitmapVirtual = bm.bitmap										
+				FROM	#tmpCustBatchVR tmpCust											
+					CROSS APPLY (														
+						SELECT TOP 3 cvs.seqNo, cvs.bitmapVirtual						
+						FROM CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)			
+						WHERE cvs.custID = tmpCust.custID								
+					) cvs																
+					CROSS APPLY (														
+						SELECT TOP 1 bm.bitmap											
+						FROM @virtualXML_Basketball	AS tmp								
+							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos) AS bm		
+						WHERE cvs.seqNo = tmp.seqNo										
+					) bm																
+				 WHERE	NOT EXISTS (													
+						SELECT	1														
+						FROM	VRCustLockStatus lm WITH(NOLOCK)						
+						WHERE	lm.custID = tmpCust.custid 								
+								AND lm.Type = 3											
+					)																	
+
 				--> Update OtherSport VR
 				UPDATE cvs
 				SET cvs.bitmapVirtual = bm.bitmap
@@ -613,7 +685,7 @@ BEGIN
 			END	
 			
 			--> Update for new accounts
-			UPDATE cvs
+			UPDATE cvs					
 			SET cvs.bitmapVirtual = bm.bitmap
 			FROM		CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)
 			INNER JOIN	custInfo			AS ci WITH (NOLOCK)
@@ -629,6 +701,23 @@ BEGIN
 						WHERE	lm.custID = ci.custid 
 								AND lm.Type = 1
 					)
+
+			UPDATE cvs																
+			SET cvs.bitmapVirtual = bm.bitmap										
+			FROM		CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)			
+			INNER JOIN	custInfo			AS ci WITH (NOLOCK)						
+					ON	ci.custid = cvs.custid										
+			INNER JOIN	@virtualXML_Basketball			AS tmp						
+					ON	cvs.seqNo = tmp.seqNo										
+			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm		
+			WHERE	ci.srecommend = @custid											
+				AND ci.custID > @maxcustid											
+				AND	NOT EXISTS (													
+						SELECT	1													
+						FROM	VRCustLockStatus lm WITH(NOLOCK)					
+						WHERE	lm.custID = ci.custid 								
+								AND lm.Type = 3										
+					)																
 
 			UPDATE cvs
 			SET cvs.bitmapVirtual = bm.bitmap
@@ -664,7 +753,7 @@ BEGIN
 			FROM #tblCustVR t
 				INNER JOIN VRCustLockStatus l1 WITH(NOLOCK) ON t.custID = l1.CustID AND l1.Type = 1
 				INNER JOIN VRCustLockStatus l2 WITH(NOLOCK) ON t.custID = l2.CustID AND l2.Type = 2
-			
+				INNER JOIN VRCustLockStatus l3 WITH(NOLOCK) ON t.custID = l3.CustID AND l3.Type = 3			
 			WHILE(1=1)
 			BEGIN
 				TRUNCATE TABLE #tmpCustBatchVR
@@ -697,6 +786,28 @@ BEGIN
 						WHERE	lm.custID = tmpCust.custid 
 								AND lm.Type = 1
 					)
+
+				--> Update Basketball VR												
+				UPDATE cvs																
+				SET cvs.bitmapVirtual = bm.bitmap										
+				FROM	#tmpCustBatchVR tmpCust											
+					CROSS APPLY (														
+						SELECT TOP 3 cvs.seqNo, cvs.bitmapVirtual						
+						FROM CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)			
+						WHERE cvs.custID = tmpCust.custID								
+					) cvs																
+					CROSS APPLY (														
+						SELECT TOP 1 bm.bitmap											
+						FROM @virtualXML_Basketball	AS tmp								
+							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos) AS bm			
+						WHERE cvs.seqNo = tmp.seqNo										
+					) bm																
+				 WHERE	NOT EXISTS (													
+						SELECT	1														
+						FROM	VRCustLockStatus lm WITH(NOLOCK)						
+						WHERE	lm.custID = tmpCust.custid 								
+								AND lm.Type = 3											
+					)																	
 
 				--> Update OtherSport VR
 				UPDATE cvs
@@ -739,6 +850,23 @@ BEGIN
 								AND lm.Type = 1
 					)
 
+			UPDATE cvs																		
+			SET cvs.bitmapVirtual = bm.bitmap												
+			FROM		CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)					
+			INNER JOIN	custInfo			AS ci WITH (NOLOCK)								
+					ON	ci.custid = cvs.custid												
+			INNER JOIN	@virtualXML_Basketball			AS tmp								
+					ON	cvs.seqNo = tmp.seqNo												
+			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm		
+			WHERE	ci.mrecommend = @custid													
+				AND ci.custID > @maxcustid													
+				AND	NOT EXISTS (															
+						SELECT	1															
+						FROM	VRCustLockStatus lm WITH(NOLOCK)							
+						WHERE	lm.custID = ci.custid 										
+								AND lm.Type = 3												
+					)																		
+
 			UPDATE cvs
 			SET cvs.bitmapVirtual = bm.bitmap
 			FROM		CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)
@@ -773,7 +901,7 @@ BEGIN
 			FROM #tblCustVR t
 				INNER JOIN VRCustLockStatus l1 WITH(NOLOCK) ON t.custID = l1.CustID AND l1.Type = 1
 				INNER JOIN VRCustLockStatus l2 WITH(NOLOCK) ON t.custID = l2.CustID AND l2.Type = 2
-
+				INNER JOIN VRCustLockStatus l3 WITH(NOLOCK) ON t.custID = l3.CustID AND l3.Type = 3		
 			WHILE(1=1)
 			BEGIN
 				TRUNCATE TABLE #tmpCustBatchVR
@@ -806,6 +934,28 @@ BEGIN
 						WHERE	lm.custID = tmpCust.custid 
 								AND lm.Type = 1
 					)
+
+				--> Update Basketball VR												
+				UPDATE cvs																
+				SET cvs.bitmapVirtual = bm.bitmap										
+				FROM	#tmpCustBatchVR tmpCust											
+					CROSS APPLY (														
+						SELECT TOP 3 cvs.seqNo, cvs.bitmapVirtual						
+						FROM CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)			
+						WHERE cvs.custID = tmpCust.custID								
+					) cvs																
+					CROSS APPLY (														
+						SELECT TOP 1 bm.bitmap											
+						FROM @virtualXML_Basketball	AS tmp								
+							CROSS APPLY dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos) AS bm		
+						WHERE cvs.seqNo = tmp.seqNo										
+					) bm																
+				 WHERE	NOT EXISTS (													
+						SELECT	1														
+						FROM	VRCustLockStatus lm WITH(NOLOCK)						
+						WHERE	lm.custID = tmpCust.custid 								
+								AND lm.Type = 3											
+					)																	
 
 				--> Update OtherSport VR
 				UPDATE cvs
@@ -847,6 +997,23 @@ BEGIN
 						WHERE	lm.custID = ci.custid 
 								AND lm.Type = 1
 					)
+
+			UPDATE cvs																
+			SET cvs.bitmapVirtual = bm.bitmap										
+			FROM		CustVirtualSetting	AS cvs WITH (UPDLOCK, ROWLOCK)			
+			INNER JOIN	custInfo			AS ci WITH (NOLOCK)						
+					ON	ci.custid = cvs.custid										
+			INNER JOIN	@virtualXML_Basketball			AS tmp						
+					ON	cvs.seqNo = tmp.seqNo										
+			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm		
+			WHERE	ci.recommend = @custid											
+				AND ci.custID > @maxcustid											
+				AND	NOT EXISTS (													
+						SELECT	1													
+						FROM	VRCustLockStatus lm WITH(NOLOCK)					
+						WHERE	lm.custID = ci.custid 								
+								AND lm.Type = 3										
+					)																
 
 			UPDATE cvs
 			SET cvs.bitmapVirtual = bm.bitmap
@@ -1089,8 +1256,9 @@ BEGIN
 			IF @VRlockStatusType = 0
 			BEGIN
 				INSERT INTO #TblType (Type)
-				SELECT 1  UNION ALL --soccer
-				SELECT 2  --Other sports
+				SELECT 1	UNION ALL		--soccer
+				SELECT 2	UNION ALL		--Other sports			
+				SELECT 3					--Basketball			
 			END
 			ELSE IF @VRlockStatusType = 1
 			BEGIN
@@ -1102,6 +1270,11 @@ BEGIN
 				INSERT INTO #TblType (Type)
 				SELECT 2  --Other sports
 			END
+			ELSE IF @VRlockStatusType = 3			
+			BEGIN								
+				INSERT INTO #TblType (Type)		
+				SELECT 3  --Basketball			
+			END									
 			ELSE
 			BEGIN
 				RETURN

@@ -332,7 +332,7 @@ Revisions:
 	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20230302@Johnson: add auto suspend for Basketball[redmine: #184339]	
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
-	
+	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]	
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -2704,12 +2704,16 @@ BEGIN
 	--Log for VR lock Status
 	DECLARE @VRLockedStatus_Soccer BIT = 0
 	DECLARE @VRLockedStatus_OS BIT = 0
+	DECLARE @VRLockedStatus_Basketball BIT = 0
 
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @recommend AND Type = 1)
 		SET @VRLockedStatus_Soccer = 1
 
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @recommend AND Type = 2)
 		SET @VRLockedStatus_OS = 1
+
+	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @recommend AND Type = 3)
+		SET @VRLockedStatus_Basketball = 1
 
     SELECT @LogSPData = '<Acc_CustomerInsMember_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'closed="'+ COALESCE(CAST(@closed AS VARCHAR(50)), SPACE(1)) + '" ' +
@@ -2730,7 +2734,8 @@ BEGIN
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +	
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
- 
+ 	'VRLockStatus_Basketball="'+ COALESCE(CAST(@VRLockedStatus_Basketball AS VARCHAR(10)),SPACE(1)) + '" ' +   
+
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' + @LogDataSP2 +
    
 	'DisableSuperLive="'+ COALESCE(CAST(@DisableSuperLive AS VARCHAR(1)), SPACE(1)) + '" />'
