@@ -333,6 +333,7 @@ Revisions:
 	- 20230302@Johnson: add auto suspend for Basketball[redmine: #184339]	
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]	
+	- 20230615@Johnson: Check Problem Account  Limit New Downline Per Day [redmine: #189792]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -354,7 +355,26 @@ BEGIN
 		,@Language = @Language
 
 	IF @ErrCode <> 0 RETURN
-
+	
+	DECLARE @isAllowed  BIT
+	
+	IF @CreatedMode = 1 
+	BEGIN
+		EXEC Acc_ProblemAccountLimitDownlineCheck
+			@custid = @recommend,
+			@isAllowed = @isAllowed OUTPUT
+		
+		IF @isAllowed = 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+						WHEN 'E' THEN 'Sorry, you can only create 5 members per day, please try again tomorrow.'
+						ELSE [dbo].[f_Get_MsgNamebyMsgID](40062, @Language)
+					end,
+				@ErrCode = 1002
+		return
+		END
+	END
+	
 ----- Elodie @ 01 JUN 2015 -------------------	
 	CREATE TABLE #tmp_Sports(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
 	CREATE TABLE #tmp_Bettype(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
