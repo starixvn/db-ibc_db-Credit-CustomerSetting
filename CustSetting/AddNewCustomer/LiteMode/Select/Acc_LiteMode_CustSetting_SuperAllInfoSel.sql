@@ -15,7 +15,7 @@ AS
 		- 20230419@Johnson: initial sp [redmine: #179159]
 		
 	Parameter's explaination:
-		- @GroupID: 1: SB, 2: RnG Games, 3: LCS, 4: NG2
+		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
 		- @GroupID = 0 & @GroupType = 0: General info
 		- @Site: check @IsMyanmarOdds for Direct Master
@@ -59,8 +59,7 @@ BEGIN
 		DECLARE @Credit_AllOtherMaster MONEY, 
 				@Credit_SAg MONEY, 
 				@Credit_MAg_Max MONEY,
-				@TransferOption	VARCHAR(8),		
-				@CurrencyID INT, 
+				@TransferOption	VARCHAR(8),
 				@srecommend INT = 0,
 				@IsAutomateTransfer BIT = 0
 		
@@ -83,7 +82,6 @@ BEGIN
 			AND RoleID = 3
 			
 		SELECT @Credit_SAg = isnull(credit, 0), 
-			@CurrencyID=ci.currency,
 			@srecommend = srecommend,
 			@UplineUserName = username 
 		FROM CustInfo as ci with (NOLOCK) 
@@ -121,8 +119,7 @@ BEGIN
 	END
 	
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
-	DECLARE	@Currency	TINYINT
-	
+		
 	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder)
 	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder
 	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus) 
@@ -216,7 +213,8 @@ BEGIN
 		SELECT cs.sporttype, cs.bettype, 0 IsLive, 
 			(CASE WHEN cs.spositiontaking<co.maxpositiontaking THEN cs.spositiontaking ELSE co.maxpositiontaking END)*100 S4,
 			cs.mpositiontaking*100 M4, 
-			co.minpositiontaking*100 AS N4			
+			co.minpositiontaking*100 AS N4,
+			s.Child_DisplayOrder
 		FROM CustSetting cs WITH(NOLOCK) 
 			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
 			INNER JOIN #SportBettypeFilter s 
@@ -229,7 +227,8 @@ BEGIN
 		SELECT cs.sporttype, cs.bettype, 1 as IsLive,			
 			(CASE WHEN cs.slivepositiontaking<co.maxlivepositiontaking THEN cs.slivepositiontaking ELSE co.maxlivepositiontaking END)*100 S4,
 			cs.mlivepositiontaking*100 M4,
-			co.minlivepositiontaking*100 AS N4 
+			co.minlivepositiontaking*100 AS N4,
+			s.Child_DisplayOrder			
 		FROM CustSetting cs WITH(NOLOCK) 
 			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
 			INNER JOIN #SportBettypeFilter s 
@@ -246,6 +245,7 @@ BEGIN
 			, cs.SuperPT AS S4  
 			, cs.MasterPT AS M4  
 			, cs.MinPT  AS N4  
+			, s.Child_DisplayOrder
 		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter s 
 				ON s.SportType = cs.sporttype  
@@ -263,13 +263,13 @@ BEGIN
 	IF @GroupID = 2 AND @GroupType = 154
 	BEGIN
 		;WITH T AS (
-		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,s.SubType,s.Child_DisplayOrder
+		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,MaxPerNumber,s.SubType,s.Child_DisplayOrder
 		FROM CustBetSetting_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
 		WHERE cs.CustID = @custid 
 		UNION ALL
-		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,NULL MaxPerNumber, NULL MaxPayoutPerMatch,s.SubType,s.Child_DisplayOrder
+		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,NULL MaxPerNumber,s.SubType,s.Child_DisplayOrder
 		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
@@ -288,31 +288,12 @@ BEGIN
 			, cs.SuperPT AS S4  
 			, cs.MasterPT AS M4  
 			, cs.MinPT  AS N4  
+			, ft.Child_DisplayOrder
 		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter ft ON cs.SportType = ft.sporttype
 												AND cs.BetType = ft.bettype
 												AND cs.IsLive = ft.islive
 		WHERE custid = @custid
-	END
-	
-	--WinLoss Limit
-	IF @GroupID = 2 AND @GroupType = 155
-	BEGIN
-		SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid
-		--SELECT @ProductID = 44
-			
-		SELECT	wl.SportType,
-				wl.BetType,
-				wl.MaxWinLimit AS MaxWinRange,				
-				gs.MinLossLimit AS MinLossRange,
-				wl.MaxLossLimit AS MaxLossRange,
-				wl.IsAutoReset AS IsAutoResetUpline				
-		FROM CustWinLossLimit_Agent wl WITH (NOLOCK)
-		INNER JOIN	#SportBettypeFilter AS sbf
-				ON	sbf.Bettype = wl.BetType
-				AND	sbf.SportType = wl.SportType
-			INNER JOIN LossLimit_GlobalSetting gs WITH (NOLOCK) ON gs.ProductId = sbf.ProductID AND gs.ExchangeId = @Currency
-		WHERE wl.CustId = @CustID 	
 	END
 	--END RNG Games	
 	----------------------------------------------------------------------------------
@@ -338,7 +319,8 @@ BEGIN
 			, cs.IsLive  
 			, cs.SuperPT AS S4  
 			, cs.MasterPT AS M4  
-			, cs.MinPT  AS N4  
+			, cs.MinPT  AS N4 
+			, s.Child_DisplayOrder	
 		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter s 
 				ON s.SportType = cs.sporttype  
@@ -346,46 +328,8 @@ BEGIN
 				AND s.IsLive = cs.islive
 		WHERE cs.CustID = @custid					
 	END
-	
-	--WinLoss Limit
-	IF @GroupID = 3 AND @GroupType = 155
-	BEGIN
-		SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid
-			
-		SELECT	wl.SportType,
-				wl.BetType,
-				wl.MaxWinLimit AS MaxWinRange,				
-				gs.MinLossLimit AS MinLossRange,
-				wl.MaxLossLimit AS MaxLossRange,
-				wl.IsAutoReset AS IsAutoResetUpline				
-		FROM CustWinLossLimit_Agent wl WITH (NOLOCK)
-		INNER JOIN	#SportBettypeFilter AS sbf
-				ON	sbf.Bettype = wl.BetType
-				AND	sbf.SportType = wl.SportType
-			INNER JOIN LossLimit_GlobalSetting gs WITH (NOLOCK) ON gs.ProductId = sbf.ProductID AND gs.ExchangeId = @Currency
-		WHERE wl.CustId = @CustID 	
-	END
-	
-	--Loss Limit
-	IF @GroupID = 3 AND @GroupType = 157
-	BEGIN
-		SELECT @currency = currency FROM custinfo WITH(NOLOCK) WHERE custid = @custid
-			
-		SELECT	wl.SportType,
-				wl.BetType,				
-				gs.MinLossLimit AS MinLossRange,
-				wl.MaxLossLimit AS MaxLossRange,
-				wl.IsAutoReset AS IsAutoResetUpline				
-		FROM CustWinLossLimit_Agent wl WITH (NOLOCK)
-		INNER JOIN	#SportBettypeFilter AS sbf
-				ON	sbf.Bettype = wl.BetType
-				AND	sbf.SportType = wl.SportType
-			INNER JOIN LossLimit_GlobalSetting gs WITH (NOLOCK) ON gs.ProductId = sbf.ProductID AND gs.ExchangeId = @Currency
-		WHERE wl.CustId = @CustID 
-	END
-	
 	--END Live & RnG Casino
 	----------------------------------------------------------------------------------
 		
-	
+	DROP TABLE #SportBettypeFilter
 END

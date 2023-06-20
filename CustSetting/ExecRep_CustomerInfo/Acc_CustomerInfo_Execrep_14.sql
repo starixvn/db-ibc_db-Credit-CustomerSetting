@@ -691,65 +691,12 @@ BEGIN
 		/********************************************* SMA WinLimit : SettingType = 6,22 ****************************************/
 		/********************************************* SMA LossLimit : SettingType = 12 ****************************************/
 		CREATE TABLE #SportBettypeFilter6 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
-		DECLARE @NewLimitTbl TABLE (SportType SMALLINT,BetType SMALLINT,MaxWinLimit SMALLMONEY,MaxLossLimit MONEY,IsAutoReset BIT)
 			
 		INSERT INTO #SportBettypeFilter6(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
 		FROM #ProductSettingDetail_tmp00
 		WHERE SettingType IN (6,22,12)
-				
-		IF ISNULL(@SettingType6,'') <> ''
-		BEGIN
-			SELECT @xml = CONVERT(XML,@SettingType6)
-			
-			INSERT INTO @NewLimitTbl(
-				SportType, 
-				BetType, 
-				MaxWinLimit, 
-				MaxLossLimit, 
-				IsAutoReset)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-				T.c.query('.').value('(R/@MaxWinLimit)[1]', 'smallmoney') AS MaxWinLimit,
-				T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
-				T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
-			FROM  @xml.nodes('/Root/R') T(c)
-		END
-		
-		IF ISNULL(@SettingType22,'') <> ''
-		BEGIN
-			SELECT @xml = CONVERT(XML,@SettingType22)
-				
-			INSERT INTO @NewLimitTbl(
-				SportType, 
-				BetType, 
-				MaxWinLimit, 
-				MaxLossLimit, 
-				IsAutoReset)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-				T.c.query('.').value('(R/@MaxWinLimit)[1]', 'smallmoney') AS MaxWinLimit,
-				T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
-				T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
-			FROM  @xml.nodes('/Root/R') T(c) 	
-		END	
-		
-		IF ISNULL(@SettingType12,'') <> ''
-		BEGIN
-			SELECT @xml = CONVERT(XML,@SettingType12)
-				
-			INSERT INTO @NewLimitTbl(				
-				SportType, 
-				BetType,  
-				MaxLossLimit, 
-				IsAutoReset)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,		
-				T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
-				T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
-			FROM  @xml.nodes('/Root/R') T(c) 	
-		END	
-		
+					
 		BEGIN TRY
 			INSERT INTO [dbo].[CustWinLossLimit_Agent]
 					([CustID]
@@ -762,11 +709,12 @@ BEGIN
 					@CustID
 					,cs.SportType
 					,cs.BetType
-					,ISNULL(cs.MaxWinLimit,0)
-					,ISNULL(cs.MaxLossLimit,0)
-					,ISNULL(cs.IsAutoReset,0)
-				FROM @NewLimitTbl cs 
+					,cs.MaxWinLimit
+					,cs.MaxLossLimit
+					,cs.IsAutoReset
+				FROM dbo.CustWinLossLimit_Agent cs WITH(NOLOCK)
 					INNER JOIN #SportBettypeFilter6 f ON f.Bettype = cs.BetType AND f.SportType = cs.SportType				
+				WHERE cs.custid = @srecommend	
 		END TRY
 		BEGIN CATCH 
 			SELECT @ErrCode = 6			

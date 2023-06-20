@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateUpd] 
 	@CustID INT,
+	@SubAccID INT = 0,
 	@TemplateID INT,
 	@Settings VARCHAR(MAX),
 	@IsDefault BIT = 0,
@@ -37,6 +38,7 @@ BEGIN
 	DECLARE @startRun DATETIME
 			,@endRun DATETIME
 			,@duration INT
+			,@roleid TINYINT
 	
 	SELECT @startRun = GETDATE()	
 	
@@ -72,6 +74,10 @@ BEGIN
 	
 	IF @ErrCode > 0
 		RETURN;
+	
+	SELECT @roleid = roleid 
+	FROM custinfo WITH(NOLOCK)
+	WHERE custid = @custid
 	
 	DECLARE @Old_IsDefault BIT,
 		@TemplateName VARCHAR(50)
@@ -121,10 +127,16 @@ BEGIN
 	SET @duration=datediff(millisecond,@startRun,@endRun)
 	
 	 DECLARE @LogSPData VARCHAR(MAX),
-			@Old_LogSPData VARCHAR(MAX)
+			@Old_LogSPData VARCHAR(MAX),
+			@ActionID INT
+		
+	SELECT @ActionID = CASE WHEN @roleid = 4 THEN 476
+							WHEN @roleid = 3 THEN 481
+							WHEN @roleid = 2 THEN 484 END	
 	 
     --Log info
     SELECT @LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
+						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
 						'TemplateName="'+ coalesce(cast(@TemplateName as VARCHAR(50)),space(1)) + '" ' +
 						'IsDefault="'+ coalesce(cast(@IsDefault as VARCHAR(1)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
@@ -137,6 +149,7 @@ BEGIN
 						'</Root>'
 	
 	SELECT @Old_LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
+						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
 						'TemplateName="'+ coalesce(cast(@TemplateName as VARCHAR(50)),space(1)) + '" ' +
 						'IsDefault="'+ coalesce(cast(@Old_IsDefault as VARCHAR(1)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
@@ -151,7 +164,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @CustID,
 				@CustID = @CustID,
-				@ActionID = 476,
+				@ActionID = @ActionID,
 				@TrackingValue = @LogSPData,				
 				@TrackingValue2 = @Old_LogSPData,
 				@duration = @duration	

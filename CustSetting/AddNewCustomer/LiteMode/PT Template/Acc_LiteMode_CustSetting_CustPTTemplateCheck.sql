@@ -39,30 +39,31 @@ BEGIN
 		T.c.query('.').value('(r/@pt)[1]', 'smallmoney') AS PT
 	FROM   @xml.nodes('/Root/r') T(c) 
 	
-	DECLARE @roleid TINYINT
+	DECLARE @roleid TINYINT, @srecommend INT
 	
-	SELECT @roleid = roleid
+	SELECT @roleid = roleid, @srecommend = srecommend
 	FROM customer c WITH(NOLOCK) 		
 	WHERE CustID = @custid
 		
-	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT)
+	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT)
+	CREATE TABLE #tmpPT (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, groupID TINYINT, SubGroupID TINYINT, MaxPT SMALLMONEY, MinPT SMALLMONEY)
+	
 	DECLARE @GroupID TINYINT,
 		@GroupType TINYINT,
 		@SubGroupID TINYINT
 		
 	IF @roleid = 4
-	BEGIN 
-		CREATE TABLE #tmpSuperPT (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, groupID TINYINT, SubGroupID TINYINT, S4 SMALLMONEY)
+	BEGIN 		
 		--check SB
 		SELECT @GroupID = 1, @GroupType = 153, @SubGroupID = 1
 		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-		SELECT SportType,Bettype,IsLive,ProductID	
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
 		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus) 
 		
-		INSERT INTO #tmpSuperPT(sporttype, bettype, IsLive,GroupID,SubGroupID, S4)
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT)
 		SELECT cs.sporttype, cs.bettype, 0 IsLive, @GroupID, @SubGroupID,
-			(CASE WHEN cs.spositiontaking<co.maxpositiontaking THEN cs.spositiontaking ELSE co.maxpositiontaking END)*100 S4
+			(CASE WHEN cs.spositiontaking<co.maxpositiontaking THEN cs.spositiontaking ELSE co.maxpositiontaking END)*100 MaxPT
 		FROM CustSetting cs WITH(NOLOCK) 
 			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
 			INNER JOIN #SportBettypeFilter s 
@@ -73,7 +74,7 @@ BEGIN
 			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
 		UNION ALL 
 		SELECT cs.sporttype, cs.bettype, 1 as IsLive, @GroupID, @SubGroupID,			
-			(CASE WHEN cs.slivepositiontaking<co.maxlivepositiontaking THEN cs.slivepositiontaking ELSE co.maxlivepositiontaking END)*100 S4
+			(CASE WHEN cs.slivepositiontaking<co.maxlivepositiontaking THEN cs.slivepositiontaking ELSE co.maxlivepositiontaking END)*100 MaxPT
 		FROM CustSetting cs WITH(NOLOCK) 
 			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
 			INNER JOIN #SportBettypeFilter s 
@@ -89,7 +90,7 @@ BEGIN
 			, cs.IsLive  
 			,@GroupID 
 			,@SubGroupID
-			, cs.SuperPT AS S4  			 
+			, cs.SuperPT AS MaxPT  			 
 		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter s 
 				ON s.SportType = cs.sporttype  
@@ -102,17 +103,17 @@ BEGIN
 		--check RNG Games
 		SELECT @GroupID = 2, @GroupType = 153, @SubGroupID = 2
 		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-		SELECT SportType,Bettype,IsLive,ProductID	
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
 		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
 		
-		INSERT INTO #tmpSuperPT(sporttype, bettype, IsLive,GroupID,SubGroupID, S4)
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT)
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
 			,@GroupID 
 			,@SubGroupID
-			, cs.SuperPT AS S4  			 
+			, cs.SuperPT AS MaxPT  			 
 		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter ft ON cs.SportType = ft.sporttype
 												AND cs.BetType = ft.bettype
@@ -124,17 +125,17 @@ BEGIN
 		--Allbet & SA Gaming
 		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 5
 		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-		SELECT SportType,Bettype,IsLive,ProductID	
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
 		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
 		
-		INSERT INTO #tmpSuperPT(sporttype, bettype, IsLive,GroupID,SubGroupID, S4)
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT)
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
 			, @GroupID 
 			, @SubGroupID
-			, cs.SuperPT AS S4  			 
+			, cs.SuperPT AS MaxPT  			 
 		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter ft ON cs.SportType = ft.sporttype
 												AND cs.BetType = ft.bettype
@@ -146,17 +147,17 @@ BEGIN
 		--Other Live Casino & RnG Games
 		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
 		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID)
-		SELECT SportType,Bettype,IsLive,ProductID	
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive	
 		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
 		
-		INSERT INTO #tmpSuperPT(sporttype, bettype, IsLive,GroupID,SubGroupID, S4)
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT)
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
 			, @GroupID 
 			, @SubGroupID
-			, cs.SuperPT AS S4  			 
+			, cs.SuperPT AS MaxPT  			 
 		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter ft ON cs.SportType = ft.sporttype
 												AND cs.BetType = ft.bettype
@@ -167,10 +168,10 @@ BEGIN
 				
 		IF EXISTS (	
 			SELECT TOP 1 1
-			FROM #tmpSuperPT t
+			FROM #tmpPT t
 				INNER JOIN @tmpSetting s ON t.GroupID = s.GroupID
 											AND t.SubGroupID = s.SubGroupID
-			WHERE t.S4 < s.PT
+			WHERE t.MaxPT < s.PT
 		)
 		BEGIN		
 			SET @xml = (
@@ -180,11 +181,11 @@ BEGIN
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
 									, t.IsLive AS '@IsLive'
-									, t.S4 AS '@MaxPT'
-								FROM #tmpSuperPT t
+									, t.MaxPT AS '@MaxPT'
+								FROM #tmpPT t
 									INNER JOIN @tmpSetting s ON t.GroupID = s.GroupID
 																AND t.SubGroupID = s.SubGroupID
-								WHERE t.S4 < s.PT
+								WHERE t.MaxPT < s.PT
 								FOR XML PATH('Row')
 									, TYPE
 								)
@@ -194,6 +195,335 @@ BEGIN
 			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 			SET @ErrType = 63
 			SET @ErrCode = 101			
-		END		
+		END	
 	END
+	ELSE IF @roleid = 3
+	BEGIN
+		--check SB
+		SELECT @GroupID = 1, @GroupType = 153, @SubGroupID = 1
+		
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
+		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus) 
+		
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT)
+		SELECT cs.sporttype, cs.bettype, 0 IsLive, @GroupID, @SubGroupID,
+			(CASE WHEN cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end)*100 MaxPT
+		FROM CustSetting cs WITH(NOLOCK) 
+			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype 
+				AND s.IsLive = 0
+		WHERE cs.CustID = @custid
+			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
+		UNION ALL 
+		SELECT cs.sporttype, cs.bettype, 1 as IsLive, @GroupID, @SubGroupID,			
+			(CASE WHEN cs.mlivepositiontaking<co.maxlivepositiontaking THEN cs.mlivepositiontaking ELSE co.maxlivepositiontaking END)*100 MaxPT
+		FROM CustSetting cs WITH(NOLOCK) 
+			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype 
+				AND s.IsLive = 1
+		WHERE cs.CustID = @custid
+			AND cs.sporttype = 1
+			AND cs.bettype IN (1,3,7,8)
+		UNION ALL
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			,@GroupID 
+			,@SubGroupID
+			, cs.MasterPT AS MaxPT  			 
+		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype  
+				AND s.IsLive = cs.islive
+		WHERE cs.CustID = @custid		
+		
+		DELETE #SportBettypeFilter
+		
+		--check RNG Games
+		SELECT @GroupID = 2, @GroupType = 153, @SubGroupID = 2
+		
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
+		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
+		
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT)
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			,@GroupID 
+			,@SubGroupID
+			, cs.MasterPT AS MaxPT  			 
+		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
+			INNER JOIN #SportBettypeFilter ft ON cs.SportType = ft.sporttype
+												AND cs.BetType = ft.bettype
+												AND cs.IsLive = ft.islive
+		WHERE custid = @custid
+						
+		DELETE #SportBettypeFilter
+		
+		--Allbet & SA Gaming
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 5
+		
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
+		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
+		
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT)
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			, @GroupID 
+			, @SubGroupID
+			, cs.MasterPT AS MaxPT  			 
+		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
+			INNER JOIN #SportBettypeFilter ft ON cs.SportType = ft.sporttype
+												AND cs.BetType = ft.bettype
+												AND cs.IsLive = ft.islive
+		WHERE custid = @custid
+		
+		DELETE #SportBettypeFilter
+		
+		--Other Live Casino & RnG Games
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
+		
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive	
+		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
+		
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT)
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			, @GroupID 
+			, @SubGroupID
+			, cs.MasterPT AS MaxPT  			 
+		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
+			INNER JOIN #SportBettypeFilter ft ON cs.SportType = ft.sporttype
+												AND cs.BetType = ft.bettype
+												AND cs.IsLive = ft.islive
+		WHERE custid = @custid
+		
+		DELETE #SportBettypeFilter
+		
+		IF EXISTS (	
+			SELECT TOP 1 1
+			FROM #tmpPT t
+				INNER JOIN @tmpSetting s ON t.GroupID = s.GroupID
+											AND t.SubGroupID = s.SubGroupID
+			WHERE t.MaxPT < s.PT
+		)
+		BEGIN		
+			SET @xml = (
+						SELECT 20046 AS '@MsgID'
+							, 'Invalid Position Taking(max set by upline).' AS '@Msg'
+							, (
+								SELECT t.SportType AS '@SportType'
+									, t.BetType AS '@BetType'
+									, t.IsLive AS '@IsLive'
+									, t.MaxPT AS '@MaxPT'
+								FROM #tmpPT t
+									INNER JOIN @tmpSetting s ON t.GroupID = s.GroupID
+																AND t.SubGroupID = s.SubGroupID
+								WHERE t.MaxPT < s.PT
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @ErrType = 63
+			SET @ErrCode = 101			
+		END	
+	END
+	ELSE IF @roleid = 2
+	BEGIN
+		--check SB
+		SELECT @GroupID = 1, @GroupType = 153, @SubGroupID = 1
+		
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
+		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus) 
+		
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT, MinPT)
+		SELECT cs.sporttype, cs.bettype, 0 IsLive, @GroupID, @SubGroupID,
+			(CASE WHEN cs.apositiontaking<co.maxpositiontaking 
+					THEN CASE WHEN cs.apositiontaking < scs.apositiontaking THEN cs.apositiontaking ELSE scs.apositiontaking END 
+					ELSE CASE WHEN co.maxpositiontaking < scs.apositiontaking THEN co.maxpositiontaking ELSE scs.apositiontaking END 
+					END)*100 MaxPT,
+			co.minpositiontaking*100 as MinPT		
+		FROM CustSetting cs WITH(NOLOCK) 
+			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype 
+				AND s.IsLive = 0
+			INNER JOIN custsetting as scs with(NOLOCK) on ci.srecommend = @srecommend and cs.sporttype = scs.sporttype and cs.bettype = scs.bettype
+		WHERE cs.CustID = @custid
+			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
+		UNION ALL 
+		SELECT cs.sporttype, cs.bettype, 1 as IsLive, @GroupID, @SubGroupID,			
+			(CASE WHEN cs.alivepositiontaking<co.maxlivepositiontaking 
+					THEN CASE WHEN cs.alivepositiontaking < scs.alivepositiontaking THEN cs.alivepositiontaking ELSE scs.alivepositiontaking END 
+					ELSE CASE WHEN co.maxlivepositiontaking < scs.alivepositiontaking THEN co.maxlivepositiontaking ELSE scs.alivepositiontaking END 
+					END)*100 MaxPT,
+			co.minlivepositiontaking*100 as MinPT
+		FROM CustSetting cs WITH(NOLOCK) 
+			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype 
+				AND s.IsLive = 1
+			INNER JOIN custsetting as scs with(NOLOCK) on ci.srecommend = @srecommend and cs.sporttype = scs.sporttype and cs.bettype = scs.bettype	
+		WHERE cs.CustID = @custid
+			AND cs.sporttype = 1
+			AND cs.bettype IN (1,3,7,8)
+		UNION ALL
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			,@GroupID 
+			,@SubGroupID
+			,(CASE WHEN cs.AgentPT< scs.AgentPT THEN cs.AgentPT ELSE scs.AgentPT END) MaxPT			 
+			,cs.MinPT
+		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype  
+				AND s.IsLive = cs.islive
+			INNER JOIN dbo.CustPTSetting3rd_Agent scs WITH (NOLOCK)  	
+				ON scs.custid = @srecommend
+				AND	scs.SportType = cs.sporttype  
+				AND scs.BetType = cs.bettype  
+				AND scs.IsLive = cs.islive
+		WHERE cs.CustID = @custid
+		
+		DELETE #SportBettypeFilter
+		
+		--check RNG Games
+		SELECT @GroupID = 2, @GroupType = 153, @SubGroupID = 2
+		
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
+		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
+		
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT, MinPT)
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			,@GroupID 
+			,@SubGroupID
+			,(CASE WHEN cs.AgentPT< scs.AgentPT THEN cs.AgentPT ELSE scs.AgentPT END) MaxPT			 
+			,cs.MinPT
+		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype  
+				AND s.IsLive = cs.islive
+			INNER JOIN dbo.CustPTSetting3rd_Agent scs WITH (NOLOCK)  	
+				ON scs.custid = @srecommend
+				AND	scs.SportType = cs.sporttype  
+				AND scs.BetType = cs.bettype  
+				AND scs.IsLive = cs.islive
+		WHERE cs.CustID = @custid
+						
+		DELETE #SportBettypeFilter
+		
+		--Allbet & SA Gaming
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 5
+		
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive)
+		SELECT SportType,Bettype,IsLive
+		FROM dbo.f_LiteMode_CustSetting_SportBetFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus) 
+		
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT, MinPT)
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			,@GroupID 
+			,@SubGroupID
+			,(CASE WHEN cs.AgentPT< scs.AgentPT THEN cs.AgentPT ELSE scs.AgentPT END) MaxPT			 
+			,cs.MinPT
+		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype  
+				AND s.IsLive = cs.islive
+			INNER JOIN dbo.CustPTSetting3rd_Agent scs WITH (NOLOCK)  	
+				ON scs.custid = @srecommend
+				AND	scs.SportType = cs.sporttype  
+				AND scs.BetType = cs.bettype  
+				AND scs.IsLive = cs.islive
+		WHERE cs.CustID = @custid
+		
+		DELETE #SportBettypeFilter
+		
+		--Other Live Casino & RnG Games
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
+		
+		INSERT INTO #tmpPT(sporttype, bettype, IsLive,GroupID,SubGroupID, MaxPT, MinPT)
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			,@GroupID 
+			,@SubGroupID
+			,(CASE WHEN cs.AgentPT< scs.AgentPT THEN cs.AgentPT ELSE scs.AgentPT END) MaxPT			 
+			,cs.MinPT
+		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype  
+				AND s.IsLive = cs.islive
+			INNER JOIN dbo.CustPTSetting3rd_Agent scs WITH (NOLOCK)  	
+				ON scs.custid = @srecommend
+				AND	scs.SportType = cs.sporttype  
+				AND scs.BetType = cs.bettype  
+				AND scs.IsLive = cs.islive
+		WHERE cs.CustID = @custid
+		
+		DELETE #SportBettypeFilter
+		
+		IF EXISTS (	
+			SELECT TOP 1 1
+			FROM #tmpPT t
+				INNER JOIN @tmpSetting s ON t.GroupID = s.GroupID
+											AND t.SubGroupID = s.SubGroupID
+			WHERE t.MaxPT < s.PT
+				OR t.MinPT > s.PT
+		)
+		BEGIN		
+			SET @xml = (
+						SELECT 20047 AS '@MsgID'
+							, 'Invalid Position Taking(min/max set by upline).' AS '@Msg'
+							, (
+								SELECT t.SportType AS '@SportType'
+									, t.BetType AS '@BetType'
+									, t.IsLive AS '@IsLive'
+									, t.MaxPT AS '@MaxPT'
+									, t.MinPT AS '@MinPT'
+								FROM #tmpPT t
+									INNER JOIN @tmpSetting s ON t.GroupID = s.GroupID
+																AND t.SubGroupID = s.SubGroupID
+								WHERE t.MaxPT < s.PT
+									OR t.MinPT > s.PT
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @ErrType = 62
+			SET @ErrCode = 102			
+		END	
+	END
+	
+	DROP TABLE #tmpPT
+	DROP TABLE #SportBettypeFilter
 END	

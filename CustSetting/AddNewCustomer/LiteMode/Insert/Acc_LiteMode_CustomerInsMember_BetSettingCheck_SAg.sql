@@ -94,9 +94,6 @@ BEGIN
 		IF EXISTS(SELECT TOP 1 1
 				FROM @BetSetting
 				WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)
-					OR (@SystemID BETWEEN 6 AND 9 --789y ExtNAP and Alpha 
-						AND (Minbet < 1 OR MaxBet < 1 OR MaxperMatch < 1)
-						)
 				)
 		BEGIN
 			SET @xml = (
@@ -106,10 +103,7 @@ BEGIN
 							SELECT SportType AS '@SportType'
 								, BetType AS '@BetType'
 							FROM @BetSetting
-							WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)
-								OR (@SystemID BETWEEN 6 AND 9 --789y ExtNAP and Alpha
-									AND (Minbet < 1 OR MaxBet < 1 OR MaxperMatch < 1)
-									)
+							WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)								
 							FOR XML PATH('Row')
 								, TYPE
 							)

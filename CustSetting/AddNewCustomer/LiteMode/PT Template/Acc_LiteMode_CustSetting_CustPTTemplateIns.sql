@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateIns] 
 	@CustID INT,
+	@SubAccID INT = 0,
 	@TemplateID INT = 0 OUTPUT,
 	@TemplateName VARCHAR(50),
 	@Settings VARCHAR(MAX),
@@ -38,6 +39,7 @@ BEGIN
 	DECLARE @startRun DATETIME
 			,@endRun DATETIME
 			,@duration INT
+			,@roleid TINYINT
 	
 	SELECT @startRun = GETDATE()	
 	
@@ -73,7 +75,11 @@ BEGIN
 	
 	IF @ErrCode > 0
 		RETURN;
-		
+	
+	SELECT @roleid = roleid 
+	FROM custinfo WITH(NOLOCK)
+	WHERE custid = @custid
+	
 	--reset IsDefault = 0 for existing template is default
 	IF @IsDefault = 1
 	BEGIN
@@ -102,10 +108,15 @@ BEGIN
 	SET @endRun=GETDATE()
 	SET @duration=datediff(millisecond,@startRun,@endRun)
 	
-	 DECLARE @LogSPData VARCHAR(MAX)
-	 
+	 DECLARE @LogSPData VARCHAR(MAX),
+		@ActionID INT
+		
+	SELECT @ActionID = CASE WHEN @roleid = 4 THEN 475
+							WHEN @roleid = 3 THEN 480
+							WHEN @roleid = 2 THEN 483 END	 
     --Log info
     SELECT @LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
+						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
 						'TemplateName="'+ coalesce(cast(@TemplateName as VARCHAR(50)),space(1)) + '" ' +
 						'IsDefault="'+ coalesce(cast(@IsDefault as VARCHAR(1)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
@@ -120,7 +131,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @CustID,
 				@CustID = @CustID,
-				@ActionID = 475,
+				@ActionID = @ActionID,
 				@TrackingValue = @LogSPData,				
 				@duration = @duration	
 				

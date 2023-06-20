@@ -93,9 +93,8 @@ BEGIN
 								AND pdt.SettingType IN (25)
 								AND pdt.IsLive		= 0
 						WHERE 
-							(	tmp.Discount		< 0
-								OR	tmp.Discount	> pdt.maxDiscount
-							))
+							tmp.Discount		< 0								
+							)
 		BEGIN
 			SET @xml = (
 					SELECT 1 AS '@MsgID'
@@ -110,8 +109,7 @@ BEGIN
 									AND pdt.SettingType IN (25)
 									AND pdt.IsLive		= 0
 							WHERE 
-								(	tmp.Discount		< 0
-									OR	tmp.Discount	> pdt.maxDiscount
+								(	tmp.Discount		< 0									
 								)
 							FOR XML PATH('Row')
 								, TYPE
@@ -120,7 +118,7 @@ BEGIN
 						, TYPE
 					)		
 			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @MsgType = 51
+			SET @MsgType = 52
 			SET @ErrCode = 101
 			
 			RETURN
@@ -171,9 +169,8 @@ BEGIN
 								AND pdt.SettingType IN (19)
 								AND pdt.IsLive		= 0
 						WHERE 
-							(	tmp.Discount		< 0
-								OR	tmp.Discount	> pdt.maxDiscount
-							))
+							tmp.Discount		< 0								
+							)
 		BEGIN
 			SET @xml = (
 					SELECT 1 AS '@MsgID'
@@ -188,8 +185,7 @@ BEGIN
 									AND pdt.SettingType IN (19)
 									AND pdt.IsLive		= 0
 							WHERE 
-								(	tmp.Discount		< 0
-									OR	tmp.Discount	> pdt.maxDiscount
+								(	tmp.Discount		< 0									
 								)
 							FOR XML PATH('Row')
 								, TYPE

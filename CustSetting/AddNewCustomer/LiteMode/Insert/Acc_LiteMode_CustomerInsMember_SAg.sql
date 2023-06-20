@@ -25,13 +25,6 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	--Parlay Max Payout
 	@SettingType27 VARCHAR(MAX)= '', --SB Parlay Max Payout
 	
-	--WinLoss Limit
-	@SettingType6 VARCHAR(MAX)= '',-- VS
-	@SettingType22 VARCHAR(MAX)= '', -- RNG Lottery, LCS
-	
-	--Loss Limit
-	@SettingType12 VARCHAR(MAX)= '',-- BBIN
-	
 	--PT
 	@TemplateName VARCHAR(50) = '',
 	@SettingType28 VARCHAR(MAX)= '',-- SB
@@ -78,18 +71,7 @@ AS
 		- @SettingType27 = '<Root>
 						<R SportType="1" BetType="9" SingleMP="1000" Combo2="1000" Combo35="1000" Combo6="1000" />
 						<R SportType="99" BetType="1" SingleMP="1000" Combo2="1000" Combo35="1000" Combo6="1000" />
-					</Root>'
-		- @SettingType6 = '<Root>
-						<R SportType="9908" BetType="1201" MaxWinlimit="2" MaxLosslimit="20000" IsAutoReset="0" />
-						...
-						<R SportType="170" BetType="3701" MaxWinlimit="2" MaxLosslimit="20000" IsAutoReset="0" />
-					</Root>'
-		- @SettingType22 = '<Root>
-						<R SportType="9909" BetType="3700" MaxWinlimit="2" MaxLosslimit="20000" IsAutoReset="0" />
-					</Root>'
-		- @SettingType12 = '<Root>
-						<R SportType="241" BetType="3300" MaxLosslimit="20000" IsAutoReset="0"  />
-					</Root>'
+					</Root>'		
 		- @SettingType28 = '<Root>
 						<R SportType="1" BetType="1" IsLive="0" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
 						<R SportType="1" BetType="1" IsLive="1" SuperPT="90" IsAuto="0" AutoPT="0" MasterPT="0" MinPT="0" />
@@ -201,27 +183,6 @@ BEGIN
 			RETURN
 		END
 	END
-	
-	  ----- 20130717@Lukas -------------------
-	DECLARE @lastMINUTEMemberCount INT
-
-	SELECT @lastMINUTEMemberCount = COUNT(1)
-	  FROM Customer c WITH(NOLOCK)
-		INNER JOIN custinfo ci WITH(NOLOCK) ON c.custid = ci.custid
-	 WHERE ci.srecommend = @srecommend
-		AND ci.roleid = 3
-		AND creatdate > DATEADD(MINUTE, -10, CURRENT_TIMESTAMP)
-		
-	IF @lastMINUTEMemberCount > 100
-	BEGIN		
-		Select	@ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'Sorry. You cannot create customer too often.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40029,@Language)
-					end,
-				@ErrCode = 998	
-		RETURN 
-	END
-    ----- / 20130717@Lukas-----------------
 	
 	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
 	SET @CurrentDate  = CONVERT(DATE,GETDATE())
@@ -478,23 +439,6 @@ BEGIN
 	IF @ErrCode > 0 
 		RETURN;	
 		
-	--Check WinLoss Limit
-	EXEC Acc_LiteMode_CustomerInsMember_WinLossLimitCheck_SAg
-		@srecommend = @srecommend,
-		--WinLoss Limit
-		@SettingType6 = @SettingType6,-- VS
-		@SettingType22 = @SettingType22, -- RNG Lottery, LCS
-		
-		--Loss Limit
-		@SettingType12 = @SettingType12,-- BBIN
-				
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg  = @ErrMsg OUTPUT	
-
-	IF @ErrCode > 0 
-		RETURN;		
-		
 	--Check PT
 	EXEC Acc_LiteMode_CustomerInsMember_PTCheck_SAg
 		@srecommend = @srecommend,
@@ -591,13 +535,6 @@ BEGIN
 			
 		--Parlay Max Payout
 		@SettingType27 = @SettingType27, --SB Parlay Max Payout
-		
-		--WinLoss Limit
-		@SettingType6 = @SettingType6,-- VS
-		@SettingType22 = @SettingType22, -- RNG Lottery, LCS
-		
-		--Loss Limit
-		@SettingType12 = @SettingType12,-- BBIN
 		
 		--PT
 		@SettingType28 = @SettingType28,-- SB
@@ -713,7 +650,9 @@ BEGIN
     'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
     'srecommend="'+ COALESCE(CAST(@srecommend AS VARCHAR(50)), SPACE(1)) + '" ' +	
     'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +
-    'site="'+ COALESCE(CAST(@site AS VARCHAR(50)), SPACE(1)) + '" />'
+    'site="'+ COALESCE(CAST(@site AS VARCHAR(50)), SPACE(1)) +
+	'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1)) + '" ' +
+    'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(5000)), SPACE(1)) + '" />'
 	
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
@@ -889,17 +828,6 @@ BEGIN
 			Child_DisplayOrder  INT
 			)		
 	
-	DECLARE @NewLimitTbl TABLE (
-			SettingType 		TINYINT
-			, SportType			SMALLINT
-			, BetType			SMALLINT
-			, MaxWinLimit		SMALLMONEY 
-			, MaxLossLimit		MONEY 
-			, IsAutoReset		BIT
-			, GroupID			TINYINT
-			, Child_DisplayOrder  INT
-			)
-			
 	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder)
 	SELECT SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)	
@@ -999,49 +927,6 @@ BEGIN
 												AND b.IsLive = p.IsLive
 	WHERE p.SettingType IN (1,18)	
 	
-	--WinLoss Limit
-	SELECT @xml = CONVERT(XML,@SettingType6)
-		
-	INSERT INTO @NewLimitTbl(
-		SettingType,
-		SportType, 
-		BetType, 
-		MaxWinLimit, 
-		MaxLossLimit, 
-		IsAutoReset)
-	SELECT 6 as SettingType,
-		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-		T.c.query('.').value('(R/@MaxWinLimit)[1]', 'smallmoney') AS MaxWinLimit,
-		T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
-		T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
-	FROM  @xml.nodes('/Root/R') T(c)
-	
-	SELECT @xml = CONVERT(XML,@SettingType22)
-			
-	INSERT INTO @NewLimitTbl(
-		SettingType,
-		SportType, 
-		BetType, 
-		MaxWinLimit, 
-		MaxLossLimit, 
-		IsAutoReset)
-	SELECT 22 as SettingType,
-		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-		T.c.query('.').value('(R/@MaxWinLimit)[1]', 'smallmoney') AS MaxWinLimit,
-		T.c.query('.').value('(R/@MaxLossLimit)[1]', 'money') AS MaxLossLimit,
-		T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
-	FROM  @xml.nodes('/Root/R') T(c)	
-	
-	UPDATE b
-	SET b.GroupID = p.GroupID,
-		b.Child_DisplayOrder = p.Child_DisplayOrder
-	FROM @NewLimitTbl b
-		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
-												AND b.BetType = p.BetType												
-	WHERE p.SettingType IN (6,22)	
-	
 	--log all settings
 	SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '">' 
 			+ '<Group ID="1">'--SB
@@ -1066,7 +951,7 @@ BEGIN
 								BetType, 
 								IsLive,
 								SuperPT,
-								IsAutoSuperPT,
+								IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,
 								MasterPT,				
 								MasterMinPT	MinPT
@@ -1087,29 +972,21 @@ BEGIN
 						) as VARCHAR(max))
 			+ '</BetSetting>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT,
+				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
 						FROM @tblPT18
 						WHERE GroupID = 2
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
 						) as VARCHAR(max))
-			+ '</PT>'
-			+ '<WinLossLimit GroupType="155">'
-				+ CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
-						FROM @NewLimitTbl
-						WHERE GroupID = 2
-						ORDER BY Child_DisplayOrder
-						FOR XML RAW('R')
-						) as VARCHAR(max))
-			+ '</WinLossLimit>'
+			+ '</PT>'			
 			+ '</Group>'
 			+ '<Group ID="3">'--LCS
 			+ '<Discount GroupType="156">' 
 				+ COALESCE(REPLACE(REPLACE(@SettingType19,'<Root>',''),'</Root>',''),SPACE(1))
 			+ '</Discount>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT,
+				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
 						FROM @tblPT18
 						WHERE GroupID = 3
@@ -1117,17 +994,6 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max))
 			+ '</PT>'
-			+ '<WinLossLimit GroupType="155">'
-				+ CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
-						FROM @NewLimitTbl
-						WHERE GroupID = 3
-						ORDER BY Child_DisplayOrder
-						FOR XML RAW('R')
-						) as VARCHAR(max))
-			+ '</WinLossLimit>'
-			+ '<LossLimit GroupType="157">' 
-				+ COALESCE(REPLACE(REPLACE(@SettingType12,'<Root>',''),'</Root>',''),SPACE(1))
-			+ '</LossLimit>'			
 			+ '</Group>'
 			+ '</Root>'
 	
