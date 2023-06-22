@@ -23,6 +23,7 @@ AS
 		- 20220922@Tacy: NAP CM - Update flow for All sites - Basketball and Remove Dengerlevel 14, 15 [RedmineID: #178053]
 		- 20221110@Tacy: LAP - Support Danger Level report, modify ActionID writelog [RedmineID: #179078]
 		- 20221226@Tacy: NAP CM - Split 789y Site [RedmineID: #184879]
+		- 20230622@Tacy: NAP CM - Saba Danger Level - list Zhifeng032 & ManbetX same danger category as Haifa site [RedmineID: #190161]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -175,9 +176,9 @@ BEGIN
 			WHEN bb.CustID IS NOT NULL THEN 13
 			WHEN isBasketball=1 THEN
 				CASE
-					WHEN (s.custid IS NOT NULL AND s.site in ('haifa','livv88sw'))
+					WHEN (s.custid IS NOT NULL AND s.site in ('haifa','livv88sw','Zhifeng032','ManbetX'))
 						OR (s.custid IS NULL AND ss.SiteLabel='789y')		
-						OR s.currency=96											THEN -- Flow B : Haifa, 789y, Livv88sw site and USDT currency
+						OR s.currency=96											THEN -- Flow B : Haifa, 789y, Livv88sw, Zhifeng032, ManbetX site and USDT currency
 							--CASE WHEN basketball + basketballParlay < 8000 OR isbasketballParlay = 0 THEN
 							CASE 
 								WHEN basketball <-140000								THEN 1
