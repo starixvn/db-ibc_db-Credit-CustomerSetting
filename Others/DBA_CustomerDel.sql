@@ -27,6 +27,7 @@ AS
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
 */		
@@ -117,9 +118,7 @@ BEGIN
 	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
-	DELETE dbo.Dep_CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.Dep_AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 
 	--DCS table
 	DELETE dbo.Dep_CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -214,9 +213,7 @@ BEGIN
 	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
-	DELETE dbo.Dep_CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.Dep_AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 
 	--DCS table
 	DELETE dbo.Dep_CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -309,9 +306,7 @@ BEGIN
 	DELETE Dep_CustProductSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE Dep_CustSetting_AGCasino WHERE custid IN (SELECT custID FROM @tmp_custID)
 
-	DELETE dbo.Dep_CustCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.Dep_CustSettingGame WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.Dep_AgentCommRate WHERE custid IN (SELECT custID FROM @tmp_custID)
 
 	--DCS table
 	DELETE dbo.Dep_CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -382,7 +377,6 @@ BEGIN
 	DELETE Dep_CustProductSetting WHERE custid = @custid
 	DELETE Dep_CustSetting_AGCasino WHERE custid = @custid
 
-	DELETE dbo.Dep_CustCommRate WHERE custid = @custid
 	DELETE dbo.Dep_CustSettingGame WHERE custid = @custid
 
 	--DCS table
