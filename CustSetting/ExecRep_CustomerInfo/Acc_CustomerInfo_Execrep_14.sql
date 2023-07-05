@@ -30,8 +30,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_14]
 	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
 	@SettingType18 VARCHAR(MAX)= '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 	
-	-- Myanmar Odds
-	@discountMyanmarOdds DECIMAL(9,8) = 0,	
+	-- Myanmar Odds		
 	@IsMyanmarOdds BIT = 0,
 	
 	@CreationStatus TINYINT = 0,
@@ -118,6 +117,10 @@ BEGIN
 		
 		IF (@RoleID = 3) 
 			SET @DirectUplineID = @srecommend
+		ELSE IF (@RoleID = 2)
+			SET @DirectUplineID = @mrecommend	
+		ELSE IF @RoleID = 1
+			SET @DirectUplineID = @recommend	
 			
 		IF @DirectUplineID <= 100 OR EXISTS( SELECT 1 FROM Acc_CustDirect WITH (NOLOCK) WHERE Custid = @DirectUplineID)
 		BEGIN
@@ -214,11 +217,11 @@ BEGIN
 				
 				IF @RoleID = 3
 					SET @UplineID = @srecommend
-				/*ELSE IF @RoleID = 2
-					SET @UplineID = @MasterID
+				ELSE IF @RoleID = 2
+					SET @UplineID = @mrecommend
 				ELSE IF @RoleID = 1
-					SET @UplineID = @AgentID		
-				*/
+					SET @UplineID = @recommend		
+				
 				
 				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo)
 				SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced, cs.SuspendInfo,cs.CloseInfo
@@ -398,7 +401,11 @@ BEGIN
 				AutoSuperPT		SMALLMONEY,
 				MasterPT		SMALLMONEY,				
 				MasterMinPT		SMALLMONEY,
-				MasterMaxPT		SMALLMONEY
+				MasterMaxPT		SMALLMONEY,
+				IsAutoMasterPT	BIT,
+				AutoMasterPT	SMALLMONEY,
+				AgentPT			SMALLMONEY,				
+				AgentMinPT		SMALLMONEY
 				)
 		DECLARE @tblPT18 TABLE (
 				SportType		SMALLINT,
@@ -409,7 +416,11 @@ BEGIN
 				AutoSuperPT		SMALLMONEY,
 				MasterPT		SMALLMONEY,				
 				MasterMinPT		SMALLMONEY,
-				MasterMaxPT		SMALLMONEY
+				MasterMaxPT		SMALLMONEY,
+				IsAutoMasterPT	BIT,
+				AutoMasterPT	SMALLMONEY,
+				AgentPT			SMALLMONEY,				
+				AgentMinPT		SMALLMONEY
 				)
 				
 		DECLARE @xml XML
@@ -423,70 +434,139 @@ BEGIN
 		BEGIN
 			SELECT @xml = CONVERT(XML, @SettingType28)
 			
-			INSERT INTO @tblPT28(SportType, 
-				BetType, 
-				IsLive,
-				SuperPT,
-				IsAutoSuperPT,
-				AutoSuperPT,
-				MasterPT,				
-				MasterMinPT)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
-				T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
-				T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
-				T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
-				T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
-				T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
-				T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
-			FROM  @xml.nodes('/Root/R') T(c) 			
+			IF @Roleid = 3
+			BEGIN
+				INSERT INTO @tblPT28(SportType, 
+					BetType, 
+					IsLive,
+					SuperPT,
+					IsAutoSuperPT,
+					AutoSuperPT,
+					MasterPT,				
+					MasterMinPT)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+					T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+					T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+					T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+					T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+					T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+					T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+				FROM  @xml.nodes('/Root/R') T(c)
+			END
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO @tblPT28(SportType, 
+					BetType, 
+					IsLive,
+					MasterPT,
+					IsAutoMasterPT,
+					AutoMasterPT,
+					AgentPT,				
+					AgentMinPT)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+					T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+					T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+					T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoMasterPT,
+					T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoMasterPT,
+					T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT,
+					T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS AgentMinPT
+				FROM  @xml.nodes('/Root/R') T(c) 
+			END
 		END
 		
 		IF ISNULL(@SettingType1,'') <> ''
 		BEGIN
 			SELECT @xml = CONVERT(XML, @SettingType1)
 			
-			INSERT INTO @tblPT18(SportType, 
-				BetType, 
-				IsLive,
-				SuperPT,
-				IsAutoSuperPT,
-				AutoSuperPT,
-				MasterPT,				
-				MasterMinPT)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
-				T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
-				T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
-				T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
-				T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
-				T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
-				T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
-			FROM  @xml.nodes('/Root/R') T(c)
+			IF @roleid = 3
+			BEGIN
+				INSERT INTO @tblPT18(SportType, 
+					BetType, 
+					IsLive,
+					SuperPT,
+					IsAutoSuperPT,
+					AutoSuperPT,
+					MasterPT,				
+					MasterMinPT)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+					T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+					T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+					T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+					T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+					T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+					T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+				FROM  @xml.nodes('/Root/R') T(c)
+			END
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO @tblPT18(SportType,
+					BetType, 
+					IsLive,
+					MasterPT,
+					IsAutoMasterPT,
+					AutoMasterPT,
+					AgentPT,				
+					AgentMinPT)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+					T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+					T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+					T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoMasterPT,
+					T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoMasterPT,
+					T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT,
+					T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS AgentMinPT
+				FROM  @xml.nodes('/Root/R') T(c)
+			END
 		END
 		
 		IF ISNULL(@SettingType18,'') <> ''
 		BEGIN
 			SELECT @xml = CONVERT(XML, @SettingType18)
 			
-			INSERT INTO @tblPT18(SportType, 
-				BetType, 
-				IsLive,
-				SuperPT,
-				IsAutoSuperPT,
-				AutoSuperPT,
-				MasterPT,				
-				MasterMinPT)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
-				T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
-				T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
-				T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
-				T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
-				T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
-				T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
-			FROM  @xml.nodes('/Root/R') T(c)
-		END
+			IF @roleid = 3
+			BEGIN
+				INSERT INTO @tblPT18(SportType, 
+					BetType, 
+					IsLive,
+					SuperPT,
+					IsAutoSuperPT,
+					AutoSuperPT,
+					MasterPT,				
+					MasterMinPT)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+					T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+					T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+					T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+					T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+					T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+					T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+				FROM  @xml.nodes('/Root/R') T(c)
+			END
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO @tblPT18(SportType,
+					BetType, 
+					IsLive,
+					MasterPT,
+					IsAutoMasterPT,
+					AutoMasterPT,
+					AgentPT,				
+					AgentMinPT)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+					T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+					T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+					T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoMasterPT,
+					T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoMasterPT,
+					T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT,
+					T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS AgentMinPT
+				FROM  @xml.nodes('/Root/R') T(c)
+			END
+		END		
 				
 		BEGIN TRY
 			IF @RoleID = 3
@@ -557,6 +637,74 @@ BEGIN
 				FROM @tblPT18 t
 					INNER JOIN #SportBettypeFilter1 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
 			END
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO #tmpcustsetting([custid], [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
+				SELECT @custid, sporttype, bettype,0 as spositiontaking, MasterPT, AgentPT, 0 as slivepositiontaking, 0 as mlivepositiontaking, 0 alivepositiontaking, 0 as autolivepositiontaking, 0 as autopositiontaking, 0 as adiscount, 0 as sdiscount, 0 as groupa, 0 as groupb, 0 as groupc, 0 as groupd, 0 groupe, 0 groupf, 0 playerdiscount, 0 discount, 0 as isautopositiontaking, 0 as isautolivepositiontaking, AutoMasterPT, 0 as autolivempositiontaking, IsAutoMasterPT, 0 as isautolivempositiontaking
+				FROM @tblPT28
+				WHERE IsLive = 0
+				
+				--update live for sporttype = 1, bettype in (1,3,7,8)
+				UPDATE cs
+				SET alivepositiontaking = AgentPT,
+					isautomlivepositiontaking = IsAutoMasterPT,
+					automlivepositiontaking = AutoMasterPT,
+					mlivepositiontaking = MasterPT
+				FROM #tmpcustsetting cs
+					INNER JOIN @tblPT28 t ON cs.sporttype = t.sporttype
+											AND cs.bettype = t.bettype
+											AND t.IsLive = 1
+			
+				INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
+				SELECT @custid, sporttype, bettype, AgentMinPT, 0.9 as maxpositiontaking, 
+						ISNULL((SELECT AgentMinPT FROM @tblPT28 t2 
+						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1),0) as minlivepositiontaking
+						, 0.9 as maxlivepositiontaking
+				FROM @tblPT28 t
+				WHERE IsLive = 0
+				
+				IF @@Error <> 0
+				BEGIN
+					--Error Occurs
+					SELECT @ErrCode=118				
+
+					-- ROLLBACK MANUALLY				
+					DELETE custoverride with (ROWLOCK) where custid =  @custid
+								
+					RETURN
+				END	
+				
+				INSERT INTO [dbo].[CustPTSetting3rd_Agent]
+				   ([CustID]
+				   ,[SportType]
+				   ,[BetType]
+				   ,[IsLive]
+				   ,[SuperPT]
+				   ,[MasterPT]
+				   ,[AgentPT]
+				   ,[IsAutoMasterPT]
+				   ,[AutoMasterPT]
+				   ,[IsAutoSuperPT]
+				   ,[AutoSuperPT]
+				   ,[MinPT]
+				   ,[MaxPT])
+				SELECT 
+					@CustID
+					,t.SportType
+					,t.BetType
+					,t.IsLive
+					,0 as SuperPT
+					,t.MasterPT
+					,t.AgentPT
+					,t.IsAutoMasterPT
+					,t.AutoMasterPT
+					,0 as IsAutoSuperPT
+					,0 as AutoSuperPT
+					,t.AgentMinPT
+					,100 MaxPT
+				FROM @tblPT18 t
+					INNER JOIN #SportBettypeFilter1 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
+			END
 		END TRY
 		BEGIN CATCH 
 			SELECT @ErrCode = 1			
@@ -606,7 +754,7 @@ BEGIN
 		END
 		
 		BEGIN TRY
-			IF @RoleID = 3
+			IF @RoleID IN (3,2)
 			BEGIN				
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
 				   ([CustID]
@@ -659,7 +807,7 @@ BEGIN
 		END
 		
 		BEGIN TRY
-			IF @RoleID = 3
+			IF @RoleID IN (3,2)
 			BEGIN
 				INSERT INTO [dbo].[CustDiscount3rd_Agent]
 					   ([CustID]
@@ -698,13 +846,15 @@ BEGIN
 		WHERE SettingType IN (6,22,12)
 					
 		BEGIN TRY
-			INSERT INTO [dbo].[CustWinLossLimit_Agent]
-					([CustID]
-					,[SportType]
-					,[BetType]
-					,[MaxWinLimit]
-					,[MaxLossLimit]
-					,[IsAutoReset])
+			IF @roleid = 3
+			BEGIN
+				INSERT INTO [dbo].[CustWinLossLimit_Agent]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[MaxWinLimit]
+						,[MaxLossLimit]
+						,[IsAutoReset])
 				SELECT
 					@CustID
 					,cs.SportType
@@ -715,6 +865,27 @@ BEGIN
 				FROM dbo.CustWinLossLimit_Agent cs WITH(NOLOCK)
 					INNER JOIN #SportBettypeFilter6 f ON f.Bettype = cs.BetType AND f.SportType = cs.SportType				
 				WHERE cs.custid = @srecommend	
+			END	
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO [dbo].[CustWinLossLimit_Agent]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[MaxWinLimit]
+						,[MaxLossLimit]
+						,[IsAutoReset])
+				SELECT
+					@CustID
+					,cs.SportType
+					,cs.BetType
+					,cs.MaxWinLimit
+					,cs.MaxLossLimit
+					,cs.IsAutoReset
+				FROM dbo.CustWinLossLimit_Agent cs WITH(NOLOCK)
+					INNER JOIN #SportBettypeFilter6 f ON f.Bettype = cs.BetType AND f.SportType = cs.SportType				
+				WHERE cs.custid = @mrecommend
+			END
 		END TRY
 		BEGIN CATCH 
 			SELECT @ErrCode = 6			
@@ -760,6 +931,15 @@ BEGIN
 					INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
 				WHERE	csla.CustID = @srecommend
 			END	
+			ELSE IF @roleid = 2
+			BEGIN			
+			    INSERT INTO	dbo.CustStakeLevel_Agent
+					(	CustID , SportType     , BetType     , StakeLevelList     )
+				SELECT	@CustID, csla.SportType, csla.BetType, csla.StakeLevelList
+				FROM	dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
+					INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
+				WHERE	csla.CustID = @mrecommend			
+			END
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 7			
@@ -808,6 +988,62 @@ BEGIN
 				FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter16 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 				WHERE custid = @srecommend
+			END
+			ELSE IF @RoleID = 2
+			BEGIN
+				--Min: max(master.minbet; super.minbet)
+				--Max: min(master.maxbet; super.maxbet)
+				--Max Per Match: min(master.maxpermatch; super.maxpermatch)
+				DECLARE @BetGamelimitAgent TABLE(
+						SportType SMALLINT,
+						BetType SMALLINT,
+						MinBet MONEY,
+						MaxBet MONEY,
+						MaxPerMatch MONEY
+					)
+
+				DECLARE @BetGameUnlimit TABLE(
+						SportType SMALLINT,
+						BetType SMALLINT,
+						IsAllowUnlimit BIT
+					)
+				INSERT INTO @BetGamelimitAgent
+				SELECT smcs.SportType,smcs.BetType,
+						 Max(case when MinBet = 0 then NULL else MinBet end) MinBet,
+						 Min(case when MaxBet = 0 then NULL else MaxBet end) MaxBet,
+						 Min(case when MaxPerMatch = 0 then NULL else MaxPerMatch end) MaxPerMatch
+				FROM dbo.CustBetSetting3rd_Agent smcs WITH (NOLOCK)
+					INNER JOIN #SportBettypeFilter9 s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
+				WHERE smcs.custid = @srecommend 
+						OR smcs.custid = @mrecommend
+				GROUP BY smcs.SportType,smcs.BetType
+			
+				INSERT INTO @BetGameUnlimit				
+				SELECT cs.SportType,cs.BetType,
+						CASE WHEN (cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0) 
+									OR (ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0) THEN 1 ELSE 0 END AS IsAllowUnlimit
+				FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
+					INNER JOIN #SportBettypeFilter9 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+					INNER JOIN dbo.ProductBetSetting ps WITH (NOLOCK) ON ps.Sporttype = cs.SportType AND ps.Bettype = cs.BetType
+				WHERE cs.custid = @srecommend AND ps.Currency = @_Currency
+
+				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
+				   ([CustID]
+				   ,[SportType]
+				   ,[BetType]
+				   ,[MinBet]
+				   ,[MaxBet]
+				   ,[MaxPerMatch])
+				SELECT
+					@CustID
+					,cs.SportType
+					,cs.BetType
+					,CASE WHEN bu.IsAllowUnlimit = 0 AND ISNULL(cs.MinBet,0) < ps.MinBet THEN ps.MinBet ELSE ISNULL(cs.MinBet,0) END AS MinBet
+					,CASE WHEN bu.IsAllowUnlimit = 0 AND ISNULL(cs.MaxBet,0) > ps.MaxBet THEN ps.MaxBet ELSE ISNULL(cs.MaxBet,0) END AS MaxBet
+					,CASE WHEN bu.IsAllowUnlimit = 0 AND ISNULL(cs.MaxPerMatch,0) > ps.MaxPerMatch THEN ps.MaxPerMatch ELSE ISNULL(cs.MaxPerMatch,0) END AS MaxPerMatch
+				FROM @BetGamelimitAgent cs
+					INNER JOIN @BetGameUnlimit bu ON cs.SportType = bu.SportType AND bu.BetType = cs.BetType
+					INNER JOIN dbo.ProductBetSetting ps WITH (NOLOCK) ON cs.SportType = ps.SportType AND bu.BetType = ps.BetType AND ps.Currency = @_Currency
 			END
 		END TRY
 		BEGIN CATCH 
@@ -901,7 +1137,7 @@ BEGIN
 				--WHERE MaxBet >= 0 AND MaxBet < 1
 			END
 
-			IF @RoleID IN (3)
+			IF @RoleID IN (3,2)
 			BEGIN
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
 				   ([CustID]
@@ -972,7 +1208,7 @@ BEGIN
 		END
 
 		BEGIN TRY
-			IF @RoleID = 3
+			IF @RoleID IN (3,2)
 			BEGIN				
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
 				   ([CustID]
@@ -1046,29 +1282,32 @@ BEGIN
 				T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
 			FROM   @xml.nodes('/Root/R') T(c)
 			
-			UPDATE t
-			SET groupa = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-							THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1)
-							ELSE groupa END,
-				groupb = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-							THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 3)
-							ELSE groupb END,
-				groupc = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-							THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 7)
-							ELSE groupc END,
-				groupd = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-							THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 8)
-							ELSE groupd END,
-				adiscount = CASE WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
-									THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4)
-								WHEN bettype = 5
-									THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5)
-								ELSE adiscount END			
-			FROM #tmpcustsetting t
+			IF @roleid IN (3,2)
+			BEGIN
+				UPDATE t
+				SET groupa = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
+								THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1)
+								ELSE groupa END,
+					groupb = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
+								THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 3)
+								ELSE groupb END,
+					groupc = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
+								THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 7)
+								ELSE groupc END,
+					groupd = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
+								THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 8)
+								ELSE groupd END,
+					adiscount = CASE WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
+										THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4)
+									WHEN bettype = 5
+										THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5)
+									ELSE adiscount END			
+				FROM #tmpcustsetting t
+			END	
 		END
 		
 		BEGIN TRY
-			IF @roleid = 3
+			IF @roleid IN (3,2)
 			BEGIN			
 				INSERT INTO [dbo].[custsetting]([custid], [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
 				SELECT @custid, [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking]
@@ -1132,7 +1371,7 @@ BEGIN
 		END
 				
 		BEGIN TRY
-			IF @roleid = 3
+			IF @roleid IN (3,2)
 			BEGIN 
 				INSERT INTO CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
 				SELECT @custid
@@ -1201,7 +1440,7 @@ BEGIN
 		END		
 		
 		BEGIN TRY
-			IF @roleid = 3
+			IF @roleid IN (3,2)
 			BEGIN 
 				INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
 				SELECT @custid , cs.SportType, cs.BetType, 

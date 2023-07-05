@@ -122,8 +122,8 @@ BEGIN
 			T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
 			T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoMasterPT,
 			T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoMasterPT,
-			T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS MasterPT,
-			T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+			T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT,
+			T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS AgentMinPT
 		FROM  @xml.nodes('/Root/R') T(c)
 		 			
 	END
@@ -148,8 +148,8 @@ BEGIN
 			T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
 			T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoMasterPT,
 			T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoMasterPT,
-			T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS MasterPT,
-			T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+			T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT,
+			T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS AgentMinPT
 		FROM  @xml.nodes('/Root/R') T(c)			
 	END
 	
@@ -215,7 +215,7 @@ BEGIN
 	BEGIN
 		SELECT @ErrCode = 602,
 			   @ErrMsg = '<Root MsgID="20044" Msg="You are not allowed to have Auto PT, please contact your upline." />',
-			   @MsgType = 61
+			   @MsgType = 0
 		RETURN					
 	END	
 	

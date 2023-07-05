@@ -650,7 +650,7 @@ BEGIN
     'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
     'srecommend="'+ COALESCE(CAST(@srecommend AS VARCHAR(50)), SPACE(1)) + '" ' +	
     'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +
-    'site="'+ COALESCE(CAST(@site AS VARCHAR(50)), SPACE(1)) +
+    'site="'+ COALESCE(CAST(@site AS VARCHAR(50)), SPACE(1)) + '" ' +
 	'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1)) + '" ' +
     'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(5000)), SPACE(1)) + '" />'
 	
@@ -750,13 +750,17 @@ BEGIN
 	--Log for VR lock Status
 	DECLARE @VRLockedStatus_Soccer BIT = 0
 	DECLARE @VRLockedStatus_OS BIT = 0
-
+	DECLARE @VRLockedStatus_Basketball BIT = 0
+	
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 1)
 		SET @VRLockedStatus_Soccer = 1
 
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 2)
 		SET @VRLockedStatus_OS = 1
-
+	
+	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 3)
+		SET @VRLockedStatus_Basketball = 1 
+		
     --Log status
     SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'suspended="'+ COALESCE(CAST(@suspended AS VARCHAR(1)), SPACE(1)) + '" ' +
@@ -775,6 +779,7 @@ BEGIN
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' + 
+	'VRLockStatus_Basketball="'+ COALESCE(CAST(@VRLockedStatus_Basketball AS VARCHAR(10)),SPACE(1)) + '" ' + 
 	'SelectedBetting="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +	
    
     'DisableOutright="'+ COALESCE(CAST(@DisableOutright AS VARCHAR(1)), SPACE(1)) + '" ' +
@@ -935,7 +940,7 @@ BEGIN
 			+ '</Discount>'
 			+ '<BetSetting GroupType="151">'
 				+ COALESCE(REPLACE(REPLACE(@SettingType26,'<Root>',''),'</Root>',''), SPACE(1)) --SB
-				+ CAST((SELECT SportType,Bettype,MinBet,MaxBet, MaxPerMatch MPM	
+				+ CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM	
 						FROM @BetSetting
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
@@ -964,7 +969,7 @@ BEGIN
 			+ '</Group>'	
 			+ '<Group ID="2">'--RnG Games
 			+ '<BetSetting GroupType="154">'
-				+ 	CAST((SELECT SportType,Bettype,MinBet,MaxBet, MaxPerMatch MPM, MaxPerNumber	
+				+ 	CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM, MaxPerNumber	
 						FROM @BetSetting
 						WHERE GroupID = 2
 						ORDER BY Child_DisplayOrder
