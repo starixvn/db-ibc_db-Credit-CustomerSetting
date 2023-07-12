@@ -25,7 +25,7 @@ BEGIN
 	DECLARE @startRun DATETIME
 			,@endRun DATETIME
 			,@duration INT
-			,@TemplateName VARCHAR(50)	
+			,@TemplateName NVARCHAR(50)	
 			,@roleid TINYINT
 	
 	SELECT @startRun = GETDATE()	
@@ -63,7 +63,7 @@ BEGIN
     --Log info
     SELECT @LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
 						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
-						'TemplateName="'+ coalesce(cast(@TemplateName as VARCHAR(50)),space(1)) + '" ' +						
+						'TemplateName="'+ coalesce(cast(@TemplateName as NVARCHAR(50)),space(1)) + '" ' +						
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" ' +
 						'/>'
 						

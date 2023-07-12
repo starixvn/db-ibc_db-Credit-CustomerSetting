@@ -16,7 +16,7 @@ AS
 */
 RETURN
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,GroupID,SubType,CreationStatus
+				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,GroupID,GroupType,SubType,CreationStatus
 	FROM dbo.ProductSettingDetail WITH(NOLOCK)
 	WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1
 								WHEN @CreationStatus = 0 THEN 0
@@ -24,9 +24,9 @@ RETURN
 		AND CreationStatus <> 2
 		AND (@SettingType IS NULL OR SettingType = @SettingType)
 		
-	UNION ALL
+	UNION
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,GroupID,SubType,CreationStatus
+				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,GroupID,GroupType,SubType,CreationStatus
 	FROM dbo.ProductSettingDetail_UAT WITH(NOLOCK)
 	WHERE @CreationStatus = 3
 		AND CreationStatus <> 2

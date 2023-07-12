@@ -1,14 +1,14 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_MAg]
 	@custid     INT OUTPUT,
-	@firstname  NVARCHAR(50),
-	@lastname   NVARCHAR(50),
+	@firstname  NVARCHAR(50) ='',
+	@lastname   NVARCHAR(50) ='',
 	@creator    INT,
 	@username   VARCHAR(30),
 	@userpwd    VARCHAR(40),
-	@phone      NVARCHAR(50),
-	@mobilephone NVARCHAR(50),	
-	@fax        NVARCHAR(50),
+	@phone      NVARCHAR(50)='',
+	@mobilephone NVARCHAR(50)='',	
+	@fax        NVARCHAR(50)='',
 
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in case direct master add new agent
 
@@ -25,7 +25,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_MAg]
 	@SettingType27 VARCHAR(MAX)= '', --SB Parlay Max Payout
 	
 	--PT
-	@TemplateName VARCHAR(50) = '',
+	@TemplateName NVARCHAR(50) = '',
 	@SettingType28 VARCHAR(MAX)= '',-- SB
 	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 	@SettingType18 VARCHAR(MAX)= '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
@@ -332,12 +332,13 @@ BEGIN
 		RETURN;
 	
 	--Check bet setting
-	EXEC Acc_LiteMode_CustomerInsMember_BetSettingCheck_SAg
+	EXEC Acc_LiteMode_CustomerInsMember_BetSettingCheck_MAg
 		@mrecommend = @mrecommend,
 		@SettingType26 = @SettingType26, --SB
 		@SettingType2 = @SettingType2, --SB2
 		@SettingType23 = @SettingType23, --RNG Games			
 		@SystemID = @SystemID,
+		@CreationStatus = @CreationStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
 		@MsgType = @MsgType OUTPUT,
@@ -347,10 +348,11 @@ BEGIN
 		RETURN;
 		
 	--Check Parlay Max Payout
-	EXEC Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_SAg
+	EXEC Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_MAg
 		@mrecommend = @mrecommend,
 		@SettingType27 = @SettingType27, --SB
-				
+		@CreationStatus = @CreationStatus,
+		
 		@ErrCode = @ErrCode OUTPUT,
 		@MsgType = @MsgType OUTPUT,
 		@ErrMsg  = @ErrMsg OUTPUT	
@@ -518,7 +520,7 @@ BEGIN
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
 	'maxcredit="'+ COALESCE(CAST(@maxcredit as VARCHAR(50)), SPACE(1)) + '" ' +
     'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
-	'TemplateName="'+ COALESCE(CAST(@TemplateName AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'TemplateName="'+ COALESCE(CAST(@TemplateName AS NVARCHAR(50)), SPACE(1)) + '" ' +
 	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
     'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
     'mrecommend="'+ COALESCE(CAST(@mrecommend AS VARCHAR(50)), SPACE(1)) + '" ' +	

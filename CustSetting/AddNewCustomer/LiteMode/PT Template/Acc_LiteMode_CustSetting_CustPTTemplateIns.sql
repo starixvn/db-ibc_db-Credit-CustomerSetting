@@ -3,7 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateIns]
 	@CustID INT,
 	@SubAccID INT = 0,
 	@TemplateID INT = 0 OUTPUT,
-	@TemplateName VARCHAR(50),
+	@TemplateName NVARCHAR(50),
 	@Settings VARCHAR(MAX),
 	@IsDefault BIT = 0,
 	@CreationStatus TINYINT = 0, 
@@ -117,7 +117,7 @@ BEGIN
     --Log info
     SELECT @LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
 						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
-						'TemplateName="'+ coalesce(cast(@TemplateName as VARCHAR(50)),space(1)) + '" ' +
+						'TemplateName="'+ coalesce(cast(@TemplateName as NVARCHAR(50)),space(1)) + '" ' +
 						'IsDefault="'+ coalesce(cast(@IsDefault as VARCHAR(1)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
 						CAST((

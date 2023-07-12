@@ -94,13 +94,14 @@ BEGIN
 		FROM CustMaster with (NOLOCK) 
 		WHERE CustID = @CustId
 		
-		SELECT @UserName as NewUserName,
+		SELECT @UplineUsername as UplineUsername,
+			@UserName as NewUserName,
 			@Msuspended as suspended,
 			@Credit_Ag_Max as Credit_Max,
 			ISNULL(@DisableAutoMPT,0) as DisableAutoMPT,
 			@TransferOption TransferOption,
 			@IsAutomateTransfer IsAutomateTransfer,
-			@IsInternalMaster as IsInternalMaster,
+			@IsInternalMaster as IsInternal,
 			@IsMyanmarOdds IsMyanmarOdds,
 			@Site site,
 			@SiteLabel SiteLabel			
@@ -251,7 +252,7 @@ BEGIN
 			INNER JOIN #SportBettypeFilter s 
 				ON s.SportType = cs.sporttype  
 				AND s.BetType = cs.bettype
-				AND s.IsLive = 0
+				AND s.IsLive = 1
 			INNER JOIN CustSetting scs WITH(NOLOCK)	ON scs.custid = @srecommend 
 													AND scs.SportType = cs.sporttype  
 													AND scs.BetType = cs.bettype
@@ -277,6 +278,7 @@ BEGIN
 				AND scs.BetType = cs.bettype  
 				AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid
+		ORDER BY Child_DisplayOrder
 	END
 	
 	--END SB Settings
@@ -292,7 +294,9 @@ BEGIN
 			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
 			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 
-			ISNULL(MIN(CASE WHEN cs.MaxPerNumber = 0 THEN NULL ELSE cs.MaxPerNumber END),0) MaxPerNumber,		
+			CASE WHEN cs.Sporttype = 161 THEN 
+					ISNULL(MIN(CASE WHEN cs.MaxPerNumber = 0 THEN NULL ELSE cs.MaxPerNumber END),0) 
+					ELSE NULL END MaxPerNumber,		
 			s.SubType,
 			s.Child_DisplayOrder
 		FROM CustBetSetting_Agent cs WITH(NOLOCK)

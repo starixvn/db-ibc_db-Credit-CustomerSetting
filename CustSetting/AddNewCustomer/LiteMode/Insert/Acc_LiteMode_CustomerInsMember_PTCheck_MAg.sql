@@ -10,7 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_PTCheck_MAg]
 
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
 AS
 /*
 	Created: 20230629@Johnson  
@@ -154,12 +154,16 @@ BEGIN
 	END
 	
 	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,
+		CASE WHEN SettingLevel = 4 THEN SettingLevel --SporttypeBettype
+			ELSE 2 END as SettingLevel,--Sporttype
+		MaxPT
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	WHERE SettingType IN (1,18,28)
 	
 	--check pt > 0 
 	;WITH T AS (
-	SELECT t.SportType, t.BetType, t.IsLive
+	SELECT t.SportType, t.BetType, t.IsLive, SettingLevel
 		FROM @tblPT28 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -171,7 +175,7 @@ BEGIN
 					OR t.AutoMasterPT < 0 
 					OR t.AutoMasterPT > ps.MaxPT)
 		UNION 
-		SELECT t.SportType, t.BetType, t.IsLive
+		SELECT t.SportType, t.BetType, t.IsLive, SettingLevel
 		FROM @tblPT18 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -283,8 +287,11 @@ BEGIN
 				)				
 	)
 	SELECT @ErrType =(
-		SELECT * 
-		FrOM T
+		SELECT t.* , ps.SettingLevel
+		FROM T
+			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+																AND t.BetType = ps.bettype 
+																AND t.IsLive = ps.IsLive
 		FOR XML RAW('Row'), TYPE
 	)	
 	
@@ -328,8 +335,11 @@ BEGIN
 			AND b.AgentPT > scs.AgentPT		
 	)
 	SELECT @ErrType =(
-		SELECT * 
+		SELECT t.*,ps.SettingLevel 
 		FrOM T
+			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+																AND t.BetType = ps.bettype 
+																AND t.IsLive = ps.IsLive
 		FOR XML RAW('Row'), TYPE
 	)	
 	

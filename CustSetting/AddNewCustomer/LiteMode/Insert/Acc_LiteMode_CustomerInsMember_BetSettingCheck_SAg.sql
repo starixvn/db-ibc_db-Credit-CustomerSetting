@@ -5,10 +5,11 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_BetSettingCheck_SAg]
 	@SettingType2 VARCHAR(MAX)= '', --SB2, VS
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games	
 	@SystemID TINYINT = 1,
+	@CreationStatus TINYINT = 0,
 	
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
 AS
 /*
 	Created: 20230516@Johnson  
@@ -43,7 +44,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @BetSetting TABLE(
+	DECLARE @BetSetting TABLE(		
 		SportType         SMALLINT, 
 		BetType           SMALLINT, 
 		MinBet            MONEY, 
@@ -65,6 +66,23 @@ BEGIN
 		PRIMARY KEY(sporttype, Bettype)
 	);
 	
+	CREATE TABLE #ProductSettingDetail_Check(	
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit],
+		[GroupID] [tinyint],
+		[GroupType] [tinyint],
+		[SettingLevel] [tinyint],		
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+	
+	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,GroupID,GroupType,SettingLevel)
+	SELECT SportType,BetType,SettingType,IsLive,GroupID,GroupType,
+		2 as SettingLevel--Sporttype		
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	WHERE SettingType IN (26,2,23)
+	
 	DECLARE @xml XML,
 		@currency TINYINT
 	
@@ -76,13 +94,15 @@ BEGIN
 	BEGIN
 		SELECT @xml = CONVERT(XML,@SettingType26)
 		
-		INSERT INTO @BetSetting(SportType, 
+		INSERT INTO @BetSetting(
+			SportType, 
 			BetType, 
 			MinBet, 
 			MaxBet, 
 			MaxPerMatch, 
 			MaxPayoutPerMatch)
-		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		SELECT 
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
 			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
 			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
 			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
@@ -100,9 +120,13 @@ BEGIN
 				SELECT 10003 AS '@MsgID'
 						, 'Wrong Min bet/ Max bet/ Max per match' AS '@Msg'
 						, (
-							SELECT SportType AS '@SportType'
-								, BetType AS '@BetType'
-							FROM @BetSetting
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+								, ps.SettingLevel AS '@SettingLevel'
+								, ps.GroupID AS '@GroupID'
+								, ps.GroupType AS '@GroupType'
+							FROM @BetSetting tmp
+								INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
 							WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)								
 							FOR XML PATH('Row')
 								, TYPE
@@ -126,9 +150,13 @@ BEGIN
 				SELECT 10059 AS '@MsgID'
 						, 'Wrong Max Payout Per Match.' AS '@Msg'
 						, (
-							SELECT SportType AS '@SportType'
-								, BetType AS '@BetType'
-							FROM @BetSetting
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+								, ps.SettingLevel AS '@SettingLevel'
+								, ps.GroupID AS '@GroupID'
+								, ps.GroupType AS '@GroupType'
+							FROM @BetSetting tmp
+								INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
 							WHERE MaxPayoutPerMatch < 0	
 							FOR XML PATH('Row')
 								, TYPE
@@ -153,11 +181,15 @@ BEGIN
 					SELECT 10067 AS '@MsgID'
 							, 'Min Bet must be less than or equal to Max Bet and Max Bet must be less than or equal to Max Per Match' AS '@Msg'
 							, (
-								SELECT SportType AS '@SportType'
-									, BetType AS '@BetType'
-								FROM @BetSetting
+								SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+								, ps.SettingLevel AS '@SettingLevel'
+								, ps.GroupID AS '@GroupID'
+								, ps.GroupType AS '@GroupType'
+								FROM @BetSetting tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
 								WHERE (MinBet > MaxBet) 
-									OR (MaxBet > MaxPerMatch) 
+										OR (MaxBet > MaxPerMatch) 
 								FOR XML PATH('Row')
 									, TYPE
 								)
@@ -180,9 +212,13 @@ BEGIN
 					SELECT 10060 AS '@MsgID'
 							, 'Max Per Match must be less than or equal to Max Payout Per Match' AS '@Msg'
 							, (
-								SELECT SportType AS '@SportType'
-									, BetType AS '@BetType'
-								FROM @BetSetting
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @BetSetting tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
 								WHERE MaxPerMatch > MaxPayoutPerMatch 
 								FOR XML PATH('Row')
 									, TYPE
@@ -220,8 +256,12 @@ BEGIN
 							, 'Min Bet must be greater than or equal to Upline''s Min Bet' AS '@Msg'
 							, (
 								SELECT t.SportType AS '@SportType'
-									,t. BetType AS '@BetType'
+									, t. BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MinBet > 0 AND u.MinBet > 0 AND t.MinBet < u.MinBet)
@@ -251,7 +291,11 @@ BEGIN
 							, (
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxBet > 0 AND u.MaxBet > 0 AND t.MaxBet > u.MaxBet)
@@ -281,7 +325,11 @@ BEGIN
 							, (
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxPerMatch > 0 AND u.MaxPerMatch > 0 AND t.MaxPerMatch > u.MaxPerMatch)
@@ -311,7 +359,11 @@ BEGIN
 							, (
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxPayoutPerMatch > 0 AND u.MaxPayoutPerMatch > 0 AND t.MaxPayoutPerMatch > u.MaxPayoutPerMatch)
@@ -336,13 +388,15 @@ BEGIN
 		
 		SELECT @xml = CONVERT(XML,@SettingType23)
 		
-		INSERT INTO @BetSetting(SportType, 
+		INSERT INTO @BetSetting(
+			SportType, 
 			BetType, 
 			MinBet, 
 			MaxBet, 
 			MaxPerMatch, 
 			MaxPerNumber)
-		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		SELECT
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
 			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
 			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
 			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
@@ -352,12 +406,14 @@ BEGIN
 		
 		SELECT @xml = CONVERT(XML,@SettingType2)
 		
-		INSERT INTO @BetSetting(SportType, 
+		INSERT INTO @BetSetting(
+			SportType, 
 			BetType, 
 			MinBet, 
 			MaxBet, 
 			MaxPerMatch)
-		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		SELECT 
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
 			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
 			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
 			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
@@ -394,7 +450,11 @@ BEGIN
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
+								, ps.SettingLevel AS '@SettingLevel'
+								, ps.GroupID AS '@GroupID'
+								, ps.GroupType AS '@GroupType'
 							FROM @BetSetting tmp
+								INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
 							LEFT JOIN dbo.ProductBetSetting pb
 								ON pb.Sporttype = tmp.SportType
 									AND pb.Bettype = tmp.BetType
@@ -437,9 +497,13 @@ BEGIN
 				SELECT 10002 AS '@MsgID'
 						, 'Wrong Max Per Ball' AS '@Msg'
 						, (
-							SELECT SportType AS '@SportType'
-								, BetType AS '@BetType'
-							FROM @BetSetting tmp				
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+								, ps.SettingLevel AS '@SettingLevel'
+								, ps.GroupID AS '@GroupID'
+								, ps.GroupType AS '@GroupType'
+							FROM @BetSetting tmp
+								INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype				
 							WHERE tmp.MaxPerNumber < 0
 								OR (tmp.MaxPerNumber < 1 AND @SystemID BETWEEN 6 AND 9) --789y ExtNAP and Alpha 
 							FOR XML PATH('Row')
@@ -465,9 +529,13 @@ BEGIN
 					SELECT 10067 AS '@MsgID'
 							, 'Min Bet must be less than or equal to Max Bet and Max Bet must be less than or equal to Max Per Match' AS '@Msg'
 							, (
-								SELECT SportType AS '@SportType'
-									, BetType AS '@BetType'
-								FROM @BetSetting
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @BetSetting tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
 								WHERE (MinBet > MaxBet) 
 									OR (MaxBet > MaxPerMatch) 
 								FOR XML PATH('Row')
@@ -496,9 +564,13 @@ BEGIN
 					SELECT 10061 AS '@MsgID'
 							, 'Max Per Ball must be greater than or equal to Max Bet and less than or equal to Max Per Match' AS '@Msg'
 							, (
-								SELECT SportType AS '@SportType'
-									, BetType AS '@BetType'
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
 								WHERE tmp.MaxPerNumber <> 0
 									AND (
 										tmp.MaxBet > tmp.MaxPerNumber 
@@ -551,7 +623,11 @@ BEGIN
 							, (
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MinBet > 0 AND u.MinBet > 0 AND t.MinBet < u.MinBet)
@@ -581,7 +657,11 @@ BEGIN
 							, (
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxBet > 0 AND u.MaxBet > 0 AND t.MaxBet > u.MaxBet)
@@ -611,7 +691,11 @@ BEGIN
 							, (
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxPerMatch > 0 AND u.MaxPerMatch > 0 AND t.MaxPerMatch > u.MaxPerMatch)
@@ -641,7 +725,11 @@ BEGIN
 							, (
 								SELECT t.SportType AS '@SportType'
 									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxPerNumber > 0 AND u.MaxPerNumber > 0 AND t.MaxPerNumber > u.MaxPerNumber)
@@ -657,4 +745,6 @@ BEGIN
 				SET @ErrCode = 227
 		END
 	END	
+	
+	DROP TABLE #ProductSettingDetail_Check
 END	

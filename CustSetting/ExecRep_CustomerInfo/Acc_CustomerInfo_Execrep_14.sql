@@ -246,14 +246,15 @@ BEGIN
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.SportType = psd.SportType	AND pbs.BetType = psd.BetType
 		WHERE psd.SettingType = 11				
 		
+		IF @RoleID = 1
+			SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @recommend 			
+		ELSE
+			SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID 			
+		
+		SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
+			
 		IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)
 		BEGIN
-			IF @RoleID = 1
-				SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @recommend 			
-			ELSE
-				SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID 			
-
-			SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
 			
 			UPDATE main
 			SET main.IsDisabled = stt.IsDisabled, 
@@ -647,8 +648,8 @@ BEGIN
 				--update live for sporttype = 1, bettype in (1,3,7,8)
 				UPDATE cs
 				SET alivepositiontaking = AgentPT,
-					isautomlivepositiontaking = IsAutoMasterPT,
-					automlivepositiontaking = AutoMasterPT,
+					isautolivempositiontaking = IsAutoMasterPT,
+					autolivempositiontaking = AutoMasterPT,
 					mlivepositiontaking = MasterPT
 				FROM #tmpcustsetting cs
 					INNER JOIN @tblPT28 t ON cs.sporttype = t.sporttype
@@ -1013,7 +1014,7 @@ BEGIN
 						 Min(case when MaxBet = 0 then NULL else MaxBet end) MaxBet,
 						 Min(case when MaxPerMatch = 0 then NULL else MaxPerMatch end) MaxPerMatch
 				FROM dbo.CustBetSetting3rd_Agent smcs WITH (NOLOCK)
-					INNER JOIN #SportBettypeFilter9 s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
+					INNER JOIN #SportBettypeFilter16 s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
 				WHERE smcs.custid = @srecommend 
 						OR smcs.custid = @mrecommend
 				GROUP BY smcs.SportType,smcs.BetType
@@ -1023,7 +1024,7 @@ BEGIN
 						CASE WHEN (cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0) 
 									OR (ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0) THEN 1 ELSE 0 END AS IsAllowUnlimit
 				FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
-					INNER JOIN #SportBettypeFilter9 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+					INNER JOIN #SportBettypeFilter16 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 					INNER JOIN dbo.ProductBetSetting ps WITH (NOLOCK) ON ps.Sporttype = cs.SportType AND ps.Bettype = cs.BetType
 				WHERE cs.custid = @srecommend AND ps.Currency = @_Currency
 
@@ -1286,21 +1287,21 @@ BEGIN
 			BEGIN
 				UPDATE t
 				SET groupa = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1)
+								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1),0)
 								ELSE groupa END,
 					groupb = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 3)
+								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 3),0)
 								ELSE groupb END,
 					groupc = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 7)
+								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 7),0)
 								ELSE groupc END,
 					groupd = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 8)
+								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 8),0)
 								ELSE groupd END,
 					adiscount = CASE WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
-										THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4)
+										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4),0)
 									WHEN bettype = 5
-										THEN (SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5)
+										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)
 									ELSE adiscount END			
 				FROM #tmpcustsetting t
 			END	
@@ -1485,3 +1486,4 @@ BEGIN
 	
 	DROP TABLE #ProductSettingDetail_tmp00
 END
+

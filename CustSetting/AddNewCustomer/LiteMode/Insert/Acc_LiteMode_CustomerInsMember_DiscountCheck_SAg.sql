@@ -8,7 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_DiscountCheck_SAg]
 	
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
 AS
 /*
 	Created: 20230515@Johnson  
@@ -49,7 +49,10 @@ BEGIN
 	)
 
 	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,
+		CASE WHEN SettingLevel = 4 THEN SettingLevel --SportTypeBettype
+			ELSE 2 END SettingLevel--SportType
+		,MaxDiscount
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
 	
 	--check SB Discount
@@ -102,6 +105,7 @@ BEGIN
 						, (
 							SELECT pdt.SportType AS '@SportType'
 								, pdt.BetType AS '@BetType'
+								, pdt.SettingLevel as '@SettingLevel'
 							FROM @NewDiscountTbl tmp
 							INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
 								ON pdt.SportType	= tmp.SportType
@@ -178,6 +182,7 @@ BEGIN
 						, (
 							SELECT pdt.SportType AS '@SportType'
 								, pdt.BetType AS '@BetType'
+								, pdt.SettingLevel as '@SettingLevel'
 							FROM @NewDiscountTbl tmp
 							INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
 								ON pdt.SportType	= tmp.SportType
