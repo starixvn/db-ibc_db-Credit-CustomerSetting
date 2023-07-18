@@ -4,7 +4,6 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedVS				BIT = 0		OUTPUT
 				,	@AllowedLiveCasino		BIT = 0		OUTPUT
 				,	@AllowedVoidBridge		BIT = 0		OUTPUT
-				,	@AllowedNG2				BIT = 0		OUTPUT
 				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedRNGLottery		BIT = 0		OUTPUT
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
@@ -60,6 +59,8 @@ Revisions:
 	- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20230519@Luke: YeeBet - Integrate new Live Casino product [Redmine: #186046]
+	- 20230628@Tacy: NG2 - Remove Setting [Redmine: #189762]
+
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */
@@ -74,7 +75,6 @@ Revisions:
 	DECLARE	@IsHideAllBet			INT
 		,	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
-		,	@IsHideNG2				INT
 		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
 		,	@IsHideVG				INT
@@ -96,7 +96,6 @@ Revisions:
 	DECLARE @bitmapOrder_Allbet		INT
 		,	@bitOrderVB				INT 
 		,	@bitOrderFW				INT 
-		,	@bitOrderNG2			INT 
 		,	@bitOrderLottery		INT 
 		,   @bitOrderVS				INT
 		,	@bitmapOrder_VG			INT
@@ -117,7 +116,6 @@ Revisions:
 	SET @bitmapOrder_Allbet = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 211 AND Bettype = 2401)
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1024)
-	SET @bitOrderNG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
 	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9908 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
@@ -290,25 +288,6 @@ Revisions:
 	--For Live Casino (Allbet + SA Gaming + SexyGaming + BBIN + GTCasino + ION + YeeBet)
 	SELECT @AllowedLiveCasino = CASE WHEN @AllowedAllBet = 1 OR @AllowedSAGaming = 1 OR @AllowedSexyGaming = 1 OR @AllowedBBIN = 1 OR @AllowedGTCasino = 1 OR @AllowedION = 1 OR @AllowedYeeBet = 1 THEN 1
 								ELSE 0 END
-	-- For NG2
-	EXEC Acc_CheckShowProduct @ProductID = 23, @SettingStatus = @SettingStatus, @IsHide = @IsHideNG2 OUTPUT
-	IF @RoleID = 4
-		SELECT	@AllowedNG2 =	CASE	WHEN @IsHideNG2 = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderNG2)) = 0 THEN 1
-										ELSE 0 END
-		FROM	CustProductStatus AS cps WITH (NOLOCK)
-		WHERE	cps.CustID = @CustID
-	ELSE 
-		SELECT	@AllowedNG2 =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderNG2)) = 0
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitOrderNG2)) = 1
-											AND @IsHideNG2 = 0 
-											THEN 1
-										ELSE 0 END
-		FROM	CustProductStatus AS cps WITH (NOLOCK)
-			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
-		WHERE	cps.CustID = @CustID
-			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
-									WHEN @RoleID = 2 THEN @mrecommend
-									ELSE @recommend END
 
 	-- For VS
 	EXEC Acc_CheckShowProduct @ProductID = 5, @SettingStatus = @SettingStatus, @IsHide = @IsHideVS OUTPUT

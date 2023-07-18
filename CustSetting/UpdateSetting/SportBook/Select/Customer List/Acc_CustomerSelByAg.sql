@@ -106,6 +106,8 @@ BEGIN
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230602@Helios: Enhance stored procedure to prevent performance issue [Redmine: #189154] 
 		- 20230519@Luke: YeeBet - Integrate new Live Casino product [Redmine: #186046]
+		- 20230628@Tacy: NG2 - Remove Setting [Redmine: #189762]
+
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -127,7 +129,6 @@ BEGIN
 		,	@bitmapOrder_AllBetVIP		INT
 		,	@bitmapOrder_VoidBridge		INT
 		,	@bitmapOrder_Lottery		INT
-		,	@bitmapOrder_NG2			INT
 		,	@bitmapOrder_FishingWorld	INT
 		,	@bitmapOrder_VS				INT
 		,	@bitmapOrder_Esports		INT 
@@ -157,7 +158,6 @@ BEGIN
 	SET @bitmapOrder_Esports = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 43 AND Bettype = 1)
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
 	SET @bitmapOrder_Lottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1024)
-	SET @bitmapOrder_NG2 = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 213 AND Bettype = 2501)
 	SET @bitmapOrder_FishingWorld = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitmapOrder_VS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9908 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
@@ -189,7 +189,6 @@ BEGIN
 		,	@IsHidden_AllBet			INT = 1
 		,	@IsHidden_VoidBridge		INT = 1
 		,	@IsHidden_Lottery			INT = 1
-		,	@IsHidden_NG2				INT = 1   
 		,	@IsHidden_FishingWorld		INT = 1 
 		,	@IsHidden_VS				INT = 1
 		,	@IsHidden_VG				INT = 1
@@ -218,7 +217,6 @@ BEGIN
 	EXEC Acc_CheckShowProduct @ProductID = 41, @SettingStatus = @SettingStatus, @Sporttype = 211, @IsHide = @IsHidden_AllBet OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 18, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_VoidBridge OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @SettingStatus = @SettingStatus, @Sporttype = 220, @IsHide = @IsHidden_Lottery OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 23, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_NG2 OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 24, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_FishingWorld OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 5, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_VS OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 16, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_Esports OUTPUT
@@ -664,13 +662,6 @@ BEGIN
 		CAST(CASE	WHEN	@IsHidden_Lottery = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cpsUpline.bitmapIsHidden, @bitmapOrder_Lottery)), 1)=0
 				THEN 0 ELSE 1
 				END AS BIT) AS HideLotteryUpline,
-
-		-- For NG2
-		ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_NG2)),1) AS DisableNG2,
-		CAST(CASE WHEN @IsHidden_NG2 = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_NG2)),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideNG2,
-		CAST(CASE WHEN @IsHidden_NG2 = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cpsUpline.bitmapIsHidden, @bitmapOrder_NG2)),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideNG2Upline,			
-		ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapHasSynced, @bitmapOrder_NG2)), 0) AS SyncedNG2,
-		ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cpsUpline.bitmapHasSynced, @bitmapOrder_NG2)), 0) AS SyncedNG2Upline,
 
 		-- For FishingWorld
 		(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_FishingWorld)) AS DisableFishingWorld,		
