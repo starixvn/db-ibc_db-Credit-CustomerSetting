@@ -14,6 +14,7 @@ AS
 	Revisions:
 		- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230620@Luke: Limitation to update PT for new member [Redmine: #188950]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -56,8 +57,9 @@ BEGIN
 		FROM LimitPTDailySetting l WITH(NOLOCK) 
 			INNER JOIN dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) b ON l.ProductID = b.ProductID
 		WHERE b.SettingType IN (1,18)
-		AND (l.Currency = @Currency OR l.Currency = 0) AND (l.SiteID = @SiteID OR l.SiteID = 0)
-		 AND (l.CustID = 0 OR  l.CustID IN (@srecommend,@mrecommend,@recommend))
+			AND (l.Currency = @Currency OR l.Currency = 0) AND (l.SiteID = @SiteID OR l.SiteID = 0)
+			AND (l.CustID = 0 OR  l.CustID IN (@srecommend,@mrecommend,@recommend))
+			AND l.LimitNewAccUpdPT = 1
 		GROUP BY b.SportType,b.BetType
 		
 		INSERT INTO CustLimitPTSetting (CustID,SportType,BetType,ActorID,PTCount,LastUpdated)

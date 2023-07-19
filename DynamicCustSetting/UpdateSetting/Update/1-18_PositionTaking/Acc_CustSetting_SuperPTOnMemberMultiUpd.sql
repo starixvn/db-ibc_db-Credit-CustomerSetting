@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_SuperPTOnMemberMultiUpd]
 	, @SubAccID		INT				= 0
 	, @IP			VARCHAR(50)		= ''
 	, @UserID		INT				= 0
+	, @isCountPT	BIT				= 1
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT = 0 OUTPUT
 	, @ErrMsg		NVARCHAR(4000)	= ''	OUTPUT
@@ -25,6 +26,7 @@ AS
 			- 20210416@Johnson: HF wrong PT setting when un-group member [redmine:#153598]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+			- 20230620@Luke: Limitation to update PT for new member [Redmine: #188950]
 		Parameter's Explanation:	
 		• @PT:
 					<ROOT>
@@ -159,7 +161,6 @@ BEGIN
 		, @MsgType = 0
 		, @ErrMsg = ''
 
-
 	--Parse affected Customer
 	DECLARE @XML XML
 	SET @XML = N'<root><r>' + REPLACE(@CustIDList, ',', '</r><r>') + '</r></root>'
@@ -167,7 +168,6 @@ BEGIN
 	INSERT INTO @tblCust (CustID)
 	SELECT r.value('.','INT')
 	FROM @xml.nodes('//root/r') AS RECORDS(r)
-
 			
 	-- ***Check Downline Belonging***
 	EXEC dbo.Acc_CustSetting_BelongingMultiCustCheck @SessionCustID = @Userid
@@ -190,7 +190,27 @@ BEGIN
 
 	IF @ErrCode > 0
 		RETURN
-	
+
+	--Check limit PT update	
+	DECLARE @isLimit BIT = 0, @isCancel BIT = 0, @LastUpdated DATE
+	IF @isCountPT = 1
+	BEGIN
+		EXEC dbo.Age_LimitPTCheck_MultiCust	  @Actorid	= @UserID, 
+		  @custIdList			=	@CustIDList,
+		  @UpdatePT				=	@PT,
+		  @SettingStatus		=   @SettingStatus,
+		  @isLimit				=	@isLimit OUTPUT,
+		  @isCancel				=	@isCancel OUTPUT,
+		  @LastUpdated			=	@LastUpdated OUTPUT
+
+		IF @isCancel > 0	
+		BEGIN
+			SELECT @ErrMsg = '<Root MsgID="10068" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
+                    , @ErrCode = 10068
+                    , @MsgType = 6   
+				RETURN
+		END
+	END
 	
 --******************************************PREPARE SETTING FOR UPDATE*************************************** 
 	--Parse XML	for PT settings
@@ -558,7 +578,20 @@ BEGIN
 			INNER JOIN @tblCust cust
 				ON cust.CustID=main.CustID
 	END
-		
+
+--***************************************UPDATE CUSTOMERS LIMIT PT***************************************
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTUpd_MultiCust @Actorid = @UserID
+			, @CustIDList		= @CustIDList
+			, @UpdatePT			= @PT
+			, @SettingStatus	= @SettingStatus
+			, @ErrCode			= @ErrCode OUTPUT
+			, @ErrMsg			= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+			RETURN
+	END
+
 --***************************************WRITE LOGS*******************************************
 		
 	--**START LOGGING**--	

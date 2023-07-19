@@ -1828,7 +1828,7 @@ BEGIN
 	    return
     END
 	
-	If @SystemID = 2 -- ALPHA
+	If @SystemID IN (2, 10) -- ALPHA, Chatbot
 	BEGIN
 		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
 		IF @ErrCode > 0
