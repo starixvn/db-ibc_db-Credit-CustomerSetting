@@ -73,8 +73,6 @@ BEGIN
 		[IsLive] [bit] ,
 		[ProductID] [tinyint],
 		[SettingLevel] [tinyint],
-		[GroupID] [tinyint],
-		[GroupType] [tinyint],
 		[MaxPT]	[smallmoney],
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
@@ -156,18 +154,17 @@ BEGIN
 		FROM  @xml.nodes('/Root/R') T(c)			
 	END
 	
-	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,GroupID,GroupType,SettingLevel,MaxPT)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,GroupID,GroupType,
+	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,
 		CASE WHEN SettingLevel = 4 THEN SettingLevel --SporttypeBettype
 			ELSE 2 END as SettingLevel--Sporttype
 		,MaxPT
-		
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
 	WHERE SettingType IN (1,18,28)
 	
 	--check pt > 0 
 	;WITH T AS (
-	SELECT t.SportType, t.BetType, t.IsLive, ps.SettingLevel,GroupID,GroupType
+	SELECT t.SportType, t.BetType, t.IsLive, ps.SettingLevel
 		FROM @tblPT28 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -179,7 +176,7 @@ BEGIN
 				OR t.AutoSuperPT > ps.MaxPT/100
 				OR t.MasterMinPT < 0)
 		UNION 
-		SELECT t.SportType, t.BetType, t.IsLive, ps.SettingLevel,GroupID,GroupType
+		SELECT t.SportType, t.BetType, t.IsLive, ps.SettingLevel
 		FROM @tblPT18 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -263,7 +260,7 @@ BEGIN
 				)
 	)    
 	SELECT @ErrType = (  
-		SELECT t.*, ps.SettingLevel,GroupID,GroupType 
+		SELECT t.*, ps.SettingLevel 
 		FROM T
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -308,7 +305,7 @@ BEGIN
 			AND scs.MasterPT < b.MasterPT
 	)
 	SELECT @ErrType = (    
-		SELECT t.*, ps.SettingLevel,GroupID,GroupType 
+		SELECT t.*, ps.SettingLevel 
 		FROM T
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -351,7 +348,7 @@ BEGIN
 			AND (cs.SuperPT < b.SuperPT OR b.SuperPT + b.MasterPT > cs.SuperPT)
 	)      
 	SELECT @ErrType = (
-		SELECT t.*, ps.SettingLevel,GroupID,GroupType 
+		SELECT t.*, ps.SettingLevel 
 		FROM T
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 

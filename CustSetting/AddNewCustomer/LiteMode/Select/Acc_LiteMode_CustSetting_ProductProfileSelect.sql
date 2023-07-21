@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_ProductProfileSelect]   
-	@CreationStatus TINYINT = 0
+	@CreationStatus TINYINT = 0,
+	@site	VARCHAR(50)= ''
 AS  
 /*  
 	 Created: 20230428@Johnson  
