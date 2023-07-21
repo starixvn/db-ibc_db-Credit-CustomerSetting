@@ -50,6 +50,8 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 20230720@Tacy: Hotfix - [NAP/Alpha] New Account Missing Bet Setting Bitcoin [RedmineID: #191556]
+
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -81,6 +83,10 @@ BEGIN
 		[Child_DisplayOrder] [int] ,
 		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
+
+	--Get site/currency
+	SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID
+	SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
 
 	IF dbo.f_CheckRepTable('ProductSettingDetail') = 1
 	BEGIN
@@ -137,9 +143,6 @@ BEGIN
 		
 		IF @RoleID = 4 OR (@IsDirect = 1 AND @RoleID = 3)
 		BEGIN
-			SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID
-			SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
-
 			UPDATE main
 			SET main.IsDisabled = stt.IsDisabled, 
 				main.IsHidden = stt.IsHidden
@@ -262,13 +265,6 @@ BEGIN
 		
 		IF EXISTS(SELECT TOP 1 1 FROM #SportBettypeFilter11)
 		BEGIN
-			IF @RoleID = 1
-				SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @AgentID 			
-			ELSE
-				SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID 			
-
-			SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
-			
 			UPDATE main
 			SET main.IsDisabled = stt.IsDisabled, 
 				main.IsHidden = stt.IsHidden
@@ -377,9 +373,6 @@ BEGIN
 
 		IF @RoleID = 4
 		BEGIN
-			SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID
-			SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
-
 			INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden,DummyProductID)
 			SELECT RealProductId, SportType, BetType, IsHidden,ProductID
 			FROM #ProductSettingDetail_tmp00 WITH (NOLOCK)
