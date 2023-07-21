@@ -126,7 +126,7 @@ BEGIN
 				WHEN bettype = 3 THEN groupB
 				WHEN bettype = 7 THEN groupC
 				WHEN bettype = 8 THEN groupD
-				WHEN bettype IN (4,5) THEN sdiscount END as discount		 
+				WHEN bettype IN (4,5) THEN adiscount END as discount		 
 		FROM custsetting WITH(NOLOCK)
 		WHERE custid = @custid
 			AND sporttype = 1

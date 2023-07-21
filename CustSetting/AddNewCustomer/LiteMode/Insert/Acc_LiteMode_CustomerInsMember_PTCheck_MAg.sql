@@ -72,6 +72,8 @@ BEGIN
 		[IsLive] [bit] ,
 		[ProductID] [tinyint],
 		[SettingLevel] [tinyint],
+		[GroupID] [tinyint],
+		[GroupType] [tinyint],
 		[MaxPT]	[smallmoney],
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
@@ -153,8 +155,8 @@ BEGIN
 		FROM  @xml.nodes('/Root/R') T(c)			
 	END
 	
-	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,
+	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,GroupID,GroupType,SettingLevel,MaxPT)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,GroupID,GroupType,
 		CASE WHEN SettingLevel = 4 THEN SettingLevel --SporttypeBettype
 			ELSE 2 END as SettingLevel,--Sporttype
 		MaxPT
@@ -163,7 +165,7 @@ BEGIN
 	
 	--check pt > 0 
 	;WITH T AS (
-	SELECT t.SportType, t.BetType, t.IsLive, SettingLevel
+	SELECT t.SportType, t.BetType, t.IsLive, SettingLevel,GroupID,GroupType
 		FROM @tblPT28 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -175,7 +177,7 @@ BEGIN
 					OR t.AutoMasterPT < 0 
 					OR t.AutoMasterPT > ps.MaxPT)
 		UNION 
-		SELECT t.SportType, t.BetType, t.IsLive, SettingLevel
+		SELECT t.SportType, t.BetType, t.IsLive, SettingLevel,GroupID,GroupType
 		FROM @tblPT18 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -227,44 +229,44 @@ BEGIN
 	--			else a2<=l3 and u2+a2>=n3
 	;WITH T AS (
 		SELECT b.SportType, b.BetType, b.IsLive, mco.minpositiontaking*100 as MinPT
-				, (CASE WHEN mcs.mpositiontaking	> mco.maxpositiontaking THEN mcs.mpositiontaking ELSE  mco.maxpositiontaking END)*100 MaxPT			
+				, (CASE WHEN mcs.mpositiontaking < mco.maxpositiontaking THEN mcs.mpositiontaking ELSE  mco.maxpositiontaking END)*100 MaxPT			
 		FROM 
 			custsetting mcs WITH(NOLOCK)			  
 			INNER JOIN @tblPT28 b ON mcs.sporttype=b.sporttype 
 								AND mcs.bettype = b.bettype        
 								AND b.isLive = 0
-			INNER JOIN custoverride AS mco WITH (NOLOCK) ON mcs.custid = mco.custid
-														AND mcs.sporttype=b.sporttype 
-														AND mcs.bettype = b.bettype 						
+			INNER JOIN custoverride AS mco WITH (NOLOCK) ON mco.custid = mcs.custid
+														AND mco.sporttype=b.sporttype 
+														AND mco.bettype = b.bettype 						
 		WHERE mcs.custid = @mrecommend 
 			AND (         
 					(b.IsAutoMasterPT=0
-					AND (b.MasterPT + b.AgentPT > CASE WHEN mcs.mpositiontaking	> mco.maxpositiontaking THEN mcs.mpositiontaking ELSE  mco.maxpositiontaking END OR b.MasterPT + b.AgentPT  < mco.minpositiontaking)
+					AND (b.MasterPT + b.AgentPT > CASE WHEN mcs.mpositiontaking	< mco.maxpositiontaking THEN mcs.mpositiontaking ELSE  mco.maxpositiontaking END OR b.MasterPT + b.AgentPT  < mco.minpositiontaking)
 					)
 					OR         
 					(b.IsAutoMasterPT>0 
-					AND (b.AgentPT > CASE WHEN mcs.mpositiontaking	> mco.maxpositiontaking THEN mcs.mpositiontaking ELSE  mco.maxpositiontaking END OR b.AgentPT + b.AutoMasterPT < mco.minpositiontaking)
+					AND (b.AgentPT > CASE WHEN mcs.mpositiontaking	< mco.maxpositiontaking THEN mcs.mpositiontaking ELSE  mco.maxpositiontaking END OR b.AgentPT + b.AutoMasterPT < mco.minpositiontaking)
 					)        
 				)	
 		UNION ALL
 		SELECT b.SportType, b.BetType, b.IsLive, mco.minpositiontaking*100 as MinPT
-				, (CASE WHEN mcs.mpositiontaking	> mco.maxpositiontaking THEN mcs.mpositiontaking ELSE  mco.maxpositiontaking END)*100 MaxPT			
+				, (CASE WHEN mcs.mlivepositiontaking	< mco.maxpositiontaking THEN mcs.mlivepositiontaking ELSE  mco.maxpositiontaking END)*100 MaxPT			
 		FROM 
 			custsetting mcs WITH(NOLOCK)			  
 			INNER JOIN @tblPT28 b ON mcs.sporttype=b.sporttype 
 								AND mcs.bettype = b.bettype        
 								AND b.isLive = 1
 			INNER JOIN custoverride AS mco WITH (NOLOCK) ON mcs.custid = mco.custid
-														AND mcs.sporttype=b.sporttype 
-														AND mcs.bettype = b.bettype 						
+														AND mco.sporttype=b.sporttype 
+														AND mco.bettype = b.bettype 						
 		WHERE mcs.custid = @mrecommend 
 			AND (         
 					(b.IsAutoMasterPT=0
-					AND (b.MasterPT + b.AgentPT > CASE WHEN mcs.mlivepositiontaking	> mco.maxlivepositiontaking THEN mcs.mlivepositiontaking ELSE  mco.maxlivepositiontaking END OR b.MasterPT + b.AgentPT  < mco.minlivepositiontaking)
+					AND (b.MasterPT + b.AgentPT > CASE WHEN mcs.mlivepositiontaking	< mco.maxlivepositiontaking THEN mcs.mlivepositiontaking ELSE  mco.maxlivepositiontaking END OR b.MasterPT + b.AgentPT  < mco.minlivepositiontaking)
 					)
 					OR         
 					(b.IsAutoMasterPT>0 
-					AND (b.AgentPT > CASE WHEN mcs.mlivepositiontaking	> mco.maxlivepositiontaking THEN mcs.mlivepositiontaking ELSE  mco.maxlivepositiontaking END OR b.AgentPT + b.AutoMasterPT < mco.minlivepositiontaking)
+					AND (b.AgentPT > CASE WHEN mcs.mlivepositiontaking	< mco.maxlivepositiontaking THEN mcs.mlivepositiontaking ELSE  mco.maxlivepositiontaking END OR b.AgentPT + b.AutoMasterPT < mco.minlivepositiontaking)
 					)        
 				)
 		UNION ALL	
@@ -287,7 +289,7 @@ BEGIN
 				)				
 	)
 	SELECT @ErrType =(
-		SELECT t.* , ps.SettingLevel
+		SELECT t.* , ps.SettingLevel,GroupID,GroupType
 		FROM T
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -335,7 +337,7 @@ BEGIN
 			AND b.AgentPT > scs.AgentPT		
 	)
 	SELECT @ErrType =(
-		SELECT t.*,ps.SettingLevel 
+		SELECT t.*,ps.SettingLevel,GroupID,GroupType 
 		FrOM T
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 

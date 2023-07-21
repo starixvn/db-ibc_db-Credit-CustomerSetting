@@ -572,7 +572,7 @@ BEGIN
 		BEGIN TRY
 			IF @RoleID = 3
 			BEGIN				
-				INSERT INTO #tmpcustsetting([custid], [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
+				INSERT INTO #tmpcustsetting([custid],[sporttype],[bettype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
 				SELECT @custid, sporttype, bettype, SuperPT, MasterPT, 0 as apositiontaking, 0 as slivepositiontaking, 0 as mlivepositiontaking, 0 alivepositiontaking, 0 as autolivepositiontaking, AutoSuperPT, 0 as adiscount, 0 as sdiscount, 0 as groupa, 0 as groupb, 0 as groupc, 0 as groupd, 0 groupe, 0 groupf, 0 playerdiscount, 0 discount, IsAutoSuperPT, 0 as isautolivepositiontaking, 0 as autompositiontaking, 0 as autolivempositiontaking, 0 as isautompositiontaking, 0 as isautolivempositiontaking
 				FROM @tblPT28
 				WHERE IsLive = 0
@@ -588,7 +588,7 @@ BEGIN
 											AND cs.bettype = t.bettype
 											AND t.IsLive = 1
 			
-				INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
+				INSERT INTO [dbo].[custoverride]([custid],[sporttype],[bettype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
 				SELECT @custid, sporttype, bettype, MasterMinPT, 0.9 as maxpositiontaking, 
 						ISNULL((SELECT MasterMinPT FROM @tblPT28 t2 
 						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1),0) as minlivepositiontaking
@@ -640,7 +640,7 @@ BEGIN
 			END
 			ELSE IF @roleid = 2
 			BEGIN
-				INSERT INTO #tmpcustsetting([custid], [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
+				INSERT INTO #tmpcustsetting([custid],[sporttype],[bettype],[spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
 				SELECT @custid, sporttype, bettype,0 as spositiontaking, MasterPT, AgentPT, 0 as slivepositiontaking, 0 as mlivepositiontaking, 0 alivepositiontaking, 0 as autolivepositiontaking, 0 as autopositiontaking, 0 as adiscount, 0 as sdiscount, 0 as groupa, 0 as groupb, 0 as groupc, 0 as groupd, 0 groupe, 0 groupf, 0 playerdiscount, 0 discount, 0 as isautopositiontaking, 0 as isautolivepositiontaking, AutoMasterPT, 0 as autolivempositiontaking, IsAutoMasterPT, 0 as isautolivempositiontaking
 				FROM @tblPT28
 				WHERE IsLive = 0
