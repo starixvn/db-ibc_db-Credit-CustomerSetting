@@ -22,10 +22,21 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @srecommend INT, @mrecommend INT
-	
-	SELECT @srecommend = srecommend, @mrecommend = mrecommend
-	FROM custinfo WITH(NOLOCK)
+	DECLARE @srecommend INT, 
+			@mrecommend INT,	
+			@SiteLabel	VARCHAR(50),
+			@Site VARCHAR(10),
+			@SiteID SMALLINT,
+			@Currency SMALLINT,
+			@UplineUsername VARCHAR(50)
+		
+	SELECT @UplineUsername = username,@srecommend = srecommend, @mrecommend = mrecommend,
+		@Site = c.site,
+		@SiteLabel = s.SiteLabel,
+		@SiteID = s.SiteID,
+		@Currency = c.currency
+	FROM Customer c with (NOLOCK)
+		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE custid = @custid
 	
 	IF @GroupType = 0 OR @GroupType = 150
@@ -42,18 +53,14 @@ BEGIN
 	
 	IF @GroupType = 0
 	BEGIN
-		DECLARE @UserName VARCHAR(50), 
-				@UplineUsername VARCHAR(50),
+		DECLARE @UserName VARCHAR(50), 				
 				@Asuspended BIT, 
 				@UplineClosed BIT, 
 				@Credit_AllOtherMember MONEY, 
 				@Credit_Ag MONEY,
 				@Credit_Mem_Max MONEY, 
 				@Credit_Ag_Bal MONEY,
-				@MaxCredit_Mem MONEY,				
-				@CurrencyID INT,
-				@SiteLabel	VARCHAR(50),
-				@Site VARCHAR(10)
+				@MaxCredit_Mem MONEY
 		
 		SELECT @Credit_AllOtherMember = ISNULL(SUM(credit), 0) 
 		FROM custinfo as ci WITH (NOLOCK) 
@@ -62,8 +69,7 @@ BEGIN
 
 		SELECT	@Credit_Ag = isnull(credit, 0),
 				@Asuspended = cs.reject , 
-				@UplineClosed = cs.closed,
-				@CurrencyID=ci.currency
+				@UplineClosed = cs.closed
 		FROM CustInfo as ci with (NOLOCK) 
 			CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 												, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
@@ -82,13 +88,6 @@ BEGIN
 									  WHEN @MaxCredit_Mem > @Credit_Ag_Bal THEN @Credit_Ag_Bal
 									  ELSE @MaxCredit_Mem END 
 
-		SELECT @UplineUsername = username,
-			@Site = c.site,
-			@SiteLabel = s.SiteLabel
-		FROM Customer c with (NOLOCK)
-			INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
-		WHERE custid = @custid
-
 		EXEC dbo.Age_CustomerSelSuggestUsername @prefix = @uplineusername,@custid = @custid, @roleid = 2, @seqname = @username output
 				
 		SELECT @UplineUsername as UplineUsername,
@@ -101,11 +100,10 @@ BEGIN
 	END
 	
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
-	DECLARE	@Currency	TINYINT
-	
+		
 	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder)
 	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder
-	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus) 
+	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus,@siteID,@currency) 
 	
 	----------------------------------------------------------------------------------
 	--BEGIN SB Settings

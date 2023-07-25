@@ -1,6 +1,9 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_DiscountCheck_MAg]
 	@mrecommend INT,
+	@siteid SMALLINT=0,
+	@currency SMALLINT=0,
+	
 	@SettingType25 VARCHAR(MAX)= '' OUTPUT, --SB
 	@SettingType19 VARCHAR(MAX)= '' OUTPUT, --LCS	
 	@IsMyanmarOdds BIT= 0,
@@ -53,7 +56,7 @@ BEGIN
 		CASE WHEN SettingLevel = 4 THEN 4 --SportTypeBettype
 			ELSE 2 END as SettingLevel --SportType
 		,MaxDiscount
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
 	
 	--check SB Discount
 	IF ISNULL(@SettingType25,'') <> ''		

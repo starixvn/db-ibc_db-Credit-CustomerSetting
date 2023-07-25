@@ -23,15 +23,16 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
+	DECLARE @SiteAgent NVARCHAR(50), @SiteLabel VARCHAR(50), @siteID SMALLINT, @currency SMALLINT
+		
+	SELECT @SiteAgent = c.site, @SiteLabel=s.SiteLabel, @SiteID = s.siteID, @currency = c.currency
+	FROM customer c WITH(NOLOCK) 
+	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
+	WHERE CustID = @custid
+	
 	IF @GroupType = 0 OR @GroupType = 150
 	BEGIN
 		DECLARE @discountMyanmarOdds DECIMAL (9,8),@IsMyanmarOdds BIT = 0
-		DECLARE @SiteAgent NVARCHAR(50), @SiteLabel VARCHAR(50)
-		
-		SELECT @SiteAgent = c.site, @SiteLabel=s.SiteLabel 
-		FROM customer c WITH(NOLOCK) 
-		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
-		WHERE CustID = @custid
 
 		-- For direct Master
 		IF @custid > 100 -- get site FROM upline IF not direct master
@@ -114,15 +115,14 @@ BEGIN
 			@IsAutomateTransfer IsAutomateTransfer,
 			@IsInternal as IsInternal,	
 			@SiteAgent AS Site,
-			@SiteLabel AS SiteLabel,
-			@IsMyanmarOdds AS IsMyanmarOdds
+			@SiteLabel AS SiteLabel
 	END
 	
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
 		
 	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder)
 	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder
-	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus) 
+	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus,@siteID,@currency) 
 	
 	----------------------------------------------------------------------------------
 	--BEGIN SB Settings

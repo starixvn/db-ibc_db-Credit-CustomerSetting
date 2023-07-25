@@ -106,7 +106,10 @@ BEGIN
 	WHERE CustID = @srecommend
 	 
 	SET  @Site = ISNULL(NULLIF(@Site,''),@Super_site)
-
+	
+	DECLARE @SiteID int
+	SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
+		
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
 	IF @Site = @Super_site
 		OR NOT EXISTS ( SELECT 1 FROM Site WITH(NOLOCK) WHERE site = @Site) -- @site = 'ExtAcc'
@@ -122,9 +125,6 @@ BEGIN
 	END
 	ELSE
 	BEGIN -- Direct master cross site
-		DECLARE @SiteID int
-		SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
-
 		DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
 		CREATE TABLE #UMConfig(SportType SMALLINT,SiteID INT, Currency INT ,BeginTime smalldatetime,EndTime smalldatetime)
 		
@@ -401,6 +401,9 @@ BEGIN
 	--check comm
 	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_SAg
 		@srecommend = @srecommend,
+		@siteID = @siteID,
+		@currency = @currency,
+		
 		@SettingType25 = @SettingType25 OUTPUT, --SB
 		@SettingType19 = @SettingType19 OUTPUT, --LCS		
 		@CreationStatus = @CreationStatus,
@@ -415,6 +418,9 @@ BEGIN
 	--Check bet setting
 	EXEC Acc_LiteMode_CustomerInsMember_BetSettingCheck_SAg
 		@srecommend = @srecommend,
+		@siteID = @siteID,
+		@currency = @currency,
+		
 		@SettingType26 = @SettingType26, --SB
 		@SettingType2 = @SettingType2, --SB2
 		@SettingType23 = @SettingType23, --RNG Games			
@@ -431,6 +437,9 @@ BEGIN
 	--Check Parlay Max Payout
 	EXEC Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_SAg
 		@srecommend = @srecommend,
+		@siteID = @siteID,
+		@currency = @currency,
+		
 		@SettingType27 = @SettingType27, --SB
 		@CreationStatus = @CreationStatus,
 		
@@ -444,6 +453,8 @@ BEGIN
 	--Check PT
 	EXEC Acc_LiteMode_CustomerInsMember_PTCheck_SAg
 		@srecommend = @srecommend,
+		@siteID = @siteID,
+		@currency = @currency,
 		
 		@SettingType28 = @SettingType28 OUTPUT,-- SB
 		@SettingType1 = @SettingType1 OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
@@ -634,17 +645,17 @@ BEGIN
 	set @endRun = GETDATE()
     set @duration  = datediff (millisecond,@startRun,@endRun)
 
-	DECLARE @LogSPData VARCHAR(MAX)
+	DECLARE @LogSPData NVARCHAR(MAX)
    
 	--Log customer info
     SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-    'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
-    'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS NVARCHAR(100)), SPACE(1))) + '" ' +
+    'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'creator="'+ COALESCE(CAST(@creator AS VARCHAR(50)), SPACE(1)) + '" ' +
     'username="'+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + '" ' +
-    'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS VARCHAR(100)), SPACE(1))) + '" ' +
-    'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)), SPACE(1))) + '" ' +
-	'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS NVARCHAR(100)), SPACE(1))) + '" ' +
+    'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS NVARCHAR(100)), SPACE(1))) + '" ' +
+	'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
     'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
 	'TemplateName="'+ COALESCE(CAST(@TemplateName AS NVARCHAR(50)), SPACE(1)) + '" ' +
@@ -721,8 +732,9 @@ BEGIN
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType	
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)
 	WHERE SettingType IN (4,11,13,21)
+		AND realProductID NOT IN (24,59,69)
 	
 	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
 	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK) 
@@ -833,11 +845,25 @@ BEGIN
 			MasterMaxPT		SMALLMONEY,
 			GroupID			  TINYINT,
 			Child_DisplayOrder  INT
-			)		
-	
+			)	
+			
+	DECLARE @tblPT28 TABLE (
+			SportType		SMALLINT,
+			BetType			SMALLINT,
+			IsLive			BIT,
+			SuperPT			SMALLMONEY,
+			IsAutoSuperPT	BIT,
+			AutoSuperPT		SMALLMONEY,
+			MasterPT		SMALLMONEY,				
+			MasterMinPT		SMALLMONEY,
+			MasterMaxPT		SMALLMONEY,
+			GroupID			  TINYINT,
+			Child_DisplayOrder  INT
+			)	
+			
 	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder)
 	SELECT SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)	
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)	
 	
 	DECLARE @xml XML
 	
@@ -879,6 +905,38 @@ BEGIN
 		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
 												AND b.BetType = p.BetType
 	WHERE p.SettingType IN (2,23)											
+	
+	--PT SB
+	SELECT @xml = CONVERT(XML, @SettingType28)
+		
+	INSERT INTO @tblPT28(
+		SportType, 
+		BetType, 
+		IsLive,
+		SuperPT,
+		IsAutoSuperPT,
+		AutoSuperPT,
+		MasterPT,				
+		MasterMinPT)
+	SELECT 
+		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+		T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+		T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+		T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+	FROM  @xml.nodes('/Root/R') T(c)
+	
+	UPDATE b
+	SET b.GroupID = p.GroupID,
+		b.Child_DisplayOrder = p.Child_DisplayOrder
+	FROM @tblPT28 b
+		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
+												AND b.BetType = p.BetType
+												AND b.IsLive = p.IsLive
+	WHERE p.SettingType IN (28)	
 	
 	--PT
 	SELECT @xml = CONVERT(XML, @SettingType1)
@@ -953,7 +1011,36 @@ BEGIN
 				+ COALESCE(REPLACE(REPLACE(@SettingType27,'<Root>',''),'</Root>',''),SPACE(1))
 			+ '</ParlayMaxPayout>'	
 			+ '<PT GroupType="153">'
-				+ COALESCE(REPLACE(REPLACE(@SettingType28,'<Root>',''),'</Root>',''), SPACE(1)) --SB
+				+ CAST((SELECT SportType, 
+								BetType, 
+								IsLive,
+								SuperPT,
+								IsAutoSuperPT IsAuto,
+								AutoSuperPT AutoPT,
+								MasterPT,				
+								MasterMinPT	MinPT
+						FROM @tblPT28
+						WHERE SportType <> 99 AND Bettype <> 9
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))--SB 
+			+ '</PT>'
+			+ '<PT GroupType="153">'
+				+ CAST((SELECT SportType, 
+								BetType, 
+								IsLive,
+								SuperPT,
+								IsAutoSuperPT IsAuto,
+								AutoSuperPT AutoPT,
+								MasterPT,				
+								MasterMinPT	MinPT
+						FROM @tblPT28
+						WHERE SportType = 99 AND Bettype = 9
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))--SB MP
+			+ '</PT>'
+			+ '<PT GroupType="153">'--SB2
 				+ CAST((SELECT SportType, 
 								BetType, 
 								IsLive,

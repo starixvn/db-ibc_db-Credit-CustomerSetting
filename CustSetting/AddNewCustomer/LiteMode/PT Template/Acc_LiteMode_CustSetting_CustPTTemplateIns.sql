@@ -11,7 +11,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateIns]
 	@Language VARCHAR(3) = 'E',
 	@IP VARCHAR(15)='',
 	@ErrCode INT = 0 OUTPUT,
-	@ErrType INT = 0 OUTPUT,
+	@MsgType INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(MAX) = '' OUTPUT
 AS
 /*
@@ -70,7 +70,7 @@ BEGIN
 		
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
-		@ErrType = @ErrType OUTPUT,
+		@MsgType = @MsgType OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
 	
 	IF @ErrCode > 0

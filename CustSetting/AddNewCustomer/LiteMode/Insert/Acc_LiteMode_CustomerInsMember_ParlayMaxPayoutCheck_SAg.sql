@@ -1,6 +1,9 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_SAg]
 	@srecommend INT,
+	@siteid SMALLINT=0,
+	@currency SMALLINT = 0,
+	
 	@SettingType27 VARCHAR(MAX)= '', --SB
 	@CreationStatus TINYINT = 0,
 	
@@ -61,8 +64,7 @@ BEGIN
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 	
-	DECLARE @xml XML,
-		@currency TINYINT
+	DECLARE @xml XML
 	
 	IF ISNULL(@SettingType27,'') = ''
 		RETURN
@@ -87,7 +89,7 @@ BEGIN
 	SELECT SportType,BetType,SettingType,IsLive,GroupID,GroupType,
 		CASE WHEN SettingLevel = 4 THEN SettingLevel --SporttypeBettype
 			ELSE 2 END as SettingLevel--Sporttype		
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)
 	WHERE SettingType IN (27)
 	
 	INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
@@ -114,10 +116,6 @@ BEGIN
 	WHERE bl.CustID			= @srecommend
 	GROUP BY bl.SportType, bl.BetType
 	
-	SELECT @currency = currency 
-	FROM custinfo WITH(NOLOCK)
-	WHERE custid = @srecommend 
-
 	-->check rule: The value must be a positive amount.
 	IF EXISTS(SELECT TOP 1 1 
 			FROM @NewMaxPayoutTbl tmp

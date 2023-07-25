@@ -1,6 +1,9 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_BetSettingCheck_MAg]
 	@mrecommend INT,
+	@siteid SMALLINT =0,
+	@currency SMALLINT=0,
+	
 	@SettingType26 VARCHAR(MAX)= '', --SB
 	@SettingType2 VARCHAR(MAX)= '', --SB2, VS
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games	
@@ -80,14 +83,13 @@ BEGIN
 	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,GroupID,GroupType,SettingLevel)
 	SELECT SportType,BetType,SettingType,IsLive,GroupID,GroupType,
 		2 as SettingLevel--Sporttype		
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
 	WHERE SettingType IN (26,2,23)
 	
-	DECLARE @xml XML,
-		@currency TINYINT,
+	DECLARE @xml XML,	
 		@srecommend INT
 	
-	SELECT @currency = currency, @srecommend = srecommend 
+	SELECT @srecommend = srecommend 
 	FROM custinfo WITH(NOLOCK)
 	WHERE custid = @mrecommend
 	

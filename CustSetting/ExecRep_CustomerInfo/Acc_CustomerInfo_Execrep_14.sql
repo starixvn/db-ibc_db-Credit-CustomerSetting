@@ -5,6 +5,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_14]
 	@mrecommend INT = 0,	
 	@recommend INT = 0,
 	@roleid INT,
+	@siteid SMALLINT=0,
+	@currency SMALLINT=0,
 	
 	--Discount	
 	@SettingType25 VARCHAR(MAX)= '', --SB
@@ -78,18 +80,22 @@ BEGIN
 		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 		
-	IF dbo.f_CheckRepTable('ProductSettingDetail') = 1
+	--IF dbo.f_CheckRepTable('ProductSettingProfile') = 1 
+	--	AND dbo.f_CheckRepTable('ProductProfileSiteCurrency') = 1
+	IF EXISTS ( SELECT 1 FROM sys.tables WHERE Name='ProductSettingProfile')	
+		AND EXISTS ( SELECT 1 FROM sys.tables WHERE Name='ProductProfileSiteCurrency')	
 	BEGIN
 		INSERT INTO #ProductSettingDetail_tmp00(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
 		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
-		FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+		FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
 
 	END
 		
 	IF (dbo.f_CheckRepTable('CustProductStatus') = 1
-		AND dbo.f_CheckRepTable('ProductSettingDetail') = 1 
+		--AND dbo.f_CheckRepTable('ProductSettingProfile') = 1 
+		AND EXISTS ( SELECT 1 FROM sys.tables WHERE Name='ProductSettingProfile')
 		AND dbo.f_CheckRepTable('ProductStatusProfile') = 1
 		AND dbo.f_CheckRepTable('ProductStatusSiteCurrency') = 1
 	)
@@ -105,9 +111,9 @@ BEGIN
 		SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
 		FROM #ProductSettingDetail_tmp00 psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.[SportType] = psd.[SportType]	AND pbs.[BetType] = psd.[BetType]
-			INNER JOIN (		  SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(4,@CreationStatus)
-						UNION ALL SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(13,@CreationStatus)
-						UNION ALL SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(21,@CreationStatus)
+			INNER JOIN (		  SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(4,@CreationStatus,@siteid,@currency)
+						UNION ALL SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(13,@CreationStatus,@siteid,@currency)
+						UNION ALL SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(21,@CreationStatus,@siteid,@currency)
 						)t 
 						ON pbs.[SportType] = t.[SportType]	AND pbs.[BetType] = t.[BetType]
 		WHERE psd.SettingType IN (4,13,21)
@@ -341,7 +347,9 @@ BEGIN
 		AND dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1
 		AND dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 1
 		AND dbo.f_CheckRepTable('CustWinLossLimit_Member') = 1
-		AND dbo.f_CheckRepTable('ProductSettingDetail') = 1 
+		--AND dbo.f_CheckRepTable('ProductSettingProfile') = 1 
+		 AND EXISTS( SELECT 1 FROM sys.tables WHERE Name='ProductSettingProfile')
+		 
 		AND	dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1
 		AND	dbo.f_CheckRepTable('CustStakeLevel_Member') = 1
 		AND	dbo.f_CheckRepTable('CustBetSetting_Agent') = 1

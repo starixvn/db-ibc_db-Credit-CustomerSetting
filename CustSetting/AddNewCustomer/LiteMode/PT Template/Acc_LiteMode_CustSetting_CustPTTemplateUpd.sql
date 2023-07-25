@@ -10,7 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateUpd]
 	@Language VARCHAR(3) = 'E',
 	@IP VARCHAR(15)='',
 	@ErrCode INT = 0 OUTPUT,
-	@ErrType INT = 0 OUTPUT,
+	@MsgType INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(MAX) = '' OUTPUT
 AS
 /*
@@ -69,7 +69,7 @@ BEGIN
 		
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
-		@ErrType = @ErrType OUTPUT,
+		@MsgType = @MsgType OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
 	
 	IF @ErrCode > 0
@@ -100,9 +100,9 @@ BEGIN
 		RETURN;
 		
 	--reset IsDefault = 0 for existing template is default
-	IF @IsDefault = 1
+	IF @IsDefault <> @Old_IsDefault 	
 	BEGIN
-		IF @IsDefault <> @Old_IsDefault
+		IF @IsDefault = 1
 		BEGIN
 			UPDATE CustPTTemplate WITH(ROWLOCK)
 			SET IsDefault = 0
@@ -112,10 +112,17 @@ BEGIN
 			UPDATE CustPTTemplate WITH(ROWLOCK)
 			SET IsDefault = 1
 			WHERE custid = @custid
-				AND TemplateID = @TemplateID				 
-		END		
-	END	
-		
+				AND TemplateID = @TemplateID				 					
+		END	
+		ELSE		
+		BEGIN
+			UPDATE CustPTTemplate WITH(ROWLOCK)
+			SET IsDefault = 0
+			WHERE custid = @custid
+				AND TemplateID = @TemplateID				
+		END
+	END
+	
 	UPDATE cs
 	SET cs.PT = t.PT
 	FROM @tmpSetting t

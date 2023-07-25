@@ -139,8 +139,11 @@ BEGIN
 	END
     --End check IP--------------------------------------------------	
 
-	DECLARE @Site NVARCHAR(50), @EnableVR BIT
-	SELECT @Site = site FROM customer WITH(NOLOCK) WHERE CustID = @mrecommend
+	DECLARE @Site NVARCHAR(50), @EnableVR BIT, @siteID SMALLINT
+	SELECT @Site = c.site, @siteID = s.siteID
+	FROM customer c WITH(NOLOCK) 
+		INNER JOIN site s WITH(NOLOCK) ON c.site = s.site
+	WHERE CustID = @mrecommend
 
 	-----20160120@Lukas  ------------------
 	---- check constraint on prefix username same as upline in case of creating new customer from alpha site
@@ -320,6 +323,9 @@ BEGIN
 	--check comm
 	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_MAg
 		@mrecommend = @mrecommend,
+		@siteID = @siteID,
+		@currency = @currency,
+		
 		@SettingType25 = @SettingType25 OUTPUT, --SB
 		@SettingType19 = @SettingType19 OUTPUT, --LCS		
 		@CreationStatus = @CreationStatus,
@@ -334,6 +340,9 @@ BEGIN
 	--Check bet setting
 	EXEC Acc_LiteMode_CustomerInsMember_BetSettingCheck_MAg
 		@mrecommend = @mrecommend,
+		@siteID = @siteID,
+		@currency = @currency,
+		
 		@SettingType26 = @SettingType26, --SB
 		@SettingType2 = @SettingType2, --SB2
 		@SettingType23 = @SettingType23, --RNG Games			
@@ -350,6 +359,9 @@ BEGIN
 	--Check Parlay Max Payout
 	EXEC Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_MAg
 		@mrecommend = @mrecommend,
+		@siteID = @siteID,
+		@currency = @currency,
+		
 		@SettingType27 = @SettingType27, --SB
 		@CreationStatus = @CreationStatus,
 		
@@ -364,6 +376,9 @@ BEGIN
 	EXEC Acc_LiteMode_CustomerInsMember_PTCheck_MAg
 		@mrecommend = @mrecommend,
 		@srecommend = @srecommend,
+		@siteID = @siteID,
+		@currency = @currency,
+		
 		@SettingType28 = @SettingType28 OUTPUT,-- SB
 		@SettingType1 = @SettingType1 OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 		@SettingType18 = @SettingType18 OUTPUT,
@@ -506,17 +521,17 @@ BEGIN
     SET @endRun = getdate()
     SET @duration  = datediff (MILLISECOND,@startRun,@endRun)
 
-	DECLARE @LogSPData VARCHAR(MAX)
+	DECLARE @LogSPData NVARCHAR(MAX)
    
 	--Log customer info
     SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
-    'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
-    'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS NVARCHAR(100)), SPACE(1))) + '" ' +
+    'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'creator="'+ COALESCE(CAST(@creator AS VARCHAR(50)), SPACE(1)) + '" ' +
     'username="'+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + '" ' +
-    'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS VARCHAR(100)), SPACE(1))) + '" ' +
-    'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)), SPACE(1))) + '" ' +
-	'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS NVARCHAR(100)), SPACE(1))) + '" ' +
+    'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS NVARCHAR(100)), SPACE(1))) + '" ' +
+	'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
 	'maxcredit="'+ COALESCE(CAST(@maxcredit as VARCHAR(50)), SPACE(1)) + '" ' +
     'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
@@ -600,8 +615,9 @@ BEGIN
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType	
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)
 	WHERE SettingType IN (4,11,13,21)
+		AND realProductID NOT IN (24,59,69)
 
 	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
 	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK) 
@@ -712,7 +728,7 @@ BEGIN
 			
 	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder)
 	SELECT SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)	
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)	
 	
 	DECLARE @xml XML
 	

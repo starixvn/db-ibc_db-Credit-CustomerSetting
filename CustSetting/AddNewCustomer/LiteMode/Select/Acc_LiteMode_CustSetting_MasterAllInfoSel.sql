@@ -22,10 +22,21 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @srecommend INT
+	DECLARE @srecommend INT,
+		@SiteLabel	VARCHAR(50),
+		@UplineUsername VARCHAR(50),
+		@Site VARCHAR(10),
+		@SiteID SMALLINT,
+		@Currency SMALLINT	
 	
-	SELECT @srecommend = srecommend
-	FROM custinfo WITH(NOLOCK)
+	SELECT @UplineUsername = username,
+			@Site = c.site,
+			@SiteLabel = s.SiteLabel,
+			@srecommend = srecommend,
+			@siteID = s.siteID,
+			@Currency = c.currency
+	FROM Customer c with (NOLOCK)
+		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE custid = @custid
 	
 	IF @GroupType = 0 OR @GroupType = 150
@@ -42,27 +53,16 @@ BEGIN
 	
 	IF @GroupType = 0
 	BEGIN
-		DECLARE @UserName VARCHAR(50), 
-				@UplineUsername VARCHAR(50),
+		DECLARE @UserName VARCHAR(50), 				
 				@Msuspended BIT,
 				@Credit_AllOtherAgent MONEY, 
 				@Credit_MAg MONEY, 
-				@Credit_Ag_Max MONEY,
-				@CurrencyID INT,					
+				@Credit_Ag_Max MONEY,								
 				@DisableAutoMPT BIT,
-				@IsInternalMaster BIT,				
-				@SiteLabel	VARCHAR(50),
-				@Site VARCHAR(10),
+				@IsInternalMaster BIT,								
 				@TransferOption VARCHAR(8),
 				@IsAutomateTransfer BIT = 0				
-				
-		SELECT @UplineUsername = username,
-			@Site = c.site,
-			@SiteLabel = s.SiteLabel
-		FROM Customer c with (NOLOCK)
-			INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
-		WHERE custid = @custid
-
+		
 		EXEC dbo.Age_CustomerSelSuggestUsername @prefix = @uplineusername,@custid = @custid, @roleid = 3, @seqname = @username output
  		
 		SELECT @Credit_AllOtherAgent = ISNULL(SUM(credit), 0) 
@@ -101,18 +101,16 @@ BEGIN
 			ISNULL(@DisableAutoMPT,0) as DisableAutoMPT,
 			@TransferOption TransferOption,
 			@IsAutomateTransfer IsAutomateTransfer,
-			@IsInternalMaster as IsInternal,
-			@IsMyanmarOdds IsMyanmarOdds,
+			@IsInternalMaster as IsInternal,			
 			@Site site,
 			@SiteLabel SiteLabel			
 	END
 	
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
-	DECLARE	@Currency	TINYINT
-	
+		
 	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder)
 	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder
-	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus) 
+	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus,@siteID,@currency) 
 	
 	----------------------------------------------------------------------------------
 	--BEGIN SB Settings

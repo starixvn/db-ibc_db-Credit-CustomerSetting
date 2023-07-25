@@ -96,7 +96,7 @@ BEGIN
     DECLARE @endRun DATETIME
     DECLARE @duration INT
     SET @startRun = GETDATE()
-	/*
+	
 	EXEC [Acc_CheckUM] @CustID = @recommend
 		,@FunctionType = 2
 		,@ErrCode = @ErrCode OUTPUT
@@ -123,11 +123,16 @@ BEGIN
 	return
 	END
 	
-	DECLARE @mrecommend int
+	DECLARE @mrecommend int,
+			@Success BIT
+			
 -----END: 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit-member each minute. Normal agent can open up to 10 members per minute
-	DECLARE @_Site VARCHAR(10), @EnableVR BIT
-	SELECT @_Site = site
-	FROM dbo.customer WITH(NOLOCK)
+	DECLARE @_Site VARCHAR(10), @EnableVR BIT, @siteID SMALLINT
+	
+	SELECT @_Site = c.site,
+		@siteID = s.siteid
+	FROM dbo.customer c WITH(NOLOCK)
+		INNER JOIN site s WITH(NOLOCK) ON c.site = s.site
 	WHERE CustID = @recommend
 	
 	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0 , @CurrentDate DATETIME
@@ -253,9 +258,8 @@ BEGIN
 		
 		@site NVARCHAR(50),
 		@DisableSuperLive BIT = 0,
-	    @matchlimit SMALLMONEY,
-		@Success BIT
-		
+	    @matchlimit SMALLMONEY
+				
 	SELECT @currency = currency
          , @mrecommend = mrecommend
          , @srecommend = srecommend
@@ -289,9 +293,9 @@ BEGIN
 	BEGIN
 		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@_Site)
 	END	
-*/
+
 	 /* 20130403@Jamie: Check Recommend <> MRecommend AND <> Srecommend OR NOT*/
- /*   IF (@recommend = @mrecommend) OR (@recommend = @srecommend)
+   IF (@recommend = @mrecommend) OR (@recommend = @srecommend)
     BEGIN
 	    SELECT	@ErrMsg = CASE @Language
 						    WHEN 'E' THEN 'Invalid user'
@@ -301,11 +305,7 @@ BEGIN
 	    RETURN	
     END
 	
-	 --Use maxcredit in CustAgent table 
-    SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) FROM custAgent WITH(NOLOCK)  WHERE CustID = @recommend
-
-    SELECT @ErrCode = 0
-	
+    SELECT @ErrCode = 0	
 	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     DECLARE @IsValid BIT
      -- MyanmarOdds
@@ -362,5 +362,74 @@ BEGIN
 			    , @success = 0, @ErrCode = 201
 	    RETURN
     END	
-	*/
+	
+	 --Use maxcredit in CustAgent table 
+    SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) FROM custAgent WITH(NOLOCK)  WHERE CustID = @recommend
+
+	SELECT @Credit_AllOtherMember = ISNULL(sum(Credit), 0) FROM custinfo WITH(NOLOCK) WHERE Recommend = @Recommend AND RoleID = 1
+    SELECT @MaxCredit_Mem = CASE WHEN @MaxCredit_Mem =0 THEN (@AgentCredit - @Credit_AllOtherMember) 
+						    ELSE @MaxCredit_Mem END 
+    IF @Credit + @Credit_AllOtherMember>@AgentCredit
+    BEGIN
+	    SELECT @ErrMsg = CASE @Language 
+							    WHEN 'E' THEN 'You have exceeded your credit limit.'  
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](70010,@Language)
+						    END	
+			    ,@success = 0, @ErrCode = 204
+	    return
+    END
+
+    IF @Credit > @MaxCredit_Mem 
+    BEGIN
+	    SELECT @ErrMsg = CASE @Language 
+							    WHEN 'E' THEN 'Member max credit has been exceeded.'
+							    ELSE [dbo].[f_Get_MsgNamebyMsgID](70009,@Language)
+						    END	
+			    ,@success = 0, @ErrCode =217
+	    return
+    END 
+		
+	IF @credit <0
+		or @recommend <=0
+		or @ugroup not in ('a','b','c','d','hka','hkb','hkc','hkd','indoa','indob','indoc','indod','dea','deb','dec','ded')
+	BEGIN
+		select @isvalid = 0, @ErrCode = 102
+		Select @ErrMsg = 	case @Language 
+								when 'E' then 'Wrong Min bet/ Max bet/ Max per ball/ Max per match/ Credit/ Agent name/ user group.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](10001,@Language)
+					end
+		return
+	END
+	
+	
+    SELECT @pwdexpiry = DATEADD(dd, -1, GETDATE())
+
+    IF @UplineClosed = 1 SELECT @Closed = 1 
+
+    --check suspended of Agent 
+    IF @Asuspended =1
+    BEGIN
+	    set @suspended =1
+    END
+	
+	--check comm
+	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_Ag
+		@srecommend = @srecommend,
+		@mrecommend = @mrecommend,
+		@recommend = @recommend,
+		@siteID = @siteID,
+		@currency = @currency,
+		
+		@SettingType25 = @SettingType25 OUTPUT, --SB
+		@SettingType19 = @SettingType19 OUTPUT, --LCS		
+		@CreationStatus = @CreationStatus,
+		@ugroup = @ugroup,
+		@IsMyanmarOdds = @IsMyanmarOdds,
+		
+		@ErrCode = @ErrCode OUTPUT,
+		@MsgType = @MsgType OUTPUT,
+		@ErrMsg = @ErrMsg OUTPUT
+	
+	IF @ErrCode > 0
+		RETURN;
 END	

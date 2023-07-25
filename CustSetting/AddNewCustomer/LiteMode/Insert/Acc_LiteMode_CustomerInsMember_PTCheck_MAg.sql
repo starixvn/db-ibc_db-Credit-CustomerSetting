@@ -2,6 +2,8 @@
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_PTCheck_MAg]
 	@mrecommend INT,	
 	@srecommend INT,
+	@siteid SMALLINT =0,
+	@currency SMALLINT =0,
 	
 	@SettingType28 VARCHAR(MAX)= '' OUTPUT,-- SB
 	@SettingType1 VARCHAR(MAX)= ''  OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
@@ -154,16 +156,13 @@ BEGIN
 	END
 	
 	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,		
-		CASE WHEN SettingLevel = 4 THEN SettingLevel --SporttypeBettype
-			ELSE 2 END as SettingLevel,--Sporttype
-		MaxPT
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	SELECT SportType,BetType,SettingType,IsLive,RealProductID,SettingLevel,MaxPT
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
 	WHERE SettingType IN (1,18,28)
 	
 	--check pt > 0 
 	;WITH T AS (
-	SELECT t.SportType, t.BetType, t.IsLive, SettingLevel
+	SELECT t.SportType, t.BetType, t.IsLive, SettingLevel,ps.ProductID
 		FROM @tblPT28 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -175,7 +174,7 @@ BEGIN
 					OR t.AutoMasterPT < 0 
 					OR t.AutoMasterPT > ps.MaxPT)
 		UNION 
-		SELECT t.SportType, t.BetType, t.IsLive, SettingLevel
+		SELECT t.SportType, t.BetType, t.IsLive, SettingLevel,ps.ProductID
 		FROM @tblPT18 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -287,7 +286,7 @@ BEGIN
 				)				
 	)
 	SELECT @ErrType =(
-		SELECT t.* , ps.SettingLevel
+		SELECT t.* , ps.SettingLevel,ps.ProductID
 		FROM T
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
@@ -335,7 +334,7 @@ BEGIN
 			AND b.AgentPT > scs.AgentPT		
 	)
 	SELECT @ErrType =(
-		SELECT t.*,ps.SettingLevel
+		SELECT t.*,ps.SettingLevel,ps.ProductID
 		FrOM T
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 

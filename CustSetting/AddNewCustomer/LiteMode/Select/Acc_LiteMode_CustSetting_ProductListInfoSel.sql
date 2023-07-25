@@ -18,38 +18,38 @@ BEGIN
 	
 	IF @CreationStatus IN (1,0)
 	BEGIN
-		SELECT DISTINCT GroupID,ProductID,0 SportType
-		FROM dbo.ProductSettingDetail WITH(NOLOCK)
+		SELECT DISTINCT GroupID,ProductID,RealProductID,0 SportType
+		FROM dbo.ProductSettingProfile WITH(NOLOCK)
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 1 --SB,SB2
 		UNION ALL	
-		SELECT DISTINCT GroupID,ProductID,CASE WHEN productid IN (5) THEN 0 ELSE SportType END --VS
-		FROM dbo.ProductSettingDetail WITH(NOLOCK)
+		SELECT DISTINCT GroupID,ProductID,RealProductID,CASE WHEN productid IN (5) THEN 0 ELSE SportType END --VS
+		FROM dbo.ProductSettingProfile WITH(NOLOCK)
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND sporttype NOT IN (164)--happy 5
 			AND GroupID = 2--RnG Games
 		UNION ALL	
-		SELECT DISTINCT GroupID,ProductID,CASE WHEN productid IN (6,18) THEN 0 ELSE SportType END --Saba Casino,RNG Slot
-		FROM dbo.ProductSettingDetail WITH(NOLOCK)
+		SELECT DISTINCT GroupID,ProductID,RealProductID,CASE WHEN productid IN (6,18) THEN 0 ELSE SportType END --Saba Casino,RNG Slot
+		FROM dbo.ProductSettingProfile WITH(NOLOCK)
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 3--Live & RnG CS
 		ORDER BY GroupID,ProductID,SportType	
 	END
 	ELSE IF @CreationStatus = 3
 	BEGIN	
-		SELECT DISTINCT GroupID,ProductID,0 SportType
-		FROM dbo.ProductSettingDetail_UAT WITH(NOLOCK)
+		SELECT DISTINCT GroupID,ProductID,RealProductID,0 SportType
+		FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 1 --SB,SB2
 		UNION ALL	
-		SELECT DISTINCT GroupID,ProductID,CASE WHEN productid IN (5) THEN 0 ELSE SportType END --VS
-		FROM dbo.ProductSettingDetail_UAT WITH(NOLOCK)
+		SELECT DISTINCT GroupID,ProductID,RealProductID,CASE WHEN productid IN (5) THEN 0 ELSE SportType END --VS
+		FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND sporttype NOT IN (164)--happy 5
 			AND GroupID = 2--RnG Games
 		UNION ALL	
-		SELECT DISTINCT GroupID,ProductID,CASE WHEN productid IN (6,18) THEN 0 ELSE SportType END --Saba Casino,RNG Slot
-		FROM dbo.ProductSettingDetail_UAT WITH(NOLOCK)
+		SELECT DISTINCT GroupID,ProductID,RealProductID,CASE WHEN productid IN (6,18) THEN 0 ELSE SportType END --Saba Casino,RNG Slot
+		FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 3--Live & RnG CS
 		ORDER BY GroupID,ProductID,SportType			

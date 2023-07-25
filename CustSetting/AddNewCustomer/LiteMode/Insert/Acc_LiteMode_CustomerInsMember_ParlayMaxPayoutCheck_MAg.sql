@@ -1,6 +1,9 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_MAg]
 	@mrecommend INT,
+	@siteid SMALLINT=0,
+	@currency SMALLINT=0,
+	
 	@SettingType27 VARCHAR(MAX)= '', --SB
 	@CreationStatus TINYINT = 0,
 	
@@ -61,8 +64,7 @@ BEGIN
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 	
-	DECLARE @xml XML,
-		@currency TINYINT,
+	DECLARE @xml XML,		
 		@srecommend INT
 	
 	IF ISNULL(@SettingType27,'') = ''
@@ -88,11 +90,10 @@ BEGIN
 	SELECT SportType,BetType,SettingType,IsLive,GroupID,GroupType,
 		CASE WHEN SettingLevel = 4 THEN SettingLevel --SporttypeBettype
 			ELSE 2 END as SettingLevel--Sporttype		
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus)
+	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
 	WHERE SettingType IN (27)
 	
-	SELECT @currency = currency,
-		@srecommend = srecommend
+	SELECT @srecommend = srecommend
 	FROM custinfo WITH(NOLOCK)
 	WHERE custid = @mrecommend 
 	
