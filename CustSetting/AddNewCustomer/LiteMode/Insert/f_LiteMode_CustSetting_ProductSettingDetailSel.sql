@@ -50,10 +50,7 @@ RETURN
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,p.ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,GroupID,GroupType,SubType,CreationStatus
 	FROM dbo.ProductSettingProfile_UAT p WITH(NOLOCK)
 		INNER JOIN ProductProfileSiteCurrency_UAT s WITH(NOLOCK) ON p.ProductSettingID = s.ProductSettingID
-	WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1
-								WHEN @CreationStatus = 0 THEN 0
-								ELSE NULL END 
-		AND @CreationStatus = 3
+	WHERE @CreationStatus = 3
 		AND CreationStatus <> 2
 		AND (@SettingType IS NULL OR SettingType = @SettingType)
 		AND MarketType = 1

@@ -218,7 +218,7 @@ BEGIN
 	BEGIN
 		SELECT @ErrCode = 602,
 			   @ErrMsg = '<Root MsgID="20044" Msg="You are not allowed to have Auto PT, please contact your upline." />',
-			   @MsgType = 0
+			   @MsgType = 60
 		RETURN					
 	END	
 	
@@ -327,7 +327,7 @@ BEGIN
 		SELECT b.SportType, b.BetType, b.IsLive, scs.AgentPT as MaxPT				
 		FROM 
 			CustPTSetting3rd_Agent scs WITH(NOLOCK)			  
-			INNER JOIN @tblPT28 b ON scs.sporttype=b.sporttype 
+			INNER JOIN @tblPT18 b ON scs.sporttype=b.sporttype 
 								AND scs.bettype = b.bettype        
 								AND b.isLive = 0						
 		WHERE scs.custid = @srecommend 

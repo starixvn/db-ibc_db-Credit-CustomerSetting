@@ -8,7 +8,8 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_BetSettingCheck_Ag]
 	
 	@SettingType26 VARCHAR(MAX)= '', --SB
 	@SettingType2 VARCHAR(MAX)= '', --SB2, VS
-	@SettingType23 VARCHAR(MAX)= '', --RNG Games	
+	@SettingType23 VARCHAR(MAX)= '', --RNG Games
+	@SettingType16 VARCHAR(MAX)= '', --SB	
 	@SystemID TINYINT = 1,
 	@CreationStatus TINYINT = 0,
 	
@@ -17,13 +18,13 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_BetSettingCheck_Ag]
 	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
 AS
 /*
-	Created: 20230628@Johnson  
-	Task : check bet setting for agent 
+	Created: 20230727@Johnson  
+	Task : check bet setting for member 
 	DB:  DBCUST/CustDB  
 	Original sp: 
 	
 	Revisions: 
-		- 20230628@Johnson: initial sp [redmine: #179159]
+		- 20230727@Johnson: initial sp [redmine: #179159]
 
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
@@ -43,7 +44,10 @@ AS
 						<R SportType="202" BetType="1501" MinBet="1" MaxBet="100" MPM="1000"  />
 						...
 						<R SportType="220" BetType="1024" MinBet="1" MaxBet="100" MPM="1000" />						
-					</Root>'		
+					</Root>'
+		- @SettingType16 = '<Root>
+						<R SportType="175" BetType="7901" MinBet="1" MaxBet="100" MPM="1000" />
+					</Root>'			
 		
 */	
 BEGIN
@@ -244,7 +248,7 @@ BEGIN
 				MaxPOpermatch = ISNULL(MIN(CASE WHEN cb.MaxPayoutPerMatch = 0 THEN NULL ELSE cb.MaxPayoutPerMatch END),0)
 		FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
-		WHERE cb.custid IN (@mrecommend,@srecommend)
+		WHERE cb.custid IN (@recommend,@mrecommend,@srecommend)
 		GROUP BY cb.Sporttype,cb.Bettype
 			
 		--> Check rule : Min Bet must be equal to or greater than Upline's Min Bet
@@ -385,7 +389,9 @@ BEGIN
 	END
 	
 	--check RNG Games, SB2
-	IF ISNULL(@SettingType23,'') <> '' OR ISNULL(@SettingType2,'') <> ''
+	IF ISNULL(@SettingType23,'') <> '' 
+		OR ISNULL(@SettingType2,'') <> ''
+		OR ISNULL(@SettingType16,'') <> ''
 	BEGIN
 		DELETE @BetSetting
 		DELETE @Upline_BetSetting
@@ -409,6 +415,22 @@ BEGIN
 		FROM  @xml.nodes('/Root/R') T(c) 
 		
 		SELECT @xml = CONVERT(XML,@SettingType2)
+		
+		INSERT INTO @BetSetting(
+			SportType, 
+			BetType, 
+			MinBet, 
+			MaxBet, 
+			MaxPerMatch)
+		SELECT 
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+			T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
+		FROM  @xml.nodes('/Root/R') T(c) 
+		
+		SELECT @xml = CONVERT(XML,@SettingType16)
 		
 		INSERT INTO @BetSetting(
 			SportType, 
@@ -601,7 +623,7 @@ BEGIN
 				MaxPerNumber = ISNULL(MIN(CASE WHEN cb.MaxPerNumber = 0 THEN NULL ELSE cb.MaxPerNumber END),0)
 		FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
-		WHERE cb.custid IN (@srecommend,@mrecommend)
+		WHERE cb.custid IN (@srecommend,@mrecommend,@recommend)
 		GROUP BY cb.Sporttype,cb.Bettype
 
 		--RNG Lottery,VS..
@@ -612,7 +634,7 @@ BEGIN
 				MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0)
 		FROM CustBetSetting3rd_Agent cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
-		WHERE cb.custid IN (@srecommend,@mrecommend)
+		WHERE cb.custid IN (@srecommend,@mrecommend,@recommend)
 		GROUP BY cb.Sporttype,cb.Bettype
 
 		--> Check rule : Min Bet must be equal to or greater than Upline's Min Bet

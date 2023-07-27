@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_BetSettingCheck_SAg]
 	@SettingType26 VARCHAR(MAX)= '', --SB
 	@SettingType2 VARCHAR(MAX)= '', --SB2, VS
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games	
+	@SettingType16 VARCHAR(MAX)= '', --Others Games
 	@SystemID TINYINT = 1,
 	@CreationStatus TINYINT = 0,
 	
@@ -41,7 +42,10 @@ AS
 						<R SportType="202" BetType="1501" MinBet="1" MaxBet="100" MPM="1000"  />
 						...
 						<R SportType="220" BetType="1024" MinBet="1" MaxBet="100" MPM="1000" />						
-					</Root>'		
+					</Root>'	
+		- @SettingType16 = '<Root>
+						<R SportType="175" BetType="7901" MinBet="1" MaxBet="100" MPM="1000" />				
+						</Root>'
 		
 */	
 BEGIN
@@ -84,7 +88,7 @@ BEGIN
 	SELECT SportType,BetType,SettingType,IsLive,GroupID,GroupType,
 		2 as SettingLevel--Sporttype		
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
-	WHERE SettingType IN (26,2,23)
+	WHERE SettingType IN (26,2,23,16)
 	
 	DECLARE @xml XML
 		
@@ -379,7 +383,9 @@ BEGIN
 	END
 	
 	--check RNG Games, SB2
-	IF ISNULL(@SettingType23,'') <> '' OR ISNULL(@SettingType2,'') <> ''
+	IF ISNULL(@SettingType23,'') <> '' 
+		OR ISNULL(@SettingType2,'') <> ''
+		OR ISNULL(@SettingType16,'') <> ''
 	BEGIN
 		DELETE @BetSetting
 		DELETE @Upline_BetSetting
@@ -403,6 +409,22 @@ BEGIN
 		FROM  @xml.nodes('/Root/R') T(c) 
 		
 		SELECT @xml = CONVERT(XML,@SettingType2)
+		
+		INSERT INTO @BetSetting(
+			SportType, 
+			BetType, 
+			MinBet, 
+			MaxBet, 
+			MaxPerMatch)
+		SELECT 
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+			T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
+		FROM  @xml.nodes('/Root/R') T(c) 
+		
+		SELECT @xml = CONVERT(XML,@SettingType16)
 		
 		INSERT INTO @BetSetting(
 			SportType, 

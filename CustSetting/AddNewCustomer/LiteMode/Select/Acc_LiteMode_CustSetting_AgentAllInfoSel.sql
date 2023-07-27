@@ -113,15 +113,12 @@ BEGIN
 	BEGIN
 		WITH T AS(
 		SELECT sporttype, bettype,
-			CASE WHEN bettype = 1 THEN groupA
-				WHEN bettype = 3 THEN groupB
-				WHEN bettype = 7 THEN groupC
-				WHEN bettype = 8 THEN groupD
-				WHEN bettype IN (4,5) THEN sdiscount END as discount		 
+			CASE WHEN bettype = 1 THEN groupA				
+				WHEN bettype IN (4,5) THEN discount END as discount		 
 		FROM custsetting WITH(NOLOCK)
 		WHERE custid = @custid
 			AND sporttype = 1
-			AND bettype IN (1,3,7,8,4,5)
+			AND bettype IN (1,4,5)
 		UNION SELECT 2, 1, @discountMyanmarOdds WHERE @IsMyanmarOdds = 1
 		)
 		SELECT T.*, s.IntervalValue,s.Child_DisplayOrder
@@ -384,6 +381,56 @@ BEGIN
 	END
 	--END Live & RnG Casino
 	----------------------------------------------------------------------------------
-		
+	
+	----------------------------------------------------------------------------------
+	--BEGIN Others Games
+	
+	--Comm
+	IF @GroupID = 4 AND @GroupType = 156
+	BEGIN
+		SELECT cs.SportType, cs.Bettype, cs.Discount, s.Child_DisplayOrder			
+		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
+			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
+		WHERE cs.custid = @custid	
+		ORDER BY s.Child_DisplayOrder	
+	END
+	
+	--Bet Setting
+	IF @GroupID = 4 AND @GroupType = 157
+	BEGIN
+		;WITH T AS (		
+		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,s.Child_DisplayOrder
+		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
+			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
+												AND cs.Bettype = s.Bettype
+		WHERE cs.CustID = @custid
+		)
+		SELECT * FROM T
+		ORDER BY Child_DisplayOrder
+	END
+	
+	--PT
+	IF @GroupID = 4 AND @GroupType = 153
+	BEGIN	
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive 
+			, CASE WHEN cs.AgentPT < scs.AgentPT THEN cs.AgentPT ELSE scs.AgentPT END as A2 
+			, cs.MinPT  AS N2 
+			, s.Child_DisplayOrder
+		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
+			INNER JOIN #SportBettypeFilter s ON s.SportType = cs.sporttype  
+											AND s.BetType = cs.bettype  
+											AND s.IsLive = cs.islive
+			INNER JOIN CustPTSetting3rd_Agent scs WITH (NOLOCK) ON scs.custid = @srecommend
+																AND	scs.SportType = cs.sporttype  
+																AND scs.BetType = cs.bettype  
+																AND scs.IsLive = cs.islive	
+		WHERE cs.CustID = @custid	
+		ORDER BY Child_DisplayOrder
+	END
+	--END Others Games
+	----------------------------------------------------------------------------------
+			
 	DROP TABLE #SportBettypeFilter
 END	

@@ -16,11 +16,13 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	--Discount	
 	@SettingType25 VARCHAR(MAX)= '', --SB
 	@SettingType19 VARCHAR(MAX)= '', --LCS
+	@SettingType3 VARCHAR(MAX)= '', --Others Games
 		
 	--Bet Setting
 	@SettingType26 VARCHAR(MAX)= '', --SB
 	@SettingType2 VARCHAR(MAX)= '', --SB2
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games
+	@SettingType16 VARCHAR(MAX)= '', --Others Games
 		
 	--Parlay Max Payout
 	@SettingType27 VARCHAR(MAX)= '', --SB Parlay Max Payout
@@ -403,9 +405,11 @@ BEGIN
 		@srecommend = @srecommend,
 		@siteID = @siteID,
 		@currency = @currency,
+		@IsMyanmarOdds = @IsMyanmarOdds,
 		
 		@SettingType25 = @SettingType25 OUTPUT, --SB
-		@SettingType19 = @SettingType19 OUTPUT, --LCS		
+		@SettingType19 = @SettingType19 OUTPUT, --LCS
+		@SettingType3 = @SettingType3 OUTPUT, --Others Games
 		@CreationStatus = @CreationStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
@@ -424,6 +428,7 @@ BEGIN
 		@SettingType26 = @SettingType26, --SB
 		@SettingType2 = @SettingType2, --SB2
 		@SettingType23 = @SettingType23, --RNG Games			
+		@SettingType16 = @SettingType16, --Others Games	
 		@SystemID = @SystemID,
 		@CreationStatus = @CreationStatus,
 		
@@ -534,10 +539,14 @@ BEGIN
 		@mrecommend = 0,	
 		@recommend = 0,
 		@roleid = 3,
+		@siteID = @siteID,
+		@currency = @currency,
 		
 		--Discount	
 		@SettingType25 = @SettingType25, --SB
 		@SettingType19 = @SettingType19, --LCS		
+		@SettingType3 = @SettingType3, --Others Games		
+		
 		-- Myanmar Odds
 		@IsMyanmarOdds = @IsMyanmarOdds,
 		
@@ -545,6 +554,7 @@ BEGIN
 		@SettingType26 = @SettingType26, --SB
 		@SettingType2 = @SettingType2, --SB2, VS
 		@SettingType23 = @SettingType23, --RNG Games
+		@SettingType16 = @SettingType16, --Ohters Games
 			
 		--Parlay Max Payout
 		@SettingType27 = @SettingType27, --SB Parlay Max Payout
@@ -734,7 +744,7 @@ BEGIN
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType	
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)
 	WHERE SettingType IN (4,11,13,21)
-		AND realProductID NOT IN (24,59,69)
+		AND realProductID NOT IN (24,59)
 	
 	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
 	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK) 
@@ -882,6 +892,20 @@ BEGIN
 		T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
 	FROM  @xml.nodes('/Root/R') T(c)	
 	
+	SELECT @xml = CONVERT(XML,@SettingType16)
+		
+	INSERT INTO @BetSetting(SportType, 
+		BetType, 
+		MinBet, 
+		MaxBet, 
+		MaxPerMatch)
+	SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+		T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+		T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+		T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
+	FROM  @xml.nodes('/Root/R') T(c)	
+	
 	SELECT @xml = CONVERT(XML,@SettingType23)
 		
 	INSERT INTO @BetSetting(SportType, 
@@ -904,7 +928,7 @@ BEGIN
 	FROM @BetSetting b
 		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
 												AND b.BetType = p.BetType
-	WHERE p.SettingType IN (2,23)											
+	WHERE p.SettingType IN (2,16,23)											
 	
 	--PT SB
 	SELECT @xml = CONVERT(XML, @SettingType28)
@@ -1020,7 +1044,7 @@ BEGIN
 								MasterPT,				
 								MasterMinPT	MinPT
 						FROM @tblPT28
-						WHERE SportType <> 99 AND Bettype <> 9
+						WHERE 1= CASE WHEN SportType = 99 AND Bettype = 9 THEN 0 ELSE 1 END 
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
 						) as VARCHAR(max))--SB 
@@ -1088,6 +1112,28 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max))
 			+ '</PT>'
+			+ '</Group>'
+			+ '<Group ID="4">'--Others Games
+			+ '<Discount GroupType="156">' 
+				+ COALESCE(REPLACE(REPLACE(@SettingType3,'<Root>',''),'</Root>',''),SPACE(1))
+			+ '</Discount>'		
+			+ '<BetSetting GroupType="157">'
+				+ 	CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM
+						FROM @BetSetting
+						WHERE GroupID = 4
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))
+			+ '</BetSetting>'
+			+ '<PT GroupType="153">'
+				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
+								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
+						FROM @tblPT18
+						WHERE GroupID = 4
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max))
+			+ '</PT>'			
 			+ '</Group>'
 			+ '</Root>'
 	

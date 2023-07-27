@@ -394,13 +394,13 @@ BEGIN
 	WHERE t.IsAutoSuperPT = 0 AND t.AutoSuperPT > 0
 	
 	UPDATE t
-	SET t.AutoSuperPT = scs.AutoSuperPT
+	SET t.AutoSuperPT = scs.SuperPT
 	FROM @tblPT18 t
 		INNER JOIN CustPTSetting3rd_Agent as scs WITH (NOLOCK) ON scs.sporttype = t.SportType
 												AND scs.bettype = t.BetType
 												AND scs.IsLive = t.IsLive					
 	WHERE custid = @srecommend 
-		AND t.AutoSuperPT > scs.AutoSuperPT
+		AND t.AutoSuperPT > scs.SuperPT
 		
 	SELECT @SettingType28 = (
 	SELECT SportType '@SportType', 

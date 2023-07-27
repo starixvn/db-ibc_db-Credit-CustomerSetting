@@ -330,6 +330,53 @@ BEGIN
 	END
 	--END Live & RnG Casino
 	----------------------------------------------------------------------------------
+	
+	----------------------------------------------------------------------------------
+	--BEGIN Others Games
+	
+	--Comm
+	IF @GroupID = 4 AND @GroupType = 156
+	BEGIN
+		SELECT cs.SportType, cs.Bettype, cs.Discount, s.Child_DisplayOrder			
+		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
+			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
+		WHERE cs.custid = @custid	
+		ORDER BY s.Child_DisplayOrder	
+	END
+	
+	--Bet Setting
+	IF @GroupID = 4 AND @GroupType = 157
+	BEGIN
+		;WITH T AS (		
+		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,s.Child_DisplayOrder
+		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
+			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
+												AND cs.Bettype = s.Bettype
+		WHERE cs.CustID = @custid
+		)
+		SELECT * FROM T
+		ORDER BY Child_DisplayOrder
+	END
+	
+	--PT
+	IF @GroupID = 4 AND @GroupType = 153
+	BEGIN					
+		SELECT cs.SportType  
+			, cs.BetType  
+			, cs.IsLive  
+			, cs.SuperPT AS S4  
+			, cs.MasterPT AS M4  
+			, cs.MinPT  AS N4 
+			, s.Child_DisplayOrder	
+		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
+			INNER JOIN #SportBettypeFilter s 
+				ON s.SportType = cs.sporttype  
+				AND s.BetType = cs.bettype  
+				AND s.IsLive = cs.islive
+		WHERE cs.CustID = @custid					
+	END
+	--END Others Games
+	----------------------------------------------------------------------------------
 		
 	DROP TABLE #SportBettypeFilter
 END
