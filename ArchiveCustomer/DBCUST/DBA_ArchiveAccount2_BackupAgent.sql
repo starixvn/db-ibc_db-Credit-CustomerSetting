@@ -16,6 +16,7 @@ AS
 			- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 			- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+			- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 
 */
 BEGIN
@@ -268,6 +269,19 @@ BEGIN
 		SELECT SubAccID,CustID,OldUserPwd,PwdExpiry,LastChangedPwdDate,isFirstLogin,SecurityCode
 			,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode,VerifyOTPCount,FunctionInfo,ProtectionCode
 		FROM CustLoginInfoSub WITH(NOLOCK)
+		WHERE custid = @CustID
+
+	--#188850
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustMaxPayoutSetting_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
+		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustMaxPayoutSetting_Agent_old(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+		SELECT CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6
+		FROM CustMaxPayoutSetting_Agent WITH(NOLOCK)
+		WHERE custid = @CustID
+
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old WITH(NOLOCK) WHERE custid = @CustID)
+		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old(CustId,ImageId,Modified)
+		SELECT CustId,ImageId,Modified
+		FROM bodb_Credit.dbo.CustProfilePicture WITH(NOLOCK)
 		WHERE custid = @CustID
 			
 END

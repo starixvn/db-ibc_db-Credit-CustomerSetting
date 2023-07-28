@@ -21,6 +21,7 @@ AS
 		- 20210614@Eden: All sites - Dormant SMA Account List [RedmineID: #155969]
 		- 20210810@Eden: Edit stage 1 to resume when archive Agent Process [RedmineID: #155969]
 		- 20220620@Johnson: define temp table to avoid dump db [redmine:#174035]
+		- 20230623@Eden: Rearrange Stage 1 processing order for master/super level [Redmine: #188850]
 	Param:
 		+ @stage: input stage to run archive
 */
@@ -143,16 +144,20 @@ BEGIN
 				SELECT @ErrMsg = ''
 				SELECT @ProcessedDate = GETDATE()
 				
-				UPDATE TOP (1) t
-				SET  IsFinished = 1
-					, @S1M1_username = username
+				SELECT TOP (1) 
+					  @S1M1_username = username
 					, @roleid_tmp = roleid
 					, @GroupLevelName = GroupLevelName
 					, @ArchivedCustID = CustID
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
+				ORDER BY t.roleid
 				
 				IF (@@ROWCOUNT = 0) BREAK
+
+				UPDATE #ArchiveMasterSuper_tmp 
+				SET IsFinished = 1
+				WHERE CustID = @ArchivedCustID
 				
 				IF @roleid_tmp = 3
 				BEGIN
