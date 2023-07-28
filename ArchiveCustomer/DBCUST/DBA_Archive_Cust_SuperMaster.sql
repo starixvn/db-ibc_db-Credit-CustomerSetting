@@ -17,6 +17,7 @@ AS
 			- 20210810@Eden: Enhance Performance for stage 1 [RedmineID: #155969]
 			- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 			- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+			- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 */
 BEGIN
 	DECLARE @RoleID INT
@@ -196,6 +197,35 @@ BEGIN
 		BEGIN
 			DELETE dbo.CustBetSetting_Agent WITH (UPDLOCK,ROWLOCK)
 			WHERE	custid = @CustID 
+			
+		END
+
+		--#188850  : more tables
+		IF dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1 
+		BEGIN
+			DELETE dbo.CustMaxPayoutSetting_Agent WITH (UPDLOCK,ROWLOCK)
+			WHERE	custid = @CustID 
+			
+		END
+
+		IF OBJECT_ID('bodb_Credit.dbo.CustProfilePicture') IS NOT NULL
+		BEGIN
+			DECLARE @CustProfilePicture TABLE (CustId int, ImageId int) 
+
+			UPDATE t
+			SET t.IsDeleted = 1,
+				t.RepUpdateTime = SYSDATETIME()
+			OUTPUT deleted.CustId,deleted.ImageId INTO @CustProfilePicture(CustId,ImageId)
+			FROM bodb_Credit.dbo.CustProfilePicture t WITH (UPDLOCK,ROWLOCK)
+			WHERE custid = @CustID 
+			
+			UPDATE t
+			SET t.IsDeleted = 1,
+				t.RepUpdateTime = SYSDATETIME()
+			FROM bodb_Credit.dbo.ProfilePicture t WITH (UPDLOCK,ROWLOCK)
+				INNER JOIN @CustProfilePicture c
+					ON t.ImageId = c.ImageId
+			WHERE t.ImageId > 1000000 -- just delete user upload image ( id > 1000000, not delete system library image id <= 1000000)
 			
 		END
 

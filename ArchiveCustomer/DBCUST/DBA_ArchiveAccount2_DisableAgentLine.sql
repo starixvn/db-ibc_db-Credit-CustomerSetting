@@ -35,6 +35,7 @@ AS
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 
 */
     
@@ -452,6 +453,22 @@ INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBetSetting_Member_old(CustID,SportTy
 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
 FROM CustBetSetting_Member WITH(NOLOCK)
 WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
+
+--#188850
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustMaxPayoutSetting_Member_old(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+SELECT CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6
+FROM CustMaxPayoutSetting_Member WITH(NOLOCK)
+WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
+
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustMaxPayoutSetting_Agent_old(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+SELECT CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6
+FROM CustMaxPayoutSetting_Agent WITH(NOLOCK)
+WHERE custid = @AgentID
+
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old(CustId,ImageId,Modified)
+SELECT CustId,ImageId,Modified
+FROM bodb_Credit.dbo.CustProfilePicture WITH(NOLOCK)
+WHERE custid = @AgentID
 -----------------------------------------------------------------------------------------------------------
 
 -- update enable = 0, credit = 0 for whole agent line (use new execRep SP)

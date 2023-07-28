@@ -22,6 +22,7 @@ Revisions:
 	- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
 	- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
+	- 20230623@Eden: Enhance backup [Redmine: #188850]
 
 */
 
@@ -119,12 +120,19 @@ END
 
 
 --backup data for later rollback for this stage
---insert for agent
-INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+
+CREATE TABLE #tempbackup(
+	[ArchiveDate] DATETIME,
+	[custid] INT,
+	[credit] MONEY,
+	[SuspendInfo] TINYINT,
+	[CloseInfo] TINYINT,
+	[ClosedReason] TINYINT
+)
+
+INSERT INTO #tempbackup(
 	[ArchiveDate],
 	[custid],
-	[closed],
-	[reject],
 	[credit],
 	[SuspendInfo],
 	[CloseInfo],
@@ -133,8 +141,6 @@ INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
 SELECT	
 	GetDate(), 
 	c.[custid],
-	c.[closed],
-	c.[reject],
 	c.[credit],
 	cps.SuspendInfo,
 	cps.CloseInfo,
@@ -143,23 +149,10 @@ FROM custinfo c WITH (NOLOCK)
 	INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
 	LEFT JOIN CustLoginInfo cl WITH (NOLOCK) ON cl.CustID = c.custid
 WHERE c.custid = @AgentID
-	AND NOT EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = c.custid)
---insert for member
-INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
-	[ArchiveDate],
-	[custid],
-	[closed],
-	[reject],
-	[credit],
-	[SuspendInfo],
-	[CloseInfo],
-	[ClosedReason]
-)
+UNION ALL
 SELECT	
 	GetDate(), 
 	c.[custid],
-	c.[closed],
-	c.[reject],
 	c.[credit],
 	cps.SuspendInfo,
 	cps.CloseInfo,
@@ -168,9 +161,28 @@ FROM custinfo c with (nolock)
 	INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
 	LEFT JOIN CustLoginInfo_Member cl WITH (NOLOCK) ON cl.CustID = c.custid
 WHERE c.recommend = @AgentID AND roleid = 1
-	AND NOT EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = c.custid)
 
+DELETE t 
+FROM #tempbackup t 
+WHERE EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = t.custid)
 
+--insert backup
+INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+	[ArchiveDate],
+	[custid],
+	[credit],
+	[SuspendInfo],
+	[CloseInfo],
+	[ClosedReason]
+)
+SELECT	
+	[ArchiveDate],
+	[custid],
+	[credit],
+	[SuspendInfo],
+	[CloseInfo],
+	[ClosedReason]
+FROM #tempbackup
 
 --close whole line using ExecRep
 EXEC dbo.Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = -1
@@ -228,6 +240,8 @@ EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@TrackingValue = @LogSPData,
 	@TrackingValue2 = @LogSPDataOld,
 	@duration = @duration
+
+DROP TABLE #tempbackup
 
 GO
 

@@ -27,6 +27,7 @@ AS
 			- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 			- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
 			- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
+			- 20230524@Eden: Scale out DBTRANS for Credit  [Redmine: #181595]
 */
 BEGIN
 
@@ -113,7 +114,17 @@ BEGIN
 		if @@Error <> 0
 		BEGIN
 			RaisError (@ErrMsg, 16, 1)
-			DELETE transfer WITH(ROWLOCK,UPDLOCK) WHERE TransId = @TransID
+
+            UPDATE dbo.Transfer WITH(ROWLOCK,UPDLOCK)
+            SET     custid = 0, 
+                    Recommend = 0, 
+                    MRecommend = 0, 
+                    SRecommend = 0, 
+                    Winlost = 0, 
+                    Actual_Stake = 0, 
+                    RepUpdateTime = SYSDATETIME()
+            WHERE  TransId = @TransID
+
 			return
 		END
 		
@@ -129,7 +140,17 @@ BEGIN
 		if @@Error <> 0
 		BEGIN
 			RaisError (@ErrMsg, 16, 1)
-			DELETE transfer WITH(ROWLOCK,UPDLOCK) WHERE TransId IN (@TransID, @TransID2)
+
+			UPDATE dbo.Transfer WITH(ROWLOCK,UPDLOCK)
+            SET     custid = 0, 
+                    Recommend = 0, 
+                    MRecommend = 0, 
+                    SRecommend = 0, 
+                    Winlost = 0, 
+                    Actual_Stake = 0, 
+                    RepUpdateTime = SYSDATETIME()
+            WHERE  TransId IN (@TransID, @TransID2)
+
 			return
 		END			
 		
@@ -149,7 +170,17 @@ BEGIN
 		if @@Error <> 0
 		BEGIN
 			RaisError (@ErrMsg, 16, 1)
-			DELETE transfer WITH(ROWLOCK,UPDLOCK) WHERE TransId = @TransID
+
+			UPDATE dbo.Transfer WITH(ROWLOCK,UPDLOCK)
+            SET     custid = 0, 
+                    Recommend = 0, 
+                    MRecommend = 0, 
+                    SRecommend = 0, 
+                    Winlost = 0, 
+                    Actual_Stake = 0, 
+                    RepUpdateTime = SYSDATETIME()
+            WHERE  TransId = @TransID
+
 			return
 		END
 		-- insert for master
@@ -165,7 +196,17 @@ BEGIN
 		if @@Error <> 0
 		BEGIN
 			RAISERROR (@ErrMsg, 16, 1)
-			DELETE transfer WITH(ROWLOCK,UPDLOCK) WHERE TransId IN (@TransID, @TransID2)
+
+			UPDATE dbo.Transfer WITH(ROWLOCK,UPDLOCK)
+            SET     custid = 0, 
+                    Recommend = 0, 
+                    MRecommend = 0, 
+                    SRecommend = 0, 
+                    Winlost = 0, 
+                    Actual_Stake = 0, 
+                    RepUpdateTime = SYSDATETIME()
+            WHERE  TransId IN (@TransID, @TransID2)
+
 			RETURN
 		END
 		
