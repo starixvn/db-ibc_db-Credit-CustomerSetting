@@ -333,6 +333,7 @@ Revisions:
 	- 20230302@Johnson: add auto suspend for Basketball[redmine: #184339]	
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]	
+	- 20230510@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 	- 20230615@Johnson: Check Problem Account  Limit New Downline Per Day [redmine: #189792]
 Param's Explanation:	
 • @ErrCode:
@@ -2373,50 +2374,6 @@ BEGIN
 
 	    return
     END    
-
-     ---- Create balance for new customer   
-	 --EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID
-	EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT
-
-    IF @ErrCode <> 0
-    BEGIN
-	    --Error occurs
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create member fail. Please try again'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-						    END	
-			    , @success = 0, @ErrCode=216
-    	
-	    -- ROLLBACK MANUALLY
-	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
-	    EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-		
-	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    return
-    END
-
-     --EXEC DBTXN.bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID    
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT 
-
-    IF @ErrCode <> 0
-    BEGIN
-	    --Error occurs
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create member fail. Please try again'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-						    END	
-			    , @success = 0, @ErrCode=216
-    	
-	    -- ROLLBACK MANUALLY
-	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
-	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
-
-	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    return
-    END
 	
 	IF ISNULL(@IsQRCode,0) = 1
 	BEGIN
@@ -2436,8 +2393,6 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 	    DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
 
 		DELETE dbo.[CustQRCode] WITH(ROWLOCK) WHERE CustID = @CustID
 
@@ -2457,8 +2412,6 @@ BEGIN
 					, @success = 0, @ErrCode=216
 			Delete custsetting with (ROWLOCK) WHERE custid  =@custid
 			DELETE custOverride WITH (ROWLOCK) WHERE custId = @custid		
-			EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-			EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
 
 			DELETE dbo.[CustQRCode] WITH(ROWLOCK) WHERE CustID = @CustID
 

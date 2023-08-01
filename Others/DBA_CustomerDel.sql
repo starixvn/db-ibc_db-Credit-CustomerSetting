@@ -28,8 +28,14 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
+		- 20230414@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
+
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
+
+	Notes: Call sp on siteDB first to delete Balance, delete Bet ticket (if exists)
+		EXEC bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+		EXEC bodb02.dbo.DBA_CustomerDel_Bets @srecommend = @custid ( roleID = 4)
 */		
 DECLARE @roleid INT, @custid INT
 SELECT @roleid = 0 
@@ -139,8 +145,6 @@ BEGIN
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 	DELETE Dep_LicenseeProductSetting WHERE custid = @custid
 
-	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
 	DELETE custinfo WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE customer WHERE custid IN (SELECT custID FROM @tmp_custID)		
 	
@@ -233,9 +237,6 @@ BEGIN
 	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE mrecommend = @custid and roleid = 2)		
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE mrecommend = @custid and roleid = 2)	
 
-	--Delete balance table
-	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
 	DELETE custinfo WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE customer WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
@@ -326,9 +327,6 @@ BEGIN
 	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID = @custid	
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID = @custid
 
-	--Delete balance table
-	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
 	DELETE custinfo WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE customer WHERE custid IN (SELECT custID FROM @tmp_custID)
 
@@ -387,9 +385,6 @@ BEGIN
 	DELETE dbo.Dep_CustDiscountSetting_Member WHERE custid = @custid
 	DELETE dbo.Dep_CustBetSetting_Member WHERE custid = @custid
 	DELETE dbo.Dep_CustBetSettingGame_Member WHERE custid = @custid
-		
-	--Delete balance table
-	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
 	DELETE custinfo WHERE custid = @custid
 	DELETE customer WHERE custid = @custid

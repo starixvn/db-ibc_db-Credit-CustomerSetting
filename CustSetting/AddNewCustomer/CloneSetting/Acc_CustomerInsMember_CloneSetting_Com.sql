@@ -87,6 +87,7 @@ AS
 	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20230302@Johnson: Return Basketball VR to its original state [redmine:#184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230718@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -119,9 +120,9 @@ BEGIN
 	WHERE ci.custid = @ExistingCustid
 	
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
-	DECLARE @SiteID int, @SiteLabel varchar(50), @EnableVR BIT
+	DECLARE @SiteID int, @SiteLabel varchar(50), @EnableVR BIT, @SiteDBGroupID	smallint
 
-	SELECT @SiteID = siteid, @SiteLabel=SiteLabel
+	SELECT @SiteID = siteid, @SiteLabel=SiteLabel, @SiteDBGroupID = SiteDBGroupID
 	FROM site WITH(NOLOCK) 
 	WHERE site = @site
 
@@ -377,8 +378,8 @@ BEGIN
 		SELECT @MaxMember = CASE WHEN @SiteLabel = '789y' THEN 20000 ELSE -1 END
 		SELECT @MaxMemberLog = CASE WHEN @SiteLabel = '789y' THEN '20000' ELSE 'Unlimited' END
 
-		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember)  
-		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting, @MaxMember			
+		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember,SiteDBGroupID)  
+		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting, @MaxMember,@SiteDBGroupID	
 		FROM CustSuper WITH(NOLOCK)
 		WHERE custid=@ExistingCustid		
 	END TRY

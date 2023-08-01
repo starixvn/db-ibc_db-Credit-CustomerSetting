@@ -151,6 +151,7 @@ Revisions:
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	- 20230414@Johnson: try catch when insert customer for case multiple clone account [redmine: #183697]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230718@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -161,11 +162,11 @@ Revisions:
 BEGIN
     SET NOCOUNT ON 
 	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @CreditRM MONEY
-			, @IsAutoEnableADBMaster BIT, @SiteLabel varchar(50)
+			, @IsAutoEnableADBMaster BIT, @SiteLabel varchar(50), @SiteDBGroupID	smallint
 	
 	SET @CreateDate = GETDATE()
 
-	SELECT @SiteLabel=SiteLabel
+	SELECT @SiteLabel=SiteLabel, @SiteDBGroupID = SiteDBGroupID
 	FROM Site WITH (NOLOCK)
 	WHERE site=@site
 
@@ -240,7 +241,7 @@ BEGIN
 		
 	    INSERT INTO CustSuper
 	    (
-	        custId, AutoIBCPositionTaking_Tote,  IsInternal, TransferOption, MaxMember
+	        custId, AutoIBCPositionTaking_Tote,  IsInternal, TransferOption, MaxMember,SiteDBGroupID
 	    )
 	    VALUES
 	    (
@@ -253,6 +254,7 @@ BEGIN
 				WHEN @SiteLabel = '789y' THEN 20000
 				ELSE -1 
 	        END
+			, @SiteDBGroupID
         )
 		
 			--Virtual rate

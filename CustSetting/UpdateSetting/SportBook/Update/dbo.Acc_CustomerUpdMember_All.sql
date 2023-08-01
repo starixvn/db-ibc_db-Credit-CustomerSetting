@@ -184,7 +184,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]
 	@SubAccID INT = 0, --Sub-AccountID  
 	@Username varchar(30) = '' OUTPUT,  
 	@ErrCode varchar(300) = '' OUTPUT,  
-	@ErrMsg nvarchar(4000) = '' OUTPUT  
+	@ErrMsg nvarchar(4000) = '' OUTPUT,
+	@TotalAmt MONEY = NULL
 AS  
 
 --@Source Control  
@@ -239,6 +240,7 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20230405@Eden: Change @UpdateMinMaxBetv1saba to @UpdateMinMaxBetsaba [RedmineID: #164280]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230510@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 
 Param's Explanation:  
 • @ErrCode:  
@@ -326,6 +328,7 @@ BEGIN
 	  @Language = @Language,  
 	  @ErrMsg = @ErrMsg_Cur OUTPUT,  
 	  @ErrCode = @ErrCode_Cur OUTPUT,  
+	  @TotalAmt = @TotalAmt,
 	  @IP = @IP  
 	 IF @ErrCode_Cur > 0  
 	 BEGIN  
