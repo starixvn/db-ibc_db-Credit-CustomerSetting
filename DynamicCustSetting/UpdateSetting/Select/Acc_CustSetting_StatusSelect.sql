@@ -20,6 +20,8 @@ AS
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20221207@Tacy: Alpha - API Management - Support data through API [RedmineID: #171247]
 	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230726@Tacy: Enhance performance [redmine: #190504]
+
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
  
@@ -81,10 +83,11 @@ BEGIN
 					ELSE ISNULL((	
 							SELECT TOP 1 1  
 							FROM dbo.custInfo ci WITH (NOLOCK)  
-								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
+								CROSS APPLY (SELECT TOP 1 1 as value FROM dbo.CustProductStatus cps_temp 
+											 WHERE ci.custid = cps_temp.CustID  
+												AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1) t
 							WHERE srecommend = @CustID  
-								AND ci.custid <> @custid
-								AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
+								AND ci.roleid IN (3,2,1)
 							), 0) END AS BIT)  HasDownline  
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
@@ -112,10 +115,11 @@ BEGIN
 					ELSE ISNULL((	
 							SELECT TOP 1 1  
 							FROM dbo.custInfo ci WITH (NOLOCK)  
-								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
+								CROSS APPLY (SELECT TOP 1 1 as value FROM dbo.CustProductStatus cps_temp 
+											 WHERE ci.custid = cps_temp.CustID  
+												AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1) t  
 							WHERE mrecommend = @CustID  
-								AND ci.custid <> @custid
-								AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
+								AND ci.roleid IN (2,1)
 							), 0) END AS BIT)  HasDownline  
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
@@ -143,10 +147,11 @@ BEGIN
 					ELSE ISNULL((	
 							SELECT TOP 1 1  
 							FROM dbo.custInfo ci WITH (NOLOCK)  
-								INNER JOIN dbo.CustProductStatus cps_temp ON ci.custid = cps_temp.CustID  
+								CROSS APPLY (SELECT TOP 1 1 as value FROM dbo.CustProductStatus cps_temp 
+											 WHERE ci.custid = cps_temp.CustID  
+												AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1) t  
 							WHERE recommend = @CustID  
-								AND ci.custid <> @custid
-								AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
+								AND ci.roleid=1
 							), 0) END AS BIT)  HasDownline  
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
