@@ -115,7 +115,8 @@ BEGIN
 			@IsAutomateTransfer IsAutomateTransfer,
 			@IsInternal as IsInternal,	
 			@SiteAgent AS Site,
-			@SiteLabel AS SiteLabel
+			@SiteLabel AS SiteLabel,
+			@currency currency
 	END
 	
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
@@ -221,8 +222,7 @@ BEGIN
 				ON s.SportType = cs.sporttype  
 				AND s.BetType = cs.bettype
 				AND s.IsLive = 0
-		WHERE cs.CustID = @custid
-			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
+		WHERE cs.CustID = @custid			
 		UNION ALL 
 		SELECT cs.sporttype, cs.bettype, 1 as IsLive,			
 			(CASE WHEN cs.slivepositiontaking<co.maxlivepositiontaking THEN cs.slivepositiontaking ELSE co.maxlivepositiontaking END)*100 S4,

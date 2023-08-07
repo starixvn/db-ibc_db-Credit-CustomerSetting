@@ -704,7 +704,7 @@ BEGIN
 											AND t.IsLive = 1
 			
 				INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-				SELECT @custid, sporttype, bettype, AgentMinPT, 0.9 as maxpositiontaking, 
+				SELECT @custid, bettype, sporttype, AgentMinPT, 0.9 as maxpositiontaking, 
 						ISNULL((SELECT AgentMinPT FROM @tblPT28 t2 
 						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1),0) as minlivepositiontaking
 						, 0.9 as maxlivepositiontaking
@@ -1699,7 +1699,7 @@ BEGIN
 				FROM   @xml.nodes('/Root/R') T(c) 
 			END
 			
-			IF @roleid IN (3,2)
+			IF @roleid = 3
 			BEGIN
 				UPDATE t
 				SET groupa = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
@@ -1719,6 +1719,28 @@ BEGIN
 									WHEN bettype = 5
 										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)
 									ELSE adiscount END			
+				FROM #tmpcustsetting t
+			END
+			ELSE IF @roleid = 2
+			BEGIN
+				UPDATE t
+				SET groupa = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
+								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1),0)
+								ELSE groupa END,
+					groupb = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
+								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 3),0)
+								ELSE groupb END,
+					groupc = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
+								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 7),0)
+								ELSE groupc END,
+					groupd = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
+								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 8),0)
+								ELSE groupd END,
+					discount = CASE WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
+										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4),0)
+									WHEN bettype = 5
+										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)
+									ELSE discount END			
 				FROM #tmpcustsetting t
 			END
 			ELSE IF @roleid = 1

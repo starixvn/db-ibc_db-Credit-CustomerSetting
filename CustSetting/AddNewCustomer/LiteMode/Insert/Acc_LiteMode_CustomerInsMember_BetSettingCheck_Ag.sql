@@ -655,7 +655,7 @@ BEGIN
 									, ps.GroupID AS '@GroupID'
 									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
-									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MinBet > 0 AND u.MinBet > 0 AND t.MinBet < u.MinBet)
@@ -689,7 +689,7 @@ BEGIN
 									, ps.GroupID AS '@GroupID'
 									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
-									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxBet > 0 AND u.MaxBet > 0 AND t.MaxBet > u.MaxBet)
@@ -723,7 +723,7 @@ BEGIN
 									, ps.GroupID AS '@GroupID'
 									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
-									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxPerMatch > 0 AND u.MaxPerMatch > 0 AND t.MaxPerMatch > u.MaxPerMatch)
@@ -757,7 +757,7 @@ BEGIN
 									, ps.GroupID AS '@GroupID'
 									, ps.GroupType AS '@GroupType'
 								FROM @BetSetting t
-									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
 									INNER JOIN @Upline_BetSetting u 
 										ON t.SportType = u.SportType AND t.BetType = u.BetType
 								WHERE (t.MaxPerNumber > 0 AND u.MaxPerNumber > 0 AND t.MaxPerNumber > u.MaxPerNumber)

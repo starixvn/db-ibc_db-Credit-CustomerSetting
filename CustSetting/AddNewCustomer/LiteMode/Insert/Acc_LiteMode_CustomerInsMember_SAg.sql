@@ -186,68 +186,36 @@ BEGIN
 		END
 	END
 	
-	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
-	SET @CurrentDate  = CONVERT(DATE,GETDATE())
-	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
-	IF @DefaultValueLimitAcc > 0
-	BEGIN
-		SET @lastAccountToDay = (SELECT  COUNT(1)
-								FROM Customer c WITH(NOLOCK)
-								WHERE c.srecommend = @srecommend
-									AND c.roleid = 3
-									AND c.creatdate  > @CurrentDate)
-			
-		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
-		BEGIN
-			Select	@ErrMsg = CASE @Language  
-							WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
-							ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10))),'(300)',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
-						END,
-					@ErrCode = 40056	
-			RETURN
-		END
-	END
-	
-	--20140619@Johnson: Check IP to create downline-----------------
-	DECLARE @isValidIP BIT, @isAllowed  BIT
-		
-	EXEC Acc_ProblemAccountLimitDownlineCheck
-		@custid = @srecommend,
-		@isAllowed = @isAllowed OUTPUT
-	
-	IF @isAllowed = 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-				WHEN 'E' THEN 'Sorry, you can only create 3 masters per day, please try again tomorrow.'
-					ELSE [dbo].[f_Get_MsgNamebyMsgID](40064, @Language)
-				end,
-			@ErrCode = 1002
-	return
-	END
-	
-	EXEC Acc_CustomerInsMember_CheckIP 
-			@IP = @IP,
-			@isValid = @isValidIP OUTPUT
-	
-	IF @isValidIP = 0
-	BEGIN
-		Select	@ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline or CSD for further information.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40032,@Language)
-					end,
-				@ErrCode = 1001	
-		return
-	END
-    --End check IP--------------------------------------------------
-	
-	---- check constraint on prefix username same as upline in case of creating new customer from alpha site
 	DECLARE @uplineUsername NVARCHAR(50)
+	
+	SELECT @uplineUsername = username 
+	FROM custinfo WITH(NOLOCK)
+	WHERE custid = @srecommend
+	
+	EXEC Acc_CustomerLimitCreatedAccountCheck
+			@Custid				= @srecommend , 
+			@RuleID				= 'SAG' , 
+			@existingMrecommend = 0 , 
+			@existingSrecommend = 0 , 
+			@Prefix				= @uplineUsername , 
+			@GroupName			= '' , 
+			@CreatedMode		= 0 , 
+			@IsQRCode			= 0 , 
+			@SystemID			= 0 , 
+			@IP					= @IP ,
+			@Credit				= @Credit ,
+			@ErrCode			= @ErrCode OUTPUT , 
+			@ErrMsg				= @ErrMsg OUTPUT , 
+			@Language			= @Language
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrCode , @ErrMsg
+		RETURN		
+	END	
+		
+	---- check constraint on prefix username same as upline in case of creating new customer from alpha site
 	IF @creator = @srecommend
 	BEGIN
-		SELECT @uplineUsername = username 
-		FROM custinfo WITH(NOLOCK)
-		WHERE custid = @srecommend
-
 		IF LEFT(@username,LEN(@uplineUsername)) <> @uplineUsername
 		BEGIN
 			SELECT @ErrMsg = CASE @Language
@@ -258,22 +226,7 @@ BEGIN
 			RETURN 
 		END
 	END 
-	-----/20160120@Lukas -----------------
 		
-    --NOT allow agent under KH, KR, KAR, KBR, KCR, LDR, KM, KAM to create downlines (Requested by wan 04-Dec-2008)
-    --20081218_By_AhWan: KER - 1238537
-    --20090112_Wan: unblock KM 194354
-    --20091130_Wan: Unblock KAR,KBR,KCR,KDR,KER,KH,KR 
-    IF @srecommend = 726582
-    BEGIN
-	    Select	@ErrMsg = CASE @Language 
-						    WHEN 'E' THEN 'Sorry, cannot create master.'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40012,@Language)
-					    END,@ErrCode = 100	
-    	
-	    return
-    END
-
     --Check an account disabled or not 
     EXEC dbo.Acc_CustomerSelCheckEnable @custid = @srecommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
     IF @ErrCode <>0		RETURN 
@@ -775,6 +728,8 @@ BEGIN
 	DECLARE @VRLockedStatus_Soccer BIT = 0
 	DECLARE @VRLockedStatus_OS BIT = 0
 	DECLARE @VRLockedStatus_Basketball BIT = 0
+	--Log for VR+
+	DECLARE @VRAccumulatedBalance BIT = 0
 	
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 1)
 		SET @VRLockedStatus_Soccer = 1
@@ -801,6 +756,7 @@ BEGIN
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
+	'VRAccumulatedBalance="'+ COALESCE(CAST(@VRAccumulatedBalance AS VARCHAR(10)),SPACE(1)) + '" ' +  
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' + 
 	'VRLockStatus_Basketball="'+ COALESCE(CAST(@VRLockedStatus_Basketball AS VARCHAR(10)),SPACE(1)) + '" ' + 
@@ -1024,18 +980,18 @@ BEGIN
 			+ '</Discount>'
 			+ '<BetSetting GroupType="151">'
 				+ COALESCE(REPLACE(REPLACE(@SettingType26,'<Root>',''),'</Root>',''), SPACE(1)) --SB
-				+ CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM	
+				+ COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM	
 						FROM @BetSetting
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))--SB2
+						) as VARCHAR(max)),SPACE(1))--SB2
 			+ '</BetSetting>'
 			+ '<ParlayMaxPayout GroupType="152">' 
 				+ COALESCE(REPLACE(REPLACE(@SettingType27,'<Root>',''),'</Root>',''),SPACE(1))
 			+ '</ParlayMaxPayout>'	
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType, 
+				+ COALESCE(CAST((SELECT SportType, 
 								BetType, 
 								IsLive,
 								SuperPT,
@@ -1047,10 +1003,10 @@ BEGIN
 						WHERE 1= CASE WHEN SportType = 99 AND Bettype = 9 THEN 0 ELSE 1 END 
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))--SB 
+						) as VARCHAR(max)),SPACE(1))--SB 
 			+ '</PT>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType, 
+				+ COALESCE(CAST((SELECT SportType, 
 								BetType, 
 								IsLive,
 								SuperPT,
@@ -1062,10 +1018,10 @@ BEGIN
 						WHERE SportType = 99 AND Bettype = 9
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))--SB MP
+						) as VARCHAR(max)),SPACE(1))--SB MP
 			+ '</PT>'
 			+ '<PT GroupType="153">'--SB2
-				+ CAST((SELECT SportType, 
+				+ COALESCE(CAST((SELECT SportType, 
 								BetType, 
 								IsLive,
 								SuperPT,
@@ -1077,26 +1033,26 @@ BEGIN
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))--SB2
+						) as VARCHAR(max)),SPACE(1))--SB2
 			+ '</PT>'
 			+ '</Group>'	
 			+ '<Group ID="2">'--RnG Games
 			+ '<BetSetting GroupType="154">'
-				+ 	CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM, MaxPerNumber	
-						FROM @BetSetting
-						WHERE GroupID = 2
-						ORDER BY Child_DisplayOrder
-						FOR XML RAW('R')
-						) as VARCHAR(max))
+				+ 	COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM, MaxPerNumber	
+								FROM @BetSetting
+								WHERE GroupID = 2
+								ORDER BY Child_DisplayOrder
+								FOR XML RAW('R')
+								) as VARCHAR(max)),SPACE(1))
 			+ '</BetSetting>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
+				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
-						FROM @tblPT18
-						WHERE GroupID = 2
-						ORDER BY Child_DisplayOrder
-						FOR XML RAW('R')
-						) as VARCHAR(max))
+							FROM @tblPT18
+							WHERE GroupID = 2
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
 			+ '</PT>'			
 			+ '</Group>'
 			+ '<Group ID="3">'--LCS
@@ -1104,13 +1060,13 @@ BEGIN
 				+ COALESCE(REPLACE(REPLACE(@SettingType19,'<Root>',''),'</Root>',''),SPACE(1))
 			+ '</Discount>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
+				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
 						FROM @tblPT18
 						WHERE GroupID = 3
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)),SPACE(1))
 			+ '</PT>'
 			+ '</Group>'
 			+ '<Group ID="4">'--Others Games
@@ -1118,21 +1074,21 @@ BEGIN
 				+ COALESCE(REPLACE(REPLACE(@SettingType3,'<Root>',''),'</Root>',''),SPACE(1))
 			+ '</Discount>'		
 			+ '<BetSetting GroupType="157">'
-				+ 	CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM
-						FROM @BetSetting
-						WHERE GroupID = 4
-						ORDER BY Child_DisplayOrder
-						FOR XML RAW('R')
-						) as VARCHAR(max))
+				+ 	COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM
+							FROM @BetSetting
+							WHERE GroupID = 4
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
 			+ '</BetSetting>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
+				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
 						FROM @tblPT18
 						WHERE GroupID = 4
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)),SPACE(1))
 			+ '</PT>'			
 			+ '</Group>'
 			+ '</Root>'

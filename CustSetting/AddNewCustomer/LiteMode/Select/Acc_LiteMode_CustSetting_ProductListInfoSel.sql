@@ -33,6 +33,11 @@ BEGIN
 		FROM dbo.ProductSettingProfile WITH(NOLOCK)
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 3--Live & RnG CS
+		UNION ALL	
+		SELECT DISTINCT GroupID,ProductID,RealProductID,0 
+		FROM dbo.ProductSettingProfile WITH(NOLOCK)
+		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
+			AND GroupID = 4--Others Games
 		ORDER BY GroupID,ProductID,SportType	
 	END
 	ELSE IF @CreationStatus = 3
@@ -52,6 +57,11 @@ BEGIN
 		FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 3--Live & RnG CS
+		UNION ALL	
+		SELECT DISTINCT GroupID,ProductID,RealProductID,0 
+		FROM dbo.ProductSettingProfile WITH(NOLOCK)
+		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
+			AND GroupID = 4--Others Games	
 		ORDER BY GroupID,ProductID,SportType			
 	END
 END

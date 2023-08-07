@@ -107,97 +107,37 @@ BEGIN
 
 	IF @ErrCode <> 0 RETURN
 	
-	DECLARE @isAllowed  BIT
-	
-	
-	EXEC Acc_ProblemAccountLimitDownlineCheck
-		@custid = @recommend,
-		@isAllowed = @isAllowed OUTPUT
-	
-	IF @isAllowed = 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-					WHEN 'E' THEN 'Sorry, you can only create 5 members per day, please try again tomorrow.'
-					ELSE [dbo].[f_Get_MsgNamebyMsgID](40062, @Language)
-				end,
-			@ErrCode = 1002
-	return
-	END
-				
------END: 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit-member each minute. Normal agent can open up to 10 members per minute
-	DECLARE @_Site VARCHAR(10), @EnableVR BIT, @siteID SMALLINT
-	
-	SELECT @_Site = c.site,
-		@siteID = s.siteid
-	FROM dbo.customer c WITH(NOLOCK)
-		INNER JOIN site s WITH(NOLOCK) ON c.site = s.site
-	WHERE CustID = @recommend
-	
-	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0 , @CurrentDate DATETIME
-	SET @CurrentDate  = CONVERT(DATE,GETDATE())
-	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@_Site)),0)
-	IF @DefaultValueLimitAcc > 0
-	BEGIN
-		SET @lastAccountToDay = (SELECT  COUNT(1)
-								FROM Customer c WITH(NOLOCK)
-								WHERE c.recommend = @recommend
-									AND c.roleid = 1
-									AND c.creatdate  > @CurrentDate)
-			
-		IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
-		BEGIN
-			SELECT	@ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
-							ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10))),'(300)',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
-						END,
-					@ErrCode = 40056	
-			return
-		END
-	END
-		
-	--20140619@Johnson: Check IP to create downline-----------------
-	Declare @isValidIP BIT
-		
-	IF @credit = 0 and
-			@IP IN ('115.77.62.87', '124.248.244.56', '116.100.7.95'
-			--20140626@Thien:
-			,'183.91.31.31', '115.77.62.87', '42.117.7.217','203.113.172.148', '42.112.19.168'
-			, '124.248.229.174', '118.69.77.60', '123.103.252.62'
-			
-			--20140627@Thien:
-			,'116.100.7.95', '118.142.46.201', '118.69.174.108', '42.117.4.151', '122.117.7.217'
-			
-			--20140628@Thien:
-			,'123.103.241.62', '203.113.173.121', '123.103.241.62'
-			
-			--20140630@Thien:
-			,'61.8.32.91', '115.78.234.153'
-			
-			--20140701@Thien:
-			,'14.169.66.152'
-					)
-		SELECT @isValidIP = 0 
-	
-	IF @isValidIP = 0
-	BEGIN
-		Select	@ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline OR CSD for further information.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40032,@Language)
-					end,
-				@ErrCode = 1001	
-		return
-	END
-    --End check IP--------------------------------------------------
-	
-	-----20160120@Lukas  ------------------
-	---- check constraint on prefix username same as upline in case of creating member from alpha site
 	DECLARE @uplineUsername NVARCHAR(50)
+	
+	SELECT @uplineUsername = username 
+	FROM custinfo WITH(NOLOCK)
+	WHERE custid = @recommend
+	
+	EXEC Acc_CustomerLimitCreatedAccountCheck
+			@Custid				= @recommend , 
+			@RuleID				= 'AG' , 
+			@existingMrecommend = 0 , 
+			@existingSrecommend = 0 , 
+			@Prefix				= @uplineUsername , 
+			@GroupName			= '' , 
+			@CreatedMode		= 1 , 
+			@IsQRCode			= 0 , 
+			@SystemID			= @SystemID , 
+			@IP					= @IP ,
+			@Credit				= @Credit ,
+			@ErrCode			= @ErrCode OUTPUT , 
+			@ErrMsg				= @ErrMsg OUTPUT , 
+			@Language			= @Language
+			
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrCode , @ErrMsg
+		RETURN		
+	END	
+	
+	---- check constraint on prefix username same as upline in case of creating member from alpha site
 	IF @creator = @recommend
 	BEGIN
-		SELECT @uplineUsername = username 
-		FROM custinfo WITH(NOLOCK)
-		WHERE custid = @recommend
-
 		IF LEFT(@username,LEN(@uplineUsername)) <> @uplineUsername
 		BEGIN			
 			SELECT @ErrMsg = CASE @Language
@@ -208,29 +148,18 @@ BEGIN
 			RETURN
 		END
 	END 
-	-----/20160120@Lukas -----------------
 	
-	  --20080514: Not allow agent LIM open new member (By Wan)
-    IF @recommend in (920145)
-    BEGIN
-	    SELECT	@ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Sorry. You cannot create more member.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40016,@Language)
-					    END,
-			    @ErrCode = 999
-	    return
-    END
-
-	 --Check an account disabled OR not 
+	--Check an account disabled OR not 
     EXEC dbo.Acc_CustomerSelCheckEnable @custid = @recommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
     IF @ErrCode <>0	RETURN 
-
-	--Check Limit max members creation per Super
-	IF @SystemID <> 1
-	BEGIN
-		EXEC Age_MaxMemberLimitBySuperCheck @AgentId = @recommend, @Language = @Language, @ErrMsg = @ErrMsg OUTPUT, @ErrCode = @ErrCode OUTPUT
-		IF @ErrCode <> 0 RETURN
-	END
+	
+	DECLARE @_Site VARCHAR(10), @EnableVR BIT, @siteID SMALLINT
+	
+	SELECT @_Site = c.site,
+		@siteID = s.siteid
+	FROM dbo.customer c WITH(NOLOCK)
+		INNER JOIN site s WITH(NOLOCK) ON c.site = s.site
+	WHERE CustID = @recommend	
 	
 	DECLARE @transcode bigint, @currency INT, @pwdexpiry datetime, @srecommend INT, @mrecommend INT,	
 	    @AgentCredit MONEY, @Credit_AllOtherMember MONEY,
@@ -301,11 +230,7 @@ BEGIN
 	    RETURN	
     END
 	
-    SELECT @ErrCode = 0	
-	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    DECLARE @IsValid BIT
-     -- MyanmarOdds
-    
+    -- MyanmarOdds    
 	DECLARE @IsMyanmarOdds BIT = 0,@MyanmarOddsAgent decimal(9,8) = 0 
 	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
 	
@@ -316,8 +241,6 @@ BEGIN
 						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40055,@Language)
 						    END,
 			    @ErrCode = 40055
-			    
-		
 	    RETURN	
 	END
 	
@@ -359,7 +282,7 @@ BEGIN
 	    RETURN
     END	
 	
-	 --Use maxcredit in CustAgent table 
+	--Use maxcredit in CustAgent table 
     SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) FROM custAgent WITH(NOLOCK)  WHERE CustID = @recommend
 
 	SELECT @Credit_AllOtherMember = ISNULL(sum(Credit), 0) FROM custinfo WITH(NOLOCK) WHERE Recommend = @Recommend AND RoleID = 1
@@ -389,8 +312,8 @@ BEGIN
 		or @recommend <=0
 		or @ugroup not in ('a','b','c','d','hka','hkb','hkc','hkd','indoa','indob','indoc','indod','dea','deb','dec','ded')
 	BEGIN
-		select @isvalid = 0, @ErrCode = 102
-		Select @ErrMsg = 	case @Language 
+		select @ErrCode = 102
+				,@ErrMsg = 	case @Language 
 								when 'E' then 'Wrong Min bet/ Max bet/ Max per ball/ Max per match/ Credit/ Agent name/ user group.'
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](10001,@Language)
 					end
@@ -660,7 +583,7 @@ BEGIN
 	
     Declare @LogSPData VARCHAR(MAX)
     --Log customer general info
-    SELECT @LogSPData = '<Acc_CustomerInsMember_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'creator="'+ COALESCE(CAST(@creator AS VARCHAR(50)), SPACE(1)) + '" ' +
@@ -774,6 +697,8 @@ BEGIN
 	DECLARE @VRLockedStatus_Soccer BIT = 0
 	DECLARE @VRLockedStatus_OS BIT = 0
 	DECLARE @VRLockedStatus_Basketball BIT = 0
+	--Log for VR+
+	DECLARE @VRAccumulatedBalance BIT = 0
 
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @recommend AND Type = 1)
 		SET @VRLockedStatus_Soccer = 1
@@ -784,7 +709,7 @@ BEGIN
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @recommend AND Type = 3)
 		SET @VRLockedStatus_Basketball = 1
 
-    SELECT @LogSPData = '<Acc_CustomerInsMember_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'closed="'+ COALESCE(CAST(@UplineClosed AS VARCHAR(50)), SPACE(1)) + '" ' +
     'suspended="'+ COALESCE(CAST(@suspended AS VARCHAR(50)), SPACE(1)) + '" ' +
     'Danger="'+ COALESCE(CAST(@AgentDanger AS VARCHAR(5)), SPACE(1)) + '" ' +
@@ -801,6 +726,7 @@ BEGIN
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +	
+	'VRAccumulatedBalance="'+ COALESCE(CAST(@VRAccumulatedBalance AS VARCHAR(10)),SPACE(1)) + '" ' +  
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
  	'VRLockStatus_Basketball="'+ COALESCE(CAST(@VRLockedStatus_Basketball AS VARCHAR(10)),SPACE(1)) + '" ' +   
@@ -1027,27 +953,27 @@ BEGIN
 	SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '">' 
 			+ '<Group ID="1">'--SB
 			+ '<Discount GroupType="150">' 
-				+ CAST((SELECT SportType,BetType,PlayerDiscount,Discount as AgentDiscount
+				+ COALESCE(CAST((SELECT SportType,BetType,PlayerDiscount,Discount as AgentDiscount
 						FROM @NewDiscountTbl
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)), SPACE(1))
 			+ '</Discount>'
 			+ '<BetSetting GroupType="151">'
 				+ COALESCE(REPLACE(REPLACE(@SettingType26,'<Root>',''),'</Root>',''), SPACE(1)) --SB
-				+ CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM	
+				+ COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM	
 						FROM @BetSetting
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))--SB2
+						) as VARCHAR(max)), SPACE(1))--SB2
 			+ '</BetSetting>'
 			+ '<ParlayMaxPayout GroupType="152">' 
 				+ COALESCE(REPLACE(REPLACE(@SettingType27,'<Root>',''),'</Root>',''),SPACE(1))
 			+ '</ParlayMaxPayout>'	
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType, 
+				+ COALESCE(CAST((SELECT SportType, 
 									BetType, 
 									IsLive,
 									AgentPT
@@ -1055,20 +981,20 @@ BEGIN
 							WHERE 1= CASE WHEN SportType = 99 AND Bettype = 9 THEN 0 ELSE 1 END 
 							ORDER BY Child_DisplayOrder
 							FOR XML RAW('R')
-							) as VARCHAR(max))--SB	
+							) as VARCHAR(max)), SPACE(1))--SB	
 			+ '</PT>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType, 
+				+ COALESCE(CAST((SELECT SportType, 
 									BetType, 
 									IsLive,									
 									AgentPT
 							FROM @tblPT28
 							WHERE SportType = 99 AND Bettype = 9							
 							FOR XML RAW('R')
-							) as VARCHAR(max))--SB MixParlay mix sports
+							) as VARCHAR(max)), SPACE(1))--SB MixParlay mix sports
 			+ '</PT>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType, 
+				+ COALESCE(CAST((SELECT SportType, 
 								BetType, 
 								IsLive,								
 								AgentPT
@@ -1076,69 +1002,69 @@ BEGIN
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))--SB2
+						) as VARCHAR(max)), SPACE(1))--SB2
 			+ '</PT>'
 			+ '</Group>'	
 			+ '<Group ID="2">'--RnG Games
 			+ '<BetSetting GroupType="154">'
-				+ 	CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM, MaxPerNumber	
+				+ 	COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM, MaxPerNumber	
 						FROM @BetSetting
 						WHERE GroupID = 2
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)), SPACE(1))
 			+ '</BetSetting>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType,BetType,IsLive,AgentPT
+				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,AgentPT
 						FROM @tblPT18
 						WHERE GroupID = 2
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)), SPACE(1))
 			+ '</PT>'			
 			+ '</Group>'
 			+ '<Group ID="3">'--LCS
 			+ '<Discount GroupType="156">' 
-				+ CAST((SELECT SportType,BetType,PlayerDiscount,Discount as AgentDiscount
+				+ COALESCE(CAST((SELECT SportType,BetType,PlayerDiscount,Discount as AgentDiscount
 						FROM @NewDiscountTbl
 						WHERE GroupID = 3
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)), SPACE(1))
 			+ '</Discount>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType,BetType,IsLive,AgentPT
+				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,AgentPT
 						FROM @tblPT18						
 						WHERE GroupID = 3
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)), SPACE(1))
 			+ '</PT>'
 			+ '</Group>'
 			+ '<Group ID="4">'--LCS
 			+ '<Discount GroupType="156">' 
-				+ CAST((SELECT SportType,BetType,PlayerDiscount,Discount as AgentDiscount
+				+ COALESCE(CAST((SELECT SportType,BetType,PlayerDiscount,Discount as AgentDiscount
 						FROM @NewDiscountTbl
 						WHERE GroupID = 4
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)), SPACE(1))
 			+ '</Discount>'
 			+ '<BetSetting GroupType="157">'
-				+ 	CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM	
+				+ 	COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM	
 						FROM @BetSetting
 						WHERE GroupID = 4
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)), SPACE(1))
 			+ '</BetSetting>'
 			+ '<PT GroupType="153">'
-				+ CAST((SELECT SportType,BetType,IsLive,AgentPT
+				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,AgentPT
 						FROM @tblPT18
 						WHERE GroupID = 4
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
-						) as VARCHAR(max))
+						) as VARCHAR(max)), SPACE(1))
 			+ '</PT>'		
 			+ '</Group>'
 			+ '</Root>'

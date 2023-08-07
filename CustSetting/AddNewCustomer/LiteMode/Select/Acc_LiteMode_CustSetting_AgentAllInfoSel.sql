@@ -96,7 +96,8 @@ BEGIN
 			@UplineClosed as closed,
 			@Credit_Mem_Max as Credit_Max,
 			@site AS Site,
-			@SiteLabel AS SiteLabel
+			@SiteLabel AS SiteLabel,
+			@currency currency
 	END
 	
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
@@ -238,8 +239,7 @@ BEGIN
 			INNER JOIN custoverride as co WITH (NOLOCK) ON co.custid = cs.custid 
 														AND co.sporttype = cs.sporttype 
 														AND co.bettype = cs.bettype	
-		WHERE cs.CustID = @CustID
-			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
+		WHERE cs.CustID = @CustID			
 		UNION ALL 
 		SELECT cs.sporttype, cs.bettype, 1 IsLive, 
 			(CASE WHEN cs.alivepositiontaking<co.maxlivepositiontaking 

@@ -103,7 +103,8 @@ BEGIN
 			@IsAutomateTransfer IsAutomateTransfer,
 			@IsInternalMaster as IsInternal,			
 			@Site site,
-			@SiteLabel SiteLabel			
+			@SiteLabel SiteLabel,
+			@currency currency			
 	END
 	
 	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
@@ -237,8 +238,7 @@ BEGIN
 			INNER JOIN CustSetting scs WITH(NOLOCK)	ON scs.custid = @srecommend 
 													AND scs.SportType = cs.sporttype  
 													AND scs.BetType = cs.bettype
-		WHERE cs.CustID = @custid			
-			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
+		WHERE cs.CustID = @custid						
 		UNION ALL
 		SELECT cs.sporttype, cs.bettype, 1 IsLive, 
 			scs.alivepositiontaking*100 AS A4,
