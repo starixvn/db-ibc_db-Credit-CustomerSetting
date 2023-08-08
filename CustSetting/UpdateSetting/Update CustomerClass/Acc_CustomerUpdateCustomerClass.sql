@@ -19,6 +19,7 @@ AS
 		- 20220405@Johnson: Add OldCustomerClass column [redmine:#170182]
 		- 20220630@Johnson: write log for LAP [redmine:#174357]
 		- 20221128@Johnson: dont write log when cc not change [redmine:#180957]
+		- 20230803@Winfred: LAP - Player Segmentation - Add Risk Level's last update time [redmine:#191101]
 	Parameter's Explanation: 
 		@custList = '<Root>
 					<r id="100" c="10" t="1" />
@@ -36,9 +37,10 @@ BEGIN
 	
 	DECLARE @CategoryList VARCHAR(MAX),
 			@startRun DATETIME, 
-			@duration INT
-	
-	SELECT @startRun = GETDATE()
+			@duration INT, 
+			@ModifiedDate DATETIME
+
+	SELECT @startRun = GETDATE() , @ModifiedDate = GETDATE()
 
 	SELECT @CategoryList = CAST((
 						SELECT DISTINCT CustomerClass c 
@@ -100,12 +102,25 @@ BEGIN
 			BREAK;
 			
 		INSERT INTO [Dep_CustCategoryHistory](custid,CategoryID,CustomerClass,CreatedDate,OldCustomerClass)
-		SELECT custid, CategoryID, CustomerClass, GETDATE(), OldCustomerClass
+		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass
 		FROM @tmp
 		WHERE CustomerClass IN (SELECT DISTINCT CustomerClass c 
 								FROM CategoryConfig WITH(NOLOCK)
 								WHERE CustomerClass IS NOT NULL)
 			AND CategoryID > 0
+		
+		UPDATE c 
+		SET c.ModifiedDate = @ModifiedDate,
+			c.CategoryID = t.CategoryID,
+			c.CustomerClass = t.CustomerClass,
+			c.OldCustomerClass = t.OldCustomerClass
+		FROM Dep_CustomerClass c WITH(UPDLOCK)
+			INNER JOIN @tmp t ON c.CustID = t.custid
+
+		INSERT INTO [Dep_CustomerClass](custid,CategoryID,CustomerClass,ModifiedDate,OldCustomerClass)
+		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass
+		FROM @tmp c
+		WHERE NOT EXISTS (SELECT TOP 1 1 from Dep_CustomerClass WITH(NOLOCK) where CustID = c.CustID)
 		
 		WAITFOR DELAY '0:0:1'
 		
