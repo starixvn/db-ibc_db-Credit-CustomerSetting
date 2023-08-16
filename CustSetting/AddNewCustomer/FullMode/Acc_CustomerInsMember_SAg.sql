@@ -434,7 +434,9 @@ Revisions:
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
-	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]	
+	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
+	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
+	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649]
 Param's Explanation:
 - @ErrCode:
     = 0: super create master successfully.
@@ -446,9 +448,10 @@ Param's Explanation:
 BEGIN
     SET NOCOUNT ON   
 
-	DECLARE @Super_site VARCHAR(50), @currency INT, @EnableVR BIT
+	DECLARE @Super_site VARCHAR(50), @currency INT, @EnableVR BIT, @Super_Username VARCHAR(30)
 	SELECT @Super_site = site,
-		@currency = currency
+		@currency = currency,
+		@Super_Username = Username
 	FROM customer WITH(NOLOCK) 
 	WHERE CustID = @srecommend
 	 
@@ -566,7 +569,7 @@ BEGIN
 	END CATCH
 	
 ----- /Elodie @ 01 JUN 2015 -------------------
-
+	/* #190167 : Remove Code
     ----- 20130717@Lukas -------------------
 	DECLARE @lastMINUTEMemberCount INT
 
@@ -608,6 +611,38 @@ BEGIN
 			RETURN
 		END
 	END
+	#190167 : End Remove Code */
+	-- New Code #190167
+
+	DECLARE 
+		@existingMrecommend		INT,
+		@existingSrecommend		INT,
+		@GroupName				VARCHAR(50),
+		@CreatedMode			TINYINT,
+		@IsQRCode				BIT
+
+	EXEC Acc_CustomerLimitCreatedAccountCheck
+			@Custid				= @srecommend , 
+			@RuleID				= 'SAG' , 
+			@existingMrecommend = 0 , 
+			@existingSrecommend = 0 , 
+			@Prefix				= @Super_Username , 
+			@GroupName			= '' , 
+			@CreatedMode		= 0 , 
+			@IsQRCode			= 0 , 
+			@SystemID			= 0 , 
+			@IP					= @IP ,
+			@Credit				= @Credit ,
+			@ErrCode			= @ErrCode OUTPUT , 
+			@ErrMsg				= @ErrMsg OUTPUT , 
+			@Language			= @Language
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrCode , @ErrMsg
+		RETURN		
+	END	
+
+	/* #190167 : Remove Code
 --20140619@Johnson: Check IP to create downline-----------------
 	DECLARE @isValidIP BIT
 	
@@ -625,6 +660,8 @@ BEGIN
 		return
 	END
     --End check IP--------------------------------------------------
+	#190167 : End Remove Code */
+
 
 	---- check constraint on prefix username same as upline in case of creating new customer from alpha site
 	DECLARE @uplineUsername NVARCHAR(50)
@@ -651,7 +688,7 @@ BEGIN
     DECLARE @endRun DATETIME
     DECLARE @duration INT
     set @startRun = GETDATE()
-
+	/* #190167 : Remove Code
     --NOT allow agent under KH, KR, KAR, KBR, KCR, LDR, KM, KAM to create downlines (Requested by wan 04-Dec-2008)
     --20081218_By_AhWan: KER - 1238537
     --20090112_Wan: unblock KM 194354
@@ -665,7 +702,7 @@ BEGIN
     	
 	    return
     END
-
+	#190167 : End Remove Code */
     --Check an account disabled or not 
     EXEC dbo.Acc_CustomerSelCheckEnable @custid = @srecommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
     IF @ErrCode <>0		RETURN 
@@ -2156,6 +2193,8 @@ BEGIN
 	DECLARE @VRLockedStatus_Soccer BIT = 0
 	DECLARE @VRLockedStatus_OS BIT = 0
 	DECLARE @VRLockedStatus_Basketball BIT = 0
+	--Log for VR+
+	DECLARE @VRAccumulatedBalance BIT = 0
 
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 1)
 		SET @VRLockedStatus_Soccer = 1
@@ -2182,6 +2221,7 @@ BEGIN
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
+	'VRAccumulatedBalance="'+ COALESCE(CAST(@VRAccumulatedBalance AS VARCHAR(10)),SPACE(1)) + '" ' +  
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' + 
 	'VRLockStatus_Basketball="'+ COALESCE(CAST(@VRLockedStatus_Basketball AS VARCHAR(10)),SPACE(1)) + '" ' + 

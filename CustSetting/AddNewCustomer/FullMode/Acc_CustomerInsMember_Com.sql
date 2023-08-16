@@ -413,6 +413,7 @@ Revisions:
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
+	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649] 
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -1308,6 +1309,7 @@ BEGIN
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'VRAccumulatedBalance="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
 	'VRLockStatus_Basketball="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +

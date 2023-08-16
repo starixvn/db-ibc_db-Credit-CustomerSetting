@@ -152,6 +152,7 @@ Revisions:
 	- 20230414@Johnson: try catch when insert customer for case multiple clone account [redmine: #183697]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230718@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
+	- 20230711@Helios: VR Accumulate Balance [Redmine: #189649]
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -390,6 +391,7 @@ BEGIN
 	FROM VRCustLockStatus v (NOLOCK) 
 	WHERE CustID = @UplineID
 		AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
+		AND v.Type <> 4
 
 	IF @@ERROR <> 0
     BEGIN

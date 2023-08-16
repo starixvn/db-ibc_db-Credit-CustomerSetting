@@ -36,6 +36,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				--20200206@Tiara: New VR structure for Soccer [Redmine: #126243]
 				,	@Sporttype					INT				= NULL 
 				,   @AdditionalActions			VARCHAR(MAX) = ''
+				,	@VRAccumulate_Balance		BIT				= 0
 AS 
 /*
 	Created:	Jamie
@@ -84,7 +85,7 @@ AS
 		- 20230302@Johnson: Add auto suspend for basketball and return Basketball VR to its original state [redmine:#184339]
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
-
+		- 20230711@Helios: VR Accumulate Balance [Redmine: #189649] 
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -1243,6 +1244,90 @@ BEGIN
 		FROM custInfo
 		WHERE custid IN (SELECT custID FROM #tblCustomer)
 	END
+
+	ELSE IF @action = 'ApplyVRAccBalanceAllDownlines' 
+	BEGIN
+		IF dbo.f_CheckRepTable('VRCustLockStatus') = 1	
+		BEGIN
+			
+			CREATE TABLE #TblCustDownline_VRAccBalance			(custID INT)
+			CREATE TABLE #TblCustDownline_tmpBatch_VRAccBalance (CustID INT PRIMARY KEY)	
+			DECLARE @VRAccBalance_batchUpdate INT = 5000
+		
+			IF @roleid = 4
+			BEGIN
+				INSERT INTO #TblCustDownline_VRAccBalance(custID)
+				SELECT c.custid
+				FROM CustInfo c WITH (NOLOCK)
+				WHERE c.srecommend = @custid
+					AND c.Enabled = 1
+			END
+			ELSE IF @roleid = 3
+			BEGIN
+				INSERT INTO #TblCustDownline_VRAccBalance(custID)
+				SELECT c.custid
+				FROM CustInfo c WITH (NOLOCK)
+				WHERE c.mrecommend = @custid
+					AND c.Enabled = 1
+			END
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO #TblCustDownline_VRAccBalance(custID)
+				SELECT c.custid
+				FROM CustInfo c WITH (NOLOCK)
+				WHERE c.recommend = @custid
+					AND c.Enabled = 1
+			END
+
+			IF NOT EXISTS( SELECT TOP 1 1 FROM #TblCustDownline_VRAccBalance)
+				RETURN
+
+			IF @VRAccumulate_Balance = 0
+			BEGIN
+				WHILE(1=1)
+				BEGIN
+					TRUNCATE TABLE #TblCustDownline_tmpBatch_VRAccBalance
+				
+					DELETE TOP (@VRAccBalance_batchUpdate) t
+					OUTPUT DELETED.custid INTO #TblCustDownline_tmpBatch_VRAccBalance
+					FROM #TblCustDownline_VRAccBalance t
+				
+					IF @@rowcount = 0 
+						BREAK;
+
+					DELETE vr
+					FROM VRCustLockStatus vr WITH (ROWLOCK, UPDLOCK)
+					INNER JOIN #TblCustDownline_tmpBatch_VRAccBalance tmp ON vr.CustID = tmp.CustID
+					WHERE vr.Type = 4
+				END		
+			END
+
+			ELSE
+			BEGIN
+				WHILE(1=1)
+				BEGIN
+					TRUNCATE TABLE #TblCustDownline_tmpBatch_VRAccBalance
+				
+					DELETE TOP (@VRAccBalance_batchUpdate) tem
+					OUTPUT DELETED.custid INTO #TblCustDownline_tmpBatch_VRAccBalance
+					FROM #TblCustDownline_VRAccBalance tem WITH (NOLOCK)
+					WHERE NOT EXISTS (SELECT 1 FROM VRCustLockStatus vr WITH (NOLOCK) WHERE vr.CustID = tem.custID AND vr.Type = 4) 
+				
+					IF @@rowcount = 0 
+						BREAK;
+
+					INSERT INTO VRCustLockStatus (CustID , Type)
+					SELECT CustID , 4
+					FROM #TblCustDownline_tmpBatch_VRAccBalance
+				END		
+			END
+
+			DROP TABLE #TblCustDownline_VRAccBalance	
+			DROP TABLE #TblCustDownline_tmpBatch_VRAccBalance
+		
+		END
+	END
+
 	ELSE IF @Action = 'EnableVRLockStatus'--execrep just use for enable 
 	BEGIN
 		--IF OBJECT_ID (N'VRCustLockStatus', N'U') IS NOT NULL --check table is existing ?
@@ -1274,7 +1359,8 @@ BEGIN
 			BEGIN								
 				INSERT INTO #TblType (Type)		
 				SELECT 3  --Basketball			
-			END									
+			END	
+		
 			ELSE
 			BEGIN
 				RETURN
