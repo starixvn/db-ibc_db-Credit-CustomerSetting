@@ -441,6 +441,8 @@ Revisions:
 	- 20230303@Johnson: add auto suspend for Basketball[redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]	
+	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
+	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649]
 Param's Explanation:
 - @ErrCode:
     = 0: Create agent successfully.
@@ -461,6 +463,43 @@ BEGIN
 		,@Language = @Language
 
 	IF @ErrCode <> 0 RETURN
+
+	-- New Code #190167
+
+	DECLARE 
+		@existingMrecommend		INT,
+		@existingSrecommend		INT,
+		@GroupName				VARCHAR(50),
+		@CreatedMode			TINYINT,
+		@IsQRCode				BIT,
+		@Master_Username VARCHAR(30)
+
+	SELECT @Master_Username = Username
+	FROM customer WITH(NOLOCK) 
+	WHERE CustID = @mrecommend
+
+	EXEC Acc_CustomerLimitCreatedAccountCheck 
+			@Custid				= @mrecommend , 
+			@RuleID				= 'MAG' , 
+			@existingMrecommend = 0 , 
+			@existingSrecommend = 0 , 
+			@Prefix				= @Master_Username , 
+			@GroupName			= '' , 
+			@CreatedMode		= 0 , 
+			@IsQRCode			= 0 , 
+			@SystemID			= 0 , 
+			@IP					= @IP ,
+			@Credit				= @Credit ,
+			@ErrCode			= @ErrCode OUTPUT , 
+			@ErrMsg				= @ErrMsg OUTPUT , 
+			@Language			= @Language
+
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrCode , @ErrMsg
+		RETURN		
+	END
+
 
 ----- Elodie @ 01 JUN 2015 -------------------
 	CREATE TABLE #tmp_Sports(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
@@ -512,9 +551,10 @@ BEGIN
 		END
 	END CATCH
 ----- /Elodie @ 01 JUN 2015 -------------------
-	DECLARE @Site NVARCHAR(50), @EnableVR BIT
+	DECLARE @Site NVARCHAR(50)
 	SELECT @Site = site FROM customer WITH(NOLOCK) WHERE CustID = @mrecommend
 
+	/* #190167 : Remove Code
     ----- 20130717@Lukas -------------------
 	declare @lastMinuteMemberCount INT
 
@@ -534,6 +574,8 @@ BEGIN
 				@ErrCode = 998	
 		return
 	END
+
+
     ----- / 20130717@Lukas-----------------
     --20140619@Johnson: Check IP to create downline-----------------
 	Declare @isValidIP BIT
@@ -552,7 +594,7 @@ BEGIN
 		return
 	END
     --End check IP--------------------------------------------------	
-
+	#190167 : End Remove Code */
 
 	-----20160120@Lukas  ------------------
 	---- check constraint on prefix username same as upline in case of creating new customer from alpha site
@@ -587,6 +629,7 @@ BEGIN
     --20081218_By_AhWan: KER - 1238537
     --20090112_Wan: unblock KM 194354
     --20091130_Wan: Unblock KAR,KBR,KCR,KDR,KER,KH,KR 
+	/* #190167 : Remove Code
     if exists (SELECT 1 FROM custinfo WITH(NOLOCK) WHERE custid = @mrecommend and srecommend  = 726582)
     BEGIN	
 	    SELECT @ErrMsg = case @Language 
@@ -596,6 +639,7 @@ BEGIN
 		    @ErrCode = 100
 	    return
     END
+	#190167 : End Remove Code */
 
     --Check an account disabled or not 
     EXEC dbo.Acc_CustomerSelCheckEnable @custid = @mrecommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
@@ -603,7 +647,7 @@ BEGIN
 
     declare @ErrType VARCHAR(4000)
     declare 
-	    @transcode bigint, @currency INT, @pwdexpiry datetime,	
+	    @transcode bigint, @currency INT, @pwdexpiry datetime,	@EnableVR BIT ,
 	    @Credit_AllOtherAgent MONEY, @Credit_AllMember MONEY, @Credit_MAg MONEY,
 	    @srecommend INT,	 
 	    @matchlimit SMALLMONEY,
@@ -813,6 +857,7 @@ BEGIN
 	   SELECT @groupb = 0, @groupc = 0, @groupd = 0		
 	END
 	
+	/* #190167 : Remove Code
 	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
 	SET @CurrentDate  = CONVERT(DATE,GETDATE())
 	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
@@ -834,6 +879,8 @@ BEGIN
 			return
 		END
 	END
+	#190167 : End Remove Code */
+
     EXEC dbo.Acc_CustomerInsMember_MAg_CheckParam
 		@custid = @custid OUTPUT,
 	    @discountcs=@discountcs,
@@ -2090,6 +2137,8 @@ BEGIN
 	DECLARE @VRLockedStatus_Soccer BIT = 0
 	DECLARE @VRLockedStatus_OS BIT = 0
 	DECLARE @VRLockedStatus_Basketball BIT = 0
+	--Log for VR+
+	DECLARE @VRAccumulatedBalance BIT = 0
 
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @mrecommend AND Type = 1)
 		SET @VRLockedStatus_Soccer = 1
@@ -2118,6 +2167,7 @@ BEGIN
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +
+	'VRAccumulatedBalance="'+ COALESCE(CAST(@VRAccumulatedBalance AS VARCHAR(10)),SPACE(1)) + '" ' +  
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_Basketball="'+ COALESCE(CAST(@VRLockedStatus_Basketball AS VARCHAR(10)),SPACE(1)) + '" ' +     

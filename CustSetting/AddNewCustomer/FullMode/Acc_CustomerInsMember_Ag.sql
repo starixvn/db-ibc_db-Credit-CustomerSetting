@@ -335,6 +335,8 @@ Revisions:
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]	
 	- 20230510@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 	- 20230615@Johnson: Check Problem Account  Limit New Downline Per Day [redmine: #189792]
+	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
+	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649]
 Param's Explanation:	
 • @ErrCode:
     = 0: add new member successfully.
@@ -356,6 +358,8 @@ BEGIN
 		,@Language = @Language
 
 	IF @ErrCode <> 0 RETURN
+
+	/* #190167 : Remove Code Limit Create New Account
 	
 	DECLARE @isAllowed  BIT
 	
@@ -375,6 +379,39 @@ BEGIN
 		return
 		END
 	END
+	#190167 : End Remove Code */
+	-- New Code #190167
+
+	DECLARE 
+		@existingMrecommend		INT,
+		@existingSrecommend		INT,
+		@GroupName				VARCHAR(50),
+		@Agent_Username VARCHAR(30)
+
+	SELECT @Agent_Username = Username
+	FROM customer WITH(NOLOCK) 
+	WHERE CustID = @recommend
+
+	EXEC Acc_CustomerLimitCreatedAccountCheck
+			@Custid				= @recommend , 
+			@RuleID				= 'AG' , 
+			@existingMrecommend = 0 , 
+			@existingSrecommend = 0 , 
+			@Prefix				= @Agent_Username , 
+			@GroupName			= '' , 
+			@CreatedMode		= @CreatedMode , 
+			@IsQRCode			= @IsQRCode , 
+			@SystemID			= @SystemID , 
+			@IP					= @IP ,
+			@Credit				= @Credit ,
+			@ErrCode			= @ErrCode OUTPUT , 
+			@ErrMsg				= @ErrMsg OUTPUT , 
+			@Language			= @Language
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrCode , @ErrMsg
+		RETURN		
+	END	
 	
 ----- Elodie @ 01 JUN 2015 -------------------	
 	CREATE TABLE #tmp_Sports(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
@@ -513,11 +550,9 @@ BEGIN
 	*/
 	DECLARE @mrecommend int
 -----END: 20180703@viet: normal agent can create upto 10 members per minute. Restricted Robot master/agent can open up to 1 low-credit-member each minute. Normal agent can open up to 10 members per minute
-	DECLARE @_Site VARCHAR(10), @EnableVR BIT
-	SELECT @_Site = site
-	FROM dbo.customer WITH(NOLOCK)
-	WHERE CustID = @recommend
 	
+
+	/* #190167 : Remove Code Limit maximum account created per day by Site (300 accounts, IBCIndo only)
 	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0 , @CurrentDate DATETIME
 	SET @CurrentDate  = CONVERT(DATE,GETDATE())
 	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@_Site)),0)
@@ -577,7 +612,8 @@ BEGIN
 				@ErrCode = 1001	
 		return
 	END
-    --End check IP--------------------------------------------------
+     --End check IP--------------------------------------------------
+	#190167 : End Remove Code */
 
 	-----20160120@Lukas  ------------------
 	---- check constraint on prefix username same as upline in case of creating member from alpha site
@@ -606,6 +642,7 @@ BEGIN
     declare @duration INT
     set @startRun = getdate()
 
+	/* #190167 : Remove Code
     --20080514: Not allow agent LIM open new member (By Wan)
     IF @recommend in (920145)
     BEGIN
@@ -616,17 +653,20 @@ BEGIN
 			    @success = 0, @ErrCode = 999
 	    return
     END        
+	#190167 : End Remove Code */
 
     --Check an account disabled OR not 
     EXEC dbo.Acc_CustomerSelCheckEnable @custid = @recommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
     IF @ErrCode <>0	RETURN 
 
+	/* #190167 : Remove Code
 	--Check Limit max members creation per Super
 	IF @SystemID <> 1
 	BEGIN
 		EXEC Age_MaxMemberLimitBySuperCheck @AgentId = @recommend, @Language = @Language, @ErrMsg = @ErrMsg OUTPUT, @ErrCode = @ErrCode OUTPUT
 		IF @ErrCode <> 0 RETURN
 	END
+	#190167 : End Remove Code */
 
     declare @transcode bigint, @currency INT, @pwdexpiry datetime, @srecommend INT,
     	
@@ -1256,6 +1296,10 @@ BEGIN
     --SELECT @maxpos = 0.7, @maxdownlinepos = 0.7
     --SELECT @adiscount = CASE WHEN @ugroup in ('a','hka') THEN 0.0025 WHEN @ugroup in ('b','hkb') THEN 0.005 WHEN @ugroup in ('c','hkc') THEN 0.0075 ELSE 0.01 END, @adiscountcs=0.05
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	DECLARE @_Site VARCHAR(10), @EnableVR BIT
+	SELECT @_Site = site
+	FROM dbo.customer WITH(NOLOCK)
+	WHERE CustID = @recommend
 
     SELECT @currency = currency
          , @mrecommend = mrecommend
@@ -1319,6 +1363,7 @@ BEGIN
 
     SELECT @ErrCode = 0
 
+	/* #190167 : Remove Code
 	--Agent can only create up to 200 new members every day by QR.
 	IF @IsQRCode = 1
 	BEGIN
@@ -1338,7 +1383,7 @@ BEGIN
 			RETURN
 		END
 	END
-
+	#190167 : End Remove Code */
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     DECLARE @IsValid BIT
      -- MyanmarOdds
@@ -2678,6 +2723,8 @@ BEGIN
 	DECLARE @VRLockedStatus_Soccer BIT = 0
 	DECLARE @VRLockedStatus_OS BIT = 0
 	DECLARE @VRLockedStatus_Basketball BIT = 0
+	--Log for VR+
+	DECLARE @VRAccumulatedBalance BIT = 0
 
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @recommend AND Type = 1)
 		SET @VRLockedStatus_Soccer = 1
@@ -2705,6 +2752,7 @@ BEGIN
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(10)),SPACE(1)) + '" ' +	
+	'VRAccumulatedBalance="'+ COALESCE(CAST(@VRAccumulatedBalance AS VARCHAR(10)),SPACE(1)) + '" ' +  
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(@VRLockedStatus_Soccer AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(@VRLockedStatus_OS AS VARCHAR(10)),SPACE(1)) + '" ' +   
  	'VRLockStatus_Basketball="'+ COALESCE(CAST(@VRLockedStatus_Basketball AS VARCHAR(10)),SPACE(1)) + '" ' +   

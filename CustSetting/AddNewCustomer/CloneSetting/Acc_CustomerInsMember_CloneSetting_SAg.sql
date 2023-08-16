@@ -106,6 +106,7 @@ AS
 	- 20230302@Johnson: add auto suspend for Basketball & return Basketball VR to its original state [redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230615@Johnson: Check Problem Account  Limit New Downline Per Day [redmine: #189792]
+	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -129,9 +130,12 @@ BEGIN
 
 	IF @ErrCode <> 0 RETURN
 	
-	
+	/* #190167 : Remove Code Limit Create New Account
 --20140619@Johnson: Check IP to create downline-----------------
-	DECLARE @isValidIP bit,@isAllowed  BIT
+	DECLARE @isValidIP bit
+	
+	
+	,@isAllowed  BIT
 	
 	IF @CreatedMode = 1 
 	BEGIN
@@ -149,10 +153,8 @@ BEGIN
 		return
 		END
 	END
-	
-	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @IsAutoEnableADBMaster BIT
-	
-	SET @CreateDate = GETDATE()
+
+
 	
 	EXEC Acc_CustomerInsMember_CheckIP 
 			@IP = @IP,
@@ -168,7 +170,12 @@ BEGIN
 		return
 	END
 --End check IP--------------------------------------------------
+		#190167 : End Remove Code */
 
+	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @IsAutoEnableADBMaster BIT
+	
+	SET @CreateDate = GETDATE()
+	
 	DECLARE @startRun DATETIME
 		,@endRun DATETIME
 		,@duration INT
@@ -219,6 +226,38 @@ BEGIN
 		RETURN		
 	END		
 
+	-- New Code #190167
+	DECLARE 
+		@GroupName				VARCHAR(50),
+		@IsQRCode				BIT,
+		@Super_Username			VARCHAR(30)
+
+	SELECT @Super_Username = Username
+	FROM customer WITH(NOLOCK) 
+	WHERE CustID = @srecommend
+
+	EXEC Acc_CustomerLimitCreatedAccountCheck 
+				@Custid				= @srecommend , 
+				@RuleID				= 'CSAG' , 
+				@existingMrecommend = 0 , 
+				@existingSrecommend = @existingSrecommend , 
+				@Prefix				= @Super_Username , 
+				@GroupName			= '' , 
+				@CreatedMode		= @CreatedMode , 
+				@IsQRCode			= 0 , 
+				@SystemID			= 0 ,
+				@IP					= @IP ,
+				@Credit				= @Credit ,				
+				@ErrCode			= @ErrCode OUTPUT , 
+				@ErrMsg				= @ErrMsg OUTPUT , 
+				@Language			= @Language
+		IF @ErrCode <> 0
+		BEGIN
+			SELECT @ErrCode , @ErrMsg
+			RETURN		
+		END	
+
+	/* #190167 : Remove Code Limit maximum account created per day by Site (300 accounts, IBCIndo only)
 	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
 	SET @CurrentDate  = CONVERT(DATE,GETDATE())
 	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
@@ -239,7 +278,7 @@ BEGIN
 			RETURN
 		END
 	END
-	
+
 	--NOT allow agent under KH, KR, KAR, KBR, KCR, LDR, KM, KAM to create downlines (Requested by wan 04-Dec-2008)  
 	--20081218_By_AhWan: KER - 1238537  
 	--20090112_Wan: unblock KM 194354  
@@ -253,7 +292,7 @@ BEGIN
 	   
 	 return  
 	END 		
-
+	#190167 : End Remove Code */
 	--CREDIT CHECK
 
 	DECLARE @Credit_AllOtherMaster MONEY, @Credit_SAg MONEY
@@ -787,6 +826,7 @@ BEGIN
 		FROM VRCustLockStatus v (NOLOCK) 
 		WHERE CustID = @srecommend
 			AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
+			AND v.Type <> 4
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrMsg = CASE @Language 

@@ -103,6 +103,7 @@ AS
 	- 20230217@Johnson: Telegram chatbot - clone account systemID = 10 [Redmine: #183697]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230615@Johnson: Check Problem Account  Limit New Downline Per Day [redmine: ##189792]
+	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -126,9 +127,12 @@ BEGIN
 
 	IF @ErrCode <> 0 RETURN
 
+	/* #190167 : Remove Code Limit Create New Account
 --20140619@Johnson: Check IP to create downline-----------------
-	Declare @isValidIP bit,@isAllowed  BIT
+	Declare @isValidIP bit
 	
+	
+	,@isAllowed  BIT
 	IF @CreatedMode = 1 
 	BEGIN
 		EXEC Acc_ProblemAccountLimitDownlineCheck
@@ -146,8 +150,7 @@ BEGIN
 		END
 	END
 	
-	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME
-	SET @CreateDate = GETDATE()
+	
 	
 	EXEC Acc_CustomerInsMember_CheckIP 
 			@IP = @IP,
@@ -163,6 +166,10 @@ BEGIN
 		return
 	END
 --End check IP--------------------------------------------------
+	#190167 : End Remove Code */
+
+	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME
+	SET @CreateDate = GETDATE()
 
 	DECLARE @startRun datetime
 		,@endRun datetime
@@ -213,7 +220,38 @@ BEGIN
 								END, 
 						@ErrCode = 203
 		RETURN		
-	END		
+	END	
+	
+	-- New Code #190167
+	DECLARE 
+		@GroupName				VARCHAR(50),
+		@IsQRCode				BIT,
+		@Master_Username		VARCHAR(30)
+
+	SELECT @Master_Username = Username
+	FROM customer WITH(NOLOCK) 
+	WHERE CustID = @mrecommend
+
+	EXEC Acc_CustomerLimitCreatedAccountCheck 
+				@Custid				= @mrecommend , 
+				@RuleID				= 'CMAG' , 
+				@existingMrecommend = @existingMrecommend , 
+				@existingSrecommend = 0 , 
+				@Prefix				= @Master_Username , 
+				@GroupName			= '' , 
+				@CreatedMode		= @CreatedMode , 
+				@IsQRCode			= 0 , 
+				@SystemID			= 0 , 
+				@IP					= @IP ,
+				@Credit				= @Credit ,
+				@ErrCode			= @ErrCode OUTPUT , 
+				@ErrMsg				= @ErrMsg OUTPUT , 
+				@Language			= @Language
+		IF @ErrCode <> 0
+		BEGIN
+			SELECT @ErrCode , @ErrMsg
+			RETURN		
+		END	
 
 	--NOT allow masters under KH, KM, KR to create agents
 	--Requested by wan 17-Jan-2007
@@ -221,6 +259,7 @@ BEGIN
 	--20081218_By_AhWan: KER - 1238537
 	--20090112_Wan: unblock KM 194354
 	--20091130_Wan: Unblock KAR,KBR,KCR,KDR,KER,KH,KR 
+	/* #190167 : Remove Code
 	if exists (select 1 from custinfo with (nolock) where custid = @mrecommend and srecommend  = 726582)
 	BEGIN	
 		Select @ErrMsg = case @Language 
@@ -230,6 +269,9 @@ BEGIN
 			@ErrCode = 100
 		return
 	END
+	#190167 : End Remove Code */
+
+	/* #190167 : Remove Code Limit maximum account created per day by Site (300 accounts, IBCIndo only)
 	
 	DECLARE @DefaultValueLimitAcc INT = 0 , @lastAccountToDay INT = 0, @CurrentDate DATETIME
 	SET @CurrentDate  = CONVERT(DATE,GETDATE())
@@ -252,6 +294,7 @@ BEGIN
 			return
 		END
 	END
+	#190167 : End Remove Code */
 	
 	--CREDIT CHECK
 	DECLARE @Credit_AllOtherAgent MONEY, @Credit_MAg MONEY
@@ -741,7 +784,7 @@ BEGIN
 		FROM VRCustLockStatus v (NOLOCK) 
 		WHERE CustID = @mrecommend
 			AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
-			
+			AND v.Type <> 4
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrMsg = CASE @Language 
