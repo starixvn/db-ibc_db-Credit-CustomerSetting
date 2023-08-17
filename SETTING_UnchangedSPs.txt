@@ -1,7 +1,1 @@
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_All.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_All.sql
-CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_All.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
+CustSetting\UpdateSetting\Update CustomerClass\Acc_CustomerUpdateCustomerClassBySport.sql
