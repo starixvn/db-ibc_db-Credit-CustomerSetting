@@ -86,6 +86,8 @@ AS
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
 		- 20230711@Helios: VR Accumulate Balance [Redmine: #189649] 
+		- 20230724@Luke: Unlock VR for Soccer, Basketball, Other Sports [Redmine: #191162]
+
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -107,8 +109,8 @@ AS
 
 		- @AdditionalActions : Use for update VR
 							 = '<ROOT>
-								<VR Unlock3="1"  Unlock2="0" Unlock1="1" Enable3="0"  Enable2="1" Enable1="0" />	
-							</ROOT>'	
+								<VR UnlockSC3="1"  UnlockSC2="0" UnlockSC1="1" UnlockBB3="1"  UnlockBB2="0" UnlockBB1="1" UnlockOS3="1"  UnlockOS2="0" UnlockOS1="1" Enable3="0"  Enable2="1" Enable1="0" />	
+							</ROOT>'
    
 */
 SET NOCOUNT ON; 
@@ -299,153 +301,163 @@ BEGIN
 		END
 	END
 	
-	IF	(@EnableVirtualrateOld <> @EnableVirtualrate AND dbo.f_CheckRepTable('custinfo') = 1)
+	IF dbo.f_CheckRepTable('custinfo') = 1
 	BEGIN
-		SET @batchUpdate = 5000--for update custinfo
-		IF	@roleid = 4
-		BEGIN			
-			DELETE #tblCustVR
-			
-			INSERT INTO #tblCustVR(custID)
-			SELECT custid
-			FROM dbo.custInfo ci WITH (NOLOCK)
-			WHERE	ci.srecommend = @custid
-			AND	NOT EXISTS (
-						SELECT	1
-						FROM	@BetTradeAccount AS lm
-						WHERE	lm.custID = ci.custid
-					)
-					
-			SELECT @maxcustid = MAX(custID)
-			FROM #tblCustVR
-			
-			WHILE(1=1)
-			BEGIN
-				TRUNCATE TABLE #tmpCustBatchVR
-				
-				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO #tmpCustBatchVR
-				FROM #tblCustVR t
-				
-				IF @@rowcount = 0 
-					BREAK;
-					
-				UPDATE	ci
-				SET	ci.virtualmultiplier = @EnableVirtualrate
-				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
-			END	
-			
-			--update newly customer if any
+		IF (@EnableVirtualrate = 1 AND @EnableVirtualrate <> @EnableVirtualrateOld)			--not enable downlines
+		BEGIN
 			UPDATE	ci
 			SET	ci.virtualmultiplier = @EnableVirtualrate
 			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-			WHERE	ci.srecommend = @custid
-			AND ci.custid > @maxcustid
-			AND	NOT EXISTS (
-						SELECT	1
-						FROM	@BetTradeAccount AS lm
-						WHERE	lm.custID = ci.custid
-					)	
-		END;
-		ELSE IF	@roleid = 3
-		BEGIN			
-			DELETE #tblCustVR
+			WHERE custID = @custid
+		END
+		ELSE IF (@EnableVirtualrate = 0)																			--disable downlines
+		BEGIN
+			SET @batchUpdate = 5000--for update custinfo
+			IF	@roleid = 4
+			BEGIN			
+				DELETE #tblCustVR
 			
-			INSERT INTO #tblCustVR(custID)
-			SELECT custid
-			FROM dbo.custInfo ci WITH (NOLOCK)
-			WHERE	ci.mrecommend = @custid
-			AND	NOT EXISTS (
-						SELECT	1
-						FROM	@BetTradeAccount AS lm
-						WHERE	lm.custID = ci.custid
-					)
-					
-			SELECT @maxcustid = ISNULL(MAX(custID),0)
-			FROM #tblCustVR
-			
-			WHILE(1=1)
-			BEGIN
-				TRUNCATE TABLE #tmpCustBatchVR
-				
-				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO #tmpCustBatchVR
-				FROM #tblCustVR t
-				
-				IF @@rowcount = 0 
-					BREAK;
-					
-				UPDATE	ci
-				SET	ci.virtualmultiplier = @EnableVirtualrate
-				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
-			END	
-			
-			UPDATE	ci
-			SET	ci.virtualmultiplier = @EnableVirtualrate
-			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-			WHERE	ci.mrecommend = @custid
-				AND ci.custID > @maxcustid
+				INSERT INTO #tblCustVR(custID)
+				SELECT custid
+				FROM dbo.custInfo ci WITH (NOLOCK)
+				WHERE	ci.srecommend = @custid
 				AND	NOT EXISTS (
-						SELECT	1
-						FROM	@BetTradeAccount AS lm
-						WHERE	lm.custID = ci.custid
-					)
-		END;
-		ELSE IF	@roleid = 2
-		BEGIN			
-			DELETE #tblCustVR
-			
-			INSERT INTO #tblCustVR(custID)
-			SELECT custid
-			FROM dbo.custInfo ci WITH (NOLOCK)
-			WHERE	ci.recommend = @custid
-			AND	NOT EXISTS (
-						SELECT	1
-						FROM	@BetTradeAccount AS lm
-						WHERE	lm.custID = ci.custid
-					)
+							SELECT	1
+							FROM	@BetTradeAccount AS lm
+							WHERE	lm.custID = ci.custid
+						)
 					
-			SELECT @maxcustid = ISNULL(MAX(custID),0)
-			FROM #tblCustVR
+				SELECT @maxcustid = MAX(custID)
+				FROM #tblCustVR
 			
-			WHILE(1=1)
-			BEGIN
-				TRUNCATE TABLE #tmpCustBatchVR
+				WHILE(1=1)
+				BEGIN
+					TRUNCATE TABLE #tmpCustBatchVR
 				
-				DELETE TOP (@batchUpdate) t
-				OUTPUT DELETED.custid INTO #tmpCustBatchVR
-				FROM #tblCustVR t
+					DELETE TOP (@batchUpdate) t
+					OUTPUT DELETED.custid INTO #tmpCustBatchVR
+					FROM #tblCustVR t
 				
-				IF @@rowcount = 0 
-					BREAK;
+					IF @@rowcount = 0 
+						BREAK;
 					
+					UPDATE	ci
+					SET	ci.virtualmultiplier = @EnableVirtualrate
+					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
+				END	
+			
+				--update newly customer if any
 				UPDATE	ci
 				SET	ci.virtualmultiplier = @EnableVirtualrate
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
-			END
-			
-			UPDATE	ci
-			SET	ci.virtualmultiplier = @EnableVirtualrate
-			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-			WHERE	ci.recommend = @custid
-				AND custid > @maxcustid
+				WHERE	ci.srecommend = @custid
+				AND ci.custid > @maxcustid
 				AND	NOT EXISTS (
-						SELECT	1
-						FROM	@BetTradeAccount AS lm
-						WHERE	lm.custID = ci.custid
-					)		
-		END;
-		ELSE IF	@roleid = 1
-		BEGIN			
-			UPDATE	ci
-			SET	ci.virtualmultiplier = @EnableVirtualrate
-			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-			WHERE	ci.custid = @custid								
-		END;
-	END;
+							SELECT	1
+							FROM	@BetTradeAccount AS lm
+							WHERE	lm.custID = ci.custid
+						)	
+			END;
+			ELSE IF	@roleid = 3
+			BEGIN			
+				DELETE #tblCustVR
+			
+				INSERT INTO #tblCustVR(custID)
+				SELECT custid
+				FROM dbo.custInfo ci WITH (NOLOCK)
+				WHERE	ci.mrecommend = @custid
+				AND	NOT EXISTS (
+							SELECT	1
+							FROM	@BetTradeAccount AS lm
+							WHERE	lm.custID = ci.custid
+						)
+					
+				SELECT @maxcustid = ISNULL(MAX(custID),0)
+				FROM #tblCustVR
+			
+				WHILE(1=1)
+				BEGIN
+					TRUNCATE TABLE #tmpCustBatchVR
+				
+					DELETE TOP (@batchUpdate) t
+					OUTPUT DELETED.custid INTO #tmpCustBatchVR
+					FROM #tblCustVR t
+				
+					IF @@rowcount = 0 
+						BREAK;
+					
+					UPDATE	ci
+					SET	ci.virtualmultiplier = @EnableVirtualrate
+					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
+				END	
+			
+				UPDATE	ci
+				SET	ci.virtualmultiplier = @EnableVirtualrate
+				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+				WHERE	ci.mrecommend = @custid
+					AND ci.custID > @maxcustid
+					AND	NOT EXISTS (
+							SELECT	1
+							FROM	@BetTradeAccount AS lm
+							WHERE	lm.custID = ci.custid
+						)
+			END;
+			ELSE IF	@roleid = 2
+			BEGIN			
+				DELETE #tblCustVR
+			
+				INSERT INTO #tblCustVR(custID)
+				SELECT custid
+				FROM dbo.custInfo ci WITH (NOLOCK)
+				WHERE	ci.recommend = @custid
+				AND	NOT EXISTS (
+							SELECT	1
+							FROM	@BetTradeAccount AS lm
+							WHERE	lm.custID = ci.custid
+						)
+					
+				SELECT @maxcustid = ISNULL(MAX(custID),0)
+				FROM #tblCustVR
+			
+				WHILE(1=1)
+				BEGIN
+					TRUNCATE TABLE #tmpCustBatchVR
+				
+					DELETE TOP (@batchUpdate) t
+					OUTPUT DELETED.custid INTO #tmpCustBatchVR
+					FROM #tblCustVR t
+				
+					IF @@rowcount = 0 
+						BREAK;
+					
+					UPDATE	ci
+					SET	ci.virtualmultiplier = @EnableVirtualrate
+					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
+				END
+			
+				UPDATE	ci
+				SET	ci.virtualmultiplier = @EnableVirtualrate
+				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+				WHERE	ci.recommend = @custid
+					AND custid > @maxcustid
+					AND	NOT EXISTS (
+							SELECT	1
+							FROM	@BetTradeAccount AS lm
+							WHERE	lm.custID = ci.custid
+						)		
+			END;
+			ELSE IF	@roleid = 1
+			BEGIN			
+				UPDATE	ci
+				SET	ci.virtualmultiplier = @EnableVirtualrate
+				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+				WHERE	ci.custid = @custid								
+			END;
+		END;			
+	END
 	
 	IF	(dbo.f_CheckRepTable('CustVirtualSetting') = 1 AND (SELECT TOP 1 1 FROM @tblVirtualrate) IS NOT NULL)
 	BEGIN
@@ -1428,14 +1440,23 @@ BEGIN
 		IF @RoleID = 1 
 			RETURN
 
-		CREATE TABLE #tblCustVR_Additional (custID INT)
-		CREATE TABLE #tmpCustBatchVR_Additional (CustID INT PRIMARY KEY)	
+		CREATE TABLE #tblCustVR_Additional (custID INT, type TINYINT)
+		CREATE TABLE #tmpCustBatchVR_Additional (CustID INT, type TINYINT)	
 		DECLARE @batchUpdate_Additional INT = 5000,
 				@maxcustid_Additional INT
 
-		DECLARE	@RoleID_Unlock3		TINYINT,
-				@RoleID_Unlock2		TINYINT,
-				@RoleID_Unlock1		TINYINT,
+		DECLARE	@RoleID_Unlock3_SC		TINYINT,
+				@RoleID_Unlock2_SC		TINYINT,
+				@RoleID_Unlock1_SC		TINYINT,
+
+				@RoleID_Unlock3_BB		TINYINT,
+				@RoleID_Unlock2_BB		TINYINT,
+				@RoleID_Unlock1_BB		TINYINT,
+
+				@RoleID_Unlock3_OS		TINYINT,
+				@RoleID_Unlock2_OS		TINYINT,
+				@RoleID_Unlock1_OS		TINYINT,
+
 				@RoleID_Enable3		TINYINT,
 				@RoleID_Enable2		TINYINT,
 				@RoleID_Enable1		TINYINT
@@ -1443,17 +1464,35 @@ BEGIN
 		EXEC sp_xml_preparedocument @DocHandler_EnableUnlockVR OUTPUT, @AdditionalActions
 
 		SELECT
-					@RoleID_Unlock3 = CASE WHEN @roleid = 4			AND Data.Unlock3 = 1 THEN 3 ELSE 0 END,
-					@RoleID_Unlock2 = CASE WHEN @roleid IN (4,3)	AND Data.Unlock2 = 1 THEN 2 ELSE 0 END,
-					@RoleID_Unlock1 = CASE WHEN @roleid IN (4,3,2)	AND Data.Unlock1 = 1 THEN 1 ELSE 0 END,
+					@RoleID_Unlock3_SC = CASE WHEN @roleid = 4			AND Data.UnlockSC3 = 1 THEN 3 ELSE 0 END,
+					@RoleID_Unlock2_SC = CASE WHEN @roleid IN (4,3)		AND Data.UnlockSC2 = 1 THEN 2 ELSE 0 END,
+					@RoleID_Unlock1_SC = CASE WHEN @roleid IN (4,3,2)	AND Data.UnlockSC1 = 1 THEN 1 ELSE 0 END,
+
+					@RoleID_Unlock3_BB = CASE WHEN @roleid = 4			AND Data.UnlockBB3 = 1 THEN 3 ELSE 0 END,
+					@RoleID_Unlock2_BB = CASE WHEN @roleid IN (4,3)		AND Data.UnlockBB2 = 1 THEN 2 ELSE 0 END,
+					@RoleID_Unlock1_BB = CASE WHEN @roleid IN (4,3,2)	AND Data.UnlockBB1 = 1 THEN 1 ELSE 0 END,
+
+					@RoleID_Unlock3_OS = CASE WHEN @roleid = 4			AND Data.UnlockOS3 = 1 THEN 3 ELSE 0 END,
+					@RoleID_Unlock2_OS = CASE WHEN @roleid IN (4,3)		AND Data.UnlockOS2 = 1 THEN 2 ELSE 0 END,
+					@RoleID_Unlock1_OS = CASE WHEN @roleid IN (4,3,2)	AND Data.UnlockOS1 = 1 THEN 1 ELSE 0 END,
+
 					@RoleID_Enable3 = CASE WHEN @roleid = 4			AND Data.Enable3 = 1 THEN 3 ELSE 0 END,
 					@RoleID_Enable2 = CASE WHEN @roleid IN (4,3)	AND Data.Enable2 = 1 THEN 2 ELSE 0 END,
 					@RoleID_Enable1 = CASE WHEN @roleid IN (4,3,2)	AND Data.Enable1 = 1 THEN 1 ELSE 0 END
 		FROM OPENXML (@DocHandler_EnableUnlockVR, '/ROOT/VR',1) 
 		WITH (
-			Unlock3		BIT,
-			Unlock2		BIT,
-			Unlock1		BIT,
+			UnlockSC3		BIT,
+			UnlockSC2		BIT,
+			UnlockSC1		BIT,
+
+			UnlockBB3		BIT,
+			UnlockBB2		BIT,
+			UnlockBB1		BIT,
+
+			UnlockOS3		BIT,
+			UnlockOS2		BIT,
+			UnlockOS1		BIT,
+
 			Enable3		BIT,
 			Enable2		BIT,
 			Enable1		BIT
@@ -1551,7 +1590,7 @@ BEGIN
 						TRUNCATE TABLE #tmpCustBatchVR_Additional
 				
 						DELETE TOP (@batchUpdate_Additional) t
-						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional
+						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional(CustID)
 						FROM #tblCustVR_Additional t
 				
 						IF @@rowcount = 0 
@@ -1602,7 +1641,7 @@ BEGIN
 						TRUNCATE TABLE #tmpCustBatchVR_Additional
 				
 						DELETE TOP (@batchUpdate_Additional) t
-						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional
+						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional(CustID)
 						FROM #tblCustVR_Additional t
 				
 						IF @@rowcount = 0 
@@ -1653,7 +1692,7 @@ BEGIN
 						TRUNCATE TABLE #tmpCustBatchVR_Additional
 				
 						DELETE TOP (@batchUpdate_Additional) t
-						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional
+						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional(CustID)
 						FROM #tblCustVR_Additional t
 				
 						IF @@rowcount = 0 
@@ -1685,31 +1724,71 @@ BEGIN
 		END
 		ELSE IF @action = 'UnlockVRDownline' AND dbo.f_CheckRepTable('VRCustLockStatus') = 1
 		BEGIN
+			CREATE TABLE #unlockTempCust(custid INT, roleid TINYINT)
+
 			TRUNCATE TABLE #tblCustVR_Additional
 
 			IF @roleid = 4
-			BEGIN
-				INSERT INTO #tblCustVR_Additional(custID)
-				SELECT ci.custid
-				FROM dbo.custInfo ci WITH (NOLOCK)
-				WHERE	ci.srecommend = @custid
-					AND ci.roleid IN (@RoleID_Unlock1,@RoleID_Unlock2,@RoleID_Unlock3)
+			BEGIN	
+				INSERT INTO #unlockTempCust(custid, roleid)
+				SELECT c.custid, c.roleid
+				FROM custInfo c WITH (NOLOCK)
+				WHERE c.srecommend = @custid
+
+				INSERT INTO #tblCustVR_Additional(custID, type)
+				SELECT t.custid, 1 AS type
+				FROM #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid IN (@RoleID_Unlock1_SC, @RoleID_Unlock2_SC, @RoleID_Unlock3_SC)
+				UNION ALL
+				SELECT t.custid, 3 AS type
+				FROM #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid IN (@RoleID_Unlock1_BB, @RoleID_Unlock2_BB, @RoleID_Unlock3_BB)
+				UNION ALL
+				SELECT t.custid, 2 AS type
+				FROM  #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid IN (@RoleID_Unlock1_OS, @RoleID_Unlock2_OS, @RoleID_Unlock3_OS)
 			END
+
 			ELSE IF @roleid = 3
 			BEGIN
-				INSERT INTO #tblCustVR_Additional(custID)
-				SELECT ci.custid
-				FROM dbo.custInfo ci WITH (NOLOCK)
-				WHERE ci.mrecommend = @custid
-					AND ci.roleid IN (@RoleID_Unlock1,@RoleID_Unlock2)
+				INSERT INTO #unlockTempCust(custid, roleid)
+				SELECT c.custid, c.roleid
+				FROM custInfo c WITH (NOLOCK)
+				WHERE c.mrecommend = @custid
+
+				INSERT INTO #tblCustVR_Additional(custID, type)
+				SELECT t.custid, 1 AS type
+				FROM #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid IN (@RoleID_Unlock1_SC, @RoleID_Unlock2_SC)
+				UNION ALL
+				SELECT t.custid, 3 AS type
+				FROM #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid IN (@RoleID_Unlock1_BB, @RoleID_Unlock2_BB)
+				UNION ALL
+				SELECT t.custid, 2 AS type
+				FROM  #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid IN (@RoleID_Unlock1_OS, @RoleID_Unlock2_OS)
 			END
+
 			ELSE IF @roleid = 2
 			BEGIN
-				INSERT INTO #tblCustVR_Additional(custID)
-				SELECT ci.custid
-				FROM dbo.custInfo ci WITH (NOLOCK)
-				WHERE ci.recommend = @custid
-					AND ci.roleid IN (@RoleID_Unlock1)
+				INSERT INTO #unlockTempCust(custid, roleid)
+				SELECT c.custid, c.roleid
+				FROM custInfo c WITH (NOLOCK)
+				WHERE c.recommend = @custid
+
+				INSERT INTO #tblCustVR_Additional(custID, type)
+				SELECT t.custid, 1 AS type
+				FROM #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid = @RoleID_Unlock1_SC
+				UNION ALL
+				SELECT t.custid, 3 AS type
+				FROM #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid = @RoleID_Unlock1_BB
+				UNION ALL
+				SELECT t.custid, 2 AS type
+				FROM  #unlockTempCust t WITH (NOLOCK)
+				WHERE t.roleid = @RoleID_Unlock1_OS
 			END
 
 			SET @batchUpdate_Additional = 2000
@@ -1719,7 +1798,7 @@ BEGIN
 				TRUNCATE TABLE #tmpCustBatchVR_Additional
 				
 				DELETE TOP (@batchUpdate_Additional) t
-				OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional
+				OUTPUT deleted.custid, deleted.type INTO #tmpCustBatchVR_Additional(CustID, type)
 				FROM #tblCustVR_Additional t
 				
 				IF @@rowcount = 0 
@@ -1728,8 +1807,9 @@ BEGIN
 				DELETE c
 				FROM VRCustLockStatus c WITH(ROWLOCK)
 					INNER JOIN #tmpCustBatchVR_Additional t
-						ON c.CustID = t.CustID
+						ON c.CustID = t.CustID AND c.Type = t.type
 			END	
+			DROP TABLE #unlockTempCust
 		END
 
 		DROP TABLE #tmpCustBatchVR_Additional
