@@ -148,7 +148,7 @@ BEGIN
 						'IsDefault="'+ coalesce(cast(@IsDefault as VARCHAR(1)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
 						CAST((
-							SELECT GroupID AS '@GroupID', SubGroupID AS '@SubGroupID', PT AS '@PT'
+							SELECT GroupID AS '@GroupID', SubGroupID AS '@SubGroupID', dbo.f_FomatNumericToChar(PT/100.0) AS '@PT'
 							FROM @tmpSetting
 							FOR XML PATH('r'), 
 							TYPE
@@ -161,7 +161,7 @@ BEGIN
 						'IsDefault="'+ coalesce(cast(@Old_IsDefault as VARCHAR(1)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
 						CAST((
-							SELECT GroupID AS '@GroupID', SubGroupID AS '@SubGroupID', Old_PT as '@PT'
+							SELECT GroupID AS '@GroupID', SubGroupID AS '@SubGroupID', dbo.f_FomatNumericToChar(Old_PT/100.0) as '@PT'
 							FROM @tmpSetting
 							FOR XML PATH('r'), 
 							TYPE
