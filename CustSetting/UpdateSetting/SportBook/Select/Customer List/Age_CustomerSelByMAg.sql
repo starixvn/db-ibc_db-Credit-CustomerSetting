@@ -12,7 +12,8 @@ ALTER PROCEDURE [dbo].[Age_CustomerSelByMAg]
 	@TotalPages int = 1 output,
 	@TotalItems int=0 output,
 	@Userid		INT = NULL,
-	@Locked BIT = NULL -- 1: Locked filter
+	@Locked BIT = NULL, -- 1: Locked filter
+	@AutoTransfer TINYINT = 2
 AS
 /*
 	Created by: [Winfred]  
@@ -26,10 +27,16 @@ AS
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 		- 20230602@Helios: Enhance stored procedure to prevent performance issue [Redmine: #189154]
+		- 20230410@Bobby: AutoJob clear balance downlines [RedmineID: #182071]
+		
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
 			1: Allowed double comm
+			2: All
+		- @AutoTransfer:
+			0: Not Allowed Auto Transfer
+			1: Allowed Auto Transfer
 			2: All
 */   
 BEGIN
@@ -49,6 +56,7 @@ BEGIN
 	CREATE TABLE #customer(custid INT, RowNumber INT,discountMyanmarOdds DECIMAL (9,8),IsMyanmarOdds BIT )
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @DoubleCommLosing = 2 AND @Locked IS NULL
+		AND @AutoTransfer = 2
 	BEGIN
 		IF @TotalPages = 0
 		BEGIN
@@ -82,7 +90,8 @@ BEGIN
 		BEGIN
 			SELECT 
 				@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-			FROM dbo.Custinfo AS ci WITH (NOLOCK)	
+			FROM dbo.Custinfo AS ci WITH (NOLOCK)
+				LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ci.custid
 				CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
@@ -96,6 +105,12 @@ BEGIN
 				AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END			
 				AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 				AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+				AND 1 = CASE 
+							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
+							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1 
+							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
 
 		END
 
@@ -104,6 +119,7 @@ BEGIN
 		FROM (
 				SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, cs.closed, ISNULL(cs.reject,0), ci.username) as RowNumber
 				FROM dbo.custinfo ci WITH (NOLOCK) 
+					LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
@@ -117,6 +133,12 @@ BEGIN
 					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END	
 					AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END
 					AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+					AND 1 = CASE 
+							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
+							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1 
+							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
 			) t
 		WHERE rownumber BETWEEN @rowstart AND @rowend
 	END
@@ -128,6 +150,7 @@ BEGIN
 				@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
 			FROM dbo.Custinfo AS ci WITH (NOLOCK)
 				INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+				LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ci.custid
 				CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
@@ -142,6 +165,12 @@ BEGIN
 				AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END			
 				AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 				AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+				AND 1 = CASE 
+							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
+							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1 
+							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
 		END	
 
 		INSERT INTO #customer(custid,RowNumber)
@@ -150,6 +179,7 @@ BEGIN
 				SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, cs.closed, ISNULL(cs.reject,0), ci.username) as RowNumber
 				FROM dbo.custinfo ci WITH(NOLOCK) 
 					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+					LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
@@ -164,6 +194,12 @@ BEGIN
 					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END			
 					AND DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN DoubleCommLosing ELSE @DoubleCommLosing END		
 					AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+					AND 1 = CASE 
+							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
+							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1 
+							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
 			) t 
 		WHERE rownumber BETWEEN @rowstart AND @rowend
 
@@ -251,12 +287,13 @@ BEGIN
 			ctm.DoubleCommLosing,
   			RowNumber,
 			ISNULL(cl.ClosedReason,0) AS ClosedReason,
-			ctm.Locked
+			ctm.Locked,
+			IIF(cbs.ToCustID > 0, 1, 0) AS IsAllowAutoTransfer
 	FROM customers ctm 
 		INNER JOIN #customer t ON ctm.custid = t.custid 
 		LEFT JOIN custsetting cs WITH (NOLOCK) ON ctm.custid = cs.custid
 		LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON t.custid=cl.CustID
-		
+		LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ctm.custid				
 	ORDER BY  t.RowNumber	
 
 	DROP TABLE #customer

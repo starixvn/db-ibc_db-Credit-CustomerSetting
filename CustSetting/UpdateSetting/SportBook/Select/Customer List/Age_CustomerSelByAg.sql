@@ -12,7 +12,8 @@ ALTER PROCEDURE [dbo].[Age_CustomerSelByAg]
 	@TotalPages int = 1 output,
 	@TotalItems int=0 OUTPUT,
 	@Userid		INT=NULL,
-	@Locked BIT = NULL -- 1: Locked filter
+	@Locked BIT = NULL, -- 1: Locked filter
+	@AutoTransfer TINYINT = 2
 AS 
 BEGIN 
 /*  
@@ -27,10 +28,16 @@ BEGIN
 		- 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20220816@Johnson: enhance sp [redmine: #176641]
 		- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
+		- 20230410@Bobby: AutoJob clear balance downlines [RedmineID: #182071]
+
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
 			1: Allowed double comm
+			2: All
+		- @AutoTransfer:
+			0: Not Allowed Auto Transfer
+			1: Allowed Auto Transfer
 			2: All
 */  
 	  
@@ -52,7 +59,8 @@ BEGIN
 		  
 	CREATE TABLE #memberList (custid int, rn int,playerdiscountMyanmarOdds DECIMAL (9,8), adiscountMyanmarOdds DECIMAL (9,8))
 
-	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL  AND @DoubleCommLosing =2 AND @Locked IS NULL -- default condition: get all
+	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL  AND @DoubleCommLosing =2 AND @Locked IS NULL 
+		AND @AutoTransfer = 2 -- default condition: get all
 	BEGIN
 		IF @TotalPages = 0
 		BEGIN
@@ -81,7 +89,8 @@ BEGIN
 		IF @TotalPages = 0
 		BEGIN
 			SELECT @TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-			FROM dbo.Custinfo ci WITH(nolock)   
+			FROM dbo.Custinfo ci WITH(nolock)
+				LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @Recommend AND cbs.ToCustID = ci.custid
 				CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
@@ -94,6 +103,12 @@ BEGIN
 				AND isnull(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END     
 				AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 				AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+				AND 1 = CASE 
+							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
+							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1 
+							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
 		END
 		INSERT INTO #memberList (custid, rn)
 		SELECT custid, rn
@@ -101,6 +116,7 @@ BEGIN
 				SELECT ci.custid,
 					ROW_NUMBER() OVER (ORDER BY ci.enabled desc, cs.closed, cs.reject, ci.username) as rn
 				FROM dbo.custInfo ci with(nolock)
+					LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @Recommend AND cbs.ToCustID = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
@@ -114,6 +130,12 @@ BEGIN
 					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END     
 					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 					AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+					AND 1 = CASE 
+							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
+							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1 
+							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
 			) x
 		WHERE rn BETWEEN @rowstart AND @rowend
 	END
@@ -122,7 +144,8 @@ BEGIN
 		IF @TotalPages = 0  
 		BEGIN
 			SELECT @TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-			FROM dbo.Custinfo ci WITH(NOLOCK)   
+			FROM dbo.Custinfo ci WITH(NOLOCK)
+				LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @Recommend AND cbs.ToCustID = ci.custid
 				INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 				CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
@@ -137,7 +160,13 @@ BEGIN
 				AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 				AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END     
 				AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END	
-				AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)				 	
+				AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+				AND 1 = CASE 
+							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
+							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1
+							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
 		END
 		INSERT INTO #memberList (custid, rn)
 		SELECT custid, rn
@@ -146,6 +175,7 @@ BEGIN
 					ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, cs.closed, cs.reject, ci.username) AS rn
 				FROM dbo.custInfo ci with(nolock)
 					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+					LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @Recommend AND cbs.ToCustID = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
@@ -159,6 +189,12 @@ BEGIN
 					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END     
 					AND ci.DoubleCommLosing = CASE WHEN @DoubleCommLosing = 2 THEN ci.DoubleCommLosing ELSE @DoubleCommLosing END
 					AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+					AND 1 = CASE 
+							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
+							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1
+							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
 			) x
 		WHERE rn BETWEEN @rowstart AND @rowend
 	END
@@ -220,19 +256,20 @@ BEGIN
 		ci.DoubleCommLosing,
 		rn as RowNumber,
 		ISNULL(cl.ClosedReason,0) AS ClosedReason,
-		ISNULL(cps.Locked,0) AS Locked
-		FROM #Result m  
-			INNER JOIN customer c (nolock) on m.custid = c.custid  
-			INNER JOIN Custinfo ci (nolock) on m.custid = ci.custid      
-			CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
-										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
-										, Locked
-									FROM dbo.CustProductStatus  WITH(NOLOCK)
-									WHERE CustID = ci.custid
-								) AS cps
-			LEFT JOIN CustLoginInfo_Member cl WITH(NOLOCK) ON c.custid=cl.CustID
-								
-		ORDER BY rn
+		ISNULL(cps.Locked,0) AS Locked,
+		IIF(cbs.ToCustID > 0, 1, 0) AS IsAllowAutoTransfer
+	FROM #Result m  
+		INNER JOIN customer c (nolock) on m.custid = c.custid  
+		INNER JOIN Custinfo ci (nolock) on m.custid = ci.custid      
+		CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+									, Locked
+								FROM dbo.CustProductStatus  WITH(NOLOCK)
+								WHERE CustID = ci.custid
+							) AS cps
+		LEFT JOIN CustLoginInfo_Member cl WITH(NOLOCK) ON c.custid=cl.CustID
+		LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @Recommend AND cbs.ToCustID = m.custid					
+	ORDER BY rn
 
 	DROP TABLE #memberList
 END
