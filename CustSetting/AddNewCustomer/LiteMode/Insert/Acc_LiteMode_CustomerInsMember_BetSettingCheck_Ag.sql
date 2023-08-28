@@ -75,6 +75,8 @@ BEGIN
 		PRIMARY KEY(sporttype, Bettype)
 	);
 	
+	DECLARE @BetSettingUnlimit TABLE(SportType SMALLINT, BetType SMALLINT, IsAllowUnlimit BIT)
+
 	CREATE TABLE #ProductSettingDetail_Check(	
 		[SettingType] [smallint],
 		[SportType] [smallint],
@@ -390,8 +392,7 @@ BEGIN
 	
 	--check RNG Games, SB2
 	IF ISNULL(@SettingType23,'') <> '' 
-		OR ISNULL(@SettingType2,'') <> ''
-		OR ISNULL(@SettingType16,'') <> ''
+		OR ISNULL(@SettingType2,'') <> ''		
 	BEGIN
 		DELETE @BetSetting
 		DELETE @Upline_BetSetting
@@ -429,23 +430,7 @@ BEGIN
 			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
 			T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
 		FROM  @xml.nodes('/Root/R') T(c) 
-		
-		SELECT @xml = CONVERT(XML,@SettingType16)
-		
-		INSERT INTO @BetSetting(
-			SportType, 
-			BetType, 
-			MinBet, 
-			MaxBet, 
-			MaxPerMatch)
-		SELECT 
-			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
-			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
-			T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
-		FROM  @xml.nodes('/Root/R') T(c) 
-		
+				
 		--> Check rule : Wrong Min bet/ Max bet/ Max per match
 		IF EXISTS(SELECT TOP 1 1
 				FROM @BetSetting tmp
@@ -772,5 +757,252 @@ BEGIN
 				SET @MsgType = 71
 				SET @ErrCode = 227
 		END
-	END	
+	END
+
+	--check Others Games
+	IF ISNULL(@SettingType16,'') <> '' 
+	BEGIN
+		DELETE @BetSetting
+		DELETE @Upline_BetSetting
+		DELETE @BetSettingUnlimit
+		
+		SELECT @xml = CONVERT(XML,@SettingType16)
+		
+		INSERT INTO @BetSetting(
+			SportType, 
+			BetType, 
+			MinBet, 
+			MaxBet, 
+			MaxPerMatch)
+		SELECT 
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+			T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+			T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+			T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch		
+		FROM  @xml.nodes('/Root/R') T(c) 
+		
+		INSERT INTO @BetSettingUnlimit
+		SELECT cs.SportType,cs.BetType,
+				CASE WHEN (cs.MinBet = 0 AND cs.MaxBet = 0 AND cs.MaxPerMatch = 0) 
+							OR (ps.MinBet = 0 AND ps.MaxBet = 0 AND ps.MaxPerMatch = 0) THEN 1 ELSE 0 END AS IsAllowUnlimit
+		FROM dbo.CustBetSetting3rd_Agent cs WITH (NOLOCK)
+			INNER JOIN @BetSetting s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+			INNER JOIN dbo.ProductBetSetting ps ON ps.Sporttype = s.SportType AND ps.Bettype = s.BetType
+		WHERE cs.custid = @srecommend AND ps.Currency = @Currency
+		
+		--> Check rule : Wrong Min bet/ Max bet/ Max per match
+		IF EXISTS(SELECT TOP 1 1
+				FROM @BetSetting tmp
+				INNER JOIN @BetSettingUnlimit s ON s.SportType = tmp.SportType AND s.Bettype = tmp.BetType
+				LEFT JOIN dbo.ProductBetSetting pb
+					ON pb.Sporttype = tmp.SportType
+						AND pb.Bettype = tmp.BetType
+						AND pb.Currency = @Currency
+				WHERE (tmp.Minbet < 0 OR tmp.MaxBet < 0 OR tmp.MaxperMatch < 0)
+					OR (	
+							s.IsAllowUnlimit = 0
+							AND
+							(
+								tmp.MinBet	<> 0 OR tmp.MaxBet	<> 0 OR tmp.MaxPerMatch	<> 0
+							)							
+							AND
+							((tmp.MinBet <> 0 AND tmp.MinBet < ISNULL(pb.MinBet,0))
+							OR (tmp.MaxBet <> 0 AND tmp.MaxBet	> ISNULL(pb.MaxBet,0))
+							OR (tmp.MaxPerMatch <> 0 AND tmp.MaxPerMatch > ISNULL(pb.MaxPerMatch,0))
+							)
+						)
+					OR (@SystemID BETWEEN 6 AND 9 --789y ExtNAP and Alpha 
+						AND (tmp.Minbet < 1 OR tmp.MaxBet < 1 OR tmp.MaxperMatch < 1 OR tmp.MaxPerNumber < 1)
+						)
+				)	
+		BEGIN
+			SET @xml = (
+				SELECT 10003 AS '@MsgID'
+						, 'Wrong Min bet/ Max bet/ Max per match' AS '@Msg'
+						, (
+							SELECT tmp.SportType AS '@SportType'
+								, tmp.BetType AS '@BetType'
+								, ps.SettingLevel AS '@SettingLevel'
+								, ps.GroupID AS '@GroupID'
+								, ps.GroupType AS '@GroupType'
+							FROM @BetSetting tmp
+								INNER JOIN @BetSettingUnlimit s ON s.SportType = tmp.SportType AND s.Bettype = tmp.BetType
+								INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+							LEFT JOIN dbo.ProductBetSetting pb
+								ON pb.Sporttype = tmp.SportType
+									AND pb.Bettype = tmp.BetType
+									AND pb.Currency = @Currency
+							WHERE (tmp.Minbet < 0 OR tmp.MaxBet < 0 OR tmp.MaxperMatch < 0)
+								OR (	
+									s.IsAllowUnlimit = 0
+									AND
+									(
+										tmp.MinBet	<> 0 OR tmp.MaxBet	<> 0 OR tmp.MaxPerMatch	<> 0
+									)							
+									AND
+									((tmp.MinBet <> 0 AND tmp.MinBet < ISNULL(pb.MinBet,0))
+									OR (tmp.MaxBet <> 0 AND tmp.MaxBet	> ISNULL(pb.MaxBet,0))
+									OR (tmp.MaxPerMatch <> 0 AND tmp.MaxPerMatch > ISNULL(pb.MaxPerMatch,0))
+									)
+								)
+								OR (@SystemID BETWEEN 6 AND 9 --789y ExtNAP and Alpha 
+									AND (tmp.Minbet < 1 OR tmp.MaxBet < 1 OR tmp.MaxperMatch < 1)
+									)
+							FOR XML PATH('Row')
+								, TYPE
+							)
+						FOR XML PATH('Root')
+						, TYPE
+						)
+			
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 71
+			SET @ErrCode = 220
+		END			
+		
+		--> Check rule : Min bet must be less than or equal to max bet and max bet must be less than or equal to max per match
+		IF EXISTS(SELECT TOP 1 1
+					FROM @BetSetting
+					WHERE (MinBet > MaxBet) 
+						OR (MaxBet > MaxPerMatch) 
+					)
+		BEGIN
+			SET @xml = (
+					SELECT 10067 AS '@MsgID'
+							, 'Min Bet must be less than or equal to Max Bet and Max Bet must be less than or equal to Max Per Match' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @BetSetting tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+								WHERE (MinBet > MaxBet) 
+									OR (MaxBet > MaxPerMatch) 
+								FOR XML PATH('Row')
+									, TYPE
+								)
+							FOR XML PATH('Root')
+							, TYPE
+							)
+				
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 222
+		END
+		
+		INSERT INTO @Upline_BetSetting (SportType,BetType,MinBet,MaxBet,MaxPerMatch)
+		SELECT  cb.Sporttype,cb.Bettype,
+				MinBet = ISNULL(MAX(CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
+				MaxBet = ISNULL(MIN(CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
+				MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0)
+		FROM CustBetSetting3rd_Agent cb WITH (NOLOCK,FORCESEEK)
+			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
+		WHERE cb.custid IN (@srecommend, @mrecommend, @recommend)		
+		GROUP BY cb.Sporttype,cb.Bettype		
+		
+		--> Check rule : Min Bet must be equal to or greater than Upline's Min Bet
+		IF EXISTS (SELECT TOP 1 1
+				FROM @BetSetting t
+					INNER JOIN @Upline_BetSetting u 
+						ON t.SportType = u.SportType AND t.BetType = u.BetType
+				WHERE (t.MinBet > 0 AND u.MinBet > 0 AND t.MinBet < u.MinBet)
+		)
+		BEGIN
+			SET @xml = (
+					SELECT 10062 AS '@MsgID'
+							, 'Min Bet must be greater than or equal to Upline''s Min Bet' AS '@Msg'
+							, (
+								SELECT t.SportType AS '@SportType'
+									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
+									INNER JOIN @Upline_BetSetting u 
+										ON t.SportType = u.SportType AND t.BetType = u.BetType
+								WHERE (t.MinBet > 0 AND u.MinBet > 0 AND t.MinBet < u.MinBet)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+							FOR XML PATH('Root')
+							, TYPE
+							)
+				
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 224
+		END
+		
+		--> Check rule : Max Bet must be equal to or less than Upline's Max Bet
+		IF EXISTS (SELECT TOP 1 1
+				FROM @BetSetting t
+					INNER JOIN @Upline_BetSetting u 
+						ON t.SportType = u.SportType AND t.BetType = u.BetType
+				WHERE (t.MaxBet > 0 AND u.MaxBet > 0 AND t.MaxBet > u.MaxBet)
+		)
+		BEGIN
+			SET @xml = (
+					SELECT 10063 AS '@MsgID'
+							, 'Max Bet must be less than or equal to Upline''s Max Bet' AS '@Msg'
+							, (
+								SELECT t.SportType AS '@SportType'
+									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
+									INNER JOIN @Upline_BetSetting u 
+										ON t.SportType = u.SportType AND t.BetType = u.BetType
+								WHERE (t.MaxBet > 0 AND u.MaxBet > 0 AND t.MaxBet > u.MaxBet)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+							FOR XML PATH('Root')
+							, TYPE
+							)
+				
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 225
+		END
+		
+		--> Check rule : Max Per Match  must be equal to or less than Upline's Max Per Match
+		IF EXISTS (SELECT TOP 1 1
+				FROM @BetSetting t
+					INNER JOIN @Upline_BetSetting u 
+						ON t.SportType = u.SportType AND t.BetType = u.BetType
+				WHERE (t.MaxPerMatch > 0 AND u.MaxPerMatch > 0 AND t.MaxPerMatch > u.MaxPerMatch)
+		)
+		BEGIN
+			SET @xml = (
+					SELECT 10064 AS '@MsgID'
+							, 'Max Per Match must be less than or equal to Upline''s Max Per Match' AS '@Msg'
+							, (
+								SELECT t.SportType AS '@SportType'
+									, t.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @BetSetting t
+									INNER JOIN #ProductSettingDetail_Check ps ON t.Sporttype = ps.Sporttype AND t.Bettype = ps.Bettype
+									INNER JOIN @Upline_BetSetting u 
+										ON t.SportType = u.SportType AND t.BetType = u.BetType
+								WHERE (t.MaxPerMatch > 0 AND u.MaxPerMatch > 0 AND t.MaxPerMatch > u.MaxPerMatch)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+							FOR XML PATH('Root')
+							, TYPE
+							)
+				
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 226
+		END		
+	END
 END	

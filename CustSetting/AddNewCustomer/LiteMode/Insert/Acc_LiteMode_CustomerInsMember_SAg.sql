@@ -826,11 +826,41 @@ BEGIN
 			GroupID			  TINYINT,
 			Child_DisplayOrder  INT
 			)	
-			
+	
+	DECLARE @tblCustWinLossLimit TABLE
+						(SportType SMALLINT
+						,BetType SMALLINT
+						,MaxWinLimit SMALLMONEY
+						,MaxLossLimit MONEY
+						,IsAutoReset BIT
+						,GroupID TINYINT
+						,Child_DisplayOrder INT)
+		
 	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder)
 	SELECT SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)	
 	
+	INSERT INTO @tblCustWinLossLimit (SportType
+									,BetType 
+									,MaxWinLimit 
+									,MaxLossLimit 
+									,IsAutoReset
+									,GroupID
+									,Child_DisplayOrder
+									)
+	SELECT cs.SportType
+		,cs.BetType 
+		,cs.MaxWinLimit 
+		,cs.MaxLossLimit 
+		,cs.IsAutoReset 
+		,t.GroupID
+		,t.Child_DisplayOrder
+	FROM CustWinLossLimit_Agent cs WITH(NOLOCK)
+		INNER JOIN #TmpProductSettingDetail t ON cs.SportType = t.SportType
+												AND cs.BetType = t.BetType
+	WHERE custid = @custid
+		AND SettingType IN (6,22,12)
+				
 	DECLARE @xml XML
 	
 	--Bet setting
@@ -1053,7 +1083,15 @@ BEGIN
 							ORDER BY Child_DisplayOrder
 							FOR XML RAW('R')
 							) as VARCHAR(max)),SPACE(1))
-			+ '</PT>'			
+			+ '</PT>'	
+			+ '<WinLossLimit GroupType="155">'
+				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+							FROM @tblCustWinLossLimit
+							WHERE GroupID = 2
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
+			+ '</WinLossLimit>'		
 			+ '</Group>'
 			+ '<Group ID="3">'--LCS
 			+ '<Discount GroupType="156">' 
@@ -1068,6 +1106,14 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max)),SPACE(1))
 			+ '</PT>'
+			+ '<WinLossLimit GroupType="155">'
+				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+							FROM @tblCustWinLossLimit
+							WHERE GroupID = 3
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
+			+ '</WinLossLimit>'	
 			+ '</Group>'
 			+ '<Group ID="4">'--Others Games
 			+ '<Discount GroupType="156">' 
@@ -1089,7 +1135,15 @@ BEGIN
 						ORDER BY Child_DisplayOrder
 						FOR XML RAW('R')
 						) as VARCHAR(max)),SPACE(1))
-			+ '</PT>'			
+			+ '</PT>'	
+			+ '<WinLossLimit GroupType="155">'
+				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+							FROM @tblCustWinLossLimit
+							WHERE GroupID = 4
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
+			+ '</WinLossLimit>'		
 			+ '</Group>'
 			+ '</Root>'
 	
