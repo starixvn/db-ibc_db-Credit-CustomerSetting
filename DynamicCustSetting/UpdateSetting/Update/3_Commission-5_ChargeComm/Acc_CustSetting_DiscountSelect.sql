@@ -16,6 +16,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230728@Helios: Customer Setting - Simplify Live Casino Customer Setting [RedmineID: #189389]
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -27,18 +28,18 @@ BEGIN
 			@MasterID	INT,
 			@AgentID	INT
 
-	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, SettingType SMALLINT)
+	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, SettingType SMALLINT, Child_DisplayOrder INT)  
 
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType)
-	SELECT SportType,Bettype,SettingType
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,SettingType, Child_DisplayOrder)  
+	SELECT SportType,Bettype,SettingType, Child_DisplayOrder 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) --Commission
 	
-	INSERT INTO #SportBettypeFilter (SportType,Bettype,SettingType)
-	SELECT SportType,Bettype,SettingType
+	INSERT INTO #SportBettypeFilter (SportType,Bettype,SettingType, Child_DisplayOrder)  
+	SELECT SportType,Bettype,SettingType, Child_DisplayOrder 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus) --Commission
 
-	INSERT INTO #SportBettypeFilter (SportType,Bettype,SettingType)
-	SELECT SportType,Bettype,SettingType
+	INSERT INTO #SportBettypeFilter (SportType,Bettype,SettingType, Child_DisplayOrder)  
+	SELECT SportType,Bettype,SettingType, Child_DisplayOrder 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus) --Charge Commission
 
 	CREATE TABLE #ProductSettingDetail_Sel(
@@ -74,6 +75,7 @@ BEGIN
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 		WHERE dc.custid = @CustID
+		ORDER BY ft.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
 	ELSE IF @RoleID = 3
 		SELECT	pdt.SportType,  
 				pdt.BetType,  
@@ -85,6 +87,7 @@ BEGIN
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype    
 			INNER JOIN dbo.CustDiscount3rd_Agent sdc WITH (NOLOCK) ON pdt.SportType = sdc.sporttype AND pdt.BetType = sdc.bettype 
 		WHERE dc.custid = @CustID AND sdc.custid = @SuperID
+		ORDER BY ft.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
 	ELSE IF @RoleID = 2
 		SELECT	pdt.SportType,  
 				pdt.BetType,
@@ -95,7 +98,8 @@ BEGIN
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			INNER JOIN dbo.CustDiscount3rd_Agent mdc WITH (NOLOCK) ON pdt.SportType = mdc.sporttype AND pdt.BetType = mdc.bettype 
-		WHERE dc.custid = @CustID AND mdc.custid = @MasterID   
+		WHERE dc.custid = @CustID AND mdc.custid = @MasterID 
+		ORDER BY ft.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
 	ELSE IF @RoleID = 1
 	BEGIN
 		IF @UplineRoleID = 4
@@ -110,6 +114,7 @@ BEGIN
 				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			WHERE dc.custid = @CustID
+			ORDER BY ft.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
 		END
 		ELSE IF @UplineRoleID = 3
 		BEGIN
@@ -122,6 +127,7 @@ BEGIN
 				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.SettingType = ft.SettingType
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			WHERE dc.custid = @CustID
+			ORDER BY ft.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
 		END
 		ELSE IF @UplineRoleID = 2
 		BEGIN
@@ -135,6 +141,7 @@ BEGIN
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype   
 				INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON pdt.SportType = adc.sporttype AND pdt.BetType = adc.bettype 
 			WHERE dc.custid = @CustID AND adc.custid = @AgentID  
+			ORDER BY ft.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
 			  
 		END
 	END
