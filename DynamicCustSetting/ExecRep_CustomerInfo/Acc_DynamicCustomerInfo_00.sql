@@ -51,6 +51,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230720@Tacy: Hotfix - [NAP/Alpha] New Account Missing Bet Setting Bitcoin [RedmineID: #191556]
+		- 202300801@Helios: Customer Setting - Simplify Live Casino Customer Setting [RedmineID: #189389]
 
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
@@ -94,7 +95,7 @@ BEGIN
 			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder)
 		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+		FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@_SiteID,@_Currency)   
 	END
 
 	if (dbo.f_CheckRepTable('CustProductStatus') = 1

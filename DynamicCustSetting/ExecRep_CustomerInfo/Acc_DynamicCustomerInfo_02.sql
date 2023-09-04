@@ -37,6 +37,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 202300801@Helios: Customer Setting - Simplify Live Casino Customer Setting [RedmineID: #189389] 
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -73,23 +74,25 @@ BEGIN
 		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
+	--Get site/currency
+	SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID
+	SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
+
 	IF dbo.f_CheckRepTable('ProductSettingDetail') = 1
 	BEGIN
 		INSERT INTO #ProductSettingDetail_tmp02(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
 		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+		FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@_SiteID,@_Currency) 
 	END
 
 	if dbo.f_CheckRepTable('CustProductStatus') = 1
 	BEGIN
-		SELECT @AgentID = recommend, @RoleID = roleid, @_Site = Site, @_Currency = currency FROM Customer WITH (NOLOCK) WHERE custid = @CustID
+		SELECT @AgentID = recommend, @RoleID = roleid FROM Customer WITH (NOLOCK) WHERE custid = @CustID
 		IF @RoleID = 1
 			SELECT @_Site = Site FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @AgentID 			
-
-		SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
-
+			
 		/********************** Product Status: SettingType = 4, Game Status: SettingType = 11, NewProductStatus = 13, NewProductStatus = 21*************/
 		--Copy all status from source super
 		BEGIN TRY

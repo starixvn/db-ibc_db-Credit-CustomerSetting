@@ -24,6 +24,7 @@ AS
 		- 20220830@Tacy: Add code to control CANSEE for SEAL Entertainment [RedmineID: #176209]
 		- 20221222@Winfred: Update Cansee for RNG SLOT [RedmineID: #181929]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
@@ -64,14 +65,24 @@ BEGIN
 	WHERE c.custid = @CustID
 
 	--Get Product Status
-	declare @BetType20 SMALLINT, @BetType2701 SMALLINT,@BetType2801 SMALLINT, @BetType4101 SMALLINT ,@Bettype5401 SMALLINT ,@Bettype8900 SMALLINT
-	SELECT @BetType20=20, @BetType4101 = 4101, @Bettype5401 = 5401, @Bettype8900=8900
-
 	SELECT DISTINCT cs.CustID, psc.Sporttype, CASE psc.Sporttype	
-	                                    WHEN 44  THEN @BetType20 
-										WHEN 248 THEN @BetType4101
-										WHEN 237 THEN @Bettype5401
-										WHEN 156 THEN @Bettype8900
+										WHEN 44		THEN CAST(20	AS SMALLINT)
+										--RNG Slot
+										WHEN 248	THEN CAST(4101	AS SMALLINT)
+										WHEN 237	THEN CAST(5401	AS SMALLINT)
+										WHEN 156	THEN CAST(8900	AS SMALLINT)
+										--Live Casino
+										WHEN 159	THEN CAST(3151	AS SMALLINT)
+										WHEN 170	THEN CAST(3701	AS SMALLINT)
+										WHEN 211	THEN CAST(2401	AS SMALLINT)
+										WHEN 225	THEN CAST(5601	AS SMALLINT)
+										WHEN 233	THEN CAST(3401	AS SMALLINT)
+										WHEN 236	THEN CAST(5701	AS SMALLINT)
+										WHEN 239	THEN CAST(3501	AS SMALLINT)
+										WHEN 241	THEN CAST(3300	AS SMALLINT)
+										WHEN 242	THEN CAST(3201	AS SMALLINT)
+										WHEN 243	THEN CAST(3101	AS SMALLINT)
+										WHEN 244	THEN CAST(3001	AS SMALLINT)
 										ELSE ps.Bettype END AS Bettype, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) AS IsHidden, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsDisabled, ps.bitmapOrder)) AS IsDisabled, 
@@ -89,9 +100,22 @@ BEGIN
 					FROM dbo.ProductLaunchedSiteCurrency psc WITH (NOLOCK) 
 					WHERE psc.IsTest <= @IsTest AND psc.SiteID = @SiteID AND (psc.Currency = @Currency OR psc.Currency = 0) 
 				) as psc ON  (CASE psc.SportType 
-				                WHEN 248 THEN 9906
+				                --RNG Slot
+								WHEN 248 THEN 9906
 								WHEN 237 THEN 9906
 								WHEN 156 THEN 9906
+								--Live Casino
+								WHEN 159	THEN 9911
+								WHEN 170	THEN 9911
+								WHEN 211	THEN 9911
+								WHEN 225	THEN 9911
+								WHEN 233	THEN 9911
+								WHEN 236	THEN 9911
+								WHEN 239	THEN 9911
+								WHEN 241	THEN 9911
+								WHEN 242	THEN 9911
+								WHEN 243	THEN 9911
+								WHEN 244	THEN 9911
 				                ELSE psc.Sporttype END) = ps.Sporttype
 		CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
 	WHERE cs.CustID = @CustID
