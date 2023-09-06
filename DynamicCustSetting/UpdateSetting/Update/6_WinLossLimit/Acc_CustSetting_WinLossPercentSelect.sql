@@ -14,6 +14,7 @@ AS
 	- 20181004@Johnson: hotfix for member winloss limit with no given credit[Redmined: #102008]	
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20230731@Eden: Simplify Live Casino Customer Setting - move from bodb02 to custdb [Redmine: #189389]
+	- 20230905@Eden: Enhance BBIN display [Redmine: #193539]
   Parameters Explanation: 
 	WinPercent: -1: winloss setting is unlimited
 				-2: N/A win/loss <> 0 and given credit = 0
@@ -123,7 +124,8 @@ BEGIN
 			, MaxWinLimit * @CreditAmount AS MaxWinAmount
 			, MaxLossLimit AS MaxLossAmount
 			, @Amount as CurrentAmount
-			, CASE WHEN MaxWinLimit = 0 THEN -1 --unlimited
+			, CASE  WHEN @RealSportType = 241 THEN -3 --N/A
+					WHEN MaxWinLimit = 0 THEN -1 --unlimited
 					WHEN @Amount > 0 AND @CreditAmount = 0 AND MaxWinLimit > 0 THEN -2--N/A
 					WHEN @Amount > 0 AND @CreditAmount > 0 AND MaxWinLimit > 0 THEN @Amount * 100/(MaxWinLimit * @CreditAmount) 
 					ELSE 0 END AS WinPercent
