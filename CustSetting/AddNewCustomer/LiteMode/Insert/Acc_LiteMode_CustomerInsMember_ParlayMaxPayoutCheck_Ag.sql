@@ -123,7 +123,7 @@ BEGIN
 	-->check rule: The value must be a positive amount.
 	IF EXISTS(SELECT TOP 1 1 
 			FROM @NewMaxPayoutTbl tmp
-			WHERE	(tmp.SingleMatchParlay < 0 OR tmp.Combo2 < 0 OR tmp.Combo35	< 0  OR tmp.ComboOver6	< 0 )
+			WHERE	(tmp.SingleMatchParlay <= 0 OR tmp.Combo2 <= 0 OR tmp.Combo35	<= 0  OR tmp.ComboOver6	<= 0 )
 			)
 	BEGIN
 		SET @xml = (
@@ -160,7 +160,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10071 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of SingleMatchParlay is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout per Bet: The setting of Single Match Parlay is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 								, ps.GroupID AS '@GroupID'
@@ -194,7 +194,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10072 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of Combo2 is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout per Bet: The setting of Combo 2 is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 								, ps.GroupID AS '@GroupID'
@@ -228,7 +228,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10073 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of Combo35 is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout per Bet: The setting of Combo 3 - 5 is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 								, ps.GroupID AS '@GroupID'
@@ -262,7 +262,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10074 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of ComboOver6 is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout per Bet: The setting of Combo Over 6 is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 								, ps.GroupID AS '@GroupID'

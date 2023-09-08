@@ -20,5 +20,5 @@ BEGIN
 	FROM CustPTTemplate t WITH(NOLOCK)
 		INNER JOIN CustPTTemplateDetail cs WITH(NOLOCK) ON t.TemplateID = cs.TemplateID
 	WHERE custid = @custid
-	ORDER BY t.TemplateID DESC
+	ORDER BY t.TemplateID DESC, GroupID ASC, SubGroupID ASC
 END	

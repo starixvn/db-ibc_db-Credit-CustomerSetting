@@ -6,7 +6,7 @@ AS
 /*  
 	 Created: 20230627@Johnson  
 	 Task : Get Product List info for Lite Mode notes
-	 DB:  DBCUST/CustDB  
+	 DB:  DBAGE/bodb02  
 	
 	 Revisions: 
 		- 20230627@Johnson: initial sp [redmine: #179159]
@@ -41,13 +41,13 @@ BEGIN
 		INSERT INTO #ProductInfo (GroupID, ProductID, RealProductID)
 		SELECT DISTINCT GroupID,0 ProductID,CASE WHEN t.ProductID = 16 THEN t.ProductID ELSE s.RealProductID END AS RealProductID 
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
-			INNER JOIN SportBettypeSettingMatrix s ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
+			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 		  AND GroupID IN ( 1,2,4) --SB,SB2, RnG Games, Bitcoin	
 		UNION ALL  		
 		SELECT DISTINCT GroupID,CASE WHEN t.ProductID <> 41 THEN 53 ELSE t.ProductID END ,s.RealProductID --Saba Casino,RNG Slot
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
-			INNER JOIN SportBettypeSettingMatrix s ON t.ProductID = s.ProductID
+			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END 
 		  AND GroupID = 3--Live & RnG CS
 		  AND (t.Productid <> 44 OR s.RealProductId = 50)
@@ -58,13 +58,13 @@ BEGIN
 		INSERT INTO #ProductInfo (GroupID, ProductID, RealProductID)
 		SELECT DISTINCT GroupID,0 ProductID,CASE WHEN t.ProductID = 16 THEN t.ProductID ELSE s.RealProductID END AS RealProductID 
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
-			INNER JOIN SportBettypeSettingMatrix s ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
+			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 		  AND GroupID IN ( 1,2,4) --SB,SB2, RnG Games, Bitcoin	
 		UNION ALL  		
 		SELECT DISTINCT GroupID,CASE WHEN t.ProductID <> 41 THEN 53 ELSE t.ProductID END ,s.RealProductID --Saba Casino,RNG Slot
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
-			INNER JOIN SportBettypeSettingMatrix s ON t.ProductID = s.ProductID
+			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END 
 		  AND GroupID = 3--Live & RnG CS
 		  AND (t.Productid <> 44 OR s.RealProductId = 50)

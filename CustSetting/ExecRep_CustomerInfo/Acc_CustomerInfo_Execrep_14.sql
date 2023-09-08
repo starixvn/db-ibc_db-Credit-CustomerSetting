@@ -81,10 +81,8 @@ BEGIN
 		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 		
-	--IF dbo.f_CheckRepTable('ProductSettingProfile') = 1 
-	--	AND dbo.f_CheckRepTable('ProductProfileSiteCurrency') = 1
-	IF EXISTS ( SELECT 1 FROM sys.tables WHERE Name='ProductSettingProfile')	
-		AND EXISTS ( SELECT 1 FROM sys.tables WHERE Name='ProductProfileSiteCurrency')	
+	IF dbo.f_CheckRepTable('ProductSettingProfile') = 1 
+		AND dbo.f_CheckRepTable('ProductProfileSiteCurrency') = 1		
 	BEGIN
 		INSERT INTO #ProductSettingDetail_tmp00(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
@@ -95,8 +93,7 @@ BEGIN
 	END
 		
 	IF (dbo.f_CheckRepTable('CustProductStatus') = 1
-		--AND dbo.f_CheckRepTable('ProductSettingProfile') = 1 
-		AND EXISTS ( SELECT 1 FROM sys.tables WHERE Name='ProductSettingProfile')
+		AND dbo.f_CheckRepTable('ProductSettingProfile') = 1 		
 		AND dbo.f_CheckRepTable('ProductStatusProfile') = 1
 		AND dbo.f_CheckRepTable('ProductStatusSiteCurrency') = 1
 	)
@@ -338,8 +335,7 @@ BEGIN
 		AND dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1
 		AND dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 1
 		AND dbo.f_CheckRepTable('CustWinLossLimit_Member') = 1
-		--AND dbo.f_CheckRepTable('ProductSettingProfile') = 1 
-		 AND EXISTS( SELECT 1 FROM sys.tables WHERE Name='ProductSettingProfile')
+		AND dbo.f_CheckRepTable('ProductSettingProfile') = 1 
 		 
 		AND	dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1
 		AND	dbo.f_CheckRepTable('CustStakeLevel_Member') = 1

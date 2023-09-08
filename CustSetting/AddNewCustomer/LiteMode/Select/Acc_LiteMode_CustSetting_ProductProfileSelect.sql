@@ -29,7 +29,7 @@ BEGIN
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID IS NOT NULL
 			AND MarketType = 0	
-			AND GroupType NOT IN (155)
+			AND GroupType NOT IN (155,158,159)
 		UNION 
 		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, CreationStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType
 		FROM dbo.ProductSettingProfile p  WITH(NOLOCK)
@@ -37,7 +37,7 @@ BEGIN
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID IS NOT NULL
 			AND MarketType = 1
-			AND GroupType NOT IN (155)
+			AND GroupType NOT IN (155,158,159)
 			AND s.SiteID = @SiteID
 			AND 1 = CASE WHEN s.currency = @currency OR s.currency = 0 THEN 1 ELSE 0 END
 		ORDER BY GroupID, GroupTypeOrder, SubGroupOrder, Child_DisplayOrder
@@ -49,7 +49,7 @@ BEGIN
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID IS NOT NULL
 			AND MarketType = 0		
-			AND GroupType NOT IN (155)
+			AND GroupType NOT IN (155,158,159)
 		UNION 
 		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, CreationStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType
 		FROM dbo.ProductSettingProfile_UAT p  WITH(NOLOCK)
@@ -57,7 +57,7 @@ BEGIN
 		WHERE CreationStatus <> 2
 			AND GroupID IS NOT NULL
 			AND MarketType = 1
-			AND GroupType NOT IN (155)
+			AND GroupType NOT IN (155,158,159)
 			AND s.SiteID = @SiteID
 			AND 1 = CASE WHEN s.currency = @currency OR s.currency = 0 THEN 1 ELSE 0 END
 		ORDER BY GroupID, GroupTypeOrder, SubGroupOrder, Child_DisplayOrder		

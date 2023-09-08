@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateUpd] 
 	@CustID INT,
 	@SubAccID INT = 0,
@@ -55,7 +55,7 @@ BEGIN
 	IF NOT EXISTS(SELECT 1 FROM CustPTTemplate WITH(NOLOCK) WHERE custid = @custid AND TemplateID = @TemplateID)
 	BEGIN
 		SELECT	@ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'This Template is not exists.'
+						WHEN 'E' THEN 'This Template does not exists.'
 						ELSE [dbo].[f_Get_MsgNamebyMsgID](20047,@Language)
 					end,
 				@ErrCode = 100
@@ -133,8 +133,8 @@ BEGIN
 	SET @endRun=GETDATE()
 	SET @duration=datediff(millisecond,@startRun,@endRun)
 	
-	 DECLARE @LogSPData VARCHAR(MAX),
-			@Old_LogSPData VARCHAR(MAX),
+	 DECLARE @LogSPData NVARCHAR(MAX),
+			@Old_LogSPData NVARCHAR(MAX),
 			@ActionID INT
 		
 	SELECT @ActionID = CASE WHEN @roleid = 4 THEN 476
@@ -144,7 +144,7 @@ BEGIN
     --Log info
     SELECT @LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
 						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
-						'TemplateName="'+ coalesce(cast(@TemplateName as NVARCHAR(50)),space(1)) + '" ' +
+						'TemplateName="'+ dbo.f_EncodeXMLValue(coalesce(cast(@TemplateName as NVARCHAR(50)),space(1))) + '" ' +
 						'IsDefault="'+ coalesce(cast(@IsDefault as VARCHAR(1)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
 						CAST((
@@ -157,7 +157,7 @@ BEGIN
 	
 	SELECT @Old_LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
 						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
-						'TemplateName="'+ coalesce(cast(@TemplateName as NVARCHAR(50)),space(1)) + '" ' +
+						'TemplateName="'+ dbo.f_EncodeXMLValue(coalesce(cast(@TemplateName as NVARCHAR(50)),space(1))) + '" ' +
 						'IsDefault="'+ coalesce(cast(@Old_IsDefault as VARCHAR(1)),space(1)) + '" ' +
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" >' +
 						CAST((

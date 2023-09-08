@@ -154,7 +154,7 @@ BEGIN
 												AND cs.bettype = s.bettype
 		WHERE custid IN (@custid,@srecommend)
 		GROUP BY cs.sporttype, cs.bettype, s.Child_DisplayOrder
-		UNION ALL
+		UNION
 		SELECT cs.sporttype, cs.bettype, 
 			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
 			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
@@ -239,7 +239,7 @@ BEGIN
 													AND scs.SportType = cs.sporttype  
 													AND scs.BetType = cs.bettype
 		WHERE cs.CustID = @custid						
-		UNION ALL
+		UNION
 		SELECT cs.sporttype, cs.bettype, 1 IsLive, 
 			scs.alivepositiontaking*100 AS A4,
 			(CASE WHEN cs.mlivepositiontaking<co.maxlivepositiontaking THEN cs.mlivepositiontaking ELSE co.maxlivepositiontaking END)*100 AS M3,
@@ -257,7 +257,7 @@ BEGIN
 		WHERE cs.CustID = @custid			
 			AND cs.sporttype = 1
 			AND cs.bettype IN (1,3,7,8)
-		UNION ALL
+		UNION
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive 
@@ -437,12 +437,17 @@ BEGIN
 	--Bet Setting
 	IF @GroupID = 4 AND @GroupType = 157
 	BEGIN
-		;WITH T AS (		
-		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,s.Child_DisplayOrder
+		;WITH T AS 
+		(SELECT cs.Sporttype, cs.Bettype,
+			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
+			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
+			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 			
+			s.Child_DisplayOrder
 		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
-		WHERE cs.CustID = @custid
+		WHERE cs.CustID IN (@custid,@srecommend)
+		GROUP BY cs.sporttype, cs.bettype,  s.Child_DisplayOrder
 		)
 		SELECT * FROM T
 		ORDER BY Child_DisplayOrder

@@ -156,7 +156,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10071 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of SingleMatchParlay is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout per Bet: The setting of Single Match Parlay is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 								, ps.GroupID AS '@GroupID'
@@ -190,7 +190,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10072 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of Combo2 is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout per Bet: The setting of Combo 2 is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 								, ps.GroupID AS '@GroupID'
@@ -224,7 +224,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10073 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of Combo35 is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout per Bet: The setting of Combo 3 - 5 is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 								, ps.GroupID AS '@GroupID'
@@ -258,7 +258,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 					SELECT 10074 AS '@MsgID'
-						, 'Parlay Max Payout: The setting of ComboOver6 is higher than the upline''s.'  AS '@Msg'
+						, 'Parlay Max Payout per Bet: The setting of Combo Over 6 is higher than the upline''s.'  AS '@Msg'
 						, (SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'
 								, ps.GroupID AS '@GroupID'

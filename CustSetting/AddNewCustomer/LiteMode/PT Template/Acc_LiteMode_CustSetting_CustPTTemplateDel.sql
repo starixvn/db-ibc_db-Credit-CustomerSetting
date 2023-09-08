@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateDel] 
 	@CustID INT,
 	@SubAccID INT = 0,
@@ -53,7 +53,7 @@ BEGIN
 	SET @endRun=GETDATE()
 	SET @duration=datediff(millisecond,@startRun,@endRun)
 	
-	DECLARE @LogSPData VARCHAR(MAX),
+	DECLARE @LogSPData NVARCHAR(MAX),
 			@ActionID INT
 		
 	SELECT @ActionID = CASE WHEN @roleid = 4 THEN 477
@@ -63,7 +63,7 @@ BEGIN
     --Log info
     SELECT @LogSPData = '<Root custid="'+ coalesce(cast(@custid as VARCHAR(50)),space(1)) + '" ' +
 						'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
-						'TemplateName="'+ coalesce(cast(@TemplateName as NVARCHAR(50)),space(1)) + '" ' +						
+						'TemplateName="'+ dbo.f_EncodeXMLValue(coalesce(cast(@TemplateName as NVARCHAR(50)),space(1))) + '" ' +						
 						'IP="'+ coalesce(cast(@IP as VARCHAR(20)),space(1)) + '" ' +
 						'/>'
 						

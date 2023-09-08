@@ -127,8 +127,8 @@ BEGIN
 						
 		DELETE #SportBettypeFilter
 		
-		--Allbet & SA Gaming
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 5
+		--LCS
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
@@ -151,8 +151,8 @@ BEGIN
 		
 		DELETE #SportBettypeFilter
 		
-		--Other Live Casino & RnG Games
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
+		--IBCBet LCS
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 8
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID	
@@ -175,8 +175,8 @@ BEGIN
 		
 		DELETE #SportBettypeFilter
 		
-		--IBCBet LCS
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 10
+		--Other Games
+		SELECT @GroupID = 4, @GroupType = 153, @SubGroupID = 10
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID	
@@ -306,8 +306,8 @@ BEGIN
 						
 		DELETE #SportBettypeFilter
 		
-		--Allbet & SA Gaming
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 5
+		--LCS
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
@@ -330,8 +330,8 @@ BEGIN
 		
 		DELETE #SportBettypeFilter
 		
-		--Other Live Casino & RnG Games
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
+		--IBCBet Casino
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 8
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID	
@@ -354,8 +354,8 @@ BEGIN
 		
 		DELETE #SportBettypeFilter
 		
-		--Other Live Casino & RnG Games
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 10
+		--Others Games
+		SELECT @GroupID = 4, @GroupType = 153, @SubGroupID = 10
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID	
@@ -395,7 +395,7 @@ BEGIN
 									, t.IsLive AS '@IsLive'
 									, t.MaxPT AS '@MaxPT'
 									, t.SettingLevel as '@SettingLevel'
-									,ProductID
+									,ProductID as '@ProductID'
 								FROM #tmpPT t
 									INNER JOIN @tmpSetting s ON t.GroupID = s.GroupID
 																AND t.SubGroupID = s.SubGroupID
@@ -508,8 +508,8 @@ BEGIN
 						
 		DELETE #SportBettypeFilter
 		
-		--Allbet & SA Gaming
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 5
+		--LCS
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
@@ -539,8 +539,8 @@ BEGIN
 		
 		DELETE #SportBettypeFilter
 		
-		--Other Live Casino & RnG Games
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
+		--IBCBet LCS
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 8
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
@@ -570,8 +570,8 @@ BEGIN
 		
 		DELETE #SportBettypeFilter
 		
-		--Other Live Casino & RnG Games
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 10
+		--Others Games
+		SELECT @GroupID = 4, @GroupType = 153, @SubGroupID = 10
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
@@ -611,7 +611,7 @@ BEGIN
 		)
 		BEGIN		
 			SET @xml = (
-						SELECT 20047 AS '@MsgID'
+						SELECT 20048 AS '@MsgID'
 							, 'Invalid Position Taking(min/max set by upline).' AS '@Msg'
 							, (
 								SELECT t.SportType AS '@SportType'

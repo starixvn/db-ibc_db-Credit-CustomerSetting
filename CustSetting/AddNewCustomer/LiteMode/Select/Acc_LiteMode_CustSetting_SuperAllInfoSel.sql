@@ -223,7 +223,7 @@ BEGIN
 				AND s.BetType = cs.bettype
 				AND s.IsLive = 0
 		WHERE cs.CustID = @custid			
-		UNION ALL 
+		UNION 
 		SELECT cs.sporttype, cs.bettype, 1 as IsLive,			
 			(CASE WHEN cs.slivepositiontaking<co.maxlivepositiontaking THEN cs.slivepositiontaking ELSE co.maxlivepositiontaking END)*100 S4,
 			cs.mlivepositiontaking*100 M4,
@@ -238,7 +238,7 @@ BEGIN
 		WHERE cs.CustID = @custid
 			AND cs.sporttype = 1
 			AND cs.bettype IN (1,3,7,8)
-		UNION ALL
+		UNION
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  

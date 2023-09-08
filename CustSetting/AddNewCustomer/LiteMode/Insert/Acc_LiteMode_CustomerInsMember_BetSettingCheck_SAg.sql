@@ -142,6 +142,7 @@ BEGIN
 			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 			SET @MsgType = 71
 			SET @ErrCode = 201
+			RETURN
 		END	
 
 		--> Check rule : Wrong Max Payout Per Match
@@ -172,6 +173,7 @@ BEGIN
 			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 			SET @MsgType = 71
 			SET @ErrCode = 202
+			RETURN
 		END
 	
 		--> Check rule : Min bet must be less than or equal to max bet and max bet must be less than or equal to max per match
@@ -204,6 +206,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 203
+				RETURN
 		END
 		
 		--> Check rule : Max Per Match must be less than or equal to Max Payout Per Match
@@ -234,6 +237,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 204
+				RETURN
 		END
 		
 		--SB bet setting
@@ -279,6 +283,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 205
+				RETURN
 		END
 		
 		--> Check rule : Max Bet must be equal to or less than Upline's Max Bet
@@ -313,6 +318,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 206
+				RETURN
 		END
 		
 		--> Check rule : Max Per Match  must be equal to or less than Upline's Max Per Match
@@ -347,6 +353,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 207
+				RETURN
 		END
 		
 		--> Check rule : Max Payout Per Match must be equal to or less than Upline's Max Payout Per Match
@@ -381,6 +388,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 208
+				RETURN
 		END
 	END
 	
@@ -489,6 +497,7 @@ BEGIN
 			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 			SET @MsgType = 71
 			SET @ErrCode = 220
+			RETURN
 		END	
 		
 		--> Check rule : Wrong Max Per Ball
@@ -521,6 +530,7 @@ BEGIN
 			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 			SET @MsgType = 71
 			SET @ErrCode = 221
+			RETURN
 		END	
 		
 		--> Check rule : Min bet must be less than or equal to max bet and max bet must be less than or equal to max per match
@@ -553,6 +563,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 222
+				RETURN
 		END
 		
 		--> Check rule :Max Per Ball must be greater than or equal to Max Bet and less than or equal to Max Per Match
@@ -591,6 +602,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 223
+				RETURN
 		END
 		
 		--NG,Happy5
@@ -646,6 +658,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 224
+				RETURN
 		END
 		
 		--> Check rule : Max Bet must be equal to or less than Upline's Max Bet
@@ -680,6 +693,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 225
+				RETURN
 		END
 		
 		--> Check rule : Max Per Match  must be equal to or less than Upline's Max Per Match
@@ -714,6 +728,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 226
+				RETURN
 		END
 		
 		--> Check rule : Max Per Ball must be equal to or less than Upline's Max Per Ball
@@ -748,6 +763,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 227
+				RETURN
 		END
 	END	
 	
@@ -851,6 +867,7 @@ BEGIN
 			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 			SET @MsgType = 71
 			SET @ErrCode = 220
+			RETURN
 		END			
 		
 		--> Check rule : Min bet must be less than or equal to max bet and max bet must be less than or equal to max per match
@@ -883,6 +900,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 222
+				RETURN
 		END
 		
 		INSERT INTO @Upline_BetSetting (SportType,BetType,MinBet,MaxBet,MaxPerMatch)
@@ -927,6 +945,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 224
+				RETURN
 		END
 		
 		--> Check rule : Max Bet must be equal to or less than Upline's Max Bet
@@ -961,6 +980,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 225
+				RETURN
 		END
 		
 		--> Check rule : Max Per Match  must be equal to or less than Upline's Max Per Match
@@ -995,6 +1015,7 @@ BEGIN
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
 				SET @ErrCode = 226
+				RETURN
 		END		
 	END
 	

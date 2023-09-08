@@ -82,7 +82,8 @@ BEGIN
 		IF @IsMyanmarOdds = 1
 		BEGIN
 			UPDATE t
-			SET t.playerDiscount = s.commRate
+			SET t.playerDiscount = CASE WHEN t.playerDiscount > s.commRate THEN s.commRate ELSE t.playerDiscount END,
+				t.Discount = s.commRate
 			FROM @NewDiscountTbl t
 				CROSS APPLY (SELECT commRate  
 							FROM AgentCommRate WITH(NOLOCK)  
@@ -90,8 +91,7 @@ BEGIN
 								AND sporttype = 1   
 								AND bettype = 1) s
 			WHERE sporttype = 2
-				AND bettype = 1
-				AND t.playerDiscount > s.commRate
+				AND bettype = 1				
 		END
 			
 		--Check if new discount <0 or > default Max Discount
@@ -187,7 +187,7 @@ BEGIN
 				discount = 0,
 				playerdiscount = 0
 			FROM @NewDiscountTbl t
-			WHERE sporttype = 1 AND bettype = 1
+			WHERE sporttype = 1
 		END
 		ELSE --correct comm
 		BEGIN

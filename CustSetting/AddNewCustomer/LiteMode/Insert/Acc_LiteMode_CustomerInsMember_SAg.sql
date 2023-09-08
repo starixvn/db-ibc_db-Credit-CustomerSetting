@@ -34,7 +34,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	@SettingType18 VARCHAR(MAX)= '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 	
 	--Log all values group from UI
-	@SettingTypeAll VARCHAR(MAX) = '',
+	@SettingTypeAll NVARCHAR(MAX) = '',
 	
 	@Language VARCHAR(2)= 'E',
 	@SubAccID INT = 0,--Sub-AccountID,
@@ -107,68 +107,21 @@ BEGIN
 	FROM customer WITH(NOLOCK) 
 	WHERE CustID = @srecommend
 	 
-	SET  @Site = ISNULL(NULLIF(@Site,''),@Super_site)
+	SET  @Site = @Super_site
 	
 	DECLARE @SiteID int
 	SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
 		
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
-	IF @Site = @Super_site
-		OR NOT EXISTS ( SELECT 1 FROM Site WITH(NOLOCK) WHERE site = @Site) -- @site = 'ExtAcc'
-	BEGIN
-		EXEC [Acc_CheckUM] @CustID = @srecommend
-			,@FunctionType = 2
-			,@ErrCode = @ErrCode OUTPUT
-			,@ErrMsg = @ErrMsg OUTPUT
-			,@ReturnUMData = 0
-			,@Language = @Language
+	EXEC [Acc_CheckUM] @CustID = @srecommend
+		,@FunctionType = 2
+		,@ErrCode = @ErrCode OUTPUT
+		,@ErrMsg = @ErrMsg OUTPUT
+		,@ReturnUMData = 0
+		,@Language = @Language
 
-		IF @ErrCode <> 0 RETURN
-	END
-	ELSE
-	BEGIN -- Direct master cross site
-		DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
-		CREATE TABLE #UMConfig(SportType SMALLINT,SiteID INT, Currency INT ,BeginTime smalldatetime,EndTime smalldatetime)
-		
-		INSERT INTO #UMConfig(SportType,SiteID,Currency,BeginTime,EndTime)
-		SELECT t.SportType,t.SiteID,t.Currency,t.BeginTime,t.EndTime		
-		FROM UMConfig t WITH(NOLOCK)
-		WHERE CONVERT(SMALLDATETIME,GETDATE()) BETWEEN t.BeginTime AND t.EndTime
-			AND t.Currency IN (0,@currency)
-			AND t.SiteID IN (0,@siteid)
-			AND (t.FunctionType = 2 
-				 OR (t.FunctionType = 1 AND t.LockAddingNew = 1)
-				 )
-			AND t.SuperID IN (0, @srecommend)
+	IF @ErrCode <> 0 RETURN
 	
-		--Delete Non-offered Products
-		DELETE ft
-		FROM #UMConfig ft
-			INNER JOIN SportNonOfferedSiteCurrency nof WITH(NOLOCK)
-				ON ft.SportType = nof.SportType
-				AND nof.siteID IN (ft.SiteID, 0)
-				AND nof.Currency IN (ft.Currency, 0)
-		WHERE NOT EXISTS(	SELECT 1 
-							FROM ProductSettingDetail p WITH(NOLOCK) 
-							WHERE nof.SportType = p.SportType 
-								AND nof.BetType <> p.BetType 
-								AND p.SettingStatus = 0 
-						)
-
-		SELECT @FromTime = CONVERT(VARCHAR,MIN(dateadd(HH,12,t.BeginTime)),103) + ' ' + LTRIM(LEFT(CONVERT(VARCHAR, MIN(dateadd(HH,12,t.BeginTime)),8),5)),
-			  @ToTime = CONVERT(VARCHAR,MAX(dateadd(HH,12,t.EndTime)),103) + ' ' + LTRIM(LEFT(CONVERT(VARCHAR, MAX(dateadd(HH,12,t.EndTime)),8),5))
-		FROM #UMConfig t
-
-		IF @FromTime IS NOT NULL AND @ToTime IS NOT NULL
-		BEGIN
-			SELECT @ErrCode = 90016
-				 , @ErrMsg =   REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](90016,@Language),'<FromTime>',@FromTime),'<ToTime>',@ToTime)
-
-			RETURN
-		END
-	END
-	------------------------------END----------------------------------------
-
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @creator AND roleid > 4) --Only check on admin user
 	BEGIN
 		DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
@@ -332,10 +285,6 @@ BEGIN
     END
     SELECT @pwdexpiry = DATEADD(dd, 30, GETDATE())
 	
-	 --Vinh@20080213: get transfer option FROM super
-    IF @srecommend > 100 -- get site FROM upline IF not direct master
-	    SELECT @site = site FROM customer WITH(NOLOCK) WHERE CustID = @srecommend
-
 	DECLARE @IsInternal BIT
     select	@IsInternal = IsInternal,
 		    @TransferOption_dec = TransferOption
@@ -621,7 +570,7 @@ BEGIN
 	'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
     'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
-	'TemplateName="'+ COALESCE(CAST(@TemplateName AS NVARCHAR(50)), SPACE(1)) + '" ' +
+	'TemplateName="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@TemplateName AS NVARCHAR(50)), SPACE(1))) + '" ' +
 	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
     'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
     'srecommend="'+ COALESCE(CAST(@srecommend AS VARCHAR(50)), SPACE(1)) + '" ' +	
@@ -739,6 +688,9 @@ BEGIN
 	
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 3)
 		SET @VRLockedStatus_Basketball = 1 
+	
+	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @srecommend AND Type = 4)
+		SET @VRAccumulatedBalance = 1
 		
     --Log status
     SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
@@ -780,7 +732,9 @@ BEGIN
 		[SettingType] [smallint] ,
 		[SportType] [smallint] ,
 		[BetType] [smallint] ,
-		[IsLive] [bit] ,						
+		[IsLive] [bit] ,
+		[SettingLevel] [tinyint] ,	
+		[ProductID] [tinyint] ,	
 		[Child_DisplayOrder] [int] ,
 		GroupID [TINYINT],
 		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
@@ -809,7 +763,9 @@ BEGIN
 			MasterPT		SMALLMONEY,				
 			MasterMinPT		SMALLMONEY,
 			MasterMaxPT		SMALLMONEY,
-			GroupID			  TINYINT,
+			SettingLevel	TINYINT,
+			ProductID 		TINYINT,
+			GroupID 		TINYINT,
 			Child_DisplayOrder  INT
 			)	
 			
@@ -823,6 +779,8 @@ BEGIN
 			MasterPT		SMALLMONEY,				
 			MasterMinPT		SMALLMONEY,
 			MasterMaxPT		SMALLMONEY,
+			SettingLevel	TINYINT,
+			ProductID 		TINYINT,
 			GroupID			  TINYINT,
 			Child_DisplayOrder  INT
 			)	
@@ -833,11 +791,23 @@ BEGIN
 						,MaxWinLimit SMALLMONEY
 						,MaxLossLimit MONEY
 						,IsAutoReset BIT
+						,SettingLevel TINYINT
+						,ProductID TINYINT
 						,GroupID TINYINT
 						,Child_DisplayOrder INT)
-		
-	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder)
-	SELECT SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder
+	
+	DECLARE @tblCustStakeLevel TABLE
+						(SportType SMALLINT
+						,BetType SMALLINT
+						,StakeLevelList	VARCHAR(200)
+						,SettingType SMALLINT
+						,SettingLevel TINYINT
+						,ProductID TINYINT
+						,GroupID TINYINT
+						,Child_DisplayOrder INT)
+					
+	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder,SettingLevel,ProductID)
+	SELECT SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder,SettingLevel,ProductID
 	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)	
 	
 	INSERT INTO @tblCustWinLossLimit (SportType
@@ -845,6 +815,8 @@ BEGIN
 									,MaxWinLimit 
 									,MaxLossLimit 
 									,IsAutoReset
+									,SettingLevel
+									,ProductID
 									,GroupID
 									,Child_DisplayOrder
 									)
@@ -853,6 +825,8 @@ BEGIN
 		,cs.MaxWinLimit 
 		,cs.MaxLossLimit 
 		,cs.IsAutoReset 
+		,t.SettingLevel
+		,t.ProductID
 		,t.GroupID
 		,t.Child_DisplayOrder
 	FROM CustWinLossLimit_Agent cs WITH(NOLOCK)
@@ -860,7 +834,75 @@ BEGIN
 												AND cs.BetType = t.BetType
 	WHERE custid = @custid
 		AND SettingType IN (6,22,12)
-				
+	
+	INSERT INTO @tblCustStakeLevel (SportType
+									,BetType 
+									,StakeLevelList
+									,SettingType
+									,SettingLevel
+									,ProductID
+									,GroupID
+									,Child_DisplayOrder
+									)
+	SELECT cs.SportType
+		,cs.BetType 
+		,cs.StakeLevelList
+		,t.SettingType
+		,t.SettingLevel
+		,t.ProductID
+		,t.GroupID
+		,t.Child_DisplayOrder
+	FROM CustStakeLevel_Agent cs WITH(NOLOCK)
+		INNER JOIN #TmpProductSettingDetail t ON cs.SportType = t.SportType
+												AND cs.BetType = t.BetType
+	WHERE custid = @custid
+		AND SettingType IN (7,8,17)
+	
+	UPDATE @tblCustStakeLevel
+	SET StakeLevelList = REPLACE(StakeLevelList, ',', ';')
+	WHERE SettingType IN (7,17)
+	
+	WHILE 0 = 0
+	BEGIN
+		UPDATE	ts
+		SET	ts.StakeLevelList = REPLACE(ts.StakeLevelList, sl.StakeLevelID, sl.StakeLevelValue)
+		FROM		@tblCustStakeLevel AS ts
+		CROSS APPLY	(	SELECT TOP(1)	CAST(sl.StakeLevelID AS VARCHAR(10)) AS StakeLevelID
+									,	CAST(sl.MinLabel AS VARCHAR(20)) + '-' + CAST(sl.MaxLabel AS VARCHAR(20)) AS StakeLevelValue
+						FROM		string_split(ts.StakeLevelList, ';') AS ss
+						INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK)
+								ON	ss.value = CAST(sl.StakeLevelID AS NVARCHAR(10))
+						WHERE sl.GameGroupID=0
+					) sl
+		WHERE ts.SettingType IN (7,17)			
+
+		IF	@@ROWCOUNT = 0
+			BREAK;
+	END;
+	
+	WHILE 0 = 0
+	BEGIN
+		UPDATE	ts
+		SET	ts.StakeLevelList = REPLACE(ts.StakeLevelList, sl.StakeLevelID, sl.StakeLevelValue)
+		FROM		@tblCustStakeLevel AS ts
+		CROSS APPLY	(	SELECT TOP(1)	CAST(sl.StakeLevelID AS VARCHAR(10)) AS StakeLevelID
+									,	gg.GroupName AS StakeLevelValue
+						FROM		string_split(ts.StakeLevelList, ',') AS ss
+						INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK)
+								ON	ss.value = CAST(sl.StakeLevelID AS NVARCHAR(10))
+						INNER JOIN	dbo.GameGroup AS gg WITH (NOLOCK)
+								ON	gg.GameGroupID = sl.GameGroupID
+					) sl
+		WHERE ts.SettingType IN (8)			
+
+		IF	@@ROWCOUNT = 0
+			BREAK;
+	END;
+	
+	UPDATE @tblCustStakeLevel
+	SET StakeLevelList = REPLACE(StakeLevelList, ',', ', ')
+	WHERE SettingType IN (8)
+	
 	DECLARE @xml XML
 	
 	--Bet setting
@@ -941,7 +983,9 @@ BEGIN
 	
 	UPDATE b
 	SET b.GroupID = p.GroupID,
-		b.Child_DisplayOrder = p.Child_DisplayOrder
+		b.Child_DisplayOrder = p.Child_DisplayOrder,
+		b.SettingLevel = p.SettingLevel,
+		b.ProductID = p.ProductID
 	FROM @tblPT28 b
 		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
 												AND b.BetType = p.BetType
@@ -995,7 +1039,9 @@ BEGIN
 		
 	UPDATE b
 	SET b.GroupID = p.GroupID,
-		b.Child_DisplayOrder = p.Child_DisplayOrder
+		b.Child_DisplayOrder = p.Child_DisplayOrder,
+		b.SettingLevel = p.SettingLevel,
+		b.ProductID = p.ProductID
 	FROM @tblPT18 b
 		INNER JOIN #TmpProductSettingDetail p ON b.SportType = p.SportType
 												AND b.BetType = p.BetType
@@ -1028,7 +1074,9 @@ BEGIN
 								IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,
 								MasterPT,				
-								MasterMinPT	MinPT
+								MasterMinPT	MinPT,
+								SettingLevel,
+								ProductID								
 						FROM @tblPT28
 						WHERE 1= CASE WHEN SportType = 99 AND Bettype = 9 THEN 0 ELSE 1 END 
 						ORDER BY Child_DisplayOrder
@@ -1043,7 +1091,9 @@ BEGIN
 								IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,
 								MasterPT,				
-								MasterMinPT	MinPT
+								MasterMinPT	MinPT,
+								SettingLevel,
+								ProductID
 						FROM @tblPT28
 						WHERE SportType = 99 AND Bettype = 9
 						ORDER BY Child_DisplayOrder
@@ -1058,7 +1108,9 @@ BEGIN
 								IsAutoSuperPT IsAuto,
 								AutoSuperPT AutoPT,
 								MasterPT,				
-								MasterMinPT	MinPT
+								MasterMinPT	MinPT,
+								SettingLevel,
+								ProductID
 						FROM @tblPT18
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
@@ -1077,7 +1129,8 @@ BEGIN
 			+ '</BetSetting>'
 			+ '<PT GroupType="153">'
 				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
-								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
+								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT,
+								SettingLevel,ProductID
 							FROM @tblPT18
 							WHERE GroupID = 2
 							ORDER BY Child_DisplayOrder
@@ -1085,13 +1138,23 @@ BEGIN
 							) as VARCHAR(max)),SPACE(1))
 			+ '</PT>'	
 			+ '<WinLossLimit GroupType="155">'
-				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset,
+								SettingLevel,ProductID
 							FROM @tblCustWinLossLimit
 							WHERE GroupID = 2
 							ORDER BY Child_DisplayOrder
 							FOR XML RAW('R')
 							) as VARCHAR(max)),SPACE(1))
-			+ '</WinLossLimit>'		
+			+ '</WinLossLimit>'	
+			+ '<BetLimit GroupType="159">'
+				+ COALESCE(CAST((SELECT SportType,BetType,SettingLevel,ProductID,StakeLevelList
+							FROM @tblCustStakeLevel
+							WHERE GroupID = 2
+								AND SettingType IN (8)
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
+			+ '</BetLimit>'	
 			+ '</Group>'
 			+ '<Group ID="3">'--LCS
 			+ '<Discount GroupType="156">' 
@@ -1099,7 +1162,7 @@ BEGIN
 			+ '</Discount>'
 			+ '<PT GroupType="153">'
 				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
-								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
+								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT,SettingLevel,ProductID
 						FROM @tblPT18
 						WHERE GroupID = 3
 						ORDER BY Child_DisplayOrder
@@ -1107,13 +1170,32 @@ BEGIN
 						) as VARCHAR(max)),SPACE(1))
 			+ '</PT>'
 			+ '<WinLossLimit GroupType="155">'
-				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset,
+								SettingLevel,ProductID
 							FROM @tblCustWinLossLimit
 							WHERE GroupID = 3
 							ORDER BY Child_DisplayOrder
 							FOR XML RAW('R')
 							) as VARCHAR(max)),SPACE(1))
 			+ '</WinLossLimit>'	
+			+ '<BetLimit GroupType="158">'
+				+ COALESCE(CAST((SELECT SportType,BetType,SettingLevel,ProductID,StakeLevelList
+							FROM @tblCustStakeLevel
+							WHERE GroupID = 3
+								AND SettingType IN (7,17)
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
+			+ '</BetLimit>'
+			+ '<BetLimit GroupType="159">'
+				+ COALESCE(CAST((SELECT SportType,BetType,SettingLevel,ProductID,StakeLevelList
+							FROM @tblCustStakeLevel
+							WHERE GroupID = 3
+								AND SettingType IN (8)
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
+			+ '</BetLimit>'
 			+ '</Group>'
 			+ '<Group ID="4">'--Others Games
 			+ '<Discount GroupType="156">' 
@@ -1129,7 +1211,7 @@ BEGIN
 			+ '</BetSetting>'
 			+ '<PT GroupType="153">'
 				+ COALESCE(CAST((SELECT SportType,BetType,IsLive,SuperPT,IsAutoSuperPT IsAuto,
-								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT
+								AutoSuperPT AutoPT,MasterPT, MasterMinPT MinPT,SettingLevel,ProductID
 						FROM @tblPT18
 						WHERE GroupID = 4
 						ORDER BY Child_DisplayOrder
@@ -1137,7 +1219,8 @@ BEGIN
 						) as VARCHAR(max)),SPACE(1))
 			+ '</PT>'	
 			+ '<WinLossLimit GroupType="155">'
-				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
+				+ COALESCE(CAST((SELECT SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset,
+								SettingLevel,ProductID
 							FROM @tblCustWinLossLimit
 							WHERE GroupID = 4
 							ORDER BY Child_DisplayOrder
