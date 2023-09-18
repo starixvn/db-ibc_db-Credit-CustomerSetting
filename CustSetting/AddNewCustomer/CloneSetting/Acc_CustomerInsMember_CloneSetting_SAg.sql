@@ -107,6 +107,7 @@ AS
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230615@Johnson: Check Problem Account  Limit New Downline Per Day [redmine: #189792]
 	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
+	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -826,7 +827,7 @@ BEGIN
 		FROM VRCustLockStatus v (NOLOCK) 
 		WHERE CustID = @srecommend
 			AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
-			AND v.Type <> 4
+			--AND v.Type <> 4
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrMsg = CASE @Language 
