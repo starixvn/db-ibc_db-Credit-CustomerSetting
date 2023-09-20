@@ -120,7 +120,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
-
+	- 20230921@Johnson: extend MaxPT = 0.93 [redmine:194132]
 Param's Explanation:
 • @ErrCode:
     = 0: Checking successfully.
@@ -270,69 +270,69 @@ Param's Explanation:
 		or @v99apositiontaking_20  <0
 		or @v99apositiontaking_9999  <0					
 		
-		or @apositiontaking_1  >0.9
-		or @apositiontaking_2  >0.9
-		or @apositiontaking_3  >0.9
-		or @apositiontaking_4  >0.9
-		or @apositiontaking_5  >0.9
-		or @apositiontaking_6  >0.9
-		or @apositiontaking_7  >0.9
-		or @apositiontaking_8  >0.9
-		or @apositiontaking_9  >0.9
-		or @apositiontaking_10 >0.9
-		or @v2apositiontaking_10 >0.9
-		or @v3apositiontaking_10 >0.9
-		or @v5apositiontaking_10 >0.9
-		or @v8apositiontaking_10 >0.9
-		or @v10apositiontaking_10 >0.9
-		or @v11apositiontaking_10 >0.9
-		or @v99apositiontaking_10 >0.9
+		or @apositiontaking_1  >0.93
+		or @apositiontaking_2  >0.93
+		or @apositiontaking_3  >0.93
+		or @apositiontaking_4  >0.93
+		or @apositiontaking_5  >0.93
+		or @apositiontaking_6  >0.93
+		or @apositiontaking_7  >0.93
+		or @apositiontaking_8  >0.93
+		or @apositiontaking_9  >0.93
+		or @apositiontaking_10 >0.93
+		or @v2apositiontaking_10 >0.93
+		or @v3apositiontaking_10 >0.93
+		or @v5apositiontaking_10 >0.93
+		or @v8apositiontaking_10 >0.93
+		or @v10apositiontaking_10 >0.93
+		or @v11apositiontaking_10 >0.93
+		or @v99apositiontaking_10 >0.93
 		
-		or @apositiontaking_9999  >0.9
-		or @alivepositiontaking_1  >0.9
-		or @alivepositiontaking_3  >0.9
-		or @alivepositiontaking_7  >0.9
-		or @alivepositiontaking_8  >0.9
+		or @apositiontaking_9999  >0.93
+		or @alivepositiontaking_1  >0.93
+		or @alivepositiontaking_3  >0.93
+		or @alivepositiontaking_7  >0.93
+		or @alivepositiontaking_8  >0.93
 		
-		or @v2apositiontaking_1  >0.9
-		or @v2apositiontaking_2  >0.9
-		or @v2apositiontaking_3  >0.9
-		or @v2apositiontaking_7  >0.9
-		or @v2apositiontaking_8  >0.9
-		--or @v2apositiontaking_9  >0.9
-		or @v2apositiontaking_20  >0.9
+		or @v2apositiontaking_1  >0.93
+		or @v2apositiontaking_2  >0.93
+		or @v2apositiontaking_3  >0.93
+		or @v2apositiontaking_7  >0.93
+		or @v2apositiontaking_8  >0.93
+		--or @v2apositiontaking_9  >0.93
+		or @v2apositiontaking_20  >0.93
 		
-		or @v2apositiontaking_9999  >0.9
+		or @v2apositiontaking_9999  >0.93
 
-		or @v3apositiontaking_1  >0.9
-		or @v3apositiontaking_2  >0.9
-		or @v3apositiontaking_3  >0.9
-		or @v3apositiontaking_20  >0.9
+		or @v3apositiontaking_1  >0.93
+		or @v3apositiontaking_2  >0.93
+		or @v3apositiontaking_3  >0.93
+		or @v3apositiontaking_20  >0.93
 
-		or @v5apositiontaking_1  >0.9
-		or @v5apositiontaking_2  >0.9
-		or @v5apositiontaking_3  >0.9
-		or @v5apositiontaking_20  >0.9
-		or @v5apositiontaking_9999  >0.9
+		or @v5apositiontaking_1  >0.93
+		or @v5apositiontaking_2  >0.93
+		or @v5apositiontaking_3  >0.93
+		or @v5apositiontaking_20  >0.93
+		or @v5apositiontaking_9999  >0.93
 
-		or @v8apositiontaking_1  >0.9
-		or @v8apositiontaking_3  >0.9
-		or @v8apositiontaking_20  >0.9
+		or @v8apositiontaking_1  >0.93
+		or @v8apositiontaking_3  >0.93
+		or @v8apositiontaking_20  >0.93
 
-		or @v10apositiontaking_1  >0.9
-		or @v10apositiontaking_2  >0.9
-		or @v10apositiontaking_3  >0.9
-		or @v10apositiontaking_20  >0.9
+		or @v10apositiontaking_1  >0.93
+		or @v10apositiontaking_2  >0.93
+		or @v10apositiontaking_3  >0.93
+		or @v10apositiontaking_20  >0.93
 
-		or @v11apositiontaking_1  >0.9
-		or @v11apositiontaking_20  >0.9
+		or @v11apositiontaking_1  >0.93
+		or @v11apositiontaking_20  >0.93
 
-		or @v99apositiontaking_1  >0.9
-		or @v99apositiontaking_2  >0.9
-		or @v99apositiontaking_3  >0.9
-		or @v99apositiontaking_9 >0.9
-		or @v99apositiontaking_20  >0.9		
-		or @v99apositiontaking_9999  >0.9													
+		or @v99apositiontaking_1  >0.93
+		or @v99apositiontaking_2  >0.93
+		or @v99apositiontaking_3  >0.93
+		or @v99apositiontaking_9 >0.93
+		or @v99apositiontaking_20  >0.93		
+		or @v99apositiontaking_9999  >0.93													
 	BEGIN
 		select @isvalid = 0, @ErrCode = 103
 		Select @ErrMsg = 	case @Language 

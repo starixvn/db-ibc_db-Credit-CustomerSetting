@@ -12,7 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_PositionTaking]
     @spositiontaking_8 smallmoney,
     @spositiontaking_9 smallmoney,
     @spositiontaking_10 smallmoney,
-    @spositiontaking_9999 smallmoney = 0.9,
+    @spositiontaking_9999 smallmoney = 0.93,
     
     @slivepositiontaking_1 smallmoney,
     @slivepositiontaking_3 smallmoney,
@@ -37,7 +37,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuper_PositionTaking]
     @v5spositiontaking_2 smallmoney,
     @v5spositiontaking_3 smallmoney,
     @v5spositiontaking_20 smallmoney,
-    @v5spositiontaking_9999 smallmoney = 0.9,
+    @v5spositiontaking_9999 smallmoney = 0.93,
 
     @v8spositiontaking_1 smallmoney,
     @v8spositiontaking_3 smallmoney,
@@ -242,6 +242,7 @@ Revisions:
 	- 20201028@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230921@Johnson: extend MaxPT = 0.93 [redmine:194132]
 Param's Explanation:
 • @ErrCode:
     = 0: Transaction recorded successfully.
@@ -479,172 +480,172 @@ BEGIN
         or @v99apositiontaking_20  <0    
         or @v99apositiontaking_9999  <0    
             
-        or @spositiontaking_1  >0.9
-        or @spositiontaking_2  >0.9
-        or @spositiontaking_3  >0.9
-        or @spositiontaking_4  >0.9
-        or @spositiontaking_5  >0.9
-        or @spositiontaking_6  >0.9
-        or @spositiontaking_7  >0.9
-        or @spositiontaking_8  >0.9
-        or @spositiontaking_9  >0.9
-        or @spositiontaking_10 >0.9
-        or @spositiontaking_9999  >0.9
+        or @spositiontaking_1  >0.93
+        or @spositiontaking_2  >0.93
+        or @spositiontaking_3  >0.93
+        or @spositiontaking_4  >0.93
+        or @spositiontaking_5  >0.93
+        or @spositiontaking_6  >0.93
+        or @spositiontaking_7  >0.93
+        or @spositiontaking_8  >0.93
+        or @spositiontaking_9  >0.93
+        or @spositiontaking_10 >0.93
+        or @spositiontaking_9999  >0.93
         
-        or @slivepositiontaking_1  >0.9
-        or @slivepositiontaking_3  >0.9
-        or @slivepositiontaking_7  >0.9
-        or @slivepositiontaking_8  >0.9
+        or @slivepositiontaking_1  >0.93
+        or @slivepositiontaking_3  >0.93
+        or @slivepositiontaking_7  >0.93
+        or @slivepositiontaking_8  >0.93
         
-        or @v2spositiontaking_1  >0.9
-        or @v2spositiontaking_2  >0.9
-        or @v2spositiontaking_3  >0.9
-        or @v2spositiontaking_7  >0.9
-        or @v2spositiontaking_8  >0.9
-        --or @v2spositiontaking_9  >0.9
-        or @v2spositiontaking_20  >0.9
-        or @v2spositiontaking_9999  >0.9
+        or @v2spositiontaking_1  >0.93
+        or @v2spositiontaking_2  >0.93
+        or @v2spositiontaking_3  >0.93
+        or @v2spositiontaking_7  >0.93
+        or @v2spositiontaking_8  >0.93
+        --or @v2spositiontaking_9  >0.93
+        or @v2spositiontaking_20  >0.93
+        or @v2spositiontaking_9999  >0.93
 
-        or @v3spositiontaking_1  >0.9
-        or @v3spositiontaking_2  >0.9
-        or @v3spositiontaking_3  >0.9
-        or @v3spositiontaking_20  >0.9
+        or @v3spositiontaking_1  >0.93
+        or @v3spositiontaking_2  >0.93
+        or @v3spositiontaking_3  >0.93
+        or @v3spositiontaking_20  >0.93
 
-        or @v5spositiontaking_1  >0.9
-        or @v5spositiontaking_2  >0.9
-        or @v5spositiontaking_3  >0.9
-        or @v5spositiontaking_20  >0.9
-        or @v5spositiontaking_9999  >0.9
+        or @v5spositiontaking_1  >0.93
+        or @v5spositiontaking_2  >0.93
+        or @v5spositiontaking_3  >0.93
+        or @v5spositiontaking_20  >0.93
+        or @v5spositiontaking_9999  >0.93
 
-        or @v8spositiontaking_1  >0.9
-        or @v8spositiontaking_3  >0.9
-        or @v8spositiontaking_20  >0.9
+        or @v8spositiontaking_1  >0.93
+        or @v8spositiontaking_3  >0.93
+        or @v8spositiontaking_20  >0.93
 
-        or @v10spositiontaking_1  >0.9
-        or @v10spositiontaking_2  >0.9
-        or @v10spositiontaking_3  >0.9
-        or @v10spositiontaking_20  >0.9
+        or @v10spositiontaking_1  >0.93
+        or @v10spositiontaking_2  >0.93
+        or @v10spositiontaking_3  >0.93
+        or @v10spositiontaking_20  >0.93
 
-        or @v11spositiontaking_1  >0.9
-        or @v11spositiontaking_20  >0.9
+        or @v11spositiontaking_1  >0.93
+        or @v11spositiontaking_20  >0.93
 
-        or @v99spositiontaking_1  >0.9
-        or @v99spositiontaking_2  >0.9
-        or @v99spositiontaking_3  >0.9
-        or @v99spositiontaking_9  >0.9
-        or @v99spositiontaking_20  >0.9
-		or @v99spositiontaking_9999  >0.9             
+        or @v99spositiontaking_1  >0.93
+        or @v99spositiontaking_2  >0.93
+        or @v99spositiontaking_3  >0.93
+        or @v99spositiontaking_9  >0.93
+        or @v99spositiontaking_20  >0.93
+		or @v99spositiontaking_9999  >0.93             
         
-        or @mpositiontaking_1  >0.9
-        or @mpositiontaking_2  >0.9
-        or @mpositiontaking_3  >0.9
-        or @mpositiontaking_4  >0.9
-        or @mpositiontaking_5  >0.9
-        or @mpositiontaking_6  >0.9
-        or @mpositiontaking_7  >0.9
-        or @mpositiontaking_8  >0.9
-        or @mpositiontaking_9  >0.9
-        or @mpositiontaking_10 >0.9
-        or @mpositiontaking_9999  >0.9
+        or @mpositiontaking_1  >0.93
+        or @mpositiontaking_2  >0.93
+        or @mpositiontaking_3  >0.93
+        or @mpositiontaking_4  >0.93
+        or @mpositiontaking_5  >0.93
+        or @mpositiontaking_6  >0.93
+        or @mpositiontaking_7  >0.93
+        or @mpositiontaking_8  >0.93
+        or @mpositiontaking_9  >0.93
+        or @mpositiontaking_10 >0.93
+        or @mpositiontaking_9999  >0.93
         
-        or @mlivepositiontaking_1  >0.9
-        or @mlivepositiontaking_3  >0.9
-        or @mlivepositiontaking_7  >0.9
-        or @mlivepositiontaking_8  >0.9
+        or @mlivepositiontaking_1  >0.93
+        or @mlivepositiontaking_3  >0.93
+        or @mlivepositiontaking_7  >0.93
+        or @mlivepositiontaking_8  >0.93
         
-        or @v2mpositiontaking_1  >0.9
-        or @v2mpositiontaking_2  >0.9
-        or @v2mpositiontaking_3  >0.9
-        or @v2mpositiontaking_7  >0.9
-        or @v2mpositiontaking_8  >0.9
-        --or @v2mpositiontaking_9  >0.9
-        or @v2mpositiontaking_20  >0.9
-        or @v2mpositiontaking_9999  >0.9
+        or @v2mpositiontaking_1  >0.93
+        or @v2mpositiontaking_2  >0.93
+        or @v2mpositiontaking_3  >0.93
+        or @v2mpositiontaking_7  >0.93
+        or @v2mpositiontaking_8  >0.93
+        --or @v2mpositiontaking_9  >0.93
+        or @v2mpositiontaking_20  >0.93
+        or @v2mpositiontaking_9999  >0.93
 
-        or @v3mpositiontaking_1  >0.9
-        or @v3mpositiontaking_2  >0.9
-        or @v3mpositiontaking_3  >0.9
-        or @v3mpositiontaking_20  >0.9
+        or @v3mpositiontaking_1  >0.93
+        or @v3mpositiontaking_2  >0.93
+        or @v3mpositiontaking_3  >0.93
+        or @v3mpositiontaking_20  >0.93
 
-        or @v5mpositiontaking_1  >0.9
-        or @v5mpositiontaking_2  >0.9
-        or @v5mpositiontaking_3  >0.9
-        or @v5mpositiontaking_20  >0.9
-        or @v5mpositiontaking_9999  >0.9
+        or @v5mpositiontaking_1  >0.93
+        or @v5mpositiontaking_2  >0.93
+        or @v5mpositiontaking_3  >0.93
+        or @v5mpositiontaking_20  >0.93
+        or @v5mpositiontaking_9999  >0.93
 
-        or @v8mpositiontaking_1  >0.9
-        or @v8mpositiontaking_3  >0.9
-        or @v8mpositiontaking_20  >0.9
+        or @v8mpositiontaking_1  >0.93
+        or @v8mpositiontaking_3  >0.93
+        or @v8mpositiontaking_20  >0.93
 
-        or @v10mpositiontaking_1  >0.9
-        or @v10mpositiontaking_2  >0.9
-        or @v10mpositiontaking_3  >0.9
-        or @v10mpositiontaking_20  >0.9
+        or @v10mpositiontaking_1  >0.93
+        or @v10mpositiontaking_2  >0.93
+        or @v10mpositiontaking_3  >0.93
+        or @v10mpositiontaking_20  >0.93
 
-        or @v11mpositiontaking_1  >0.9
-        or @v11mpositiontaking_20  >0.9
+        or @v11mpositiontaking_1  >0.93
+        or @v11mpositiontaking_20  >0.93
 
-        or @v99mpositiontaking_1  >0.9
-        or @v99mpositiontaking_2  >0.9
-        or @v99mpositiontaking_3  >0.9
-        or @v99mpositiontaking_9  >0.9
-        or @v99mpositiontaking_20  >0.9
-		or @v99mpositiontaking_9999  >0.9          
+        or @v99mpositiontaking_1  >0.93
+        or @v99mpositiontaking_2  >0.93
+        or @v99mpositiontaking_3  >0.93
+        or @v99mpositiontaking_9  >0.93
+        or @v99mpositiontaking_20  >0.93
+		or @v99mpositiontaking_9999  >0.93          
 
-        or @apositiontaking_1  >0.9
-        or @apositiontaking_2  >0.9
-        or @apositiontaking_3  >0.9
-        or @apositiontaking_4  >0.9
-        or @apositiontaking_5  >0.9
-        or @apositiontaking_6  >0.9
-        or @apositiontaking_7  >0.9
-        or @apositiontaking_8  >0.9
-        or @apositiontaking_9  >0.9
-        or @apositiontaking_10 >0.9
-        or @apositiontaking_9999  >0.9
-        or @alivepositiontaking_1  >0.9
-        or @alivepositiontaking_3  >0.9
-        or @alivepositiontaking_7  >0.9
-        or @alivepositiontaking_8  >0.9
+        or @apositiontaking_1  >0.93
+        or @apositiontaking_2  >0.93
+        or @apositiontaking_3  >0.93
+        or @apositiontaking_4  >0.93
+        or @apositiontaking_5  >0.93
+        or @apositiontaking_6  >0.93
+        or @apositiontaking_7  >0.93
+        or @apositiontaking_8  >0.93
+        or @apositiontaking_9  >0.93
+        or @apositiontaking_10 >0.93
+        or @apositiontaking_9999  >0.93
+        or @alivepositiontaking_1  >0.93
+        or @alivepositiontaking_3  >0.93
+        or @alivepositiontaking_7  >0.93
+        or @alivepositiontaking_8  >0.93
         
-        or @v2apositiontaking_1  >0.9
-        or @v2apositiontaking_2  >0.9
-        or @v2apositiontaking_3  >0.9
-        or @v2apositiontaking_7  >0.9
-        or @v2apositiontaking_8  >0.9
-        --or @v2apositiontaking_9  >0.9
-        or @v2apositiontaking_20  >0.9
-        or @v2apositiontaking_9999  >0.9
+        or @v2apositiontaking_1  >0.93
+        or @v2apositiontaking_2  >0.93
+        or @v2apositiontaking_3  >0.93
+        or @v2apositiontaking_7  >0.93
+        or @v2apositiontaking_8  >0.93
+        --or @v2apositiontaking_9  >0.93
+        or @v2apositiontaking_20  >0.93
+        or @v2apositiontaking_9999  >0.93
 
-        or @v3apositiontaking_1  >0.9
-        or @v3apositiontaking_2  >0.9
-        or @v3apositiontaking_3  >0.9
-        or @v3apositiontaking_20  >0.9
+        or @v3apositiontaking_1  >0.93
+        or @v3apositiontaking_2  >0.93
+        or @v3apositiontaking_3  >0.93
+        or @v3apositiontaking_20  >0.93
 
-        or @v5apositiontaking_1  >0.9
-        or @v5apositiontaking_2  >0.9
-        or @v5apositiontaking_3  >0.9
-        or @v5apositiontaking_20  >0.9
-        or @v5apositiontaking_9999  >0.9
+        or @v5apositiontaking_1  >0.93
+        or @v5apositiontaking_2  >0.93
+        or @v5apositiontaking_3  >0.93
+        or @v5apositiontaking_20  >0.93
+        or @v5apositiontaking_9999  >0.93
 
-        or @v8apositiontaking_1  >0.9
-        or @v8apositiontaking_3  >0.9
-        or @v8apositiontaking_20  >0.9
+        or @v8apositiontaking_1  >0.93
+        or @v8apositiontaking_3  >0.93
+        or @v8apositiontaking_20  >0.93
 
-        or @v10apositiontaking_1  >0.9
-        or @v10apositiontaking_2  >0.9
-        or @v10apositiontaking_3  >0.9
-        or @v10apositiontaking_20  >0.9
+        or @v10apositiontaking_1  >0.93
+        or @v10apositiontaking_2  >0.93
+        or @v10apositiontaking_3  >0.93
+        or @v10apositiontaking_20  >0.93
 
-        or @v11apositiontaking_1  >0.9
-        or @v11apositiontaking_20  >0.9
+        or @v11apositiontaking_1  >0.93
+        or @v11apositiontaking_20  >0.93
 
-        or @v99apositiontaking_1  >0.9
-        or @v99apositiontaking_2  >0.9
-        or @v99apositiontaking_3  >0.9
-        or @v99apositiontaking_9  >0.9
-        or @v99apositiontaking_20  >0.9
-		or @v99apositiontaking_9999  >0.9        
+        or @v99apositiontaking_1  >0.93
+        or @v99apositiontaking_2  >0.93
+        or @v99apositiontaking_3  >0.93
+        or @v99apositiontaking_9  >0.93
+        or @v99apositiontaking_20  >0.93
+		or @v99apositiontaking_9999  >0.93        
 
         or @spositiontaking_1   <  @mpositiontaking_1  
         or @spositiontaking_2   <  @mpositiontaking_2  
@@ -782,30 +783,30 @@ BEGIN
 		or @v99apositiontaking_10 <0
 		
 
-		or @v2spositiontaking_10 >0.9
-		or @v3spositiontaking_10 >0.9
-		or @v5spositiontaking_10 >0.9
-		or @v8spositiontaking_10 >0.9
-		or @v10spositiontaking_10 >0.9
-		or @v11spositiontaking_10 >0.9
-		or @v99spositiontaking_10 >0.9
+		or @v2spositiontaking_10 >0.93
+		or @v3spositiontaking_10 >0.93
+		or @v5spositiontaking_10 >0.93
+		or @v8spositiontaking_10 >0.93
+		or @v10spositiontaking_10 >0.93
+		or @v11spositiontaking_10 >0.93
+		or @v99spositiontaking_10 >0.93
 		
 		
-		or @v2mpositiontaking_10 >0.9
-		or @v3mpositiontaking_10 >0.9
-		or @v5mpositiontaking_10 >0.9
-		or @v8mpositiontaking_10 >0.9
-		or @v10mpositiontaking_10 >0.9
-		or @v11mpositiontaking_10 >0.9
-		or @v99mpositiontaking_10 >0.9
+		or @v2mpositiontaking_10 >0.93
+		or @v3mpositiontaking_10 >0.93
+		or @v5mpositiontaking_10 >0.93
+		or @v8mpositiontaking_10 >0.93
+		or @v10mpositiontaking_10 >0.93
+		or @v11mpositiontaking_10 >0.93
+		or @v99mpositiontaking_10 >0.93
 		
-		or @v2apositiontaking_10 >0.9
-		or @v3apositiontaking_10 >0.9
-		or @v5apositiontaking_10 >0.9
-		or @v8apositiontaking_10 >0.9
-		or @v10apositiontaking_10 >0.9
-		or @v11apositiontaking_10 >0.9
-		or @v99apositiontaking_10 >0.9
+		or @v2apositiontaking_10 >0.93
+		or @v3apositiontaking_10 >0.93
+		or @v5apositiontaking_10 >0.93
+		or @v8apositiontaking_10 >0.93
+		or @v10apositiontaking_10 >0.93
+		or @v11apositiontaking_10 >0.93
+		or @v99apositiontaking_10 >0.93
 
 		or @v2spositiontaking_10  <  @v2mpositiontaking_10 
 		or @v3spositiontaking_10  <  @v3mpositiontaking_10 

@@ -545,6 +545,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 			- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 			- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+			- 20230921@Johnson: extend MaxPT = 0.93 [redmine:194132]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -714,59 +715,59 @@ BEGIN
 		UNION ALL SELECT @custid, 3, 1, 0, @spositiontaking_3, 0, @slivepositiontaking_3
 		UNION ALL SELECT @custid, 7, 1, 0, @spositiontaking_7, 0, @slivepositiontaking_7
 		UNION ALL SELECT @custid, 8, 1, 0, @spositiontaking_8, 0, @slivepositiontaking_8
-		UNION ALL SELECT @custid, 2, 1, 0, @spositiontaking_2, 0, 0.9
-		UNION ALL SELECT @custid, 4, 1, 0, @spositiontaking_4, 0, 0.9
-		UNION ALL SELECT @custid, 5, 1, 0, @spositiontaking_5, 0, 0.9
-		UNION ALL SELECT @custid, 6, 1, 0, @spositiontaking_6, 0, 0.9
-		UNION ALL SELECT @custid, 9, 1, 0, @spositiontaking_9, 0, 0.9
-		UNION ALL SELECT @custid, 10, 1, 0, @spositiontaking_10, 0, 0.9
-		UNION ALL SELECT @custid, 10, 2, 0, @v2spositiontaking_10, 0, 0.9
-		UNION ALL SELECT @custid, 10, 3, 0, @v3spositiontaking_10, 0, 0.9
-		UNION ALL SELECT @custid, 10, 5, 0, @v5spositiontaking_10, 0, 0.9
-		UNION ALL SELECT @custid, 10, 8, 0, @v8spositiontaking_10, 0, 0.9
-		UNION ALL SELECT @custid, 10, 10, 0, @v10spositiontaking_10, 0, 0.9
-		UNION ALL SELECT @custid, 10, 11, 0, @v11spositiontaking_10, 0, 0.9
-		UNION ALL SELECT @custid, 10, 99, 0, @v99spositiontaking_10, 0, 0.9
-		UNION ALL SELECT @custid, 9999, 1, 0, @spositiontaking_9999, 0, 0.9
+		UNION ALL SELECT @custid, 2, 1, 0, @spositiontaking_2, 0, 0.93
+		UNION ALL SELECT @custid, 4, 1, 0, @spositiontaking_4, 0, 0.93
+		UNION ALL SELECT @custid, 5, 1, 0, @spositiontaking_5, 0, 0.93
+		UNION ALL SELECT @custid, 6, 1, 0, @spositiontaking_6, 0, 0.93
+		UNION ALL SELECT @custid, 9, 1, 0, @spositiontaking_9, 0, 0.93
+		UNION ALL SELECT @custid, 10, 1, 0, @spositiontaking_10, 0, 0.93
+		UNION ALL SELECT @custid, 10, 2, 0, @v2spositiontaking_10, 0, 0.93
+		UNION ALL SELECT @custid, 10, 3, 0, @v3spositiontaking_10, 0, 0.93
+		UNION ALL SELECT @custid, 10, 5, 0, @v5spositiontaking_10, 0, 0.93
+		UNION ALL SELECT @custid, 10, 8, 0, @v8spositiontaking_10, 0, 0.93
+		UNION ALL SELECT @custid, 10, 10, 0, @v10spositiontaking_10, 0, 0.93
+		UNION ALL SELECT @custid, 10, 11, 0, @v11spositiontaking_10, 0, 0.93
+		UNION ALL SELECT @custid, 10, 99, 0, @v99spositiontaking_10, 0, 0.93
+		UNION ALL SELECT @custid, 9999, 1, 0, @spositiontaking_9999, 0, 0.93
 
-		UNION ALL SELECT @custid, 1, 2, 0, @v2spositiontaking_1, 0, 0.9
-		UNION ALL SELECT @custid, 2, 2, 0, @v2spositiontaking_2, 0, 0.9
-		UNION ALL SELECT @custid, 3, 2, 0, @v2spositiontaking_3, 0, 0.9
-		UNION ALL SELECT @custid, 7, 2, 0, @v2spositiontaking_7, 0, 0.9
-		UNION ALL SELECT @custid, 8, 2, 0, @v2spositiontaking_8, 0, 0.9
-		--UNION ALL select @custid, 9, 2, 0, @v2spositiontaking_9, 0, 0.9
-		UNION ALL SELECT @custid, 20, 2, 0, @v2spositiontaking_20, 0, 0.9
-		UNION ALL SELECT @custid, 9999, 2, 0, @v2spositiontaking_9999, 0, 0.9
+		UNION ALL SELECT @custid, 1, 2, 0, @v2spositiontaking_1, 0, 0.93
+		UNION ALL SELECT @custid, 2, 2, 0, @v2spositiontaking_2, 0, 0.93
+		UNION ALL SELECT @custid, 3, 2, 0, @v2spositiontaking_3, 0, 0.93
+		UNION ALL SELECT @custid, 7, 2, 0, @v2spositiontaking_7, 0, 0.93
+		UNION ALL SELECT @custid, 8, 2, 0, @v2spositiontaking_8, 0, 0.93
+		--UNION ALL select @custid, 9, 2, 0, @v2spositiontaking_9, 0, 0.93
+		UNION ALL SELECT @custid, 20, 2, 0, @v2spositiontaking_20, 0, 0.93
+		UNION ALL SELECT @custid, 9999, 2, 0, @v2spositiontaking_9999, 0, 0.93
 
-		UNION ALL SELECT @custid, 1, 3, 0, @v3spositiontaking_1, 0, 0.9
-		UNION ALL SELECT @custid, 2, 3, 0, @v3spositiontaking_2, 0, 0.9
-		UNION ALL SELECT @custid, 3, 3, 0, @v3spositiontaking_3, 0, 0.9
-		UNION ALL SELECT @custid, 20, 3, 0, @v3spositiontaking_20, 0, 0.9
+		UNION ALL SELECT @custid, 1, 3, 0, @v3spositiontaking_1, 0, 0.93
+		UNION ALL SELECT @custid, 2, 3, 0, @v3spositiontaking_2, 0, 0.93
+		UNION ALL SELECT @custid, 3, 3, 0, @v3spositiontaking_3, 0, 0.93
+		UNION ALL SELECT @custid, 20, 3, 0, @v3spositiontaking_20, 0, 0.93
 
-		UNION ALL SELECT @custid, 1, 5, 0, @v5spositiontaking_1, 0, 0.9
-		UNION ALL SELECT @custid, 2, 5, 0, @v5spositiontaking_2, 0, 0.9
-		UNION ALL SELECT @custid, 3, 5, 0, @v5spositiontaking_3, 0, 0.9
-		UNION ALL SELECT @custid, 20, 5, 0, @v5spositiontaking_20, 0, 0.9
-		UNION ALL SELECT @custid, 9999, 5, 0, @v5spositiontaking_9999, 0, 0.9
+		UNION ALL SELECT @custid, 1, 5, 0, @v5spositiontaking_1, 0, 0.93
+		UNION ALL SELECT @custid, 2, 5, 0, @v5spositiontaking_2, 0, 0.93
+		UNION ALL SELECT @custid, 3, 5, 0, @v5spositiontaking_3, 0, 0.93
+		UNION ALL SELECT @custid, 20, 5, 0, @v5spositiontaking_20, 0, 0.93
+		UNION ALL SELECT @custid, 9999, 5, 0, @v5spositiontaking_9999, 0, 0.93
 
-		UNION ALL SELECT @custid, 1, 8, 0, @v8spositiontaking_1, 0, 0.9
-		UNION ALL SELECT @custid, 3, 8, 0, @v8spositiontaking_3, 0, 0.9
-		UNION ALL SELECT @custid, 20, 8, 0, @v8spositiontaking_20, 0, 0.9
+		UNION ALL SELECT @custid, 1, 8, 0, @v8spositiontaking_1, 0, 0.93
+		UNION ALL SELECT @custid, 3, 8, 0, @v8spositiontaking_3, 0, 0.93
+		UNION ALL SELECT @custid, 20, 8, 0, @v8spositiontaking_20, 0, 0.93
 
-		UNION ALL SELECT @custid, 1, 10, 0, @v10spositiontaking_1, 0, 0.9
-		UNION ALL SELECT @custid, 2, 10, 0, @v10spositiontaking_2, 0, 0.9
-		UNION ALL SELECT @custid, 3, 10, 0, @v10spositiontaking_3, 0, 0.9
-		UNION ALL SELECT @custid, 20, 10, 0, @v10spositiontaking_20, 0, 0.9
+		UNION ALL SELECT @custid, 1, 10, 0, @v10spositiontaking_1, 0, 0.93
+		UNION ALL SELECT @custid, 2, 10, 0, @v10spositiontaking_2, 0, 0.93
+		UNION ALL SELECT @custid, 3, 10, 0, @v10spositiontaking_3, 0, 0.93
+		UNION ALL SELECT @custid, 20, 10, 0, @v10spositiontaking_20, 0, 0.93
 
-		UNION ALL SELECT @custid, 1, 11, 0, @v11spositiontaking_1, 0, 0.9
-		UNION ALL SELECT @custid, 20, 11, 0, @v11spositiontaking_20, 0, 0.9
+		UNION ALL SELECT @custid, 1, 11, 0, @v11spositiontaking_1, 0, 0.93
+		UNION ALL SELECT @custid, 20, 11, 0, @v11spositiontaking_20, 0, 0.93
 
-		UNION ALL SELECT @custid, 1, 99, 0, @v99spositiontaking_1, 0, 0.9
-		UNION ALL SELECT @custid, 2, 99, 0, @v99spositiontaking_2, 0, 0.9
-		UNION ALL SELECT @custid, 3, 99, 0, @v99spositiontaking_3, 0, 0.9
-		UNION ALL SELECT @custid, 9, 99, 0, @v99spositiontaking_9, 0, 0.9
-		UNION ALL SELECT @custid, 20, 99, 0, @v99spositiontaking_20, 0, 0.9
-		UNION ALL SELECT @custid, 9999, 99, 0, @v99spositiontaking_9999, 0, 0.9
+		UNION ALL SELECT @custid, 1, 99, 0, @v99spositiontaking_1, 0, 0.93
+		UNION ALL SELECT @custid, 2, 99, 0, @v99spositiontaking_2, 0, 0.93
+		UNION ALL SELECT @custid, 3, 99, 0, @v99spositiontaking_3, 0, 0.93
+		UNION ALL SELECT @custid, 9, 99, 0, @v99spositiontaking_9, 0, 0.93
+		UNION ALL SELECT @custid, 20, 99, 0, @v99spositiontaking_20, 0, 0.93
+		UNION ALL SELECT @custid, 9999, 99, 0, @v99spositiontaking_9999, 0, 0.93
 	
 		IF @@ERROR <> 0
 		BEGIN
@@ -909,63 +910,63 @@ BEGIN
 		END		
 
 		INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-		select @custid, 1, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 7, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 8, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 4, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 5, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 6, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 3, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 8, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 10, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 11, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9999, 1, 0, 0.9, 0, 0.9
+		select @custid, 1, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 7, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 8, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 4, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 5, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 6, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 3, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 8, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 10, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 11, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9999, 1, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 7, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 8, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 2, 0, 0.9, 0, 0.9
-		--UNION ALL select @custid, 9, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9999, 2, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 7, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 8, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 2, 0, 0.93, 0, 0.93
+		--UNION ALL select @custid, 9, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9999, 2, 0, 0.93, 0, 0.93
 		
-		UNION ALL select @custid, 1, 3, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 3, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 3, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 3, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 3, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 3, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 3, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 3, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9999, 5, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9999, 5, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 8, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 8, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 8, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 8, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 8, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 8, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 10, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 10, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 10, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 10, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 10, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 10, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 10, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 10, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 11, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 11, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 11, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 11, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9999, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 99, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9999, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 99, 0, 0.93, 0, 0.93
 	
 		if @@Error <> 0
 		BEGIN
@@ -1105,63 +1106,63 @@ BEGIN
 		END		
 
 		INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-		select @custid, 1, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 7, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 8, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 4, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 5, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 6, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 1, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 3, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 8, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 10, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 11, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 10, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9999, 1, 0, 0.9, 0, 0.9
+		select @custid, 1, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 7, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 8, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 4, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 5, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 6, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 1, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 3, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 8, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 10, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 11, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 10, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9999, 1, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 7, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 8, 2, 0, 0.9, 0, 0.9
-		--UNION ALL select @custid, 9, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 2, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9999, 2, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 7, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 8, 2, 0, 0.93, 0, 0.93
+		--UNION ALL select @custid, 9, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 2, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9999, 2, 0, 0.93, 0, 0.93
 		
-		UNION ALL select @custid, 1, 3, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 3, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 3, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 3, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 3, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 3, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 3, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 3, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 5, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9999, 5, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 5, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9999, 5, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 8, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 8, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 8, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 8, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 8, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 8, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 10, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 10, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 10, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 10, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 10, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 10, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 10, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 10, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 11, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 11, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 11, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 11, 0, 0.93, 0, 0.93
 
-		UNION ALL select @custid, 1, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 2, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 3, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 20, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9999, 99, 0, 0.9, 0, 0.9
-		UNION ALL select @custid, 9, 99, 0, 0.9, 0, 0.9
+		UNION ALL select @custid, 1, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 2, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 3, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 20, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9999, 99, 0, 0.93, 0, 0.93
+		UNION ALL select @custid, 9, 99, 0, 0.93, 0, 0.93
 
 		if @@error <> 0
 		BEGIN

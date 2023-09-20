@@ -352,7 +352,7 @@ Revisions:
 	- 20210714@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20220620@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
-
+	- 20230921@Johnson: extend MaxPT = 0.93 [redmine:194132]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -2362,21 +2362,21 @@ if	@UpdatePositiontaking   = 1  or
 		if (@UpdateMultiple = 0 or @UpdatePositiontaking = 1)
 			BEGIN --@UpdatePositiontaking 
 				if 
-					@mpositiontaking_1  <0 OR @mpositiontaking_1  >0.9
-					OR @mpositiontaking_2  <0 OR @mpositiontaking_2  >0.9
-					OR @mpositiontaking_3  <0 OR @mpositiontaking_3  >0.9
-					OR @mpositiontaking_4  <0 OR @mpositiontaking_4  >0.9
-					OR @mpositiontaking_5  <0 OR @mpositiontaking_5  >0.9
-					OR @mpositiontaking_6  <0 OR @mpositiontaking_6  >0.9
-					OR @mpositiontaking_7  <0 OR @mpositiontaking_7  >0.9
-					OR @mpositiontaking_8  <0 OR @mpositiontaking_8  >0.9
-					OR @mpositiontaking_9  <0 OR @mpositiontaking_9  >0.9
-					OR @mpositiontaking_10 <0 OR @mpositiontaking_10 >0.9
-					OR @mpositiontaking_9999 <0 OR @mpositiontaking_9999 >0.9
-					OR @mlivepositiontaking_1  <0 OR @mlivepositiontaking_1  >0.9
-					OR @mlivepositiontaking_3  <0 OR @mlivepositiontaking_3  >0.9
-					OR @mlivepositiontaking_7  <0 OR @mlivepositiontaking_7  >0.9
-					OR @mlivepositiontaking_8  <0 OR @mlivepositiontaking_8  >0.9
+					@mpositiontaking_1  <0 OR @mpositiontaking_1  >0.93
+					OR @mpositiontaking_2  <0 OR @mpositiontaking_2  >0.93
+					OR @mpositiontaking_3  <0 OR @mpositiontaking_3  >0.93
+					OR @mpositiontaking_4  <0 OR @mpositiontaking_4  >0.93
+					OR @mpositiontaking_5  <0 OR @mpositiontaking_5  >0.93
+					OR @mpositiontaking_6  <0 OR @mpositiontaking_6  >0.93
+					OR @mpositiontaking_7  <0 OR @mpositiontaking_7  >0.93
+					OR @mpositiontaking_8  <0 OR @mpositiontaking_8  >0.93
+					OR @mpositiontaking_9  <0 OR @mpositiontaking_9  >0.93
+					OR @mpositiontaking_10 <0 OR @mpositiontaking_10 >0.93
+					OR @mpositiontaking_9999 <0 OR @mpositiontaking_9999 >0.93
+					OR @mlivepositiontaking_1  <0 OR @mlivepositiontaking_1  >0.93
+					OR @mlivepositiontaking_3  <0 OR @mlivepositiontaking_3  >0.93
+					OR @mlivepositiontaking_7  <0 OR @mlivepositiontaking_7  >0.93
+					OR @mlivepositiontaking_8  <0 OR @mlivepositiontaking_8  >0.93
 				BEGIN
 						SELECT @isvalid = 0, @ErrCode_cur = 5
 						SELECT @ErrMsg_cur = 	CASE @Language 
@@ -2681,16 +2681,16 @@ if	@UpdatePositiontaking   = 1  or
 	if (@UpdateMultiple = 0 or @UpdatePositiontakingv2 = 1)
 		BEGIN --@UpdatePositiontakingv2
 			IF 
-				@v2mpositiontaking_1 <0 OR @v2mpositiontaking_1 >0.9
-				OR @v2mpositiontaking_2 <0 OR @v2mpositiontaking_2 >0.9
-				OR @v2mpositiontaking_3 <0 OR @v2mpositiontaking_3 >0.9
-				OR @v2mpositiontaking_7 <0 OR @v2mpositiontaking_7 >0.9
-				OR @v2mpositiontaking_8 <0 OR @v2mpositiontaking_8 >0.9
-			--	OR @v2mpositiontaking_9 <0 OR @v2mpositiontaking_9 >0.9
-				OR @v2mpositiontaking_20 <0 OR @v2mpositiontaking_20 >0.9
-				OR @v2mpositiontaking_9999 <0 OR @v2mpositiontaking_9999 >0.9
+				@v2mpositiontaking_1 <0 OR @v2mpositiontaking_1 >0.93
+				OR @v2mpositiontaking_2 <0 OR @v2mpositiontaking_2 >0.93
+				OR @v2mpositiontaking_3 <0 OR @v2mpositiontaking_3 >0.93
+				OR @v2mpositiontaking_7 <0 OR @v2mpositiontaking_7 >0.93
+				OR @v2mpositiontaking_8 <0 OR @v2mpositiontaking_8 >0.93
+			--	OR @v2mpositiontaking_9 <0 OR @v2mpositiontaking_9 >0.93
+				OR @v2mpositiontaking_20 <0 OR @v2mpositiontaking_20 >0.93
+				OR @v2mpositiontaking_9999 <0 OR @v2mpositiontaking_9999 >0.93
 				
-				OR @v2mpositiontaking_10 <0 OR @v2mpositiontaking_10 >0.9
+				OR @v2mpositiontaking_10 <0 OR @v2mpositiontaking_10 >0.93
 			BEGIN
 				SELECT @isvalid = 0, @ErrCode_cur = 5
 				SELECT @ErrMsg_cur = 	CASE @Language 
@@ -2963,11 +2963,11 @@ if	@UpdatePositiontaking   = 1  or
 		if (@UpdateMultiple = 0 or @UpdatePositiontakingv3 = 1)
 		BEGIN --@UpdatePositiontakingv3 
 			IF 	
-				@v3mpositiontaking_1 <0 OR @v3mpositiontaking_1 >0.9
-				OR @v3mpositiontaking_2 <0 OR @v3mpositiontaking_2 >0.9
-				OR @v3mpositiontaking_3 <0 OR @v3mpositiontaking_3 >0.9
-				OR @v3mpositiontaking_20 <0 OR @v3mpositiontaking_20 >0.9				
-				OR @v3mpositiontaking_10 <0 OR @v3mpositiontaking_10 >0.9				
+				@v3mpositiontaking_1 <0 OR @v3mpositiontaking_1 >0.93
+				OR @v3mpositiontaking_2 <0 OR @v3mpositiontaking_2 >0.93
+				OR @v3mpositiontaking_3 <0 OR @v3mpositiontaking_3 >0.93
+				OR @v3mpositiontaking_20 <0 OR @v3mpositiontaking_20 >0.93				
+				OR @v3mpositiontaking_10 <0 OR @v3mpositiontaking_10 >0.93				
 				
 			BEGIN
 				SELECT @isvalid = 0, @ErrCode_cur = 5
@@ -3217,12 +3217,12 @@ if	@UpdatePositiontaking   = 1  or
 		if (@UpdateMultiple = 0 or  @UpdatePositiontakingv5 = 1 )
 		BEGIN --@UpdatePositiontakingv5
 			if 
-				@v5mpositiontaking_1 <0 OR @v5mpositiontaking_1 >0.9
-				OR @v5mpositiontaking_2 <0 OR @v5mpositiontaking_2 >0.9
-				OR @v5mpositiontaking_3 <0 OR @v5mpositiontaking_3 >0.9
-				OR @v5mpositiontaking_20 <0 OR @v5mpositiontaking_20 >0.9
-				OR @v5mpositiontaking_9999 <0 OR @v5mpositiontaking_9999 >0.9
-				OR @v5mpositiontaking_10 <0 OR @v5mpositiontaking_10 >0.9
+				@v5mpositiontaking_1 <0 OR @v5mpositiontaking_1 >0.93
+				OR @v5mpositiontaking_2 <0 OR @v5mpositiontaking_2 >0.93
+				OR @v5mpositiontaking_3 <0 OR @v5mpositiontaking_3 >0.93
+				OR @v5mpositiontaking_20 <0 OR @v5mpositiontaking_20 >0.93
+				OR @v5mpositiontaking_9999 <0 OR @v5mpositiontaking_9999 >0.93
+				OR @v5mpositiontaking_10 <0 OR @v5mpositiontaking_10 >0.93
 			BEGIN
 				SELECT @isvalid = 0, @ErrCode_cur = 5
 				SELECT @ErrMsg_cur = 	CASE @Language 
@@ -3478,10 +3478,10 @@ if	@UpdatePositiontaking   = 1  or
 		--Baseball
 		if (@UpdateMultiple = 0 or @UpdatePositiontakingv8 = 1 )
 			BEGIN --@UpdatePositiontakingv8 
-				if 	@v8mpositiontaking_1 <0 OR @v8mpositiontaking_1 >0.9
-					OR @v8mpositiontaking_3 <0  OR @v8mpositiontaking_3 >0.9
-					OR @v8mpositiontaking_20 <0 OR @v8mpositiontaking_20 >0.9					
-					OR @v8mpositiontaking_10 <0 OR @v8mpositiontaking_10 >0.9					
+				if 	@v8mpositiontaking_1 <0 OR @v8mpositiontaking_1 >0.93
+					OR @v8mpositiontaking_3 <0  OR @v8mpositiontaking_3 >0.93
+					OR @v8mpositiontaking_20 <0 OR @v8mpositiontaking_20 >0.93					
+					OR @v8mpositiontaking_10 <0 OR @v8mpositiontaking_10 >0.93					
 				BEGIN
 					SELECT @isvalid = 0, @ErrCode_cur = 5
 					SELECT @ErrMsg_cur = 	CASE @Language 
@@ -3725,11 +3725,11 @@ if	@UpdatePositiontaking   = 1  or
 		if (@UpdateMultiple = 0 or  @UpdatePositiontakingv10 = 1 )
 		BEGIN -- @UpdatePositiontakingv10
 			if 
-				 @v10mpositiontaking_1 <0 OR @v10mpositiontaking_1 >0.9
-				OR @v10mpositiontaking_2 <0 OR @v10mpositiontaking_2 >0.9
-				OR @v10mpositiontaking_3 <0 OR @v10mpositiontaking_3 >0.9
-				OR @v10mpositiontaking_20 <0 OR @v10mpositiontaking_20 >0.9				
-				OR @v10mpositiontaking_10 <0 OR @v10mpositiontaking_10 >0.9				
+				 @v10mpositiontaking_1 <0 OR @v10mpositiontaking_1 >0.93
+				OR @v10mpositiontaking_2 <0 OR @v10mpositiontaking_2 >0.93
+				OR @v10mpositiontaking_3 <0 OR @v10mpositiontaking_3 >0.93
+				OR @v10mpositiontaking_20 <0 OR @v10mpositiontaking_20 >0.93				
+				OR @v10mpositiontaking_10 <0 OR @v10mpositiontaking_10 >0.93				
 				
 			BEGIN
 				SELECT @isvalid = 0, @ErrCode_cur = 5
@@ -3974,9 +3974,9 @@ if	@UpdatePositiontaking   = 1  or
 		if (@UpdateMultiple = 0 or @UpdatePositiontakingv11 = 1)
 		BEGIN--@UpdatePositiontakingv11
 			if 
-				@v11mpositiontaking_1 <0 OR @v11mpositiontaking_1 >0.9
-				OR @v11mpositiontaking_20 <0 OR @v11mpositiontaking_20 >0.9				
-				OR @v11mpositiontaking_10 <0 OR @v11mpositiontaking_10 >0.9				
+				@v11mpositiontaking_1 <0 OR @v11mpositiontaking_1 >0.93
+				OR @v11mpositiontaking_20 <0 OR @v11mpositiontaking_20 >0.93				
+				OR @v11mpositiontaking_10 <0 OR @v11mpositiontaking_10 >0.93				
 			BEGIN
 				SELECT @isvalid = 0, @ErrCode_cur = 5
 				SELECT @ErrMsg_cur = 	CASE @Language 
@@ -4210,12 +4210,12 @@ if	@UpdatePositiontaking   = 1  or
 		if (@UpdateMultiple = 0 or @UpdatePositiontakingv99 = 1 )
 		BEGIN--@UpdatePositiontakingv99
 			if 
-				@v99mpositiontaking_1 <0 OR @v99mpositiontaking_1 >0.9
-				OR @v99mpositiontaking_2 <0 OR @v99mpositiontaking_2 >0.9
-				OR @v99mpositiontaking_3 <0 OR @v99mpositiontaking_3 >0.9
-				OR @v99mpositiontaking_20 <0 OR @v99mpositiontaking_20 >0.9							
-				OR @v99mpositiontaking_10 <0 OR @v99mpositiontaking_10 >0.9		
-				OR @v99mpositiontaking_9999 <0 OR @v99mpositiontaking_9999 >0.9							
+				@v99mpositiontaking_1 <0 OR @v99mpositiontaking_1 >0.93
+				OR @v99mpositiontaking_2 <0 OR @v99mpositiontaking_2 >0.93
+				OR @v99mpositiontaking_3 <0 OR @v99mpositiontaking_3 >0.93
+				OR @v99mpositiontaking_20 <0 OR @v99mpositiontaking_20 >0.93							
+				OR @v99mpositiontaking_10 <0 OR @v99mpositiontaking_10 >0.93		
+				OR @v99mpositiontaking_9999 <0 OR @v99mpositiontaking_9999 >0.93							
 			BEGIN
 				SELECT @isvalid = 0, @ErrCode_cur = 5
 				SELECT @ErrMsg_cur = 	CASE @Language 
@@ -4465,7 +4465,7 @@ if	@UpdatePositiontaking   = 1  or
 		if (@UpdateMultiple = 0 or  @UpdatePositiontakingv99MP = 1	)
 			BEGIN--@UpdatePositiontakingv99MP
 				if 			
-					@v99mpositiontaking_9 <0 OR @v99mpositiontaking_9 >0.9
+					@v99mpositiontaking_9 <0 OR @v99mpositiontaking_9 >0.93
 				BEGIN
 					SELECT @isvalid = 0, @ErrCode_cur = 5
 					SELECT @ErrMsg_cur = 	CASE @Language 
