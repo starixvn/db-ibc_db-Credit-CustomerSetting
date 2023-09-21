@@ -26,6 +26,7 @@ AS
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230921@Luke: Live Casino - Allow uncheck bet limit to control product status [Redmine: #194121]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -117,11 +118,15 @@ BEGIN
 
 	--Prevent users under 789y uncheck all Stakelevel
 	--Prevent uncheck all Stakelevel of member level for setting type 17,7
-	IF (@RoleID = 1 AND @SettingType = 17) OR @SystemID IN (6,7,8,9) --Restrict for Member Level of all sites for setting type 17 or 789y all level 
+	IF (@RoleID = 1 AND @SettingType IN (7,17)) OR @SystemID IN (6,7,8,9) --Restrict for Member Level of all sites for setting type 17 or 789y all level 
 		BEGIN
 		IF EXISTS (SELECT 1 
 					FROM #tmpStakeCheck WITH (NOLOCK)
 					WHERE StakeLevelList IS NULL OR StakeLevelList='')
+		AND NOT (
+				@Site IN ('733333', '722222') --Allow users under site: 733333, 722222 uncheck all StakeLevel on Live Casino products
+				AND @ProductID = 41
+			)
 		BEGIN
 				SELECT	@xml =	(
 											SELECT	10035												AS '@MsgID'
