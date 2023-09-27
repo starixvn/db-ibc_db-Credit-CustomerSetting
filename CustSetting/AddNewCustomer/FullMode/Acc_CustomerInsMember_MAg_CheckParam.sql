@@ -253,7 +253,7 @@ Revisions:
 	- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]		
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
-
+	- 20230921@Johnson: extend MaxPT = 0.93 [redmine:194132]
 Param's Explanation:
 • @ErrCode:
     = 0: check valid parameters successfully.
@@ -411,70 +411,70 @@ BEGIN TRY
 		-- mix parlay of mixed sports
 		or @v99apositiontaking_9 < 0			
 
-		or @apositiontaking_1  >0.9
-		or @apositiontaking_2  >0.9
-		or @apositiontaking_3  >0.9
-		or @apositiontaking_4  >0.9
-		or @apositiontaking_5  >0.9
-		or @apositiontaking_6  >0.9
-		or @apositiontaking_7  >0.9
-		or @apositiontaking_8  >0.9
-		or @apositiontaking_9  >0.9
-		or @apositiontaking_10 >0.9
-		or @v2apositiontaking_10 >0.9
-		or @v3apositiontaking_10 >0.9
-		or @v5apositiontaking_10 >0.9
-		or @v8apositiontaking_10 >0.9
-		or @v10apositiontaking_10 >0.9
-		or @v11apositiontaking_10 >0.9
-		or @v99apositiontaking_10 >0.9
-		or @apositiontaking_9999  >0.9
+		or @apositiontaking_1  >0.93
+		or @apositiontaking_2  >0.93
+		or @apositiontaking_3  >0.93
+		or @apositiontaking_4  >0.93
+		or @apositiontaking_5  >0.93
+		or @apositiontaking_6  >0.93
+		or @apositiontaking_7  >0.93
+		or @apositiontaking_8  >0.93
+		or @apositiontaking_9  >0.93
+		or @apositiontaking_10 >0.93
+		or @v2apositiontaking_10 >0.93
+		or @v3apositiontaking_10 >0.93
+		or @v5apositiontaking_10 >0.93
+		or @v8apositiontaking_10 >0.93
+		or @v10apositiontaking_10 >0.93
+		or @v11apositiontaking_10 >0.93
+		or @v99apositiontaking_10 >0.93
+		or @apositiontaking_9999  >0.93
 		
-		or @alivepositiontaking_1  >0.9
-		or @alivepositiontaking_3  >0.9
-		or @alivepositiontaking_7  >0.9
-		or @alivepositiontaking_8  >0.9
+		or @alivepositiontaking_1  >0.93
+		or @alivepositiontaking_3  >0.93
+		or @alivepositiontaking_7  >0.93
+		or @alivepositiontaking_8  >0.93
 		
-		or @v2apositiontaking_1  >0.9
-		or @v2apositiontaking_2  >0.9
-		or @v2apositiontaking_3  >0.9
-		or @v2apositiontaking_7  >0.9
-		or @v2apositiontaking_8  >0.9
-	--	or @v2apositiontaking_9  >0.9
-		or @v2apositiontaking_20  >0.9
-		or @v2apositiontaking_9999  >0.9
+		or @v2apositiontaking_1  >0.93
+		or @v2apositiontaking_2  >0.93
+		or @v2apositiontaking_3  >0.93
+		or @v2apositiontaking_7  >0.93
+		or @v2apositiontaking_8  >0.93
+	--	or @v2apositiontaking_9  >0.93
+		or @v2apositiontaking_20  >0.93
+		or @v2apositiontaking_9999  >0.93
 
-		or @v3apositiontaking_1  >0.9
-		or @v3apositiontaking_2  >0.9
-		or @v3apositiontaking_3  >0.9
-		or @v3apositiontaking_20  >0.9
+		or @v3apositiontaking_1  >0.93
+		or @v3apositiontaking_2  >0.93
+		or @v3apositiontaking_3  >0.93
+		or @v3apositiontaking_20  >0.93
 
-		or @v5apositiontaking_1  >0.9
-		or @v5apositiontaking_2  >0.9
-		or @v5apositiontaking_3  >0.9
-		or @v5apositiontaking_20  >0.9
-		or @v5apositiontaking_9999  >0.9
+		or @v5apositiontaking_1  >0.93
+		or @v5apositiontaking_2  >0.93
+		or @v5apositiontaking_3  >0.93
+		or @v5apositiontaking_20  >0.93
+		or @v5apositiontaking_9999  >0.93
 		
-		or @v8apositiontaking_1  >0.9
-		or @v8apositiontaking_3  >0.9
-		or @v8apositiontaking_20  >0.9
+		or @v8apositiontaking_1  >0.93
+		or @v8apositiontaking_3  >0.93
+		or @v8apositiontaking_20  >0.93
 
-		or @v10apositiontaking_1  >0.9
-		or @v10apositiontaking_2  >0.9
-		or @v10apositiontaking_3  >0.9
-		or @v10apositiontaking_20  >0.9
+		or @v10apositiontaking_1  >0.93
+		or @v10apositiontaking_2  >0.93
+		or @v10apositiontaking_3  >0.93
+		or @v10apositiontaking_20  >0.93
 
-		or @v11apositiontaking_1  >0.9
-		or @v11apositiontaking_20  >0.9
+		or @v11apositiontaking_1  >0.93
+		or @v11apositiontaking_20  >0.93
 
-		or @v99apositiontaking_1  >0.9
-		or @v99apositiontaking_2  >0.9
-		or @v99apositiontaking_3  >0.9
-		or @v99apositiontaking_20  >0.9
-		or @v99apositiontaking_9999  >0.9
+		or @v99apositiontaking_1  >0.93
+		or @v99apositiontaking_2  >0.93
+		or @v99apositiontaking_3  >0.93
+		or @v99apositiontaking_20  >0.93
+		or @v99apositiontaking_9999  >0.93
 
 		-- mix parlay of mixed sports
-		or @v99apositiontaking_9  > 0.9
+		or @v99apositiontaking_9  > 0.93
 			
 		or @mpositiontaking_1  <0
 		or @mpositiontaking_2  <0
@@ -541,70 +541,70 @@ BEGIN TRY
 		-- mix parlay of mixed sports
 		or @v99mpositiontaking_9  <0			
 
-		or @mpositiontaking_1  >0.9
-		or @mpositiontaking_2  >0.9
-		or @mpositiontaking_3  >0.9
-		or @mpositiontaking_4  >0.9
-		or @mpositiontaking_5  >0.9
-		or @mpositiontaking_6  >0.9
-		or @mpositiontaking_7  >0.9
-		or @mpositiontaking_8  >0.9
-		or @mpositiontaking_9  >0.9
-		or @mpositiontaking_10 >0.9
-		or @v2mpositiontaking_10 >0.9
-		or @v3mpositiontaking_10 >0.9
-		or @v5mpositiontaking_10 >0.9
-		or @v8mpositiontaking_10 >0.9
-		or @v10mpositiontaking_10 >0.9
-		or @v11mpositiontaking_10 >0.9
-		or @v99mpositiontaking_10 >0.9
-		or @mpositiontaking_9999  >0.9
+		or @mpositiontaking_1  >0.93
+		or @mpositiontaking_2  >0.93
+		or @mpositiontaking_3  >0.93
+		or @mpositiontaking_4  >0.93
+		or @mpositiontaking_5  >0.93
+		or @mpositiontaking_6  >0.93
+		or @mpositiontaking_7  >0.93
+		or @mpositiontaking_8  >0.93
+		or @mpositiontaking_9  >0.93
+		or @mpositiontaking_10 >0.93
+		or @v2mpositiontaking_10 >0.93
+		or @v3mpositiontaking_10 >0.93
+		or @v5mpositiontaking_10 >0.93
+		or @v8mpositiontaking_10 >0.93
+		or @v10mpositiontaking_10 >0.93
+		or @v11mpositiontaking_10 >0.93
+		or @v99mpositiontaking_10 >0.93
+		or @mpositiontaking_9999  >0.93
 		
-		or @mlivepositiontaking_1  >0.9
-		or @mlivepositiontaking_3  >0.9
-		or @mlivepositiontaking_7  >0.9
-		or @mlivepositiontaking_8  >0.9
+		or @mlivepositiontaking_1  >0.93
+		or @mlivepositiontaking_3  >0.93
+		or @mlivepositiontaking_7  >0.93
+		or @mlivepositiontaking_8  >0.93
 		
-		or @v2mpositiontaking_1  >0.9
-		or @v2mpositiontaking_2  >0.9
-		or @v2mpositiontaking_3  >0.9
-		or @v2mpositiontaking_7  >0.9
-		or @v2mpositiontaking_8  >0.9
-	--	or @v2mpositiontaking_9  >0.9
-		or @v2mpositiontaking_20  >0.9
-		or @v2mpositiontaking_9999  >0.9
+		or @v2mpositiontaking_1  >0.93
+		or @v2mpositiontaking_2  >0.93
+		or @v2mpositiontaking_3  >0.93
+		or @v2mpositiontaking_7  >0.93
+		or @v2mpositiontaking_8  >0.93
+	--	or @v2mpositiontaking_9  >0.93
+		or @v2mpositiontaking_20  >0.93
+		or @v2mpositiontaking_9999  >0.93
 
-		or @v3mpositiontaking_1  >0.9
-		or @v3mpositiontaking_2  >0.9
-		or @v3mpositiontaking_3  >0.9
-		or @v3mpositiontaking_20  >0.9
+		or @v3mpositiontaking_1  >0.93
+		or @v3mpositiontaking_2  >0.93
+		or @v3mpositiontaking_3  >0.93
+		or @v3mpositiontaking_20  >0.93
 
-		or @v5mpositiontaking_1  >0.9
-		or @v5mpositiontaking_2  >0.9
-		or @v5mpositiontaking_3  >0.9
-		or @v5mpositiontaking_20  >0.9
-		or @v5mpositiontaking_9999  >0.9
+		or @v5mpositiontaking_1  >0.93
+		or @v5mpositiontaking_2  >0.93
+		or @v5mpositiontaking_3  >0.93
+		or @v5mpositiontaking_20  >0.93
+		or @v5mpositiontaking_9999  >0.93
 
-		or @v8mpositiontaking_1  >0.9
-		or @v8mpositiontaking_3  >0.9
-		or @v8mpositiontaking_20  >0.9
+		or @v8mpositiontaking_1  >0.93
+		or @v8mpositiontaking_3  >0.93
+		or @v8mpositiontaking_20  >0.93
 
-		or @v10mpositiontaking_1  >0.9
-		or @v10mpositiontaking_2  >0.9
-		or @v10mpositiontaking_3  >0.9
-		or @v10mpositiontaking_20  >0.9
+		or @v10mpositiontaking_1  >0.93
+		or @v10mpositiontaking_2  >0.93
+		or @v10mpositiontaking_3  >0.93
+		or @v10mpositiontaking_20  >0.93
 
-		or @v11mpositiontaking_1  >0.9
-		or @v11mpositiontaking_20  >0.9
+		or @v11mpositiontaking_1  >0.93
+		or @v11mpositiontaking_20  >0.93
 
-		or @v99mpositiontaking_1  >0.9
-		or @v99mpositiontaking_2  >0.9
-		or @v99mpositiontaking_3  >0.9
-		or @v99mpositiontaking_20  >0.9
-		or @v99mpositiontaking_9999  >0.9
+		or @v99mpositiontaking_1  >0.93
+		or @v99mpositiontaking_2  >0.93
+		or @v99mpositiontaking_3  >0.93
+		or @v99mpositiontaking_20  >0.93
+		or @v99mpositiontaking_9999  >0.93
 
 		-- mix parlay of mixed sports
-		or @v99mpositiontaking_9  > 0.9
+		or @v99mpositiontaking_9  > 0.93
 		
 		--Auto Master PT
 		or @auto_mpositiontaking_1  <0
@@ -671,68 +671,68 @@ BEGIN TRY
 		-- mix parlay of mixed sports
 		or @auto_v99mpositiontaking_9 < 0			
 		
-		or @auto_mpositiontaking_1>0.9
-		or @auto_mpositiontaking_2>0.9
-		or @auto_mpositiontaking_3>0.9
-		or @auto_mpositiontaking_4>0.9
-		or @auto_mpositiontaking_5>0.9
-		or @auto_mpositiontaking_6>0.9
-		or @auto_mpositiontaking_7>0.9
-		or @auto_mpositiontaking_8>0.9
-		or @auto_mpositiontaking_9>0.9
-		or @auto_mpositiontaking_10>0.9
-		or @auto_v2mpositiontaking_10>0.9
-		or @auto_v3mpositiontaking_10>0.9
-		or @auto_v5mpositiontaking_10>0.9
-		or @auto_v8mpositiontaking_10>0.9
-		or @auto_v10mpositiontaking_10>0.9
-		or @auto_v11mpositiontaking_10>0.9
-		or @auto_v99mpositiontaking_10>0.9
-		or @auto_mpositiontaking_9999>0.9
-		or @auto_mlivepositiontaking_1>0.9
-		or @auto_mlivepositiontaking_3>0.9
-		or @auto_mlivepositiontaking_7>0.9
-		or @auto_mlivepositiontaking_8>0.9
+		or @auto_mpositiontaking_1>0.93
+		or @auto_mpositiontaking_2>0.93
+		or @auto_mpositiontaking_3>0.93
+		or @auto_mpositiontaking_4>0.93
+		or @auto_mpositiontaking_5>0.93
+		or @auto_mpositiontaking_6>0.93
+		or @auto_mpositiontaking_7>0.93
+		or @auto_mpositiontaking_8>0.93
+		or @auto_mpositiontaking_9>0.93
+		or @auto_mpositiontaking_10>0.93
+		or @auto_v2mpositiontaking_10>0.93
+		or @auto_v3mpositiontaking_10>0.93
+		or @auto_v5mpositiontaking_10>0.93
+		or @auto_v8mpositiontaking_10>0.93
+		or @auto_v10mpositiontaking_10>0.93
+		or @auto_v11mpositiontaking_10>0.93
+		or @auto_v99mpositiontaking_10>0.93
+		or @auto_mpositiontaking_9999>0.93
+		or @auto_mlivepositiontaking_1>0.93
+		or @auto_mlivepositiontaking_3>0.93
+		or @auto_mlivepositiontaking_7>0.93
+		or @auto_mlivepositiontaking_8>0.93
 		
-		or @auto_v2mpositiontaking_1>0.9
-		or @auto_v2mpositiontaking_2>0.9
-		or @auto_v2mpositiontaking_3>0.9
-		or @auto_v2mpositiontaking_7>0.9
-		or @auto_v2mpositiontaking_8>0.9
-	--	or @auto_v2mpositiontaking_9>0.9
-		or @auto_v2mpositiontaking_20>0.9
-		or @auto_v2mpositiontaking_9999>0.9
+		or @auto_v2mpositiontaking_1>0.93
+		or @auto_v2mpositiontaking_2>0.93
+		or @auto_v2mpositiontaking_3>0.93
+		or @auto_v2mpositiontaking_7>0.93
+		or @auto_v2mpositiontaking_8>0.93
+	--	or @auto_v2mpositiontaking_9>0.93
+		or @auto_v2mpositiontaking_20>0.93
+		or @auto_v2mpositiontaking_9999>0.93
 		
-		or @auto_v3mpositiontaking_1>0.9
-		or @auto_v3mpositiontaking_2>0.9
-		or @auto_v3mpositiontaking_3>0.9	
-		or @auto_v3mpositiontaking_20>0.9
+		or @auto_v3mpositiontaking_1>0.93
+		or @auto_v3mpositiontaking_2>0.93
+		or @auto_v3mpositiontaking_3>0.93	
+		or @auto_v3mpositiontaking_20>0.93
 		
-		or @auto_v5mpositiontaking_1>0.9
-		or @auto_v5mpositiontaking_2>0.9
-		or @auto_v5mpositiontaking_3>0.9	
-		or @auto_v5mpositiontaking_20>0.9
-		or @auto_v5mpositiontaking_9999>0.9
+		or @auto_v5mpositiontaking_1>0.93
+		or @auto_v5mpositiontaking_2>0.93
+		or @auto_v5mpositiontaking_3>0.93	
+		or @auto_v5mpositiontaking_20>0.93
+		or @auto_v5mpositiontaking_9999>0.93
 		
-		or @auto_v8mpositiontaking_1>0.9	
-		or @auto_v8mpositiontaking_3>0.9	
-		or @auto_v8mpositiontaking_20>0.9
+		or @auto_v8mpositiontaking_1>0.93	
+		or @auto_v8mpositiontaking_3>0.93	
+		or @auto_v8mpositiontaking_20>0.93
 		
-		or @auto_v10mpositiontaking_1>0.9
-		or @auto_v10mpositiontaking_2>0.9
-		or @auto_v10mpositiontaking_3>0.9	
-		or @auto_v10mpositiontaking_20>0.9
+		or @auto_v10mpositiontaking_1>0.93
+		or @auto_v10mpositiontaking_2>0.93
+		or @auto_v10mpositiontaking_3>0.93	
+		or @auto_v10mpositiontaking_20>0.93
 		
-		or @auto_v11mpositiontaking_1>0.9	
-		or @auto_v11mpositiontaking_20>0.9
+		or @auto_v11mpositiontaking_1>0.93	
+		or @auto_v11mpositiontaking_20>0.93
 		
-		or @auto_v99mpositiontaking_1>0.9
-		or @auto_v99mpositiontaking_2>0.9
-		or @auto_v99mpositiontaking_3>0.9	
-		or @auto_v99mpositiontaking_20>0.9
-		or @auto_v99mpositiontaking_9999>0.9
+		or @auto_v99mpositiontaking_1>0.93
+		or @auto_v99mpositiontaking_2>0.93
+		or @auto_v99mpositiontaking_3>0.93	
+		or @auto_v99mpositiontaking_20>0.93
+		or @auto_v99mpositiontaking_9999>0.93
 		-- mix parlay of mixed sports
-		or @auto_v99mpositiontaking_9 > 0.9		
+		or @auto_v99mpositiontaking_9 > 0.93		
 
 	BEGIN
 		select @isvalid = 0, @ErrCode = 3

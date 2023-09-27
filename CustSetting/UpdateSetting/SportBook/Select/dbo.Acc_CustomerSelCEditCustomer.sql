@@ -39,6 +39,7 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20230310@Tacy: NAP/Alpha - Split 789y site [RedmineID: #181596]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230920@Johnson: extend MaxPT = 0.93 [redmine:194132]
 Param's Explanation:
  - @CustID: super ID
 */
@@ -329,68 +330,68 @@ select
 	max(case when co.bettype = 9999 and co.sporttype=99 then co.minpositiontaking else 0 end) as v99spositiontaking_9999_min,	
 	
 	--l4 = s4, so hard code to make s4_max = 0.9
-	0.9 as spositiontaking_1_max,
-	0.9 as spositiontaking_2_max,
-	0.9 as spositiontaking_3_max,
-	0.9 as spositiontaking_4_max,
-	0.9 as spositiontaking_5_max,
-	0.9 as spositiontaking_6_max,
-	0.9 as spositiontaking_7_max,
-	0.9 as spositiontaking_8_max,
-	0.9 as spositiontaking_9_max, 
-	0.9 as spositiontaking_10_max, 
-	0.9 as spositiontaking_9999_max,
+	0.93 as spositiontaking_1_max,
+	0.93 as spositiontaking_2_max,
+	0.93 as spositiontaking_3_max,
+	0.93 as spositiontaking_4_max,
+	0.93 as spositiontaking_5_max,
+	0.93 as spositiontaking_6_max,
+	0.93 as spositiontaking_7_max,
+	0.93 as spositiontaking_8_max,
+	0.93 as spositiontaking_9_max, 
+	0.93 as spositiontaking_10_max, 
+	0.93 as spositiontaking_9999_max,
 
-	0.9 as slivepositiontaking_1_max,
-	0.9 as slivepositiontaking_3_max,
-	0.9 as slivepositiontaking_7_max,
-	0.9 as slivepositiontaking_8_max,
+	0.93 as slivepositiontaking_1_max,
+	0.93 as slivepositiontaking_3_max,
+	0.93 as slivepositiontaking_7_max,
+	0.93 as slivepositiontaking_8_max,
 
 	--v2	
-	0.9 as v2spositiontaking_1_max,
-	0.9 as v2spositiontaking_2_max,
-	0.9 as v2spositiontaking_3_max,
-	0.9 as v2spositiontaking_7_max,
-	0.9 as v2spositiontaking_8_max,	
+	0.93 as v2spositiontaking_1_max,
+	0.93 as v2spositiontaking_2_max,
+	0.93 as v2spositiontaking_3_max,
+	0.93 as v2spositiontaking_7_max,
+	0.93 as v2spositiontaking_8_max,	
 	
-	0.9 as v2spositiontaking_20_max,
-	0.9 as v2spositiontaking_9999_max,
+	0.93 as v2spositiontaking_20_max,
+	0.93 as v2spositiontaking_9999_max,
 
 	--v3
-	0.9 as v3spositiontaking_1_max,
-	0.9 as v3spositiontaking_2_max,
-	0.9 as v3spositiontaking_3_max,
-	0.9 as v3spositiontaking_20_max,	
+	0.93 as v3spositiontaking_1_max,
+	0.93 as v3spositiontaking_2_max,
+	0.93 as v3spositiontaking_3_max,
+	0.93 as v3spositiontaking_20_max,	
 
 	--v5
-	0.9 as v5spositiontaking_1_max,
-	0.9 as v5spositiontaking_2_max,
-	0.9 as v5spositiontaking_3_max,
-	0.9 as v5spositiontaking_20_max,	
-	0.9 as v5spositiontaking_9999_max,
+	0.93 as v5spositiontaking_1_max,
+	0.93 as v5spositiontaking_2_max,
+	0.93 as v5spositiontaking_3_max,
+	0.93 as v5spositiontaking_20_max,	
+	0.93 as v5spositiontaking_9999_max,
 
 	--v8
-	0.9 as v8spositiontaking_1_max,
-	0.9 as v8spositiontaking_3_max,
-	0.9 as v8spositiontaking_20_max,	
+	0.93 as v8spositiontaking_1_max,
+	0.93 as v8spositiontaking_3_max,
+	0.93 as v8spositiontaking_20_max,	
 
 	--v10
-	0.9 as v10spositiontaking_1_max,
-	0.9 as v10spositiontaking_2_max,
-	0.9 as v10spositiontaking_3_max,
-	0.9 as v10spositiontaking_20_max,	
+	0.93 as v10spositiontaking_1_max,
+	0.93 as v10spositiontaking_2_max,
+	0.93 as v10spositiontaking_3_max,
+	0.93 as v10spositiontaking_20_max,	
 
 	--v11
-	0.9 as v11spositiontaking_1_max,
-	0.9 as v11spositiontaking_20_max,	
+	0.93 as v11spositiontaking_1_max,
+	0.93 as v11spositiontaking_20_max,	
 
 	--v99
-	0.9 as v99spositiontaking_1_max,
-	0.9 as v99spositiontaking_2_max,
-	0.9 as v99spositiontaking_3_max,
-	0.9 as v99spositiontaking_9_max,
-	0.9 as v99spositiontaking_20_max,
-	0.9 as v99spositiontaking_9999_max,			
+	0.93 as v99spositiontaking_1_max,
+	0.93 as v99spositiontaking_2_max,
+	0.93 as v99spositiontaking_3_max,
+	0.93 as v99spositiontaking_9_max,
+	0.93 as v99spositiontaking_20_max,
+	0.93 as v99spositiontaking_9999_max,			
 	---------------------------------------------------------------------
 
 	max(case when cs.bettype = 1 and cs.sporttype=1 then cs.spositiontaking else 0 end) as spositiontaking_1,
@@ -580,13 +581,13 @@ select
 	
 	-- Provide dedicated Outright PT for each sport --
 	
-	0.9 as v2spositiontaking_10_max,
-	0.9 as v3spositiontaking_10_max,
-	0.9 as v5spositiontaking_10_max,
-	0.9 as v8spositiontaking_10_max,
-	0.9 as v10spositiontaking_10_max,
-	0.9 as v11spositiontaking_10_max,
-	0.9 as v99spositiontaking_10_max,
+	0.93 as v2spositiontaking_10_max,
+	0.93 as v3spositiontaking_10_max,
+	0.93 as v5spositiontaking_10_max,
+	0.93 as v8spositiontaking_10_max,
+	0.93 as v10spositiontaking_10_max,
+	0.93 as v11spositiontaking_10_max,
+	0.93 as v99spositiontaking_10_max,
 	
 	--- Outright PT for Super
 	max(case when cs.bettype = 10 and cs.sporttype=2 then cs.spositiontaking else 0 end) as v2spositiontaking_10,
