@@ -88,6 +88,8 @@ AS
 	- 20230302@Johnson: Return Basketball VR to its original state [redmine:#184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230718@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
+	- 20230915@Tacy: Alpha/NAP - Support to update siteLabel for MBC [Redmine: #194034]
+
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -198,7 +200,7 @@ BEGIN
 	END
 
 	--Check cross-site:
-	IF ( @source_SiteLabel IN ('789y','Nova88','IBC') OR @SiteLabel IN ('789y','Nova88','IBC') )
+	IF ( @source_SiteLabel IN ('789y','MBC','IBC') OR @SiteLabel IN ('789y','MBC','IBC') )
 		AND @SiteLabel<>@source_SiteLabel
 	BEGIN
 		SELECT	@ErrMsg='Cannot copy Super from ' + @_Site + ' (' + @source_SiteLabel + ') to ' + @Site + ' (' + @SiteLabel + ')',
