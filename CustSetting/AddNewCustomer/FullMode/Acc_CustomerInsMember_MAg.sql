@@ -443,6 +443,7 @@ Revisions:
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]	
 	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
 	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649]
+	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141]
 Param's Explanation:
 - @ErrCode:
     = 0: Create agent successfully.
@@ -2148,6 +2149,9 @@ BEGIN
 
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @mrecommend AND Type = 3)
 		SET @VRLockedStatus_Basketball = 1
+
+	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @mrecommend AND Type = 4)
+		SET @VRAccumulatedBalance = 1
 
     SELECT @LogSPData = '<Acc_CustomerInsMember_MAg custid="'+ COALESCE(CAST(@custid as VARCHAR(50)), SPACE(1)) + '" ' +
     'isinternal="'+ COALESCE(CAST(@IsInternal as VARCHAR(50)), SPACE(1)) + '" ' +
