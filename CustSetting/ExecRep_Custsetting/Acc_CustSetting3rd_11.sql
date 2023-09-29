@@ -18,6 +18,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting3rd_11]
 	,@EnableDownline BIT = 0
 	,@UpdBetLimit	VARCHAR(MAX) = NULL
 	,@UpdCurency BIT = 0
+	,@Option BIT = 0
 	,@Mode		VARCHAR(20) = 'NonSportbook'
 AS
 /*
@@ -40,6 +41,7 @@ AS
 		- 202202220@Elodie: Apply DCS for SB [RedmineID: #167898] 
 		- 20221109@Johnson: Add Saba & Saba cricket [redmine: #175659]
 	    - 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105
+	    - 20230929@Winfred: Bet Setting of players not updated in case update Player Bet Setting (all players) [redmine:#194669]
 	Param's Explanation:
 		
 */ 
@@ -447,16 +449,23 @@ BEGIN
 		FROM STRING_SPLIT(@ids,',') WHERE VALUE <> ''
 		IF @ProductID = 1 --Sportbook
 		BEGIN	
-			UPDATE cs WITH(UPDLOCK,ROWLOCK)
-			SET cs.minbet = CASE WHEN roleid IN (3,4) AND cs.minbet <= s.MinBet AND @UpdCurency = 0 THEN cs.MinBet ELSE s.MinBet END, 
-				cs.maxbet = CASE WHEN roleid IN (3,4) AND cs.MaxBet >= s.MaxBet AND @UpdCurency = 0 THEN cs.MaxBet ELSE s.MaxBet END,
-				cs.MaxPerMatch = CASE WHEN roleid IN (3,4) AND cs.MaxPerMatch >= s.MaxPerMatch AND @UpdCurency = 0 THEN cs.MaxPerMatch ELSE s.MaxPerMatch END , 
-				cs.MaxPayoutPerMatch = CASE WHEN roleid IN (3,4) AND cs.MaxPayoutPerMatch >= s.MaxPayoutPerMatch AND @UpdCurency = 0 THEN cs.MaxPayoutPerMatch ELSE s.MaxPayoutPerMatch END 
-			FROM dbo.Dep_CustBetSettingGame_Agent cs
-				INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cs.custid
-				INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
-			WHERE c.custid IN (SELECT custid FROM #tblCustSB)
-				AND roleid BETWEEN 2 AND 4
+			IF @Option  = 0
+			BEGIN
+				UPDATE cs WITH(UPDLOCK,ROWLOCK)
+				SET cs.minbet = CASE WHEN roleid IN (3,4) AND cs.minbet <= s.MinBet AND @UpdCurency = 0 
+									 THEN cs.MinBet ELSE s.MinBet END, 
+					cs.maxbet = CASE WHEN roleid IN (3,4) AND cs.MaxBet >= s.MaxBet AND @UpdCurency = 0 
+									 THEN cs.MaxBet ELSE s.MaxBet END,
+					cs.MaxPerMatch = CASE WHEN roleid IN (3,4) AND cs.MaxPerMatch >= s.MaxPerMatch AND @UpdCurency = 0 
+										  THEN cs.MaxPerMatch ELSE s.MaxPerMatch END , 
+					cs.MaxPayoutPerMatch = CASE WHEN roleid IN (3,4) AND cs.MaxPayoutPerMatch >= s.MaxPayoutPerMatch AND @UpdCurency = 0 
+												THEN cs.MaxPayoutPerMatch ELSE s.MaxPayoutPerMatch END 
+				FROM dbo.Dep_CustBetSettingGame_Agent cs
+					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cs.custid
+					INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
+				WHERE c.custid IN (SELECT custid FROM #tblCustSB)
+					AND roleid BETWEEN 2 AND 4
+			END
 
 			IF @ExistedMember = 1
 			BEGIN
