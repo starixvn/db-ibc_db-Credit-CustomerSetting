@@ -14,6 +14,7 @@ AS
 		- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 		- 20210128@Winfred: Check startrun when log master / Super [RedmineID: #149262]
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
+		- 20230818@Eden : Archive super level 789y [Redmine: #183447]
 */
 BEGIN
 
@@ -34,6 +35,18 @@ BEGIN
 	DECLARE @duration INT
 	DECLARE @UserID int = 360418
 	SET @startRun = GETDATE()
+
+	-- from agent to master
+	CREATE TABLE #AgentToMaster_Transfer (recommend INT, mrecommend INT,srecommend INT, agentName VARCHAR (50), masterName VARCHAR(50)
+				, currency INT,currencyName nvarchar(10), actualrate float, Isfinished BIT DEFAULT 0
+				)
+	CREATE TABLE #Master_tmp (CustID INT,username VARCHAR(50), Isfinished BIT DEFAULT 0)
+	CREATE TABLE #MasterToSuper_Transfer (srecommend INT, mrecommend INT,superName VARCHAR (50), masterName VARCHAR(50)
+				, currency INT,currencyName nvarchar(10), actualrate float, Isfinished BIT DEFAULT 0
+				)
+	CREATE TABLE #Super_tmp (CustID INT, username VARCHAR(50),Isfinished BIT DEFAULT 0)
+	CREATE TABLE #SuperList_Stage3(custid INT, username VARCHAR(50) , Isfinished BIT DEFAULT 0)
+	CREATE TABLE #Cust_ArchiveAccount_SuperStage3(CustID INT PRIMARY KEY, username VARCHAR(50))
 	
 	if exists(select 1 from DBACC.bodb02.dbo.SystemSettings with(nolock) where VName = 'aa_Status' AND VValue IN ('Stage 3 - Running','Stage 3 - Done'))
 	BEGIN
@@ -61,16 +74,6 @@ BEGIN
 		END
 		
 		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = 3
-
-		-- from agent to master
-		CREATE TABLE #AgentToMaster_Transfer (recommend INT, mrecommend INT,srecommend INT, agentName VARCHAR (50), masterName VARCHAR(50)
-					, currency INT,currencyName nvarchar(10), actualrate float, Isfinished BIT DEFAULT 0
-					)
-		CREATE TABLE #Master_tmp (CustID INT,username VARCHAR(50), Isfinished BIT DEFAULT 0)
-		CREATE TABLE #MasterToSuper_Transfer (srecommend INT, mrecommend INT,superName VARCHAR (50), masterName VARCHAR(50)
-					, currency INT,currencyName nvarchar(10), actualrate float, Isfinished BIT DEFAULT 0
-					)
-		CREATE TABLE #Super_tmp (CustID INT, username VARCHAR(50),Isfinished BIT DEFAULT 0)
 		
 		INSERT INTO #AgentToMaster_Transfer (recommend, mrecommend,srecommend,agentName, masterName, currency,currencyName, actualrate)
 		SELECT ci.custid,ci.mrecommend,ci.srecommend, ci.username, t.Master, ci.currency, e.currency,e.actualrate 
@@ -238,8 +241,58 @@ BEGIN
 					@duration = @duration
 			END	
 		END
+
+		INSERT INTO #Cust_ArchiveAccount_SuperStage3(CustID,username)
+		SELECT CustID,username
+		FROM DBCUST.CUSTDB.dbo.Cust_ArchiveAccount WITH(NOLOCK) 
+		WHERE roleid = 4
+			AND stageID = 3
+
+		--> Supers were deleted setting transfer balance to Finance 
+		INSERT INTO #SuperList_Stage3(custid,username)
+		SELECT DISTINCT ar.custid, ca.Username
+		FROM tmpCustGroupLevelArchived ar WITH(NOLOCK) 
+			INNER JOIN #Cust_ArchiveAccount_SuperStage3 ca WITH (NOLOCK) ON ar.custid = ca.CustID
+		WHERE ar.GroupLevelName IN ('S1','S0')
+			AND ar.Roleid = 4 
+
+		WHILE (1=1)
+		BEGIN
+			SELECT @ErrMsg = ''
+				
+			UPDATE TOP (1) t
+			SET  IsFinished = 1
+				, @custid_tmp = Custid 
+				, @supername = t.username
+			FROM #SuperList_Stage3 t 
+			WHERE IsFinished = 0	
+				
+			IF (@@ROWCOUNT = 0) BREAK
+
+			EXEC bodb02.dbo.DBA_ArchiveAccount3_ClearBalance_Super
+				@srecommend = @custid_tmp,
+				@UserID		= 10278938, --starixIT
+				@IP			= '125.227.140.97',
+				@ErrMsg		= @ErrMsg OUTPUT
+			
+			IF @ErrMsg <> ''
+			BEGIN
+				SET @msg = 'Stage 3 - Transfer Super ' + @supername + ' to Finance error: ' + @ErrMsg
+				RAISERROR(@msg, 0, 0) WITH NOWAIT	
+			END
+			ELSE
+			BEGIN
+				SET @msg = 'Stage 3 - Done transfer Super ' + @supername + ' to Finance'
+				RAISERROR(@msg, 0, 0) WITH NOWAIT	
+			END
+
+			WAITFOR DELAY '00:00:00.010'
+		END	
 	END
 	DROP TABLE #AgentToMaster_Transfer
 	DROP TABLE #MasterToSuper_Transfer
-	
+	DROP TABLE #Master_tmp
+	DROP TABLE #Super_tmp
+	DROP TABLE #SuperList_Stage3
+	DROP TABLE #Cust_ArchiveAccount_SuperStage3
 END

@@ -3,7 +3,8 @@ ALTER PROCEDURE [DBA_ArchiveAccount4_DelCustInfoMaster]
 	@AccName varchar(50),
 	@UserID int = 360418,
 	@ErrMsg nvarchar(200) = '' OUTPUT,
-	@ErrCode int = 0 OUTPUT
+	@ErrCode int = 0 OUTPUT,
+	@RoleID_Tmp TINYINT = 3
 AS
 /*
 		Description: Archive Phas 2
@@ -17,6 +18,7 @@ AS
 			- 20210225@Winfred: Check exists bettype 20000 and matchid = 0 ( use clustered index ) in bettrans [RedmineID: #149262]
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 			- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
+			- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
 */
 BEGIN
 	    
@@ -27,15 +29,17 @@ BEGIN
 	declare @duration int
 	set @startRun = getdate()
 
-	Declare @roleid int, @CustID int, @Enabled bit
+	Declare @roleid int, @CustID int, @Enabled bit, @Level varchar(10)
+	SELECT @Level = CASE WHEN @RoleID_Tmp = 3 THEN 'Master' ELSE  'Super' END
 
 	SELECT @roleid = roleid, @CustID = custid, @Enabled = Enabled
 	FROM custinfo (nolock)
 	WHERE username = @AccName
 
-	if isnull(@CustID,0) = 0 or @roleid NOT IN (3)
+	if isnull(@CustID,0) = 0 or @roleid <> @RoleID_Tmp
 	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'Invalid Master User Name', @ErrCode = 101
+		Select @ErrMsg = @AccName +':'+ 'Invalid '+ @Level +' User Name', @ErrCode = 101
+
 		print @ErrMsg
 		return
 	END
@@ -51,7 +55,7 @@ BEGIN
 		WHERE custid = @custid
 		)
 	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'Cust info data of this Master have not been backed-up yet. Auto backup activated.', @ErrCode = 10
+		Select @ErrMsg = @AccName +':'+ 'Cust info data of this '+ @Level +' have not been backed-up yet. Auto backup activated.', @ErrCode = 10
 		print @ErrMsg
 		--select @ErrMsg = ''
 		EXEC dbo.DBA_ArchiveAccount4_BackupCustInfoMaster @AccName=@AccName, @ErrMsg = @ErrMsg
@@ -70,8 +74,8 @@ BEGIN
 	
 	--Pre-check: Make sure @CustID not exists bettype 20000 in transfer
 	IF EXISTS(select 1 from DBACC.bodb02.dbo.transfer with (nolock) where custid = @CustID AND bettype = 20000)
-	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'This master exists bettype 20000 in transfer!', @ErrCode = 11
+	BEGIN	
+		Select @ErrMsg = @AccName +':'+ 'This ' + @Level + ' exists bettype 20000 in transfer!', @ErrCode = 11
 		print @ErrMsg
 		return
 	END
@@ -88,6 +92,7 @@ BEGIN
 	declare @LogSPData varchar(2000)
 
 	Select @LogSPData = '<DBA_ArchiveAccount4_DelCustInfoMaster AccName="'+ coalesce(cast(@AccName as varchar(50)),space(1))+ '" ' +
+						'Level="'+ coalesce(cast(@Level as varchar(50)),space(1)) + '" ' +
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+ '" ' +
 						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1))  + '"/>'

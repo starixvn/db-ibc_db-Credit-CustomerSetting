@@ -17,6 +17,7 @@ AS
 			- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 			- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+			- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
 */
     
 SET NOCOUNT ON
@@ -32,9 +33,9 @@ SELECT @roleid = roleid, @custid = custid, @Enabled = Enabled
 FROM custinfo (nolock)
 WHERE username = @AccName
 
-if isnull(@custid,0) = 0 or @roleid NOT in (3)
+if isnull(@custid,0) = 0 or @roleid NOT in (3,4)
 BEGIN
-	Select @ErrMsg = @AccName +':'+ 'Invalid Master User Name', @ErrCode = 101
+	Select @ErrMsg = @AccName +':'+ 'Invalid Master/Super User Name', @ErrCode = 101
 	print @ErrMsg
 	return
 END
@@ -45,7 +46,7 @@ IF EXISTS(
 	WHERE custid = @custid
 	)
 BEGIN
-	Select @ErrMsg = @AccName +':'+ 'Backup data of this agent already exist. Please check!', @ErrCode = 101
+	Select @ErrMsg = @AccName +':'+ 'Backup data of this Master/Super already exist. Please check!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg, Roleid) VALUES(@custid, @ErrMsg, 3) 
 	print @ErrMsg
 	return

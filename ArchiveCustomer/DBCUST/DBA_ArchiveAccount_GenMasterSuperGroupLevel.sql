@@ -23,6 +23,7 @@ AS
 		- 20220214@Eden: Exclude SuperID: 46195971 [RedmineID: #168423]
 		- 20220422@Eden: Exclude SuperID: 46379016 [RedmineID: #171821]
 		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
+		- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
 		
 	Param's Explanation:
 */
@@ -362,6 +363,28 @@ BEGIN
 		FROM #DirectMaster t
 			INNER JOIN tmpCustGroupLevelArchived ar WITH(ROWLOCK) ON ar.custid = t.CustID
 	END
+
+	--START ---#183447 - detect S0 whose downlines is deleted all before 
+	IF @StageId IN(3,4)
+	BEGIN
+		--Mark all supers is disabled and all their downline have remove custinfo as S0
+		INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
+		SELECT ci.CustID
+			, 4 AS RoleID
+			, 'S0' AS GroupLevelName
+			, @StageId AS StageID
+		FROM  custinfo ci  WITH(NOLOCK)
+			OUTER APPLY (   SELECT TOP 1 ci.custid
+							FROM custInfo d  WITH(NOLOCK)
+							WHERE d.srecommend = ci.CustID 
+							  AND d.custid <> ci.CustID
+          ) downline
+		WHERE downline.custid IS NULL
+			AND ci.roleid = 4
+			AND ci.Enabled = 0
+			AND ci.CustID NOT IN (SELECT custid FROM #SuperMaster_Exception)
+	END
+	--END ----#183447 - detect S0 whose downlines is deleted all before
 					 
 	DROP TABLE #tmpMaster
 	DROP TABLE #tmpSuper
@@ -371,7 +394,6 @@ BEGIN
 	DROP TABLE #M0NotInPreviousStage
 	DROP TABLE #Cust_ArchiveAccount_Master
 	DROP TABLE #DirectMaster
-	
 END
 GO
 
