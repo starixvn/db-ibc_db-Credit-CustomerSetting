@@ -25,6 +25,7 @@ ALTER PROCEDURE [DBA_ArchiveAccount3_ClearBalance_AgentMaster]
 			- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
 			- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 			- 20230524@Eden: Scale out DBTRANS for Credit  [Redmine: #181595]
+			- 20230818@Eden : Archive super level 789y [Redmine: #183447]
 */
 AS
 BEGIN
@@ -72,7 +73,7 @@ BEGIN
 	SET @Now = CURRENT_TIMESTAMP
 	--------------------------START:Agent-Master-------------------------------
 		
-	print @agentname +':'+ 'Agent-Master-->Agent:' + @agentname + ' ' + cast(@AgentBalance as varchar(30))
+	print @agentname +':'+ 'Agent-Master-->Agent:' + @agentname + ' ' + CONVERT(varchar(30),@AgentBalance,2)
 
 	EXEC Get_Refno_Transid @RefNo = @RefNo OUTPUT
 	EXEC Get_Bettrans_TransID @TransID = @TransID OUTPUT

@@ -22,6 +22,7 @@ AS
 		- 20210810@Eden: Edit stage 1 to resume when archive Agent Process [RedmineID: #155969]
 		- 20220620@Johnson: define temp table to avoid dump db [redmine:#174035]
 		- 20230623@Eden: Rearrange Stage 1 processing order for master/super level [Redmine: #188850]
+		- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
 	Param:
 		+ @stage: input stage to run archive
 */
@@ -150,7 +151,7 @@ BEGIN
 					, @GroupLevelName = GroupLevelName
 					, @ArchivedCustID = CustID
 				FROM #ArchiveMasterSuper_tmp t 
-				WHERE IsFinished = 0	
+				WHERE IsFinished = 0
 				ORDER BY t.roleid
 				
 				IF (@@ROWCOUNT = 0) BREAK
@@ -430,7 +431,16 @@ BEGIN
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
 			INNER JOIN dbo.custinfo ci WITH (NOLOCK)  ON ar.custid = ci.custid
 		WHERE ar.GroupLevelName IN ('M1','M0')
-		ORDER BY ar.Roleid
+
+		-- Delete S1,S0 789y Site (Some Headline)
+		INSERT INTO #ArchiveMasterSuper_tmp (CustID, GroupLevelName, RoleID, username)
+		SELECT ar.custid, ar.GroupLevelName, ar.Roleid, ci.username
+		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
+			INNER JOIN dbo.customer ci WITH (NOLOCK)  ON ar.custid = ci.custid
+			INNER JOIN dbo.Site s WITH(NOLOCK) ON s.site = ci.site AND s.SiteLabel = '789y'
+			CROSS APPLY dbo.f_CustSetting_GetHeadLineFromCustID (ar.custid) sp
+			--INNER JOIN dbo.f_CustSetting_GetArchiveHeadline () h ON sp.HeadlineID = h.headlineID 
+		WHERE ar.GroupLevelName IN ('S1','S0')
 		
 		IF EXISTS (SELECT TOP (1) 1 FROM #ArchiveMasterSuper_tmp)
 		BEGIN
@@ -439,30 +449,34 @@ BEGIN
 				SELECT @ErrMsg = ''
 				SELECT @ProcessedDate = GETDATE()
 				
-				UPDATE TOP (1) t
-					SET  IsFinished = 1
-						, @S1M1_username = username
+				SELECT TOP (1)
+						  @S1M1_username = username
 						, @GroupLevelName = GroupLevelName
 						, @ArchivedCustID = t.CustID
 						, @roleid_tmp = t.RoleID
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
+				ORDER BY t.RoleID
 				
 				IF (@@ROWCOUNT = 0) BREAK
-				
-				EXEC dbo.DBA_ArchiveAccount3_DelCustSettingMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
+			
+				EXEC dbo.DBA_ArchiveAccount3_DelCustSettingMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT, @roleid_tmp = @roleid_tmp
 
 				--> Insert data for Cust_ArchiveAccount
-				IF ISNULL(@ErrMsg,'') = '' AND @roleid_tmp = 3
+				IF ISNULL(@ErrMsg,'') = '' AND @roleid_tmp IN (3,4)
 					EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 						@CustId = @ArchivedCustID,
-						@RoleID = 3,
+						@RoleID = @roleid_tmp,
 						@StageID = @stage,
 						@ProcessedDate = @ProcessedDate,
 						@ArchivedDate = @ArchivedDate
 				
 				SET @msg = 'Stage 3 - Done Delete Setting for '+ @GroupLevelName + ':' + @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
+
+				UPDATE #ArchiveMasterSuper_tmp 
+				SET IsFinished = 1
+				WHERE CustID = @ArchivedCustID
 				
 				WAITFOR DELAY '00:00:00.010'
 				
@@ -475,18 +489,25 @@ BEGIN
 		TRUNCATE TABLE ArchivedMasterAgent_Stage3
 		CREATE TABLE #Masterlist_Stage3(custid INT)
 		CREATE TABLE #AgentList_Stage3(custid INT)
+		CREATE TABLE #SuperList_Stage3(custid INT)
 		
 		INSERT INTO #Masterlist_Stage3(custid)
 		SELECT DISTINCT ar.custid
 		FROM tmpCustGroupLevelArchived ar WITH(NOLOCK) 
-			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.custid = ca.CustID AND ca.ArchivedDate = @ArchivedDate
+			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.custid = ca.CustID AND ca.ArchivedDate = @ArchivedDate AND ca.StageID = 3
 		WHERE GroupLevelName IN ('M1','M0')
 			
 		INSERT INTO #AgentList_Stage3(custid)
 		SELECT DISTINCT ar.recommend AS CustID		
 		FROM tmpCustArchived ar WITH(NOLOCK) 
-			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.recommend = ca.CustID AND ca.ArchivedDate = @ArchivedDate
+			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.recommend = ca.CustID AND ca.ArchivedDate = @ArchivedDate AND ca.StageID = 3
 		WHERE IsFinished = 1 AND ISNULL(ErrMsg,'') = ''
+
+		INSERT INTO #SuperList_Stage3(custid)
+		SELECT DISTINCT ar.custid
+		FROM tmpCustGroupLevelArchived ar WITH(NOLOCK) 
+			INNER JOIN Cust_ArchiveAccount ca WITH (NOLOCK) ON ar.custid = ca.CustID AND ca.ArchivedDate = @ArchivedDate AND ca.StageID = 3
+		WHERE GroupLevelName IN ('S1','S0')
 
 		INSERT INTO ArchivedMasterAgent_Stage3(CustID,username,Level)
 		SELECT s.CustID,
@@ -497,6 +518,7 @@ BEGIN
 		WHERE c.roleid = 2
 			AND c.Enabled = 0
 			AND NOT EXISTS( SELECT 1 FROM #Masterlist_Stage3 WHERE custid = c.mrecommend)
+			AND NOT EXISTS( SELECT 1 FROM #SuperList_Stage3 WHERE custid = c.srecommend)
 		UNION ALL 
 		SELECT s.CustID,
 			c.username,
@@ -505,10 +527,20 @@ BEGIN
 			INNER JOIN custInfo c WITH(NOLOCK) ON s.CustID = c.custid
 		WHERE c.roleid = 3
 			AND c.Enabled = 0
+			AND NOT EXISTS( SELECT 1 FROM #SuperList_Stage3 WHERE custid = c.srecommend)
+		UNION ALL 
+		SELECT s.CustID,
+			c.username,
+			'Super' AS [Level]
+		FROM #SuperList_Stage3 s 
+			INNER JOIN custInfo c WITH(NOLOCK) ON s.CustID = c.custid
+		WHERE c.roleid = 4
+			AND c.Enabled = 0
 		
 		DROP TABLE #AgentList_Stage3
 		DROP TABLE #Masterlist_Stage3
-		
+		DROP TABLE #SuperList_Stage3
+
 		Print 'ArchivedMasterAgent_Stage3: END'
 
 	END
@@ -555,7 +587,16 @@ BEGIN
 		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
 			INNER JOIN dbo.custinfo ci WITH (NOLOCK)  ON ar.custid = ci.custid
 		WHERE ar.GroupLevelName IN ('M1','M0')
-		ORDER BY ar.Roleid
+
+		-- Delete S1,S0 789y Site (Some Headline)
+		INSERT INTO #ArchiveMasterSuper_tmp (CustID, GroupLevelName, RoleID, username)
+		SELECT ar.custid, ar.GroupLevelName, ar.Roleid, ci.username
+		FROM dbo.tmpCustGroupLevelArchived ar WITH (NOLOCK)
+			INNER JOIN dbo.customer ci WITH (NOLOCK)  ON ar.custid = ci.custid
+			INNER JOIN dbo.Site s WITH(NOLOCK) ON s.site = ci.site AND s.SiteLabel = '789y'
+			CROSS APPLY dbo.f_CustSetting_GetHeadLineFromCustID (ar.custid) sp
+			--INNER JOIN dbo.f_CustSetting_GetArchiveHeadline () h ON sp.HeadlineID = h.headlineID 
+		WHERE ar.GroupLevelName IN ('S1','S0')
 		
 		IF EXISTS (SELECT TOP (1) 1 FROM #ArchiveMasterSuper_tmp)
 		BEGIN
@@ -564,29 +605,34 @@ BEGIN
 				SELECT @ErrMsg = ''
 				SELECT @ProcessedDate = GETDATE()
 				
-				UPDATE TOP (1) t
-					SET  IsFinished = 1
-						, @S1M1_username = username
-						, @GroupLevelName = GroupLevelName
-						, @ArchivedCustID = t.CustID
+				SELECT TOP (1)
+					  @S1M1_username = username
+					, @GroupLevelName = GroupLevelName
+					, @ArchivedCustID = t.CustID
+					, @roleid_tmp = t.RoleID
 				FROM #ArchiveMasterSuper_tmp t 
 				WHERE IsFinished = 0	
+				ORDER BY t.RoleID
 				
 				IF (@@ROWCOUNT = 0) BREAK
-				
-				EXEC dbo.DBA_ArchiveAccount4_DelCustInfoMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT
+			
+				EXEC dbo.DBA_ArchiveAccount4_DelCustInfoMaster @AccName = @S1M1_username, @ErrMsg = @ErrMsg OUTPUT , @roleid_tmp = @roleid_tmp
 
 				-->Update data from Cust_ArchiveAccount		
-				IF ISNULL(@ErrMsg,'') = ''
+				IF ISNULL(@ErrMsg,'') = '' AND @roleid_tmp IN(3,4)
 					EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 						@CustId = @ArchivedCustID,
-						@RoleID = 3,
+						@RoleID = @roleid_tmp,
 						@StageID = @stage,
 						@ProcessedDate = @ProcessedDate,
 						@ArchivedDate = @ArchivedDate
 				
 				SET @msg = 'Stage 4 - Done Delete Customer Information for ' + @GroupLevelName +':'+  @S1M1_username + CHAR(13)
 				RAISERROR(@msg, 0, 0) WITH NOWAIT	
+
+				UPDATE #ArchiveMasterSuper_tmp 
+				SET IsFinished = 1
+				WHERE CustID = @ArchivedCustID
 				
 				WAITFOR DELAY '00:00:00.010'
 				

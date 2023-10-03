@@ -14,6 +14,7 @@ AS
 		
 		Revisions:    
 			- 20230608@Danny: Clear super balance [Redmine:183447]	
+			- 20230818@Eden : Archive super level 789y [Redmine: #183447]
 */
 BEGIN
 
@@ -97,6 +98,13 @@ BEGIN
 	IF @Balance = 0
 		RETURN
 
+	--Ger sitelabel of super
+	DECLARE @Sitelabel varchar(50)
+	SELECT @Sitelabel = s.SiteLabel
+	FROM custdb.dbo.customer c WITH(NOLOCK)
+		INNER JOIN custdb.dbo.Site s WITH(NOLOCK) On s.site = c.site
+	WHERE c.custid = @srecommend
+
 	-- Start transfer
 	DECLARE  @GetHeadLineFromCustID TABLE (custID INT, HeadlineID INT) 
 	DECLARE @sql VARCHAR(4000) = '
@@ -105,10 +113,12 @@ BEGIN
 	INSERT INTO @GetHeadLineFromCustID
 	EXEC( @sql)
 
-	SELECT  @toCustID =  h.FinanceCode
+	SELECT  @toCustID =  CASE WHEN h.FinanceCode IS NOT NULL THEN h.FinanceCode
+							  WHEN h.FinanceCode IS NULL AND @Sitelabel = '789y' THEN 14835730 --THAUSD
+						 END
 	FROM  CustDB.dbo.custinfo ci WITH(NOLOCK)
 	  CROSS APPLY @GetHeadLineFromCustID sp
-	  INNER JOIN dbo.f_CustSetting_GetArchiveHeadline () h
+	  LEFT JOIN dbo.f_CustSetting_GetArchiveHeadline () h
 		ON sp.HeadlineID = h.headlineID 
 	WHERE ci.roleid = 4
 	  AND ci.custid = @srecommend

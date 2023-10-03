@@ -3,7 +3,8 @@ ALTER PROCEDURE [DBA_ArchiveAccount3_DelCustSettingMaster]
 	@AccName varchar(50),
 	@UserID int = 360418,
 	@ErrMsg nvarchar(200) = '' OUTPUT,
-	@ErrCode int = 0 OUTPUT
+	@ErrCode int = 0 OUTPUT,
+	@RoleID_Tmp TINYINT = 3
 AS
 /*
 		Description: Disable an Master, Super
@@ -13,6 +14,7 @@ AS
 		
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
+			- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -22,15 +24,16 @@ BEGIN
 	declare @duration int
 	set @startRun = getdate()
 
-	Declare @roleid int, @CustID int, @Enabled bit
+	Declare @roleid int, @CustID int, @Enabled bit, @Level varchar(10)
+	SELECT @Level = CASE WHEN @RoleID_Tmp = 3 THEN 'Master' ELSE  'Super' END
 
 	SELECT @roleid = roleid, @CustID = custid, @Enabled = Enabled
 	FROM custinfo (nolock)
 	WHERE username = @AccName
 
-	if isnull(@CustID,0) = 0 or @roleid NOT IN (3)
+	if isnull(@CustID,0) = 0 or @roleid <> @RoleID_Tmp
 	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'Invalid Master User Name', @ErrCode = 101
+		Select @ErrMsg = @AccName +':'+ 'Invalid ' + @Level + ' User Name', @ErrCode = 101
 		print @ErrMsg
 		return
 	END
@@ -46,7 +49,7 @@ BEGIN
 		WHERE custid = @CustID 
 		)
 	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'Cust setting data of this agent have not been backed-up yet. Auto backup activated', @ErrCode = 10
+		Select @ErrMsg = @AccName +':'+ 'Cust setting data of this ' + @Level + ' have not been backed-up yet. Auto backup activated', @ErrCode = 10
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@CustID,@ErrMsg,3) 
 		print @ErrMsg
 		select @ErrMsg = ''
@@ -65,7 +68,8 @@ BEGIN
 	------------------
 	declare @LogSPData varchar(2000)
 
-	Select @LogSPData = '<DBA_ArchiveAccount3_DelCustSetting AccName="'+ coalesce(cast(@AccName as varchar(50)),space(1))+ '" ' +
+	Select @LogSPData = '<DBA_ArchiveAccount3_DelCustSettingMaster AccName="'+ coalesce(cast(@AccName as varchar(50)),space(1))+ '" ' +
+						'Level="'+ coalesce(cast(@Level as varchar(50)),space(1)) + '" ' +
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+ '" ' +
 						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1))  + '"/>'

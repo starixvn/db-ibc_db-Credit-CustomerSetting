@@ -24,6 +24,7 @@ Revisions:
 	- 20220907@Eden: Scale out DBTrans [RedmineID: #158293]
 	- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 	- 20230524@Eden: Scale out DBTRANS for Credit  [Redmine: #181595]
+	- 20230818@Eden : Archive super level 789y [Redmine: #183447]
 Note:
 --Pre-check needed:
 	--+Closed status
@@ -177,7 +178,7 @@ FETCH NEXT FROM CS_custid INTO @custid, @recommend, @mrecommend, @srecommend, @c
 
 WHILE @@FETCH_STATUS = 0
 BEGIN		
-		print @AccName +':'+ 'MEMBER-AGENT-->Member:' + @membername + ' ' + cast(@memberBalance as varchar(30))
+		print @AccName +':'+ 'MEMBER-AGENT-->Member:' + @membername + ' ' + CONVERT(varchar(30),@memberBalance,2)
 	
 		EXEC Get_Refno_Transid @RefNo = @RefNo OUTPUT
 		EXEC Get_Bettrans_TransID @TransID = @TransID OUTPUT
