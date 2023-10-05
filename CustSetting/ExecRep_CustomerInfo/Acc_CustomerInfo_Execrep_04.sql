@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT				
 				,	@roleid						TINYINT			
 				,	@action						VARCHAR(30)		= ''
@@ -24,7 +24,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_04] @custid						INT
 				,	@DisableAllMembers 			BIT 			= NULL
 				
 				,	@DisableSuperLive			BIT				= 0
-				,	@DisableColossusBet			BIT				= 0				
 				,	@AutoSuspendSoccer			BIT				= 0
 				,	@AutoSuspendOtherSports		BIT				= 0
 				,	@AutoSuspendBasketball		BIT				= 0
@@ -82,6 +81,7 @@ AS
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20221103@Johnson: Change data type of CustSettingAutoSuspend [Redmine: #179782]
 		- 20221207@Johnson: update setting for sub-bettype for Esport is 'Follow parent' [redmine: #177594]
+		- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
 		- 20230302@Johnson: Add auto suspend for basketball and return Basketball VR to its original state [redmine:#184339]
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
@@ -1193,36 +1193,6 @@ BEGIN
 	    END;
     END;
     
-    ELSE IF @Action = 'ColossusBet'  
-	BEGIN  
-		IF (@roleID = 4)  
-		BEGIN  
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableColossusBet = @DisableColossusBet,  
-					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END    
-				WHERE CustID <> @CustID  
-					AND SRecommend = @CustID;  
-		END;  
-
-		IF (@roleID = 3)  
-		BEGIN  
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-				SET DisableColossusBet = @DisableColossusBet,  
-					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
-				WHERE CustID <> @CustID  
-					AND MRecommend = @CustID; 
-		END;  
-
-		IF (@roleID = 2)  
-		BEGIN  
-				UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK)   
-					SET DisableColossusBet = @DisableColossusBet,  
-					HideColossusBet = CASE WHEN HideColossusBet = 1 THEN 0 ELSE HideColossusBet END      
-				WHERE CustID <> @CustID  
-					AND Recommend = @CustID;  
-		END;  
-	END;    
-
 	ELSE IF	@action = 'EnableVirtualMultiplier'
 	BEGIN
 		DECLARE	@tblEnableVirtualrate	TABLE (CustIDs VARCHAR(MAX))
