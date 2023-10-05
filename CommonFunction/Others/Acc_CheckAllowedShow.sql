@@ -4,7 +4,6 @@ ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
 				,	@AllowedVS				BIT = 0		OUTPUT
 				,	@AllowedLiveCasino		BIT = 0		OUTPUT
 				,	@AllowedVoidBridge		BIT = 0		OUTPUT
-				,	@AllowedFishingWorld	BIT = 0		OUTPUT
 				,	@AllowedRNGLottery		BIT = 0		OUTPUT
 				,	@AllowedVirtualGames	BIT = 0		OUTPUT
 				,	@AllowedSabaClub		BIT = 0		OUTPUT
@@ -58,6 +57,7 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20221130@Tacy: Non-sports products - Remove GDG and Fishing World [RedmineID: #174511]
 	- 20230519@Luke: YeeBet - Integrate new Live Casino product [Redmine: #186046]
 	- 20230628@Tacy: NG2 - Remove Setting [Redmine: #189762]
 	- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
@@ -75,7 +75,6 @@ Revisions:
 			
 	DECLARE	@IsHideVoidBridge		INT
 		,	@IsHiddenLottery		INT 
-		,	@IsHideFishingWorld		INT
 		,	@IsHideVS				INT
 		,	@IsHideVG				INT
 		,	@IsHideVG2				INT
@@ -89,7 +88,6 @@ Revisions:
 		,   @IsHiddenLiveCasino		INT = 1
 
 	DECLARE @bitOrderVB				INT 
-		,	@bitOrderFW				INT 
 		,	@bitOrderLottery		INT 
 		,   @bitOrderVS				INT
 		,	@bitmapOrder_VG			INT
@@ -104,7 +102,6 @@ Revisions:
 
 	SET @bitOrderVB = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
 	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1024)
-	SET @bitOrderFW = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 219 AND Bettype = 1011)
 	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9908 AND Bettype = 1201)
 	SET @bitmapOrder_VG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 245 AND Bettype = 4601)
 	SET @bitmapOrder_FGG = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 176 AND Bettype = 8201)
@@ -120,18 +117,6 @@ Revisions:
 	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
 	from custinfo with (nolock) where CustID=@CustID
 	
-	--For FishingWorld
-	EXEC Acc_CheckShowProduct @ProductID = 24, @SettingStatus = @SettingStatus, @IsHide = @IsHideFishingWorld OUTPUT
-	SELECT	@AllowedFishingWorld =	CASE	WHEN @RoleID = 4 AND @IsHideFishingWorld = 0 THEN 1
-										WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderFW) = 0
-											AND dbo.f_GetProductStatus(cps.bitmapHasSynced, @bitOrderFW) = 1
-											AND @IsHideFishingWorld = 0 
-											THEN 1
-										ELSE 0
-								END
-	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
-	WHERE	cps.CustID = @CustID
-
 	--For RNGLottery
 	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 220, @SettingStatus = @SettingStatus, @IsHide = @IsHiddenLottery OUTPUT
 	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 222, @SettingStatus = @SettingStatus, @IsHide = @IsHideTableGames OUTPUT
