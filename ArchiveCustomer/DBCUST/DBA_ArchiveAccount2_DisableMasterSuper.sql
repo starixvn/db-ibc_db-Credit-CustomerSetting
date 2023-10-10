@@ -24,6 +24,7 @@ AS
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 			- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 			- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
+			- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
 */
 BEGIN
 	    
@@ -96,7 +97,7 @@ BEGIN
                       0,
                       Abnormal, DoubleCommLosing,
                       autosuspend2, 0, DisableEsports, 0, 0,  
-                      DisableSuperLive, DisableColossusBet, HideColossusBet, 
+                      DisableSuperLive, 1,1, 
                       LockUpd, 0, BonusWalletFlag
 		from	custinfo (nolock)
 		WHERE custid = @CustID
