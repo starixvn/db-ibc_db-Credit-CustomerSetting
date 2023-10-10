@@ -31,6 +31,7 @@ AS
 		- 20220725@Tacy: change strSplit() UFD to STRING_SPLIT() SQL Function
 		- 20220808@Tacy: update member's StakeLevel by execrep when using Search & Copy New member function [RedmineID: #176225]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230921@Luke: Live Casino - Allow uncheck bet limit to control product status [Redmine: #194121]
 
 	Param's Explanation:
 		@StakeLevel:
@@ -769,7 +770,7 @@ BEGIN
 			,	@IP									AS '@IP'
 			,	(
 					SELECT	@ProductID				AS '@ProductID'
-						,	slle.StakeLevelList_old	AS '@StakeLevelList'
+						,	ISNULL(slle.StakeLevelList_old,'')	AS '@StakeLevelList'
 					FROM	#StakeLevelList_Excluded	AS slle
 					FOR XML PATH('StakeLevel')
 				,	TYPE
@@ -789,7 +790,7 @@ BEGIN
 			,	@IP									AS '@IP'
 			,	(
 					SELECT	ts.SportType			AS '@SportType'
-						,	slle.StakeLevelList_old	AS '@StakeLevelList'
+						,	ISNULL(slle.StakeLevelList_old,'')	AS '@StakeLevelList'
 					FROM		#tmpStake AS ts
 					INNER JOIN	#StakeLevelList_Excluded AS slle
 							ON	slle.BetType = ts.BetType
@@ -811,7 +812,7 @@ BEGIN
 			,	@IP									AS '@IP'
 			,	(
 					SELECT	slle.BetType			AS '@BetType'
-						,	slle.StakeLevelList_old	AS '@StakeLevelList'
+						,	ISNULL(slle.StakeLevelList_old,'')	AS '@StakeLevelList'
 					FROM	#StakeLevelList_Excluded AS slle
 					FOR XML PATH('StakeLevel')
 				,	TYPE
@@ -832,7 +833,7 @@ BEGIN
 			,	(
 					SELECT	ts.SportType			AS '@SportType'
 						,	slle.BetType			AS '@BetType'
-						,	slle.StakeLevelList_old	AS '@StakeLevelList'
+						,	ISNULL(slle.StakeLevelList_old,'')	AS '@StakeLevelList'
 					FROM		#tmpStake AS ts
 					INNER JOIN	#StakeLevelList_Excluded AS slle
 							ON	slle.BetType = ts.BetType
@@ -857,7 +858,7 @@ BEGIN
 			,	@IP									AS '@IP'
 			,	(
 					SELECT	@ProductID				AS '@ProductID'
-						,	ts.StakeLevelList		AS '@StakeLevelList'
+						,	ISNULL(ts.StakeLevelList,'')		AS '@StakeLevelList'
 					FROM	#tmpStake AS ts
 					FOR XML PATH('StakeLevel')
 				,	TYPE
@@ -877,7 +878,7 @@ BEGIN
 			,	@IP									AS '@IP'
 			,	(
 					SELECT	ts.SportType			AS '@SportType'
-						,	ts.StakeLevelList		AS '@StakeLevelList'
+						,	ISNULL(ts.StakeLevelList,'')		AS '@StakeLevelList'
 					FROM	#tmpStake AS ts
 					FOR XML PATH('StakeLevel')
 				,	TYPE
@@ -897,7 +898,7 @@ BEGIN
 			,	@IP									AS '@IP'
 			,	(
 					SELECT	ts.BetType				AS '@BetType'
-						,	ts.StakeLevelList		AS '@StakeLevelList'
+						,	ISNULL(ts.StakeLevelList,'')		AS '@StakeLevelList'
 					FROM	#tmpStake AS ts
 					FOR XML PATH('StakeLevel')
 				,	TYPE
@@ -918,7 +919,7 @@ BEGIN
 			,	(
 					SELECT	ts.SportType			AS '@SportType'
 						,	ts.BetType				AS '@BetType'
-						,	ts.StakeLevelList		AS '@StakeLevelList'
+						,	ISNULL(ts.StakeLevelList,'')		AS '@StakeLevelList'
 					FROM	#tmpStake AS ts
 					FOR XML PATH('StakeLevel')
 				,	TYPE
