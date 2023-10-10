@@ -19,6 +19,8 @@ AS
 			- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 			- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 			- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
+			- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
+
 */
 BEGIN  
 	SET NOCOUNT ON
@@ -100,7 +102,7 @@ BEGIN
                       0,
                       Abnormal, DoubleCommLosing,
                       autosuspend2, 0, DisableEsports, 0, 0,  
-                      DisableSuperLive, DisableColossusBet, HideColossusBet, 
+                      DisableSuperLive, 1,1, 
                       LockUpd, 0, BonusWalletFlag  
 	from	custinfo (nolock)
 	where	custid = @CustID

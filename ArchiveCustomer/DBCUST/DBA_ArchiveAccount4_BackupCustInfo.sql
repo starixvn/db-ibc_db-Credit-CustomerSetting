@@ -22,6 +22,8 @@ AS
 		- 20210923@Eden: Include newly created tables into Archive Credit Dormant Account process [redmine: #162050]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
+
 */
     
 SET NOCOUNT ON
@@ -103,7 +105,7 @@ select	@Now,
                       0,
                       Abnormal, DoubleCommLosing,
                       autosuspend2, 0, DisableEsports, 0, 0,  
-                      DisableSuperLive, DisableColossusBet, HideColossusBet, 
+                      DisableSuperLive, 1,1, 
                       LockUpd, 0, BonusWalletFlag
 from	custinfo (nolock)
 where	custid IN (	select custid from custinfo with (nolock) where recommend = @AgentID)
