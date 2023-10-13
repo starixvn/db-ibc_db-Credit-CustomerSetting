@@ -1,7 +1,9 @@
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MaxPayoutSelect] 
-	  @CustID		INT
-	, @SettingStatus TINYINT = 0
+	  @CustID			INT
+	, @GroupID			TINYINT	= 1
+	, @GroupType		TINYINT	= 152
+	, @SettingStatus		TINYINT	= 0
 AS
 /*
 	Created: 20210518@Winfred
@@ -12,33 +14,54 @@ AS
 	Revision: 
 		- 20210518@Winfred: Initial SP [RedmineID:#154104]
 		- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
+		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+
 	Param's Explanation:
+		- @GroupType:	152 - MaxPayout
 		- @SettingStatus: 0: Pro, 1: UAT
+
+	EXEC  [dbo].[Acc_CustSetting_MaxPayoutSelect_UAT2]
+		@CustId = 102596104,
+		@GroupID = 1 ,
+		@GroupType   = 152  ,
+		@SettingStatus = 3
 		
 */
 BEGIN
-	DECLARE	@Currency	TINYINT,
+	DECLARE	@Currency		TINYINT,
 			@RoleID		TINYINT,
-			@SuperID	INT,
-			@MasterID	INT,
-			@AgentID	INT
+			@SuperID		INT,
+			@MasterID		INT,
+			@AgentID		INT,
+			@SiteID		INT
 	
 	DECLARE @MatchParlayUnlimit TABLE(SportType SMALLINT, BetType SMALLINT, SingleMatchParlay_IsAllowUnlimit BIT, Combo2_IsAllowUnlimit BIT, Combo35_IsAllowUnlimit BIT, ComboOver6_IsAllowUnlimit BIT)
-	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT)
-	
+		
+	CREATE TABLE #ProductSettingProfile(
+		ProductID		TINYINT,	
+		SportType		SMALLINT,
+		BetType		SMALLINT,
+		Child_DisplayOrder TINYINT
+	)
+
 	-- Select customer's information
-	SELECT	@Currency   = c.currency
-		,	@RoleID     = c.roleid
-		,	@SuperID	= c.srecommend
-		,	@MasterID	= c.mrecommend
-		,	@AgentID	= c.recommend
-	FROM	dbo.Customer AS c WITH(NOLOCK)
-	WHERE	c.custid = @CustID
+	SELECT	
+			@RoleID		= c.roleid,
+			@SuperID		= c.srecommend,
+			@MasterID		= c.mrecommend,
+			@AgentID		= c.recommend,
+			@siteid		= s.siteid,
+			@Currency		= c.currency
+	FROM	Customer c WITH (NOLOCK)
+			INNER JOIN Site s WITH (NOLOCK) ON s.site = c.site
+	WHERE	c.custID = @CustID 
 	
-	INSERT INTO #SportBettypeFilter(SportType,Bettype)
-	SELECT DISTINCT SportType,Bettype 	
-	FROM dbo.MaxPayoutGlobalSetting WITH(NOLOCK)
-	WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
+	-- Collect Product Setting Profile
+	INSERT INTO #ProductSettingProfile 	(ProductID , SportType , BetType , Child_DisplayOrder  )
+	SELECT ProductID , SportType , Bettype , Child_DisplayOrder 
+	FROM f_CustSetting_ProductProfileSelByGroupType (@GroupType, @SettingStatus , @SiteID , @Currency)
+	WHERE GroupID = @GroupID
+
 	
 	IF @RoleID = 1 
 	BEGIN
@@ -49,7 +72,7 @@ BEGIN
 				CASE WHEN cs.Combo35 = 0 AND mMp.Combo35 = 0 AND aMp.Combo35 = 0  THEN 1 ELSE 0 END AS Combo35_IsAllowUnlimit,
 				CASE WHEN cs.ComboOver6 = 0 AND mMp.ComboOver6 = 0 AND aMp.ComboOver6 = 0 THEN 1 ELSE 0 END AS ComboOver6_IsAllowUnlimit
 		FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
-			INNER JOIN #SportBettypeFilter s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+			INNER JOIN #ProductSettingProfile s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent mMp WITH (NOLOCK) ON s.SportType = mMp.sporttype AND s.BetType = mMp.bettype
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent aMp WITH (NOLOCK) ON s.SportType = aMp.sporttype AND s.BetType = aMp.bettype
 		WHERE cs.custid = @SuperID  AND mMp.CustID = @MasterID AND aMp.CustID = @AgentID  
@@ -63,7 +86,7 @@ BEGIN
 				CASE WHEN cs.Combo35 = 0 AND mMp.Combo35 = 0  THEN 1 ELSE 0 END AS Combo35_IsAllowUnlimit,
 				CASE WHEN cs.ComboOver6 = 0 AND mMp.ComboOver6 = 0  THEN 1 ELSE 0 END AS ComboOver6_IsAllowUnlimit
 		FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
-			INNER JOIN #SportBettypeFilter s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+			INNER JOIN #ProductSettingProfile s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent mMp WITH (NOLOCK) ON s.SportType = mMp.sporttype AND s.BetType = mMp.bettype
 		WHERE cs.custid = @SuperID  AND mMp.CustID = @MasterID 
 	END
@@ -76,7 +99,7 @@ BEGIN
 				CASE WHEN cs.Combo35 = 0 THEN 1 ELSE 0 END AS Combo35_IsAllowUnlimit,
 				CASE WHEN cs.ComboOver6 = 0  THEN 1 ELSE 0 END AS ComboOver6_IsAllowUnlimit
 		FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
-			INNER JOIN #SportBettypeFilter s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+			INNER JOIN #ProductSettingProfile s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 		WHERE cs.custid = @SuperID
 	END
 		
@@ -95,7 +118,7 @@ BEGIN
 				1 AS Combo2_IsAllowUnlimit,
 				1 AS Combo35_IsAllowUnlimit,
 				1 AS ComboOver6_IsAllowUnlimit
-		FROM #SportBettypeFilter ft 
+		FROM #ProductSettingProfile ft 
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype
 			LEFT JOIN dbo.MaxPayoutGlobalSetting Mps ON Mps.SportType = bl.sporttype AND Mps.BetType = bl.bettype AND Mps.Currency = @Currency
 		WHERE bl.CustID = @CustID
@@ -119,7 +142,7 @@ BEGIN
 				bu.Combo2_IsAllowUnlimit AS Combo2_IsAllowUnlimit,
 				bu.Combo35_IsAllowUnlimit AS Combo35_IsAllowUnlimit,
 				bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit		
-		FROM #SportBettypeFilter ft 
+		FROM #ProductSettingProfile ft 
 			INNER JOIN @MatchParlayUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
@@ -154,7 +177,7 @@ BEGIN
 				bu.Combo2_IsAllowUnlimit AS Combo2_IsAllowUnlimit,
 				bu.Combo35_IsAllowUnlimit AS Combo35_IsAllowUnlimit,
 				bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit							
-		FROM #SportBettypeFilter ft 
+		FROM #ProductSettingProfile ft 
 			INNER JOIN @MatchParlayUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
@@ -195,7 +218,7 @@ BEGIN
 				0 AS Combo2_IsAllowUnlimit,
 				0 AS Combo35_IsAllowUnlimit,
 				0 AS ComboOver6_IsAllowUnlimit				
-		FROM #SportBettypeFilter ft 
+		FROM #ProductSettingProfile ft 
 			INNER JOIN @MatchParlayUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype
 			INNER JOIN dbo.CustMaxPayoutSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
@@ -203,6 +226,6 @@ BEGIN
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent abl WITH (NOLOCK) ON ft.SportType = abl.sporttype AND ft.BetType = abl.bettype
 		WHERE bl.CustID = @CustID AND sbl.CustID = @SuperID AND mbl.CustID = @MasterID AND abl.CustID = @AgentID
 
-	DROP TABLE #SportBettypeFilter
+	DROP TABLE #ProductSettingProfile
 END
 

@@ -28,6 +28,7 @@ AS
 		- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 		- 20230602@Helios: Enhance stored procedure to prevent performance issue [Redmine: #189154]
 		- 20230410@Bobby: AutoJob clear balance downlines [RedmineID: #182071]
+		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 		
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -53,7 +54,7 @@ BEGIN
 	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
 	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
 		  
-	CREATE TABLE #customer(custid INT, RowNumber INT,discountMyanmarOdds DECIMAL (9,8),IsMyanmarOdds BIT )
+	CREATE TABLE #customer(custid INT, RowNumber INT)
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @DoubleCommLosing = 2 AND @Locked IS NULL
 		AND @AutoTransfer = 2
@@ -204,19 +205,7 @@ BEGIN
 		WHERE rownumber BETWEEN @rowstart AND @rowend
 
 	END
-	-- MyanmarOdds
-		DECLARE @IsMyanmarOdds BIT = 0	
-		SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds(@MRecommend)
-	IF @IsMyanmarOdds = 1
-	BEGIN
-		
-		UPDATE T
-			SET discountMyanmarOdds = ac.CommRate
-			, t.IsMyanmarOdds = @IsMyanmarOdds
-		FROM #customer T
-			INNER JOIN AgentCommRate ac WITH (NOLOCK) ON T.custid = AC.CustId 
-		WHERE Sporttype = 1 AND Bettype = 1			
-	END
+	
 	-- get data for filtered customers	
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )	
 
@@ -240,19 +229,21 @@ BEGIN
 								) AS cps
 		WHERE c.custid IN (SELECT custid FROM #customer) AND (@Userid IS NULL OR (@Userid IS NOT NULL AND c.site NOT IN (SELECT site FROM @tmp )))
 	),
-	custsetting AS
+	CustDiscountAgent AS
 	(
-		SELECT cs.custid,
-			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupa ELSE 0 END) groupa, --- need to indicate 
-			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupb ELSE 0 END) groupb, 
-			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupc ELSE 0 END) groupc, 
-			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupd ELSE 0 END) groupd, 
-			MAX(CASE WHEN cs.bettype = 4 and cs.sporttype=1 then cs.discount else 0 end) as discountcs,	
-			MAX(CASE WHEN cs.bettype = 5 and cs.sporttype=1 then cs.discount else 0 end) as discount1x2	
-		FROM dbo.CustSetting cs WITH(NOLOCK) 
-		WHERE custid IN (SELECT custid FROM #customer)
-			AND sporttype IN (1) AND bettype IN (1,4,5,20)
-		GROUP BY cs.custid 
+		SELECT 
+			cda.CustID
+		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 1 THEN cda.Discount END) AS 'GroupA'
+		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 3 THEN cda.Discount END) AS 'GroupB'
+		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 7 THEN cda.Discount END) AS 'GroupC'
+		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 8 THEN cda.Discount END) AS 'GroupD'
+		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 5 THEN cda.Discount END) AS '1X2'
+		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 4 THEN cda.Discount END) AS 'OthersComm'
+		,	MAX(CASE WHEN cda.SportType = 2 AND cda.BetType = 1 THEN cda.Discount END) AS 'MyanmarOdds'
+		FROM CustDiscount3rd_Agent cda WITH (NOLOCK)
+		WHERE cda.custid IN (SELECT custid FROM #customer)
+		AND cda.SportType IN (1,2)
+		GROUP BY cda.CustID
 	)
 	SELECT  ctm.enabled,
 			ctm.closed, 
@@ -269,15 +260,15 @@ BEGIN
 			ISNULL(ctm.phone, '') as phone,
 			ISNULL(ctm.mobilephone, '') as mobilephone,
 			ISNULL(ctm.iplogin, '') as lastloginip,
-			cs.groupa as groupa, 
-			cs.groupb as groupb, 
-			cs.groupc as groupc, 
-			cs.groupd as groupd, 
-			discountcs discountcs,	
-			discount1x2 discount1x2,
+			cda.GroupA AS groupa, 
+			cda.GroupB AS groupb, 
+			cda.GroupC AS groupc, 
+			cda.GroupD AS groupd, 
+			cda.OthersComm AS discountcs,	
+			cda.[1X2] AS discount1x2,
 			-- MyanmarOdds
-			ISNULL(t.IsMyanmarOdds,0) AS IsMyanmarOdds,
-			ISNULL(t.discountMyanmarOdds,0) AS discountMyanmarOdds,
+			CASE WHEN ISNULL(cda.MyanmarOdds,0) = 0 THEN 0 ELSE 1 END AS IsMyanmarOdds,
+			ISNULL(cda.MyanmarOdds,0) AS discountMyanmarOdds,
 					
 			ctm.currency,	
 			ctm.matchlimit,
@@ -291,7 +282,7 @@ BEGIN
 			IIF(cbs.ToCustID > 0, 1, 0) AS IsAllowAutoTransfer
 	FROM customers ctm 
 		INNER JOIN #customer t ON ctm.custid = t.custid 
-		LEFT JOIN custsetting cs WITH (NOLOCK) ON ctm.custid = cs.custid
+		LEFT JOIN CustDiscountAgent cda WITH (NOLOCK) ON ctm.custid = cda.custid
 		LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON t.custid=cl.CustID
 		LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ctm.custid				
 	ORDER BY  t.RowNumber	

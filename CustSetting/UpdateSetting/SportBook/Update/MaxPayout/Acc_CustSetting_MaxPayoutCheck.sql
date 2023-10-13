@@ -12,6 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MaxPayoutCheck]
 	, @Language VARCHAR(2)= 'E'
 	, @ErrCode		INT				= 0		OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
+	, @MsgType		INT				= 0		OUTPUT
 AS
 /*
 	Created: 20210518@Winfred
@@ -21,6 +22,7 @@ AS
 
 	Revision: 
 		- 20210518@Winfred: Initial SP [RedmineID:#154104]	
+		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 
 	Param's Explanation:
 		• @@MaxPayoutLimit:
@@ -65,31 +67,39 @@ BEGIN
 		OR @MaxPayoutLimit = ''
 		RETURN
 
-	SELECT	@ErrCode	= 0 ,@ErrMsg		= ''
+	SELECT	@ErrCode	= 0 ,@ErrMsg		= '', @MsgType	= 0
 
-	--Parse XML data
-	DECLARE @iDoc INT
+	-- Parse Data Json
+	INSERT INTO @NewMaxPayoutTbl  ( SportType , BetType , SingleMatchParlay , Combo2 , Combo35 , ComboOver6 )
+	SELECT SportType, BetType, SingleMP, Combo2 , Combo35 , Combo6
+	FROM OPENJSON(@MaxPayoutLimit)
+	    WITH
+		  (
+			SportType		SMALLINT,
+			BetType		SMALLINT,
+			SingleMP		MONEY,
+			Combo2		MONEY,
+			Combo35		MONEY,
+			Combo6		MONEY
+        ) AS MaxPayoutLimit
 
-	EXEC sp_xml_preparedocument @iDoc OUTPUT
-		, @MaxPayoutLimit
-
-	INSERT @NewMaxPayoutTbl(SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-	SELECT SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6
-	FROM OPENXML(@iDoc, '/ROOT/MaxPayoutLimit', 1) WITH (
-				SportType		SMALLINT
-				, BetType		SMALLINT
-				, SingleMatchParlay	MONEY
-				, Combo2			MONEY
-				, Combo35			MONEY
-				, ComboOver6		MONEY
-			)
-
-	EXEC sp_xml_removedocument @iDoc
 
 	--Get currency of member
 	SELECT @Currency = ci.currency
 	FROM dbo.custInfo ci WITH(NOLOCK)
 	WHERE ci.custid=@CustID
+
+	-- Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewMaxPayoutTbl t
+		INNER JOIN ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 27
+		AND u.FunctionType = 1 --Edit Customer
 	
 	IF @RoleID BETWEEN 1 AND 3
 	BEGIN
@@ -287,8 +297,22 @@ BEGIN
 			FROM @ErrorSportTypeTbl tmp
 			WHERE	tmp.SingleMatchParlay < 0 OR tmp.Combo2 < 0 OR tmp.Combo35	< 0  OR tmp.ComboOver6	< 0 )
 	BEGIN
-		SELECT @ErrMsg= CASE @Language WHEN 'E' THEN 'The value must be a positive amount.'  
-          ELSE [dbo].[f_Get_MsgNamebyMsgID](10055,@Language) END 
+		SET @XML = (SELECT 10055 AS '@MsgID'
+						, 'The value must be a positive amount.' AS '@Msg'
+						, (
+							SELECT tmp.SportType   AS '@SportType'
+							,	 tmp.BetType   AS '@BetType'
+							FROM @ErrorSportTypeTbl tmp
+							WHERE	tmp.SingleMatchParlay < 0 OR tmp.Combo2 < 0 OR tmp.Combo35	< 0  OR tmp.ComboOver6	< 0
+							FOR XML PATH('Row')
+								, TYPE
+							)
+					FOR XML PATH('Root')
+						, TYPE
+					)
+		
+		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+		SET @MsgType = 72
 		SET @ErrCode = 10055
 		
 		RETURN
@@ -323,43 +347,57 @@ BEGIN
 		
 		IF @RoleID  = 4 
 		BEGIN
-			SET	@ErrMsg = CASE @Language 
-							WHEN 'E' THEN N''+ @Bettype + ': The setting of ' + @Columns + ' is higher than the company setting'
-							ELSE REPLACE(
-									REPLACE(
-										REPLACE(
-											REPLACE(
-												[dbo].[f_Get_MsgNamebyMsgID](10057,@Language)
-												,'<Column>'
-												,@Columns)
-											,'(Column)'
-											,@Columns)	
-										,'<BetType>'
-										,@Bettype)
-									,'(BetType)'
-									,@Bettype)
-							END
+			SET @XML = (SELECT 10057 AS '@MsgID'
+						, N''+ @Bettype + ': The setting of ' + @Columns + ' is higher than the company setting' AS '@Msg'
+						, (
+							SELECT tmp.SportType   AS '@SportType'
+							,	 tmp.BetType   AS '@BetType'
+							FROM @ErrorSportTypeTbl tmp
+							LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+							WHERE	(tmp.Upline_SingleMatchParlay> 0 AND (tmp.SingleMatchParlay = 0 OR tmp.SingleMatchParlay > tmp.Upline_SingleMatchParlay))
+									OR (tmp.Upline_Combo2	> 0  AND ( tmp.Combo2 = 0 OR tmp.Combo2 > tmp.Upline_Combo2))
+									OR (tmp.Upline_Combo35 > 0  AND ( tmp.Combo35 = 0 OR tmp.Combo35 > tmp.Upline_Combo35))
+									OR (tmp.Upline_ComboOver6 > 0  AND ( tmp.ComboOver6 = 0 OR tmp.ComboOver6 > tmp.Upline_ComboOver6))
+									OR ( @RoleID = 4 AND (tmp.SingleMatchParlay> pb.SingleMatchParlay OR tmp.Combo2> pb.Combo2 OR tmp.Combo35> pb.Combo35 OR tmp.ComboOver6> pb.ComboOver6))
+							FOR XML PATH('Row')
+								, TYPE
+							)
+					FOR XML PATH('Root')
+						, TYPE
+					)
+		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 72
 			SET @ErrCode = 10057
+
+			RETURN
 		END 
 		ELSE 
 		BEGIN
-			SET	@ErrMsg = CASE @Language 
-							WHEN 'E' THEN N''+ @Bettype + ': The setting of ' + @Columns + ' is higher than the upline''s.'''
-							ELSE REPLACE(
-									REPLACE(
-										REPLACE(
-											REPLACE(
-												[dbo].[f_Get_MsgNamebyMsgID](10056,@Language)
-												,'<Column>'
-												,@Columns)
-											,'(Column)'
-											,@Columns)	
-										,'<BetType>'
-										,@Bettype)
-									,'(BetType)'
-									,@Bettype)
-							END
+			SET @XML = (SELECT 10056 AS '@MsgID'
+						, N''+ @Bettype + ': The setting of ' + @Columns + ' is higher than the upline''s.''' AS '@Msg'
+						, (
+							SELECT tmp.SportType   AS '@SportType'
+							,	 tmp.BetType   AS '@BetType'
+							FROM @ErrorSportTypeTbl tmp
+							LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+							WHERE	(tmp.Upline_SingleMatchParlay> 0 AND (tmp.SingleMatchParlay = 0 OR tmp.SingleMatchParlay > tmp.Upline_SingleMatchParlay))
+									OR (tmp.Upline_Combo2	> 0  AND ( tmp.Combo2 = 0 OR tmp.Combo2 > tmp.Upline_Combo2))
+									OR (tmp.Upline_Combo35 > 0  AND ( tmp.Combo35 = 0 OR tmp.Combo35 > tmp.Upline_Combo35))
+									OR (tmp.Upline_ComboOver6 > 0  AND ( tmp.ComboOver6 = 0 OR tmp.ComboOver6 > tmp.Upline_ComboOver6))
+									OR ( @RoleID = 4 AND (tmp.SingleMatchParlay> pb.SingleMatchParlay OR tmp.Combo2> pb.Combo2 OR tmp.Combo35> pb.Combo35 OR tmp.ComboOver6> pb.ComboOver6))
+							FOR XML PATH('Row')
+								, TYPE
+							)
+					FOR XML PATH('Root')
+						, TYPE
+					)
+		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 72
 			SET @ErrCode = 10056	
+
+			RETURN
 		END 
 		
 		

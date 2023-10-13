@@ -29,6 +29,7 @@ BEGIN
 		- 20220816@Johnson: enhance sp [redmine: #176641]
 		- 20220921@Winfred:  Macau Game Setting Page - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 		- 20230410@Bobby: AutoJob clear balance downlines [RedmineID: #182071]
+		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -47,15 +48,11 @@ BEGIN
 	DECLARE @RowCount int, @RowStart int, @RowEnd int  
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1   
 	SET @Username = isnull(@Username, '')  
-	 
-	-- For DCS Product
-	DECLARE @IsMyanmarOdds BIT = 0
-	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
 	
-    DECLARE	@bitmapOrder_AllBet			INT
+      DECLARE	@bitmapOrder_AllBet		INT
 		,	@bitmapOrder_VoidBridge		INT 
-	SET @bitmapOrder_VoidBridge = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
-	SELECT	@bitmapOrder_AllBet =	(SELECT	psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
+	SET		@bitmapOrder_VoidBridge =	(SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
+	SELECT	@bitmapOrder_AllBet	=	(SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
 		  
 	CREATE TABLE #memberList (custid int, rn int,playerdiscountMyanmarOdds DECIMAL (9,8), adiscountMyanmarOdds DECIMAL (9,8))
 
@@ -198,44 +195,39 @@ BEGIN
 			) x
 		WHERE rn BETWEEN @rowstart AND @rowend
 	END
-	-- For Myanmar Odds
-	IF @IsMyanmarOdds = 1
-	BEGIN
-		UPDATE T
-		SET playerdiscountMyanmarOdds = cc.playerdiscount,
-			adiscountMyanmarOdds = ac.CommRate
-		FROM #memberList T
-			INNER JOIN CustCommRate cc WITH (NOLOCK) ON T.custid = cc.CustId 
-			INNER JOIN AgentCommRate ac WITH (NOLOCK) ON ac.custid = @recommend AND cc.sporttype = ac.sporttype AND cc.bettype = ac.bettype
-		WHERE ac.Sporttype = 1 AND ac.Bettype = 1	
 	
-	END
+	CREATE TABLE #Result 
+	(
+			custid INT PRIMARY KEY
+		,	rn INT
+		,	discount DECIMAL(9,8)
+		,	discountcs DECIMAL(9,8)
+		,	discount1x2 DECIMAL(9,8)
+		,	playerdiscount DECIMAL(9,8)
+		,	playerdiscountcs DECIMAL(9,8)
+		,	playerdiscount1x2 DECIMAL(9,8)
+		,	playerdiscountMyanmarOdds DECIMAL (9,8)
+		,	adiscountMyanmarOdds DECIMAL (9,8) 
+	)
 	
-	CREATE TABLE #Result (custid INT PRIMARY KEY, rn INT, discount DECIMAL(9,8), discountcs DECIMAL(9,8), discount1x2 DECIMAL(9,8),
-		playerdiscount DECIMAL(9,8), playerdiscountcs DECIMAL(9,8), playerdiscount1x2 DECIMAL(9,8),
-		playerdiscountMyanmarOdds DECIMAL (9,8), adiscountMyanmarOdds DECIMAL (9,8) 
-		)
 	
-	INSERT INTO #Result(custid, rn, discount, discountcs, discount1x2, playerdiscount, playerdiscountcs, playerdiscount1x2,
-					playerdiscountMyanmarOdds, adiscountMyanmarOdds)
-	SELECT c.custid as custid
-		,rn
-		,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.discount else 0 end) as discount
-		,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.discount else 0 end) as discountcs
-		,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.discount else 0 end) as discount1x2	
-
-		,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.playerdiscount else 0 end) as playerdiscount
-		,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.playerdiscount else 0 end) as playerdiscountcs
-		,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.playerdiscount else 0 end) as playerdiscount1x2
-		
-		,ISNULL(C.playerdiscountMyanmarOdds,0) AS playerdiscountMyanmarOdds
-		,ISNULL(C.adiscountMyanmarOdds,0) AS adiscountMyanmarOdds		
+	INSERT INTO #Result(custid, rn, discount, discountcs, discount1x2, playerdiscount, playerdiscountcs, playerdiscount1x2, playerdiscountMyanmarOdds, adiscountMyanmarOdds)
+	SELECT
+		c.custid
+	,	rn
+	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 1 THEN cdm.AgentDiscount ELSE 0 END)	   AS discount
+	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 4 THEN cdm.AgentDiscount ELSE 0 END)	   AS discountcs
+	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 5 THEN cdm.AgentDiscount ELSE 0 END)	   AS discount1x2
+	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 1 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscount
+	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 4 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscountcs
+	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 5 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscount1x2
+	,	MAX(CASE WHEN cdm.SportType = 2 AND cdm.BetType = 1 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscountMyanmarOdds
+	,	MAX(CASE WHEN cdm.SportType = 2 AND cdm.BetType = 1 THEN cdm.AgentDiscount ELSE 0 END)	   AS adiscountMyanmarOdds
 	FROM #memberList c
-		LEFT JOIN CustSetting cs with(nolock) 
-			on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) )		
-	WHERE rn between @rowstart and @rowend
-	GROUP BY c.custid, rn,c.playerdiscountMyanmarOdds,c.adiscountMyanmarOdds
-	
+	LEFT JOIN CustDiscount3rd_Member cdm WITH (NOLOCK) ON c.custid = cdm.CustID
+	WHERE cdm.SportType IN (1,2)
+	AND rn between @rowstart and @rowend
+	GROUP BY c.CustID , rn 
 	
 	SELECT   
 		ci.enabled, cps.closed, isnull(cps.reject,0) as suspended, isnull(ci.DisableOutright,0) as DisableOutright, ci.virtualmultiplier-1 as VirtualMultiplier,   
@@ -250,7 +242,7 @@ BEGIN
 		playerdiscountcs,  
 		playerdiscount1x2, 
 		-- MyanmarOdds
-		ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds,
+		CASE WHEN ISNULL(m.playerdiscountMyanmarOdds,0) = 0 THEN 0 ELSE 1 END AS IsMyanmarOdds,
 		ISNULL(m.playerdiscountMyanmarOdds,0) playerdiscountMyanmarOdds,
 		ISNULL(m.adiscountMyanmarOdds,0) adiscountMyanmarOdds,
 		ci.DoubleCommLosing,

@@ -21,6 +21,7 @@ AS
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 
  Param's Explanation:  
 
@@ -62,11 +63,14 @@ BEGIN
 	INSERT INTO #SportList (ProductID, SportType, BetType, IsLive)
 	SELECT ProductID, SportType, BetType, IsLive 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),1,@SettingStatus)
-	WHERE islive <= @islive
+	--WHERE islive <= @islive
 	UNION ALL
 	SELECT ProductID, SportType, BetType, IsLive 
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),18,@SettingStatus)
-	WHERE islive <= @islive
+	--WHERE islive <= @islive
+	UNION ALL
+	SELECT ProductID, SportType, BetType, IsLive 
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),28,@SettingStatus)
 		
 	INSERT @PTMatrix
 	SELECT

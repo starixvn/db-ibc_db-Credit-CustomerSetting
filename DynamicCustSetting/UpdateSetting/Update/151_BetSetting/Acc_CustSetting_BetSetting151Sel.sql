@@ -1,0 +1,142 @@
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+CREATE PROCEDURE [dbo].[Acc_CustSetting_BetSetting151Sel] 
+	  @CustID			INT
+	, @GroupID			TINYINT	= 1
+	, @GroupType		TINYINT	= 151
+	, @SettingStatus		TINYINT	= 0
+AS
+/*
+	Created: 20231019@Helios
+	Task : Get SMA Bet setting values of a SportsBook
+	DB: DBCUST/CustDB
+	Original:
+
+	Revisions: 
+		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+
+	Param's Explanation:
+		- @GroupType:	151 - Discount
+		- @SettingStatus: 0: Pro, 1: UAT
+		
+	EXEC  [dbo].[Acc_CustSetting_BetSetting151Sel_UAT2]
+	    @CustId = 102596104,
+	    @GroupID = 1 ,
+	    @GroupType   = 151  ,
+	    @SettingStatus = 3
+*/
+
+BEGIN
+	SET NOCOUNT ON
+	
+	DECLARE	@Currency		TINYINT,
+			@RoleID		TINYINT,
+			@SuperID		INT,
+			@MasterID		INT,
+			@AgentID		INT,
+			@CurrencyID		INT,
+			@SiteID		INT
+
+	CREATE TABLE #ProductSettingProfile(
+		ProductID		TINYINT,	
+		SportType		SMALLINT,
+		BetType		SMALLINT,
+		MaxDiscount		DECIMAL(19,8),
+		IntervalValue	DECIMAL(19,8),
+		SubType		TINYINT,
+		Child_DisplayOrder TINYINT
+	)
+
+	----------------------------------------------------------------
+
+	SELECT	
+			@RoleID		= c.roleid,
+			@SuperID		= c.srecommend,
+			@MasterID		= c.mrecommend,
+			@AgentID		= c.recommend,
+			@siteid		= s.siteid,
+			@CurrencyID		= c.currency
+	FROM	Customer c WITH (NOLOCK)
+			INNER JOIN Site s WITH (NOLOCK) ON s.site = c.site
+	WHERE	c.custID = @CustID 
+
+	-- Collect Product Setting Profile
+	INSERT INTO #ProductSettingProfile 	(ProductID , SportType , BetType , MaxDiscount , IntervalValue , SubType , Child_DisplayOrder )
+	SELECT ProductID , SportType , Bettype , MaxDiscount , IntervalValue  , SubType , Child_DisplayOrder 
+	FROM f_CustSetting_ProductProfileSelByGroupType (@GroupType, @SettingStatus , @SiteID , @CurrencyID)
+	WHERE GroupID = @GroupID 
+	
+
+	IF @RoleID = 4
+		BEGIN
+			SELECT	psp.SportType,
+					psp.BetType,
+					bl.MinBet,
+					bl.MaxBet,
+					bl.MaxPerMatch		AS MaxPerMatch,
+					--0				AS MaxPerMatchMin,
+					bl.MaxPayoutPerMatch	AS MaxPayoutPerMatch
+			FROM #ProductSettingProfile psp
+				INNER JOIN dbo.CustBetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
+			WHERE bl.CustID = @CustID
+			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+		END
+	ELSE IF @RoleID = 3
+		BEGIN
+			SELECT
+					psp.SportType,
+					psp.BetType,
+					bl.MinBet,
+					bl.MaxBet,
+					bl.MaxPerMatch				AS MaxPerMatch,
+					bl.MaxPayoutPerMatch			AS MaxPayoutPerMatch,
+					sbl.MinBet					AS MinBetMin,
+					sbl.MaxBet					AS MaxBetMax,
+					--0						AS MaxPerMatchMin,
+					sbl.MaxPerMatch				AS MaxPerMatchMax,
+					sbl.MaxPayoutPerMatch			AS MaxPayoutPerMatchMax
+			FROM #ProductSettingProfile psp
+				INNER JOIN dbo.CustBetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
+				INNER JOIN dbo.CustBetSetting_Agent sbl WITH (NOLOCK) ON psp.SportType = sbl.sporttype AND psp.BetType = sbl.bettype
+			WHERE bl.CustID = @CustID AND sbl.CustID = @SuperID
+			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+		END
+	ELSE IF @RoleID = 2
+		SELECT	psp.SportType,
+				psp.BetType,
+				bl.MinBet,
+				bl.MaxBet,
+				bl.MaxPerMatch																			AS MaxPerMatch,
+				bl.MaxPayoutPerMatch																		AS MaxPayoutPerMatch,
+				(SELECT MAX(t.MinBet) FROM (VALUES (Sbl.Minbet) , (Mbl.MinBet)) AS t(MinBet))									AS MinBetMin,
+				(SELECT MIN(t.MaxBet) FROM (VALUES (Sbl.MaxBet) , (Mbl.MaxBet)) AS t(MaxBet))									AS MaxBetMax,
+				--0																					AS MaxPerMatchMin,
+				(SELECT MIN(t.MaxPerMatch) FROM (VALUES (Sbl.MaxPerMatch) , (Mbl.MaxPerMatch)) AS t(MaxPerMatch))					AS MaxPerMatchMax,
+				(SELECT MIN(t.MaxPayoutPerMatch) FROM (VALUES (Sbl.MaxPayoutPerMatch) , (Mbl.MaxPayoutPerMatch)) AS t(MaxPayoutPerMatch))	AS MaxPayoutPerMatchMax
+		FROM #ProductSettingProfile psp
+			INNER JOIN dbo.CustBetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
+			INNER JOIN dbo.CustBetSetting_Agent Sbl WITH (NOLOCK) ON psp.SportType = Sbl.sporttype AND psp.BetType = Sbl.bettype
+			INNER JOIN dbo.CustBetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
+		WHERE bl.CustID = @CustID AND Sbl.CustID = @SuperID AND Mbl.CustID = @MasterID
+		ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+	ELSE IF @RoleID = 1
+		SELECT	psp.SportType,
+				psp.BetType,
+				cbsm.MinBet,
+				cbsm.MaxBet,
+				cbsm.MaxPerMatch																							AS MaxPerMatch,
+				cbsm.MaxPayoutPerMatch																						AS MaxPayoutPerMatch,
+				(SELECT MAX(t.MinBet) FROM (VALUES (Sbl.Minbet) , (Mbl.MinBet) , (Abl.MinBet)) AS t(MinBet))										AS MinBetMin,
+				(SELECT MIN(t.MaxBet) FROM (VALUES (Sbl.MaxBet) , (Mbl.MaxBet) , (Abl.MaxBet)) AS t(MaxBet))										AS MaxBetMax,
+				--0																									AS MaxPerMatchMin,
+				(SELECT MIN(t.MaxPerMatch) FROM (VALUES (Sbl.MaxPerMatch) , (Mbl.MaxPerMatch) , (Abl.MaxPerMatch)) AS t(MaxPerMatch))						AS MaxPerMatchMax,
+				(SELECT MIN(t.MaxPayoutPerMatch) FROM (VALUES (Sbl.MaxPayoutPerMatch) , (Mbl.MaxPayoutPerMatch) , (Abl.MaxPayoutPerMatch)) AS t(MaxPayoutPerMatch))	AS MaxPayoutPerMatchMax
+		FROM #ProductSettingProfile psp
+			INNER JOIN dbo.CustBetSetting_Member cbsm WITH (NOLOCK) ON psp.SportType = cbsm.sporttype AND psp.BetType = cbsm.bettype
+			INNER JOIN dbo.CustBetSetting_Agent Sbl WITH (NOLOCK) ON psp.SportType = Sbl.sporttype AND psp.BetType = Sbl.bettype
+			INNER JOIN dbo.CustBetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
+			INNER JOIN dbo.CustBetSetting_Agent Abl WITH (NOLOCK) ON psp.SportType = Abl.sporttype AND psp.BetType = Abl.bettype
+		WHERE cbsm.CustID = @CustID AND Sbl.CustID = @SuperID AND Mbl.CustID = @MasterID AND Abl.CustID = @AgentID
+		ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+	DROP TABLE #ProductSettingProfile
+END
+GO

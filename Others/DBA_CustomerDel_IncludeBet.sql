@@ -23,6 +23,8 @@ AS
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
 */		
@@ -57,8 +59,6 @@ BEGIN
 	DELETE @tmp_custID
 	INSERT INTO @tmp_custID
 	SELECT custID FROM custinfo WITH (NOLOCK) WHERE srecommend = @custid
-	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
 
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 	
@@ -88,8 +88,6 @@ BEGIN
 	DELETE @tmp_custID
 	INSERT INTO @tmp_custID
 	SELECT custID FROM custinfo WITH (NOLOCK) WHERE mrecommend = @custid
-	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
 
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_IncludeBet_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
@@ -118,8 +116,6 @@ BEGIN
 	DELETE @tmp_custID
 	INSERT INTO @tmp_custID
 	SELECT custID FROM custinfo WITH (NOLOCK) WHERE recommend = @custid
-	delete custsetting where custid IN (SELECT custID FROM @tmp_custID)
-	delete custoverride where custid IN (SELECT custID FROM @tmp_custID)
 
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_IncludeBet_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
@@ -155,7 +151,6 @@ BEGIN
 		RETURN
 	END
 	
-	delete custsetting where custid = @custid
 
 	EXEC DBTXN.bodb02.dbo.DBA_CustomerDel_IncludeBet_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 

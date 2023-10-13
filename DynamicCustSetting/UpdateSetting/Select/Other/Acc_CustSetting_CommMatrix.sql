@@ -17,6 +17,7 @@ AS
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 		
@@ -39,6 +40,9 @@ BEGIN
 			UNION
 			SELECT SportType, Bettype
 			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus)
+			UNION
+			SELECT SportType, Bettype
+			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,25,@SettingStatus)
 			) tmp
 	
 	SET NOCOUNT ON
