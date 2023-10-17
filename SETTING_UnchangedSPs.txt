@@ -1,2 +1,3 @@
-DynamicCustSetting\AddNewCustomer\Acc_CustSetting_DCSSettingCopyInsertMember.sql
-DynamicCustSetting\UpdateSetting\Update\7_StakeLevel-8_StakeLevelGroup\Acc_CustSetting_StakeLevelSelect.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_SAg.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_MAg.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_Ag.sql
