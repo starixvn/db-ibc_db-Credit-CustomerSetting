@@ -48,7 +48,7 @@ AS
 		
 		Revisions: 
 			- 20230525@Johnson: initial sp [redmine: #179159]
-
+			- 20231017@Johnson: extend MaxPT for SB = 0.93 [redmine:#195578]
 	Param's Explanation: 
 	
 */
@@ -632,10 +632,10 @@ BEGIN
 											AND t.IsLive = 1
 			
 				INSERT INTO [dbo].[custoverride]([custid],[sporttype],[bettype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-				SELECT @custid, sporttype, bettype, MasterMinPT, 0.9 as maxpositiontaking, 
+				SELECT @custid, sporttype, bettype, MasterMinPT, 0.93 as maxpositiontaking, 
 						ISNULL((SELECT MasterMinPT FROM @tblPT28 t2 
 						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1),0) as minlivepositiontaking
-						, 0.9 as maxlivepositiontaking
+						, 0.93 as maxlivepositiontaking
 				FROM @tblPT28 t
 				WHERE IsLive = 0
 				
@@ -700,10 +700,10 @@ BEGIN
 											AND t.IsLive = 1
 			
 				INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-				SELECT @custid, bettype, sporttype, AgentMinPT, 0.9 as maxpositiontaking, 
+				SELECT @custid, bettype, sporttype, AgentMinPT, 0.93 as maxpositiontaking, 
 						ISNULL((SELECT AgentMinPT FROM @tblPT28 t2 
 						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1),0) as minlivepositiontaking
-						, 0.9 as maxlivepositiontaking
+						, 0.93 as maxlivepositiontaking
 				FROM @tblPT28 t
 				WHERE IsLive = 0
 				
