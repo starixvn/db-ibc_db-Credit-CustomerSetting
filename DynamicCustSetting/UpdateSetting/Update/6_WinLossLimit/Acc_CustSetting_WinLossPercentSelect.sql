@@ -15,6 +15,8 @@ AS
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20230731@Eden: Simplify Live Casino Customer Setting - move from bodb02 to custdb [Redmine: #189389]
 	- 20230905@Eden: Enhance BBIN display [Redmine: #193539]
+	- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
+
   Parameters Explanation: 
 	WinPercent: -1: winloss setting is unlimited
 				-2: N/A win/loss <> 0 and given credit = 0
@@ -52,7 +54,7 @@ BEGIN
 		INNER JOIN dbo.SportBettypeSettingMatrix mt WITH(NOLOCK)
 			ON d.SportType = mt.SporttypeRefWinlossLimit
 			AND d.BetType = mt.BettypeRefWinlossLimit
-			AND mt.isLicensee = 0 AND mt.Site = 'ALL'
+			AND mt.isLicensee = 0 AND mt.Site = 'ALL' AND mt.isDeleted = 0
 	WHERE SettingType = 22
 		AND d.SportType = @SportType
 		AND d.BetType = @BetType
