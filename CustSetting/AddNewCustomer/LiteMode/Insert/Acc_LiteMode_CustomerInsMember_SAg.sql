@@ -45,8 +45,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	@IP VARCHAR(15)='',
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
-	@site VARCHAR(50) = '',
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,	
 	@CreationStatus TINYINT = 0
 AS
 /*
@@ -57,7 +56,7 @@ AS
 	
 	Revisions: 
 		- 20230512@Johnson: initial sp [redmine: #179159]
-
+		- 20231024@Johnson: remove param @site [redmine: #195406]
 	Param's Explanation: 
 		- @SettingType25 = '<Root>
 						<R SportType="1" BetType="1" Discount="0.0025" />
@@ -101,14 +100,13 @@ BEGIN
     DECLARE @duration INT
     SET @startRun = GETDATE()
 	
-	DECLARE @Super_site VARCHAR(50), @currency INT, @EnableVR BIT
-	SELECT @Super_site = site,
+	DECLARE @site VARCHAR(50) = '', @currency INT, @EnableVR BIT
+	
+	SELECT @Site = site,
 		@currency = currency
 	FROM customer WITH(NOLOCK) 
 	WHERE CustID = @srecommend
 	 
-	SET  @Site = @Super_site
-	
 	DECLARE @SiteID int
 	SELECT @SiteID = siteid FROM site WITH(NOLOCK) WHERE site = @site
 		
@@ -252,16 +250,8 @@ BEGIN
 	-- Reset discount value in case its value > upline
 	DECLARE @IsMyanmarOdds BIT = 0
 	
-	 IF @srecommend > 100 -- get site FROM upline IF not direct master
-	 BEGIN
-		   SET @IsMyanmarOdds = dbo.fn_IsMyanmarOddsBySite(@Super_site)
-	 END
-	 ELSE
-	 BEGIN
-		   	-- For Direct Master
-			SET @IsMyanmarOdds = dbo.fn_IsMyanmarOddsBySite(@Site)
-	 END
-
+	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOddsBySite(@Site)
+	
 	IF @IsMyanmarOdds = 1 AND dbo.fn_IsMyanmarOdds (@srecommend) <> 1
 	BEGIN
 		 SELECT	@ErrMsg = CASE @Language
