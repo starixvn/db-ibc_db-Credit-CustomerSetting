@@ -471,7 +471,7 @@ BEGIN
 	    RETURN
     END	
 	
-	If @SystemID = 2 -- ALPHA
+	If @SystemID IN(2,6) -- ALPHA
 	BEGIN
 		EXEC Age_LimitPTDailyIns @SettingStatus = @CreationStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
 		IF @ErrCode > 0
