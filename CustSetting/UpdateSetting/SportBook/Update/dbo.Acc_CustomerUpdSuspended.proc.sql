@@ -1,9 +1,10 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuspended]
 	@CustID int,
 	@Suspended bit,	
 	@SubAccID int = 0, --Sub-AccountID
 	@UserID int,
+	@ActionID int=1104,
 	@Language varchar(2) = 'E',
 	@ErrCode int = 0 OUTPUT,
 	@ErrMsg nvarchar(500) = '' OUTPUT,
@@ -42,8 +43,12 @@ Revisions:
 	- 20200216@Elodie: Lock close/suspend for some member [Redmine: #128541]
 	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+	- 20230921@Tacy: CWL - Suspend member accounts when member reaches Yellow level on RNG Slots Games [RedmineID: #184911]
 	
 Param's Explanation:
+• @ActionID = 1104 ~ normal flow
+			<>1104 ~ CWL flow
+
 • @ErrCode:
     = 0: Update successfully.
     > 0: Specific Error.
@@ -243,17 +248,25 @@ BEGIN
 	END
 
 	---------------
-	declare @LogSPData varchar(8000),
-			@ActionID INT 
+	declare @LogSPData varchar(8000)
 
-	Select @LogSPData = '<Acc_CustomerUpdSuspended CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
-						'Suspended="'+ coalesce(cast(@Suspended as varchar(50)),space(1)) + '" '+
-						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" '+
-						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+
-						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+
-						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+
-						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+
-						'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
+	IF @ActionID=1104
+	BEGIN
+		Select @LogSPData = '<Acc_CustomerUpdSuspended CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
+							'Suspended="'+ coalesce(cast(@Suspended as varchar(50)),space(1)) + '" '+
+							'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" '+
+							'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+
+							'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+
+							'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+
+							'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+
+							'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
+	END
+	ELSE
+	BEGIN
+		Select @LogSPData = '<Acc_CustomerUpdSuspended CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
+							'Suspended="'+ coalesce(cast(@Suspended as varchar(50)),space(1)) + '" '+
+							'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" />'
+	END
 
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)
@@ -263,7 +276,7 @@ BEGIN
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @UserID,
 			@CustID = @CustID,
-			@ActionID = 1104,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 		
@@ -320,19 +333,22 @@ BEGIN
 		END								
 	END TRY
 	BEGIN CATCH	
-		Select @LogSPData = '<Acc_CustomerUpdSuspended CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
-							'Suspended="'+ coalesce(cast(@Suspended as varchar(50)),space(1)) + '" '+
-							'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" '+
-							'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+
-							'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+
-							'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" '+
-							'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1))+'" '+
-							'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
+		IF @ActionID=1104
+		BEGIN
+			Select @LogSPData = '<Acc_CustomerUpdSuspended CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+
+								'Suspended="'+ coalesce(cast(@Suspended as varchar(50)),space(1)) + '" '+
+								'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1)) + '" '+
+								'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+
+								'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+
+								'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as varchar(50)),space(1)) + '" '+
+								'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as varchar(4000)),space(1))+'" '+
+								'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'
+		END
 
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 			@UserID = @UserID,
 			@CustID = @CustID,
-			@ActionID = 1104,
+			@ActionID = @ActionID,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 		
