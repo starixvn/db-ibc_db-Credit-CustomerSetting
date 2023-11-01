@@ -54,7 +54,7 @@ AS
 	
 	Revisions: 
 		- 20230717@Johnson: initial sp [redmine: #179159]
-
+		- 20231026@Johnson: Limit New Account Update PT for i7 [redmine: #196032]
 	Param's Explanation: 
 		- @SettingType25 = '<Root>
 						<R SportType="1" BetType="1" Discount="0.0025" />
@@ -548,7 +548,7 @@ BEGIN
 	    RETURN
     END
 	
-	IF @SystemID IN (2, 10) -- ALPHA, Chatbot
+	IF @SystemID IN (2,6,10) -- ALPHA,i7 Alpha, Chatbot
 	BEGIN
 		EXEC Age_LimitPTDailyIns @SettingStatus = @CreationStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
 		IF @ErrCode > 0
