@@ -25,6 +25,7 @@ AS
 		- 20221226@Tacy: NAP CM - Split 789y Site [RedmineID: #184879]
 		- 20230622@Tacy: NAP CM - Saba Danger Level - list Zhifeng032 & ManbetX same danger category as Haifa site [RedmineID: #190161]
 		- 20230628@Tacy: NAP CM - Saba Danger Level - list sites - currencies on selected list same danger level as Haifa [RedmineID: #190392]
+		- 20230628@Tacy: NAP CM - Saba Danger Level - list sites - currencies on selected list same danger level as Haifa [RedmineID: #196620]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -161,8 +162,8 @@ BEGIN
 						  OR (s.currency=3	 AND s.site='GoldenF')	--US$
 						  OR (s.currency=51	 AND s.site='368Cash')	--INH
 						  OR (s.currency=124 AND s.site='VKGAMECV')	--RMB2
-						  OR (s.currency=4	 AND s.site IN ('998bet','ARYA','HBPT','Mancity2','OCMSS'))	--TB
-						  OR (s.currency=13	 AND s.site IN ('18LuckV2','C7YOUXI','DMsports','e8casino','RMnewera','TSLAA','vssports','ZFRT166','ZhiFeng035'))	--RMB
+						  OR (s.currency=4	 AND s.site IN ('998bet','ARYA','HBPT','Mancity2','OCMSS','zt828','SENBKK'))	--TB
+						  OR (s.currency=13	 AND s.site IN ('18LuckV2','C7YOUXI','DMsports','e8casino','RMnewera','TSLAA','vssports','ZFRT166','ZhiFeng035','ZF026'))	--RMB
 							))
 						OR (s.custid IS NULL AND ss.SiteLabel='789y')		
 						OR s.currency=96	
