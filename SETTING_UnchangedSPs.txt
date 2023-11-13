@@ -1,5 +1,9 @@
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
 CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
-CustSetting\UpdateSetting\SportBook\Select\Customer List\Acc_CustomerSelByMAg.sql
-CustSetting\UpdateSetting\SportBook\Select\Customer List\Age_CustomerSelByMAg.sql
-CustSetting\UpdateSetting\SportBook\Select\Customer List\Acc_CustomerSelSAgList.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdAgent_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMaster_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdSuper_All.sql
+CustSetting\UpdateSetting\SportBook\Update\dbo.Acc_CustomerUpdMember_All.sql
+CustSetting\AddNewCustomer\LiteMode\Select\Acc_LiteMode_CustSetting_ProductListInfoSel.sql

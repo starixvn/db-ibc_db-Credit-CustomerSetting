@@ -38,7 +38,7 @@ AS
             - 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 			- 20230814@Luke: Basketball AIO [Redmine: #191334]
 			- 20231016@Luke: Offer 10 upcoming sports for Winter Sports [Redmine: #194661]
-
+			- 20231114@Johnson: Hide bettype SABA for site 777777 [redmine: #194591]
     Param's Explanation: 
             @CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
             @isShowAll: 0: Show Active Bettype, 1: Show ALL 
@@ -48,13 +48,15 @@ AS
 */
 BEGIN
     SET NOCOUNT ON 
-    DECLARE         @HideNG2                                BIT = 0 
-                    --,@HideVS                                BIT = 0 
-                    --,@HideLottery                        BIT = 0
-                    ,@IsMyanmarOdds                        BIT = 0           -- MyanmarOdds
+    DECLARE         @HideNG2                            BIT = 0 
+                    --,@HideVS                          BIT = 0 
+                    --,@HideLottery                     BIT = 0
+                    ,@IsMyanmarOdds                     BIT = 0           -- MyanmarOdds
                     ,@srecommend                        INT        
-                    ,@isIMBC                                BIT = 0
-        
+                    ,@isIMBC                            BIT = 0
+					,@SpecialPlatform					TINYINT = 0
+					,@Site								VARCHAR(10)
+					
     CREATE TABLE #tempRef (Bettype INT,GroupTypeId INT)        
 
     DECLARE @SearchQuery varchar(1024)
@@ -68,16 +70,17 @@ BEGIN
 
     DELETE FROM #tempRef 
     WHERE bettype=GroupTypeId OR BetType IN (3915,3900)  
-
-    IF @RoleID = 1 AND ISNULL(@CustID, 0) <> 0
-            IF (SELECT [Site] FROM DBCUST.CustDB.dbo.Customer WITH (NOLOCK)
-                                                WHERE custid = (SELECT recommend FROM DBCUST.CustDB.dbo.Customer WITH (NOLOCK)
-                                                                                WHERE custid = @CustID)) = 'IMBC'
-                    SELECT @isIMBC = 1
-    ELSE
-            IF (SELECT [Site] FROM DBCUST.CustDB.dbo.Customer WITH (NOLOCK)
-                                                WHERE custid = @CustID) = 'IMBC'
-                    SELECT @isIMBC = 1
+	
+	SELECT @Site = Site, @srecommend = srecommend
+	FROM DBCUST.CustDB.dbo.Customer WITH (NOLOCK)
+    WHERE custid = @CustID
+	
+	SELECT @SpecialPlatform = SpecialPlatfrom
+	FROM DBCUST.CustDB.dbo.Site WITH (NOLOCK)
+	WHERE Site = @Site
+	
+    IF @Site = 'IMBC'
+        SELECT @isIMBC = 1
         
     IF @RoleID BETWEEN 2 AND 4 
     BEGIN        
@@ -150,7 +153,7 @@ BEGIN
                             --AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
                             --AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
                             AND b.Site <> 'CN88'
-			--191334
+							AND 1 = CASE WHEN @SpecialPlatform = 4 AND Bettype IN (228,229) THEN 0 ELSE 1 END --Hide bettype SABA xxx for 777777
             UNION ALL
             SELECT CONVERT(SMALLINT,2) AS Sporttype, 647 AS Bettype,  CONVERT(SMALLINT,2)  AS SporttypeRefPT, 9999 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
             UNION ALL
