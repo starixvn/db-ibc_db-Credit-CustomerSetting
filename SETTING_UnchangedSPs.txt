@@ -1,3 +1,5 @@
-DynamicCustSetting\Others\PlaceBet\Dot_Member_CustCreditInfo_Cust_DCS.sql
-Others\Dot_Member_GetCustCreditInfo.sql
-Others\Intg_NonSports_CustInfo_DCS.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
+CustSetting\UpdateSetting\SportBook\Select\Customer List\Acc_CustomerSelByMAg.sql
+CustSetting\UpdateSetting\SportBook\Select\Customer List\Age_CustomerSelByMAg.sql
+CustSetting\UpdateSetting\SportBook\Select\Customer List\Acc_CustomerSelSAgList.sql

@@ -90,7 +90,7 @@ AS
 	- 20230718@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 	- 20230915@Tacy: Alpha/NAP - Support to update siteLabel for MBC [Redmine: #194034]
 	- 20240129@Luke: NAP - Virtual rate - Change default of VR Status for newly created Super to Enable [Redmine: #200311]
-
+	- 20231211@Johnson: check permission for 777 [redmineID: #197160]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -180,6 +180,20 @@ BEGIN
 		RETURN
 
 	END
+	
+	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
+	DECLARE @tmpUserid VARCHAR(50)
+	
+	SELECT @tmpUserid=CAST(@creator AS VARCHAR(50))
+		
+	INSERT INTO  @tmp (siteid , site,SpecialGroup)
+	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
+	
+	IF (@site IN (SELECT site FROM @tmp ))
+	BEGIN
+		SELECT @ErrCode = 103, @ErrMsg ='You don''t have permission to access'
+		RETURN
+	END
 
 	-- For Myanmar Odds
 	DECLARE @IsMyanmarOdds_destination BIT = 0
@@ -202,7 +216,7 @@ BEGIN
 	END
 
 	--Check cross-site:
-	IF ( @source_SiteLabel IN ('789y','MBC','IBC') OR @SiteLabel IN ('789y','MBC','IBC') )
+	IF ( @source_SiteLabel IN ('789y','MBC','IBC','777') OR @SiteLabel IN ('789y','MBC','IBC','777') )
 		AND @SiteLabel<>@source_SiteLabel
 	BEGIN
 		SELECT	@ErrMsg='Cannot copy Super from ' + @_Site + ' (' + @source_SiteLabel + ') to ' + @Site + ' (' + @SiteLabel + ')',
