@@ -10,7 +10,7 @@ AS
 	
 	 Revisions: 
 		- 20230627@Johnson: initial sp [redmine: #179159]
-
+		- 20231201@Johnson: Separate PT for Live & RNG Casino [redmine: #197629]
 	 Param's Explanation: 
 		@CreationStatus: 0: Pro, 1: UAT, 3: UAT/PRO
  */  
@@ -26,6 +26,7 @@ BEGIN
 	CREATE TABLE #ProductInfo
 	(
 		GroupID TINYINT,
+		SubGroupID TINYINT,
 		ProductID TINYINT,
 		RealProductID TINYINT
 	)
@@ -38,14 +39,14 @@ BEGIN
 
 	IF @CreationStatus IN (1,0)
 	BEGIN
-		INSERT INTO #ProductInfo (GroupID, ProductID, RealProductID)
-		SELECT DISTINCT GroupID,0 ProductID,CASE WHEN t.ProductID = 16 THEN t.ProductID ELSE s.RealProductID END AS RealProductID 
+		INSERT INTO #ProductInfo (GroupID,SubGroupID, ProductID, RealProductID)
+		SELECT DISTINCT GroupID,SubGroupID,0 ProductID,CASE WHEN t.ProductID = 16 THEN t.ProductID ELSE s.RealProductID END AS RealProductID 
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
 		  AND GroupID IN ( 1,2,4) --SB,SB2, RnG Games, Bitcoin	
 		UNION ALL  		
-		SELECT DISTINCT GroupID,CASE WHEN t.ProductID <> 41 THEN 53 ELSE t.ProductID END ,s.RealProductID --Saba Casino,RNG Slot
+		SELECT DISTINCT GroupID,SubGroupID,CASE WHEN t.ProductID <> 41 THEN 53 ELSE t.ProductID END ,s.RealProductID --Saba Casino,RNG Slot
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END 
@@ -56,22 +57,22 @@ BEGIN
 	ELSE IF @CreationStatus = 3
 	BEGIN	
 		INSERT INTO #ProductInfo (GroupID, ProductID, RealProductID)
-		SELECT DISTINCT GroupID,0 ProductID,CASE WHEN t.ProductID = 16 THEN t.ProductID ELSE s.RealProductID END AS RealProductID 
+		SELECT DISTINCT GroupID,SubGroupID,0 ProductID,CASE WHEN t.ProductID = 16 THEN t.ProductID ELSE s.RealProductID END AS RealProductID 
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
-		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
+		WHERE CreationStatus <> 2
 		  AND GroupID IN ( 1,2,4) --SB,SB2, RnG Games, Bitcoin	
 		UNION ALL  		
-		SELECT DISTINCT GroupID,CASE WHEN t.ProductID <> 41 THEN 53 ELSE t.ProductID END ,s.RealProductID --Saba Casino,RNG Slot
+		SELECT DISTINCT GroupID,SubGroupID,CASE WHEN t.ProductID <> 41 THEN 53 ELSE t.ProductID END ,s.RealProductID --Saba Casino,RNG Slot
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID
-		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END 
+		WHERE CreationStatus <> 2
 		  AND GroupID = 3--Live & RnG CS
 		  AND (t.Productid <> 44 OR s.RealProductId = 50)
-		ORDER BY GroupID,ProductID   		
+		ORDER BY GroupID,SubGroupID,ProductID   		
 	END
 
-	SELECT GroupID, ProductID, p.RealProductID
+	SELECT GroupID,SubGroupID, ProductID, p.RealProductID
 	FROM #ProductInfo p
 		INNER JOIN #OfferedProduct po ON p.RealProductID = po.RealProductID 
 	WHERE po.IsHidden = 0 AND (po.EndOfSupportDate > GETDATE() OR po.EndOfSupportDate IS NULL)	

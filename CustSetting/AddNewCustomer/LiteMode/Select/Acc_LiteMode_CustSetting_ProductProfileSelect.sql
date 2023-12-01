@@ -11,7 +11,7 @@ AS
 	
 	 Revisions: 
 		- 20230428@Johnson: initial sp [redmine: #179159]
-
+		- 20231201@Johnson: Separate PT for Live & RNG Casino [redmine: #197629]
 	 Param's Explanation: 
 		@CreationStatus: 0: Pro, 1: UAT, 3: UAT/PRO
  */  
@@ -46,7 +46,7 @@ BEGIN
 	BEGIN			
 		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, CreationStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType
 		FROM dbo.ProductSettingProfile_UAT p WITH(NOLOCK)
-		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END
+		WHERE CreationStatus <> 2
 			AND GroupID IS NOT NULL
 			AND MarketType = 0		
 			AND GroupType NOT IN (155,158,159)
