@@ -13,7 +13,7 @@ AS
 	
 	Revisions:
 		- 20230419@Johnson: initial sp [redmine: #179159]
-		
+		- 20231204@Johnson: Sort SubGroup [redmine: #197629]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -304,6 +304,7 @@ BEGIN
 												AND cs.BetType = ft.bettype
 												AND cs.IsLive = ft.islive
 		WHERE custid = @custid
+		ORDER BY SubGroupOrder,Child_DisplayOrder
 	END
 	--END RNG Games	
 	----------------------------------------------------------------------------------
@@ -318,7 +319,7 @@ BEGIN
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
 		WHERE cs.custid = @custid	
-		ORDER BY s.Child_DisplayOrder	
+		ORDER BY SubGroupOrder,s.Child_DisplayOrder	
 	END
 	
 	--PT
@@ -336,7 +337,8 @@ BEGIN
 				ON s.SportType = cs.sporttype  
 				AND s.BetType = cs.bettype  
 				AND s.IsLive = cs.islive
-		WHERE cs.CustID = @custid					
+		WHERE cs.CustID = @custid	
+		ORDER BY SubGroupOrder,s.Child_DisplayOrder			
 	END
 	--END Live & RnG Casino
 	----------------------------------------------------------------------------------
@@ -351,21 +353,18 @@ BEGIN
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
 		WHERE cs.custid = @custid	
-		ORDER BY s.Child_DisplayOrder	
+		ORDER BY SubGroupOrder,s.Child_DisplayOrder	
 	END
 	
 	--Bet Setting
 	IF @GroupID = 4 AND @GroupType = 157
-	BEGIN
-		;WITH T AS (		
+	BEGIN				
 		SELECT cs.Sporttype, cs.Bettype, MinBet, MaxBet, MaxPerMatch,s.Child_DisplayOrder
 		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
-		WHERE cs.CustID = @custid
-		)
-		SELECT * FROM T
-		ORDER BY Child_DisplayOrder
+		WHERE cs.CustID = @custid		
+		ORDER BY SubGroupOrder,Child_DisplayOrder
 	END
 	
 	--PT
@@ -383,7 +382,8 @@ BEGIN
 				ON s.SportType = cs.sporttype  
 				AND s.BetType = cs.bettype  
 				AND s.IsLive = cs.islive
-		WHERE cs.CustID = @custid					
+		WHERE cs.CustID = @custid
+		ORDER BY SubGroupOrder,Child_DisplayOrder	
 	END
 	--END Others Games
 	----------------------------------------------------------------------------------
