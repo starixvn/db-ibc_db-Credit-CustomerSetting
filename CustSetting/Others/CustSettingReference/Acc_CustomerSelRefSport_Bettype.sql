@@ -37,6 +37,7 @@ AS
             - 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
             - 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 			- 20230814@Luke: Basketball AIO [Redmine: #191334]
+			- 20231016@Luke: Offer 10 upcoming sports for Winter Sports [Redmine: #194661]
 
     Param's Explanation: 
             @CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -149,6 +150,7 @@ BEGIN
                             --AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
                             --AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
                             AND b.Site <> 'CN88'
+			--191334
             UNION ALL
             SELECT CONVERT(SMALLINT,2) AS Sporttype, 647 AS Bettype,  CONVERT(SMALLINT,2)  AS SporttypeRefPT, 9999 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
             UNION ALL
@@ -157,6 +159,16 @@ BEGIN
             SELECT CONVERT(SMALLINT,2)  AS Sporttype, 649 AS Bettype,  CONVERT(SMALLINT,2)  AS SporttypeRefPT, 9999 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
             UNION ALL
             SELECT CONVERT(SMALLINT,2)  AS Sporttype, 650 AS Bettype,  CONVERT(SMALLINT,2)  AS SporttypeRefPT, 9999 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
+			
+			--194661
+			UNION ALL
+            SELECT CONVERT(SMALLINT,58) AS Sporttype, 7 AS Bettype,  CONVERT(SMALLINT,99)  AS SporttypeRefPT, 1 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
+			UNION ALL
+            SELECT CONVERT(SMALLINT,58) AS Sporttype, 8 AS Bettype,  CONVERT(SMALLINT,99)  AS SporttypeRefPT, 3 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
+			UNION ALL
+            SELECT CONVERT(SMALLINT,58) AS Sporttype, 12 AS Bettype,  CONVERT(SMALLINT,99)  AS SporttypeRefPT, 2 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
+			UNION ALL
+            SELECT CONVERT(SMALLINT,58) AS Sporttype, 21 AS Bettype,  CONVERT(SMALLINT,99)  AS SporttypeRefPT, 20 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
     )
     SELECT Sporttype 
             , CASE WHEN Sporttype=6 and bettype=3900 THEN 4 ELSE bettype END Bettype
