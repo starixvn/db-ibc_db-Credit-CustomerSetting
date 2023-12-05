@@ -87,6 +87,7 @@ AS
 		- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
 		- 20230711@Helios: VR Accumulate Balance [Redmine: #189649] 
 		- 20230724@Luke: Unlock VR for Soccer, Basketball, Other Sports [Redmine: #191162]
+		- 20231129@Luke: NAP - Virtual rate - Enhance VR [Redmine: #194939]
 
 	Param's Explanation:
 		@Action: 
@@ -1405,15 +1406,14 @@ BEGIN
 		END
 	END
 	
-	ELSE IF @Action IN ('EnableVRDownline', 'UnlockVRDownline')
+	ELSE IF @Action IN ('EnableABDownline', 'UnlockVRDownline')
 	BEGIN
 		IF @RoleID = 1 
 			RETURN
 
 		CREATE TABLE #tblCustVR_Additional (custID INT, type TINYINT)
 		CREATE TABLE #tmpCustBatchVR_Additional (CustID INT, type TINYINT)	
-		DECLARE @batchUpdate_Additional INT = 5000,
-				@maxcustid_Additional INT
+		DECLARE @batchUpdate_Additional INT = 5000
 
 		DECLARE	@RoleID_Unlock3_SC		TINYINT,
 				@RoleID_Unlock2_SC		TINYINT,
@@ -1427,9 +1427,9 @@ BEGIN
 				@RoleID_Unlock2_OS		TINYINT,
 				@RoleID_Unlock1_OS		TINYINT,
 
-				@RoleID_Enable3		TINYINT,
-				@RoleID_Enable2		TINYINT,
-				@RoleID_Enable1		TINYINT
+				@RoleID_EnableAB3		TINYINT,
+				@RoleID_EnableAB2		TINYINT,
+				@RoleID_EnableAB1		TINYINT
 		DECLARE @DocHandler_EnableUnlockVR INT
 		EXEC sp_xml_preparedocument @DocHandler_EnableUnlockVR OUTPUT, @AdditionalActions
 
@@ -1446,251 +1446,84 @@ BEGIN
 					@RoleID_Unlock2_OS = CASE WHEN @roleid IN (4,3)		AND Data.UnlockOS2 = 1 THEN 2 ELSE 0 END,
 					@RoleID_Unlock1_OS = CASE WHEN @roleid IN (4,3,2)	AND Data.UnlockOS1 = 1 THEN 1 ELSE 0 END,
 
-					@RoleID_Enable3 = CASE WHEN @roleid = 4			AND Data.Enable3 = 1 THEN 3 ELSE 0 END,
-					@RoleID_Enable2 = CASE WHEN @roleid IN (4,3)	AND Data.Enable2 = 1 THEN 2 ELSE 0 END,
-					@RoleID_Enable1 = CASE WHEN @roleid IN (4,3,2)	AND Data.Enable1 = 1 THEN 1 ELSE 0 END
+					@RoleID_EnableAB3 = CASE WHEN @roleid = 4			AND Data.EnableAB3 = 1 THEN 3 ELSE 0 END,
+					@RoleID_EnableAB2 = CASE WHEN @roleid IN (4,3)		AND Data.EnableAB2 = 1 THEN 2 ELSE 0 END,
+					@RoleID_EnableAB1 = CASE WHEN @roleid IN (4,3,2)	AND Data.EnableAB1 = 1 THEN 1 ELSE 0 END
 		FROM OPENXML (@DocHandler_EnableUnlockVR, '/ROOT/VR',1) 
 		WITH (
-			UnlockSC3		BIT,
-			UnlockSC2		BIT,
-			UnlockSC1		BIT,
+			UnlockSC3		TINYINT,
+			UnlockSC2		TINYINT,
+			UnlockSC1		TINYINT,
 
-			UnlockBB3		BIT,
-			UnlockBB2		BIT,
-			UnlockBB1		BIT,
+			UnlockBB3		TINYINT,
+			UnlockBB2		TINYINT,
+			UnlockBB1		TINYINT,
 
-			UnlockOS3		BIT,
-			UnlockOS2		BIT,
-			UnlockOS1		BIT,
+			UnlockOS3		TINYINT,
+			UnlockOS2		TINYINT,
+			UnlockOS1		TINYINT,
 
-			Enable3		BIT,
-			Enable2		BIT,
-			Enable1		BIT
+			EnableAB3		TINYINT,
+			EnableAB2		TINYINT,
+			EnableAB1		TINYINT
 		) AS Data
 
 		EXEC sp_xml_removedocument @DocHandler_EnableUnlockVR
 
-		DECLARE @BetTradeAccount1 TABLE (CustID INT)
-
-		IF @action = 'EnableVRDownline'
-			AND NOT(@RoleID_Enable1 = 0 AND @RoleID_Enable2 = 0 AND @RoleID_Enable3 = 0 ) 
+		IF @action = 'EnableABDownline' AND dbo.f_CheckRepTable('VRCustLockStatus') = 1
 		BEGIN
-			IF( dbo.f_CheckRepTable('Customer') = 1 AND dbo.f_CheckRepTable('BetTradeCust') = 1)
-			BEGIN
-			IF EXISTS(SELECT TOP 1 1 FROM Customer c WITH(NOLOCK) WHERE custid = @custid AND site IN ('TLC', 'asiabet88'))
-				BEGIN
-					IF @roleid = 4 
-					BEGIN
-						INSERT INTO @BetTradeAccount1 (CustID)
-						SELECT c.Custid  
-						FROM Customer c WITH(NOLOCK)
-							INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
-						WHERE c.srecommend = @custid 
-					END
-					ELSE IF @roleid = 3
-					BEGIN
-						INSERT INTO @BetTradeAccount1 (CustID)
-						SELECT c.Custid  
-						FROM Customer c WITH(NOLOCK)
-							INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
-						WHERE c.mrecommend = @custid 
-					END
-					ELSE IF @roleid = 2
-					BEGIN
-						INSERT INTO @BetTradeAccount1 (CustID)
-						SELECT c.Custid  
-						FROM Customer c WITH(NOLOCK)
-							INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
-						WHERE c.recommend = @custid 
-					END
-				END
-			END
-	
-			IF( dbo.f_CheckRepTable('Customer') = 1 AND dbo.f_CheckRepTable('TradeCust') = 1 )
+			TRUNCATE TABLE #tblCustVR_Additional
+
+			IF @roleid = 4
 			BEGIN	
-				IF @roleid = 4 
-				BEGIN
-					INSERT INTO @BetTradeAccount1 (CustID)
-					SELECT c.Custid  
-					FROM Customer c WITH(NOLOCK)
-						INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
-					WHERE c.srecommend = @custid 
-				END
-				ELSE IF @roleid = 3
-				BEGIN
-					INSERT INTO @BetTradeAccount1 (CustID)
-					SELECT c.Custid  
-					FROM Customer c WITH(NOLOCK)
-						INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
-					WHERE c.mrecommend = @custid 
-				END
-				ELSE IF @roleid = 2
-				BEGIN
-					INSERT INTO @BetTradeAccount1 (CustID)
-					SELECT c.Custid  
-					FROM Customer c WITH(NOLOCK)
-						INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
-					WHERE c.recommend = @custid 		
-				END
+				INSERT INTO #tblCustVR_Additional(custID, type)
+				SELECT custid, 4 AS type
+				FROM custInfo WITH (NOLOCK)
+				WHERE srecommend = @custid
+					AND roleid IN (@RoleID_EnableAB3, @RoleID_EnableAB2, @RoleID_EnableAB1)
 			END
-	
-			IF	dbo.f_CheckRepTable('custinfo') = 1
+
+			ELSE IF @roleid = 3
 			BEGIN
-				SET @batchUpdate_Additional = 5000--for update custinfo
-				IF	@roleid = 4
-				BEGIN			
-					DELETE #tblCustVR_Additional
-			
-					INSERT INTO #tblCustVR_Additional(custID)
-					SELECT custid
-					FROM dbo.custInfo ci WITH (NOLOCK)
-					WHERE	ci.srecommend = @custid
-					AND	NOT EXISTS (
-								SELECT	1
-								FROM	@BetTradeAccount1 AS lm
-								WHERE	lm.custID = ci.custid
-							)
-					AND ci.roleid IN (@RoleID_Enable1,@RoleID_Enable2,@RoleID_Enable3)
-					
-					SELECT @maxcustid_Additional = MAX(custID)
-					FROM #tblCustVR_Additional
-			
-					WHILE(1=1)
-					BEGIN
-						TRUNCATE TABLE #tmpCustBatchVR_Additional
-				
-						DELETE TOP (@batchUpdate_Additional) t
-						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional(CustID)
-						FROM #tblCustVR_Additional t
-				
-						IF @@rowcount = 0 
-							BREAK;
-					
-						UPDATE	ci
-						SET	ci.virtualmultiplier = 1
-						FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-						WHERE custID IN (SELECT custID FROM #tmpCustBatchVR_Additional)
-							AND ci.VirtualMultiplier = 0
-					END	
-			
-					--update newly customer if any
-					UPDATE	ci
-					SET	ci.virtualmultiplier = 1
-					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-					WHERE	ci.srecommend = @custid
-					AND ci.custid > @maxcustid_Additional
-					AND	NOT EXISTS (
-								SELECT	1
-								FROM	@BetTradeAccount1 AS lm
-								WHERE	lm.custID = ci.custid
-							)	
-					AND ci.roleid IN (@RoleID_Enable1,@RoleID_Enable2,@RoleID_Enable3)
-					AND ci.VirtualMultiplier = 0
+				INSERT INTO #tblCustVR_Additional(custID, type)
+				SELECT custid, 4 AS type
+				FROM custInfo WITH (NOLOCK)
+				WHERE mrecommend = @custid
+					AND roleid IN (@RoleID_EnableAB2, @RoleID_EnableAB1)
+			END
 
-				END;
-				ELSE IF	@roleid = 3
-				BEGIN			
-					DELETE #tblCustVR_Additional
-			
-					INSERT INTO #tblCustVR_Additional(custID)
-					SELECT custid
-					FROM dbo.custInfo ci WITH (NOLOCK)
-					WHERE	ci.mrecommend = @custid
-					AND	NOT EXISTS (
-								SELECT	1
-								FROM	@BetTradeAccount1 AS lm
-								WHERE	lm.custID = ci.custid
-							)
-					AND ci.roleid IN (@RoleID_Enable1,@RoleID_Enable2)
-					
-					SELECT @maxcustid_Additional = MAX(custID)
-					FROM #tblCustVR_Additional
-			
-					WHILE(1=1)
-					BEGIN
-						TRUNCATE TABLE #tmpCustBatchVR_Additional
-				
-						DELETE TOP (@batchUpdate_Additional) t
-						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional(CustID)
-						FROM #tblCustVR_Additional t
-				
-						IF @@rowcount = 0 
-							BREAK;
-					
-						UPDATE	ci
-						SET	ci.virtualmultiplier = 1
-						FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-						WHERE custID IN (SELECT custID FROM #tmpCustBatchVR_Additional)
-							AND ci.VirtualMultiplier = 0
-					END	
-			
-					--update newly customer if any
-					UPDATE	ci
-					SET	ci.virtualmultiplier = 1
-					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-					WHERE	ci.mrecommend = @custid
-					AND ci.custid > @maxcustid_Additional
-					AND	NOT EXISTS (
-								SELECT	1
-								FROM	@BetTradeAccount1 AS lm
-								WHERE	lm.custID = ci.custid
-							)	
-					AND ci.roleid IN (@RoleID_Enable1,@RoleID_Enable2)
-					AND ci.VirtualMultiplier = 0
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO #tblCustVR_Additional(custID, type)
+				SELECT custid, 4 AS type
+				FROM custInfo WITH (NOLOCK)
+				WHERE recommend = @custid
+					AND roleid = @RoleID_EnableAB1
+			END
 
-				END;
-				ELSE IF	@roleid = 2
-				BEGIN			
-					DELETE #tblCustVR_Additional
-			
-					INSERT INTO #tblCustVR_Additional(custID)
-					SELECT custid
-					FROM dbo.custInfo ci WITH (NOLOCK)
-					WHERE	ci.recommend = @custid
-					AND	NOT EXISTS (
-								SELECT	1
-								FROM	@BetTradeAccount1 AS lm
-								WHERE	lm.custID = ci.custid
-							)
-					AND ci.roleid IN (@RoleID_Enable1)
-					
-					SELECT @maxcustid_Additional = MAX(custID)
-					FROM #tblCustVR_Additional
-			
-					WHILE(1=1)
-					BEGIN
-						TRUNCATE TABLE #tmpCustBatchVR_Additional
-				
-						DELETE TOP (@batchUpdate_Additional) t
-						OUTPUT DELETED.custid INTO #tmpCustBatchVR_Additional(CustID)
-						FROM #tblCustVR_Additional t
-				
-						IF @@rowcount = 0 
-							BREAK;
-					
-						UPDATE	ci
-						SET	ci.virtualmultiplier = 1
-						FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-						WHERE custID IN (SELECT custID FROM #tmpCustBatchVR_Additional)
-							AND ci.VirtualMultiplier = 0
-					END	
-			
-					--update newly customer if any
-					UPDATE	ci
-					SET	ci.virtualmultiplier = 1
-					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-					WHERE	ci.recommend = @custid
-					AND ci.custid > @maxcustid_Additional
-					AND	NOT EXISTS (
-								SELECT	1
-								FROM	@BetTradeAccount1 AS lm
-								WHERE	lm.custID = ci.custid
-							)	
-					AND ci.roleid IN (@RoleID_Enable1)
-					AND ci.VirtualMultiplier = 0
+			SET @batchUpdate_Additional = 5000
 
-				END;
-			END;
+			WHILE(1=1)
+			BEGIN
+				TRUNCATE TABLE #tmpCustBatchVR_Additional
+				
+				DELETE TOP (@batchUpdate_Additional) t
+					OUTPUT deleted.custid, deleted.type 
+					INTO #tmpCustBatchVR_Additional(CustID, type)
+				FROM #tblCustVR_Additional t
+				
+				IF @@rowcount = 0 
+					BREAK;
+					
+				INSERT INTO VRCustLockStatus(CustID, Type)
+				SELECT t.custID, t.type
+				FROM #tmpCustBatchVR_Additional t
+				WHERE NOT EXISTS(
+					SELECT TOP 1 1
+					FROM VRCustLockStatus v WITH (NOLOCK)
+					WHERE t.CustID = v.CustID AND t.type = v.Type
+				)
+			END	
 		END
 		ELSE IF @action = 'UnlockVRDownline' AND dbo.f_CheckRepTable('VRCustLockStatus') = 1
 		BEGIN
@@ -1761,7 +1594,7 @@ BEGIN
 				WHERE t.roleid = @RoleID_Unlock1_OS
 			END
 
-			SET @batchUpdate_Additional = 2000
+			SET @batchUpdate_Additional = 5000
 
 			WHILE(1=1)
 			BEGIN
@@ -1927,6 +1760,212 @@ BEGIN
 			END	
 		END
 		DROP TABLE #tmpCustVR2Downline
+	END
+	ELSE IF @Action IN ('DisableABDownline','LockVRDownline')
+	BEGIN
+		CREATE TABLE #lockTempCust_Additional(custid INT, type TINYINT)
+		CREATE TABLE #lockTempCust_Batch(custid INT, type TINYINT)
+		DECLARE @lockBatchSize INT = 5000
+
+		IF @roleid = 1
+			RETURN
+
+		DECLARE	@RoleID_Lock3_SC		TINYINT,
+				@RoleID_Lock2_SC		TINYINT,
+				@RoleID_Lock1_SC		TINYINT,
+
+				@RoleID_Lock3_BB		TINYINT,
+				@RoleID_Lock2_BB		TINYINT,
+				@RoleID_Lock1_BB		TINYINT,
+
+				@RoleID_Lock3_OS		TINYINT,
+				@RoleID_Lock2_OS		TINYINT,
+				@RoleID_Lock1_OS		TINYINT,
+
+				@RoleID_Disable3_AB		TINYINT,
+				@RoleID_Disable2_AB		TINYINT,
+				@RoleID_Disable1_AB		TINYINT
+		DECLARE @DocHandler_LockVR INT
+		EXEC sp_xml_preparedocument @DocHandler_LockVR OUTPUT, @AdditionalActions
+
+		SELECT
+					@RoleID_Lock3_SC = CASE WHEN @roleid = 4			AND Data.UnlockSC3 = 0 THEN 3 ELSE 0 END,
+					@RoleID_Lock2_SC = CASE WHEN @roleid IN (4,3)		AND Data.UnlockSC2 = 0 THEN 2 ELSE 0 END,
+					@RoleID_Lock1_SC = CASE WHEN @roleid IN (4,3,2)		AND Data.UnlockSC1 = 0 THEN 1 ELSE 0 END,
+
+					@RoleID_Lock3_BB = CASE WHEN @roleid = 4			AND Data.UnlockBB3 = 0 THEN 3 ELSE 0 END,
+					@RoleID_Lock2_BB = CASE WHEN @roleid IN (4,3)		AND Data.UnlockBB2 = 0 THEN 2 ELSE 0 END,
+					@RoleID_Lock1_BB = CASE WHEN @roleid IN (4,3,2)		AND Data.UnlockBB1 = 0 THEN 1 ELSE 0 END,
+
+					@RoleID_Lock3_OS = CASE WHEN @roleid = 4			AND Data.UnlockOS3 = 0 THEN 3 ELSE 0 END,
+					@RoleID_Lock2_OS = CASE WHEN @roleid IN (4,3)		AND Data.UnlockOS2 = 0 THEN 2 ELSE 0 END,
+					@RoleID_Lock1_OS = CASE WHEN @roleid IN (4,3,2)		AND Data.UnlockOS1 = 0 THEN 1 ELSE 0 END,
+
+					@RoleID_Disable3_AB = CASE WHEN @roleid = 4			AND Data.EnableAB3 = 0 THEN 3 ELSE 0 END,
+					@RoleID_Disable2_AB = CASE WHEN @roleid IN (4,3)	AND Data.EnableAB2 = 0 THEN 2 ELSE 0 END,
+					@RoleID_Disable1_AB = CASE WHEN @roleid IN (4,3,2)	AND Data.EnableAB1 = 0 THEN 1 ELSE 0 END
+		FROM OPENXML (@DocHandler_LockVR, '/ROOT/VR',1) 
+		WITH (
+			UnlockSC3		TINYINT,
+			UnlockSC2		TINYINT,
+			UnlockSC1		TINYINT,
+
+			UnlockBB3		TINYINT,
+			UnlockBB2		TINYINT,
+			UnlockBB1		TINYINT,
+
+			UnlockOS3		TINYINT,
+			UnlockOS2		TINYINT,
+			UnlockOS1		TINYINT,
+
+			EnableAB3		TINYINT,
+			EnableAB2		TINYINT,
+			EnableAB1		TINYINT
+		) AS Data
+
+		EXEC sp_xml_removedocument @DocHandler_LockVR
+
+		IF @action = 'DisableABDownline' AND dbo.f_CheckRepTable('VRCustLockStatus') = 1
+		BEGIN
+			TRUNCATE TABLE #lockTempCust_Additional
+
+			IF @roleid = 4
+			BEGIN	
+				INSERT INTO #lockTempCust_Additional(custID, type)
+				SELECT custid, 4 AS type
+				FROM custInfo WITH (NOLOCK)
+				WHERE srecommend = @custid
+					AND roleid IN (@RoleID_Disable3_AB, @RoleID_Disable2_AB, @RoleID_Disable1_AB)
+			END
+
+			ELSE IF @roleid = 3
+			BEGIN
+				INSERT INTO #lockTempCust_Additional(custID, type)
+				SELECT custid, 4 AS type
+				FROM custInfo WITH (NOLOCK)
+				WHERE mrecommend = @custid
+					AND roleid IN (@RoleID_Disable2_AB, @RoleID_Disable1_AB)
+			END
+
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO #lockTempCust_Additional(custID, type)
+				SELECT custid, 4 AS type
+				FROM custInfo WITH (NOLOCK)
+				WHERE recommend = @custid
+					AND roleid = @RoleID_Disable1_AB
+			END
+
+			WHILE(1=1)
+			BEGIN
+				TRUNCATE TABLE #lockTempCust_Batch
+				
+				DELETE TOP (@lockBatchSize) t
+					OUTPUT deleted.custid, deleted.type 
+					INTO #lockTempCust_Batch(CustID, type)
+				FROM #lockTempCust_Additional t
+				
+				IF @@rowcount = 0 
+					BREAK;
+					
+				DELETE v
+				FROM VRCustLockStatus v WITH (ROWLOCK)
+					INNER JOIN #lockTempCust_Batch t ON v.CustID = t.custid AND v.Type = t.type
+			END				
+		END
+		ELSE IF @action = 'LockVRDownline' AND dbo.f_CheckRepTable('VRCustLockStatus') = 1
+		BEGIN
+			CREATE TABLE #lockTempCust(custid INT, roleid TINYINT)
+
+			IF @roleid = 4
+			BEGIN
+				INSERT INTO #lockTempCust(custid, roleid)
+				SELECT custid, roleid 
+				FROM custinfo with (NOLOCK)
+				WHERE srecommend = @custid
+
+				INSERT INTO #lockTempCust_Additional(custid, type)
+				SELECT custid, 1 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock3_SC, @RoleID_Lock2_SC,@RoleID_Lock1_SC)
+				UNION ALL
+				SELECT custid, 2 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock3_OS, @RoleID_Lock2_OS,@RoleID_Lock1_OS)
+				UNION ALL
+				SELECT custid, 3 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock3_BB, @RoleID_Lock2_BB,@RoleID_Lock1_BB)
+			END
+			ELSE IF @roleid = 3
+			BEGIN
+				INSERT INTO #lockTempCust(custid, roleid)
+				SELECT custid, roleid 
+				FROM custinfo with (NOLOCK)
+				WHERE mrecommend = @custid
+
+				INSERT INTO #lockTempCust_Additional(custid, type)
+				SELECT custid, 1 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock2_SC,@RoleID_Lock1_SC)
+				UNION ALL
+				SELECT custid, 2 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock2_OS,@RoleID_Lock1_OS)
+				UNION ALL
+				SELECT custid, 3 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock2_BB,@RoleID_Lock1_BB)
+			END
+			ELSE IF @roleid = 2
+			BEGIN
+				INSERT INTO #lockTempCust(custid, roleid)
+				SELECT custid, roleid 
+				FROM custinfo with (NOLOCK)
+				WHERE recommend = @custid
+
+				INSERT INTO #lockTempCust_Additional(custid, type)
+				SELECT custid, 1 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock1_SC)
+				UNION ALL
+				SELECT custid, 2 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock1_OS)
+				UNION ALL
+				SELECT custid, 3 AS type
+				FROM #lockTempCust
+				WHERE roleid IN (@RoleID_Lock1_BB)
+			END
+
+			IF NOT EXISTS( SELECT TOP 1 1 FROM #lockTempCust_Additional)
+				RETURN
+
+			WHILE(1=1)
+			BEGIN
+				DELETE #lockTempCust_Batch
+
+				DELETE TOP (@lockBatchSize) t 
+					OUTPUT DELETED.custid, DELETED.type
+					INTO #lockTempCust_Batch(custid, type)
+				FROM #lockTempCust_Additional t
+
+				IF @@ROWCOUNT = 0
+					BREAK
+
+				INSERT INTO VRCustLockStatus(CustID, Type)
+				SELECT t.custid, t.type 
+				FROM #lockTempCust_Batch t
+				WHERE NOT EXISTS(
+					SELECT TOP 1 1
+					FROM VRCustLockStatus v WITH (NOLOCK) 
+					WHERE v.CustID = t.custid AND v.Type = t.type
+				)
+			END	
+			DROP TABLE #lockTempCust
+		END
+		DROP TABLE	#lockTempCust_Additional, 
+					#lockTempCust_Batch
 	END
 END
 
