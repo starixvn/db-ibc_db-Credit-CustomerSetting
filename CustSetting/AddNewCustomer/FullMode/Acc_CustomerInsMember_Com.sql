@@ -413,7 +413,8 @@ Revisions:
 	- 20230303@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine: #184339]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
-	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649] 
+	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649]
+	- 20231208@Johnson: Enhance log credit get Actualrate from DBCUST [redmine: #196720]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -1399,12 +1400,20 @@ BEGIN
 	DECLARE @LogSPCredit VARCHAR(MAX)
 	SELECT @LogSPCredit = 'UserName='+ COALESCE(CAST(@username AS VARCHAR(30)),SPACE(1))
 	
-	DECLARE @log xml, @SB_Error BIT = 0
- 
+	DECLARE @log xml, @SB_Error BIT = 0,@Date DATE, @ActualRate FLOAT
+					
+	SELECT @Date = CURRENT_TIMESTAMP
+		
+	SELECT @ActualRate = e.ActualRate
+	FROM dbo.ExchangeDailyOanda e WITH (NOLOCK)
+	WHERE ExchangeDate = @Date
+		AND ExchangeId = @Currency
+			
 	SELECT @log = (SELECT @Creator as '@UserID',
 						@custid as '@CustID',
 						@LogSPCredit as '@Doing',						
 						@credit as '@NewValue',
+						ISNULL(@ActualRate,0) as '@ActualRate',
 						@IP as '@IP',
 						1208 as '@ActionID',
 						getdate() as '@LogDate'

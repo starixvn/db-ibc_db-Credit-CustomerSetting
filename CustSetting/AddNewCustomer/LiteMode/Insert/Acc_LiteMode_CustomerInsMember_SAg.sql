@@ -57,6 +57,7 @@ AS
 	Revisions: 
 		- 20230512@Johnson: initial sp [redmine: #179159]
 		- 20231024@Johnson: remove param @site [redmine: #195406]
+		- 20231211@Johnson: Enhance log credit get Actualrate from DBCUST [redmine: #196720]
 	Param's Explanation: 
 		- @SettingType25 = '<Root>
 						<R SportType="1" BetType="1" Discount="0.0025" />
@@ -581,12 +582,20 @@ BEGIN
     SELECT @LogSPCredit = 'UserName='+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + ',
     SubAccName='+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) 
 
-	DECLARE @log xml, @SB_Error BIT = 0
+	DECLARE @log xml, @SB_Error BIT = 0, @Date DATE, @ActualRate FLOAT
+					
+	SELECT @Date = CURRENT_TIMESTAMP
+		
+	SELECT @ActualRate = e.ActualRate
+	FROM dbo.ExchangeDailyOanda e WITH (NOLOCK)
+	WHERE ExchangeDate = @Date
+		AND ExchangeId = @Currency
  
 	SELECT @log = (SELECT @Creator as '@UserID',
 						@custid as '@CustID',
 						@LogSPCredit as '@Doing',						
 						@credit as '@NewValue',
+						@ActualRate as '@ActualRate',
 						@IP as '@IP',
 						1223 as '@ActionID',
 						getdate() as '@LogDate'

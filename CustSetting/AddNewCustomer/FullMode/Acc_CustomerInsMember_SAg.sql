@@ -438,6 +438,7 @@ Revisions:
 	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
 	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649]
 	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141] 
+	- 20231208@Johnson: Enhance log credit get Actualrate from DBCUST [redmine: #196720]
 Param's Explanation:
 - @ErrCode:
     = 0: super create master successfully.
@@ -2250,12 +2251,20 @@ BEGIN
     SELECT @LogSPCredit = 'UserName='+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + ',
     SubAccName='+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) 
 
-	DECLARE @log xml, @SB_Error BIT = 0
+	DECLARE @log xml, @SB_Error BIT = 0,@Date DATE, @ActualRate FLOAT
+					
+	SELECT @Date = CURRENT_TIMESTAMP
+		
+	SELECT @ActualRate = e.ActualRate
+	FROM dbo.ExchangeDailyOanda e WITH (NOLOCK)
+	WHERE ExchangeDate = @Date
+		AND ExchangeId = @Currency
  
 	SELECT @log = (SELECT @Creator as '@UserID',
 						@custid as '@CustID',
 						@LogSPCredit as '@Doing',						
 						@credit as '@NewValue',
+						ISNULL(@ActualRate,0) as '@ActualRate',
 						@IP as '@IP',
 						1210 as '@ActionID',
 						getdate() as '@LogDate'
