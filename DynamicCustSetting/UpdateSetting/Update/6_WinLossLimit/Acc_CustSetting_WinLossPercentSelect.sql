@@ -16,6 +16,7 @@ AS
 	- 20230731@Eden: Simplify Live Casino Customer Setting - move from bodb02 to custdb [Redmine: #189389]
 	- 20230905@Eden: Enhance BBIN display [Redmine: #193539]
 	- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
+	- 20231213@Tacy: Live Casino - Hide un-launched product from Member Win Loss Limit page [Redmine: #198317]
 
   Parameters Explanation: 
 	WinPercent: -1: winloss setting is unlimited
@@ -55,9 +56,11 @@ BEGIN
 			ON d.SportType = mt.SporttypeRefWinlossLimit
 			AND d.BetType = mt.BettypeRefWinlossLimit
 			AND mt.isLicensee = 0 AND mt.Site = 'ALL' AND mt.isDeleted = 0
+		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON p.ProductID=mt.RealProductId
 	WHERE SettingType = 22
 		AND d.SportType = @SportType
 		AND d.BetType = @BetType
+		AND p.Environment <= @SettingStatus
 
 	IF NOT EXISTS( SELECT 1 FROM #tmpRealSport)
 	BEGIN
