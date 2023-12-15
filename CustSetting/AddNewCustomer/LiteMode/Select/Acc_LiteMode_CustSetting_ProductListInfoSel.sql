@@ -81,16 +81,24 @@ BEGIN
 			AND GroupType = 153-- PT
 			AND t.Productid IN (18,41)
 			AND MarketType = 0 
+			AND s.SportType NOT IN (SELECT DISTINCT SportType --Live Casino(SABA casino)
+									FROM dbo.ProductSettingProfile t WITH(NOLOCK)
+									WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END 
+									  AND GroupID = 3--Live & RnG CS
+									  AND GroupType = 153-- PT									 
+									  AND MarketType = 1	  
+									)
 		UNION ALL  		
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino
+		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino(SABA casino)
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
-			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID
+			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID AND t.SportType = s.SportType	
 		WHERE CreationStatus <= CASE WHEN @CreationStatus = 1 THEN 1 ELSE 0 END 
 			AND GroupID = 3--Live & RnG CS
 			AND GroupType = 153-- PT
 			AND t.Productid IN (18,41)
 			AND MarketType = 1 	
+			AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
 		UNION ALL  		
 		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --Saba Casino,Virtual Games,Vgaming
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
@@ -142,11 +150,18 @@ BEGIN
 		  AND GroupType = 153-- PT
 		  AND t.Productid IN (18,41)
 		  AND MarketType = 0 
+		  AND s.SportType NOT IN (SELECT DISTINCT SportType --Live Casino(SABA casino)
+									FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
+									WHERE CreationStatus <> 2
+									  AND GroupID = 3--Live & RnG CS
+									  AND GroupType = 153-- PT									 
+									  AND MarketType = 1	  
+									)
 		UNION ALL  		
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino
+		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino(SABA casino)
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
-			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID			
+			INNER JOIN SportBettypeSettingMatrix s WITH(NOLOCK) ON t.ProductID = s.ProductID AND t.SportType = s.SportType			 			
 		WHERE CreationStatus <> 2
 		  AND GroupID = 3--Live & RnG CS
 		  AND GroupType = 153-- PT
