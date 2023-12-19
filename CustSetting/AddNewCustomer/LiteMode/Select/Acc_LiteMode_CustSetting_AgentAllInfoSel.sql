@@ -12,7 +12,7 @@ AS
 	
 	Revisions:
 		- 2023710@Johnson: initial sp [redmine: #179159]
-		
+		- 20231204@Johnson: Sort SubGroup [redmine: #197629]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -100,10 +100,10 @@ BEGIN
 			@currency currency
 	END
 	
-	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT)
+	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT,SubGroupID TINYINT,SubGroupOrder TINYINT)
 		
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder)
-	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder)
+	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder
 	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus,@siteID,@currency) 
 	
 	----------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ BEGIN
 		FROM T
 		INNER JOIN #SportBettypeFilter s ON t.sporttype = s.sporttype
 											AND t.bettype = s.bettype
-		ORDER BY s.Child_DisplayOrder									
+		ORDER BY SubGroupOrder, s.Child_DisplayOrder									
 	END
 	
 	--Bet setting SB
@@ -138,27 +138,30 @@ BEGIN
 			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 
 			ISNULL(MIN(CASE WHEN cs.MaxPayoutPerMatch = 0 THEN NULL ELSE cs.MaxPayoutPerMatch END),0) MaxPayoutPerMatch,		
+			s.SubGroupOrder,
 			s.Child_DisplayOrder
 		FROM CustBetSetting_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
 												AND cs.bettype = s.bettype
 		WHERE custid IN (@custid,@srecommend,@mrecommend)
-		GROUP BY cs.sporttype, cs.bettype, s.Child_DisplayOrder
+		GROUP BY cs.sporttype, cs.bettype,s.SubGroupOrder, s.Child_DisplayOrder
 		UNION
 		SELECT cs.sporttype, cs.bettype, 
 			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
 			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch,
 			NULL MaxPayoutPerMatch, 
+			s.SubGroupOrder,
 			s.Child_DisplayOrder
 		FROM CustBetSetting3rd_Agent cs WITH(NOLOCK)
 		INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
 												AND cs.bettype = s.bettype
 		WHERE custid IN (@custid,@srecommend,@mrecommend)
-		GROUP BY cs.sporttype, cs.bettype, s.Child_DisplayOrder
+		GROUP BY cs.sporttype, cs.bettype, s.SubGroupOrder, s.Child_DisplayOrder
 		)
-		SELECT * FROM T
-		ORDER BY Child_DisplayOrder
+		SELECT sporttype, bettype, MinBet, MaxBet, MaxPerMatch, MaxPayoutPerMatch, Child_DisplayOrder
+		FROM T
+		ORDER BY SubGroupOrder,Child_DisplayOrder
 	END
 	
 	--Parlay MaxPayoutPerMatch
@@ -215,12 +218,13 @@ BEGIN
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent mbl WITH (NOLOCK) ON ft.SportType = mbl.sporttype AND ft.BetType = mbl.bettype
 			LEFT JOIN MaxPayoutGlobalSetting mps WITH(NOLOCK) ON ft.BetType = mps.BetType  AND ft.SportType = mps.SportType AND mps.Currency = @currency
 		WHERE bl.CustID = @CustID AND sbl.CustID = @srecommend AND mbl.CustID = @mrecommend		
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY SubGroupOrder,ft.Child_DisplayOrder
 	END
 	
 	--SB PT
 	IF @GroupID = 1 AND @GroupType = 153
 	BEGIN
+		;WITH T AS (
 		SELECT cs.sporttype, cs.bettype, 0 IsLive, 
 			(CASE WHEN cs.apositiontaking<co.maxpositiontaking 
 				THEN CASE WHEN cs.apositiontaking < scs.apositiontaking THEN cs.apositiontaking 
@@ -229,6 +233,7 @@ BEGIN
 						ELSE scs.apositiontaking END 
 				END)*100 as A2,
 			co.minpositiontaking*100 as N2,
+			SubGroupOrder,
 			s.Child_DisplayOrder
 		FROM CustSetting as cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON s.SportType = cs.sporttype  
@@ -250,6 +255,7 @@ BEGIN
 						ELSE scs.alivepositiontaking END 
 				END)*100 as A2,
 			co.minlivepositiontaking*100 as N2,
+			SubGroupOrder,
 			s.Child_DisplayOrder
 		FROM CustSetting as cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON s.SportType = cs.sporttype  
@@ -270,6 +276,7 @@ BEGIN
 			, cs.IsLive 
 			, CASE WHEN cs.AgentPT < scs.AgentPT THEN cs.AgentPT ELSE scs.AgentPT END as A2 
 			, cs.MinPT  AS N2 
+			, SubGroupOrder
 			, s.Child_DisplayOrder
 		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter s ON s.SportType = cs.sporttype  
@@ -279,7 +286,15 @@ BEGIN
 																AND	scs.SportType = cs.sporttype  
 																AND scs.BetType = cs.bettype  
 																AND scs.IsLive = cs.islive	
-		WHERE cs.CustID = @custid	
+		WHERE cs.CustID = @custid
+		)
+		SELECT SportType  
+			, BetType  
+			, IsLive 
+			, A2
+			, N2
+			, Child_DisplayOrder
+		FROM T
 		ORDER BY Child_DisplayOrder
 	END
 	--END SB Settings
@@ -299,12 +314,13 @@ BEGIN
 					ISNULL(MIN(CASE WHEN cs.MaxPerNumber = 0 THEN NULL ELSE cs.MaxPerNumber END),0) 
 					ELSE NULL END MaxPerNumber,	
 			s.SubType,
+			s.SubGroupOrder,
 			s.Child_DisplayOrder
 		FROM CustBetSetting_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
 												AND cs.bettype = s.bettype
 		WHERE custid IN (@custid,@srecommend,@mrecommend)
-		GROUP BY cs.sporttype, cs.bettype, s.SubType, s.Child_DisplayOrder
+		GROUP BY cs.sporttype, cs.bettype, s.SubType,SubGroupOrder, s.Child_DisplayOrder
 		UNION ALL
 		SELECT cs.Sporttype, cs.Bettype,
 			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
@@ -312,15 +328,17 @@ BEGIN
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 
 			NULL MaxPerNumber,
 			s.SubType,
+			s.SubGroupOrder,
 			s.Child_DisplayOrder
 		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
 		WHERE cs.CustID IN (@custid,@srecommend,@mrecommend)
-		GROUP BY cs.sporttype, cs.bettype, s.SubType, s.Child_DisplayOrder
+		GROUP BY cs.sporttype, cs.bettype, s.SubType,SubGroupOrder, s.Child_DisplayOrder
 		)
-		SELECT * FROM T
-		ORDER BY Child_DisplayOrder
+		SELECT Sporttype, Bettype, MinBet, MaxBet, MaxPerMatch, MaxPerNumber, SubType, Child_DisplayOrder
+		FROM T
+		ORDER BY SubGroupOrder,Child_DisplayOrder
 	END
 	
 	--PT
@@ -341,7 +359,7 @@ BEGIN
 																AND scs.BetType = cs.bettype  
 																AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid	
-		ORDER BY Child_DisplayOrder
+		ORDER BY SubGroupOrder, Child_DisplayOrder
 	END
 	
 	--END RNG Games	
@@ -357,7 +375,7 @@ BEGIN
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
 		WHERE cs.custid = @custid	
-		ORDER BY s.Child_DisplayOrder	
+		ORDER BY SubGroupOrder,s.Child_DisplayOrder	
 	END
 	
 	--PT
@@ -378,7 +396,7 @@ BEGIN
 																AND scs.BetType = cs.bettype  
 																AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid	
-		ORDER BY Child_DisplayOrder
+		ORDER BY SubGroupOrder,Child_DisplayOrder
 	END
 	--END Live & RnG Casino
 	----------------------------------------------------------------------------------
@@ -393,7 +411,7 @@ BEGIN
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
 		WHERE cs.custid = @custid	
-		ORDER BY s.Child_DisplayOrder	
+		ORDER BY SubGroupOrder,s.Child_DisplayOrder	
 	END
 	
 	--Bet Setting
@@ -404,15 +422,17 @@ BEGIN
 			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
 			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 			
+			SubGroupOrder,
 			s.Child_DisplayOrder
 		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
 		WHERE cs.CustID IN (@custid,@srecommend,@mrecommend)
-		GROUP BY cs.sporttype, cs.bettype, s.SubType, s.Child_DisplayOrder
+		GROUP BY cs.sporttype, cs.bettype, s.SubType, SubGroupOrder,s.Child_DisplayOrder
 		)
-		SELECT * FROM T
-		ORDER BY Child_DisplayOrder
+		SELECT Sporttype, Bettype, MinBet, MaxBet, MaxPerMatch, Child_DisplayOrder
+		FROM T
+		ORDER BY SubGroupOrder,Child_DisplayOrder
 	END
 	
 	--PT
@@ -433,7 +453,7 @@ BEGIN
 																AND scs.BetType = cs.bettype  
 																AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid	
-		ORDER BY Child_DisplayOrder
+		ORDER BY SubGroupOrder,Child_DisplayOrder
 	END
 	--END Others Games
 	----------------------------------------------------------------------------------
