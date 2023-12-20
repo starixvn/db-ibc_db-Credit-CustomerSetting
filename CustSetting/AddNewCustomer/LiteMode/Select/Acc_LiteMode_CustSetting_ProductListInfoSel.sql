@@ -11,17 +11,21 @@ AS
 	 Revisions: 
 		- 20230627@Johnson: initial sp [redmine: #179159]
 		- 20231201@Johnson: Separate PT for Live & RNG Casino [redmine: #197629]
+		- 20231219@Johnson: call sp Age_GetOfferedProductBySiteCurrency [redmine: #197629]
 	 Param's Explanation: 
 		@CreationStatus: 0: Pro, 1: UAT, 3: UAT/PRO
  */  
 BEGIN   
 	SET NOCOUNT ON
-	DECLARE @SiteID INT, @Currency INT 
+	DECLARE @SiteID INT, @Site VARCHAR(10), @Currency INT 
 	CREATE TABLE #OfferedProduct
 	(
 		RealProductID TINYINT,
+		ProductName VARCHAR(50), 
+		EndOfSupportDate date, 
 		IsHidden BIT,
-		EndOfSupportDate DATE
+		[Type] tinyint,
+		OrderNo int
 	)
 
 	CREATE TABLE #ProductInfo
@@ -32,16 +36,16 @@ BEGIN
 		RealProductID TINYINT
 	)
 	
-	SELECT @SiteID = SiteID, @Currency = Currency 
+	SELECT @SiteID = s.SiteID, @Site = c.Site, @Currency = Currency 
 	FROM customer c WITH(NOLOCK)
 		INNER JOIN Site s WITH(NOLOCK) ON c.Site = s.Site
 	WHERE custid = @custid	
 	
-	INSERT INTO #OfferedProduct
-	EXEC Age_GetOfferedProductByCust @CustId = @CustId, @SettingStatus  = @CreationStatus
+	INSERT INTO #OfferedProduct (RealProductID, ProductName, IsHidden, EndOfSupportDate, OrderNo, [Type])
+	EXEC Age_GetOfferedProductBySiteCurrency @Site = @Site, @Currency = @Currency, @SettingStatus  = @CreationStatus
 
 	INSERT INTO #OfferedProduct
-	SELECT 16, 0, NULL -- hardcode for SB2
+	SELECT 16,NULL,NULL,0, NULL ,NULL-- hardcode for SB2
 
 	IF @CreationStatus IN (1,0)
 	BEGIN
