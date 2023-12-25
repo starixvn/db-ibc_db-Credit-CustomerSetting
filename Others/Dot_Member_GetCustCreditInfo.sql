@@ -85,6 +85,7 @@ AS
 	-- 20230307@VN-Johnson: Add auto suspend for BasketBall and return Basketball VR to its original state [redmine:#184339]
 	-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
 	-- 20230427@VN-Luke: Separate lock function for Basketball [Redmine: #185991]
+	-- 20230616@TwYC(DBCust): Remove logic of [custinfo.disablenumber]
 
   */
 BEGIN
@@ -255,11 +256,6 @@ BEGIN
 					THEN ci.disableoutright
 				WHEN @StructureVerBetSetting = 'DCS'
 					THEN @DisBetSetting
-				WHEN @sporttype IN (
-						161
-						,164
-						)
-					THEN ci.disablenumber
 				WHEN @sporttype = 43
 					THEN ci.disableesports
 				WHEN @sporttype = 1
