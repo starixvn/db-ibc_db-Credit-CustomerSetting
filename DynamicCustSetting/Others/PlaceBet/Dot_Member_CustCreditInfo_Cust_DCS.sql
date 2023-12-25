@@ -68,6 +68,7 @@ BEGIN
 		-- 20230307@Johnson: add auto suspend for Basketball and return Basketball VR to its original state [redmine:#184339]
 		-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
 		-- 20230427@VN-Luke: Separate lock function for Basketball [Redmine: #185991]
+		-- 20230616@TwYC(DBCust): Remove logic of [custinfo.disablenumber]
 
       */
 	SET NOCOUNT ON;
@@ -169,8 +170,6 @@ BEGIN
 			END
 		,@currency = ci.currency
 		,@DisableBet = Isnull(CASE 
-				WHEN @sporttype = 161
-					THEN ci.disablenumber
 				WHEN @sporttype = 43
 					THEN ci.disableesports
 				WHEN @sporttype = 44
