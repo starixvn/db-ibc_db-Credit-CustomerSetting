@@ -25,8 +25,11 @@ AS
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 
 	Param's Explanation:
-		• @@MaxPayoutLimit:
-		'<ROOT>				<MaxPayoutLimit 						SportType="1" 						BetType="1" 						SingleMatchParlay="3000" 						Combo2="40000" 						Combo35="6000000"						ComboOver6="1000000"				/>		</ROOT>'
+		â€¢ @@MaxPayoutLimit:
+		'[
+					{ "SportType": "1", "BetType": "9", "SingleMP": "3000", "Combo2": "40000", "Combo35": "6000000", "Combo6": "1000000"  },
+					{ "SportType": "99", "BetType": "9", "SingleMP": "6000", "Combo2": "40000", "Combo35": "6000000", "Combo6": "1000000" }
+		]'
 
 	*/
 BEGIN
