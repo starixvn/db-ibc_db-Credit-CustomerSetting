@@ -26,6 +26,7 @@ AS
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230524@Eden: Change batch update delete data to 5000 [Redmine: #181595]
 		- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
+		- 20230529@Eden: Check permission of KL Environment [Redmine: #199968]
 
 	Param's Explanation:
 		@Type: 
@@ -371,28 +372,28 @@ BEGIN
 			
 		END
 
-		IF OBJECT_ID('bodb_Credit.dbo.CustProfilePicture') IS NOT NULL
+		IF DATABASEPROPERTYEX('bodb_Credit', 'Updateability') = 'READ_WRITE' -- allow update
 		BEGIN
-			DECLARE @CustProfilePicture TABLE (CustId int, ImageId int) 
+			IF OBJECT_ID('bodb_Credit.dbo.CustProfilePicture') IS NOT NULL
+			BEGIN
+				DECLARE @CustProfilePicture TABLE (CustId int, ImageId int) 
 
-			UPDATE t
-			SET t.IsDeleted = 1,
-				t.RepUpdateTime = SYSDATETIME()
-			OUTPUT deleted.CustId,deleted.ImageId INTO @CustProfilePicture(CustId,ImageId)
-			FROM bodb_Credit.dbo.CustProfilePicture t WITH (UPDLOCK,ROWLOCK)
-			WHERE custid = @AgentID 
+				UPDATE t
+				SET t.IsDeleted = 1,
+					t.RepUpdateTime = SYSDATETIME()
+				OUTPUT deleted.CustId,deleted.ImageId INTO @CustProfilePicture(CustId,ImageId)
+				FROM bodb_Credit.dbo.CustProfilePicture t WITH (UPDLOCK,ROWLOCK)
+				WHERE custid = @AgentID 
 			
-			UPDATE t
-			SET t.IsDeleted = 1,
-				t.RepUpdateTime = SYSDATETIME()
-			FROM bodb_Credit.dbo.ProfilePicture t WITH (UPDLOCK,ROWLOCK)
-				INNER JOIN @CustProfilePicture c
-					ON t.ImageId = c.ImageId
-			WHERE t.ImageId > 1000000 -- just delete user upload image ( id > 1000000, not delete system library image id <= 1000000)
+				UPDATE t
+				SET t.IsDeleted = 1,
+					t.RepUpdateTime = SYSDATETIME()
+				FROM bodb_Credit.dbo.ProfilePicture t WITH (UPDLOCK,ROWLOCK)
+					INNER JOIN @CustProfilePicture c
+						ON t.ImageId = c.ImageId
+				WHERE t.ImageId > 1000000 -- just delete user upload image ( id > 1000000, not delete system library image id <= 1000000)
+			END
 		END
-
-		
-
 	END 
 	ELSE IF @Type = 2  --Stage 4
 	BEGIN
