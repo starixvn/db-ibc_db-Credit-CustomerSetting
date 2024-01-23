@@ -1,2 +1,3 @@
-CustSetting\AddNewCustomer\LiteMode\PT Template\Acc_LiteMode_CustSetting_CustPTTemplateIns.sql
-CustSetting\AddNewCustomer\LiteMode\PT Template\Acc_LiteMode_CustSetting_CustPTTemplateUpd.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_MAg.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_Ag.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_SAg.sql
