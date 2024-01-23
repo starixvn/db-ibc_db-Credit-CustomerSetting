@@ -23,6 +23,7 @@ AS
 	
 	Revisions: 
 		- 20230628@Johnson: initial sp [redmine: #179159]
+		- 20240118@Eden: avoid data duplicate of Esport & Muay Thai Betsetting [redmine: #199970]
 
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
@@ -621,7 +622,7 @@ BEGIN
 				MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0),
 				MaxPerNumber = ISNULL(MIN(CASE WHEN cb.MaxPerNumber = 0 THEN NULL ELSE cb.MaxPerNumber END),0)
 		FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
-			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
+			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType AND b.SportType NOT IN (43,44)
 		WHERE cb.custid IN (@srecommend,@mrecommend)
 		GROUP BY cb.Sporttype,cb.Bettype
 

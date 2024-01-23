@@ -14,6 +14,7 @@ AS
 	Revisions:
 		- 20230419@Johnson: initial sp [redmine: #179159]
 		- 20231204@Johnson: Sort SubGroup [redmine: #197629]
+		- 20240118@Eden: avoid data duplicate of Esport & Muay Thai Betsetting [redmine: #199970]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -159,6 +160,7 @@ BEGIN
 		FROM CustBetSetting_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
 												AND cs.bettype = s.bettype
+												AND s.SportType NOT IN(43,44)
 		WHERE custid = @custid			
 		UNION 
 		SELECT cs.sporttype, cs.bettype, MinBet, MaxBet, MaxPerMatch, NULL MaxPayoutPerMatch, s.Child_DisplayOrder, s.SubGroupOrder
