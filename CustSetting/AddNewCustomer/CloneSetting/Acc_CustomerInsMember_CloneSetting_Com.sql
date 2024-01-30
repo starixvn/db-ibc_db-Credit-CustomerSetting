@@ -89,6 +89,7 @@ AS
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230718@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 	- 20230915@Tacy: Alpha/NAP - Support to update siteLabel for MBC [Redmine: #194034]
+	- 20240129@Luke: NAP - Virtual rate - Change default of VR Status for newly created Super to Enable [Redmine: #200311]
 
  Explanation's Param:  
 	- @ErrCode:
@@ -122,13 +123,14 @@ BEGIN
 	WHERE ci.custid = @ExistingCustid
 	
 	-------------------BLOCK ADDING NEW USE UMCONFIG----------------------------
-	DECLARE @SiteID int, @SiteLabel varchar(50), @EnableVR BIT, @SiteDBGroupID	smallint
+	DECLARE @SiteID int, @SiteLabel varchar(50), @SiteDBGroupID	smallint,  @EnableVR BIT
 
 	SELECT @SiteID = siteid, @SiteLabel=SiteLabel, @SiteDBGroupID = SiteDBGroupID
 	FROM site WITH(NOLOCK) 
 	WHERE site = @site
 
-	SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
+	-- SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
+	SELECT @EnableVR = 1 --Enable as default [#200311]
 
 	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
 	CREATE TABLE #UMConfig(SportType SMALLINT,SiteID INT, Currency INT ,BeginTime smalldatetime,EndTime smalldatetime)

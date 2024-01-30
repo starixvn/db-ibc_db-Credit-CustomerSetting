@@ -414,6 +414,8 @@ Revisions:
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230427@Luke: Separate lock function for Basketball [Redmine: #185991]
 	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649] 
+	- 20240129@Luke: NAP - Virtual rate - Change default of VR Status for newly created Super to Enable [Redmine: #200311]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -432,7 +434,8 @@ BEGIN
 	FROM site WITH(NOLOCK)
 	WHERE site = @site
 
-	SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
+	--SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
+	SELECT @EnableVR = 1 --Enable as default [#200311]
 
 	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30)
 	CREATE TABLE #UMConfig(SportType SMALLINT,SiteID INT, Currency INT ,BeginTime smalldatetime,EndTime smalldatetime)
@@ -1308,7 +1311,7 @@ BEGIN
 	'autosuspend="'+ COALESCE(CAST(@autosuspend AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend2="'+ COALESCE(CAST(@autosuspend2 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'autosuspend3="'+ COALESCE(CAST(@autosuspend3 AS VARCHAR(1)),SPACE(1)) + '" ' +
-	'virtualmultiplier="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
+	'virtualmultiplier="'+ COALESCE(CAST(@EnableVR AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'VRAccumulatedBalance="'+ COALESCE(CAST(0 AS VARCHAR(1)),SPACE(1)) + '" ' +
 	'VRLockStatus_Soccer="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +   
 	'VRLockStatus_OtherSports="'+ COALESCE(CAST(0 AS VARCHAR(10)),SPACE(1)) + '" ' +
