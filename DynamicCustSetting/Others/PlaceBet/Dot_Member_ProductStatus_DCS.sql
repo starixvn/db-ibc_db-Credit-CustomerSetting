@@ -29,6 +29,7 @@ Revisions:
     - 20201127@Winfred: 231 for 180 as representavtive [redmine:#131370]    
     --20220727@TWAndy(DBCust): Support NumberGame(161) and Happy5(164) for Licensee
 	- 20221121@Eden: Unify VS and RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20221121@TWAndy(DBCust): Support NumberGame(161) and Happy5(164) for Credit
 
 Explanation :   
 
@@ -43,6 +44,7 @@ Explanation :
         SELECT @sporttype = case when @sporttype between 180 and 186 then 9908
 							     when @sporttype between 190 and 197 then 9908 
 							     when @sporttype = 231 then 9908
+								 when @sporttype in (161,164) then 161
 							     else @sporttype end
 
 		SELECT @bettype = case when @bettype = 1021 then 1024
