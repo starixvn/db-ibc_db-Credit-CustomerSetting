@@ -30,7 +30,7 @@ Revisions:
     --20220727@TWAndy(DBCust): Support NumberGame(161) and Happy5(164) for Licensee
 	- 20221121@Eden: Unify VS and RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20221121@TWAndy(DBCust): Support NumberGame(161) and Happy5(164) for Credit
-
+	- 20240221@Tacy: Virtual Sports - Merge VS1, VS2, VS3 into Virtual Sports [RedmineID: #198008]
 Explanation :   
 
 */
@@ -66,10 +66,14 @@ Explanation :
     END
     ELSE
     BEGIN
-        SELECT @sporttype = case when @sporttype between 180 and 186 then 180
-                                 when @sporttype between 190 and 197 then 190
+        SELECT @sporttype = case when @sporttype between 180 and 186 then 9908
+                                 when @sporttype between 190 and 197 then 9908
                                  when @sporttype in (161,164) then 161
                                  else @sporttype end
+
+		SELECT @bettype = case when @sporttype = 9908 then 1201
+							    else @bettype end
+
         --Get Bitmaporder
         SELECT @BitMapOrder = min(bitmapOrder)
         FROM dbo.Dep_ProductStatusProfile psp WITH (NOLOCK) 
