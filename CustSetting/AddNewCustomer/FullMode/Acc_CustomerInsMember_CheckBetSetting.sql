@@ -85,6 +85,7 @@ Revisions:
 	- 20210831@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 	- 20221226@Tacy: Alpha/NAP - Split 789y Site [RedmineID: #181596]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20231113Johnson: Change text SABA to Virtual for site 777777 [redmine:#194591]
 
 Param's Explanation:
 • @ErrCode:
@@ -96,7 +97,8 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @RoleID TINYINT, @recommend INT, @mrecommend int, @srecommend INT,  @SiteLabel VARCHAR (50)
+	DECLARE @RoleID TINYINT, @recommend INT, @mrecommend int, @srecommend INT,  
+			@SiteLabel VARCHAR (50), @SpecialPlatform TINYINT
 	DECLARE @ErrType NVARCHAR(4000) = ''
 
 	DECLARE @BetSetting TABLE(
@@ -147,7 +149,13 @@ BEGIN
 	SELECT 9901, 1, @minbetv1saba, @maxbetv1saba, @maxpermatchv1saba, NULL, @maxPOpermatchv1saba, NULL UNION ALL
 	--Saba Basketball
 	SELECT 9902, 1, @minbetv2saba, @maxbetv2saba, @maxpermatchv2saba, NULL, @maxPOpermatchv2saba, NULL
-
+	
+	Select @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend,
+		@RoleID=RoleID, @SiteLabel = SiteLabel, @SpecialPlatform = SpecialPlatfrom
+	from customer c with (NOLOCK)
+	inner join Site s with (nolock) on s.site=c.site
+	where CustID = @CustID
+	
 	--Correct sportname for Mix Sports Parlay 
 	UPDATE t
 	SET t.SportName = case @Language 
@@ -178,36 +186,31 @@ BEGIN
 
 	--Correct sportname for Saba Soccer
 	UPDATE t
-	SET t.SportName = case @Language 
-						when 'CS' then N'沙巴足球'
-						when 'CT' then N'沙巴足球'
-						when 'TH' then N'ฟุตบอล Saba'
-						when 'J' then N'Saba Soccer'
-						when 'KO' then N'Saba Soccer'
-						when 'VI' then N'Saba Soccer'
-						else N'Saba Soccer' 
-					 end
+	SET t.SportName = CASE @Language 
+						WHEN 'CS' THEN CASE WHEN @SpecialPlatform = 4 THEN N'虚拟足球' ELSE N'沙巴足球' END
+						WHEN 'CT' THEN CASE WHEN @SpecialPlatform = 4 THEN N'虛擬足球' ELSE N'沙巴足球' END
+						WHEN 'TH' THEN CASE WHEN @SpecialPlatform = 4 THEN N'ฟุตบอลอนิเมชั่น' ELSE N'ฟุตบอล Saba' END
+						WHEN 'J' THEN CASE WHEN @SpecialPlatform = 4 THEN N'Virtual Soccer' ELSE N'Saba Soccer' END
+						WHEN 'KO' THEN CASE WHEN @SpecialPlatform = 4 THEN N'Virtual Soccer' ELSE N'Saba Soccer' END
+						WHEN 'VI' THEN CASE WHEN @SpecialPlatform = 4 THEN N'Virtual Soccer' ELSE N'Saba Soccer' END
+						ELSE CASE WHEN @SpecialPlatform = 4 THEN N'Virtual Soccer' ELSE N'Saba Soccer' END
+					 END
 	FROM @BetSetting t
 	WHERE sporttype = 9901 AND bettype = 1
 
 	--Correct sportname for Saba Basketball
 	UPDATE t
 	SET t.SportName = case @Language 
-						when 'CS' then N'沙巴篮球'
-						when 'CT' then N'沙巴籃球'
-						when 'TH' then N'บาสเกตบอล Saba'
-						when 'J' then N'Saba Basketball'
-						when 'KO' then N'Saba Basketball'
-						when 'VI' then N'Saba Basketball'
-						else N'Saba Basketball' 
+						WHEN 'CS' THEN CASE WHEN @SpecialPlatform = 4 THEN N'虚拟篮球' ELSE N'沙巴篮球' END
+						WHEN 'CT' THEN CASE WHEN @SpecialPlatform = 4 THEN N'虛擬籃球' ELSE N'沙巴籃球' END
+						WHEN 'TH' THEN CASE WHEN @SpecialPlatform = 4 THEN N'บาสเกตบอลเสมือนจริง' ELSE N'บาสเกตบอล Saba' END
+						WHEN 'J' THEN CASE WHEN @SpecialPlatform = 4 THEN N'Virtual Basketball' ELSE N'Saba Basketball' END
+						WHEN 'KO' THEN CASE WHEN @SpecialPlatform = 4 THEN N'Virtual Basketball' ELSE N'Saba Basketball' END
+						WHEN 'VI' THEN CASE WHEN @SpecialPlatform = 4 THEN N'Virtual Basketball' ELSE N'Saba Basketball' END
+						ELSE CASE WHEN @SpecialPlatform = 4 THEN N'Virtual Basketball' ELSE N'Saba Basketball' END
 					 end
 	FROM @BetSetting t
 	WHERE sporttype = 9902 AND bettype = 1
-			
-	Select @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend, @RoleID=RoleID, @SiteLabel = SiteLabel
-	from customer c with (NOLOCK)
-	inner join Site s with (nolock) on s.site=c.site
-	where CustID = @CustID
 	
 	--> Check rule : Wrong Min bet/ Max bet/ Max per match/ Credit/ Master Agent name/ user group
 	SELECT TOP(1) @ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](10001,@Language) + ' (' + SportName + ')'
