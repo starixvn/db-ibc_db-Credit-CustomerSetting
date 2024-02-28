@@ -19,6 +19,7 @@ Revisions:
 	- 20130121@Dan: change linked server DB06 to DBACC, call to DBAGE/bodb_AGE for Acc_CustGroup
 	- 20181122@Elodie: DB053/bodb_Age Migration [Redmine:#104770]
 	- 20190201@Phillip: #105338 Build Customer Setting with Singbet Style
+	- 20231201@Johnson: remove @IsExcludeCN88 [redmine: #197160]
 
 Param's Explanation:
 	@username: username want to get all info related
