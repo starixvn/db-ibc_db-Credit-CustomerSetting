@@ -106,6 +106,7 @@ AS
 	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
 	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141]
 	- 20231211@Johnson: check permission for 777 [redmineID: #197160]
+	- 20240229@Johnson: no need check permission for 777 on Alpha [redmine: #201574]
  Explanation's Param:  
 	• @ErrCode:
 		= 0: Create agent successfully.
@@ -197,26 +198,12 @@ BEGIN
 	-- Check role and master of existing agent
 	DECLARE @existingUsername varchar(30),@roleid tinyint, @existingMrecommend int, @Enabled BIT, @currency INT, @site NVARCHAR(50), @ExistingSrecommend INT
 	
-	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
-	DECLARE @tmpUserid VARCHAR(50)
-	
 	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @existingMrecommend = ISNULL(mrecommend,0), @Enabled = ISNULL(Enabled, 0), @currency = currency, @ExistingSrecommend = srecommend
 	FROM dbo.CustInfo WITH(NOLOCK) 
 	WHERE custid = @ExistingCustid
 	
 	SET @site = (SELECT Site FROM dbo.Customer WITH (NOLOCK) WHERE custid = @ExistingCustid)
 	
-	SELECT @tmpUserid=CAST(@creator AS VARCHAR(50))
-		
-	INSERT INTO  @tmp (siteid , site,SpecialGroup)
-	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
-	
-	IF (@site IN (SELECT site FROM @tmp ))
-	BEGIN
-		SELECT @ErrCode = 103, @ErrMsg ='You don''t have permission to access'
-		RETURN
-	END
-
 	IF ( NOT (@roleid = 2 AND @existingMrecommend = @mrecommend))
 	BEGIN		
 		 SELECT @ErrMsg = CASE @Language 
