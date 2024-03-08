@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="Dot_Member,Dot_Intg" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="svc_tig,Dot_Intg" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Member_ProductStatusList_DCS]
 	@CustID INT,
 	@IsTest BIT = 0
@@ -25,6 +25,7 @@ AS
 		- 20221222@Winfred: Update Cansee for RNG SLOT [RedmineID: #181929]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
+		- 20240307@Luke: Show Product Status [Redmine: #202011]
 
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
@@ -83,6 +84,7 @@ BEGIN
 										WHEN 242	THEN CAST(3201	AS SMALLINT)
 										WHEN 243	THEN CAST(3101	AS SMALLINT)
 										WHEN 244	THEN CAST(3001	AS SMALLINT)
+										WHEN 228	THEN CAST(10300 AS SMALLINT)
 										ELSE ps.Bettype END AS Bettype, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) AS IsHidden, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsDisabled, ps.bitmapOrder)) AS IsDisabled, 
@@ -116,6 +118,7 @@ BEGIN
 								WHEN 242	THEN 9911
 								WHEN 243	THEN 9911
 								WHEN 244	THEN 9911
+								WHEN 228	THEN 9911
 				                ELSE psc.Sporttype END) = ps.Sporttype
 		CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
 	WHERE cs.CustID = @CustID
