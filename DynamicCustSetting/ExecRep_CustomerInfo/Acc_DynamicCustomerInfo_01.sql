@@ -15,7 +15,7 @@ AS
 		- 20220808@Tacy: Initial SP [RedmineID: #176225]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
-
+		- 20240312@Johnson: HF check to Group PT for SC customer [Redmine: #202119]
 	Param's Explanation:
 */
 BEGIN
@@ -42,7 +42,11 @@ BEGIN
 			, MaxLossLimit	MONEY 
 			, IsAutoReset	BIT
 	)
-	
+		
+	DECLARE @SuperID INT, @MasterID INT
+
+	SELECT @SuperID = srecommend, @MasterID = mrecommend FROM Custinfo WITH (NOLOCK) WHERE custid = @CustId
+				
 	IF @SettingType IN (1,18) -- PT
 	BEGIN
 		IF dbo.f_CheckRepTable('CustSettingMode3rd') = 0 RETURN
@@ -72,7 +76,7 @@ BEGIN
 
 		--Get setting mode
 		SELECT @SettingMode = IsGrouped
-		FROM dbo.CustSettingMode3rd
+		FROM dbo.CustSettingMode3rd WITH(NOLOCK)
 		WHERE CustID = @CustID
 		
 		IF ISNULL(@SettingMode,0)=0
@@ -90,6 +94,60 @@ BEGIN
 					(npt.SuperPT <> main.SuperPT
 						OR npt.MasterPT <> main.MasterPT
 						OR npt.AgentPT <> main.AgentPT)
+						
+				IF EXISTS (SELECT TOP 1 1
+						FROM dbo.CustPTGroupSetting3rd_Member grp WITH(NOLOCK)
+						WHERE grp.AgentID = @AgentID
+						)
+					AND NOT EXISTS(SELECT TOP 1 1
+								FROM dbo.CustPTGroupSetting3rd_Member grp
+								JOIN CustPTSetting3rd_Member cs ON cs.SportType = grp.SportType
+														AND cs.BetType = grp.BetType
+														AND cs.Islive = grp.Islive
+								WHERE grp.AgentID = @AgentID
+								AND cs.custid = @custid
+								AND (
+									cs.SuperPT <> grp.SuperPT
+									OR
+									cs.MasterPT <> grp.MasterPT
+									OR
+									cs.AgentPT <> grp.AgentPT
+									OR
+									cs.IsAutoMasterPT <> grp.IsAutoMasterPT
+									OR
+									cs.AutoMasterPT <> grp.AutoMasterPT
+									OR
+									cs.IsAutoSuperPT <> grp.IsAutoSuperPT
+									OR
+									cs.AutoSuperPT <> grp.AutoSuperPT
+								))
+						AND @SuperID IN (
+											13869621,
+											5340162,
+											12262401,
+											12141653,
+											4138910,
+											6379932,
+											16112208,
+											12141529,
+											1539339,
+											720475
+											--UUS
+											,17287861
+											,18879367
+											,14373244
+											,18362423
+											,18479460
+											,18289591
+										)	
+				BEGIN
+					UPDATE cs 
+					SET IsGrouped = 1					
+					FROM dbo.CustSettingMode3rd cs WITH(ROWLOCK)
+					WHERE CustID = @CustID
+					
+					DELETE CustPTSetting3rd_Member WITH(ROWLOCK) WHERE custid = @custid
+				END
 		END
 		ELSE
 		BEGIN			
@@ -179,8 +237,7 @@ BEGIN
 		DECLARE @SuperDiscount DECIMAL(9,8),
 				@MasterDiscount DECIMAL(9,8),
 				@AgentDiscount DECIMAL(9,8),
-				@PlayerDiscount DECIMAL(9,8),
-				@SuperID INT, @MasterID INT
+				@PlayerDiscount DECIMAL(9,8)
 
 		DECLARE @NewDiscountTbl TABLE (
 				SportType	SMALLINT
@@ -199,10 +256,7 @@ BEGIN
 				Discount	DECIMAL(9, 8))	
 	
 		EXEC sp_xml_removedocument @iDoc
-
-		--Update 
-		SELECT @SuperID = srecommend, @MasterID = mrecommend FROM Custinfo WITH (NOLOCK) WHERE custid = @CustId
-
+		
 		UPDATE dcmem  
 		SET @SuperDiscount = dcs.Discount,
 			@MasterDiscount = dcm.Discount,
