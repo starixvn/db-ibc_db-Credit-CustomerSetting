@@ -26,6 +26,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 		- 20240307@Luke: Show Product Status [Redmine: #202011]
+		- 20240318@Luke: Yolo Play [Redmine: #201447]
 
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
@@ -72,6 +73,7 @@ BEGIN
 										WHEN 248	THEN CAST(4101	AS SMALLINT)
 										WHEN 237	THEN CAST(5401	AS SMALLINT)
 										WHEN 156	THEN CAST(8900	AS SMALLINT)
+										WHEN 189	THEN CAST(3650	AS SMALLINT)
 										--Live Casino
 										WHEN 159	THEN CAST(3151	AS SMALLINT)
 										WHEN 170	THEN CAST(3701	AS SMALLINT)
@@ -106,6 +108,7 @@ BEGIN
 								WHEN 248 THEN 9906
 								WHEN 237 THEN 9906
 								WHEN 156 THEN 9906
+								WHEN 189 THEN 9906
 								--Live Casino
 								WHEN 159	THEN 9911
 								WHEN 170	THEN 9911
