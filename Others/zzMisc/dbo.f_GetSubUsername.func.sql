@@ -17,8 +17,8 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[f_GetSubUsername] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[f_GetSubUsername] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[f_GetSubUsername] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[f_GetSubUsername] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[f_GetSubUsername] TO [vnteam]

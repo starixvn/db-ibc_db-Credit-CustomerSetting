@@ -362,7 +362,7 @@ END CATCH
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaster_CommissionHR] TO [vnteam]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_CommissionHR] TO [bodbAdminNet]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_CommissionHR] TO [bodbAdminNet,wsv_nap]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_CommissionHR] TO [bodbDownlineNet]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_CommissionHR] TO [bodbDownlineNet,wsv_alp]
 GO 

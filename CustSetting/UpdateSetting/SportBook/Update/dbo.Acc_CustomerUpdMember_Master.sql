@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_Master]
 	@CustID INT,--memberid
 
@@ -309,7 +309,7 @@ Revisions:
 	- 20090917@Phuc: write log into DBLOG.
 	- 20091125@Terry: check disabled casino
 	- 20100112@Kiwi: Amend to write log in xml format.
-	- 20100730@Henry: invoke execute to bodbExtAccNet
+	- 20100730@Henry: invoke execute to bodbExtAccNet,wsv_xnap
 	- 20100915@Lukas:	- Add number game setting
 						- Add mixed sports setting
 						- Remove mix parlay of basketball

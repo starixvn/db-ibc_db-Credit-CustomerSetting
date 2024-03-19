@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,vnteam" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbExtAccNet,wsv_xnap,bodbDownlineNet,wsv_alp,bodbDownlineNetView,wsv_alpv,vnteam" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditMasterVS] 
 	@custid	INT
 AS
@@ -184,10 +184,10 @@ SET NOCOUNT ON
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelEditMasterVS] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterVS] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterVS] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterVS] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterVS] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterVS] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterVS] TO [bodbDownlineNetView,wsv_alpv]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterVS] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterVS] TO [bodbExtAccNet,wsv_xnap]

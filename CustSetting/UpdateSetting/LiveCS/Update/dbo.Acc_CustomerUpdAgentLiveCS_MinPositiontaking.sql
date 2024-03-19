@@ -134,6 +134,6 @@ END
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentLiveCS_MinPositiontaking] TO [vnteam]
 GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_MinPositiontaking] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_MinPositiontaking] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_MinPositiontaking] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_MinPositiontaking] TO [bodbDownlineNet,wsv_alp]

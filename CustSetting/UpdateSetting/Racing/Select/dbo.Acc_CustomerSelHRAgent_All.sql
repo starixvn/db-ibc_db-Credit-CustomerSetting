@@ -11,7 +11,7 @@ Revisions:
 	- 20090701@Phuc: remove dbo.IsAllowChangePositiontaking, auto master, disalbe auto MPT.
 	- 20091128@Kiwi: Move custsetting & custoverride to the separated tables (CustSetting3rd & CustOverride3rd).
 	- 20100414@Shifu: OpenTote
-	- 20100729@Henry: Grant permission for bodbExtAccNet
+	- 20100729@Henry: Grant permission for bodbExtAccNet,wsv_xnap
 	- 20101231@Johnson: Get setting for HR AU, Greyhound, Harness
 	- 20130306@Johnson: Check bet setting with setting of 3rd
 	- 20130506@Johnson: check null bet setting of 3rd
@@ -703,12 +703,12 @@ where custid = @srecommend and sporttype = 153
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_All] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_All] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_All] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_All] TO [bodbExtAccNet,wsv_xnap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_All] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_All] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_All] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_All] TO [bodbDownlineNetView,wsv_alpv]
 GO
 

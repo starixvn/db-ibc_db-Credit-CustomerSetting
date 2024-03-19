@@ -20,8 +20,8 @@ BEGIN
 END   
   
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ActorStatusSelect] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ActorStatusSelect] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ActorStatusSelect] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ActorStatusSelect] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ActorStatusSelect] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ActorStatusSelect] TO [bodbExtAccNet,wsv_xnap]

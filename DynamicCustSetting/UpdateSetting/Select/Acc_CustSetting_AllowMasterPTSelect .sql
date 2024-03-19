@@ -30,8 +30,8 @@ END
   
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AllowMasterPTSelect ] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_AllowMasterPTSelect ] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AllowMasterPTSelect ] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_AllowMasterPTSelect ] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_AllowMasterPTSelect ] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_AllowMasterPTSelect ] TO [bodbExtAccNet,wsv_xnap]

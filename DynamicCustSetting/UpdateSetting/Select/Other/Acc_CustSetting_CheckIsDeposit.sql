@@ -21,7 +21,7 @@ BEGIN
 	SELECT @IsDeposit IsDeposit
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CheckIsDeposit] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_CheckIsDeposit] TO [bodbAdminNet,wsv_nap] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_CheckIsDeposit] TO [vnteam] AS [dbo]
 

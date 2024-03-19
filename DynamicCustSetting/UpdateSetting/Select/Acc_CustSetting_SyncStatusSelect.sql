@@ -56,12 +56,12 @@ BEGIN
 END  
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusSelect] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusSelect] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusSelect] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusSelect] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusSelect] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusSelect] TO [bodbDownlineNetView,wsv_alpv]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusSelect] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SyncStatusSelect] TO [bodbExtAccNet,wsv_xnap]
 
 	

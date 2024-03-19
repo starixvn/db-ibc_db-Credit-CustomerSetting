@@ -85,9 +85,9 @@ SELECT
 	@MaxperMatch_Max AS MaxperMatch_Max
 	
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMinMaxBetHR] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMinMaxBetHR] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMinMaxBetHR] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMinMaxBetHR] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMinMaxBetHR] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMinMaxBetHR] TO [bodbDownlineNetView,wsv_alpv]
 GO

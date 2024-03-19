@@ -110,6 +110,6 @@ EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@duration = @duration
 
 GO
-GRANT EXECUTE ON [dbo].[DBA_ChangeCurrency] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[DBA_ChangeCurrency] TO [bodbAdminNet,wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[DBA_ChangeCurrency] TO [vnteam]

@@ -33,8 +33,8 @@ BEGIN
 		currency
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_ExchangeSel] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_ExchangeSel] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_ExchangeSel] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_ExchangeSel] TO [bodbExtAccNet,wsv_xnap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_ExchangeSel] TO [vnteam]

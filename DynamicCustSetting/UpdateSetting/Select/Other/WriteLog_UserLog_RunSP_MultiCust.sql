@@ -50,8 +50,8 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[WriteLog_UserLog_RunSP_MultiCust] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[WriteLog_UserLog_RunSP_MultiCust] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[WriteLog_UserLog_RunSP_MultiCust] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[WriteLog_UserLog_RunSP_MultiCust] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[WriteLog_UserLog_RunSP_MultiCust] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[WriteLog_UserLog_RunSP_MultiCust] TO [bodbExtAccNet,wsv_xnap]

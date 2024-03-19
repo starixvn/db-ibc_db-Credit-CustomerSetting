@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbExtAccNet,wsv_xnap,bodbDownlineNet,wsv_alp,vnteam" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelEditSuperVS]
 	@custid		INT
 AS
@@ -126,8 +126,8 @@ WHERE cs.custid = @custId
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelEditSuperVS] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperVS] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperVS] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperVS] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperVS] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperVS] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperVS] TO [bodbExtAccNet,wsv_xnap]

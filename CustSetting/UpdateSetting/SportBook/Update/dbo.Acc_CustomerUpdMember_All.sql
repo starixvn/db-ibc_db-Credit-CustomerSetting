@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMember_All]  
 	@custid INT,--memberid  
 
@@ -206,7 +206,7 @@ Revisions:
 	- 20090703@Phuc: enrich error message.(-101: general info, -102: closed, -103: suspended, -104: credit, -105: commission, -106: min/max bet, -107: positiontaking  
 	- 20090801@Shifu: check disabled user  
 	- 20091125@Terry: Check disabled casino  
-	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]  
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet,wsv_xnap]  
 	- 20100830@Henry: Add Number Game + Mix Parlay Mixed Sports  
 	- 20101028@Lukas: Add max per ball (number game)
 	- 20110801@Lukas: (Number Game)

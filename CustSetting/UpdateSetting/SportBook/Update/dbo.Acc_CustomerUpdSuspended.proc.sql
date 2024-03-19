@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0" isNested="1"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdSuspended]
 	@CustID int,
 	@Suspended bit,	
@@ -27,7 +27,7 @@ Revisions:
 	- 20091105@Hanh: Hardcode to not allow update closed status by moving Casino DB
 	- 20091125@Terry : add one more para @disCasino check disabled Casino
 	- 20100107@Lewin: Modify LogSPData Format, call new version write log
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet,wsv_xnap]
 	- 20101021@Henry: Record execution time
 	- 20110907@Sophia: Change Linked Server from DB052 to DB053
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
@@ -69,7 +69,7 @@ BEGIN
 	if @ErrCode <>0 return
 	--end
 	
-	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' 
+	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet,wsv_nap' 
 	AND (EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)
 		OR (EXISTS (SELECT 1 FROM CustSuspendLockUpd WITH (NOLOCK) WHERE custid = @CustID) AND @Suspended = 0))
 	BEGIN

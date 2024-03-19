@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -247,10 +247,10 @@ BEGIN CATCH
 		@duration = @duration
 END CATCH
 GO
-GRANT EXECUTE ON [dbo].Acc_CustomerUpdDisable151_41 TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].Acc_CustomerUpdDisable151_41 TO [bodbAdminNet,wsv_nap]
 GO
-GRANT  EXECUTE  ON [dbo].Acc_CustomerUpdDisable151_41  TO [bodbDownlineNet]
+GRANT  EXECUTE  ON [dbo].Acc_CustomerUpdDisable151_41  TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].Acc_CustomerUpdDisable151_41 TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].Acc_CustomerUpdDisable151_41 TO [bodbExtAccNet] 
+GRANT EXECUTE ON [dbo].Acc_CustomerUpdDisable151_41 TO [bodbExtAccNet,wsv_xnap] 

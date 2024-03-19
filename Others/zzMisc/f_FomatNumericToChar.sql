@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView,Dot_Member" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv,Dot_Member" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION f_FomatNumericToChar(@str MONEY) 
 	RETURNS VARCHAR(50) 
 AS

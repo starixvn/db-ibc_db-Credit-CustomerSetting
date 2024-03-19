@@ -136,8 +136,8 @@ BEGIN
 END 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerOpusCS] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerOpusCS] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerOpusCS] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerOpusCS] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerOpusCS] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelSEditCustomerOpusCS] TO [bodbDownlineNetView,wsv_alpv]

@@ -76,10 +76,10 @@ BEGIN
 END
  
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductStatusSelect] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductStatusSelect] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductStatusSelect] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductStatusSelect] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductStatusSelect] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_ProductStatusSelect] TO [bodbExtAccNet,wsv_xnap]
 
 	

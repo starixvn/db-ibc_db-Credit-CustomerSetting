@@ -384,10 +384,10 @@ SET NOCOUNT ON
 	END CATCH
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxBet] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxBet] TO [bodbAdminNet,wsv_nap] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxBet] TO [bodbDownlineNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxBet] TO [bodbDownlineNet,wsv_alp] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxBet] TO [bodbExtAccNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxBet] TO [bodbExtAccNet,wsv_xnap] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxBet] TO [vnteam] AS [dbo]

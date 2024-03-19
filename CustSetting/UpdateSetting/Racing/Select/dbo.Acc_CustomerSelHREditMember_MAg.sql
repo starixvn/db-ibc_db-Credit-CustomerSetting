@@ -401,13 +401,13 @@ group by
 
 
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [bodbAdminNet]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [bodbAdminNet,wsv_nap]
  GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [bodbExtAccNet]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [bodbExtAccNet,wsv_xnap]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [bodbDownlineNet]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [bodbDownlineNet,wsv_alp]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [bodbDownlineNetView]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [bodbDownlineNetView,wsv_alpv]
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelHREditMember_MAg] TO [vnteam]
 GO 

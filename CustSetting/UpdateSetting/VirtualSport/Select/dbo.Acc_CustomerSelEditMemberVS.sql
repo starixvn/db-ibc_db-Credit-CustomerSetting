@@ -197,11 +197,11 @@ SET NOCOUNT ON
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelEditMemberVS] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberVS] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberVS] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberVS] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberVS] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberVS] TO [bodbDownlineNetView]	
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberVS] TO [bodbDownlineNetView,wsv_alpv]	
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberVS] TO [bodbExtAccNet]	
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMemberVS] TO [bodbExtAccNet,wsv_xnap]	
 

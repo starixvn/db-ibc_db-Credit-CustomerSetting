@@ -196,8 +196,8 @@ EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 ---------------------------------------------------------
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_MinMaxBetOpenTote] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_MinMaxBetOpenTote] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_MinMaxBetOpenTote] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMember_MinMaxBetOpenTote] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMember_MinMaxBetOpenTote] TO vnteam

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAgent_All]
 	@custid int,
 	@firstname nvarchar(50),
@@ -406,7 +406,7 @@ Revisions:
 						-108: disable FI, -109: disableHR)
 	- 20090801@Shifu: check disabled user
 	- 20091125@Terry: check disabled Casino
-	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet,wsv_xnap]
 	- 20100909@Lukas:	- Add Number game setting
 						- Add Mixed sports setting
 						- Remove Mix parlay of basketball setting

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_SAg_CheckParam]
 	@custid int OUTPUT,
 	@credit money,
@@ -226,7 +226,7 @@ Revisions:
     - 20000514@PhuongDao: Check commission 1x2
     - 20090520@PhuongDao: Add default HR PT Tote and Fixed 
     - 20090521@PhuongDao: Remove Min-Max Bet HR 
-    - 20100803@Henry: grant execute permission to [bodbExtAccNet]
+    - 20100803@Henry: grant execute permission to [bodbExtAccNet,wsv_xnap]
 	- 20100827@Lukas:	- Add & validate params for Number game
 						- Add & validate params for Mix Parlay for Mixed Sports
 						- Remove params for Mix Parlay for Basketball

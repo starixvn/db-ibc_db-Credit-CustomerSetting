@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,wsv_nap" viewers="vnteam" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdDisableKeno] 
 	@CustID INT

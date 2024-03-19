@@ -37,8 +37,8 @@ BEGIN
 END   
   
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SameLineCheck] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SameLineCheck] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SameLineCheck] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SameLineCheck] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SameLineCheck] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SameLineCheck] TO [bodbExtAccNet,wsv_xnap]

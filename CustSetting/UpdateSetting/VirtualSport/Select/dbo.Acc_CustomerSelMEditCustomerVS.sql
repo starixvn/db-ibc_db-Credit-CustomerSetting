@@ -170,16 +170,16 @@ WHERE cs.custid=@custId
 
 
 GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [bodbAdminNet,wsv_nap]
 
 GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [bodbExtAccNet,wsv_xnap]
 
 GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [bodbDownlineNet,wsv_alp]
 
 GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [bodbDownlineNetView,wsv_alpv]
 
 GO 
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelMEditCustomerVS] TO [vnteam]

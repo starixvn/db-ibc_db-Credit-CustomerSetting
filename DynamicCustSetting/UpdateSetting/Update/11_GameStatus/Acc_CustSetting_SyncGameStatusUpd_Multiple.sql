@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	Acc_CustSetting_SyncGameStatusUpd_Multiple
 	@CustIDs		VARCHAR(MAX)	= NULL
 ,	@IsSynced		BIT				= 1

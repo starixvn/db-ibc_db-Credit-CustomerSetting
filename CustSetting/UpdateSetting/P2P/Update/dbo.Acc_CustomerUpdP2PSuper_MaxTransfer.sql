@@ -151,9 +151,9 @@ BEGIN CATCH
 END CATCH	
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdP2PSuper_MaxTransfer] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdP2PSuper_MaxTransfer] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdP2PSuper_MaxTransfer] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdP2PSuper_MaxTransfer] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdP2PSuper_MaxTransfer] TO vnteam
 

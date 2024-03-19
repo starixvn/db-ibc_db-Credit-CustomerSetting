@@ -123,9 +123,9 @@ EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@duration = @duration
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_MinMaxBet152_41] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_MinMaxBet152_41] TO [bodbAdminNet,wsv_nap]
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_MinMaxBet152_41] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_MinMaxBet152_41] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuper_MinMaxBet152_41] TO vnteam 

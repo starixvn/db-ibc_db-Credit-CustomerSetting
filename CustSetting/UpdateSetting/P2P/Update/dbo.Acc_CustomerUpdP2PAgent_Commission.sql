@@ -175,9 +175,9 @@ SELECT @TrackingValue2 = '<Acc_CustomerUpdP2PAgent_Commission custid="'+ coalesc
 END CATCH		
 	
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdP2PAgent_Commission] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdP2PAgent_Commission] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdP2PAgent_Commission] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdP2PAgent_Commission] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdP2PAgent_Commission] TO vnteam
 

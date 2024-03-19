@@ -125,9 +125,9 @@ select
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelCommissionHR] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelCommissionHR] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelCommissionHR] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelCommissionHR] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelCommissionHR] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelCommissionHR] TO [bodbDownlineNetView,wsv_alpv]
 GO

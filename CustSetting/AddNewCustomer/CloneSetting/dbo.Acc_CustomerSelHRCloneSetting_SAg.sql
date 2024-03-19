@@ -56,9 +56,9 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].Acc_CustomerSelHRCloneSetting_SAg TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].Acc_CustomerSelHRCloneSetting_SAg TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].Acc_CustomerSelHRCloneSetting_SAg TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].Acc_CustomerSelHRCloneSetting_SAg TO [bodbDownlineNetView,wsv_alpv]
 GO
 GRANT VIEW DEFINITION ON [dbo].Acc_CustomerSelHRCloneSetting_SAg TO [vnteam]
 

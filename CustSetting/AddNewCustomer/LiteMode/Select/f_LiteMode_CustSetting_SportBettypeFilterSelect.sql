@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" selecters="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCust-CustDB" selecters="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID TINYINT, @GroupType SMALLINT, @SubGroupID TINYINT =NULL, @CreationStatus TINYINT, @siteid smallint= 0, @currency SMALLINT = 0) 
 RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, RealProductID TINYINT, SportType SMALLINT, Bettype SMALLINT, IsLive BIT, IntervalValue DECIMAL(19,8),SubType TINYINT, Child_DisplayOrder INT, SettingLevel TINYINT, SubGroupID TINYINT, SubGroupOrder TINYINT)
 /*

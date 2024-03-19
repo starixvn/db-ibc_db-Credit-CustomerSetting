@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_DisableAutoMPT]
     @CustID int,-- MasterID
@@ -21,7 +21,7 @@ Revisions:
     - 20090917@Phuc: write log into DBLOG.
     - 20091203@Kiwi: Modify to retrieve data FROM CustSetting3rd.
     - 20100112@Kiwi: AmEND to write log in xml format.
-    - 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+    - 20100728@Kiwi: grant execute permission to [bodbExtAccNet,wsv_xnap]
     - 20101006@Lukas: update isautolive PT ON custsetting3rd
     - 20101019@Henry: Record execution time
     - 20110606@Amy: Check Old/New value

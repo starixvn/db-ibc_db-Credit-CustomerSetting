@@ -120,12 +120,12 @@ ELSE
 		RETURN		
 	END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [bodbDownlineNetView,wsv_alpv]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [bodbExtAccNet,wsv_xnap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelP2PSuper_All] TO [vnteam]

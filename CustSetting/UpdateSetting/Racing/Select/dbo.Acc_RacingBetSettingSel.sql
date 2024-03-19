@@ -31,10 +31,10 @@ WHERE sporttype = ISNULL(@sporttype, sporttype)
 
 		
 GO
-GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingSel] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingSel] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingSel] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingSel] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingSel] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingSel] TO [bodbDownlineNetView,wsv_alpv]
 GO
-GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingSel] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingSel] TO [bodbExtAccNet,wsv_xnap]

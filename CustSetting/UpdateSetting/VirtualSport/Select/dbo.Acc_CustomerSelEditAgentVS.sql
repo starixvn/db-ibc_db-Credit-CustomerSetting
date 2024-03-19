@@ -233,12 +233,12 @@ Param's Explanation:
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentVS] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentVS] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentVS] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentVS] TO [bodbExtAccNet,wsv_xnap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentVS] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentVS] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentVS] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditAgentVS] TO [bodbDownlineNetView,wsv_alpv]
 GO
 

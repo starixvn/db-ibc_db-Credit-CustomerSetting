@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="1" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,wsv_nap,bodbExtAccNet,wsv_xnap,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="1" isNested="1"></info>*/
 ALTER FUNCTION fn_IsMyanmarOdds (@CustID INT = 0)
 RETURNs BIT
 AS

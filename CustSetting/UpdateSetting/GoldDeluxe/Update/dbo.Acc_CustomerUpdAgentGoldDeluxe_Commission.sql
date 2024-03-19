@@ -139,11 +139,11 @@ BEGIN
 
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_Commission] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_Commission] TO [bodbAdminNet,wsv_nap] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_Commission] TO [bodbDownlineNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_Commission] TO [bodbDownlineNet,wsv_alp] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_Commission] TO [bodbExtAccNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_Commission] TO [bodbExtAccNet,wsv_xnap] AS [dbo]
 GO
 
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentGoldDeluxe_Commission] TO [vnteam] AS [dbo]

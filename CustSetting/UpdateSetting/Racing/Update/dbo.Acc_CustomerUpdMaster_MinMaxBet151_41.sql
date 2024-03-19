@@ -246,8 +246,8 @@ END CATCH
 ---------------------------------------------------------
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_MinMaxBet151_41] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_MinMaxBet151_41] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_MinMaxBet151_41] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaster_MinMaxBet151_41] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaster_MinMaxBet151_41] TO [VNTeam]

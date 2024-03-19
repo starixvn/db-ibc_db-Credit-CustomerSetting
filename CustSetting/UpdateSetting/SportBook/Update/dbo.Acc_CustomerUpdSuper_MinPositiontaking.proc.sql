@@ -511,5 +511,5 @@ from
 where custsetting3rd.sporttype=161 and custsetting3rd.bettype in (85,86,87,89,90) and custsetting3rd.slivepositiontaking+custsetting3rd.alivepositiontaking+custsetting3rd.mlivepositiontaking>scs.slivepositiontaking
 
 GO
-GRANT EXECUTE ON [dbo].Acc_CustomerUpdSuper_MinPositiontaking TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].Acc_CustomerUpdSuper_MinPositiontaking TO [bodbAdminNet,wsv_nap]
 GO

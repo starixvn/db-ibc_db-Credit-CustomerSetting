@@ -46,8 +46,8 @@ SET NOCOUNT ON
 	
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelVSCloneSetting_Ag] TO [bodbDownlineNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelVSCloneSetting_Ag] TO [bodbDownlineNet,wsv_alp] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelVSCloneSetting_Ag] TO [bodbDownlineNetView] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelVSCloneSetting_Ag] TO [bodbDownlineNetView,wsv_alpv] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelVSCloneSetting_Ag] TO [vnteam] AS [dbo]

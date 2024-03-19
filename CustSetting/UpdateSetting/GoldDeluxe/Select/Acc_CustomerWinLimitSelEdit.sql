@@ -56,13 +56,13 @@ BEGIN
 	WHERE CustId = @CustId AND SportType = @SportType AND BetType = @BetType
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitSelEdit] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitSelEdit] TO [bodbAdminNet,wsv_nap] AS [dbo]
 GO
 
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitSelEdit] TO [bodbDownlineNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitSelEdit] TO [bodbDownlineNet,wsv_alp] AS [dbo]
 GO
 
-GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitSelEdit] TO [bodbExtAccNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerWinLimitSelEdit] TO [bodbExtAccNet,wsv_xnap] AS [dbo]
 GO
 
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerWinLimitSelEdit] TO [vnteam] AS [dbo]

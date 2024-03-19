@@ -190,6 +190,6 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdOpusCS_StakeLevel] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdOpusCS_StakeLevel] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdOpusCS_StakeLevel] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdOpusCS_StakeLevel] TO [bodbDownlineNet,wsv_alp]

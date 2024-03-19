@@ -21,11 +21,11 @@ else
 	
 	
 GO
-GRANT EXECUTE ON [dbo].Acc_CheckHRAllowedCurrency TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].Acc_CheckHRAllowedCurrency TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].Acc_CheckHRAllowedCurrency TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].Acc_CheckHRAllowedCurrency TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].Acc_CheckHRAllowedCurrency TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].Acc_CheckHRAllowedCurrency TO [bodbDownlineNetView,wsv_alpv]
 GO
-GRANT EXECUTE ON [dbo].Acc_CheckHRAllowedCurrency TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].Acc_CheckHRAllowedCurrency TO [bodbExtAccNet,wsv_xnap]
 GO

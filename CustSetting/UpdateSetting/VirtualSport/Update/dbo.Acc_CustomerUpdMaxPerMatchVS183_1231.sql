@@ -38,13 +38,13 @@ AS
 
 GO
 
-GRANT EXECUTE ON [Acc_CustomerUpdMaxPerMatchVS183_1231] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [Acc_CustomerUpdMaxPerMatchVS183_1231] TO [bodbAdminNet,wsv_nap] AS [dbo]
 GO
 
-GRANT EXECUTE ON [Acc_CustomerUpdMaxPerMatchVS183_1231] TO [bodbDownlineNet] AS [dbo]
+GRANT EXECUTE ON [Acc_CustomerUpdMaxPerMatchVS183_1231] TO [bodbDownlineNet,wsv_alp] AS [dbo]
 GO
 
-GRANT EXECUTE ON [Acc_CustomerUpdMaxPerMatchVS183_1231] TO [bodbExtAccNet] AS [dbo]
+GRANT EXECUTE ON [Acc_CustomerUpdMaxPerMatchVS183_1231] TO [bodbExtAccNet,wsv_xnap] AS [dbo]
 GO
 
 GRANT VIEW DEFINITION ON [Acc_CustomerUpdMaxPerMatchVS183_1231] TO [vnteam] AS [dbo]

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbDownlineNetView,wsv_alpv,bodbExtAccNet,wsv_xnap" viewers="vnteam" isFunction="0"></info>*/
 USE [CustDB]
 GO
 /****** Object:  StoredProcedure [dbo].[Age_MaxMemberLimitBySuperCheck]    Script Date: 10/04/2018 15:13:53 ******/
@@ -68,10 +68,10 @@ BEGIN
 	END
 END
 GO
-GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbDownlineNetView,wsv_alpv]
 GO
-GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [bodbExtAccNet,wsv_xnap]

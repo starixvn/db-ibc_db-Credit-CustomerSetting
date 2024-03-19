@@ -152,11 +152,11 @@ ELSE
 	END
 
 GO
-GRANT EXECUTE ON dbo.Acc_CustomerSelP2PMember_All TO bodbAdminNet
+GRANT EXECUTE ON dbo.Acc_CustomerSelP2PMember_All TO bodbAdminNet,wsv_nap
 GO
-GRANT EXECUTE ON dbo.Acc_CustomerSelP2PMember_All TO bodbDownlineNet
+GRANT EXECUTE ON dbo.Acc_CustomerSelP2PMember_All TO bodbDownlineNet,wsv_alp
 GO
 GRANT VIEW definition ON dbo.Acc_CustomerSelP2PMember_All TO vnteam
 GO
-GRANT EXECUTE ON [dbo].Acc_CustomerSelP2PMember_All TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].Acc_CustomerSelP2PMember_All TO [bodbExtAccNet,wsv_xnap]
 

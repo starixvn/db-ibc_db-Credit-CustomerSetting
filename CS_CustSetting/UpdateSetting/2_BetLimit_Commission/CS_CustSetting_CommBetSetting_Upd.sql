@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE CS_CustSetting_CommBetSetting_Upd
 	@RoleId			TINYINT,

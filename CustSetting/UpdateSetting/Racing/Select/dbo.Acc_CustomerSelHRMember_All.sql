@@ -528,12 +528,12 @@ select
 
 	
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRMember_All] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRMember_All] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRMember_All] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRMember_All] TO [bodbExtAccNet,wsv_xnap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRMember_All] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRMember_All] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRMember_All] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRMember_All] TO [bodbDownlineNetView,wsv_alpv]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelHRMember_All] TO [vnteam]

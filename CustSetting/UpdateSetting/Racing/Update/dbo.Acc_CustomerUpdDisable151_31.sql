@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="vnteam" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -32,7 +32,7 @@ Revisions:
 	- 20090818@Phuc: check page access and check upline closed first(call Age_CustSubCheckPageAccess)
 	- 20090917@Phuc: write log into DBLOG.
 	- 20091008@Kiwi: Remove WriteLog_UserLog
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet,wsv_xnap]
 	- 20101021@Henry: Record execution time
 	- 20110427@Johnson: change type of @SubAccID to INT
 	- 20110509@Johnson: Update error message for Thai version
@@ -256,10 +256,10 @@ BEGIN CATCH
 		@duration = @duration
 END CATCH
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_31] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_31] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT  EXECUTE  ON [dbo].[Acc_CustomerUpdDisable151_31]  TO [bodbDownlineNet]
+GRANT  EXECUTE  ON [dbo].[Acc_CustomerUpdDisable151_31]  TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdDisable151_31] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_31] TO [bodbExtAccNet] 
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_31] TO [bodbExtAccNet,wsv_xnap] 

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLog-bodb_CustomerLog" executers="bodbAdminNet" viewers="" selecters=""></info>*/
+/*<info serverAlias="DBLog-bodb_CustomerLog" executers="bodbAdminNet,wsv_nap" viewers="" selecters=""></info>*/
 
 ALTER PROCEDURE [dbo].[WriteLog_UserLog_UserControl_Multiple]
 	@LogData NVARCHAR(MAX),	

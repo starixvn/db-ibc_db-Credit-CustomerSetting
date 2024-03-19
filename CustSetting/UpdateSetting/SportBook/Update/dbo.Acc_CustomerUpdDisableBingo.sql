@@ -187,10 +187,10 @@ BEGIN CATCH
 END CATCH
 		
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableBingo] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableBingo] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableBingo] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableBingo] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableBingo] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableBingo] TO [bodbExtAccNet,wsv_xnap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdDisableBingo] TO [vnteam]

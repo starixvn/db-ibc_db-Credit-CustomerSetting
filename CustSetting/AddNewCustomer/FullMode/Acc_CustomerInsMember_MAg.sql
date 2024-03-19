@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_MAg]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -337,7 +337,7 @@ Revisions:
 	- 20100112@Kiwi: amend to write log in xml format.
 	- 20100414@Kiwi: Remove to do not insert answer field.
 	- 20100506@Huynguyen: Add param @DisableOpenTote
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet,wsv_xnap]
 	- 20100831@Lukas:	- Add setting information for Number game.
 						- Add setting information for mix parlay of mixed sports 
 						- Remove mix parlay of basketball

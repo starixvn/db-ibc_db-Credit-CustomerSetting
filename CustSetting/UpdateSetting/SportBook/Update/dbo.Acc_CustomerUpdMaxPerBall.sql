@@ -34,8 +34,8 @@ begin
 end
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerBall] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerBall] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerBall] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerBall] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaxPerBall] TO [vnteam]

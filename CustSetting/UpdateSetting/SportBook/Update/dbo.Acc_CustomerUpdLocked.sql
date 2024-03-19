@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,wsv_alp,bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdLocked]
 	@CustID int,
 	@UserID int,
@@ -36,7 +36,7 @@ BEGIN
 	if @ErrCode <>0 return
 	--end
 
-	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet' 
+	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet,wsv_nap' 
 		AND EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)
 	BEGIN
 		 SELECT  @ErrMsg = CASE @Language

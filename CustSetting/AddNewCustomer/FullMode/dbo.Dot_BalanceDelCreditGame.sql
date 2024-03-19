@@ -32,6 +32,6 @@ IF @Success = 0 AND @Retry < 3 GOTO TryAgain
 
 
 GO
-GRANT EXECUTE ON [dbo].[Dot_BalanceDelCreditGame] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Dot_BalanceDelCreditGame] TO [bodbAdminNet,wsv_nap] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Dot_BalanceDelCreditGame] TO [bodbDownlineNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Dot_BalanceDelCreditGame] TO [bodbDownlineNet,wsv_alp] AS [dbo]

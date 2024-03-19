@@ -22,11 +22,11 @@ FROM custinfo WITH (NOLOCK)
 WHERE CustID = @CustID
 
 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableOutRight] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableOutRight] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableOutRight] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableOutRight] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableOutRight] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableOutRight] TO [bodbDownlineNetView,wsv_alpv]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelDisableOutRight] TO [vnteam]
 GO

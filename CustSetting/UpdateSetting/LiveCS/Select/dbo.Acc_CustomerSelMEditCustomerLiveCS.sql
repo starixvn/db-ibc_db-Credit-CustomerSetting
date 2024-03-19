@@ -87,8 +87,8 @@ END
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelMEditCustomerLiveCS] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerLiveCS] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerLiveCS] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerLiveCS] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerLiveCS] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerLiveCS] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMEditCustomerLiveCS] TO [bodbDownlineNetView,wsv_alpv]

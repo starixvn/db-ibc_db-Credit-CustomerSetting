@@ -286,11 +286,11 @@ Param's Explanation:
 		c.mrecommend
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_SAg] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_SAg] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_SAg] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_SAg] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_SAg] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_SAg] TO [bodbDownlineNetView,wsv_alpv]
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRAgent_SAg] TO vnteam
 GO

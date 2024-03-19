@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="vnteam" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="vnteam" isFunction="1"></info>*/
 ALTER FUNCTION [dbo].[f_GetSportTypeBetTypeGameType] (
 	  @Mode TINYINT,@Server VARCHAR(50))
 RETURNS @retbl TABLE (ID INT PRIMARY KEY, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)

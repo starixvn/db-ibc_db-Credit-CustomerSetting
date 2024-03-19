@@ -43,6 +43,6 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember_Check] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember_Check] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_DCSSettingCopyInsertMember_Check] TO [vnteam]

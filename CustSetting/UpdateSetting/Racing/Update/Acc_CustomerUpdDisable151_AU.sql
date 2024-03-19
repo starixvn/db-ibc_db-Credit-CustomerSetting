@@ -225,10 +225,10 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_AU] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_AU] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT  EXECUTE  ON [dbo].[Acc_CustomerUpdDisable151_AU]  TO [bodbDownlineNet]
+GRANT  EXECUTE  ON [dbo].[Acc_CustomerUpdDisable151_AU]  TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdDisable151_AU] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_AU] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisable151_AU] TO [bodbExtAccNet,wsv_xnap]

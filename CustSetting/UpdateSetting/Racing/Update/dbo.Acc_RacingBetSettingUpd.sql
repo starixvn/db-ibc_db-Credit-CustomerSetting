@@ -126,4 +126,4 @@ SET NOCOUNT ON
 	END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingUpd] TO [bodbadminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_RacingBetSettingUpd] TO [bodbAdminNet,wsv_nap] AS [dbo]

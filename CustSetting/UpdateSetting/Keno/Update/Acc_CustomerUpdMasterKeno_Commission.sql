@@ -131,9 +131,9 @@ GO
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMasterKeno_Commission] TO [vnteam]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Commission] TO [bodbAdminNet]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Commission] TO [bodbAdminNet,wsv_nap]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Commission] TO [bodbDownlineNet]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Commission] TO [bodbDownlineNet,wsv_alp]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Commission] TO [bodbExtAccNet]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterKeno_Commission] TO [bodbExtAccNet,wsv_xnap]
 GO 

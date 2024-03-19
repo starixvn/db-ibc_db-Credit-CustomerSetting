@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,vnteam" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbExtAccNet,wsv_xnap,vnteam" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelHRSuper_All]
 	@custid int
 AS
@@ -355,8 +355,8 @@ Param's Explanation:
 		
 		
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRSuper_All] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRSuper_All] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRSuper_All] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRSuper_All] TO [bodbExtAccNet,wsv_xnap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelHRSuper_All] TO [vnteam]

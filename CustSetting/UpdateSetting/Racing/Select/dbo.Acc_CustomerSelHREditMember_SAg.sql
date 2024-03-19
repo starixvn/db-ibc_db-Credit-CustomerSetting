@@ -354,12 +354,12 @@ group by
 		
   
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [bodbExtAccNet,wsv_xnap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [bodbDownlineNetView,wsv_alpv]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelHREditMember_SAg] TO [vnteam]

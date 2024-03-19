@@ -146,6 +146,6 @@ EXEC WriteLog_UserLog @UserID = @UserID, @Doing = @LogData
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdChangeCurrency_DirectMaster] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdChangeCurrency_DirectMaster] TO [bodbAdminNet,wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdChangeCurrency_DirectMaster] TO [vnteam]

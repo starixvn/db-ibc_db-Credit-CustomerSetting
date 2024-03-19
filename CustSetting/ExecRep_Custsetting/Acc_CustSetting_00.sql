@@ -271,6 +271,6 @@ from
 where custsetting.custid = @custid and custsetting.sporttype=1 and custsetting.bettype in (1,3,7,8) and custsetting.slivepositiontaking+custsetting.alivepositiontaking+custsetting.mlivepositiontaking>scs.slivepositiontaking
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_00] TO [bodbadminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_00] TO [bodbAdminNet,wsv_nap] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustSetting_00] TO [vnteam] AS [dbo]

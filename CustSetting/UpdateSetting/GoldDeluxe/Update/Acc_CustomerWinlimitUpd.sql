@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbExtAccNet,bodbDownlineNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,wsv_nap,bodbExtAccNet,wsv_xnap,bodbDownlineNet,wsv_alp" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Acc_CustomerWinLimitUpd @CustId INT
 	, @MaxWinLimit SMALLMONEY
 	, @IsAutoReset BIT

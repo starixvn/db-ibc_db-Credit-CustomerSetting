@@ -227,9 +227,9 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_MinMaxBet153_51] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_MinMaxBet153_51] TO [bodbAdminNet,wsv_nap]
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_MinMaxBet153_51] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgent_MinMaxBet153_51] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgent_MinMaxBet153_51] TO vnteam 

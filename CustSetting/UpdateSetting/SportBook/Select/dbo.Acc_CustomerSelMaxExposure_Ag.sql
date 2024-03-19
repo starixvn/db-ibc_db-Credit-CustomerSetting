@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBACC-bodb02,DBTXN-bodb02" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBACC-bodb02,DBTXN-bodb02" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelMaxExposure_Ag]
 	@custid int,
 	@sporttype SMALLINT,

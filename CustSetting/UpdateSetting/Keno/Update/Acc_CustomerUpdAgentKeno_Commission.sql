@@ -121,7 +121,7 @@ END
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentKeno_Commission] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_Commission] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_Commission] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_Commission] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentKeno_Commission] TO [bodbDownlineNet,wsv_alp]
 

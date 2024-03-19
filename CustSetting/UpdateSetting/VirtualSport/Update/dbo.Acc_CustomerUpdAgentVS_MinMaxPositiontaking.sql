@@ -193,8 +193,8 @@ where cs.spositiontaking+cs.apositiontaking+cs.mpositiontaking>scs.spositiontaki
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxPositiontaking]  TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxPositiontaking]  TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxPositiontaking]  TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxPositiontaking]  TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxPositiontaking]  TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxPositiontaking]  TO [bodbExtAccNet]  
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentVS_MinMaxPositiontaking]  TO [bodbExtAccNet,wsv_xnap]  

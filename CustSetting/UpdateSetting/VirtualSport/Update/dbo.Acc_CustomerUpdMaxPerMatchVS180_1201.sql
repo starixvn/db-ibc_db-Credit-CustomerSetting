@@ -36,10 +36,10 @@ Param's Explanation:
 	end
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchVS180_1201] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchVS180_1201] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchVS180_1201] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchVS180_1201] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaxPerMatchVS180_1201] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchVS180_1201] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchVS180_1201] TO [bodbExtAccNet,wsv_xnap]

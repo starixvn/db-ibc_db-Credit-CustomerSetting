@@ -13,11 +13,11 @@ Select exchangeID as currency, currency as currencyName
 from dbo.[f_GetHRAllowedCurr]()
 	
 GO
-GRANT EXECUTE ON [dbo].Acc_SelHRAllowedCurrency TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].Acc_SelHRAllowedCurrency TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].Acc_SelHRAllowedCurrency TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].Acc_SelHRAllowedCurrency TO [bodbExtAccNet,wsv_xnap]
 GO
-GRANT EXECUTE ON [dbo].Acc_SelHRAllowedCurrency TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].Acc_SelHRAllowedCurrency TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].Acc_SelHRAllowedCurrency TO [bodbDownlineNetView]
+GRANT EXECUTE ON [dbo].Acc_SelHRAllowedCurrency TO [bodbDownlineNetView,wsv_alpv]
 GO

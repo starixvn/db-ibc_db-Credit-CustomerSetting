@@ -19,7 +19,7 @@ Revisions:
 	- 20090909@Phuc: check upline suspended.
 	- 20090917@Phuc: write log into DBLOG.
 	- 20100112@Kiwi: amend to write log in xml format.
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet,wsv_xnap]
 	- 20101021@Henry: Record execution time
 	- 20110709@Johnson: Change to use new server BD053 instead DB052
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
@@ -196,10 +196,10 @@ END CATCH
 
 		
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [bodbDownlineNet,wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdDisableOutright] TO vnteam
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [bodbExtAccNet,wsv_xnap]

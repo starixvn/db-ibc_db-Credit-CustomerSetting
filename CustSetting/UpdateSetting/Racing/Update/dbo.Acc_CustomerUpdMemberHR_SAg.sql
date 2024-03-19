@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMemberHR_SAg] 
 	@CustID int,--memberid 
 	@UserID int,
@@ -88,7 +88,7 @@ Revisions:
 	- 20091201@Kiwi: Move custsetting & custoverride to the separated tables (CustSetting3rd & CustOverride3rd).
 	- 20100112@Kiwi: Amend to write log in xml format.
 	- 20100515@Shifu: Add default value for @v151mpositiontaking_31, @v151mpositiontaking_32
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet,wsv_xnap]
 	- 20110124@Lukas: Add more partner ( AU Horse racing) & racing game (Harness, Greyhound) setting
 	- 20110323@Johnson: Check @custid must be member's ID
 	- 20110428@Lukas: change tag name when write log <a> -> <au>

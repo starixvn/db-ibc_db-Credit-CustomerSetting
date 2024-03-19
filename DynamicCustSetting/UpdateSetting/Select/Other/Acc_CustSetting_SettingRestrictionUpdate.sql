@@ -85,8 +85,8 @@ BEGIN
 END   
   
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [bodbAdminNet,wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [bodbDownlineNet,wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [bodbExtAccNet,wsv_xnap]

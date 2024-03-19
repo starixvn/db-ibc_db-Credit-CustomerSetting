@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbDownlineNetView" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_SAg]
 	@custid     INT OUTPUT,
 	@firstname  NVARCHAR(50),
@@ -328,7 +328,7 @@ Revisions:
 	- 20100112@Kiwi: amend to write log in xml format.
 	- 20100414@Kiwi: Remove to do not insert answer field.
 	- 20100506@Huynguyen: Add param @DisableOpenTote
-	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
+	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet,wsv_xnap]
 	- 20100827@Lukas:	- Add setting information (minbet,maxbet,positiontaking, auto_positiontaking...) for Number game 
 						- Add setting information for Mix Parlay for Mixed Sports (sporttype = 99, bettype = 9)
 						- Remove Mix Parlay for Basketball game (sporttype = 2, bettype = 9)

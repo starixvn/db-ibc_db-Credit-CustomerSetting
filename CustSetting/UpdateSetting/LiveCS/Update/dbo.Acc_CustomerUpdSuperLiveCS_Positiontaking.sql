@@ -246,8 +246,8 @@ INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperLiveCS_Positiontaking] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperLiveCS_Positiontaking] TO [bodbAdminNet,wsv_nap] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperLiveCS_Positiontaking] TO [bodbDownlineNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperLiveCS_Positiontaking] TO [bodbDownlineNet,wsv_alp] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperLiveCS_Positiontaking] TO [vnteam] AS [dbo]
