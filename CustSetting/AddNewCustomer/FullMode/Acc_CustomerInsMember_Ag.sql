@@ -197,6 +197,7 @@ Revisions:
 	- 20230711@Helios: Add Log VR+ Accumulate Balance [Redmine: #189649]
 	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141]
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20240321@Luke: NAP - Virtual rate - For Direct account :Change default of VR Status for newly created accounts to "Follow upline" [Redmine: #202624]
 Param's Explanation:	
 	- @ErrCode:
 		= 0: add new member successfully.
@@ -387,9 +388,12 @@ BEGIN
     
 	--Virtual rate
 	IF EXISTS (SELECT 1 FROM Acc_CustDirect WITH(NOLOCK) WHERE custid = @recommend)		
-	BEGIN
-		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@_Site)
-	END	
+		AND EXISTS( 
+				SELECT 1 
+				FROM dbo.Site WITH (NOLOCK)
+				WHERE site = @site AND SiteLabel IN ('789y')
+			)
+				SET @EnableVR = 1
 
 	DECLARE @Closed BIT = 0, @Suspend BIT = 0
 

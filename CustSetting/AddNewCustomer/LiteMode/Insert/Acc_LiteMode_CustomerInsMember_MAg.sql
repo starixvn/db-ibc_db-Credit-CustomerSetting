@@ -39,6 +39,7 @@ AS
 		- 20230626@Johnson: initial sp [redmine: #179159]
 		- 20231026@Johnson: Limit New Account Update PT for i7 [redmine: #196032]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240321@Luke: NAP - Virtual rate - For Direct account :Change default of VR Status for newly created accounts to "Follow upline" [Redmine: #202624]
   Limit New Account Update PT	Param's Explanation: 
 		- @SettingXML:
 		'{
@@ -249,9 +250,12 @@ BEGIN
 	 
 	 --Virtual rate
 	IF EXISTS (SELECT 1 FROM Acc_CustDirect WITH(NOLOCK) WHERE custid = @mrecommend)		
-	BEGIN
-		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
-	END	
+		AND EXISTS( 
+				SELECT 1 
+				FROM dbo.Site WITH (NOLOCK)
+				WHERE site = @site AND SiteLabel IN ('789y')
+			)
+				SET @EnableVR = 1
 	
 	SELECT @username = rtrim(ltrim(@username))
 
