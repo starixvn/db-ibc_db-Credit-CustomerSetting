@@ -29,6 +29,7 @@ AS
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230414@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
+		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
@@ -98,11 +99,7 @@ BEGIN
 	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Dep_CustBAActive WHERE custid IN (SELECT custID FROM @tmp_custID)	
-
-	--Delete setting credit
-	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE custoverride WHERE custid IN (SELECT custID FROM @tmp_custID)
-
+	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustPTSetting3rd_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -192,9 +189,6 @@ BEGIN
 	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Dep_CustBAActive WHERE custid IN (SELECT custID FROM @tmp_custID)
 
-	--Delete setting credit
-	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE custoverride WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -281,10 +275,6 @@ BEGIN
 	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Dep_CustBAActive WHERE custid IN (SELECT custID FROM @tmp_custID)
-
-	--Delete setting credit
-	DELETE custsetting WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE custoverride WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -357,9 +347,6 @@ BEGIN
 	DELETE dbo.CustRequestGame WHERE custid = @custid	
 	DELETE dbo.CustVirtualSetting WHERE custid = @custid
 	DELETE dbo.Dep_CustBAActive WHERE custid = @custid
-
-	--Delete setting credit
-	DELETE custsetting WHERE custid = @custid
 	
 	--DCS table
 	DELETE dbo.CustProductStatus WHERE custid = @custid

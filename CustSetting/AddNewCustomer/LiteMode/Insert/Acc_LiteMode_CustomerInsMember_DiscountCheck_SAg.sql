@@ -7,8 +7,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_DiscountCheck_SAg]
 	@SettingType25 VARCHAR(MAX)= '' OUTPUT, --SB
 	@SettingType19 VARCHAR(MAX)= '' OUTPUT, --LCS
 	@SettingType3 VARCHAR(MAX)= '' OUTPUT, --Others Games	
-	@IsMyanmarOdds BIT= 0,
-	@CreationStatus TINYINT = 0,
+	@SettingStatus TINYINT = 0,
 	
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
@@ -22,6 +21,7 @@ AS
 	
 	Revisions: 
 		- 20230515@Johnson: initial sp [redmine: #179159]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 	Param's Explanation: 
 		- @SettingType25 = '<Root>
@@ -39,7 +39,7 @@ BEGIN
 
 	DECLARE @xml XML
 	
-	DECLARE @NewDiscountTbl TABLE (sporttype SMALLINT, bettype SMALLINT, discount DECIMAL(9,8))
+	DECLARE @NewDiscountTbl TABLE (sporttype SMALLINT, bettype SMALLINT, discount DECIMAL(9,8),Child_DisplayOrder INT)
 	
 	CREATE TABLE #ProductSettingDetail_Check(
 		[SettingType] [smallint],
@@ -49,19 +49,23 @@ BEGIN
 		[ProductID] [tinyint],
 		[SettingLevel] [tinyint],
 		MaxDiscount	decimal(9,8),
+		Child_DisplayOrder	INT
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount)
+	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount,Child_DisplayOrder)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,
 		CASE WHEN SettingLevel = 4 THEN SettingLevel --SportTypeBettype
 			ELSE 2 END SettingLevel--SportType
 		,MaxDiscount
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
+		,Child_DisplayOrder
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 	
 	--check SB Discount
 	IF ISNULL(@SettingType25,'') <> ''		
 	BEGIN
+		DELETE @NewDiscountTbl
+		
 		SELECT @xml = CONVERT(XML,@SettingType25)
 		
 		INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
@@ -70,27 +74,6 @@ BEGIN
 			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
 		FROM   @xml.nodes('/Root/R') T(c) 
 		
-		IF @IsMyanmarOdds = 1
-		BEGIN
-			UPDATE t
-			SET t.Discount = s.commRate
-			FROM @NewDiscountTbl t
-				CROSS APPLY (SELECT commRate  
-							FROM AgentCommRate WITH(NOLOCK)  
-							WHERE custid = @srecommend
-								AND sporttype = 1   
-								AND bettype = 1) s
-			WHERE sporttype = 2
-				AND bettype = 1
-				AND t.Discount > s.commRate
-			
-			--update groupb,c,d = 0
-			UPDATE @NewDiscountTbl
-			SET discount = 0
-			WHERE sporttype = 1
-				AND bettype IN (3,7,8)			
-		END
-			
 		--Check if new discount <0 or > default Max Discount
 		IF EXISTS (SELECT TOP 1 1 
 						FROM @NewDiscountTbl tmp
@@ -134,25 +117,28 @@ BEGIN
 		
 		--correct discount
 		UPDATE t
-		SET t.Discount = CASE WHEN t.bettype = 1 AND t.Discount > cs.groupa THEN cs.groupa
-							WHEN t.bettype = 3 AND t.Discount > cs.groupb THEN cs.groupb
-							WHEN t.bettype = 7 AND t.Discount > cs.groupc THEN cs.groupc
-							WHEN t.bettype = 8 AND t.Discount > cs.groupd THEN cs.groupd
-							WHEN t.bettype IN (4,5) AND t.Discount > cs.sdiscount THEN cs.sdiscount
-							ELSE t.Discount END
+		SET t.Discount = cs.Discount
 		FROM @NewDiscountTbl t
-			INNER JOIN custsetting cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
 													AND t.bettype = cs.bettype
-		WHERE custid = @srecommend
-			AND t.sporttype = 1
+		WHERE custid = @srecommend			
+			AND t.Discount > cs.Discount
+
+		UPDATE t
+		SET t.Child_DisplayOrder = d.Child_DisplayOrder
+		FROM @NewDiscountTbl t
+			INNER JOIN #ProductSettingDetail_Check d 
+				ON t.SportType = d.SportType
+				AND t.BetType = d.BetType
 			
 		SELECT @SettingType25 = (
 		SELECT SportType '@SportType', 
 			BetType '@BetType', 
 			discount '@Discount'			
 		FROM @NewDiscountTbl
+		ORDER BY Child_DisplayOrder,SportType,BetType
 		FOR XML PATH ('R'), ROOT('Root')
-		)		
+		)
 	END	
 	
 	--check LCS Discount
@@ -217,12 +203,20 @@ BEGIN
 													AND t.bettype = cs.bettype
 		WHERE custid = @srecommend			
 			AND t.Discount > cs.Discount
+
+		UPDATE t
+		SET t.Child_DisplayOrder = d.Child_DisplayOrder
+		FROM @NewDiscountTbl t
+			INNER JOIN #ProductSettingDetail_Check d 
+				ON t.SportType = d.SportType
+				AND t.BetType = d.BetType
 			
 		SELECT @SettingType19 = (
 		SELECT SportType '@SportType', 
 			BetType '@BetType', 
 			discount '@Discount'			
 		FROM @NewDiscountTbl
+		ORDER BY Child_DisplayOrder,SportType,BetType
 		FOR XML PATH ('R'), ROOT('Root')
 		)
 	END	
@@ -290,11 +284,19 @@ BEGIN
 		WHERE custid = @srecommend			
 			AND t.Discount > cs.Discount
 			
+		UPDATE t
+		SET t.Child_DisplayOrder = d.Child_DisplayOrder
+		FROM @NewDiscountTbl t
+			INNER JOIN #ProductSettingDetail_Check d 
+				ON t.SportType = d.SportType
+				AND t.BetType = d.BetType
+			
 		SELECT @SettingType3 = (
 		SELECT SportType '@SportType', 
 			BetType '@BetType', 
 			discount '@Discount'			
 		FROM @NewDiscountTbl
+		ORDER BY Child_DisplayOrder,SportType,BetType
 		FOR XML PATH ('R'), ROOT('Root')
 		)
 	END	

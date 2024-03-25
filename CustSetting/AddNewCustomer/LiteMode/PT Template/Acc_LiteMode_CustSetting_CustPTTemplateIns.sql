@@ -6,7 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateIns]
 	@TemplateName NVARCHAR(50),
 	@Settings VARCHAR(MAX),
 	@IsDefault BIT = 0,
-	@CreationStatus TINYINT = 0, 
+	@SettingStatus TINYINT = 0, 
 	
 	@Language VARCHAR(3) = 'E',
 	@IP VARCHAR(15)='',
@@ -21,6 +21,7 @@ AS
 	
 	Revisions: 
 		- 20230508@Johnson: initial sp [redmine: #179159]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 	Param's Explanation: 
 		- @Settings = '<Root>
@@ -31,7 +32,7 @@ AS
 						<r group="4" sub="0" pt="85" />
 					</Root>'
 		- group: Product Group/sub: Sub Group
-		- @CreationStatus: 0: Pro, 1: UAT, 3: UAT/PRO	
+		- @SettingStatus: 0: Pro, 1: UAT, 3: UAT/PRO	
 		- @ErrType: 0: normal message, 1: show sport/bettype
 */	
 BEGIN
@@ -66,7 +67,7 @@ BEGIN
 	EXEC Acc_LiteMode_CustSetting_CustPTTemplateCheck 
 		@CustID = @CustID,	
 		@Settings = @Settings,
-		@CreationStatus = @CreationStatus, 
+		@SettingStatus = @SettingStatus, 
 		
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,

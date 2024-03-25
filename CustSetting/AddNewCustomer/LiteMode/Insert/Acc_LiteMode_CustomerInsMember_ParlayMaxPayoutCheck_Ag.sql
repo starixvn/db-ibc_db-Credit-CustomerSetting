@@ -6,8 +6,8 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_Ag]
 	@siteid SMALLINT=0,
 	@currency SMALLINT=0,
 	
-	@SettingType27 VARCHAR(MAX)= '', --SB
-	@CreationStatus TINYINT = 0,
+	@SettingType27 VARCHAR(MAX)= '' OUTPUT, --SB
+	@SettingStatus TINYINT = 0,
 	
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
@@ -21,6 +21,7 @@ AS
 	
 	Revisions: 
 		- 20230727@Johnson: initial sp [redmine: #179159]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 	Param's Explanation: 
 		- @SettingType27 = '<Root>
@@ -38,6 +39,7 @@ BEGIN
 		, Combo2			MONEY
 		, Combo35			MONEY
 		, ComboOver6		MONEY
+		, Child_DisplayOrder	INT
 		)
 	DECLARE @UplineMaxPayoutTbl TABLE (
 			SportType		SMALLINT
@@ -62,7 +64,8 @@ BEGIN
 		[IsLive] [bit],
 		[GroupID] [tinyint],
 		[GroupType] [tinyint],
-		[SettingLevel] [tinyint],		
+		[SettingLevel] [tinyint],	
+		Child_DisplayOrder	INT,
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 	
@@ -87,11 +90,12 @@ BEGIN
 		T.c.query('.').value('(R/@Combo6)[1]', 'money') AS ComboOver6
 	FROM  @xml.nodes('/Root/R') T(c) 
 	
-	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,GroupID,GroupType,SettingLevel)
+	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,GroupID,GroupType,SettingLevel,Child_DisplayOrder)
 	SELECT SportType,BetType,SettingType,IsLive,GroupID,GroupType,
 		CASE WHEN SettingLevel = 4 THEN SettingLevel --SporttypeBettype
-			ELSE 2 END as SettingLevel--Sporttype		
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
+			ELSE 2 END as SettingLevel,--Sporttype		
+			Child_DisplayOrder
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 	WHERE SettingType IN (27)
 		
 	INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
@@ -136,7 +140,7 @@ BEGIN
 								, ps.GroupType AS '@GroupType'
 							FROM @NewMaxPayoutTbl tmp
 								INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype
-							WHERE	(tmp.SingleMatchParlay < 0 OR tmp.Combo2 < 0 OR tmp.Combo35	< 0  OR tmp.ComboOver6	< 0 )
+							WHERE	(tmp.SingleMatchParlay <= 0 OR tmp.Combo2 <= 0 OR tmp.Combo35	<= 0  OR tmp.ComboOver6	<= 0 )
 							FOR XML PATH('Row')
 								, TYPE
 							)
@@ -285,6 +289,25 @@ BEGIN
 		
 		RETURN
 	END
+
+	UPDATE t
+	SET t.Child_DisplayOrder = d.Child_DisplayOrder
+	FROM @NewMaxPayoutTbl t
+		INNER JOIN #ProductSettingDetail_Check d 
+			ON t.SportType = d.SportType
+			AND t.BetType = d.BetType
+		
+	SELECT @SettingType27 = (
+	SELECT SportType '@SportType', 
+		BetType '@BetType', 
+		SingleMatchParlay '@SingleMP',
+		Combo2 '@Combo2',
+		Combo35 '@Combo35',
+		ComboOver6 '@Combo6'
+	FROM @NewMaxPayoutTbl
+	ORDER BY Child_DisplayOrder,SportType,BetType
+	FOR XML PATH ('R'), ROOT('Root')
+	)	
 	
 	DROP TABLE #ProductSettingDetail_Check
 END

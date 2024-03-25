@@ -6,7 +6,6 @@ ALTER PROCEDURE [dbo].[Acc_CustomerLimitCreatedAccountCheck]
 	@existingSrecommend		INT = 0,
 	@Prefix					VARCHAR(50),
 	@GroupName				VARCHAR(50),
-	@CreatedMode			TINYINT,
 	@IsQRCode				BIT,
 	@SystemID				TINYINT,
 	@IP						VARCHAR(15),
@@ -24,6 +23,7 @@ AS
   
  Revisions:  
  - 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
+ - 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
  */
 BEGIN
 
@@ -70,8 +70,6 @@ BEGIN
 	IF @RuleID = 'AG'			-- SP related : Acc_CustomerInsMember_Ag
 	BEGIN
 		-- Limit Create New Account
-		--IF @CreatedMode = 1	-- APPLY Check ProblemAccountLimitDownline For Create Account : Single or Multiple
-		--BEGIN
 		 IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid)) 
 		 BEGIN
 			SELECT @cntDownlines = COUNT(1) 
@@ -408,8 +406,6 @@ BEGIN
 	IF @RuleID = 'CSAG'			-- SP related : Acc_CustomerInsMember_CloneSetting_Sag
 	BEGIN
 		-- Limit Create New Account		
-		--IF @CreatedMode = 1	-- APPLY Check ProblemAccountLimitDownline For Create Account : Single or Multiple
-		--BEGIN
 			IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid))
 			BEGIN
 				SELECT @cntDownlines = COUNT(1) 
@@ -487,8 +483,6 @@ BEGIN
 	IF @RuleID = 'CMAG'			-- SP related : Acc_CustomerInsMember_CloneSetting_MAg
 	BEGIN
 		-- Limit Create New Account		
-		--IF @CreatedMode = 1	-- APPLY Check ProblemAccountLimitDownline For Create Account : Single or Multiple
-		--BEGIN
 			IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid))
 			BEGIN
 				SELECT @cntDownlines = COUNT(1) 

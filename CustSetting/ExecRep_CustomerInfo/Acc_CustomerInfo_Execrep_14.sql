@@ -34,10 +34,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_14]
 	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot), NG2
 	@SettingType18 VARCHAR(MAX)= '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 	
-	-- Myanmar Odds		
-	@IsMyanmarOdds BIT = 0,
-	
-	@CreationStatus TINYINT = 0,
+	@SettingStatus TINYINT = 0,
 	@ErrCode INT = 0 OUTPUT
 	
 AS
@@ -49,6 +46,7 @@ AS
 		Revisions: 
 			- 20230525@Johnson: initial sp [redmine: #179159]
 			- 20231017@Johnson: extend MaxPT for SB = 0.93 [redmine:#195578]
+			- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 	Param's Explanation: 
 	
 */
@@ -88,7 +86,7 @@ BEGIN
 			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
 		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
-		FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
+		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 
 	END
 		
@@ -109,9 +107,9 @@ BEGIN
 		SELECT DISTINCT psd.SportType,psd.Bettype,psd.IsLive, psd.SettingType,psd.IsDisabled,psd.IsHidden,psd.IsSync,pbs.bitmapOrder 
 		FROM #ProductSettingDetail_tmp00 psd WITH(NOLOCK)  
 			INNER JOIN ProductStatusProfile pbs WITH (NOLOCK) ON pbs.[SportType] = psd.[SportType]	AND pbs.[BetType] = psd.[BetType]
-			INNER JOIN (		  SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(4,@CreationStatus,@siteid,@currency)
-						UNION ALL SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(13,@CreationStatus,@siteid,@currency)
-						UNION ALL SELECT Sporttype, bettype FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(21,@CreationStatus,@siteid,@currency)
+			INNER JOIN (		  SELECT Sporttype, bettype FROM dbo.f_CustSetting_ProductProfileSel(4,@SettingStatus,@siteid,@currency)
+						UNION ALL SELECT Sporttype, bettype FROM dbo.f_CustSetting_ProductProfileSel(13,@SettingStatus,@siteid,@currency)
+						UNION ALL SELECT Sporttype, bettype FROM dbo.f_CustSetting_ProductProfileSel(21,@SettingStatus,@siteid,@currency)
 						)t 
 						ON pbs.[SportType] = t.[SportType]	AND pbs.[BetType] = t.[BetType]
 		WHERE psd.SettingType IN (4,13,21)
@@ -342,67 +340,18 @@ BEGIN
 		AND	dbo.f_CheckRepTable('CustBetSetting_Agent') = 1
 		AND	dbo.f_CheckRepTable('CustBetSetting_Member') = 1
 		
-		AND dbo.f_CheckRepTable('CustSetting') = 1 
-		AND dbo.f_CheckRepTable('CustOverride') = 1 
 		AND dbo.f_CheckRepTable('ProductGlobalSetting') = 1 
 		AND dbo.f_CheckRepTable('ProductBetSetting') = 1
-		AND dbo.f_CheckRepTable('AgentCommRate') = 1
-		AND dbo.f_CheckRepTable('CustCommRate') = 1 
 		AND dbo.f_CheckRepTable('CustBetSetting_Agent') = 1
 		AND dbo.f_CheckRepTable('CustBetSetting_Member') = 1 
 		AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1 
 		AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Member') = 1 	  
 	)
 	BEGIN
-		CREATE TABLE #tmpcustSetting(
-			[custid] [int] NOT NULL,
-			[bettype] [smallint] NOT NULL,
-			[sporttype] [smallint] NOT NULL,
-			[apositiontaking] [smallmoney] NOT NULL,
-			[mpositiontaking] [smallmoney] NOT NULL,
-			[spositiontaking] [smallmoney] NOT NULL,
-			[alivepositiontaking] [smallmoney] NOT NULL,
-			[mlivepositiontaking] [smallmoney] NOT NULL,
-			[slivepositiontaking] [smallmoney] NOT NULL,
-			[playerdiscount] [decimal](9, 8) NOT NULL,
-			[discount] [decimal](9, 8) NOT NULL,
-			[adiscount] [decimal](9, 8) NOT NULL,
-			[sdiscount] [decimal](9, 8) NOT NULL,
-			[groupa] [decimal](9, 8) NOT NULL,
-			[groupb] [decimal](9, 8) NOT NULL,
-			[groupc] [decimal](9, 8) NOT NULL,
-			[groupd] [decimal](9, 8) NOT NULL,
-			[groupe] [decimal](9, 8) NOT NULL,
-			[groupf] [decimal](9, 8) NOT NULL,
-			[autopositiontaking] [smallmoney] NOT NULL,
-			[autolivepositiontaking] [smallmoney] NOT NULL,
-			[isautopositiontaking] [bit] NOT NULL,
-			[isautolivepositiontaking] [bit] NOT NULL,
-			[autompositiontaking] [smallmoney] NOT NULL,
-			[autolivempositiontaking] [smallmoney] NOT NULL,
-			[isautompositiontaking] [bit] NOT NULL,
-			[isautolivempositiontaking] [bit] NOT NULL
-		)	
-		
 		/********************************************* Position Taking: SettingType = 1 ***********************************/
 		--PT setting
 		CREATE TABLE #SportBettypeFilter1 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
-				
-		DECLARE @tblPT28 TABLE (
-				SportType		SMALLINT,
-				BetType			SMALLINT,
-				IsLive			BIT,
-				SuperPT			SMALLMONEY,
-				IsAutoSuperPT	BIT,
-				AutoSuperPT		SMALLMONEY,
-				MasterPT		SMALLMONEY,				
-				MasterMinPT		SMALLMONEY,
-				MasterMaxPT		SMALLMONEY,
-				IsAutoMasterPT	BIT,
-				AutoMasterPT	SMALLMONEY,
-				AgentPT			SMALLMONEY,				
-				AgentMinPT		SMALLMONEY
-				)
+
 		DECLARE @tblPT18 TABLE (
 				SportType		SMALLINT,
 				BetType			SMALLINT,
@@ -424,7 +373,7 @@ BEGIN
 		INSERT INTO #SportBettypeFilter1(ProductID, SportType,Bettype,IsLive, SettingType, RealProductId)
 		SELECT ProductID, SportType,Bettype,IsLive, SettingType, RealProductId
 		FROM #ProductSettingDetail_tmp00
-		WHERE SettingType IN (1,18)
+		WHERE SettingType IN (1,18,28)
 		
 		IF ISNULL(@SettingType28,'') <> ''
 		BEGIN
@@ -432,7 +381,7 @@ BEGIN
 			
 			IF @Roleid = 3
 			BEGIN
-				INSERT INTO @tblPT28(SportType, 
+				INSERT INTO @tblPT18(SportType, 
 					BetType, 
 					IsLive,
 					SuperPT,
@@ -452,7 +401,7 @@ BEGIN
 			END
 			ELSE IF @roleid = 2
 			BEGIN
-				INSERT INTO @tblPT28(SportType, 
+				INSERT INTO @tblPT18(SportType, 
 					BetType, 
 					IsLive,
 					MasterPT,
@@ -472,7 +421,7 @@ BEGIN
 			END
 			ELSE IF @roleid = 1
 			BEGIN
-				INSERT INTO @tblPT28(SportType, 
+				INSERT INTO @tblPT18(SportType, 
 					BetType, 
 					IsLive,
 					SuperPT,
@@ -615,41 +564,6 @@ BEGIN
 		BEGIN TRY
 			IF @RoleID = 3
 			BEGIN				
-				INSERT INTO #tmpcustsetting([custid],[sporttype],[bettype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
-				SELECT @custid, sporttype, bettype, SuperPT, MasterPT, 0 as apositiontaking, 0 as slivepositiontaking, 0 as mlivepositiontaking, 0 alivepositiontaking, 0 as autolivepositiontaking, AutoSuperPT, 0 as adiscount, 0 as sdiscount, 0 as groupa, 0 as groupb, 0 as groupc, 0 as groupd, 0 groupe, 0 groupf, 0 playerdiscount, 0 discount, IsAutoSuperPT, 0 as isautolivepositiontaking, 0 as autompositiontaking, 0 as autolivempositiontaking, 0 as isautompositiontaking, 0 as isautolivempositiontaking
-				FROM @tblPT28
-				WHERE IsLive = 0
-				
-				--update live for sporttype = 1, bettype in (1,3,7,8)
-				UPDATE cs
-				SET slivepositiontaking = SuperPT,
-					isautolivepositiontaking = IsAutoSuperPT,
-					autolivepositiontaking = AutoSuperPT,
-					mlivepositiontaking = MasterPT
-				FROM #tmpcustsetting cs
-					INNER JOIN @tblPT28 t ON cs.sporttype = t.sporttype
-											AND cs.bettype = t.bettype
-											AND t.IsLive = 1
-			
-				INSERT INTO [dbo].[custoverride]([custid],[sporttype],[bettype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-				SELECT @custid, sporttype, bettype, MasterMinPT, 0.93 as maxpositiontaking, 
-						ISNULL((SELECT MasterMinPT FROM @tblPT28 t2 
-						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1),0) as minlivepositiontaking
-						, 0.93 as maxlivepositiontaking
-				FROM @tblPT28 t
-				WHERE IsLive = 0
-				
-				IF @@Error <> 0
-				BEGIN
-					--Error Occurs
-					SELECT @ErrCode=118				
-
-					-- ROLLBACK MANUALLY				
-					DELETE custoverride with (ROWLOCK) where custid =  @custid
-								
-					RETURN
-				END	
-				
 				INSERT INTO [dbo].[CustPTSetting3rd_Agent]
 				   ([CustID]
 				   ,[SportType]
@@ -683,41 +597,6 @@ BEGIN
 			END
 			ELSE IF @roleid = 2
 			BEGIN
-				INSERT INTO #tmpcustsetting([custid],[sporttype],[bettype],[spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
-				SELECT @custid, sporttype, bettype,0 as spositiontaking, MasterPT, AgentPT, 0 as slivepositiontaking, 0 as mlivepositiontaking, 0 alivepositiontaking, 0 as autolivepositiontaking, 0 as autopositiontaking, 0 as adiscount, 0 as sdiscount, 0 as groupa, 0 as groupb, 0 as groupc, 0 as groupd, 0 groupe, 0 groupf, 0 playerdiscount, 0 discount, 0 as isautopositiontaking, 0 as isautolivepositiontaking, 0 as autolivempositiontaking, 0 as isautolivempositiontaking, AutoMasterPT, IsAutoMasterPT
-				FROM @tblPT28
-				WHERE IsLive = 0
-				
-				--update live for sporttype = 1, bettype in (1,3,7,8)
-				UPDATE cs
-				SET alivepositiontaking = AgentPT,
-					isautolivempositiontaking = IsAutoMasterPT,
-					autolivempositiontaking = AutoMasterPT,
-					mlivepositiontaking = MasterPT
-				FROM #tmpcustsetting cs
-					INNER JOIN @tblPT28 t ON cs.sporttype = t.sporttype
-											AND cs.bettype = t.bettype
-											AND t.IsLive = 1
-			
-				INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-				SELECT @custid, bettype, sporttype, AgentMinPT, 0.93 as maxpositiontaking, 
-						ISNULL((SELECT AgentMinPT FROM @tblPT28 t2 
-						WHERE t2.sporttype = t.sporttype AND t2.bettype = t.bettype AND t2.IsLive = 1),0) as minlivepositiontaking
-						, 0.93 as maxlivepositiontaking
-				FROM @tblPT28 t
-				WHERE IsLive = 0
-				
-				IF @@Error <> 0
-				BEGIN
-					--Error Occurs
-					SELECT @ErrCode=118				
-
-					-- ROLLBACK MANUALLY				
-					DELETE custoverride with (ROWLOCK) where custid =  @custid
-								
-					RETURN
-				END	
-				
 				INSERT INTO [dbo].[CustPTSetting3rd_Agent]
 				   ([CustID]
 				   ,[SportType]
@@ -751,21 +630,6 @@ BEGIN
 			END
 			ELSE IF @roleid = 1
 			BEGIN
-				INSERT INTO #tmpcustsetting([custid],[sporttype],[bettype],[spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
-				SELECT @custid, sporttype, bettype, SuperPT, MasterPT, AgentPT, 0 as slivepositiontaking, 0 as mlivepositiontaking, 0 alivepositiontaking, 0 as autolivepositiontaking, 0 as autopositiontaking, 0 as adiscount, 0 as sdiscount, 0 as groupa, 0 as groupb, 0 as groupc, 0 as groupd, 0 groupe, 0 groupf, 0 playerdiscount, 0 discount, 0 as isautopositiontaking, 0 as isautolivepositiontaking, 0 as autolivempositiontaking, 0 as isautolivempositiontaking, 0 as autompositiontaking, 0 as isautompositiontaking
-				FROM @tblPT28
-				WHERE IsLive = 0
-				
-				--update live for sporttype = 1, bettype in (1,3,7,8)
-				UPDATE cs
-				SET alivepositiontaking = AgentPT,					
-					mlivepositiontaking = MasterPT,
-					slivepositiontaking = SuperPT
-				FROM #tmpcustsetting cs
-					INNER JOIN @tblPT28 t ON cs.sporttype = t.sporttype
-											AND cs.bettype = t.bettype
-											AND t.IsLive = 1
-											
 				--If this is the first member,insert into Group Setting
 				INSERT INTO [dbo].[CustPTGroupSetting3rd_Member]
 				   ([AgentID]
@@ -886,7 +750,6 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID				
 			END	
 			ELSE IF @roleid = 1
@@ -978,7 +841,6 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 			END	
@@ -991,19 +853,27 @@ BEGIN
 			RETURN
 		END CATCH
 		
-		/********************************************* Commision : SettingType = 3, Ticket Commision : SettingType = 14 ****************************************/
+		/********************************************* Commision : SettingType = 3,19,25, Ticket Commision : SettingType = 14 ****************************************/
 		CREATE TABLE #SportBettypeFilter19 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 		DECLARE @NewDiscountTbl TABLE (sporttype SMALLINT, bettype SMALLINT, discount DECIMAL(9,8), playerdiscount DECIMAL(9,8), sdiscount DECIMAL(9,8), adiscount DECIMAL(9,8))
 	
 		INSERT INTO #SportBettypeFilter19(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
 		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
 		FROM #ProductSettingDetail_tmp00
-		WHERE SettingType IN (3,19)
+		WHERE SettingType IN (3,19,25)
 		
-		IF ISNULL(@SettingType19,'') <> '' OR ISNULL(@SettingType3,'') <> ''
+		IF ISNULL(@SettingType19,'') <> '' OR ISNULL(@SettingType3,'') <> '' OR ISNULL(@SettingType25,'') <> ''
 		BEGIN			
 			IF @roleid IN (3,2)
 			BEGIN
+				SELECT @xml = CONVERT(XML,@SettingType25)
+				
+				INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+					T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
+				FROM   @xml.nodes('/Root/R') T(c) 
+				
 				SELECT @xml = CONVERT(XML,@SettingType19)
 				
 				INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
@@ -1022,6 +892,17 @@ BEGIN
 			END
 			ELSE IF @roleid = 1
 			BEGIN
+				SELECT @xml = CONVERT(XML,@SettingType25)
+				
+				INSERT INTO @NewDiscountTbl(sporttype,bettype,playerdiscount,discount,adiscount,sdiscount)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+					T.c.query('.').value('(R/@playerdiscount)[1]', 'decimal(9,8)') AS playerdiscount,
+					T.c.query('.').value('(R/@discount)[1]', 'decimal(9,8)') AS discount,
+					T.c.query('.').value('(R/@adiscount)[1]', 'decimal(9,8)') AS adiscount,
+					T.c.query('.').value('(R/@sdiscount)[1]', 'decimal(9,8)') AS sdiscount
+				FROM   @xml.nodes('/Root/R') T(c) 
+				
 				SELECT @xml = CONVERT(XML,@SettingType19)
 				
 				INSERT INTO @NewDiscountTbl(sporttype,bettype,playerdiscount,discount,adiscount,sdiscount)
@@ -1089,7 +970,6 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
@@ -1180,7 +1060,6 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
@@ -1261,7 +1140,6 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
@@ -1353,7 +1231,6 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
@@ -1504,7 +1381,6 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
@@ -1645,7 +1521,6 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
@@ -1661,182 +1536,7 @@ BEGIN
 				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
 				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
 				DELETE FROM CustStakeLevel_Member WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID
 				DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
-			END
-			RETURN	
-		END CATCH
-		
-		
-		/********************************************* SB Discount : SettingType = 25 ****************************************/
-		DELETE @NewDiscountTbl
-		
-		IF ISNULL(@SettingType25,'') <> ''		
-		BEGIN
-			SELECT @xml = CONVERT(XML,@SettingType25)
-			
-			IF @roleid IN (3,2)
-			BEGIN
-				INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
-				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-					T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
-				FROM   @xml.nodes('/Root/R') T(c)
-			END
-			ELSE IF @roleid = 1
-			BEGIN
-				INSERT INTO @NewDiscountTbl(sporttype,bettype,playerdiscount,discount,adiscount,sdiscount)
-				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-					T.c.query('.').value('(R/@playerdiscount)[1]', 'decimal(9,8)') AS playerdiscount,
-					T.c.query('.').value('(R/@discount)[1]', 'decimal(9,8)') AS discount,
-					T.c.query('.').value('(R/@adiscount)[1]', 'decimal(9,8)') AS adiscount,
-					T.c.query('.').value('(R/@sdiscount)[1]', 'decimal(9,8)') AS sdiscount
-				FROM   @xml.nodes('/Root/R') T(c) 
-			END
-			
-			IF @roleid = 3
-			BEGIN
-				UPDATE t
-				SET groupa = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1),0)
-								ELSE groupa END,
-					groupb = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 3),0)
-								ELSE groupb END,
-					groupc = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 7),0)
-								ELSE groupc END,
-					groupd = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 8),0)
-								ELSE groupd END,
-					adiscount = CASE WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
-										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4),0)
-									WHEN bettype = 5
-										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)
-									ELSE adiscount END			
-				FROM #tmpcustsetting t
-			END
-			ELSE IF @roleid = 2
-			BEGIN
-				UPDATE t
-				SET groupa = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1),0)
-								ELSE groupa END,
-					groupb = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 3),0)
-								ELSE groupb END,
-					groupc = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 7),0)
-								ELSE groupc END,
-					groupd = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-								THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 8),0)
-								ELSE groupd END,
-					discount = CASE WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
-										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4),0)
-									WHEN bettype = 5
-										THEN ISNULL((SELECT Discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)
-									ELSE discount END			
-				FROM #tmpcustsetting t
-			END
-			ELSE IF @roleid = 1
-			BEGIN
-				UPDATE t
-				SET playerdiscount = CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-											THEN ISNULL((SELECT playerdiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1),0)
-										WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
-											THEN ISNULL((SELECT playerdiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4),0)
-										WHEN bettype = 5
-											THEN ISNULL((SELECT playerdiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)
-										ELSE playerdiscount END,
-					discount = 	CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-											THEN ISNULL((SELECT discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1),0)
-										WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
-											THEN ISNULL((SELECT discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4),0)
-										WHEN bettype = 5
-											THEN ISNULL((SELECT discount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)	
-										ELSE discount END,
-					adiscount = 	CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-											THEN ISNULL((SELECT adiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1),0)
-										WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
-											THEN ISNULL((SELECT adiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4),0)
-										WHEN bettype = 5
-											THEN ISNULL((SELECT adiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)	
-										ELSE adiscount END,
-					sdiscount = 	CASE WHEN bettype IN (1, 2, 3, 7, 8) 
-											THEN ISNULL((SELECT sdiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 1),0)
-										WHEN bettype IN (4, 6, 9, 10, 20, 21, 22, 9999) and sporttype <> 154
-											THEN ISNULL((SELECT sdiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 4),0)
-										WHEN bettype = 5
-											THEN ISNULL((SELECT sdiscount FROM @NewDiscountTbl WHERE sporttype = 1 AND bettype = 5),0)		
-										ELSE sdiscount END					
-				FROM #tmpcustsetting t
-			END
-		END
-		
-		BEGIN TRY
-			IF @roleid IN (3,2,1)
-			BEGIN			
-				INSERT INTO [dbo].[custsetting]([custid], [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
-				SELECT @custid, [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking]
-				FROM #tmpcustSetting
-			END
-			
-			IF (@IsMyanmarOdds = 1 AND @roleid > 1)
-			BEGIN
-				INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
-				SELECT @custid,1,1,Discount
-				FROM @NewDiscountTbl
-				WHERE sporttype = 2
-					AND bettype = 1				
-			END
-			ELSE IF (@IsMyanmarOdds = 1 AND @roleid = 1)
-			BEGIN
-				CREATE TABLE #CustCommRate_MOtemp (CustID INT, SportType SMALLINT, BetType SMALLINT,CommRate decimal(9,8),roleid TINYINT)
-			
-				INSERT INTO #CustCommRate_MOtemp(CustID,SportType,BetType,CommRate,roleid )
-				SELECT @CustID AS CustID,AC.SportType,AC.BetType,AC.CommRate,CI.roleid 
-				FROM AgentCommRate ac WITH (NOLOCK)
-					JOIN custInfo ci WITH (NOLOCK) ON ac.CustID = ci.custid
-				WHERE ac.CustID IN (@srecommend,@mrecommend,@recommend) AND ac.Sporttype = 1 AND ac.Bettype = 1
-				
-				INSERT INTO CustCommRate (CustID,SportType,BetType,sdiscount,adiscount,discount,playerdiscount)
-				SELECT CustID,SportType,BetType,T.[4],T.[3],T.[2],
-					ISNULL((SELECT playerdiscount FROM @NewDiscountTbl WHERE sporttype = 2 AND bettype = 1),0)
-				FROM #CustCommRate_MOtemp
-				PIVOT(
-					SUM(CommRate)
-					FOR roleID IN ([2],[3],[4])
-				) AS T
-			END
-		END TRY
-		BEGIN CATCH
-			SELECT @ErrCode = 25			
-			DELETE FROM CustProductStatus WHERE CustID = @CustID			
-			IF @roleid > 1
-			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-				DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
-				DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-				DELETE FROM AgentCommRate WHERE CustID = @CustID
-				DELETE FROM custsetting WHERE CustID = @CustID
-			END		
-			ELSE IF @roleid = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
-				DELETE FROM CustStakeLevel_Member WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
-				DELETE FROM CustCommRate WHERE CustID = @CustID
-				DELETE FROM custsetting WHERE CustID = @CustID
 			END
 			RETURN	
 		END CATCH
@@ -1905,15 +1605,12 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
 				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
 				DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
 				DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-				DELETE FROM AgentCommRate WHERE CustID = @CustID
-				DELETE FROM custsetting WHERE CustID = @CustID
 			END		
 			ELSE IF @roleid = 1
 			BEGIN
@@ -1923,10 +1620,7 @@ BEGIN
 				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
 				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
 				DELETE FROM CustStakeLevel_Member WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID
 				DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
-				DELETE FROM CustCommRate WHERE CustID = @CustID
-				DELETE FROM custsetting WHERE CustID = @CustID
 			END
 			RETURN	
 		END CATCH
@@ -1995,14 +1689,12 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID			
 			IF @roleid > 1
 			BEGIN
-				DELETE FROM CustOverride WHERE CustID = @CustID
 				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
 				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
 				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
 				DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
 				DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-				DELETE FROM AgentCommRate WHERE CustID = @CustID
 				DELETE FROM CustMaxPayoutSetting_Agent WHERE CustID = @CustID
 			END	
 			ELSE IF @roleid = 1
@@ -2013,10 +1705,7 @@ BEGIN
 				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
 				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
 				DELETE FROM CustStakeLevel_Member WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID
 				DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
-				DELETE FROM CustCommRate WHERE CustID = @CustID
-				DELETE FROM custsetting WHERE CustID = @CustID
 				DELETE FROM CustMaxPayoutSetting_Member WHERE CustID = @CustID
 			END			
 			RETURN	
@@ -2032,7 +1721,6 @@ BEGIN
 		DROP TABLE #SportBettypeFilter23
 		DROP TABLE #SportBettypeFilter26
 		DROP TABLE #SportBettypeFilter27
-		DROP TABLE #tmpcustSetting
 	END	
 	
 	DROP TABLE #ProductSettingDetail_tmp00

@@ -21,6 +21,7 @@ AS
 	- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 
  Param's Explanation:  
 
@@ -57,16 +58,19 @@ BEGIN
 		[MaxPT] SMALLMONEY
 	)	
 	
-	CREATE TABLE #SportList (ProductID TINYINT, SportType SMALLINT, BetType SMALLINT, IsLive BIT)
+	CREATE TABLE #SportList (ProductID TINYINT, SportType SMALLINT, BetType SMALLINT, IsLive BIT, Child_DisplayOrder int)
 
-	INSERT INTO #SportList (ProductID, SportType, BetType, IsLive)
-	SELECT ProductID, SportType, BetType, IsLive 
+	INSERT INTO #SportList (ProductID, SportType, BetType, IsLive, Child_DisplayOrder)
+	SELECT ProductID, SportType, BetType, IsLive , Child_DisplayOrder
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),1,@SettingStatus)
-	WHERE islive <= @islive
+	--WHERE islive <= @islive
 	UNION ALL
-	SELECT ProductID, SportType, BetType, IsLive 
+	SELECT ProductID, SportType, BetType, IsLive , Child_DisplayOrder
 	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),18,@SettingStatus)
-	WHERE islive <= @islive
+	--WHERE islive <= @islive
+	UNION ALL
+	SELECT ProductID, SportType, BetType, IsLive , Child_DisplayOrder
+	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),28,@SettingStatus)
 		
 	INSERT @PTMatrix
 	SELECT
@@ -191,9 +195,9 @@ BEGIN
 	END
 
 	--Return PT
-	SELECT [SportType]
-		, [BetType]
-		, [IsLive]
+	SELECT pt.[SportType]
+		, pt.[BetType]
+		, pt.[IsLive]
 		, [RoleID]
 		, ISNULL([SuperPT],0) [SuperPT]
 		, ISNULL([MasterPT],0) [MasterPT]
@@ -206,10 +210,14 @@ BEGIN
 		--, ISNULL([MaxPT],0) [MaxPT]
 	FROM @PTMatrix pt
 		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON pt.CustID = ci.custid
-	ORDER BY [SportType]
-		, [BetType]
-		, [IsLive]
-		, [RoleID] DESC
+		INNER JOIN #SportList t ON pt.SportType = t.SportType
+								AND pt.BetType = t.BetType
+								AND pt.IsLive = t.IsLive
+	ORDER BY t.Child_DisplayOrder
+		, pt.[SportType]
+		, pt.[BetType]
+		, pt.[IsLive]
+		, ci.[RoleID] DESC
 
 	DROP TABLE #SportList
 END

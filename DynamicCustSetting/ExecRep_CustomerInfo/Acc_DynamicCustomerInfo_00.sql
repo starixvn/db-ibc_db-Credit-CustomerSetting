@@ -52,6 +52,7 @@ AS
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230720@Tacy: Hotfix - [NAP/Alpha] New Account Missing Bet Setting Bitcoin [RedmineID: #191556]
 		- 202300801@Helios: Customer Setting - Simplify Live Casino Customer Setting [RedmineID: #189389]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
@@ -713,120 +714,148 @@ BEGIN
 							AND cs.bettype = s.bettype 
 							AND cs.IsLive = s.IsLive
 						
-				--If this is the first member,insert into Group Setting
-				INSERT INTO [dbo].[CustPTGroupSetting3rd_Member]
-				   ([AgentID]
-				   ,[SportType]
-				   ,[BetType]
-				   ,[IsLive]
-				   ,[SuperPT]
-				   ,[MasterPT]
-				   ,[AgentPT]
-				   ,[IsAutoMasterPT]
-				   ,[AutoMasterPT]
-				   ,[IsAutoSuperPT]
-				   ,[AutoSuperPT])
-				SELECT 
-					@AgentID,SportType,BetType,Islive,
-					SuperPT,MasterPT,AgentPT,IsAutoMPT,AutoMPT,IsAutoSPT,AutoSPT
-				FROM @MemberPTTbl
-				WHERE NOT EXISTS(SELECT TOP 1 1 FROM dbo.CustPTGroupSetting3rd_Member WHERE AgentID = @AgentID)
-				AND @SuperID IN (
-						13869621,
-						5340162,
-						12262401,
-						12141653,
-						4138910,
-						6379932,
-						16112208,
-						12141529,
-						1539339,
-						720475
-						--UUS
-						,17287861
-						,18879367
-						,14373244
-						,18362423
-						,18479460
-						,18289591
+				DECLARE @IsGroupPT BIT = 0 
+						, @IsInvidualSetting BIT = 1
+
+				--Process group PT
+				IF @SuperID IN (
+						   13869621,  
+						   5340162,  
+						   12262401,  
+						   12141653,  
+						   4138910,  
+						   6379932,  
+						   16112208,  
+						   12141529,  
+						   1539339,  
+						   720475  
+						   --UUS  
+						   ,17287861  
+						   ,18879367  
+						   ,14373244  
+						   ,18362423  
+						   ,18479460  
+						   ,18289591  
 					)
-			
-				IF @@ROWCOUNT<>0
 				BEGIN
-					INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
-						SELECT @CustID,1
-				END
-				ELSE
-				BEGIN
-					IF EXISTS(SELECT TOP 1 1
-								FROM dbo.CustPTGroupSetting3rd_Member grp
-								JOIN @memberPTTbl tmp ON tmp.SportType = grp.SportType
-														AND tmp.BetType = grp.BetType
-														AND tmp.Islive = grp.Islive
-								WHERE grp.AgentID = @AgentID
-								AND (
-									tmp.SuperPT <> grp.SuperPT
-									OR
-									tmp.MasterPT <> grp.MasterPT
-									OR
-									tmp.AgentPT <> grp.AgentPT
-									OR
-									tmp.IsAutoMPT <> grp.IsAutoMasterPT
-									OR
-									tmp.AutoMPT <> grp.AutoMasterPT
-									OR
-									tmp.IsAutoSPT <> grp.IsAutoSuperPT
-									OR
-									tmp.AutoSPT <> grp.AutoSuperPT
-								))
-						OR @SuperID NOT IN (
-											13869621,
-											5340162,
-											12262401,
-											12141653,
-											4138910,
-											6379932,
-											16112208,
-											12141529,
-											1539339,
-											720475
-											--UUS
-											,17287861
-											,18879367
-											,14373244
-											,18362423
-											,18479460
-											,18289591
-										)
-					BEGIN
-						--If this member's PT setting are diffrent from Group PT Setting
-						INSERT INTO [dbo].[CustPTSetting3rd_Member]
-							   ([CustID]
-							   ,[SportType]
-							   ,[BetType]
-							   ,[IsLive]
-							   ,[SuperPT]
-							   ,[MasterPT]
-							   ,[AgentPT]
-							   ,[IsAutoMasterPT]
-							   ,[AutoMasterPT]
-							   ,[IsAutoSuperPT]
-							   ,[AutoSuperPT])
-						SELECT 
-						@CustID,SportType,BetType,Islive,
-							SuperPT,MasterPT,AgentPT,IsAutoMPT,AutoMPT,IsAutoSPT,AutoSPT
-						FROM @memberPTTbl
+					INSERT INTO [dbo].[CustPTGroupSetting3rd_Member]
+					   ([AgentID]
+					   ,[SportType]
+					   ,[BetType]
+					   ,[IsLive]
+					   ,[SuperPT]
+					   ,[MasterPT]
+					   ,[AgentPT]
+					   ,[IsAutoMasterPT]
+					   ,[AutoMasterPT]
+					   ,[IsAutoSuperPT]
+					   ,[AutoSuperPT])
+					SELECT 
+						@AgentID,SportType,BetType,Islive,
+						SuperPT,MasterPT,AgentPT,IsAutoMPT,AutoMPT,IsAutoSPT,AutoSPT
+					FROM @MemberPTTbl t
+					WHERE NOT EXISTS(	SELECT TOP 1 1 
+										FROM dbo.CustPTGroupSetting3rd_Member WITH(NOLOCK)  
+										WHERE AgentID = @AgentID AND SportType = t.SportType AND BetType = t.BetType
+									)
+
+					SELECT @IsGroupPT = IsGrouped
+					FROM CustSettingMode3rd WITH(NOLOCK) 
+					WHERE custid = @CustID
 					
-						INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
-							SELECT @CustID,0
-					END
-					ELSE
+					IF @IsGroupPT = 0
 					BEGIN
-						INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
-							SELECT @CustID,1
+						SET @IsInvidualSetting = 1
+					END
+					ELSE IF EXISTS(	SELECT TOP 1 1
+									FROM dbo.CustPTGroupSetting3rd_Member grp
+										JOIN @memberPTTbl tmp ON tmp.SportType = grp.SportType
+																AND tmp.BetType = grp.BetType
+																AND tmp.Islive = grp.Islive
+									WHERE grp.AgentID = @AgentID
+										AND (
+											tmp.SuperPT <> grp.SuperPT
+											OR
+											tmp.MasterPT <> grp.MasterPT
+											OR
+											tmp.AgentPT <> grp.AgentPT
+											OR
+											tmp.IsAutoMPT <> grp.IsAutoMasterPT
+											OR
+											tmp.AutoMPT <> grp.AutoMasterPT
+											OR
+											tmp.IsAutoSPT <> grp.IsAutoSuperPT
+											OR
+											tmp.AutoSPT <> grp.AutoSuperPT
+										)
+									)
+					BEGIN
+						SET @IsInvidualSetting = 1
+					END
+					ELSE 
+					BEGIN
+						SET @IsInvidualSetting = 0
 					END
 				END
-			 
+
+				IF @IsInvidualSetting = 1 
+				BEGIN
+					INSERT INTO [dbo].[CustPTSetting3rd_Member]
+							([CustID]
+							,[SportType]
+							,[BetType]
+							,[IsLive]
+							,[SuperPT]
+							,[MasterPT]
+							,[AgentPT]
+							,[IsAutoMasterPT]
+							,[AutoMasterPT]
+							,[IsAutoSuperPT]
+							,[AutoSuperPT])
+					SELECT @CustID,SportType,BetType,Islive,
+						SuperPT,MasterPT,AgentPT,IsAutoMPT,AutoMPT,IsAutoSPT,AutoSPT
+					FROM @memberPTTbl
+
+					--If this member's PT setting are diffrent from Group PT Setting
+					INSERT INTO [dbo].[CustPTSetting3rd_Member]
+							([CustID]
+							,[SportType]
+							,[BetType]
+							,[IsLive]
+							,[SuperPT]
+							,[MasterPT]
+							,[AgentPT]
+							,[IsAutoMasterPT]
+							,[AutoMasterPT]
+							,[IsAutoSuperPT]
+							,[AutoSuperPT])
+					SELECT @CustID
+						,[SportType]
+						,[BetType]
+						,[IsLive]
+						,[SuperPT]
+						,[MasterPT]
+						,[AgentPT]
+						,[IsAutoMasterPT]
+						,[AutoMasterPT]
+						,[IsAutoSuperPT]
+						,[AutoSuperPT]
+					FROM CustPTGroupSetting3rd_Member t WITH(NOLOCK)
+					WHERE AgentID = @AgentID
+						AND NOT EXISTS( SELECT TOP 1 1 
+										FROM dbo.[CustPTSetting3rd_Member] WITH(NOLOCK) 
+										WHERE CustID = @CustID AND SportType = t.SportType AND BetType = t.BetType
+										)
+
+					IF @IsGroupPT = 1
+					BEGIN
+						 UPDATE t
+						 SET t.IsGrouped = 0
+						 FROM CustSettingMode3rd t WITH(ROWLOCK,UPDLOCK)
+						 WHERE CustID = @CustID
+							AND IsGrouped = 1
+					END
+				END				
 			END
 		END TRY
 		BEGIN CATCH

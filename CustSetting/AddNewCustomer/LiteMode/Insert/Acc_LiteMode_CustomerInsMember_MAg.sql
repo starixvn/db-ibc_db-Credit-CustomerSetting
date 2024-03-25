@@ -11,27 +11,8 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_MAg]
 	@fax        NVARCHAR(50)='',
 
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in case direct master add new agent
-
-	--Discount	
-	@SettingType25 VARCHAR(MAX)= '', --SB
-	@SettingType19 VARCHAR(MAX)= '', --LCS
-	@SettingType3 VARCHAR(MAX)= '', --Others Games
-		
-	--Bet Setting
-	@SettingType26 VARCHAR(MAX)= '', --SB
-	@SettingType2 VARCHAR(MAX)= '', --SB2
-	@SettingType23 VARCHAR(MAX)= '', --RNG Games
-	@SettingType16 VARCHAR(MAX)= '', --Others Games
-		
-	--Parlay Max Payout
-	@SettingType27 VARCHAR(MAX)= '', --SB Parlay Max Payout
-	
-	--PT
+	@SettingXML VARCHAR(MAX) = '',
 	@TemplateName NVARCHAR(50) = '',
-	@SettingType28 VARCHAR(MAX)= '',-- SB
-	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
-	@SettingType18 VARCHAR(MAX)= '',-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
-	
 	--Log all values group from UI
 	@SettingTypeAll NVARCHAR(MAX) = '',
 	
@@ -46,7 +27,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_MAg]
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
-	@CreationStatus TINYINT = 0
+	@SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20230626@Johnson  
@@ -57,40 +38,67 @@ AS
 	Revisions: 
 		- 20230626@Johnson: initial sp [redmine: #179159]
 		- 20231026@Johnson: Limit New Account Update PT for i7 [redmine: #196032]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
   Limit New Account Update PT	Param's Explanation: 
-		- @SettingType25 = '<Root>
-						<R SportType="1" BetType="1" Discount="0.0025" />
-						<R SportType="1" BetType="3" Discount="0.005" />
-						...
-						<R SportType="2" BetType="1" Discount="0.0025" />
-					</Root>'
-		- @SettingType26 = '<Root>
-						<R SportType="1" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
-						.....
-						<R SportType="9902" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
-					</Root>'
-		- @SettingType27 = '<Root>
-						<R SportType="1" BetType="9" SingleMP="1000" Combo2="1000" Combo35="1000" Combo6="1000" />
-						<R SportType="99" BetType="1" SingleMP="1000" Combo2="1000" Combo35="1000" Combo6="1000" />
-					</Root>'		
-		- @SettingType28 = '<Root>
-						<R SportType="1" BetType="1" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-						<R SportType="1" BetType="1" IsLive="1" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-						....
-						<R SportType="99" BetType="9" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-					</Root>'			
-		- @SettingType1 = '<Root>
-						<R SportType="43" BetType="1" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-						<R SportType="44" BetType="1" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-						....
-						<R SportType="9908" BetType="1201" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-					</Root>'
-		- @SettingType18 = '<Root>
-						<R SportType="169" BetType="3611" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-						<R SportType="220" BetType="1024" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-						....
-						<R SportType="245" BetType="4601" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
-					</Root>'				
+		- @SettingXML:
+		'{
+			"150": [
+				{"SportType": "1","BetType": "1","Discount": "0.0010000"},
+				{"SportType": "1","BetType": "3","Discount": "0.0015000"},
+				{"SportType": "1","BetType": "5","Discount": "0.0030000"},
+				{"SportType": "1","BetType": "7","Discount": "0.0020000"},
+				{"SportType": "1","BetType": "4","Discount": "0.0035000"},
+				{"SportType": "1","BetType": "8","Discount": "0.0025000"}
+			],
+			"156": [
+				{"SportType": "9911","BetType": "2400","Discount": "0.0035000"},
+				{"SportType": "175","BetType": "7901","Discount": "0.0025000"}
+			],
+
+			"151": [
+				{"SportType": "1","BetType": "9","MinBet": "0","MaxBet": "10","MPM": "10","MaxPayout": "110"},
+				{"SportType": "2","BetType": "1","MinBet": "0","MaxBet": "0","MPM": "0","MaxPayout": "0"},
+				{"SportType": "9902","BetType": "1","MinBet": "0","MaxBet": "10","MPM": "10","MaxPayout": "110"},
+				{"SportType": "1","BetType": "1","MinBet": "0","MaxBet": "10","MPM": "10","MaxPayout": "110"},
+				{"SportType": "9901","BetType": "1","MinBet": "0","MaxBet": "0","MPM": "0","MaxPayout": "0"},
+				{"SportType": "11","BetType": "1","MinBet": "0","MaxBet": "0","MPM": "0","MaxPayout": "0"},
+				{"SportType": "99","BetType": "1","MinBet": "0","MaxBet": "10","MPM": "10","MaxPayout": "110"},
+				{"SportType": "3","BetType": "1","MinBet": "0","MaxBet": "0","MPM": "0","MaxPayout": "0"},
+				{"SportType": "5","BetType": "1","MinBet": "0","MaxBet": "10","MPM": "10","MaxPayout": "110"},
+				{"SportType": "8","BetType": "1","MinBet": "0","MaxBet": "0","MPM": "0","MaxPayout": "0"},
+				{"SportType": "10","BetType": "1","MinBet": "0","MaxBet": "10","MPM": "10","MaxPayout": "110"},
+				{"SportType": "99","BetType": "9","MinBet": "0","MaxBet": "0","MPM": "0","MaxPayout": "0"},
+				{"SportType": "43","BetType": "1","MinBet": "0","MaxBet": "10","MPM": "10"},
+				{"SportType": "44","BetType": "3","MinBet": "0","MaxBet": "0","MPM": "0"}
+			],
+			"152": [
+				{"SportType": "99","BetType": "9","SingleMP": "31000","Combo2": "47000","Combo35": "157000","Combo6": "628000"},
+				{"SportType": "1","BetType": "9","SingleMP": "31000","Combo2": "47000","Combo35": "157000","Combo6": "628000"}
+        
+			],
+			"153": [
+				{"SportType": "9914","BetType": "915","IsLive": "0"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "9914","BetType": "917","IsLive": "0"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "9913","BetType": "917","IsLive": "1"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "9915","BetType": "918","IsLive": "0"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "9913","BetType": "915","IsLive": "1"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "9913","BetType": "916","IsLive": "1"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "9914","BetType": "916","IsLive": "0"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "9906","BetType": "4001","IsLive": "0","MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "175","BetType": "7901","IsLive": "0"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "161","BetType": "81","IsLive": "0"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"},
+				{"SportType": "202","BetType": "1501","IsLive": "0"	,"MasterPT": "20","IsAutoMasterPT": "0","AutoMasterPT": "0.0000","AgentPT": "38","MinPT": "0"}
+
+			],
+
+			"154": [
+				{"SportType": "161","BetType": "81","MinBet": "0","MaxBet": "10","MPM": "10","MaxPerNumber": "10"},
+				{"SportType": "164","BetType": "8101","MinBet": "0","MaxBet": "0","MPM": "0"}
+			],
+			"157": [
+				{"SportType": "175","BetType": "7901","MinBet": "0","MaxBet": "0","MPM": "0"}
+			]
+		}'			
 */	
 BEGIN
 	SET NOCOUNT ON
@@ -99,6 +107,23 @@ BEGIN
     DECLARE @endRun DATETIME
     DECLARE @duration INT
     SET @startRun = GETDATE()
+
+	DECLARE
+		--Discount	
+		@SettingType25 VARCHAR(MAX)= '', --SB
+		@SettingType19 VARCHAR(MAX)= '', --LCS
+		@SettingType3 VARCHAR(MAX)= '', --Others Games
+		--Bet Setting
+		@SettingType26 VARCHAR(MAX)= '', --SB
+		@SettingType2 VARCHAR(MAX)= '', --SB2
+		@SettingType23 VARCHAR(MAX)= '', --RNG Games
+		@SettingType16 VARCHAR(MAX)= '', --Others Games
+		--Parlay Max Payout
+		@SettingType27 VARCHAR(MAX)= '', --SB Parlay Max Payout
+		--PT
+		@SettingType28 VARCHAR(MAX)= '',-- SB
+		@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
+		@SettingType18 VARCHAR(MAX)= '' -- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 	
 	EXEC [Acc_CheckUM] @CustID = @mrecommend
 		,@FunctionType = 2
@@ -108,6 +133,16 @@ BEGIN
 		,@Language = @Language
 
 	IF @ErrCode <> 0 RETURN
+
+	IF @credit <0
+	BEGIN
+		SELECT  @ErrCode = 2
+		SELECT @ErrMsg = 	CASE @Language 
+								WHEN 'E' THEN 'Credits must be positive.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](70025,@Language)
+							END
+		RETURN
+	END
 	
 	DECLARE @uplineUsername NVARCHAR(50)
 	
@@ -122,7 +157,6 @@ BEGIN
 			@existingSrecommend = 0 , 
 			@Prefix				= @uplineUsername , 
 			@GroupName			= '' , 
-			@CreatedMode		= 0 , 
 			@IsQRCode			= 0 , 
 			@SystemID			= 0 , 
 			@IP					= @IP ,
@@ -218,12 +252,6 @@ BEGIN
 	BEGIN
 		SELECT @EnableVR = EnableVR FROM f_GenerateVirtualStatusBySite (@site)
 	END	
-
-	-- MyanmarOdds
-	-- Reset discount value in case its value > upline	
-	DECLARE @IsMyanmarOdds BIT = 0
-	
-	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@mrecommend)
 	
 	SELECT @username = rtrim(ltrim(@username))
 
@@ -250,37 +278,305 @@ BEGIN
 
     SELECT @Credit_AllOtherAgent = isnull(sum(credit), 0) FROM custinfo as ci WITH(NOLOCK) WHERE mrecommend = @mrecommend and RoleID = 2
 
-    if @Credit_AllOtherAgent + @Credit >@Credit_MAg
+    IF @Credit_AllOtherAgent + @Credit >@Credit_MAg
     BEGIN
-	    SELECT @ErrMsg = case @Language 
-						    when 'E' then 'Sorry, credit update is not successful, You have exceeded your master credit.'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](70011,@Language)
-					    END,
-		    @ErrCode = 104
+		SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_MAg - @Credit_AllOtherAgent, '#,#0.####'))
+
+	    SELECT @ErrCode = 104
 	    return
     END
     -- maxcredit 
     if (isnull(@maxcredit ,0) > @credit )
     BEGIN 
-	    SELECT @ErrMsg = case @Language
-		    when 'E' then 'Sorry, credit update is not successful, You have exceeded your agent credit.'  
-            ELSE [dbo].[f_Get_MsgNamebyMsgID](70012,@Language)
-         END,  
-      @ErrCode = 116  
-     return  
+	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70034,@Language), '{number}', FORMAT(@maxcredit, '#,#0.####')),  
+			@ErrCode = 116  
+		return  
     END 
+
+	DECLARE @Comm_Tbl TABLE(
+		 SportType SMALLINT  
+		,BetType SMALLINT  
+		,Discount DECIMAL(9,8)
+		,SettingType SMALLINT
+		,GroupType TINYINT
+	)
+
+	DECLARE @BetSetting_Tbl TABLE(
+		 SportType SMALLINT  
+		,BetType SMALLINT  
+		,MinBet MONEY  
+		,MaxBet MONEY
+		,MPM MONEY  
+		,MaxPayout MONEY 
+		,MaxPerNumber MONEY
+		,SettingType SMALLINT
+		,GroupType TINYINT
+	)
+
+	DECLARE @Parlay_MaxPayout_Tbl TABLE(
+		 SportType SMALLINT
+		,BetType SMALLINT  
+		,SingleMP MONEY
+		,Combo2 MONEY 
+		,Combo35 MONEY
+		,Combo6 MONEY 
+		,SettingType SMALLINT
+		,GroupType TINYINT
+	)
+
+	DECLARE @PT_Tbl TABLE(
+		SportType SMALLINT  
+		,BetType SMALLINT  
+		,IsLive BIT 
+		,MasterPT SMALLMONEY 
+		,IsAuto BIT 
+		,AutoPT SMALLMONEY  
+		,AgentPT SMALLMONEY
+		,MinPT SMALLMONEY 
+		,SettingType SMALLINT
+		,GroupType TINYINT
+	)
+	--Parse Json
+	INSERT INTO @Comm_Tbl(GroupType,SportType,BetType,Discount)
+	SELECT 150 AS GroupType,SportType,BetType,Discount
+	FROM OPENJSON(@SettingXML,'$."150"') WITH (
+			SportType SMALLINT  '$.SportType'
+			,BetType SMALLINT  '$.BetType'
+			,Discount DECIMAL(9,8)  '$.Discount'
+		)
+	UNION ALL
+	SELECT 156 AS GroupType,SportType,BetType,Discount
+	FROM OPENJSON(@SettingXML,'$."156"') WITH (
+			SportType SMALLINT  '$.SportType'
+			,BetType SMALLINT  '$.BetType'
+			,Discount DECIMAL(9,8)  '$.Discount'
+		)
+
+	INSERT INTO @BetSetting_Tbl(GroupType,SportType,BetType,MinBet,MaxBet,MPM,MaxPayout,MaxPerNumber)
+	SELECT 151 AS GroupType,SportType,BetType,MinBet,MaxBet,MPM,MaxPayout,MaxPerNumber
+	FROM OPENJSON(@SettingXML,'$."151"') WITH (
+			SportType SMALLINT  '$.SportType'
+			,BetType SMALLINT  '$.BetType'
+			,MinBet MONEY  '$.MinBet'
+			,MaxBet MONEY  '$.MaxBet'
+			,MPM MONEY  '$.MPM'
+			,MaxPayout MONEY  '$.MaxPayout'
+			,MaxPerNumber MONEY  '$.MaxPerNumber'
+		)
+	UNION ALL
+	SELECT 154 AS GroupType,SportType,BetType,MinBet,MaxBet,MPM,MaxPayout,MaxPerNumber
+	FROM OPENJSON(@SettingXML,'$."154"') WITH (
+			SportType SMALLINT  '$.SportType'
+			,BetType SMALLINT  '$.BetType'
+			,MinBet MONEY  '$.MinBet'
+			,MaxBet MONEY  '$.MaxBet'
+			,MPM MONEY  '$.MPM'
+			,MaxPayout MONEY  '$.MaxPayout'
+			,MaxPerNumber MONEY  '$.MaxPerNumber'
+		)
+	UNION ALL
+	SELECT 157 AS GroupType,SportType,BetType,MinBet,MaxBet,MPM,MaxPayout,MaxPerNumber
+	FROM OPENJSON(@SettingXML,'$."157"') WITH (
+			SportType SMALLINT  '$.SportType'
+			,BetType SMALLINT  '$.BetType'
+			,MinBet MONEY  '$.MinBet'
+			,MaxBet MONEY  '$.MaxBet'
+			,MPM MONEY  '$.MPM'
+			,MaxPayout MONEY  '$.MaxPayout'
+			,MaxPerNumber MONEY  '$.MaxPerNumber'
+		)
+
+
+	INSERT INTO @Parlay_MaxPayout_Tbl(GroupType,SportType,BetType,SingleMP,Combo2,Combo35,Combo6)
+	SELECT 152 AS GroupType,SportType,BetType,SingleMP,Combo2,Combo35,Combo6
+	FROM OPENJSON(@SettingXML,'$."152"') WITH (
+			SportType SMALLINT  '$.SportType'
+			,BetType SMALLINT  '$.BetType'
+			,SingleMP MONEY  '$.SingleMP'
+			,Combo2 MONEY  '$.Combo2'
+			,Combo35 MONEY  '$.Combo35'
+			,Combo6 MONEY  '$.Combo6'
+		)
+	
+	INSERT INTO @PT_Tbl(GroupType,SportType,BetType,IsLive,MasterPT,IsAuto,AutoPT,AgentPT,MinPT)
+	SELECT 153 AS GroupType,SportType,BetType,IsLive,MasterPT,IsAuto,AutoPT,AgentPT,MinPT
+	FROM OPENJSON(@SettingXML,'$."153"') WITH (
+			SportType SMALLINT  '$.SportType'
+			,BetType SMALLINT  '$.BetType'
+			,IsLive BIT  '$.IsLive'
+			,MasterPT SMALLMONEY  '$.MasterPT'
+			,IsAuto BIT  '$.IsAutoMasterPT'
+			,AutoPT SMALLMONEY  '$.AutoMasterPT'
+			,AgentPT SMALLMONEY  '$.AgentPT'
+			,MinPT SMALLMONEY  '$.MinPT'
+		)
+
+	DECLARE @GroupTypeTbl TABLE(
+			 GroupType		TINYINT
+			,SettingType	smallint
+			,SportType		smallint
+			,BetType		smallint
+			,IsLive			bit
+		)
+
+	INSERT INTO @GroupTypeTbl(GroupType,SettingType,SportType,BetType,IsLive)
+	SELECT t.GroupType,t.SettingType,t.SportType,t.BetType,t.IsLive 
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency) t
+	WHERE t.GroupType IN(
+		 150,156 --Comm
+		,151,154,157 -- Betsetting
+		,152 --Parlay Max Payout
+		,153 --PT
+	)
+
+	UPDATE t 
+	SET t.Settingtype = g.SettingType
+	FROM @Comm_Tbl t 
+		INNER JOIN @GroupTypeTbl g 
+			ON t.GroupType = g.GroupType
+			AND t.SportType = g.SportType 
+			AND t.BetType = g.BetType
+
+	UPDATE t 
+	SET t.Settingtype = g.SettingType
+	FROM @BetSetting_Tbl t 
+		INNER JOIN @GroupTypeTbl g 
+			ON t.GroupType = g.GroupType
+			AND t.SportType = g.SportType 
+			AND t.BetType = g.BetType
+
+	UPDATE t 
+	SET t.Settingtype = g.SettingType
+	FROM @Parlay_MaxPayout_Tbl t 
+		INNER JOIN @GroupTypeTbl g 
+			ON t.GroupType = g.GroupType
+			AND t.SportType = g.SportType 
+			AND t.BetType = g.BetType
+
+	UPDATE t 
+	SET t.Settingtype = g.SettingType
+	FROM @PT_Tbl t 
+		INNER JOIN @GroupTypeTbl g 
+			ON t.GroupType = g.GroupType
+			AND t.SportType = g.SportType 
+			AND t.BetType = g.BetType
+			AND t.IsLive = g.IsLive
+
+	--Input to XML param
+	--Comm
+	SELECT @SettingType25 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,Discount
+					FROM @Comm_Tbl
+					WHERE SettingType = 25
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	SELECT @SettingType19 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,Discount
+					FROM @Comm_Tbl
+					WHERE SettingType = 19
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	SELECT @SettingType3 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,Discount
+					FROM @Comm_Tbl
+					WHERE SettingType = 3
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	--Bet Setting
+	SELECT @SettingType26 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,MinBet,MaxBet,MPM,MaxPayout
+					FROM @BetSetting_Tbl
+					WHERE SettingType = 26
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	SELECT @SettingType2 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,MinBet,MaxBet,MPM
+					FROM @BetSetting_Tbl
+					WHERE SettingType = 2
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	SELECT @SettingType23 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,MinBet,MaxBet,MPM,MaxPerNumber
+					FROM @BetSetting_Tbl
+					WHERE SettingType = 23
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	SELECT @SettingType16 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,MinBet,MaxBet,MPM
+					FROM @BetSetting_Tbl
+					WHERE SettingType = 16
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	--Parlay Max Payout
+	SELECT @SettingType27 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,SingleMP,Combo2,Combo35,Combo6
+					FROM @Parlay_MaxPayout_Tbl
+					WHERE SettingType = 27
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	
+	--PT
+	SELECT @SettingType28 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,IsLive,MasterPT,IsAuto,AutoPT,AgentPT,MinPT
+					FROM @PT_Tbl
+					WHERE SettingType = 28
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	SELECT @SettingType1 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,IsLive,MasterPT,IsAuto,AutoPT,AgentPT,MinPT
+					FROM @PT_Tbl
+					WHERE SettingType = 1
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+
+	SELECT @SettingType18 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,IsLive,MasterPT,IsAuto,AutoPT,AgentPT,MinPT
+					FROM @PT_Tbl
+					WHERE SettingType = 18
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
 
 	--check comm
 	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_MAg
 		@mrecommend = @mrecommend,
 		@siteID = @siteID,
 		@currency = @currency,
-		@IsMyanmarOdds = @IsMyanmarOdds,
 		
 		@SettingType25 = @SettingType25 OUTPUT, --SB
 		@SettingType19 = @SettingType19 OUTPUT, --LCS	
 		@SettingType3 = @SettingType3 OUTPUT, --LCS		
-		@CreationStatus = @CreationStatus,
+		@SettingStatus = @SettingStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
 		@MsgType = @MsgType OUTPUT,
@@ -300,7 +596,7 @@ BEGIN
 		@SettingType23 = @SettingType23, --RNG Games
 		@SettingType16 = @SettingType16, --Others Games		
 		@SystemID = @SystemID,
-		@CreationStatus = @CreationStatus,
+		@SettingStatus = @SettingStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
 		@MsgType = @MsgType OUTPUT,
@@ -316,7 +612,7 @@ BEGIN
 		@currency = @currency,
 		
 		@SettingType27 = @SettingType27, --SB
-		@CreationStatus = @CreationStatus,
+		@SettingStatus = @SettingStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
 		@MsgType = @MsgType OUTPUT,
@@ -335,7 +631,7 @@ BEGIN
 		@SettingType28 = @SettingType28 OUTPUT,-- SB
 		@SettingType1 = @SettingType1 OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 		@SettingType18 = @SettingType18 OUTPUT,
-		@CreationStatus = @CreationStatus,
+		@SettingStatus = @SettingStatus,
 		
 		@ErrCode = @ErrCode OUTPUT,
 		@MsgType = @MsgType OUTPUT,
@@ -416,8 +712,6 @@ BEGIN
 		@SettingType25 = @SettingType25, --SB
 		@SettingType19 = @SettingType19, --LCS	
 		@SettingType3 = @SettingType3, --Others Games			
-		-- Myanmar Odds
-		@IsMyanmarOdds = @IsMyanmarOdds,
 		
 		--Bet Setting
 		@SettingType26 = @SettingType26, --SB
@@ -433,7 +727,7 @@ BEGIN
 		@SettingType1 = @SettingType1,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 		@SettingType18 = @SettingType18,-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
 				
-		@CreationStatus = @CreationStatus,
+		@SettingStatus = @SettingStatus,
 		@ErrCode = @ErrCode OUTPUT
 
 	IF @ErrCode > 0
@@ -450,7 +744,7 @@ BEGIN
 	
 	If @SystemID IN (2,6) -- ALPHA, i7 alpha
 	BEGIN
-		EXEC Age_LimitPTDailyIns @SettingStatus = @creationstatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
 		IF @ErrCode > 0
 		BEGIN
 			SELECT @ErrMsg = CASE @Language 
@@ -458,18 +752,15 @@ BEGIN
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							END
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
-			DELETE FROM CustProductStatus WHERE CustID = @CustID			
-			
-			DELETE FROM CustOverride WHERE CustID = @CustID
-			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
-			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-			DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-			DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
-			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-			DELETE FROM AgentCommRate WHERE CustID = @CustID
-			DELETE FROM CustMaxPayoutSetting_Agent WHERE CustID = @CustID
+			DELETE FROM CustLimitPTSetting			WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustProductStatus			WITH (ROWLOCK) WHERE CustID = @CustID			
+			DELETE FROM CustPTSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID	
+			DELETE FROM CustBetSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID					
+			DELETE FROM CustDiscount3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustWinLossLimit_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustStakeLevel_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) WHERE CustID = @CustID
 			
 			RETURN
 		END	
@@ -572,7 +863,7 @@ BEGIN
 	
 	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
 	SELECT DISTINCT ProductID,SportType,Bettype,SettingType	
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency)
 	WHERE SettingType IN (4,11,13,21)
 		AND realProductID NOT IN (24,59)
 
@@ -731,7 +1022,7 @@ BEGIN
 						
 	INSERT INTO #TmpProductSettingDetail(SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder,SettingLevel,ProductID)
 	SELECT SettingType,SportType,BetType,IsLive,GroupID,Child_DisplayOrder,SettingLevel,ProductID
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteID,@currency)	
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency)	
 	
 	INSERT INTO @tblCustWinLossLimit (SportType
 									,BetType 
@@ -898,11 +1189,11 @@ BEGIN
 		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
 		T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
 		T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
-		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+		T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney')/100 AS MasterPT,
 		T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoMasterPT,
-		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoMasterPT,
-		T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT,
-		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS AgentMinPT
+		T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney')/100 AS AutoMasterPT,
+		T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney')/100 AS AgentPT,
+		T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney')/100 AS AgentMinPT
 	FROM  @xml.nodes('/Root/R') T(c)
 	
 	UPDATE b

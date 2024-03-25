@@ -45,11 +45,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	@autosuspend BIT = 0,
 	@autosuspend2 BIT = 0,
 	@autosuspend3 BIT = 0,
-	
+
 	@DoubleCommLosing BIT = 0,
-
-	@DisableEsports BIT = 0,
-
 	@DisableSuperLive BIT = 0,	
 	
 	@credit MONEY,
@@ -154,6 +151,7 @@ Revisions:
 	- 20230718@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 	- 20230711@Helios: VR Accumulate Balance [Redmine: #189649]
 	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141]
+	- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -243,11 +241,11 @@ BEGIN
 		
 	    INSERT INTO CustSuper
 	    (
-	        custId, AutoIBCPositionTaking_Tote,  IsInternal, TransferOption, MaxMember,SiteDBGroupID
+	        custId,  IsInternal, TransferOption, MaxMember,SiteDBGroupID
 	    )
 	    VALUES
 	    (
-	        @CustID, 0,  @IsInternal, 
+	        @CustID,  @IsInternal, 
 			CASE
 				WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0)
 				ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0))
@@ -515,7 +513,7 @@ BEGIN
 		  , DisableOutright
 		  , danger, danger2, danger3, danger4, danger5, Abnormal
 		  , DoubleCommLosing
-		  , DisableEsports, DisableSuperLive
+		  , DisableSuperLive
 		  , DangerLevel
 		  )
 		VALUES
@@ -529,7 +527,7 @@ BEGIN
 		  , @DisableOutright
 		  , @danger, @danger2, @danger3, @danger4, @danger5, @Abnormal
 		  , @DoubleCommLosing	
-		  , @DisableEsports, @DisableSuperLive
+		  , @DisableSuperLive
 		  , @DangerLevel
 		)
 

@@ -2,12 +2,15 @@
 ALTER PROCEDURE [dbo].[Acc_CustSetting_MaxPayoutUpd] 
 	  @CustID		INT
 	, @MaxPayoutLimit VARCHAR(MAX)
-	, @Language VARCHAR(2)= 'E'
-	, @SubAccID		INT				= 0
+	, @SubAccID		INT			= 0
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
-	, @ErrCode		INT				= 0		OUTPUT
+	, @ErrCode		INT			= 0	OUTPUT
 	, @ErrMsg		NVARCHAR(MAX)	= ''	OUTPUT
+	, @MsgType		TINYINT		= 0   OUTPUT
+	, @GroupID		TINYINT		= 1
+	, @GroupType	TINYINT		= 152
+	, @SettingStatus	TINYINT		= 0
 AS
 /*
 	Created: 20210518@Winfred
@@ -18,10 +21,14 @@ AS
 	Revisions:
 		- 20210518@Winfred: Initial SP  [RedmineID:#154104]
 		- 20210813@Eden: no need to update downlines and write indirect log when not affected [RedmineID:#160135]
+		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
 
 	Param's Explanation:
-	• @@MaxPayoutLimit:
-		'<ROOT>				<MaxPayoutLimit 						SportType="1" 						BetType="1" 						SingleMatchParlay="3000" 						Combo2="40000" 						Combo35="6000000"						ComboOver6="1000000"				/>		</ROOT>'
+	@MaxPayoutLimit:
+		'[
+					{ "SportType": "1", "BetType": "9", "SingleMP": "3000", "Combo2": "40000", "Combo35": "6000000", "Combo6": "1000000"  },
+					{ "SportType": "99", "BetType": "9", "SingleMP": "6000", "Combo2": "40000", "Combo35": "6000000", "Combo6": "1000000" }
+		]'
 
 	*/
 BEGIN
@@ -38,11 +45,14 @@ BEGIN
 		, @logSpData_Old_Indirectly	NVARCHAR(MAX)
 		, @xml				XML
 		,@UserName		NVARCHAR(50)
+		, @MaxPayoutLimitXML		VARCHAR(MAX)  = ''
 		
 	DECLARE @AgentID		INT
 		, @MasterID			INT
 		, @SuperID			INT
 		, @RoleID			INT
+		, @SiteID				INT 
+		, @CurrencyID			INT
 		
 	DECLARE @OldMaxPayoutTbl TABLE (
 		SportType			SMALLINT
@@ -60,6 +70,19 @@ BEGIN
 		, Combo35			MONEY
 		, ComboOver6		MONEY
 		)
+	CREATE TABLE #ProductSettingDetail(
+		ProductID		TINYINT,
+		RealProductID	TINYINT,		
+		SportType		SMALLINT,
+		BetType		SMALLINT,
+		IsLive		BIT,
+		IntervalValue	DECIMAL(19,8),
+		SubType		TINYINT,
+		Child_DisplayOrder TINYINT,
+		SettingLevel	TINYINT,
+		SettingType		TINYINT
+	PRIMARY KEY(SportType ASC , BetType ASC)
+	)
 
 	--Check if XML is null or empty
 	IF @MaxPayoutLimit IS NULL
@@ -67,7 +90,7 @@ BEGIN
 		RETURN
 
 	SET @startRun = GETDATE()
-	SELECT	@ErrCode	= 0	,	@ErrMsg			= ''
+	SELECT	@ErrCode	= 0	,	@ErrMsg			= '', @MsgType	= 0
 
 	--Check disable user
 	EXEC dbo.Acc_CustomerSelCheckEnable 
@@ -78,59 +101,48 @@ BEGIN
 	IF @ErrCode > 0
 	BEGIN
 		SET @ErrCode = 101
+		SET @MsgType = 101
 		RETURN
 	END
 
-	--> Check UM config
-	EXEC [Acc_CheckUM] @CustID = @CustID, @ProductID = 1
-		, @Language = @Language, @FunctionType = 1
-		, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT 
-		, @ReturnUMData = 0
-		
-	IF @ErrCode <>0 
-		RETURN
+	-- Get line information
+	SELECT @UserName = username, @AgentID = recommend, @MasterID = mrecommend, @SuperID = srecommend, @RoleID=RoleID, @SiteID = s.siteid , @CurrencyID = c.currency
+	FROM customer c WITH (NOLOCK)
+	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
+	WHERE CustID = @CustID
 
-	SET @ErrCode = ''
+	INSERT INTO #ProductSettingDetail 	(ProductID , RealProductID , SportType , BetType , IsLive , IntervalValue , SubType , Child_DisplayOrder , SettingLevel , SettingType)
+	SELECT ProductID ,RealProductID , SportType , Bettype , IsLive , IntervalValue , SubType , Child_DisplayOrder , SettingLevel , SettingType
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID,@CurrencyID)
+	WHERE Grouptype = @GroupType
+	AND (GroupID = @GroupID OR @GroupID IS NULL)
 
-	--Get line information
-	SELECT @AgentID = recommend
-		, @MasterID = mrecommend
-		, @SuperID	= srecommend
-		, @RoleID	= RoleID
-		,@UserName = username
-	FROM dbo.custInfo WITH (NOLOCK)
-	WHERE custid = @CustID
 
-	--Check belonging
-	EXEC dbo.Age_CustomerSelCheckBelonging 
-		@SessionCustID	= @Userid 
-		,@Custid		= @custid		
-		,@roleid		= @roleid OUTPUT
-	IF (@roleid = 0)
-	BEGIN
-		SET @ErrCode = 101
-		SET @ErrMsg = 'Users are not in the same line!'
-		RETURN
-	END
+	-- Parse Data Json
+	INSERT INTO @NewMaxPayoutTbl  ( SportType , BetType , SingleMatchParlay , Combo2 , Combo35 , ComboOver6 )
+	SELECT SportType, BetType, SingleMP, Combo2 , Combo35 , Combo6
+	FROM OPENJSON(@MaxPayoutLimit)
+	    WITH
+		  (
+			SportType		SMALLINT,
+			BetType		SMALLINT,
+			SingleMP		MONEY,
+			Combo2		MONEY,
+			Combo35		MONEY,
+			Combo6		MONEY
+        ) AS MaxPayoutLimit
 
-	--Parse XML	
-	DECLARE @iDoc INT
-
-	EXEC sp_xml_preparedocument @iDoc OUTPUT
-		, @MaxPayoutLimit
-
-	INSERT @NewMaxPayoutTbl (SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-	SELECT SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6
-	FROM OPENXML(@iDoc, '/ROOT/MaxPayoutLimit', 1) WITH (
-			SportType			SMALLINT
-			, BetType			SMALLINT
-			, SingleMatchParlay	MONEY
-			, Combo2			MONEY
-			, Combo35			MONEY
-			, ComboOver6		MONEY
-			)
-
-	EXEC sp_xml_removedocument @iDoc
+	-- Exclude Update for Sport is having UM
+	DELETE t
+	FROM @NewMaxPayoutTbl t
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
+			ON u.SportType IN( t.SportType,0)
+			AND u.SettingType IN (ps.SettingType,0)
+			AND u.ProductID  IN (ps.ProductID, 0)
+	WHERE ps.SettingType = 27
+		AND u.FunctionType = 1 --Edit Customer
 
 	IF NOT EXISTS( SELECT 1 FROM @NewMaxPayoutTbl)
 	BEGIN
@@ -139,6 +151,20 @@ BEGIN
 
 		RETURN
 	END
+
+	--Check belonging
+	EXEC dbo.Age_CustomerSelCheckBelonging 
+		@SessionCustID	= @Userid 
+		,@Custid		= @custid		
+		,@roleid		= @roleid OUTPUT
+	IF (@roleid = 0)
+	BEGIN
+		SET @MsgType = 101
+		SET @ErrCode = 101
+		SET @ErrMsg = 'Users are not in the same line!'
+		RETURN
+	END
+
 	
 	--Validate new Max Payout settings
 	EXEC [dbo].[Acc_CustSetting_MaxPayoutCheck] @CustID	= @CustID
@@ -147,9 +173,13 @@ BEGIN
 						, @MasterID		= @MasterID
 						, @SuperID		= @SuperID
 						, @MaxPayoutLimit	= @MaxPayoutLimit
-						, @Language	= @Language
+						, @Language	= 'E'
+						, @SettingStatus  = @SettingStatus
+						, @SiteID		= @SiteID
+						, @CurrencyID	= @CurrencyID
 						, @ErrCode		= @ErrCode	OUTPUT
 						, @ErrMsg		= @ErrMsg	OUTPUT
+						, @MsgType		= @MsgType	OUTPUT
 
 	IF @ErrCode <> 0
 		RETURN
@@ -201,6 +231,18 @@ BEGIN
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN
+		SELECT @MaxPayoutLimitXML = CONVERT( VARCHAR(MAX), 
+							(	
+								SELECT	 SportType			AS	'@SportType'		
+										,BetType 			AS	'@BetType' 
+										,SingleMatchParlay 	AS	'@SingleMatchParlay'
+										,Combo2 			AS	'@Combo2' 
+										,Combo35 			AS	'@Combo35' 
+										,ComboOver6			AS	'@ComboOver6'
+								FROM @NewMaxPayoutTbl
+								FOR XML PATH('MaxPayoutLimit'), ROOT ('ROOT'), TYPE)
+							)
+
 		--get old settings
 		INSERT INTO @OldMaxPayoutTbl(SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
 		SELECT bl.SportType
@@ -231,7 +273,7 @@ BEGIN
 
 		EXEC [Acc_CustSetting_MaxPayoutCheckDownline]
 			@CustID = @CustID,
-			@MaxPayoutLimit = @MaxPayoutLimit,
+			@MaxPayoutLimit = @MaxPayoutLimitXML,
 			@isConfirm = @IsAffectedDownline OUTPUT
 
 		IF @IsAffectedDownline = 1
@@ -241,12 +283,13 @@ BEGIN
 														@custid		= @custid
 													,	@roleid		= @roleid
 													,	@isExecRep	= 1
-													,	@Language	= @Language
+													,	@Language	= 'E'
 													,	@ErrCode	= @ErrCode	OUTPUT
 													,	@ErrMsg		= @ErrMsg	OUTPUT
 
 			IF @ErrCode > 0
 			BEGIN
+				SET @MsgType = 101
 				RETURN
 			END
 		END
@@ -274,8 +317,8 @@ BEGIN
 			EXEC dbo.Acc_CustSetting_12
 				@CustId = @CustId
 				,@RoleId = @RoleId
-				,@XML = @MaxPayoutLimit
-				,@Mode='MaxPayout'
+				,@XML = @MaxPayoutLimitXML
+				,@GroupType		= @GroupType
 		END
 	END
 	
@@ -286,11 +329,33 @@ BEGIN
 	SELECT @SPName = LogStr 
 	FROM f_CustSetting_FormatLog (@SPName)
 	
-	INSERT INTO @LogAction (ActionID)
-	SELECT l.ActionID
-	FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
-		INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
-	WHERE l.SPName = @SPName AND ld.ProductID = 1 AND ld.Level = @RoleID
+	--SELECT l.ActionID
+	--FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
+	--	INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
+	--WHERE l.SPName = @SPName AND ld.ProductID = 1 AND ld.Level = @RoleID
+	IF @RoleID = 4
+	BEGIN
+		INSERT INTO @LogAction (ActionID)
+			SELECT 220000
+		UNION SELECT 220001
+	END
+	ELSE IF @RoleID = 3
+	BEGIN
+		INSERT INTO @LogAction (ActionID)
+			SELECT 220002
+		UNION SELECT 220003
+	END
+	ELSE IF @RoleID = 2
+	BEGIN
+		INSERT INTO @LogAction (ActionID)
+			SELECT 220004
+		UNION SELECT 220005
+	END
+	ELSE IF @RoleID = 1
+	BEGIN
+		INSERT INTO @LogAction (ActionID)
+			SELECT 220006
+	END
 	
 	-- Log old data
 	SET @xml = (
