@@ -57,6 +57,7 @@ BEGIN
 	AND sbm.Enabled = 1
 	AND 1 = CASE WHEN @SpecialPlatform = 4 AND b1.typeid IN (228,229) THEN 0 ELSE 1 END --Hide bettype SABA xxx for 777777
 	AND sbm.IsTest = CASE WHEN @IsTest = 0 THEN 0 ELSE sbm.IsTest END
+	ORDER BY b.typedesc
         	 
 END
 
