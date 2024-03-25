@@ -91,6 +91,7 @@ AS
 	- 20230915@Tacy: Alpha/NAP - Support to update siteLabel for MBC [Redmine: #194034]
 	- 20240129@Luke: NAP - Virtual rate - Change default of VR Status for newly created Super to Enable [Redmine: #200311]
 	- 20231211@Johnson: check permission for 777 [redmineID: #197160]
+	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -172,6 +173,16 @@ BEGIN
 		RETURN
 	END
 	------------------------------END----------------------------------------
+	IF @credit <0
+	BEGIN
+		SELECT  @ErrCode = 2
+		SELECT @ErrMsg = 	CASE @Language 
+								WHEN 'E' THEN 'Credits must be positive.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](70025,@Language)
+							END
+		RETURN
+	END
+
 	--Check Inactive site:
 	IF EXISTS (SELECT 1 FROM Site WITH (NOLOCK) WHERE site=@_Site AND isActive=0)
 	BEGIN
@@ -396,8 +407,8 @@ BEGIN
 		SELECT @MaxMember = CASE WHEN @SiteLabel = '789y' THEN 20000 ELSE -1 END
 		SELECT @MaxMemberLog = CASE WHEN @SiteLabel = '789y' THEN '20000' ELSE 'Unlimited' END
 
-		INSERT INTO CustSuper(custId, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember,SiteDBGroupID)  
-		SELECT	@CustID, AutoIBCPositionTaking_Tote, AutoIBCPositionTaking_Fixed, @IsInternal, TransferOption, LimitPerIP, SelectedBetting, @MaxMember,@SiteDBGroupID	
+		INSERT INTO CustSuper(custId,IsInternal, TransferOption, LimitPerIP, SelectedBetting,MaxMember,SiteDBGroupID)  
+		SELECT	@CustID, @IsInternal, TransferOption, LimitPerIP, SelectedBetting, @MaxMember,@SiteDBGroupID	
 		FROM CustSuper WITH(NOLOCK)
 		WHERE custid=@ExistingCustid		
 	END TRY
@@ -544,9 +555,6 @@ BEGIN
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		
-		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
 							
 		RETURN	
 	END CATCH
@@ -568,10 +576,6 @@ BEGIN
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		
-		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		RETURN	
 	END CATCH		
@@ -633,10 +637,6 @@ BEGIN
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		
-		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @Custid
 		
@@ -684,10 +684,6 @@ BEGIN
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		
-		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid

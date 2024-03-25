@@ -6,12 +6,12 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_BetSettingCheck_Ag]
 	@siteid SMALLINT =0,
 	@currency SMALLINT=0,
 	
-	@SettingType26 VARCHAR(MAX)= '', --SB
+	@SettingType26 VARCHAR(MAX)= '' OUTPUT, --SB
 	@SettingType2 VARCHAR(MAX)= '', --SB2, VS
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games
 	@SettingType16 VARCHAR(MAX)= '', --SB	
 	@SystemID TINYINT = 1,
-	@CreationStatus TINYINT = 0,
+	@SettingStatus TINYINT = 0,
 	
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
@@ -26,6 +26,7 @@ AS
 	Revisions: 
 		- 20230727@Johnson: initial sp [redmine: #179159]
 		- 20240118@Eden: avoid data duplicate of Esport & Muay Thai Betsetting [redmine: #199970]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
@@ -61,7 +62,8 @@ BEGIN
 		MaxBet            MONEY, 
 		MaxPerMatch       MONEY, 
 		MaxPerNumber      MONEY, 
-		MaxPayoutPerMatch MONEY		
+		MaxPayoutPerMatch MONEY,	
+		Child_DisplayOrder	INT		
 		PRIMARY KEY(sporttype, Bettype)
 	);
 	
@@ -85,14 +87,16 @@ BEGIN
 		[IsLive] [bit],
 		[GroupID] [tinyint],
 		[GroupType] [tinyint],
-		[SettingLevel] [tinyint],		
+		[SettingLevel] [tinyint],
+		Child_DisplayOrder	INT,
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 	
-	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,GroupID,GroupType,SettingLevel)
+	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,GroupID,GroupType,SettingLevel,Child_DisplayOrder)
 	SELECT SportType,BetType,SettingType,IsLive,GroupID,GroupType,
-		2 as SettingLevel--Sporttype		
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
+		2 as SettingLevel,--Sporttype
+		Child_DisplayOrder
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 	WHERE SettingType IN (26,2,23,16)
 	
 	DECLARE @xml XML
@@ -397,6 +401,25 @@ BEGIN
 				SET @ErrCode = 208
 				RETURN
 		END
+
+		UPDATE t
+		SET t.Child_DisplayOrder = d.Child_DisplayOrder
+		FROM @BetSetting t
+			INNER JOIN #ProductSettingDetail_Check d 
+				ON t.SportType = d.SportType
+				AND t.BetType = d.BetType
+		
+		SELECT @SettingType26 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			MinBet '@MinBet',
+			MaxBet '@MaxBet',
+			MaxPerMatch '@MPM',
+			MaxPayoutPerMatch '@MaxPayout'
+		FROM @BetSetting
+		ORDER BY Child_DisplayOrder,SportType,BetType
+		FOR XML PATH ('R'), ROOT('Root')
+		)	
 	END
 	
 	--check RNG Games, SB2
@@ -620,7 +643,7 @@ BEGIN
 				MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0),
 				MaxPerNumber = ISNULL(MIN(CASE WHEN cb.MaxPerNumber = 0 THEN NULL ELSE cb.MaxPerNumber END),0)
 		FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
-			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType AND b.SportType NOT IN (43,44)
+			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
 		WHERE cb.custid IN (@srecommend,@mrecommend,@recommend)
 		GROUP BY cb.Sporttype,cb.Bettype
 

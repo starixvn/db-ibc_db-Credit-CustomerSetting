@@ -5,489 +5,15 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@mrecommend INT = 0,	
 	@recommend INT = 0,
 	@roleid INT,
+	@siteid SMALLINT=0,
+	@currency SMALLINT=0,
 	@isSearchAndCopy BIT = 0,
 	@copyFromCustID INT = 0,
 
-	@groupa DECIMAL(9,8) = 0, 
-	@groupb DECIMAL(9,8) = 0, 
-	@groupc DECIMAL(9,8) = 0, 
-	@groupd DECIMAL(9,8) = 0,
-	
-	---
-	--insert new super	
-	@spositiontaking_1 SMALLMONEY = 0,
-	@spositiontaking_2 SMALLMONEY = 0,
-	@spositiontaking_3 SMALLMONEY = 0,
-	@spositiontaking_4 SMALLMONEY = 0,
-	@spositiontaking_5 SMALLMONEY = 0,
-	@spositiontaking_6 SMALLMONEY = 0,
-	@spositiontaking_7 SMALLMONEY = 0,
-	@spositiontaking_8 SMALLMONEY = 0,
-	@spositiontaking_9 SMALLMONEY = 0,
-	@spositiontaking_10 SMALLMONEY = 0,
-	@v2spositiontaking_10 SMALLMONEY = 0,
-	@v3spositiontaking_10 SMALLMONEY = 0,
-	@v5spositiontaking_10 SMALLMONEY = 0,
-	@v8spositiontaking_10 SMALLMONEY = 0,
-	@v10spositiontaking_10 SMALLMONEY = 0,
-	@v11spositiontaking_10 SMALLMONEY = 0,
-	@v99spositiontaking_10 SMALLMONEY = 0,
-	@spositiontaking_9999 SMALLMONEY = 0,
-	
-	@slivepositiontaking_1 SMALLMONEY = 0,
-	@slivepositiontaking_3 SMALLMONEY = 0,
-	@slivepositiontaking_7 SMALLMONEY = 0,
-	@slivepositiontaking_8 SMALLMONEY = 0,
-	
-	@v2spositiontaking_1 SMALLMONEY = 0,
-	@v2spositiontaking_2 SMALLMONEY = 0,
-	@v2spositiontaking_3 SMALLMONEY = 0,
-	@v2spositiontaking_7 SMALLMONEY = 0,
-	@v2spositiontaking_8 SMALLMONEY = 0,
-	--@v2spositiontaking_9 SMALLMONEY = 0,
-	@v2spositiontaking_20 SMALLMONEY = 0,
-	@v2spositiontaking_9999 SMALLMONEY = 0,
-	
-	@v3spositiontaking_1 SMALLMONEY = 0,
-	@v3spositiontaking_2 SMALLMONEY = 0,
-	@v3spositiontaking_3 SMALLMONEY = 0,
-	@v3spositiontaking_20 SMALLMONEY = 0,
-
-	@v5spositiontaking_1 SMALLMONEY = 0,
-	@v5spositiontaking_2 SMALLMONEY = 0,
-	@v5spositiontaking_3 SMALLMONEY = 0,
-	@v5spositiontaking_20 SMALLMONEY = 0,
-	@v5spositiontaking_9999 SMALLMONEY = 0,
-
-	@v8spositiontaking_1 SMALLMONEY = 0,
-	@v8spositiontaking_3 SMALLMONEY = 0,
-	@v8spositiontaking_20 SMALLMONEY = 0,
-
-	@v10spositiontaking_1 SMALLMONEY = 0,
-	@v10spositiontaking_2 SMALLMONEY = 0,
-	@v10spositiontaking_3 SMALLMONEY = 0,
-	@v10spositiontaking_20 SMALLMONEY = 0,
-
-	@v11spositiontaking_1 SMALLMONEY = 0,
-	@v11spositiontaking_20 SMALLMONEY = 0,
-
-	@v99spositiontaking_1 SMALLMONEY = 0,
-	@v99spositiontaking_2 SMALLMONEY = 0,
-	@v99spositiontaking_3 SMALLMONEY = 0,
-	@v99spositiontaking_9 SMALLMONEY = 0,
-	@v99spositiontaking_20 SMALLMONEY = 0,
-	@v99spositiontaking_9999 SMALLMONEY = 0,	
-	
-	---create new master
-	@auto_spositiontaking_1 smallmoney = 0,
-	@auto_spositiontaking_2 smallmoney = 0,
-	@auto_spositiontaking_3 smallmoney = 0,
-	@auto_spositiontaking_4 smallmoney = 0,
-	@auto_spositiontaking_5 smallmoney = 0,
-	@auto_spositiontaking_6 smallmoney = 0,
-	@auto_spositiontaking_7 smallmoney = 0,
-	@auto_spositiontaking_8 smallmoney = 0,
-	@auto_spositiontaking_9 smallmoney = 0,
-	@auto_spositiontaking_10 smallmoney = 0,
-	@auto_v2spositiontaking_10 smallmoney = 0,
-	@auto_v3spositiontaking_10 smallmoney = 0,
-	@auto_v5spositiontaking_10 smallmoney = 0,
-	@auto_v8spositiontaking_10 smallmoney = 0,
-	@auto_v10spositiontaking_10 smallmoney = 0,
-	@auto_v11spositiontaking_10 smallmoney = 0,
-	@auto_v99spositiontaking_10 smallmoney = 0,
-	@auto_spositiontaking_9999 smallmoney = 0,
-	@auto_slivepositiontaking_1 smallmoney = 0,
-	@auto_slivepositiontaking_3 smallmoney = 0,
-	@auto_slivepositiontaking_7 smallmoney = 0,
-	@auto_slivepositiontaking_8 smallmoney = 0,
-	
-	@auto_v2spositiontaking_1 smallmoney = 0,
-	@auto_v2spositiontaking_2 smallmoney = 0,
-	@auto_v2spositiontaking_3 smallmoney = 0,
-	@auto_v2spositiontaking_7 smallmoney = 0,
-	@auto_v2spositiontaking_8 smallmoney = 0,
---	@auto_v2spositiontaking_9 smallmoney = 0,
-	@auto_v2spositiontaking_20 smallmoney = 0,
-	@auto_v2spositiontaking_9999 smallmoney = 0,
-	
-	@auto_v3spositiontaking_1 smallmoney = 0,
-	@auto_v3spositiontaking_2 smallmoney = 0,
-	@auto_v3spositiontaking_3 smallmoney = 0,	
-	@auto_v3spositiontaking_20 smallmoney = 0,
-	
-	@auto_v5spositiontaking_1 smallmoney = 0,
-	@auto_v5spositiontaking_2 smallmoney = 0,
-	@auto_v5spositiontaking_3 smallmoney = 0,	
-	@auto_v5spositiontaking_20 smallmoney = 0,
-	@auto_v5spositiontaking_9999 smallmoney = 0,
-	
-	@auto_v8spositiontaking_1 smallmoney = 0,	
-	@auto_v8spositiontaking_3 smallmoney = 0,	
-	@auto_v8spositiontaking_20 smallmoney = 0,
-	
-	@auto_v10spositiontaking_1 smallmoney = 0,
-	@auto_v10spositiontaking_2 smallmoney = 0,
-	@auto_v10spositiontaking_3 smallmoney = 0,	
-	@auto_v10spositiontaking_20 smallmoney = 0,
-	
-	@auto_v11spositiontaking_1 smallmoney = 0,	
-	@auto_v11spositiontaking_20 smallmoney = 0,
-	
-	@auto_v99spositiontaking_1 smallmoney = 0,
-	@auto_v99spositiontaking_2 smallmoney = 0,
-	@auto_v99spositiontaking_3 smallmoney = 0,		
-	@auto_v99spositiontaking_20 smallmoney = 0,	
-	@auto_v99spositiontaking_9999 smallmoney = 0,	
-	@auto_v99spositiontaking_9 smallmoney = 0,
-	
-	----n4 vs	
-	@isauto_spositiontaking_1 BIT = 0,
-	@isauto_spositiontaking_2 BIT = 0,
-	@isauto_spositiontaking_3 BIT = 0,
-	@isauto_spositiontaking_4 BIT = 0,
-	@isauto_spositiontaking_5 BIT = 0,
-	@isauto_spositiontaking_6 BIT = 0,
-	@isauto_spositiontaking_7 BIT = 0,
-	@isauto_spositiontaking_8 BIT = 0,
-	@isauto_spositiontaking_9 BIT = 0,
-	@isauto_spositiontaking_10 BIT = 0,
-	@isauto_v2spositiontaking_10 BIT = 0,
-	@isauto_v3spositiontaking_10 BIT = 0,
-	@isauto_v5spositiontaking_10 BIT = 0,
-	@isauto_v8spositiontaking_10 BIT = 0,
-	@isauto_v10spositiontaking_10 BIT = 0,
-	@isauto_v11spositiontaking_10 BIT = 0,
-	@isauto_v99spositiontaking_10 BIT = 0,
-	@isauto_spositiontaking_9999 BIT = 0,
-	
-	@isauto_slivepositiontaking_1 BIT = 0,
-	@isauto_slivepositiontaking_3 BIT = 0,
-	@isauto_slivepositiontaking_7 BIT = 0,
-	@isauto_slivepositiontaking_8 BIT = 0,
-	
-	@isauto_v2spositiontaking_1 BIT = 0,
-	@isauto_v2spositiontaking_2 BIT = 0,
-	@isauto_v2spositiontaking_3 BIT = 0,
-	@isauto_v2spositiontaking_7 BIT = 0,
-	@isauto_v2spositiontaking_8 BIT = 0,
---	@isauto_v2spositiontaking_9 BIT = 0,
-	@isauto_v2spositiontaking_20 BIT = 0,
-	@isauto_v2spositiontaking_9999 BIT = 0,
-	
-	@isauto_v3spositiontaking_1 BIT = 0,
-	@isauto_v3spositiontaking_2 BIT = 0,
-	@isauto_v3spositiontaking_3 BIT = 0,	
-	@isauto_v3spositiontaking_20 BIT = 0,
-	
-	@isauto_v5spositiontaking_1 BIT = 0,
-	@isauto_v5spositiontaking_2 BIT = 0,
-	@isauto_v5spositiontaking_3 BIT = 0,	
-	@isauto_v5spositiontaking_20 BIT = 0,
-	@isauto_v5spositiontaking_9999 BIT = 0,
-	
-	@isauto_v8spositiontaking_1 BIT = 0,	
-	@isauto_v8spositiontaking_3 BIT = 0,	
-	@isauto_v8spositiontaking_20 BIT = 0,
-	
-	@isauto_v10spositiontaking_1 BIT = 0,
-	@isauto_v10spositiontaking_2 BIT = 0,
-	@isauto_v10spositiontaking_3 BIT = 0,	
-	@isauto_v10spositiontaking_20 BIT = 0,
-	
-	@isauto_v11spositiontaking_1 BIT = 0,	
-	@isauto_v11spositiontaking_20 BIT = 0,
-
-	@isauto_v99spositiontaking_1 BIT = 0,
-	@isauto_v99spositiontaking_2 BIT = 0,
-	@isauto_v99spositiontaking_3 BIT = 0,		
-	@isauto_v99spositiontaking_20 BIT = 0,
-	@isauto_v99spositiontaking_9999 BIT = 0,
-	@isauto_v99spositiontaking_9 BIT = 0,	
-	
-	@mpositiontaking_1 SMALLMONEY = 0,
-	@mpositiontaking_2 SMALLMONEY = 0,
-	@mpositiontaking_3 SMALLMONEY = 0,
-	@mpositiontaking_4 SMALLMONEY = 0,
-	@mpositiontaking_5 SMALLMONEY = 0,
-	@mpositiontaking_6 SMALLMONEY = 0,
-	@mpositiontaking_7 SMALLMONEY = 0,
-	@mpositiontaking_8 SMALLMONEY = 0,
-	@mpositiontaking_9 SMALLMONEY = 0,
-	@mpositiontaking_10 SMALLMONEY = 0,
-	@v2mpositiontaking_10 SMALLMONEY = 0,
-	@v3mpositiontaking_10 SMALLMONEY = 0,
-	@v5mpositiontaking_10 SMALLMONEY = 0,
-	@v8mpositiontaking_10 SMALLMONEY = 0,
-	@v10mpositiontaking_10 SMALLMONEY = 0,
-	@v11mpositiontaking_10 SMALLMONEY = 0,
-	@v99mpositiontaking_10 SMALLMONEY = 0,
-	@mpositiontaking_9999 SMALLMONEY = 0,
-	
-	@mlivepositiontaking_1 SMALLMONEY = 0,
-	@mlivepositiontaking_3 SMALLMONEY = 0,
-	@mlivepositiontaking_7 SMALLMONEY = 0,
-	@mlivepositiontaking_8 SMALLMONEY = 0,
-	
-	@v2mpositiontaking_1 SMALLMONEY = 0,
-	@v2mpositiontaking_2 SMALLMONEY = 0,
-	@v2mpositiontaking_3 SMALLMONEY = 0,
-	@v2mpositiontaking_7 SMALLMONEY = 0,
-	@v2mpositiontaking_8 SMALLMONEY = 0,
-	--@v2mpositiontaking_9 SMALLMONEY = 0,
-	@v2mpositiontaking_20 SMALLMONEY = 0,
-	@v2mpositiontaking_9999 SMALLMONEY = 0,
-
-	@v3mpositiontaking_1 SMALLMONEY = 0,
-	@v3mpositiontaking_2 SMALLMONEY = 0,
-	@v3mpositiontaking_3 SMALLMONEY = 0,
-	@v3mpositiontaking_20 SMALLMONEY = 0,
-
-	@v5mpositiontaking_1 SMALLMONEY = 0,
-	@v5mpositiontaking_2 SMALLMONEY = 0,
-	@v5mpositiontaking_3 SMALLMONEY = 0,
-	@v5mpositiontaking_20 SMALLMONEY = 0,
-	@v5mpositiontaking_9999 SMALLMONEY = 0,
-
-	@v8mpositiontaking_1 SMALLMONEY = 0,
-	@v8mpositiontaking_3 SMALLMONEY = 0,
-	@v8mpositiontaking_20 SMALLMONEY = 0,
-
-	@v10mpositiontaking_1 SMALLMONEY = 0,
-	@v10mpositiontaking_2 SMALLMONEY = 0,
-	@v10mpositiontaking_3 SMALLMONEY = 0,
-	@v10mpositiontaking_20 SMALLMONEY = 0,
-
-	@v11mpositiontaking_1 SMALLMONEY = 0,
-	@v11mpositiontaking_20 SMALLMONEY = 0,
-
-	@v99mpositiontaking_1 SMALLMONEY = 0,
-	@v99mpositiontaking_2 SMALLMONEY = 0,
-	@v99mpositiontaking_3 SMALLMONEY = 0,
-	@v99mpositiontaking_9 SMALLMONEY = 0,
-	@v99mpositiontaking_20 SMALLMONEY = 0,
-	@v99mpositiontaking_9999 SMALLMONEY = 0,	
-		
-	---create agent
-	--Auto Master PT
-	@auto_mpositiontaking_1 smallmoney = 0,
-	@auto_mpositiontaking_2 smallmoney = 0,
-	@auto_mpositiontaking_3 smallmoney = 0,
-	@auto_mpositiontaking_4 smallmoney = 0,
-	@auto_mpositiontaking_5 smallmoney = 0,
-	@auto_mpositiontaking_6 smallmoney = 0,
-	@auto_mpositiontaking_7 smallmoney = 0,
-	@auto_mpositiontaking_8 smallmoney = 0,
-	@auto_mpositiontaking_9 smallmoney = 0,
-	@auto_mpositiontaking_10 smallmoney = 0,
-	@auto_v2mpositiontaking_10 smallmoney = 0,
-	@auto_v3mpositiontaking_10 smallmoney = 0,
-	@auto_v5mpositiontaking_10 smallmoney = 0,
-	@auto_v8mpositiontaking_10 smallmoney = 0,
-	@auto_v10mpositiontaking_10 smallmoney = 0,
-	@auto_v11mpositiontaking_10 smallmoney = 0,
-	@auto_v99mpositiontaking_10 smallmoney = 0,
-	@auto_mpositiontaking_9999 smallmoney = 0,
-	@auto_mlivepositiontaking_1 smallmoney = 0,
-	@auto_mlivepositiontaking_3 smallmoney = 0,
-	@auto_mlivepositiontaking_7 smallmoney = 0,
-	@auto_mlivepositiontaking_8 smallmoney = 0,
-	
-	@auto_v2mpositiontaking_1 smallmoney = 0,
-	@auto_v2mpositiontaking_2 smallmoney = 0,
-	@auto_v2mpositiontaking_3 smallmoney = 0,
-	@auto_v2mpositiontaking_7 smallmoney = 0,
-	@auto_v2mpositiontaking_8 smallmoney = 0,
---	@auto_v2mpositiontaking_9 smallmoney = 0,
-	@auto_v2mpositiontaking_20 smallmoney = 0,
-	@auto_v2mpositiontaking_9999 smallmoney = 0,
-	
-	@auto_v3mpositiontaking_1 smallmoney = 0,
-	@auto_v3mpositiontaking_2 smallmoney = 0,
-	@auto_v3mpositiontaking_3 smallmoney = 0,	
-	@auto_v3mpositiontaking_20 smallmoney = 0,
-	
-	@auto_v5mpositiontaking_1 smallmoney = 0,
-	@auto_v5mpositiontaking_2 smallmoney = 0,
-	@auto_v5mpositiontaking_3 smallmoney = 0,	
-	@auto_v5mpositiontaking_20 smallmoney = 0,
-	@auto_v5mpositiontaking_9999 smallmoney = 0,
-	
-	@auto_v8mpositiontaking_1 smallmoney = 0,	
-	@auto_v8mpositiontaking_3 smallmoney = 0,	
-	@auto_v8mpositiontaking_20 smallmoney = 0,
-	
-	@auto_v10mpositiontaking_1 smallmoney = 0,
-	@auto_v10mpositiontaking_2 smallmoney = 0,
-	@auto_v10mpositiontaking_3 smallmoney = 0,	
-	@auto_v10mpositiontaking_20 smallmoney = 0,
-	
-	@auto_v11mpositiontaking_1 smallmoney = 0,	
-	@auto_v11mpositiontaking_20 smallmoney = 0,
-	
-	@auto_v99mpositiontaking_1 smallmoney = 0,
-	@auto_v99mpositiontaking_2 smallmoney = 0,
-	@auto_v99mpositiontaking_3 smallmoney = 0,	
-	@auto_v99mpositiontaking_20 smallmoney = 0,	
-	@auto_v99mpositiontaking_9999 smallmoney = 0,	
-	-- mix parlay of mixed sports
-	@auto_v99mpositiontaking_9 smallmoney = 0,	
-
-	@isauto_mpositiontaking_1 BIT = 0,
-	@isauto_mpositiontaking_2 BIT = 0,
-	@isauto_mpositiontaking_3 BIT = 0,
-	@isauto_mpositiontaking_4 BIT = 0,
-	@isauto_mpositiontaking_5 BIT = 0,
-	@isauto_mpositiontaking_6 BIT = 0,
-	@isauto_mpositiontaking_7 BIT = 0,
-	@isauto_mpositiontaking_8 BIT = 0,
-	@isauto_mpositiontaking_9 BIT = 0,
-	@isauto_mpositiontaking_10 BIT = 0,
-	@isauto_v2mpositiontaking_10 BIT = 0,
-	@isauto_v3mpositiontaking_10 BIT = 0,
-	@isauto_v5mpositiontaking_10 BIT = 0,
-	@isauto_v8mpositiontaking_10 BIT = 0,
-	@isauto_v10mpositiontaking_10 BIT = 0,
-	@isauto_v11mpositiontaking_10 BIT = 0,
-	@isauto_v99mpositiontaking_10 BIT = 0,
-	@isauto_mpositiontaking_9999 BIT = 0,
-	
-	@isauto_mlivepositiontaking_1 BIT = 0,
-	@isauto_mlivepositiontaking_3 BIT = 0,
-	@isauto_mlivepositiontaking_7 BIT = 0,
-	@isauto_mlivepositiontaking_8 BIT = 0,
-	
-	@isauto_v2mpositiontaking_1 BIT = 0,
-	@isauto_v2mpositiontaking_2 BIT = 0,
-	@isauto_v2mpositiontaking_3 BIT = 0,
-	@isauto_v2mpositiontaking_7 BIT = 0,
-	@isauto_v2mpositiontaking_8 BIT = 0,
---	@isauto_v2mpositiontaking_9 BIT = 0,
-	@isauto_v2mpositiontaking_20 BIT = 0,
-	@isauto_v2mpositiontaking_9999 BIT = 0,
-	
-	@isauto_v3mpositiontaking_1 BIT = 0,
-	@isauto_v3mpositiontaking_2 BIT = 0,
-	@isauto_v3mpositiontaking_3 BIT = 0,	
-	@isauto_v3mpositiontaking_20 BIT = 0,
-	
-	@isauto_v5mpositiontaking_1 BIT = 0,
-	@isauto_v5mpositiontaking_2 BIT = 0,
-	@isauto_v5mpositiontaking_3 BIT = 0,	
-	@isauto_v5mpositiontaking_20 BIT = 0,
-	@isauto_v5mpositiontaking_9999 BIT = 0,
-	
-	@isauto_v8mpositiontaking_1 BIT = 0,	
-	@isauto_v8mpositiontaking_3 BIT = 0,	
-	@isauto_v8mpositiontaking_20 BIT = 0,
-	
-	@isauto_v10mpositiontaking_1 BIT = 0,
-	@isauto_v10mpositiontaking_2 BIT = 0,
-	@isauto_v10mpositiontaking_3 BIT = 0,	
-	@isauto_v10mpositiontaking_20 BIT = 0,
-	
-	@isauto_v11mpositiontaking_1 BIT = 0,	
-	@isauto_v11mpositiontaking_20 BIT = 0,
-
-	@isauto_v99mpositiontaking_1 BIT = 0,
-	@isauto_v99mpositiontaking_2 BIT = 0,
-	@isauto_v99mpositiontaking_3 BIT = 0,	
-	@isauto_v99mpositiontaking_20 BIT = 0,
-	@isauto_v99mpositiontaking_9999 BIT = 0,
-	--- mix parlay of mixed sports
-	@isauto_v99mpositiontaking_9 BIT = 0,	
-		
-	@apositiontaking_1 SMALLMONEY = 0,
-	@apositiontaking_2 SMALLMONEY = 0,
-	@apositiontaking_3 SMALLMONEY = 0,
-	@apositiontaking_4 SMALLMONEY = 0,
-	@apositiontaking_5 SMALLMONEY = 0,
-	@apositiontaking_6 SMALLMONEY = 0,
-	@apositiontaking_7 SMALLMONEY = 0,
-	@apositiontaking_8 SMALLMONEY = 0,
-	@apositiontaking_9 SMALLMONEY = 0,
-	@apositiontaking_10 SMALLMONEY = 0,
-	@v2apositiontaking_10 SMALLMONEY = 0,
-	@v3apositiontaking_10 SMALLMONEY = 0,
-	@v5apositiontaking_10 SMALLMONEY = 0,
-	@v8apositiontaking_10 SMALLMONEY = 0,
-	@v10apositiontaking_10 SMALLMONEY = 0,
-	@v11apositiontaking_10 SMALLMONEY = 0,
-	@v99apositiontaking_10 SMALLMONEY = 0,
-	@apositiontaking_9999 SMALLMONEY = 0,
-	
-	@alivepositiontaking_1 SMALLMONEY = 0,
-	@alivepositiontaking_3 SMALLMONEY = 0,
-	@alivepositiontaking_7 SMALLMONEY = 0,
-	@alivepositiontaking_8 SMALLMONEY = 0,
-	
-	@v2apositiontaking_1 SMALLMONEY = 0,
-	@v2apositiontaking_2 SMALLMONEY = 0,
-	@v2apositiontaking_3 SMALLMONEY = 0,
-	@v2apositiontaking_7 SMALLMONEY = 0,
-	@v2apositiontaking_8 SMALLMONEY = 0,
-	--@v2apositiontaking_9 SMALLMONEY = 0,
-	@v2apositiontaking_20 SMALLMONEY = 0,
-	
-	@v2apositiontaking_9999 SMALLMONEY = 0,
-
-	@v3apositiontaking_1 SMALLMONEY = 0,
-	@v3apositiontaking_2 SMALLMONEY = 0,
-	@v3apositiontaking_3 SMALLMONEY = 0,
-	@v3apositiontaking_20 SMALLMONEY = 0,
-
-	@v5apositiontaking_1 SMALLMONEY = 0,
-	@v5apositiontaking_2 SMALLMONEY = 0,
-	@v5apositiontaking_3 SMALLMONEY = 0,
-	@v5apositiontaking_20 SMALLMONEY = 0,
-	@v5apositiontaking_9999 SMALLMONEY = 0,
-
-	@v8apositiontaking_1 SMALLMONEY = 0,
-	@v8apositiontaking_3 SMALLMONEY = 0,
-	@v8apositiontaking_20 SMALLMONEY = 0,
-
-	@v10apositiontaking_1 SMALLMONEY = 0,
-	@v10apositiontaking_2 SMALLMONEY = 0,
-	@v10apositiontaking_3 SMALLMONEY = 0,
-	@v10apositiontaking_20 SMALLMONEY = 0,
-
-	@v11apositiontaking_1 SMALLMONEY = 0,
-	@v11apositiontaking_20 SMALLMONEY = 0,
-
-	@v99apositiontaking_1 SMALLMONEY = 0,
-	@v99apositiontaking_2 SMALLMONEY = 0,
-	@v99apositiontaking_3 SMALLMONEY = 0,
-	@v99apositiontaking_9 SMALLMONEY = 0,
-	@v99apositiontaking_20 SMALLMONEY = 0,
-	@v99apositiontaking_9999 SMALLMONEY = 0,	
-				  	
-	@discount decimal(9,8)= 0,	
-	@discountcs DECIMAL(9,8)=0, 
-	--comm 1x2
-	@discount1x2 DECIMAL(9,8)=0,
-	
-	
-	@playerdiscount decimal(9,8) = 0, 
-	@playerdiscountcs decimal(9,8) = 0,
-	--1x2 
-	@playerdiscount1x2 decimal(9,8)=0,	
-
-	
-	@adiscount decimal(9,8) = 0,
-	@adiscountcs decimal(9,8) = 0,
-	@adiscount1x2 decimal(9,8) = 0,
-
-	
-	@sdiscount decimal(9,8) = 0,		
-	@sdiscountcs decimal(9,8) = 0,	
-	@sdiscount1x2 decimal(9,8) = 0,			
-	
-	-->Bet Setting XML
-	@BetSettingXML VARCHAR(8000) = '',
-
-	-- Myanma Odds
-	@discountMyanmarOdds DECIMAL(9,8) = 0,	
-	@IsMyanmarOdds BIT = 0,
+	@SettingType25 VARCHAR(MAX)= '', --Discount
+	@SettingType26 VARCHAR(MAX)= '', --Bet Setting
+	@SettingType27 VARCHAR(MAX)= '', --Parlay Max Payout
+	@SettingType28 VARCHAR(MAX)= '', --PT
 	
 	@SettingStatus TINYINT = 0,
 	@ErrCode INT = 0 OUTPUT
@@ -546,6 +72,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 			- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 			- 20230921@Johnson: extend MaxPT = 0.93 [redmine:194132]
+			- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -553,1008 +80,665 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 BEGIN
     SET NOCOUNT ON
 			
-     if (dbo.f_CheckRepTable('CustSetting') = 1 
-		  AND dbo.f_CheckRepTable('CustOverride') = 1 
-		  AND dbo.f_CheckRepTable('ProductGlobalSetting') = 1 
-		  AND dbo.f_CheckRepTable('ProductBetSetting') = 1
-		  AND dbo.f_CheckRepTable('AgentCommRate') = 1
-		  AND dbo.f_CheckRepTable('CustCommRate') = 1 
-		  AND dbo.f_CheckRepTable('CustBetSetting_Agent') = 1
+     IF ( dbo.f_CheckRepTable('CustBetSetting_Agent') = 1
 		  AND dbo.f_CheckRepTable('CustBetSetting_Member') = 1 
 		  AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1 
 		  AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Member') = 1 
+		  AND dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1 
+		  AND dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 1 
+		  AND dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1 
+		  AND dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1 
 	   )
 	BEGIN
-
-	DECLARE @discountnumber DECIMAL(9,8)=0,
-	@playerdiscountnumber decimal(9,8)=0,
-	@adiscountnumber decimal(9,8) = 0,
-	@sdiscountnumber decimal(9,8) = 0
-	
-
-    DECLARE @ProductGlobalSetting TABLE (Sporttype INT, Bettype INT, MaxPositiontaking SMALLMONEY, IsDep BIT)
-    DECLARE @ProductBetSetting TABLE (Currency TINYINT, Bettype INT, MinBet MONEY)     
-	   
-	DECLARE @currency INT
-          , @super    INT
-          , @master   INT
-
-    SELECT @currency = currency
-         , @super = srecommend
-         , @master = mrecommend
-      FROM dbo.custInfo WITH(NOLOCK)
-    WHERE custid = @custid	
-	
-	
-	DECLARE @DocHandler INT	
-	DECLARE @BetSetting TABLE(
-			SportType         SMALLINT, 
-			BetType           SMALLINT, 
-			MinBet            MONEY, 
-			MaxBet            MONEY, 
-			MaxPerMatch       MONEY, 
-			MaxPerNumber      MONEY, 
-			MaxPayoutPerMatch MONEY
-		);
-
-	--Parse SB Bet Setting from XML
-	IF ISNULL(@BetSettingXML,'') <> ''
-	BEGIN
-		EXEC sp_xml_preparedocument @DocHandler OUTPUT, @BetSettingXML
-
-		INSERT INTO @BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT SportType        
-			,BetType          
-			,MinBet           
-			,MaxBet           
-			,MaxPerMatch      
-			,MaxPerNumber     
-			,MaxPayoutPerMatch
-		FROM OPENXML (@DocHandler, '/Root/Row',1) 
-		WITH (
-			SportType         SMALLINT, 
-			BetType           SMALLINT, 
-			MinBet            MONEY, 
-			MaxBet            MONEY, 
-			MaxPerMatch       MONEY, 
-			MaxPerNumber      MONEY, 
-			MaxPayoutPerMatch MONEY
-		) AS Data
-
-		EXEC sp_xml_removedocument @DocHandler
-	END
-	ELSE
-	BEGIN
-		--Error Occurs
-		SELECT @ErrCode=116
-					
-		RETURN
-	END
-
-
-	IF @roleid = 4
-	BEGIN					
-		INSERT INTO [dbo].[custsetting]([custId], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [alivepositiontaking], [mlivepositiontaking], [slivepositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], autopositiontaking, autolivepositiontaking, isautopositiontaking, isautolivepositiontaking ,[autompositiontaking],[autolivempositiontaking],[isautompositiontaking],[isautolivempositiontaking])
-				SELECT @custid, 1, 1, @apositiontaking_1, @mpositiontaking_1, @spositiontaking_1, @alivepositiontaking_1, @mlivepositiontaking_1, @slivepositiontaking_1, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 3, 1, @apositiontaking_3, @mpositiontaking_3, @spositiontaking_3, @alivepositiontaking_3, @mlivepositiontaking_3, @slivepositiontaking_3, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 7, 1, @apositiontaking_7, @mpositiontaking_7, @spositiontaking_7, @alivepositiontaking_7, @mlivepositiontaking_7, @slivepositiontaking_7, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 8, 1, @apositiontaking_8, @mpositiontaking_8, @spositiontaking_8, @alivepositiontaking_8, @mlivepositiontaking_8, @slivepositiontaking_8, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 2, 1, @apositiontaking_2, @mpositiontaking_2, @spositiontaking_2, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		--1x2
-		UNION ALL	SELECT @custid, 5, 1, @apositiontaking_5, @mpositiontaking_5, @spositiontaking_5, 0, 0, 0, 0, 0, 0, @discount1x2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL	SELECT @custid, 4, 1, @apositiontaking_4, @mpositiontaking_4, @spositiontaking_4, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 6, 1, @apositiontaking_6, @mpositiontaking_6, @spositiontaking_6, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 9, 1, @apositiontaking_9, @mpositiontaking_9, @spositiontaking_9, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		CREATE TABLE #ProductSettingDetail_ExecRep00(
+			[SettingType] [smallint] ,
+			[SportType] [smallint] ,
+			[BetType] [smallint] ,
+			[IsLive] [bit] ,
+			[ProductID] [tinyint] ,
+			[MaxPT] [smallmoney] ,
+			[MaxDiscount] [decimal](9, 8) ,
+			[IsSync] [bit] ,
+			[IsHidden] [bit] ,
+			[IsDisabled] [bit] ,
+			[SettingLevel] [tinyint] ,
+			[DisplayOrder] [tinyint] ,
+			[SettingStatus] [tinyint] ,
+			[IntervalValue] [decimal](19, 8) ,
+			[RealProductId] [tinyint] ,
+			[MaxChoice] [tinyint] ,
+			[ProductSettingID] [int] ,
+			[Parent_ProductSettingID] [int] ,
+			[Child_DisplayOrder] [int] ,
+			SubType [TINYINT],
+			PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+		)
 		
-		UNION ALL	SELECT @custid, 10, 1, @apositiontaking_10, @mpositiontaking_10, @spositiontaking_10, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-				
-		UNION ALL	SELECT @custid, 9999, 1, @apositiontaking_9999, @mpositiontaking_9999, @spositiontaking_9999, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL	SELECT @custid, 1, 2, @v2apositiontaking_1, @v2mpositiontaking_1, @v2spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 2, 2, @v2apositiontaking_2, @v2mpositiontaking_2, @v2spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 3, 2, @v2apositiontaking_3, @v2mpositiontaking_3, @v2spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 7, 2, @v2apositiontaking_7, @v2mpositiontaking_7, @v2spositiontaking_7, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 8, 2, @v2apositiontaking_8, @v2mpositiontaking_8, @v2spositiontaking_8, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		--UNION ALL	select @custid, 9, 2, @v2apositiontaking_9, @v2mpositiontaking_9, @v2spositiontaking_9, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, @v2spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 10, 2, @v2apositiontaking_10, @v2mpositiontaking_10, @v2spositiontaking_10,  0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 9999, 2, @v2apositiontaking_9999, @v2mpositiontaking_9999, @v2spositiontaking_9999, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		
-		UNION ALL	SELECT @custid, 1, 3, @v3apositiontaking_1, @v3mpositiontaking_1, @v3spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 2, 3, @v3apositiontaking_2, @v3mpositiontaking_2, @v3spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 3, 3, @v3apositiontaking_3, @v3mpositiontaking_3, @v3spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 20, 3, @v3apositiontaking_20, @v3mpositiontaking_20, @v3spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 10, 3, @v3apositiontaking_10, @v3mpositiontaking_10, @v3spositiontaking_10,  0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL	SELECT @custid, 1, 5, @v5apositiontaking_1, @v5mpositiontaking_1, @v5spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 2, 5, @v5apositiontaking_2, @v5mpositiontaking_2, @v5spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 3, 5, @v5apositiontaking_3, @v5mpositiontaking_3, @v5spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 20, 5, @v5apositiontaking_20, @v5mpositiontaking_20, @v5spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 9999, 5, @v5apositiontaking_9999, @v5mpositiontaking_9999, @v5spositiontaking_9999, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 10, 5, @v5apositiontaking_10, @v5mpositiontaking_10, @v5spositiontaking_10, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL	SELECT @custid, 1, 8, @v8apositiontaking_1, @v8mpositiontaking_1, @v8spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 3, 8, @v8apositiontaking_3, @v8mpositiontaking_3, @v8spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 20, 8, @v8apositiontaking_20, @v8mpositiontaking_20, @v8spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 10, 8, @v8apositiontaking_10, @v8mpositiontaking_10, @v8spositiontaking_10,0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL	SELECT @custid, 1, 10, @v10apositiontaking_1, @v10mpositiontaking_1, @v10spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 2, 10, @v10apositiontaking_2, @v10mpositiontaking_2, @v10spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 3, 10, @v10apositiontaking_3, @v10mpositiontaking_3, @v10spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 20, 10, @v10apositiontaking_20, @v10mpositiontaking_20, @v10spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 10, 10, @v10apositiontaking_10, @v10mpositiontaking_10, @v10spositiontaking_10, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL	SELECT @custid, 1, 11, @v11apositiontaking_1, @v11mpositiontaking_1, @v11spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, @v11spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 10, 11, @v11apositiontaking_10, @v11mpositiontaking_10, @v11spositiontaking_10, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL	SELECT @custid, 1, 99, @v99apositiontaking_1, @v99mpositiontaking_1, @v99spositiontaking_1, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 2, 99, @v99apositiontaking_2, @v99mpositiontaking_2, @v99spositiontaking_2, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 3, 99, @v99apositiontaking_3, @v99mpositiontaking_3, @v99spositiontaking_3, 0,0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, @v99spositiontaking_20, 0, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 10, 99, @v99apositiontaking_10, @v99mpositiontaking_10, @v99spositiontaking_10, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL	SELECT @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, @v99spositiontaking_9999, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		--Mix Sports Parlay
-		UNION ALL	SELECT @custid, 9, 99, @v99apositiontaking_9, @v99mpositiontaking_9, @v99spositiontaking_9, 0,0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		
-		IF @@ERROR <> 0
+		IF dbo.f_CheckRepTable('ProductSettingProfile') = 1 
+			AND dbo.f_CheckRepTable('ProductProfileSiteCurrency') = 1		
 		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE custSetting WITH (ROWLOCK) WHERE custId  =@custid
-					
-			RETURN
-		END		
+			INSERT INTO #ProductSettingDetail_ExecRep00(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
+			SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+					,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
+			FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 
-		INSERT INTO [dbo].[custoverride]([custId], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-		SELECT @custid, 1, 1, 0, @spositiontaking_1, 0, @slivepositiontaking_1
-		UNION ALL SELECT @custid, 3, 1, 0, @spositiontaking_3, 0, @slivepositiontaking_3
-		UNION ALL SELECT @custid, 7, 1, 0, @spositiontaking_7, 0, @slivepositiontaking_7
-		UNION ALL SELECT @custid, 8, 1, 0, @spositiontaking_8, 0, @slivepositiontaking_8
-		UNION ALL SELECT @custid, 2, 1, 0, @spositiontaking_2, 0, 0.93
-		UNION ALL SELECT @custid, 4, 1, 0, @spositiontaking_4, 0, 0.93
-		UNION ALL SELECT @custid, 5, 1, 0, @spositiontaking_5, 0, 0.93
-		UNION ALL SELECT @custid, 6, 1, 0, @spositiontaking_6, 0, 0.93
-		UNION ALL SELECT @custid, 9, 1, 0, @spositiontaking_9, 0, 0.93
-		UNION ALL SELECT @custid, 10, 1, 0, @spositiontaking_10, 0, 0.93
-		UNION ALL SELECT @custid, 10, 2, 0, @v2spositiontaking_10, 0, 0.93
-		UNION ALL SELECT @custid, 10, 3, 0, @v3spositiontaking_10, 0, 0.93
-		UNION ALL SELECT @custid, 10, 5, 0, @v5spositiontaking_10, 0, 0.93
-		UNION ALL SELECT @custid, 10, 8, 0, @v8spositiontaking_10, 0, 0.93
-		UNION ALL SELECT @custid, 10, 10, 0, @v10spositiontaking_10, 0, 0.93
-		UNION ALL SELECT @custid, 10, 11, 0, @v11spositiontaking_10, 0, 0.93
-		UNION ALL SELECT @custid, 10, 99, 0, @v99spositiontaking_10, 0, 0.93
-		UNION ALL SELECT @custid, 9999, 1, 0, @spositiontaking_9999, 0, 0.93
-
-		UNION ALL SELECT @custid, 1, 2, 0, @v2spositiontaking_1, 0, 0.93
-		UNION ALL SELECT @custid, 2, 2, 0, @v2spositiontaking_2, 0, 0.93
-		UNION ALL SELECT @custid, 3, 2, 0, @v2spositiontaking_3, 0, 0.93
-		UNION ALL SELECT @custid, 7, 2, 0, @v2spositiontaking_7, 0, 0.93
-		UNION ALL SELECT @custid, 8, 2, 0, @v2spositiontaking_8, 0, 0.93
-		--UNION ALL select @custid, 9, 2, 0, @v2spositiontaking_9, 0, 0.93
-		UNION ALL SELECT @custid, 20, 2, 0, @v2spositiontaking_20, 0, 0.93
-		UNION ALL SELECT @custid, 9999, 2, 0, @v2spositiontaking_9999, 0, 0.93
-
-		UNION ALL SELECT @custid, 1, 3, 0, @v3spositiontaking_1, 0, 0.93
-		UNION ALL SELECT @custid, 2, 3, 0, @v3spositiontaking_2, 0, 0.93
-		UNION ALL SELECT @custid, 3, 3, 0, @v3spositiontaking_3, 0, 0.93
-		UNION ALL SELECT @custid, 20, 3, 0, @v3spositiontaking_20, 0, 0.93
-
-		UNION ALL SELECT @custid, 1, 5, 0, @v5spositiontaking_1, 0, 0.93
-		UNION ALL SELECT @custid, 2, 5, 0, @v5spositiontaking_2, 0, 0.93
-		UNION ALL SELECT @custid, 3, 5, 0, @v5spositiontaking_3, 0, 0.93
-		UNION ALL SELECT @custid, 20, 5, 0, @v5spositiontaking_20, 0, 0.93
-		UNION ALL SELECT @custid, 9999, 5, 0, @v5spositiontaking_9999, 0, 0.93
-
-		UNION ALL SELECT @custid, 1, 8, 0, @v8spositiontaking_1, 0, 0.93
-		UNION ALL SELECT @custid, 3, 8, 0, @v8spositiontaking_3, 0, 0.93
-		UNION ALL SELECT @custid, 20, 8, 0, @v8spositiontaking_20, 0, 0.93
-
-		UNION ALL SELECT @custid, 1, 10, 0, @v10spositiontaking_1, 0, 0.93
-		UNION ALL SELECT @custid, 2, 10, 0, @v10spositiontaking_2, 0, 0.93
-		UNION ALL SELECT @custid, 3, 10, 0, @v10spositiontaking_3, 0, 0.93
-		UNION ALL SELECT @custid, 20, 10, 0, @v10spositiontaking_20, 0, 0.93
-
-		UNION ALL SELECT @custid, 1, 11, 0, @v11spositiontaking_1, 0, 0.93
-		UNION ALL SELECT @custid, 20, 11, 0, @v11spositiontaking_20, 0, 0.93
-
-		UNION ALL SELECT @custid, 1, 99, 0, @v99spositiontaking_1, 0, 0.93
-		UNION ALL SELECT @custid, 2, 99, 0, @v99spositiontaking_2, 0, 0.93
-		UNION ALL SELECT @custid, 3, 99, 0, @v99spositiontaking_3, 0, 0.93
-		UNION ALL SELECT @custid, 9, 99, 0, @v99spositiontaking_9, 0, 0.93
-		UNION ALL SELECT @custid, 20, 99, 0, @v99spositiontaking_20, 0, 0.93
-		UNION ALL SELECT @custid, 9999, 99, 0, @v99spositiontaking_9999, 0, 0.93
-	
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE custSetting WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE [custOverride] WITH (ROWLOCK) WHERE custId  =@custid
-			
-			RETURN
-		END							
-				
-	END--end roleid = 4
-	ELSE IF @roleid = 3
-	BEGIN			
-		INSERT INTO [dbo].[custsetting]([custid], [bettype], [sporttype], [spositiontaking], [mpositiontaking], [apositiontaking], [slivepositiontaking], [mlivepositiontaking], [alivepositiontaking], autolivepositiontaking, autopositiontaking, [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], playerdiscount, discount, isautopositiontaking, isautolivepositiontaking, [autolivempositiontaking],[isautolivempositiontaking],[autompositiontaking],[isautompositiontaking] )
-		select @custid, 1, 1, @spositiontaking_1, @mpositiontaking_1, 0, @slivepositiontaking_1, @mlivepositiontaking_1, 0, @auto_slivepositiontaking_1, @auto_spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_spositiontaking_1, @isauto_slivepositiontaking_1, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 1, @spositiontaking_3, @mpositiontaking_3, 0, @slivepositiontaking_3, @mlivepositiontaking_3, 0, @auto_slivepositiontaking_3, @auto_spositiontaking_3, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_spositiontaking_3, @isauto_slivepositiontaking_3, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 7, 1, @spositiontaking_7, @mpositiontaking_7, 0, @slivepositiontaking_7, @mlivepositiontaking_7, 0, @auto_slivepositiontaking_7, @auto_spositiontaking_7, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_spositiontaking_7, @isauto_slivepositiontaking_7, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 8, 1, @spositiontaking_8, @mpositiontaking_8, 0, @slivepositiontaking_8, @mlivepositiontaking_8, 0, @auto_slivepositiontaking_8, @auto_spositiontaking_8, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_spositiontaking_8, @isauto_slivepositiontaking_8, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 1, @spositiontaking_2, @mpositiontaking_2, 0, 0, 0, 0, 0, @auto_spositiontaking_2, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_spositiontaking_2, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 4, 1, @spositiontaking_4, @mpositiontaking_4, 0, 0, 0, 0, 0, @auto_spositiontaking_4, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_spositiontaking_4, 0, 0, 0, 0, 0
-		--1x2
-		UNION ALL
-		select @custid, 5, 1, @spositiontaking_5, @mpositiontaking_5, 0, 0, 0, 0, 0, @auto_spositiontaking_5, @discount1x2, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_spositiontaking_5, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 6, 1, @spositiontaking_6, @mpositiontaking_6, 0, 0, 0, 0, 0, @auto_spositiontaking_6, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_spositiontaking_6, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 9, 1, @spositiontaking_9, @mpositiontaking_9, 0, 0, 0, 0, 0, @auto_spositiontaking_9, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_spositiontaking_9, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 1, @spositiontaking_10, @mpositiontaking_10, 0, 0, 0, 0, 0, @auto_spositiontaking_10, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_spositiontaking_10, 0, 0, 0, 0, 0
-				
-		UNION ALL
-		select @custid, 9999, 1, @spositiontaking_9999, @mpositiontaking_9999, 0, 0, 0, 0, 0, @auto_spositiontaking_9999, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_spositiontaking_9999, 0, 0, 0, 0, 0
-		
-		UNION ALL
-		select @custid, 1, 2, @v2spositiontaking_1, @v2mpositiontaking_1, 0, 0, 0, 0, 0, @auto_v2spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v2spositiontaking_1, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 2, @v2spositiontaking_2, @v2mpositiontaking_2, 0, 0, 0, 0, 0, @auto_v2spositiontaking_2, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v2spositiontaking_2, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 2, @v2spositiontaking_3, @v2mpositiontaking_3, 0, 0, 0, 0, 0, @auto_v2spositiontaking_3, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v2spositiontaking_3, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 7, 2, @v2spositiontaking_7, @v2mpositiontaking_7, 0, 0, 0, 0, 0, @auto_v2spositiontaking_7, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v2spositiontaking_7, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 8, 2, @v2spositiontaking_8, @v2mpositiontaking_8, 0, 0, 0, 0, 0, @auto_v2spositiontaking_8, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v2spositiontaking_8, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 2, @v2spositiontaking_10, @v2mpositiontaking_10, 0, 0, 0, 0, 0, @auto_v2spositiontaking_10, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v2spositiontaking_10, 0, 0, 0, 0, 0
-		--UNION ALL
-		--select @custid, 9, 2,   @v2spositiontaking_9,   @v2mpositiontaking_9,   0, 0, 0, 0, 0, @auto_v2spositiontaking_9,  @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v2spositiontaking_9, 0  , 0, 0, 0, 0
-		--Get commission of Correct Score for MoneyLine
-		UNION ALL
-		select @custid, 20, 2, @v2spositiontaking_20, @v2mpositiontaking_20, 0, 0, 0, 0, 0, @auto_v2spositiontaking_20, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v2spositiontaking_20, 0, 0, 0, 0, 0
-		
-		UNION ALL
-		SELECT @custid, 9999, 2, @v2spositiontaking_9999, @v2mpositiontaking_9999, 0, 0, 0, 0, 0, @auto_v2spositiontaking_9999, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v2spositiontaking_9999, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 3, @v3spositiontaking_1, @v3mpositiontaking_1, 0, 0, 0, 0, 0, @auto_v3spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v3spositiontaking_1, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 3, @v3spositiontaking_2, @v3mpositiontaking_2, 0, 0, 0, 0, 0, @auto_v3spositiontaking_2, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v3spositiontaking_2, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 3, @v3spositiontaking_3, @v3mpositiontaking_3, 0, 0, 0, 0, 0, @auto_v3spositiontaking_3, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v3spositiontaking_3, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 3, @v3spositiontaking_20, @v3mpositiontaking_20, 0, 0, 0, 0, 0, @auto_v3spositiontaking_20, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v3spositiontaking_20, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 3, @v3spositiontaking_10, @v3mpositiontaking_10, 0, 0, 0, 0, 0, @auto_v3spositiontaking_10, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v3spositiontaking_10, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 5, @v5spositiontaking_1, @v5mpositiontaking_1, 0, 0, 0, 0, 0, @auto_v5spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v5spositiontaking_1, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 5, @v5spositiontaking_2, @v5mpositiontaking_2, 0, 0, 0, 0, 0, @auto_v5spositiontaking_2, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v5spositiontaking_2, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 5, @v5spositiontaking_3, @v5mpositiontaking_3, 0, 0, 0, 0, 0, @auto_v5spositiontaking_3, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v5spositiontaking_3, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 5, @v5spositiontaking_20, @v5mpositiontaking_20, 0, 0, 0, 0, 0, @auto_v5spositiontaking_20, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v5spositiontaking_20, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 9999, 5, @v5spositiontaking_9999, @v5mpositiontaking_9999, 0, 0, 0, 0, 0, @auto_v5spositiontaking_9999, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v5spositiontaking_9999, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 5, @v5spositiontaking_10, @v5mpositiontaking_10, 0, 0, 0, 0, 0, @auto_v5spositiontaking_10, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v5spositiontaking_10, 0, 0, 0, 0, 0
-		
-		UNION ALL
-		select @custid, 1, 8, @v8spositiontaking_1, @v8mpositiontaking_1, 0, 0, 0, 0, 0, @auto_v8spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v8spositiontaking_1, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 8, @v8spositiontaking_3, @v8mpositiontaking_3, 0, 0, 0, 0, 0, @auto_v8spositiontaking_3, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v8spositiontaking_3, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 8, @v8spositiontaking_20, @v8mpositiontaking_20, 0, 0, 0, 0, 0, @auto_v8spositiontaking_20, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v8spositiontaking_20, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 8, @v8spositiontaking_10, @v8mpositiontaking_10, 0, 0, 0, 0, 0, @auto_v8spositiontaking_10, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v8spositiontaking_10, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 10, @v10spositiontaking_1, @v10mpositiontaking_1, 0, 0, 0, 0, 0, @auto_v10spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v10spositiontaking_1, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 10, @v10spositiontaking_2, @v10mpositiontaking_2, 0, 0, 0, 0, 0, @auto_v10spositiontaking_2, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v10spositiontaking_2, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 10, @v10spositiontaking_3, @v10mpositiontaking_3, 0, 0, 0, 0, 0, @auto_v10spositiontaking_3, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v10spositiontaking_3, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 10, @v10spositiontaking_20, @v10mpositiontaking_20, 0, 0, 0, 0, 0, @auto_v10spositiontaking_20, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v10spositiontaking_20, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 10, @v10spositiontaking_10, @v10mpositiontaking_10, 0, 0, 0, 0, 0, @auto_v10spositiontaking_10,  @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v10spositiontaking_10, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 11, @v11spositiontaking_1, @v11mpositiontaking_1, 0, 0, 0, 0, 0, @auto_v11spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v11spositiontaking_1, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 11, @v11spositiontaking_20, @v11mpositiontaking_20, 0, 0, 0, 0, 0, @auto_v11spositiontaking_20, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v11spositiontaking_20, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 11, @v11spositiontaking_10, @v11mpositiontaking_10, 0, 0, 0, 0, 0, @auto_v11spositiontaking_10,  @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v11spositiontaking_10, 0, 0, 0, 0, 0
-
-		--v99
-		UNION ALL
-		select @custid, 1, 99, @v99spositiontaking_1, @v99mpositiontaking_1, 0, 0, 0, 0, 0, @auto_v99spositiontaking_1, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v99spositiontaking_1, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 99, @v99spositiontaking_2, @v99mpositiontaking_2, 0, 0, 0, 0, 0, @auto_v99spositiontaking_2, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v99spositiontaking_2, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 99, @v99spositiontaking_3, @v99mpositiontaking_3, 0, 0, 0, 0, 0, @auto_v99spositiontaking_3, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, 0, 0, @isauto_v99spositiontaking_3, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 99, @v99spositiontaking_20, @v99mpositiontaking_20, 0, 0, 0, 0, 0, @auto_v99spositiontaking_20, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v99spositiontaking_20, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 99, @v99spositiontaking_10, @v99mpositiontaking_10, 0, 0, 0, 0, 0, @auto_v99spositiontaking_10,  @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v99spositiontaking_10, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 9999, 99, @v99spositiontaking_9999, @v99mpositiontaking_9999, 0, 0, 0, 0, 0, @auto_v99spositiontaking_9999,  @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v99spositiontaking_9999, 0, 0, 0, 0, 0
-		-- mix parlay of mixed sports
-		UNION ALL
-		select @custid, 9, 99, @v99spositiontaking_9, @v99mpositiontaking_9, 0, 0, 0, 0, 0, @auto_v99spositiontaking_9, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, @isauto_v99spositiontaking_9, 0, 0, 0, 0, 0
-	
-		if @@Error <> 0
-		BEGIN
-			--Error Occurs	
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE [custsetting] with (ROWLOCK) where custid =  @custid
-						
-			return
-		END		
-
-		INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-		select @custid, 1, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 7, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 8, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 4, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 5, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 6, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 3, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 8, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 10, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 11, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9999, 1, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 7, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 8, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 2, 0, 0.93, 0, 0.93
-		--UNION ALL select @custid, 9, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9999, 2, 0, 0.93, 0, 0.93
-		
-		UNION ALL select @custid, 1, 3, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 3, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 3, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 3, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9999, 5, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 8, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 8, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 8, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 10, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 10, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 10, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 10, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 11, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 11, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9999, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 99, 0, 0.93, 0, 0.93
-	
-		if @@Error <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=118
-			
-			-- ROLLBACK MANUALLY
-			DELETE [CustSetting] with (ROWLOCK) where custid =  @custid
-			DELETE custoverride with (ROWLOCK) where custid =  @custid
-						
-			return
-		END				
-		     
-	END--end roleid =3
-	ELSE IF @roleid = 2
-	BEGIN				
-		INSERT INTO [dbo].[custsetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [alivepositiontaking], [mlivepositiontaking], [slivepositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], autompositiontaking, autolivempositiontaking, isautompositiontaking, isautolivempositiontaking,[autopositiontaking],[autolivepositiontaking],[isautopositiontaking],[isautolivepositiontaking])
-		select @custid, 1, 1, @apositiontaking_1, @mpositiontaking_1, 0, @alivepositiontaking_1, @mlivepositiontaking_1, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_mpositiontaking_1, @auto_mlivepositiontaking_1, @isauto_mpositiontaking_1, @isauto_mlivepositiontaking_1, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 3, 1, @apositiontaking_3, @mpositiontaking_3, 0, @alivepositiontaking_3, @mlivepositiontaking_3, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_mpositiontaking_3, @auto_mlivepositiontaking_3, @isauto_mpositiontaking_3, @isauto_mlivepositiontaking_3, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 7, 1, @apositiontaking_7, @mpositiontaking_7, 0, @alivepositiontaking_7, @mlivepositiontaking_7, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_mpositiontaking_7, @auto_mlivepositiontaking_7, @isauto_mpositiontaking_7, @isauto_mlivepositiontaking_7, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 8, 1, @apositiontaking_8, @mpositiontaking_8, 0, @alivepositiontaking_8, @mlivepositiontaking_8, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_mpositiontaking_8, @auto_mlivepositiontaking_8, @isauto_mpositiontaking_8, @isauto_mlivepositiontaking_8, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 2, 1, @apositiontaking_2, @mpositiontaking_2, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_mpositiontaking_2, 0, @isauto_mpositiontaking_2, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 4, 1, @apositiontaking_4, @mpositiontaking_4, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_mpositiontaking_4, 0, @isauto_mpositiontaking_4, 0, 0 ,0 ,0 ,0
-		--1x2
-		UNION ALL
-		select @custid, 5, 1, @apositiontaking_5, @mpositiontaking_5, 0, 0, 0, 0, 0, @discount1x2, 0, 0, 0, 0, 0, 0, 0, 0, @auto_mpositiontaking_5, 0, @isauto_mpositiontaking_5, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 6, 1, @apositiontaking_6, @mpositiontaking_6, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_mpositiontaking_6, 0, @isauto_mpositiontaking_6, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 9, 1, @apositiontaking_9, @mpositiontaking_9, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_mpositiontaking_9, 0, @isauto_mpositiontaking_9, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 10, 1, @apositiontaking_10, @mpositiontaking_10, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_mpositiontaking_10, 0, @isauto_mpositiontaking_10, 0, 0 ,0 ,0 ,0
-				
-		UNION ALL
-		select @custid, 9999, 1, @apositiontaking_9999, @mpositiontaking_9999, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_mpositiontaking_9999, 0, @isauto_mpositiontaking_9999, 0, 0 ,0 ,0 ,0
-		
-		UNION ALL
-		select @custid, 1, 2, @v2apositiontaking_1, @v2mpositiontaking_1, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v2mpositiontaking_1, 0, @isauto_v2mpositiontaking_1, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 2, 2, @v2apositiontaking_2, @v2mpositiontaking_2, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v2mpositiontaking_2, 0, @isauto_v2mpositiontaking_2, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 3, 2, @v2apositiontaking_3, @v2mpositiontaking_3, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v2mpositiontaking_3, 0, @isauto_v2mpositiontaking_3, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 7, 2, @v2apositiontaking_7, @v2mpositiontaking_7, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v2mpositiontaking_7, 0, @isauto_v2mpositiontaking_7, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 8, 2, @v2apositiontaking_8, @v2mpositiontaking_8, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v2mpositiontaking_8, 0, @isauto_v2mpositiontaking_8, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 10, 2, @v2apositiontaking_10, @v2mpositiontaking_10, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v2mpositiontaking_10, 0, @isauto_v2mpositiontaking_10, 0, 0 ,0 ,0 ,0
-		--UNION ALL
-		--select @custid, 9, 2, @v2apositiontaking_9, @v2mpositiontaking_9, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v2mpositiontaking_9, 0, @isauto_v2mpositiontaking_9, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v2mpositiontaking_20, 0, @isauto_v2mpositiontaking_20, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 9999, 2, @v2apositiontaking_9999, @v2mpositiontaking_9999, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v2mpositiontaking_9999, 0, @isauto_v2mpositiontaking_9999, 0, 0 ,0 ,0 ,0
-		
-		UNION ALL
-		select @custid, 1, 3, @v3apositiontaking_1, @v3mpositiontaking_1, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v3mpositiontaking_1, 0, @isauto_v3mpositiontaking_1, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 2, 3, @v3apositiontaking_2, @v3mpositiontaking_2, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v3mpositiontaking_2, 0, @isauto_v3mpositiontaking_2, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 3, 3, @v3apositiontaking_3, @v3mpositiontaking_3, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v3mpositiontaking_3, 0, @isauto_v3mpositiontaking_3, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 20, 3, @v3apositiontaking_20, @v3mpositiontaking_20, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v3mpositiontaking_20, 0, @isauto_v3mpositiontaking_20, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 10, 3, @v3apositiontaking_10, @v3mpositiontaking_10, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v3mpositiontaking_10, 0, @isauto_v3mpositiontaking_10, 0, 0 ,0 ,0 ,0
-
-		UNION ALL
-		select @custid, 1, 5, @v5apositiontaking_1, @v5mpositiontaking_1, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v5mpositiontaking_1, 0, @isauto_v5mpositiontaking_1, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 2, 5, @v5apositiontaking_2, @v5mpositiontaking_2, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v5mpositiontaking_2, 0, @isauto_v5mpositiontaking_2, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 3, 5, @v5apositiontaking_3, @v5mpositiontaking_3, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v5mpositiontaking_3, 0, @isauto_v5mpositiontaking_3, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 20, 5, @v5apositiontaking_20, @v5mpositiontaking_20, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v5mpositiontaking_20, 0, @isauto_v5mpositiontaking_20, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 9999, 5, @v5apositiontaking_9999, @v5mpositiontaking_9999, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v5mpositiontaking_9999, 0, @isauto_v5mpositiontaking_9999, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 10, 5, @v5apositiontaking_10, @v5mpositiontaking_10, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v5mpositiontaking_10, 0, @isauto_v5mpositiontaking_10, 0, 0 ,0 ,0 ,0
-
-		UNION ALL
-		select @custid, 1, 8, @v8apositiontaking_1, @v8mpositiontaking_1, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v8mpositiontaking_1, 0, @isauto_v8mpositiontaking_1, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 3, 8, @v8apositiontaking_3, @v8mpositiontaking_3, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v8mpositiontaking_3, 0, @isauto_v8mpositiontaking_3, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 20, 8, @v8apositiontaking_20, @v8mpositiontaking_20, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v8mpositiontaking_20, 0, @isauto_v8mpositiontaking_20, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 10, 8, @v8apositiontaking_10, @v8mpositiontaking_10,   0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v8mpositiontaking_10, 0, @isauto_v8mpositiontaking_10, 0, 0 ,0 ,0 ,0
-
-		UNION ALL
-		select @custid, 1, 10, @v10apositiontaking_1, @v10mpositiontaking_1, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v10mpositiontaking_1, 0, @isauto_v10mpositiontaking_1, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 2, 10, @v10apositiontaking_2, @v10mpositiontaking_2, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v10mpositiontaking_2, 0, @isauto_v10mpositiontaking_2, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 3, 10, @v10apositiontaking_3, @v10mpositiontaking_3, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v10mpositiontaking_3, 0, @isauto_v10mpositiontaking_3, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 20, 10, @v10apositiontaking_20, @v10mpositiontaking_20, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v10mpositiontaking_20, 0, @isauto_v10mpositiontaking_20, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 10, 10, @v10apositiontaking_10, @v10mpositiontaking_10, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v10mpositiontaking_10, 0, @isauto_v10mpositiontaking_10, 0, 0 ,0 ,0 ,0
-
-		UNION ALL
-		select @custid, 1, 11, @v11apositiontaking_1, @v11mpositiontaking_1, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v11mpositiontaking_1, 0, @isauto_v11mpositiontaking_1, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v11mpositiontaking_20, 0, @isauto_v11mpositiontaking_20, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 10, 11, @v11apositiontaking_10, @v11mpositiontaking_10, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v11mpositiontaking_10, 0, @isauto_v11mpositiontaking_10, 0, 0 ,0 ,0 ,0
-
-		UNION ALL
-		select @custid, 1, 99, @v99apositiontaking_1, @v99mpositiontaking_1, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v99mpositiontaking_1, 0, @isauto_v99mpositiontaking_1, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 2, 99, @v99apositiontaking_2, @v99mpositiontaking_2, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v99mpositiontaking_2, 0, @isauto_v99mpositiontaking_2, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 3, 99, @v99apositiontaking_3, @v99mpositiontaking_3, 0, 0, 0, 0, 0, 0, 0, 0, @groupa, @groupb, @groupc, @groupd, 0, 0, @auto_v99mpositiontaking_3, 0, @isauto_v99mpositiontaking_3, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v99mpositiontaking_20, 0, @isauto_v99mpositiontaking_20, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 10, 99, @v99apositiontaking_10, @v99mpositiontaking_10, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v99mpositiontaking_10, 0, @isauto_v99mpositiontaking_10, 0, 0 ,0 ,0 ,0
-		UNION ALL
-		select @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v99mpositiontaking_9999, 0, @isauto_v99mpositiontaking_9999, 0, 0 ,0 ,0 ,0
-		--- mix parlay of mixed sports
-		UNION ALL
-		select @custid, 9, 99, @v99apositiontaking_9, @v99mpositiontaking_9, 0, 0, 0, 0, 0, @discountcs, 0, 0, 0, 0, 0, 0, 0, 0, @auto_v99mpositiontaking_9, 0, @isauto_v99mpositiontaking_9, 0, 0 ,0 ,0 ,0
-
-		if @@error <> 0
-		BEGIN
-			--Error occur	
-			SELECT @ErrCode = 114
-			
-			-- ROLLBACK MANUALLY
-			DELETE custsetting with (ROWLOCK) where custid =  @custid
-			
-			return
-		END		
-
-		INSERT INTO [dbo].[custoverride]([custid], [bettype], [sporttype], minpositiontaking, maxpositiontaking, minlivepositiontaking, maxlivepositiontaking)
-		select @custid, 1, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 7, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 8, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 4, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 5, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 6, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 1, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 3, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 8, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 10, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 11, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 10, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9999, 1, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 7, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 8, 2, 0, 0.93, 0, 0.93
-		--UNION ALL select @custid, 9, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 2, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9999, 2, 0, 0.93, 0, 0.93
-		
-		UNION ALL select @custid, 1, 3, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 3, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 3, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 3, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 5, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9999, 5, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 8, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 8, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 8, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 10, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 10, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 10, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 10, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 11, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 11, 0, 0.93, 0, 0.93
-
-		UNION ALL select @custid, 1, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 2, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 3, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 20, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9999, 99, 0, 0.93, 0, 0.93
-		UNION ALL select @custid, 9, 99, 0, 0.93, 0, 0.93
-
-		if @@error <> 0
-		BEGIN
-
-			--Error occur
-			SELECT @ErrCode = 115
-				
-			-- ROLLBACK MANUALLY
-			DELETE custsetting with (ROWLOCK) where custid =  @custid
-			DELETE custoverride with (ROWLOCK) where custid =  @custid
-			
-			return
-		END				
-
-	END--end roleid =2
-	ELSE IF @roleid = 1
-	BEGIN			
-		--print @v2mpositiontaking_20
-		INSERT INTO [dbo].[custsetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [alivepositiontaking], [mlivepositiontaking], [slivepositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [groupa], [groupb], [groupc], [groupd], [groupe], [groupf], autopositiontaking, autolivepositiontaking, isautopositiontaking, isautolivepositiontaking  ,[autompositiontaking],[autolivempositiontaking],[isautompositiontaking],[isautolivempositiontaking])
-		select @custid, 1, 1, @apositiontaking_1, @mpositiontaking_1,@spositiontaking_1, @alivepositiontaking_1, @mlivepositiontaking_1, @slivepositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 1, @apositiontaking_3, @mpositiontaking_3, @spositiontaking_3, @alivepositiontaking_3, @mlivepositiontaking_3, @slivepositiontaking_3, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 7, 1, @apositiontaking_7, @mpositiontaking_7, @spositiontaking_7, @alivepositiontaking_7, @mlivepositiontaking_7, @slivepositiontaking_7, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 8, 1, @apositiontaking_8, @mpositiontaking_8, @spositiontaking_8, @alivepositiontaking_8, @mlivepositiontaking_8, @slivepositiontaking_8, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 1, @apositiontaking_2, @mpositiontaking_2, @spositiontaking_2, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 4, 1, @apositiontaking_4, @mpositiontaking_4, @spositiontaking_4, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		--1x2
-		UNION ALL
-		select @custid, 5, 1, @apositiontaking_5, @mpositiontaking_5, @spositiontaking_5, 0, 0, 0, @playerdiscount1x2, @discount1x2, @adiscount1x2, @sdiscount1x2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 6, 1, @apositiontaking_6, @mpositiontaking_6, @spositiontaking_6, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 9, 1, @apositiontaking_9, @mpositiontaking_9, @spositiontaking_9, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 1, @apositiontaking_10, @mpositiontaking_10, @spositiontaking_10, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		
-		UNION ALL
-		select @custid, 9999, 1, @apositiontaking_9999, @mpositiontaking_9999, @spositiontaking_9999, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		
-		UNION ALL
-		select @custid, 1, 2, @v2apositiontaking_1, @v2mpositiontaking_1, @v2spositiontaking_1, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 2, @v2apositiontaking_2, @v2mpositiontaking_2, @v2spositiontaking_2, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 2, @v2apositiontaking_3, @v2mpositiontaking_3, @v2spositiontaking_3, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 7, 2, @v2apositiontaking_7, @v2mpositiontaking_7, @v2spositiontaking_7, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 8, 2, @v2apositiontaking_8, @v2mpositiontaking_8, @v2spositiontaking_8, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 2, @v2apositiontaking_10, @v2mpositiontaking_10, @v2spositiontaking_10,0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		--UNION ALL
-		--select @custid, 9, 2, @v2apositiontaking_9, @v2mpositiontaking_9, @v2spositiontaking_9, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, @v2spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		SELECT @custid, 9999, 2, @v2apositiontaking_9999, @v2mpositiontaking_9999, @v2spositiontaking_9999, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	
-		UNION ALL
-		select @custid, 1, 3, @v3apositiontaking_1, @v3mpositiontaking_1, @v3spositiontaking_1, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 3, @v3apositiontaking_2, @v3mpositiontaking_2, @v3spositiontaking_2, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 3, @v3apositiontaking_3, @v3mpositiontaking_3, @v3spositiontaking_3, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 3, @v3apositiontaking_20, @v3mpositiontaking_20, @v3spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 3, @v3apositiontaking_10, @v3mpositiontaking_10, @v3spositiontaking_10,0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 5, @v5apositiontaking_1, @v5mpositiontaking_1, @v5spositiontaking_1, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 5, @v5apositiontaking_2, @v5mpositiontaking_2, @v5spositiontaking_2, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 5, @v5apositiontaking_3, @v5mpositiontaking_3, @v5spositiontaking_3, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 5, @v5apositiontaking_20, @v5mpositiontaking_20, @v5spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 9999, 5, @v5apositiontaking_9999, @v5mpositiontaking_9999, @v5spositiontaking_9999, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 5, @v5apositiontaking_10, @v5mpositiontaking_10, @v5spositiontaking_10, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 8, @v8apositiontaking_1, @v8mpositiontaking_1, @v8spositiontaking_1, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 8, @v8apositiontaking_3, @v8mpositiontaking_3, @v8spositiontaking_3, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 8, @v8apositiontaking_20, @v8mpositiontaking_20, @v8spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 8, @v8apositiontaking_10, @v8mpositiontaking_10, @v8spositiontaking_10,0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 10, @v10apositiontaking_1, @v10mpositiontaking_1, @v10spositiontaking_1, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 10, @v10apositiontaking_2, @v10mpositiontaking_2, @v10spositiontaking_2, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 10, @v10apositiontaking_3, @v10mpositiontaking_3, @v10spositiontaking_3, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 10, @v10apositiontaking_20, @v10mpositiontaking_20, @v10spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 10, @v10apositiontaking_10, @v10mpositiontaking_10, @v10spositiontaking_10, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 11, @v11apositiontaking_1, @v11mpositiontaking_1, @v11spositiontaking_1, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, @v11spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 11, @v11apositiontaking_10, @v11mpositiontaking_10, @v11spositiontaking_10, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		UNION ALL
-		select @custid, 1, 99, @v99apositiontaking_1, @v99mpositiontaking_1, @v99spositiontaking_1, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 2, 99, @v99apositiontaking_2, @v99mpositiontaking_2, @v99spositiontaking_2, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 3, 99, @v99apositiontaking_3, @v99mpositiontaking_3, @v99spositiontaking_3, 0, 0, 0, @playerdiscount, @discount, @adiscount, @sdiscount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 9, 99, @v99apositiontaking_9, isnull(@v99mpositiontaking_9,0), isnull(@v99spositiontaking_9,0), 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 9999, 99, @v99apositiontaking_9999, @v99mpositiontaking_9999, @v99spositiontaking_9999, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, @v99spositiontaking_20, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		UNION ALL
-		select @custid, 10, 99, @v99apositiontaking_10, @v99mpositiontaking_10, @v99spositiontaking_10, 0, 0, 0, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-		if @@Error <> 0
-		BEGIN
-			--Error occurs
-			SELECT @ErrCode=215
-			
-			-- ROLLBACK MANUALLY
-			Delete custsetting with (ROWLOCK) where custid  =@custid
-
-			return
-		END				
-	END
-	
-	-- For Myanma Odds
-	--DECLARE @DirectParentAgent INT 
-	
-	IF @roleid IN (2,3,4)
-	BEGIN
-		
-		--IF @roleid = 2 
-		--	SET @DirectParentAgent = @mrecommend 
-		--IF @roleid = 3 
-		--	SET @DirectParentAgent = @srecommend 
-		---- For Myanma Odds
-		--IF (@IsMyanmarOdds = 1 AND (@roleid = 4 OR EXISTS (SELECT 1 FROM AgentCommRate WITH (NOLOCK) WHERE CustID = @DirectParentAgent AND SportType = 1 AND Bettype = 1)))
-		IF (@IsMyanmarOdds = 1)
-		BEGIN
-			INSERT INTO dbo.AgentCommRate (CustID,SportType,BetType,CommRate) 
-			SELECT @custid,1,1,@discountMyanmarOdds
-		END	
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid			
-			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid
-			
-			RETURN
 		END
 
-		--Insert SportBook, Number Game bet setting 
-		INSERT INTO CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT @custid
-			,SportType        
-			,BetType          
-			,MinBet           
-			,MaxBet           
-			,MaxPerMatch      
-			,MaxPerNumber     
-			,MaxPayoutPerMatch
-		FROM @BetSetting
+		--PT setting
+		BEGIN
+			CREATE TABLE #SportBettypeFilter28 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
 
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid					
-			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE CustBetSetting_Agent WITH (ROWLOCK) WHERE custId  =@custid
-			
-			RETURN
-		END
-	
-	END
-	IF @roleid = 1
-	BEGIN
-		IF (@IsMyanmarOdds = 1)
-		BEGIN
-			CREATE TABLE #CustCommRate_MOtemp (CustID INT, SportType SMALLINT, BetType SMALLINT,CommRate decimal(9,8),roleid TINYINT)
-			
-			INSERT INTO #CustCommRate_MOtemp(CustID,SportType,BetType,CommRate,roleid )
-			SELECT @CustID AS CustID,AC.SportType,AC.BetType,AC.CommRate,CI.roleid 
-			FROM AgentCommRate ac WITH (NOLOCK)
-				JOIN custInfo ci WITH (NOLOCK) ON ac.CustID = ci.custid
-			WHERE ac.CustID IN (@srecommend,@mrecommend,@recommend) AND ac.Sporttype = 1 AND ac.Bettype = 1
-			
-			INSERT INTO CustCommRate (CustID,SportType,BetType,sdiscount,adiscount,discount,playerdiscount)
-			SELECT CustID,SportType,BetType,T.[4],T.[3],T.[2],@discountMyanmarOdds
-			FROM #CustCommRate_MOtemp
-			PIVOT(
-				SUM(CommRate)
-				FOR roleID IN ([2],[3],[4])
-			) AS T
-			
+			DECLARE @tblPT28 TABLE (
+					SportType		SMALLINT,
+					BetType			SMALLINT,
+					IsLive			BIT,
+					SuperPT			SMALLMONEY,
+					IsAutoSuperPT	BIT,
+					AutoSuperPT		SMALLMONEY,
+					MasterPT		SMALLMONEY,				
+					MasterMinPT		SMALLMONEY,
+					MasterMaxPT		SMALLMONEY,
+					IsAutoMasterPT	BIT,
+					AutoMasterPT	SMALLMONEY,
+					AgentPT			SMALLMONEY,				
+					AgentMinPT		SMALLMONEY,
+					SuperMinPT		SMALLMONEY
+					)
 				
-			IF @@ERROR <> 0
+			DECLARE @xml XML
+		
+			INSERT INTO #SportBettypeFilter28(ProductID, SportType,Bettype,IsLive, SettingType, RealProductId)
+			SELECT ProductID, SportType,Bettype,IsLive, SettingType, RealProductId
+			FROM #ProductSettingDetail_ExecRep00
+			WHERE SettingType IN (28)
+		
+			IF ISNULL(@SettingType28,'') <> ''
 			BEGIN
-				--Error Occurs
-				SELECT @ErrCode=116
+				SELECT @xml = CONVERT(XML, @SettingType28)
+				IF @roleid = 4
+				BEGIN
+					INSERT INTO @tblPT28(
+							SportType, 
+							BetType, 
+							IsLive,
+							SuperPT,
+							MasterPT,
+							AgentPT,
+							SuperMinPT
+						)
+					SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+						T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+						T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+						T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+						T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+						T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT,
+						T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS SuperMinPT
+					FROM  @xml.nodes('/Root/R') T(c)		
+				END
+				ELSE IF @Roleid = 3
+				BEGIN
+					INSERT INTO @tblPT28(SportType, 
+						BetType, 
+						IsLive,
+						SuperPT,
+						IsAutoSuperPT,
+						AutoSuperPT,
+						MasterPT,				
+						MasterMinPT)
+					SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+						T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+						T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+						T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+						T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoSuperPT,
+						T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoSuperPT,
+						T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+						T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS MasterMinPT
+					FROM  @xml.nodes('/Root/R') T(c)
+				END
+				ELSE IF @roleid = 2
+				BEGIN
+					INSERT INTO @tblPT28(SportType, 
+						BetType, 
+						IsLive,
+						MasterPT,
+						IsAutoMasterPT,
+						AutoMasterPT,
+						AgentPT,				
+						AgentMinPT)
+					SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+						T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+						T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+						T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+						T.c.query('.').value('(R/@IsAuto)[1]', 'bit') AS IsAutoMasterPT,
+						T.c.query('.').value('(R/@AutoPT)[1]', 'smallmoney') AS AutoMasterPT,
+						T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT,
+						T.c.query('.').value('(R/@MinPT)[1]', 'smallmoney') AS AgentMinPT
+					FROM  @xml.nodes('/Root/R') T(c) 
+				END
+				ELSE IF @roleid = 1
+				BEGIN
+					INSERT INTO @tblPT28(SportType, 
+						BetType, 
+						IsLive,
+						SuperPT,
+						MasterPT,					
+						AgentPT)
+					SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+						T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
+						T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
+						T.c.query('.').value('(R/@SuperPT)[1]', 'smallmoney') AS SuperPT,
+						T.c.query('.').value('(R/@MasterPT)[1]', 'smallmoney') AS MasterPT,
+						T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT
+					FROM  @xml.nodes('/Root/R') T(c) 
+				END
+			END
 				
-				-- ROLLBACK MANUALLY
-				DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-				DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid							
-				DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  = @custid
-				DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
-				
+			BEGIN TRY
+				IF @RoleID = 4
+				BEGIN				
+					INSERT INTO [dbo].[CustPTSetting3rd_Agent]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[IsLive]
+						,[SuperPT]
+						,[MasterPT]
+						,[AgentPT]
+						,[IsAutoMasterPT]
+						,[AutoMasterPT]
+						,[IsAutoSuperPT]
+						,[AutoSuperPT]
+						,[MinPT]
+						,[MaxPT])
+					SELECT 
+						@CustID
+						,t.SportType
+						,t.BetType
+						,t.IsLive
+						,t.SuperPT
+						,t.MasterPT
+						,t.AgentPT
+						,0 AS IsAutoMasterPT
+						,0 AS AutoMasterPT
+						,0 AS IsAutoSuperPT
+						,0 AS AutoSuperPT
+						,t.SuperMinPT
+						,100 MaxPT
+					FROM @tblPT28 t
+						INNER JOIN #SportBettypeFilter28 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
+				END
+				ELSE IF @RoleID = 3
+				BEGIN				
+					INSERT INTO [dbo].[CustPTSetting3rd_Agent]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[IsLive]
+						,[SuperPT]
+						,[MasterPT]
+						,[AgentPT]
+						,[IsAutoMasterPT]
+						,[AutoMasterPT]
+						,[IsAutoSuperPT]
+						,[AutoSuperPT]
+						,[MinPT]
+						,[MaxPT])
+					SELECT 
+						@CustID
+						,t.SportType
+						,t.BetType
+						,t.IsLive
+						,t.SuperPT
+						,t.MasterPT
+						,0 as AgentPT
+						,0 IsAutoMasterPT
+						,0 AutoMasterPT
+						,t.IsAutoSuperPT
+						,t.AutoSuperPT
+						,t.MasterMinPT
+						,100 MaxPT
+					FROM @tblPT28 t
+						INNER JOIN #SportBettypeFilter28 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
+				END
+				ELSE IF @roleid = 2
+				BEGIN
+					INSERT INTO [dbo].[CustPTSetting3rd_Agent]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[IsLive]
+						,[SuperPT]
+						,[MasterPT]
+						,[AgentPT]
+						,[IsAutoMasterPT]
+						,[AutoMasterPT]
+						,[IsAutoSuperPT]
+						,[AutoSuperPT]
+						,[MinPT]
+						,[MaxPT])
+					SELECT 
+						@CustID
+						,t.SportType
+						,t.BetType
+						,t.IsLive
+						,0 as SuperPT
+						,t.MasterPT
+						,t.AgentPT
+						,t.IsAutoMasterPT
+						,t.AutoMasterPT
+						,0 as IsAutoSuperPT
+						,0 as AutoSuperPT
+						,t.AgentMinPT
+						,100 MaxPT
+					FROM @tblPT28 t
+						INNER JOIN #SportBettypeFilter28 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
+				END
+				ELSE IF @roleid = 1
+				BEGIN
+					--If this is the first member,insert into Group Setting
+					INSERT INTO [dbo].[CustPTGroupSetting3rd_Member]
+						([AgentID]
+						,[SportType]
+						,[BetType]
+						,[IsLive]
+						,[SuperPT]
+						,[MasterPT]
+						,[AgentPT]
+						,[IsAutoMasterPT]
+						,[AutoMasterPT]
+						,[IsAutoSuperPT]
+						,[AutoSuperPT])		
+					SELECT 
+						@recommend,SportType,BetType,Islive,
+						SuperPT,MasterPT,AgentPT,0 IsAutoMasterPT,0 AutoMasterPT,0 IsAutoSuperPT,0 AutoSuperPT
+					FROM @tblPT28
+					WHERE NOT EXISTS(SELECT TOP 1 1 FROM dbo.CustPTGroupSetting3rd_Member WHERE AgentID = @recommend)
+					AND @srecommend IN (
+							13869621,
+							5340162,
+							12262401,
+							12141653,
+							4138910,
+							6379932,
+							16112208,
+							12141529,
+							1539339,
+							720475
+							--UUS
+							,17287861
+							,18879367
+							,14373244
+							,18362423
+							,18479460
+							,18289591
+						)
+			
+					IF @@ROWCOUNT<>0
+					BEGIN
+						INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
+							SELECT @CustID,1
+					END
+					ELSE 
+					BEGIN
+						IF EXISTS(SELECT TOP 1 1
+									FROM dbo.CustPTGroupSetting3rd_Member grp WITH(NOLOCK)
+									JOIN @tblPT28 tmp ON tmp.SportType = grp.SportType
+															AND tmp.BetType = grp.BetType
+															AND tmp.Islive = grp.Islive
+									WHERE grp.AgentID = @recommend
+									AND (
+										tmp.SuperPT <> grp.SuperPT
+										OR
+										tmp.MasterPT <> grp.MasterPT
+										OR
+										tmp.AgentPT <> grp.AgentPT
+										OR
+										0 <> grp.IsAutoMasterPT
+										OR
+										0 <> grp.AutoMasterPT
+										OR
+										0 <> grp.IsAutoSuperPT
+										OR
+										0 <> grp.AutoSuperPT
+									))
+							OR @srecommend NOT IN (
+												13869621,
+												5340162,
+												12262401,
+												12141653,
+												4138910,
+												6379932,
+												16112208,
+												12141529,
+												1539339,
+												720475
+												--UUS
+												,17287861
+												,18879367
+												,14373244
+												,18362423
+												,18479460
+												,18289591
+											)
+						BEGIN
+							--If this member's PT setting are diffrent from Group PT Setting
+							INSERT INTO [dbo].[CustPTSetting3rd_Member]
+									([CustID]
+									,[SportType]
+									,[BetType]
+									,[IsLive]
+									,[SuperPT]
+									,[MasterPT]
+									,[AgentPT]
+									,[IsAutoMasterPT]
+									,[AutoMasterPT]
+									,[IsAutoSuperPT]
+									,[AutoSuperPT])
+							SELECT 
+							@CustID,SportType,BetType,Islive,
+								SuperPT,MasterPT,AgentPT,0 IsAutoMasterPT,0 AutoMasterPT,0 IsAutoSuperPT,0 AutoSuperPT
+							FROM @tblPT28
+					
+							INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
+								SELECT @CustID,0
+						END
+						ELSE
+						BEGIN
+							INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
+								SELECT @CustID,1
+						END
+					END				
+				END
+			END TRY
+			BEGIN CATCH 
+				SELECT @ErrCode = 1			
+			
+				IF @roleid > 1
+				BEGIN
+					DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID				
+				END	
+				ELSE IF @roleid = 1
+				BEGIN
+					DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
+					DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
+				END
 				RETURN
+			END CATCH
+
+		END
+		--Commission
+		BEGIN
+			CREATE TABLE #SportBettypeFilter25 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
+			DECLARE @NewDiscountTbl TABLE (sporttype SMALLINT, bettype SMALLINT, discount DECIMAL(9,8), playerdiscount DECIMAL(9,8), sdiscount DECIMAL(9,8), adiscount DECIMAL(9,8))
+	
+			INSERT INTO #SportBettypeFilter25(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+			SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId		
+			FROM #ProductSettingDetail_ExecRep00
+			WHERE SettingType IN (25)
+		
+			IF  ISNULL(@SettingType25,'') <> ''
+			BEGIN			
+				IF @roleid IN (4,3,2)
+				BEGIN
+					SELECT @xml = CONVERT(XML,@SettingType25)
+				
+					INSERT INTO @NewDiscountTbl(sporttype,bettype,discount)
+					SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+						T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+						T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
+					FROM   @xml.nodes('/Root/R') T(c) 
+				END
+				ELSE IF @roleid = 1
+				BEGIN
+					SELECT @xml = CONVERT(XML,@SettingType25)
+				
+					INSERT INTO @NewDiscountTbl(sporttype,bettype,playerdiscount,discount,adiscount,sdiscount)
+					SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+						T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+						T.c.query('.').value('(R/@playerdiscount)[1]', 'decimal(9,8)') AS playerdiscount,
+						T.c.query('.').value('(R/@discount)[1]', 'decimal(9,8)') AS discount,
+						T.c.query('.').value('(R/@adiscount)[1]', 'decimal(9,8)') AS adiscount,
+						T.c.query('.').value('(R/@sdiscount)[1]', 'decimal(9,8)') AS sdiscount
+					FROM   @xml.nodes('/Root/R') T(c) 
+				END
 			END
+		
+			BEGIN TRY
+				IF @RoleID IN (4,3,2)
+				BEGIN
+					INSERT INTO [dbo].[CustDiscount3rd_Agent]
+						   ([CustID]
+						   ,[SportType]
+						   ,[BetType]
+						   ,[Discount])
+					SELECT 
+						@CustID
+						,dc.SportType
+						,dc.BetType
+						,dc.discount
+					FROM @NewDiscountTbl dc
+						INNER JOIN #SportBettypeFilter25 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType
+				END	
+				ELSE IF @roleid = 1
+				BEGIN
+					INSERT INTO [dbo].[CustDiscount3rd_Member]
+					   ([CustID]
+					   ,[SportType]
+					   ,[BetType]
+					   ,[PlayerDiscount]
+					   ,[AgentDiscount]
+					   ,[MasterDiscount]
+					   ,[SuperDiscount])
+					SELECT 
+						@CustID
+						,dc.SportType
+						,dc.BetType
+						,dc.playerdiscount
+						,dc.discount
+						,dc.adiscount
+						,dc.sdiscount
+					FROM @NewDiscountTbl dc
+						INNER JOIN #SportBettypeFilter25 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType   
+				END
+			END TRY
+			BEGIN CATCH 
+				SELECT @ErrCode = 3			
+				DELETE FROM CustProductStatus WHERE CustID = @CustID			
+				IF @roleid > 1
+				BEGIN
+					DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID				
+					DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
+				END	
+				ELSE IF @roleid = 1
+				BEGIN
+					DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
+					DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
+					DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
+				END
+				RETURN
+			END CATCH
 		END
 
-		--Insert SportBook, Number Game bet setting 
-		INSERT INTO CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT @custid
-			,SportType        
-			,BetType          
-			,MinBet           
-			,MaxBet           
-			,MaxPerMatch      
-			,MaxPerNumber     
-			,MaxPayoutPerMatch
-		FROM @BetSetting
+		--Bet Setting
+		BEGIN
+			DECLARE @BetSetting TABLE(
+				SportType         SMALLINT, 
+				BetType           SMALLINT, 
+				MinBet            MONEY, 
+				MaxBet            MONEY, 
+				MaxPerMatch       MONEY, 
+				MaxPerNumber      MONEY, 
+				MaxPayoutPerMatch MONEY		
+				PRIMARY KEY(sporttype, Bettype)
+			);
+			CREATE TABLE #SportBettypeFilter26 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
+		
+			INSERT INTO #SportBettypeFilter26(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+			SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
+			FROM #ProductSettingDetail_ExecRep00
+			WHERE SettingType IN (26)
+		
+			DELETE @BetSetting
+		
+			IF ISNULL(@SettingType26,'') <> ''
+			BEGIN			
+				SELECT @xml = CONVERT(XML,@SettingType26)
+		
+				INSERT INTO @BetSetting(SportType, 
+					BetType, 
+					MinBet, 
+					MaxBet, 
+					MaxPerMatch, 
+					MaxPayoutPerMatch)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+					T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
+					T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
+					T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch,
+					T.c.query('.').value('(R/@MaxPayout)[1]', 'money') AS MaxPayoutPerMatch
+				FROM  @xml.nodes('/Root/R') T(c)   
+			END
+				
+			BEGIN TRY
+				IF @roleid IN (4,3,2)
+				BEGIN 
+					INSERT INTO CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+					SELECT @custid
+						,cs.SportType        
+						,cs.BetType          
+						,MinBet           
+						,MaxBet           
+						,MaxPerMatch      
+						,MaxPerNumber     
+						,MaxPayoutPerMatch
+					FROM @BetSetting cs
+						INNER JOIN #SportBettypeFilter26 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+				END
+				ELSE IF @roleid = 1
+				BEGIN
+					INSERT INTO CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+					SELECT @custid
+						,cs.SportType        
+						,cs.BetType          
+						,MinBet           
+						,MaxBet           
+						,MaxPerMatch      
+						,MaxPerNumber     
+						,MaxPayoutPerMatch
+					FROM @BetSetting cs
+						INNER JOIN #SportBettypeFilter26 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+				END
+			END TRY
+			BEGIN CATCH 
+				SELECT @ErrCode = 26			
+				DELETE FROM CustProductStatus WHERE CustID = @CustID			
+				IF @roleid > 1
+				BEGIN
+					DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID					
+					DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
+					DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
+				END		
+				ELSE IF @roleid = 1
+				BEGIN
+					DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
+					DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
+					DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
+					DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
+				END
+				RETURN	
+			END CATCH
+		END
 
-		IF @@ERROR <> 0
+		--Parlay MaxPayout
 		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
+			CREATE TABLE #SportBettypeFilter27 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
+			DECLARE @NewMaxPayoutTbl TABLE (
+						SportType			SMALLINT
+						, BetType			SMALLINT
+						, SingleMatchParlay	MONEY
+						, Combo2			MONEY
+						, Combo35			MONEY
+						, ComboOver6		MONEY
+						)
+		
+			INSERT INTO #SportBettypeFilter27(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+			SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
+			FROM #ProductSettingDetail_ExecRep00
+			WHERE SettingType IN (27)
+		
+			IF ISNULL(@SettingType27,'') <> ''
+			BEGIN
+				SELECT @xml = CONVERT(XML,@SettingType27)
 				
-			-- ROLLBACK MANUALLY
-			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid						
-			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  = @custid
-			DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
-			DELETE CustBetSetting_Member WITH (ROWLOCK) WHERE custId  = @custid
-				
-			RETURN
+				INSERT INTO @NewMaxPayoutTbl(SportType, 
+					BetType, 
+					SingleMatchParlay, 
+					Combo2, 
+					Combo35, 
+					ComboOver6)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+					T.c.query('.').value('(R/@SingleMP)[1]', 'money') AS SingleMatchParlay,
+					T.c.query('.').value('(R/@Combo2)[1]', 'money') AS Combo2,
+					T.c.query('.').value('(R/@Combo35)[1]', 'money') AS Combo35,
+					T.c.query('.').value('(R/@Combo6)[1]', 'money') AS ComboOver6
+				FROM  @xml.nodes('/Root/R') T(c)
+			END		
+		
+			BEGIN TRY
+				IF @roleid IN (4,3,2)
+				BEGIN 
+					INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+					SELECT @custid , cs.SportType, cs.BetType, 
+							cs.SingleMatchParlay,
+							cs.Combo2,
+							cs.Combo35,
+							cs.ComboOver6
+					FROM @NewMaxPayoutTbl cs
+						INNER JOIN #SportBettypeFilter27 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+				END
+				ELSE IF @roleid = 1
+				BEGIN
+					INSERT INTO CustMaxPayoutSetting_Member(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+					SELECT @custid , cs.SportType, cs.BetType, 
+							cs.SingleMatchParlay,
+							cs.Combo2,
+							cs.Combo35,
+							cs.ComboOver6
+					FROM @NewMaxPayoutTbl cs
+						INNER JOIN #SportBettypeFilter27 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+				END
+			END TRY
+			BEGIN CATCH 
+				SELECT @ErrCode = 27			
+				DELETE FROM CustProductStatus WHERE CustID = @CustID			
+				IF @roleid > 1
+				BEGIN
+					DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID					
+					DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
+					DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
+					DELETE FROM CustMaxPayoutSetting_Agent WHERE CustID = @CustID
+				END	
+				ELSE IF @roleid = 1
+				BEGIN
+					DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
+					DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
+					DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
+					DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
+					DELETE FROM CustMaxPayoutSetting_Member WHERE CustID = @CustID
+				END			
+				RETURN	
+			END CATCH
 		END
 		
+		DROP TABLE #ProductSettingDetail_ExecRep00
+		DROP TABLE #SportBettypeFilter25
+		DROP TABLE #SportBettypeFilter26
+		DROP TABLE #SportBettypeFilter27
+		DROP TABLE #SportBettypeFilter28
 	END
-	
-	--FOR Parlay Max Payout 
-	IF @roleid IN (2,3,4)
-	BEGIN
-		IF @roleid = 4 
-		BEGIN
-			IF EXISTS(SELECT TOP 1 1 FROM MaxPayoutGlobalSetting WITH(NOLOCK) WHERE Currency = @currency )
-			BEGIN
-				INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-				SELECT @custid , cs.SportType, cs.BetType, 
-						cs.SingleMatchParlay,
-						cs.Combo2,
-						cs.Combo35,
-						cs.ComboOver6
-				FROM dbo.MaxPayoutGlobalSetting cs WITH(NOLOCK)
-				WHERE cs.Currency = @currency AND cs.SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
-				UNION 
-				SELECT @custid , 1 AS SportType,9 AS BetType, 
-						0.1 AS SingleMatchParlay,
-						0.1 AS Combo2,
-						0.1 AS Combo35,
-						0.1 AS ComboOver6
-				WHERE  NOT EXISTS(SELECT TOP 1 1 FROM MaxPayoutGlobalSetting WITH(NOLOCK) WHERE Currency = @currency AND SportType = 1 AND BetType = 9)	
-				UNION 
-				SELECT @custid , 99 AS SportType,9 AS BetType, 
-						0.1 AS SingleMatchParlay,
-						0.1 AS Combo2,
-						0.1 AS Combo35,
-						0.1 AS ComboOver6
-				WHERE  NOT EXISTS(SELECT TOP 1 1 FROM MaxPayoutGlobalSetting WITH(NOLOCK) WHERE Currency = @currency AND SportType = 99 AND BetType = 9)							
-			END
-			ELSE
-			BEGIN
-				INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-				SELECT @custid , 1 AS SportType,9 AS BetType, 
-						0.1 AS SingleMatchParlay,
-						0.1 AS Combo2,
-						0.1 AS Combo35,
-						0.1 AS ComboOver6
-				UNION 
-				SELECT @custid , 99 AS SportType,9 AS BetType, 
-						0.1 AS SingleMatchParlay,
-						0.1 AS Combo2,
-						0.1 AS Combo35,
-						0.1 AS ComboOver6
-			END
-		END
-		ELSE IF @roleid = 3
-		BEGIN 
-			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-			SELECT @custid , cs.SportType, cs.BetType, 
-					cs.SingleMatchParlay,
-					cs.Combo2,
-					cs.Combo35,
-					cs.ComboOver6
-			FROM dbo.CustMaxPayoutSetting_Agent cs  WITH(NOLOCK)
-			WHERE cs.CustID = @srecommend
-		END
-		ELSE IF @roleid = 2
-		BEGIN 
-			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-			SELECT @custid , cs.SportType, cs.BetType, 
-					cs.SingleMatchParlay,
-					cs.Combo2,
-					cs.Combo35,
-					cs.ComboOver6
-			FROM dbo.CustMaxPayoutSetting_Agent cs  WITH(NOLOCK)
-			WHERE cs.CustID = @mrecommend
-		END
-			
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid					
-			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE CustMaxPayoutSetting_Agent WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE CustBetSetting_Agent WITH (ROWLOCK) WHERE custId  =@custid
-			
-			RETURN
-		END
-	
-	END
-	IF @roleid = 1
-	BEGIN
-		IF @isSearchAndCopy = 0
-		BEGIN 
-			INSERT INTO CustMaxPayoutSetting_Member(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-			SELECT @custid , cs.SportType, cs.BetType, 
-					CASE WHEN cs.SingleMatchParlay = 0 THEN mps.SingleMatchParlay  ELSE cs.SingleMatchParlay END AS SingleMatchParlay, 
-					CASE WHEN cs.Combo2 = 0 THEN mps.Combo2  ELSE cs.Combo2 END AS Combo2,
-					CASE WHEN cs.Combo35 = 0 THEN mps.Combo35  ELSE cs.Combo35 END AS Combo35,
-					CASE WHEN cs.ComboOver6 = 0 THEN mps.ComboOver6  ELSE cs.ComboOver6 END AS ComboOver6
-			FROM dbo.CustMaxPayoutSetting_Agent cs  WITH(NOLOCK)
-				LEFT JOIN MaxPayoutGlobalSetting mps WITH(NOLOCK) ON cs.BetType = mps.BetType  AND cs.SportType = mps.SportType AND mps.Currency = @currency
-			WHERE cs.CustID = @recommend 		
-		END
-		ELSE
-		BEGIN
-			INSERT INTO CustMaxPayoutSetting_Member(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-			SELECT @custid , cs.SportType, cs.BetType, 
-					CASE WHEN cs.SingleMatchParlay > upl.SingleMatchParlay  AND upl.SingleMatchParlay > 0 THEN upl.SingleMatchParlay ELSE cs.SingleMatchParlay END AS SingleMatchParlay,
-					CASE WHEN cs.Combo2 > upl.Combo2  AND upl.Combo2 > 0 THEN upl.Combo2 ELSE cs.Combo2 END AS Combo2,
-					CASE WHEN cs.Combo35 > upl.Combo35  AND upl.Combo35 > 0 THEN upl.Combo35 ELSE cs.Combo35 END AS Combo35,
-					CASE WHEN cs.ComboOver6 > upl.ComboOver6  AND upl.ComboOver6 > 0 THEN upl.ComboOver6 ELSE cs.ComboOver6 END AS ComboOver6
-			FROM dbo.CustMaxPayoutSetting_Member cs WITH (NOLOCK)
-			INNER JOIN dbo.CustMaxPayoutSetting_Agent upl WITH (NOLOCK) ON cs.SportType = upl.SportType AND cs.BetType = upl.BetType
-			WHERE cs.CustID  = @copyFromCustID  AND Upl.CustID = @recommend
-		END	
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode=116
-			
-			-- ROLLBACK MANUALLY
-			DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-			DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid				
-			DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  = @custid
-			DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
-			DELETE CustMaxPayoutSetting_Member WITH (ROWLOCK) WHERE custId  =@custid
-			DELETE CustBetSetting_Member WITH (ROWLOCK) WHERE custId  =@custid
-			
-			RETURN
-		END
-		
-	END
-	
-	END
+
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-START*/
 	DECLARE @DCSErrCode INT = 0
 	EXEC dbo.Acc_DynamicCustomerInfo_00
@@ -1575,14 +759,14 @@ BEGIN
 		SET @ErrCode = 911
 				
 		-- ROLLBACK MANUALLY
-		IF(dbo.f_CheckRepTable('custSetting') = 1) DELETE dbo.custSetting WITH (ROWLOCK) WHERE custId = @custid
-		IF(dbo.f_CheckRepTable('custOverride') = 1) DELETE dbo.custOverride WITH (ROWLOCK) WHERE custId = @custid				
-		IF(dbo.f_CheckRepTable('AgentCommRate') = 1) DELETE AgentCommRate WITH (ROWLOCK) WHERE custId  =@custid		
-		IF(dbo.f_CheckRepTable('CustCommRate') = 1) DELETE CustCommRate WITH (ROWLOCK) WHERE custId  = @custid
 		IF(dbo.f_CheckRepTable('CustBetSetting_Agent') = 1) DELETE CustBetSetting_Agent WITH (ROWLOCK) WHERE custId  = @custid
 		IF(dbo.f_CheckRepTable('CustBetSetting_Member') = 1) DELETE CustBetSetting_Member WITH (ROWLOCK) WHERE custId  = @custid
 		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Member') = 1) DELETE CustMaxPayoutSetting_Member WITH (ROWLOCK) WHERE custId  = @custid
 		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1) DELETE CustMaxPayoutSetting_Agent WITH (ROWLOCK) WHERE custId  = @custid
+		IF(dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1) DELETE CustPTSetting3rd_Agent WITH (ROWLOCK) WHERE custId  = @custid
+		IF(dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 1) DELETE CustPTSetting3rd_Member WITH (ROWLOCK) WHERE custId  = @custid
+		IF(dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1) DELETE CustDiscount3rd_Agent WITH (ROWLOCK) WHERE custId  = @custid
+		IF(dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1) DELETE CustDiscount3rd_Member WITH (ROWLOCK) WHERE custId  = @custid
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/	
 END

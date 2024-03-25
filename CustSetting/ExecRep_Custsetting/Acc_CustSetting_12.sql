@@ -1,9 +1,10 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="" isFunction="0" isNested="1"></info>*/
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_12]
 	@CustId			INT,
-    @RoleId			INT,
-	@XML			VARCHAR(MAX) = NULL,
-	@Mode			VARCHAR(50)='MaxPayout'
+      @RoleId			INT,
+	@XML				VARCHAR(MAX) = NULL,
+	@GroupType			SMALLINT = 0 ,
+	@Mode				VARCHAR(50) = 'SB_BetSetting'
 AS
 /*
     Created: 20210518@Winfred
@@ -16,6 +17,7 @@ AS
 		- 20210816@Eden: Max Payout Per Match [redmine: #158073]
 		- 20220516@Tacy: Insert history of member bet setting: Number Game, Happy5 [RedmineID: #170739]
 		- 20220716@Tacy: HotFix - Error when update big line NG/Happy5/Keno bet setting [RedmineID: #175836]
+		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 
     Param's Explanation:
             
@@ -42,8 +44,8 @@ BEGIN
 				UpdateTime	DATETIME
 			)
 
-    -- check existing tables
-	IF (@Mode='MaxPayout')
+    -- Update MaxPayout Call From Acc_CustSetting_MaxPayoutUpd
+	IF (@GroupType = 152)
 	BEGIN
 		IF dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 0 RETURN
 		IF dbo.f_CheckRepTable('CustMaxPayoutSetting_Member') = 0 RETURN
@@ -213,7 +215,9 @@ BEGIN
 			END
 		END
 	END
-	ELSE IF (@Mode='SB_BetSetting')
+
+	-- Update BetSetting call from Acc_CustomerUpd_BetSetting , Acc_CustSetting_BetSetting23Upd
+	ELSE IF (@GroupType = 151) OR (@Mode = 'SB_BetSetting')
 	BEGIN
 		IF dbo.f_CheckRepTable('CustBetSetting_Agent') = 0 RETURN
 		IF dbo.f_CheckRepTable('CustBetSetting_Member') = 0 RETURN
@@ -221,7 +225,7 @@ BEGIN
 		IF ISNULL(@XML,'') = ''
 			RETURN
 
-		DECLARE @NewMaxBet MONEY, @NewMaxPerNumber MONEY, @NewMaxPerMatch MONEY, @NewMaxPayoutPerMatch MONEY
+		DECLARE @NewMaxBet MONEY, @NewMaxPerNumber MONEY, @NewMaxPerMatch MONEY, @NewMaxPayoutPerMatch MONEY , @NewMinBet MONEY
 		DECLARE @BetSetting TABLE(
 				SportType         SMALLINT, 
 				BetType           SMALLINT, 
@@ -314,6 +318,9 @@ BEGIN
 				IF @@ROWCOUNT = 0 
 					BREAK;
 
+				-- This rule: Update BetSetting for :
+				-- Sports of Soccer Call by SP Acc_CustomerUpd_BetSetting
+				-- NumberGame & Happy5 Call by SP Acc_CustSetting_BetSetting23Upd
 				UPDATE b
 				SET @NewMaxBet = CASE WHEN (b.MaxBet > new.MaxBet AND new.MaxBet > 0) THEN new.MaxBet ELSE b.MaxBet END,
 					@NewMaxPerNumber = CASE WHEN (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0) THEN new.MaxPerNumber ELSE b.MaxPerNumber END,
@@ -334,10 +341,29 @@ BEGIN
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #AgentTmpBatch ci
 						ON b.custid = ci.custid
-				WHERE ( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
-						OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
-						OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
-						OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0))
+				WHERE 
+				b.SportType NOT IN (43,44)
+				AND ( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
+					OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
+					OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
+					OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0))
+
+				-- This rule just Update BetSetting for E-Sports & Muay Thai
+				UPDATE b
+				SET 
+					@NewMaxBet = CASE WHEN new.MaxBet < b.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE b.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < b.MaxPerMatch AND new.MaxPerMatch > 0 THEN new.MaxPerMatch ELSE b.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN @NewMaxPerMatch < @NewMaxBet THEN @NewMaxPerMatch ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN @NewMaxBet < b.MinBet THEN @NewMaxBet ELSE b.MinBet END,
+					b.MinBet = @NewMinBet,
+					b.MaxBet = @NewMaxBet,
+					b.MaxPerMatch = @NewMaxPerMatch
+				FROM dbo.CustBetSetting_Agent b WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
+					INNER JOIN #AgentTmpBatch ci
+						ON b.custid = ci.custid
+				WHERE 
+				b.SportType IN (43,44)
 			END
 		END
 
@@ -354,6 +380,9 @@ BEGIN
 				IF @@ROWCOUNT = 0 
 					BREAK;
 
+				-- This rule: Update BetSetting for :
+				-- Sports of Soccer Call by SP Acc_CustomerUpd_BetSetting
+				-- NumberGame & Happy5 Call by SP Acc_CustSetting_BetSetting23Upd
 				UPDATE b
 				SET @NewMaxBet = CASE WHEN (b.MaxBet > new.MaxBet AND new.MaxBet > 0) THEN new.MaxBet ELSE b.MaxBet END,
 					@NewMaxPerNumber = CASE WHEN (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0) THEN new.MaxPerNumber ELSE b.MaxPerNumber END,
@@ -374,10 +403,31 @@ BEGIN
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #AgentTmpBatch ci
 						ON b.custid = ci.custid
-				WHERE ( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
-						OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
-						OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
-						OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0))
+				WHERE 
+				b.SportType NOT IN (43,44)
+				AND (
+					   (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
+					OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
+					OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
+					OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0)
+				)
+
+				-- This rule just Update BetSetting for E-Sports & Muay Thai
+				UPDATE b
+				SET 
+					@NewMaxBet = CASE WHEN new.MaxBet < b.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE b.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < b.MaxPerMatch AND new.MaxPerMatch > 0 THEN new.MaxPerMatch ELSE b.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN @NewMaxPerMatch < @NewMaxBet THEN @NewMaxPerMatch ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN @NewMaxBet < b.MinBet THEN @NewMaxBet ELSE b.MinBet END,
+					b.MinBet = @NewMinBet,
+					b.MaxBet = @NewMaxBet,
+					b.MaxPerMatch = @NewMaxPerMatch
+				FROM dbo.CustBetSetting_Agent b WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
+					INNER JOIN #AgentTmpBatch ci
+						ON b.custid = ci.custid
+				WHERE 
+				b.SportType IN (43,44)
 			END
 		END
 
@@ -394,7 +444,10 @@ BEGIN
 
 				IF @@ROWCOUNT = 0 
 					BREAK;
-
+				
+				-- This rule: Update BetSetting for :
+				-- Sports of Soccer Call by SP Acc_CustomerUpd_BetSetting
+				-- NumberGame & Happy5 Call by SP Acc_CustSetting_BetSetting23Upd
 				UPDATE b
 				SET @NewMaxBet = CASE WHEN (b.MaxBet > new.MaxBet AND new.MaxBet > 0) THEN new.MaxBet ELSE b.MaxBet END,
 					@NewMaxPerNumber = CASE WHEN (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0) THEN new.MaxPerNumber ELSE b.MaxPerNumber END,
@@ -417,38 +470,33 @@ BEGIN
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #MemberTmpBatch ci
 						ON b.custid = ci.custid
-				WHERE ( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
+				WHERE 
+				b.SportType NOT IN (43,44)
+				AND 
+				(		   
+						   (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
 						OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
 						OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
-						OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0))
+						OR (b.MaxPerNumber > new.MaxPerNumber AND new.MaxPerNumber > 0)
+				)
 
-				--Insert history bet setting
-				DELETE hbs
-				FROM #History_BetSetting hbs
-					INNER JOIN @BetSetting bs ON bs.SportType=hbs.SportType
-												AND bs.BetType=hbs.BetType
-				WHERE hbs.SportType NOT IN (161, 164) OR
-					(bs.MaxBet=hbs.MaxBet
-						AND bs.MaxPerMatch=hbs.MaxPerMatch)
-
-				IF EXISTS (SELECT 1 FROM #History_BetSetting)
-				BEGIN
-					SET @CustList = (SELECT CustID		AS '@CustID',
-											SportType	AS '@SportType',
-											BetType		AS '@BetType',
-											MaxBet		AS '@MaxBet',
-											MaxPerMatch	AS '@MaxPerMatch',
-											'NULL'		AS '@StakeLevelList',
-											UpdateTime	AS '@UpdateTime'
-									 FROM #History_BetSetting
-									 FOR XML PATH ('r'), ROOT ('root')
-									 )
-
-					EXECUTE Acc_DynamicCustSetting3rd_08 @CustList=@CustList, @ErrMsg = @ErrMsg OUTPUT;
-
-					IF @ErrMsg <> ''
-						RETURN
-				END
+				-- This rule just Update BetSetting for E-Sports & Muay Thai
+				UPDATE b
+				SET 
+					@NewMaxBet = CASE WHEN new.MaxBet < b.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE b.MaxBet END,
+					@NewMaxPerMatch = CASE WHEN new.MaxPerMatch < b.MaxPerMatch AND new.MaxPerMatch > 0 THEN new.MaxPerMatch ELSE b.MaxPerMatch END,
+					@NewMaxBet = CASE WHEN @NewMaxPerMatch < @NewMaxBet THEN @NewMaxPerMatch ELSE @NewMaxBet END,
+					@NewMinBet = CASE WHEN @NewMaxBet < b.MinBet THEN @NewMaxBet ELSE b.MinBet END,
+					b.MinBet = @NewMinBet,
+					b.MaxBet = @NewMaxBet,
+					b.MaxPerMatch = @NewMaxPerMatch
+				FROM dbo.CustBetSetting_Member b WITH(ROWLOCK,UPDLOCK)
+					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
+					INNER JOIN #MemberTmpBatch ci
+						ON b.custid = ci.custid
+				WHERE 
+				b.SportType IN (43,44)
+			
 			END
 		END
 	END

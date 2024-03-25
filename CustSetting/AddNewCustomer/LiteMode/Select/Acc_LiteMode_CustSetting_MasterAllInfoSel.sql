@@ -3,7 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_MasterAllInfoSel]
 	@CustID INT,		
 	@GroupID INT = 0,
 	@GroupType INT = 0,
-	@CreationStatus TINYINT = 0
+	@SettingStatus TINYINT = 0
 AS
 /*
 	Created by: 20230622@Johnson	
@@ -14,6 +14,7 @@ AS
 		- 20230622@Johnson: initial sp [redmine: #179159]
 		- 20231204@Johnson: Sort SubGroup [redmine: #197629]
 		- 20240118@Eden: avoid data duplicate of Esport & Muay Thai Betsetting [redmine: #199970]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -40,22 +41,9 @@ BEGIN
 		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE custid = @custid
 	
-	IF @GroupType = 0 OR @GroupType = 150
-	BEGIN
-		DECLARE @discountMyanmarOdds DECIMAL (9,8),@IsMyanmarOdds BIT = 0
-		
-		SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@srecommend)
-		
-		IF @IsMyanmarOdds = 1
-		BEGIN
-			SET @discountMyanmarOdds = ISNULL((SELECT CommRate FROM AgentCommRate WITH (NOLOCK) WHERE CustId = @CustID AND Sporttype = 1 AND Bettype = 1),0)
-		END	
-	END	
-	
 	IF @GroupType = 0
 	BEGIN
-		DECLARE @UserName VARCHAR(50), 				
-				@Msuspended BIT,
+		DECLARE @Msuspended BIT,
 				@Credit_AllOtherAgent MONEY, 
 				@Credit_MAg MONEY, 
 				@Credit_Ag_Max MONEY,								
@@ -63,8 +51,6 @@ BEGIN
 				@IsInternalMaster BIT,								
 				@TransferOption VARCHAR(8),
 				@IsAutomateTransfer BIT = 0				
-		
-		EXEC dbo.Age_CustomerSelSuggestUsername @prefix = @uplineusername,@custid = @custid, @roleid = 3, @seqname = @username output
  		
 		SELECT @Credit_AllOtherAgent = ISNULL(SUM(credit), 0) 
 		FROM custinfo as ci WITH (NOLOCK) 
@@ -96,7 +82,6 @@ BEGIN
 		WHERE CustID = @CustId
 		
 		SELECT @UplineUsername as UplineUsername,
-			@UserName as NewUserName,
 			@Msuspended as suspended,
 			@Credit_Ag_Max as Credit_Max,
 			ISNULL(@DisableAutoMPT,0) as DisableAutoMPT,
@@ -112,7 +97,7 @@ BEGIN
 		
 	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder)
 	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder
-	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@CreationStatus,@siteID,@currency) 
+	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@SettingStatus,@siteID,@currency) 
 	
 	----------------------------------------------------------------------------------
 	--BEGIN SB Settings
@@ -120,60 +105,31 @@ BEGIN
 	--comm SB
 	IF  @GroupID = 1 AND @GroupType = 150
 	BEGIN
-		WITH T AS(
-		SELECT sporttype, bettype,
-			CASE WHEN bettype = 1 THEN groupA
-				WHEN bettype = 3 THEN groupB
-				WHEN bettype = 7 THEN groupC
-				WHEN bettype = 8 THEN groupD
-				WHEN bettype IN (4,5) THEN adiscount END as discount		 
-		FROM custsetting WITH(NOLOCK)
-		WHERE custid = @custid
-			AND sporttype = 1
-			AND bettype IN (1,3,7,8,4,5)
-		UNION SELECT 2, 1, @discountMyanmarOdds WHERE @IsMyanmarOdds = 1
-		)
-		SELECT T.*, s.IntervalValue,s.Child_DisplayOrder
-		FROM T
-		INNER JOIN #SportBettypeFilter s ON t.sporttype = s.sporttype
-											AND t.bettype = s.bettype
-		ORDER BY SubGroupOrder, s.Child_DisplayOrder									
+		SELECT t.SportType, t.BetType, t.Discount, s.IntervalValue,s.Child_DisplayOrder
+		FROM CustDiscount3rd_Agent t WITH(NOLOCK)
+			INNER JOIN #SportBettypeFilter s 
+				ON t.sporttype = s.sporttype
+				AND t.bettype = s.bettype
+		WHERE t.CustID = @CustID
+		ORDER BY s.SubGroupOrder,s.Child_DisplayOrder									
 	END
 	
 	--Bet setting SB
 	IF @GroupID = 1 AND @GroupType = 151
 	BEGIN				
-		;WITH T AS(
 		SELECT cs.sporttype, cs.bettype, 
 			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
 			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 
-			ISNULL(MIN(CASE WHEN cs.MaxPayoutPerMatch = 0 THEN NULL ELSE cs.MaxPayoutPerMatch END),0) MaxPayoutPerMatch,		
-			s.Child_DisplayOrder,
-			s.SubGroupOrder
+			MaxPayoutPerMatch = CASE WHEN cs.SportType IN(43,44) THEN NULL 
+									 ELSE ISNULL(MIN(CASE WHEN cs.MaxPayoutPerMatch = 0 THEN NULL ELSE cs.MaxPayoutPerMatch END),0) 
+								END
 		FROM CustBetSetting_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
 												AND cs.bettype = s.bettype
-												AND s.SportType NOT IN(43,44)
 		WHERE custid IN (@custid,@srecommend)
 		GROUP BY cs.sporttype, cs.bettype,s.SubGroupOrder, s.Child_DisplayOrder
-		UNION
-		SELECT cs.sporttype, cs.bettype, 
-			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
-			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
-			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch,
-			NULL MaxPayoutPerMatch, 
-			s.Child_DisplayOrder,
-			s.SubGroupOrder
-		FROM CustBetSetting3rd_Agent cs WITH(NOLOCK)
-		INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
-												AND cs.bettype = s.bettype
-		WHERE custid IN (@custid,@srecommend)
-		GROUP BY cs.sporttype, cs.bettype,s.SubGroupOrder, s.Child_DisplayOrder
-		)
-		SELECT sporttype, bettype, MinBet, MaxBet, MaxPerMatch, MaxPayoutPerMatch, Child_DisplayOrder
-		FROM T
-		ORDER BY SubGroupOrder,Child_DisplayOrder
+		ORDER BY s.SubGroupOrder,s.Child_DisplayOrder
 	END
 	
 	--Parlay MaxPayoutPerMatch
@@ -216,8 +172,7 @@ BEGIN
 				bu.SingleMatchParlay_IsAllowUnlimit AS SingleMatchParlay_IsAllowUnlimit,
 				bu.Combo2_IsAllowUnlimit AS Combo2_IsAllowUnlimit,
 				bu.Combo35_IsAllowUnlimit AS Combo35_IsAllowUnlimit,
-				bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit,
-				ft.Child_DisplayOrder				
+				bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit		
 		FROM #SportBettypeFilter ft 
 			INNER JOIN @MatchParlayUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype			
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
@@ -229,51 +184,12 @@ BEGIN
 	--SB PT
 	IF @GroupID = 1 AND @GroupType = 153
 	BEGIN	
-		;WITH T AS(
-		SELECT cs.sporttype, cs.bettype, 0 IsLive, 
-			scs.apositiontaking*100 AS A4,
-			(CASE WHEN cs.mpositiontaking<co.maxpositiontaking THEN cs.mpositiontaking ELSE co.maxpositiontaking END)*100 AS M3,
-			co.minpositiontaking*100 AS N3,
-			s.SubGroupOrder,
-			s.Child_DisplayOrder
-		FROM CustSetting cs WITH(NOLOCK) 
-			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
-			INNER JOIN #SportBettypeFilter s 
-				ON s.SportType = cs.sporttype  
-				AND s.BetType = cs.bettype
-				AND s.IsLive = 0
-			INNER JOIN CustSetting scs WITH(NOLOCK)	ON scs.custid = @srecommend 
-													AND scs.SportType = cs.sporttype  
-													AND scs.BetType = cs.bettype
-		WHERE cs.CustID = @custid						
-		UNION
-		SELECT cs.sporttype, cs.bettype, 1 IsLive, 
-			scs.alivepositiontaking*100 AS A4,
-			(CASE WHEN cs.mlivepositiontaking<co.maxlivepositiontaking THEN cs.mlivepositiontaking ELSE co.maxlivepositiontaking END)*100 AS M3,
-			co.minlivepositiontaking*100 AS N3,
-			s.SubGroupOrder,
-			s.Child_DisplayOrder
-		FROM CustSetting cs WITH(NOLOCK) 
-			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
-			INNER JOIN #SportBettypeFilter s 
-				ON s.SportType = cs.sporttype  
-				AND s.BetType = cs.bettype
-				AND s.IsLive = 1
-			INNER JOIN CustSetting scs WITH(NOLOCK)	ON scs.custid = @srecommend 
-													AND scs.SportType = cs.sporttype  
-													AND scs.BetType = cs.bettype
-		WHERE cs.CustID = @custid			
-			AND cs.sporttype = 1
-			AND cs.bettype IN (1,3,7,8)
-		UNION
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive 
 			, scs.AgentPT AS A4			
 			, cs.MasterPT AS M3  
 			, cs.MinPT  AS N3  
-			, s.SubGroupOrder
-			, s.Child_DisplayOrder
 		FROM dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter s 
 				ON s.SportType = cs.sporttype  
@@ -285,16 +201,7 @@ BEGIN
 				AND scs.BetType = cs.bettype  
 				AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid
-		)
-		SELECT  SportType  
-			, BetType  
-			, IsLive 
-			, A4			
-			, M3  
-			, N3  			
-			, Child_DisplayOrder
-		FROM T
-		ORDER BY SubGroupOrder, Child_DisplayOrder
+		ORDER BY s.SubGroupOrder, s.Child_DisplayOrder
 	END
 	
 	--END SB Settings
@@ -422,17 +329,17 @@ BEGIN
 	--Bet Setting
 	IF @GroupID = 4 AND @GroupType = 157
 	BEGIN
-		;WITH T AS 
-		(SELECT cs.Sporttype, cs.Bettype,
+		;WITH T AS (		
+		SELECT cs.sporttype, cs.bettype, 
 			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
 			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
-			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 			
+			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch,	
 			s.SubGroupOrder,
 			s.Child_DisplayOrder
-		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
-			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
-												AND cs.Bettype = s.Bettype
-		WHERE cs.CustID IN (@custid,@srecommend)
+		FROM CustBetSetting3rd_Agent cs WITH(NOLOCK)
+			INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
+												AND cs.bettype = s.bettype
+		WHERE custid IN (@custid,@srecommend)
 		GROUP BY cs.sporttype, cs.bettype, SubGroupOrder, s.Child_DisplayOrder
 		)
 		SELECT Sporttype, Bettype, MinBet, MaxBet, MaxPerMatch, Child_DisplayOrder

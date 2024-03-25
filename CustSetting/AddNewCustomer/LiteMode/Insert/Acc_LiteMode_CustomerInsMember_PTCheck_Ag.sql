@@ -9,7 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_PTCheck_Ag]
 	@SettingType28 VARCHAR(MAX)= '' OUTPUT,-- SB
 	@SettingType1 VARCHAR(MAX)= ''  OUTPUT,-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 	@SettingType18 VARCHAR(MAX)= '' OUTPUT,-- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
-	@CreationStatus TINYINT = 0,
+	@SettingStatus TINYINT = 0,
 
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
@@ -23,6 +23,7 @@ AS
 	
 	Revisions: 
 		- 20230727@Johnson: initial sp [redmine: #179159]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 	Param's Explanation: 
 		- @SettingType28 = '<Root>
@@ -46,15 +47,7 @@ AS
 */	
 BEGIN
 	SET NOCOUNT ON 
-		
-	DECLARE @tblPT28 TABLE (
-				SportType		SMALLINT,
-				BetType			SMALLINT,
-				IsLive			BIT,
-				AgentPT			SMALLMONEY,
-				SuperPT 		SMALLMONEY,
-				MasterPT		SMALLMONEY
-				)		
+	
 	DECLARE @tblPT18 TABLE (
 				SettingType		SMALLINT,
 				SportType		SMALLINT,
@@ -62,7 +55,8 @@ BEGIN
 				IsLive			BIT,
 				AgentPT			SMALLMONEY,
 				SuperPT 		SMALLMONEY,
-				MasterPT		SMALLMONEY
+				MasterPT		SMALLMONEY,
+				Child_DisplayOrder	INT
 				)
 	CREATE TABLE #ProductSettingDetail_PTCheck(
 		[SettingType] [smallint],
@@ -72,6 +66,7 @@ BEGIN
 		[ProductID] [tinyint],
 		[SettingLevel] [tinyint],		
 		[MaxPT]	[smallmoney],
+		Child_DisplayOrder	INT,
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 	
@@ -81,16 +76,18 @@ BEGIN
 	IF ISNULL(@SettingType28,'') <> ''
 	BEGIN
 		SELECT @xml = CONVERT(XML, @SettingType28)
-		
-		INSERT INTO @tblPT28(SportType, 
+
+		INSERT INTO @tblPT18(SettingType,
+			SportType,
 			BetType, 
 			IsLive,
 			AgentPT)
-		SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+		SELECT 28 as SettingType,
+			T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
 			T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS BetType,
 			T.c.query('.').value('(R/@IsLive)[1]', 'bit') AS IsLive,
-			T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney')/100 AS AgentPT
-		FROM  @xml.nodes('/Root/R') T(c) 			
+			T.c.query('.').value('(R/@AgentPT)[1]', 'smallmoney') AS AgentPT
+		FROM  @xml.nodes('/Root/R') T(c)			
 	END	
 
 	IF ISNULL(@SettingType1,'') <> ''
@@ -128,29 +125,19 @@ BEGIN
 		FROM  @xml.nodes('/Root/R') T(c)			
 	END
 	
-	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
-	SELECT SportType,BetType,SettingType,IsLive,RealProductID,SettingLevel,MaxPT
-	FROM dbo.f_LiteMode_CustSetting_ProductSettingDetailSel(NULL,@CreationStatus,@siteid,@currency)
+	INSERT INTO #ProductSettingDetail_PTCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT,Child_DisplayOrder)
+	SELECT SportType,BetType,SettingType,IsLive,RealProductID,SettingLevel,MaxPT,Child_DisplayOrder
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 	WHERE SettingType IN (1,18,28)
 	
 	--check pt > 0 
 	;WITH T AS (
-	SELECT t.SportType, t.BetType, t.IsLive, SettingLevel,ps.ProductID
-		FROM @tblPT28 t
-			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
-																AND t.BetType = ps.bettype 
-																AND t.IsLive = ps.IsLive
-		WHERE ps.SettingType IN (28)--SB PT
-			AND (t.AgentPT < 0 
-				OR t.AgentPT > ps.MaxPT			
-				)
-		UNION 
 		SELECT t.SportType, t.BetType, t.IsLive, SettingLevel,ps.ProductID
 		FROM @tblPT18 t
 			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																AND t.BetType = ps.bettype 
 																AND t.IsLive = ps.IsLive
-		WHERE ps.SettingType IN (1,18)--DCS PT
+		WHERE ps.SettingType IN (1,18,28)--DCS PT
 			AND (t.AgentPT < 0 				
 				OR t.AgentPT > ps.MaxPT
 				)
@@ -173,31 +160,11 @@ BEGIN
 	
 	--check n2<=a1<=l2
 	;WITH T AS (
-		SELECT b.SportType, b.BetType, b.IsLive, 
-			co.minpositiontaking*100 MinPT,
-			co.maxpositiontaking*100 MaxPT	
-		FROM @tblPT28 b
-			INNER JOIN custoverride AS co WITH (NOLOCK) ON co.sporttype=b.sporttype 
-														AND co.bettype = b.bettype 
-														AND b.isLive = 0														
-		WHERE co.custid = @recommend 
-			AND (b.AgentPT < co.minpositiontaking OR b.AgentPT > co.maxpositiontaking)
-		UNION ALL
-		SELECT b.SportType, b.BetType, b.IsLive, 
-			co.minlivepositiontaking*100 MinPT,
-			co.maxlivepositiontaking*100 MaxPT	
-		FROM @tblPT28 b
-			INNER JOIN custoverride AS co WITH (NOLOCK) ON co.sporttype=b.sporttype 
-														AND co.bettype = b.bettype 
-														AND b.isLive = 1														
-		WHERE co.custid = @recommend 
-			AND (b.AgentPT < co.minlivepositiontaking OR b.AgentPT > co.maxlivepositiontaking)	
-		UNION ALL
 		SELECT b.SportType, b.BetType, b.IsLive,co.MinPT,co.MaxPT	
 		FROM @tblPT18 b
 			INNER JOIN CustPTSetting3rd_Agent AS co WITH (NOLOCK) ON co.sporttype=b.sporttype 
 														AND co.bettype = b.bettype 
-														AND b.isLive = 0														
+														AND b.isLive = co.IsLive														
 		WHERE co.custid = @recommend 
 			AND (b.AgentPT < co.MinPT OR b.AgentPT > co.MaxPT)	
 	)	
@@ -222,30 +189,6 @@ BEGIN
 	--check a1<=min(a2,a4) - Vinh
 	SELECT @ErrType = ''
 	;WITH T AS (
-		SELECT b.SportType, b.BetType, b.IsLive, 
-			(CASE WHEN cs.apositiontaking < scs.apositiontaking THEN cs.apositiontaking ELSE scs.apositiontaking END)*100 MaxPT	
-		FROM @tblPT28 b
-			INNER JOIN custsetting AS cs WITH (NOLOCK) ON cs.custid = @recommend 
-														AND cs.sporttype=b.sporttype 
-														AND cs.bettype = b.bettype 
-														AND b.isLive = 0
-			INNER JOIN custsetting AS scs WITH (NOLOCK) ON scs.custid = @srecommend
-														AND scs.sporttype=b.sporttype 
-														AND scs.bettype = b.bettype 																							
-		WHERE b.AgentPT > CASE WHEN cs.apositiontaking < scs.apositiontaking THEN cs.apositiontaking ELSE scs.apositiontaking END
-		UNION ALL
-		SELECT b.SportType, b.BetType, b.IsLive, 
-			(CASE WHEN cs.alivepositiontaking < scs.alivepositiontaking THEN cs.alivepositiontaking ELSE scs.alivepositiontaking END)*100 MaxPT	
-		FROM @tblPT28 b
-			INNER JOIN custsetting AS cs WITH (NOLOCK) ON cs.custid = @recommend 
-														AND cs.sporttype=b.sporttype 
-														AND cs.bettype = b.bettype 
-														AND b.isLive = 1
-			INNER JOIN custsetting AS scs WITH (NOLOCK) ON scs.custid = @srecommend
-														AND scs.sporttype=b.sporttype 
-														AND scs.bettype = b.bettype 																							
-		WHERE b.AgentPT > CASE WHEN cs.alivepositiontaking < scs.alivepositiontaking THEN cs.alivepositiontaking ELSE scs.alivepositiontaking END
-		UNION ALL
 		SELECT b.SportType, b.BetType, b.IsLive, 
 			CASE WHEN cs.AgentPT < scs.AgentPT THEN cs.AgentPT ELSE scs.AgentPT END MaxPT	
 		FROM @tblPT18 b
@@ -286,54 +229,7 @@ BEGIN
     --IF @auto_spt = 0 THEN @spt = s3
     --else	IF @auto_spt < s4 - @mpt - @apt THEN @spt = @auto_spt
     --		else @spt = s4 - @mpt - @apt
-	DECLARE @MasterPT SMALLMONEY
-	
-	UPDATE t
-	SET @MasterPT = CASE WHEN cs.isautompositiontaking = 0 THEN cs.mpositiontaking 
-						ELSE CASE WHEN cs.autompositiontaking < mcs.mpositiontaking - t.AgentPT THEN cs.autompositiontaking
-								ELSE mcs.mpositiontaking - t.AgentPT END
-						END,
-		t.SuperPT = CASE WHEN mcs.isautopositiontaking = 0 THEN mcs.spositiontaking
-						ELSE CASE WHEN mcs.autopositiontaking < scs.spositiontaking - @MasterPT - t.AgentPT
-									THEN mcs.autopositiontaking
-									ELSE scs.spositiontaking - @MasterPT - t.AgentPT
-								END
-						END,
-		t.MasterPT = @MasterPT						
-	FROM @tblPT28 t 
-		INNER JOIN custsetting cs WITH(NOLOCK) ON cs.custid = @recommend
-												AND cs.sporttype = t.sporttype
-												AND cs.bettype = t.bettype
-												AND t.IsLive = 0
-		INNER JOIN custsetting mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
-												AND mcs.sporttype = t.sporttype
-												AND mcs.bettype = t.bettype
-		INNER JOIN custsetting scs WITH(NOLOCK) ON scs.custid = @srecommend
-												AND scs.sporttype = t.sporttype
-												AND scs.bettype = t.bettype
-	UPDATE t
-	SET @MasterPT = CASE WHEN cs.isautolivempositiontaking = 0 THEN cs.mlivepositiontaking 
-						ELSE CASE WHEN cs.autolivempositiontaking < mcs.mlivepositiontaking - t.AgentPT THEN cs.autolivempositiontaking
-									ELSE mcs.mlivepositiontaking - t.AgentPT END
-						END,
-		t.SuperPT = CASE WHEN mcs.isautolivepositiontaking = 0 THEN mcs.slivepositiontaking
-								ELSE CASE WHEN mcs.autolivepositiontaking < scs.slivepositiontaking - @MasterPT - t.AgentPT
-											THEN mcs.autolivepositiontaking
-											ELSE scs.slivepositiontaking - @MasterPT - t.AgentPT
-										END
-						END,
-		t.MasterPT = @MasterPT							
-	FROM @tblPT28 t 
-		INNER JOIN custsetting cs WITH(NOLOCK) ON cs.custid = @recommend
-												AND cs.sporttype = t.sporttype
-												AND cs.bettype = t.bettype
-												AND t.IsLive = 1
-		INNER JOIN custsetting mcs WITH(NOLOCK) ON mcs.custid = @mrecommend
-												AND mcs.sporttype = t.sporttype
-												AND mcs.bettype = t.bettype
-		INNER JOIN custsetting scs WITH(NOLOCK) ON scs.custid = @srecommend
-												AND scs.sporttype = t.sporttype
-												AND scs.bettype = t.bettype										
+	DECLARE @MasterPT SMALLMONEY								
 	
 	UPDATE t
 	SET @MasterPT = CASE WHEN cs.IsAutoMasterPT = 0 THEN cs.MasterPT 
@@ -361,6 +257,14 @@ BEGIN
 												AND mcs.bettype = t.bettype
 												AND mcs.IsLive = t.IsLive
 																						
+	UPDATE t
+	SET t.Child_DisplayOrder = d.Child_DisplayOrder
+	FROM @tblPT18 t
+		INNER JOIN #ProductSettingDetail_PTCheck d 
+			ON t.SportType = d.SportType
+			AND t.BetType = d.BetType
+			AND t.IsLive = d.IsLive
+	
 	SELECT @SettingType28 = (
 	SELECT SportType '@SportType', 
 		BetType '@BetType', 
@@ -368,7 +272,9 @@ BEGIN
 		SuperPT '@SuperPT',
 		MasterPT '@MasterPT',		
 		AgentPT '@AgentPT'
-	FROM @tblPT28
+	FROM @tblPT18
+	WHERE SettingType = 28
+	ORDER BY Child_DisplayOrder,SportType,BetType
 	FOR XML PATH ('R'), ROOT('Root')
 	)	
 	
@@ -381,6 +287,7 @@ BEGIN
 		AgentPT '@AgentPT'
 	FROM @tblPT18
 	WHERE SettingType = 1
+	ORDER BY Child_DisplayOrder,SportType,BetType
 	FOR XML PATH ('R'), ROOT('Root')
 	)	
 	
@@ -393,6 +300,7 @@ BEGIN
 		AgentPT '@AgentPT'
 	FROM @tblPT18
 	WHERE SettingType = 18
+	ORDER BY Child_DisplayOrder,SportType,BetType
 	FOR XML PATH ('R'), ROOT('Root')
 	)	
 	

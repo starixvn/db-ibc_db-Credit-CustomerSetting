@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdMaster_DisableAutoMPT]
     @CustID int,-- MasterID
     @DisableAutoMPT bit = 0,
@@ -34,12 +33,13 @@ Revisions:
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20151014@Helen: Customer Setting for Sportsbook 2- [Redmine: #44604]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 Param's Explanation:
-• @ErrCode:
+- @ErrCode:
     = 0: Transaction recorded successfully.
     > 0: Specific Error.
   
-• @ErrMsg: Error description.
+- @ErrMsg: Error description.
 */
 BEGIN
     SET NOCOUNT ON
@@ -92,116 +92,55 @@ BEGIN
     IF @DisableAutoMPT = 1
     BEGIN
         --Reset m2 of all agent under this master
-        --m2=min(um2,m3-a2)
-        
-        UPDATE acs 
-           SET mpositiontaking =
-                 CASE
-                   WHEN acs.autompositiontaking > mcs.mpositiontaking - acs.apositiontaking THEN mcs.mpositiontaking - acs.apositiontaking
-                   ELSE acs.autompositiontaking
-                 END
-          FROM custsetting acs WITH(ROWLOCK, UPDLOCK) 
-			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = acs.custid
-			INNER JOIN custsetting mcs WITH(NOLOCK) ON acs.sporttype = mcs.sporttype
-												   AND acs.bettype = mcs.bettype
-												   AND mcs.custid = @CustID
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid = 2
-           AND ci.Enabled = 1
-           AND acs.isautompositiontaking = 1       
-
-
-        UPDATE acs 
-           SET mlivepositiontaking =
-                 CASE
-                   WHEN acs.autolivempositiontaking > mcs.mlivepositiontaking - acs.alivepositiontaking THEN mcs.mlivepositiontaking - acs.alivepositiontaking
-                   ELSE acs.autolivempositiontaking
-                 END      
-          FROM custsetting acs WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = acs.custid
-			INNER JOIN custsetting mcs WITH(NOLOCK) ON acs.sporttype = mcs.sporttype
-												   AND acs.bettype = mcs.bettype
-												   AND mcs.custid = @CustID
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid = 2
-           AND ci.Enabled = 1
-           AND acs.isautolivempositiontaking = 1             
-
-        --Reset auto master PT of all agent under this master 
-        UPDATE cs
-           SET isautompositiontaking = 0
-             , autompositiontaking = 0
-          FROM custsetting cs WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid 
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid IN (1, 2)
-           AND ci.Enabled = 1
-           AND cs.isautompositiontaking = 1      
-
-         UPDATE cs
-           SET isautolivempositiontaking = 0
-             , autolivempositiontaking = 0
-          FROM custsetting cs WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid 
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid IN (1, 2)
-           AND ci.Enabled = 1
-           AND cs.isautolivempositiontaking = 1            
-        
-        -- For sportbook2: CustPTSetting3rd_Member AND CustPTSetting3rd_Agent
-        --Reset m2 of all agent under this master
         --m2=min(um2,m3-a2) -- isautompositiontaking = Islive = 0 
-        BEGIN
         UPDATE acs 
-           SET MasterPT =
-                 CASE
-                   WHEN acs.AutoMasterPT > mcs.MasterPT - acs.AgentPT THEN mcs.MasterPT - acs.AgentPT
-                   ELSE acs.AutoMasterPT
-                 END
-          FROM CustPTSetting3rd_Agent acs WITH(ROWLOCK, UPDLOCK) 
+        SET MasterPT =
+                CASE
+                WHEN acs.AutoMasterPT > mcs.MasterPT - acs.AgentPT THEN mcs.MasterPT - acs.AgentPT
+                ELSE acs.AutoMasterPT
+                END
+        FROM CustPTSetting3rd_Agent acs WITH(ROWLOCK, UPDLOCK) 
 			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = acs.custid
 			INNER JOIN CustPTSetting3rd_Agent mcs WITH(NOLOCK) ON acs.sporttype = mcs.sporttype
-												   AND acs.bettype = mcs.bettype
-												   AND mcs.custid = @CustID
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid = 2
-           AND ci.Enabled = 1
-           AND acs.IsAutoMasterPT = 1
+												AND acs.bettype = mcs.bettype
+												AND mcs.custid = @CustID
+        WHERE ci.mrecommend = @CustID
+			AND ci.roleid = 2
+			AND ci.Enabled = 1
+			AND acs.IsAutoMasterPT = 1
         
-        --Reset auto master PT of all agent under this master 
-          UPDATE cs
-           SET IsAutoMasterPT = 0
-             , AutoMasterPT = 0
-          FROM CustPTSetting3rd_Agent cs WITH(ROWLOCK, UPDLOCK)
+		--Reset auto master PT of all agent under this master 
+        UPDATE cs
+        SET IsAutoMasterPT = 0
+            , AutoMasterPT = 0
+        FROM CustPTSetting3rd_Agent cs WITH(ROWLOCK, UPDLOCK)
 			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid 
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid = 2
-           AND ci.Enabled = 1
-           AND cs.IsAutoMasterPT = 1
+        WHERE ci.mrecommend = @CustID
+			AND ci.roleid = 2
+			AND ci.Enabled = 1
+			AND cs.IsAutoMasterPT = 1
          
-          UPDATE cs
-           SET IsAutoMasterPT = 0
-             , AutoMasterPT = 0
-          FROM CustPTSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK)
+        UPDATE cs
+        SET IsAutoMasterPT = 0
+            , AutoMasterPT = 0
+        FROM CustPTSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK)
 			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid 
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid = 1
-           AND ci.Enabled = 1
-           AND cs.IsAutoMasterPT = 1
+        WHERE ci.mrecommend = @CustID
+			AND ci.roleid = 1
+			AND ci.Enabled = 1
+			AND cs.IsAutoMasterPT = 1
            
                        
-		 -- Update Group
-		 UPDATE cs
-           SET IsAutoMasterPT = 0
-             , AutoMasterPT = 0
-          FROM CustPTGroupSetting3rd_Member  cs WITH(ROWLOCK, UPDLOCK)
+		-- Update Group
+		UPDATE cs
+        SET IsAutoMasterPT = 0
+            , AutoMasterPT = 0
+        FROM CustPTGroupSetting3rd_Member  cs WITH(ROWLOCK, UPDLOCK)
 			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.AgentID 
-         WHERE ci.mrecommend = @CustID
-           AND ci.roleid = 2
-           AND ci.Enabled = 1
-           AND cs.IsAutoMasterPT = 1
-		
-		END
+        WHERE ci.mrecommend = @CustID
+			AND ci.roleid = 2
+			AND ci.Enabled = 1
+			AND cs.IsAutoMasterPT = 1
     END
 
     DECLARE  @LogSPData varchar(8000)

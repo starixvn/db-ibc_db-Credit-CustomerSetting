@@ -2,7 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_CustPTTemplateCheck] 
 	@CustID INT,	
 	@Settings VARCHAR(MAX),
-	@CreationStatus TINYINT = 0,
+	@SettingStatus TINYINT = 0,
 	
 	@Language VARCHAR(3) = 'E',
 	@ErrCode INT = 0 OUTPUT,
@@ -16,6 +16,7 @@ AS
 	
 	Revisions: 
 		- 20230509@Johnson: initial sp [redmine: #179159]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 	Param's Explanation: 
 		- @Settings = '<Root>
@@ -60,7 +61,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency) 
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency) 
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel,MaxPT)
 		SELECT cs.sporttype, cs.bettype, 0 IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,
@@ -108,7 +109,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -132,7 +133,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -156,7 +157,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -180,7 +181,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID	
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -204,7 +205,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID	
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -263,7 +264,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.sporttype, cs.bettype, 0 IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,
@@ -311,7 +312,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -335,7 +336,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus,@siteID,@currency) 
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID,@SettingStatus,@siteID,@currency) 
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -359,7 +360,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID,@CreationStatus,@siteID,@currency) 
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID,@SettingStatus,@siteID,@currency) 
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -383,7 +384,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID	
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -407,7 +408,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID	
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -466,7 +467,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT, MinPT)
 		SELECT cs.sporttype, cs.bettype, 0 IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,
@@ -530,7 +531,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT, MinPT)
 		SELECT cs.SportType  
@@ -561,7 +562,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT, MinPT)
 		SELECT cs.SportType  
@@ -592,7 +593,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT, MinPT)
 		SELECT cs.SportType  
@@ -623,7 +624,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 				
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT, MinPT)
 		SELECT cs.SportType  
@@ -654,7 +655,7 @@ BEGIN
 		
 		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
 		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
-		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @CreationStatus,@siteID,@currency)
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 				
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT, MinPT)
 		SELECT cs.SportType  

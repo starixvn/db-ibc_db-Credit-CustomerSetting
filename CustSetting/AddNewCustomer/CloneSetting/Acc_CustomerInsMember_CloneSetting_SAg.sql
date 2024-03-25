@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 (
 	@Custid INT OUTPUT
@@ -13,13 +13,12 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CloneSetting_SAg]
 	,@Creator INT
 	,@srecommend INT	
 	,@ExistingCustid INT
-	,@SubAccountID INT=0	
+	,@SubAccID INT=0	
 	,@Language VARCHAR(2)= 'E'
 	,@IP VARCHAR(15)=''		
 	,@ErrCode INT = 0 OUTPUT
 	,@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	,@SystemID TINYINT=1
-	,@CreatedMode TINYINT = 0
 	,@SettingStatus TINYINT = 0
 )
 AS
@@ -110,15 +109,14 @@ AS
 	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141]
 	- 20231211@Johnson: check permission for 777 [redmineID: #197160]
 	- 20240229@Johnson: no need check permission for 777 on Alpha [redmine: #201574]
+	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
  Explanation's Param:  
-	• @ErrCode:
+	- @ErrCode:
 		= 0: Create agent successfully.
 		> 0: Specific Error.
 	  
-	• @ErrMsg: Error description.	
+	- @ErrMsg: Error description.	
 	- @SettingStatus: 0: Pro, 1: UAT
-	- @CreatedMode: = 0: single customer
-				= 1: multiple customers
   
 */
 BEGIN
@@ -132,48 +130,16 @@ BEGIN
 		,@Language = @Language
 
 	IF @ErrCode <> 0 RETURN
-	
-	/* #190167 : Remove Code Limit Create New Account
---20140619@Johnson: Check IP to create downline-----------------
-	DECLARE @isValidIP bit
-	
-	
-	,@isAllowed  BIT
-	
-	IF @CreatedMode = 1 
-	BEGIN
-		EXEC Acc_ProblemAccountLimitDownlineCheck
-			@custid = @srecommend,
-			@isAllowed = @isAllowed OUTPUT
-		
-		IF @isAllowed = 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-					WHEN 'E' THEN 'Sorry, you can only create 3 masters per day, please try again tomorrow.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40064, @Language)
-					end,
-				@ErrCode = 1002
-		return
-		END
-	END
 
-
-	
-	EXEC Acc_CustomerInsMember_CheckIP 
-			@IP = @IP,
-			@isValid = @isValidIP OUTPUT
-	
-	IF @isValidIP = 0
+	IF @credit <0
 	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline or CSD for further information.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40032, @Language)
-					end,
-				@ErrCode = 1001	
-		return
+		SELECT  @ErrCode = 2
+		SELECT @ErrMsg = 	CASE @Language 
+								WHEN 'E' THEN 'Credits must be positive.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](70025,@Language)
+							END
+		RETURN
 	END
---End check IP--------------------------------------------------
-		#190167 : End Remove Code */
 
 	DECLARE @NotificationInfo VARCHAR(MAX), @CreateDate DATETIME, @IsAllDayBalTransfer BIT, @IsAutoEnableADBMaster BIT
 	
@@ -246,7 +212,6 @@ BEGIN
 				@existingSrecommend = @existingSrecommend , 
 				@Prefix				= @Super_Username , 
 				@GroupName			= '' , 
-				@CreatedMode		= @CreatedMode , 
 				@IsQRCode			= 0 , 
 				@SystemID			= 0 ,
 				@IP					= @IP ,
@@ -661,8 +626,6 @@ BEGIN
 			@ErrCode = 115
 			
 		-- ROLLBACK MANUALLY	
-		DELETE FROM custoverride WITH(ROWLOCK) WHERE custid =  @CustID
-		DELETE FROM custsetting WITH(ROWLOCK) WHERE custid =  @CustID
 		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  	    
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
@@ -689,9 +652,7 @@ BEGIN
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID			
+		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  			
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
 							
@@ -760,9 +721,7 @@ BEGIN
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID					
+		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  					
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID 
 		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid 
@@ -810,10 +769,7 @@ BEGIN
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		
+		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
@@ -842,10 +798,7 @@ BEGIN
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
 		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM dbo.CustSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM custoverride WITH (ROWLOCK) WHERE custid =  @CustID
-		
+		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID  	
 		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
 		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID  
 		DELETE FROM VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
@@ -874,7 +827,7 @@ BEGIN
 	'Language="'+ coalesce(cast(@Language as VARCHAR(2)),space(1)) + '" ' +	
 	'CopiedFrom="'+cast(@ExistingCustid as VARCHAR(10))+'" '+
 	'CopiedFomUsername="'+c.username+'" '+
-	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccountID) as VARCHAR(30)),space(1)) + '" ' +
+	'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as VARCHAR(30)),space(1)) + '" ' +
 	'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
 	'ErrCode="'+ coalesce(cast(@ErrCode as VARCHAR(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as VARCHAR(4000)),space(1)) + '" />'
@@ -883,8 +836,7 @@ BEGIN
 	
 	DECLARE @ActionID INT 
 	SELECT @ActionID = CASE WHEN @systemID = 10 THEN 95079 --telegram chatbot					
-						ELSE CASE WHEN @CreatedMode = 1 THEN 95080 --Mulitple customers
-								ELSE 630 END --old mode
+						ELSE 95080 --Mulitple customers
 						END		
 	
 	BEGIN TRY
@@ -912,7 +864,7 @@ BEGIN
 		'Language="'+ coalesce(cast(@Language as VARCHAR(2)),space(1)) + '" ' +	
 		'CopiedFrom="'+cast(@ExistingCustid as VARCHAR(10))+'" '+
 		'CopiedFomUsername="'+c.username+'" '+
-		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccountID) as VARCHAR(30)),space(1)) + '" ' +
+		'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as VARCHAR(30)),space(1)) + '" ' +
 		'SystemId="'+ cast(@SystemID as VARCHAR(3)) + '" ' +
 		'ErrCode="'+ coalesce(cast(ERROR_NUMBER() as VARCHAR(50)),space(1)) + '" ' +
 		'ErrMsg="'+ coalesce(cast(ERROR_MESSAGE() as VARCHAR(4000)),space(1)) + '" />'

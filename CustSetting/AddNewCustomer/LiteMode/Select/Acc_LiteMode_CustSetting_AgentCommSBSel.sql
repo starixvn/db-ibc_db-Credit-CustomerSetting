@@ -9,6 +9,7 @@ AS
 	
 	Revisions:
 		- 2023710@Johnson: initial sp [redmine: #179159]
+		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		
 	Parameter's explaination:
 	
@@ -16,13 +17,9 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	SELECT sporttype, bettype,
-			CASE WHEN bettype = 1 THEN groupA
-				WHEN bettype = 3 THEN groupB
-				WHEN bettype = 7 THEN groupC
-				WHEN bettype = 8 THEN groupD END as discount		 
-		FROM custsetting WITH(NOLOCK)
-		WHERE custid = @custid
-			AND sporttype = 1
-			AND bettype IN (1,3,7,8)
+	SELECT sporttype, bettype, discount		 
+	FROM CustDiscount3rd_Agent WITH(NOLOCK)
+	WHERE custid = @custid
+		AND sporttype = 1
+		AND bettype IN (1,3,7,8) -- load data when agent assign ugroup for member
 END			

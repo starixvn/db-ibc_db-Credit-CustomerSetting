@@ -38,6 +38,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 202300801@Helios: Customer Setting - Simplify Live Casino Customer Setting [RedmineID: #189389] 
+		- 20231228@Eden: DCS Sportsbook Credit[redmine: #193083]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -715,6 +716,27 @@ BEGIN
 					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
 				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9,16,20,23) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
 
+			IF EXISTS(SELECT TOP 1 1 FROM [dbo].CustBetSetting_Agent WITH(NOLOCK) WHERE CustID = @ExistingCustID)
+				INSERT INTO [dbo].CustBetSetting_Agent
+						   ([CustID]
+						   ,[SportType]
+						   ,[BetType]
+						   ,[MinBet]
+						   ,[MaxBet]
+						   ,[MaxPerMatch]
+						   ,MaxPerNumber
+						   )
+				SELECT		@CustID
+						   ,cs.SportType
+						   ,cs.BetType
+						   ,[MinBet]
+						   ,[MaxBet]
+						   ,[MaxPerMatch]
+						   ,MaxPerNumber
+				FROM [dbo].CustBetSetting_Agent cs WITH (NOLOCK)
+					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
+				WHERE CustID = @ExistingCustID AND ps.SettingType IN (23) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
+
 			IF @RoleID = 4
 			BEGIN
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
@@ -754,6 +776,30 @@ BEGIN
 						AND t.BetType = p.BetType
 						AND p.SubType = 1
 				WHERE t.SettingType IN (23) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
+
+				INSERT INTO [dbo].[CustBetSetting_Agent]
+					   ([CustID]
+					   ,[SportType]
+					   ,[BetType]
+					   ,[MinBet]
+					   ,[MaxBet]
+					   ,[MaxPerMatch]
+					   ,MaxPerNumber
+					   )
+				SELECT
+					@CustID
+					,t.SportType
+					,t.BetType
+					,0
+					,0
+					,0
+					,0
+				FROM #ProductProfile t 
+					INNER JOIN #ProductSettingDetail_tmp02 p 
+						ON t.SportType = p.SportType 
+						AND t.BetType = p.BetType
+						AND p.SubType = 2
+				WHERE t.SettingType IN (23) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 				
 				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
 					   ([CustID]
@@ -779,6 +825,7 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID
 			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID		
 			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
+			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
 		
 			RETURN
 		END CATCH
@@ -820,6 +867,7 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID
 			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
+			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
 			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
 		
 			RETURN
@@ -872,6 +920,7 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID
 			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
+			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
 			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
 			DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
 		
@@ -919,6 +968,7 @@ BEGIN
 			DELETE FROM CustProductStatus WHERE CustID = @CustID
 			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
 			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
+			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
 			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
 			DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
 			DELETE FROM dbo.CustStakeLevel_Agent WHERE CustID = @CustID
