@@ -27,6 +27,7 @@ AS
 		  - 20230801@Johnson: adjust DCS products setting from LiteMode	[Redmine:#179159]
 		  - 20240308@Johnson: HF wrong PT on group [redmine: #202053]
 		  - 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
+		  - 20240327@Johnson: HF wrong PT on group [redmine: #202119]
 		Parameter's Explanation:
 	*/	
 BEGIN
@@ -161,8 +162,8 @@ BEGIN
 						WHERE grp.AgentID = @recommend
 						)
 				AND NOT EXISTS(SELECT TOP 1 1
-								FROM dbo.CustPTGroupSetting3rd_Member grp 
-								JOIN CustPTSetting3rd_Member cs ON cs.SportType = grp.SportType
+								FROM dbo.CustPTGroupSetting3rd_Member grp WITH(NOLOCK) 
+								JOIN CustPTSetting3rd_Member cs WITH(NOLOCK) ON cs.SportType = grp.SportType
 														AND cs.BetType = grp.BetType
 														AND cs.Islive = grp.Islive
 								WHERE grp.AgentID = @recommend

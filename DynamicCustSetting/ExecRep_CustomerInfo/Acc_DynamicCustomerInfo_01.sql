@@ -100,8 +100,8 @@ BEGIN
 						WHERE grp.AgentID = @AgentID
 						)
 					AND NOT EXISTS(SELECT TOP 1 1
-								FROM dbo.CustPTGroupSetting3rd_Member grp
-								JOIN CustPTSetting3rd_Member cs ON cs.SportType = grp.SportType
+								FROM dbo.CustPTGroupSetting3rd_Member grp WITH(NOLOCK)
+								JOIN CustPTSetting3rd_Member cs WITH(NOLOCK) ON cs.SportType = grp.SportType
 														AND cs.BetType = grp.BetType
 														AND cs.Islive = grp.Islive
 								WHERE grp.AgentID = @AgentID
@@ -200,7 +200,7 @@ BEGIN
 					grpt.AutoSuperPT,
 					grpt.AutoMasterPT
 				FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
-					LEFT JOIN dbo.CustPTSetting3rd_Member mempt
+					LEFT JOIN dbo.CustPTSetting3rd_Member mempt WITH(NOLOCK)
 						ON mempt.CustID = @CustID
 						AND grpt.SportType=mempt.SportType
 						AND grpt.BetType=mempt.BetType

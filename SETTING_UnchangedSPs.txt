@@ -1,4 +1,4 @@
-
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Ag.sql
 CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_Ag.sql
 DynamicCustSetting\UpdateSetting\Update\1-18_PositionTaking\Acc_CustSetting_AgentPTOnMemberUpd.sql
 DynamicCustSetting\AddNewCustomer\Acc_CustSetting_DCSSettingCopyInsertMember.sql
