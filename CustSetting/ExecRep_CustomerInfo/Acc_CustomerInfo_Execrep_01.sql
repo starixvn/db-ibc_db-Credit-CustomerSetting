@@ -27,6 +27,7 @@ AS
 		  - 20230801@Johnson: adjust DCS products setting from LiteMode	[Redmine:#179159]
 		  - 20240308@Johnson: HF wrong PT on group [redmine: #202053]
 		  - 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
+		  - 20240327@Johnson: HF wrong PT on group [redmine: #202119]
 		Parameter's Explanation:
 	*/	
 BEGIN
@@ -43,9 +44,7 @@ BEGIN
 	DECLARE @mpos smallmoney, @apos smallmoney, @spos smallmoney, @mapos1 smallmoney, @mapos2 smallmoney, @mapos smallmoney, @maxmapos smallmoney
 
 	IF @mode = 'SportBook' OR @mode = 'LiteMode'
-	BEGIN
-		--check agent min/max
-		--update a1=n2 when a1<n2
+	BEGIN		
 		--Get setting mode
 		DECLARE @SettingMode BIT
 		
@@ -57,77 +56,77 @@ BEGIN
 		BEGIN
 			--check agent min/max
 			--update a1=n2 when a1<n2
-		UPDATE cs 
-		SET 
-			cs.AgentPT = aco.MinPT,
-			cs.MasterPT = CASE WHEN cs.MasterPT + aco.MinPT > mcs.MasterPT THEN mcs.MasterPT-aco.MinPT ELSE cs.MasterPT END
-		FROM 
-			CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)			
-			INNER JOIN CustPTSetting3rd_Agent as mcs with (NOLOCK) on mcs.custid = @mrecommend  AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
-			INNER JOIN CustPTSetting3rd_Agent as aco with (NOLOCK) on aco.custid = @recommend  AND aco.sporttype=cs.sporttype AND aco.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
-		WHERE cs.custid = @custid AND cs.AgentPT<aco.MinPT
-		
-		--Recal AUTO MPT 
-		--Update m1=min(m4-a1,m3-a1,(im1?um1,um2))
-		--if @updautomaster = 1
-		--begin
-		UPDATE cs
-			SET MasterPT = 
-				CASE WHEN scs.MasterPT > mcs.MasterPT THEN
-						CASE WHEN mcs.MasterPT-cs.AgentPT > (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
-						THEN (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
-						ELSE  mcs.MasterPT-cs.AgentPT END
-					ELSE 
-						CASE WHEN scs.MasterPT-cs.AgentPT > (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
-						THEN (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
-						ELSE  scs.MasterPT-cs.AgentPT END
-					END
-		FROM
-			CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)					
-			INNER JOIN CustPTSetting3rd_Agent as mcs with (NOLOCK) on mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
-			INNER JOIN CustPTSetting3rd_Agent as scs with (NOLOCK) on scs.custid = @srecommend AND scs.sporttype=cs.sporttype AND scs.bettype=cs.bettype AND scs.IsLive = cs.IsLive
-			INNER JOIN CustPTSetting3rd_Agent as acs with (NOLOCK) on acs.custid = @recommend AND acs.sporttype=cs.sporttype AND acs.bettype=cs.bettype AND acs.IsLive = cs.IsLive
-		WHERE
-			cs.custid = @custid			
-			AND (acs.IsAutoMasterPT = 1 or cs.IsAutoMasterPT = 1)
+			UPDATE cs 
+			SET 
+				cs.AgentPT = aco.MinPT,
+				cs.MasterPT = CASE WHEN cs.MasterPT + aco.MinPT > mcs.MasterPT THEN mcs.MasterPT-aco.MinPT ELSE cs.MasterPT END
+			FROM 
+				CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)			
+				INNER JOIN CustPTSetting3rd_Agent as mcs with (NOLOCK) on mcs.custid = @mrecommend  AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
+				INNER JOIN CustPTSetting3rd_Agent as aco with (NOLOCK) on aco.custid = @recommend  AND aco.sporttype=cs.sporttype AND aco.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
+			WHERE cs.custid = @custid AND cs.AgentPT<aco.MinPT
 			
+			--Recal AUTO MPT 
+			--Update m1=min(m4-a1,m3-a1,(im1?um1,um2))
+			--if @updautomaster = 1
+			--begin
+			UPDATE cs
+				SET MasterPT = 
+					CASE WHEN scs.MasterPT > mcs.MasterPT THEN
+							CASE WHEN mcs.MasterPT-cs.AgentPT > (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
+							THEN (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
+							ELSE  mcs.MasterPT-cs.AgentPT END
+						ELSE 
+							CASE WHEN scs.MasterPT-cs.AgentPT > (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
+							THEN (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
+							ELSE  scs.MasterPT-cs.AgentPT END
+						END
+			FROM
+				CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)					
+				INNER JOIN CustPTSetting3rd_Agent as mcs with (NOLOCK) on mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
+				INNER JOIN CustPTSetting3rd_Agent as scs with (NOLOCK) on scs.custid = @srecommend AND scs.sporttype=cs.sporttype AND scs.bettype=cs.bettype AND scs.IsLive = cs.IsLive
+				INNER JOIN CustPTSetting3rd_Agent as acs with (NOLOCK) on acs.custid = @recommend AND acs.sporttype=cs.sporttype AND acs.bettype=cs.bettype AND acs.IsLive = cs.IsLive
+			WHERE
+				cs.custid = @custid			
+				AND (acs.IsAutoMasterPT = 1 or cs.IsAutoMasterPT = 1)
+				
+				
+			--check master min/max
+			--update m1=n3-a1 if a1+m1<n3
+			UPDATE cs 
+			SET 
+				MasterPT = mco.MinPT-cs.AgentPT
+			FROM 
+				CustPTSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
+				INNER JOIN CustPTSetting3rd_Agent as mco WITH (NOLOCK) on mco.custid = @mrecommend  AND mco.sporttype=cs.sporttype AND mco.bettype=cs.bettype AND mco.IsLive = cs.IsLive
+			WHERE cs.custid = @custid 
+				AND cs.AgentPT+cs.MasterPT<mco.MinPT
 			
-		--check master min/max
-		--update m1=n3-a1 if a1+m1<n3
-		UPDATE cs 
-		SET 
-			MasterPT = mco.MinPT-cs.AgentPT
-		FROM 
-			CustPTSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
-			INNER JOIN CustPTSetting3rd_Agent as mco WITH (NOLOCK) on mco.custid = @mrecommend  AND mco.sporttype=cs.sporttype AND mco.bettype=cs.bettype AND mco.IsLive = cs.IsLive
-		WHERE cs.custid = @custid 
-			AND cs.AgentPT+cs.MasterPT<mco.MinPT
-		
-		--recal autopos
-		--if @updautosuper = 1 
-		--begin
-		UPDATE cs
-			SET SuperPT = CASE WHEN scs.SuperPT-cs.MasterPT-cs.AgentPT >
-									(CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
-								THEN (CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
-								ELSE scs.SuperPT-cs.MasterPT-cs.AgentPT END 
-		FROM
-			CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) 			
-			INNER JOIN CustPTSetting3rd_Agent as mcs WITH (NOLOCK) ON mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
-			INNER JOIN CustPTSetting3rd_Agent as scs WITH (NOLOCK) ON scs.custid = @srecommend AND scs.sporttype=cs.sporttype AND scs.bettype=cs.bettype AND scs.IsLive = cs.IsLive
-		where
-			cs.custid = @custid			
-			AND (cs.IsAutoSuperPT=1 OR mcs.IsAutoSuperPT=1)
+			--recal autopos
+			--if @updautosuper = 1 
+			--begin
+			UPDATE cs
+				SET SuperPT = CASE WHEN scs.SuperPT-cs.MasterPT-cs.AgentPT >
+										(CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
+									THEN (CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
+									ELSE scs.SuperPT-cs.MasterPT-cs.AgentPT END 
+			FROM
+				CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) 			
+				INNER JOIN CustPTSetting3rd_Agent as mcs WITH (NOLOCK) ON mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
+				INNER JOIN CustPTSetting3rd_Agent as scs WITH (NOLOCK) ON scs.custid = @srecommend AND scs.sporttype=cs.sporttype AND scs.bettype=cs.bettype AND scs.IsLive = cs.IsLive
+			where
+				cs.custid = @custid			
+				AND (cs.IsAutoSuperPT=1 OR mcs.IsAutoSuperPT=1)
 
-		--check super min/max
-		--update s1 when s1+m1+a1<n4 
-		UPDATE cs
-		SET SuperPT = sco.MinPT-cs.MasterPT-cs.AgentPT
-		FROM 
-			CustPTSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
-			INNER JOIN CustPTSetting3rd_Agent as sco with (NOLOCK) on sco.custid = @srecommend  AND sco.sporttype=cs.sporttype AND sco.bettype=cs.bettype AND sco.IsLive = cs.IsLive
-		WHERE cs.custid = @custid 
-			AND cs.AgentPT+cs.MasterPT+cs.SuperPT<sco.MinPT
+			--check super min/max
+			--update s1 when s1+m1+a1<n4 
+			UPDATE cs
+			SET SuperPT = sco.MinPT-cs.MasterPT-cs.AgentPT
+			FROM 
+				CustPTSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
+				INNER JOIN CustPTSetting3rd_Agent as sco with (NOLOCK) on sco.custid = @srecommend  AND sco.sporttype=cs.sporttype AND sco.bettype=cs.bettype AND sco.IsLive = cs.IsLive
+			WHERE cs.custid = @custid 
+				AND cs.AgentPT+cs.MasterPT+cs.SuperPT<sco.MinPT
 
 			--update s1,m1,a1 in case s1+m1+a1>s4
 			--s1=max(0,s4-m1-a1)
@@ -156,6 +155,61 @@ BEGIN
 				INNER JOIN CustPTSetting3rd_Agent as aco WITH (NOLOCK) on aco.custid = @recommend  AND aco.sporttype=cs.sporttype AND aco.bettype=cs.bettype AND aco.IsLive = cs.IsLive
 			WHERE cs.custid = @custid 
 				AND cs.SuperPT+cs.AgentPT+cs.MasterPT>scs.SuperPT
+			
+			--check to group PT
+			IF EXISTS (SELECT TOP 1 1
+						FROM dbo.CustPTGroupSetting3rd_Member grp WITH(NOLOCK)
+						WHERE grp.AgentID = @recommend
+						)
+				AND NOT EXISTS(SELECT TOP 1 1
+								FROM dbo.CustPTGroupSetting3rd_Member grp WITH(NOLOCK) 
+								JOIN CustPTSetting3rd_Member cs WITH(NOLOCK) ON cs.SportType = grp.SportType
+														AND cs.BetType = grp.BetType
+														AND cs.Islive = grp.Islive
+								WHERE grp.AgentID = @recommend
+								AND cs.custid = @custid
+								AND (
+									cs.SuperPT <> grp.SuperPT
+									OR
+									cs.MasterPT <> grp.MasterPT
+									OR
+									cs.AgentPT <> grp.AgentPT
+									OR
+									cs.IsAutoMasterPT <> grp.IsAutoMasterPT
+									OR
+									cs.AutoMasterPT <> grp.AutoMasterPT
+									OR
+									cs.IsAutoSuperPT <> grp.IsAutoSuperPT
+									OR
+									cs.AutoSuperPT <> grp.AutoSuperPT
+								))
+						AND @srecommend IN (
+											13869621,
+											5340162,
+											12262401,
+											12141653,
+											4138910,
+											6379932,
+											16112208,
+											12141529,
+											1539339,
+											720475
+											--UUS
+											,17287861
+											,18879367
+											,14373244
+											,18362423
+											,18479460
+											,18289591
+										)	
+			BEGIN
+				UPDATE cs 
+				SET IsGrouped = 1					
+				FROM dbo.CustSettingMode3rd cs WITH(ROWLOCK)
+				WHERE CustID = @CustID
+				
+				DELETE CustPTSetting3rd_Member WITH(ROWLOCK) WHERE custid = @custid
+			END	
 		END
 		ELSE
 		BEGIN 
