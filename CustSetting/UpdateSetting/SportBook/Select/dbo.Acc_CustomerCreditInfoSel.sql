@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerCreditInfoSel]
 	
 	Revisions:
 		- 20230306@Johnson: get Credit available of new customer for clone account [redmine: #183697]
+		- 20240401@Elodie: The max credit per member got wrong calculation when creating multi-account [Redmine: #203180]
 */	
 AS
 BEGIN
@@ -19,8 +20,9 @@ BEGIN
 		@Credit MONEY = 0,
 		@UplineCredit MONEY = 0,
 		@Credit_AllDownlines MONEY = 0,
-		@Credit_Max MONEY = 0		
-		
+		@Credit_Max MONEY = 0,		
+		@MaxCredit_Mem MONEY 
+
 	SELECT @Credit = Credit,		
 		@roleid = roleid,
 		@UplineID = CASE WHEN roleid = 1 THEN recommend 
@@ -60,9 +62,7 @@ BEGIN
 		SELECT @Credit_Max = @UplineCredit - @Credit_AllDownlines	
 	END
 	ELSE IF @roleid = 1
-	BEGIN
-		DECLARE @MaxCredit_Mem MONEY 
-		
+	BEGIN				
 		SELECT @Credit_AllDownlines = ISNULL(SUM(credit), 0) 
 		FROM custinfo as ci WITH (NOLOCK) 
 		WHERE recommend = @UplineID 
@@ -72,12 +72,8 @@ BEGIN
 		
 		SELECT @MaxCredit_Mem = isnull(maxcredit,0) 
 		FROM CustAgent WITH (NOLOCK) 
-		WHERE CustID = @UplineID 
-		
-		SELECT @Credit_Max = CASE WHEN @MaxCredit_Mem = 0 THEN @Credit_Max 
-								WHEN @MaxCredit_Mem > @Credit_Max THEN @Credit_Max
-							 ELSE @MaxCredit_Mem END 							 	
+		WHERE CustID = @UplineID 							 	
 	END
 	
-	SELECT @Credit Credit, @Credit_Max as Credit_Max
+	SELECT @Credit Credit, @Credit_Max as Credit_Max, @MaxCredit_Mem AS MaxCredit_Mem
 END
