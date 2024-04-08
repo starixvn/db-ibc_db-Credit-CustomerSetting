@@ -266,7 +266,7 @@ BEGIN
 		c.username, c.custid, ci.roleid, c.ugroup as ugroup, IsNull(c.site,'') AS site,   
 		c.firstname, c.lastname, c.username2,   
 		c.iplogin as lastloginip,  
-		c.creatdate as createdate, c.currency,  
+		c.currency,  
 		m.discount,  
 		m.discountcs,  
 		m.discount1x2,  		
