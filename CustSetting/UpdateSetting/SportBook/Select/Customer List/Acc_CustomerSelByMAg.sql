@@ -834,7 +834,7 @@ BEGIN
 		FROM CustDiscount3rd_Agent cda WITH(NOLOCK) 
 		WHERE custid IN (SELECT custid FROM #customer)
 			AND cda.SportType IN (1,2)
-		GROUP BY cs.custid 
+		GROUP BY cda.custid 
 	)	
 	SELECT  ctm.enabled,
 			ctm.closed, 
