@@ -105,6 +105,7 @@ AS
 		- 20230519@Luke: YeeBet - Integrate new Live Casino product [Redmine: #186046]
 		- 20230628@Tacy: NG2 - Remove Setting [Redmine: #189762]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
+		- 20240405@Kelvin: Update View Master/Agent/Member list [RedmineID: #202877]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -513,17 +514,7 @@ BEGIN
 		END
 	END
 	
-	-- MyanmarOdds
-	DECLARE @IsMyanmarOdds BIT = 0	
-	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds(@srecommend)
-	IF @IsMyanmarOdds = 1
-	BEGIN
-		UPDATE T
-			SET adiscountMyanmarOdds = ac.CommRate, t.IsMyanmarOdds = @IsMyanmarOdds
-		FROM #customer T
-			JOIN AgentCommRate ac WITH (NOLOCK) ON T.custid = AC.CustId 
-		WHERE ac.Sporttype = 1 AND ac.Bettype = 1		
-	END
+	
 	
 	-- get data for filtered customers
 	
@@ -532,7 +523,7 @@ BEGIN
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, cps.reject, cps.closed, MatchLimit, VirtualMultiplier, Enabled, 
 				DisableOutright,
 				
-				DoubleCommLosing,
+				
 				-- For MuayThai
 				ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_MuayThai)),1) AS DisableMuayThai,
 				CAST(CASE WHEN @IsHidden_MuayThai = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_MuayThai)),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideMuayThai,
@@ -833,16 +824,17 @@ BEGIN
 	),
 	custsetting AS
 	(
-		SELECT cs.custid,
-			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupa ELSE 0 END) groupa, 
-			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupb ELSE 0 END) groupb, 
-			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupc ELSE 0 END) groupc, 
-			MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.groupd ELSE 0 END) groupd, 
-			MAX(CASE WHEN cs.bettype = 4 and cs.sporttype=1 then cs.adiscount else 0 end) as discountcs,	
-			MAX(CASE WHEN cs.bettype = 5 and cs.sporttype=1 then cs.adiscount else 0 end) as discount1x2
-		FROM dbo.CustSetting cs WITH(NOLOCK) 
+		SELECT cda.custid			
+			,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 1 THEN cda.Discount END) AS groupa
+			,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 3 THEN cda.Discount END) AS groupb
+			,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 7 THEN cda.Discount END) AS groupc
+			,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 8 THEN cda.Discount END) AS groupd
+			,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 5 THEN cda.Discount END) AS discount1x2
+			,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 4 THEN cda.Discount END) AS discountcs
+			,MAX(CASE WHEN cda.SportType = 2 AND cda.BetType = 1 THEN cda.Discount END) AS discountMyanmarOdds
+		FROM dbo.CustDiscount3rd_Agent cda WITH(NOLOCK) 
 		WHERE custid IN (SELECT custid FROM #customer)
-			AND sporttype IN (1) AND bettype IN (1,4,5,20)
+			AND cda.SportType IN (1,2)
 		GROUP BY cs.custid 
 	)	
 	SELECT  ctm.enabled,
@@ -872,7 +864,7 @@ BEGIN
 			ctm.virtualmultiplier-1 as VirtualMultiplier,
 			ctm.creatdate as createdate,
 			ctm.isinternal,
-			ctm.DoubleCommLosing,			
+						
 			ctm.DisableMuayThai,
 			ctm.HideMuayThai,
 			ctm.DisableEsports,
@@ -938,8 +930,8 @@ BEGIN
 			ctm.HideRNGWar,
 			ctm.HideRNGWarUpline,
 			-- MyanmarOdds
-			ISNULL(t.IsMyanmarOdds,0) AS IsMyanmarOdds,
-			ISNULL(t.adiscountMyanmarOdds,0) AS discountMyanmarOdds,
+			CASE WHEN ISNULL(cs.discountMyanmarOdds,0) = 0 THEN 0 ELSE 1 END AS IsMyanmarOdds,
+			ISNULL(cs.discountMyanmarOdds,0) AS discountMyanmarOdds,
 			
 			--WM
 			ctm.DisableWM,

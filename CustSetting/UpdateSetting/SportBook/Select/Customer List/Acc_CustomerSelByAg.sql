@@ -109,6 +109,7 @@ BEGIN
 		- 20230519@Luke: YeeBet - Integrate new Live Casino product [Redmine: #186046]
 		- 20230628@Tacy: NG2 - Remove Setting [Redmine: #189762]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
+		- 20240405@Kelvin: Update View Master/Agent/Member list [RedmineID: #202877]
 
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -122,9 +123,7 @@ BEGIN
 */  
 	  
 	SET NOCOUNT ON  		
-	DECLARE @IsMyanmarOdds BIT = 0
-	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
-	
+		
 	-- For DCS Product
     DECLARE	@bitmapOrder_MuayThai		INT 
 		,	@bitmapOrder_AllBetVIP		INT
@@ -505,36 +504,23 @@ BEGIN
 			WHERE rn BETWEEN @rowstart AND @rowend
 		END
 	END
-	-- For Myanmar Odds
-	IF @IsMyanmarOdds = 1
-	BEGIN
-		UPDATE T
-		SET playerdiscountMyanmarOdds = cc.playerdiscount,
-			adiscountMyanmarOdds = ac.CommRate
-		FROM #memberList T
-			INNER JOIN CustCommRate cc WITH (NOLOCK) ON T.custid = cc.CustId 
-			INNER JOIN AgentCommRate ac WITH (NOLOCK) ON ac.custid = @recommend AND cc.sporttype = ac.sporttype AND cc.bettype = ac.bettype
-		WHERE ac.Sporttype = 1 AND ac.Bettype = 1	
 	
-	END
 	;WITH src AS (
 		SELECT c.custid as custid
 			,rn
-			,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.discount else 0 end) as discount
-			,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.discount else 0 end) as discountcs
-			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.discount else 0 end) as discount1x2	
-
-			,max(case when cs.sporttype = 1 and cs.bettype = 1 then cs.playerdiscount else 0 end) as playerdiscount
-			,max(case when cs.sporttype = 1 and cs.bettype = 4 then cs.playerdiscount else 0 end) as playerdiscountcs
-			,max(case when cs.sporttype = 1 and cs.bettype = 5 then cs.playerdiscount else 0 end) as playerdiscount1x2		
-
-			,ISNULL(C.playerdiscountMyanmarOdds,0) AS playerdiscountMyanmarOdds
-			,ISNULL(C.adiscountMyanmarOdds,0) AS adiscountMyanmarOdds
+			,MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 1 THEN cdm.AgentDiscount ELSE 0 END)	   AS discount
+			,MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 4 THEN cdm.AgentDiscount ELSE 0 END)	   AS discountcs
+			,MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 5 THEN cdm.AgentDiscount ELSE 0 END)	   AS discount1x2
+			,MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 1 THEN cdm.PlayerDiscount ELSE 0 END)   AS playerdiscount
+			,MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 4 THEN cdm.PlayerDiscount ELSE 0 END)   AS playerdiscountcs
+			,MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 5 THEN cdm.PlayerDiscount ELSE 0 END)   AS playerdiscount1x2		
+			,MAX(CASE WHEN cdm.SportType = 2 AND cdm.BetType = 1 THEN cdm.PlayerDiscount ELSE 0 END)   AS playerdiscountMyanmarOdds
+			,MAX(CASE WHEN cdm.SportType = 2 AND cdm.BetType = 1 THEN cdm.AgentDiscount ELSE 0 END)	   AS adiscountMyanmarOdds			
 		FROM #memberList c
-			LEFT JOIN CustSetting cs with(nolock) 
-				on c.custid = cs.custid and ((cs.sporttype = 1 and cs.bettype in (1,4,5)) )
+			LEFT JOIN CustDiscount3rd_Member cdm with(nolock) 
+				on c.custid = cdm.custid and cdm.SportType IN (1,2)
 		WHERE rn between @rowstart and @rowend
-		GROUP BY c.custid, rn,c.playerdiscountMyanmarOdds,c.adiscountMyanmarOdds
+		GROUP BY c.custid, rn, c.playerdiscountMyanmarOdds, c.adiscountMyanmarOdds
 	)	
 	
 	SELECT   
@@ -548,13 +534,11 @@ BEGIN
 		discount1x2,  		
 		playerdiscount,  
 		playerdiscountcs,  
-		playerdiscount1x2,     		 
-		ci.DoubleCommLosing,
-			
+		playerdiscount1x2,     		 					
 		-- MyanmarOdds
-		ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds,
-		ISNULL(m.playerdiscountMyanmarOdds,0) playerdiscountMyanmarOdds,
-		ISNULL(m.adiscountMyanmarOdds,0) adiscountMyanmarOdds,
+		CASE WHEN ISNULL(src.playerdiscountMyanmarOdds,0) = 0 THEN 0 ELSE 1 END AS IsMyanmarOdds,
+		ISNULL(src.playerdiscountMyanmarOdds,0) playerdiscountMyanmarOdds,
+		ISNULL(src.adiscountMyanmarOdds,0) adiscountMyanmarOdds,
 		-- For MuayThai
 		ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, @bitmapOrder_MuayThai)),1) AS DisableMuayThai,
 		CAST(CASE WHEN @IsHidden_MuayThai = 0 AND ISNULL((SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_MuayThai)),1) = 0 THEN 0 ELSE 1 END AS BIT) AS HideMuayThai,
