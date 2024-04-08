@@ -520,7 +520,7 @@ BEGIN
 			LEFT JOIN CustDiscount3rd_Member cdm with(nolock) 
 				on c.custid = cdm.custid and cdm.SportType IN (1,2)
 		WHERE rn between @rowstart and @rowend
-		GROUP BY c.custid, rn, c.playerdiscountMyanmarOdds, c.adiscountMyanmarOdds
+		GROUP BY c.custid, rn
 	)	
 	
 	SELECT   
