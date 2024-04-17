@@ -187,11 +187,11 @@ EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 	@duration = @duration
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOpenTote] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOpenTote] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOpenTote] TO [bodbExtAccNet,wsv_xnap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOpenTote] TO [wsv_xnap]
 GO
-GRANT  EXECUTE  ON [dbo].[Acc_CustomerUpdDisableOpenTote]  TO [bodbDownlineNet,wsv_alp]
+GRANT  EXECUTE  ON [dbo].[Acc_CustomerUpdDisableOpenTote]  TO [wsv_alp]
 GO
 GRANT  VIEW DEFINITION  ON [dbo].[Acc_CustomerUpdDisableOpenTote]  TO [VNTeam]
 GO

@@ -46,12 +46,12 @@ ELSE
 	END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [bodbAdminNet,wsv_nap] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [wsv_nap] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [bodbDownlineNet,wsv_alp] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [wsv_alp] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [bodbDownlineNetView,wsv_alpv] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [wsv_alpv] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [bodbExtAccNet,wsv_xnap] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [wsv_xnap] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelEditSuperLiveCS] TO [vnteam] AS [dbo]

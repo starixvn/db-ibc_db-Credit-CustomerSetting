@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,wsv_nap" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[CS_DynamicCustomerInfo_02]
 	@CustId						INT,
 	@RoleId						TINYINT,

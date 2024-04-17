@@ -209,7 +209,7 @@ where cs.spositiontaking+cs.apositiontaking+cs.mpositiontaking>scs.spositiontaki
 
 
 GO
-GRANT EXECUTE ON [dbo].Acc_CustomerUpdAgentHR_MinMaxPositiontaking TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].Acc_CustomerUpdAgentHR_MinMaxPositiontaking TO [wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].Acc_CustomerUpdAgentHR_MinMaxPositiontaking TO vnteam
 GO

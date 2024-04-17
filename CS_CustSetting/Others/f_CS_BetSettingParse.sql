@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" selecters="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbDownlineNetView,wsv_alpv,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" selecters="wsv_nap,wsv_alp,wsv_alpv,vnteam" viewers="" isFunction="1"></info>*/
 
 ALTER FUNCTION f_CS_BetSettingParse(@DataXML XML) 
 RETURNS TABLE 

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="bodbAdminNet,wsv_nap,bodbExtAccNet,wsv_xnap" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCust-CustDB,DBAGE-bodb02,DBACC-bodb02" executers="wsv_nap,wsv_xnap" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CheckShowProduct]
 	@ProductID	TINYINT,
 	@Sporttype	SMALLINT = NULL,

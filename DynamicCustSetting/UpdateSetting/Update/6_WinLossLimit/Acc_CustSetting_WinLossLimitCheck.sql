@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_WinLossLimitCheck] 
 	  @CustID		INT
 	, @RoleID		INT
@@ -282,8 +282,8 @@ END
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitCheck] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitCheck] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitCheck] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitCheck] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitCheck] TO [bodbExtAccNet,wsv_xnap]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_WinLossLimitCheck] TO [wsv_xnap]

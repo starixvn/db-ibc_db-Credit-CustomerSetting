@@ -95,5 +95,5 @@ where custsetting.sporttype=1 and custsetting.bettype in (1,3,7,8) and custsetti
 
 
 GO
-GRANT EXECUTE ON [dbo].Acc_CustSetting_01 TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].Acc_CustSetting_01 TO [wsv_nap]
 GO

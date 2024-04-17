@@ -86,8 +86,8 @@ exec [dbo].[Acc_CustomerSelEditMemberLiveCS] @custid = 642719,@recommend = 64270
 GO
 GRANT VIEW DEFINITION ON [Acc_CustomerSelEditMemberLiveCS] TO vnteam
 GO
-GRANT EXECUTE ON [Acc_CustomerSelEditMemberLiveCS] TO bodbAdminNet,wsv_nap
+GRANT EXECUTE ON [Acc_CustomerSelEditMemberLiveCS] TO wsv_nap
 GO
-GRANT EXECUTE ON [Acc_CustomerSelEditMemberLiveCS] TO bodbDownlineNet,wsv_alp
+GRANT EXECUTE ON [Acc_CustomerSelEditMemberLiveCS] TO wsv_alp
 GO
-GRANT EXECUTE ON [Acc_CustomerSelEditMemberLiveCS] TO bodbDownlineNetView,wsv_alpv
+GRANT EXECUTE ON [Acc_CustomerSelEditMemberLiveCS] TO wsv_alpv

@@ -20,8 +20,8 @@ BEGIN
 END   
   
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerRoleSelect] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerRoleSelect] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerRoleSelect] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerRoleSelect] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerRoleSelect] TO [bodbExtAccNet,wsv_xnap]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerRoleSelect] TO [wsv_xnap]

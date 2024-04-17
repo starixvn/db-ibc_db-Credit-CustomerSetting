@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB,DBACC-bodb02" selecters="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB,DBACC-bodb02" selecters="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION f_DCS_PT_XMLParse(@DataXML	NVARCHAR(MAX)) 
 RETURNS @SportBetTypeTbl TABLE (SportType SMALLINT
 						, Bettype SMALLINT

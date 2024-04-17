@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" selecters="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,vnteam" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" selecters="wsv_nap,wsv_alp,vnteam" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION [dbo].[f_SetBinaryValues] (@binStr VARBINARY(256), @xmlStr XML)   
 RETURNS TABLE  
 AS  

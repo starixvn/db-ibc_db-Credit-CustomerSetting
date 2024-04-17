@@ -49,7 +49,7 @@ END
 
 
 GO
-GRANT EXECUTE ON Acc_CustomerSelSuperLiveCS_Commission TO bodbAdminNet,wsv_nap
+GRANT EXECUTE ON Acc_CustomerSelSuperLiveCS_Commission TO wsv_nap
 GO
 GRANT VIEW DEFINITION ON Acc_CustomerSelSuperLiveCS_Commission TO vnteam
 

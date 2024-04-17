@@ -85,13 +85,13 @@ group by
 	
 	
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO [bodbExtAccNet,wsv_xnap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO [wsv_xnap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO [bodbDownlineNetView,wsv_alpv]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO [wsv_alpv]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelHRComEditOverride_Ag] TO vnteam
 

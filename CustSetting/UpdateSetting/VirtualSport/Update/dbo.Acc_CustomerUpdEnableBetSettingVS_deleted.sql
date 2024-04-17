@@ -269,5 +269,5 @@ SET NOCOUNT ON
 	
 GO
 
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdEnableBetSettingVS] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdEnableBetSettingVS] TO [wsv_nap]
 GO 

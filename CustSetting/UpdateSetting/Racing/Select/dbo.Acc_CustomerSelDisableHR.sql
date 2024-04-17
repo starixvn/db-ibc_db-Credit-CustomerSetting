@@ -26,9 +26,9 @@ WHERE CustID = @CustID
 
 GO
 
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableHR] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableHR] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableHR] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableHR] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableHR] TO [bodbDownlineNetView,wsv_alpv]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelDisableHR] TO [wsv_alpv]
 GO

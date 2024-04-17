@@ -36,8 +36,8 @@ Param's Explanation:
 	end
 	
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchHR] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchHR] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchHR] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMaxPerMatchHR] TO [wsv_alp]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMaxPerMatchHR] TO [vnteam]

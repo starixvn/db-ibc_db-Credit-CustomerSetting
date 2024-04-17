@@ -280,7 +280,7 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].Acc_CustSetting3rd_01 TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].Acc_CustSetting3rd_01 TO [wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].Acc_CustSetting3rd_01 TO vnteam
 GO

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-custdb" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBTXN-custdb" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Acc_CustSetting_WinLossPercentSelect
 	 @CustId INT
 	,@SportType SMALLINT

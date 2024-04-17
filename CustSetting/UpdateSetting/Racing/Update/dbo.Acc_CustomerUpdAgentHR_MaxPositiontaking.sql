@@ -145,7 +145,7 @@ where cs.apositiontaking+cs.mpositiontaking+cs.spositiontaking>sco.maxpositionta
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentHR_MaxPositiontaking] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentHR_MaxPositiontaking] TO [wsv_nap]
 Go
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentHR_MaxPositiontaking] TO vnteam
 Go

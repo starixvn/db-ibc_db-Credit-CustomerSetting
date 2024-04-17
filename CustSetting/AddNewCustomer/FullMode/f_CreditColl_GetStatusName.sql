@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,wsv_nap" viewers="" isFunction="1" isNested="1"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap" viewers="" isFunction="1" isNested="1"></info>*/
 ALTER FUNCTION [dbo].[f_CreditColl_GetStatusName] 
 (
 	@Status		INT

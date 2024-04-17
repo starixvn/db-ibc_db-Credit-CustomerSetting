@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbDownlineNetView,wsv_alpv,bodbExtAccNet,wsv_xnap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_alpv,wsv_xnap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelSAgentInfo] 
 	@CustID int, @Site VARCHAR(50) = ''
 AS
@@ -12,7 +12,7 @@ Revisions:
 	- 20090336@PhuongDoan: remove '_1' in SP name
 	- 20090901@Shifu: add IsInternal	
 	- 20091215@Kiwi: Remove HR (151) and Financials (201).
-	- 20100803@Henry: grant execute permission to [bodbExtAccNet,wsv_xnap]
+	- 20100803@Henry: grant execute permission to [wsv_xnap]
 	- 20100828@Henry: Add Mix Parlay Mixed Sports & Number Game
 	- 20101027@Lukas: Add max per ball (number game)
 	- 20110727@Lukas: (Number Game)

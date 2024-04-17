@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].Acc_CustomerUpd_IsAutoEnableADBMaster
 	@UserId					INT = 0
 	,@CustId				INT

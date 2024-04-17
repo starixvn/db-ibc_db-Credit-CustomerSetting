@@ -153,9 +153,9 @@ GO
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperKeno_Commission] TO [vnteam]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Commission] TO [bodbAdminNet,wsv_nap]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Commission] TO [wsv_nap]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Commission] TO [bodbDownlineNet,wsv_alp]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Commission] TO [wsv_alp]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Commission] TO [bodbExtAccNet,wsv_xnap]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperKeno_Commission] TO [wsv_xnap]
 GO 

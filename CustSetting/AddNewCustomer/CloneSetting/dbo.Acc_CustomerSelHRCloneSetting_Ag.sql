@@ -26,6 +26,6 @@ SET NOCOUNT ON
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelHRCloneSetting_Ag] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRCloneSetting_Ag] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRCloneSetting_Ag] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRCloneSetting_Ag] TO [bodbDownlineNetView,wsv_alpv]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelHRCloneSetting_Ag] TO [wsv_alpv]

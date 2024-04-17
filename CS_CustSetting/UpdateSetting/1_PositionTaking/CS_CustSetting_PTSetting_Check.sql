@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE CS_CustSetting_PTSetting_Check
 	@RoleId			TINYINT,

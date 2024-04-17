@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelKenoStatus] 
 	@custid INT
 	, @roleid INT = NULL
@@ -188,6 +188,6 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelKenoStatus] TO [bodbAdminNet,wsv_nap] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelKenoStatus] TO [wsv_nap] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelKenoStatus] TO [bodbDownlineNet,wsv_alp] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelKenoStatus] TO [wsv_alp] AS [dbo]

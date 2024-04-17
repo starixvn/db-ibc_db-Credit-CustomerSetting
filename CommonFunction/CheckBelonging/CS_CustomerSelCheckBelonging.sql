@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB, DBAGE-bodb02" executers="bodbExtAccNet,wsv_xnap,bodbDownlineNet,wsv_alp,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB, DBAGE-bodb02" executers="wsv_xnap,wsv_alp,wsv_alpv" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE CS_CustomerSelCheckBelonging
 	@SessionCustID INT, --uplineID	
 	@custid INT = NULL,

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,wsv_nap,bodbExtAccNet,wsv_xnap,bodbDownlineNet,wsv_alp,bodbDownlineNetView,wsv_alpv" selecters="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_xnap,wsv_alp,wsv_alpv" selecters="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE Acc_CustomerSelProductStatus
 	  @SportName		VARCHAR(20)

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB,DBTXN-bodb02" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="vnteam" isFunction="1"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB,DBTXN-bodb02" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="vnteam" isFunction="1"></info>*/
 ALTER FUNCTION [dbo].[f_Get_SportNameBySporttype]
 (
     @Sporttype    SMALLINT,

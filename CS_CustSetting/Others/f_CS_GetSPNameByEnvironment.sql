@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp" viewers="" isFunction="1"></info>*/
 
 ALTER FUNCTION [dbo].[f_CS_GetSPNameByEnvironment](@SPName VARCHAR(50)) 
 RETURNS VARCHAR(50) 

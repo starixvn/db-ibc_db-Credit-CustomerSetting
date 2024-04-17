@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_ProductProfileSelect]   
 	@ProductID	TINYINT = NULL,
 	@SettingType SMALLINT = NULL,
@@ -12,7 +12,7 @@ AS
 	 Original:  
 
 	 Revisions: 
-		- 20190116@Johnson: grant permission for bodbDownlineNetView,wsv_alpv [redmine:#106601]
+		- 20190116@Johnson: grant permission for wsv_alpv [redmine:#106601]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]

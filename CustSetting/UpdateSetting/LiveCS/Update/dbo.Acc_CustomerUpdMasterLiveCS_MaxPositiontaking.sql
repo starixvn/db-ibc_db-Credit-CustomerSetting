@@ -128,6 +128,6 @@ SET NOCOUNT ON
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMasterLiveCS_MaxPositiontaking] TO [vnteam]
 GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_MaxPositiontaking] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_MaxPositiontaking] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_MaxPositiontaking] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_MaxPositiontaking] TO [wsv_alp]

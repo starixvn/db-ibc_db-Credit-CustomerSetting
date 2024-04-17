@@ -51,8 +51,8 @@ WHERE custid = @custid AND sporttype = 162 AND bettype = 1101
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelEditMasterLiveCS] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterLiveCS] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterLiveCS] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterLiveCS] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterLiveCS] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterLiveCS] TO [bodbDownlineNetView,wsv_alpv]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelEditMasterLiveCS] TO [wsv_alpv]

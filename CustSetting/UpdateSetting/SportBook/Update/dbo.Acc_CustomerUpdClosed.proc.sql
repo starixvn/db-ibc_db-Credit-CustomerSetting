@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,wsv_alp,bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CustDB" executers="wsv_alp,wsv_nap,wsv_alp,wsv_xnap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdClosed]
 	@CustID int,
 	@Closed bit,	
@@ -28,7 +28,7 @@ Revisions:
 	- 20091008@Kiwi: Remove WriteLog_UserLog
 	- 20091125@Terry : add one more para @disCasino check disabled Casino
 	- 20100102@Lewin : modify LogSP Data, call WriteLog_UserLog_RunSPNew instead of WriteLog_UserLog_RunSP 
-	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet,wsv_xnap]
+	- 20100728@Kiwi: invoke execute permission to [wsv_xnap]
 	- 20101021@Henry: Record execution time
 	- 20110907@Sophia: Change Linked Server from DB052 to DB053
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
@@ -118,7 +118,7 @@ BEGIN
 	END
 	-----***END: PREVENT ROBOT OPENED BACK***-----
 
-	IF @UserID <> @CustID AND CURRENT_USER <> 'bodbAdminNet,wsv_nap' 
+	IF @UserID <> @CustID AND CURRENT_USER <> 'wsv_nap' 
 	AND (EXISTS (SELECT 1 FROM custInfo WITH (NOLOCK) WHERE custid = @CustID AND LockUpd = 1 AND roleid = 1)
 		OR (EXISTS (SELECT 1 FROM CustSuspendLockUpd WITH (NOLOCK) WHERE custid = @CustID) AND @Closed = 0))
 	BEGIN

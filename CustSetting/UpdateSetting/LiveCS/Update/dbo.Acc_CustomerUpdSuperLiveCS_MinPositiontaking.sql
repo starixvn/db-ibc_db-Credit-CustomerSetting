@@ -137,6 +137,6 @@ WHERE ci.srecommend = @srecommend AND ci.roleid = 1 AND ci.SyncLiveCasino = 1
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuperLiveCS_MinPositiontaking] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperLiveCS_MinPositiontaking] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperLiveCS_MinPositiontaking] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperLiveCS_MinPositiontaking] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuperLiveCS_MinPositiontaking] TO [wsv_alp]

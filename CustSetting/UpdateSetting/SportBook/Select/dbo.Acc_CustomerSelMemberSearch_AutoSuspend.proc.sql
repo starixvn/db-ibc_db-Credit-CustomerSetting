@@ -52,4 +52,4 @@ WHERE a.RowNumber BETWEEN @RowStart AND @RowEnd
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelMemberSearch_AutoSuspend] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelMemberSearch_AutoSuspend] TO [wsv_nap]

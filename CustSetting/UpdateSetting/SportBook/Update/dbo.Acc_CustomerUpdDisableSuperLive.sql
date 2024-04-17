@@ -192,9 +192,9 @@ END
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [vnteam]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [bodbAdminNet,wsv_nap]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [wsv_nap]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [bodbDownlineNet,wsv_alp]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [wsv_alp]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [bodbExtAccNet,wsv_xnap]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [wsv_xnap]
 GO 

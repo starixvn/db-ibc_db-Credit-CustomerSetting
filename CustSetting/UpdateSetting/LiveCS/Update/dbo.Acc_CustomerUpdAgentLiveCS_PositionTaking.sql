@@ -403,10 +403,10 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_PositionTaking] TO [bodbAdminNet,wsv_nap] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_PositionTaking] TO [wsv_nap] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_PositionTaking] TO [bodbDownlineNet,wsv_alp] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_PositionTaking] TO [wsv_alp] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_PositionTaking] TO [bodbExtAccNet,wsv_xnap] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdAgentLiveCS_PositionTaking] TO [wsv_xnap] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdAgentLiveCS_PositionTaking] TO [vnteam] AS [dbo]

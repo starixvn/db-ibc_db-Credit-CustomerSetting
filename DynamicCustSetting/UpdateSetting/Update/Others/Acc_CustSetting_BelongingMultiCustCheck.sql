@@ -50,8 +50,8 @@ IF (@Cust_DO <> @Cust_UP) OR @Cust_UP IS NULL
 SELECT @roleid = ISNULL(@roleid, 0)
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BelongingMultiCustCheck] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_BelongingMultiCustCheck] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BelongingMultiCustCheck] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_BelongingMultiCustCheck] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BelongingMultiCustCheck] TO [bodbExtAccNet,wsv_xnap]
+GRANT EXECUTE ON [dbo].[Acc_CustSetting_BelongingMultiCustCheck] TO [wsv_xnap]

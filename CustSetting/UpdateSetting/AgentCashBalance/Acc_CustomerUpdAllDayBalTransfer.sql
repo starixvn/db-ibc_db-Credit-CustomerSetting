@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,wsv_nap,bodbDownlineNet,wsv_alp,bodbExtAccNet,wsv_xnap" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdAllDayBalTransfer]
 	@UserId					INT = 0
 	,@CustId				INT
@@ -86,7 +86,7 @@ BEGIN
 	END
 	ELSE IF @roleId = 3
 	BEGIN
-		IF SUSER_NAME() = 'bodbDownlineNet,wsv_alp'
+		IF SUSER_NAME() = 'wsv_alp'
 		BEGIN
 			SELECT @ActionID = 706
 

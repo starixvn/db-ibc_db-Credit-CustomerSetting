@@ -57,4 +57,4 @@ where a.rownumber between @rowstart and @rowend
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_OperatorSel] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_OperatorSel] TO [wsv_nap]

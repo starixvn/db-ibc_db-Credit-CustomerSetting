@@ -194,6 +194,6 @@ BEGIN
 	
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelStatusVS] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelStatusVS] TO [wsv_nap]
 GO
 

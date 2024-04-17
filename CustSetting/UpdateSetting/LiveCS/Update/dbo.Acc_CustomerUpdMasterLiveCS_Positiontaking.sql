@@ -457,9 +457,9 @@ GO
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMasterLiveCS_Positiontaking] TO [vnteam]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_Positiontaking] TO [bodbAdminNet,wsv_nap]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_Positiontaking] TO [wsv_nap]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_Positiontaking] TO [bodbDownlineNet,wsv_alp]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_Positiontaking] TO [wsv_alp]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_Positiontaking] TO [bodbExtAccNet,wsv_xnap]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMasterLiveCS_Positiontaking] TO [wsv_xnap]
 GO 

@@ -159,8 +159,8 @@ SET NOCOUNT ON
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxPositiontaking] TO [vnteam]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxPositiontaking] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxPositiontaking] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxPositiontaking] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxPositiontaking] TO [wsv_alp]
 GO 
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxPositiontaking] TO [bodbExtAccNet,wsv_xnap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdMemberVS_MinMaxPositiontaking] TO [wsv_xnap]

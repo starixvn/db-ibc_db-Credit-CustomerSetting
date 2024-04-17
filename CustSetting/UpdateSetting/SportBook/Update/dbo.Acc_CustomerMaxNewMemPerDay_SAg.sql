@@ -159,5 +159,5 @@ end
 GO
  GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerMaxNewMemPerDay_SAg] TO [vnteam]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerMaxNewMemPerDay_SAg] TO [bodbAdminNet,wsv_nap]
+ GRANT EXECUTE ON [dbo].[Acc_CustomerMaxNewMemPerDay_SAg] TO [wsv_nap]
 GO 

@@ -95,9 +95,9 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelVSCloneSetting_SAg] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelVSCloneSetting_SAg] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelVSCloneSetting_SAg] TO [bodbDownlineNetView,wsv_alpv]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelVSCloneSetting_SAg] TO [wsv_alpv]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelVSCloneSetting_SAg] TO [vnteam]
 

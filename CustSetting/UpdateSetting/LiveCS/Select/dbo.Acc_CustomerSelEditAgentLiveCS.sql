@@ -71,8 +71,8 @@ END
 GO
 GRANT VIEW DEFINITION ON [Acc_CustomerSelEditAgentLiveCS] TO vnteam
 GO
-GRANT EXECUTE ON [Acc_CustomerSelEditAgentLiveCS] TO bodbAdminNet,wsv_nap
+GRANT EXECUTE ON [Acc_CustomerSelEditAgentLiveCS] TO wsv_nap
 GO
-GRANT EXECUTE ON [Acc_CustomerSelEditAgentLiveCS] TO bodbDownlineNet,wsv_alp
+GRANT EXECUTE ON [Acc_CustomerSelEditAgentLiveCS] TO wsv_alp
 GO
-GRANT EXECUTE ON [Acc_CustomerSelEditAgentLiveCS] TO bodbDownlineNetView,wsv_alpv
+GRANT EXECUTE ON [Acc_CustomerSelEditAgentLiveCS] TO wsv_alpv

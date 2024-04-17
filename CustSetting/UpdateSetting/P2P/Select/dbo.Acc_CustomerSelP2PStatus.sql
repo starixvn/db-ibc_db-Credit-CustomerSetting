@@ -58,12 +58,12 @@ SELECT
 	@DisableP2P AS DisableP2P,
 	@DISABLEFUNP2P AS DisableFunP2P
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PStatus] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PStatus] TO [wsv_nap]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PStatus] TO [bodbDownlineNet,wsv_alp]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PStatus] TO [wsv_alp]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PStatus] TO [bodbDownlineNetView,wsv_alpv]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PStatus] TO [wsv_alpv]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PStatus] TO [bodbExtAccNet,wsv_xnap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerSelP2PStatus] TO [wsv_xnap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerSelP2PStatus] TO [vnteam]

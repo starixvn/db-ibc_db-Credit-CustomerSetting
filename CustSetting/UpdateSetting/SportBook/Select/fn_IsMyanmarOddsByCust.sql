@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02,DBACC-bodb02" selecters="bodbAdminNet,wsv_nap,bodbExtAccNet,wsv_xnap,bodbExtAccNet,wsv_xnap,bodbDownlineNetView,wsv_alpv" viewers="" isFunction="1" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBAGE-bodb02,DBACC-bodb02" selecters="wsv_nap,wsv_xnap,wsv_xnap,wsv_alpv" viewers="" isFunction="1" isNested="1"></info>*/
 CREATE FUNCTION fn_IsMyanmarOddsByCust (@CustID INT = 0)
 RETURNS TABLE  
 AS

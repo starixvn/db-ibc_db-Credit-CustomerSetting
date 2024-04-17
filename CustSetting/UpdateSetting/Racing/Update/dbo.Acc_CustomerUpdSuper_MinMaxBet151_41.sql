@@ -18,7 +18,7 @@ DB: DBTRANS.bodb02
 Revisions:
 	- 20100415@Shifu: OpenTote.
 	- 20100612@Kiwi: Change to write Log in XML format.
-	- 20100803@Henry: grant execute permission to [bodbExtAccNet,wsv_xnap]
+	- 20100803@Henry: grant execute permission to [wsv_xnap]
 	- 20110225@Lukas: 
 				-	change SP name from [Acc_CustomerUpdSuper_MinMaxBetOpenTote] to [Acc_CustomerUpdSuper_MinMaxBet151_41]
 				-	Check the difference from old value before update
@@ -165,6 +165,6 @@ END CATCH
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_MinMaxBet151_41] TO [bodbAdminNet,wsv_nap]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdSuper_MinMaxBet151_41] TO [wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdSuper_MinMaxBet151_41] TO [vnteam]
