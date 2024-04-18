@@ -16,6 +16,7 @@ AS
 	Revisions:
 		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 		- 20230310@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+		- 20240418@Eden: HotFix - Master update Agent bet setting RNG Keno, but member bet setting still not updated [Redmine: #204104]
 	Param's Explanation:
 */
 BEGIN
@@ -157,7 +158,7 @@ BEGIN
 				)
 		BEGIN
 			SET @IsAffected = 1
-			RETURN
+			GOTO CheckDCS;
 		END
 		
 	END
