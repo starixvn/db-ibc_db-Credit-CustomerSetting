@@ -44,7 +44,7 @@ Revisions:
 	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20230921@Tacy: CWL - Suspend member accounts when member reaches Yellow level on RNG Slots Games [RedmineID: #184911]
-	
+	- 20240422@Elodie: Change SQL Account [RedmineID: #204201]
 Param's Explanation:
 • @ActionID = 1104 ~ normal flow
 			<>1104 ~ CWL flow

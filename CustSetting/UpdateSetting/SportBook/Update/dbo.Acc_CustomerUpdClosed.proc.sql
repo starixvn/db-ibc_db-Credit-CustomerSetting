@@ -46,7 +46,7 @@ Revisions:
 	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-
+	- 20240422@Elodie: Change SQL Account [RedmineID: #204201]
 Param's Explanation
 • @custid: custid that need to be viewed.   
 

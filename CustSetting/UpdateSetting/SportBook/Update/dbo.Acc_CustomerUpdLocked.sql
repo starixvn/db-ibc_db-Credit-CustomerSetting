@@ -18,7 +18,7 @@ Original:
 
 Revisions:
     - 20210408@Tina: Lock account & indirect close account [redmine: #148600]
-
+	- 20240422@Elodie: Change SQL Account [RedmineID: #204201]
 Param's Explanation
 • @custid: custid that need to be viewed.   
 
