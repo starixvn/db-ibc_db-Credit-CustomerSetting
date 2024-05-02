@@ -14,9 +14,11 @@ ALTER PROCEDURE dbo.Dot_Member_GetVRSettingAdjustment (
 			,@VRStatus				TINYINT  
 			,@Time					TIME(7)    
 			,@LiveIndicator			BIT   
-			,@Istest				BIT = 0
+			,@Istest		BIT = 0     
 			,@CurrencyID			INT = 0
 			,@AccumulatedBalance	BIT = 0 OUTPUT
+			,@CustomerClassDetail	SMALLINT
+			,@CCSporttype			SMALLINT
 )
 AS  
 /*  
@@ -30,6 +32,7 @@ AS
 		- 20230301@Eden: Wrong VR of Basketball and Esport [Redmine:#184585]
 		- 20230307@Johnson: Return Basketball VR to its original state [redmine:#184339]
 		- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
+		- 20240422@Winfred: [NAP CM] VR Engine - Allow to add CC by Sport, and re-arrange league group on dropdownlist [Redmine: #195539]
 		- 20240328@Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
 
 	Param's Explanation:  
@@ -52,6 +55,8 @@ AS
 		@LiveIndicator = 1,
 		@CurrencyID	   = 20,
 		@AccumulatedBalance = @AccumulatedBalance OUTPUT
+		@CustomerClassDetail = 200,
+		@CCSporttype = 2
 	SELECT @VRValue, @AccumulatedBalance
 */  
 BEGIN    
@@ -66,6 +71,7 @@ BEGIN
 		,LeagueGroupID INT        
 		,LeagueID      INT 
 		,CurrencyID		INT
+		,CCSporttype	SMALLINT
 	)
 
 	INSERT INTO @NotinConfig( 
@@ -75,8 +81,10 @@ BEGIN
 		,CustomerClass
 		,DateOfWeek   
 		,LeagueGroupID
-		,LeagueID   
+		,LeagueID  
 		,CurrencyID
+		,CustomerClassDetail
+		,CCSporttype
 	)
 
 	SELECT @Sporttype as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
@@ -87,6 +95,15 @@ BEGIN
 	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek, @LeagueGroupID as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
 	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, @LeagueID as LeagueID, 0 AS CurrencyID UNION ALL
 	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, @CurrencyID AS CurrencyID
+	SELECT @Sporttype as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, @Bettype as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, @SiteID as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, @CustomerClass as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, @DateOfWeek as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek, @LeagueGroupID as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, @LeagueID as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, @CustomerClassDetail as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, @CCSporttype as CCSporttype
 
 	SELECT TOP(1)
 		@Adjustmenttype	= r.Adjustmenttype, 
@@ -107,6 +124,8 @@ BEGIN
 							AND rd0.CustomerClass = s.CustomerClass
 							AND rd0.DateOfWeek = s.DateOfWeek
 							AND rd0.CurrencyID = s.CurrencyID
+							AND rd0.CustomerClassDetail = s.CustomerClassDetail
+							AND rd0.CCSporttype = s.CCSporttype
 					WHERE r.ruleid = rd0.ruleid
 				)rd0
 	WHERE rd.Sporttype IN(0,@Sporttype)
@@ -130,6 +149,8 @@ BEGIN
 		AND r.VRStatus IN( 2,ISNULL(@VRStatus,r.VRStatus))
 		AND rd0.ruleid IS NULL
 		AND r.Status <= @Istest
+		AND rd.CustomerClassDetail IN(0,@CustomerClassDetail)
+		AND rd.CCSporttype IN(0,@CCSporttype)
 	ORDER BY r.Priority
 
 	SELECT @VRValue = CASE WHEN @Adjustmenttype = 1 THEN @AdjustmentValue

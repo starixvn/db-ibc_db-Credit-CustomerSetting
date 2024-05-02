@@ -1,28 +1,30 @@
 /*<info serverAlias="DBCUST-CustDB" executers="svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
-                    @CustID				INT,
-                    @SportType			SMALLINT,
-                    @BetType			SMALLINT,
-					@OriginalSportType	SMALLINT = 0,
-                    @OriginalBetType	SMALLINT = 0,
-                    @isLive				BIT,
-					@IsLicensee			BIT,
-					@LeagueGroupID		SMALLINT = 0,
-					@IsApplyVR2			BIT = 0,
-					@srecommend         INT,
-					@usertype			INT = 0, --0:default(MBC) 1:IMBC 2:CN88
-                    @virtualMultiplier	SMALLMONEY	OUT,
-					@RefLevelID			INT = NULL,
-					@IsLowVR			BIT = 0,
-					@CustomerClass		SMALLINT = NULL,         
-					@StakeRM			MONEY = NULL,
-					@virtualrate		SMALLMONEY = NULL,
-					@BetFrom			NVARCHAR(4) = '',
-					@SiteID				INT = NULL,
-					@LeagueID			INT = -1,
+                    @CustID					INT,
+                    @SportType				SMALLINT,
+                    @BetType				SMALLINT,
+					@OriginalSportType		SMALLINT = 0,
+                    @OriginalBetType		SMALLINT = 0,
+                    @isLive					BIT,
+					@IsLicensee				BIT,
+					@LeagueGroupID			SMALLINT = 0,
+					@IsApplyVR2				BIT = 0,
+					@srecommend				INT,
+					@usertype				INT = 0, --0:default(MBC) 1:IMBC 2:CN88
+                    @virtualMultiplier		SMALLMONEY	OUT,
+					@RefLevelID				INT = NULL,
+					@IsLowVR				BIT = 0,
+					@CustomerClass			SMALLINT = NULL,         
+					@StakeRM				MONEY = NULL,
+					@virtualrate			SMALLMONEY = NULL,
+					@BetFrom				NVARCHAR(4) = '',
+					@SiteID					INT = NULL,
+					@LeagueID				INT = -1,
 					@Istest				BIT = 0,
 					@CurrencyID			INT = 0,
 					@AccumulatedBalance	BIT = 0 OUTPUT
+					@CustomerClassDetail	SMALLINT = NULL,
+					@CCSportType			SMALLINT = 0
 AS
 /*
     Created: 20151019@joy
@@ -51,6 +53,7 @@ AS
 		-- 20230307@VN-Johnson: Return Basketball VR to its original state [redmine:#184339]
 		-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
 		-- 20240328@VN-Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
+		-- 20240422@Winfred: [NAP CM] VR Engine - Allow to add CC by Sport, and re-arrange league group on dropdownlist [Redmine: #195539]
 
     Parameter's Explanation:
 */
@@ -236,6 +239,8 @@ BEGIN
 		,@Istest				= @Istest
 		,@CurrencyID			= @CurrencyID
 		,@AccumulatedBalance	= @AccumulatedBalance OUTPUT
+		,@CCSporttype			= @CCSportType 
+		,@CustomerClassDetail	= @CustomerClassDetail 
 
 	ReturnVR:
 

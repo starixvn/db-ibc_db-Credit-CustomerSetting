@@ -16,6 +16,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustCreditInfo_Cust_DCS] @custid INT
 	,@CustomerClass SMALLINT = NULL
 	,@StakeRM MONEY = NULL
 	,@LeagueID INT = - 1
+	,@CCsporttype SMALLINT
+	,@CustomerClassDetail SMALLINT = NULL
 AS
 BEGIN
 	/*
@@ -70,6 +72,7 @@ BEGIN
 		-- 20230427@VN-Luke: Separate lock function for Basketball [Redmine: #185991]
 		-- 20230616@TwYC(DBCust): Remove logic of [custinfo.disablenumber]
 		-- 20240328@VN-Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
+		-- 20240422@Winfred: [NAP CM] VR Engine - Allow to add CC by Sport, and re-arrange league group on dropdownlist [Redmine: #195539]
 
       */
 	SET NOCOUNT ON;
@@ -495,6 +498,8 @@ BEGIN
 					,@Istest = @Istest
 					,@CurrencyID = @currency
 					,@AccumulatedBalance = @AccumulatedBalance OUTPUT
+					,@CCSportType = @CCSportType
+					,@CustomerClassDetail = @CustomerClassDetail
 			END
 		END
 		ELSE IF @sporttype = 43 --For Esports, get VR2
@@ -519,6 +524,8 @@ BEGIN
 				,@Istest = @Istest
 				,@CurrencyID = @currency
 				,@AccumulatedBalance = @AccumulatedBalance OUTPUT
+				,@CCSportType = @CCSportType
+				,@CustomerClassDetail = @CustomerClassDetail
 		END
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
 		BEGIN
@@ -542,6 +549,8 @@ BEGIN
 				,@Istest = @Istest
 				,@CurrencyID = @currency
 				,@AccumulatedBalance = @AccumulatedBalance OUTPUT
+				,@CCSportType = @CCSportType
+				,@CustomerClassDetail = @CustomerClassDetail
 		END
 
 		IF @IsForcedVRValue = 1 AND @sporttype NOT IN (43)
