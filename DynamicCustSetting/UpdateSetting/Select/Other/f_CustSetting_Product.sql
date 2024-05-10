@@ -39,27 +39,3 @@ RETURN
 	WHERE p.Enabled=1
 		AND @SettingStatus = 0
 	
-	-- UAT test Mode: #198960
-	-- Age_CustomerSelWinLimitProduct, Age_GetOfferedProductBySiteCurrency
-	UNION ALL
-	SELECT ProductID
-		,ProductName
-		,Description
-		,ProductPrefix
-		,Enabled
-		,BalanceType
-		,SubProductBalanceType
-		,GroupType
-		,CASE 
-			WHEN p.ProductID = 70 THEN 2  
-			WHEN p.ProductID IN (50,38,66,6,42) THEN 1  
-			ELSE p.CasinoType
-			END AS CasinoType
-		,IsOfferPlayForFun
-		,EndOfSupportDate
-		,VendorID
-		,OrderNo
-		,Environment
-	FROM Products p WITH (NOLOCK)
-	WHERE p.Enabled=1
-		AND @SettingStatus >= 1
