@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="svc_tig,Dot_Intg,Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="svc_tig,Dot_Intg" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Member_ProductStatusList_DCS]
 	@CustID INT,
 	@IsTest BIT = 0
@@ -27,6 +27,7 @@ AS
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 		- 20240307@Luke: Show Product Status [Redmine: #202011]
 		- 20240312@Elodie: Enhance SP [Redmine:#199517]
+		- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960] 
 
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
@@ -57,10 +58,11 @@ BEGIN
 	--Get Product Status
 	SELECT DISTINCT cs.CustID, t.Sporttype, CASE t.Sporttype	
 										WHEN 44		THEN CAST(20	AS SMALLINT)
-										--RNG Slot
+										--RNG Casino
 										WHEN 248	THEN CAST(4101	AS SMALLINT)
 										WHEN 237	THEN CAST(5401	AS SMALLINT)
 										WHEN 156	THEN CAST(8900	AS SMALLINT)
+										WHEN 224	THEN CAST(5500	AS SMALLINT)
 										--Live Casino
 										WHEN 159	THEN CAST(3151	AS SMALLINT)
 										WHEN 170	THEN CAST(3701	AS SMALLINT)
@@ -74,6 +76,13 @@ BEGIN
 										WHEN 243	THEN CAST(3101	AS SMALLINT)
 										WHEN 244	THEN CAST(3001	AS SMALLINT)
 										WHEN 228	THEN CAST(10300 AS SMALLINT)
+										WHEN 176	THEN CAST(8201 AS SMALLINT)
+										--Other RNG Casino
+										WHEN 245	THEN CAST(4601	AS SMALLINT)
+										WHEN 208	THEN CAST(2101	AS SMALLINT)
+										WHEN 171	THEN CAST(3801 AS SMALLINT)
+										WHEN 200	THEN CAST(1611 AS SMALLINT)
+										WHEN 240	THEN CAST(10801 AS SMALLINT)
 										ELSE ps.Bettype END AS Bettype, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) AS IsHidden, 
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsDisabled, ps.bitmapOrder)) AS IsDisabled, 
@@ -85,8 +94,9 @@ BEGIN
                     WHERE psc.IsTest <= @IsTest                            
 							AND (( psc.Currency = @Currency  AND (psc.SiteID = @SiteID OR psc.SiteID = 0))
 								OR ( psc.SiteID = @SiteID AND (psc.Currency = @Currency OR psc.Currency = 0)))
-							AND  (CASE WHEN psc.SportType IN (248,237,156) THEN 9906
-                                       WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228) THEN 9911
+							AND  (CASE WHEN psc.SportType IN (248,237,156,224) THEN 9906 --RNG Casino
+                                       WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176) THEN 9911 --Live Casino
+									   WHEN psc.SportType IN (245,208,171,200,240) THEN 9911 --Other RNG Casino
                                        ELSE psc.SportType END) = ps.Sporttype
                         ) AS t
 		CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
