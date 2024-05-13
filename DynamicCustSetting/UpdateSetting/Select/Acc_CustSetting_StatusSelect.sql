@@ -21,26 +21,43 @@ AS
 	- 20221207@Tacy: Alpha - API Management - Support data through API [RedmineID: #171247]
 	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230726@Tacy: Enhance performance [redmine: #190504]
-
+	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
  
- Example: EXEC Acc_CustSetting_StatusSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
+ Example: EXEC Acc_CustSetting_StatusSelect_UAT4 @CustID = 112225441, @ProductID = 53, @RoleID = 3, @SettingType = 21 , @SettingStatus = 3
    
  */  
 BEGIN  
    
 	DECLARE @downlines BIT  = 0   
-	DECLARE @SuperID INT, @MasterID INT, @AgentID INT , @IsIMBC BIT = 0   
+	DECLARE @SuperID INT, @MasterID INT, @AgentID INT , @IsIMBC BIT = 0   , @SiteID INT  , @CurrencyID  INT
    
-	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend    
-	FROM dbo.custInfo ci WITH(NOLOCK)    
-	WHERE ci.custid = @CustID   
+	-- Get line information
+	SELECT @SuperID = c.srecommend, @MasterID = mrecommend, @AgentID = c.recommend , @SiteID = s.siteid , @CurrencyID = c.currency
+	FROM customer c WITH (NOLOCK)
+	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
+	WHERE CustID = @CustID 
    
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @SuperID AND [Site] = 'IMBC')  
 		SET @IsIMBC = 1  
     
 	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, RealProductID TINYINT, Child_DisplayOrder INT)
+
+	CREATE TABLE #ProductSettingDetail(
+		[SettingType] [smallint],
+		[SportType] [smallint],
+		[BetType] [smallint],
+		[IsLive] [bit] ,
+		[ProductID] [tinyint],
+		Child_DisplayOrder INT,
+		GroupID	TINYINT,
+	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
+	)
+
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,Child_DisplayOrder,GroupID)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,Child_DisplayOrder,GroupID
+	FROM dbo.f_CustSetting_ProductProfileSel(@SettingType,@SettingStatus,@SiteID,@CurrencyID)
 
 	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType,Child_DisplayOrder, RealProductID)
 	SELECT ProductID,SportType,Bettype,IsLive, SettingType ,Child_DisplayOrder, RealProductID
@@ -88,8 +105,10 @@ BEGIN
 												AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1) t
 							WHERE srecommend = @CustID  
 								AND ci.roleid IN (3,2,1)
-							), 0) END AS BIT)  HasDownline  
+							), 0) END AS BIT)  HasDownline ,
+			psd.GroupID
 		FROM #SportBettypeFilter ft 
+			INNER JOIN #ProductSettingDetail psd ON ft.SportType = psd.SportType AND ft.Bettype = psd.BetType AND ft.IsLive = psd.IsLive AND ft.SettingType = psd.SettingType
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK)
 		WHERE stt.CustID = @CustID  
@@ -120,8 +139,10 @@ BEGIN
 												AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1) t  
 							WHERE mrecommend = @CustID  
 								AND ci.roleid IN (2,1)
-							), 0) END AS BIT)  HasDownline  
+							), 0) END AS BIT)  HasDownline  ,
+			psd.GroupID
 		FROM #SportBettypeFilter ft 
+			INNER JOIN #ProductSettingDetail psd ON ft.SportType = psd.SportType AND ft.Bettype = psd.BetType AND ft.IsLive = psd.IsLive AND ft.SettingType = psd.SettingType
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)
@@ -152,8 +173,10 @@ BEGIN
 												AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1) t  
 							WHERE recommend = @CustID  
 								AND ci.roleid=1
-							), 0) END AS BIT)  HasDownline  
+							), 0) END AS BIT)  HasDownline  ,
+			psd.GroupID
 		FROM #SportBettypeFilter ft 
+			INNER JOIN #ProductSettingDetail psd ON ft.SportType = psd.SportType AND ft.Bettype = psd.BetType AND ft.IsLive = psd.IsLive AND ft.SettingType = psd.SettingType
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK) 
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK) 
@@ -172,8 +195,10 @@ BEGIN
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsHidden, psp.bitmapOrder)) AS isHiddenUpline,   
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, psp.bitmapOrder)) AS isDisabledUpline, 
 			
-			0 As HasDownline    
+			0 As HasDownline    ,
+			psd.GroupID
 		FROM #SportBettypeFilter ft 
+			INNER JOIN #ProductSettingDetail psd ON ft.SportType = psd.SportType AND ft.Bettype = psd.BetType AND ft.IsLive = psd.IsLive AND ft.SettingType = psd.SettingType
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Bettype = ft.BetType AND psp.Sporttype = ft.SportType                 
 			CROSS JOIN dbo.CustProductStatus stt WITH (NOLOCK)
 			CROSS JOIN dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)

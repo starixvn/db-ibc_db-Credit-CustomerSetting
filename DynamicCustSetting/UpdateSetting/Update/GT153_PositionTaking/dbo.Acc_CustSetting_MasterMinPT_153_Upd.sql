@@ -4,7 +4,8 @@ ALTER PROCEDURE dbo.Acc_CustSetting_MasterMinPT_153_Upd
 	@PT					VARCHAR(MAX),
 	@SubAccID			INT = 0,
 	@UserID				INT = 0,        
-    @IP					VARCHAR(15)='',      
+    @IP					VARCHAR(15)='', 
+    @IsCountPT			BIT = 1,
     @ErrCode			INT = 0 OUTPUT,
     @MsgType			INT = 0 OUTPUT,
     @ErrMsg				NVARCHAR(MAX) = '' OUTPUT, 
@@ -20,6 +21,7 @@ AS
 
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 
 	Parameter's Explanation:
 		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
@@ -167,6 +169,28 @@ BEGIN
 					AND	psd.BetType = tmp.BetType
 					AND psd.IsLive = tmp.IsLive
 
+	-- check Limit Daily PT Update
+	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0, @LastUpdated DATE
+	IF @IsCountPT = 1
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyCheck    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@LastUpdated	= @LastUpdated OUTPUT
+			,@isLimit		= @isLimit OUTPUT
+			,@isCancel		= @isCancel OUTPUT
+			,@SettingStatus = @SettingStatus
+		IF @isCancel > 0	
+		BEGIN
+			
+			SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
+                    , @ErrCode = 10078
+                    , @MsgType = 6   
+				RETURN
+		END
+	END 
+
     -- Log old data
 	SET @xml = (
 		SELECT  @custid                         AS '@CustID',
@@ -237,8 +261,8 @@ BEGIN
 		@MasterID = @custid
 		,@SuperID = @srecommend
 		,@RoleID = 3
-		,@SportBettypeXML = @PT	
-	
+		,@SportBettypeXML = @PT	 
+
     -- Log new updated data
 	SET @xml = (
 		SELECT  @custid                         AS '@CustID',
@@ -279,7 +303,9 @@ BEGIN
 	
 	DECLARE @ActionID INT
 
-	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 521 
+	SELECT @ActionID = CASE 
+					WHEN @GroupID = 1 THEN 521 -- SB
+								ELSE 533 -- 3rdProducts
 							END
 	
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
@@ -291,5 +317,18 @@ BEGIN
 		@duration = @duration	
 
 	DROP TABLE #ProductSettingDetail_MMinUpd
+
+	-- Update Limitation PT
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyUpd    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@ErrCode		= @ErrCode OUTPUT
+			,@ErrMsg		= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+		RETURN
+	END
 END	
 GO

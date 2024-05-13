@@ -3,7 +3,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMember_153_MultiUpd]
 	  @CustIDList	VARCHAR(MAX)
 	, @PT			VARCHAR(MAX)
 	, @SubAccID		INT				= 0
-	, @IP			VARCHAR(50)		= ''
+	, @IP			VARCHAR(50)			= ''
+	, @isCountPT	BIT				= 1
 	, @UserID		INT				= 0
 	, @ErrCode		INT				= 0		OUTPUT
 	, @MsgType		INT				= 0		OUTPUT
@@ -20,6 +21,7 @@ AS
 
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 
 	Parameter's Explanation:	
 	- @PT:	[
@@ -187,6 +189,28 @@ BEGIN
 
 	IF @ErrCode > 0
 		RETURN
+
+	--Check limit PT update	
+	DECLARE @isLimit BIT = 0, @isCancel BIT = 0, @LastUpdated DATE
+	IF @isCountPT = 1
+	BEGIN
+		EXEC dbo.Age_LimitPTCheck_MultiCust	  @Actorid	= @UserID, 
+		  @custIdList			=	@CustIDList,
+		  @UpdatePT				=	@PT,
+		  @SettingStatus		=   @SettingStatus,
+		  @isLimit				=	@isLimit OUTPUT,
+		  @isCancel				=	@isCancel OUTPUT,
+		  @LastUpdated			=	@LastUpdated OUTPUT
+
+		IF @isCancel > 0	
+		BEGIN
+			SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
+                    , @ErrCode = 10078
+                    , @MsgType = 6   
+				RETURN
+		END
+	END
+	
 	
 --******************************************PREPARE SETTING FOR UPDATE*************************************** 		
 	--Parse XML	
@@ -612,7 +636,7 @@ BEGIN
 			INNER JOIN @tblCust cust
 				ON cust.CustID=main.CustID
 	END
-	
+
 --***************************************WRITE LOGS*******************************************			
 	--**START LOGGING**--
 	-- Log old data
@@ -673,7 +697,8 @@ BEGIN
 
 	DECLARE @ActionID INT
 
-	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 513 
+	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 513 -- SB
+								ELSE 525 -- 3rdProducts
 							END
 
 	BEGIN TRY
@@ -699,4 +724,17 @@ BEGIN
 	END CATCH
 
 	DROP TABLE #ProductSettingDetail
+
+--***************************************UPDATE CUSTOMERS LIMIT PT***************************************
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTUpd_MultiCust @Actorid = @UserID
+			, @CustIDList		= @CustIDList
+			, @UpdatePT			= @PT
+			, @SettingStatus	= @SettingStatus
+			, @ErrCode			= @ErrCode OUTPUT
+			, @ErrMsg			= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+			RETURN
+	END
 END

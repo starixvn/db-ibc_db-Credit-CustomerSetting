@@ -5,6 +5,9 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_StatusSettingSelect]
  , @RoleID INT = NULL  
  , @SettingType TINYINT = NULL
  , @SettingStatus TINYINT = 0
+ , @GroupID		TINYINT = 0
+ , @GroupType	SMALLINT = 0
+ , @Mode		BIT	= 0
 AS  
 /*  
  Created: 20151012@Helen  
@@ -31,24 +34,48 @@ AS
 	- 20221006@Winfred: Macau Game - Rename the setting page into RNG Slot and hide all bet limit setting [Redmine: #174513]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
+
  Param's Explanation:  
 	- @CustID: 
 	- @SettingStatus: 0: Pro, 1: UAT
- Example: EXEC Acc_CustSetting_StatusSettingSelect @CustID = 1176070, @ProductID = 24, @RoleID = 4, @SettingType = 13
-   
- */  
+	- @Mode : 0 (default) >> Input @SettingStatus
+	- @Mode : 1 >> Input @GroupID , @GroupType
+ Example: EXEC Acc_CustSetting_StatusSettingSelect 
+									@CustID	    = 112225106
+								    , @ProductID	    = NULL
+								    , @RoleID	    = 3
+								    , @SettingType    = 21
+								    , @SettingStatus  = 3
+								    , @GroupID	    = 3
+								    , @GroupType	    = 160
+								    , @Mode		    = 1
+	    EXEC Acc_CustSetting_StatusSettingSelect 
+									@CustID	    = 112225106
+								    , @ProductID	    = 44
+								    , @RoleID	    = 3
+								    , @SettingType    = 13
+								    , @SettingStatus  = 3
+								    , @GroupID	    = 0
+								    , @GroupType	    = 0
+								    , @Mode		    = 0
+
+ */ 
+
 BEGIN  
    
 	DECLARE @IsDisabledDownline BIT, @downlines BIT  = 0   
-	DECLARE @SuperID INT, @MasterID INT, @AgentID INT , @IsIMBC BIT = 0   
+	DECLARE @SuperID INT, @MasterID INT, @AgentID INT , @IsIMBC BIT = 0 , @SiteID	  INT  , @CurrencyID	INT
    
-	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend    
-	FROM dbo.custInfo ci WITH(NOLOCK)    
-	WHERE ci.custid=@CustID   
+	-- Get line information
+	SELECT @SuperID = c.srecommend, @MasterID = mrecommend, @AgentID = c.recommend , @SiteID = s.siteid , @CurrencyID = c.currency
+	FROM customer c WITH (NOLOCK)
+	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
+	WHERE CustID = @CustID  
    
 	IF EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE custid = @SuperID AND [Site] = 'IMBC')  
 		SET @IsIMBC = 1  
-    
+      
 	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType TINYINT, Child_DisplayOrder INT)
 
 	CREATE TABLE #ProductSettingDetail(
@@ -58,32 +85,65 @@ BEGIN
 		[IsLive] [bit] ,
 		[ProductID] [tinyint],
 		Child_DisplayOrder INT,
+		GroupID	TINYINT,
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
  
-	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,Child_DisplayOrder)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,Child_DisplayOrder 
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	IF @Mode =0
+	BEGIN
+		INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,Child_DisplayOrder,GroupID)
+		SELECT SportType,BetType,SettingType,IsLive,ProductID,Child_DisplayOrder,GroupID
+		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID,@CurrencyID)
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
-	WHERE @SettingType IS NULL OR @SettingType = 4
+		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+		SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
+		WHERE @SettingType IS NULL OR @SettingType = 4
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
-	WHERE @SettingType IS NULL OR @SettingType = 11
+		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+		SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,11,@SettingStatus)
+		WHERE @SettingType IS NULL OR @SettingType = 11
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
-	WHERE @SettingType IS NULL OR @SettingType = 13	
+		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+		SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
+		WHERE @SettingType IS NULL OR @SettingType = 13	
 
-	INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
-	SELECT ProductID,SportType,Bettype,IsLive, SettingType   
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
-	WHERE @SettingType IS NULL OR @SettingType = 21
+		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+		SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,21,@SettingStatus)
+		WHERE @SettingType IS NULL OR @SettingType = 21
+	END
+	
+	IF @Mode > 0
+	BEGIN
+		INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,Child_DisplayOrder,GroupID)
+		SELECT SportType,BetType,SettingType,IsLive,ProductID,Child_DisplayOrder,GroupID
+		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID,@CurrencyID)
+		WHERE Grouptype = @GroupType
+		AND (GroupID = @GroupID OR @GroupID IS NULL)	
+
+		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+		SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus)
+		WHERE @SettingType IS NULL OR @SettingType = 4
+
+		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+		SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,11,@SettingStatus)
+		WHERE @SettingType IS NULL OR @SettingType = 11
+
+		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+		SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,13,@SettingStatus)
+		WHERE @SettingType IS NULL OR @SettingType = 13	
+
+		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive, SettingType)
+		SELECT ProductID,SportType,Bettype,IsLive, SettingType   
+		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULL,21,@SettingStatus)
+		WHERE @SettingType IS NULL OR @SettingType = 21
+	END
 
 	--DELETE sbf  
 	--FROM  #SportBettypeFilter sbf  
@@ -132,7 +192,8 @@ BEGIN
 								WHERE srecommend = @CustID  
 									AND ci.custid <> @custid
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
-								), 0) END AS BIT)  HasDownline  
+								), 0) END AS BIT)  HasDownline  ,
+			pdt.GroupID
 		FROM #ProductSettingDetail pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
@@ -171,7 +232,8 @@ BEGIN
 								WHERE mrecommend = @CustID  
 									AND ci.custid <> @custid
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
-								), 0) END AS BIT)  HasDownline  
+								), 0) END AS BIT)  HasDownline  ,
+			pdt.GroupID
 		FROM #ProductSettingDetail pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
@@ -210,7 +272,8 @@ BEGIN
 								WHERE recommend = @CustID  
 									AND ci.custid <> @custid
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1
-								), 0) END AS BIT)  HasDownline  
+								), 0) END AS BIT)  HasDownline  ,
+			pdt.GroupID
 		FROM #ProductSettingDetail pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
@@ -231,7 +294,8 @@ BEGIN
 			0 AS IsDisabledDownline,			
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) as IsSyncedUpline,  
-			0 As HasDownline  
+			0 As HasDownline  ,
+			pdt.GroupID
 		FROM #ProductSettingDetail pdt WITH (NOLOCK)  
 			INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype AND pdt.BetType = ft.bettype AND pdt.IsLive = ft.islive AND pdt.SettingType = ft.SettingType
 			INNER JOIN ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = pdt.BetType AND PSP.Sporttype = PDT.SportType                 
@@ -241,6 +305,11 @@ BEGIN
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 		ORDER BY pdt.ProductID, ft.Child_DisplayOrder
 	END   
+
+
+	DROP TABLE #ProductSettingDetail
+	DROP TABLE #SportBettypeFilter
+
 END
 
 GO

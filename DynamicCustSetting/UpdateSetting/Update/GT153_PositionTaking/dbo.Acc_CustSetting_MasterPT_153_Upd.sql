@@ -6,6 +6,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPT_153_Upd]
 	@SubAccID			INT = 0,
 	@UserID				INT = 0,        
     @IP					VARCHAR(15)='',   
+    @IsCountPT			BIT = 1,
     @ErrCode			INT = 0 OUTPUT,
     @MsgType			INT = 0 OUTPUT,
     @ErrMsg				NVARCHAR(MAX) = '' OUTPUT,
@@ -21,6 +22,7 @@ AS
 
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 
 	Parameter's Explanation:
 		@PT/ @OnlyMinPT = [
@@ -47,6 +49,7 @@ BEGIN
 			@SubAccID	= @SubAccID,
 			@UserID		= @UserID,
 			@IP			= @IP,
+			@IsCountPT	= @IsCountPT,
 			@MsgType	= @MsgType OUTPUT,		
 			@ErrCode	= @ErrCode OUTPUT,
 			@ErrMsg		= @ErrMsg OUTPUT,
@@ -212,6 +215,28 @@ BEGIN
 				ON	psd.SportType = tmp.SportType
 						AND	psd.BetType = tmp.BetType
 						AND psd.IsLive = tmp.IsLive
+
+		-- check Limit Daily PT Update
+		DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0 , @LastUpdated DATE
+		IF @IsCountPT = 1
+		BEGIN
+			EXEC dbo.Age_LimitPTDailyCheck    
+				 @custid		= @custid
+				,@Actorid		= @UserID
+				,@UpdatePT		= @PT
+				,@LastUpdated	= @LastUpdated OUTPUT
+				,@isLimit		= @isLimit OUTPUT
+				,@isCancel		= @isCancel OUTPUT
+				,@SettingStatus   = @SettingStatus
+			IF @isCancel > 0	
+			BEGIN
+				
+				SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
+                    , @ErrCode = 10078
+                    , @MsgType = 6   
+				RETURN
+			END
+		END 
 
 		-- Log old data	
 		SET @xml = (
@@ -414,7 +439,8 @@ BEGIN
 						
 		DECLARE @ActionID INT
 
-		SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 512 
+		SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 512 -- SB
+									ELSE 524 -- 3rdProducts
 							END
 
 		EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
@@ -427,5 +453,18 @@ BEGIN
 
 		DROP TABLE #ProductSettingDetail
 	END
+
+	-- Update Limitation PT
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyUpd    
+				@custid			= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@ErrCode	= @ErrCode OUTPUT
+			,@ErrMsg		= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+		RETURN
+	END 
 END	
 GO

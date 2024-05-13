@@ -5,6 +5,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentPTOnMember_153_Upd]
 	, @SubAccID			INT				= 0
 	, @IP				VARCHAR(50)		= ''
 	, @UserID			INT				= 0
+	, @IsCountPT		BIT				= 1   
+	, @isSearchAndCopy	BIT				= 0
 	, @ErrCode			INT				= 0		OUTPUT
 	, @MsgType			INT				= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(4000)	= ''	OUTPUT
@@ -20,6 +22,7 @@ AS
 
 	Revision:
 	- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 
 	Parameter's Explanation:
 	- @PT: [
@@ -143,7 +146,8 @@ BEGIN
 
 	DECLARE @ProductID		TINYINT,
 			@ProductName	VARCHAR(50),
-			@SettingLevel	TINYINT
+			@SettingLevel	TINYINT,
+			@SettingList	VARCHAR(MAX)
     
 	DECLARE  @SiteID SMALLINT,
 		@Currency SMALLINT	
@@ -274,6 +278,32 @@ BEGIN
 			ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
 					AND psd.IsLive = tmp.IsLive
+
+	-- check Limit Daily PT Update
+	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0, @LastUpdated DATE
+	IF @GroupID = 3 ---- Apply for 3rd products
+	BEGIN
+		IF @IsCountPT = 1
+		BEGIN
+			EXEC dbo.Age_LimitPTDailyCheck    
+				 @custid		= @custid
+				,@Actorid		= @UserID
+				,@UpdatePT		= @PT
+				,@LastUpdated	= @LastUpdated OUTPUT
+				,@isLimit		= @isLimit OUTPUT
+				,@isCancel		= @isCancel OUTPUT
+				,@SettingStatus = @SettingStatus
+			IF @isCancel > 0	
+			BEGIN
+			
+				SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
+				  , @ErrCode = 10078
+				  , @MsgType = 6   
+					RETURN
+			END
+		END 
+	END
+
 
 	--Get setting mode
 	SELECT @SettingMode = IsGrouped
@@ -601,7 +631,40 @@ BEGIN
 		OR npt.AgentPT <> opt.AgentPT
 	))
 		RETURN
-		
+	
+	
+	IF @isSearchAndCopy=1
+	BEGIN
+		DECLARE @SettingType SMALLINT
+
+		SELECT @SettingType = ps.SettingType
+		FROM @NewPTTble t
+		INNER JOIN #ProductSettingDetail ps WITH (NOLOCK) 
+			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
+		WHERE ps.SettingType IN (1,18)
+
+		SET	@SettingList =	(
+							SELECT	SportType,			
+									BetType,
+									IsLive,
+									SuperPT,
+									MasterPT,
+									AgentPT,
+									IsAutoMasterPT,
+									AutoMasterPT,
+									IsAutoSuperPT,
+									AutoSuperPT
+							FROM	@NewPTTble
+							FOR XML RAW ('PT'), ROOT ('ROOT') 
+						)
+
+		EXECUTE Acc_DynamicCustomerInfo_01 
+					@CustID=@CustID,
+					@SettingList=@SettingList,
+					@SettingType=@SettingType,
+					@AgentID=@_AgentID
+	END
+	ELSE		
 	BEGIN
 		IF ISNULL(@SettingMode,0)=0
 			BEGIN
@@ -758,7 +821,8 @@ BEGIN
 
 	DECLARE @ActionID INT
 
-	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 516 
+	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 516 -- SB
+								ELSE 528 -- 3rdProducts
 							END
 	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper @UserID = @UserID
 					, @CustID			= @CustID
@@ -768,5 +832,19 @@ BEGIN
 					, @duration			= @duration
 
 	DROP TABLE #ProductSettingDetail
+
+	
+	-- Update Limitation PT
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyUpd    
+				 @custid	= @custid
+				,@Actorid	= @UserID
+				,@UpdatePT	= @PT
+				,@ErrCode	= @ErrCode OUTPUT
+				,@ErrMsg	= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+		RETURN
+	END 	
 END
 GO

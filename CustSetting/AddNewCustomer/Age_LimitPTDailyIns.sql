@@ -15,6 +15,7 @@ AS
 		- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230620@Luke: Limitation to update PT for new member [Redmine: #188950]
+		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -61,6 +62,13 @@ BEGIN
 			AND (l.CustID = 0 OR  l.CustID IN (@srecommend,@mrecommend,@recommend))
 			AND l.LimitNewAccUpdPT = 1
 		GROUP BY b.SportType,b.BetType
+
+		-- Exclude Sport/Product Non Offer PT Limit
+		DELETE t FROM @tblPT AS t 
+		CROSS APPLY (
+					SELECT dbo.f_CustSetting_GetOfferPTLimit (t.SportType, t.BetType)
+				) fn (IsNonOffer)
+		WHERE fn.IsNonOffer = 0
 		
 		INSERT INTO CustLimitPTSetting (CustID,SportType,BetType,ActorID,PTCount,LastUpdated)
 		SELECT @custid , P.SportType,p.BetType,@Actorid , 1 AS PTCount ,CAST(GETDATE() AS  DATE) AS LastUpdated
