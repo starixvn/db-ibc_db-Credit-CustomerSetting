@@ -7,7 +7,10 @@ ALTER PROCEDURE [dbo].[Age_LimitPTCheck_MultiCust]
 	  @settingStatus		TINYINT = 0,
 	  @isLimit				BIT = 0 OUTPUT,	
 	  @isCancel				BIT = 0 OUTPUT,
-	  @LastUpdated			DATE OUTPUT
+	  @LastUpdated			DATE OUTPUT,
+	  @ErrCode				INT = 0 OUTPUT,
+        @MsgType				INT = 0 OUTPUT,
+	  @ErrMsg				NVARCHAR(4000) = '' OUTPUT
 AS
 /*
 		Task : NAP CM - Limitation to update PT for new member
@@ -15,9 +18,12 @@ AS
 		Original: 
 		Revisions:
 			- 20230620@Luke: Limitation to update PT for new member [Redmine: #188950]
+			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 	*/
 BEGIN
 	SET NOCOUNT ON;
+
+	EXEC Acc_CustSetting_PT_JsonParse @PTSetting = @updatePT OUTPUT
 
 	DECLARE @TblCust AS TABLE(
 		custId INT,
@@ -56,20 +62,6 @@ BEGIN
 
 	SELECT @SiteID = siteid FROM Site WITH(NOLOCK) WHERE site = @site
 
-	DECLARE @isTest BIT,
-			@SQL NVARCHAR(100) = OBJECT_NAME(@@PROCID)
-
-	IF (@SQL like '%_xtest%' 
-		OR  @SQL like '%_xpre%' 
-		OR  @SQL like '%_uat1%'
-		OR  @SQL like '%_uat2%'
-		OR  @SQL like '%_uat3%'
-		OR  @SQL like '%_uat4%')
-		SELECT @isTest = 1
-	ELSE
-		SELECT @isTest = 0
-
-
 	DECLARE @TblPT AS TABLE(
 		sportType	SMALLINT,
 		betType		SMALLINT,
@@ -79,6 +71,14 @@ BEGIN
 	INSERT INTO @TblPT(sportType, betType)
 	SELECT SportType, Bettype
 	FROM dbo.f_DCS_PT_XMLParse(@UpdatePT)
+
+	-- Exclude Sport/Product Non Offer PT Limit
+	DELETE t FROM @TblPT AS t 
+	CROSS APPLY (
+				SELECT dbo.f_CustSetting_GetOfferPTLimit (t.SportType, t.BetType)
+			) fn (IsOffer)
+	WHERE fn.IsOffer = 0
+
 
 	CREATE TABLE #ProductSettingDetail_Check(
 		settingType SMALLINT,
@@ -107,7 +107,9 @@ BEGIN
 		FROM #TempLimit t
 			INNER JOIN @TblPT p ON t.SportType = p.sportType AND t.BetType = p.betType
 		WHERE (t.Currency = @currency OR t.Currency = 0)
-			AND (t.SiteID = @siteId OR t.SiteID = 0) AND SettingStatus <= CASE WHEN @isTest = 1 THEN 1 ELSE 0 END
+			AND (t.SiteID = @siteId OR t.SiteID = 0) 
+			AND SettingStatus <= CASE WHEN @settingStatus IN (1,3) THEN 3 ELSE 0 END
+			AND SettingStatus <> 2
 			AND (t.CustID = 0 or t.CustID IN (@srecommend, @mrecommend, @recommend))
 	)
 	BEGIN
@@ -126,6 +128,8 @@ BEGIN
 		) KQ
 	END
 
+	DECLARE @ErrInfo	XML
+
 	DECLARE @currentDate DATE = GETDATE()
 	IF EXISTS(
 		SELECT TOP 1 1
@@ -143,6 +147,23 @@ BEGIN
 								WHERE  ActorID = @Actorid AND PTCount >= p.maxCount
 								AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE)), GETDATE())
 		SELECT @LastUpdated  = DATEADD(DAY,30,@LastUpdated)
+
+		SELECT @ErrInfo = (
+						SELECT DISTINCT p.SportType , p.BetType
+						FROM @TblCust c
+						INNER JOIN CustLimitPTSetting t WITH(NOLOCK) ON t.CustID = c.custId
+						INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
+						WHERE ActorID = @Actorid AND t.PTCount >= p.MaxCount
+							AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= @currentDate
+						FOR XML RAW('Row'), TYPE
+					)
+	END
+
+	IF @ErrInfo IS NOT NULL
+	BEGIN
+		SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> ' + CONVERT(VARCHAR(MAX),@ErrInfo) + '</Root>'
+			, @ErrCode = 10078
+			, @MsgType = 6   
 	END
 
 	DROP TABLE #ProductSettingDetail_Check, #TempLimit

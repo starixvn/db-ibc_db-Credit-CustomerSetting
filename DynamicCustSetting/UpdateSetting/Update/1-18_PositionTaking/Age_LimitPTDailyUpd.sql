@@ -14,9 +14,13 @@ AS
 		Revisions:
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
+			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 	*/
 BEGIN
 	SET NOCOUNT ON;
+
+	EXEC Acc_CustSetting_PT_JsonParse @PTSetting = @UpdatePT OUTPUT
+
 	BEGIN TRY
 		DECLARE @tblPT TABLE (
 				SportType		SMALLINT,
@@ -32,6 +36,13 @@ BEGIN
 		SportType,
 		BetType
 	FROM dbo.f_DCS_PT_XMLParse(@UpdatePT)	
+
+	-- Exclude Sport/Product Non Offer PT Limit
+	DELETE t FROM @tblPT AS t 
+	CROSS APPLY (
+				SELECT dbo.f_CustSetting_GetOfferPTLimit (t.SportType, t.BetType)
+			) fn (IsOffer)
+	WHERE fn.IsOffer = 0
 	
 		IF EXISTS( SELECT TOP 1 1 FROM CustLimitPTSetting t WITH(NOLOCK)  
 									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType

@@ -42,6 +42,7 @@ AS
 		- 20231024@Johnson: remove param @site [redmine: #195406]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240321@Luke: NAP - Virtual rate - For Direct account :Change default of VR Status for newly created accounts to "Follow upline" [Redmine: #202624]
+		- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
 	Param's Explanation: 
 		@SettingXML :
 		'{
@@ -987,29 +988,42 @@ BEGIN
     END
 	
 	--write log product status
-	DECLARE @LogDataSP2 VARCHAR(4000)
+	DECLARE @LogDataSP2 VARCHAR(4000) = ''
 	
-	SET @LogDataSP2 = ''
-	
-	CREATE TABLE #temSportbettypeSetting(ProductID TINYINT,SportType SMALLINT, Bettype SMALLINT, SettingType SMALLINT)
-	
-	INSERT INTO #temSportbettypeSetting(ProductID,SportType,Bettype,SettingType)
-	SELECT DISTINCT ProductID,SportType,Bettype,SettingType	
+	CREATE TABLE #tempSportbettypeSetting(ProductID TINYINT,SportType SMALLINT, Bettype SMALLINT, SettingType SMALLINT, GroupID TINYINT)
+	CREATE TABLE #tempProductOfferStatus(custIsHidden BIT, Name VARCHAR(50))
+
+	INSERT INTO #tempSportbettypeSetting(ProductID,SportType,Bettype,SettingType,GroupID)
+	SELECT DISTINCT ProductID,SportType,Bettype,SettingType	,GroupID
 	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency)
 	WHERE SettingType IN (4,11,13,21)
 		AND realProductID NOT IN (24,59)
 	
-	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' +  REPLACE(REPLACE(p.ProductName, ' ', ''),'*','') + '="' + COALESCE(CAST(iq.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
-	FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK) 
-		INNER JOIN (SELECT psd.ProductID, MIN(CAST(Hi.[Value] AS INT)) AS custIsHidden
-					FROM #temSportbettypeSetting psd WITH(NOLOCK)
-						INNER JOIN	ProductStatusProfile psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype
-																			AND	psd.BetType = psp.Bettype
-						INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
-						CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
-					WHERE psd.ProductID <> 20 
-					GROUP BY psd.ProductID	
-					) iq ON iq.ProductID = p.ProductID
+	INSERT INTO #tempProductOfferStatus(custIsHidden, Name)
+	SELECT MIN(CAST(Hi.[Value] AS INT)) AS custIsHidden, REPLACE(REPLACE(MAX(p.ProductName), ' ', ''),'*','') 
+	FROM #tempSportbettypeSetting psd WITH(NOLOCK)
+		INNER JOIN	ProductStatusProfile psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype
+															AND	psd.BetType = psp.Bettype
+		INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
+		CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
+		INNER JOIN DBPRO.bodb02.dbo.Products p WITH (NOLOCK)  ON p.ProductID = psd.ProductID
+	WHERE psd.ProductID <> 20 
+		AND ISNULL(psd.GroupID,0) NOT IN (3)
+	GROUP BY psd.ProductID
+
+	INSERT INTO #tempProductOfferStatus(CustIsHidden,Name)
+	SELECT MIN(CAST(Hi.[Value] AS INT)) AS custIsHidden, 'GroupID' + CAST(psd.GroupID AS VARCHAR(10))
+	FROM #tempSportbettypeSetting psd WITH(NOLOCK)
+		INNER JOIN	ProductStatusProfile psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype
+															AND	psd.BetType = psp.Bettype
+		INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
+		CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
+	WHERE psd.ProductID <> 20 
+		AND ISNULL(psd.GroupID,0) IN (3)
+	GROUP BY psd.GroupID
+
+	SELECT @LogDataSP2 = @LogDataSP2 +  'Hide' + t.Name  + '="' + COALESCE(CAST(t.custIsHidden AS VARCHAR(1)), SPACE(1)) + '" '
+	FROM #tempProductOfferStatus t
 
 	SELECT @LogDataSP2	= @LogDataSP2 
 						+ 'Disable' + CAST(Sporttype AS VARCHAR) + '_' + CAST(Bettype AS VARCHAR)
@@ -1018,7 +1032,7 @@ BEGIN
 		SELECT	psp.Sporttype,
 				psp.Bettype,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapIsDisabled, psp.bitmapOrder)) AS custIsDisable
-		FROM		#temSportbettypeSetting AS psd WITH(NOLOCK)
+		FROM		#tempSportbettypeSetting AS psd WITH(NOLOCK)
 			INNER JOIN	ProductStatusProfile AS psp WITH(NOLOCK) ON	psd.SportType = psp.Sporttype AND psd.BetType = psp.Bettype 
 			CROSS APPLY CustProductStatus WITH(NOLOCK)
 		WHERE CustID = @custid AND (psd.ProductID <> 20)
@@ -1223,7 +1237,7 @@ BEGIN
 						FROM		string_split(ts.StakeLevelList, ';') AS ss
 						INNER JOIN	dbo.StakeLevel AS sl WITH (NOLOCK)
 								ON	ss.value = CAST(sl.StakeLevelID AS NVARCHAR(10))
-						WHERE sl.GameGroupID=0
+						--WHERE sl.GameGroupID=0
 					) sl
 		WHERE ts.SettingType IN (7,17)			
 
@@ -1253,6 +1267,37 @@ BEGIN
 	UPDATE @tblCustStakeLevel
 	SET StakeLevelList = REPLACE(StakeLevelList, ',', ', ')
 	WHERE SettingType IN (8)
+
+	DECLARE @LogGT159_GID2 VARCHAR(MAX) = '',
+			@LogGT159_GID3 VARCHAR(MAX) = ''
+
+	IF EXISTS(SELECT 1 FROM @tblCustStakeLevel WHERE GroupID = 2 AND SettingType IN (8))
+	BEGIN	
+		SET  @LogGT159_GID2 = 
+		 '<BetLimit GroupType="159">'
+			+ COALESCE(CAST((SELECT SportType,BetType,SettingLevel,ProductID,StakeLevelList
+						FROM @tblCustStakeLevel
+						WHERE GroupID = 2
+							AND SettingType IN (8)
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max)),SPACE(1))
+		+ '</BetLimit>'	
+	END
+
+	IF EXISTS(SELECT 1 FROM @tblCustStakeLevel WHERE GroupID = 3 AND SettingType IN (8))
+	BEGIN	
+		SET  @LogGT159_GID3 = 
+		 '<BetLimit GroupType="159">'
+			+ COALESCE(CAST((SELECT SportType,BetType,SettingLevel,ProductID,StakeLevelList
+						FROM @tblCustStakeLevel
+						WHERE GroupID = 3
+							AND SettingType IN (8)
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max)),SPACE(1))
+		+ '</BetLimit>'	
+	END
 	
 	DECLARE @xml XML
 	
@@ -1497,15 +1542,7 @@ BEGIN
 							FOR XML RAW('R')
 							) as VARCHAR(max)),SPACE(1))
 			+ '</WinLossLimit>'	
-			+ '<BetLimit GroupType="159">'
-				+ COALESCE(CAST((SELECT SportType,BetType,SettingLevel,ProductID,StakeLevelList
-							FROM @tblCustStakeLevel
-							WHERE GroupID = 2
-								AND SettingType IN (8)
-							ORDER BY Child_DisplayOrder
-							FOR XML RAW('R')
-							) as VARCHAR(max)),SPACE(1))
-			+ '</BetLimit>'	
+			+ @LogGT159_GID2
 			+ '</Group>'
 			+ '<Group ID="3">'--LCS
 			+ '<Discount GroupType="156">' 
@@ -1538,15 +1575,7 @@ BEGIN
 							FOR XML RAW('R')
 							) as VARCHAR(max)),SPACE(1))
 			+ '</BetLimit>'
-			+ '<BetLimit GroupType="159">'
-				+ COALESCE(CAST((SELECT SportType,BetType,SettingLevel,ProductID,StakeLevelList
-							FROM @tblCustStakeLevel
-							WHERE GroupID = 3
-								AND SettingType IN (8)
-							ORDER BY Child_DisplayOrder
-							FOR XML RAW('R')
-							) as VARCHAR(max)),SPACE(1))
-			+ '</BetLimit>'
+			+ + @LogGT159_GID3
 			+ '</Group>'
 			+ '<Group ID="4">'--Others Games
 			+ '<Discount GroupType="156">' 
@@ -1600,8 +1629,9 @@ BEGIN
 		@TrackingValue = @LogSPData,
 		@duration = @duration
 
-	DROP TABLE #temSportbettypeSetting
 	DROP TABLE #TmpProductSettingDetail
 	DROP TABLE #UMConfig
+	DROP TABLE #tempSportbettypeSetting
+	DROP TABLE #tempProductOfferStatus
 END
 		

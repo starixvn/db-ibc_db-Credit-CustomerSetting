@@ -14,9 +14,12 @@ AS
 		Original: 
 		Revisions:
 			- 202130620@Luke: Limitation to update PT for new member [Redmine: #188950]
+			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 	*/
 BEGIN
 	SET NOCOUNT ON;
+
+	EXEC Acc_CustSetting_PT_JsonParse @PTSetting = @UpdatePT OUTPUT
 
 	BEGIN TRY
 		DECLARE @TblCust AS TABLE(
@@ -38,6 +41,13 @@ BEGIN
 				)
 		SELECT p.SportType, p.BetType
 		FROM dbo.f_DCS_PT_XMLParse(@UpdatePT) p
+
+		-- Exclude Sport/Product Non Offer PT Limit
+		DELETE t FROM @tmpPT AS t 
+		CROSS APPLY (
+					SELECT dbo.f_CustSetting_GetOfferPTLimit (t.SportType, t.BetType)
+				) fn (IsOffer)
+		WHERE fn.IsOffer = 0
 
 		DECLARE @tblPT AS TABLE(
 			SportType	SMALLINT,

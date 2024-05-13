@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMember_153_Upd]
 	@UserID		INT = 0,    
 	@SubAccID	INT = 0, --Sub-AccountID     
     @IP			VARCHAR(15)='',
+    @IsCountPT		BIT = 1,
     @ErrCode	INT = 0 OUTPUT,
 	@MsgType	INT = 0 OUTPUT,
     @ErrMsg		NVARCHAR(4000) = '' OUTPUT, 
@@ -20,6 +21,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMember_153_Upd]
 
 	Revision:
 	- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 
 	Parameter's Explanation:
 		@PT =[
@@ -229,6 +231,32 @@ BEGIN
 
 		RETURN
 	END
+
+	-- check Limit Daily PT Update
+	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0, @LastUpdated DATE
+	IF @GroupID = 3 ---- Apply for 3rd products
+	BEGIN
+		IF @IsCountPT = 1
+		BEGIN
+			EXEC dbo.Age_LimitPTDailyCheck    
+				 @custid		= @custid
+				,@Actorid		= @UserID
+				,@UpdatePT		= @PT
+				,@LastUpdated	= @LastUpdated OUTPUT
+				,@isLimit		= @isLimit OUTPUT
+				,@isCancel		= @isCancel OUTPUT
+				,@SettingStatus = @SettingStatus
+			IF @isCancel > 0	
+			BEGIN
+			
+				SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
+				  , @ErrCode = 10078
+				  , @MsgType = 6   
+					RETURN
+			END
+		END 
+	END
+
 	
 	SELECT @SettingMode = IsGrouped
 	FROM dbo.CustSettingMode3rd
@@ -395,8 +423,9 @@ BEGIN
 			
         -- Log old data
 		SET @xml = (
-				SELECT  dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',			
-						@IP                             AS '@IP',				
+				SELECT	@CustID				 			AS '@CustID',
+						dbo.f_GetSubUsername(@SubAccID)			AS '@SubAccName',			
+						@IP								AS '@IP',				
 						(
 							SELECT  @GroupID									AS '@GroupID',
 									t.ProductID									AS '@ProductID',
@@ -427,8 +456,9 @@ BEGIN
 
 	-- Log new updated data
 	SET @xml = (
-			SELECT  dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
-					@IP                             AS '@IP',
+			SELECT	@CustID				 			AS '@CustID',
+					dbo.f_GetSubUsername(@SubAccID)			AS '@SubAccName',
+					@IP								AS '@IP',
 					(
 						SELECT  @GroupID										AS '@GroupID',
 								cs.ProductID									AS '@ProductID',
@@ -781,7 +811,7 @@ BEGIN
 			END
 		END
 	END			 
-	
+
 	SELECT @logSpData_Old = LogStr 
 	FROM f_CustSetting_FormatLog (@logSpData_Old)
 	SELECT @logSpData = LogStr 
@@ -793,7 +823,8 @@ BEGIN
 
 	DECLARE @ActionID INT
 
-	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 519 
+	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 519 -- SB
+								ELSE 531 -- 3rdProducts
 							END
 						
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
@@ -805,4 +836,17 @@ BEGIN
 		@duration = @duration
 
 	DROP TABLE #ProductSettingDetail
+
+	-- Update Limitation PT
+	IF @isLimit > 0
+	BEGIN
+		EXEC dbo.Age_LimitPTDailyUpd    
+			 @custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@ErrCode		= @ErrCode OUTPUT
+			,@ErrMsg		= @ErrMsg OUTPUT
+		IF @ErrCode > 0
+		RETURN
+	END 
 END

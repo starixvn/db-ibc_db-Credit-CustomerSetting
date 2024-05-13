@@ -7,7 +7,10 @@ ALTER PROCEDURE [dbo].[Age_LimitPTDailyCheck]
 	  @LastUpdated			DATE OUTPUT,
 	  @isLimit				BIT = 0 OUTPUT,
 	  @isCancel				BIT = 0 OUTPUT,
-	  @SettingStatus		TINYINT = 0
+	  @SettingStatus			TINYINT = 0,
+	  @ErrCode				INT = 0 OUTPUT,
+        @MsgType				INT = 0 OUTPUT,
+	  @ErrMsg				NVARCHAR(4000) = '' OUTPUT
 AS
 /*
 		Task : NAP CM -  Limit Daily PT Update
@@ -17,9 +20,12 @@ AS
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 	*/
 BEGIN
 	SET NOCOUNT ON;
+
+	EXEC Acc_CustSetting_PT_JsonParse @PTSetting = @UpdatePT OUTPUT
 	
 	DECLARE @srecommend INT,
 			@mrecommend INT,
@@ -28,21 +34,6 @@ BEGIN
 			@site		NVARCHAR(50),
 			@SiteID		INT	,
 			@roleActorid TINYINT = 5
-	DECLARE @isTest BIT,@SQL NVARCHAR(100) = OBJECT_NAME(@@PROCID)
-
-	IF  (@SQL like '%_xtest%' 
-			OR  @SQL like '%_xpre%' 
-			OR  @SQL like '%_uat1%'
-			OR  @SQL like '%_uat2%'
-			OR  @SQL like '%_uat3%'
-			OR  @SQL like '%_uat4%')
-	BEGIN
-		SELECT @isTest = 1
-	END
-	ELSE
-	BEGIN
-		SELECT @isTest = 0
-	END
 	
 	SELECT	@roleActorid = roleid FROM Customer WITH(NOLOCK)	WHERE custid = @Actorid
 	IF @roleActorid > 4 
@@ -76,6 +67,13 @@ BEGIN
 		BetType
 	FROM dbo.f_DCS_PT_XMLParse(@UpdatePT)	
 
+	-- Exclude Sport/Product Non Offer PT Limit
+	DELETE t FROM @tblPT AS t 
+	CROSS APPLY (
+				SELECT dbo.f_CustSetting_GetOfferPTLimit (t.SportType, t.BetType)
+			) fn (IsOffer)
+	WHERE fn.IsOffer = 0
+
 	CREATE TABLE #ProductSettingDetail_DailyCheck(
 		[SettingType] [smallint],
 		[SportType] [smallint],
@@ -100,7 +98,9 @@ BEGIN
 	IF EXISTS( SELECT TOP 1 1 FROM #TempLimit t
 									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
 							  WHERE  (Currency = @Currency OR Currency = 0)
-							  AND (SiteID = @SiteID OR SiteID = 0) AND SettingStatus <= CASE WHEN @isTest = 1 THEN 1 ELSE 0 END
+							  AND (SiteID = @SiteID OR SiteID = 0) 
+							  AND SettingStatus <= CASE WHEN @SettingStatus IN (1,3) THEN 3 ELSE 0 END
+							  AND SettingStatus <> 2
 							  AND (CustID = 0 OR  CustID IN (@srecommend,@mrecommend,@recommend)))
 	BEGIN
 		SET @isLimit = 1
@@ -118,6 +118,9 @@ BEGIN
 					) KQ
 	END	
 	
+	DECLARE @ErrInfo	XML
+
+
 	IF EXISTS( SELECT TOP 1 1 FROM CustLimitPTSetting t WITH(NOLOCK) 
 									INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
 							  WHERE  t.CustID = @custid AND ActorID = @Actorid AND PTCount >= p.MaxCount
@@ -130,8 +133,25 @@ BEGIN
 							  WHERE  t.CustID = @custid AND ActorID = @Actorid AND PTCount >= p.MaxCount
 							  AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE)), GETDATE())
 		SELECT @LastUpdated  = DATEADD(DAY,30,@LastUpdated)
+
+
+		SELECT @ErrInfo = (
+						SELECT DISTINCT p.SportType , p.BetType
+						FROM CustLimitPTSetting t WITH(NOLOCK) 
+						INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType
+						WHERE  t.CustID = @custid AND ActorID = @Actorid AND PTCount >= p.MaxCount
+						AND DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS DATE)
+						FOR XML RAW('Row'), TYPE
+					)
 	END	
 	
+	IF @ErrInfo IS NOT NULL
+	BEGIN
+		SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> ' + CONVERT(VARCHAR(MAX),@ErrInfo) + '</Root>'
+			, @ErrCode = 10078
+			, @MsgType = 6   
+	END
+
 	DROP TABLE #TempLimit
 	DROP TABLE #ProductSettingDetail_DailyCheck
 END

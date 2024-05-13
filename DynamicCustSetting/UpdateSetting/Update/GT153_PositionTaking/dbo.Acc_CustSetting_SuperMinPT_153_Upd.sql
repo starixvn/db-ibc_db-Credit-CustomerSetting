@@ -3,6 +3,7 @@ ALTER PROCEDURE Acc_CustSetting_SuperMinPT_153_Upd
 	@custid		INT,
 	@PT			VARCHAR(MAX),
 	@UserID		INT = 0,       
+	@SubAccID		INT	 = 0,
     @IP			VARCHAR(15)='',
     @ErrCode	INT = 0 OUTPUT,
     @MsgType	INT = 0 OUTPUT,
@@ -19,6 +20,7 @@ AS
 
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 
 	Parameter's Explanation:
 		@PT = <ROOT>
@@ -171,7 +173,8 @@ BEGIN
 
 	-- Log old data
 	SET @xml = (
-			SELECT  @custid			AS '@CustID',			
+			SELECT  @custid			AS '@CustID',
+					dbo.f_GetSubUsername(@SubAccID)			AS '@SubAccName',
 					@IP				AS '@IP',
 					(           
 						SELECT  @GroupID									AS '@GroupID',
@@ -249,6 +252,7 @@ BEGIN
     -- Log new updated data
 	SET @xml = (
 			SELECT  @custid			AS '@CustID',			
+					dbo.f_GetSubUsername(@SubAccID)			AS '@SubAccName',
 					@IP				AS '@IP',
 					(           
 						SELECT  @GroupID									AS '@GroupID',
@@ -285,7 +289,8 @@ BEGIN
 						
 	DECLARE @ActionID INT
 
-	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 520 
+	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 520 -- SB
+								ELSE 532 -- 3rdProducts
 						END
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
