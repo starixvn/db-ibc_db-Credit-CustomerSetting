@@ -15,6 +15,7 @@ AS
 
 	Revisions:
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
+		- 20240423@Elodie: Member Max Credit, Member Given Credit enhancements [Redmine: #203332]
 
 	Param's Explanation:
 	
@@ -46,7 +47,7 @@ BEGIN
 			@Credit_AllOtherMember		MONEY,
 			@Credit_Ag				MONEY,
 			@Credit_Ag_Bal			MONEY,
-			@Credit_Mem_Max			MONEY,
+			--@Credit_Mem_Max			MONEY,
 			@MaxCredit_Mem			MONEY,
 
 			-- Param get Cust Info
@@ -276,9 +277,9 @@ BEGIN
 
 		SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember
 		----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-		SELECT @Credit_Mem_Max = CASE WHEN @MaxCredit_Mem =0 THEN @Credit_Ag_Bal
-									WHEN @MaxCredit_Mem > @Credit_Ag_Bal THEN @Credit_Ag_Bal
-									  ELSE @MaxCredit_Mem END  
+		--SELECT @Credit_Mem_Max = CASE WHEN @MaxCredit_Mem =0 THEN @Credit_Ag_Bal
+		--							WHEN @MaxCredit_Mem > @Credit_Ag_Bal THEN @Credit_Ag_Bal
+		--							  ELSE @MaxCredit_Mem END  
 
 		SELECT @DisableAutoMPT = ISNULL(DisableAutoMPT, 0)
 		FROM CustMaster WITH (NOLOCK)  
@@ -301,12 +302,13 @@ BEGIN
 			-- Get Credit for SB
 			, i.credit							AS MaxCredit
 
-			-- Role Member
-			, @Credit_Mem_Max						AS MaxCreditMax
+			-- Role Member			
 			, @uGroup							AS uGroup
 			, @RoleID							AS RoleID
 			, @DisableAutoMPT						AS DisableAutoMPT
 			, @SpecialPlatfrom					AS SpecialPlatfrom
+			, @Credit_Ag_Bal					as MaxCreditMax
+			, @MaxCredit_Mem					AS MaxCredit_Mem
 		FROM custInfo i WITH (NOLOCK)
 		WHERE i.custID = @CustID	
 	END
