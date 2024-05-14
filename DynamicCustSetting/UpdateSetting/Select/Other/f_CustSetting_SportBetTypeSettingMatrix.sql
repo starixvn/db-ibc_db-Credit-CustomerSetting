@@ -39,4 +39,4 @@ RETURNS TABLE AS
 		, sbsm.BettypeRefWinlossLimit
 		, sbsm.isDeleted
 	FROM SportBettypeSettingMatrix sbsm WITH (NOLOCK)
-	WHERE @SettingStatus = 0  
+	WHERE sbsm.isDeleted = 0
