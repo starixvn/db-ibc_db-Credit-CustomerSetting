@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
                     @CustID				INT,
                     @SportType			SMALLINT,
@@ -20,7 +20,9 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@BetFrom			NVARCHAR(4) = '',
 					@SiteID				INT = NULL,
 					@LeagueID			INT = -1,
-					@Istest				BIT = 0
+					@Istest				BIT = 0,
+					@CurrencyID			INT = 0,
+					@AccumulatedBalance	BIT = 0 OUTPUT
 AS
 /*
     Created: 20151019@joy
@@ -48,6 +50,7 @@ AS
 		-- 20210427@VN-Eden: Implement dedicated feature to control Global Virtual Rate adjustment on tickets [Redmine:#136423]
 		-- 20230307@VN-Johnson: Return Basketball VR to its original state [redmine:#184339]
 		-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
+		-- 20240328@VN-Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
 
     Parameter's Explanation:
 */
@@ -216,21 +219,23 @@ BEGIN
 
 	--Get VR on tickets by config table
 	EXEC Dot_Member_GetVRSettingAdjustment
-		 @Sporttype     = @OriginalSportType    
-		,@Bettype       = @OriginalBetType      
-		,@SiteType      = @SiteType     
-		,@SiteID        = @SiteID       
-		,@CustomerClass = @CustomerClass
-		,@DateOfWeek    = @DateOfWeek   
-		,@LeagueGroupID = @LeagueGroupID
-		,@LeagueID      = @LeagueID     
-		,@Betfrom       = @Betfrom      
-		,@StakeRM       = @StakeRM      
-		,@VRValue       = @virtualMultiplier OUTPUT   
-		,@VRStatus      = @virtualrate     
-		,@Time          = @CurrentHKTime         
-		,@LiveIndicator = @isLive
-		,@Istest		= @Istest
+		 @Sporttype				= @OriginalSportType    
+		,@Bettype				= @OriginalBetType      
+		,@SiteType				= @SiteType     
+		,@SiteID				= @SiteID       
+		,@CustomerClass			= @CustomerClass
+		,@DateOfWeek			= @DateOfWeek   
+		,@LeagueGroupID			= @LeagueGroupID
+		,@LeagueID				= @LeagueID     
+		,@Betfrom				= @Betfrom      
+		,@StakeRM				= @StakeRM      
+		,@VRValue				= @virtualMultiplier OUTPUT   
+		,@VRStatus				= @virtualrate     
+		,@Time					= @CurrentHKTime         
+		,@LiveIndicator			= @isLive
+		,@Istest				= @Istest
+		,@CurrencyID			= @CurrencyID
+		,@AccumulatedBalance	= @AccumulatedBalance OUTPUT
 
 	ReturnVR:
 

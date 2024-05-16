@@ -1,20 +1,22 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE dbo.Dot_Member_GetVRSettingAdjustment (
-			 @Sporttype     SMALLINT   
-			,@Bettype       SMALLINT   
-			,@SiteType      TINYINT    
-			,@SiteID        INT        
-			,@CustomerClass SMALLINT   
-			,@DateOfWeek    TINYINT    
-			,@LeagueGroupID INT        
-			,@LeagueID      INT        
-			,@Betfrom       NVARCHAR(4)    
-			,@StakeRM       MONEY      
-			,@VRValue       SMALLMONEY OUTPUT
-			,@VRStatus      TINYINT  
-			,@Time          TIME(7)    
-			,@LiveIndicator BIT   
-			,@Istest		BIT = 0     
+			 @Sporttype				SMALLINT   
+			,@Bettype				SMALLINT   
+			,@SiteType				TINYINT    
+			,@SiteID				INT        
+			,@CustomerClass			SMALLINT   
+			,@DateOfWeek			TINYINT    
+			,@LeagueGroupID			INT        
+			,@LeagueID				INT        
+			,@Betfrom				NVARCHAR(4)    
+			,@StakeRM				MONEY      
+			,@VRValue				SMALLMONEY OUTPUT
+			,@VRStatus				TINYINT  
+			,@Time					TIME(7)    
+			,@LiveIndicator			BIT   
+			,@Istest				BIT = 0
+			,@CurrencyID			INT = 0
+			,@AccumulatedBalance	BIT = 0 OUTPUT
 )
 AS  
 /*  
@@ -28,9 +30,11 @@ AS
 		- 20230301@Eden: Wrong VR of Basketball and Esport [Redmine:#184585]
 		- 20230307@Johnson: Return Basketball VR to its original state [redmine:#184339]
 		- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
+		- 20240328@Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
 
 	Param's Explanation:  
 	DECLARE @VRValue SMALLMONEY = 0.5
+			,@AccumulatedBalance BIT
 	EXEC Dot_Member_GetVRSettingAdjustment
 		@Sporttype     = 1 ,
 		@Bettype       = 1, 
@@ -45,8 +49,10 @@ AS
 		@VRValue       = @VRValue OUTPUT, 
 		@VRStatus      = 1, 
 		@Time          = '23:59:59.9999', 
-		@LiveIndicator = 1
-	SELECT @VRValue
+		@LiveIndicator = 1,
+		@CurrencyID	   = 20,
+		@AccumulatedBalance = @AccumulatedBalance OUTPUT
+	SELECT @VRValue, @AccumulatedBalance
 */  
 BEGIN    
 	DECLARE @Adjustmenttype tinyint ,@AdjustmentValue SMALLMONEY
@@ -59,6 +65,7 @@ BEGIN
 		,DateOfWeek    TINYINT    
 		,LeagueGroupID INT        
 		,LeagueID      INT 
+		,CurrencyID		INT
 	)
 
 	INSERT INTO @NotinConfig( 
@@ -69,19 +76,22 @@ BEGIN
 		,DateOfWeek   
 		,LeagueGroupID
 		,LeagueID   
+		,CurrencyID
 	)
 
-	SELECT @Sporttype as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID UNION ALL
-	SELECT 0 as Sporttype, @Bettype as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, @SiteID as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, @CustomerClass as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, @DateOfWeek as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek, @LeagueGroupID as LeagueGroupID, -1 as LeagueID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, @LeagueID as LeagueID
+	SELECT @Sporttype as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
+	SELECT 0 as Sporttype, @Bettype as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, @SiteID as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, @CustomerClass as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, @DateOfWeek as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek, @LeagueGroupID as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, @LeagueID as LeagueID, 0 AS CurrencyID UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, @CurrencyID AS CurrencyID
 
 	SELECT TOP(1)
 		@Adjustmenttype	= r.Adjustmenttype, 
-		@AdjustmentValue = r.AdjustmentValue
+		@AdjustmentValue = r.AdjustmentValue,
+		@AccumulatedBalance = r.AccumulatedBalance
 		--, r.Priority
 	FROM [VRSettingRule] r WITH(NOLOCK,FORCESEEK)
 	INNER JOIN [VRSettingRuleDetail] rd WITH(NOLOCK,FORCESEEK)
@@ -96,6 +106,7 @@ BEGIN
 							AND rd0.LeagueID = s.LeagueID
 							AND rd0.CustomerClass = s.CustomerClass
 							AND rd0.DateOfWeek = s.DateOfWeek
+							AND rd0.CurrencyID = s.CurrencyID
 					WHERE r.ruleid = rd0.ruleid
 				)rd0
 	WHERE rd.Sporttype IN(0,@Sporttype)
@@ -105,6 +116,7 @@ BEGIN
 		AND rd.LeagueID IN( -1,@LeagueID)
 		AND rd.CustomerClass IN(0,@CustomerClass)
 		AND rd.DateOfWeek IN(0,@DateOfWeek)
+		AND rd.CurrencyID IN (0,@CurrencyID)
 		--
 		AND r.LiveIndicator IN(2,@LiveIndicator)
 		AND r.SiteType IN(0,@SiteType)
