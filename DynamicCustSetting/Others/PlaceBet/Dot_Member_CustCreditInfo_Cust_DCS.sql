@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Member_CustCreditInfo_Cust_DCS] @custid INT
 			 
 	,@sporttype SMALLINT
@@ -69,6 +69,7 @@ BEGIN
 		-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
 		-- 20230427@VN-Luke: Separate lock function for Basketball [Redmine: #185991]
 		-- 20230616@TwYC(DBCust): Remove logic of [custinfo.disablenumber]
+		-- 20240328@VN-Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
 
       */
 	SET NOCOUNT ON;
@@ -102,6 +103,7 @@ BEGIN
 		,@SiteID INT
 		,@Istest BIT
 		,@Locked BIT = 0
+		,@AccumulatedBalance BIT = 0
 
 	SELECT @Istest = CASE 
 			WHEN (
@@ -491,6 +493,8 @@ BEGIN
 					,@SiteID = @SiteID
 					,@LeagueID = @LeagueID
 					,@Istest = @Istest
+					,@CurrencyID = @currency
+					,@AccumulatedBalance = @AccumulatedBalance OUTPUT
 			END
 		END
 		ELSE IF @sporttype = 43 --For Esports, get VR2
@@ -513,6 +517,8 @@ BEGIN
 				,@SiteID = @SiteID
 				,@LeagueID = @LeagueID
 				,@Istest = @Istest
+				,@CurrencyID = @currency
+				,@AccumulatedBalance = @AccumulatedBalance OUTPUT
 		END
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
 		BEGIN
@@ -534,6 +540,8 @@ BEGIN
 				,@SiteID = @SiteID
 				,@LeagueID = @LeagueID
 				,@Istest = @Istest
+				,@CurrencyID = @currency
+				,@AccumulatedBalance = @AccumulatedBalance OUTPUT
 		END
 
 		IF @IsForcedVRValue = 1 AND @sporttype NOT IN (43)
@@ -575,4 +583,5 @@ BEGIN
 		,@DisableBet DisabledBet
 		,@BonusWalletFlag BonusWalletFlag
 		,@Locked Locked
+		,@AccumulatedBalance AccumulatedBalance
 END
