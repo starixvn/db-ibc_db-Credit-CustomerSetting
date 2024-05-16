@@ -22,7 +22,7 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@LeagueID				INT = -1,
 					@Istest				BIT = 0,
 					@CurrencyID			INT = 0,
-					@AccumulatedBalance	BIT = 0 OUTPUT
+					@AccumulatedBalance	BIT = 0 OUTPUT,
 					@CustomerClassDetail	SMALLINT = NULL,
 					@CCSportType			SMALLINT = 0
 AS

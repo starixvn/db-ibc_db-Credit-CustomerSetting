@@ -32,8 +32,8 @@ AS
 		- 20230301@Eden: Wrong VR of Basketball and Esport [Redmine:#184585]
 		- 20230307@Johnson: Return Basketball VR to its original state [redmine:#184339]
 		- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
-		- 20240422@Winfred: [NAP CM] VR Engine - Allow to add CC by Sport, and re-arrange league group on dropdownlist [Redmine: #195539]
 		- 20240328@Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
+		- 20240422@VN-Winfred: [NAP CM] VR Engine - Allow to add CC by Sport, and re-arrange league group on dropdownlist [Redmine: #195539]
 
 	Param's Explanation:  
 	DECLARE @VRValue SMALLMONEY = 0.5
@@ -71,6 +71,7 @@ BEGIN
 		,LeagueGroupID INT        
 		,LeagueID      INT 
 		,CurrencyID		INT
+		,CustomerClassDetail SMALLINT
 		,CCSporttype	SMALLINT
 	)
 
@@ -87,23 +88,16 @@ BEGIN
 		,CCSporttype
 	)
 
-	SELECT @Sporttype as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
-	SELECT 0 as Sporttype, @Bettype as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, @SiteID as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, @CustomerClass as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, @DateOfWeek as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek, @LeagueGroupID as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, @LeagueID as LeagueID, 0 AS CurrencyID UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, @CurrencyID AS CurrencyID
-	SELECT @Sporttype as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
-	SELECT 0 as Sporttype, @Bettype as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, @SiteID as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, @CustomerClass as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, @DateOfWeek as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek, @LeagueGroupID as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, @LeagueID as LeagueID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, @CustomerClassDetail as CustomerClassDetail, 0 as CCSporttype UNION ALL
-	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 as CustomerClassDetail, @CCSporttype as CCSporttype
+	SELECT @Sporttype as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, @Bettype as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, @SiteID as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, @CustomerClass as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, @DateOfWeek as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek, @LeagueGroupID as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, @LeagueID as LeagueID, 0 AS CurrencyID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, @CurrencyID AS CurrencyID, 0 as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID, @CustomerClassDetail as CustomerClassDetail, 0 as CCSporttype UNION ALL
+	SELECT 0 as Sporttype, 0 as Bettype, 0 as SiteID, 0 as CustomerClass, 0 as DateOfWeek,-1 as LeagueGroupID, -1 as LeagueID, 0 AS CurrencyID, 0 as CustomerClassDetail, @CCSporttype as CCSporttype
 
 	SELECT TOP(1)
 		@Adjustmenttype	= r.Adjustmenttype, 

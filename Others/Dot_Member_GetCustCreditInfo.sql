@@ -89,7 +89,7 @@ AS
 	-- 20230427@VN-Luke: Separate lock function for Basketball [Redmine: #185991]
 	-- 20230616@TwYC(DBCust): Remove logic of [custinfo.disablenumber]
 	-- 20240328@VN-Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
-	-- 20240422@Winfred: [NAP CM] VR Engine - Allow to add CC by Sport, and re-arrange league group on dropdownlist [Redmine: #195539]
+	-- 20240422@VN-Winfred: [NAP CM] VR Engine - Allow to add CC by Sport, and re-arrange league group on dropdownlist [Redmine: #195539]
 
   */
 BEGIN
