@@ -37,5 +37,4 @@ RETURN
 		,Environment
 	FROM Products p WITH (NOLOCK)
 	WHERE p.Enabled=1
-		AND @SettingStatus = 0
 	

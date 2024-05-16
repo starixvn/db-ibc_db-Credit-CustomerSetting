@@ -1,1 +1,0 @@
-CustSetting\UpdateSetting\SportBook\Update\Acc_CustomerUpdGeneralInfo.sql
