@@ -20,6 +20,7 @@ AS
 		- 20220630@Johnson: write log for LAP [redmine:#174357]
 		- 20221128@Johnson: dont write log when cc not change [redmine:#180957]
 		- 20230803@Winfred: LAP - Player Segmentation - Add Risk Level's last update time [redmine:#191101]
+		- 20240522@Johnson: CC Log - Change value from negative number to empty [redmine:#205427]
 	Parameter's Explanation: 
 		@custList = '<Root>
 					<r id="100" c="10" t="1" />
@@ -132,7 +133,7 @@ BEGIN
 			@ActionID INT = 5566
 		
 		SELECT @LogData = 
-		CAST((SELECT custid '@id', CustomerClass '@c', OldCustomerClass '@o'
+		CAST((SELECT custid '@id', NULLIF(CustomerClass,-1) '@c', NULLIF(OldCustomerClass,-1) '@o'
 			FROM #tblDep_CustClass			
 			FOR XML PATH('r'), ROOT('Root')) AS VARCHAR(MAX)
 			)
