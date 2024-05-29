@@ -10,6 +10,8 @@ AS
     Revision: 
 		- 20231121@Johnson: initial sp [redmine:#196252]
 		- 20240319@Johnson: Add Ice Hockey [redmine: #201129]
+		- 20240529@Tacy: Add Virtual Kabaddi [redmine: #205314]
+
 */
 BEGIN
 	SET NOCOUNT ON
@@ -29,6 +31,7 @@ BEGIN
 			UNION ALL SELECT  '5_42', '5'--Virtual Tennis	
 			UNION ALL SELECT  '50_42', '99'--Virtual Cricket
 			UNION ALL SELECT  '4_42', '99'--Virtual Ice Hockey
+			UNION ALL SELECT  '47_42', '99'--Virtual Kabaddi
 		)
 		SELECT * FROM T
 	END
@@ -44,6 +47,7 @@ BEGIN
 			UNION ALL SELECT  '5_42', '5'--Saba Tennis	
 			UNION ALL SELECT  '50_42', '99'--Saba Cricket
 			UNION ALL SELECT  '4_42', '99'--Saba Ice Hockey
+			UNION ALL SELECT  '47_42', '99'--Saba Kabaddi
 		)
 		SELECT * FROM T
 	END
