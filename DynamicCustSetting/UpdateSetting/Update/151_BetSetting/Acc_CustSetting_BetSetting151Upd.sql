@@ -224,14 +224,14 @@ BEGIN
 	BEGIN
 		INSERT INTO @Old_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
 		SELECT cb.SportType,cb.BetType,cb.MinBet,cb.MaxBet,cb.MaxPerMatch,cb.MaxPayoutPerMatch
-		FROM CustBetSetting_Agent cb WITH (NOLOCK)
+		FROM BetSetting_Agent cb WITH (NOLOCK)
 			INNER JOIN @New_BetSetting b ON cb.CustID = b.CustID AND cb.SportType = b.SportType AND cb.BetType = b.BetType
 	END
 	ELSE
 	BEGIN
 		INSERT INTO @Old_BetSetting(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
 		SELECT cb.SportType,cb.BetType,cb.MinBet,cb.MaxBet,cb.MaxPerMatch,cb.MaxPayoutPerMatch
-		FROM CustBetSetting_Member cb WITH (NOLOCK)
+		FROM BetSetting_Member cb WITH (NOLOCK)
 			INNER JOIN @New_BetSetting b ON cb.CustID = b.CustID AND cb.SportType = b.SportType AND cb.BetType = b.BetType
 	END
 
@@ -315,9 +315,10 @@ BEGIN
 		SET a.MaxBet = t.MaxBet,
 			a.MaxPerMatch = t.MaxPerMatch,
 			a.MaxPayoutPerMatch = t.MaxPayoutPerMatch,
-			a.MinBet = t.MinBet
+			a.MinBet = t.MinBet,
+			a.RepUpdateTime = SYSDATETIME()
 		FROM @New_BetSetting t
-			INNER JOIN CustBetSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN BetSetting_Agent a WITH(ROWLOCK,UPDLOCK)
 				ON t.SportType = a.SportType AND t.BetType = a.BetType
 		WHERE a.CustID = @custid
 	END
@@ -328,9 +329,10 @@ BEGIN
 		SET a.MaxBet = t.MaxBet,
 			a.MaxPerMatch = t.MaxPerMatch,
 			a.MaxPayoutPerMatch = t.MaxPayoutPerMatch,
-			a.MinBet = t.MinBet
+			a.MinBet = t.MinBet,
+			a.RepUpdateTime = SYSDATETIME()
 		FROM @New_BetSetting t
-			INNER JOIN CustBetSetting_Member a WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN BetSetting_Member a WITH(ROWLOCK,UPDLOCK)
 				ON t.SportType = a.SportType AND t.BetType = a.BetType
 		WHERE a.CustID = @custid	
 	END
@@ -358,7 +360,7 @@ BEGIN
 			INSERT INTO @Notify_agents(CustID)
 			SELECT c.custid
 			FROM @New_BetSetting t
-				INNER JOIN CustBetSetting_Agent a WITH(NOLOCK)
+				INNER JOIN BetSetting_Agent a WITH(NOLOCK)
 					ON t.SportType = a.SportType AND t.BetType = a.BetType
 				INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
 			WHERE c.srecommend = @custid
@@ -374,7 +376,7 @@ BEGIN
 			INSERT INTO @Notify_agents(CustID)
 			SELECT c.custid
 			FROM @New_BetSetting t
-				INNER JOIN CustBetSetting_Agent a WITH(NOLOCK)
+				INNER JOIN BetSetting_Agent a WITH(NOLOCK)
 					ON t.SportType = a.SportType AND t.BetType = a.BetType
 				INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
 			WHERE c.mrecommend = @custid
@@ -387,7 +389,7 @@ BEGIN
 		END
 
 		--Update Downline
-		EXEC dbo.Acc_CustSetting_12
+		EXEC dbo.Acc_CustSetting_BetSettingSportsbookUpd
 			 @CustId    = @CustId
 			,@RoleId    = @RoleId
 			,@XML		= @BetSettingXML

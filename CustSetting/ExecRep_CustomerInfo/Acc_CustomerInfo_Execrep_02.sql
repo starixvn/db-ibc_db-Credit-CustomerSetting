@@ -39,8 +39,7 @@ BEGIN
 	SET NOCOUNT ON
 
     IF (dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1 		  
-		  AND dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1	
-		  AND dbo.f_CheckRepTable('CustBetSetting_Agent') = 1	 
+		  AND dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1			 
 		  AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1	
 	   )
 	BEGIN	
@@ -66,7 +65,7 @@ BEGIN
 		INSERT INTO #SportBettype_SB(SportType,BetType,SettingType,IsLive)
 		SELECT SportType,BetType,SettingType,IsLive
 		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@_SiteID,@_Currency)
-		WHERE SettingType IN (25,26,27,28)
+		WHERE SettingType IN (25,27,28)
 
 		--PT
 		INSERT INTO [dbo].[CustPTSetting3rd_Agent]
@@ -187,32 +186,6 @@ BEGIN
 			DELETE FROM dbo.CustMaxPayoutSetting_Agent WITH(ROWLOCK) WHERE CustID = @CustID
 			RETURN
 		END	
-		
-		--Sportbook Bet setting
-		INSERT INTO CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
-		SELECT @custid
-			,cs.SportType        
-			,cs.BetType          
-			,cs.MinBet           
-			,cs.MaxBet           
-			,cs.MaxPerMatch        
-			,cs.MaxPayoutPerMatch
-		FROM CustBetSetting_Agent cs WITH(NOLOCK)
-			INNER JOIN #SportBettype_SB ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.SettingType = 26
-		WHERE cs.custid = @ExistingCustid
-
-		IF @@ERROR <> 0
-		BEGIN
-			--Error Occurs
-			SELECT @ErrCode = 26
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.[CustPTSetting3rd_Agent] WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM dbo.[CustDiscount3rd_Agent] WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM dbo.CustMaxPayoutSetting_Agent WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM dbo.CustBetSetting_Agent WITH(ROWLOCK) WHERE CustID = @CustID
-			RETURN
-		END	
 	END
 
 	DECLARE @DCSErrCode INT = 0
@@ -232,8 +205,7 @@ BEGIN
 		-- ROLLBACK MANUALLY
 		IF(dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1)		DELETE CustDiscount3rd_Agent WITH (ROWLOCK) WHERE custid =  @CustID
 		IF(dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1)		DELETE dbo.CustPTSetting3rd_Agent WITH(ROWLOCK) WHERE custid = @CustID 
-		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1)	DELETE CustMaxPayoutSetting_Agent WITH (ROWLOCK) WHERE custId  = @CustID
-		IF(dbo.f_CheckRepTable('CustBetSetting_Agent') = 1)			DELETE CustBetSetting_Agent WITH (ROWLOCK) WHERE custId  = @CustID
+		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1)	DELETE CustMaxPayoutSetting_Agent WITH (ROWLOCK) WHERE custId  = @CustID		
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/
 END

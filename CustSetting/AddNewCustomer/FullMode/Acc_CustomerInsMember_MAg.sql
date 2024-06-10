@@ -169,6 +169,7 @@ Revisions:
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240321@Luke: NAP - Virtual rate - For Direct account :Change default of VR Status for newly created accounts to "Follow upline" [Redmine: #202624]
 	- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
+	- 20240606@Johnson: Scale out DBCUST [Redmine: #199915]
 Param's Explanation:
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -588,7 +589,7 @@ BEGIN
 		@siteID = @siteID,
 		@currency = @currency,
 		@SettingType25 = @SettingType25, --Discount	
-		@SettingType26 = @SettingType26, --Bet Setting
+		--@SettingType26 = @SettingType26, --Bet Setting
 		@SettingType27 = @SettingType27, --Parlay Max Payout
 		@SettingType28 = @SettingType28, --PT
 		@SettingStatus = @SettingStatus,
@@ -605,6 +606,34 @@ BEGIN
 
 	    RETURN
     END	
+	
+	EXEC dbo.Acc_Custsetting_SportsbookIns
+		@custid = @custid,
+		@roleid = 2,
+		@siteID = @siteID,
+		@currency = @currency,
+		@SettingType26 = @SettingType26, --Bet Setting		
+		@SettingStatus = @SettingStatus,
+		@ErrCode = @ErrCode OUTPUT
+
+	IF @ErrCode > 0
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							when 'E' then 'Create customer fail. Please try again'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+						END
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			DELETE FROM CustProductStatus			WITH (ROWLOCK) WHERE CustID = @CustID			
+			DELETE FROM CustPTSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID	
+			DELETE FROM CustBetSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID					
+			DELETE FROM CustDiscount3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustWinLossLimit_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustStakeLevel_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) WHERE CustID = @CustID
+	
+		RETURN
+	END
 	
 	If @SystemID = 2 -- ALPHA
 	BEGIN
@@ -624,6 +653,12 @@ BEGIN
 			DELETE FROM CustWinLossLimit_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
 			DELETE FROM CustStakeLevel_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
 			DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+			
+			DELETE BetSetting_Agent WITH (ROWLOCK)
+			OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],SYSDATETIME()
+			INTO [BetSetting_Agent_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
+			WHERE custID = @custid
+			
 			DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) WHERE CustID = @CustID
 			
 			RETURN

@@ -25,7 +25,7 @@ AS
 		- 20230628@Johnson: initial sp [redmine: #179159]
 		- 20240118@Eden: avoid data duplicate of Esport & Muay Thai Betsetting [redmine: #199970]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
-
+		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
 						<R SportType="1" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
@@ -260,7 +260,7 @@ BEGIN
 				MaxBet = ISNULL(MIN(CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
 				MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0),				
 				MaxPOpermatch = ISNULL(MIN(CASE WHEN cb.MaxPayoutPerMatch = 0 THEN NULL ELSE cb.MaxPayoutPerMatch END),0)
-		FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
+		FROM BetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
 		WHERE cb.custid IN (@mrecommend,@srecommend)
 		GROUP BY cb.Sporttype,cb.Bettype

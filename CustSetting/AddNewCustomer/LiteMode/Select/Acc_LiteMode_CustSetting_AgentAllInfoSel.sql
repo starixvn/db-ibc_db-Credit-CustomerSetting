@@ -16,7 +16,7 @@ AS
 		- 20240118@Eden: avoid data duplicate of Esport & Muay Thai Betsetting [redmine: #199970]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240423@Elodie: Member Max Credit, Member Given Credit enhancements [Redmine: #203332]
-
+		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -121,7 +121,7 @@ BEGIN
 			MaxPayoutPerMatch = CASE WHEN cs.SportType IN(43,44) THEN NULL 
 									 ELSE ISNULL(MIN(CASE WHEN cs.MaxPayoutPerMatch = 0 THEN NULL ELSE cs.MaxPayoutPerMatch END),0) 
 								END
-		FROM CustBetSetting_Agent cs WITH (NOLOCK)
+		FROM BetSetting_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
 		WHERE cs.CustID IN (@custid,@srecommend,@mrecommend)

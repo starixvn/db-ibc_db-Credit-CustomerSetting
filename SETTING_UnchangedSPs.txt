@@ -1,0 +1,4 @@
+ArchiveCustomer\DBCUST\DBA_ArchiveAccount1_CloseMaster.sql
+ArchiveCustomer\DBCUST\DBA_ArchiveAccount1_CloseSuper.sql
+ArchiveCustomer\DBCUST\DBA_ArchiveAccount3_DelCustSettingMaster.sql
+ArchiveCustomer\DBCUST\DBA_ArchiveAccount4_DelCustInfoMaster.sql

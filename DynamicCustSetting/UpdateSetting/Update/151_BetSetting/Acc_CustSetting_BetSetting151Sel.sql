@@ -13,7 +13,7 @@ AS
 
 	Revisions: 
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
-
+		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
 	Param's Explanation:
 		- @GroupType:	151 - Discount
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -77,7 +77,7 @@ BEGIN
 					--0				AS MaxPerMatchMin,
 					bl.MaxPayoutPerMatch	AS MaxPayoutPerMatch
 			FROM #ProductSettingProfile psp
-				INNER JOIN dbo.CustBetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
+				INNER JOIN dbo.BetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
 			WHERE bl.CustID = @CustID
 			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
 		END
@@ -96,8 +96,8 @@ BEGIN
 					sbl.MaxPerMatch				AS MaxPerMatchMax,
 					sbl.MaxPayoutPerMatch			AS MaxPayoutPerMatchMax
 			FROM #ProductSettingProfile psp
-				INNER JOIN dbo.CustBetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
-				INNER JOIN dbo.CustBetSetting_Agent sbl WITH (NOLOCK) ON psp.SportType = sbl.sporttype AND psp.BetType = sbl.bettype
+				INNER JOIN dbo.BetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
+				INNER JOIN dbo.BetSetting_Agent sbl WITH (NOLOCK) ON psp.SportType = sbl.sporttype AND psp.BetType = sbl.bettype
 			WHERE bl.CustID = @CustID AND sbl.CustID = @SuperID
 			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
 		END
@@ -168,9 +168,9 @@ BEGIN
 										END)) AS t (MaxPayoutPerMatch)
 				    )				 AS MaxPayoutPerMatchMax
 		FROM #ProductSettingProfile psp
-			INNER JOIN dbo.CustBetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
-			INNER JOIN dbo.CustBetSetting_Agent Sbl WITH (NOLOCK) ON psp.SportType = Sbl.sporttype AND psp.BetType = Sbl.bettype
-			INNER JOIN dbo.CustBetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
+			INNER JOIN dbo.BetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
+			INNER JOIN dbo.BetSetting_Agent Sbl WITH (NOLOCK) ON psp.SportType = Sbl.sporttype AND psp.BetType = Sbl.bettype
+			INNER JOIN dbo.BetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
 		WHERE bl.CustID = @CustID AND Sbl.CustID = @SuperID AND Mbl.CustID = @MasterID
 		ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
 	ELSE IF @RoleID = 1
@@ -260,10 +260,10 @@ BEGIN
 											  END)) AS t (MaxPayoutPerMatch)
 				    )				   AS MaxPayoutPerMatchMax
 		FROM #ProductSettingProfile psp
-			INNER JOIN dbo.CustBetSetting_Member cbsm WITH (NOLOCK) ON psp.SportType = cbsm.sporttype AND psp.BetType = cbsm.bettype
-			INNER JOIN dbo.CustBetSetting_Agent Sbl WITH (NOLOCK) ON psp.SportType = Sbl.sporttype AND psp.BetType = Sbl.bettype
-			INNER JOIN dbo.CustBetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
-			INNER JOIN dbo.CustBetSetting_Agent Abl WITH (NOLOCK) ON psp.SportType = Abl.sporttype AND psp.BetType = Abl.bettype
+			INNER JOIN dbo.BetSetting_Member cbsm WITH (NOLOCK) ON psp.SportType = cbsm.sporttype AND psp.BetType = cbsm.bettype
+			INNER JOIN dbo.BetSetting_Agent Sbl WITH (NOLOCK) ON psp.SportType = Sbl.sporttype AND psp.BetType = Sbl.bettype
+			INNER JOIN dbo.BetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
+			INNER JOIN dbo.BetSetting_Agent Abl WITH (NOLOCK) ON psp.SportType = Abl.sporttype AND psp.BetType = Abl.bettype
 		WHERE cbsm.CustID = @CustID AND Sbl.CustID = @SuperID AND Mbl.CustID = @MasterID AND Abl.CustID = @AgentID
 		ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
 	DROP TABLE #ProductSettingProfile

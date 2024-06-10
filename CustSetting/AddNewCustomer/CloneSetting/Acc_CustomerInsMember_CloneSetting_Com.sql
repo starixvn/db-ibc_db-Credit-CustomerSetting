@@ -93,6 +93,7 @@ AS
 	- 20231211@Johnson: check permission for 777 [redmineID: #197160]
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240419@Tacy: NAP - Permission controls on real currency [redmineID: #202523]
+	- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 
  Explanation's Param:  
 	- @ErrCode:
@@ -515,6 +516,31 @@ BEGIN
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							end
 				,@ErrCode = 106
+		-- ROLLBACK MANUALLY	
+		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID  
+		
+		
+		RETURN
+	END CATCH
+	
+	BEGIN TRY
+		EXEC dbo.Acc_Custsetting_CloneSetting_SportsbookIns
+			@custid = @custid,
+			@ExistingCustid = @ExistingCustid,
+			@Language = @Language,
+			@SettingStatus = @SettingStatus,
+			@ErrCode = @ErrCode OUTPUT,
+			@ErrMsg = @ErrMsg OUTPUT
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+				,@ErrCode = 107
 		-- ROLLBACK MANUALLY	
 		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
 		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid

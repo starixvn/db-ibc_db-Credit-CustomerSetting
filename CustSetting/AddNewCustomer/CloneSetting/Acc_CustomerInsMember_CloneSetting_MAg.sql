@@ -107,6 +107,7 @@ AS
 	- 20231211@Johnson: check permission for 777 [redmineID: #197160]
 	- 20240229@Johnson: no need check permission for 777 on Alpha [redmine: #201574]
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20240607@Johnson: scale out DBCUST [redmine: #199915]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -547,6 +548,28 @@ BEGIN
 	END
 	
 		EXEC dbo.Acc_CustomerInfo_Execrep_02
+			@custid = @custid,
+			@ExistingCustid = @ExistingCustid,
+			@SettingStatus = @SettingStatus,
+			@ErrCode = @ErrCode output
+	
+	IF @ErrCode > 0 
+	BEGIN
+		SELECT @ErrMsg = case @Language 
+								when 'E' then 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+
+		-- ROLLBACK MANUALLY	
+		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
+		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
+		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  
+				
+		RETURN
+	END
+	
+	EXEC dbo.Acc_Custsetting_CloneSetting_SportsbookIns
 			@custid = @custid,
 			@ExistingCustid = @ExistingCustid,
 			@SettingStatus = @SettingStatus,

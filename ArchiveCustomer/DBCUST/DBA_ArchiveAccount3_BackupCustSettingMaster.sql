@@ -20,6 +20,7 @@ AS
 			- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 			- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
 			- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
+			- 20240612@Johnson: Scale out DBCUST [redmine: #199915]
 
 */
 BEGIN  
@@ -242,7 +243,13 @@ BEGIN
 		SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
 		FROM CustBetSetting_Agent WITH(NOLOCK)
 		WHERE custid = @CustID
-
+	
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.BetSetting_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
+		INSERT INTO DBARCCUST.bodb_Customer.dbo.BetSetting_Agent_old(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch)
+		SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch
+		FROM BetSetting_Agent WITH(NOLOCK)
+		WHERE custid = @CustID
+		
 	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustLoginInfo_old WITH(NOLOCK) WHERE custid = @CustID)
 		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustLoginInfo_old(CustID,OldUserPwd,LastChangedPwdDate,isFirstLogin,SecurityCode,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode
 			,VerifyOTPCount,ClosedReason,FunctionInfo,ProtectionCode,IsProtectedMode)
