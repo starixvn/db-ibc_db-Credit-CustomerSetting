@@ -92,6 +92,8 @@ AS
 	- 20240129@Luke: NAP - Virtual rate - Change default of VR Status for newly created Super to Enable [Redmine: #200311]
 	- 20231211@Johnson: check permission for 777 [redmineID: #197160]
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20240419@Tacy: NAP - Permission controls on real currency [redmineID: #202523]
+
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -193,14 +195,18 @@ BEGIN
 	END
 	
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
-	DECLARE @tmpUserid VARCHAR(50)
-	
-	SELECT @tmpUserid=CAST(@creator AS VARCHAR(50))
-		
+	DECLARE @tmpExchange TABLE (exchangeID INT, Currency NVARCHAR(50), OfferSite TINYINT)
+
+	--get deny site
 	INSERT INTO  @tmp (siteid , site,SpecialGroup)
-	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@tmpUserid)
+	SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@creator)
 	
-	IF (@site IN (SELECT site FROM @tmp ))
+	--get deny currency
+	INSERT INTO  @tmpExchange (exchangeID, Currency, OfferSite)
+	SELECT exchangeID, Currency, OfferSite FROM NAP_UserControl.dbo.f_GetDeniedCurrencyByUser(@creator)
+
+	IF (@site IN (SELECT site FROM @tmp)
+		OR @currency IN (SELECT exchangeID FROM @tmpExchange))
 	BEGIN
 		SELECT @ErrCode = 103, @ErrMsg ='You don''t have permission to access'
 		RETURN
