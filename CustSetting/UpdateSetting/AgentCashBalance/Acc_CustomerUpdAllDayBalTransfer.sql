@@ -19,6 +19,7 @@ AS
 		- 20200310@Percy: Add master level [RedmineID: #130091]
 		- 20200319@Percy: Add option enable downline if enable super [RedmineID: #130741]
 		- 20200602@Sol: Update IsAutoEnableADBMaster [Redmine: #134242]
+		- 20240523@Lewis: Change SQL Account [Redmine: #204021]
 */
 
 BEGIN  
