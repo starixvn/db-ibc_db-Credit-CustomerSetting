@@ -13,6 +13,7 @@ AS
         - 20180713@Vicky: NAP - Add new permission control to view Licensee Account [Redmine: #96118]
         - 20200930@Johnson: get isInternal status [redmine:#161998]
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+		- 20240419@Tacy: NAP - Permission controls on real currency [redmineID: #202523]
  Param's Explanation:
         - @UserNameList: 'MKW2RMB26, MKW3RMB, ITSA0341'
         
@@ -22,7 +23,7 @@ AS
  */  
 BEGIN
     
-    DECLARE @tblCust TABLE (CustInfo VARCHAR(50), srecommend INT, recommend INT, roleid TINYINT, custid INT, isInternal BIT)
+    DECLARE @tblCust TABLE (CustInfo VARCHAR(50), srecommend INT, recommend INT, roleid TINYINT, custid INT, isInternal BIT, IsRealCurrency BIT DEFAULT (0))
 
     IF @UserNameList != ''
     BEGIN
@@ -35,7 +36,8 @@ BEGIN
         SET srecommend = ci.srecommend,
 			recommend = ci.recommend,
 			roleid = ci.roleid,
-			custid = ci.custid
+			custid = ci.custid,
+			IsRealCurrency=CASE WHEN ci.currency NOT IN (20,72) THEN 1 ELSE 0 END --UUS, YNG
         FROM @tblCust tc
         	INNER JOIN dbo.Customer ci WITH (NOLOCK) ON ci.username = tc.CustInfo 
         WHERE ci.roleid  IN (1,2,3,4)
@@ -44,7 +46,8 @@ BEGIN
         SET srecommend = ci.srecommend,
 			recommend = ci.recommend,
 			roleid = ci.roleid,
-			custid = ci.custid
+			custid = ci.custid,
+			IsRealCurrency=CASE WHEN ci.currency NOT IN (20,72) THEN 1 ELSE 0 END --UUS, YNG
         FROM @tblCust tc
         	INNER JOIN dbo.Customer ci WITH (NOLOCK) ON ci.username2 = tc.CustInfo
         WHERE tc.srecommend IS NULL AND ci.roleid  IN (1,2,3,4)
@@ -76,7 +79,8 @@ BEGIN
         SELECT tc.CustInfo, 
             (CASE WHEN dep.CustId IS NULL THEN 0 ELSE 1 END) AS IsDeposit,
             (CASE WHEN tc.srecommend  IS NULL THEN 0 ELSE 1 END) AS IsValid,
-			ISNULL(tc.IsInternal,0) IsInternal
+			ISNULL(tc.IsInternal,0) IsInternal,
+			IsRealCurrency
         FROM @tblCust tc
         	LEFT JOIN dbo.Dep_CustSuper dep WITH (NOLOCK) ON tc.srecommend = dep.custid
             
@@ -91,7 +95,8 @@ BEGIN
             (CASE WHEN ci.srecommend  IS NULL THEN 0 ELSE 1 END) AS IsValid,
 			ISNULL(CASE WHEN ci.roleid = 4 THEN s.IsInternal
 				 WHEN ci.roleid = 3 THEN m.IsInternal
-				 WHEN ci.roleid IN (2,1) THEN a.IsInternal ELSE 0 END,0) IsInternal  
+				 WHEN ci.roleid IN (2,1) THEN a.IsInternal ELSE 0 END,0) IsInternal  ,
+			CASE WHEN ci.currency NOT IN (20,72) THEN 1 ELSE 0 END IsRealCurrency --UUS, YNG
         FROM @tblCust tmpCust
             LEFT JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = tmpCust.CustInfo AND ci.roleid  IN (1,2,3,4)
             LEFT JOIN dbo.Dep_CustSuper dep WITH (NOLOCK) ON ci.srecommend = dep.custid
