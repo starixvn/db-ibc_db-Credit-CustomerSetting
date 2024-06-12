@@ -26,6 +26,7 @@ AS
 		- 20230622@Tacy: NAP CM - Saba Danger Level - list Zhifeng032 & ManbetX same danger category as Haifa site [RedmineID: #190161]
 		- 20230628@Tacy: NAP CM - Saba Danger Level - list sites - currencies on selected list same danger level as Haifa [RedmineID: #190392]
 		- 20230628@Tacy: NAP CM - Saba Danger Level - list sites - currencies on selected list same danger level as Haifa [RedmineID: #196620]
+		- 20240610@Winfred: NAP CM - Saba Danger Level - Agent in list are same danger level as Haifa [RedmineID: #206335]
 
 	Parameter's Explanation:		
 		-@custList = '<Root>
@@ -166,7 +167,10 @@ BEGIN
 						  OR (s.currency=13	 AND s.site IN ('18LuckV2','C7YOUXI','DMsports','e8casino','RMnewera','TSLAA','vssports','ZFRT166','ZhiFeng035','ZF026'))	--RMB
 							))
 						OR (s.custid IS NULL AND ss.SiteLabel='789y')		
-						OR s.currency=96	
+						OR s.currency=96		
+						OR (c.recommend = 23400764 --CGameRMB01 - RMB
+							OR c.recommend IN (55539343, 55539345, 55539346) -- SL88SWINH06,SL88SWINH07, SL88SWINH04 - INH
+							)	
 						THEN -- Flow B : Haifa, 789y, Livv88sw, Zhifeng032, ManbetX site and USDT currency
 							CASE 
 								WHEN basketball <-140000								THEN 1
