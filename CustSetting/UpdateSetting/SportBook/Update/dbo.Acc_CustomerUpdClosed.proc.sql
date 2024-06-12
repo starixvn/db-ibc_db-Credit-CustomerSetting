@@ -28,7 +28,7 @@ Revisions:
 	- 20091008@Kiwi: Remove WriteLog_UserLog
 	- 20091125@Terry : add one more para @disCasino check disabled Casino
 	- 20100102@Lewin : modify LogSP Data, call WriteLog_UserLog_RunSPNew instead of WriteLog_UserLog_RunSP 
-	- 20100728@Kiwi: invoke execute permission to [wsv_xnap]
+	- 20100728@Kiwi: invoke execute permission to [bodbExtAccNet]
 	- 20101021@Henry: Record execution time
 	- 20110907@Sophia: Change Linked Server from DB052 to DB053
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
@@ -46,7 +46,7 @@ Revisions:
 	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
-	- 20240422@Elodie: Change SQL Account [RedmineID: #204201]
+	- 20240422@Elodie: Change SQL Account [RedmineID: #204021]  
 Param's Explanation
 • @custid: custid that need to be viewed.   
 

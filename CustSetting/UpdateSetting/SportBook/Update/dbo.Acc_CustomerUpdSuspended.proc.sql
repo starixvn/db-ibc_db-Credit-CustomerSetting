@@ -27,7 +27,7 @@ Revisions:
 	- 20091105@Hanh: Hardcode to not allow update closed status by moving Casino DB
 	- 20091125@Terry : add one more para @disCasino check disabled Casino
 	- 20100107@Lewin: Modify LogSPData Format, call new version write log
-	- 20100728@Kiwi: grant execute permission to [wsv_xnap]
+	- 20100728@Kiwi: grant execute permission to [bodbExtAccNet]
 	- 20101021@Henry: Record execution time
 	- 20110907@Sophia: Change Linked Server from DB052 to DB053
 	- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
@@ -44,7 +44,7 @@ Revisions:
 	- 20210505@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20230921@Tacy: CWL - Suspend member accounts when member reaches Yellow level on RNG Slots Games [RedmineID: #184911]
-	- 20240422@Elodie: Change SQL Account [RedmineID: #204201]
+	- 20240422@Elodie: Change SQL Account [RedmineID: #204021]  
 Param's Explanation:
 • @ActionID = 1104 ~ normal flow
 			<>1104 ~ CWL flow
