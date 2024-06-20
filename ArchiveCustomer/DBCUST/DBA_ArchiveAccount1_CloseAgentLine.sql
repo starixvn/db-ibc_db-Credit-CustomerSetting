@@ -23,7 +23,6 @@ Revisions:
 	- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 	- 20230623@Eden: Enhance backup [Redmine: #188850]
-	- 20240613@Johnson: Scale out DBCUST [redmine: #199915]
 
 */
 
@@ -187,9 +186,6 @@ FROM #tempbackup
 
 --close whole line using ExecRep
 EXEC dbo.Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = -1
-
---delete sportsbook settings
-EXEC dbo.DBA_ArchiveAccount_DelCustSettingSportsbook @AgentID = @AgentID, @Type = -1
 
 --> Insert data for Cust_ArchiveAccount
 DECLARE @IsOverwrite BIT

@@ -787,19 +787,10 @@ BEGIN
 			DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
 			DELETE FROM CustBetSetting_Member		WITH(ROWLOCK) WHERE CustID = @CustID
 			
-			INSERT INTO [dbo].[BetSetting_Member_Del]
-			   ([CustID]
-			   ,[Sporttype]
-			   ,[Bettype]
-			   ,[RepUpdateTime])
-			SELECT [CustID]
-			   ,[Sporttype]
-			   ,[Bettype]
-			   ,SYSDATETIME()
-			FROM BetSetting_Member WITH (NOLOCK)
-			WHERE custID = @custid
-			
+			--rep in-house
 			DELETE BetSetting_Member WITH (ROWLOCK)
+			OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],SYSDATETIME()
+			INTO [BetSetting_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 			WHERE custID = @custid
 			
 			DELETE FROM CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE CustID = @CustID

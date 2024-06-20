@@ -804,16 +804,10 @@ BEGIN
 			
 			DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
 			
-			INSERT INTO [dbo].[BetSetting_Agent_Del]
-				   ([CustID]
-				   ,[Sporttype]
-				   ,[Bettype]
-				   ,[RepUpdateTime])
-			SELECT [CustID],[Sporttype],[Bettype],SYSDATETIME()
-			FROM BetSetting_Agent WITH (NOLOCK)
-			WHERE custID = @custid
-			
+			--rep in-house
 			DELETE BetSetting_Agent WITH (ROWLOCK)
+			OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],SYSDATETIME()
+			INTO [BetSetting_Agent_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 			WHERE custID = @custid
 			
 			DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) WHERE CustID = @CustID
