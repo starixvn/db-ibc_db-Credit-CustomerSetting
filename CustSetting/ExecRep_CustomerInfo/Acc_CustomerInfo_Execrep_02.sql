@@ -31,7 +31,7 @@ AS
 		- 20210802@Eden: Max Payout Per Match [redmine: #158073]
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
-
+		- 20240628@Johnson: scale out DBCUST [redmine: #199915]
 	Parameter's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */ 

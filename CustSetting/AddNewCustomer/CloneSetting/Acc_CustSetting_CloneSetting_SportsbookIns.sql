@@ -41,22 +41,22 @@ BEGIN
 	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@_SiteID,@_Currency)
 	WHERE SettingType IN (26)
 	
-	--Sportsbook Bet setting
-	INSERT INTO BetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch,RepUpdateTime)
-	SELECT @custid
-		,cs.SportType        
-		,cs.BetType          
-		,cs.MinBet           
-		,cs.MaxBet           
-		,cs.MaxPerMatch        
-		,cs.MaxPayoutPerMatch
-		,SYSDATETIME()
-	FROM BetSetting_Agent cs WITH(NOLOCK)
-		INNER JOIN #SportBettype_SB ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.SettingType = 26
-	WHERE cs.custid = @ExistingCustid
-
-	IF @@ERROR <> 0
-	BEGIN
+	BEGIN TRY
+		--Sportsbook Bet setting
+		INSERT INTO BetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPayoutPerMatch,RepUpdateTime)
+		SELECT @custid
+			,cs.SportType        
+			,cs.BetType          
+			,cs.MinBet           
+			,cs.MaxBet           
+			,cs.MaxPerMatch        
+			,cs.MaxPayoutPerMatch
+			,SYSDATETIME()
+		FROM BetSetting_Agent cs WITH(NOLOCK)
+			INNER JOIN #SportBettype_SB ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.SettingType = 26
+		WHERE cs.custid = @ExistingCustid
+	END TRY	
+	BEGIN CATCH 
 		--Error Occurs
 		SELECT @ErrCode = 26
 			
@@ -67,5 +67,5 @@ BEGIN
 		WHERE custID = @custid
 				
 		RETURN
-	END	
+	END	CATCH
 END

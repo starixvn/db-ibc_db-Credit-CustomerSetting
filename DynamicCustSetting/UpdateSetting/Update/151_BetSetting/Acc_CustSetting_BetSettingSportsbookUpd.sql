@@ -67,7 +67,7 @@ BEGIN
 		IF @SportbettypeCount = 0
 			SET @SportbettypeCount = 1
 
-		SET @Batch_Num = 5000/@SportbettypeCount
+		SET @Batch_Num = 2000/@SportbettypeCount
 
 		IF @RoleId = 4
 		BEGIN
@@ -129,7 +129,7 @@ BEGIN
 					b.MaxBet = @NewMaxBet,
 					b.MaxPerMatch = @NewMaxPerMatch,
 					b.MaxPayoutPerMatch = @NewMaxPayoutPerMatch,
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.BetSetting_Agent b WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #AgentTmpBatch ci
@@ -151,7 +151,7 @@ BEGIN
 					b.MinBet = @NewMinBet,
 					b.MaxBet = @NewMaxBet,
 					b.MaxPerMatch = @NewMaxPerMatch,
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.BetSetting_Agent b WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #AgentTmpBatch ci
@@ -190,7 +190,7 @@ BEGIN
 					b.MaxBet = @NewMaxBet,
 					b.MaxPerMatch = @NewMaxPerMatch,
 					b.MaxPayoutPerMatch = @NewMaxPayoutPerMatch,
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.BetSetting_Agent b WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #AgentTmpBatch ci
@@ -213,7 +213,7 @@ BEGIN
 					b.MinBet = @NewMinBet,
 					b.MaxBet = @NewMaxBet,
 					b.MaxPerMatch = @NewMaxPerMatch,
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.BetSetting_Agent b WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #AgentTmpBatch ci
@@ -252,7 +252,7 @@ BEGIN
 					b.MaxBet = @NewMaxBet,
 					b.MaxPerMatch = @NewMaxPerMatch,					
 					b.MaxPayoutPerMatch = @NewMaxPayoutPerMatch,
-					RepUpdateTime = SYSDATETIME()				
+					RepUpdateTime = dbo.f_GetDateTime2()				
 				FROM dbo.BetSetting_Member b WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #MemberTmpBatch ci
@@ -276,7 +276,7 @@ BEGIN
 					b.MinBet = @NewMinBet,
 					b.MaxBet = @NewMaxBet,
 					b.MaxPerMatch = @NewMaxPerMatch,
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.BetSetting_Member b WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @BetSetting new ON b.sporttype = new.sporttype AND b.bettype = new.bettype
 					INNER JOIN #MemberTmpBatch ci

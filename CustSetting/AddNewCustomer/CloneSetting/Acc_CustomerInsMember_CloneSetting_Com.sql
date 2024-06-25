@@ -525,17 +525,17 @@ BEGIN
 		
 		RETURN
 	END CATCH
+
+	EXEC dbo.Acc_Custsetting_CloneSetting_SportsbookIns
+		@custid = @custid,
+		@ExistingCustid = @ExistingCustid,
+		@Language = @Language,
+		@SettingStatus = @SettingStatus,
+		@ErrCode = @ErrCode OUTPUT,
+		@ErrMsg = @ErrMsg OUTPUT
 	
-	BEGIN TRY
-		EXEC dbo.Acc_Custsetting_CloneSetting_SportsbookIns
-			@custid = @custid,
-			@ExistingCustid = @ExistingCustid,
-			@Language = @Language,
-			@SettingStatus = @SettingStatus,
-			@ErrCode = @ErrCode OUTPUT,
-			@ErrMsg = @ErrMsg OUTPUT
-	END TRY
-	BEGIN CATCH
+	IF @ErrCode > 0
+	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 								WHEN 'E' THEN 'Create customer failed. Please try again.'
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
@@ -549,7 +549,7 @@ BEGIN
 		
 		
 		RETURN
-	END CATCH
+	END
 
     DECLARE @isForcedChangeSecurityCode BIT = 0, @ClosedReason TINYINT=0,@Closed BIT
 	SELECT TOP 1 @Closed= CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END

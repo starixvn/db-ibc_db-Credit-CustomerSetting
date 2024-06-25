@@ -21,7 +21,7 @@ AS
 
 	Revisions:
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
-
+		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -291,25 +291,7 @@ BEGIN
 			@RoleID		= @RoleID,
 			@BetSettingXML	= @BetSettingXML,
 			@IsAffected		= @IsAffected OUTPUT
-
-		IF @IsAffected = 1
-		BEGIN
-			--Check Allowed downlines	
-			EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
-				@custid		= @custid
-			,	@roleid		= @roleid
-			,	@isExecRep		= 1
-			,	@Language		= 'E'
-			,	@ErrCode		= @ErrCode	OUTPUT
-			,	@ErrMsg		= @ErrMsg	OUTPUT
-
-			IF @ErrCode > 0
-			BEGIN
-				SET @MsgType = 101
-				RETURN
-			END
-		END
-
+		
 		--Update setting
 		UPDATE a
 		SET a.MaxBet = t.MaxBet,
