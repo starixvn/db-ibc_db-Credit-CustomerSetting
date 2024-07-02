@@ -29,6 +29,7 @@ AS
 		- 20240312@Elodie: Enhance SP [Redmine:#199517]
 		- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960] 
 		- 20240626@Eden: Tuning SP [Redmine: #207072]   
+		- 20240702@Eden: Hotfix - wrong Other RNG Casino status [Redmine: #207072]
 
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
 */
@@ -96,7 +97,7 @@ BEGIN
 								AND NOT (psc.Currency = 0  AND psc.SiteID = 0) -- Not apply config for all site currency
 								AND  (CASE WHEN psc.SportType IN (248,237,156,224) THEN 9906 --RNG Casino
 										   WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176) THEN 9911 --Live Casino
-										   WHEN psc.SportType IN (245,208,171,200,240) THEN 9911 --Other RNG Casino
+										   WHEN psc.SportType IN (245,208,171,200,240) THEN 9918 --Other RNG Casino
 										   ELSE psc.SportType END) = ps.Sporttype
 							) AS t
 			CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
@@ -152,7 +153,7 @@ BEGIN
 								AND NOT (psc.Currency = 0  AND psc.SiteID = 0) -- Not apply config for all site currency
 								AND  (CASE WHEN psc.SportType IN (248,237,156,224) THEN 9906 --RNG Casino
 										   WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176) THEN 9911 --Live Casino
-										   WHEN psc.SportType IN (245,208,171,200,240) THEN 9911 --Other RNG Casino
+										   WHEN psc.SportType IN (245,208,171,200,240) THEN 9918 --Other RNG Casino
 										   ELSE psc.SportType END) = ps.Sporttype
 							) AS t
 			CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
