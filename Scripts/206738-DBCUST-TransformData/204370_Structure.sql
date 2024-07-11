@@ -8,12 +8,14 @@
 USE bodb_CustHistory
 GO
 
----- DROP TABLE IF EXISTS Dest_ServiceTransform
+DROP TABLE IF EXISTS Dest_ServiceTransform
+GO
+
 CREATE TABLE Dest_ServiceTransform
 (
 	TableName		VARCHAR(200) NOT NULL
 	,Interval		INT			 NOT NULL
-	,rID			INT			 NOT NULL
+	,rID			BIGINT		 NOT NULL
 	,BatchSize		INT			 NOT NULL
 	,SPSelect		VARCHAR(200) NOT NULL
 	,SPInsert		VARCHAR(200) NOT NULL
@@ -34,6 +36,22 @@ CREATE NONCLUSTERED INDEX [IX_Dest_ServiceTransform_StatusID] ON [dbo].[Dest_Ser
 )
 GO
 
+---------------INIT DATA--------------------------------------------
+
+---CLEAN UP DATA ON SIT:
+
+IF @@SERVERNAME = 'SITDBCUST'
+BEGIN
+	TRUNCATE TABLE BetSetting_Member_History
+
+	TRUNCATE TABLE BetSetting_Agent_History
+
+	TRUNCATE TABLE BetSetting3rd_Member_History
+
+	TRUNCATE TABLE BetSetting3rd_Agent_History
+
+END
+
 
 INSERT INTO  Dest_ServiceTransform 
 (	
@@ -41,7 +59,9 @@ INSERT INTO  Dest_ServiceTransform
 	, rID, BatchSize
 	, SPSelect, SPInsert, StatusID ,SiteDBGroupID ,UpdateTime	
 )	
-VALUES('BetSetting_Member_History', 1000, 0, 1000, 'ServiceTransform_BetSetting_Member_Select', 'ServiceTransform_BetSetting_Member_Insert', 0, 0, SYSDATETIME() )
-	 ,( 'BetSetting_Agent_History' , 1000, 0, 1000, 'ServiceTransform_BetSetting_Agent_Select', 'ServiceTransform_BetSetting_Agent_Insert', 0, 0, SYSDATETIME() )
+VALUES('BetSetting_Member_History'		, 1000, 0, 1000, 'ServiceTransform_BetSetting_Member_Select'	, 'ServiceTransform_BetSetting_Member_Insert'	, 1, 0, SYSDATETIME() )
+	 ,( 'BetSetting_Agent_History'		, 1000, 0, 1000, 'ServiceTransform_BetSetting_Agent_Select'		, 'ServiceTransform_BetSetting_Agent_Insert'	, 1, 0, SYSDATETIME() )
+	 ,( 'BetSetting3rd_Member_History'	, 1000, 0, 1000, 'ServiceTransform_BetSetting3rd_Member_Select'	, 'ServiceTransform_BetSetting3rd_Member_Insert', 0, 0, SYSDATETIME() )
+	 ,( 'BetSetting3rd_Agent_History'	, 1000, 0, 1000, 'ServiceTransform_BetSetting3rd_Agent_Select'	, 'ServiceTransform_BetSetting3rd_Agent_Insert'	, 0, 0, SYSDATETIME() )
 
 GO
