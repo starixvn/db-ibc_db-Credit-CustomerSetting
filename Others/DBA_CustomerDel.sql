@@ -30,6 +30,7 @@ AS
 		- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230414@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+		- 20240527@Tacy: Delete data in Dep_ChargeInfoSetting [RedmineID: #201239]
 
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
@@ -141,6 +142,8 @@ BEGIN
 	DELETE dbo.Dep_CustDiscountGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 	DELETE dbo.Dep_CustPTGroupSetting_Member WHERE AgentID IN (SELECT custid FROM customer WITH (NOLOCK) WHERE srecommend = @custid and roleid = 2)	
 	DELETE Dep_LicenseeProductSetting WHERE custid = @custid
+
+	DELETE Dep_ChargeInfoSetting WHERE custid = @custid
 
 	DELETE custinfo WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE customer WHERE custid IN (SELECT custID FROM @tmp_custID)		

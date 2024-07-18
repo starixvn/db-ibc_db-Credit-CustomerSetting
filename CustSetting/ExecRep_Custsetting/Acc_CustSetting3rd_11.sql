@@ -19,7 +19,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting3rd_11]
 	,@UpdBetLimit	VARCHAR(MAX) = NULL
 	,@UpdCurency BIT = 0
 	,@Option BIT = 0
-	,@Mode		VARCHAR(20) = 'NonSportbook'
+	,@Mode	VARCHAR(20) = 'NonSportbook'
+	,@SettingStatus TINYINT = 0
 AS
 /*
 	Created: Elodie
@@ -42,6 +43,7 @@ AS
 		- 20221109@Johnson: Add Saba & Saba cricket [redmine: #175659]
 	    - 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105
 	    - 20230929@Winfred: Bet Setting of players not updated in case update Player Bet Setting (all players) [redmine:#194669]
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 	Param's Explanation:
 		
 */ 
@@ -64,7 +66,8 @@ BEGIN
 
 		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive,SettingType)
 		SELECT @ProductID AS ProductID,SportType,Bettype,IsLive, SettingType 
-		FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL)
+		FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus)
+		WHERE SettingType IN (2,10,12)
 
 		DECLARE @string VARCHAR(MAX), @splitter CHAR(1), @xml XML
 		SELECT @splitter = ',', @string = @ids
@@ -440,7 +443,8 @@ BEGIN
 
 		INSERT INTO #SportBettypeFilter (ProductID,SportType,Bettype,IsLive,SettingType)
 		SELECT @ProductID AS ProductID,SportType,Bettype,IsLive, SettingType 
-		FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL)
+		FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus)
+		WHERE SettingType IN (2,10,12)
 
 		--Create temp table containing all accounts belong to super, exclude fincance account
 		CREATE TABLE #tblCustSB (custid INT)	
