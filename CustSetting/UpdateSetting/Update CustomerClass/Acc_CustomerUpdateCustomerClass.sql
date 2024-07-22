@@ -21,6 +21,7 @@ AS
 		- 20221128@Johnson: dont write log when cc not change [redmine:#180957]
 		- 20230803@Winfred: LAP - Player Segmentation - Add Risk Level's last update time [redmine:#191101]
 		- 20240522@Johnson: CC Log - Change value from negative number to empty [redmine:#205427]
+		- 20240716@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Parameter's Explanation: 
 		@custList = '<Root>
 					<r id="100" c="10" t="1" />
@@ -102,8 +103,8 @@ BEGIN
 		IF @@ROWCOUNT = 0
 			BREAK;
 			
-		INSERT INTO [Dep_CustCategoryHistory](custid,CategoryID,CustomerClass,CreatedDate,OldCustomerClass)
-		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass
+		INSERT INTO [Dep_CustCategoryHistory](custid,CategoryID,CustomerClass,CreatedDate,OldCustomerClass,RepUpdateTime)
+		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass, SYSDATETIME()
 		FROM @tmp
 		WHERE CustomerClass IN (SELECT DISTINCT CustomerClass c 
 								FROM CategoryConfig WITH(NOLOCK)
@@ -114,12 +115,13 @@ BEGIN
 		SET c.ModifiedDate = @ModifiedDate,
 			c.CategoryID = t.CategoryID,
 			c.CustomerClass = t.CustomerClass,
-			c.OldCustomerClass = t.OldCustomerClass
+			c.OldCustomerClass = t.OldCustomerClass,
+			c.RepUpdateTime = SYSDATETIME()
 		FROM Dep_CustomerClass c WITH(UPDLOCK)
 			INNER JOIN @tmp t ON c.CustID = t.custid
 
-		INSERT INTO [Dep_CustomerClass](custid,CategoryID,CustomerClass,ModifiedDate,OldCustomerClass)
-		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass
+		INSERT INTO [Dep_CustomerClass](custid,CategoryID,CustomerClass,ModifiedDate,OldCustomerClass,RepUpdateTime)
+		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass, SYSDATETIME()
 		FROM @tmp c
 		WHERE NOT EXISTS (SELECT TOP 1 1 from Dep_CustomerClass WITH(NOLOCK) where CustID = c.CustID)
 		

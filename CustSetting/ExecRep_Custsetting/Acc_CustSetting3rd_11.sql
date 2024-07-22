@@ -44,17 +44,13 @@ AS
 	    - 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105
 	    - 20230929@Winfred: Bet Setting of players not updated in case update Player Bet Setting (all players) [redmine:#194669]
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
+		- 20240722@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 		
 */ 
 BEGIN
 
 	SET NOCOUNT ON
-	
-	IF NOT(dbo.f_CheckRepTable('Dep_CustBetSettingGame_Agent') = 1 
-	   AND dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 1
-	   )
-		  RETURN	
 	
 	DECLARE @ProductID TINYINT
 	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, Sporttype SMALLINT, Bettype SMALLINT, IsLive BIT, SettingType TINYINT)
@@ -86,7 +82,8 @@ BEGIN
 				SET cs.minbet = CASE WHEN @UpdateMinBet = 1 THEN @MinBet ELSE cs.MinBet END, 
 					cs.maxbet = CASE WHEN @UpdateMaxBet = 1 THEN @maxbet ELSE cs.MaxBet END,
 					cs.MaxPerMatch = CASE WHEN @UpdateMPM = 1 THEN @MaxPerMatch ELSE cs.MaxPerMatch END, 
-					cs.MaxPayoutPerMatch = CASE WHEN @UpdateMaxPayoutPM = 1 THEN @MaxPayoutPerMatch ELSE cs.MaxPayoutPerMatch END
+					cs.MaxPayoutPerMatch = CASE WHEN @UpdateMaxPayoutPM = 1 THEN @MaxPayoutPerMatch ELSE cs.MaxPayoutPerMatch END,
+					cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGame_Agent cs
 					INNER JOIN CustInfo c ON c.custid = cs.custid
 				WHERE cs.Sporttype = @Sporttype
@@ -100,7 +97,8 @@ BEGIN
 					SET cs.minbet = CASE WHEN @UpdateMinBet = 1 THEN @MinBet ELSE cs.MinBet END, 
 						cs.maxbet = CASE WHEN @UpdateMaxBet = 1 THEN @maxbet ELSE cs.MaxBet END,
 						cs.MaxPerMatch = CASE WHEN @UpdateMPM = 1 THEN @MaxPerMatch ELSE cs.MaxPerMatch END, 
-						cs.MaxPayoutPerMatch = CASE WHEN @UpdateMaxPayoutPM = 1 THEN @MaxPayoutPerMatch ELSE cs.MaxPayoutPerMatch END
+						cs.MaxPayoutPerMatch = CASE WHEN @UpdateMaxPayoutPM = 1 THEN @MaxPayoutPerMatch ELSE cs.MaxPayoutPerMatch END,
+						cs.RepUpdateTime = SYSDATETIME()
 					FROM dbo.Dep_CustBetSettingGameGroup_Member cs
 						INNER JOIN CustInfo c ON c.custid = cs.AgentID
 					WHERE cs.Sporttype = @Sporttype
@@ -112,7 +110,8 @@ BEGIN
 					SET cs.minbet = CASE WHEN @UpdateMinBet = 1 THEN @MinBet ELSE cs.MinBet END, 
 						cs.maxbet = CASE WHEN @UpdateMaxBet = 1 THEN @maxbet ELSE cs.MaxBet END,
 						cs.MaxPerMatch = CASE WHEN @UpdateMPM = 1 THEN @MaxPerMatch ELSE cs.MaxPerMatch END, 
-						cs.MaxPayoutPerMatch = CASE WHEN @UpdateMaxPayoutPM = 1 THEN @MaxPayoutPerMatch ELSE cs.MaxPayoutPerMatch END
+						cs.MaxPayoutPerMatch = CASE WHEN @UpdateMaxPayoutPM = 1 THEN @MaxPayoutPerMatch ELSE cs.MaxPayoutPerMatch END,
+						cs.RepUpdateTime = SYSDATETIME()
 					FROM dbo.Dep_CustBetSettingGame_Member cs
 						INNER JOIN CustInfo c ON c.custid = cs.custid
 					WHERE cs.Sporttype = @Sporttype
@@ -131,7 +130,7 @@ BEGIN
 				FROM #tblCust t 
 				INNER JOIN Dep_CustBetSettingGame_Member cs on t.custid = cs.custid AND cs.sporttype = @Sporttype AND bettype = @Bettype
 	 
-				INSERT INTO Dep_CustBetSettingGame_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+				INSERT INTO Dep_CustBetSettingGame_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 				SELECT  t.custid			   
 					   ,sporttype as [sporttype]
 					   ,bettype as [bettype]
@@ -164,13 +163,14 @@ BEGIN
 										AND cs.sporttype= s.sporttype
 										AND cs.bettype = s.bettype
 									) END MaxPayoutPerMatch
+						,SYSDATETIME()			
 				FROM #tblCust t
 					INNER JOIN CustInfo c ON c.custid = t.custid
 					CROSS JOIN #SportBettypeFilter s
 				WHERE s.sporttype = @Sporttype AND s.SettingType = 10
 					AND roleid BETWEEN 2 AND 4
 
-				INSERT INTO Dep_CustBetSettingGameGroup_Member ([AgentID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+				INSERT INTO Dep_CustBetSettingGameGroup_Member ([AgentID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch],RepUpdateTime)
 				SELECT  t.custid			  
 					   ,sporttype as [sporttype]
 						,bettype as [bettype]
@@ -199,13 +199,14 @@ BEGIN
 										AND cs.sporttype= s.sporttype
 										AND cs.bettype = s.bettype
 									) END MaxPayoutPerMatch
+						,SYSDATETIME()			
 				FROM #tblCust t
 					INNER JOIN CustInfo c ON c.custid = t.custid
 					CROSS JOIN #SportBettypeFilter s
 				WHERE s.sporttype = @Sporttype AND s.SettingType = 10
 					AND @ExistedMember = 1 AND roleid = 2
 
-				INSERT INTO Dep_CustBetSettingGame_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+				INSERT INTO Dep_CustBetSettingGame_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 				SELECT  t.custid			  
 					   ,sporttype as [sporttype]
 					   ,bettype as [bettype]
@@ -236,6 +237,7 @@ BEGIN
 										AND cs.sporttype= s.sporttype
 										AND cs.bettype = s.bettype
 									) END MaxPayoutPerMatch
+						,SYSDATETIME()			
 				FROM #tblCust t
 					INNER JOIN CustInfo c ON c.custid = t.custid
 					CROSS JOIN #SportBettypeFilter s
@@ -246,7 +248,8 @@ BEGIN
 		IF @Sporttype = 161 --NumberGame
 		BEGIN
 			UPDATE cs  WITH(UPDLOCK,ROWLOCK)
-				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall
+				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall,
+						cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGame_Agent cs 
 					INNER JOIN CustInfo c ON c.custid = cs.custid
 				WHERE cs.Sporttype = @Sporttype
@@ -256,7 +259,8 @@ BEGIN
 			IF @ExistedMember = 1
 			BEGIN
 				UPDATE cs  WITH(UPDLOCK,ROWLOCK)
-				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall
+				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall,
+						cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGameGroup_Member cs 
 					INNER JOIN CustInfo c ON c.custid = cs.AgentID
 				WHERE cs.Sporttype = @Sporttype
@@ -264,7 +268,8 @@ BEGIN
 					AND c.roleid = 2
 
 				UPDATE cs  WITH(UPDLOCK,ROWLOCK)
-				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall
+				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall,
+						cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGame_Member cs 
 					INNER JOIN CustInfo c ON c.custid = cs.CustID
 				WHERE cs.Sporttype = @Sporttype
@@ -282,7 +287,7 @@ BEGIN
 			FROM #tblCust t 
 			INNER JOIN Dep_CustBetSettingGame_Member cs on t.custid = cs.custid AND cs.sporttype = @Sporttype
 	 
-			INSERT INTO Dep_CustBetSettingGame_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGame_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 			SELECT  t.custid			   
 					,sporttype as [sporttype]
 					,bettype as [bettype]
@@ -291,13 +296,14 @@ BEGIN
 					,@MaxPerMatch
 					,@MaxPerBall
 					,NULL
+					,SYSDATETIME()
 			FROM #tblCust t
 				INNER JOIN CustInfo c ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s		
 			WHERE s.sporttype = @Sporttype AND s.SettingType = 12
 				AND roleid BETWEEN 2 AND 4
 		
-			INSERT INTO Dep_CustBetSettingGameGroup_Member ([AgentID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGameGroup_Member ([AgentID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 			SELECT  t.custid
 					,sporttype as [sporttype]
 					,bettype as [bettype]
@@ -306,13 +312,14 @@ BEGIN
 					,@MaxPerMatch
 					,@MaxPerBall
 					,NULL
+					,SYSDATETIME()
 			FROM #tblCust t
 				INNER JOIN CustInfo c ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s		
 			WHERE s.sporttype = @Sporttype AND s.SettingType = 12
 				AND @ExistedMember = 1 AND roleid = 2
 
-			INSERT INTO Dep_CustBetSettingGame_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGame_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 			SELECT  t.custid			  
 					,sporttype as [sporttype]
 					,bettype as [bettype]
@@ -321,6 +328,7 @@ BEGIN
 					,@MaxPerMatch
 					,@MaxPerBall
 					,NULL
+					,SYSDATETIME()
 			FROM #tblCust t
 				INNER JOIN CustInfo c ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s		
@@ -336,7 +344,8 @@ BEGIN
 			IF @Enable = 1 AND @EnableDownline = 0
 			BEGIN
 				UPDATE cg WITH(UPDLOCK,ROWLOCK)
-				SET	bitmapIsDisabled  = dbo.f_GenerateProductStatus (cg.bitmapIsDisabled, @BitmapOrder,0)
+				SET	bitmapIsDisabled  = dbo.f_GenerateProductStatus (cg.bitmapIsDisabled, @BitmapOrder,0),
+					RepUpdateTime = SYSDATETIME()
 				FROM Dep_CustProductStatus cg 
 					INNER JOIN CustInfo c ON c.custid = cg.custid
 				WHERE c.custid IN (SELECT custid FROM #tblCust)	
@@ -346,7 +355,8 @@ BEGIN
 			IF @Enable = 1 AND @EnableDownline = 1
 			BEGIN
 				UPDATE cg WITH(UPDLOCK,ROWLOCK)
-				SET	bitmapIsDisabled  = dbo.f_GenerateProductStatus (cg.bitmapIsDisabled, @BitmapOrder,0)
+				SET	bitmapIsDisabled  = dbo.f_GenerateProductStatus (cg.bitmapIsDisabled, @BitmapOrder,0),
+					RepUpdateTime = SYSDATETIME()
 				FROM Dep_CustProductStatus cg 
 					INNER JOIN CustInfo c ON c.custid = cg.custid
 				WHERE c.custid IN (SELECT custid FROM #tblCust)	
@@ -355,7 +365,8 @@ BEGIN
 			UPDATE cg WITH(UPDLOCK,ROWLOCK)
 			SET	MinBet = @MinBet, 
 				MaxBet = @MaxBet, 
-				MaxPerMatch= @MaxPerMatch
+				MaxPerMatch= @MaxPerMatch,
+				RepUpdateTime = SYSDATETIME()
 			FROM Dep_CustBetSetting_Agent cg 
 				INNER JOIN CustInfo c ON c.custid = cg.custid
 			WHERE cg.SportType = @Sporttype AND cg.BetType = @Bettype
@@ -367,7 +378,8 @@ BEGIN
 				UPDATE cg WITH(UPDLOCK,ROWLOCK)
 				SET	MinBet = @MinBet, 
 					MaxBet = @MaxBet, 
-					MaxPerMatch= @MaxPerMatch
+					MaxPerMatch= @MaxPerMatch,
+					RepUpdateTime= SYSDATETIME()
 				FROM Dep_CustBetSetting_Member cg 
 					INNER JOIN CustInfo c ON c.custid = cg.custid
 				WHERE cg.SportType = @Sporttype AND cg.BetType = @Bettype
@@ -382,26 +394,28 @@ BEGIN
 			FROM #tblCust t 
 			INNER JOIN Dep_CustBetSetting_Member cs on t.custid = cs.custid AND cs.SportType = @Sporttype AND BetType = @Bettype		
 
-			INSERT INTO [dbo].Dep_CustBetSetting_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch])
+			INSERT INTO [dbo].Dep_CustBetSetting_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], RepUpdateTime)
 			SELECT  t.custid
 					,SportType
 					,BetType
 					,@minbet			
 					,@maxbet			
 					,@MaxPerMatch	
+					,SYSDATETIME()
 			FROM #tblCust t		
 				INNER JOIN CustInfo c ON c.custid = t.custid	
 				CROSS JOIN #SportBettypeFilter s		
 			WHERE s.sporttype = @Sporttype AND BetType = @Bettype AND s.SettingType = 2
 				AND roleid BETWEEN 2 AND 4
 
-			INSERT INTO [dbo].Dep_CustBetSetting_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch])
+			INSERT INTO [dbo].Dep_CustBetSetting_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], RepUpdateTime)
 			SELECT  t.custid
 					,SportType
 					,BetType
 					,@minbet			
 					,@maxbet			
-					,@MaxPerMatch	
+					,@MaxPerMatch
+					,SYSDATETIME()
 			FROM #tblCust t		
 				INNER JOIN CustInfo c ON c.custid = t.custid	
 				CROSS JOIN #SportBettypeFilter s		
@@ -463,7 +477,8 @@ BEGIN
 					cs.MaxPerMatch = CASE WHEN roleid IN (3,4) AND cs.MaxPerMatch >= s.MaxPerMatch AND @UpdCurency = 0 
 										  THEN cs.MaxPerMatch ELSE s.MaxPerMatch END , 
 					cs.MaxPayoutPerMatch = CASE WHEN roleid IN (3,4) AND cs.MaxPayoutPerMatch >= s.MaxPayoutPerMatch AND @UpdCurency = 0 
-												THEN cs.MaxPayoutPerMatch ELSE s.MaxPayoutPerMatch END 
+												THEN cs.MaxPayoutPerMatch ELSE s.MaxPayoutPerMatch END,
+					cs.RepUpdateTime = SYSDATETIME()							
 				FROM dbo.Dep_CustBetSettingGame_Agent cs
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cs.custid
 					INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
@@ -477,7 +492,8 @@ BEGIN
 				SET cs.minbet = s.MinBet, 
 					cs.maxbet = s.MaxBet,
 					cs.MaxPerMatch = s.MaxPerMatch, 
-					cs.MaxPayoutPerMatch = s.MaxPayoutPerMatch
+					cs.MaxPayoutPerMatch = s.MaxPayoutPerMatch,
+					cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGameGroup_Member cs
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cs.AgentID
 					INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
@@ -488,7 +504,8 @@ BEGIN
 				SET cs.minbet = s.MinBet, 
 					cs.maxbet = s.MaxBet,
 					cs.MaxPerMatch = s.MaxPerMatch, 
-					cs.MaxPayoutPerMatch = s.MaxPayoutPerMatch
+					cs.MaxPayoutPerMatch = s.MaxPayoutPerMatch,
+					cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGame_Member cs
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cs.custid
 					INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
@@ -511,7 +528,7 @@ BEGIN
 			INNER JOIN Dep_CustBetSettingGame_Member cs WITH(NOLOCK) on t.custid = cs.custid
 			INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
 	 
-			INSERT INTO Dep_CustBetSettingGame_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGame_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 			SELECT  t.custid			   
 				   ,s.sporttype as [sporttype]
 				   ,s.bettype as [bettype]
@@ -544,13 +561,14 @@ BEGIN
 									AND cs.sporttype= s.sporttype
 									AND cs.bettype = s.bettype
 								) END MaxPayoutPerMatch
+					,SYSDATETIME()			
 			FROM #tblCustSB t
 				INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s
 				INNER JOIN #SportTypeBetType l on s.Sporttype = l.SportType AND s.Bettype = l.Bettype
 			WHERE roleid BETWEEN 2 AND 4  AND s.SettingType = 10
 
-			INSERT INTO Dep_CustBetSettingGameGroup_Member ([AgentID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGameGroup_Member ([AgentID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch],RepUpdateTime)
 			SELECT  t.custid			  
 				    ,s.sporttype as [sporttype]
 					,s.bettype as [bettype]
@@ -579,13 +597,14 @@ BEGIN
 									AND cs.sporttype= s.sporttype
 									AND cs.bettype = s.bettype
 								) END MaxPayoutPerMatch
+					,SYSDATETIME()			
 			FROM #tblCustSB t
 				INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s
 				INNER JOIN #SportTypeBetType l on s.Sporttype = l.SportType AND s.Bettype = l.Bettype
 			WHERE @ExistedMember = 1 AND roleid = 2  AND s.SettingType = 10
 
-			INSERT INTO Dep_CustBetSettingGame_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGame_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 			SELECT  t.custid			  
 				   ,s.sporttype as [sporttype]
 				   ,s.bettype as [bettype]
@@ -616,6 +635,7 @@ BEGIN
 									AND cs.sporttype= s.sporttype
 									AND cs.bettype = s.bettype
 								) END MaxPayoutPerMatch
+					,SYSDATETIME()			
 			FROM #tblCustSB t
 				INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s
@@ -626,7 +646,8 @@ BEGIN
 		IF @ProductID = 3 --NumberGame
 		BEGIN
 			UPDATE cs  WITH(UPDLOCK,ROWLOCK)
-				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall
+				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall,
+						cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGame_Agent cs 
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cs.custid
 					INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
@@ -636,7 +657,8 @@ BEGIN
 			IF @ExistedMember = 1
 			BEGIN
 				UPDATE cs  WITH(UPDLOCK,ROWLOCK)
-				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall
+				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall,
+						cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGameGroup_Member cs 
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cs.AgentID
 					INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
@@ -644,7 +666,8 @@ BEGIN
 					AND c.roleid = 2
 
 				UPDATE cs  WITH(UPDLOCK,ROWLOCK)
-				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall
+				SET    cs.minbet = @MinBet, cs.maxbet = @maxbet, cs.MaxPerMatch = @MaxPerMatch, cs.MaxPerNumber =  @MaxPerBall,
+						cs.RepUpdateTime = SYSDATETIME()
 				FROM dbo.Dep_CustBetSettingGame_Member cs 
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cs.CustID
 					INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
@@ -666,7 +689,7 @@ BEGIN
 			INNER JOIN Dep_CustBetSettingGame_Member cs WITH(NOLOCK) on t.custid = cs.custid 
 			INNER JOIN #SportTypeBetType s ON cs.SportType = s.SportType AND cs.BetType = s.Bettype
 	 
-			INSERT INTO Dep_CustBetSettingGame_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGame_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 			SELECT  t.custid			   
 				   ,s.sporttype as [sporttype]
 				   ,s.bettype as [bettype]
@@ -675,13 +698,14 @@ BEGIN
 				   ,l.MaxPerMatch
 				   ,@MaxPerBall
 				   ,NULL
+				   ,SYSDATETIME()
 			FROM #tblCustSB t
 				INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s	
 				INNER JOIN #SportTypeBetType l on s.Sporttype = l.SportType AND s.Bettype = l.Bettype	
 			WHERE s.SettingType = 12 AND roleid BETWEEN 2 AND 4
 		
-			INSERT INTO Dep_CustBetSettingGameGroup_Member ([AgentID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGameGroup_Member ([AgentID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 			SELECT  t.custid
 				   ,s.sporttype as [sporttype]
 				   ,s.bettype as [bettype]
@@ -690,13 +714,14 @@ BEGIN
 				   ,l.MaxPerMatch
 				   ,@MaxPerBall
 				   ,NULL
+				   ,SYSDATETIME()
 			FROM #tblCustSB t
 				INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s	
 				INNER JOIN #SportTypeBetType l on s.Sporttype = l.SportType AND s.Bettype = l.Bettype	
 			WHERE s.SettingType = 12 AND @ExistedMember = 1 AND roleid = 2
 
-			INSERT INTO Dep_CustBetSettingGame_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch])
+			INSERT INTO Dep_CustBetSettingGame_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], [MaxPerNumber], [MaxPayoutPerMatch], RepUpdateTime)
 			SELECT  t.custid			  
 				   ,s.sporttype as [sporttype]
 				   ,s.bettype as [bettype]
@@ -705,6 +730,7 @@ BEGIN
 				   ,l.MaxPerMatch
 				   ,@MaxPerBall
 				   ,NULL
+				   ,SYSDATETIME()
 			FROM #tblCustSB t
 				INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = t.custid
 				CROSS JOIN #SportBettypeFilter s
@@ -721,7 +747,8 @@ BEGIN
 			IF @Enable = 1 AND @EnableDownline = 0
 			BEGIN
 				UPDATE cg WITH(UPDLOCK,ROWLOCK)
-				SET	bitmapIsDisabled  = dbo.f_GenerateProductStatus (cg.bitmapIsDisabled, @BitmapOrderKN,0)
+				SET	bitmapIsDisabled  = dbo.f_GenerateProductStatus (cg.bitmapIsDisabled, @BitmapOrderKN,0),
+					RepUpdateTime = SYSDATETIME()
 				FROM Dep_CustProductStatus cg 
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cg.custid
 				WHERE c.custid IN (SELECT custid FROM #tblCustSB)	
@@ -731,7 +758,8 @@ BEGIN
 			IF @Enable = 1 AND @EnableDownline = 1
 			BEGIN
 				UPDATE cg WITH(UPDLOCK,ROWLOCK)
-				SET	bitmapIsDisabled  = dbo.f_GenerateProductStatus (cg.bitmapIsDisabled, @BitmapOrderKN,0)
+				SET	bitmapIsDisabled  = dbo.f_GenerateProductStatus (cg.bitmapIsDisabled, @BitmapOrderKN,0),
+					RepUpdateTime = SYSDATETIME()
 				FROM Dep_CustProductStatus cg 
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cg.custid
 				WHERE c.custid IN (SELECT custid FROM #tblCustSB)	
@@ -740,7 +768,8 @@ BEGIN
 			UPDATE cg WITH(UPDLOCK,ROWLOCK)
 			SET	MinBet = @MinBet, 
 				MaxBet = @MaxBet, 
-				MaxPerMatch= @MaxPerMatch
+				MaxPerMatch= @MaxPerMatch,
+				RepUpdateTime = SYSDATETIME()
 			FROM Dep_CustBetSetting_Agent cg 
 				INNER JOIN CustInfo c ON c.custid = cg.custid
 				INNER JOIN #SportTypeBetType l on cg.Sporttype = l.SportType AND cg.Bettype = l.Bettype
@@ -752,7 +781,8 @@ BEGIN
 				UPDATE cg WITH(UPDLOCK,ROWLOCK)
 				SET	MinBet = @MinBet, 
 					MaxBet = @MaxBet, 
-					MaxPerMatch= @MaxPerMatch
+					MaxPerMatch= @MaxPerMatch,
+					RepUpdateTime = SYSDATETIME()
 				FROM Dep_CustBetSetting_Member cg 
 					INNER JOIN CustInfo c WITH(NOLOCK) ON c.custid = cg.custid
 					INNER JOIN #SportTypeBetType l on cg.Sporttype = l.SportType AND cg.Bettype = l.Bettype
@@ -770,26 +800,28 @@ BEGIN
 			INNER JOIN Dep_CustBetSetting_Member cs on t.custid = cs.custid 
 			INNER JOIN #SportTypeBetType l on cs.Sporttype = l.SportType AND cs.Bettype = l.Bettype		
 
-			INSERT INTO [dbo].Dep_CustBetSetting_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch])
+			INSERT INTO [dbo].Dep_CustBetSetting_Agent ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch], RepUpdateTime)
 			SELECT  t.custid
 				   ,s.SportType
 				   ,s.BetType
 				   ,l.MinBet			
 				   ,l.MaxBet			
 				   ,l.MaxPerMatch	
+				   ,SYSDATETIME()
 			FROM #tblCustSB t		
 				INNER JOIN CustInfo c ON c.custid = t.custid	
 				CROSS JOIN #SportBettypeFilter s
 				INNER JOIN #SportTypeBetType l on s.Sporttype = l.SportType AND s.Bettype = l.Bettype			
 			WHERE s.SettingType = 2 AND roleid BETWEEN 2 AND 4
 
-			INSERT INTO [dbo].Dep_CustBetSetting_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch])
+			INSERT INTO [dbo].Dep_CustBetSetting_Member ([CustID], [SportType], [BetType], [MinBet], [MaxBet], [MaxPerMatch],RepUpdateTime)
 			SELECT  t.custid
 				   ,s.SportType
 				   ,s.BetType
 				   ,l.MinBet			
 				   ,l.MaxBet			
 				   ,l.MaxPerMatch	
+				   ,SYSDATETIME()
 			FROM #tblCustSB t		
 				INNER JOIN CustInfo c ON c.custid = t.custid	
 				CROSS JOIN #SportBettypeFilter s
