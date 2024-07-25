@@ -104,7 +104,7 @@ BEGIN
 			BREAK;
 			
 		INSERT INTO [Dep_CustCategoryHistory](custid,CategoryID,CustomerClass,CreatedDate,OldCustomerClass,RepUpdateTime)
-		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass, SYSDATETIME()
+		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass, dbo.f_GetDateTime2()
 		FROM @tmp
 		WHERE CustomerClass IN (SELECT DISTINCT CustomerClass c 
 								FROM CategoryConfig WITH(NOLOCK)
@@ -116,12 +116,12 @@ BEGIN
 			c.CategoryID = t.CategoryID,
 			c.CustomerClass = t.CustomerClass,
 			c.OldCustomerClass = t.OldCustomerClass,
-			c.RepUpdateTime = SYSDATETIME()
+			c.RepUpdateTime = dbo.f_GetDateTime2()
 		FROM Dep_CustomerClass c WITH(UPDLOCK)
 			INNER JOIN @tmp t ON c.CustID = t.custid
 
 		INSERT INTO [Dep_CustomerClass](custid,CategoryID,CustomerClass,ModifiedDate,OldCustomerClass,RepUpdateTime)
-		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass, SYSDATETIME()
+		SELECT custid, CategoryID, CustomerClass, @ModifiedDate, OldCustomerClass, dbo.f_GetDateTime2()
 		FROM @tmp c
 		WHERE NOT EXISTS (SELECT TOP 1 1 from Dep_CustomerClass WITH(NOLOCK) where CustID = c.CustID)
 		
