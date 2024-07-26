@@ -199,6 +199,8 @@ Revisions:
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240321@Luke: NAP - Virtual rate - For Direct account :Change default of VR Status for newly created accounts to "Follow upline" [Redmine: #202624]
 	- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
+	- 20240726@Louisa: HF New Direct Member had SiteLable in (789y) disable VR status [Redmine:#208455]
+
 Param's Explanation:	
 	- @ErrCode:
 		= 0: add new member successfully.
@@ -346,8 +348,7 @@ BEGIN
 	    @autosuspend BIT,
 	    @autosuspend2 BIT,
 		@autosuspend3 BIT,	
-    			
-	    @site NVARCHAR(50),  	    		  
+    			 	    		  
 		@DisableSuperLive BIT = 0,
 	    @matchlimit SMALLMONEY	
 
@@ -392,7 +393,7 @@ BEGIN
 		AND EXISTS( 
 				SELECT 1 
 				FROM dbo.Site WITH (NOLOCK)
-				WHERE site = @site AND SiteLabel IN ('789y')
+				WHERE site = @_site AND SiteLabel IN ('789y')
 			)
 				SET @EnableVR = 1
 
@@ -466,7 +467,6 @@ BEGIN
 	    END
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     SELECT  @username = rtrim(ltrim(@username))
-    SELECT @site=CASE WHEN @ugroup like 'indo_' THEN 'INDO' ELSE '' END, @ugroup = CASE WHEN @ugroup like 'indo_' THEN right(@ugroup,1) ELSE @ugroup END
 
     DECLARE @IsExists BIT 
 	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
@@ -677,7 +677,7 @@ BEGIN
 	    @userpwd = @userpwd,
 	    @pwdexpiry = @pwdexpiry,
 	    @currency = @currency,
-	    @site = @site,
+	    @site = @_site,
 	    @ugroup = @ugroup,
 	    @srecommend = @srecommend,
 	    @mrecommend = @mrecommend,
