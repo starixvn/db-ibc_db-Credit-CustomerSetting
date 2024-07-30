@@ -1,7 +1,6 @@
 /*<info serverAlias="DBCust-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelByMAg]
 	@MRecommend int,
-	@IsAgentSite bit = 0,	
 	@Username varchar(30)=null,
 	@Enabled bit = null,
 	@Closed bit=null,
@@ -12,7 +11,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerSelByMAg]
 	@TotalItems int=0 output,
 	@Userid		INT = NULL,
 	@SettingStatus TINYINT = 0,
-	@Locked BIT = NULL -- 1: Locked filter
+	@Locked BIT = NULL, -- 1: Locked filter
+	@DeniedList	NVARCHAR(MAX)=NULL
 AS
 /*
 	Created by: []
@@ -105,6 +105,7 @@ AS
 		- 20230628@Tacy: NG2 - Remove Setting [Redmine: #189762]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 		- 20240405@Kelvin: Update View Master/Agent/Member list [RedmineID: #202877]
+		- 20240805@Tacy: Remove linked-server/cross-db on NAP_UserControl [redmineID: #208402]
 		- 20240917@Elodie: Tuning sp [redmine: #210892]
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -249,9 +250,22 @@ BEGIN
 	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )	
 
 	IF EXISTS (SELECT 1 FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @Userid AND roleid > 4)
+	AND ISNULL(@DeniedList,'')<>''
+	BEGIN
 		INSERT INTO  @tmp (siteid , site,SpecialGroup)
-		SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@Userid)
-	
+		SELECT vl.[ID], vl.[Name], vl.[Opt]
+		FROM OPENJSON(@DeniedList) 
+				WITH (  [KeyName]	VARCHAR(30),
+						[Value]	NVARCHAR(MAX) AS JSON
+					) AS js
+		CROSS APPLY OPENJSON (js.[value])
+				WITH (  [ID]	INT,
+						[Name]	NVARCHAR(30),
+						[Opt]	TINYINT
+					) AS vl
+		WHERE js.[KeyName]='Site'
+	END
+
 	;WITH customers AS
 	(
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, cps.reject, cps.closed, MatchLimit, VirtualMultiplier, Enabled,						
@@ -267,7 +281,8 @@ BEGIN
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
 									WHERE CustID = ci.custid
 						 ) AS cps			
-		WHERE c.custid IN (SELECT custid FROM #customer) AND (@Userid IS NULL OR (@Userid IS NOT NULL AND c.site NOT IN (SELECT site FROM @tmp )))
+		WHERE c.custid IN (SELECT custid FROM #customer) 
+			AND c.site NOT IN (SELECT site FROM @tmp)
 	),
 	custsetting AS
 	(

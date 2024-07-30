@@ -1,7 +1,6 @@
-/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="wsv_alp,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Age_CustomerSelByMAg]
 	@MRecommend int,
-	@IsAgentSite bit = 0,	
 	@Username varchar(30)=null,
 	@Enabled bit = null,
 	@Closed bit=null,
@@ -29,6 +28,7 @@ AS
 		- 20230602@Helios: Enhance stored procedure to prevent performance issue [Redmine: #189154]
 		- 20230410@Bobby: AutoJob clear balance downlines [RedmineID: #182071]
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+		- 20240812@Tacy: Remove linked-server/cross-db on NAP_UserControl [redmineID: #208402]
 		- 20240917@Elodie: Tuning sp [redmine: #210892]
 	Explanation's Param:
 		- @DoubleCommLosing:
@@ -207,12 +207,6 @@ BEGIN
 	END
 	
 	-- get data for filtered customers	
-	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )	
-
-	IF EXISTS (SELECT 1 FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @Userid AND roleid > 4)
-		INSERT INTO  @tmp (siteid , site,SpecialGroup)
-		SELECT siteid , [site], SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser(@Userid)
-	
 	;WITH customers AS
 	(
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, cps.reject, cps.closed, MatchLimit, VirtualMultiplier, Enabled,
@@ -227,7 +221,7 @@ BEGIN
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
 									WHERE CustID = ci.custid
 								) AS cps
-		WHERE c.custid IN (SELECT custid FROM #customer) AND (@Userid IS NULL OR (@Userid IS NOT NULL AND c.site NOT IN (SELECT site FROM @tmp )))
+		WHERE c.custid IN (SELECT custid FROM #customer)
 	),
 	CustDiscountAgent AS
 	(
