@@ -16,6 +16,7 @@ AS
 		- 20231204@Johnson: Sort SubGroup [redmine: #197629]
 		- 20240118@Eden: avoid data duplicate of Esport & Muay Thai Betsetting [redmine: #199970]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -131,7 +132,7 @@ BEGIN
 	BEGIN				
 		SELECT cs.sporttype, cs.bettype, MinBet, MaxBet, MaxPerMatch, 
 			MaxPayoutPerMatch = CASE WHEN s.SportType IN(43,44) THEN NULL ELSE ISNULL(MaxPayoutPerMatch,0) END
-		FROM CustBetSetting_Agent cs WITH(NOLOCK)
+		FROM BetSetting_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter s 
 				ON cs.sporttype = s.sporttype
 				AND cs.bettype = s.bettype

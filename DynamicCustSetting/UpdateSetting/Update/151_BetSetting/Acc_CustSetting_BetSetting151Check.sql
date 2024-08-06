@@ -24,7 +24,7 @@ AS
 
 	Revisions: 
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
-
+		- 20240612@Johnson: Scale out DBCUST [redmine: #199915]
 	Param's Explanation:
 	@BetSetting: Json Type
 		'[
@@ -170,7 +170,7 @@ BEGIN
 							THEN NULL
 						ELSE bl.MaxPayoutPerMatch
 					END) AS MaxPayoutPerMatch
-		FROM dbo.CustBetSetting_Agent bl WITH (NOLOCK)
+		FROM dbo.BetSetting_Agent bl WITH (NOLOCK)
 		INNER JOIN @NewBetSettingTbl tmp
 			ON tmp.SportType	= bl.SportType
 				AND tmp.BetType = bl.BetType
@@ -204,7 +204,7 @@ BEGIN
 							THEN NULL
 						ELSE bl.MaxPayoutPerMatch
 					END) AS MaxPayoutPerMatch
-		FROM dbo.CustBetSetting_Agent bl WITH (NOLOCK)
+		FROM dbo.BetSetting_Agent bl WITH (NOLOCK)
 		INNER JOIN @NewBetSettingTbl tmp
 			ON tmp.SportType	= bl.SportType
 				AND tmp.BetType = bl.BetType
@@ -239,7 +239,7 @@ BEGIN
 							THEN NULL
 						ELSE bl.MaxPayoutPerMatch
 					END) AS MaxPayoutPerMatch
-		FROM dbo.CustBetSetting_Agent bl WITH (NOLOCK)
+		FROM dbo.BetSetting_Agent bl WITH (NOLOCK)
 		INNER JOIN @NewBetSettingTbl tmp
 			ON tmp.SportType	= bl.SportType
 				AND tmp.BetType = bl.BetType

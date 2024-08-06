@@ -14,7 +14,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_14]
 	@SettingType3 VARCHAR(MAX)= '', --Others Games
 	
 	--Bet Setting
-	@SettingType26 VARCHAR(MAX)= '', --SB
+	--@SettingType26 VARCHAR(MAX)= '', --SB
 	@SettingType2 VARCHAR(MAX)= '', --SB2, VS
 	@SettingType23 VARCHAR(MAX)= '', --RNG Games
 	@SettingType16 VARCHAR(MAX)= '', --Others Games
@@ -47,6 +47,7 @@ AS
 			- 20230525@Johnson: initial sp [redmine: #179159]
 			- 20231017@Johnson: extend MaxPT for SB = 0.93 [redmine:#195578]
 			- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+			- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
 	Param's Explanation: 
 	
 */
@@ -1540,90 +1541,7 @@ BEGIN
 			END
 			RETURN	
 		END CATCH
-		
-		/********************************************* SB Bet Setting : SettingType = 26 ****************************************/
-		CREATE TABLE #SportBettypeFilter26 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
-		
-		INSERT INTO #SportBettypeFilter26(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
-		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
-		FROM #ProductSettingDetail_tmp00
-		WHERE SettingType IN (26)
-		
-		DELETE @BetSetting
-		
-		IF ISNULL(@SettingType26,'') <> ''
-		BEGIN			
-			SELECT @xml = CONVERT(XML,@SettingType26)
-		
-			INSERT INTO @BetSetting(SportType, 
-				BetType, 
-				MinBet, 
-				MaxBet, 
-				MaxPerMatch, 
-				MaxPayoutPerMatch)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-				T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
-				T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
-				T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch,
-				T.c.query('.').value('(R/@MaxPayout)[1]', 'money') AS MaxPayoutPerMatch
-			FROM  @xml.nodes('/Root/R') T(c)   
-		END
 				
-		BEGIN TRY
-			IF @roleid IN (3,2)
-			BEGIN 
-				INSERT INTO CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-				SELECT @custid
-					,cs.SportType        
-					,cs.BetType          
-					,MinBet           
-					,MaxBet           
-					,MaxPerMatch      
-					,MaxPerNumber     
-					,MaxPayoutPerMatch
-				FROM @BetSetting cs
-					INNER JOIN #SportBettypeFilter26 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-			END
-			ELSE IF @roleid = 1
-			BEGIN
-				INSERT INTO CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-				SELECT @custid
-					,cs.SportType        
-					,cs.BetType          
-					,MinBet           
-					,MaxBet           
-					,MaxPerMatch      
-					,MaxPerNumber     
-					,MaxPayoutPerMatch
-				FROM @BetSetting cs
-					INNER JOIN #SportBettypeFilter26 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-			END
-		END TRY
-		BEGIN CATCH 
-			SELECT @ErrCode = 26			
-			DELETE FROM CustProductStatus WHERE CustID = @CustID			
-			IF @roleid > 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-				DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
-				DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-			END		
-			ELSE IF @roleid = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
-				DELETE FROM CustStakeLevel_Member WHERE CustID = @CustID
-				DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
-			END
-			RETURN	
-		END CATCH
 		
 		/********************************************* SB Parlay Max Payout : SettingType = 27 ****************************************/
 		CREATE TABLE #SportBettypeFilter27 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
@@ -1718,8 +1636,7 @@ BEGIN
 		DROP TABLE #SportBettypeFilter7			
 		DROP TABLE #SportBettypeFilter16
 		DROP TABLE #SportBettypeFilter20
-		DROP TABLE #SportBettypeFilter23
-		DROP TABLE #SportBettypeFilter26
+		DROP TABLE #SportBettypeFilter23		
 		DROP TABLE #SportBettypeFilter27
 	END	
 	

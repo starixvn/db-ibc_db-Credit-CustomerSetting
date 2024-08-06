@@ -18,7 +18,7 @@ AS
 	
 	Revisions: 
 		- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
-	
+		- 20240619@Johnson: Scale out dbcust [redmine:#199915]
 	Examples:
 		DECLARE @SettingType25 VARCHAR(MAX)= '',
 				@SettingType26 VARCHAR(MAX)= '',
@@ -82,7 +82,7 @@ BEGIN
 						, bl.MaxBet
 						, bl.MaxPerMatch AS MPM
 						, bl.MaxPayoutPerMatch AS MaxPayout
-					FROM dbo.CustBetSetting_Member bl WITH (NOLOCK)
+					FROM dbo.BetSetting_Member bl WITH (NOLOCK)
 						INNER JOIN @ProductSettingDetail fil ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType AND fil.SettingType = 26	
 					WHERE bl.custid = @ExistingCustID
 					ORDER BY fil.Child_DisplayOrder

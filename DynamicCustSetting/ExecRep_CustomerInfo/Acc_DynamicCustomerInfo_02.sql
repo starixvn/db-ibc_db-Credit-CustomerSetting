@@ -39,6 +39,7 @@ AS
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 202300801@Helios: Customer Setting - Simplify Live Casino Customer Setting [RedmineID: #189389] 
 		- 20231228@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240628@Johnson: scale out DBCUST [redmine: #199915]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
