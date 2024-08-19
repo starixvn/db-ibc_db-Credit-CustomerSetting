@@ -16,6 +16,7 @@ AS
 
 	 Revision:
 		- 20240628@Louisa: Initial [Redmine:#204370]
+		- 20240628@Louisa: transform historial data - 16 tables Deposite [Redmine:#207025]
 */
 BEGIN
 	
@@ -51,6 +52,104 @@ BEGIN
 						WHERE rID> @LastRID
 						ORDER BY rID )
 
+	--------------------------------------------------------------------------------
+	IF @TableName = 'Dep_CustBetSetting_Agent_History'	
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustBetSetting_Agent_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'Dep_CustBetSetting_Member_History'	
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustBetSetting_Member_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'Dep_CustBetSettingGame_Agent_History'	
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustBetSettingGame_Agent_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'Dep_CustBetSettingGame_Member_History'		
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustBetSettingGame_Member_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'Dep_CustBetSettingGameGroup_Member_History' 	
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+					FROM Dep_CustBetSettingGameGroup_Member_History WITH (NOLOCK) 
+					WHERE rID> @LastRID
+					ORDER BY rID )
+	
+	IF @TableName = 'Dep_CustDiscountSetting_Agent_History'		
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustDiscountSetting_Agent_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'Dep_CustDiscountSetting_Member_History'	
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustDiscountSetting_Member_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+	
+	IF @TableName = 'Dep_CustDiscountGroupSetting_Member_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustDiscountGroupSetting_Member_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'Dep_CustProductStatus_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustProductStatus_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'Dep_CustPTGroupSetting_Member_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustPTGroupSetting_Member_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+				
+	IF @TableName = 'Dep_CustPTSetting_Member_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustPTSetting_Member_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+		
+	IF @TableName = 'Dep_CustPTSetting_Agent_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustPTSetting_Agent_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'Dep_CustSettingGame_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustSettingGame_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+		
+	IF @TableName = 'Dep_CustSettingMode_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustSettingMode_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+		
+	IF @TableName = 'Dep_CustStakeLevel_Agent_History'	
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustStakeLevel_Agent_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+				
+	IF @TableName = 'Dep_CustStakeLevel_Member_History'	
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM Dep_CustStakeLevel_Member_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	--------------------------------------------------------------------------------
 
 	IF @UpdateTime IS NOT NULL AND DATEDIFF(MINUTE, @UpdateTime, @CurrentTime) > @CheckingTime
 	BEGIN
