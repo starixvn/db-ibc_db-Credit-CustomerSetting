@@ -29,9 +29,10 @@ AS
 		- 20240312@Elodie: Enhance SP [Redmine:#199517]
 		- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960] 
 		- 20240626@Eden: Tuning SP [Redmine: #207072]   
-		- 20240702@Eden: Hotfix - wrong Other RNG Casino status [Redmine: #207072]
+		- 20240702@Eden: Hotfix - wrong Other RNG Casino status [Redmine: #207072] 
+		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 
-	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 1
+	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 0
 */
 BEGIN
 	DECLARE @SiteID INT, @Currency TINYINT, @IsLaunched BIT
@@ -83,6 +84,9 @@ BEGIN
 											WHEN 171	THEN CAST(3801 AS SMALLINT)
 											WHEN 200	THEN CAST(1611 AS SMALLINT)
 											WHEN 240	THEN CAST(10801 AS SMALLINT)
+											----Keno/Lottery
+											WHEN 220	THEN CAST(1024	AS SMALLINT)
+											WHEN 222	THEN CAST(4901 AS SMALLINT)
 											ELSE ps.Bettype END AS Bettype, 
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) AS IsHidden, 
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsDisabled, ps.bitmapOrder)) AS IsDisabled, 
@@ -98,6 +102,7 @@ BEGIN
 								AND  (CASE WHEN psc.SportType IN (248,237,156,224) THEN 9906 --RNG Casino
 										   WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176) THEN 9911 --Live Casino
 										   WHEN psc.SportType IN (245,208,171,200,240) THEN 9918 --Other RNG Casino
+										   WHEN psc.SportType IN (220,222) THEN 9919 --Keno/Lottery
 										   ELSE psc.SportType END) = ps.Sporttype
 							) AS t
 			CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
@@ -139,6 +144,9 @@ BEGIN
 											WHEN 171	THEN CAST(3801 AS SMALLINT)
 											WHEN 200	THEN CAST(1611 AS SMALLINT)
 											WHEN 240	THEN CAST(10801 AS SMALLINT)
+											----Keno/Lottery
+											WHEN 220	THEN CAST(1024	AS SMALLINT)
+											WHEN 222	THEN CAST(4901 AS SMALLINT)
 											ELSE ps.Bettype END AS Bettype, 
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsHidden, ps.bitmapOrder)) AS IsHidden, 
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cs.bitmapIsDisabled, ps.bitmapOrder)) AS IsDisabled, 
@@ -154,6 +162,7 @@ BEGIN
 								AND  (CASE WHEN psc.SportType IN (248,237,156,224) THEN 9906 --RNG Casino
 										   WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176) THEN 9911 --Live Casino
 										   WHEN psc.SportType IN (245,208,171,200,240) THEN 9918 --Other RNG Casino
+										   WHEN psc.SportType IN (220,222) THEN 9919 --Keno/Lottery
 										   ELSE psc.SportType END) = ps.Sporttype
 							) AS t
 			CROSS APPLY dbo.CustProductStatus cs WITH (NOLOCK)
