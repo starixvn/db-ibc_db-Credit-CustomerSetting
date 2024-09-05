@@ -47,6 +47,7 @@ Revisions:
 	- 20241008@Winfred: [CTS] - Customer Classification - Classify Agent [redmine:#185799]
 	- 20241024@Johnson: Danger Setting - Update ABI 33/46 to ORI 33/46 [redmineID: ##208301]
 	- 20241206@Johnson: LAP - Update odds group for licensee [redmine:#199306]
+	- 20240807@Helios: Scale Out DBCUST - Apply Inhouse replication for tables of problem account [Redmine:#209747] 
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -291,7 +292,7 @@ BEGIN
 	BEGIN
 		IF (dbo.f_CheckRepTable('custinfo') = 0) RETURN
 		IF OBJECT_ID('Dep_Custsuper') IS NULL RETURN
-		
+				
 		CREATE TABLE #tblCustClass (custid INT,RoleID TINYINT, CustomerClass INT, OldCustomerClass SMALLINT, CategoryID INT, isDeposit BIT, isFinished BIT DEFAULT(0))
 		DECLARE @tmp TABLE (custid INT,RoleID TINYINT, CustomerClass INT, OldCustomerClass SMALLINT, CategoryID INT, isDeposit BIT)
 		DECLARE @tblCategory TABLE (CategoryID INT)
@@ -334,17 +335,27 @@ BEGIN
 			FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tmp t ON c.custid = t.custid AND t.roleid = 1
 			
-			IF (dbo.f_CheckRepTable('ProblemAccountClassification') = 1)  
-			BEGIN			
-				MERGE ProblemAccountClassification as Target
-				USING @tmp as Source
-				ON Target.custid = Source.custid 
-				WHEN MATCHED AND (ISNULL(source.CustomerClass,0) IN (SELECT CategoryID FROM @tblCategory))
-				THEN UPDATE SET ModifiedDate = GETDATE()
-				WHEN MATCHED AND ISNULL(source.CustomerClass,0) NOT IN (SELECT CategoryID FROM @tblCategory)
-				THEN DELETE 
-				WHEN NOT MATCHED BY TARGET AND (ISNULL(source.CustomerClass,0) IN (SELECT CategoryID FROM @tblCategory))
-				THEN INSERT(custid,isReviewed,ModifiedDate) VALUES(Source.custid,0,GETDATE());	
+			IF dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
+			BEGIN  			
+				INSERT INTO ProblemAccountClassification_Del_InHouse (CustID , RepUpdateTime)
+				SELECT CustID,RepUpdateTime
+				FROM (
+					
+					MERGE ProblemAccountClassification as Target
+					USING @tmp as Source
+					ON Target.custid = Source.custid 
+					WHEN MATCHED AND (ISNULL(source.CustomerClass,0) IN (SELECT CategoryID FROM @tblCategory))
+					THEN UPDATE SET ModifiedDate = GETDATE() , RepUpdateTime = [dbo].[f_GetDateTime2]()
+					
+					WHEN NOT MATCHED BY TARGET AND (ISNULL(source.CustomerClass,0) IN (SELECT CategoryID FROM @tblCategory))
+					THEN INSERT(custid,isReviewed,ModifiedDate,RepUpdateTime) VALUES(Source.custid,0,GETDATE(),[dbo].[f_GetDateTime2]())
+					
+					WHEN MATCHED AND ISNULL(source.CustomerClass,0) NOT IN (SELECT CategoryID FROM @tblCategory)
+					THEN DELETE 
+					OUTPUT $ACTION , source.custid AS CustID , [dbo].[f_GetDateTime2]() AS RepUpdateTime
+				) AS _Dlt (Action,CustID,RepUpdateTime)
+				WHERE Action = 'DELETE'
 			END
 						
 			IF EXISTS ( SELECT 1 FROM sys.tables WHERE Name='CustCategoryHistory')
@@ -365,6 +376,7 @@ BEGIN
 		END
 		
 		DROP TABLE #tblCustClass
+	
 	END
 	ELSE IF @mode = 'CustomerClassBySport'
 	BEGIN
