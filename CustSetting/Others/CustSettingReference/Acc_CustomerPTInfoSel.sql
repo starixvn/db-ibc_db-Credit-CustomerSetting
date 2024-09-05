@@ -12,8 +12,9 @@ AS
 	Original: DBTXN - Acc_CustomerSelRefSport_Bettype
 
 	Revisions:
-		--20231114@Johnson: Hide bettype SABA for site 777777 [redmine: #194591]
+		- 20231114@Johnson: Hide bettype SABA for site 777777 [redmine: #194591]
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
+		- 20240716@Tacy: Baseball AIO [RedmineID: #207510]
 
 	Param's Explanation:
 		@CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
@@ -47,7 +48,8 @@ BEGIN
 	WHERE Site = @Site
 	--End #194591
 	     
-	SELECT DISTINCT  b.typedesc , b1.typeid
+	SELECT DISTINCT  b.typedesc 
+				, CASE WHEN b.typeid=8827 THEN b.typeid ELSE b1.typeid END AS typeid
 	FROM bettype b WITH (NOLOCk)
 	INNER JOIN SportBettypeMatrix sbm WITH (NOLOCK) ON b.typeid = sbm.BetType
 	INNER JOIN bettype b1 WITH (NOLOCK) ON b.DisplayedTypeID = b1.typeid
