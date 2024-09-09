@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00] 
-	@CustID				INT
+	  @CustID			INT
 	, @SuperID			INT
 	, @MasterID			INT
 	, @AgentID			INT
@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_00]
 	, @copyFromCustID 	INT = 0
 	, @ErrCode			INT	= 0 OUTPUT
 	, @SettingStatus TINYINT = 0
+	, @ProductProfile	VARCHAR(MAX) = NULL OUTPUT -- Json
 AS
 /*
 	Created: 20150916@Dominic
@@ -53,6 +54,7 @@ AS
 		- 20230720@Tacy: Hotfix - [NAP/Alpha] New Account Missing Bet Setting Bitcoin [RedmineID: #191556]
 		- 202300801@Helios: Customer Setting - Simplify Live Casino Customer Setting [RedmineID: #189389]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
@@ -90,7 +92,7 @@ BEGIN
 	SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID
 	SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
 
-	IF dbo.f_CheckRepTable('ProductSettingDetail') = 1
+	IF dbo.f_CheckRepTable('ProductStatusProfile') = 1
 	BEGIN
 		INSERT INTO #ProductSettingDetail_tmp00(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder)
@@ -100,7 +102,6 @@ BEGIN
 	END
 
 	if (dbo.f_CheckRepTable('CustProductStatus') = 1
-		AND dbo.f_CheckRepTable('ProductSettingDetail') = 1 
 		AND dbo.f_CheckRepTable('ProductStatusProfile') = 1
 		AND dbo.f_CheckRepTable('ProductStatusSiteCurrency') = 1
 	)
@@ -352,7 +353,7 @@ BEGIN
 		AND dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1
 		AND dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 1
 		AND dbo.f_CheckRepTable('CustWinLossLimit_Member') = 1
-		AND dbo.f_CheckRepTable('ProductSettingDetail') = 1 
+		AND dbo.f_CheckRepTable('ProductStatusProfile') = 1 
 		AND	dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1
 		AND	dbo.f_CheckRepTable('CustStakeLevel_Member') = 1
 		AND	dbo.f_CheckRepTable('CustBetSetting_Agent') = 1
@@ -370,13 +371,14 @@ BEGIN
 			[SportType] [smallint] NOT NULL,
 			[BetType] [smallint] NOT NULL,
 			[IsHidden] [BIT] NOT NULL,
-			[DummyProductID] [tinyint] NOT NULL
+			[DummyProductID] [tinyint] NOT NULL,
+			[ProductSettingID] [int]
 		)
 
 		IF @RoleID = 4
 		BEGIN
-			INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden,DummyProductID)
-			SELECT RealProductId, SportType, BetType, IsHidden,ProductID
+			INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden,DummyProductID,ProductSettingID)
+			SELECT RealProductId, SportType, BetType, IsHidden,ProductID,ProductSettingID
 			FROM #ProductSettingDetail_tmp00 WITH (NOLOCK)
 			WHERE SettingType IN (4,11,13,21)
 		
@@ -403,16 +405,53 @@ BEGIN
 				  ,ps.BetType
 				  ,IsLive
 			FROM #ProductSettingDetail_tmp00 ps WITH(NOLOCK)
-				INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
-			WHERE op.IsHidden = 0 AND ps.SettingType NOT IN (4,11,13,21)
+				INNER JOIN (
+								SELECT DISTINCT ProductID
+								FROM #OfferedProductList WITH (NOLOCK) 
+								WHERE IsHidden = 0
+							) op ON ps.RealProductId = op.ProductID
+			WHERE ps.SettingType NOT IN (4,11,13,21) 
+				AND ps.Parent_ProductSettingID IS NULL
 			UNION
 			SELECT ps.SettingType
 				  ,ps.SportType
 				  ,ps.BetType
 				  ,IsLive
 			FROM #ProductSettingDetail_tmp00 ps WITH(NOLOCK)
-				INNER JOIN (SELECT DISTINCT ProductID, IsHidden,DummyProductID FROM #OfferedProductList WITH (NOLOCK)) op ON ps.ProductID = op.DummyProductID
-			WHERE op.IsHidden = 0 AND ps.SettingType = 22
+				INNER JOIN (
+								SELECT DISTINCT DummyProductID 
+								FROM #OfferedProductList WITH (NOLOCK)
+								WHERE IsHidden = 0
+							) op ON ps.ProductID = op.DummyProductID
+			WHERE ps.SettingType = 22 
+				AND ps.Parent_ProductSettingID IS NULL
+			UNION -- Ref Status
+			SELECT SettingType
+				  ,ps.SportType
+				  ,ps.BetType
+				  ,ps.IsLive
+			FROM #ProductSettingDetail_tmp00 ps WITH(NOLOCK)
+				INNER JOIN (
+								SELECT DISTINCT ProductSettingID
+								FROM #OfferedProductList WITH (NOLOCK) 
+								WHERE IsHidden = 0
+							) op ON ps.Parent_ProductSettingID = op.ProductSettingID
+			WHERE ps.SettingType NOT IN (4,11,13,21)
+			UNION -- alway offer
+			SELECT SettingType
+				  ,ps.SportType
+				  ,ps.BetType
+				  ,ps.IsLive
+			FROM #ProductSettingDetail_tmp00 ps WITH(NOLOCK)
+			WHERE ps.SettingType NOT IN (4,11,13,21)
+				AND ps.Parent_ProductSettingID = 0
+			
+			--Output Json
+			SELECT @ProductProfile = (
+				SELECT SettingType,SportType,BetType,IsLive
+				FROM #ProductProfile
+				FOR JSON PATH
+			)
 
 		END
 
@@ -1876,6 +1915,7 @@ BEGIN
 		END CATCH
 
 		/********************************************* Bet Limit : SettingType = 23 ****************************************/
+		/*
 		CREATE TABLE #SportBettypeFilter23 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT,SubType TinyINT)
 		
 		INSERT INTO #SportBettypeFilter23(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId,SubType)
@@ -2179,6 +2219,7 @@ BEGIN
 
 			RETURN
 		END CATCH
+		*/
 
 		DROP TABLE #SportBettypeFilter1
 		DROP TABLE #SportBettypeFilter2
@@ -2188,7 +2229,7 @@ BEGIN
 		DROP TABLE #SportBettypeFilter7
 		DROP TABLE #SportBettypeFilter9
 		DROP TABLE #SportBettypeFilter20
-		DROP TABLE #SportBettypeFilter23
+		--DROP TABLE #SportBettypeFilter23
 	END
 
 	DROP TABLE #ProductSettingDetail_tmp00

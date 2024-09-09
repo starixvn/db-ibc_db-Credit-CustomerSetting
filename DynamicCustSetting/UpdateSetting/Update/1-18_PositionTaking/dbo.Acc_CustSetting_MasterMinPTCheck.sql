@@ -19,6 +19,7 @@ AS
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
 
 	Parameter's Explanations:
 		@PT = <ROOT>
@@ -65,7 +66,7 @@ BEGIN
 	WHERE mcs.custid = @MasterID 	
 	-- end read xml	
 
-	CREATE TABLE #ProductSettingDetail_MMinCheck(
+	CREATE TABLE #ProductSettingProfile_MMinCheck(
 		[SettingType] [smallint],
 		[SportType] [smallint],
 		[BetType] [smallint],
@@ -76,14 +77,14 @@ BEGIN
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingDetail_MMinCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+	INSERT INTO #ProductSettingProfile_MMinCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
 	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @tblPT t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -104,7 +105,7 @@ BEGIN
 								ELSE 0 END)
 	FROM dbo.CustPTSetting3rd_Agent s WITH (NOLOCK) 
 		INNER JOIN @tblPT m ON s.sporttype = m.sporttype AND s.bettype = m.bettype AND s.IsLive = m.IsLive
-		INNER JOIN #ProductSettingDetail_MMinCheck ps WITH(NOLOCK) ON m.SportType = ps.Sporttype AND m.BetType = ps.bettype AND m.IsLive = ps.IsLive
+		INNER JOIN #ProductSettingProfile_MMinCheck ps WITH(NOLOCK) ON m.SportType = ps.Sporttype AND m.BetType = ps.bettype AND m.IsLive = ps.IsLive
 	WHERE s.custid = @SuperID AND ps.SettingType IN (1,18)
 	
 	SELECT @ErrCode = ISNULL(@ErrCode,0)
@@ -115,7 +116,7 @@ BEGIN
 			(
 				SELECT t.SportType, t.BetType, t.IsLive
 				FROM @tblPT t
-					INNER JOIN #ProductSettingDetail_MMinCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype AND t.BetType = ps.bettype AND t.IsLive = ps.IsLive
+					INNER JOIN #ProductSettingProfile_MMinCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype AND t.BetType = ps.bettype AND t.IsLive = ps.IsLive
 				WHERE ps.SettingType IN (1,18)--PT
 					AND t.MasterMinPT < 0										
 				FOR XML RAW('Row'), TYPE
@@ -158,5 +159,5 @@ BEGIN
         
 	SELECT @ErrCode = 0
 
-	DROP TABLE #ProductSettingDetail_MMinCheck
+	DROP TABLE #ProductSettingProfile_MMinCheck
 END 

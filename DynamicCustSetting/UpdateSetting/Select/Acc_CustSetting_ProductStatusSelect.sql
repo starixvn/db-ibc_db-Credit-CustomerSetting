@@ -9,7 +9,8 @@ AS
  
 	Revision: 
 		- 20160801@Elodie: Implementing GameStatus Setting - [Redmine: #60809]
-		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]	
+		- 20160801@Elodie: Implementing NewProductStatus Plugin - [Redmine #70722]
+		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
 	Param's Explanation:  
    
  */  
@@ -23,7 +24,7 @@ BEGIN
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, PSP.bitmapOrder)) AS IsHidden
 		FROM DBAGE.bodb02.dbo.Products P WITH (NOLOCK)
-			INNER JOIN dbo.ProductSettingDetail psd WITH(NOLOCK)  ON P.productID = PSD.ProductID
+			INNER JOIN dbo.ProductSettingProfile psd WITH(NOLOCK)  ON P.productID = PSD.ProductID
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = psd.SportType AND psp.Bettype = psd.BetType
 			INNER JOIN dbo.CustProductStatus cps  WITH (NOLOCK) ON cps.CustID =  @CustID
 		WHERE psd.SettingType IN (4	,11, 13)
@@ -41,7 +42,7 @@ BEGIN
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, PSP.bitmapOrder)) AS IsHidden
 			FROM DBAGE.bodb02.dbo.Products P WITH (NOLOCK)
-				INNER JOIN dbo.ProductSettingDetail psd WITH(NOLOCK)  ON P.productID = PSD.ProductID
+				INNER JOIN dbo.ProductSettingProfile psd WITH(NOLOCK)  ON P.productID = PSD.ProductID
 				INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = psd.SportType AND psp.Bettype = psd.BetType
 				INNER JOIN dbo.CustProductStatus cps  WITH (NOLOCK) ON cps.CustID IN (SELECT CustID FROM custInfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)
 			WHERE psd.SettingType IN (4	,11, 13)
@@ -53,7 +54,7 @@ BEGIN
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, PSP.bitmapOrder)) AS IsHidden
 			FROM DBAGE.bodb02.dbo.Products P WITH (NOLOCK)
-				INNER JOIN dbo.ProductSettingDetail psd WITH(NOLOCK)  ON P.productID = PSD.ProductID
+				INNER JOIN dbo.ProductSettingProfile psd WITH(NOLOCK)  ON P.productID = PSD.ProductID
 				INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = psd.SportType AND psp.Bettype = psd.BetType
 				INNER JOIN dbo.CustProductStatus cps  WITH (NOLOCK) ON cps.CustID IN (SELECT CustID FROM custInfo WITH (NOLOCK) WHERE mrecommend = @CustID AND roleid = 2)
 			WHERE psd.SettingType IN (4	,11, 13)
@@ -65,7 +66,7 @@ BEGIN
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, PSP.bitmapOrder)) AS IsHidden
 			FROM DBAGE.bodb02.dbo.Products P WITH (NOLOCK)
-				INNER JOIN dbo.ProductSettingDetail psd WITH(NOLOCK)  ON P.productID = PSD.ProductID
+				INNER JOIN dbo.ProductSettingProfile psd WITH(NOLOCK)  ON P.productID = PSD.ProductID
 				INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = psd.SportType AND psp.Bettype = psd.BetType
 				INNER JOIN dbo.CustProductStatus cps  WITH (NOLOCK) ON cps.CustID IN (SELECT CustID FROM custInfo WITH (NOLOCK) WHERE recommend = @CustID AND roleid = 1)
 			WHERE psd.SettingType IN (4	,11, 13)

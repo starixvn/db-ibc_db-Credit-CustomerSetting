@@ -28,6 +28,7 @@ AS
 		- 20240118@Eden: avoid data duplicate of Esport & Muay Thai Betsetting [redmine: #199970]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
+		- 20240520@Eden: Unify RNG Games [redmine: #204358]  
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
 						<R SportType="1" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
@@ -48,7 +49,7 @@ AS
 						<R SportType="220" BetType="1024" MinBet="1" MaxBet="100" MPM="1000" />						
 					</Root>'
 		- @SettingType16 = '<Root>
-						<R SportType="175" BetType="7901" MinBet="1" MaxBet="100" MPM="1000" />
+						<R SportType="175" BetType="7901" MinBet="1" MaxBet="100" MPM="1000" /> 
 					</Root>'			
 		
 */	
@@ -89,13 +90,15 @@ BEGIN
 		[GroupType] [tinyint],
 		[SettingLevel] [tinyint],
 		Child_DisplayOrder	INT,
+		SubType TINYINT,
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 	
-	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,GroupID,GroupType,SettingLevel,Child_DisplayOrder)
+	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,GroupID,GroupType,SettingLevel,Child_DisplayOrder,SubType)
 	SELECT SportType,BetType,SettingType,IsLive,GroupID,GroupType,
 		2 as SettingLevel,--Sporttype
-		Child_DisplayOrder
+		Child_DisplayOrder,
+		SubType
 	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 	WHERE SettingType IN (26,2,23,16)
 	
@@ -635,19 +638,23 @@ BEGIN
 				RETURN
 		END
 		
-		--NG,Happy5
+		--Settingtype 23
 		INSERT INTO @Upline_BetSetting (SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber)
 		SELECT  cb.Sporttype,cb.Bettype,
 				MinBet = ISNULL(MAX(CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
 				MaxBet = ISNULL(MIN(CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
 				MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0),
-				MaxPerNumber = ISNULL(MIN(CASE WHEN cb.MaxPerNumber = 0 THEN NULL ELSE cb.MaxPerNumber END),0)
-		FROM CustBetSetting_Agent cb WITH (NOLOCK,FORCESEEK)
+				MaxPerNumber = CASE WHEN MAX(d.SubType) = 2 THEN ISNULL(MIN(CASE WHEN cb.MaxPerNumber = 0 THEN NULL ELSE cb.MaxPerNumber END),0) END
+		FROM BetSetting3rd_Agent cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
+			INNER JOIN #ProductSettingDetail_Check d 
+				ON b.SportType = d.SportType
+				AND b.BetType = d.BetType
+				AND d.SettingType = 23
 		WHERE cb.custid IN (@srecommend,@mrecommend,@recommend)
 		GROUP BY cb.Sporttype,cb.Bettype
 
-		--RNG Lottery,VS..
+		--Other Settingtype
 		INSERT INTO @Upline_BetSetting (SportType,BetType,MinBet,MaxBet,MaxPerMatch)
 		SELECT  cb.Sporttype,cb.Bettype,
 				MinBet = ISNULL(MAX(CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
@@ -655,6 +662,10 @@ BEGIN
 				MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0)
 		FROM CustBetSetting3rd_Agent cb WITH (NOLOCK,FORCESEEK)
 			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
+			INNER JOIN #ProductSettingDetail_Check d 
+				ON b.SportType = d.SportType
+				AND b.BetType = d.BetType
+				AND d.SettingType <> 23
 		WHERE cb.custid IN (@srecommend,@mrecommend,@recommend)
 		GROUP BY cb.Sporttype,cb.Bettype
 

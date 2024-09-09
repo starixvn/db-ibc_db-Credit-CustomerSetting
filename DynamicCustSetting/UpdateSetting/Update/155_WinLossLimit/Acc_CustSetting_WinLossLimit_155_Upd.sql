@@ -21,6 +21,7 @@ AS
 	Original:	
 	Revisions:
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
+	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 
 	Param's Explanation:
 	- @Limit:
@@ -384,8 +385,8 @@ BEGIN
 
 	DECLARE @ActionID INT
 
-	SELECT @ActionID = CASE WHEN @GroupID = 3 THEN 852 
-							END
+	SELECT @ActionID = 852
+
 	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper 
 					  @UserID = @UserID
 					, @CustID			= @CustID

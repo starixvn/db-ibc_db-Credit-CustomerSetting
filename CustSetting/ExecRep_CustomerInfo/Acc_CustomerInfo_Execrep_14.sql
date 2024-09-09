@@ -48,6 +48,7 @@ AS
 			- 20231017@Johnson: extend MaxPT for SB = 0.93 [redmine:#195578]
 			- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 			- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
+			- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	Param's Explanation: 
 	
 */
@@ -1400,148 +1401,6 @@ BEGIN
 			RETURN	
 		END CATCH
 		
-		/********************************************* Bet Limit : SettingType = 23 ****************************************/
-		CREATE TABLE #SportBettypeFilter23 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT,SubType TinyINT)
-		
-		INSERT INTO #SportBettypeFilter23(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId,SubType)
-		SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId,SubType
-		FROM #ProductSettingDetail_tmp00
-		WHERE SettingType IN (23)
-		
-		DELETE @BetSetting
-		
-		IF ISNULL(@SettingType23,'') <> ''
-		BEGIN			
-			SELECT @xml = CONVERT(XML,@SettingType23)
-			
-			INSERT INTO @BetSetting(SportType, 
-				BetType, 
-				MinBet, 
-				MaxBet, 
-				MaxPerMatch, 
-				MaxPerNumber)
-			SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
-				T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
-				T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
-				T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
-				T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch,
-				T.c.query('.').value('(R/@MaxPerNumber)[1]', 'money') AS MaxPerNumber
-			FROM  @xml.nodes('/Root/R') T(c)  
-		END
-
-		BEGIN TRY
-			IF @RoleID IN (3,2)
-			BEGIN				
-				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
-				   ([CustID]
-				   ,[SportType]
-				   ,[BetType]
-				   ,[MinBet]
-				   ,[MaxBet]
-				   ,[MaxPerMatch])
-				SELECT
-					@CustID
-					,cs.SportType
-					,cs.BetType
-					,MinBet
-					,MaxBet
-					,MaxPerMatch
-				FROM @BetSetting cs 
-					INNER JOIN #SportBettypeFilter23 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-				WHERE s.SubType = 1
-
-				INSERT INTO [dbo].[CustBetSetting_Agent]
-				   ([CustID]
-				   ,[SportType]
-				   ,[BetType]
-				   ,[MinBet]
-				   ,[MaxBet]
-				   ,[MaxPerMatch]
-				   ,[MaxPerNumber]
-				   ,MaxPayoutPerMatch
-				   )
-				SELECT
-					@CustID
-					,cs.SportType
-					,cs.BetType
-					,MinBet
-					,MaxBet
-					,MaxPerMatch
-					,MaxPerNumber
-					,MaxPayoutPerMatch
-				FROM @BetSetting cs
-					INNER JOIN #SportBettypeFilter23 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-				WHERE s.SubType = 2
-			END
-			ELSE IF @roleid = 1
-			BEGIN
-				INSERT INTO [dbo].[CustBetSetting3rd_Member]
-				   ([CustID]
-				   ,[SportType]
-				   ,[BetType]
-				   ,[MinBet]
-				   ,[MaxBet]
-				   ,[MaxPerMatch])
-				SELECT
-					@CustID
-					,cs.SportType
-					,cs.BetType
-					,MinBet
-					,MaxBet
-					,MaxPerMatch
-				FROM @BetSetting cs 
-					INNER JOIN #SportBettypeFilter23 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-				WHERE s.SubType = 1
-				
-				INSERT INTO [dbo].[CustBetSetting_Member]
-				   ([CustID]
-				   ,[SportType]
-				   ,[BetType]
-				   ,[MinBet]
-				   ,[MaxBet]
-				   ,[MaxPerMatch]
-				   ,[MaxPerNumber]
-				   ,MaxPayoutPerMatch
-				   )
-				SELECT
-					@CustID
-					,cs.SportType
-					,cs.BetType
-					,MinBet
-					,MaxBet
-					,MaxPerMatch
-					,MaxPerNumber
-					,MaxPayoutPerMatch
-				FROM @BetSetting cs
-					INNER JOIN #SportBettypeFilter23 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-				WHERE s.SubType = 2
-			END
-		END TRY
-		BEGIN CATCH
-			SELECT @ErrCode = 23			
-			DELETE FROM CustProductStatus WHERE CustID = @CustID			
-			IF @roleid > 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID					
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-				DELETE FROM CustStakeLevel_Agent WHERE CustID = @CustID
-				DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-			END		
-			ELSE IF @roleid = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
-				DELETE FROM CustStakeLevel_Member WHERE CustID = @CustID
-				DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
-			END
-			RETURN	
-		END CATCH
-				
 		
 		/********************************************* SB Parlay Max Payout : SettingType = 27 ****************************************/
 		CREATE TABLE #SportBettypeFilter27 (ProductID TINYINT, SportType SMALLINT,Bettype SMALLINT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
@@ -1636,7 +1495,6 @@ BEGIN
 		DROP TABLE #SportBettypeFilter7			
 		DROP TABLE #SportBettypeFilter16
 		DROP TABLE #SportBettypeFilter20
-		DROP TABLE #SportBettypeFilter23		
 		DROP TABLE #SportBettypeFilter27
 	END	
 	

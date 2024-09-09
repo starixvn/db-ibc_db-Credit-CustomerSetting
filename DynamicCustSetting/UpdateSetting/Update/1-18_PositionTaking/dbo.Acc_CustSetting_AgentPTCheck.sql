@@ -25,6 +25,8 @@ AS
 			- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 			- 20210112@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]	
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358] 
+
 		Parameter's Explanations:
 		
 	*/
@@ -77,7 +79,7 @@ BEGIN
 		INNER JOIN CustPTSetting3rd_Agent AS acs WITH (NOLOCK) ON acs.sporttype = b.sporttype AND acs.bettype = b.bettype AND acs.isLive = b.IsLive					
 	WHERE acs.custid = @AgentID
 
-	CREATE TABLE #ProductSettingDetail_ACheck(
+	CREATE TABLE #ProductSettingProfile_ACheck(
 		[SettingType] [smallint],
 		[SportType] [smallint],
 		[BetType] [smallint],
@@ -88,7 +90,7 @@ BEGIN
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingDetail_ACheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+	INSERT INTO #ProductSettingProfile_ACheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
 	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
@@ -97,7 +99,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @tblPT t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -112,7 +114,7 @@ BEGIN
 		( 			
 			SELECT t.SportType, t.BetType, t.IsLive
 			FROM @tblPT t
-				INNER JOIN #ProductSettingDetail_ACheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+				INNER JOIN #ProductSettingProfile_ACheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
 																	AND t.BetType = ps.bettype 
 																	AND t.IsLive = ps.IsLive		
 			WHERE ps.SettingType IN (1,18) --PT
@@ -559,5 +561,5 @@ BEGIN
 		END
 	 END-- end check    
 	 
-	 DROP TABLE #ProductSettingDetail_ACheck
+	 DROP TABLE #ProductSettingProfile_ACheck
 END

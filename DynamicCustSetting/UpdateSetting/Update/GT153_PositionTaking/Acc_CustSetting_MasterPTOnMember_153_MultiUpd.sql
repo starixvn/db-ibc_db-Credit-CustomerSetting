@@ -21,7 +21,8 @@ AS
 
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
-		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
+		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+		- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 
 	Parameter's Explanation:	
 	- @PT:  [
@@ -190,27 +191,25 @@ BEGIN
 		
 	--Check limit PT update	
 	DECLARE @isLimit BIT = 0, @isCancel BIT = 0, @LastUpdated DATE
-	IF @GroupID = 3  -- Apply for 3rd products
+	IF @isCountPT = 1
 	BEGIN
-		IF @isCountPT = 1
-		BEGIN
-			EXEC dbo.Age_LimitPTCheck_MultiCust	  @Actorid	= @UserID, 
-			  @custIdList			=	@CustIDList,
-			  @UpdatePT				=	@PT,
-			  @SettingStatus		=   @SettingStatus,
-			  @isLimit				=	@isLimit OUTPUT,
-			  @isCancel				=	@isCancel OUTPUT,
-			  @LastUpdated			=	@LastUpdated OUTPUT
+		EXEC dbo.Age_LimitPTCheck_MultiCust	  @Actorid	= @UserID, 
+			@custIdList			=	@CustIDList,
+			@UpdatePT				=	@PT,
+			@SettingStatus		=   @SettingStatus,
+			@isLimit				=	@isLimit OUTPUT,
+			@isCancel				=	@isCancel OUTPUT,
+			@LastUpdated			=	@LastUpdated OUTPUT
 
-			IF @isCancel > 0	
-			BEGIN
-				SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
-				  , @ErrCode = 10078
-				  , @MsgType = 6   
-					RETURN
-			END
+		IF @isCancel > 0	
+		BEGIN
+			SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
+				, @ErrCode = 10078
+				, @MsgType = 6   
+				RETURN
 		END
 	END
+	
 
 --******************************************PREPARE SETTING FOR UPDATE*************************************** 	
 	--Parse XML

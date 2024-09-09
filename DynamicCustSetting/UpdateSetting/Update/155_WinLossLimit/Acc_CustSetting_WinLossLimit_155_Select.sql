@@ -12,6 +12,7 @@ AS
 	Original:
 	Revisions:
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
+	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 	
 	Param's Explanation:
 		• @SettingType: 6,22: WinLossLimit
@@ -59,7 +60,8 @@ BEGIN
 	--BEGIN		
 	IF @RoleID = 4
 		BEGIN
-			SELECT	sbf.ProductID,
+			SELECT
+				CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
 				wl.SportType,
 				wl.BetType,
 				wl.MaxWinLimit,
@@ -82,7 +84,7 @@ BEGIN
 		END
 	ELSE IF @RoleID IN (3,2)
 		BEGIN
-			SELECT	sbf.ProductID,
+			SELECT	CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
 					wl.SportType,
 					wl.BetType,
 					wl.MaxWinLimit,
@@ -107,7 +109,7 @@ BEGIN
 		END
 	ELSE
 		BEGIN
-			SELECT	sbf.ProductID,
+			SELECT	CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
 					wl.SportType,
 					wl.BetType,
 					wl.MaxWinLimit,

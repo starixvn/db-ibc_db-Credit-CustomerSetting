@@ -8,6 +8,7 @@ AS
 	
 	Revision:
 		- 20221121@Eden: Init function [RedmineID: #180640]
+		- 20240521@Helios: Unify RNG Games - Move from table ProductSettingDetail to ProductSettingProfile [Redmine: #204358] 
 
 	Param's Explanation:
 	SELECT * FROM dbo.f_CustSetting_ProductSettingDetailSel(3)
@@ -15,7 +16,7 @@ AS
 RETURN
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder, SubType
-	FROM dbo.ProductSettingDetail WITH(NOLOCK)
+	FROM dbo.ProductSettingProfile WITH(NOLOCK)
 	WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1
 								WHEN @SettingStatus = 0 THEN 0
 								ELSE NULL END 
@@ -23,7 +24,7 @@ RETURN
 	UNION ALL
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder, SubType
-	FROM dbo.ProductSettingDetail_UAT WITH(NOLOCK)
+	FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
 	WHERE @SettingStatus = 3
 		AND SettingStatus <> 2
 GO

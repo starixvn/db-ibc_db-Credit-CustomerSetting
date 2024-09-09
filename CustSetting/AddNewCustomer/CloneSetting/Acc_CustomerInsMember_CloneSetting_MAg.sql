@@ -108,6 +108,7 @@ AS
 	- 20240229@Johnson: no need check permission for 777 on Alpha [redmine: #201574]
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240607@Johnson: scale out DBCUST [redmine: #199915]
+	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -164,14 +165,15 @@ BEGIN
 
 
 	-- Check role and master of existing agent
-	DECLARE @existingUsername varchar(30),@roleid tinyint, @existingMrecommend int, @Enabled BIT, @currency INT, @site NVARCHAR(50), @ExistingSrecommend INT
+	DECLARE @existingUsername varchar(30),@roleid tinyint, @existingMrecommend int, @Enabled BIT, @currency INT, @site NVARCHAR(50), @ExistingSrecommend INT, @SiteID INT
 	
 	SELECT @existingUsername =  ISNULL(username,''), @roleid = ISNULL(roleid,0), @existingMrecommend = ISNULL(mrecommend,0), @Enabled = ISNULL(Enabled, 0), @currency = currency, @ExistingSrecommend = srecommend
 	FROM dbo.CustInfo WITH(NOLOCK) 
 	WHERE custid = @ExistingCustid
 	
 	SET @site = (SELECT Site FROM dbo.Customer WITH (NOLOCK) WHERE custid = @ExistingCustid)
-	
+	SELECT @SiteID = SiteID FROM Site  WITH (NOLOCK) WHERE site = @site
+
 	IF ( NOT (@roleid = 2 AND @existingMrecommend = @mrecommend))
 	BEGIN		
 		 SELECT @ErrMsg = CASE @Language 
@@ -376,25 +378,11 @@ BEGIN
 							end
 				,@ErrCode = 103
 				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.customer With (ROWLOCK) WHERE CustID = @CustID			
+			-- ROLLBACK MANUALLY	
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 			RETURN
 		END	
 	END CATCH
-	
-	--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @Custid, 0, 2, @ErrCode, @ErrMsg
---	IF @ErrCode <> 0
---	BEGIN
---			SELECT @ErrMsg = CASE @Language 
---							    WHEN 'E' THEN 'Create customer failed. Please try again.'
---							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
---						    END
---				, @ErrCode = 107
---		 -- ROLLBACK MANUALLY
---			DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-			
---			RETURN
---	END
 	
 	SET @recommend = @custid
 	UPDATE Customer WITH (ROWLOCK, UPDLOCK) 
@@ -409,10 +397,8 @@ BEGIN
 						end
 			,@ErrCode = 104
 			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.customer With (ROWLOCK) WHERE CustID = @CustID			
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END	
 			
@@ -434,13 +420,9 @@ BEGIN
 		  END,  
 		@ErrCode = 105  
 
-		-- ROLLBACK MANUALLY  
-
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
-		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		
-		RETURN  
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
 	END  
 
 	DECLARE @enableUpline bit, @doubleCommLosingUpline bit, @virtualmultiplier SMALLMONEY
@@ -528,31 +510,56 @@ BEGIN
 							end
 				,@ErrCode = 106
 					
-		-- ROLLBACK MANUALLY			
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
-		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID  
-		DELETE FROM dbo.custInfo WITH(ROWLOCK) WHERE custId = @CustID  		  
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
 		RETURN
 	END CATCH
 
-	SELECT @CreditRM = @credit * actualrate
-	FROM dbo.exchange WITH (NOLOCK) 
-	WHERE exchangeid = @currency
+	BEGIN TRY
+		SELECT @CreditRM = @credit * actualrate
+		FROM dbo.exchange WITH (NOLOCK) 
+		WHERE exchangeid = @currency
 
-	IF @CreditRM > 300000
-	BEGIN
-		INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2)
-		SELECT @CustId, 1, 0
-	END
-	
+		IF @CreditRM > 300000
+		BEGIN
+			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2)
+			SELECT @CustId, 1, 0
+		END
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+				,@ErrCode = 106
+
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
+	END CATCH
+
+	DECLARE @ProductProfile VARCHAR(MAX) = ''
+
+	BEGIN TRY
 		EXEC dbo.Acc_CustomerInfo_Execrep_02
 			@custid = @custid,
 			@ExistingCustid = @ExistingCustid,
 			@SettingStatus = @SettingStatus,
+			@ProductProfile = @ProductProfile OUTPUT,
 			@ErrCode = @ErrCode output
-	
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+				,@ErrCode = 106
+
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
+	END CATCH		
 	IF @ErrCode > 0 
 	BEGIN
 		SELECT @ErrMsg = case @Language 
@@ -561,20 +568,55 @@ BEGIN
 							end
 
 		-- ROLLBACK MANUALLY	
-		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 				
 		RETURN
 	END
 	
+	-- Start : Initialize Data 3rd Products
+	BEGIN TRY
+		EXEC dbo.Acc_Custsetting_CloneSetting_3rdProductIns
+			@custid = @custid,
+			@ExistingCustID = @ExistingCustid,
+			@RoleID = @RoleID,
+			@SiteID = @SiteID,
+			@Currency = @Currency,
+			@ProductProfile = @ProductProfile,
+			@ErrCode = @ErrCode OUTPUT,
+			@SettingStatus	= @SettingStatus
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+				,@ErrCode = 106
+
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
+	END CATCH
+	IF @ErrCode > 0 
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							end
+
+		-- ROLLBACK MANUALLY			
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
+	END
+	-- End : Initialize Data 3rd Products
+	
+	-- Start : Initialize Data SportsBook
 	EXEC dbo.Acc_Custsetting_CloneSetting_SportsbookIns
 			@custid = @custid,
 			@ExistingCustid = @ExistingCustid,
 			@SettingStatus = @SettingStatus,
 			@ErrCode = @ErrCode output
-	
 	IF @ErrCode > 0 
 	BEGIN
 		SELECT @ErrMsg = case @Language 
@@ -582,14 +624,12 @@ BEGIN
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							end
 
-		-- ROLLBACK MANUALLY	
-		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 				
 		RETURN
 	END
+	-- End : Initialize Data SportsBook
 	
 	If @SystemID IN (2, 10) -- ALPHA, Chatbot
 	BEGIN
@@ -600,10 +640,9 @@ BEGIN
 								when 'E' then 'Create customer fail. Please try again'
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							END
-			DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  
-			DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
+			-- ROLLBACK MANUALLY	
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 			RETURN
 		END	
 	END
@@ -657,15 +696,10 @@ BEGIN
 							end,
 			@ErrCode = 114
 			
-		-- ROLLBACK MANUALLY		
-		DELETE FROM custAgent WITH(ROWLOCK) WHERE custId = @CustID  	    
-		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID	
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid			
-		
-		
-		RETURN	
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
 	END 
 	
 	BEGIN TRY
@@ -681,15 +715,10 @@ BEGIN
 							end
 				,@ErrCode = 106
 			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid
-		
-		RETURN	
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
 	END CATCH	
 	
 	BEGIN TRY
@@ -750,15 +779,10 @@ BEGIN
 							end
 				,@ErrCode = 106
 			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid					
-		RETURN	
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
 	END CATCH	
 
 	BEGIN TRY
@@ -777,17 +801,10 @@ BEGIN
 							end
 				,@ErrCode = 106
 			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		
-		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid						
-		RETURN	
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
 	END CATCH
 
 	BEGIN TRY
@@ -805,17 +822,10 @@ BEGIN
 							end
 				,@ErrCode = 106
 			
-		-- ROLLBACK MANUALLY
-		DELETE FROM dbo.Customer WITH(ROWLOCK) WHERE CustID = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @Custid
-		DELETE FROM dbo.CustInfo WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID  	
-		DELETE FROM CustLoginInfo WITH(ROWLOCK) WHERE custid = @Custid
-		DELETE FROM dbo.CustVirtualSetting WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid
-		DELETE FROM CustLimitPTSetting WITH (ROWLOCK) WHERE custId =@custid						
-		RETURN	
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
 	END CATCH
 	
 	SET @endRun=GETDATE()

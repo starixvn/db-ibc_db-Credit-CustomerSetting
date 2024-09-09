@@ -13,6 +13,7 @@ RETURNS @SportBetTypeSetting TABLE (ProductID TINYINT, SportType SMALLINT, Betty
 		- 20200403@Elodie: Get RealProductID [Redmine: #129440]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20240521@Helios: Unify RNG Games - Move from table ProductSettingDetail to ProductSettingProfile [Redmine: #204358]
 	Explanation's Param:
 		@SettingStatus: 0: Pro, 1: UAT
 		
@@ -22,7 +23,7 @@ BEGIN
 	BEGIN
 		INSERT @SportBetTypeSetting(ProductID, SportType,Bettype,IsLive, SettingType, RealProductId, SubType, Child_DisplayOrder)
 		SELECT DISTINCT ProductID, SportType,Bettype,IsLive, SettingType, RealProductId, SubType, Child_DisplayOrder 
-		FROM dbo.ProductSettingDetail WITH(NOLOCK)
+		FROM dbo.ProductSettingProfile WITH(NOLOCK)
 		WHERE (@ProductID IS NULL OR ProductID = @ProductID ) AND (@SettingType IS NULL OR SettingType = @SettingType) 
 				AND SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
 	END
@@ -30,7 +31,7 @@ BEGIN
 	BEGIN
 		INSERT @SportBetTypeSetting(ProductID, SportType,Bettype,IsLive, SettingType, RealProductId, SubType, Child_DisplayOrder)
 		SELECT DISTINCT ProductID, SportType,Bettype,IsLive, SettingType, RealProductId, SubType, Child_DisplayOrder 
-		FROM dbo.ProductSettingDetail_UAT WITH(NOLOCK)
+		FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
 		WHERE (@ProductID IS NULL OR ProductID = @ProductID ) AND (@SettingType IS NULL OR SettingType = @SettingType) 
 			AND SettingStatus <> 2
 	END

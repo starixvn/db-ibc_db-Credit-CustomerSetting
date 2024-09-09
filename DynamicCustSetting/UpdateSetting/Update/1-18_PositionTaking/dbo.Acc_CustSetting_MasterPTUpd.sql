@@ -31,6 +31,7 @@ AS
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+			- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
 
 		Parameter's Explanation:
 			@PT = <ROOT>
@@ -120,7 +121,7 @@ BEGIN
 		END
 		----------	
 		
-		CREATE TABLE #ProductSettingDetail(
+		CREATE TABLE #ProductSettingProfile(
 			[SettingType] [smallint],
 			[SportType] [smallint],
 			[BetType] [smallint],
@@ -130,7 +131,7 @@ BEGIN
 		PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 		)
  
-		INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+		INSERT INTO #ProductSettingProfile(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
 		SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
 		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
     
@@ -186,7 +187,7 @@ BEGIN
 		--Exclude Update for Sport is having UM
 		DELETE t
 		FROM @tblPT t
-			INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+			INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 				ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 			INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 				ON u.SportType IN( t.SportType,0)
@@ -228,7 +229,7 @@ BEGIN
 	   -- Select ProductID and SettingLevel
 		SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 		FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-				FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
+				FROM		#ProductSettingProfile AS psd WITH(NOLOCK)
 				INNER JOIN	@tblPT AS tmp
 						ON	psd.SportType = tmp.SportType
 						AND	psd.BetType = tmp.BetType
@@ -644,7 +645,7 @@ BEGIN
 			@TrackingValue2 = @logSPData_Old,
 			@duration = @duration	
 
-		DROP TABLE #ProductSettingDetail
+		DROP TABLE #ProductSettingProfile
 	END
 END	
 GO

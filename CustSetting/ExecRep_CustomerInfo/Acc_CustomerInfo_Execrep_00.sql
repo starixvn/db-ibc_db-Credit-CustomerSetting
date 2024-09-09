@@ -9,13 +9,13 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@currency SMALLINT=0,
 	@isSearchAndCopy BIT = 0,
 	@copyFromCustID INT = 0,
-
-	@SettingType25 VARCHAR(MAX)= '', --Discount	
+	@SettingType25 VARCHAR(MAX)= '', --Discount
+	@SettingType26 VARCHAR(MAX)= '', --Bet Setting
 	@SettingType27 VARCHAR(MAX)= '', --Parlay Max Payout
 	@SettingType28 VARCHAR(MAX)= '', --PT
-	
 	@SettingStatus TINYINT = 0,
-	@ErrCode INT = 0 OUTPUT
+	@ErrCode INT = 0 OUTPUT,
+	@ProductProfile	VARCHAR(MAX) = NULL OUTPUT -- Json
 	
  AS
 	/*
@@ -73,6 +73,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20230921@Johnson: extend MaxPT = 0.93 [redmine:194132]
 			- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 			- 20240607@Johnson: Scale out DBCUST [redmine: #199915]
+			- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -661,6 +662,7 @@ BEGIN
 			, @copyFromCustID 	= @copyFromCustID
 			, @ErrCode			= @DCSErrCode OUTPUT
 			, @SettingStatus    = @SettingStatus
+			, @ProductProfile	= @ProductProfile OUTPUT
 				
 	IF @DCSErrCode <> 0 
 	BEGIN

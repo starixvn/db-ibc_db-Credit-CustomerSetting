@@ -1,11 +1,10 @@
 /*<info serverAlias="DBCust-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
-					@CustID					INT
-				,	@AllowedVS				BIT = 0		OUTPUT
-				,	@AllowedRNGLottery		BIT = 0		OUTPUT
+					@CustID				INT
 				,	@AllowedBitcoin			BIT = 0		OUTPUT
-				,	@AllowedLiveRNGCasino	BIT = 0		OUTPUT
-				,   @SettingStatus          TINYINT = 0
+				,	@AllowedLiveRNGCasino		BIT = 0		OUTPUT
+				,	@AllowedRNGGames			BIT = 0		OUTPUT
+				,     @SettingStatus			TINYINT = 0
 AS
 BEGIN
 /*
@@ -56,6 +55,7 @@ Revisions:
 	- 20230628@Tacy: NG2 - Remove Setting [Redmine: #189762]
 	- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 	- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960]
+	- 20240521@Helios: Unify RNG Games [Redmine: #204358]  
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -63,135 +63,330 @@ Revisions:
 
 	SET NOCOUNT ON
 
-	Declare @mCurrencyID int, @RoleID int, @SyncCasino bit 
-	Declare @srecommend int, @mrecommend int, @recommend int 
-	DECLARE @AllowedLottery BIT, @AllowedTableGames BIT
-	DECLARE	@Allowed_LiveCasino	BIT, @Allowed_RNGCasino BIT, @Allowed_OtherRNGCasino BIT 
-			
-	DECLARE	@IsHiddenLottery		INT 
-		,	@IsHideVS				INT
-		,	@IsHideTableGames		INT
-		,	@IsHideBitcoin			INT
-		--Live & RNG Casino
-		,   @IsHidden_LiveCasino	INT = 1
-		,   @IsHidden_RNGCasino		INT = 1
-		,   @IsHidden_OtherRNGCasino INT = 1
+	DECLARE
+		@mCurrencyID INT
+	    , @RoleID	 INT
+	    , @SyncCasino	 BIT
+	DECLARE
+		@srecommend INT
+	    , @mrecommend INT
+	    , @recommend  INT
+	DECLARE
+		-- RNG Casino
+		@Allowed_LiveCasino     BIT
+	    , @Allowed_RNGCasino	BIT
+	    , @Allowed_OtherRNGCasino BIT
+	    
+	      -- RNG Games
+	    , @Allowed_RNGGames	 INT = 1 
+	    , @Allowed_SportsLottery	 INT = 1 
+	    , @Allowed_VirtualSport	 INT = 1 
 
-	DECLARE @bitOrderLottery		INT 
-		,   @bitOrderVS				INT
-		,	@bitmapOrder_TableGames	INT 
-		,	@bitmapOrder_Bitcoin	INT 
+	DECLARE
+	      @IsHideBitcoin		 INT
 		--Live & RNG Casino
-		,   @bitmapOrder_LiveCasino	INT
-		,   @bitmapOrder_RNGCasino	INT
-		,	@bitmapOrder_OtherRNGCasino	INT 
+	    , @IsHidden_LiveCasino	 INT = 1
+	    , @IsHidden_RNGCasino	 INT = 1
+	    , @IsHidden_OtherRNGCasino INT = 1
+	      --RNG Games
+	    , @IsHidden_RNGGames	 INT = 1 
+	    , @IsHidden_SportsLottery	 INT = 1 
+	    , @IsHidden_VirtualSport	 INT = 1 
 
-	SET @bitOrderLottery = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 220 AND Bettype = 1024)
-	SET @bitOrderVS = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9908 AND Bettype = 1201)
-	SET @bitmapOrder_TableGames = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 222 AND Bettype = 4901)
-	SET @bitmapOrder_Bitcoin = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 175 AND Bettype = 7901)
+	DECLARE
+	      @bitmapOrder_Bitcoin	    INT
+		--Live & RNG Casino
+	    , @bitmapOrder_LiveCasino	    INT
+	    , @bitmapOrder_RNGCasino	    INT
+	    , @bitmapOrder_OtherRNGCasino INT
+	      --RNG Games
+	    , @bitmapOrder_RNGGames	    INT = 1 
+	    , @bitmapOrder_SportsLottery   INT = 1 
+	    , @bitmapOrder_VirtualSport   INT = 1 
+
+	
+	SET @bitmapOrder_Bitcoin = 
+	(
+		SELECT bitmapOrder
+		FROM ProductStatusProfile WITH (NOLOCK)
+		WHERE Sporttype = 175 AND Bettype = 7901
+	)
 	--Live & RNG Casino
-	SET @bitmapOrder_LiveCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9911 AND Bettype = 2400)
-	SET @bitmapOrder_RNGCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
-	SET @bitmapOrder_OtherRNGCasino = (SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9918 AND Bettype = 4601)
+	SET @bitmapOrder_LiveCasino = 
+	(
+		SELECT bitmapOrder
+		FROM ProductStatusProfile WITH (NOLOCK)
+		WHERE Sporttype = 9911 AND Bettype = 2400
+	)
+	SET @bitmapOrder_RNGCasino = 
+	(
+		SELECT bitmapOrder
+		FROM ProductStatusProfile WITH (NOLOCK)
+		WHERE Sporttype = 9906 AND Bettype = 4001
+	)
+	SET @bitmapOrder_OtherRNGCasino = 
+	(
+		SELECT bitmapOrder
+		FROM ProductStatusProfile WITH (NOLOCK)
+		WHERE Sporttype = 9918 AND Bettype = 4601
+	)
 
+	--RNG Games
+	SET @bitmapOrder_RNGGames = 
+	(
+		SELECT bitmapOrder
+		FROM ProductStatusProfile WITH (NOLOCK)
+		WHERE Sporttype = 9919 AND Bettype = 1501
+	)
+	SET @bitmapOrder_SportsLottery = 
+	(
+		SELECT bitmapOrder
+		    FROM ProductStatusProfile WITH (NOLOCK)
+			WHERE Sporttype = 169 AND Bettype = 3611
+	)
+	SET @bitmapOrder_VirtualSport = 
+	(
+		SELECT bitmapOrder
+		    FROM ProductStatusProfile WITH (NOLOCK)
+			WHERE Sporttype = 9908 AND Bettype = 1201
+	)
 
-	Select @mCurrencyID=Currency, @RoleID=RoleID, @srecommend=srecommend, @mrecommend=mrecommend, @recommend=recommend	
-	from custinfo with (nolock) where CustID=@CustID
-	
-	--For RNGLottery
-	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 220, @SettingStatus = @SettingStatus, @IsHide = @IsHiddenLottery OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 44, @sportType = 222, @SettingStatus = @SettingStatus, @IsHide = @IsHideTableGames OUTPUT
-	SELECT	@AllowedLottery =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitOrderLottery)) = 0
-											AND @IsHiddenLottery = 0 
-											THEN 1
-										ELSE 0 END,
-			@AllowedTableGames =CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_TableGames)) = 0
-											AND @IsHideTableGames = 0 
-											THEN 1
-										ELSE 0 END
-	FROM	CustProductStatus AS cps WITH (NOLOCK)
-	WHERE	cps.CustID = @CustID
-
-	--For RNGLottery (Lottery + TableGames + RNG War)
-	SELECT @AllowedRNGLottery = CASE WHEN @AllowedLottery = 1 OR @AllowedTableGames = 1 THEN 1 ELSE 0 END
-	
-	If @RoleID=4
-	BEGIN	
-		SET @AllowedVS = 1
-	END
-
-	-- For VS
-	EXEC Acc_CheckShowProduct @ProductID = 5, @SettingStatus = @SettingStatus, @IsHide = @IsHideVS OUTPUT
-	SELECT	@AllowedVS = CASE	WHEN @RoleID = 4 AND @IsHideVS = 0 THEN 1
-								WHEN dbo.f_GetProductStatus(cps.bitmapIsHidden, @bitOrderVS) = 0 AND @IsHideVS = 0 THEN 1
-								ELSE 0
-						END
-	FROM	dbo.CustProductStatus AS cps WITH (NOLOCK)
-	WHERE	cps.CustID = @CustID
+	SELECT
+		@mCurrencyID=Currency
+	    , @RoleID     =RoleID
+	    , @srecommend =srecommend
+	    , @mrecommend =mrecommend
+	    , @recommend  =recommend
+	FROM custInfo WITH (NOLOCK)
+	WHERE CustID=@CustID
 
 	-- For Bitcoin
-	EXEC Acc_CheckShowProduct @ProductID = 69, @SettingStatus = @SettingStatus, @IsHide = @IsHideBitcoin OUTPUT
-	IF @RoleID = 4
-		SELECT	@AllowedBitcoin =	CASE	WHEN @IsHideBitcoin = 0 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Bitcoin)) = 0 THEN 1
-										ELSE 0 END
-		FROM	CustProductStatus AS cps WITH (NOLOCK)
-		WHERE	cps.CustID = @CustID
-	ELSE 
-		SELECT	@AllowedBitcoin =	CASE	WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_Bitcoin)) = 0
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_Bitcoin)) = 1
-											AND @IsHideBitcoin = 0 
-											THEN 1
-										ELSE 0 END
-		FROM	CustProductStatus AS cps WITH (NOLOCK)
-			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
-		WHERE	cps.CustID = @CustID
-			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
-									WHEN @RoleID = 2 THEN @mrecommend
-									ELSE @recommend END		
+	EXEC Acc_CheckShowProduct @ProductID     = 69
+					, @SettingStatus = @SettingStatus
+					, @IsHide	     = @IsHideBitcoin OUTPUT
 
+	IF    @RoleID = 4
+		SELECT @AllowedBitcoin = CASE
+						     WHEN @IsHideBitcoin = 0 AND
+							     (
+								     SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_Bitcoin )
+							     ) = 0 THEN 1
+						     ELSE 0
+					     END
+		FROM CustProductStatus AS cps WITH (NOLOCK)
+		WHERE cps.CustID = @CustID
+	ELSE
+		SELECT @AllowedBitcoin = CASE
+						     WHEN
+							     (
+								     SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_Bitcoin )
+							     ) = 0
+							     AND
+							     (
+								     SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( ups.bitmapHasSynced , @bitmapOrder_Bitcoin )
+							     ) = 1 AND @IsHideBitcoin = 0 THEN 1
+						     ELSE 0
+					     END
+		FROM CustProductStatus AS cps WITH (NOLOCK)
+		CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)
+		WHERE cps.CustID = @CustID
+		AND ups.CustID = CASE
+						WHEN @RoleID = 3 THEN @srecommend
+						WHEN @RoleID = 2 THEN @mrecommend
+						ELSE @recommend
+				    END
 
 	-- For Live & RNG Casino
-	EXEC Acc_CheckShowProduct @ProductID = 41, @sportType = 9911, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_LiveCasino OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 53, @sportType = 9906, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_RNGCasino OUTPUT
-	EXEC Acc_CheckShowProduct @ProductID = 53, @sportType = 9918, @SettingStatus = @SettingStatus, @IsHide = @IsHidden_OtherRNGCasino OUTPUT
-	IF @RoleID = 4
-		SELECT	@Allowed_LiveCasino =	CASE WHEN @IsHidden_LiveCasino = 0 
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_LiveCasino)) = 0 THEN 1
-										ELSE 0 END,
-				@Allowed_RNGCasino =	CASE WHEN @IsHidden_RNGCasino = 0 
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_RNGCasino)) = 0 THEN 1
-										ELSE 0 END,
-				@Allowed_OtherRNGCasino =	CASE WHEN @IsHidden_OtherRNGCasino = 0 
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_OtherRNGCasino)) = 0 THEN 1
-										ELSE 0 END
+	EXEC Acc_CheckShowProduct @ProductID     = 41
+					, @Sporttype     = 9911
+					, @SettingStatus = @SettingStatus
+					, @IsHide	     = @IsHidden_LiveCasino OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID     = 53
+					, @Sporttype     = 9906
+					, @SettingStatus = @SettingStatus
+					, @IsHide	     = @IsHidden_RNGCasino OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID     = 53
+					, @Sporttype     = 9918
+					, @SettingStatus = @SettingStatus
+					, @IsHide	     = @IsHidden_OtherRNGCasino OUTPUT
 
-		FROM	CustProductStatus AS cps WITH (NOLOCK)
-		WHERE	cps.CustID = @CustID
-	ELSE 
-		SELECT	@Allowed_LiveCasino =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_LiveCasino)) = 0
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_LiveCasino)) = 1
-											AND @IsHidden_LiveCasino = 0 
-											THEN 1
-										ELSE 0 END,
-				@Allowed_RNGCasino =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_RNGCasino)) = 0
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_RNGCasino)) = 1
-											AND @IsHidden_RNGCasino = 0 
-											THEN 1
-										ELSE 0 END,
-				@Allowed_OtherRNGCasino =	CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, @bitmapOrder_OtherRNGCasino)) = 0
-											AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(ups.bitmapHasSynced, @bitmapOrder_OtherRNGCasino)) = 1
-											AND @IsHidden_OtherRNGCasino = 0 
-											THEN 1
-										ELSE 0 END
-		FROM	CustProductStatus AS cps WITH (NOLOCK)
-			CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)	
-		WHERE	cps.CustID = @CustID
-			AND ups.CustID = CASE	WHEN @RoleID = 3 THEN @srecommend
-									WHEN @RoleID = 2 THEN @mrecommend
-									ELSE @recommend END
+	IF    @RoleID = 4
+	BEGIN
+		SELECT @Allowed_LiveCasino     =  CASE
+								 WHEN @IsHidden_LiveCasino = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_LiveCasino )
+									 ) = 0 THEN 1
+								 ELSE 0
+							    END
+		    , @Allowed_RNGCasino	= CASE
+								 WHEN @IsHidden_RNGCasino = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_RNGCasino )
+									 ) = 0 THEN 1
+								 ELSE 0
+							   END
+		    , @Allowed_OtherRNGCasino = CASE
+								 WHEN @IsHidden_OtherRNGCasino = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_OtherRNGCasino )
+									 ) = 0 THEN 1
+								 ELSE 0
+							 END
 
-	SELECT @AllowedLiveRNGCasino = CASE WHEN @Allowed_LiveCasino = 1 OR @Allowed_RNGCasino = 1 OR @Allowed_OtherRNGCasino = 1  THEN 1 ELSE 0 END
-							
+		FROM CustProductStatus AS cps WITH (NOLOCK)
+		WHERE cps.CustID = @CustID
+	END
+	ELSE
+	BEGIN
+		SELECT @Allowed_LiveCasino     = CASE
+								 WHEN
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_LiveCasino )
+									 ) = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( ups.bitmapHasSynced , @bitmapOrder_LiveCasino )
+									 ) = 1
+									 AND @IsHidden_LiveCasino = 0 THEN 1
+								 ELSE 0
+							 END
+		    , @Allowed_RNGCasino	= CASE
+								 WHEN
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_RNGCasino )
+									 ) = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( ups.bitmapHasSynced , @bitmapOrder_RNGCasino )
+									 ) = 1
+									 AND @IsHidden_RNGCasino = 0 THEN 1
+								 ELSE 0
+							 END
+		    , @Allowed_OtherRNGCasino = CASE
+								 WHEN
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_OtherRNGCasino )
+									 ) = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( ups.bitmapHasSynced , @bitmapOrder_OtherRNGCasino )
+									 ) = 1
+									 AND @IsHidden_OtherRNGCasino = 0 THEN 1
+								 ELSE 0
+							 END
+		FROM CustProductStatus AS cps WITH (NOLOCK)
+		CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)
+		WHERE cps.CustID = @CustID
+		AND ups.CustID = CASE
+						WHEN @RoleID = 3 THEN @srecommend
+						WHEN @RoleID = 2 THEN @mrecommend
+					ELSE @recommend
+				END
+	END
+
+	SELECT @AllowedLiveRNGCasino =  CASE
+						     WHEN @Allowed_LiveCasino = 1 OR @Allowed_RNGCasino = 1 OR @Allowed_OtherRNGCasino = 1 THEN 1
+						     ELSE 0
+					        END
+
+	-- For RNG Games : DummyProductID - 44
+	EXEC Acc_CheckShowProduct @ProductID     = 44		
+					, @Sporttype     = 169		-- Sports Lottery
+					, @SettingStatus = @SettingStatus
+					, @IsHide	     = @IsHidden_SportsLottery OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID     = 44		
+					, @Sporttype     = 9919		-- RNG Games / Keno/Loterry
+					, @SettingStatus = @SettingStatus
+					, @IsHide	     = @IsHidden_RNGGames OUTPUT
+	EXEC Acc_CheckShowProduct @ProductID     = 44		
+					, @Sporttype     = 9908		-- Virtual Sports
+					, @SettingStatus = @SettingStatus
+					, @IsHide	     = @IsHidden_VirtualSport OUTPUT
+	
+	
+	IF    @RoleID = 4
+	BEGIN
+		SELECT @Allowed_SportsLottery     =  CASE
+								 WHEN @IsHidden_SportsLottery = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_SportsLottery )
+									 ) = 0 THEN 1
+								 ELSE 0
+							    END
+		    , @Allowed_RNGGames	= CASE
+								 WHEN @IsHidden_RNGGames = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_RNGGames )
+									 ) = 0 THEN 1
+								 ELSE 0
+							   END
+		    , @Allowed_VirtualSport = CASE
+								 WHEN @IsHidden_VirtualSport = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_VirtualSport )
+									 ) = 0 THEN 1
+								 ELSE 0
+							 END
+
+		FROM CustProductStatus AS cps WITH (NOLOCK)
+		WHERE cps.CustID = @CustID
+	END
+	ELSE
+	BEGIN
+		SELECT @Allowed_SportsLottery     = CASE
+								 WHEN
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_SportsLottery )
+									 ) = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( ups.bitmapHasSynced , @bitmapOrder_SportsLottery )
+									 ) = 1 AND @IsHidden_SportsLottery = 0 THEN 1
+								 ELSE 0
+							 END
+		    , @Allowed_RNGGames	= CASE
+								 WHEN
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_RNGGames )
+									 ) = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( ups.bitmapHasSynced , @bitmapOrder_RNGGames )
+									 ) = 1 AND @IsHidden_RNGGames = 0 THEN 1
+								 ELSE 0
+							 END
+		    , @Allowed_VirtualSport = CASE
+								 WHEN
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_VirtualSport )
+									 ) = 0
+									 AND
+									 (
+										 SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( ups.bitmapHasSynced , @bitmapOrder_VirtualSport )
+									 ) = 1 AND @IsHidden_VirtualSport = 0 THEN 1
+								 ELSE 0
+							 END
+		FROM CustProductStatus AS cps WITH (NOLOCK)
+		CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)
+		WHERE cps.CustID = @CustID
+		AND ups.CustID = CASE
+						WHEN @RoleID = 3 THEN @srecommend
+						WHEN @RoleID = 2 THEN @mrecommend
+					ELSE @recommend
+				END
+	END
+
+	SELECT @AllowedRNGGames =  CASE
+						     WHEN @Allowed_SportsLottery = 1 OR @Allowed_RNGGames = 1 OR @Allowed_VirtualSport = 1 THEN 1
+						     ELSE 0
+					        END
 END
+
 GO

@@ -20,6 +20,7 @@ AS
 		- 20170424@Elodie: Update Customer's Ticket Commission [Redmine: #75221]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
 
 	Param's Explanation:
 		• @Commission:
@@ -145,7 +146,7 @@ BEGIN
 
 	EXEC sp_xml_removedocument @iDoc
 
-	CREATE TABLE #ProductSettingDetail(
+	CREATE TABLE #ProductSettingProfile(
 		[SettingType] [smallint],
 		[SportType] [smallint],
 		[BetType] [smallint],
@@ -155,14 +156,14 @@ BEGIN
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
+	INSERT INTO #ProductSettingProfile(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
 	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewCommTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -273,7 +274,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		#ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		#ProductSettingProfile AS psd WITH(NOLOCK)
 			INNER JOIN	@NewCommTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType
@@ -483,7 +484,7 @@ BEGIN
 			, @duration			= @duration
 	END CATCH
 
-	DROP TABLE #ProductSettingDetail
+	DROP TABLE #ProductSettingProfile
 END
 
 GO

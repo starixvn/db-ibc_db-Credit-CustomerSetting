@@ -21,7 +21,8 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMember_153_Upd]
 
 	Revision:
 	- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
-	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
+	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 
 	Parameter's Explanation:
 		@PT =[
@@ -234,29 +235,25 @@ BEGIN
 
 	-- check Limit Daily PT Update
 	DECLARE  @isLimit BIT = 0 ,@isCancel BIT = 0, @LastUpdated DATE
-	IF @GroupID = 3 ---- Apply for 3rd products
+	IF @IsCountPT = 1
 	BEGIN
-		IF @IsCountPT = 1
+		EXEC dbo.Age_LimitPTDailyCheck    
+				@custid		= @custid
+			,@Actorid		= @UserID
+			,@UpdatePT		= @PT
+			,@LastUpdated	= @LastUpdated OUTPUT
+			,@isLimit		= @isLimit OUTPUT
+			,@isCancel		= @isCancel OUTPUT
+			,@SettingStatus = @SettingStatus
+		IF @isCancel > 0	
 		BEGIN
-			EXEC dbo.Age_LimitPTDailyCheck    
-				 @custid		= @custid
-				,@Actorid		= @UserID
-				,@UpdatePT		= @PT
-				,@LastUpdated	= @LastUpdated OUTPUT
-				,@isLimit		= @isLimit OUTPUT
-				,@isCancel		= @isCancel OUTPUT
-				,@SettingStatus = @SettingStatus
-			IF @isCancel > 0	
-			BEGIN
 			
-				SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
-				  , @ErrCode = 10078
-				  , @MsgType = 6   
-					RETURN
-			END
-		END 
-	END
-
+			SELECT @ErrMsg = '<Root MsgID="10078" Msg="'+ CAST (@LastUpdated AS VARCHAR(10)) +'"> </Root>'
+				, @ErrCode = 10078
+				, @MsgType = 6   
+				RETURN
+		END
+	END 
 	
 	SELECT @SettingMode = IsGrouped
 	FROM dbo.CustSettingMode3rd

@@ -173,6 +173,7 @@ Revisions:
 	- 20240321@Luke: NAP - Virtual rate - For Direct account :Change default of VR Status for newly created accounts to "Follow upline" [Redmine: #202624]
 	- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240606@Johnson: Scale out DBCUST [Redmine: #199915]
+	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 Param's Explanation:
 	- @ErrCode:
 		= 0: super create master successfully.
@@ -700,11 +701,12 @@ BEGIN
 				    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 			    END
     				
-		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 3
 	    RETURN
     END	
 	
+	-- Start : Initialize Data SportsBook
 	EXEC dbo.Acc_Custsetting_SportsbookIns
 		@custid = @custid,
 		@roleid = 3,
@@ -720,18 +722,36 @@ BEGIN
 							when 'E' then 'Create customer fail. Please try again'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			DELETE FROM CustProductStatus			WITH (ROWLOCK) WHERE CustID = @CustID			
-			DELETE FROM CustPTSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID	
-			DELETE FROM CustBetSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID					
-			DELETE FROM CustDiscount3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustWinLossLimit_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustStakeLevel_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) WHERE CustID = @CustID
-	
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 3
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID			
+		RETURN
+	END	
+	-- END : Initialize Data SportsBook
+
+	-- Start : Initialize Data 3rd Products
+	EXEC dbo.Acc_CustSetting_3rdProductIns
+		@custid = @custid,
+		@SuperID = @srecommend,
+		@MasterID = @custid,
+		@RoleID = 3,
+		@siteID = @siteID,
+		@currency = @currency,
+		@SettingStatus = @SettingStatus,
+		@ErrCode = @ErrCode OUTPUT
+
+	IF @ErrCode > 0
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							when 'E' then 'Create customer fail. Please try again'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+						END
+
+
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 3
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID			
 		RETURN
 	END
+	-- End : Initialize Data 3rd Products
 	
 	If @SystemID = 2 -- ALPHA
 	BEGIN
@@ -742,24 +762,10 @@ BEGIN
 								when 'E' then 'Create customer fail. Please try again'
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							END
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			DELETE FROM CustLimitPTSetting			WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustProductStatus			WITH (ROWLOCK) WHERE CustID = @CustID			
-			DELETE FROM CustPTSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID	
-			DELETE FROM CustBetSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID					
-			DELETE FROM CustDiscount3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustWinLossLimit_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustStakeLevel_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			
-			DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			--rep in-house
-			DELETE BetSetting_Agent WITH (ROWLOCK)
-			OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],SYSDATETIME()
-			INTO [BetSetting_Agent_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
-			WHERE custID = @custid
-						
-			DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) WHERE CustID = @CustID
-			
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 3
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID	
+	
+
 			RETURN
 		END	
 	END	
@@ -792,25 +798,10 @@ BEGIN
 								when 'E' then 'Create customer fail. Please try again'
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							END
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 3
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID				
-			DELETE FROM VRCustSetting				WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustLimitPTSetting			WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustProductStatus			WITH (ROWLOCK) WHERE CustID = @CustID			
-			DELETE FROM CustPTSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID	
-			DELETE FROM CustBetSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID					
-			DELETE FROM CustDiscount3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustWinLossLimit_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustStakeLevel_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
 			
-			DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
 			
-			--rep in-house
-			DELETE BetSetting_Agent WITH (ROWLOCK)
-			OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],SYSDATETIME()
-			INTO [BetSetting_Agent_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
-			WHERE custID = @custid
-			
-			DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) WHERE CustID = @CustID
 			RETURN
 		END
 	END
