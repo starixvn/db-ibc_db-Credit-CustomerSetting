@@ -8,6 +8,8 @@ AS
 	DB:  DBCUST/CustDB
 	Original:  
   
+	Revisions:
+	- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
 	Param's Explanation:  
    
  */  
@@ -21,7 +23,7 @@ BEGIN
 	WHERE custid = @CustID
 
 	SELECT @BitmapOrder = PSP.bitmapOrder
-	FROM dbo.ProductSettingDetail psd WITH(NOLOCK)  
+	FROM dbo.ProductSettingProfile psd WITH(NOLOCK)  
 		INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = psd.SportType AND psp.Bettype = psd.BetType
 	WHERE psd.SettingType = 4 AND psd.ProductID = @ProductID
 

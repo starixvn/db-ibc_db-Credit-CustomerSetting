@@ -15,10 +15,13 @@ AS
 		- 20231201@Johnson: Separate PT for Live & RNG Casino [redmine: #197629]
 		- 20231219@Johnson: call sp Age_GetOfferedProductBySiteCurrency [redmine: #197629]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
-		- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960] 
+		- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960]
+		- 20240521@Helios: Unify RNG Games [Redmine: #204358]
+
 	 Param's Explanation: 
 		@SettingStatus: 0: Pro, 1: UAT, 3: UAT/PRO
  */  
+
 BEGIN   
 	SET NOCOUNT ON
 	DECLARE @SiteID INT
@@ -60,16 +63,19 @@ BEGIN
 		EXEC Age_GetOfferedProductBySiteCurrency @Site = @Site, @Currency = @Currency, @SettingStatus  = @SettingStatus
 	END
 
+	
 	IF @SettingStatus IN (1,0)
 	BEGIN
 		INSERT INTO #ProductInfo (GroupID,SubGroupID,SubGroupOrder,RealProductID)
+		
+		-- Get data for SportsBook , Bit Coint 
 		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportType
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
-		  AND GroupID IN ( 1,2,4) --SB, RnG Games, Bitcoin	
+		  AND GroupID IN ( 1,4) 
 			AND GroupType = 153-- PT
 			AND MarketType = 0
 		UNION ALL
@@ -77,21 +83,47 @@ BEGIN
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
 			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType		
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportType
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
-			AND GroupID IN ( 1,2,4) --SB,SB2, RnG Games, Bitcoin
+			AND GroupID IN ( 1,4)
 			AND GroupType = 153-- PT
 			AND MarketType = 1
-			AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END			
+			AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END	
+		UNION ALL
+
+		-- Get data for RNG Games
+		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
+		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
+			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT
+				AND s.isLicensee = 0 AND s.Site = 'All'
+		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+			AND GroupID = 2
+			AND GroupType = 153-- PT
+			AND MarketType = 0
+		UNION ALL
+		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
+		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
+			INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
+			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT	
+				AND s.isLicensee = 0 AND s.Site = 'All'
+		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+			AND GroupID = 2
+			AND GroupType = 153-- PT
+			AND MarketType = 1
+			AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END	
 		UNION ALL  		
+
+		-- Get data for Live & RNG Casino
 		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --FGG
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
-			AND GroupID = 3--Live & RnG CS
+			AND GroupID = 3
 			AND GroupType = 153-- PT
 			AND (t.Productid <> 44 OR s.RealProductId = 50)
 			AND MarketType = 0
@@ -102,7 +134,7 @@ BEGIN
 				ON t.ProductID = s.ProductID
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
-			AND GroupID = 3--Live & RnG CS
+			AND GroupID = 3
 			AND GroupType = 153-- PT
 			AND t.Productid IN (53,41)
 			AND MarketType = 0 
@@ -121,7 +153,7 @@ BEGIN
 				ON t.ProductID = s.ProductID AND t.SportType = s.SportType	
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
-			AND GroupID = 3--Live & RnG CS
+			AND GroupID = 3
 			AND GroupType = 153-- PT
 			AND t.Productid IN (53,41)
 			AND MarketType = 1 	
@@ -134,7 +166,7 @@ BEGIN
 				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
-		  AND GroupID = 3--Live & RnG CS
+		  AND GroupID = 3
 		  AND GroupType = 153-- PT
 		  AND (t.Productid <> 44 OR s.RealProductId = 50)
 		  AND MarketType = 1
@@ -143,13 +175,15 @@ BEGIN
 	ELSE IF @SettingStatus = 3
 	BEGIN	
 		INSERT INTO #ProductInfo (GroupID,SubGroupID,SubGroupOrder,RealProductID)
+
+		-- Get data for SportsBook , Bit Coint 
 		SELECT DISTINCT GroupID, SubGroupID,0 SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)			
 			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportType
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <> 2
-		  AND GroupID IN ( 1,2,4) --SB, RnG Games, Bitcoin	
+		  AND GroupID IN ( 1,4) 
 		  AND GroupType = 153-- PT
 		  AND MarketType = 0
 		UNION ALL  		
@@ -157,21 +191,48 @@ BEGIN
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
 			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND CASE WHEN t.SportType = 9908 THEN 180 ELSE t.SportType END = s.SportType
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportType
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <> 2
-		  AND GroupID IN ( 1,2,4) --SB,SB2, RnG Games, Bitcoin	
+		  AND GroupID IN ( 1,4) 
 		  AND GroupType = 153-- PT
 		  AND MarketType = 1
 		  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
+
+		UNION ALL
+
+		-- Get data for RNG Games
+		SELECT DISTINCT GroupID, SubGroupID, SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
+		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)			
+			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT
+				AND s.isLicensee = 0 AND s.Site = 'All'
+		WHERE SettingStatus <> 2
+		  AND GroupID = 2
+		  AND GroupType = 153-- PT
+		  AND MarketType = 0
 		UNION ALL  		
+		SELECT DISTINCT GroupID, SubGroupID, SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
+		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
+			INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
+			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT
+				AND s.isLicensee = 0 AND s.Site = 'All'
+		WHERE SettingStatus <> 2
+		  AND GroupID = 2
+		  AND GroupType = 153-- PT
+		  AND MarketType = 1
+		  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
+		UNION ALL
+
+		-- Get data for Live & RNG Casino
 		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --FGG
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <> 2
-		  AND GroupID = 3--Live & RnG CS
+		  AND GroupID = 3
 		  AND GroupType = 153-- PT
 		  AND (t.Productid <> 44 OR s.RealProductId = 50)
 		  AND MarketType = 0
@@ -182,7 +243,7 @@ BEGIN
 				ON t.ProductID = s.ProductID
 				AND s.isLicensee = 0 AND s.Site = 'All'
 		WHERE SettingStatus <> 2
-		  AND GroupID = 3--Live & RnG CS
+		  AND GroupID = 3
 		  AND GroupType = 153-- PT
 		  AND t.Productid IN (53,41)
 		  AND MarketType = 0 
@@ -221,6 +282,7 @@ BEGIN
 		  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
 		
 	END
+
 	-- Get data of Sportsbook , RNG Games , Other Games (Bitcoin)
 	SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,p.RealProductID
 	FROM #ProductInfo p
@@ -228,6 +290,7 @@ BEGIN
 	WHERE po.IsHidden = 0 AND (po.EndOfSupportDate > GETDATE() OR po.EndOfSupportDate IS NULL)
 	AND p.GroupID IN (1,2,4)
 	UNION ALL
+
 	-- Get data of Other RNG Casino
 	SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,p.RealProductID
 	FROM #ProductInfo p
@@ -238,6 +301,7 @@ BEGIN
 	AND p.SubGroupID = 5
 	AND po.RealProductID IN (6,42,66,38,86)
 	UNION ALL
+
 	-- Get data of Live & RNG Casino
 	SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,p.RealProductID
 	FROM #ProductInfo p

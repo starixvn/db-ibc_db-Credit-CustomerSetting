@@ -46,6 +46,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230310@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240215@Eden: Unify Live Casino & RNG slot/RNG Casino [Redmine: #198960]
+		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 	
@@ -72,6 +73,7 @@ BEGIN
 		[SettingLevel] [tinyint],
 		GroupID	tinyint,
 		GroupType	tinyint,
+		SubType	tinyint,
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
@@ -84,6 +86,7 @@ BEGIN
 		[SettingLevel] [tinyint],
 		GroupID	tinyint,
 		GroupType	tinyint,
+		SubType	tinyint,
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
@@ -94,23 +97,24 @@ BEGIN
 		[IsLive] [bit] ,
 		[ProductID] [tinyint],
 		[SettingLevel] [tinyint],
+		SubType	tinyint,
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingProfile_All(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,GroupID,GroupType)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,GroupID,GroupType
+	INSERT INTO #ProductSettingProfile_All(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,GroupID,GroupType,SubType)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,GroupID,GroupType,SubType
 	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@_SiteID,@_Currency) 
 	WHERE SettingType NOT IN (25,26,27,28) -- all setting of SB except product status of MuayThai
 
-	INSERT INTO #ProductSettingProfile(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,GroupID,GroupType)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,GroupID,GroupType
+	INSERT INTO #ProductSettingProfile(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,GroupID,GroupType,SubType)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,GroupID,GroupType,SubType
 	FROM #ProductSettingProfile_All
-	WHERE GroupID IN(3)
+	WHERE GroupID IN(3,2)
 
-	INSERT INTO #ProductSettingDetail_tbl(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
+	INSERT INTO #ProductSettingDetail_tbl(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,SubType)
+	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,SubType
 	FROM #ProductSettingProfile_All
-	WHERE ISNULL(GroupID,0) NOT IN (3) 
+	WHERE ISNULL(GroupID,0) NOT IN (3,2) 
 	
 	/********************************************* Position Taking: SettingType = 1 ***********************************/
 	IF EXISTS (SELECT 1 FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus))
@@ -2061,6 +2065,82 @@ BEGIN
 			DELETE FROM	#TempComm_GT156 WHERE GroupID=@GroupID	
 		END
 		DROP TABLE #TempComm_GT156
+	END
+
+	/********************************************* Bet Setting : GroupType = 154 ****************************************/
+	SELECT @GroupType = 154, @GroupID = NULL, @xmlDiscount = NULL
+	IF EXISTS (SELECT 1 FROM #ProductSettingProfile WHERE GroupType = @GroupType)
+	BEGIN
+		CREATE TABLE #TempBetSetting_GT154 (GroupID TINYINT)
+		DECLARE @NewBetLimitTbl_GT154 TABLE (
+			  SportType			SMALLINT
+			, BetType			SMALLINT
+			, MinBet			MONEY
+			, MaxBet			MONEY
+			, MaxPerMatch		MONEY
+			, MaxPerNumber		MONEY
+			)
+	
+		INSERT INTO @NewBetLimitTbl_GT154(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber)
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.MinBet
+			, bl.MaxBet
+			, bl.MaxPerMatch
+			, bl.MaxPerNumber
+		FROM dbo.BetSetting3rd_Member bl WITH (NOLOCK)
+			INNER JOIN #ProductSettingProfile fil 
+				ON fil.SportType = bl.SportType AND fil.BetType = bl.BetType AND fil.GroupType = @GroupType 
+		WHERE bl.CustID	= @ExistingCustID
+
+		INSERT INTO #TempBetSetting_GT154(GroupID)	
+		SELECT 
+				DISTINCT
+				psd.GroupID				
+		FROM	#ProductSettingProfile AS psd WITH(NOLOCK)
+		INNER JOIN	@NewBetLimitTbl_GT154 AS ts
+				ON	ts.SportType = psd.SportType
+				AND	ts.BetType = psd.BetType
+		WHERE	psd.GroupType = @GroupType
+			AND psd.GroupID IS NOT NULL
+			AND	psd.SettingLevel IS NOT NULL
+			
+		WHILE EXISTS(SELECT TOP 1 1 FROM #TempBetSetting_GT154)
+		BEGIN
+			SELECT TOP 1 @GroupID = GroupID FROM #TempBetSetting_GT154	
+			SET @xmlStr = ( 
+									SELECT nslt.SportType	AS 'SportType'
+										, nslt.BetType		AS 'BetType'
+										, MinBet			AS 'MinBet'
+										, MaxBet			AS 'MaxBet'
+										, MaxPerMatch		AS 'MPM'
+										, MaxPerNumber		AS 'MaxPerNumber'
+									FROM @NewBetLimitTbl_GT154 nslt
+										INNER JOIN #ProductSettingProfile AS psd WITH(NOLOCK) 
+											ON nslt.BetType=psd.BetType
+											AND nslt.SportType=psd.SportType 
+											AND psd.GroupType = @GroupType
+									WHERE psd.GroupID=@GroupID
+									FOR JSON PATH
+								)
+
+			EXEC Acc_CustSetting_BetSetting_154_Upd 		
+				  @CustID = @CustID
+				, @BetLimit = @xmlStr
+				, @SubAccID = @SubAccID
+				, @IP = @IP
+				, @UserID = @UserID
+				, @SystemID = @SystemID
+				, @isSearchAndCopy=@isSearchAndCopy
+				, @ErrCode = @ErrCode OUTPUT
+				, @ErrMsg = @ErrMsg OUTPUT
+				, @SettingStatus = @SettingStatus
+				, @GroupType = @GroupType
+				, @GroupID = @GroupID
+
+			DELETE FROM	#TempBetSetting_GT154 WHERE GroupID=@GroupID	
+		END
+		DROP TABLE #TempBetSetting_GT154
 	END
 
 	DROP TABLE #ProductSettingDetail_tbl

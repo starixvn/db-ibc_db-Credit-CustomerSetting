@@ -17,6 +17,7 @@ AS
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240423@Elodie: Member Max Credit, Member Given Credit enhancements [Redmine: #203332]
 		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
+		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -213,40 +214,20 @@ BEGIN
 	--Bet Setting
 	IF @GroupID = 2 AND @GroupType = 154
 	BEGIN
-		;WITH T AS (
-		SELECT cs.sporttype, cs.bettype, 
-			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
-			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
-			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 
-			CASE WHEN cs.Sporttype = 161 THEN 
-					ISNULL(MIN(CASE WHEN cs.MaxPerNumber = 0 THEN NULL ELSE cs.MaxPerNumber END),0) 
-					ELSE NULL END MaxPerNumber,	
-			s.SubType,
-			s.SubGroupOrder,
-			s.Child_DisplayOrder
-		FROM CustBetSetting_Agent cs WITH(NOLOCK)
-			INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
-												AND cs.bettype = s.bettype
-		WHERE custid IN (@custid,@srecommend,@mrecommend)
-		GROUP BY cs.sporttype, cs.bettype, s.SubType,SubGroupOrder, s.Child_DisplayOrder
-		UNION ALL
 		SELECT cs.Sporttype, cs.Bettype,
 			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
 			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 
-			NULL MaxPerNumber,
+			CASE WHEN s.SubType = 2 THEN  ISNULL(MIN(CASE WHEN cs.MaxPerNumber = 0 THEN NULL ELSE cs.MaxPerNumber END),0) END AS MaxPerNumber, 
 			s.SubType,
 			s.SubGroupOrder,
 			s.Child_DisplayOrder
-		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
+		FROM BetSetting3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype
 		WHERE cs.CustID IN (@custid,@srecommend,@mrecommend)
 		GROUP BY cs.sporttype, cs.bettype, s.SubType,SubGroupOrder, s.Child_DisplayOrder
-		)
-		SELECT Sporttype, Bettype, MinBet, MaxBet, MaxPerMatch, MaxPerNumber, SubType
-		FROM T
-		ORDER BY SubGroupOrder,Child_DisplayOrder
+		ORDER BY s.SubGroupOrder,s.Child_DisplayOrder
 	END
 	
 	--PT

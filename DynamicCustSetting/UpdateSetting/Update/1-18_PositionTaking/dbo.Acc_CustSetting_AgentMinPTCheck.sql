@@ -19,6 +19,8 @@ AS
 		- 20200615@Elodie: Initial SP [Redmine: #135363]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
+		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
+
 	Parameter's Explanations:
 		
 */
@@ -60,7 +62,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @tblPT t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)

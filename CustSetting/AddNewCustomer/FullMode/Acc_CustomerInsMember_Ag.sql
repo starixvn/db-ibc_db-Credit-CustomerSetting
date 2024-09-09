@@ -200,6 +200,7 @@ Revisions:
 	- 20240321@Luke: NAP - Virtual rate - For Direct account :Change default of VR Status for newly created accounts to "Follow upline" [Redmine: #202624]
 	- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240606@Johnson: Scale out DBCUST [Redmine: #199915]
+	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 Param's Explanation:	
 	- @ErrCode:
 		= 0: add new member successfully.
@@ -729,8 +730,8 @@ BEGIN
 
     IF @ErrCode <> 0
 	    return
-  
-    EXEC dbo.Acc_CustomerInfo_Execrep_00
+
+	EXEC dbo.Acc_CustomerInfo_Execrep_00
 	    @custid = @custid,
 	    @srecommend = @srecommend,
 	    @mrecommend = @mrecommend,
@@ -755,11 +756,11 @@ BEGIN
 					    END	
     				
 		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			
-
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
 	    RETURN
     END	
-	
+			
+	-- Start : Initialize Data SportsBook
 	EXEC dbo.Acc_Custsetting_SportsbookIns
 		@custid = @custid,
 		@roleid = 1,
@@ -768,27 +769,43 @@ BEGIN
 		@SettingType26 = @SettingType26, --Bet Setting		
 		@SettingStatus = @SettingStatus,
 		@ErrCode = @ErrCode OUTPUT
-
 	IF @ErrCode > 0
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 						    WHEN 'E' THEN 'Create customer fail. Please try again'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-					    END	
-    				
-		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			-- ROLLBACK MANUALLY	
-			DELETE FROM CustPTSetting3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustSettingMode3rd			WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustDiscount3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustWinLossLimit_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustStakeLevel_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustBetSetting_Member		WITH(ROWLOCK) WHERE CustID = @CustID						
-			DELETE FROM CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE CustID = @CustID
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+						END
+	   		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
 	    RETURN
-	END
+    END
+    -- End : Initialize Data SportsBook
+
+    -- Start : Initialize Data 3rd Products
+	EXEC dbo.Acc_CustSetting_3rdProductIns
+		@custid = @custid,
+		@SuperID = @srecommend,
+		@MasterID = @mrecommend,
+		@AgentID = @recommend,
+		@RoleID = 1,
+		@siteID = @siteID,
+		@currency = @currency,
+		@SettingStatus = @SettingStatus,
+		@ErrCode = @ErrCode OUTPUT
+		
+	IF @ErrCode > 0
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							when 'E' then 'Create customer fail. Please try again'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+						END
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			
+		RETURN
+	END						
+	-- End : Initialize Data 3rd Products
+
 	IF @isSearchAndCopy = 1
 	BEGIN
 		--Correct 3rd Products Setting 
@@ -801,33 +818,7 @@ BEGIN
 			,@SystemID = @SystemID
 			,@IsCountPT = 0
 			,@isSearchAndCopy = @isSearchAndCopy
-			--,@ErrCode = @ErrCode OUTPUT
-			--,@ErrMsg = @ErrMsg OUTPUT
 			,@SettingStatus = @SettingStatus
-
-		--IF @ErrCode <> 0
-		--BEGIN
-		--	--Error occurs
-		--	SELECT @ErrMsg = CASE @Language 
-		--							WHEN 'E' THEN 'Create member fail. Please try again'
-		--							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-		--						END	+ CHAR(10) + CHAR(13) + @ErrMsg
-    	
-		--	-- ROLLBACK MANUALLY	
-		--	DELETE FROM CustPTSetting3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		--	DELETE FROM CustSettingMode3rd			WITH(ROWLOCK) WHERE CustID = @CustID
-		--	DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-		--	DELETE FROM CustDiscount3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		--	DELETE FROM CustWinLossLimit_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		--	DELETE FROM CustStakeLevel_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		--	DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-		--	DELETE FROM CustBetSetting_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		--	DELETE FROM CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE CustID = @CustID
-
-		--	EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-
-		--	RETURN
-		--END   
 	END
 
 
@@ -848,23 +839,8 @@ BEGIN
 			    , @ErrCode=216
     	
 	    -- ROLLBACK MANUALLY	
-		DELETE FROM CustPTSetting3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustSettingMode3rd			WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustDiscount3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustWinLossLimit_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustStakeLevel_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustBetSetting_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		
-		DELETE BetSetting_Member WITH (ROWLOCK)
-		OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],SYSDATETIME()
-		INTO [BetSetting_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
-		WHERE custID = @custid
-		
-		DELETE FROM CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE CustID = @CustID
-
-	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
+	    	EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 
 	    RETURN
     END    
@@ -885,25 +861,9 @@ BEGIN
 			    , @ErrCode=216
     	
 	    -- ROLLBACK MANUALLY
-		DELETE FROM CustQRCode					WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustPTSetting3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustSettingMode3rd			WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustDiscount3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustWinLossLimit_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustStakeLevel_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustBetSetting_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		
-		DELETE BetSetting_Member WITH (ROWLOCK)
-		OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],SYSDATETIME()
-		INTO [BetSetting_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
-		WHERE custID = @custid
-		
-		DELETE FROM CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE CustID = @CustID	
-
-	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    return
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
+	    	EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+	    RETURN
     END
 	
 	If @SystemID IN (2, 10) -- ALPHA, Chatbot
@@ -917,24 +877,7 @@ BEGIN
 							END
 					, @ErrCode=216	
 
-			DELETE FROM CustQRCode					WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustLimitPTSetting			WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustPTSetting3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustSettingMode3rd			WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustDiscount3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustWinLossLimit_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustStakeLevel_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM CustBetSetting_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-			
-			DELETE BetSetting_Member WITH (ROWLOCK)
-			OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],SYSDATETIME()
-			INTO [BetSetting_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
-			WHERE custID = @custid
-			
-			DELETE FROM CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE CustID = @CustID			
-
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 			RETURN
 		END	

@@ -19,17 +19,18 @@ AS
  Revision:
     - 20150226@Dominic: add new parameter @SettingType
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
    
  */  
 BEGIN  
 	DECLARE @DCSProducts TABLE(ProductID TINYINT)
 	INSERT @DCSProducts(ProductID)
 	SELECT ProductID
-	FROM dbo.ProductSettingDetail WITH(NOLOCK)
+	FROM dbo.ProductSettingProfile WITH(NOLOCK)
 	WHERE SettingStatus < 2 AND (@SettingType IS NULL OR SettingType = @SettingType)
 	UNION 
 	SELECT ProductID
-	FROM dbo.ProductSettingDetail_UAT WITH(NOLOCK)
+	FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
 	WHERE SettingStatus < 2 AND (@SettingType IS NULL OR SettingType = @SettingType)
 
 	SELECT [ProductID], CASE WHEN SUBSTRING([Language],12,LEN([Language]) - 11) = '' THEN 'EN' ELSE UPPER(SUBSTRING([Language],12,LEN([Language]) - 11)) END [Language], Name

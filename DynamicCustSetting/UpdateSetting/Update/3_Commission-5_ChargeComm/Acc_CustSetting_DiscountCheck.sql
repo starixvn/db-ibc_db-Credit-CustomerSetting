@@ -21,6 +21,7 @@ AS
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
 
 	Param's Explanation:
 		• @Discount:
@@ -67,7 +68,7 @@ BEGIN
 
 	EXEC sp_xml_removedocument @iDoc
 
-	CREATE TABLE #ProductSettingDetail_Check(
+	CREATE TABLE #ProductSettingProfile_Check(
 		[SettingType] [smallint],
 		[SportType] [smallint],
 		[BetType] [smallint],
@@ -78,14 +79,14 @@ BEGIN
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount)
+	INSERT INTO #ProductSettingProfile_Check(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxDiscount
 	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewDiscountTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -97,7 +98,7 @@ BEGIN
 	--Check if new discount <0 or > default Max Discount
 	IF EXISTS (select TOP 1 1 
 					FROM @NewDiscountTbl tmp
-					INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
+					INNER JOIN #ProductSettingProfile_Check pdt WITH (NOLOCK)
 						ON pdt.SportType	= tmp.SportType
 							AND pdt.BetType = tmp.BetType
 							AND pdt.SettingType IN (3,19)
@@ -114,7 +115,7 @@ BEGIN
 						SELECT pdt.SportType AS '@SportType'
 							, pdt.BetType AS '@BetType'
 						FROM @NewDiscountTbl tmp
-						INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
+						INNER JOIN #ProductSettingProfile_Check pdt WITH (NOLOCK)
 							ON pdt.SportType	= tmp.SportType
 								AND pdt.BetType = tmp.BetType
 								AND pdt.SettingType IN (3,19)
@@ -136,6 +137,6 @@ BEGIN
 		RETURN
 	END
 
-	DROP TABLE #ProductSettingDetail_Check
+	DROP TABLE #ProductSettingProfile_Check
 END
 GO

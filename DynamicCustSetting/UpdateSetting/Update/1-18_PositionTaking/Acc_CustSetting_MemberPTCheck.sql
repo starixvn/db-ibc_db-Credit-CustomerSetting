@@ -16,7 +16,7 @@ AS
 	Task : Check Member's PT when SMA update member
 	DB: DBCUST/CustDB
 	Original:
-
+	
 	Param's Explanation:
 	• @PT:
 				<ROOT>
@@ -43,6 +43,7 @@ AS
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20210111@Johnson: dont allow update Master AutoPT when DisableAutoMPT = 1 [redmine:#148027]		
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -91,7 +92,7 @@ BEGIN
 		, NULL Old_IsAutoMasterPT
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
 
-	CREATE TABLE #ProductSettingDetail_MemCheck(
+	CREATE TABLE #ProductSettingProfile_MemCheck(
 		[SettingType] [smallint],
 		[SportType] [smallint],
 		[BetType] [smallint],
@@ -102,14 +103,14 @@ BEGIN
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingDetail_MemCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
+	INSERT INTO #ProductSettingProfile_MemCheck(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,MaxPT
 	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewPTTble t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -168,7 +169,7 @@ BEGIN
 		SELECT @ErrInfo = (
 							SELECT pdt.SportType,pdt.BetType,pdt.IsLive
 							FROM @NewPTTble mempt
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType=mempt.SportType
 										AND pdt.BetType=mempt.BetType
 										AND pdt.IsLive=mempt.IsLive
@@ -195,7 +196,7 @@ BEGIN
 											AND apt.BetType=mempt.BetType
 											AND apt.IsLive=mempt.IsLive
 											AND apt.CustID=@AgentID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -230,7 +231,7 @@ BEGIN
 										AND apt.BetType=mempt.BetType
 										AND apt.IsLive=mempt.IsLive
 										AND apt.CustID=@AgentID
-							INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+							INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 								ON pdt.SportType = mempt.SportType
 									AND pdt.BetType = mempt.BetType
 									AND pdt.IsLive = mempt.IsLive
@@ -317,7 +318,7 @@ BEGIN
 		SELECT @ErrInfo = (
 							SELECT pdt.SportType,pdt.BetType,pdt.IsLive,mempt.AgentPT_Max AS MaxPT
 							FROM @NewPTTble mempt 
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -375,7 +376,7 @@ BEGIN
 		SELECT @ErrInfo = (
 					SELECT pdt.SportType,pdt.BetType,pdt.IsLive
 					FROM @NewPTTble mempt
-						INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+						INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 							ON pdt.SportType = mempt.SportType
 								AND pdt.BetType = mempt.BetType
 								AND pdt.IsLive = mempt.IsLive
@@ -418,7 +419,7 @@ BEGIN
 									AND mpt.BetType=mempt.BetType
 									AND mpt.IsLive=mempt.IsLive
 									AND mpt.CustID=@MasterID
-						INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+						INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 							ON pdt.SportType = mempt.SportType
 								AND pdt.BetType = mempt.BetType
 								AND pdt.IsLive = mempt.IsLive
@@ -451,7 +452,7 @@ BEGIN
 								AND spt.BetType=mempt.BetType
 								AND spt.IsLive=mempt.IsLive
 								AND spt.CustID=@SuperID
-					INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+					INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 						ON pdt.SportType = mempt.SportType
 							AND pdt.BetType = mempt.BetType
 							AND pdt.IsLive = mempt.IsLive
@@ -479,7 +480,7 @@ BEGIN
 							AND mpt.BetType=mempt.BetType
 							AND mpt.IsLive=mempt.IsLive
 							AND mpt.CustID=@MasterID
-				INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+				INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 					ON pdt.SportType = mempt.SportType
 						AND pdt.BetType = mempt.BetType
 						AND pdt.IsLive = mempt.IsLive
@@ -512,7 +513,7 @@ BEGIN
 								AND spt.BetType=mempt.BetType
 								AND spt.IsLive=mempt.IsLive
 								AND spt.CustID=@SuperID
-					INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+					INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 						ON pdt.SportType = mempt.SportType
 							AND pdt.BetType = mempt.BetType
 							AND pdt.IsLive = mempt.IsLive
@@ -539,7 +540,7 @@ BEGIN
 											AND mpt.BetType=mempt.BetType
 											AND mpt.IsLive=mempt.IsLive
 											AND mpt.CustID=@MasterID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -572,7 +573,7 @@ BEGIN
 											AND mpt.BetType=mempt.BetType
 											AND mpt.IsLive=mempt.IsLive
 											AND mpt.CustID=@MasterID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -606,7 +607,7 @@ BEGIN
 											AND mpt.BetType=mempt.BetType
 											AND mpt.IsLive=mempt.IsLive
 											AND mpt.CustID=@MasterID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -663,7 +664,7 @@ BEGIN
 		SELECT @ErrInfo = (
 							SELECT pdt.SportType,pdt.BetType,pdt.IsLive
 							FROM @NewPTTble mempt
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -691,7 +692,7 @@ BEGIN
 							AND spt.BetType=mempt.BetType
 							AND spt.IsLive=mempt.IsLive
 							AND spt.CustID=@SuperID
-				INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+				INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 					ON pdt.SportType = mempt.SportType
 						AND pdt.BetType = mempt.BetType
 						AND pdt.IsLive = mempt.IsLive
@@ -717,7 +718,7 @@ BEGIN
 											AND spt.BetType=mempt.BetType
 											AND spt.IsLive=mempt.IsLive
 											AND spt.CustID=@SuperID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -747,7 +748,7 @@ BEGIN
 											AND spt.BetType=mempt.BetType
 											AND spt.IsLive=mempt.IsLive
 											AND spt.CustID=@SuperID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -778,7 +779,7 @@ BEGIN
 											AND spt.BetType=mempt.BetType
 											AND spt.IsLive=mempt.IsLive
 											AND spt.CustID=@SuperID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -830,7 +831,7 @@ BEGIN
 											AND mpt.BetType=mempt.BetType
 											AND mpt.IsLive=mempt.IsLive
 											AND mpt.CustID=@MasterID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -888,7 +889,7 @@ BEGIN
 											AND mpt.BetType=mempt.BetType
 											AND mpt.IsLive=mempt.IsLive
 											AND mpt.CustID=@MasterID
-								INNER JOIN #ProductSettingDetail_MemCheck pdt WITH (NOLOCK)
+								INNER JOIN #ProductSettingProfile_MemCheck pdt WITH (NOLOCK)
 									ON pdt.SportType = mempt.SportType
 										AND pdt.BetType = mempt.BetType
 										AND pdt.IsLive = mempt.IsLive
@@ -910,6 +911,6 @@ BEGIN
             RETURN
         END	
 	END
-	DROP TABLE #ProductSettingDetail_MemCheck
+	DROP TABLE #ProductSettingProfile_MemCheck
 END
 GO

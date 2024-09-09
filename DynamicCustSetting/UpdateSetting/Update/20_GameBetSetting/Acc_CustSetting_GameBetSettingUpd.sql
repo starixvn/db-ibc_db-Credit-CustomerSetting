@@ -22,6 +22,7 @@ AS
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]  
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
 		- 20220808@Tacy: update member's betsetting by SP execrep when using Search & Copy New member function [RedmineID: #176225]
+		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
 
 	Param's Explanation:
 	- @BetLimit:
@@ -162,7 +163,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM @NewBetSettingTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -341,7 +342,7 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 psd.ProductID, psd.SettingLevel
-			FROM		ProductSettingDetail AS psd WITH(NOLOCK)
+			FROM		ProductSettingProfile AS psd WITH(NOLOCK)
 			INNER JOIN	@NewBetSettingTbl AS tmp
 					ON	psd.SportType = tmp.SportType
 					AND	psd.BetType = tmp.BetType

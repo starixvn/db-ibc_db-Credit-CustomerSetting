@@ -17,7 +17,8 @@ AS
 	- 20230905@Eden: Enhance BBIN display [Redmine: #193539]
 	- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
 	- 20231213@Tacy: Live Casino - Hide un-launched product from Member Win Loss Limit page [Redmine: #198317]
-	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
+	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 
   Parameters Explanation: 
 	WinPercent: -1: winloss setting is unlimited
@@ -73,10 +74,12 @@ BEGIN
 	DELETE ft
 	FROM #tmpRealSport ft
 		INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) 
-			ON  CASE WHEN ft.ProductId = 41 THEN 9911 
+			ON  CASE 
+				  WHEN ft.ProductId = 41 THEN 9911  
+				  WHEN ft.ProductId = 44 THEN 9919	-- Dummy SportType RNG/Keno
 				   ELSE ft.SportType END = psp.Sporttype
-			AND	CASE WHEN ft.BetType = 1021 THEN 1024 
-				     WHEN ft.ProductId = 41 THEN 2400
+			AND	CASE WHEN ft.ProductId = 41 THEN 2400
+				     WHEN ft.ProductId = 44 THEN 1501 -- Dummy BetType RNG/Keno
 				ELSE ft.BetType END = psp.Bettype												
 		INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 		CROSS APPLY dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder) Hd

@@ -5,7 +5,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_02]
 	@Language VARCHAR(3) = 'E',
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(500) = '' OUTPUT,
-	@SettingStatus TINYINT = 0
+	@SettingStatus TINYINT = 0,
+	@ProductProfile	VARCHAR(MAX) = NULL OUTPUT -- Json
 AS
 /*
 	Created: Johnson
@@ -32,6 +33,7 @@ AS
 		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240628@Johnson: scale out DBCUST [redmine: #199915]
+		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	Parameter's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */ 
@@ -196,6 +198,7 @@ BEGIN
 			, @ExistingCustid	= @ExistingCustid
 			, @SettingStatus    = @SettingStatus
 			, @ErrCode			= @DCSErrCode OUTPUT
+			, @ProductProfile	= @ProductProfile OUTPUT
 			
 	IF @DCSErrCode <> 0 
 	BEGIN
