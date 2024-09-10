@@ -12,12 +12,15 @@ AS
   
 	Revisions: 
 		- 20200818@Eden: NAP CM - Auto Update Bet Limit Control [RedmineID: #139701]
-
+		- 20240904@Johnson: Apply Inhouse for BLC [redmine:#209892]
 	Param's Explanation:  
 		@CustID = 0 : process for all customer of this Type
 */
 BEGIN
-    SET NOCOUNT ON
+    IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
+		
+	SET NOCOUNT ON	
 	DECLARE @TempCust TABLE ( CustID INT PRIMARY KEY)
 
 	IF @CustID = 0
@@ -49,14 +52,16 @@ BEGIN
 
 	WHILE 1 = 1
 	BEGIN
-		DELETE TOP (5000) bc
+		DELETE TOP (2000) bc
+		OUTPUT DELETED.CustID, DELETED.BetLimitTypeID, dbo.f_GetDateTime2()
+		INTO BetLimitControlCustSetting_Del_InHouse(CustID,BetLimitTypeID,RepUpdateTime)
 		FROM BetLimitControlCustSetting bc WITH(ROWLOCK)
 			INNER JOIN @TempCust t ON t.CustID = bc.CustID 
 		WHERE bc.BetLimitTypeID = @BetLimitTypeID
 		
 		IF @@ROWCOUNT = 0
 		BREAK;
-		WAITFOR DELAY '00:00:00.001'
+		WAITFOR DELAY '00:00:00.05'
 	END
 END
 GO
