@@ -12,7 +12,7 @@ AS
 /*
 	 Created by: 20240628@Louisa
 	 Task: init [Redmine:#204370]
-	 DB: DBTP-bodb_CustHistory
+	 DB: DBCUST-CustDB_History
 
 	 Revision:
 		- 20240628@Louisa: Initial [Redmine:#204370]
