@@ -11,7 +11,7 @@ AS
 /*
 	 Created by: 20240723@Louisa
 	 Task: Deposit - Transform data from DBCUST/CustDB_History to DBTP/bodb_CustHistory  [Redmine:#207025]
-	 DB: DBTP-bodb02
+	 DB: DBTP-bodb_CustHistory
 
 	 Revision:
 		- 20240628@Louisa: Initial [Redmine:#207025]
@@ -58,10 +58,10 @@ BEGIN
 					,apos	SMALLMONEY
 					,mpos	SMALLMONEY
 					,spos	SMALLMONEY
-					,pdis	DECIMAL
-					,dis	DECIMAL
-					,adis	DECIMAL
-					,sdis	DECIMAL
+					,pdis	DECIMAL(9,8)
+					,dis	DECIMAL(9,8)
+					,adis	DECIMAL(9,8)
+					,sdis	DECIMAL(9,8)
 					,ut		DATETIME
 					)
 				
