@@ -26,7 +26,9 @@ INSERT INTO  Dest_ServiceTransform
 	, rID, BatchSize
 	, SPSelect, SPInsert, StatusID ,SiteDBGroupID ,UpdateTime, GroupID
 )	
-VALUES('VRCustLockStatus'	, 1000, 0, 1000, 'ServiceTransform_VRCustLockStatus_Select'		, 'ServiceTransform_VRCustLockStatus_Insert'	, 0, 0, SYSDATETIME() ,3)
-	 ,('CustVirtualSetting'	, 1000, 0, 1000, 'ServiceTransform_CustVirtualSetting_Select'	, 'ServiceTransform_CustVirtualSetting_Insert'	, 0, 0, SYSDATETIME() ,3)
+VALUES('VRCustLockStatus_History'	, 1000, 0, 1000, 'ServiceTransform_VRCustLockStatus_Select'		, 'ServiceTransform_VRCustLockStatus_Insert'	, 0, 0, SYSDATETIME() ,3)
+	 ,('CustVirtualSetting_History'	, 1000, 0, 1000, 'ServiceTransform_CustVirtualSetting_Select'	, 'ServiceTransform_CustVirtualSetting_Insert'	, 0, 0, SYSDATETIME() ,3)
 	 
 GO 
+
+

@@ -24,11 +24,11 @@ BEGIN
 
 			DECLARE @MaxID BIGINT
 			DECLARE @tmpVRCustLockStatusH TABLE 
-			(	rID			BIGINT					
-				,CustID		INT
-				,Type		TINYINT
-				,UpdateTime	DATETIME
-				,IsLocked	BIT
+			(	rID			BIGINT NOT NULL					
+				,CustID		INT NOT NULL
+				,Type		TINYINT NOT NULL
+				,UpdateTime	DATETIME NOT NULL
+				,IsLocked	BIT NOT NULL
 			)
 		
 			INSERT INTO @tmpVRCustLockStatusH ( rID ,CustID ,Type ,UpdateTime ,IsLocked)
@@ -44,7 +44,7 @@ BEGIN
 			SELECT @MaxID = MAX(rID) FROM @tmpVRCustLockStatusH
 
 			INSERT INTO VRCustLockStatus_History (rID ,CustID ,Type ,UpdateTime,IsLocked, SiteDBGroupID)
-			SELECT  rID ,CustID ,Type ,UpdateTime,IsLocked, @SiteDBGroupID
+			SELECT  rID ,CustID ,Type ,UpdateTime ,IsLocked ,@SiteDBGroupID
 			FROM @tmpVRCustLockStatusH
 
 			UPDATE Dest_ServiceTransform 

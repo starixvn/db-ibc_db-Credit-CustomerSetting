@@ -24,11 +24,11 @@ BEGIN
 
 			DECLARE @MaxID BIGINT
 			DECLARE @tmpCustVirtualSettingH TABLE 
-			(	rID				BIGINT
-				,UpdateTime		DATETIME	
-				,custid			INT
-				,seqNo			TINYINT
-				,bitmapVirtual	BINARY(64)
+			(	rID				BIGINT NOT NULL
+				,UpdateTime		DATETIME NOT NULL	
+				,custid			INT NOT NULL
+				,seqNo			TINYINT NOT NULL
+				,bitmapVirtual	BINARY(64) NOT NULL
 			)
 		
 			INSERT INTO @tmpCustVirtualSettingH ( rID ,UpdateTime ,custid ,seqNo ,bitmapVirtual)
@@ -43,8 +43,8 @@ BEGIN
 				
 			SELECT @MaxID = MAX(rID) FROM @tmpCustVirtualSettingH
 
-			INSERT INTO CustVirtualSetting_History ( rid ,UpdateTime ,custid ,seqNo	,bitmapVirtual ,SiteDBGroupID)
-			SELECT rid ,UpdateTime ,custid ,seqNo ,bitmapVirtual, @SiteDBGroupID
+			INSERT INTO CustVirtualSetting_History ( rID ,UpdateTime ,custid ,seqNo	,bitmapVirtual ,SiteDBGroupID)
+			SELECT rID ,UpdateTime ,custid ,seqNo ,bitmapVirtual, @SiteDBGroupID
 			FROM @tmpCustVirtualSettingH
 
 			UPDATE Dest_ServiceTransform 

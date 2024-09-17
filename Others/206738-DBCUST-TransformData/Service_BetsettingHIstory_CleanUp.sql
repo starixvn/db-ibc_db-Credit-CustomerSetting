@@ -12,6 +12,7 @@ AS
 	 Revision:
 		- 20240628@Louisa: Initial [Redmine:#204370]
 		- 20240628@Louisa: transform historial data - 16 tables Deposite [Redmine:#207025]
+		- 20240812@Louisa: Virtual Rate tables [Redmine:#207029]
 */
 
 BEGIN

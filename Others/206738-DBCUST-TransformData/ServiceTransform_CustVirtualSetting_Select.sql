@@ -34,7 +34,7 @@ BEGIN
 										rID				AS 'rid'
 										,UpdateTime		AS 'ut'
 										,custid			AS 'cid'
-										,seqNo			AS 'sn'
+										,seqNo			AS 'sq'
 										,bitmapVirtual	AS 'bv'
 								FROM CustVirtualSetting_History WITH(NOLOCK)
 								WHERE rID > @rID 

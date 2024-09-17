@@ -14,4 +14,4 @@ GO
 UPDATE Dest_ServiceTransform WITH(ROWLOCK, UPDLOCK)
 SET StatusID = 1
 WHERE StatusID = 0
-	AND TableName IN ('VRCustLockStatus', 'CustVirtualSetting' )
+	AND TableName IN ('VRCustLockStatus_History', 'CustVirtualSetting_History' )
