@@ -9,6 +9,7 @@ AS
 
 	 Revision:
 		- 20240628@Louisa: Initial [Redmine:#204370]
+		- 20240628@Louisa: Add GroupID [Redmine:#207025]
 */
 BEGIN
 	SELECT Tablename
@@ -18,6 +19,7 @@ BEGIN
 			,SPSelect
 			,SPInsert
 			,SiteDBGroupID
+			,GroupID
 	FROM Dest_ServiceTransform WITH(NOLOCK)
 	WHERE StatusID = 1
 		--AND SiteDBGroupID = @SiteDBGroupID
