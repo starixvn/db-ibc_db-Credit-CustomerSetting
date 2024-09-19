@@ -29,7 +29,7 @@ AS
 		- 20230602@Helios: Enhance stored procedure to prevent performance issue [Redmine: #189154]
 		- 20230410@Bobby: AutoJob clear balance downlines [RedmineID: #182071]
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
-		
+		- 20240917@Elodie: Tuning sp [redmine: #210892]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -73,7 +73,7 @@ BEGIN
 		FROM (
 				SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled desc, cs.closed, ISNULL(cs.reject,0), ci.username) AS RowNumber 
 				FROM dbo.custinfo ci WITH(NOLOCK)
-					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
@@ -93,7 +93,7 @@ BEGIN
 				@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
 			FROM dbo.Custinfo AS ci WITH (NOLOCK)
 				LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ci.custid
-				CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+				CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
@@ -121,7 +121,7 @@ BEGIN
 				SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, cs.closed, ISNULL(cs.reject,0), ci.username) as RowNumber
 				FROM dbo.custinfo ci WITH (NOLOCK) 
 					LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ci.custid
-					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
@@ -152,7 +152,7 @@ BEGIN
 			FROM dbo.Custinfo AS ci WITH (NOLOCK)
 				INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 				LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ci.custid
-				CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+				CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
@@ -181,7 +181,7 @@ BEGIN
 				FROM dbo.custinfo ci WITH(NOLOCK) 
 					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 					LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @MRecommend AND cbs.ToCustID = ci.custid
-					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 										, Locked
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
