@@ -108,7 +108,7 @@ BEGIN
 		- 20230628@Tacy: NG2 - Remove Setting [Redmine: #189762]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 		- 20240405@Kelvin: Update View Master/Agent/Member list [RedmineID: #202877]
-
+		- 20240917@Elodie: Tuning sp [redmine: #210892]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -150,7 +150,7 @@ BEGIN
 				SELECT ci.custid,
 					ROW_NUMBER() OVER (ORDER BY ci.enabled desc, cs.closed, cs.reject, ci.username) as rn
 				FROM dbo.custInfo ci with(nolock)
-					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 								FROM dbo.CustProductStatus  WITH(NOLOCK)
 								WHERE CustID = ci.custid
@@ -165,7 +165,7 @@ BEGIN
 		BEGIN
 			SELECT @TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
 			FROM dbo.Custinfo ci WITH(nolock)   
-				CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+				CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 									, bitmapHasSynced
 									, Locked
@@ -185,7 +185,7 @@ BEGIN
 				SELECT ci.custid,
 					ROW_NUMBER() OVER (ORDER BY ci.enabled desc, cs.closed, cs.reject, ci.username) as rn
 				FROM dbo.custInfo ci with(nolock)
-					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 									, Locked
 								FROM dbo.CustProductStatus  WITH(NOLOCK)
@@ -207,7 +207,7 @@ BEGIN
 			SELECT @TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
 			FROM dbo.Custinfo ci WITH(NOLOCK)   
 				INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-				CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+				CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 									, Locked
 								FROM dbo.CustProductStatus  WITH(NOLOCK)
@@ -229,7 +229,7 @@ BEGIN
 					ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, cs.closed, cs.reject, ci.username) AS rn
 				FROM dbo.custInfo ci with(nolock)
 					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-					CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
 									, Locked
 								FROM dbo.CustProductStatus  WITH(NOLOCK)
