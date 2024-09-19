@@ -21,6 +21,7 @@ AS
 	Revisions:  
 	- 20211011@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
 	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+	- 20240520@Eden: Unify RNG Games [redmine: #204358]
 
 	Parameter Definition
 
@@ -230,7 +231,7 @@ BEGIN
 	--> Wrong Config
 	IF EXISTS(	SELECT 1
 				FROM #TempConfig t
-					LEFT JOIN ProductSettingDetail dt WITH(NOLOCK)
+					LEFT JOIN ProductSettingProfile dt WITH(NOLOCK)
 						ON t.SportType = dt.SportType
 						AND t.BetType= dt.BetType
 						AND t.IsLive = dt.IsLive
@@ -243,7 +244,7 @@ BEGIN
 			,ErrCode = 2
 			,ErrMsg = 'Wrong Config(s): '
 		FROM #TempConfig t
-			LEFT JOIN ProductSettingDetail dt WITH(NOLOCK)
+			LEFT JOIN ProductSettingProfile dt WITH(NOLOCK)
 				ON t.SportType = dt.SportType
 				AND t.BetType= dt.BetType
 				AND t.IsLive = dt.IsLive
@@ -356,7 +357,7 @@ BEGIN
 				FROM #TempConfig t
 					OUTER APPLY(	SELECT TOP(1) p.SettingType
 									FROM ProductSettingType p WITH(NOLOCK) 
-										INNER JOIN ProductSettingDetail d WITH(NOLOCK) 
+										INNER JOIN ProductSettingProfile d WITH(NOLOCK) 
 											ON d.SettingType = p.SettingType
 									WHERE p.SettingName = t.SettingName
 										AND t.CopyFromSportType = d.SportType 
@@ -373,7 +374,7 @@ BEGIN
 		FROM #TempConfig t
 			OUTER APPLY(	SELECT TOP(1) p.SettingType
 							FROM ProductSettingType p WITH(NOLOCK) 
-								INNER JOIN ProductSettingDetail d WITH(NOLOCK) 
+								INNER JOIN ProductSettingProfile d WITH(NOLOCK) 
 									ON d.SettingType = p.SettingType
 							WHERE p.SettingName = t.SettingName
 								AND t.CopyFromSportType = d.SportType 

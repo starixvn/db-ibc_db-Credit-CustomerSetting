@@ -10,6 +10,7 @@ AS
 	Revisions:  
 	- 20211011@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
 	- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
+	- 20240520@Eden: Unify RNG Games [redmine: #204358]
 
 	Parameter Definition
 
@@ -28,9 +29,10 @@ BEGIN
 		,SettingName = CASE WHEN cf.SettingType = 12 THEN 'Loss Limit' ELSE t.SettingName END
 		,cf.MaxDiscount
 		,cf.IntervalValue
-	FROM  ProductSettingDetail cf WITH(NOLOCK)
+	FROM  ProductSettingProfile cf WITH(NOLOCK)
 		INNER JOIN ProductSettingType t WITH(NOLOCK) ON cf.SettingType = t.SettingType
-	WHERE cf.ProductID <> 1
+		AND cf.SettingType NOT IN (2,9,16) --no need support copy data from difference tables with settingtype = 23
+	WHERE cf.ProductID <> 1 
 END
 GO
 
