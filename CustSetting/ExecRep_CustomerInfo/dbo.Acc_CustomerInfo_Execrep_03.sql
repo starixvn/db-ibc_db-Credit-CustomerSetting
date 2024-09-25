@@ -43,6 +43,7 @@ Revisions:
 	- 20230614@Johnson: update CC for Saba Virtual Soccer, Saba Virtual Basketball [redmine: #185320] 
 	- 20240426@Johnson: Update CC By Sports for Special Class [redmine:#201360]
 	- 20240904@Winfred: Update SportID of CustomerClassSetting Feature name [redmine:#210321]
+	- 20240716@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -280,36 +281,11 @@ BEGIN
 		END
 		
 		DROP TABLE #tblCustDanger
-	END
-	ELSE IF @mode = 'VIPStatus'
-	BEGIN
-		IF (dbo.f_CheckRepTable('Dep_CustVIP') = 0) RETURN
-		IF (dbo.f_CheckRepTable('ProblemAccount') = 0) RETURN
-		
-		DECLARE @tmpCust TABLE (custid INT)
-		
-		INSERT INTO @tmpCust(custid)
-		SELECT value
-		FROM STRING_SPLIT(@CustList,',')
-		
-		--Update VIP status
-		IF @isVip = 0
-		BEGIN
-			DELETE Dep_CustVIP WITH(UPDLOCK,ROWLOCK)
-			WHERE custid IN (SELECT custid FROM @tmpCust)
-		END
-		ELSE 
-		BEGIN
-			INSERT INTO Dep_CustVIP(custid,userID,ModifiedDate)
-			SELECT custid, @userid, getdate()
-			FROM @tmpCust t
-			WHERE NOT EXISTS (SELECT 1 FROM Dep_CustVIP d WITH(NOLOCK) WHERE t.custid = d.custid)
-		END
-	END
+	END	
 	ELSE IF @mode = 'CustomerClass'
 	BEGIN
 		IF (dbo.f_CheckRepTable('custinfo') = 0) RETURN
-		IF (dbo.f_CheckRepTable('Dep_Custsuper') = 0) RETURN
+		IF OBJECT_ID('Dep_Custsuper') IS NULL RETURN
 		
 		CREATE TABLE #tblCustClass (custid INT, CustomerClass SMALLINT, OldCustomerClass SMALLINT, CategoryID SMALLINT, isDeposit BIT, isFinished BIT DEFAULT(0))
 		DECLARE @tmp TABLE (custid INT, CustomerClass SMALLINT, OldCustomerClass SMALLINT, CategoryID SMALLINT, isDeposit BIT)
