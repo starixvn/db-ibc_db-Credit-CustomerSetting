@@ -17,6 +17,7 @@ AS
 	 Revision:
 		- 20240628@Louisa: Initial [Redmine:#204370]
 		- 20240628@Louisa: transform historial data - 16 tables Deposite [Redmine:#207025]
+		- 20240812@Louisa: Virtual Rate tables [Redmine:#207029]
 */
 BEGIN
 	
@@ -49,6 +50,18 @@ BEGIN
 	IF @TableName = 'BetSetting3rd_Agent_History'
 	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
 						FROM BetSetting3rd_Agent_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'VRCustLockStatus_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM VRCustLockStatus_History WITH (NOLOCK) 
+						WHERE rID> @LastRID
+						ORDER BY rID )
+
+	IF @TableName = 'CustVirtualSetting_History'
+	SET @UpdateTime = ( SELECT TOP(1) UpdateTime 
+						FROM CustVirtualSetting_History WITH (NOLOCK) 
 						WHERE rID> @LastRID
 						ORDER BY rID )
 
