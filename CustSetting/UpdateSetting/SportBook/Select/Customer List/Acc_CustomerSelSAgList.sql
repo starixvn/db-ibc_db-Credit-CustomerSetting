@@ -1,7 +1,7 @@
 ﻿/*<info serverAlias="DBAGE-bodb02" executers="wsv_nap,wsv_xnap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerSelSAgList]   
-	@System varchar(50) = 'ACCOUNTING'
-	,@Userid INT=NULL
+	@System			VARCHAR(50) = 'ACCOUNTING'
+	,@DeniedList	NVARCHAR(MAX)=NULL
 AS  
 
 /*
@@ -22,47 +22,54 @@ AS
 		- 20181122@Elodie: DB053/bodb_Age Migration [Redmine:#104770]
 		- 20190201@Phillip: #105338 Build Customer Setting with Singbet Style
 		- 20240419@Tacy: NAP - Permission controls on real currency [redmineID: #202523]
+		- 20240725@Tacy: Remove linked-server/cross-db on NAP_UserControl [redmineID: #208402]
 
 */
 BEGIN
 	SET NOCOUNT ON  
 
-	DECLARE @SearchQuery varchar(1024), @SearchCurrency VARCHAR(1024)
-
-	DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
-	DECLARE @tmpExchange TABLE (exchangeID INT, Currency NVARCHAR(50), OfferSite TINYINT)
-
-	DECLARE @tmpUserid VARCHAR(50)
-	SELECT @tmpUserid=CAST(@Userid AS VARCHAR(50))
-
-	--get deny site
-	SELECT @SearchQuery = 'SELECT * 
-	FROM OPENQUERY(DBPOL, 
-	''SELECT siteid , site,SpecialGroup FROM NAP_UserControl.dbo.f_GetDeniedSiteByUser( ''''' + @tmpUserid + ''''')'')'
-	
-	INSERT INTO  @tmp (siteid , site,SpecialGroup)
-	EXECUTE(@SearchQuery)
-
-	--get deny currency
-    SELECT @SearchCurrency = 'SELECT * 
-	FROM OPENQUERY(DBPOL, 
-	''SELECT exchangeID, Currency, OfferSite FROM NAP_UserControl.dbo.f_GetDeniedCurrencyByUser ( ''''' + @tmpUserid + ''''')'')'
-
-	INSERT INTO  @tmpExchange (exchangeID, Currency, OfferSite)
-	EXECUTE(@SearchCurrency)
-
 	IF(@System = 'ACCOUNTING')
 	BEGIN
-		
+		DECLARE @tmp TABLE (siteid INT,site NVARCHAR(50), SpecialGroup TINYINT )
+		DECLARE @tmpExchange TABLE (exchangeID INT, Currency NVARCHAR(50), OfferSite TINYINT)
+
+		IF ISNULL(@DeniedList,'')<>''
+		BEGIN
+			--get deny site
+			INSERT INTO @tmp (siteid, site, SpecialGroup)
+			SELECT vl.[ID], vl.[Name], vl.[Opt]
+			FROM OPENJSON(@DeniedList) 
+					WITH (  [KeyName]	VARCHAR(30),
+							[Value]	NVARCHAR(MAX) AS JSON
+						) AS js
+			CROSS APPLY OPENJSON (js.[value])
+					WITH (  [ID]	INT,
+							[Name]	NVARCHAR(30),
+							[Opt]	TINYINT
+						) AS vl
+			WHERE js.[KeyName]='Site'
+	
+			--get deny currency
+			INSERT INTO  @tmpExchange (exchangeID, Currency, OfferSite)
+			SELECT vl.[ID], vl.[Name], vl.[Opt]
+			FROM OPENJSON(@DeniedList) 
+					WITH (  [KeyName]	VARCHAR(30),
+							[Value]	NVARCHAR(MAX) AS JSON
+						) AS js
+			CROSS APPLY OPENJSON (js.[value])
+					WITH (  [ID]	INT,
+							[Name]	NVARCHAR(30),
+							[Opt]	TINYINT
+						) AS vl
+			WHERE js.[KeyName]='Exchange'
+		END
+	
 		Select c.custid, c.username, c.currency as exchangeid, c.[site] AS siteName
 		from customer as c with (NOLOCK) 
 		where c.roleid=4 and c.custid>100 and c.[site] <> 'CN88'
-		and c.srecommend NOT IN(SELECT custid from f_DepSuper_1 ('all'))
-		AND (@Userid IS NULL 
-			OR (@Userid IS NOT NULL 
-				AND site NOT IN (SELECT site FROM @tmp)
-				AND c.currency NOT IN (SELECT exchangeID FROM @tmpExchange)
-			))
+			and c.srecommend NOT IN(SELECT custid from f_DepSuper_1 ('all'))
+			AND site NOT IN (SELECT site FROM @tmp)
+			AND c.currency NOT IN (SELECT exchangeID FROM @tmpExchange)
 		order by c.username   
 	END
 	ELSE
