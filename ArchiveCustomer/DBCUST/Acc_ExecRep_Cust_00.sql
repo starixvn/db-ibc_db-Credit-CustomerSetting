@@ -27,7 +27,7 @@ AS
 		- 20230524@Eden: Change batch update delete data to 5000 [Redmine: #181595]
 		- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 		- 20230529@Eden: Check permission of KL Environment [Redmine: #199968]
-
+		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
 	Param's Explanation:
 		@Type: 
 			+ -1-Stage 1: update closed = 1 for whole agent line
@@ -398,9 +398,11 @@ BEGIN
 	ELSE IF @Type = 2  --Stage 4
 	BEGIN
 		IF @@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DB66')  
-		   OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
-		   OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
-		   OR  @@SERVERNAME LIKE 'TESTSITEDB%'  --Local
+			OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
+			OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
+			OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
+			OR  @@SERVERNAME LIKE 'SITDBSITEC%'  --SIT 
+			OR  @@SERVERNAME LIKE 'TESTSITEDB%'  --Local
 		BEGIN
 
 			WHILE (1=1)
