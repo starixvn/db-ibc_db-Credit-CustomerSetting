@@ -46,11 +46,12 @@ AS
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 		- 20240722@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
+		- 20241010@Johnson: remove DBKLC1 [redmine: #207025]
 	Param's Explanation:
 		
 */ 
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBKLC1','DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	SET NOCOUNT ON
