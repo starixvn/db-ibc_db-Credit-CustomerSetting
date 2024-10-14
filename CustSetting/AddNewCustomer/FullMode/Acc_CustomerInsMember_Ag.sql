@@ -201,6 +201,8 @@ Revisions:
 	- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240606@Johnson: Scale out DBCUST [Redmine: #199915]
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+
 Param's Explanation:	
 	- @ErrCode:
 		= 0: add new member successfully.
@@ -729,7 +731,10 @@ BEGIN
 	    @ErrMsg = @ErrMsg OUTPUT
 
     IF @ErrCode <> 0
-	    return
+	BEGIN
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+	    RETURN
+	END
 
 	EXEC dbo.Acc_CustomerInfo_Execrep_00
 	    @custid = @custid,
@@ -799,9 +804,8 @@ BEGIN
 							when 'E' then 'Create customer fail. Please try again'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
-			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID	
 		RETURN
 	END						
 	-- End : Initialize Data 3rd Products
@@ -839,9 +843,8 @@ BEGIN
 			    , @ErrCode=216
     	
 	    -- ROLLBACK MANUALLY	
-		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
-	    	EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-
+	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @roleid = 1
 	    RETURN
     END    
 	
@@ -862,7 +865,7 @@ BEGIN
     	
 	    -- ROLLBACK MANUALLY
 		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
-	    	EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    RETURN
     END
 	
@@ -877,8 +880,8 @@ BEGIN
 							END
 					, @ErrCode=216	
 
-			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @roleid = 1
 			RETURN
 		END	
 	END

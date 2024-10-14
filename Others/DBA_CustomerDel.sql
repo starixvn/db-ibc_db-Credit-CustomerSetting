@@ -34,6 +34,7 @@ AS
 		- 20240726@Johnson: Scale out DBCUST for SB Bet settings [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20240726@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
@@ -104,7 +105,6 @@ BEGIN
 	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -120,7 +120,6 @@ BEGIN
 	DELETE dbo.CustStakeLevel_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustWinLossLimit_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustWinLossLimit_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustBetSetting3rd_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustBetSetting3rd_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustDiscount3rd_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -147,6 +146,15 @@ BEGIN
 	OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],dbo.f_GetDateTime2()
 	INTO [BetSetting_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 	WHERE custID IN (SELECT custID FROM @tmp_custID)
+	--Inhouse Tables
+	--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid IN (SELECT custID FROM @tmp_custID)
+
+	DELETE c
+	OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+	INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+	FROM CustVirtualSetting c WITH(ROWLOCK) 
+	WHERE custid IN (SELECT custID FROM @tmp_custID)
+
 		
 	--Delete setting deposit	
 	DELETE Dep_CustProductSetting 
@@ -294,7 +302,6 @@ BEGIN
 	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -311,7 +318,6 @@ BEGIN
 	DELETE dbo.CustStakeLevel_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustWinLossLimit_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustWinLossLimit_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustBetSetting3rd_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustBetSetting3rd_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustDiscount3rd_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -338,6 +344,15 @@ BEGIN
 	OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],dbo.f_GetDateTime2()
 	INTO [BetSetting_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 	WHERE custID IN (SELECT custID FROM @tmp_custID)
+	--Inhouse Tables
+	--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid IN (SELECT custID FROM @tmp_custID)
+
+	DELETE c
+	OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+	INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+	FROM CustVirtualSetting c WITH(ROWLOCK) 
+	WHERE custid IN (SELECT custID FROM @tmp_custID)
+
 	
 	--Delete setting deposit
 	DELETE Dep_CustProductSetting 
@@ -473,7 +488,6 @@ BEGIN
 	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -489,7 +503,6 @@ BEGIN
 	DELETE dbo.CustStakeLevel_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustWinLossLimit_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustWinLossLimit_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
-	DELETE dbo.CustVirtualSetting WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustBetSetting3rd_Agent WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustBetSetting3rd_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
 	DELETE dbo.CustDiscount3rd_Member WHERE custid IN (SELECT custID FROM @tmp_custID)
@@ -516,6 +529,15 @@ BEGIN
 	OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],dbo.f_GetDateTime2()
 	INTO [BetSetting_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 	WHERE custID IN (SELECT custID FROM @tmp_custID)
+	--Inhouse Tables
+	--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid IN (SELECT custID FROM @tmp_custID)
+
+	DELETE c
+	OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+	INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+	FROM CustVirtualSetting c WITH(ROWLOCK) 
+	WHERE custid IN (SELECT custID FROM @tmp_custID)
+
 		
 	--Delete setting deposit
 	DELETE Dep_CustProductSetting 
@@ -637,7 +659,6 @@ BEGIN
 	DELETE dbo.CustGroupHeadline WHERE custid = @custid	
 	DELETE dbo.CustNoComm WHERE custid = @custid	
 	DELETE dbo.CustRequestGame WHERE custid = @custid	
-	DELETE dbo.CustVirtualSetting WHERE custid = @custid
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -650,13 +671,21 @@ BEGIN
 	DELETE dbo.CustSettingMode3rd WHERE custid = @custid
 	DELETE dbo.CustStakeLevel_Member WHERE custid = @custid
 	DELETE dbo.CustWinLossLimit_Member WHERE custid = @custid
-	DELETE dbo.CustVirtualSetting WHERE custid = @custid
 	DELETE dbo.CustBetSetting3rd_Member WHERE custid = @custid
 	DELETE dbo.CustDiscount3rd_Member WHERE custid = @custid
 
 	DELETE dbo.BetSetting3rd_Member 
 	OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, dbo.f_GetDateTime2() 
 	INTO BetSetting3rd_Member_Del_Inhouse(CustID,Sporttype,Bettype,RepUpdateTime)
+	WHERE custid = @custid
+	
+	--Inhouse Tables
+	--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @custid
+
+	DELETE c
+	OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+	INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+	FROM CustVirtualSetting c WITH(ROWLOCK) 
 	WHERE custid = @custid
 		
 	DELETE BetSetting_Member WITH (ROWLOCK)

@@ -44,6 +44,7 @@ AS
 		- 20240321@Luke: NAP - Virtual rate - For Direct account :Change default of VR Status for newly created accounts to "Follow upline" [Redmine: #202624]
 		- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
 		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
+		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	Param's Explanation: 
 		@SettingXML :
@@ -796,7 +797,10 @@ BEGIN
 
     --Error Occurs
     IF @ErrCode <> 0
+	 BEGIN
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @roleid = 3
 	    RETURN
+    END	
 
 	EXEC Acc_CustomerInfo_Execrep_14
 		@custid = @custid,
@@ -882,9 +886,8 @@ BEGIN
 				    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 			    END
     				
-		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		    EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 3
-			
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 3
 	    RETURN
     END		
 		

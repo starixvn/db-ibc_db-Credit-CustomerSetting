@@ -43,6 +43,8 @@ AS
 		- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
 		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+	
   Limit New Account Update PT	Param's Explanation: 
 		- @SettingXML:
 		'{
@@ -702,9 +704,13 @@ BEGIN
 	    @Language = @Language,
 	    @ErrCode = @ErrCode OUTPUT,
 	    @ErrMsg = @ErrMsg OUTPUT
-
-    IF @ErrCode <> 0
-	    return
+    
+    IF @ErrCode > 0
+    BEGIN
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @roleid = 2
+	    RETURN
+    END	
 	
 	EXEC Acc_CustomerInfo_Execrep_14
 		@custid = @custid,

@@ -152,6 +152,7 @@ Revisions:
 	- 20230711@Helios: VR Accumulate Balance [Redmine: #189649]
 	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141]
 	- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]	
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -258,8 +259,8 @@ BEGIN
         )
 		
 			--Virtual rate
-		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-		SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
+		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+		SELECT custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime  FROM f_GenerateVirtualSettingBySite (@site,@CustID)
     END
     ELSE IF @roleid = 3
     BEGIN
@@ -293,13 +294,13 @@ BEGIN
 					WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 						AND ci.srecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK)))
 		BEGIN
-			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-			SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+			SELECT custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime FROM f_GenerateVirtualSettingBySite (@site,@CustID)
 		END
 		ELSE
 		BEGIN
-			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-			SELECT @Custid, seqNo, bitmapVirtual
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+			SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime
 			FROM CustVirtualSetting WITH(NOLOCK)
 			WHERE custid = @srecommend
 		END
@@ -325,13 +326,13 @@ BEGIN
 					WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 						AND ci.mrecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK)))
 		BEGIN
-			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-			SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+			SELECT custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime FROM f_GenerateVirtualSettingBySite (@site,@CustID)
 		END
 		ELSE
 		BEGIN
-			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-			SELECT @Custid, seqNo, bitmapVirtual
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+			SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime
 			FROM CustVirtualSetting WITH(NOLOCK)
 			WHERE custid = @mrecommend
 		END
@@ -344,13 +345,13 @@ BEGIN
 					WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 						AND ci.recommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK)))
 		BEGIN
-			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-			SELECT custid, seqNo, bitmapVirtual FROM f_GenerateVirtualSettingBySite (@site,@CustID)
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+			SELECT custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime FROM f_GenerateVirtualSettingBySite (@site,@CustID)
 		END
 		ELSE
 		BEGIN
-			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-			SELECT @Custid, seqNo, bitmapVirtual
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+			SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime
 			FROM CustVirtualSetting WITH(NOLOCK)
 			WHERE custid = @recommend
 		END  
@@ -362,18 +363,6 @@ BEGIN
 					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 					     END
 		     , @ErrCode = 112
-
-	    -- ROLLBACK MANUALLY
-	    IF @RoleID = 4
-		    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-	    ELSE IF @RoleID = 3
-		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-	    ELSE IF @RoleID = 2
-		    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 	    RETURN
     END	
 
@@ -385,8 +374,8 @@ BEGIN
 						END
 
 	--VR lock status
-	INSERT INTO VRCustLockStatus(CustID,Type)
-	SELECT @custid,Type
+	INSERT INTO VRCustLockStatus(CustID,Type,RepUpdateTime)
+	SELECT @custid,Type, [dbo].[f_GetDateTime2]() as RepUpdateTime
 	FROM VRCustLockStatus v (NOLOCK) 
 	WHERE CustID = @UplineID
 		AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
@@ -399,19 +388,6 @@ BEGIN
 					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 					     END
 		     , @ErrCode = 112
-
-	    -- ROLLBACK MANUALLY
-	    IF @RoleID = 4
-		    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-	    ELSE IF @RoleID = 3
-		    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-	    ELSE IF @RoleID = 2
-		    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 	    RETURN
     END	
 
@@ -447,18 +423,6 @@ BEGIN
 								    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							    END
 				    ,@ErrCode = 115
-
-		    IF @RoleID = 4
-			    DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		    ELSE IF @RoleID = 3
-			    DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-		    ELSE IF @RoleID = 2
-			    DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-
-		    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-			DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-			--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 		    RETURN
 	    END
     END
@@ -476,18 +440,6 @@ BEGIN
 										ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 									END
 						,@ErrCode = 115
-
-				IF @RoleID = 4
-					DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-				ELSE IF @RoleID = 3
-					DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-				ELSE IF @RoleID = 2
-					DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-
-				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-				DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-				--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 				RETURN
 			END
 		END
@@ -547,30 +499,6 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							END,
 				@ErrCode = 113
-
-		-- ROLLBACK MANUALLY
-		IF @RoleID = 4
-		BEGIN
-			DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
-		END
-		ELSE IF @RoleID = 3
-		BEGIN
-			DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-		END
-		ELSE IF @RoleID = 2
-		BEGIN
-			DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-		END
-		
-		DELETE FROM SuspiciousCust WITH (ROWLOCK) WHERE CustId = @custid
-		DELETE FROM custInfo WITH (ROWLOCK) WHERE CustId = @custid
-		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
-		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 		RETURN
     END CATCH
 	
@@ -758,32 +686,6 @@ BEGIN
 							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							 END,
 				   @ErrCode = 113
-
-			-- ROLLBACK MANUALLY
-			IF @RoleID = 4
-			BEGIN
-				DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
-				DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
-			END
-			ELSE IF @RoleID = 3
-			BEGIN
-				DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-				DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
-			END
-			ELSE IF @RoleID = 2
-			BEGIN
-				DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-				DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
-			END
-			
-			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
-			DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-			--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 			
 			RETURN
 		END
@@ -791,8 +693,8 @@ BEGIN
 		--Set Manual VR for Site = '611111'
 		IF @site = '611111'
 		BEGIN
-			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)			
-			SELECT @CustID,43 AS SportType
+			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType,RepUpdateTime)			
+			SELECT @CustID,43 AS SportType, [dbo].[f_GetDateTime2]() as RepUpdateTime
 			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
 
 			IF @@ERROR <> 0
@@ -803,33 +705,6 @@ BEGIN
 								   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 								 END,
 					   @ErrCode = 113
-
-				-- ROLLBACK MANUALLY
-				IF @RoleID = 4
-				BEGIN
-					DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-					DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID
-					DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
-				END
-				ELSE IF @RoleID = 3
-				BEGIN
-					DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-					DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-					DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
-				END
-				ELSE IF @RoleID = 2
-				BEGIN
-					DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-					DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
-					DELETE FROM custinfo WITH (ROWLOCK) WHERE CustID = @CustID
-				END
-
-				DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid				
-				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
-				DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-				--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 			
 				RETURN
 			END
@@ -838,8 +713,8 @@ BEGIN
 			BEGIN
 				DECLARE @InitBitmap varbinary(30)  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
-				INSERT INTO CustSettingAutoSuspend(CustID,SportType,AutoSuspendLive,AutoSuspendNonLive,OverrideASLive,OverrideASNonLive)
-				SELECT @custid, 43 AS SportType, @InitBitmap, @InitBitmap, @InitBitmap, @InitBitmap
+				INSERT INTO CustSettingAutoSuspend(CustID,SportType,AutoSuspendLive,AutoSuspendNonLive,OverrideASLive,OverrideASNonLive,RepUpdateTime)
+				SELECT @custid, 43 AS SportType, @InitBitmap, @InitBitmap, @InitBitmap, @InitBitmap, [dbo].[f_GetDateTime2]() as RepUpdateTime
 
 				IF @@ERROR <> 0
 				BEGIN 
@@ -849,15 +724,6 @@ BEGIN
 									   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 									 END,
 						   @ErrCode = 113
-
-					-- ROLLBACK MANUALLY
-					DELETE FROM CustSettingAutoSuspend WITH (ROWLOCK) WHERE CustId = @custid
-					DELETE FROM VRSettingManualUpdAcc WITH (ROWLOCK) WHERE CustId = @custid					
-					DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-					DELETE FROM custInfo WITH(ROWLOCK) WHERE custId = @CustID
-					DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
-					DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-					--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 			
 					RETURN
 				END
