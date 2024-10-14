@@ -70,6 +70,7 @@ BEGIN
 		-- 20230427@VN-Luke: Separate lock function for Basketball [Redmine: #185991]
 		-- 20230616@TwYC(DBCust): Remove logic of [custinfo.disablenumber]
 		-- 20240328@VN-Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
+		-- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 
       */
 	SET NOCOUNT ON;
@@ -281,7 +282,7 @@ BEGIN
 
 			--Update Status = 2
 			UPDATE v
-			SET v.[status] = 2
+			SET v.[status] = 2 , v.RepUpdateTime = [dbo].[f_GetDateTime2]()
 			FROM vrcustautoadjustment v WITH (ROWLOCK)
 			WHERE v.sporttype = @AdjustmentSporttype
 				AND v.custid = @custid
@@ -299,9 +300,11 @@ BEGIN
 				INSERT INTO vrcustlockstatus (
 					custid
 					,type
+					,RepUpdateTime
 					)
 				SELECT @custid
 					,2
+					,[dbo].[f_GetDateTime2]() AS RepUpdateTime
 			END
 
 			--lock VR status Basketball
@@ -315,9 +318,11 @@ BEGIN
 				INSERT INTO vrcustlockstatus (
 					custid
 					,type
+					,RepUpdateTime
 					)
 				SELECT @custid
 					,3
+					,[dbo].[f_GetDateTime2]() AS RepUpdateTime
 			END
 										
 			--Update VR = 0 for Other sports (using VR1)								
@@ -357,9 +362,11 @@ BEGIN
 					INSERT INTO vrcustlockstatus (
 						custid
 						,type
+						,RepUpdateTime
 						)
 					SELECT @custid
 						,1
+						,[dbo].[f_GetDateTime2]() AS RepUpdateTime
 				END
 			END
 
@@ -406,6 +413,7 @@ BEGIN
 
 			UPDATE cvs
 			SET cvs.bitmapvirtual = bm.bitmap
+				,cvs.RepUpdateTime = [dbo].[f_GetDateTime2]()
 			FROM custvirtualsetting AS cvs WITH (
 					UPDLOCK
 					,ROWLOCK

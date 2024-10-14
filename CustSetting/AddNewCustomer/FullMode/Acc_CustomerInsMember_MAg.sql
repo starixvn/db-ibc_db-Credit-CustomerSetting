@@ -171,6 +171,8 @@ Revisions:
 	- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240606@Johnson: Scale out DBCUST [Redmine: #199915]
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+
 Param's Explanation:
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -602,8 +604,8 @@ BEGIN
 				    WHEN 'E' THEN 'Create customer fail. Please try again'
 				    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 			    END
-    			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+    	EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    RETURN
     	END	
 	
@@ -622,8 +624,8 @@ BEGIN
 							when 'E' then 'Create customer fail. Please try again'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
-			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END
 	-- End : Initialize Data SportsBook
@@ -646,8 +648,8 @@ BEGIN
 							when 'E' then 'Create customer fail. Please try again'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
-			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
 	END	
 	-- End : Initialize Data 3rd Products
@@ -664,9 +666,6 @@ BEGIN
 			
 			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	
-
-
 			RETURN
 		END	
 	END

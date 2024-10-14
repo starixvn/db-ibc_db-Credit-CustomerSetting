@@ -13,6 +13,7 @@ AS
 		- 20170328@Elodie: Expand the range of VR setting [RedmineID:#73808]
 		- 20170915@Winnie: Update logic to VR auto-adjustment job Phase 2 [RedmineID:#82312
 		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
+		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 
 	Param's Explanation:  
 		- @VirtualMultiplier = '<ROOT>
@@ -120,6 +121,7 @@ BEGIN
 			-- Update filled bitmapVirtual
 			UPDATE	cvs
 			SET	cvs.bitmapVirtual = CONVERT(BINARY(64), REPLICATE(CAST(CAST(tvr.VirtualMultiplier AS BINARY(1)) AS VARCHAR), 64))
+				,cvs.RepUpdateTime = [dbo].[f_GetDateTime2]()	
 			FROM		dbo.CustVirtualSetting AS cvs WITH (ROWLOCK, UPDLOCK)
 			INNER JOIN	@processingCustID AS pci
 					ON	pci.CustID = cvs.custid
@@ -130,6 +132,7 @@ BEGIN
 			-- Update the last bitmapVirtual
 			UPDATE	cvs
 			SET	cvs.bitmapVirtual = CONVERT(BINARY(64),	REPLICATE(CAST(CAST(tvr.VirtualMultiplier AS BINARY(1)) AS VARCHAR), @profileID) + REPLICATE(CAST(CAST(0 AS BINARY(1)) AS VARCHAR), 64 - @profileID))
+				,cvs.RepUpdateTime = [dbo].[f_GetDateTime2]()	
 			FROM		dbo.CustVirtualSetting AS cvs WITH (ROWLOCK, UPDLOCK)
 			INNER JOIN	@processingCustID AS pci
 					ON	pci.CustID = cvs.custid
@@ -142,6 +145,7 @@ BEGIN
 			
 			UPDATE cvs
 				SET		bitmapVirtual = (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_multiple(bitmapVirtual, CONVERT(VARCHAR(MAX), virtualXML)))
+						,cvs.RepUpdateTime = [dbo].[f_GetDateTime2]()	
 				FROM		CustVirtualSetting AS cvs WITH(UPDLOCK, ROWLOCK)
 				CROSS APPLY (
 					SELECT (
@@ -169,6 +173,7 @@ BEGIN
 			
 			UPDATE cvs
 				SET		bitmapVirtual = (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_multiple(bitmapVirtual, CONVERT(VARCHAR(MAX), virtualXML)))
+						,cvs.RepUpdateTime = [dbo].[f_GetDateTime2]()	
 				FROM		CustVirtualSetting AS cvs WITH(UPDLOCK, ROWLOCK)
 				CROSS APPLY (
 					SELECT (

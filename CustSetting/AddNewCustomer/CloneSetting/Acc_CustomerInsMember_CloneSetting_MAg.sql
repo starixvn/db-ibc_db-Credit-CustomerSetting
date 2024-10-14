@@ -109,6 +109,7 @@ AS
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -703,8 +704,8 @@ BEGIN
 	END 
 	
 	BEGIN TRY
-		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-		SELECT @Custid, seqNo, bitmapVirtual
+		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+		SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 		FROM CustVirtualSetting WITH(NOLOCK)
 		WHERE custid = @mrecommend      
 	END TRY
@@ -787,8 +788,8 @@ BEGIN
 
 	BEGIN TRY
 		 --VR lock status
-		INSERT INTO VRCustLockStatus(CustID,Type)
-		SELECT @custid,Type
+		INSERT INTO VRCustLockStatus(CustID,Type,RepUpdateTime)
+		SELECT @custid,Type, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 		FROM VRCustLockStatus v (NOLOCK) 
 		WHERE CustID = @mrecommend
 			AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
@@ -810,8 +811,8 @@ BEGIN
 	BEGIN TRY
 		 IF @site = '611111'
 		 BEGIN
-			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType)			
-			SELECT @CustID,43 AS SportType
+			INSERT INTO [VRSettingManualUpdAcc](CustID,SportType,RepUpdateTime)			
+			SELECT @CustID,43 AS SportType, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 			WHERE NOT EXISTS (SELECT 1 FROM VRSettingManualUpdAcc WHERE custid = @CustId AND SportType = 43)
 		 END
 	END TRY
