@@ -28,7 +28,6 @@ AS
 		- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 		- 20230529@Eden: Check permission of KL Environment [Redmine: #199968]
 		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
-		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 	Param's Explanation:
 		@Type: 
 			+ -1-Stage 1: update closed = 1 for whole agent line
@@ -165,15 +164,13 @@ BEGIN
 		BEGIN
 			WHILE 1=1
 			BEGIN
-				DELETE TOP(2000) c
-				OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-				INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-				FROM dbo.CustVirtualSetting c WITH(ROWLOCK,UPDLOCK)
+				DELETE TOP(5000)
+				FROM dbo.CustVirtualSetting WITH(ROWLOCK,UPDLOCK)
 				WHERE custid IN (SELECT custid 
 								 FROM custinfo WITH(NOLOCK) 
 								 WHERE recommend = @AgentID
 								)
-				IF @@ROWCOUNT < 2000
+				IF @@ROWCOUNT < 5000
 					BREAK
 			END
 		END
@@ -383,14 +380,14 @@ BEGIN
 
 				UPDATE t
 				SET t.IsDeleted = 1,
-					t.RepUpdateTime = [dbo].[f_GetDateTime2]()
+					t.RepUpdateTime = SYSDATETIME()
 				OUTPUT deleted.CustId,deleted.ImageId INTO @CustProfilePicture(CustId,ImageId)
 				FROM bodb_Credit.dbo.CustProfilePicture t WITH (UPDLOCK,ROWLOCK)
 				WHERE custid = @AgentID 
 			
 				UPDATE t
 				SET t.IsDeleted = 1,
-					t.RepUpdateTime = [dbo].[f_GetDateTime2]()
+					t.RepUpdateTime = SYSDATETIME()
 				FROM bodb_Credit.dbo.ProfilePicture t WITH (UPDLOCK,ROWLOCK)
 					INNER JOIN @CustProfilePicture c
 						ON t.ImageId = c.ImageId
