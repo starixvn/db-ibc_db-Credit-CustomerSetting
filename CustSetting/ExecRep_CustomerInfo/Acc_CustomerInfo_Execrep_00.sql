@@ -74,6 +74,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 			- 20240607@Johnson: Scale out DBCUST [redmine: #199915]
 			- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+			- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -454,16 +455,6 @@ BEGIN
 			END TRY
 			BEGIN CATCH 
 				SELECT @ErrCode = 1			
-			
-				IF @roleid > 1
-				BEGIN
-					DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID				
-				END	
-				ELSE IF @roleid = 1
-				BEGIN
-					DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-					DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				END
 				RETURN
 			END CATCH
 
@@ -545,18 +536,6 @@ BEGIN
 			END TRY
 			BEGIN CATCH 
 				SELECT @ErrCode = 3			
-				DELETE FROM CustProductStatus WHERE CustID = @CustID			
-				IF @roleid > 1
-				BEGIN
-					DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID				
-					DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				END	
-				ELSE IF @roleid = 1
-				BEGIN
-					DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-					DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-					DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-				END
 				RETURN
 			END CATCH
 		END
@@ -623,22 +602,6 @@ BEGIN
 			END TRY
 			BEGIN CATCH 
 				SELECT @ErrCode = 27			
-				DELETE FROM CustProductStatus WHERE CustID = @CustID			
-				IF @roleid > 1
-				BEGIN
-					DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID					
-					DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-					DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-					DELETE FROM CustMaxPayoutSetting_Agent WHERE CustID = @CustID
-				END	
-				ELSE IF @roleid = 1
-				BEGIN
-					DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-					DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-					DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-					DELETE FROM CustBetSetting_Member WHERE CustID = @CustID
-					DELETE FROM CustMaxPayoutSetting_Member WHERE CustID = @CustID
-				END			
 				RETURN	
 			END CATCH
 		END
@@ -668,16 +631,6 @@ BEGIN
 	BEGIN
 		--Error occur
 		SET @ErrCode = 911
-				
-		-- ROLLBACK MANUALLY
-		IF(dbo.f_CheckRepTable('CustBetSetting_Agent') = 1) DELETE CustBetSetting_Agent WITH (ROWLOCK) WHERE custId  = @custid
-		IF(dbo.f_CheckRepTable('CustBetSetting_Member') = 1) DELETE CustBetSetting_Member WITH (ROWLOCK) WHERE custId  = @custid
-		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Member') = 1) DELETE CustMaxPayoutSetting_Member WITH (ROWLOCK) WHERE custId  = @custid
-		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1) DELETE CustMaxPayoutSetting_Agent WITH (ROWLOCK) WHERE custId  = @custid
-		IF(dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1) DELETE CustPTSetting3rd_Agent WITH (ROWLOCK) WHERE custId  = @custid
-		IF(dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 1) DELETE CustPTSetting3rd_Member WITH (ROWLOCK) WHERE custId  = @custid
-		IF(dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1) DELETE CustDiscount3rd_Agent WITH (ROWLOCK) WHERE custId  = @custid
-		IF(dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1) DELETE CustDiscount3rd_Member WITH (ROWLOCK) WHERE custId  = @custid
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/	
 END

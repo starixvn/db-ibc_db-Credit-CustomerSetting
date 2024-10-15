@@ -1,6 +1,6 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_MAg]
-	@custid     INT OUTPUT,
+	@custid     INT,
 	@firstname  NVARCHAR(50) ='',
 	@lastname   NVARCHAR(50) ='',
 	@creator    INT,
@@ -10,21 +10,20 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_MAg]
 	@mobilephone NVARCHAR(50)='',	
 	@fax        NVARCHAR(50)='',
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in case direct master add new agent
-	--
-	@SettingXML VARCHAR(MAX) = '', -- store all settings
-	--
 	@Language VARCHAR(2)= 'E',
 	@SubAccID INT = 0,--Sub-AccountID,
 	@credit MONEY,
 	@maxcredit MONEY = 0,	
 	@mrecommend INT,
-	@SystemID	TINYINT=1,
-	
+	@SystemID	TINYINT=1,	
 	@IP VARCHAR(15)='',
+	@Site NVARCHAR(50),
+	@SettingXML	VARCHAR(MAX) = '',
+	@SettingStatus TINYINT = 0,
+
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
-	@SettingStatus TINYINT = 0
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT
 AS
 --@Source Control
 /*
@@ -172,6 +171,7 @@ Revisions:
 	- 20240606@Johnson: Scale out DBCUST [Redmine: #199915]
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+	- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
 
 Param's Explanation:
 	- @ErrCode:
@@ -225,90 +225,22 @@ Param's Explanation:
 
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @SettingType25 VARCHAR(MAX)= '', --Discount
-			@SettingType26 VARCHAR(MAX)= '', --Bet Setting
-			@SettingType27 VARCHAR(MAX)= '', --Parlay Max Payout
-			@SettingType28 VARCHAR(MAX)= ''  --PT
 	
 	DECLARE @startRun DATETIME
-    DECLARE @endRun DATETIME
-    DECLARE @duration INT
+			,@endRun DATETIME
+			,@duration INT
+			,@RoleID INT = 2
+			,@SettingType25	VARCHAR(MAX)= ''
+			,@SettingType26	VARCHAR(MAX)= ''
+			,@SettingType27	VARCHAR(MAX)= ''
+			,@SettingType28	VARCHAR(MAX)= ''
+			,@SiteID int
+
     SET @startRun = GETDATE()
-	
-	EXEC [Acc_CheckUM] @CustID = @mrecommend
-		,@FunctionType = 2
-		,@ErrCode = @ErrCode OUTPUT
-		,@ErrMsg = @ErrMsg OUTPUT
-		,@ReturnUMData = 0
-		,@Language = @Language
 
-	IF @ErrCode <> 0 RETURN
-
-	IF @credit <0
-	BEGIN
-		SELECT  @ErrCode = 2
-		SELECT @ErrMsg = 	CASE @Language 
-								WHEN 'E' THEN 'Credits must be positive.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](70025,@Language)
-							END
-		RETURN
-	END
-	
-	DECLARE @uplineUsername NVARCHAR(50)
-	
-	SELECT @uplineUsername = username 
-	FROM custinfo WITH(NOLOCK)
-	WHERE custid = @mrecommend
-				
-	EXEC Acc_CustomerLimitCreatedAccountCheck
-			@Custid				= @mrecommend , 
-			@RuleID				= 'MAG' , 
-			@existingMrecommend = 0 , 
-			@existingSrecommend = 0 , 
-			@Prefix				= @uplineUsername , 
-			@GroupName			= '' , 
-			@IsQRCode			= 0 , 
-			@SystemID			= 0 , 
-			@IP					= @IP ,
-			@Credit				= @Credit ,
-			@ErrCode			= @ErrCode OUTPUT , 
-			@ErrMsg				= @ErrMsg OUTPUT , 
-			@Language			= @Language
-
-	IF @ErrCode <> 0
-	BEGIN
-		SELECT @ErrCode , @ErrMsg
-		RETURN		
-	END
-	
-	---- check constraint on prefix username same as upline in case of creating new customer from alpha site
-	IF @creator = @mrecommend
-	BEGIN
-		IF LEFT(@username,LEN(@uplineUsername)) <> @uplineUsername
-		BEGIN
-			SELECT @ErrMsg = CASE @Language
-						    WHEN 'E' THEN 'This function is under maintenance and not available at the moment. Please kindly check back later. Thank you!'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](90011, @Language)
-					     END,				   
-				   @ErrCode = 101
-			RETURN
-		END
-	END 
-		
-	DECLARE @Site NVARCHAR(50), @EnableVR BIT, @siteID SMALLINT
-	SELECT @Site = c.site, @siteID = s.siteID
-	FROM customer c WITH(NOLOCK) 
-		INNER JOIN site s WITH(NOLOCK) ON c.site = s.site
-	WHERE CustID = @mrecommend
-	
-    --Check an account disabled or not 
-    EXEC dbo.Acc_CustomerSelCheckEnable @custid = @mrecommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
-    if @ErrCode <>0		return 
-	
-	declare @ErrType VARCHAR(4000)
     declare 
 	    @transcode bigint, @currency INT, @pwdexpiry datetime,	
-	    @Credit_AllOtherAgent MONEY, @Credit_AllMember MONEY, @Credit_MAg MONEY,
+	    --@Credit_AllOtherAgent MONEY, @Credit_AllMember MONEY, @Credit_MAg MONEY,
 	    @srecommend INT,	 
 	    @matchlimit SMALLMONEY,
 	    @TransferOption_dec TINYINT,
@@ -325,13 +257,15 @@ BEGIN
 		@DangerMaster2 TINYINT = 0,
 		@DangerMaster3 TINYINT = 0,
 		@DangerMaster4 TINYINT = 0,
-		@DangerMaster5 TINYINT = 0
+		@DangerMaster5 TINYINT = 0,
+		@EnableVR BIT
+
 	
 	SELECT @currency = currency
          --, @Msuspended = reject
          , @UplineClosed = cs.closed
 
-         , @Credit_MAg = isnull(credit, 0)
+         --, @Credit_MAg = isnull(credit, 0)
          , @srecommend = srecommend
          , @matchlimit = matchlimit
          , @DisableOutright = DisableOutright
@@ -357,6 +291,11 @@ BEGIN
 					) AS cs
      WHERE CustID = @mrecommend
 	 
+	 SELECT @siteID = s.siteID  
+	 FROM customer c WITH(NOLOCK)   
+	  INNER JOIN site s WITH(NOLOCK) ON c.site = s.site  
+	 WHERE CustID = @mrecommend  
+	 
 	 --Virtual rate
 	IF EXISTS (SELECT 1 FROM Acc_CustDirect WITH(NOLOCK) WHERE custid = @mrecommend)		
 		AND EXISTS( 
@@ -368,57 +307,25 @@ BEGIN
 	
 	SELECT @username = rtrim(ltrim(@username))
 
-    DECLARE @IsExists BIT 
-	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
-
-	IF @IsExists = 1
-    BEGIN
-	    SELECT @ErrMsg = case @Language 
-							    when 'E' then 'This username is not available.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
-						    END,
-		    @ErrCode = 1101		
-	    RETURN
-    END
     SELECT @pwdexpiry = dateadd(dd, 30, getdate())
-	
-	 --Vinh@20080213: get transfer option FROM master
-	DECLARE @IsInternal BIT
-    select	@IsInternal = IsInternal,
-		    @TransferOption_dec = TransferOption 
+	--Vinh@20080213: get transfer option FROM master
+    DECLARE @IsInternal BIT
+    select  @IsInternal = IsInternal,
+            @TransferOption_dec = TransferOption 
     FROM custmaster with (nolock) 
     WHERE CustID = @mrecommend
 
-    SELECT @Credit_AllOtherAgent = isnull(sum(credit), 0) FROM custinfo as ci WITH(NOLOCK) WHERE mrecommend = @mrecommend and RoleID = 2
-
-    if @Credit_AllOtherAgent + @Credit >@Credit_MAg
-    BEGIN
-	    SET @ErrMsg = REPLACE( [dbo].[f_Get_MsgNamebyMsgID](70030,@Language) , '{number}', FORMAT(@Credit_MAg - @Credit_AllOtherAgent, '#,#0.####'))
-
-	    SELECT @ErrCode = 104
-	    return
-    END
-    -- maxcredit 
-    IF (isnull(@maxcredit ,0) > @credit )
-    BEGIN 
-	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70034,@Language) , '{number}', FORMAT(@maxcredit, '#,#0.####')),  
-			@ErrCode = 116  
-		return  
-    END 
-
-	------------------------------
-	--Parse Json to XML param
 	SELECT @SettingType25 = CONVERT(VARCHAR(MAX),
-				(
-					SELECT SportType,BetType,Discount
-					FROM OPENJSON(@SettingXML,'$."150"') WITH (
-							SportType SMALLINT  '$.SportType'
-							,BetType SMALLINT  '$.BetType'
-							,Discount DECIMAL(9,8)  '$.Discount'
-						)
-					FOR XML RAW('R'), ROOT ('Root'), TYPE
-				)
+			(
+				SELECT SportType,BetType,Discount
+				FROM OPENJSON(@SettingXML,'$."150"') WITH (
+						SportType SMALLINT  '$.SportType'
+						,BetType SMALLINT  '$.BetType'
+						,Discount DECIMAL(9,8)  '$.Discount'
+					)
+				FOR XML RAW('R'), ROOT ('Root'), TYPE
 			)
+		)
 
 	SELECT @SettingType26 = CONVERT(VARCHAR(MAX),
 				(
@@ -454,7 +361,7 @@ BEGIN
 				(
 					SELECT SportType,BetType,IsLive,MasterPT,IsAuto,AutoPT,AgentPT,MinPT
 					FROM OPENJSON(@SettingXML,'$."153"') WITH (
-							SportType SMALLINT  '$.SportType'
+							 SportType SMALLINT  '$.SportType'
 							,BetType SMALLINT  '$.BetType'
 							,IsLive BIT  '$.IsLive'
 							,MasterPT SMALLMONEY  '$.MasterPT'
@@ -467,19 +374,16 @@ BEGIN
 				)
 			)
 
+	--------START: Update parametter-------------------------------------------------------------------
 	--check comm
 	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_MAg
 		@mrecommend = @mrecommend,
 		@siteID = @siteID,
 		@currency = @currency,
-		@SettingType25 = @SettingType25 OUTPUT, --SB
+		@SettingType25 = @SettingType25 OUTPUT, --SB	
 		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT
-	
-	IF @ErrCode > 0
-		RETURN;
+		@IsValidateParam = 0,
+		@IsUpdateParam = 1--update parameter only, skip validate
 	
 	--Check bet setting
 	EXEC Acc_LiteMode_CustomerInsMember_BetSettingCheck_MAg
@@ -489,12 +393,8 @@ BEGIN
 		@SettingType26 = @SettingType26 OUTPUT, --SB
 		@SystemID = @SystemID,
 		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg  = @ErrMsg OUTPUT	
-
-	IF @ErrCode > 0 
-		RETURN;
+		@IsValidateParam = 0,
+		@IsUpdateParam = 1--update parameter only, skip validate
 		
 	--Check Parlay Max Payout
 	EXEC Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_MAg
@@ -503,13 +403,9 @@ BEGIN
 		@currency = @currency,
 		@SettingType27 = @SettingType27 OUTPUT, --SB
 		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg  = @ErrMsg OUTPUT	
+		@IsValidateParam = 0,
+		@IsUpdateParam = 1--update parameter only, skip validate
 
-	IF @ErrCode > 0 
-		RETURN;		
-		
 	--Check PT
 	EXEC Acc_LiteMode_CustomerInsMember_PTCheck_MAg
 		@mrecommend = @mrecommend,
@@ -518,157 +414,174 @@ BEGIN
 		@currency = @currency,
 		@SettingType28 = @SettingType28 OUTPUT,-- SB
 		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg  = @ErrMsg OUTPUT	
-
-	IF @ErrCode > 0 
-		RETURN;		
+		@IsValidateParam = 0,
+		@IsUpdateParam = 1--update parameter only, skip validate
+	--------END: Update parametter-------------------------------------------------------------------
 
 	--Insert general data 
-    EXEC dbo.Acc_CustomerInsUserInfo
-	    @custid = @custid OUTPUT,
-	    @firstname = @firstname,
-	    @lastname = @lastname,
-	    @creator = @creator,
-	    @username = @username,
-	    @userpwd = @userpwd,
-	    @pwdexpiry = @pwdexpiry,
-	    @currency = @currency,
-	    @site = @site,
-	    @srecommend = @srecommend,
-	    @mrecommend = @mrecommend,
-	    @recommend = 0,
-	    @roleid = 2,
-	    @phone = @phone,
-	    @mobilephone = @mobilephone,
-	    @email = '',
-	    @fax = @fax,
-	    @address = '',
-	    @city = '',
-	    @state = '',
-	    @country = '',
-	    @postal = '',
-	    @TransferOption = @TransferOption,
-	    --@suspended = @suspended,
-	    @closed=@UplineClosed,
+    BEGIN TRY
+		EXEC dbo.Acc_CustomerInsUserInfo
+			@custid = @custid,
+			@firstname = @firstname,
+			@lastname = @lastname,
+			@creator = @creator,
+			@username = @username,
+			@userpwd = @userpwd,
+			@pwdexpiry = @pwdexpiry,
+			@currency = @currency,
+			@site = @site,
+			@srecommend = @srecommend,
+			@mrecommend = @mrecommend,
+			@recommend = 0,
+			@roleid = 2,
+			@phone = @phone,
+			@mobilephone = @mobilephone,
+			@email = '',
+			@fax = @fax,
+			@address = '',
+			@city = '',
+			@state = '',
+			@country = '',
+			@postal = '',
+			@TransferOption = @TransferOption,
+			@closed=@UplineClosed,
 
-	    @autosuspend = @autosuspend,
-	    @autosuspend2 = @autosuspend2,
-		@autosuspend3 = @autosuspend3,
+			@autosuspend = @autosuspend,
+			@autosuspend2 = @autosuspend2,
+			@autosuspend3 = @autosuspend3,
 
-	    @DisableOutright = @DisableOutright,	
-	    @matchlimit = @matchlimit,
-	    @virtualmultiplier = @EnableVR,
+			@DisableOutright = @DisableOutright,	
+			@matchlimit = @matchlimit,
+			@virtualmultiplier = @EnableVR,
 	   
-	    @IsInternal = @IsInternal,
+			@IsInternal = @IsInternal,
 		
-    	@SystemID=@SystemID,
-	    @credit = @credit,
-	    @maxcredit = @maxcredit,
+    		@SystemID=@SystemID,
+			@credit = @credit,
+			@maxcredit = @maxcredit,
 	
-	    @DoubleCommLosing = @DoubleCommLosing,	 
-		@DisableSuperLive = @DisableSuperLive,
-		@Danger = @DangerMaster,
-		@Danger2 = @DangerMaster2,
-		@Danger3 = @DangerMaster3,
-		@Danger4 = @DangerMaster4,
-		@Danger5 = @DangerMaster5,
+			@DoubleCommLosing = @DoubleCommLosing,	 
+			@DisableSuperLive = @DisableSuperLive,
+			@Danger = @DangerMaster,
+			@Danger2 = @DangerMaster2,
+			@Danger3 = @DangerMaster3,
+			@Danger4 = @DangerMaster4,
+			@Danger5 = @DangerMaster5,
 	 
-	    @IP = @IP,
-	    @TransferOption_dec = @TransferOption_dec,
-	    @Language = @Language,
-	    @ErrCode = @ErrCode OUTPUT,
-	    @ErrMsg = @ErrMsg OUTPUT
+			@IP = @IP,
+			@TransferOption_dec = @TransferOption_dec,
+			@Language = @Language,
+			@ErrCode = @ErrCode OUTPUT,
+			@ErrMsg = @ErrMsg OUTPUT
 
-    IF @ErrCode <> 0
-	    return
+		IF @ErrCode <> 0
+		BEGIN
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+		END
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrCode = @@ERROR
+				,@ErrMsg = ERROR_MESSAGE()
 
-	EXEC dbo.Acc_CustomerInfo_Execrep_00  
-		@custid = @custid,
-		@srecommend = @srecommend,
-		@mrecommend = @mrecommend,
-		@roleid = 2,
-		@siteID = @siteID,
-		@currency = @currency,
-		@SettingType25 = @SettingType25, --Discount	
-		--@SettingType26 = @SettingType26, --Bet Setting
-		@SettingType27 = @SettingType27, --Parlay Max Payout
-		@SettingType28 = @SettingType28, --PT
-		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT
-
-	IF @ErrCode > 0
-    	BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-				    WHEN 'E' THEN 'Create customer fail. Please try again'
-				    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-			    END
-    	EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    RETURN
-    	END	
+
+		RETURN
+	END CATCH
+
+	BEGIN TRY
+		EXEC dbo.Acc_CustomerInfo_Execrep_00  
+			@custid = @custid,
+			@srecommend = @srecommend,
+			@mrecommend = @mrecommend,
+			@roleid = 2,
+			@siteID = @siteID,
+			@currency = @currency,
+			@SettingType25 = @SettingType25, --Discount	
+			--@SettingType26 = @SettingType26, --Bet Setting
+			@SettingType27 = @SettingType27, --Parlay Max Payout
+			@SettingType28 = @SettingType28, --PT
+			@SettingStatus = @SettingStatus,
+			@ErrCode = @ErrCode OUTPUT
+
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+						WHEN 'E' THEN 'Create customer fail. Please try again'
+						ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+					END
+    			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = @roleid
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+		END	
 	
-	-- Start : Initialize Data SportsBook
-	EXEC dbo.Acc_Custsetting_SportsbookIns
-		@custid = @custid,
-		@roleid = 2,
-		@siteID = @siteID,
-		@currency = @currency,
-		@SettingType26 = @SettingType26, --Bet Setting		
-		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT
-	IF @ErrCode > 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
+		-- Start : Initialize Data SportsBook
+		EXEC dbo.Acc_Custsetting_SportsbookIns
+			@custid = @custid,
+			@roleid = 2,
+			@siteID = @siteID,
+			@currency = @currency,
+			@SettingType26 = @SettingType26, --Bet Setting		
+			@SettingStatus = @SettingStatus,
+			@ErrCode = @ErrCode OUTPUT
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
 							when 'E' then 'Create customer fail. Please try again'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
-		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
-	-- End : Initialize Data SportsBook
-	
-	-- Start : Initialize Data 3rd Products
-	EXEC dbo.Acc_CustSetting_3rdProductIns
-		@custid = @custid,
-		@SuperID = @srecommend,
-		@MasterID = @mrecommend,
-		@AgentID = @custid,
-		@RoleID = 2,
-		@siteID = @siteID,
-		@currency = @currency,	
-		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT	
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = @roleid
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+		END
 
-	IF @ErrCode > 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-							when 'E' then 'Create customer fail. Please try again'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END
-		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END	
-	-- End : Initialize Data 3rd Products
-			
-	If @SystemID = 2 -- ALPHA
-	BEGIN
-		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+		-- Start : Initialize Data 3rd Products
+		EXEC dbo.Acc_CustSetting_3rdProductIns  
+			@custid = @custid,  
+			@SuperID = @srecommend,  
+			@MasterID = @mrecommend,  
+			@AgentID = @custid,  
+			@RoleID = 2,  
+			@siteID = @siteID,  
+			@currency = @currency,   
+			@SettingStatus = @SettingStatus,  
+			@ErrCode = @ErrCode OUTPUT  
+
 		IF @ErrCode > 0
 		BEGIN
 			SELECT @ErrMsg = CASE @Language 
 								when 'E' then 'Create customer fail. Please try again'
 								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							END
-			
-			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 2
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = @roleid
 			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 			RETURN
-		END	
-	END
+		END
+		-- End : Initialize Data 3rd Products
+			
+		If @SystemID = 2 -- ALPHA
+		BEGIN
+			EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+			IF @ErrCode > 0
+			BEGIN
+				SELECT @ErrMsg = CASE @Language 
+									when 'E' then 'Create customer fail. Please try again'
+									ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+								END
+				EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = @roleid
+				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+				RETURN
+			END	
+		END
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrCode = @@ERROR
+				,@ErrMsg = ERROR_MESSAGE()
+		
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = @roleid
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		RETURN
+	END CATCH
 
     SET @endRun = getdate()
     SET @duration  = datediff (MILLISECOND,@startRun,@endRun)
@@ -771,7 +684,7 @@ BEGIN
 															AND	psd.BetType = psp.Bettype
 		INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
 		CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
-		INNER JOIN DBPRO.bodb02.dbo.Products p WITH (NOLOCK)  ON p.ProductID = psd.ProductID
+		INNER JOIN dbo.Products p WITH (NOLOCK)  ON p.ProductID = psd.ProductID
 	WHERE psd.ProductID <> 20 
 		AND ISNULL(psd.GroupID,0) NOT IN (3)
 	GROUP BY psd.ProductID

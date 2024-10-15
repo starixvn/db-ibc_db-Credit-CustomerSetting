@@ -12,7 +12,9 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_PTCheck_MAg]
 
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
+	@IsValidateParam BIT = 1,
+	@IsUpdateParam BIT = 0 -- Update Parameter
 AS
 /*
 	Created: 20230629@Johnson  
@@ -23,6 +25,7 @@ AS
 	Revisions: 
 		- 20230629@Johnson: initial sp [redmine: #179159]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
 
 	Param's Explanation: 
 		- @SettingType28 = '<Root>
@@ -155,188 +158,195 @@ BEGIN
 	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 	WHERE SettingType IN (1,18,28)
 	
-	--check pt > 0 
-	;WITH T AS (
-		SELECT t.SportType, t.BetType, t.IsLive, SettingLevel,ps.ProductID
-		FROM @tblPT18 t
-			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
-																AND t.BetType = ps.bettype 
-																AND t.IsLive = ps.IsLive
-		WHERE (t.AgentPT < 0 OR t.MasterPT < 0 
-				OR t.AgentPT + t.MasterPT > ps.MaxPT
-				OR t.MasterPT > ps.MaxPT			
-				OR t.AutoMasterPT < 0 
-				OR t.AutoMasterPT > ps.MaxPT
-				OR t.AgentMinPT > t.AgentPT
-			)
-	)
-	SELECT @ErrType =
-	(
-		SELECT * 
-		FROM T
-		FOR XML RAW('Row'), TYPE
-	)
-	
-	IF @ErrType IS NOT NULL
-	BEGIN        
-		 SELECT @ErrMsg = '<Root MsgID="20001" Msg="Wrong position taking.">'
-							+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
-					, @MsgType = 61
-					, @ErrCode = 601
-		RETURN
-	END	
-	
-	IF EXISTS(			
-			SELECT 1
-			FROM @tblPT18 t
-			WHERE IsAutoMasterPT = 1 	
-			)
-			AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
-						WHERE custid = @mrecommend	
-							AND DisableAutoMPT = 1)
+	IF @IsValidateParam = 1
 	BEGIN
-		SELECT @ErrCode = 602,
-			   @ErrMsg = '<Root MsgID="20044" Msg="You are not allowed to have Auto PT, please contact your upline." />',
-			   @MsgType = 60
-		RETURN					
-	END	
+		--check pt > 0 
+		;WITH T AS (
+			SELECT t.SportType, t.BetType, t.IsLive, SettingLevel,ps.ProductID
+			FROM @tblPT18 t
+				INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+																	AND t.BetType = ps.bettype 
+																	AND t.IsLive = ps.IsLive
+			WHERE (t.AgentPT < 0 OR t.MasterPT < 0 
+					OR t.AgentPT + t.MasterPT > ps.MaxPT
+					OR t.MasterPT > ps.MaxPT			
+					OR t.AutoMasterPT < 0 
+					OR t.AutoMasterPT > ps.MaxPT
+					OR t.AgentMinPT > t.AgentPT
+				)
+		)
+		SELECT @ErrType =
+		(
+			SELECT * 
+			FROM T
+			FOR XML RAW('Row'), TYPE
+		)
 	
-	--Check if(!i2)n3<=m2+a2<=min(m3,l3)
-	--			else a2<=l3 and u2+a2>=n3
-	;WITH T AS (
-		SELECT b.SportType, b.BetType, b.IsLive, mcs.MinPT
-				, CASE WHEN mcs.MaxPT	> mcs.MasterPT THEN mcs.MasterPT ELSE  mcs.MaxPT END MaxPT			
-		FROM 
-			CustPTSetting3rd_Agent AS mcs WITH (NOLOCK) 
-			INNER JOIN @tblPT18 b ON mcs.sporttype=b.sporttype 
-									AND mcs.bettype = b.bettype        
-									AND mcs.isLive = b.isLive       			
-		WHERE mcs.custid = @mrecommend 
-			AND (         
-					(b.IsAutoMasterPT=0
-					AND (b.MasterPT + b.AgentPT > CASE WHEN mcs.MaxPT	> mcs.MasterPT THEN mcs.MasterPT ELSE  mcs.MaxPT END OR b.MasterPT + b.AgentPT  < mcs.MinPT)
-					)
-					OR         
-					(b.IsAutoMasterPT>0 
-					AND (b.AgentPT > CASE WHEN mcs.MaxPT	> mcs.MasterPT THEN mcs.MasterPT ELSE  mcs.MaxPT END OR b.AgentPT + b.AutoMasterPT < mcs.MinPT)
-					)        
-				)				
-	)
-	SELECT @ErrType =(
-		SELECT t.* , ps.SettingLevel,ps.ProductID
-		FROM T
-			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
-																AND t.BetType = ps.bettype 
-																AND t.IsLive = ps.IsLive
-		FOR XML RAW('Row'), TYPE
-	)	
+		IF @ErrType IS NOT NULL
+		BEGIN        
+			 SELECT @ErrMsg = '<Root MsgID="20001" Msg="Wrong position taking.">'
+								+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
+						, @MsgType = 61
+						, @ErrCode = 601
+			RETURN
+		END	
 	
-	IF @ErrType IS NOT NULL
-	BEGIN       
-		SELECT @ErrMsg = '<Root MsgID="20025" Msg="The position taking violates Upline Min/Max PT.">'
-						+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
-				, @MsgType = 62
-				, @ErrCode = 603	
-		RETURN
-	END  
+		IF EXISTS(			
+				SELECT 1
+				FROM @tblPT18 t
+				WHERE IsAutoMasterPT = 1 	
+				)
+				AND EXISTS (SELECT 1 FROM CustMaster WITH(NOLOCK) 
+							WHERE custid = @mrecommend	
+								AND DisableAutoMPT = 1)
+		BEGIN
+			SELECT @ErrCode = 602,
+				   @ErrMsg = '<Root MsgID="20044" Msg="You are not allowed to have Auto PT, please contact your upline." />',
+				   @MsgType = 60
+			RETURN					
+		END	
 	
-	--check a2<=a4
-	SELECT @ErrType = ''
-	;WITH T AS (
-		SELECT b.SportType, b.BetType, b.IsLive, scs.AgentPT as MaxPT				
-		FROM 
-			CustPTSetting3rd_Agent scs WITH(NOLOCK)			  
-			INNER JOIN @tblPT18 b ON scs.sporttype=b.sporttype 
-								AND scs.bettype = b.bettype        
-								AND b.isLive = scs.IsLive						
-		WHERE scs.custid = @srecommend 
-			AND b.AgentPT > scs.AgentPT		
-	)
-	SELECT @ErrType =(
-		SELECT t.*,ps.SettingLevel,ps.ProductID
-		FrOM T
-			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
-																AND t.BetType = ps.bettype 
-																AND t.IsLive = ps.IsLive
-		FOR XML RAW('Row'), TYPE
-	)	
+		--Check if(!i2)n3<=m2+a2<=min(m3,l3)
+		--			else a2<=l3 and u2+a2>=n3
+		;WITH T AS (
+			SELECT b.SportType, b.BetType, b.IsLive, mcs.MinPT
+					, CASE WHEN mcs.MaxPT	> mcs.MasterPT THEN mcs.MasterPT ELSE  mcs.MaxPT END MaxPT			
+			FROM 
+				CustPTSetting3rd_Agent AS mcs WITH (NOLOCK) 
+				INNER JOIN @tblPT18 b ON mcs.sporttype=b.sporttype 
+										AND mcs.bettype = b.bettype        
+										AND mcs.isLive = b.isLive       			
+			WHERE mcs.custid = @mrecommend 
+				AND (         
+						(b.IsAutoMasterPT=0
+						AND (b.MasterPT + b.AgentPT > CASE WHEN mcs.MaxPT	> mcs.MasterPT THEN mcs.MasterPT ELSE  mcs.MaxPT END OR b.MasterPT + b.AgentPT  < mcs.MinPT)
+						)
+						OR         
+						(b.IsAutoMasterPT>0 
+						AND (b.AgentPT > CASE WHEN mcs.MaxPT	> mcs.MasterPT THEN mcs.MasterPT ELSE  mcs.MaxPT END OR b.AgentPT + b.AutoMasterPT < mcs.MinPT)
+						)        
+					)				
+		)
+		SELECT @ErrType =(
+			SELECT t.* , ps.SettingLevel,ps.ProductID
+			FROM T
+				INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+																	AND t.BetType = ps.bettype 
+																	AND t.IsLive = ps.IsLive
+			FOR XML RAW('Row'), TYPE
+		)	
 	
-	IF @ErrType IS NOT NULL
-	BEGIN       
-		SELECT @ErrMsg = '<Root MsgID="20005" Msg="Wrong position taking (max set by company).">'
-						+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
-				, @MsgType = 63
-				, @ErrCode = 604	
-		RETURN
-	END  
-		
-	--correct im2,um2
-	UPDATE t
-	SET t.IsAutoMasterPT = 1
-	FROM @tblPT18 t
-	WHERE t.IsAutoMasterPT = 0 AND t.AutoMasterPT > 0
+		IF @ErrType IS NOT NULL
+		BEGIN       
+			SELECT @ErrMsg = '<Root MsgID="20025" Msg="The position taking violates Upline Min/Max PT.">'
+							+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
+					, @MsgType = 62
+					, @ErrCode = 603	
+			RETURN
+		END  
 	
-	UPDATE t
-	SET t.AutoMasterPT = mcs.MasterPT
-	FROM @tblPT18 t
-		INNER JOIN CustPTSetting3rd_Agent as mcs WITH (NOLOCK) ON mcs.sporttype = t.SportType
-																AND mcs.bettype = t.BetType
-																AND t.IsLive = mcs.IsLive					
-	WHERE custid = @mrecommend 
-		AND t.AutoMasterPT > mcs.MasterPT
+		--check a2<=a4
+		SELECT @ErrType = ''
+		;WITH T AS (
+			SELECT b.SportType, b.BetType, b.IsLive, scs.AgentPT as MaxPT				
+			FROM 
+				CustPTSetting3rd_Agent scs WITH(NOLOCK)			  
+				INNER JOIN @tblPT18 b ON scs.sporttype=b.sporttype 
+									AND scs.bettype = b.bettype        
+									AND b.isLive = scs.IsLive						
+			WHERE scs.custid = @srecommend 
+				AND b.AgentPT > scs.AgentPT		
+		)
+		SELECT @ErrType =(
+			SELECT t.*,ps.SettingLevel,ps.ProductID
+			FrOM T
+				INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+																	AND t.BetType = ps.bettype 
+																	AND t.IsLive = ps.IsLive
+			FOR XML RAW('Row'), TYPE
+		)	
+	
+		IF @ErrType IS NOT NULL
+		BEGIN       
+			SELECT @ErrMsg = '<Root MsgID="20005" Msg="Wrong position taking (max set by company).">'
+							+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
+					, @MsgType = 63
+					, @ErrCode = 604	
+			RETURN
+		END  
+	END
+	
+	IF @IsUpdateParam = 1 -- UpdateParameter for update and writelog
+	BEGIN
+		--correct im2,um2
+		UPDATE t
+		SET t.IsAutoMasterPT = 1
+		FROM @tblPT18 t
+		WHERE t.IsAutoMasterPT = 0 AND t.AutoMasterPT > 0
+	
+		UPDATE t
+		SET t.AutoMasterPT = mcs.MasterPT
+		FROM @tblPT18 t
+			INNER JOIN CustPTSetting3rd_Agent as mcs WITH (NOLOCK) ON mcs.sporttype = t.SportType
+																	AND mcs.bettype = t.BetType
+																	AND t.IsLive = mcs.IsLive					
+		WHERE custid = @mrecommend 
+			AND t.AutoMasterPT > mcs.MasterPT
 
-	UPDATE t
-	SET t.Child_DisplayOrder = d.Child_DisplayOrder
-	FROM @tblPT18 t
-		INNER JOIN #ProductSettingDetail_PTCheck d 
-			ON t.SportType = d.SportType
-			AND t.BetType = d.BetType
-			AND t.IsLive = d.IsLive
+		UPDATE t
+		SET t.Child_DisplayOrder = d.Child_DisplayOrder
+		FROM @tblPT18 t
+			INNER JOIN #ProductSettingDetail_PTCheck d 
+				ON t.SportType = d.SportType
+				AND t.BetType = d.BetType
+				AND t.IsLive = d.IsLive
 	
-	SELECT @SettingType28 = (
-	SELECT SportType '@SportType', 
-		BetType '@BetType', 
-		IsLive '@IsLive',
-		MasterPT '@MasterPT',
-		IsAutoMasterPT '@IsAuto',
-		AutoMasterPT '@AutoPT',
-		AgentPT '@AgentPT',				
-		AgentMinPT '@MinPT'
-	FROM @tblPT18
-	WHERE SettingType = 28
-	ORDER BY Child_DisplayOrder,SportType,BetType
-	FOR XML PATH ('R'), ROOT('Root')
-	)	
+		SELECT @SettingType28 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			IsLive '@IsLive',
+			MasterPT '@MasterPT',
+			IsAutoMasterPT '@IsAuto',
+			AutoMasterPT '@AutoPT',
+			AgentPT '@AgentPT',				
+			AgentMinPT '@MinPT'
+		FROM @tblPT18
+		WHERE SettingType = 28
+		ORDER BY Child_DisplayOrder,SportType,BetType
+		FOR XML PATH ('R'), ROOT('Root')
+		)	
 	
-	SELECT @SettingType1 = (
-	SELECT SportType '@SportType', 
-		BetType '@BetType', 
-		IsLive '@IsLive',
-		MasterPT '@MasterPT',
-		IsAutoMasterPT '@IsAuto',
-		AutoMasterPT '@AutoPT',
-		AgentPT '@AgentPT',				
-		AgentMinPT '@MinPT'
-	FROM @tblPT18
-	WHERE SettingType = 1
-	ORDER BY Child_DisplayOrder,SportType,BetType
-	FOR XML PATH ('R'), ROOT('Root')
-	)	
+		SELECT @SettingType1 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			IsLive '@IsLive',
+			MasterPT '@MasterPT',
+			IsAutoMasterPT '@IsAuto',
+			AutoMasterPT '@AutoPT',
+			AgentPT '@AgentPT',				
+			AgentMinPT '@MinPT'
+		FROM @tblPT18
+		WHERE SettingType = 1
+		ORDER BY Child_DisplayOrder,SportType,BetType
+		FOR XML PATH ('R'), ROOT('Root')
+		)	
 	
-	SELECT @SettingType18 = (
-	SELECT SportType '@SportType', 
-		BetType '@BetType', 
-		IsLive '@IsLive',
-		MasterPT '@MasterPT',
-		IsAutoMasterPT '@IsAuto',
-		AutoMasterPT '@AutoPT',
-		AgentPT '@AgentPT',				
-		AgentMinPT '@MinPT'
-	FROM @tblPT18
-	WHERE SettingType = 18
-	ORDER BY Child_DisplayOrder,SportType,BetType
-	FOR XML PATH ('R'), ROOT('Root')
-	)		
+		SELECT @SettingType18 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			IsLive '@IsLive',
+			MasterPT '@MasterPT',
+			IsAutoMasterPT '@IsAuto',
+			AutoMasterPT '@AutoPT',
+			AgentPT '@AgentPT',				
+			AgentMinPT '@MinPT'
+		FROM @tblPT18
+		WHERE SettingType = 18
+		ORDER BY Child_DisplayOrder,SportType,BetType
+		FOR XML PATH ('R'), ROOT('Root')
+		)
+		
+	END
 	
 	DROP TABLE #ProductSettingDetail_PTCheck
 END		

@@ -9,7 +9,9 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_SAg]
 	
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
+	@IsValidateParam BIT = 1,
+	@IsUpdateParam BIT = 0 -- Update Parameter
 AS
 /*
 	Created: 20230519@Johnson  
@@ -20,6 +22,7 @@ AS
 	Revisions: 
 		- 20230519@Johnson: initial sp [redmine: #179159]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
 
 	Param's Explanation: 
 		- @SettingType27 = '<Root>
@@ -96,214 +99,220 @@ BEGIN
 	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency)
 	WHERE SettingType IN (27)
 	
-	INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
-	SELECT cs.SportType,cs.BetType,
-			CASE WHEN cs.SingleMatchParlay = 0 THEN 1 ELSE 0 END AS SingleMatchParlay_IsAllowUnlimit,
-			CASE WHEN cs.Combo2 = 0 THEN 1 ELSE 0 END AS Combo2_IsAllowUnlimit,
-			CASE WHEN cs.Combo35 = 0 THEN 1 ELSE 0 END AS Combo35_IsAllowUnlimit,
-			CASE WHEN cs.ComboOver6 = 0  THEN 1 ELSE 0 END AS ComboOver6_IsAllowUnlimit
-	FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
-		INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
-	WHERE cs.custid = @srecommend 	
-	
-	INSERT INTO @UplineMaxPayoutTbl(SportType, BetType, SingleMatchParlay, Combo2, Combo35, ComboOver6)
-	SELECT bl.SportType
-		, bl.BetType
-		, MIN(CASE WHEN bl.SingleMatchParlay = 0 THEN NULL ELSE bl.SingleMatchParlay END) AS SingleMatchParlay
-		, MIN(CASE WHEN bl.Combo2 = 0 THEN NULL ELSE bl.Combo2 END) AS Combo2
-		, MIN(CASE WHEN bl.Combo35 = 0 THEN NULL ELSE bl.Combo35 END) AS Combo35
-		, MIN(CASE WHEN bl.ComboOver6 = 0 THEN NULL ELSE bl.ComboOver6 END) AS ComboOver6					
-	FROM dbo.CustMaxPayoutSetting_Agent bl WITH (NOLOCK)
-	INNER JOIN @MatchParlayUnlimit tmp
-		ON tmp.SportType	= bl.SportType
-			AND tmp.BetType = bl.BetType
-	WHERE bl.CustID			= @srecommend
-	GROUP BY bl.SportType, bl.BetType
-	
-	-->check rule: The value must be a positive amount.
-	IF EXISTS(SELECT TOP 1 1 
-			FROM @NewMaxPayoutTbl tmp
-			WHERE	(tmp.SingleMatchParlay < 0 OR tmp.Combo2 < 0 OR tmp.Combo35	< 0  OR tmp.ComboOver6	< 0 )
-			)
+	IF @IsValidateParam = 1
 	BEGIN
-		SET @xml = (
-					SELECT 10070 AS '@MsgID'
-						, 'The Parlay Max Payout value must be a positive amount.'  AS '@Msg'
-						, (
-							SELECT  tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, ps.GroupID AS '@GroupID'
-								, ps.GroupType AS '@GroupType'
-							FROM @NewMaxPayoutTbl tmp
-								INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype																		
-							WHERE	(tmp.SingleMatchParlay < 0 OR tmp.Combo2 < 0 OR tmp.Combo35	< 0  OR tmp.ComboOver6	< 0 )
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-		SET @MsgType = 31
-		SET @ErrCode = 301
-		
-		RETURN
-	END
+		INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
+		SELECT cs.SportType,cs.BetType,
+				CASE WHEN cs.SingleMatchParlay = 0 THEN 1 ELSE 0 END AS SingleMatchParlay_IsAllowUnlimit,
+				CASE WHEN cs.Combo2 = 0 THEN 1 ELSE 0 END AS Combo2_IsAllowUnlimit,
+				CASE WHEN cs.Combo35 = 0 THEN 1 ELSE 0 END AS Combo35_IsAllowUnlimit,
+				CASE WHEN cs.ComboOver6 = 0  THEN 1 ELSE 0 END AS ComboOver6_IsAllowUnlimit
+		FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
+			INNER JOIN @NewMaxPayoutTbl s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+		WHERE cs.custid = @srecommend 	
 	
-	-->Check rule: The setting of Parlay Max Payout is higher than the upline''s.
-	IF EXISTS(SELECT TOP 1 1 
-			FROM @NewMaxPayoutTbl tmp
-				LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-				LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-			WHERE	(ubl.SingleMatchParlay> 0 AND (tmp.SingleMatchParlay = 0 OR tmp.SingleMatchParlay > ubl.SingleMatchParlay))				
-			)	
-	BEGIN
-		SET @xml = (
-					SELECT 10071 AS '@MsgID'
-						, 'Parlay Max Payout per Bet: The setting of Single Match Parlay is higher than the upline''s.'  AS '@Msg'
-						, (SELECT  tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, ps.GroupID AS '@GroupID'
-								, ps.GroupType AS '@GroupType'
-							FROM @NewMaxPayoutTbl tmp
-								INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype																		
-								LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-								LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-							WHERE	ubl.SingleMatchParlay> 0 
-									AND (tmp.SingleMatchParlay = 0 OR tmp.SingleMatchParlay > ubl.SingleMatchParlay)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-		SET @MsgType = 31
-		SET @ErrCode = 302
-		
-		RETURN
-	END
+		INSERT INTO @UplineMaxPayoutTbl(SportType, BetType, SingleMatchParlay, Combo2, Combo35, ComboOver6)
+		SELECT bl.SportType
+			, bl.BetType
+			, MIN(CASE WHEN bl.SingleMatchParlay = 0 THEN NULL ELSE bl.SingleMatchParlay END) AS SingleMatchParlay
+			, MIN(CASE WHEN bl.Combo2 = 0 THEN NULL ELSE bl.Combo2 END) AS Combo2
+			, MIN(CASE WHEN bl.Combo35 = 0 THEN NULL ELSE bl.Combo35 END) AS Combo35
+			, MIN(CASE WHEN bl.ComboOver6 = 0 THEN NULL ELSE bl.ComboOver6 END) AS ComboOver6					
+		FROM dbo.CustMaxPayoutSetting_Agent bl WITH (NOLOCK)
+		INNER JOIN @MatchParlayUnlimit tmp
+			ON tmp.SportType	= bl.SportType
+				AND tmp.BetType = bl.BetType
+		WHERE bl.CustID			= @srecommend
+		GROUP BY bl.SportType, bl.BetType
 	
-	-->Check rule: The setting of Parlay Max Payout is higher than the upline''s.
-	IF EXISTS(SELECT TOP 1 1 
-			FROM @NewMaxPayoutTbl tmp
-				LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-				LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-			WHERE (ubl.Combo2	> 0  AND ( tmp.Combo2 = 0 OR tmp.Combo2 > ubl.Combo2))				
-			)	
-	BEGIN
-		SET @xml = (
-					SELECT 10072 AS '@MsgID'
-						, 'Parlay Max Payout per Bet: The setting of Combo 2 is higher than the upline''s.'  AS '@Msg'
-						, (SELECT  tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, ps.GroupID AS '@GroupID'
-								, ps.GroupType AS '@GroupType'
-							FROM @NewMaxPayoutTbl tmp
-								INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype
-								LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-								LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-							WHERE ubl.Combo2	> 0  
-								AND ( tmp.Combo2 = 0 OR tmp.Combo2 > ubl.Combo2)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-		SET @MsgType = 31
-		SET @ErrCode = 303
+		-->check rule: The value must be a positive amount.
+		IF EXISTS(SELECT TOP 1 1 
+				FROM @NewMaxPayoutTbl tmp
+				WHERE	(tmp.SingleMatchParlay < 0 OR tmp.Combo2 < 0 OR tmp.Combo35	< 0  OR tmp.ComboOver6	< 0 )
+				)
+		BEGIN
+			SET @xml = (
+						SELECT 10070 AS '@MsgID'
+							, 'The Parlay Max Payout value must be a positive amount.'  AS '@Msg'
+							, (
+								SELECT  tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @NewMaxPayoutTbl tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype																		
+								WHERE	(tmp.SingleMatchParlay < 0 OR tmp.Combo2 < 0 OR tmp.Combo35	< 0  OR tmp.ComboOver6	< 0 )
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 31
+			SET @ErrCode = 301
 		
-		RETURN
-	END	
+			RETURN
+		END
 	
-	-->Check rule: The setting of Parlay Max Payout is higher than the upline''s.
-	IF EXISTS(SELECT TOP 1 1 
-			FROM @NewMaxPayoutTbl tmp
-				LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-				LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-			WHERE	(ubl.Combo35 > 0  AND ( tmp.Combo35 = 0 OR tmp.Combo35 > ubl.Combo35))				
-			)	
-	BEGIN
-		SET @xml = (
-					SELECT 10073 AS '@MsgID'
-						, 'Parlay Max Payout per Bet: The setting of Combo 3 - 5 is higher than the upline''s.'  AS '@Msg'
-						, (SELECT  tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, ps.GroupID AS '@GroupID'
-								, ps.GroupType AS '@GroupType'
-							FROM @NewMaxPayoutTbl tmp
-								INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype								
-								LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-								LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-							WHERE ubl.Combo35	> 0  
-								AND ( tmp.Combo35 = 0 OR tmp.Combo35 > ubl.Combo35)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-		SET @MsgType = 31
-		SET @ErrCode = 304
+		-->Check rule: The setting of Parlay Max Payout is higher than the upline''s.
+		IF EXISTS(SELECT TOP 1 1 
+				FROM @NewMaxPayoutTbl tmp
+					LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+					LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+				WHERE	(ubl.SingleMatchParlay> 0 AND (tmp.SingleMatchParlay = 0 OR tmp.SingleMatchParlay > ubl.SingleMatchParlay))				
+				)	
+		BEGIN
+			SET @xml = (
+						SELECT 10071 AS '@MsgID'
+							, 'Parlay Max Payout per Bet: The setting of Single Match Parlay is higher than the upline''s.'  AS '@Msg'
+							, (SELECT  tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @NewMaxPayoutTbl tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype																		
+									LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+									LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+								WHERE	ubl.SingleMatchParlay> 0 
+										AND (tmp.SingleMatchParlay = 0 OR tmp.SingleMatchParlay > ubl.SingleMatchParlay)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 31
+			SET @ErrCode = 302
 		
-		RETURN
-	END	
+			RETURN
+		END
 	
-	-->Check rule: The setting of Parlay Max Payout is higher than the upline''s.
-	IF EXISTS(SELECT TOP 1 1 
-			FROM @NewMaxPayoutTbl tmp
-				LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-				LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-			WHERE (ubl.ComboOver6 > 0  AND ( tmp.ComboOver6 = 0 OR tmp.ComboOver6 > ubl.ComboOver6))
-			)	
-	BEGIN
-		SET @xml = (
-					SELECT 10074 AS '@MsgID'
-						, 'Parlay Max Payout per Bet: The setting of Combo Over 6 is higher than the upline''s.'  AS '@Msg'
-						, (SELECT  tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, ps.GroupID AS '@GroupID'
-								, ps.GroupType AS '@GroupType'
-							FROM @NewMaxPayoutTbl tmp
-								INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype
-								LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
-								LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-							WHERE ubl.ComboOver6 > 0  
-								AND ( tmp.ComboOver6 = 0 OR tmp.ComboOver6 > ubl.ComboOver6)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-		SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-		SET @MsgType = 31
-		SET @ErrCode = 305
+		-->Check rule: The setting of Parlay Max Payout is higher than the upline''s.
+		IF EXISTS(SELECT TOP 1 1 
+				FROM @NewMaxPayoutTbl tmp
+					LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+					LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+				WHERE (ubl.Combo2	> 0  AND ( tmp.Combo2 = 0 OR tmp.Combo2 > ubl.Combo2))				
+				)	
+		BEGIN
+			SET @xml = (
+						SELECT 10072 AS '@MsgID'
+							, 'Parlay Max Payout per Bet: The setting of Combo 2 is higher than the upline''s.'  AS '@Msg'
+							, (SELECT  tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @NewMaxPayoutTbl tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype
+									LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+									LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+								WHERE ubl.Combo2	> 0  
+									AND ( tmp.Combo2 = 0 OR tmp.Combo2 > ubl.Combo2)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 31
+			SET @ErrCode = 303
 		
-		RETURN
+			RETURN
+		END	
+	
+		-->Check rule: The setting of Parlay Max Payout is higher than the upline''s.
+		IF EXISTS(SELECT TOP 1 1 
+				FROM @NewMaxPayoutTbl tmp
+					LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+					LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+				WHERE	(ubl.Combo35 > 0  AND ( tmp.Combo35 = 0 OR tmp.Combo35 > ubl.Combo35))				
+				)	
+		BEGIN
+			SET @xml = (
+						SELECT 10073 AS '@MsgID'
+							, 'Parlay Max Payout per Bet: The setting of Combo 3 - 5 is higher than the upline''s.'  AS '@Msg'
+							, (SELECT  tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @NewMaxPayoutTbl tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype								
+									LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+									LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+								WHERE ubl.Combo35	> 0  
+									AND ( tmp.Combo35 = 0 OR tmp.Combo35 > ubl.Combo35)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 31
+			SET @ErrCode = 304
+		
+			RETURN
+		END	
+	
+		-->Check rule: The setting of Parlay Max Payout is higher than the upline''s.
+		IF EXISTS(SELECT TOP 1 1 
+				FROM @NewMaxPayoutTbl tmp
+					LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+					LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+				WHERE (ubl.ComboOver6 > 0  AND ( tmp.ComboOver6 = 0 OR tmp.ComboOver6 > ubl.ComboOver6))
+				)	
+		BEGIN
+			SET @xml = (
+						SELECT 10074 AS '@MsgID'
+							, 'Parlay Max Payout per Bet: The setting of Combo Over 6 is higher than the upline''s.'  AS '@Msg'
+							, (SELECT  tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.GroupID AS '@GroupID'
+									, ps.GroupType AS '@GroupType'
+								FROM @NewMaxPayoutTbl tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.SportType = ps.SportType AND tmp.Bettype = ps.Bettype
+									LEFT JOIN @UplineMaxPayoutTbl ubl ON tmp.SportType = ubl.SportType AND tmp.BetType = ubl.BetType
+									LEFT JOIN dbo.MaxPayoutGlobalSetting pb  WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+								WHERE ubl.ComboOver6 > 0  
+									AND ( tmp.ComboOver6 = 0 OR tmp.ComboOver6 > ubl.ComboOver6)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+			SET @MsgType = 31
+			SET @ErrCode = 305
+		
+			RETURN
+		END
 	END
 
-	UPDATE t
-	SET t.Child_DisplayOrder = d.Child_DisplayOrder
-	FROM @NewMaxPayoutTbl t
-		INNER JOIN #ProductSettingDetail_Check d 
-			ON t.SportType = d.SportType
-			AND t.BetType = d.BetType
+	IF @IsUpdateParam = 1 -- UpdateParameter for update and writelog
+	BEGIN
+		UPDATE t
+		SET t.Child_DisplayOrder = d.Child_DisplayOrder
+		FROM @NewMaxPayoutTbl t
+			INNER JOIN #ProductSettingDetail_Check d 
+				ON t.SportType = d.SportType
+				AND t.BetType = d.BetType
 		
-	SELECT @SettingType27 = (
-	SELECT SportType '@SportType', 
-		BetType '@BetType', 
-		SingleMatchParlay '@SingleMP',
-		Combo2 '@Combo2',
-		Combo35 '@Combo35',
-		ComboOver6 '@Combo6'
-	FROM @NewMaxPayoutTbl
-	ORDER BY Child_DisplayOrder,SportType,BetType
-	FOR XML PATH ('R'), ROOT('Root')
-	)	
+		SELECT @SettingType27 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			SingleMatchParlay '@SingleMP',
+			Combo2 '@Combo2',
+			Combo35 '@Combo35',
+			ComboOver6 '@Combo6'
+		FROM @NewMaxPayoutTbl
+		ORDER BY Child_DisplayOrder,SportType,BetType
+		FOR XML PATH ('R'), ROOT('Root')
+		)	
+	END
 	
 	DROP TABLE #ProductSettingDetail_Check
 END

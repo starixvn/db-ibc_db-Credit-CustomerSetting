@@ -1,6 +1,6 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
-	@custid INT OUTPUT,
+	@custid INT,
 	@firstname NVARCHAR(50),
 	@lastname NVARCHAR(50),
 	@creator INT,
@@ -19,6 +19,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@ugroup			VARCHAR(5) = NULL,
 	@SystemID		TINYINT=1,
 	@IP 			VARCHAR(15)='',
+
 	@ErrCode 		INT = 0 OUTPUT,
 	@MsgType		INT = 0 OUTPUT,
 	@ErrMsg 		NVARCHAR(4000) = '' OUTPUT,
@@ -202,6 +203,7 @@ Revisions:
 	- 20240606@Johnson: Scale out DBCUST [Redmine: #199915]
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 
 Param's Explanation:	
 	- @ErrCode:
@@ -254,120 +256,46 @@ Param's Explanation:
 BEGIN
     SET NOCOUNT ON
 
-	declare @startRun datetime
-    declare @endRun datetime
-    declare @duration INT
-    set @startRun = getdate()
+	DECLARE @startRun DATETIME
+			,@endRun DATETIME
+			,@duration INT
+			,@SettingType25	VARCHAR(MAX)= ''
+			,@SettingType26	VARCHAR(MAX)= ''
+			,@SettingType27	VARCHAR(MAX)= ''
+			,@SettingType28	VARCHAR(MAX)= ''
 
-	DECLARE @SettingType25 VARCHAR(MAX)= '', --Discount
-			@SettingType26 VARCHAR(MAX)= '', --Bet Setting
-			@SettingType27 VARCHAR(MAX)= '', --Parlay Max Payout
-			@SettingType28 VARCHAR(MAX)= ''  --PT
+    SET @startRun = GETDATE()
 
-	EXEC [Acc_CheckUM] @CustID = @recommend
-		,@FunctionType = 2
-		,@ErrCode = @ErrCode OUTPUT
-		,@ErrMsg = @ErrMsg OUTPUT
-		,@ReturnUMData = 0
-		,@Language = @Language
-
-	IF @ErrCode <> 0 RETURN
-
-	IF @credit <0
-	BEGIN
-		SELECT  @ErrCode = 2
-		SELECT @ErrMsg = 	CASE @Language 
-								WHEN 'E' THEN 'Credits must be positive.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](70025,@Language)
-							END
-		RETURN
-	END
-
-	DECLARE @uplineUsername NVARCHAR(50)
-	
-	SELECT @uplineUsername = username 
-	FROM custinfo WITH(NOLOCK)
-	WHERE custid = @recommend
-
-	EXEC Acc_CustomerLimitCreatedAccountCheck
-			@Custid				= @recommend , 
-			@RuleID				= 'AG' , 
-			@existingMrecommend = 0 , 
-			@existingSrecommend = 0 , 
-			@Prefix				= @uplineUsername , 
-			@GroupName			= '' , 
-			@IsQRCode			= @IsQRCode , 
-			@SystemID			= @SystemID , 
-			@IP					= @IP ,
-			@Credit				= @Credit ,
-			@ErrCode			= @ErrCode OUTPUT , 
-			@ErrMsg				= @ErrMsg OUTPUT , 
-			@Language			= @Language
-	IF @ErrCode <> 0
-	BEGIN
-		SELECT @ErrCode , @ErrMsg
-		RETURN		
-	END	
-
-	---- check constraint on prefix username same as upline in case of creating member from alpha site
-	IF @creator = @recommend
-	BEGIN
-		SELECT @uplineUsername = username 
-		FROM custinfo WITH(NOLOCK)
-		WHERE custid = @recommend
-
-		IF LEFT(@username,LEN(@uplineUsername)) <> @uplineUsername
-		BEGIN			
-			SELECT @ErrMsg = CASE @Language
-						    WHEN 'E' THEN 'This function is under maintenance and not available at the moment. Please kindly check back later. Thank you!'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](90011, @Language)
-					     END,
-				   @ErrCode = 101
-			RETURN
-		END
-	END 
-
-    --Check an account disabled OR not 
-    EXEC dbo.Acc_CustomerSelCheckEnable @custid = @recommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
-    IF @ErrCode <>0	RETURN 
-
-    declare @transcode bigint, @currency INT, @pwdexpiry datetime, @srecommend INT, @mrecommend INT,
-	    @AgentCredit MONEY, @Credit_AllOtherMember MONEY,
-	    @MaxCredit_Mem MONEY,
-	    @Asuspended BIT,
+    DECLARE @transcode bigint, @currency INT, @pwdexpiry datetime, @srecommend INT, @mrecommend INT,
 	    @UplineClosed BIT,
 	    @DisableOutright BIT,	   
 		@suspended BIT = 0,
-		
 	    @AgentDanger tinyint,
 	    @AgentDanger2 tinyint,
 	    @AgentDanger3 tinyint,
 		@AgentDanger4 tinyint,
 	    @AgentDanger5 tinyint,
 	    @AgentAbnormal tinyint,
-    	
 	    -- check autosuspend's upline
 	    @autosuspend BIT,
 	    @autosuspend2 BIT,
 		@autosuspend3 BIT,	
-    			
-	    @site NVARCHAR(50),  	    		  
+		@SiteID int,
+		@_Site VARCHAR(10) ,	    		  
 		@DisableSuperLive BIT = 0,
 	    @matchlimit SMALLMONEY	
 
-    DECLARE @_Site VARCHAR(10), @EnableVR BIT, @siteID SMALLINT
-
+	DECLARE @EnableVR BIT
+	
 	SELECT @_Site = c.site,
 		@siteID = s.siteid
 	FROM dbo.customer c WITH(NOLOCK)
 		INNER JOIN site s WITH(NOLOCK) ON c.site = s.site
-	WHERE CustID = @recommend	
+	WHERE CustID = @recommend
 
     SELECT @currency = currency
          , @mrecommend = mrecommend
          , @srecommend = srecommend
-         , @AgentCredit = ISNULL(Credit, 0)     
-         --, @Asuspended = reject
          , @UplineClosed = cs.closed
          , @matchlimit = matchlimit
          , @AgentDanger = Danger
@@ -396,7 +324,7 @@ BEGIN
 		AND EXISTS( 
 				SELECT 1 
 				FROM dbo.Site WITH (NOLOCK)
-				WHERE site = @site AND SiteLabel IN ('789y')
+				WHERE site = @_site AND SiteLabel IN ('789y')
 			)
 				SET @EnableVR = 1
 
@@ -419,111 +347,13 @@ BEGIN
 		WHERE CustID = @ExistingCustID
     END
 
-    /* 20130403@Jamie: Check Recommend <> MRecommend AND <> Srecommend OR NOT*/
-    IF (@recommend = @mrecommend) OR (@recommend = @srecommend)
-    BEGIN
-	    SELECT	@ErrMsg = CASE @Language
-						    WHEN 'E' THEN 'Invalid user'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40002,@Language)
-						    END,
-			     @ErrCode = 350
-	    RETURN	
-    END
-
-    /* END: Check Recommend <> MRecommend AND <> Srecommend OR NOT*/
-
-    SELECT @ErrCode = 0
-
-     -- MyanmarOdds
-	DECLARE @IsMyanmarOdds BIT = 0
-	SET @IsMyanmarOdds = dbo.fn_IsMyanmarOdds (@recommend)
-	
-	IF @IsMyanmarOdds = 1 AND @ugroup <> 'a'
-	BEGIN
-	   SELECT	@ErrMsg = CASE @Language
-						    WHEN 'E' THEN 'The selected group is not allowed for this site'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40055,@Language)
-						    END,
-			     @ErrCode = 40055
-	    RETURN	
-	END
-
-    --Check member group under Won currency
-    IF @currency = 45 AND @ugroup NOT IN ('dea','deb','dec','ded')-- Won currency
-	    BEGIN
-		    SELECT @ErrMsg = CASE @Language
-							    WHEN 'E' THEN 'Unable to assign this group to the customer.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40017,@Language)
-							    END,
-				    @ErrCode = 300
-		    return			
-	    END
-    	
-    IF @currency <> 45 AND @ugroup IN ('dea','deb','dec','ded') -- Others currency
-	    BEGIN
-		    SELECT @ErrMsg = CASE @Language
-							    WHEN 'E' THEN 'Unable to assign this group to the customer.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40017,@Language)
-							    END,
-				    @ErrCode = 301
-		    return			
-	    END
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    SELECT  @username = rtrim(ltrim(@username))
-    SELECT @site=CASE WHEN @ugroup like 'indo_' THEN 'INDO' ELSE '' END, @ugroup = CASE WHEN @ugroup like 'indo_' THEN right(@ugroup,1) ELSE @ugroup END
-
-    DECLARE @IsExists BIT 
-	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
-
-	IF @IsExists = 1
-    BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'This username is not available.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
-						    END		
-			    , @ErrCode = 201
-	    RETURN
-    END
-
-	--Use maxcredit in CustAgent table 
-    SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) FROM custAgent WITH(NOLOCK)  WHERE CustID = @recommend
-
-    SELECT @Credit_AllOtherMember = ISNULL(sum(Credit), 0) FROM custinfo WITH(NOLOCK) WHERE Recommend = @Recommend AND RoleID = 1
-    SELECT @MaxCredit_Mem = CASE WHEN @MaxCredit_Mem =0 THEN (@AgentCredit - @Credit_AllOtherMember) 
-						    ELSE @MaxCredit_Mem END 
-    IF @Credit + @Credit_AllOtherMember>@AgentCredit
-    BEGIN
-	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@AgentCredit - @Credit_AllOtherMember, '#,#0.####'))
-			    , @ErrCode = 204
-	    return
-    END
-
-    IF @Credit > @MaxCredit_Mem 
-    BEGIN
-	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70032,@Language), '{number}', FORMAT(@MaxCredit_Mem, '#,#0.####'))
-			    , @ErrCode =217
-	    return
-    END 
-
-	IF @credit <0
-		or @recommend <=0
-		or @ugroup not in ('a','b','c','d','hka','hkb','hkc','hkd','indoa','indob','indoc','indod','dea','deb','dec','ded')
-	BEGIN
-		select @ErrCode = 102
-				,@ErrMsg = 	case @Language 
-								when 'E' then 'Wrong Min bet/ Max bet/ Max per ball/ Max per match/ Credit/ Agent name/ user group.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](10001,@Language)
-					end
-		return
-	END
+    SELECT  @username = RTRIM(LTRIM(@username))
 
     SELECT @pwdexpiry = CASE WHEN @IsQRCode = 1 THEN '01/01/1900' ELSE DATEADD(dd, -1, GETDATE()) END
 
-    --check suspended of Agent 
-    IF @Asuspended =1
-    BEGIN
-	    set @suspended =1
-    END
+	IF @UplineClosed = 1
+		SET @Closed = 1
 
 	IF @isSearchAndCopy = 1 --Clone Setting --> Get Setting from SourceCustID
 	BEGIN
@@ -597,6 +427,7 @@ BEGIN
 				)
 	END
 
+	--------START: Update parametter-------------------------------------------------------------------
 	--check comm
 	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_Ag
 		@srecommend = @srecommend,
@@ -604,217 +435,240 @@ BEGIN
 		@recommend = @recommend,
 		@siteID = @siteID,
 		@currency = @currency,
-		
-		@SettingType25 = @SettingType25 OUTPUT, --SB
-		@SettingStatus = @SettingStatus,
 		@ugroup = @ugroup,
-		
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT
-	
-	IF @ErrCode > 0
-		RETURN;
-		
+		@SettingType25 = @SettingType25 OUTPUT,
+		@SettingStatus = @SettingStatus,
+		@IsValidateParam = 0,
+		@IsUpdateParam = 1--update parameter only, skip validate
+
 	EXEC Acc_LiteMode_CustomerInsMember_BetSettingCheck_Ag
 		@srecommend =@srecommend,
 		@mrecommend =@mrecommend,
 		@recommend =@recommend,
 		@siteid =@siteid,
 		@currency =@currency,
-		
-		@SettingType26 = @SettingType26, --SB
+		@SettingType26 = @SettingType26 OUTPUT, --SB
 		@SystemID = @SystemID,
 		@SettingStatus  = @SettingStatus,
-		
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg  = @ErrMsg OUTPUT
-	
-	IF @ErrCode > 0
-		RETURN;
-		
+		@IsValidateParam = 0,
+		@IsUpdateParam = 1--update parameter only, skip validate
+
 	EXEC Acc_LiteMode_CustomerInsMember_ParlayMaxPayoutCheck_Ag
 		@srecommend = @srecommend,
 		@mrecommend = @mrecommend,
 		@recommend = @recommend,
 		@siteid =@siteid,
 		@currency =@currency,
-		
-		@SettingType27 = @SettingType27, --SB
+		@SettingType27 = @SettingType27 OUTPUT, --SB
 		@SettingStatus = @SettingStatus,
-		
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT
-	
-	IF @ErrCode > 0
-		RETURN;
-		
+		@IsValidateParam = 0,
+		@IsUpdateParam = 1--update parameter only, skip validate
+
 	EXEC Acc_LiteMode_CustomerInsMember_PTCheck_Ag
 		@srecommend = @srecommend,
 		@mrecommend = @mrecommend,
 		@recommend = @recommend,		
 		@siteid = @siteid,
 		@currency = @currency,
-		
 		@SettingType28 = @SettingType28 OUTPUT,-- SB
 		@SettingStatus = @SettingStatus,
-
-		@ErrCode = @ErrCode OUTPUT,
-		@MsgType = @MsgType OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT
-
-	IF @ErrCode > 0
-		RETURN;
-
-	IF @UplineClosed = 1
-		SET @Closed = 1
+		@IsValidateParam = 0,
+		@IsUpdateParam = 1--update parameter only, skip validate
+ 	--------END: Update parametter-------------------------------------------------------------------
 
     --Insert general data 
-    EXEC dbo.Acc_CustomerInsUserInfo
-	    @custid = @custid OUTPUT,
-	    @firstname = @firstname,
-	    @lastname = @lastname,
-	    @creator = @creator,
-	    @username = @username,
-	    @userpwd = @userpwd,
-	    @pwdexpiry = @pwdexpiry,
-	    @currency = @currency,
-	    @site = @site,
-	    @ugroup = @ugroup,
-	    @srecommend = @srecommend,
-	    @mrecommend = @mrecommend,
-	    @recommend = @recommend,
-	    @roleid = 1,
-	    @phone = @phone,
-	    @mobilephone = @mobilephone,
-	    @email = '',
-	    @fax = @fax,
-	    @address = '',
-	    @city = '',
-	    @state = '',
-	    @country = '',
-	    @postal = '',
-	    @TransferOption = NULL,
-	    --@suspended = @suspended,
-	    @closed = @Closed,
-    	
-	    @autosuspend = @autosuspend,
-	    @autosuspend2 = @autosuspend2,
-		@autosuspend3 = @autosuspend3,
+    BEGIN TRY
+		EXEC dbo.Acc_CustomerInsUserInfo
+			@custid = @custid,
+			@firstname = @firstname,
+			@lastname = @lastname,
+			@creator = @creator,
+			@username = @username,
+			@userpwd = @userpwd,
+			@pwdexpiry = @pwdexpiry,
+			@currency = @currency,
+			@site = @_site,
+			@ugroup = @ugroup,
+			@srecommend = @srecommend,
+			@mrecommend = @mrecommend,
+			@recommend = @recommend,
+			@roleid = 1,
+			@phone = @phone,
+			@mobilephone = @mobilephone,
+			@email = '',
+			@fax = @fax,
+			@address = '',
+			@city = '',
+			@state = '',
+			@country = '',
+			@postal = '',
+			@TransferOption = NULL,
+			--@suspended = @suspended,
+			@closed = @Closed,
+			@autosuspend = @autosuspend,
+			@autosuspend2 = @autosuspend2,
+			@autosuspend3 = @autosuspend3,
+			@Danger = @AgentDanger,
+			@Danger2 = @AgentDanger2,
+			@Danger3 = @AgentDanger3,
+			@Danger4 = @AgentDanger4,
+			@Danger5 = @AgentDanger5,
+			@Abnormal = @AgentAbnormal,
+			@DisableOutright = @DisableOutright,	
+			@matchlimit = @matchlimit,
+			@virtualmultiplier = @EnableVR,
+			@DoubleCommLosing = 0,-- off double comm losing WHEN create new member   	 
+			@DisableSuperLive = @DisableSuperLive,
+    		@SystemID=@SystemID,
+			@credit = @credit,	
+			@IP = @IP,
+			@TransferOption_dec = NULL,
+			@copyFromCustID = @ExistingCustID,
+			@isSearchAndCopy = @isSearchAndCopy,
+			@Language = @Language,
+			@ErrCode = @ErrCode OUTPUT,
+			@ErrMsg = @ErrMsg OUTPUT
 
-	    @Danger = @AgentDanger,
-	    @Danger2 = @AgentDanger2,
-	    @Danger3 = @AgentDanger3,
-		@Danger4 = @AgentDanger4,
-	    @Danger5 = @AgentDanger5,
-	    @Abnormal = @AgentAbnormal,
-    	
-	  
-	    @DisableOutright = @DisableOutright,	
-	    @matchlimit = @matchlimit,
-	    @virtualmultiplier = @EnableVR,
-	   
-	    @DoubleCommLosing = 0,-- off double comm losing WHEN create new member   	 
-	  
-		@DisableSuperLive = @DisableSuperLive,
+		IF @ErrCode <> 0
+		BEGIN
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+		END
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrCode = @@ERROR
+				,@ErrMsg = ERROR_MESSAGE()
 
-    	@SystemID=@SystemID,
-	    @credit = @credit,	
-	    @IP = @IP,
-	    @TransferOption_dec = NULL,
-	    @copyFromCustID = @ExistingCustID,
-	    @isSearchAndCopy = @isSearchAndCopy,
-	    @Language = @Language,
-	    @ErrCode = @ErrCode OUTPUT,
-	    @ErrMsg = @ErrMsg OUTPUT
-
-    IF @ErrCode <> 0
-	BEGIN
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    RETURN
-	END
+		RETURN
+	END CATCH
 
-	EXEC dbo.Acc_CustomerInfo_Execrep_00
-	    @custid = @custid,
-	    @srecommend = @srecommend,
-	    @mrecommend = @mrecommend,
-	    @recommend = @recommend,
-	    @roleid = 1,--create member
-		@isSearchAndCopy = @isSearchAndCopy,
-		@copyFromCustID = @ExistingCustID,
-		@siteID = @siteID,
-		@currency = @currency,
-		@SettingType25 = @SettingType25, --Discount	
-		--@SettingType26 = @SettingType26, --Bet Setting
-		@SettingType27 = @SettingType27, --Parlay Max Payout
-		@SettingType28 = @SettingType28, --PT
-		@SettingStatus = @SettingStatus,
-	    @ErrCode = @ErrCode OUTPUT
+	BEGIN TRY
+		EXEC dbo.Acc_CustomerInfo_Execrep_00
+			@custid = @custid,
+			@srecommend = @srecommend,
+			@mrecommend = @mrecommend,
+			@recommend = @recommend,
+			@roleid = 1,--create member
+			@isSearchAndCopy = @isSearchAndCopy,
+			@copyFromCustID = @ExistingCustID,
+			@siteID = @siteID,
+			@currency = @currency,
+			@SettingType25 = @SettingType25, --Discount	
+			--@SettingType26 = @SettingType26, --Bet Setting
+			@SettingType27 = @SettingType27, --Parlay Max Payout
+			@SettingType28 = @SettingType28, --PT
+			@SettingStatus = @SettingStatus,
+			@ErrCode = @ErrCode OUTPUT
 
-    IF @ErrCode > 0
-    BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-						    WHEN 'E' THEN 'Create customer fail. Please try again'
-						    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-					    END	
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END	
     				
-		    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
-	    RETURN
-    END	
-			
-	-- Start : Initialize Data SportsBook
-	EXEC dbo.Acc_Custsetting_SportsbookIns
-		@custid = @custid,
-		@roleid = 1,
-		@siteID = @siteID,
-		@currency = @currency,
-		@SettingType26 = @SettingType26, --Bet Setting		
-		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT
-	IF @ErrCode > 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-						    WHEN 'E' THEN 'Create customer fail. Please try again'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END
+			 -- ROLLBACK MANUALLY	
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+		END	
+
+		-- Start : Initialize Data SportsBook
+		EXEC dbo.Acc_Custsetting_SportsbookIns
+			@custid = @custid,
+			@roleid = 1,
+			@siteID = @siteID,
+			@currency = @currency,
+			@SettingType26 = @SettingType26, --Bet Setting		
+			@SettingStatus = @SettingStatus,
+			@ErrCode = @ErrCode OUTPUT
+		IF @ErrCode > 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END	
 	   		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
-	    RETURN
-    END
-    -- End : Initialize Data SportsBook
+			RETURN
+		END
+		-- End : Initialize Data SportsBook
 
-    -- Start : Initialize Data 3rd Products
-	EXEC dbo.Acc_CustSetting_3rdProductIns
-		@custid = @custid,
-		@SuperID = @srecommend,
-		@MasterID = @mrecommend,
-		@AgentID = @recommend,
-		@RoleID = 1,
-		@siteID = @siteID,
-		@currency = @currency,
-		@SettingStatus = @SettingStatus,
-		@ErrCode = @ErrCode OUTPUT
+		-- Start : Initialize Data 3rd Products
+		EXEC dbo.Acc_CustSetting_3rdProductIns
+			@custid = @custid,
+			@SuperID = @srecommend,
+			@MasterID = @mrecommend,
+			@AgentID = @recommend,
+			@RoleID = 1,
+			@siteID = @siteID,
+			@currency = @currency,
+			@SettingStatus = @SettingStatus,
+			@ErrCode = @ErrCode OUTPUT
 		
-	IF @ErrCode > 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
+		IF @ErrCode <> 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
 							when 'E' then 'Create customer fail. Please try again'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END
-		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID	
+
+			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+		END
+		-- End : Initialize Data 3rd Products
+
+		EXEC dbo.Acc_CustomerInfo_Execrep_01
+			@custid = @custid, 
+			@srecommend = @srecommend, 
+			@mrecommend = @mrecommend, 
+			@recommend = @recommend,
+			@mode = 'sportbook'   
+	
+		IF ISNULL(@IsQRCode,0) = 1
+		BEGIN
+			INSERT INTO [dbo].[CustQRCode] (CustID)
+			SELECT @custid
+		END
+	
+		If @SystemID IN (2, 10) -- ALPHA, Chatbot
+		BEGIN
+			EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
+			IF @ErrCode > 0
+			BEGIN
+				SELECT @ErrMsg = CASE @Language 
+									when 'E' then 'Create member fail. Please try again'
+									ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
+								END
+						, @ErrCode=216	
+				-- ROLLBACK MANUALLY	
+				EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1		
+				EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+				RETURN
+			END	
+		END
+	END TRY
+	BEGIN CATCH
+		--Error occurs
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create member fail. Please try again'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
+							END	
+				, @ErrCode=216
+    	
+		-- ROLLBACK MANUALLY	
+		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
+		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN
-	END						
-	-- End : Initialize Data 3rd Products
+	END CATCH
 
 	IF @isSearchAndCopy = 1
 	BEGIN
 		--Correct 3rd Products Setting 
 		EXEC [Acc_CustSetting_DCSSettingCopyInsertMember]
-			 @CustID = @CustID
+			@CustID = @CustID
 			,@ExistingCustID = @ExistingCustID
 			,@SubAccID = @SubAccID
 			,@IP = @IP
@@ -823,67 +677,6 @@ BEGIN
 			,@IsCountPT = 0
 			,@isSearchAndCopy = @isSearchAndCopy
 			,@SettingStatus = @SettingStatus
-	END
-
-
-    EXEC dbo.Acc_CustomerInfo_Execrep_01
-		@custid = @custid, 
-		@srecommend = @srecommend, 
-		@mrecommend = @mrecommend, 
-		@recommend = @recommend,
-		@mode = 'sportbook'
-    	
-    IF @@ERROR <> 0
-    BEGIN
-	    --Error occurs
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create member fail. Please try again'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-						    END	
-			    , @ErrCode=216
-    	
-	    -- ROLLBACK MANUALLY	
-	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @roleid = 1
-	    RETURN
-    END    
-	
-	IF ISNULL(@IsQRCode,0) = 1
-	BEGIN
-		INSERT INTO [dbo].[CustQRCode] (CustID)
-		SELECT @custid
-	END
-
-	IF @@ERROR <> 0
-	BEGIN
-	    --Error occurs
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create member fail. Please try again'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-						    END	
-			    , @ErrCode=216
-    	
-	    -- ROLLBACK MANUALLY
-		EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID ,@RoleID = 1
-	    EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-	    RETURN
-    END
-	
-	If @SystemID IN (2, 10) -- ALPHA, Chatbot
-	BEGIN
-		EXEC Age_LimitPTDailyIns @SettingStatus = @SettingStatus, @Actorid=@creator,@custid=@CustID,@ErrMsg=@ErrMsg OUTPUT,@ErrCode=@ErrCode OUTPUT
-		IF @ErrCode > 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create member fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-							END
-					, @ErrCode=216	
-
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			EXEC Acc_CustomerInsSetting_Rollback @CustID = @CustID, @roleid = 1
-			RETURN
-		END	
 	END
 
     set @endRun = getdate()
@@ -929,7 +722,6 @@ BEGIN
 		@ActionID = @ActionID,
 		@TrackingValue = @LogSPData,
 		@duration = @duration
-
 
 	-- Write Log Credit
     Declare @LogSPCredit VARCHAR(200)
@@ -998,7 +790,7 @@ BEGIN
 															AND	psd.BetType = psp.Bettype
 		INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = @CustID
 		CROSS APPLY(SELECT [value] FROM dbo.f_CustSetting_ProductStatusSel(cps.bitmapIsHidden, psp.bitmapOrder)) AS Hi
-		INNER JOIN DBPRO.bodb02.dbo.Products p WITH (NOLOCK)  ON p.ProductID = psd.ProductID
+		INNER JOIN dbo.Products p WITH (NOLOCK)  ON p.ProductID = psd.ProductID
 	WHERE psd.ProductID <> 20 
 		AND ISNULL(psd.GroupID,0) NOT IN (3)
 	GROUP BY psd.ProductID
