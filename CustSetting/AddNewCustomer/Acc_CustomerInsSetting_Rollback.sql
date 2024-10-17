@@ -52,6 +52,7 @@ BEGIN
 	WHERE CustID = @CustID
 
 	DELETE FROM CustLimitPTSetting			WITH (ROWLOCK) WHERE CustID = @CustID
+	DELETE FROM SuspiciousCust				WITH (ROWLOCK) WHERE CustID = @CustID
 	DELETE FROM CustProductStatus			WITH (ROWLOCK) WHERE CustID = @CustID
 
 	IF @RoleID IN (2,3,4)
@@ -66,9 +67,15 @@ BEGIN
 
 		--Inhouse Tables
 		DELETE c
-		OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, SYSDATETIME() 
-		INTO BetSetting3rd_Agent_Del(CustID,Sporttype,Bettype,RepUpdateTime)
+		OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, dbo.f_GetDateTime2() 
+		INTO BetSetting3rd_Agent_Del_Inhouse(CustID,Sporttype,Bettype,RepUpdateTime)
 		FROM BetSetting3rd_Agent c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
+
+		DELETE c
+		OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, dbo.f_GetDateTime2() 
+		INTO BetSetting_Agent_Del_Inhouse(CustID,Sporttype,Bettype,RepUpdateTime)
+		FROM BetSetting_Agent c WITH(ROWLOCK) 
 		WHERE CustID = @CustID
 	END
 	ELSE IF @RoleID = 1
@@ -85,9 +92,16 @@ BEGIN
 
 		--Inhouse Tables
 		DELETE c
-		OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, SYSDATETIME() 
-		INTO BetSetting3rd_Member_Del(CustID,Sporttype,Bettype,RepUpdateTime)
+		OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, dbo.f_GetDateTime2() 
+		INTO BetSetting3rd_Member_Del_Inhouse(CustID,Sporttype,Bettype,RepUpdateTime)
 		FROM BetSetting3rd_Member c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
+
+
+		DELETE c
+		OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, dbo.f_GetDateTime2() 
+		INTO BetSetting_Member_Del_Inhouse(CustID,Sporttype,Bettype,RepUpdateTime)
+		FROM BetSetting_Member c WITH(ROWLOCK) 
 		WHERE CustID = @CustID
 	END
 END
