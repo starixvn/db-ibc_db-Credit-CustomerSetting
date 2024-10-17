@@ -3,7 +3,7 @@ ALTER PROCEDURE [DBA_ArchiveAccount1_CloseAgentLine_GenScript]
 AS
 /*
 	Created: Daniel@20151116
-	Task: Archive Acc - Gen script batch run sp for stage 0 - close agent
+	Task: Archive Acc - Gen script batch run sp for stage 0 - close agent 
 	DB: DBACC/bodb02
 	Original: DBA_ArchiveAccount0_CloseAgent_GenScript
 
@@ -20,6 +20,7 @@ AS
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		- 20220422@Eden: Exclude SuperID: 46379016 [RedmineID: #171821]
 		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
+		- 20240905@Eden : Scale out DBCUST [redmine: #210077] 
 
 		
 	Param's Explanation:
@@ -96,7 +97,7 @@ WHERE ag.roleid = 2
 	AND agci.custid NOT IN (
 		SELECT DISTINCT recommend
 		FROM customer c WITH (NOLOCK)
-		WHERE --roleid = 1 AND
+		WHERE roleid IN(1,2) AND
 			creatdate >= DATEADD(mm, -3, GETDATE())
 		)
 	

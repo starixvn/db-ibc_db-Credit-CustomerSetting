@@ -17,6 +17,7 @@ AS
 		- 20210825@Eden: Exclude Direct Masters/Agents/Members from Archiving Credit Account process (Stage 3 and Stage 4) [RedmineID: #160690]
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
+		- 20240905@Eden : Scale out DBCUST [redmine: #210077]
 		
 	Param's Explanation:
 */
@@ -110,8 +111,8 @@ WHERE ag.roleid = 2
 	AND agci.custid NOT IN (
 		SELECT DISTINCT recommend
 		FROM customer c WITH (NOLOCK)
-		WHERE --roleid = 1 AND
-			creatdate >= DATEADD(mm, -7, GETDATE())
+		WHERE roleid IN(1,2)
+			AND creatdate >= DATEADD(mm, -7, GETDATE())
 		)
 	
 SELECT sag.username Super
