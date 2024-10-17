@@ -27,7 +27,8 @@ AS
 BEGIN
     SET NOCOUNT ON
 
-
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	RETURN;
 
 	CREATE TABLE	#tblVirtualRate (
 						CustID				INT
@@ -95,8 +96,8 @@ BEGIN
 				@DocHandler
 	-- END - Read XML
 	
-	IF	dbo.f_CheckRepTable('CustVirtualSetting') <> 1 --OR NOT EXISTS (SELECT 1 FROM #tblVirtualrate)
-		RETURN
+	--IF	OBJECT_ID('VRCustSetting') IS NULL dbo.f_CheckRepTable('CustVirtualSetting') <> 1 --OR NOT EXISTS (SELECT 1 FROM #tblVirtualrate)
+	--	RETURN
 
 	SELECT	TOP 1
 			@seqNo = pvs.seqNo
