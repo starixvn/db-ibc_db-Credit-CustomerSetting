@@ -19,6 +19,8 @@ AS
 			- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 			- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 			- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
+			- 20240905@Eden : Scale out DBCUST - Delete data custinfomini [redmine: #210077]
+			- 20241007@Helios : Scale out DBCUST - Delete data custinfomini - remove call link Server DBGLOB [redmine: #210077]
 */
 BEGIN
 	    
@@ -66,8 +68,8 @@ BEGIN
 				WHERE	custid = @CustID
 		)
 	BEGIN
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
-		SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+		INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline)
+		SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline
 		FROM	custsub WITH (NOLOCK)
 		WHERE	custid = @CustID
 	END
@@ -85,6 +87,9 @@ BEGIN
 	--===============================
 
 	Exec DBA_Archive_Cust_SuperMaster @CustID = @CustID, @stage = 4 
+
+	--Delete custinfomini
+	EXEC GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustID
 	----------------------------------------------------------------
 	print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 

@@ -16,6 +16,8 @@ AS
 		- 20180320@Daniel: rename SP to count stage from 1 => No. 4 for this stage
 		- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - Delete custinfo for DBPRO - [Redmine:130032]
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
+		- 20240905@Eden : Scale out DBCUST - Delete data custinfomini [redmine: #210077]
+		- 20241007@Helios : Scale out DBCUST - Delete data custinfomini - remove call link Server DBGLOB [redmine: #210077]
 
 */
     
@@ -61,8 +63,8 @@ IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsub_old WITH(NOLOCK)
 				WHERE	custid = @AgentID
 		)
 BEGIN
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
-	SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline)
+	SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline
 	FROM	custsub WITH (NOLOCK)
 	WHERE	custid = @AgentID
 END
@@ -78,6 +80,9 @@ FROM custinfo with (nolock) where recommend = @AgentID
 EXEC DBPRO.bodb02.dbo.DBA_ArchiveAccount4_DelCustInfo_ForDBPRO @CustIDs = @CustIDs
 
 Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 2 
+
+--Delete custinfomini
+EXEC GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustIDs
 ----------------------------------------------------------------
 print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 

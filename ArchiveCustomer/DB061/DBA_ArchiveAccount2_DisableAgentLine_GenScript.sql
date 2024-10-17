@@ -21,6 +21,7 @@ AS
 		- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
+		- 20240905@Eden : Scale out DBCUST [redmine: #210077]
 		
 	Param's Explanation:
 */
@@ -94,8 +95,8 @@ WHERE ag.isFinished = 1
 	AND agci.custid NOT IN (
 		SELECT DISTINCT recommend
 		FROM customer c WITH (NOLOCK)
-		WHERE --roleid = 1 AND
-			creatdate >= @startdate
+		WHERE  roleid IN(1,2)
+			AND creatdate >= @startdate
 		)
 	AND ag.IsFinished = 1 AND (ISNULL(ag.ErrMsg,'') = '' OR ag.ErrMsg LIKE '%archived%')
 	
