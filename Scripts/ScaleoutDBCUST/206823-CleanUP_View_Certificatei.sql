@@ -20,6 +20,7 @@ DROP SIGNATURE FROM OBJECT::dbo.API_CustomerIns_Register_UAT2 BY CERTIFICATE cer
 DROP SIGNATURE FROM OBJECT::dbo.Dot_Admin_CreateCustInfoMiniAccount_Test BY CERTIFICATE cert_scaleout_dbcust_UAT
 DROP SIGNATURE FROM OBJECT::dbo.Dot_Member_CheckNickname_Cust_Mini_test BY CERTIFICATE cert_scaleout_dbcust_UAT
 DROP SIGNATURE FROM OBJECT::dbo.Dot_Member_UpdateNickname_Cust_Mini_test BY CERTIFICATE cert_scaleout_dbcust_UAT
+DROP SIGNATURE FROM OBJECT::dbo.Dot_Admin_RollbackCustomerIns_Test BY CERTIFICATE cert_scaleout_dbcust_UAT
 
 DROP VIEW CustinfoMini
 GO
@@ -35,3 +36,4 @@ USE [CustDB]
 GO
 DROP USER [user_cert_scaleout_dbcust_UAT]
 GO
+
