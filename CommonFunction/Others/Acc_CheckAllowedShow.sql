@@ -1,7 +1,6 @@
 /*<info serverAlias="DBCust-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	[dbo].[Acc_CheckAllowedShow]
-					@CustID				INT
-				,	@AllowedBitcoin			BIT = 0		OUTPUT
+					@CustID				INT				
 				,	@AllowedLiveRNGCasino		BIT = 0		OUTPUT
 				,	@AllowedRNGGames			BIT = 0		OUTPUT
 				,     @SettingStatus			TINYINT = 0
@@ -56,7 +55,7 @@ Revisions:
 	- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 	- 20240318@Eden: Unify Live RNG Casino [Redmine: #198960]
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]  
-
+	- 20241022@Johnson: remove bitcoin [redmine: #201396]
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */
@@ -82,10 +81,9 @@ Revisions:
 	    , @Allowed_SportsLottery	 INT = 1 
 	    , @Allowed_VirtualSport	 INT = 1 
 
-	DECLARE
-	      @IsHideBitcoin		 INT
+	DECLARE	    
 		--Live & RNG Casino
-	    , @IsHidden_LiveCasino	 INT = 1
+	     @IsHidden_LiveCasino	 INT = 1
 	    , @IsHidden_RNGCasino	 INT = 1
 	    , @IsHidden_OtherRNGCasino INT = 1
 	      --RNG Games
@@ -93,10 +91,9 @@ Revisions:
 	    , @IsHidden_SportsLottery	 INT = 1 
 	    , @IsHidden_VirtualSport	 INT = 1 
 
-	DECLARE
-	      @bitmapOrder_Bitcoin	    INT
+	DECLARE	      
 		--Live & RNG Casino
-	    , @bitmapOrder_LiveCasino	    INT
+	     @bitmapOrder_LiveCasino	    INT
 	    , @bitmapOrder_RNGCasino	    INT
 	    , @bitmapOrder_OtherRNGCasino INT
 	      --RNG Games
@@ -104,13 +101,6 @@ Revisions:
 	    , @bitmapOrder_SportsLottery   INT = 1 
 	    , @bitmapOrder_VirtualSport   INT = 1 
 
-	
-	SET @bitmapOrder_Bitcoin = 
-	(
-		SELECT bitmapOrder
-		FROM ProductStatusProfile WITH (NOLOCK)
-		WHERE Sporttype = 175 AND Bettype = 7901
-	)
 	--Live & RNG Casino
 	SET @bitmapOrder_LiveCasino = 
 	(
@@ -159,43 +149,7 @@ Revisions:
 	    , @recommend  =recommend
 	FROM custInfo WITH (NOLOCK)
 	WHERE CustID=@CustID
-
-	-- For Bitcoin
-	EXEC Acc_CheckShowProduct @ProductID     = 69
-					, @SettingStatus = @SettingStatus
-					, @IsHide	     = @IsHideBitcoin OUTPUT
-
-	IF    @RoleID = 4
-		SELECT @AllowedBitcoin = CASE
-						     WHEN @IsHideBitcoin = 0 AND
-							     (
-								     SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_Bitcoin )
-							     ) = 0 THEN 1
-						     ELSE 0
-					     END
-		FROM CustProductStatus AS cps WITH (NOLOCK)
-		WHERE cps.CustID = @CustID
-	ELSE
-		SELECT @AllowedBitcoin = CASE
-						     WHEN
-							     (
-								     SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( cps.bitmapIsHidden , @bitmapOrder_Bitcoin )
-							     ) = 0
-							     AND
-							     (
-								     SELECT value FROM dbo.f_CustSetting_ProductStatusSel ( ups.bitmapHasSynced , @bitmapOrder_Bitcoin )
-							     ) = 1 AND @IsHideBitcoin = 0 THEN 1
-						     ELSE 0
-					     END
-		FROM CustProductStatus AS cps WITH (NOLOCK)
-		CROSS JOIN CustProductStatus AS ups WITH (NOLOCK)
-		WHERE cps.CustID = @CustID
-		AND ups.CustID = CASE
-						WHEN @RoleID = 3 THEN @srecommend
-						WHEN @RoleID = 2 THEN @mrecommend
-						ELSE @recommend
-				    END
-
+	
 	-- For Live & RNG Casino
 	EXEC Acc_CheckShowProduct @ProductID     = 41
 					, @Sporttype     = 9911

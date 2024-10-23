@@ -31,7 +31,7 @@ BEGIN
 		- 20230410@Bobby: AutoJob clear balance downlines [RedmineID: #182071]
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 		- 20240917@Elodie: Tuning sp [redmine: #210892]
-
+		- 20241022@Johnson: remove MyanmarOdds [redmine: #201396]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -55,7 +55,7 @@ BEGIN
 	SET		@bitmapOrder_VoidBridge =	(SELECT bitmapOrder FROM ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = 9906 AND Bettype = 4001)
 	SELECT	@bitmapOrder_AllBet	=	(SELECT psp.bitmapOrder FROM dbo.ProductStatusProfile AS psp WITH(NOLOCK) WHERE	psp.Sporttype = 211 AND	psp.Bettype = 2401)
 		  
-	CREATE TABLE #memberList (custid int, rn int,playerdiscountMyanmarOdds DECIMAL (9,8), adiscountMyanmarOdds DECIMAL (9,8))
+	CREATE TABLE #memberList (custid int, rn int)
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL  AND @DoubleCommLosing =2 AND @Locked IS NULL 
 		AND @AutoTransfer = 2 -- default condition: get all
@@ -206,13 +206,11 @@ BEGIN
 		,	discount1x2 DECIMAL(9,8)
 		,	playerdiscount DECIMAL(9,8)
 		,	playerdiscountcs DECIMAL(9,8)
-		,	playerdiscount1x2 DECIMAL(9,8)
-		,	playerdiscountMyanmarOdds DECIMAL (9,8)
-		,	adiscountMyanmarOdds DECIMAL (9,8) 
+		,	playerdiscount1x2 DECIMAL(9,8)		
 	)
 	
 	
-	INSERT INTO #Result(custid, rn, discount, discountcs, discount1x2, playerdiscount, playerdiscountcs, playerdiscount1x2, playerdiscountMyanmarOdds, adiscountMyanmarOdds)
+	INSERT INTO #Result(custid, rn, discount, discountcs, discount1x2, playerdiscount, playerdiscountcs, playerdiscount1x2)
 	SELECT
 		c.custid
 	,	rn
@@ -221,9 +219,7 @@ BEGIN
 	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 5 THEN cdm.AgentDiscount ELSE 0 END)	   AS discount1x2
 	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 1 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscount
 	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 4 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscountcs
-	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 5 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscount1x2
-	,	MAX(CASE WHEN cdm.SportType = 2 AND cdm.BetType = 1 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscountMyanmarOdds
-	,	MAX(CASE WHEN cdm.SportType = 2 AND cdm.BetType = 1 THEN cdm.AgentDiscount ELSE 0 END)	   AS adiscountMyanmarOdds
+	,	MAX(CASE WHEN cdm.SportType = 1 AND cdm.BetType = 5 THEN cdm.PlayerDiscount ELSE 0 END)	   AS playerdiscount1x2	
 	FROM #memberList c
 	LEFT JOIN CustDiscount3rd_Member cdm WITH (NOLOCK) ON c.custid = cdm.CustID
 	WHERE cdm.SportType IN (1,2)
@@ -241,11 +237,7 @@ BEGIN
 		discount1x2,  		
 		playerdiscount,  
 		playerdiscountcs,  
-		playerdiscount1x2, 
-		-- MyanmarOdds
-		CASE WHEN ISNULL(m.playerdiscountMyanmarOdds,0) = 0 THEN 0 ELSE 1 END AS IsMyanmarOdds,
-		ISNULL(m.playerdiscountMyanmarOdds,0) playerdiscountMyanmarOdds,
-		ISNULL(m.adiscountMyanmarOdds,0) adiscountMyanmarOdds,
+		playerdiscount1x2, 		
 		ci.DoubleCommLosing,
 		rn as RowNumber,
 		ISNULL(cl.ClosedReason,0) AS ClosedReason,

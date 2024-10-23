@@ -1,1 +1,1 @@
-DynamicCustSetting\UpdateSetting\Update\GT154_BetSetting\Acc_CustSetting_BetSetting_154_Upd.sql
+CustSetting\AddNewCustomer\LiteMode\Select\Acc_LiteMode_CustSetting_ProductListInfoSel.sql
