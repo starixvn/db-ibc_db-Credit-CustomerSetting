@@ -14,7 +14,9 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_DiscountCheck_Ag]
 	
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
+	@IsValidateParam BIT = 1,
+	@IsUpdateParam BIT = 0 -- Update Parameter
 AS
 /*
 	Created: 20230727@Johnson  
@@ -25,6 +27,7 @@ AS
 	Revisions: 
 		- 20230727@Johnson: initial sp [redmine: #179159]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
 
 	Param's Explanation: 
 		- @SettingType25 = '<Root>
@@ -82,25 +85,10 @@ BEGIN
 			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS playerdiscount
 		FROM   @xml.nodes('/Root/R') T(c) 
 			
-		--Check if new discount <0 or > default Max Discount
-		IF EXISTS (SELECT TOP 1 1 
-						FROM @NewDiscountTbl tmp
-						INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
-							ON pdt.SportType	= tmp.SportType
-								AND pdt.BetType = tmp.BetType
-								AND pdt.SettingType IN (25)
-								AND pdt.IsLive		= 0
-						WHERE 
-							tmp.playerDiscount		< 0								
-							)
+		IF @IsValidateParam = 1
 		BEGIN
-			SET @xml = (
-					SELECT 1 AS '@MsgID'
-						, 'Invalid commission rate.' AS '@Msg'
-						, (
-							SELECT pdt.SportType AS '@SportType'
-								, pdt.BetType AS '@BetType'
-								, pdt.SettingLevel as '@SettingLevel'
+			--Check if new discount <0 or > default Max Discount
+			IF EXISTS (SELECT TOP 1 1 
 							FROM @NewDiscountTbl tmp
 							INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
 								ON pdt.SportType	= tmp.SportType
@@ -108,132 +96,153 @@ BEGIN
 									AND pdt.SettingType IN (25)
 									AND pdt.IsLive		= 0
 							WHERE 
-								(	tmp.playerDiscount		< 0									
+								tmp.playerDiscount		< 0								
 								)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @MsgType = 52
-			SET @ErrCode = 101
+			BEGIN
+				SET @xml = (
+						SELECT 1 AS '@MsgID'
+							, 'Invalid commission rate.' AS '@Msg'
+							, (
+								SELECT pdt.SportType AS '@SportType'
+									, pdt.BetType AS '@BetType'
+									, pdt.SettingLevel as '@SettingLevel'
+								FROM @NewDiscountTbl tmp
+								INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
+									ON pdt.SportType	= tmp.SportType
+										AND pdt.BetType = tmp.BetType
+										AND pdt.SettingType IN (25)
+										AND pdt.IsLive		= 0
+								WHERE 
+									(	tmp.playerDiscount		< 0									
+									)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 52
+				SET @ErrCode = 101
 			
-			RETURN
+				RETURN
+			END
 		END
 
-		--update SMA discount -->1x2 comm, Other comm, MyanmarOdds
-		UPDATE t
-		SET t.sdiscount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @srecommend
-			AND NOT( t.sporttype = 1 AND t.bettype = 1)
-		
-		UPDATE t
-		SET t.adiscount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @mrecommend	
-			AND NOT( t.sporttype = 1 AND t.bettype = 1)
-		
-		UPDATE t
-		SET t.discount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @recommend
-			AND NOT( t.sporttype = 1 AND t.bettype = 1)
-
-		--Asian HDP, OU, OE Comm, correct by ugroup
-		UPDATE t
-		SET t.sdiscount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															 AND cs.bettype = CASE WHEN @ugroup in ('a','hka','dea') THEN 1
-																				  WHEN @ugroup in ('b','hkb','deb') THEN 3
-																				  WHEN @ugroup in ('c','hkc','dec') THEN 7
-																				  ELSE 8 
-																				END
-		WHERE custid = @srecommend
-			AND ( t.sporttype = 1 AND t.bettype = 1)
-			AND cs.BetType IN (1,3,7,8)
-		
-		UPDATE t
-		SET t.adiscount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															 AND cs.bettype = CASE WHEN @ugroup in ('a','hka','dea') THEN 1
-																				  WHEN @ugroup in ('b','hkb','deb') THEN 3
-																				  WHEN @ugroup in ('c','hkc','dec') THEN 7
-																				  ELSE 8 
-																				END
-		WHERE custid = @mrecommend	
-			AND ( t.sporttype = 1 AND t.bettype = 1)
-			AND cs.BetType IN (1,3,7,8)
-		
-		UPDATE t
-		SET t.discount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															 AND cs.bettype = CASE WHEN @ugroup in ('a','hka','dea') THEN 1
-																				  WHEN @ugroup in ('b','hkb','deb') THEN 3
-																				  WHEN @ugroup in ('c','hkc','dec') THEN 7
-																				  ELSE 8 
-																				END
-		WHERE custid = @recommend
-			AND ( t.sporttype = 1 AND t.bettype = 1)
-			AND cs.BetType IN (1,3,7,8)
-		
-		--correct discount
-		UPDATE t
-		SET adiscount = sdiscount
-		FROM @NewDiscountTbl t
-		WHERE adiscount > sdiscount		
-		
-		UPDATE t
-		SET discount = adiscount
-		FROM @NewDiscountTbl t
-		WHERE discount > adiscount
-		
-		UPDATE t
-		SET playerdiscount = discount
-		FROM @NewDiscountTbl t
-		WHERE playerdiscount > discount
-
-		--set comm of sportbook = 0 if agent of member exist in table CustNoComm
-		IF EXISTS(SELECT 1 FROM CustNoComm WHERE custID = @recommend)
+		IF @IsUpdateParam = 1 -- UpdateParameter for update and writelog
 		BEGIN
+			--update SMA discount -->1x2 comm, Other comm, MyanmarOdds
 			UPDATE t
-			SET sdiscount = 0,
-				adiscount = 0,
-				discount = 0,
-				playerdiscount = 0
+			SET t.sdiscount = cs.Discount
 			FROM @NewDiscountTbl t
-			WHERE sporttype = 1 AND bettype IN(1,4,5)
-		END
-
-		UPDATE t
-		SET t.Child_DisplayOrder = d.Child_DisplayOrder
-		FROM @NewDiscountTbl t
-			INNER JOIN #ProductSettingDetail_Check d 
-				ON t.SportType = d.SportType
-				AND t.BetType = d.BetType
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @srecommend
+				AND NOT( t.sporttype = 1 AND t.bettype = 1)
 		
-		SELECT @SettingType25 = (
-		SELECT SportType '@SportType', 
-			BetType '@BetType', 
-			playerdiscount '@playerdiscount',
-			ISNULL(discount,0) '@discount',
-			ISNULL(adiscount,0) '@adiscount',
-			ISNULL(sdiscount,0) '@sdiscount'
-		FROM @NewDiscountTbl
-		ORDER BY Child_DisplayOrder,SportType,BetType
-		FOR XML PATH ('R'), ROOT('Root')
-		)		
+			UPDATE t
+			SET t.adiscount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @mrecommend	
+				AND NOT( t.sporttype = 1 AND t.bettype = 1)
+		
+			UPDATE t
+			SET t.discount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @recommend
+				AND NOT( t.sporttype = 1 AND t.bettype = 1)
+
+			--Asian HDP, OU, OE Comm, correct by ugroup
+			UPDATE t
+			SET t.sdiscount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																 AND cs.bettype = CASE WHEN @ugroup in ('a','hka','dea') THEN 1
+																					  WHEN @ugroup in ('b','hkb','deb') THEN 3
+																					  WHEN @ugroup in ('c','hkc','dec') THEN 7
+																					  ELSE 8 
+																					END
+			WHERE custid = @srecommend
+				AND ( t.sporttype = 1 AND t.bettype = 1)
+				AND cs.BetType IN (1,3,7,8)
+		
+			UPDATE t
+			SET t.adiscount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																 AND cs.bettype = CASE WHEN @ugroup in ('a','hka','dea') THEN 1
+																					  WHEN @ugroup in ('b','hkb','deb') THEN 3
+																					  WHEN @ugroup in ('c','hkc','dec') THEN 7
+																					  ELSE 8 
+																					END
+			WHERE custid = @mrecommend	
+				AND ( t.sporttype = 1 AND t.bettype = 1)
+				AND cs.BetType IN (1,3,7,8)
+		
+			UPDATE t
+			SET t.discount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																 AND cs.bettype = CASE WHEN @ugroup in ('a','hka','dea') THEN 1
+																					  WHEN @ugroup in ('b','hkb','deb') THEN 3
+																					  WHEN @ugroup in ('c','hkc','dec') THEN 7
+																					  ELSE 8 
+																					END
+			WHERE custid = @recommend
+				AND ( t.sporttype = 1 AND t.bettype = 1)
+				AND cs.BetType IN (1,3,7,8)
+		
+			--correct discount
+			UPDATE t
+			SET adiscount = sdiscount
+			FROM @NewDiscountTbl t
+			WHERE adiscount > sdiscount		
+		
+			UPDATE t
+			SET discount = adiscount
+			FROM @NewDiscountTbl t
+			WHERE discount > adiscount
+		
+			UPDATE t
+			SET playerdiscount = discount
+			FROM @NewDiscountTbl t
+			WHERE playerdiscount > discount
+
+			--set comm of sportbook = 0 if agent of member exist in table CustNoComm
+			IF EXISTS(SELECT 1 FROM CustNoComm WHERE custID = @recommend)
+			BEGIN
+				UPDATE t
+				SET sdiscount = 0,
+					adiscount = 0,
+					discount = 0,
+					playerdiscount = 0
+				FROM @NewDiscountTbl t
+				WHERE sporttype = 1 AND bettype IN(1,4,5)
+			END
+
+			UPDATE t
+			SET t.Child_DisplayOrder = d.Child_DisplayOrder
+			FROM @NewDiscountTbl t
+				INNER JOIN #ProductSettingDetail_Check d 
+					ON t.SportType = d.SportType
+					AND t.BetType = d.BetType
+		
+			SELECT @SettingType25 = (
+			SELECT SportType '@SportType', 
+				BetType '@BetType', 
+				playerdiscount '@playerdiscount',
+				ISNULL(discount,0) '@discount',
+				ISNULL(adiscount,0) '@adiscount',
+				ISNULL(sdiscount,0) '@sdiscount'
+			FROM @NewDiscountTbl
+			ORDER BY Child_DisplayOrder,SportType,BetType
+			FOR XML PATH ('R'), ROOT('Root')
+			)		
+		END
 	END	
 	
 	--check LCS Discount
@@ -249,25 +258,10 @@ BEGIN
 			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS playerdiscount
 		FROM   @xml.nodes('/Root/R') T(c) 
 		
-		--Check if new discount <0 or > default Max Discount
-		IF EXISTS (SELECT TOP 1 1 
-						FROM @NewDiscountTbl tmp
-						INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
-							ON pdt.SportType	= tmp.SportType
-								AND pdt.BetType = tmp.BetType
-								AND pdt.SettingType IN (19)
-								AND pdt.IsLive		= 0
-						WHERE 
-							tmp.playerdiscount		< 0								
-							)
+		IF @IsValidateParam = 1
 		BEGIN
-			SET @xml = (
-					SELECT 1 AS '@MsgID'
-						, 'Invalid commission rate.' AS '@Msg'
-						, (
-							SELECT pdt.SportType AS '@SportType'
-								, pdt.BetType AS '@BetType'
-								, pdt.SettingLevel as '@SettingLevel'
+			--Check if new discount <0 or > default Max Discount
+			IF EXISTS (SELECT TOP 1 1 
 							FROM @NewDiscountTbl tmp
 							INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
 								ON pdt.SportType	= tmp.SportType
@@ -275,77 +269,98 @@ BEGIN
 									AND pdt.SettingType IN (19)
 									AND pdt.IsLive		= 0
 							WHERE 
-								(	tmp.playerdiscount		< 0									
+								tmp.playerdiscount		< 0								
 								)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @MsgType = 51
-			SET @ErrCode = 102
+			BEGIN
+				SET @xml = (
+						SELECT 1 AS '@MsgID'
+							, 'Invalid commission rate.' AS '@Msg'
+							, (
+								SELECT pdt.SportType AS '@SportType'
+									, pdt.BetType AS '@BetType'
+									, pdt.SettingLevel as '@SettingLevel'
+								FROM @NewDiscountTbl tmp
+								INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
+									ON pdt.SportType	= tmp.SportType
+										AND pdt.BetType = tmp.BetType
+										AND pdt.SettingType IN (19)
+										AND pdt.IsLive		= 0
+								WHERE 
+									(	tmp.playerdiscount		< 0									
+									)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 51
+				SET @ErrCode = 102
 			
-			RETURN
+				RETURN
+			END
 		END
-		
-		--update SMA discount
-		UPDATE t
-		SET t.sdiscount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @srecommend
-		
-		UPDATE t
-		SET t.adiscount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @mrecommend	
-		
-		UPDATE t
-		SET t.discount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @recommend
-		
-		--correct discount
-		UPDATE t
-		SET adiscount = sdiscount
-		FROM @NewDiscountTbl t
-		WHERE adiscount > sdiscount		
-		
-		UPDATE t
-		SET discount = adiscount
-		FROM @NewDiscountTbl t
-		WHERE discount > adiscount
-		
-		UPDATE t
-		SET playerdiscount = discount
-		FROM @NewDiscountTbl t
-		WHERE playerdiscount > discount
 
-		UPDATE t
-		SET t.Child_DisplayOrder = d.Child_DisplayOrder
-		FROM @NewDiscountTbl t
-			INNER JOIN #ProductSettingDetail_Check d 
-				ON t.SportType = d.SportType
-				AND t.BetType = d.BetType
+		IF @IsUpdateParam = 1 -- UpdateParameter for update and writelog
+		BEGIN
+			--update SMA discount
+			UPDATE t
+			SET t.sdiscount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @srecommend
+		
+			UPDATE t
+			SET t.adiscount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @mrecommend	
+		
+			UPDATE t
+			SET t.discount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @recommend
+		
+			--correct discount
+			UPDATE t
+			SET adiscount = sdiscount
+			FROM @NewDiscountTbl t
+			WHERE adiscount > sdiscount		
+		
+			UPDATE t
+			SET discount = adiscount
+			FROM @NewDiscountTbl t
+			WHERE discount > adiscount
+		
+			UPDATE t
+			SET playerdiscount = discount
+			FROM @NewDiscountTbl t
+			WHERE playerdiscount > discount
+
+			UPDATE t
+			SET t.Child_DisplayOrder = d.Child_DisplayOrder
+			FROM @NewDiscountTbl t
+				INNER JOIN #ProductSettingDetail_Check d 
+					ON t.SportType = d.SportType
+					AND t.BetType = d.BetType
 					
-		SELECT @SettingType19 = (
-		SELECT SportType '@SportType', 
-			BetType '@BetType', 
-			playerdiscount '@playerdiscount',
-			discount '@discount',
-			adiscount '@adiscount',
-			sdiscount '@sdiscount'
-		FROM @NewDiscountTbl
-		ORDER BY Child_DisplayOrder,SportType,BetType
-		FOR XML PATH ('R'), ROOT('Root')
-		)
+			SELECT @SettingType19 = (
+			SELECT SportType '@SportType', 
+				BetType '@BetType', 
+				playerdiscount '@playerdiscount',
+				discount '@discount',
+				adiscount '@adiscount',
+				sdiscount '@sdiscount'
+			FROM @NewDiscountTbl
+			ORDER BY Child_DisplayOrder,SportType,BetType
+			FOR XML PATH ('R'), ROOT('Root')
+			)
+		END
 	END	
 	
 	--check Others Games Discount
@@ -361,25 +376,10 @@ BEGIN
 			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS playerdiscount
 		FROM   @xml.nodes('/Root/R') T(c) 
 		
-		--Check if new discount <0 or > default Max Discount
-		IF EXISTS (SELECT TOP 1 1 
-						FROM @NewDiscountTbl tmp
-						INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
-							ON pdt.SportType	= tmp.SportType
-								AND pdt.BetType = tmp.BetType
-								AND pdt.SettingType IN (3)
-								AND pdt.IsLive		= 0
-						WHERE 
-							tmp.playerdiscount		< 0								
-							)
+		IF @IsValidateParam = 1
 		BEGIN
-			SET @xml = (
-					SELECT 1 AS '@MsgID'
-						, 'Invalid commission rate.' AS '@Msg'
-						, (
-							SELECT pdt.SportType AS '@SportType'
-								, pdt.BetType AS '@BetType'
-								, pdt.SettingLevel as '@SettingLevel'
+			--Check if new discount <0 or > default Max Discount
+			IF EXISTS (SELECT TOP 1 1 
 							FROM @NewDiscountTbl tmp
 							INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
 								ON pdt.SportType	= tmp.SportType
@@ -387,77 +387,98 @@ BEGIN
 									AND pdt.SettingType IN (3)
 									AND pdt.IsLive		= 0
 							WHERE 
-								(	tmp.playerdiscount		< 0									
+								tmp.playerdiscount		< 0								
 								)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @MsgType = 51
-			SET @ErrCode = 102
+			BEGIN
+				SET @xml = (
+						SELECT 1 AS '@MsgID'
+							, 'Invalid commission rate.' AS '@Msg'
+							, (
+								SELECT pdt.SportType AS '@SportType'
+									, pdt.BetType AS '@BetType'
+									, pdt.SettingLevel as '@SettingLevel'
+								FROM @NewDiscountTbl tmp
+								INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
+									ON pdt.SportType	= tmp.SportType
+										AND pdt.BetType = tmp.BetType
+										AND pdt.SettingType IN (3)
+										AND pdt.IsLive		= 0
+								WHERE 
+									(	tmp.playerdiscount		< 0									
+									)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 51
+				SET @ErrCode = 102
 			
-			RETURN
+				RETURN
+			END
 		END
 		
-		--update SMA discount
-		UPDATE t
-		SET t.sdiscount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @srecommend
+		IF @IsUpdateParam = 1 -- UpdateParameter for update and writelog
+		BEGIN
+			--update SMA discount
+			UPDATE t
+			SET t.sdiscount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @srecommend
 		
-		UPDATE t
-		SET t.adiscount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @mrecommend	
+			UPDATE t
+			SET t.adiscount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @mrecommend	
 		
-		UPDATE t
-		SET t.discount = cs.Discount
-		FROM @NewDiscountTbl t
-			INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
-															AND t.bettype = cs.bettype
-		WHERE custid = @recommend
+			UPDATE t
+			SET t.discount = cs.Discount
+			FROM @NewDiscountTbl t
+				INNER JOIN CustDiscount3rd_Agent cs WITH(NOLOCK) ON t.sporttype = cs.sporttype
+																AND t.bettype = cs.bettype
+			WHERE custid = @recommend
 		
-		--correct discount
-		UPDATE t
-		SET adiscount = sdiscount
-		FROM @NewDiscountTbl t
-		WHERE adiscount > sdiscount		
+			--correct discount
+			UPDATE t
+			SET adiscount = sdiscount
+			FROM @NewDiscountTbl t
+			WHERE adiscount > sdiscount		
 		
-		UPDATE t
-		SET discount = adiscount
-		FROM @NewDiscountTbl t
-		WHERE discount > adiscount
+			UPDATE t
+			SET discount = adiscount
+			FROM @NewDiscountTbl t
+			WHERE discount > adiscount
 		
-		UPDATE t
-		SET playerdiscount = discount
-		FROM @NewDiscountTbl t
-		WHERE playerdiscount > discount
+			UPDATE t
+			SET playerdiscount = discount
+			FROM @NewDiscountTbl t
+			WHERE playerdiscount > discount
 					
-		UPDATE t
-		SET t.Child_DisplayOrder = d.Child_DisplayOrder
-		FROM @NewDiscountTbl t
-			INNER JOIN #ProductSettingDetail_Check d 
-				ON t.SportType = d.SportType
-				AND t.BetType = d.BetType
+			UPDATE t
+			SET t.Child_DisplayOrder = d.Child_DisplayOrder
+			FROM @NewDiscountTbl t
+				INNER JOIN #ProductSettingDetail_Check d 
+					ON t.SportType = d.SportType
+					AND t.BetType = d.BetType
 		
-		SELECT @SettingType3 = (
-		SELECT SportType '@SportType', 
-			BetType '@BetType', 
-			playerdiscount '@playerdiscount',
-			discount '@discount',
-			adiscount '@adiscount',
-			sdiscount '@sdiscount'
-		FROM @NewDiscountTbl
-		ORDER BY Child_DisplayOrder,SportType,BetType
-		FOR XML PATH ('R'), ROOT('Root')
-		)
+			SELECT @SettingType3 = (
+			SELECT SportType '@SportType', 
+				BetType '@BetType', 
+				playerdiscount '@playerdiscount',
+				discount '@discount',
+				adiscount '@adiscount',
+				sdiscount '@sdiscount'
+			FROM @NewDiscountTbl
+			ORDER BY Child_DisplayOrder,SportType,BetType
+			FOR XML PATH ('R'), ROOT('Root')
+			)
+		END
 	END	
 	
 	DROP TABLE #ProductSettingDetail_Check

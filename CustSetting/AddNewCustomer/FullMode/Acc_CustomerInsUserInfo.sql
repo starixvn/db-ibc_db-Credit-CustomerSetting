@@ -1,5 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
+(
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
 	@lastname NVARCHAR(50),
@@ -60,6 +61,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(4000) = '' OUTPUT
+	)
 AS
 
 /*
@@ -153,6 +155,7 @@ Revisions:
 	- 20230918@Helios: Update rule VR+ for New Customer [Redmine: #194141]
 	- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]	
+	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -179,48 +182,46 @@ BEGIN
 		WHERE cus.custid = @recommend
 	END
 	
-	BEGIN TRY	
-		INSERT INTO Customer   			
-					(username, firstname, lastname, phone, mobilephone, fax, email, address,
-					city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
-					currency, pwdexpiry, creator, Site, creatdate, ugroup
-					) 
-				 VALUES (@username, @firstname, @lastname, @phone, @mobilephone, @fax, @email, @address, 
-					@city, @state, @country, @postal, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
-					@currency, @pwdexpiry, @creator, @site, GETDATE(), @ugroup
-					)
-		
-		SELECT @custid=@@IDENTITY			
+	BEGIN TRY
+		EXEC Acc_CustomerIns
+			 @FirstName	= @FirstName	
+			,@LastName	= @LastName	
+			,@UserName	= @UserName	
+			,@UserPwd	= @UserPwd	 
+			,@pwdexpiry = @pwdexpiry 
+			,@roleid	= @roleid	
+			,@closed	= @closed	
+			,@CustID	= @CustID	
+			,@creator	= @creator	
+
+			,@phone			= @phone			
+			,@mobilephone	= @mobilephone	
+			,@email			= @email			
+			,@fax			= @fax			
+			,@address		= @address		
+			,@city			= @city			
+			,@state			= @state			
+			,@country		= @country		
+			,@postal		= @postal		
+			,@srecommend	= @srecommend	
+			,@mrecommend	= @mrecommend	
+			,@recommend		= @recommend		
+			,@currency		= @currency		
+			,@site			= @site			
+			,@ugroup		= @ugroup
+			
+			,@ErrCode = @ErrCode OUTPUT
+			,@ErrMsg  = @ErrMsg OUTPUT
+
 	END TRY
 	BEGIN CATCH 
-		IF @@ERROR <> 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-									WHEN 'E' THEN 'Create customer failed. Please try again.'
-									ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
-								END,
-				@ErrCode = 111
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-				
-			RETURN
-		END
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
+							END,
+			@ErrCode = 111
+		RETURN
 	END CATCH
-	--EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Ins  @custid, 0, @roleid, @ErrCode, @ErrMsg
-	
-	--IF @ErrCode <>0
---	BEGIN
---			SELECT @ErrMsg = CASE @Language 
---							    WHEN 'E' THEN 'Create customer failed. Please try again.'
---							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
---						    END
---				, @ErrCode = 116
---		 -- ROLLBACK MANUALLY
---			DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-			
---			RETURN
---	END
 	
     DECLARE	@UplineSecurityCode			 VARCHAR(50)
 	      , @isForcedChangeSecurityCode BIT
@@ -686,7 +687,6 @@ BEGIN
 							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 							 END,
 				   @ErrCode = 113
-			
 			RETURN
 		END
 
@@ -705,7 +705,6 @@ BEGIN
 								   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 								 END,
 					   @ErrCode = 113
-			
 				RETURN
 			END
 
@@ -724,7 +723,6 @@ BEGIN
 									   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 									 END,
 						   @ErrCode = 113
-			
 					RETURN
 				END
 			END

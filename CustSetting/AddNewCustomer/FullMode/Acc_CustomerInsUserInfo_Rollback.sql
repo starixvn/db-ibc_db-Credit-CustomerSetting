@@ -4,12 +4,12 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo_Rollback]
 AS
 /*
 	Created: 20240605@Eden
-	Task : Rollback Credit Customer Setting for New accounts when failed  
+	Task : Rollback Credit Customer Setting for New accounts when failed 
 	DB: DBCUST/CustDB
 	Original:
 
 	Revisions:
-		- 20240520@Eden: Unify RNG Games [redmine: #204358]  
+		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 		
 	Param's Explanation:
 

@@ -6,7 +6,9 @@ ALTER PROCEDURE [dbo].Acc_CustomerInsMember_DiscountCheck_Com
 	@SettingStatus TINYINT = 0,
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
+	@IsValidateParam BIT = 1,
+	@IsUpdateParam BIT = 0 -- Update Parameter
 AS
 /*
 	Created: 20231010@Eden  
@@ -16,6 +18,7 @@ AS
 	
 	Revisions: 
 		- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
 
 	Param's Explanation: 
 		- @SettingType25 = '<Root>
@@ -68,59 +71,65 @@ BEGIN
 			T.c.query('.').value('(R/@Discount)[1]', 'decimal(9,8)') AS discount
 		FROM   @xml.nodes('/Root/R') T(c) 
 		
-		--Check if new discount < 0 or > default Max Discount
-		IF EXISTS (	SELECT TOP 1 1 
-					FROM @NewDiscountTbl tmp
-					INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
-						ON pdt.SportType	= tmp.SportType
-							AND pdt.BetType = tmp.BetType
-							AND pdt.SettingType IN (25)
-							AND pdt.IsLive		= 0
-					WHERE (tmp.Discount	< 0	OR tmp.discount> pdt.MaxDiscount)							
-					)
+		IF @IsValidateParam = 1
 		BEGIN
-			SET @xml = (
-					SELECT 1 AS '@MsgID'
-						, 'Invalid commission rate.' AS '@Msg'
-						, (
-							SELECT pdt.SportType AS '@SportType'
-								, pdt.BetType AS '@BetType'
-								, pdt.SettingLevel as '@SettingLevel'
-							FROM @NewDiscountTbl tmp
-							INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
-								ON pdt.SportType	= tmp.SportType
-									AND pdt.BetType = tmp.BetType
-									AND pdt.SettingType IN (25)
-									AND pdt.IsLive		= 0
-							WHERE (	tmp.Discount < 0 OR tmp.discount > pdt.MaxDiscount)
-							FOR XML PATH('Row')
-								, TYPE
-							)
-					FOR XML PATH('Root')
-						, TYPE
-					)		
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @MsgType = 52
-			SET @ErrCode = 101
+			--Check if new discount < 0 or > default Max Discount
+			IF EXISTS (	SELECT TOP 1 1 
+						FROM @NewDiscountTbl tmp
+						INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
+							ON pdt.SportType	= tmp.SportType
+								AND pdt.BetType = tmp.BetType
+								AND pdt.SettingType IN (25)
+								AND pdt.IsLive		= 0
+						WHERE (tmp.Discount	< 0	OR tmp.discount> pdt.MaxDiscount)							
+						)
+			BEGIN
+				SET @xml = (
+						SELECT 1 AS '@MsgID'
+							, 'Invalid commission rate.' AS '@Msg'
+							, (
+								SELECT pdt.SportType AS '@SportType'
+									, pdt.BetType AS '@BetType'
+									, pdt.SettingLevel as '@SettingLevel'
+								FROM @NewDiscountTbl tmp
+								INNER JOIN #ProductSettingDetail_Check pdt WITH (NOLOCK)
+									ON pdt.SportType	= tmp.SportType
+										AND pdt.BetType = tmp.BetType
+										AND pdt.SettingType IN (25)
+										AND pdt.IsLive		= 0
+								WHERE (	tmp.Discount < 0 OR tmp.discount > pdt.MaxDiscount)
+								FOR XML PATH('Row')
+									, TYPE
+								)
+						FOR XML PATH('Root')
+							, TYPE
+						)		
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 52
+				SET @ErrCode = 101
 			
-			RETURN
+				RETURN
+			END
 		END
 
-		UPDATE t
-		SET t.Child_DisplayOrder = d.Child_DisplayOrder
-		FROM @NewDiscountTbl t
-			INNER JOIN #ProductSettingDetail_Check d 
-				ON t.SportType = d.SportType
-				AND t.BetType = d.BetType
+		IF @IsUpdateParam = 1 -- UpdateParameter for update and writelog
+		BEGIN
+			UPDATE t
+			SET t.Child_DisplayOrder = d.Child_DisplayOrder
+			FROM @NewDiscountTbl t
+				INNER JOIN #ProductSettingDetail_Check d 
+					ON t.SportType = d.SportType
+					AND t.BetType = d.BetType
 			
-		SELECT @SettingType25 = (
-		SELECT SportType '@SportType', 
-			BetType '@BetType', 
-			discount '@Discount'			
-		FROM @NewDiscountTbl
-		ORDER BY Child_DisplayOrder,SportType,BetType
-		FOR XML PATH ('R'), ROOT('Root')
-		)
+			SELECT @SettingType25 = (
+			SELECT SportType '@SportType', 
+				BetType '@BetType', 
+				discount '@Discount'			
+			FROM @NewDiscountTbl
+			ORDER BY Child_DisplayOrder,SportType,BetType
+			FOR XML PATH ('R'), ROOT('Root')
+			)
+		END
 	END	
 	
 	DROP TABLE #ProductSettingDetail_Check

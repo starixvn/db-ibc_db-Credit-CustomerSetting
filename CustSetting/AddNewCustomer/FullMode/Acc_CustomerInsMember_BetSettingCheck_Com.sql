@@ -6,7 +6,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_BetSettingCheck_Com]
 	@SettingStatus TINYINT = 0,
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
+	@IsValidateParam BIT = 1,
+	@IsUpdateParam BIT = 0 -- Update Parameter
 AS
 /*
 	Created: 20231010@Eden  
@@ -16,6 +18,7 @@ AS
 	
 	Revisions: 
 		- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
 
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
@@ -81,142 +84,148 @@ BEGIN
 			T.c.query('.').value('(R/@MaxPayout)[1]', 'money') AS MaxPayoutPerMatch
 		FROM  @xml.nodes('/Root/R') T(c) 
 		
-		--> Check rule : Wrong Min bet/ Max bet/ Max per match
-		IF EXISTS(SELECT TOP 1 1
-				FROM @BetSetting
-				WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)
-				)
+		IF @IsValidateParam = 1
 		BEGIN
-			SET @xml = (
-				SELECT 10003 AS '@MsgID'
-						, 'Wrong Min bet/ Max bet/ Max per match' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, ps.SettingLevel AS '@SettingLevel'
-							FROM @BetSetting tmp
-								INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
-							WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)								
-							FOR XML PATH('Row')
-								, TYPE
-							)
-						FOR XML PATH('Root')
-						, TYPE
-						)
-			
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @MsgType = 71
-			SET @ErrCode = 201
-			RETURN
-		END	
-
-		--> Check rule : Wrong Max Payout Per Match
-		IF EXISTS(SELECT TOP 1 1
-				FROM @BetSetting
-				WHERE MaxPayoutPerMatch < 0
-				)
-		BEGIN
-			SET @xml = (
-				SELECT 10059 AS '@MsgID'
-						, 'Wrong Max Payout Per Match.' AS '@Msg'
-						, (
-							SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, ps.SettingLevel AS '@SettingLevel'
-							FROM @BetSetting tmp
-								INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
-							WHERE MaxPayoutPerMatch < 0	
-							FOR XML PATH('Row')
-								, TYPE
-							)
-						FOR XML PATH('Root')
-						, TYPE
-						)
-			
-			SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-			SET @MsgType = 71
-			SET @ErrCode = 202
-			RETURN
-		END
-	
-		--> Check rule : Min bet must be less than or equal to max bet and max bet must be less than or equal to max per match
-		IF EXISTS(SELECT TOP 1 1
+			--> Check rule : Wrong Min bet/ Max bet/ Max per match
+			IF EXISTS(SELECT TOP 1 1
 					FROM @BetSetting
-					WHERE (MinBet > MaxBet) 
-						OR (MaxBet > MaxPerMatch) 
+					WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)
 					)
-		BEGIN
-			SET @xml = (
-					SELECT 10067 AS '@MsgID'
-							, 'Min Bet must be less than or equal to Max Bet and Max Bet must be less than or equal to Max Per Match' AS '@Msg'
-							, (
-								SELECT tmp.SportType AS '@SportType'
-								, tmp.BetType AS '@BetType'
-								, ps.SettingLevel AS '@SettingLevel'
-								FROM @BetSetting tmp
-									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
-								WHERE (MinBet > MaxBet) 
-										OR (MaxBet > MaxPerMatch) 
-								FOR XML PATH('Row')
-									, TYPE
-								)
-							FOR XML PATH('Root')
-							, TYPE
-							)
-				
-				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-				SET @MsgType = 71
-				SET @ErrCode = 203
-				RETURN
-		END
-		
-		--> Check rule : Max Per Match must be less than or equal to Max Payout Per Match
-		IF EXISTS(SELECT TOP 1 1
-					FROM @BetSetting
-					WHERE MaxPerMatch > MaxPayoutPerMatch 
-					)
-		BEGIN
-			SET @xml = (
-					SELECT 10060 AS '@MsgID'
-							, 'Max Per Match must be less than or equal to Max Payout Per Match' AS '@Msg'
+			BEGIN
+				SET @xml = (
+					SELECT 10003 AS '@MsgID'
+							, 'Wrong Min bet/ Max bet/ Max per match' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
 									, ps.SettingLevel AS '@SettingLevel'
 								FROM @BetSetting tmp
 									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
-								WHERE MaxPerMatch > MaxPayoutPerMatch 
+								WHERE (Minbet < 0 OR MaxBet < 0 OR MaxperMatch < 0)								
 								FOR XML PATH('Row')
 									, TYPE
 								)
 							FOR XML PATH('Root')
 							, TYPE
 							)
-				
+			
 				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 				SET @MsgType = 71
-				SET @ErrCode = 204
+				SET @ErrCode = 201
 				RETURN
+			END	
+
+			--> Check rule : Wrong Max Payout Per Match
+			IF EXISTS(SELECT TOP 1 1
+					FROM @BetSetting
+					WHERE MaxPayoutPerMatch < 0
+					)
+			BEGIN
+				SET @xml = (
+					SELECT 10059 AS '@MsgID'
+							, 'Wrong Max Payout Per Match.' AS '@Msg'
+							, (
+								SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+								FROM @BetSetting tmp
+									INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+								WHERE MaxPayoutPerMatch < 0	
+								FOR XML PATH('Row')
+									, TYPE
+								)
+							FOR XML PATH('Root')
+							, TYPE
+							)
+			
+				SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+				SET @MsgType = 71
+				SET @ErrCode = 202
+				RETURN
+			END
+	
+			--> Check rule : Min bet must be less than or equal to max bet and max bet must be less than or equal to max per match
+			IF EXISTS(SELECT TOP 1 1
+						FROM @BetSetting
+						WHERE (MinBet > MaxBet) 
+							OR (MaxBet > MaxPerMatch) 
+						)
+			BEGIN
+				SET @xml = (
+						SELECT 10067 AS '@MsgID'
+								, 'Min Bet must be less than or equal to Max Bet and Max Bet must be less than or equal to Max Per Match' AS '@Msg'
+								, (
+									SELECT tmp.SportType AS '@SportType'
+									, tmp.BetType AS '@BetType'
+									, ps.SettingLevel AS '@SettingLevel'
+									FROM @BetSetting tmp
+										INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+									WHERE (MinBet > MaxBet) 
+											OR (MaxBet > MaxPerMatch) 
+									FOR XML PATH('Row')
+										, TYPE
+									)
+								FOR XML PATH('Root')
+								, TYPE
+								)
+				
+					SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+					SET @MsgType = 71
+					SET @ErrCode = 203
+					RETURN
+			END
+		
+			--> Check rule : Max Per Match must be less than or equal to Max Payout Per Match
+			IF EXISTS(SELECT TOP 1 1
+						FROM @BetSetting
+						WHERE MaxPerMatch > MaxPayoutPerMatch 
+						)
+			BEGIN
+				SET @xml = (
+						SELECT 10060 AS '@MsgID'
+								, 'Max Per Match must be less than or equal to Max Payout Per Match' AS '@Msg'
+								, (
+									SELECT tmp.SportType AS '@SportType'
+										, tmp.BetType AS '@BetType'
+										, ps.SettingLevel AS '@SettingLevel'
+									FROM @BetSetting tmp
+										INNER JOIN #ProductSettingDetail_Check ps ON tmp.Sporttype = ps.Sporttype AND tmp.Bettype = ps.Bettype
+									WHERE MaxPerMatch > MaxPayoutPerMatch 
+									FOR XML PATH('Row')
+										, TYPE
+									)
+								FOR XML PATH('Root')
+								, TYPE
+								)
+				
+					SET @ErrMsg = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+					SET @MsgType = 71
+					SET @ErrCode = 204
+					RETURN
+			END
 		END
 
-		UPDATE t
-		SET t.Child_DisplayOrder = d.Child_DisplayOrder
-		FROM @BetSetting t
-			INNER JOIN #ProductSettingDetail_Check d 
-				ON t.SportType = d.SportType
-				AND t.BetType = d.BetType
+		IF @IsUpdateParam = 1 -- UpdateParameter for update and writelog
+		BEGIN
+			UPDATE t
+			SET t.Child_DisplayOrder = d.Child_DisplayOrder
+			FROM @BetSetting t
+				INNER JOIN #ProductSettingDetail_Check d 
+					ON t.SportType = d.SportType
+					AND t.BetType = d.BetType
 		
-		SELECT @SettingType26 = (
-		SELECT SportType '@SportType', 
-			BetType '@BetType', 
-			MinBet '@MinBet',
-			MaxBet '@MaxBet',
-			MaxPerMatch '@MPM',
-			MaxPayoutPerMatch '@MaxPayout'
-		FROM @BetSetting
-		ORDER BY Child_DisplayOrder,SportType,BetType
-		FOR XML PATH ('R'), ROOT('Root')
-		)	
+			SELECT @SettingType26 = (
+			SELECT SportType '@SportType', 
+				BetType '@BetType', 
+				MinBet '@MinBet',
+				MaxBet '@MaxBet',
+				MaxPerMatch '@MPM',
+				MaxPayoutPerMatch '@MaxPayout'
+			FROM @BetSetting
+			ORDER BY Child_DisplayOrder,SportType,BetType
+			FOR XML PATH ('R'), ROOT('Root')
+			)	
+		END
 	END
 	
 	DROP TABLE #ProductSettingDetail_Check

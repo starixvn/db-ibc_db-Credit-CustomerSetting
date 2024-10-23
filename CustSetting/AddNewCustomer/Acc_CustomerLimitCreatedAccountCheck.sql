@@ -8,7 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerLimitCreatedAccountCheck]
 	@GroupName				VARCHAR(50),
 	@IsQRCode				BIT,
 	@SystemID				TINYINT,
-	@IP						VARCHAR(15),
+	@IP						VARCHAR(15) = '',
 	@Credit					MONEY,
 	@ErrCode				INT = 0 OUTPUT,
 	@ErrMsg					NVARCHAR(250) = '' OUTPUT,
@@ -24,6 +24,8 @@ AS
  Revisions:  
  - 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
  - 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+ - 20240704@Helen: Revise code for scaleout dbcust - remove rule check IP - [Redmine:#206823]
+
  */
 BEGIN
 
@@ -106,33 +108,6 @@ BEGIN
 					   @ErrCode = 40051
 				RETURN
 			END
-		END
-
-		-- Check IP to create downline
-		IF @Credit = 0 AND @IP IN ('115.77.62.87', '124.248.244.56', '116.100.7.95'
-			--20140626@Thien:
-			,'183.91.31.31', '115.77.62.87', '42.117.7.217','203.113.172.148', '42.112.19.168'
-			, '124.248.229.174', '118.69.77.60', '123.103.252.62'
-			
-			--20140627@Thien:
-			,'116.100.7.95', '118.142.46.201', '118.69.174.108', '42.117.4.151', '122.117.7.217'
-			
-			--20140628@Thien:
-			,'123.103.241.62', '203.113.173.121', '123.103.241.62'
-			
-			--20140630@Thien:
-			,'61.8.32.91', '115.78.234.153'
-			
-			--20140701@Thien:
-			,'14.169.66.152'
-					)
-		BEGIN
-			SELECT	@ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline OR CSD for further information.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40032,@Language)
-						END,
-					@ErrCode = 1001	
-			RETURN
 		END
 
 		-- Limit maximum account created per day by Site (300 accounts, IBCIndo only)
@@ -292,17 +267,6 @@ BEGIN
 			END
 		END
 
-		-- Check IP to create downline
-		IF @IP IN ('127.0.0.1')
-		BEGIN
-			SELECT	@ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline or CSD for further information.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40032,@Language)
-					END,
-				@ErrCode = 1001	
-			RETURN
-		END
-
 		-- Cannot create more 1296 accounts Master,Agent
 		SELECT top 1 @seqname = SeqName
 		FROM age_custSeq WITH(NOLOCK)
@@ -368,17 +332,6 @@ BEGIN
 			END
 		END
 
-		-- Check IP to create downline
-		IF @IP IN ('127.0.0.1')
-		BEGIN
-			SELECT	@ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline or CSD for further information.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40032,@Language)
-					END,
-				@ErrCode = 1001	
-			RETURN
-		END
-	
 		-- Cannot create more 1296 accounts Master,Agent
 		SELECT top 1 @seqname = SeqName
 		FROM age_custSeq WITH(NOLOCK)
@@ -445,17 +398,6 @@ BEGIN
 			END
 		END
 
-		-- Check IP to create downline
-		IF @IP IN ('127.0.0.1')
-		BEGIN
-			SELECT	@ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline or CSD for further information.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40032,@Language)
-					END,
-				@ErrCode = 1001	
-			RETURN
-		END
-
 		-- Cannot create more 1296 accounts Master,Agent
 		SELECT top 1 @seqname = SeqName
 		FROM age_custSeq WITH(NOLOCK)
@@ -519,17 +461,6 @@ BEGIN
 						@ErrCode = 40056	
 				RETURN
 			END
-		END
-
-		-- Check IP to create downline
-		IF @IP IN ('127.0.0.1')
-		BEGIN
-			SELECT	@ErrMsg = CASE @Language 
-						WHEN 'E' THEN 'Your account is not allowed to create more customer. Please contact your upline or CSD for further information.'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](40032,@Language)
-					END,
-				@ErrCode = 1001	
-			RETURN
 		END
 
 		-- Cannot create more 1296 accounts Master,Agent

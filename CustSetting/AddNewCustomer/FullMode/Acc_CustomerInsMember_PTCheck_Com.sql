@@ -6,7 +6,9 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_PTCheck_Com]
 	@SettingStatus TINYINT = 0,
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(MAX) = '' OUTPUT	
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
+	@IsValidateParam BIT = 1,
+	@IsUpdateParam BIT = 0 -- Update Parameter
 AS
 /*
 	Created: 20231010@Eden 
@@ -16,6 +18,7 @@ AS
 	
 	Revisions: 
 		- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
 
 	Param's Explanation: 
 		- @SettingType28 = '<Root>
@@ -83,55 +86,61 @@ BEGIN
 	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 	WHERE SettingType IN (28)
 	
-	--check 0 <= AgentPT <= Master PT <= SuperPT <= MaxPT, MinPT <= SuperPT
-	;WITH T AS (
-		SELECT t.SportType, t.BetType, t.IsLive, ps.SettingLevel,ps.ProductID
-		FROM @tblPT t
-			INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
-																AND t.BetType = ps.bettype 
-																AND t.IsLive = ps.IsLive
-		WHERE (t.SuperPT < 0 OR t.MasterPT < 0 OR t.AgentPT < 0 OR t.MinPT < 0
-				OR t.SuperPT > ps.MaxPT OR t.MasterPT > t.SuperPT OR t.AgentPT > t.MasterPT
-				OR t.MinPT > t.SuperPT
-			)
-	)
-	SELECT @ErrType =
-	(
-		SELECT * 
-		FROM T
-		FOR XML RAW('Row'), TYPE
-	)
+	IF @IsValidateParam = 1
+	BEGIN
+		--check 0 <= AgentPT <= Master PT <= SuperPT <= MaxPT, MinPT <= SuperPT
+		;WITH T AS (
+			SELECT t.SportType, t.BetType, t.IsLive, ps.SettingLevel,ps.ProductID
+			FROM @tblPT t
+				INNER JOIN #ProductSettingDetail_PTCheck ps WITH(NOLOCK) ON t.SportType = ps.Sporttype 
+																	AND t.BetType = ps.bettype 
+																	AND t.IsLive = ps.IsLive
+			WHERE (t.SuperPT < 0 OR t.MasterPT < 0 OR t.AgentPT < 0 OR t.MinPT < 0
+					OR t.SuperPT > ps.MaxPT OR t.MasterPT > t.SuperPT OR t.AgentPT > t.MasterPT
+					OR t.MinPT > t.SuperPT
+				)
+		)
+		SELECT @ErrType =
+		(
+			SELECT * 
+			FROM T
+			FOR XML RAW('Row'), TYPE
+		)
 	
-	IF @ErrType IS NOT NULL
-	BEGIN        
-		 SELECT @ErrMsg = '<Root MsgID="20001" Msg="Wrong position taking.">'
-							+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
-					, @MsgType = 61
-					, @ErrCode = 601
-		RETURN
-	END	
+		IF @ErrType IS NOT NULL
+		BEGIN        
+			 SELECT @ErrMsg = '<Root MsgID="20001" Msg="Wrong position taking.">'
+								+ CONVERT(VARCHAR(MAX),@ErrType) + '</Root>'
+						, @MsgType = 61
+						, @ErrCode = 601
+			RETURN
+		END	
+	END
 
-	UPDATE t
-	SET t.Child_DisplayOrder = d.Child_DisplayOrder
-	FROM @tblPT t
-		INNER JOIN #ProductSettingDetail_PTCheck d 
-			ON t.SportType = d.SportType
-			AND t.BetType = d.BetType
-			AND t.IsLive = d.IsLive
+	IF @IsUpdateParam = 1 -- UpdateParameter for update and writelog
+	BEGIN
+		UPDATE t
+		SET t.Child_DisplayOrder = d.Child_DisplayOrder
+		FROM @tblPT t
+			INNER JOIN #ProductSettingDetail_PTCheck d 
+				ON t.SportType = d.SportType
+				AND t.BetType = d.BetType
+				AND t.IsLive = d.IsLive
 		
-	SELECT @SettingType28 = (
-	SELECT SportType '@SportType', 
-		BetType '@BetType', 
-		IsLive '@IsLive',
-		SuperPT '@SuperPT',
-		MasterPT '@MasterPT',	
-		AgentPT '@AgentPT',	
-		MinPT '@MinPT'
-	FROM @tblPT
-	WHERE SettingType = 28
-	ORDER BY Child_DisplayOrder,SportType,BetType
-	FOR XML PATH ('R'), ROOT('Root')
-	)	
+		SELECT @SettingType28 = (
+		SELECT SportType '@SportType', 
+			BetType '@BetType', 
+			IsLive '@IsLive',
+			SuperPT '@SuperPT',
+			MasterPT '@MasterPT',	
+			AgentPT '@AgentPT',	
+			MinPT '@MinPT'
+		FROM @tblPT
+		WHERE SettingType = 28
+		ORDER BY Child_DisplayOrder,SportType,BetType
+		FOR XML PATH ('R'), ROOT('Root')
+		)	
+	END
 	
 	DROP TABLE #ProductSettingDetail_PTCheck
 END		
