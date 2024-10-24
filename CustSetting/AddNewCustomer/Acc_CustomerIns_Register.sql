@@ -21,6 +21,7 @@ AS
 	
 	Revisions:
 		- 20240704@Helen:register username/nickname/custid for CREDIT - [Redmine:#206823]
+		- 20241001@Helen: release with new structure on GlobCustDB instead of using view on CUSTDB - [Redmine:#206823]
 		
 	Parameter's Explanation:
 		
@@ -71,6 +72,7 @@ BEGIN
 
 	BEGIN TRY
 		---UAT Test
+		/*
 		SELECT @custid = NEXT VALUE FOR dbo.seq_CustinfoMini
 
 		IF @roleid = 4   
@@ -82,9 +84,9 @@ BEGIN
 
 		INSERT INTO dbo.CustInfoMini (custid,username,sitedbgroupid, srecommend, mrecommend, recommend,currency, site, roleid) 
 		VALUES (@custid,@username,@sitedbgroupid, @srecommend, @mrecommend, @recommend, @currency, @site, @roleid )
-		
+		*/
 		--PRO
-		/*
+		
 		INSERT INTO dbo.CustInfoMini (username,sitedbgroupid, srecommend, mrecommend, recommend,currency, site, roleid) 
 			VALUES (@username,@sitedbgroupid, @srecommend, @mrecommend, @recommend, @currency, @site, @roleid)
 		SET @custid = SCOPE_IDENTITY()
@@ -107,8 +109,6 @@ BEGIN
 			SET recommend = @CustID
 			WHERE custid = @CustID
 		END
-
-		*/
 
 	END TRY
 	BEGIN CATCH

@@ -4,7 +4,7 @@ ALTER PROCEDURE [dbo].[Age_CustSubIns_Register]
 	@username	VARCHAR(30) = NULL,
 	@Nickname VARCHAR(50) = NULL,
 	@custid	INT,
-	@sitedbgroupid	SMALLINT = 0, 
+	@sitedbgroupid	TINYINT = 0, 
 	@Language	VARCHAR(2)= 'E',
 	@ErrCode	INT = 0 OUTPUT,
 	@ErrMsg	NVARCHAR(4000) = '' OUTPUT,
@@ -19,7 +19,8 @@ AS
 	
 	Revisions:
 		- 20240704@Helen:register username/nickname/custid for CREDIT - [Redmine:#206823]
-		
+		- 20241001@Helen: release with new structure on GlobCustDB instead of using view on CUSTDB - [Redmine:#206823]
+
 	Parameter's Explanation:
 		
 */	
@@ -48,14 +49,15 @@ BEGIN
 		IF @Nickname IS NULL
 		BEGIN
 			--UAT
+			/*
 			SELECT @SubAccID = NEXT VALUE FOR dbo.seq_CustSubMini 
 			INSERT INTO dbo.CustSubMini (subaccid,custid,username,sitedbgroupid) VALUES (@SubAccID, @custid,@username,@sitedbgroupid)
-
+			*/
 			-- PRO
-			/*
+			
 			INSERT INTO dbo.CustSubMini (custid,username,sitedbgroupid) VALUES (@custid,@username,@sitedbgroupid)
 			SET @SubAccID = SCOPE_IDENTITY()
-			*/
+			
 		END
 		ELSE 
 		BEGIN
