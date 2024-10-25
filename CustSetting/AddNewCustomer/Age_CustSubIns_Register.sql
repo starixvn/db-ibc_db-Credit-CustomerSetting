@@ -4,7 +4,7 @@ ALTER PROCEDURE [dbo].[Age_CustSubIns_Register]
 	@username	VARCHAR(30) = NULL,
 	@Nickname VARCHAR(50) = NULL,
 	@custid	INT,
-	@sitedbgroupid	TINYINT = 0, 
+	@sitedbgroupid	SMALLINT = 0, 
 	@Language	VARCHAR(2)= 'E',
 	@ErrCode	INT = 0 OUTPUT,
 	@ErrMsg	NVARCHAR(4000) = '' OUTPUT,
@@ -20,6 +20,7 @@ AS
 	Revisions:
 		- 20240704@Helen:register username/nickname/custid for CREDIT - [Redmine:#206823]
 		- 20241001@Helen: release with new structure on GlobCustDB instead of using view on CUSTDB - [Redmine:#206823]
+		- 20241024@Eden: Change datatype @sitedbgroupid to smallint [Redmine:#206823]
 
 	Parameter's Explanation:
 		
