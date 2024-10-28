@@ -22,12 +22,28 @@ AS
 	Revisions:
 		- 20240704@Helen:register username/nickname/custid for CREDIT - [Redmine:#206823]
 		- 20241001@Helen: release with new structure on GlobCustDB instead of using view on CUSTDB - [Redmine:#206823]
+		- 20241028@July: [Scale out DBCUST] Wrong Currency [Redmine: #212777]
 		
 	Parameter's Explanation:
 		
 */	
 BEGIN
 	SET NOCOUNT ON
+
+	IF @roleid = 4 AND (@currency IS NULL OR @currency = 0 )
+	BEGIN
+		SELECT @ErrMsg ='Failed to create Super due to invalid currency [0 or Null].'
+			 , @ErrCode = 100
+		RETURN
+	END
+
+	IF @roleid = 4 AND (@site IS NULL OR @site = '' )
+	BEGIN
+		SELECT @ErrMsg ='Failed to create Super due to invalid site [Empty or Null].'
+			 , @ErrCode = 100
+		RETURN
+	END
+
 	SELECT  @username = RTRIM(LTRIM(@username))
 	IF EXISTS (SELECT 1 FROM dbo.CustInfoMini WITH(NOLOCK) WHERE username = @username)
 			OR EXISTS (SELECT 1 FROM dbo.CustInfoMini WITH (NOLOCK) WHERE username2 = @username)

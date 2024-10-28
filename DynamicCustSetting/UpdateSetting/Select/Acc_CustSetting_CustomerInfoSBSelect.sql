@@ -16,6 +16,7 @@ AS
 	Revisions:
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
 		- 20240423@Elodie: Member Max Credit, Member Given Credit enhancements [Redmine: #203332]
+		- 20241028@July: [Scale out DBCUST] Wrong Currency [Redmine: #212777]
 
 	Param's Explanation:
 	
@@ -60,7 +61,7 @@ BEGIN
 			@mobilephone			NVARCHAR(50),
 			@email				NVARCHAR(50),
 			@fax					NVARCHAR(50),
-			@Currency				NVARCHAR(50),
+			@Currency				INT,
 			@CurrencyName			NVARCHAR(50),
 			@Site					VARCHAR(10),
 			@SiteLabel				VARCHAR(50),
