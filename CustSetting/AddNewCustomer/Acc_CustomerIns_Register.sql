@@ -37,7 +37,7 @@ BEGIN
 		RETURN
 	END
 
-	IF @roleid = 4 AND (@site IS NULL OR @site = '' )
+	IF @roleid IN (1,2,3,4) AND (@site IS NULL OR @site = '' )
 	BEGIN
 		SELECT @ErrMsg ='Failed to create Super due to invalid site [Empty or Null].'
 			 , @ErrCode = 100
