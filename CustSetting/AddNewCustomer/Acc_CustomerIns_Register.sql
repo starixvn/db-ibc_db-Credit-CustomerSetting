@@ -23,6 +23,7 @@ AS
 		- 20240704@Helen:register username/nickname/custid for CREDIT - [Redmine:#206823]
 		- 20241001@Helen: release with new structure on GlobCustDB instead of using view on CUSTDB - [Redmine:#206823]
 		- 20241028@July: [Scale out DBCUST] Wrong Currency [Redmine: #212777]
+		- 20241028@July: [Scale out DBCUST] Update RepUpdateTime for inhouse [Redmine: #212777]
 		
 	Parameter's Explanation:
 		
@@ -111,18 +112,21 @@ BEGIN
 		BEGIN
 			UPDATE CustInfoMini WITH(ROWLOCK,UPDLOCK)
 			SET srecommend = @CustID
+			  , RepUpdateTime = SYSDATETIME()
 			WHERE custid = @CustID
 		END
 		ELSE IF @roleid = 3 
 		BEGIN
 			UPDATE CustInfoMini WITH(ROWLOCK,UPDLOCK)
 			SET mrecommend = @CustID
+			  , RepUpdateTime = SYSDATETIME()
 			WHERE custid = @CustID
 		END
 		ELSE IF @roleid = 2 
 		BEGIN
 			UPDATE CustInfoMini WITH(ROWLOCK,UPDLOCK)
 			SET recommend = @CustID
+			  , RepUpdateTime = SYSDATETIME()
 			WHERE custid = @CustID
 		END
 
