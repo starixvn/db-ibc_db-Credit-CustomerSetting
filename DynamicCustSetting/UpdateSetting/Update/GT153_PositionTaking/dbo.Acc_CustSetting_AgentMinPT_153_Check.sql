@@ -18,8 +18,8 @@ AS
 	Original:
 
 	Revision:
-	- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
-		
+		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20241030@Elodie: Check Agent Min PT > 0 [Redmine: #212710]
 	Parameter's Explanations:
 		
 */
@@ -108,7 +108,7 @@ BEGIN
 	select @ErrType = '' 	
     
 	SELECT @ErrCode = MAX (CASE	WHEN m.MaxPT < a.AgentMinPT THEN 199 --check l3 >= n2 
-								WHEN a.AgentPT < a.AgentMinPT THEN 198 --check a2 >= n2     
+								WHEN a.AgentPT < a.AgentMinPT OR a.AgentMinPT < 0 THEN 198 --check a2 >= n2     
 								ELSE 0 END)
 	FROM dbo.CustPTSetting3rd_Agent m WITH(NOLOCK) 
 		INNER JOIN @tblPT a ON m.sporttype = a.sporttype AND m.bettype = a.bettype AND m.IsLive = a.IsLive
@@ -151,7 +151,7 @@ BEGIN
 		(
 			SELECT b.SportType, b.BetType,b.IsLive ,b.ProductID,b.SettingLevel
 			FROM @tblPT b				
-			WHERE b.AgentPT < b.AgentMinPT
+			WHERE b.AgentPT < b.AgentMinPT OR b.AgentMinPT < 0
 			FOR XML RAW('Row'), TYPE
 		)
 		
