@@ -26,7 +26,7 @@ AS
 		- 20230629@Johnson: initial sp [redmine: #179159]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
-
+		- 20241030@Elodie: Check Agent Min PT > 0 [Redmine: #212710]
 	Param's Explanation: 
 		- @SettingType28 = '<Root>
 						<R SportType="1" BetType="1" IsLive="0" MasterPT="40" IsAuto="0" AutoPT="0" AgentPT="30" MinPT="0" />
@@ -173,6 +173,7 @@ BEGIN
 					OR t.AutoMasterPT < 0 
 					OR t.AutoMasterPT > ps.MaxPT
 					OR t.AgentMinPT > t.AgentPT
+					OR t.AgentMinPT < 0
 				)
 		)
 		SELECT @ErrType =

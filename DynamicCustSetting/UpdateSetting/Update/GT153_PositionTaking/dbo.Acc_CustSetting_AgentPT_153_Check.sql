@@ -22,7 +22,8 @@ AS
 		Original:
 
 		Revision:
-		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+			- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+			- 20241030@Elodie: Check Agent Min PT > 0 [Redmine: #212710]
 
 		Parameter's Explanations:
 		
@@ -169,7 +170,7 @@ BEGIN
 	END	
 	
 	SELECT @ErrCode = MAX (CASE	WHEN m.MaxPT < a.AgentMinPT THEN 199 --check l3 >= n2 
-								WHEN a.AgentPT < a.AgentMinPT THEN 198 --check a2 >= n2     
+								WHEN a.AgentPT < a.AgentMinPT OR a.AgentMinPT < 0 THEN 198 --check a2 >= n2     
 								WHEN a.IsAutoMasterPT = 0 AND a.MasterPT > m.MasterPT  THEN 197 --check m2 > m3
 								WHEN (a.IsAutoMasterPT = 0 AND (a.MasterPT + a.AgentPT > m.MaxPT OR a.MasterPT + a.AgentPT  < m.MinPT))
 									OR (a.IsAutoMasterPT = 1 AND (a.AgentPT > m.MaxPT OR a.AgentPT + a.AutoMasterPT < m.MinPT)) THEN 196 --check n3<=m2+a2<=l3 if im2 = 0, a2<=l3 and um2+a2>=n3 if im2 = 1           
@@ -230,7 +231,7 @@ BEGIN
 			(
 				SELECT b.SportType, b.BetType,b.IsLive , b.ProductID, b.SettingLevel
 				FROM @tblPT b				
-				WHERE b.AgentPT < b.AgentMinPT
+				WHERE b.AgentPT < b.AgentMinPT OR b.AgentMinPT < 0
 				FOR XML RAW('Row'), TYPE
 			)
 		
