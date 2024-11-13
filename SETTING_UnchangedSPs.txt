@@ -1,3 +1,1 @@
-DynamicCustSetting\UpdateSetting\Update\GT153_PositionTaking\dbo.Acc_CustSetting_AgentPT_153_Upd.sql
-DynamicCustSetting\UpdateSetting\Update\GT153_PositionTaking\dbo.Acc_CustSetting_AgentMinPT_153_Upd.sql
-CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_MAg.sql
+DynamicCustSetting\UpdateSetting\Update\GT154_BetSetting\Acc_CustSetting_BetSetting_154_Upd.sql
