@@ -1,8 +1,9 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdateCustomerClass]  
-	@custList	VARCHAR(MAX) = '',	
+	@custList	VARCHAR(MAX) = '',		
+	@Mode	 	INT = 1 ,	
 	@ErrCode 	INT = 0 OUTPUT,	
-	@ErrMsg		VARCHAR(500) = '' OUTPUT
+	@ErrMsg		VARCHAR(MAX) = '' OUTPUT
 AS  
 /*  
 
@@ -22,7 +23,9 @@ AS
 		- 20230803@Winfred: LAP - Player Segmentation - Add Risk Level's last update time [redmine:#191101]
 		- 20240522@Johnson: CC Log - Change value from negative number to empty [redmine:#205427]
 		- 20240716@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20241008@Winfred: [CTS] - Customer Classification - Classify Agent [redmine:#185799]
 	Parameter's Explanation: 
+		@Mode = 2 : SMA , 1 : Member
 		@custList = '<Root>
 					<r id="100" c="10" t="1" />
 					<r id="101" c="11" t="2" />
@@ -52,18 +55,79 @@ BEGIN
 						) AS VARCHAR(MAX))
 
 	--import categroy for deposit customers
-	CREATE TABLE #tblDep_CustClass (custid INT, CustomerClass SMALLINT, CategoryID SMALLINT, OldCustomerClass SMALLINT, isFinished BIT DEFAULT(0))
-	DECLARE @tmp TABLE (custid INT, CustomerClass SMALLINT, CategoryID SMALLINT, OldCustomerClass SMALLINT)
+	CREATE TABLE #tblDep_CustClass (custid INT, CustomerClass INT, CategoryID INT, OldCustomerClass INT, isFinished BIT DEFAULT(0))
+	DECLARE @tmp TABLE (custid INT, CustomerClass INT, CategoryID INT, OldCustomerClass INT)
+	DECLARE @tmpExists TABLE (custid INT)
 	
 	DECLARE @xml XML = CAST (@CustList as XML),
 			@cnt INT
-	
+
 	INSERT INTO #tblDep_CustClass (custid, CustomerClass, CategoryID)
 	SELECT t.c.value('@id[1]','int'),
 		t.c.value('@c[1]','int'),
 		t.c.value('@t[1]','int')
 	FROM @xml.nodes('Root/r')as t(c)
 		
+	IF @Mode = 2
+	BEGIN
+		CREATE TABLE #tblCustClass (custid INT, CustomerClass INT, CategoryID INT, CustomerClassOld INT, CategoryIDOld INT, isFinished BIT DEFAULT(0))
+		DECLARE @tmpAgent TABLE (custid INT, CustomerClass INT, CategoryID INT, CustomerClassOld INT, CategoryIDOld INT)
+		
+		INSERT INTO #tblCustClass(custid, CustomerClass, CategoryID, CustomerClassOld, CategoryIDOld)
+		SELECT custid, NULLIF(a.customerclass,-1), a.CategoryID , kq.CustomerClass AS CustomerClassOld, kq.CategoryID AS CategoryIDOld
+		FROM #tblDep_CustClass a
+			OUTER APPLY (SELECT TOP 1 CustomerClass, CategoryID FROM CustomerClassSetting_Agent WITH(NOLOCK) WHERE a.custID = CustID AND SportType = 0) kq
+		WHERE EXISTS (SELECT TOP 1 1 FROM custInfo b WITH(NOLOCK) WHERE a.custid  = b.custid AND roleid > 1) ;
+		 
+		WHILE (1=1)
+		BEGIN
+			UPDATE TOP (2000) t
+			SET isFinished = 1
+			OUTPUT DELETED.custid, DELETED.CustomerClass, DELETED.CategoryID, DELETED.CustomerClassOld, DELETED.CategoryIDOld
+			INTO @tmpAgent(custid, CustomerClass, CategoryID, CustomerClassOld, CategoryIDOld)
+			FROM #tblCustClass t
+			WHERE isFinished = 0
+			
+			SELECT @cnt = @@ROWCOUNT
+			
+			MERGE CustomerClassSetting_Agent as Target
+			USING @tmpAgent as Source ON Target.custid = Source.custid AND Target.SportType = 0
+			WHEN MATCHED 
+			THEN UPDATE SET ModifiedDate = GETDATE(), RepUpdateTime = [dbo].[f_GetDateTime2](), CategoryID = Source.CategoryID, CustomerClass = Source.CustomerClass
+			WHEN NOT MATCHED BY TARGET 
+			THEN INSERT (custid, SportType, CategoryID,CustomerClass,ModifiedDate,RepUpdateTime)
+			VALUES(custid,0, CategoryID,CustomerClass,GETDATE(),[dbo].[f_GetDateTime2]());	
+						
+			IF EXISTS ( SELECT 1 FROM sys.tables WHERE Name='CustCategoryHistory')
+			BEGIN
+				INSERT INTO CustCategoryHistory(custid,CategoryID,CustomerClass,OldCustomerClass, OldCategoryID , CreatedDate)
+				SELECT custid,a.CategoryID,a.CustomerClass,CustomerClassOld,CategoryIDOld, GETDATE()
+				FROM @tmpAgent a
+				WHERE (CustomerClass IN (SELECT DISTINCT CustomerClass FROM CategoryConfig WITH(NOLOCK) WHERE CustomerClass IS NOT NULL))
+					AND CategoryID > 0
+			END
+
+			IF @cnt < 2000
+				BREAK;
+				
+			DELETE @tmpAgent
+		END
+		DROP TABLE #tblCustClass
+	END
+
+	DELETE t
+	OUTPUT DELETED.custid
+	INTO @tmpExists(custid)
+	FROM #tblDep_CustClass t
+	WHERE NOT EXISTS (SELECT TOP 1 1 from custinfo WITH(NOLOCK) where CustID = t.CustID)
+
+	IF EXISTS (SELECT TOP 1 1 FROM @tmpExists)
+	BEGIN
+		SELECT @ErrCode = 200,
+			@ErrMsg = STRING_AGG(CustID,',') WITHIN GROUP (ORDER BY CustID)
+		FROM @tmpExists
+	END
+
 	DELETE t
 	FROM #tblDep_CustClass t
 		INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
@@ -76,11 +140,11 @@ BEGIN
 	
 	DELETE FROM #tblDep_CustClass 
 	WHERE OldCustomerClass = CustomerClass
-	
+
 	BEGIN TRY	
-		EXEC Acc_CustomerInfo_Execrep_03 @CustList = @CustList,
-										@mode = 'CustomerClass',
-										@CategoryList = @CategoryList	
+			EXEC Acc_CustomerInfo_Execrep_03 @CustList = @CustList,
+											@mode = 'CustomerClass',
+											@CategoryList = @CategoryList
 	END TRY
 	BEGIN CATCH 
 		SELECT @ErrCode = 100,
