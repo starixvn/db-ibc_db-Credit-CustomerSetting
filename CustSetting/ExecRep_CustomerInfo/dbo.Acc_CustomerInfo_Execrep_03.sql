@@ -44,6 +44,7 @@ Revisions:
 	- 20240426@Johnson: Update CC By Sports for Special Class [redmine:#201360]
 	- 20240904@Winfred: Update SportID of CustomerClassSetting Feature name [redmine:#210321]
 	- 20240716@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+	- 20241008@Winfred: [CTS] - Customer Classification - Classify Agent [redmine:#185799]
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -287,8 +288,8 @@ BEGIN
 		IF (dbo.f_CheckRepTable('custinfo') = 0) RETURN
 		IF OBJECT_ID('Dep_Custsuper') IS NULL RETURN
 		
-		CREATE TABLE #tblCustClass (custid INT, CustomerClass SMALLINT, OldCustomerClass SMALLINT, CategoryID SMALLINT, isDeposit BIT, isFinished BIT DEFAULT(0))
-		DECLARE @tmp TABLE (custid INT, CustomerClass SMALLINT, OldCustomerClass SMALLINT, CategoryID SMALLINT, isDeposit BIT)
+		CREATE TABLE #tblCustClass (custid INT,RoleID TINYINT, CustomerClass INT, OldCustomerClass SMALLINT, CategoryID INT, isDeposit BIT, isFinished BIT DEFAULT(0))
+		DECLARE @tmp TABLE (custid INT,RoleID TINYINT, CustomerClass INT, OldCustomerClass SMALLINT, CategoryID INT, isDeposit BIT)
 		DECLARE @tblCategory TABLE (CategoryID INT)
 		
 		DECLARE @xml XML = CAST (@CustList as XML),
@@ -307,7 +308,8 @@ BEGIN
 		
 		UPDATE t
 		SET isDeposit = CASE WHEN s.custid IS NULL THEN 0 ELSE 1 END,
-			OldCustomerClass = ci.CustomerClass
+			OldCustomerClass = ci.CustomerClass,
+			t.RoleID = ci.roleid
 		FROM #tblCustClass t
 			INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
 			LEFT JOIN Dep_Custsuper s WITH(NOLOCK) ON ci.srecommend = s.custid
@@ -316,8 +318,8 @@ BEGIN
 		BEGIN
 			UPDATE TOP (5000) t
 			SET isFinished = 1
-			OUTPUT DELETED.custid, DELETED.CustomerClass, DELETED.OldCustomerClass, DELETED.CategoryID, DELETED.isDeposit
-			INTO @tmp(custid,CustomerClass,OldCustomerClass,CategoryID,isDeposit)
+			OUTPUT DELETED.custid, DELETED.CustomerClass, DELETED.OldCustomerClass, DELETED.CategoryID, DELETED.isDeposit, DELETED.RoleID
+			INTO @tmp(custid,CustomerClass,OldCustomerClass,CategoryID,isDeposit,RoleID)
 			FROM #tblCustClass t
 			WHERE isFinished = 0
 			
@@ -326,7 +328,7 @@ BEGIN
 			UPDATE c
 			SET c.CustomerClass = NULLIF(t.CustomerClass,-1)
 			FROM custInfo c WITH(UPDLOCK,ROWLOCK)
-				INNER JOIN @tmp t ON c.custid = t.custid
+				INNER JOIN @tmp t ON c.custid = t.custid AND t.roleid = 1
 			
 			IF (dbo.f_CheckRepTable('ProblemAccountClassification') = 1)  
 			BEGIN			
@@ -340,8 +342,8 @@ BEGIN
 				WHEN NOT MATCHED BY TARGET AND (ISNULL(source.CustomerClass,0) IN (SELECT CategoryID FROM @tblCategory))
 				THEN INSERT(custid,isReviewed,ModifiedDate) VALUES(Source.custid,0,GETDATE());	
 			END
-			
-			IF EXISTS ( SELECT 1 FROM sys.tables WHERE Name='CustCategoryHistory') 
+						
+			IF EXISTS ( SELECT 1 FROM sys.tables WHERE Name='CustCategoryHistory')
 			BEGIN
 				INSERT INTO CustCategoryHistory(custid,CategoryID,CustomerClass,OldCustomerClass,CreatedDate)
 				SELECT custid,CategoryID,CustomerClass,OldCustomerClass,GETDATE()
@@ -349,6 +351,7 @@ BEGIN
 				WHERE (CustomerClass IN (SELECT CategoryID FROM @tblCategory))
 					AND isDeposit = 0
 					AND CategoryID > 0
+					AND RoleID = 1
 			END
 			
 			IF @cnt < 5000
