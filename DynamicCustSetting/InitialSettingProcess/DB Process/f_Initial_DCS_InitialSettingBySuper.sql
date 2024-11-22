@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCust-CustDB,DBSIG-CustDB,DBACC-bodb02,dbext-bodb02,dbbof-bodb02,dbwh-bodb02" selecters="" viewers="" isFunction="1"></info>*/
-CREATE FUNCTION [dbo].[f_Initial_DCS_InitialSettingBySuper] (@Currency INT)
+ALTER FUNCTION [dbo].[f_Initial_DCS_InitialSettingBySuper] (@Currency INT)
 RETURNS TABLE 
 AS
 /*
@@ -14,7 +14,9 @@ AS
 */
 RETURN 
 (
-	SELECT CustId
+	--SELECT 0 CustId WHERE 1 = 0 -- remove cmd after initial
+
+	SELECT CustId 
 	FROM custinfo WITH (NOLOCK)
 	WHERE currency = @Currency 
 		AND custid = 1176070 -- Hardcode direct account to initial setting
