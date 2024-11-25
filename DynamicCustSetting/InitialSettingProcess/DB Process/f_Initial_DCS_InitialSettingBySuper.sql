@@ -14,11 +14,11 @@ AS
 */
 RETURN 
 (
-	--SELECT 0 CustId WHERE 1 = 0 -- remove cmd after initial
+	SELECT 0 CustId WHERE 1 = 0 -- remove cmd after initial
 
-	SELECT CustId 
-	FROM custinfo WITH (NOLOCK)
-	WHERE currency = @Currency 
-		AND custid = 1176070 -- Hardcode direct account to initial setting
+	--SELECT CustId 
+	--FROM custinfo WITH (NOLOCK)
+	--WHERE currency = @Currency 
+	--	AND custid = 1176070 -- Hardcode direct account to initial setting
 )
 GO
