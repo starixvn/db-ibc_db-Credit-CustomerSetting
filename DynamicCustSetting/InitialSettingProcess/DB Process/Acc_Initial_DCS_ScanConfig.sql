@@ -277,6 +277,17 @@ BEGIN
 		FROM Initial_Customer WITH(ROWLOCK,UPDLOCK) 
 		WHERE CustID > @MaxcustID
 	END
+	
+	DECLARE @ExchangeId INT = CAST(@Currency AS INT)
+	IF @Currency = '20' 
+	BEGIN
+		IF EXISTS (SELECT custid FROM f_Initial_DCS_InitialSettingBySuper(@ExchangeId))
+		BEGIN
+			DELETE 
+			FROM Initial_Customer WITH(ROWLOCK,UPDLOCK) 
+			WHERE CustID NOT IN (SELECT custid FROM f_Initial_DCS_InitialSettingBySuper(@ExchangeId))
+		END
+	END
 
 	ReturnLB:
 	SELECT CAST(StepID AS INT) AS StepID, IsScanCustomer, @XMLConfig AS XMLConfig
