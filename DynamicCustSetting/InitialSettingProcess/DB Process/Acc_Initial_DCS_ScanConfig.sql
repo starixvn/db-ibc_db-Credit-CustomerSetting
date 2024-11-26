@@ -279,7 +279,7 @@ BEGIN
 	END
 	
 	DECLARE @ExchangeId INT = CAST(@Currency AS INT)
-	IF @Currency = '20' 
+	IF @Currency = '20' OR @Currency = '72'
 	BEGIN
 		IF EXISTS (SELECT custid FROM f_Initial_DCS_InitialSettingBySuper(@ExchangeId))
 		BEGIN
