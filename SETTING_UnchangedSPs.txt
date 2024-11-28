@@ -1,1 +1,4 @@
+CustSetting\UpdateSetting\Update Danger\Acc_CustomerUdpDanger_JobExclusion.sql
 CustSetting\UpdateSetting\Update CustomerClass\Acc_CustomerUpdateCustomerClass.sql
+CustSetting\UpdateSetting\Update CustomerClass\Acc_CustomerUpdateCustomerClassBySport.sql
+CustSetting\UpdateSetting\Update Danger\Acc_CustomerUpdDangerLevel.sql

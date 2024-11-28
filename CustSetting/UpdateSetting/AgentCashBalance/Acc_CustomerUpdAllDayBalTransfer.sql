@@ -20,6 +20,7 @@ AS
 		- 20200319@Percy: Add option enable downline if enable super [RedmineID: #130741]
 		- 20200602@Sol: Update IsAutoEnableADBMaster [Redmine: #134242]
 		- 20240523@Lewis: Change SQL Account [Redmine: #204021]
+		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 */
 
 BEGIN  
@@ -53,7 +54,8 @@ BEGIN
 		BEGIN TRY
 			UPDATE dbo.CustSuper WITH (ROWLOCK)
 			SET IsAllDayBalTransfer = @IsAllDayBalTransfer,
-				IsAutoEnableADBMaster = CASE WHEN @IsAllDayBalTransfer = 0 THEN 0 ELSE IsAutoEnableADBMaster END
+				IsAutoEnableADBMaster = CASE WHEN @IsAllDayBalTransfer = 0 THEN 0 ELSE IsAutoEnableADBMaster END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			WHERE custid = @CustId
 		END TRY
 		BEGIN CATCH
@@ -67,7 +69,8 @@ BEGIN
 		BEGIN
 			BEGIN TRY
 				UPDATE m WITH (ROWLOCK)
-				SET IsAllDayBalTransfer = @IsAllDayBalTransfer
+				SET IsAllDayBalTransfer = @IsAllDayBalTransfer,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustMaster m
 					INNER JOIN dbo.Customer c WITH (NOLOCK) ON m.custid = c.custid
 				WHERE c.srecommend = @CustId
@@ -75,8 +78,9 @@ BEGIN
 			END TRY
 			BEGIN CATCH
 				-- Rollback manually
-				UPDATE dbo.CustSuper
-				SET IsAllDayBalTransfer = @IsAllDayBalTransfer_Old
+				UPDATE dbo.CustSuper WITH (ROWLOCK)
+				SET IsAllDayBalTransfer = @IsAllDayBalTransfer_Old,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				WHERE custid = @CustId
 
 				-- Action failed. Please try again.
@@ -103,7 +107,8 @@ BEGIN
 
 		BEGIN TRY
 			UPDATE dbo.CustMaster WITH (ROWLOCK)
-			SET IsAllDayBalTransfer = @IsAllDayBalTransfer
+			SET IsAllDayBalTransfer = @IsAllDayBalTransfer,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			WHERE custid = @CustId
 		END TRY
 		BEGIN CATCH

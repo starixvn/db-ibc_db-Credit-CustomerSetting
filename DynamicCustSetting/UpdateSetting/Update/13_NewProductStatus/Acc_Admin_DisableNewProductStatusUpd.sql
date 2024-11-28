@@ -23,6 +23,7 @@ AS
 		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -292,7 +293,8 @@ BEGIN
 			)
 			
 	UPDATE CustProductStatus
-		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
+			RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE CustID = @CustID
 	
 	UPDATE ns 
@@ -323,7 +325,8 @@ BEGIN
 			)
 
 		UPDATE CustProductStatus WITH (ROWLOCK,UPDLOCK)
-		SET bitmapIsHidden =(SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+		SET bitmapIsHidden =(SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
+			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE CustID = @CustID
 		
 	END

@@ -12,7 +12,7 @@ AS
 	Revisions:
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
-		
+		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 
 	Examples:
@@ -53,17 +53,41 @@ BEGIN
 
 	DELETE FROM CustLimitPTSetting			WITH (ROWLOCK) WHERE CustID = @CustID
 	DELETE FROM SuspiciousCust				WITH (ROWLOCK) WHERE CustID = @CustID
-	DELETE FROM CustProductStatus			WITH (ROWLOCK) WHERE CustID = @CustID
+	
+	DELETE FROM CustProductStatus			WITH (ROWLOCK) 
+	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+	INTO CustProductStatus_Del_InHouse(custid,RepUpdateTime)
+	WHERE CustID = @CustID
 
 	IF @RoleID IN (2,3,4)
 	BEGIN			
-		DELETE FROM CustPTSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustPTSetting3rd_Agent		WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, DELETED.IsLive, dbo.f_GetDateTime2()
+		INTO CustPTSetting3rd_Agent_Del_Inhouse(custid,SportType,Bettype,IsLive,RepUpdateTime)
+		WHERE CustID = @CustID
+		
 		DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustBetSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID					
-		DELETE FROM CustDiscount3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustWinLossLimit_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustStakeLevel_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) WHERE CustID = @CustID
+		
+		DELETE FROM CustDiscount3rd_Agent		WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
+		INTO CustDiscount3rd_Agent_Del_Inhouse(custid,SportType,Bettype,RepUpdateTime)
+		WHERE CustID = @CustID
+		
+		DELETE FROM CustWinLossLimit_Agent		WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
+		INTO CustWinLossLimit_Agent_Del_Inhouse(custid,SportType,Bettype,RepUpdateTime)
+		WHERE CustID = @CustID
+		
+		DELETE FROM CustStakeLevel_Agent		WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
+		INTO CustStakeLevel_Agent_Del_Inhouse(custid,SportType,Bettype,RepUpdateTime)
+		WHERE CustID = @CustID
+		
+		DELETE FROM CustMaxPayoutSetting_Agent	WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
+		INTO CustMaxPayoutSetting_Agent_Del_Inhouse(custid,SportType,Bettype,RepUpdateTime)
+		WHERE CustID = @CustID
 
 		--Inhouse Tables
 		DELETE c
@@ -80,15 +104,43 @@ BEGIN
 	END
 	ELSE IF @RoleID = 1
 	BEGIN
-		DELETE FROM CustSettingMode3rd			WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustQRCode					WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustPTSetting3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
+		DELETE FROM CustSettingMode3rd			WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO CustSettingMode3rd_Del_Inhouse(custid,RepUpdateTime)
+		WHERE CustID = @CustID
+		
+		DELETE FROM CustQRCode					WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO CustQRCode_Del_Inhouse(custid,RepUpdateTime)
+		WHERE CustID = @CustID
+		
+		DELETE FROM CustPTSetting3rd_Member		WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, DELETED.IsLive, dbo.f_GetDateTime2()
+		INTO CustPTSetting3rd_Member_Del_Inhouse(custid,SportType,Bettype,IsLive,RepUpdateTime)
+		WHERE CustID = @CustID
+		
 		DELETE FROM CustBetSetting_Member		WITH(ROWLOCK) WHERE CustID = @CustID
 		DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustDiscount3rd_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustWinLossLimit_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustStakeLevel_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustMaxPayoutSetting_Member WITH(ROWLOCK) WHERE CustID = @CustID
+		
+		DELETE FROM CustDiscount3rd_Member		WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
+		INTO CustDiscount3rd_Member_Del_Inhouse(custid,SportType,Bettype,RepUpdateTime)
+		WHERE CustID = @CustID
+		
+		DELETE FROM CustWinLossLimit_Member		WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
+		INTO CustWinLossLimit_Member_Del_Inhouse(custid,SportType,Bettype,RepUpdateTime)
+		WHERE CustID = @CustID
+		
+		DELETE FROM CustStakeLevel_Member		WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
+		INTO CustStakeLevel_Member_Del_Inhouse(custid,SportType,Bettype,RepUpdateTime)
+		WHERE CustID = @CustID
+		
+		DELETE FROM CustMaxPayoutSetting_Member WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
+		INTO CustMaxPayoutSetting_Member_Del_Inhouse(custid,SportType,Bettype,RepUpdateTime)
+		WHERE CustID = @CustID
 
 		--Inhouse Tables
 		DELETE c

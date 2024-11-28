@@ -156,6 +156,7 @@ Revisions:
 	- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]	
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
+	- 20241121@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
 	
 	Param's Explanation:
@@ -240,12 +241,13 @@ BEGIN
 
 	    SET @srecommend = @custid
 	    UPDATE Customer WITH(ROWLOCK, UPDLOCK)
-	       SET srecommend = @custid
+	    SET srecommend = @custid,
+			RepUpdateTime = dbo.f_GetDateTime2()
 	     WHERE custId = @CustID
 		
 	    INSERT INTO CustSuper
 	    (
-	        custId,  IsInternal, TransferOption, MaxMember,SiteDBGroupID
+	        custId,  IsInternal, TransferOption, MaxMember,SiteDBGroupID,RepUpdateTime
 	    )
 	    VALUES
 	    (
@@ -259,6 +261,7 @@ BEGIN
 				ELSE -1 
 	        END
 			, @SiteDBGroupID
+			, dbo.f_GetDateTime2()
         )
 		
 			--Virtual rate
@@ -279,16 +282,20 @@ BEGIN
 		WHERE CustId = @srecommend
 
 	    SET @mrecommend = @custid 
-	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET mrecommend = @custid WHERE custId = @CustID
+	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) 
+		SET mrecommend = @custid,
+			RepUpdateTime = dbo.f_GetDateTime2()
+		WHERE custId = @CustID
 
-	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer)
+	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer,RepUpdateTime)
 	    VALUES
 		(
 			@CustID,
 			@DisableAutoMPT, 
 			@IsInternal, 
 			CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, 
-			CASE WHEN @IsAutoEnableADBMaster = 1 THEN ISNULL(@IsAllDayBalTransfer, 0) ELSE 0 END
+			CASE WHEN @IsAutoEnableADBMaster = 1 THEN ISNULL(@IsAllDayBalTransfer, 0) ELSE 0 END,
+			dbo.f_GetDateTime2()
 		)
 	
 		--Virtual rate
@@ -318,10 +325,13 @@ BEGIN
 	     WHERE CustID = @mrecommend
 
 	    SET @recommend = @custid
-	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET recommend = @custid WHERE custId = @CustID
+	    UPDATE Customer WITH (ROWLOCK, UPDLOCK) 
+		SET recommend = @custid,
+			RepUpdateTime = dbo.f_GetDateTime2()
+		WHERE custId = @CustID
 
-	    INSERT INTO CustAgent(custId, MaxCredit, IsInternal, TransferOption, Site)
-	    VALUES(@CustID, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, @site)
+	    INSERT INTO CustAgent(custId, MaxCredit, IsInternal, TransferOption, Site, RepUpdateTime)
+	    VALUES(@CustID, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, @site, dbo.f_GetDateTime2())
 		
 		--Virtual rate
 		IF EXISTS(	SELECT 1
@@ -470,6 +480,7 @@ BEGIN
 		  , DoubleCommLosing
 		  , DisableSuperLive
 		  , DangerLevel
+		  , RepUpdateTime
 		  )
 		VALUES
 		(
@@ -484,6 +495,7 @@ BEGIN
 		  , @DoubleCommLosing	
 		  , @DisableSuperLive
 		  , @DangerLevel
+		  , dbo.f_GetDateTime2()
 		)
 
 		SELECT @CreditRM = @credit * actualrate

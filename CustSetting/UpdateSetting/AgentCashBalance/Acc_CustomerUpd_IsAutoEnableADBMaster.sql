@@ -16,6 +16,7 @@ AS
 
 	Revisions:
 		- 20200602@Sol: Update IsAutoEnableADBMaster [Redmine: #134242]
+		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 */
 
 BEGIN  
@@ -46,7 +47,8 @@ BEGIN
 
 		BEGIN TRY
 			UPDATE dbo.CustSuper WITH (ROWLOCK)
-			SET IsAutoEnableADBMaster = @IsAutoEnableADBMaster
+			SET IsAutoEnableADBMaster = @IsAutoEnableADBMaster,
+				RepUpdateTime=dbo.f_GetDateTime2()
 			WHERE custid = @CustId
 		END TRY
 		BEGIN CATCH

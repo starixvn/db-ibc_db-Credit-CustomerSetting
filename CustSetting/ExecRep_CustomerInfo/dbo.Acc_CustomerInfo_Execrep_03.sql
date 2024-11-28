@@ -45,6 +45,7 @@ Revisions:
 	- 20240904@Winfred: Update SportID of CustomerClassSetting Feature name [redmine:#210321]
 	- 20240716@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	- 20241008@Winfred: [CTS] - Customer Classification - Classify Agent [redmine:#185799]
+	- 20241128@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	- 20241024@Johnson: Danger Setting - Update ABI 33/46 to ORI 33/46 [redmineID: ##208301]
 	- 20241206@Johnson: LAP - Update odds group for licensee [redmine:#199306]
 	- 20240807@Helios: Scale Out DBCUST - Apply Inhouse replication for tables of problem account [Redmine:#209747] 
@@ -73,7 +74,7 @@ BEGIN
 				@StopRow INT	
 		
 		SET @StartRow=1
-		SET @Threshold=5000
+		SET @Threshold=2000
 		
 		/*region2: get downlines */
 		-- Get downline of super
@@ -123,7 +124,8 @@ BEGIN
 				IF(@DangerLevel<>0)
 				BEGIN
 					UPDATE c
-					SET danger = @DangerLevel	
+					SET danger = @DangerLevel,
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM custinfo c WITH(UPDLOCK,ROWLOCK) 
 						INNER JOIN @tempCust t ON c.CustID=t.CustID
 					WHERE	ID >= @StartRow 
@@ -132,7 +134,8 @@ BEGIN
 				ELSE
 				BEGIN
 					UPDATE c
-					SET danger = @DangerLevel 
+					SET danger = @DangerLevel,
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM custinfo c WITH(UPDLOCK,ROWLOCK) 
 						INNER JOIN @tempCust t ON c.CustID=t.CustID
 					WHERE	ID >= @StartRow 
@@ -186,7 +189,8 @@ BEGIN
 			BEGIN	
 					
 				UPDATE c
-					SET danger3 = @DangerLevel	
+					SET danger3 = @DangerLevel,
+						RepUpdateTime = dbo.f_GetDateTime2()
 				FROM custinfo c WITH(UPDLOCK,ROWLOCK) 
 					INNER JOIN @tempCust t ON c.CustID=t.CustID
 				WHERE	ID >= @StartRow 
@@ -210,7 +214,8 @@ BEGIN
 			BEGIN	
 					
 				UPDATE c
-					SET danger4 = @DangerLevel	
+					SET danger4 = @DangerLevel,
+						RepUpdateTime = dbo.f_GetDateTime2()
 				FROM custinfo c WITH(UPDLOCK,ROWLOCK) 
 					INNER JOIN @tempCust t ON c.CustID=t.CustID
 				WHERE	ID >= @StartRow 
@@ -234,7 +239,8 @@ BEGIN
 			BEGIN	
 					
 				UPDATE c
-					SET danger5 = @DangerLevel	
+					SET danger5 = @DangerLevel,
+						RepUpdateTime = dbo.f_GetDateTime2()
 				FROM custinfo c WITH(UPDLOCK,ROWLOCK) 
 					INNER JOIN @tempCust t ON c.CustID=t.CustID
 				WHERE	ID >= @StartRow 
@@ -268,7 +274,7 @@ BEGIN
 		
 		WHILE (1=1)
 		BEGIN
-			UPDATE TOP (5000) t
+			UPDATE TOP (2000) t
 			SET isFinished = 1
 			OUTPUT DELETED.custid, DELETED.Danger INTO @tmpCustDanger(custid,Danger)
 			FROM #tblCustDanger t
@@ -280,7 +286,8 @@ BEGIN
 			UPDATE c
 			SET c.Danger = CASE WHEN @DangerType = 1 THEN t.Danger ELSE c.Danger END,
 				c.Danger2 = CASE WHEN @DangerType = 2 THEN t.Danger ELSE c.Danger2 END,
-				c.Danger3 = CASE WHEN @DangerType = 3 THEN t.Danger ELSE c.Danger3 END
+				c.Danger3 = CASE WHEN @DangerType = 3 THEN t.Danger ELSE c.Danger3 END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tmpCustDanger t ON c.custid = t.custid
 				
@@ -322,7 +329,7 @@ BEGIN
 			
 		WHILE (1=1)
 		BEGIN
-			UPDATE TOP (5000) t
+			UPDATE TOP (2000) t
 			SET isFinished = 1
 			OUTPUT DELETED.custid, DELETED.CustomerClass, DELETED.OldCustomerClass, DELETED.CategoryID, DELETED.isDeposit, DELETED.RoleID
 			INTO @tmp(custid,CustomerClass,OldCustomerClass,CategoryID,isDeposit,RoleID)
@@ -332,7 +339,8 @@ BEGIN
 			SELECT @cnt = @@ROWCOUNT
 			
 			UPDATE c
-			SET c.CustomerClass = NULLIF(t.CustomerClass,-1)
+			SET c.CustomerClass = NULLIF(t.CustomerClass,-1),
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tmp t ON c.custid = t.custid AND t.roleid = 1
 			
@@ -370,7 +378,7 @@ BEGIN
 					AND RoleID = 1
 			END
 			
-			IF @cnt < 5000
+			IF @cnt < 2000
 				BREAK;
 				
 			DELETE @tmp
@@ -403,7 +411,7 @@ BEGIN
 			
 			WHILE (1=1)
 			BEGIN
-				UPDATE TOP (5000) t
+				UPDATE TOP (2000) t
 				SET isFinished = 1
 				OUTPUT DELETED.custid, DELETED.CC1, DELETED.CC2, DELETED.CC43, DELETED.CC99, DELETED.CC229
 				INTO @tmpCustClassSport(custid,CC1,CC2,CC43,CC99,CC229)
@@ -418,7 +426,8 @@ BEGIN
 					c.CCBasketball = CASE WHEN t.CC2 IS NOT NULL THEN NULLIF(t.CC2,-1) ELSE c.CCBasketball END,
 					c.CCEsports = CASE WHEN t.CC43 IS NOT NULL THEN NULLIF(t.CC43,-1) ELSE c.CCEsports END,
 					c.CCOtherSports = CASE WHEN t.CC99 IS NOT NULL THEN NULLIF(t.CC99,-1) ELSE  c.CCOtherSports END,
-					c.CCNonSports = CASE WHEN t.CC229 IS NOT NULL THEN NULLIF(t.CC229,-1) ELSE c.CCNonSports END				
+					c.CCNonSports = CASE WHEN t.CC229 IS NOT NULL THEN NULLIF(t.CC229,-1) ELSE c.CCNonSports END,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 					INNER JOIN @tmpCustClassSport t ON c.custid = t.custid
 					
@@ -485,6 +494,7 @@ BEGIN
 		
 		UPDATE customer WITH(UPDLOCK,ROWLOCK)
 		SET ugroup = CASE WHEN LEFT (ugroup,2) = 'hk' THEN 'hk' + @oddsgroup ELSE @oddsgroup END
+			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE custid IN (SELECT custid FROM @tmpCustOddsGroup)		
 	END
 	ELSE IF @mode = 'SabaDangerLevel'
@@ -503,7 +513,7 @@ BEGIN
 
 		WHILE (1=1)
 		BEGIN
-			UPDATE TOP (5000) t
+			UPDATE TOP (2000) t
 			SET isFinished = 1
 			OUTPUT DELETED.custid, DELETED.DangerLevel
 			INTO @tmpSaba(custid,DangerLevel)
@@ -514,7 +524,8 @@ BEGIN
 				BREAK;
 			
 			UPDATE c
-			SET c.DangerLevel = t.DangerLevel
+			SET c.DangerLevel = t.DangerLevel,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tmpSaba t ON c.custid = t.custid
 				

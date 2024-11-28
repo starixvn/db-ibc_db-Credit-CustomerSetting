@@ -111,8 +111,8 @@ AS
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
+	- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
-
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -229,12 +229,13 @@ BEGIN
 			RETURN
 		END	
 
-		INSERT INTO CustAgent(custId, MaxCredit, IsInternal, TransferOption, Site)
+		INSERT INTO CustAgent(custId, MaxCredit, IsInternal, TransferOption, Site, RepUpdateTime)
 		SELECT @CustID,
 				@MaxCredit,
 				IsInternal,
 				TransferOption,
-				Site
+				Site,
+				dbo.f_GetDateTime2()
 		FROM dbo.CustAgent WITH(NOLOCK)
 		WHERE custid=@ExistingCustid		 
 
@@ -286,6 +287,7 @@ BEGIN
 				,Danger3
 				,Danger4
 				,Danger5
+				,RepUpdateTime
 				)
 		 SELECT
 				@custid
@@ -311,6 +313,7 @@ BEGIN
 				,@DangerMaster3
 				,@DangerMaster4
 				,@DangerMaster5
+				,dbo.f_GetDateTime2()
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid 
 

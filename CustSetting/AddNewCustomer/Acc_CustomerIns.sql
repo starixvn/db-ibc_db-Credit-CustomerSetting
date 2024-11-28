@@ -45,7 +45,7 @@ AS
 		
 	Revisions:
 		- 20240704@Louisa: initial [Redmine:#206823]
-
+		- 20241121@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Parameter's Explanation:
 */
 BEGIN
@@ -85,6 +85,7 @@ BEGIN
 			,remark
 			,important
 			,username2
+			,RepUpdateTime
 		)
 		VALUES  (
 			@custid
@@ -117,6 +118,7 @@ BEGIN
 			,@remark
 			,@important
 			,@UserName2
+			,dbo.f_GetDateTime2()
 				);
 		
 		SET IDENTITY_INSERT Customer OFF
