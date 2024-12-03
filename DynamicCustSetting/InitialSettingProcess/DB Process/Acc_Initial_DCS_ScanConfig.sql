@@ -15,7 +15,7 @@ AS
 	Revisions:  
 	- 20210713@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
 	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
-
+	- 20241122@Elodie : Initial by Super for UUS and YNG [Redmine: #214128]
 	Value Mapping
 		CurrentStep = :
 			1: Delete existing customer setting
@@ -277,10 +277,10 @@ BEGIN
 		FROM Initial_Customer WITH(ROWLOCK,UPDLOCK) 
 		WHERE CustID > @MaxcustID
 	END
-	
-	DECLARE @ExchangeId INT = CAST(@Currency AS INT)
+		
 	IF @Currency = '20' OR @Currency = '72'
 	BEGIN
+		DECLARE @ExchangeId INT = CAST(@Currency AS INT)
 		IF EXISTS (SELECT custid FROM f_Initial_DCS_InitialSettingBySuper(@ExchangeId))
 		BEGIN
 			DELETE 
