@@ -35,6 +35,7 @@ AS
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
+	- 20241023@Johnson: remove columns IsSync/IsSyncedUpline [Redmine: #201396]
 
  Param's Explanation:  
 	- @CustID: 
@@ -167,8 +168,7 @@ BEGIN
 		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)  
 			SET @downlines = 1     
      
-		SELECT pdt.ProductID, pdt.SportType, pdt.BetType,  
-			CASE WHEN stt.CustID IS NULL THEN 0 ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) END as IsSync,
+		SELECT pdt.ProductID, pdt.SportType, pdt.BetType,  			
 			CAST(CASE WHEN stt.CustID IS NULL  OR (@IsIMBC = 0 AND pdt.ProductID = 20) THEN 1 ELSE   
 					(CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0 THEN 0 ELSE 1 END) END AS BIT) AS isHidden,    
 			1 AS isHiddenUpline,  
@@ -182,8 +182,7 @@ BEGIN
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline,
 											 
-			0 AS isDisabledUpline, 
-			1 AS isSyncedUpline,
+			0 AS isDisabledUpline, 			
 			CAST(CASE WHEN @downlines = 0 THEN 0
 						ELSE ISNULL((	
 								SELECT TOP 1 1  
@@ -208,7 +207,7 @@ BEGIN
 			SET @downlines = 1   
      
 		SELECT pdt.ProductID, pdt.SportType, pdt.BetType,  
-			CASE WHEN stt.CustID IS NULL THEN 0 ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) END as IsSync,  
+			
 			CAST(CASE WHEN stt.CustID IS NULL OR (@IsIMBC = 0 AND pdt.ProductID = 20) THEN 1 
 					ELSE (CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0 THEN 0 ELSE 1 END) END AS BIT) AS isHidden,   
 			CAST(CASE WHEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsHidden, PSP.bitmapOrder))=0 THEN 0 ELSE 1 END AS BIT) AS isHiddenUpline, 
@@ -223,7 +222,7 @@ BEGIN
 								), 0) END AS IsDisabledDownline,  
 			  
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) as IsDisabledUpline,  
-			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) as IsSyncedUpline,  
+			
 			CAST(CASE WHEN @downlines = 0 THEN 0
 						ELSE ISNULL((	
 								SELECT TOP 1 1  
@@ -249,7 +248,7 @@ BEGIN
 			SET @downlines = 1   
      
 		SELECT pdt.ProductID, pdt.SportType, pdt.BetType,  
-			CASE WHEN stt.CustID IS NULL THEN 0 ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) END as IsSync, 
+			
 			CAST(CASE WHEN stt.CustID IS NULL OR (@IsIMBC = 0 AND pdt.ProductID = 20) THEN 1 
 						ELSE (CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0 THEN 0 ELSE 1 END) END AS BIT) AS isHidden,    
 			CAST(CASE WHEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsHidden, PSP.bitmapOrder))=0 THEN 0 ELSE 1 END AS BIT) AS isHiddenUpline,  
@@ -262,8 +261,7 @@ BEGIN
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1  
 									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(cps_temp.bitmapHasSynced, PSP.bitmapOrder)) = 1  
 								), 0) END AS IsDisabledDownline, 			
-			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,  
-			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) AS IsSyncedUpline,  
+			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,  			
 			CAST(CASE WHEN @downlines = 0 THEN 0
 						ELSE ISNULL((	
 								SELECT TOP 1 1  
@@ -286,14 +284,13 @@ BEGIN
 	ELSE IF @RoleID = 1  
 	BEGIN  
 		SELECT pdt.ProductID, pdt.SportType, pdt.BetType,  
-			CASE WHEN stt.CustID IS NULL THEN 0 ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) END as IsSync,  
+			
 			CAST(CASE WHEN stt.CustID IS NULL OR (@IsIMBC = 0 AND pdt.ProductID = 20) THEN 1 
 					ELSE (CASE WHEN (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0 THEN 0 ELSE 1 END) END AS BIT) AS isHidden,    
 			CAST(CASE WHEN (SELECT ISNULL(value,1) FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsHidden, PSP.bitmapOrder))=0 THEN 0 ELSE 1 END AS BIT) AS isHiddenUpline,   
 			CASE WHEN stt.CustID IS NULL THEN 1 ELSE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) END AS isDisabled,  
 			0 AS IsDisabledDownline,			
 			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabledUpline,  
-			(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt_UPLINE.bitmapHasSynced, PSP.bitmapOrder)) as IsSyncedUpline,  
 			0 As HasDownline  ,
 			pdt.GroupID
 		FROM #ProductSettingDetail pdt WITH (NOLOCK)  

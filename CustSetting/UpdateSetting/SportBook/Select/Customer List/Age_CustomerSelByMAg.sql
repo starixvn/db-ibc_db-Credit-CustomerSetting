@@ -30,6 +30,7 @@ AS
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 		- 20240812@Tacy: Remove linked-server/cross-db on NAP_UserControl [redmineID: #208402]
 		- 20240917@Elodie: Tuning sp [redmine: #210892]
+		- 20241022@Johnson: remove MyanmarOdds [redmine: #201396]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -232,8 +233,7 @@ BEGIN
 		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 7 THEN cda.Discount END) AS 'GroupC'
 		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 8 THEN cda.Discount END) AS 'GroupD'
 		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 5 THEN cda.Discount END) AS '1X2'
-		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 4 THEN cda.Discount END) AS 'OthersComm'
-		,	MAX(CASE WHEN cda.SportType = 2 AND cda.BetType = 1 THEN cda.Discount END) AS 'MyanmarOdds'
+		,	MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 4 THEN cda.Discount END) AS 'OthersComm'		
 		FROM CustDiscount3rd_Agent cda WITH (NOLOCK)
 		WHERE cda.custid IN (SELECT custid FROM #customer)
 		AND cda.SportType IN (1,2)
@@ -260,10 +260,7 @@ BEGIN
 			cda.GroupD AS groupd, 
 			cda.OthersComm AS discountcs,	
 			cda.[1X2] AS discount1x2,
-			-- MyanmarOdds
-			CASE WHEN ISNULL(cda.MyanmarOdds,0) = 0 THEN 0 ELSE 1 END AS IsMyanmarOdds,
-			ISNULL(cda.MyanmarOdds,0) AS discountMyanmarOdds,
-					
+								
 			ctm.currency,	
 			ctm.matchlimit,
 			ctm.virtualmultiplier-1 as VirtualMultiplier,
