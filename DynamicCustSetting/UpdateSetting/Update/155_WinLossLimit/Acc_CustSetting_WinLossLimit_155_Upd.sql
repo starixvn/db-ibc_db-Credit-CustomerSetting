@@ -22,7 +22,7 @@ AS
 	Revisions:
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
-
+	- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 	- @Limit:
 		22: WinLossLimit
@@ -245,6 +245,7 @@ BEGIN
 			SET main.MaxWinLimit = tmp.MaxWinLimit
 				, main.IsAutoReset = tmp.IsAutoReset
 				, main.MaxLossLimit = tmp.MaxLossLimit
+				, RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 			WHERE main.custid = @CustID
@@ -269,6 +270,7 @@ BEGIN
 		SET main.MaxWinLimit = tmp.MaxWinLimit
 			, main.IsAutoReset = tmp.IsAutoReset
 			, main.MaxLossLimit = tmp.MaxLossLimit
+			, RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustWinLossLimit_Agent main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID

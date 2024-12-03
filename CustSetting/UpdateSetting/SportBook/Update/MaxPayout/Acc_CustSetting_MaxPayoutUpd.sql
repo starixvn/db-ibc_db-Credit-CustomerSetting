@@ -22,7 +22,7 @@ AS
 		- 20210518@Winfred: Initial SP  [RedmineID:#154104]
 		- 20210813@Eden: no need to update downlines and write indirect log when not affected [RedmineID:#160135]
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
-
+		- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 	@MaxPayoutLimit:
 		'[
@@ -217,6 +217,7 @@ BEGIN
 			, main.Combo2		= tmp.Combo2
 			, main.Combo35	= tmp.Combo35
 			, main.ComboOver6	= tmp.ComboOver6
+			, RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustMaxPayoutSetting_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewMaxPayoutTbl tmp
 			ON tmp.SportType	= main.sporttype
@@ -300,6 +301,7 @@ BEGIN
 			, main.Combo2		= tmp.Combo2
 			, main.Combo35	= tmp.Combo35
 			, main.ComboOver6	= tmp.ComboOver6
+			, RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustMaxPayoutSetting_Agent main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewMaxPayoutTbl tmp
 			ON tmp.SportType	= main.sporttype

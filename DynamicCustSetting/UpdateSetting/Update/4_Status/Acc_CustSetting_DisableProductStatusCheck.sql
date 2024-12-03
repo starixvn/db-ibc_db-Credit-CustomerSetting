@@ -19,7 +19,7 @@ AS
 	Revision:
 		- 20200702@Winfred: Validate enabled status of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
-	
+		- 20241219@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -81,7 +81,7 @@ BEGIN
 
 	DELETE t
 	FROM #NewDisableStatTblCheck t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)

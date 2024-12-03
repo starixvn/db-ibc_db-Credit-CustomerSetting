@@ -15,7 +15,7 @@ AS
     Revision:
 		- 20201022@Elodie: Change datatype of PT from tinyint to smallmoney  [Redmine: #143764]
 		- 20220622@Elodie:  Run by batch [RedmineID: #174131]
-
+		- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
     Parameter's Explanation:
 		- @AutoPT
 			<ROOT>
@@ -27,10 +27,10 @@ BEGIN
     SET NOCOUNT ON
     
 --******************************************CHECK EXISTING TABLES*****************************************************    
-    IF dbo.f_CheckRepTable('custinfo') = 0 RETURN  
-    IF dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 0 RETURN  
-    IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 0 RETURN  
-    IF dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 0 RETURN   
+    IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+	RETURN;
     
     --Check Invalid RoleID				            
 	IF @RoleID NOT IN (2,3) RETURN
@@ -75,7 +75,7 @@ BEGIN
 					UNIQUE CLUSTERED (SportType, BetType, IsLive) 
 				)
 	
-	DECLARE @BatchNo INT = 5000, @SettingRow TINYINT
+	DECLARE @BatchNo INT = 2000, @SettingRow TINYINT
 	CREATE TABLE #Agent(custid INT)
 	CREATE TABLE #Member(custid INT)
 	CREATE TABLE #AgentTmpBatch(custid INT)
@@ -186,7 +186,8 @@ BEGIN
 				@_S1 = CASE WHEN @_S1 < 0 THEN 0 ELSE @_S1 END,
 				@_S1 = CASE WHEN @_S1 > 100 THEN 100 ELSE @_S1 END,
 				--Aplly changes
-				cs.SuperPT = @_S1
+				cs.SuperPT = @_S1,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch ci WITH(NOLOCK)
 				INNER JOIN CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) ON ci.CustID = cs.CustID
 				INNER JOIN @_SuperPTTbl scs ON scs.SportType = cs.SportType AND scs.BetType = cs.BetType AND scs.IsLive = cs.IsLive
@@ -228,7 +229,8 @@ BEGIN
 				@_S1 = CASE WHEN @_S1 < 0 THEN 0 ELSE @_S1 END,
 				@_S1 = CASE WHEN @_S1 > 100 THEN 100 ELSE @_S1 END,
 				--Aplly changes
-				cs.SuperPT = @_S1
+				cs.SuperPT = @_S1,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #AgentTmpBatch ci WITH(NOLOCK)
 				INNER JOIN CustPTGroupSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) ON ci.CustID = cs.AgentID
 				INNER JOIN @_SuperPTTbl scs ON scs.SportType = cs.SportType AND scs.BetType = cs.BetType AND scs.IsLive = cs.IsLive
@@ -271,7 +273,8 @@ BEGIN
 				@_M1 = CASE WHEN @_M1 < 0 THEN 0 ELSE @_M1 END,
 				@_M1 = CASE WHEN @_M1 > 100 THEN 100 ELSE @_M1 END,
 				--Aplly changes
-				cs.MasterPT = @_M1
+				cs.MasterPT = @_M1,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch ci WITH(NOLOCK)
 				INNER JOIN CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) ON ci.CustID = cs.CustID
 				INNER JOIN @_MasterPTTbl mcs ON mcs.SportType = cs.SportType AND mcs.BetType = cs.BetType AND mcs.IsLive = cs.IsLive
@@ -302,7 +305,8 @@ BEGIN
 			@_M1 = CASE WHEN @_M1 < 0 THEN 0 ELSE @_M1 END,
 			@_M1 = CASE WHEN @_M1 > 100 THEN 100 ELSE @_M1 END,
 			--Aplly changes
-			cs.MasterPT = @_M1
+			cs.MasterPT = @_M1,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM CustPTGroupSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) 
 			INNER JOIN @_MasterPTTbl mcs ON mcs.SportType = cs.SportType AND mcs.BetType = cs.BetType AND mcs.IsLive = cs.IsLive
 			INNER JOIN @_AgentPTTbl acs ON acs.SportType = cs.SportType AND acs.BetType = cs.BetType AND acs.IsLive = cs.IsLive

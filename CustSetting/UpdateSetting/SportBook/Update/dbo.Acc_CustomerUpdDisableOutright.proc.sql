@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableOutright]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_xnap,wsv_alp" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableOutright]
 	@CustID int,
 	@DisableOutright bit,	
 	@SubAccID int = 0, --Sub-AccountID
@@ -26,6 +27,7 @@ Revisions:
 	- 20121206@Scott : Check Allowed downlines during peak hour at weekend  
 	- 20130218@Dan: Change linked server DB053 to DBAGE; Write more log on DBTXN server in case of DBLOG server failure
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB)
+	- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 Param's Explanation:
 */
 
@@ -99,8 +101,12 @@ BEGIN
 	return
 END
 
+CREATE TABLE #tblCust (custid INT PRIMARY KEY)
+DECLARE @tmpCust TABLE (custid INT PRIMARY KEY)
 
-update custinfo with (ROWLOCK, UPDLOCK) set DisableOutright = @DisableOutright
+update custinfo with (ROWLOCK, UPDLOCK) 
+set DisableOutright = @DisableOutright,
+	RepUpdateTime = dbo.f_GetDateTime2()
 where custid = @custid
 
 if (@@error <> 0)
@@ -115,45 +121,42 @@ end
 
 if @roleid = 4
 begin
-	update custinfo with (ROWLOCK, UPDLOCK) set DisableOutright = @DisableOutright where srecommend = @custid
-	if (@@error <> 0)
-	begin
-		Select @ErrMsg = 
-					case @Language 
-						when 'E' then 'Update process is unsuccessful !'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-					end	, @ErrCode = 102
-	return
-	end
+	INSERT INTO #tblCust(custid)
+	SELECT custid 
+	FROM custinfo WITH(NOLOCK)
+	WHERE srecommend = @custid
 end
-
-if @roleid = 3
+else if @roleid = 3
 begin
-	update custinfo with (ROWLOCK, UPDLOCK) set DisableOutright = @DisableOutright where mrecommend = @custid
-	if (@@error <> 0)
-	begin
-		Select @ErrMsg = 
-					case @Language 
-						when 'E' then 'Update process is unsuccessful !'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-					end	, @ErrCode = 103
-	return
-	end
-end
-
-if @roleid = 2
+	INSERT INTO #tblCust(custid)
+	SELECT custid 
+	FROM custinfo WITH(NOLOCK)
+	WHERE mrecommend = @custid
+end	
+else if @roleid = 2
 begin
-	update custinfo with (ROWLOCK, UPDLOCK) set DisableOutright = @DisableOutright where recommend = @custid
-	if (@@error <> 0)
-	begin
-		Select @ErrMsg = 
-					case @Language 
-						when 'E' then 'Update process is unsuccessful !'
-						ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-					end	, @ErrCode = 104
-	return
-	end
-end
+	INSERT INTO #tblCust(custid)
+	SELECT custid 
+	FROM custinfo WITH(NOLOCK)
+	WHERE recommend = @custid
+end	
+
+WHILE(1=1)
+BEGIN
+	DELETE TOP (2000) t
+	OUTPUT DELETED.custid INTO @tmpCust(custid)
+	FROM #tblCust t
+	
+	IF @@ROWCOUNT = 0
+		BREAK;
+			
+	update custinfo with (ROWLOCK, UPDLOCK) 
+	set DisableOutright = @DisableOutright, 
+		RepUpdateTime = dbo.f_GetDateTime2()
+	where custid IN (SELECT custid FROM @tmpCust)
+	
+	DELETE @tmpCust
+END	
 
 Declare @LogSPData varchar(8000)
 Select @LogSPData = '<Acc_CustomerUpdDisableOutright CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +
@@ -196,10 +199,3 @@ END CATCH
 
 		
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [wsv_nap]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [wsv_alp]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdDisableOutright] TO vnteam
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableOutright] TO [wsv_xnap]

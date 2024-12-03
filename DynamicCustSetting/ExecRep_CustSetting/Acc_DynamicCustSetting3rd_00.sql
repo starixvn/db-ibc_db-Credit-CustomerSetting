@@ -14,17 +14,18 @@ AS
 		- 20161011@Winnie:  Implement for Loss limit setting type [RedmineID: #65472]
 		- 20220622@Elodie:  Run by batch [RedmineID: #174131]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
     Param's Explanation:
             
 */
 BEGIN
 	SET NOCOUNT ON;
-    -- check existing tables
-
-    IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
+    IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+	)
+	RETURN;
 	
-	DECLARE @BatchNo INT = 5000, @SettingRow TINYINT
+	DECLARE @BatchNo INT = 2000, @SettingRow TINYINT
 	CREATE TABLE #Agent(custid INT)
 	CREATE TABLE #Member(custid INT)
 	CREATE TABLE #AgentTmpBatch(custid INT)
@@ -102,7 +103,8 @@ BEGIN
 				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
 									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
 				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
+									THEN 0 ELSE cwl.IsAutoReset END,
+				RepUpdateTime = dbo.f_GetDateTime2()							
 			FROM dbo.CustWinLossLimit_Agent cwl WITH (ROWLOCK, UPDLOCK)
 				INNER JOIN @NewLimitTbl12 wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
 				INNER JOIN #AgentTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId
@@ -123,7 +125,8 @@ BEGIN
 				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
 									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
 				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
+									THEN 0 ELSE cwl.IsAutoReset END,
+				RepUpdateTime = dbo.f_GetDateTime2()						
 			FROM dbo.CustWinLossLimit_Member cwl WITH (ROWLOCK, UPDLOCK)
 				INNER JOIN @NewLimitTbl12 wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
 				INNER JOIN #MemberTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId
@@ -173,7 +176,8 @@ BEGIN
 				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
 									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
 				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
+									THEN 0 ELSE cwl.IsAutoReset END,
+				RepUpdateTime = dbo.f_GetDateTime2()						
 			FROM dbo.CustWinLossLimit_Agent cwl WITH (ROWLOCK, UPDLOCK)
 				INNER JOIN @NewLimitTbl wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
 				INNER JOIN #AgentTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId
@@ -195,7 +199,8 @@ BEGIN
 				MaxLossLimit = CASE WHEN (wl.MaxLossLimit > 0 AND (cwl.MaxLossLimit = 0 OR cwl.MaxLossLimit > wl.MaxLossLimit)) 
 									THEN wl.MaxLossLimit ELSE cwl.MaxLossLimit END,
 				IsAutoReset = CASE WHEN wl.IsAutoReset = 0 
-									THEN 0 ELSE cwl.IsAutoReset END			
+									THEN 0 ELSE cwl.IsAutoReset END,
+				RepUpdateTime = dbo.f_GetDateTime2()					
 			FROM dbo.CustWinLossLimit_Member cwl WITH (ROWLOCK, UPDLOCK)
 				INNER JOIN @NewLimitTbl wl ON cwl.sporttype = wl.sporttype AND cwl.bettype = wl.bettype
 				INNER JOIN #MemberTmpBatch c WITH(NOLOCK) ON cwl.CustId = c.CustId

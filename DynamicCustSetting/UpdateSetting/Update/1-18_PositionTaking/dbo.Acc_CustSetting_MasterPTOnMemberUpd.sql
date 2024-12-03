@@ -29,6 +29,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMemberUpd]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 			- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
+			- 20241212@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		Parameter's Explanation:
 			@PT =<ROOT>
 					<PT SportType="1" BetType="1" IsLive="0" MasterPT="50" AutoMasterPT="0" IsAutoMasterPT="0" />
@@ -932,6 +933,7 @@ BEGIN
 			,cs.IsAutoMasterPT = b.IsAutoMasterPT
 			,cs.AutoSuperPT = b.AutoSuperPT
 			,cs.AutoMasterPT = b.AutoMasterPT
+			,RepUpdateTime = dbo.f_GetDateTime2()
 		FROM CustPTSetting3rd_Member cs WITH(UPDLOCK,ROWLOCK)
 			INNER JOIN @NewPT b ON cs.sporttype = b.SportType	
 									AND cs.bettype = b.BetType
@@ -963,7 +965,8 @@ BEGIN
 				cs.isAutoSuperPT = b.isAutoSuperPT,
 				cs.IsAutoMasterPT = b.IsAutoMasterPT,
 				cs.AutoSuperPT = b.AutoSuperPT,
-				cs.AutoMasterPT = b.AutoMasterPT
+				cs.AutoMasterPT = b.AutoMasterPT,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustPTGroupSetting3rd_Member cs WITH(ROWLOCK,UPDLOCK)
 				INNER JOIN @NewPT b ON  b.SportType=cs.SportType
 										AND b.BetType=cs.BetType
@@ -1011,6 +1014,7 @@ BEGIN
 					   ,[AgentPT]
 					   ,[AutoSuperPT]
 					   ,[AutoMasterPT]
+					   ,RepUpdateTime
 					)
 				SELECT
 						@CustID,
@@ -1023,7 +1027,8 @@ BEGIN
 						grpt.MasterPT,
 						grpt.AgentPT,
 						grpt.AutoSuperPT,
-						grpt.AutoMasterPT
+						grpt.AutoMasterPT,
+						dbo.f_GetDateTime2()
 				FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
 					LEFT JOIN dbo.CustPTSetting3rd_Member mempt ON mempt.CustID = @CustID
 																	AND grpt.SportType=mempt.SportType
@@ -1039,7 +1044,8 @@ BEGIN
 					cs.isAutoSuperPT = b.isAutoSuperPT,
 					cs.IsAutoMasterPT = b.IsAutoMasterPT,
 					cs.AutoSuperPT = b.AutoSuperPT,
-					cs.AutoMasterPT = b.AutoMasterPT
+					cs.AutoMasterPT = b.AutoMasterPT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustPTSetting3rd_Member cs WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewPT b ON  b.SportType=cs.SportType
 											AND b.BetType=cs.BetType
@@ -1057,7 +1063,8 @@ BEGIN
 		
 				---Update setting mode
 				UPDATE dbo.CustSettingMode3rd WITH(ROWLOCK,UPDLOCK)
-				SET IsGrouped = 0
+				SET IsGrouped = 0,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				WHERE CustID = @CustID
 			END
 		END

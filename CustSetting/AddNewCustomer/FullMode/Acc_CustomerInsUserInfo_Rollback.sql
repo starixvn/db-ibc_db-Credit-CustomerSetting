@@ -26,7 +26,7 @@ BEGIN
 	FROM custinfo c WITH (ROWLOCK)  
 	WHERE custid = @CustID
 	
-	DELETE 
+	DELETE c
 	OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
 	INTO customer_Del_InHouse(CustID,RepUpdateTime)
 	FROM customer c WITH (ROWLOCK)  

@@ -22,6 +22,7 @@
 			- 20130218@Dan: Write more log on DBTXN server in case of DBLOG server failure
 			- 20130507@Elodie: Correct the content of error message (MsgID=60021)
 			- 20220427@Tacy: Add check belonging - [Redmine:171928]
+			- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
@@ -77,54 +78,54 @@ SET NOCOUNT ON
 	END
 	
 	UPDATE custinfo WITH(UPDLOCK,ROWLOCK)
-	SET DoubleCommLosing = @DoubleCommLosing
+	SET DoubleCommLosing = @DoubleCommLosing,
+		RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE custid = @custid
 	
+	CREATE TABLE #tblCust (custid INT PRIMARY KEY)
+	DECLARE @tmpCust TABLE (custid INT PRIMARY KEY)
+
 	IF @DoubleCommLosing = 0
-	BEGIN
-		BEGIN TRY
-			IF @roleid = 4
+	BEGIN		
+		IF @roleid = 4
+		BEGIN
+			INSERT INTO #tblCust(custid)
+			SELECT custid 
+			FROM custinfo WITH(NOLOCK)
+			WHERE srecommend = @custid
+		END
+		ELSE IF @roleid = 3
+		BEGIN
+			INSERT INTO #tblCust(custid)
+			SELECT custid 
+			FROM custinfo WITH(NOLOCK)
+			WHERE mrecommend = @custid
+		END	
+		ELSE IF @roleid = 2
+		BEGIN
+			INSERT INTO #tblCust(custid)
+			SELECT custid 
+			FROM custinfo WITH(NOLOCK)
+			WHERE recommend = @custid
+		END	
+		
+		BEGIN TRY				
+			WHILE(1=1)
 			BEGIN
-				UPDATE custinfo WITH(UPDLOCK,ROWLOCK)
-				SET DoubleCommLosing = @DoubleCommLosing
-				WHERE srecommend = @custid
+				DELETE TOP (2000) t
+				OUTPUT DELETED.custid INTO @tmpCust(custid)
+				FROM #tblCust t
 				
-				IF @@ERROR <> 0
-				BEGIN
-					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Update process is unsuccessful !'
-											ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language) END,
-							@ErrCode = 100
-					RETURN
-				END
-			END
-			IF @roleid = 3
-			BEGIN
-				UPDATE custinfo WITH(UPDLOCK,ROWLOCK)
-				SET DoubleCommLosing = @DoubleCommLosing
-				WHERE mrecommend = @custid
+				IF @@ROWCOUNT = 0
+					BREAK;
+						
+				UPDATE custinfo with (ROWLOCK, UPDLOCK) 
+				SET DoubleCommLosing = @DoubleCommLosing, 
+					RepUpdateTime = dbo.f_GetDateTime2()
+				WHERE custid IN (SELECT custid FROM @tmpCust)
 				
-				IF @@ERROR <> 0
-				BEGIN
-					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Update process is unsuccessful !'
-											ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language) END,
-							@ErrCode = 101
-					RETURN
-				END
-			END
-			IF @roleid = 2
-			BEGIN
-				UPDATE custinfo WITH(UPDLOCK,ROWLOCK)
-				SET DoubleCommLosing = @DoubleCommLosing
-				WHERE recommend = @custid
-				
-				IF @@ERROR <> 0
-				BEGIN
-					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Update process is unsuccessful !'
-											ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language) END,
-							@ErrCode = 102
-					RETURN
-				END
-			END
+				DELETE @tmpCust
+			END	
 			SELECT @UpdatedDownlines = 1
 		END TRY
 		BEGIN CATCH

@@ -55,13 +55,18 @@ AS
 		- 202300801@Helios: Customer Setting - Simplify Live Casino Customer Setting [RedmineID: #189389]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
-
+		- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
 
 BEGIN
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+	)
+	RETURN;
+				
 	SELECT @ErrCode = 0
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT
 
@@ -91,20 +96,13 @@ BEGIN
 	--Get site/currency
 	SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID
 	SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
-
-	IF dbo.f_CheckRepTable('ProductStatusProfile') = 1
-	BEGIN
-		INSERT INTO #ProductSettingDetail_tmp00(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder)
-		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder
-		FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@_SiteID,@_Currency)   
-	END
-
-	if (dbo.f_CheckRepTable('CustProductStatus') = 1
-		AND dbo.f_CheckRepTable('ProductStatusProfile') = 1
-		AND dbo.f_CheckRepTable('ProductStatusSiteCurrency') = 1
-	)
+	
+	INSERT INTO #ProductSettingDetail_tmp00(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+		,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder)
+	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder
+	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@_SiteID,@_Currency)   
+		
 	BEGIN
 		DECLARE @xmlStrDisabled XML
 		DECLARE @xmlStrHidden XML
@@ -208,14 +206,14 @@ BEGIN
 						)
 				END
 						
-				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo)
+				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo,RepUpdateTime)
 				SELECT	@CustID
 						, (select bitmap from dbo.f_GenerateProductStatus_multiple (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
 						, (select bitmap from dbo.f_GenerateProductStatus_multiple (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, CONVERT(VARCHAR(MAX),@xmlStrHidden)))
 						, (select bitmap from dbo.f_GenerateProductStatus_multiple (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, CONVERT(VARCHAR(MAX),@xmlStrSync)))
 						, 0
 						, 0
-						
+						,dbo.f_GetDateTime2()
 			END	ELSE IF @RoleID IN (3,2,1)
 			BEGIN
 				--Get from Super
@@ -232,8 +230,8 @@ BEGIN
 				ELSE IF @RoleID = 1
 					SET @UplineID = @AgentID		
 			
-				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo)
-				SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced, cs.SuspendInfo,cs.CloseInfo
+				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo,RepUpdateTime)
+				SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced, cs.SuspendInfo,cs.CloseInfo,dbo.f_GetDateTime2()
 				FROM [dbo].[CustProductStatus] cs WITH (NOLOCK)
 				WHERE cs.CustID = @UplineID
 				
@@ -244,7 +242,9 @@ BEGIN
 					WHERE custid = @copyFromCustID
 					
 					UPDATE CustProductStatus WITH(UPDLOCK,ROWLOCK)
-					SET suspendInfo = @CopySuspendInfo, CloseInfo = @CopyCloseInfo
+					SET suspendInfo = @CopySuspendInfo, 
+						CloseInfo = @CopyCloseInfo,
+						RepUpdateTime = dbo.f_GetDateTime2()
 					WHERE custid = @custid
 				END
 			END
@@ -252,7 +252,11 @@ BEGIN
 		BEGIN CATCH
 			SELECT @ErrCode = 4
 
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
+			DELETE FROM CustProductStatus 
+			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+			INTO CustProductStatus_Del_Inhouse(custid,RepUpdateTime)
+			WHERE CustID = @CustID
+						
 			RETURN
 		END CATCH
 
@@ -326,40 +330,21 @@ BEGIN
 				UPDATE cs
 				SET bitmapIsDisabled = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 					bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-					bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
+					bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync))),
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
 				WHERE cs.CustID = @CustID     
 
 			END TRY
 			BEGIN CATCH
 				SELECT @ErrCode = 11
-
-				DELETE FROM CustProductStatus WHERE CustID = @CustID
 				RETURN
 			END CATCH
 		END
 
 		DROP TABLE #SportBettypeFilter4
 		DROP TABLE #SportBettypeFilter11
-	END
-
-	if(dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1
-		AND dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 1
-		AND dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 1
-		AND dbo.f_CheckRepTable('CustSettingMode3rd') = 1
-		AND dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 1
-		AND dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 1
-		AND dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1
-		AND dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1
-		AND dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 1
-		AND dbo.f_CheckRepTable('CustWinLossLimit_Member') = 1
-		AND dbo.f_CheckRepTable('ProductStatusProfile') = 1 
-		AND	dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1
-		AND	dbo.f_CheckRepTable('CustStakeLevel_Member') = 1
-		AND	dbo.f_CheckRepTable('CustBetSetting_Agent') = 1
-		AND	dbo.f_CheckRepTable('CustBetSetting_Member') = 1
-	   )
-	 BEGIN
+	
 		CREATE TABLE #ProductProfile(
 			[SettingType] [smallint] NOT NULL,
 			[SportType] [smallint] NOT NULL,
@@ -487,7 +472,8 @@ BEGIN
 				   ,[IsAutoSuperPT]
 				   ,[AutoSuperPT]
 				   ,[MinPT]
-				   ,[MaxPT])
+				   ,[MaxPT]
+				   ,RepUpdateTime)
 				SELECT 
 					@Custid
 					,dtl.SportType
@@ -495,6 +481,7 @@ BEGIN
 					,dtl.IsLive
 					,0,0,0,0,0,0,0,0
 					,100 --dtl.MaxPT
+					,dbo.f_GetDateTime2()
 				FROM #ProductSettingDetail_tmp00 dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
 					INNER JOIN #ProductProfile fil ON ft.SettingType = fil.SettingType AND ft.SportType = fil.SportType AND ft.BetType = fil.BetType AND ft.IsLive = fil.IsLive
@@ -520,7 +507,8 @@ BEGIN
 				   ,[IsAutoSuperPT]
 				   ,[AutoSuperPT]
 				   ,[MinPT]
-				   ,[MaxPT])
+				   ,[MaxPT]
+				   ,RepUpdateTime)
 				SELECT 
 					@CustID
 					,dtl.SportType
@@ -528,6 +516,7 @@ BEGIN
 					,dtl.IsLive
 					,spt.SuperPT,0,0,0,0,0,0,0
 					,100 --dtl.MaxPT
+					,dbo.f_GetDateTime2()
 				FROM #ProductSettingDetail_tmp00 dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
 					INNER JOIN CustPTSetting3rd_Agent spt ON dtl.SportType = spt.SportType AND dtl.BetType = spt.BetType AND dtl.IsLive = spt.IsLive
@@ -554,11 +543,13 @@ BEGIN
 				   ,[IsAutoSuperPT]
 				   ,[AutoSuperPT]
 				   ,[MinPT]
-				   ,[MaxPT])
+				   ,[MaxPT]
+				   ,RepUpdateTime)
 				SELECT 
 				@custid,dtl.SportType,dtl.BetType,dtl.IsLive,
 					0,mpt.MasterPT,0,0,0,0,0,0
 					,100 --dtl.MaxPT
+					,dbo.f_GetDateTime2()
 				FROM #ProductSettingDetail_tmp00 dtl WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter1 ft ON dtl.SportType = ft.SportType AND dtl.BetType = ft.BetType AND dtl.IsLive = ft.IsLive AND dtl.SettingType = ft.SettingType
 					INNER JOIN CustPTSetting3rd_Agent mpt ON dtl.SportType = mpt.SportType AND dtl.BetType = mpt.BetType AND dtl.IsLive = mpt.IsLive
@@ -605,7 +596,7 @@ BEGIN
 					, IsAutoMPT
 					, AutoMPT
 					, IsAutoSPT
-					, AutoSPT
+					, AutoSPT					
 					)
 				SELECT @CustID
 					, acs.SportType
@@ -617,7 +608,7 @@ BEGIN
 					, 0
 					, 0
 					, 0
-					, 0
+					, 0					
 				FROM dbo.CustPTSetting3rd_Agent acs WITH (NOLOCK)
 					INNER JOIN dbo.CustPTSetting3rd_Agent mcs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND acs.islive = mcs.islive AND mcs.custid = @MasterID
 					INNER JOIN #SportBettypeFilter1 ft ON mcs.SportType = ft.SportType AND mcs.BetType = ft.BetType AND mcs.IsLive = ft.IsLive
@@ -735,7 +726,7 @@ BEGIN
 					-- done apply all rule, then update to destination table
 					,cs.AgentPT = @a1
 					,cs.MasterPT = @m1
-					,cs.SuperPT = @s1								       
+					,cs.SuperPT = @s1										
 				FROM @MemberPTTbl cs 
 					INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK) 
 						ON @AgentID = acs.custid 
@@ -788,10 +779,11 @@ BEGIN
 					   ,[IsAutoMasterPT]
 					   ,[AutoMasterPT]
 					   ,[IsAutoSuperPT]
-					   ,[AutoSuperPT])
+					   ,[AutoSuperPT]
+					   ,RepUpdateTime)
 					SELECT 
 						@AgentID,SportType,BetType,Islive,
-						SuperPT,MasterPT,AgentPT,IsAutoMPT,AutoMPT,IsAutoSPT,AutoSPT
+						SuperPT,MasterPT,AgentPT,IsAutoMPT,AutoMPT,IsAutoSPT,AutoSPT,dbo.f_GetDateTime2()
 					FROM @MemberPTTbl t
 					WHERE NOT EXISTS(	SELECT TOP 1 1 
 										FROM dbo.CustPTGroupSetting3rd_Member WITH(NOLOCK)  
@@ -850,9 +842,10 @@ BEGIN
 							,[IsAutoMasterPT]
 							,[AutoMasterPT]
 							,[IsAutoSuperPT]
-							,[AutoSuperPT])
+							,[AutoSuperPT]
+							,RepUpdateTime)
 					SELECT @CustID,SportType,BetType,Islive,
-						SuperPT,MasterPT,AgentPT,IsAutoMPT,AutoMPT,IsAutoSPT,AutoSPT
+						SuperPT,MasterPT,AgentPT,IsAutoMPT,AutoMPT,IsAutoSPT,AutoSPT, dbo.f_GetDateTime2()
 					FROM @memberPTTbl
 
 					--If this member's PT setting are diffrent from Group PT Setting
@@ -867,7 +860,8 @@ BEGIN
 							,[IsAutoMasterPT]
 							,[AutoMasterPT]
 							,[IsAutoSuperPT]
-							,[AutoSuperPT])
+							,[AutoSuperPT]
+							,RepUpdateTime)
 					SELECT @CustID
 						,[SportType]
 						,[BetType]
@@ -879,6 +873,7 @@ BEGIN
 						,[AutoMasterPT]
 						,[IsAutoSuperPT]
 						,[AutoSuperPT]
+						, dbo.f_GetDateTime2()
 					FROM CustPTGroupSetting3rd_Member t WITH(NOLOCK)
 					WHERE AgentID = @AgentID
 						AND NOT EXISTS( SELECT TOP 1 1 
@@ -887,9 +882,10 @@ BEGIN
 										)
 
 					IF @IsGroupPT = 1
-					BEGIN
+					BEGIN	
 						 UPDATE t
-						 SET t.IsGrouped = 0
+						 SET t.IsGrouped = 0,
+							RepUpdateTime = dbo.f_GetDateTime2()
 						 FROM CustSettingMode3rd t WITH(ROWLOCK,UPDLOCK)
 						 WHERE CustID = @CustID
 							AND IsGrouped = 1
@@ -899,16 +895,6 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 1
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID
-			END
 			RETURN
 		END CATCH
 		/********************************************* Bet Limit : SettingType = 2 ****************************************/
@@ -1049,19 +1035,7 @@ BEGIN
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 2
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID		
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-			END
+			SELECT @ErrCode = 2			
 			RETURN
 		END CATCH
 	
@@ -1089,12 +1063,14 @@ BEGIN
 					   ([CustID]
 					   ,[SportType]
 					   ,[BetType]
-					   ,[Discount])
+					   ,[Discount]
+					   ,RepUpdateTime)
 					SELECT 
 						@CustID
 						,ft.SportType
 						,ft.BetType
 						,0 -- 0 zero by default
+						,dbo.f_GetDateTime2()
 					FROM #SportBettypeFilter3 ft 
 						INNER JOIN #ProductProfile fil ON ft.SettingType = fil.SettingType AND ft.SportType = fil.SportType AND ft.BetType = fil.BetType 
 				END
@@ -1105,12 +1081,14 @@ BEGIN
 				   ([CustID]
 				   ,[SportType]
 				   ,[BetType]
-				   ,[Discount])
+				   ,[Discount]
+				   ,RepUpdateTime)
 				SELECT 
 					@CustID
 					,dc.SportType
 					,dc.BetType
 					,0 -- 0 zero by default
+					,dbo.f_GetDateTime2()
 				FROM CustDiscount3rd_Agent dc WITH(NOLOCK) 
 					INNER JOIN #SportBettypeFilter3 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType
 				WHERE CustID = @SuperID
@@ -1121,12 +1099,14 @@ BEGIN
 				   ([CustID]
 				   ,[SportType]
 				   ,[BetType]
-				   ,[Discount])
+				   ,[Discount]
+				   ,RepUpdateTime)
 				SELECT 
 					@CustID
 					,dc.SportType
 					,dc.BetType
 					,0 -- 0 zero by default
+					,dbo.f_GetDateTime2()
 				FROM CustDiscount3rd_Agent dc WITH(NOLOCK) 
 					INNER JOIN #SportBettypeFilter3 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType
 				WHERE CustID = @MasterID
@@ -1144,7 +1124,8 @@ BEGIN
 				   ,[PlayerDiscount]
 				   ,[AgentDiscount]
 				   ,[MasterDiscount]
-				   ,[SuperDiscount])
+				   ,[SuperDiscount]
+				   ,RepUpdateTime)
 				SELECT 
 					@CustID
 					,acs.SportType
@@ -1153,6 +1134,7 @@ BEGIN
 					,acs.Discount
 					,mcs.Discount
 					,scs.Discount
+					,dbo.f_GetDateTime2()
 				FROM dbo.CustDiscount3rd_Agent acs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter3 f ON acs.SportType = f.SportType AND acs.BetType = f.BetType
 					INNER JOIN dbo.CustDiscount3rd_Agent mcs WITH (NOLOCK) ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype AND mcs.custid = @MasterID
@@ -1161,21 +1143,7 @@ BEGIN
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 3
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID	
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-			END
+			SELECT @ErrCode = 3			
 			RETURN
 		END CATCH
 		
@@ -1198,12 +1166,14 @@ BEGIN
 					   ([CustID]
 					   ,[SportType]
 					   ,[BetType]
-					   ,[Discount])
+					   ,[Discount]
+					   ,RepUpdateTime)
 					SELECT 
 						@CustID
 						,ft.SportType
 						,ft.BetType
 						,0 -- 0 zero by default
+						,dbo.f_GetDateTime2()
 					FROM #SportBettypeFilter5 ft 
 						INNER JOIN #ProductProfile fil ON ft.SettingType = fil.SettingType AND ft.SportType = fil.SportType AND ft.BetType = fil.BetType 
 				END
@@ -1214,12 +1184,14 @@ BEGIN
 				   ([CustID]
 				   ,[SportType]
 				   ,[BetType]
-				   ,[Discount])
+				   ,[Discount]
+				   ,RepUpdateTime)
 				SELECT 
 					@CustID
 					,dc.SportType
 					,dc.BetType
 					,0 -- 0 zero by default
+					,dbo.f_GetDateTime2()
 				FROM CustDiscount3rd_Agent dc WITH(NOLOCK)
 					INNER JOIN #SportBettypeFilter5 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType 
 				WHERE CustID = @SuperID
@@ -1230,12 +1202,14 @@ BEGIN
 				   ([CustID]
 				   ,[SportType]
 				   ,[BetType]
-				   ,[Discount])
+				   ,[Discount]
+				   ,RepUpdateTime)
 				SELECT 
 					@CustID
 					,dc.SportType
 					,dc.BetType
 					,0 -- 0 zero by default
+					,dbo.f_GetDateTime2()
 				FROM CustDiscount3rd_Agent dc WITH(NOLOCK) 
 					INNER JOIN #SportBettypeFilter5 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType 
 				WHERE CustID = @MasterID
@@ -1253,7 +1227,8 @@ BEGIN
 				   ,[PlayerDiscount]
 				   ,[AgentDiscount]
 				   ,[MasterDiscount]
-				   ,[SuperDiscount])
+				   ,[SuperDiscount]
+				   ,RepUpdateTime)
 				SELECT 
 					@CustID
 					,acs.SportType
@@ -1262,6 +1237,7 @@ BEGIN
 					,acs.Discount
 					,mcs.Discount
 					,scs.Discount
+					,dbo.f_GetDateTime2()
 				FROM dbo.CustDiscount3rd_Agent acs WITH (NOLOCK)
 					INNER JOIN dbo.CustDiscount3rd_Agent mcs WITH (NOLOCK)
 								ON acs.sporttype = mcs.sporttype
@@ -1277,20 +1253,7 @@ BEGIN
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 5
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID	
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-			END
+			SELECT @ErrCode = 5			
 			RETURN
 		END CATCH
 
@@ -1324,7 +1287,8 @@ BEGIN
 					   ,[BetType]
 					   ,[MaxWinLimit]
 					   ,[MaxLossLimit]
-					   ,[IsAutoReset])
+					   ,[IsAutoReset]
+					   ,RepUpdateTime)
 					SELECT
 						@CustID
 						,ft.SportType
@@ -1332,6 +1296,7 @@ BEGIN
 						,0
 						,gs.DefaultLossLimit
 						,1
+						,dbo.f_GetDateTime2()
 					FROM #SportBettypeFilter6 ft 
 						INNER JOIN #ProductProfile fil ON ft.SettingType = fil.SettingType AND ft.SportType = fil.SportType AND ft.BetType = fil.BetType 
 						INNER JOIN LossLimit_GlobalSetting gs ON gs.ProductId = ft.ProductID
@@ -1350,7 +1315,8 @@ BEGIN
 					,[BetType]
 					,[MaxWinLimit]
 					,[MaxLossLimit]
-					,[IsAutoReset])
+					,[IsAutoReset]
+					,RepUpdateTime)
 				SELECT
 					@CustID
 					,cs.SportType
@@ -1358,6 +1324,7 @@ BEGIN
 					,MaxWinLimit
 					,MaxLossLimit
 					,IsAutoReset
+					,dbo.f_GetDateTime2()
 				FROM dbo.CustWinLossLimit_Agent cs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter6 f ON f.Bettype = cs.BetType AND f.SportType = cs.SportType
 				WHERE custid = @SuperID
@@ -1373,7 +1340,8 @@ BEGIN
 					,[BetType]
 					,[MaxWinLimit]
 					,[MaxLossLimit]
-					,[IsAutoReset])
+					,[IsAutoReset]
+					,RepUpdateTime)
 				SELECT
 					@CustID
 					,cs.SportType
@@ -1381,6 +1349,7 @@ BEGIN
 					,MaxWinLimit
 					,MaxLossLimit
 					,IsAutoReset
+					,dbo.f_GetDateTime2()
 				FROM dbo.CustWinLossLimit_Agent cs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter6 f ON f.Bettype = cs.BetType AND f.SportType = cs.SportType
 				WHERE custid = @MasterID
@@ -1396,7 +1365,8 @@ BEGIN
 					,[BetType]
 					,[MaxWinLimit]
 					,[MaxLossLimit]
-					,[IsAutoReset])
+					,[IsAutoReset]
+					,RepUpdateTime)
 				SELECT
 					@CustID
 					,cs.SportType
@@ -1404,29 +1374,14 @@ BEGIN
 					,MaxWinLimit
 					,MaxLossLimit
 					,IsAutoReset
+					,dbo.f_GetDateTime2()
 				FROM dbo.CustWinLossLimit_Agent cs WITH (NOLOCK)
 					INNER JOIN #SportBettypeFilter6 f ON f.Bettype = cs.BetType AND f.SportType = cs.SportType
 				WHERE custid = @AgentID
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 6
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID	
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-			END
+			SELECT @ErrCode = 6			
 			RETURN
 		END CATCH
 
@@ -1461,8 +1416,8 @@ BEGIN
 			IF	@RoleID = 4
 			BEGIN
 				INSERT INTO	dbo.CustStakeLevel_Agent
-					(	CustID , SportType    , BetType    , StakeLevelList)
-				SELECT	@CustID, sbf.SportType, sbf.Bettype, LEFT(sl.list, LEN(sl.list) - 1)
+					(	CustID , SportType    , BetType    , StakeLevelList, RepUpdateTime)
+				SELECT	@CustID, sbf.SportType, sbf.Bettype, LEFT(sl.list, LEN(sl.list) - 1), dbo.f_GetDateTime2() 
 				FROM	#SportBettypeFilter7 AS sbf
 					INNER JOIN #ProductProfile ps ON ps.BetType = sbf.Bettype AND ps.SportType = sbf.SportType AND ps.SettingType = sbf.SettingType
 					CROSS APPLY (
@@ -1479,8 +1434,8 @@ BEGIN
 			ELSE IF	@RoleID = 3
 			BEGIN
 			    INSERT INTO	dbo.CustStakeLevel_Agent
-					(	CustID , SportType     , BetType     , StakeLevelList     )
-				SELECT	@CustID, csla.SportType, csla.BetType, csla.StakeLevelList
+					(	CustID , SportType     , BetType     , StakeLevelList, RepUpdateTime )
+				SELECT	@CustID, csla.SportType, csla.BetType, csla.StakeLevelList, dbo.f_GetDateTime2()
 				FROM	dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
 					INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
 				WHERE	csla.CustID = @SuperID
@@ -1488,8 +1443,8 @@ BEGIN
 			ELSE IF	@RoleID = 2
 			BEGIN
 			    INSERT INTO	dbo.CustStakeLevel_Agent
-					(	CustID , SportType     , BetType     , StakeLevelList     )
-				SELECT	@CustID, csla.SportType, csla.BetType, csla.StakeLevelList
+					(	CustID , SportType     , BetType     , StakeLevelList, RepUpdateTime)
+				SELECT	@CustID, csla.SportType, csla.BetType, csla.StakeLevelList, dbo.f_GetDateTime2()
 				FROM	dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
 					INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
 				WHERE	csla.CustID = @MasterID
@@ -1497,8 +1452,8 @@ BEGIN
 			ELSE IF	@RoleID = 1
 			BEGIN
 			    INSERT INTO	dbo.CustStakeLevel_Member
-					(	CustID , SportType     , BetType     , StakeLevelList                 , LastUpdated)
-				SELECT	@CustID, csla.SportType, csla.BetType, ISNULL(sr.LowestStakeLevel, ''), GETDATE()
+					(	CustID , SportType     , BetType     , StakeLevelList                 , LastUpdated, RepUpdateTime)
+				SELECT	@CustID, csla.SportType, csla.BetType, ISNULL(sr.LowestStakeLevel, ''), GETDATE(), dbo.f_GetDateTime2()
 				FROM	dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
 					INNER JOIN #SportBettypeFilter7 f ON f.Bettype = csla.BetType AND f.SportType = csla.SportType
 					OUTER APPLY (
@@ -1515,25 +1470,7 @@ BEGIN
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 7
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID	
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
-				DELETE FROM dbo.CustStakeLevel_Member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-				DELETE FROM dbo.CustStakeLevel_Agent WHERE CustID = @CustID
-			END
+			SELECT @ErrCode = 7			
 			RETURN
 		END CATCH
 		
@@ -1714,26 +1651,7 @@ BEGIN
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 9
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID	
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
-				DELETE FROM dbo.CustStakeLevel_Member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-				DELETE FROM dbo.CustStakeLevel_Agent WHERE CustID = @CustID
-			END
-
+			SELECT @ErrCode = 9			
 			RETURN
 		END CATCH
 
@@ -1891,26 +1809,7 @@ BEGIN
 		END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 9
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustSettingMode3rd WHERE CustID = @CustID
-				DELETE FROM CustBetSetting3rd_Member WHERE CustID = @CustID	
-				DELETE FROM CustDiscount3rd_Member WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Member WHERE CustID = @CustID
-				DELETE FROM dbo.CustStakeLevel_Member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-				DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-				DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-				DELETE FROM dbo.CustStakeLevel_Agent WHERE CustID = @CustID
-			END
-
+			SELECT @ErrCode = 9			
 			RETURN
 		END CATCH
 

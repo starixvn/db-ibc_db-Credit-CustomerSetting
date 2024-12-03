@@ -114,8 +114,8 @@ AS
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
+	- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
-
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -236,12 +236,13 @@ BEGIN
 		FROM dbo.CustSuper WITH (NOLOCK)
 		WHERE CustId = @srecommend
 
-		INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer)  
+		INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer,RepUpdateTime)  
 		SELECT @CustID,
 				DisableAutoMPT,
 				IsInternal,
 				TransferOption,
-				CASE WHEN @IsAutoEnableADBMaster = 1 THEN ISNULL(@IsAllDayBalTransfer, 0) ELSE 0 END
+				CASE WHEN @IsAutoEnableADBMaster = 1 THEN ISNULL(@IsAllDayBalTransfer, 0) ELSE 0 END,
+				dbo.f_GetDateTime2()
 		FROM dbo.CustMaster WITH(NOLOCK)
 		WHERE custid=@ExistingCustid
 
@@ -294,6 +295,7 @@ BEGIN
 				,Danger3
 				,Danger4
 				,Danger5
+				,RepUpdateTime
 				)
 		 SELECT
 				@custid
@@ -319,6 +321,7 @@ BEGIN
 				,@DangerSuper3
 				,@DangerSuper4
 				,@DangerSuper5
+				,dbo.f_GetDateTime2()
 		FROM dbo.custinfo WITH(NOLOCK)
 		WHERE custid=@ExistingCustid  
 

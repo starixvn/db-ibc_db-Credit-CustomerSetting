@@ -89,7 +89,7 @@ AS
 		- 20230724@Luke: Unlock VR for Soccer, Basketball, Other Sports [Redmine: #191162]
 		- 20231129@Luke: NAP - Virtual rate - Enhance VR [Redmine: #194939]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting [redmine: #207029]
-
+		- 20241129@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -124,7 +124,7 @@ BEGIN
 
 	CREATE TABLE #tblCustVR (custID INT)
 	CREATE TABLE #tmpCustBatchVR (CustID INT PRIMARY KEY)	
-	DECLARE @batchUpdate INT = 5000,
+	DECLARE @batchUpdate INT = 2000,
 			@maxcustid INT					
 	
 	SELECT	@EnableVirtualrateOld = virtualmultiplier
@@ -198,13 +198,14 @@ BEGIN
 		IF (@EnableVirtualrate = 1 AND @EnableVirtualrate <> @EnableVirtualrateOld)			--not enable downlines
 		BEGIN
 			UPDATE	ci
-			SET	ci.virtualmultiplier = @EnableVirtualrate
+			SET	ci.virtualmultiplier = @EnableVirtualrate,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
 			WHERE custID = @custid
 		END
 		ELSE IF (@EnableVirtualrate = 0)																			--disable downlines
 		BEGIN
-			SET @batchUpdate = 5000--for update custinfo
+			SET @batchUpdate = 2000--for update custinfo
 			IF	@roleid = 4
 			BEGIN			
 				DELETE #tblCustVR
@@ -234,14 +235,16 @@ BEGIN
 						BREAK;
 					
 					UPDATE	ci
-					SET	ci.virtualmultiplier = @EnableVirtualrate
+					SET	ci.virtualmultiplier = @EnableVirtualrate,
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
 					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
 				END	
 			
 				--update newly customer if any
 				UPDATE	ci
-				SET	ci.virtualmultiplier = @EnableVirtualrate
+				SET	ci.virtualmultiplier = @EnableVirtualrate,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
 				WHERE	ci.srecommend = @custid
 				AND ci.custid > @maxcustid
@@ -280,13 +283,15 @@ BEGIN
 						BREAK;
 					
 					UPDATE	ci
-					SET	ci.virtualmultiplier = @EnableVirtualrate
+					SET	ci.virtualmultiplier = @EnableVirtualrate,
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
 					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
 				END	
 			
 				UPDATE	ci
-				SET	ci.virtualmultiplier = @EnableVirtualrate
+				SET	ci.virtualmultiplier = @EnableVirtualrate,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
 				WHERE	ci.mrecommend = @custid
 					AND ci.custID > @maxcustid
@@ -325,13 +330,15 @@ BEGIN
 						BREAK;
 					
 					UPDATE	ci
-					SET	ci.virtualmultiplier = @EnableVirtualrate
+					SET	ci.virtualmultiplier = @EnableVirtualrate,
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
 					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
 				END
 			
 				UPDATE	ci
-				SET	ci.virtualmultiplier = @EnableVirtualrate
+				SET	ci.virtualmultiplier = @EnableVirtualrate,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
 				WHERE	ci.recommend = @custid
 					AND custid > @maxcustid
@@ -344,7 +351,8 @@ BEGIN
 			ELSE IF	@roleid = 1
 			BEGIN			
 				UPDATE	ci
-				SET	ci.virtualmultiplier = @EnableVirtualrate
+				SET	ci.virtualmultiplier = @EnableVirtualrate,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
 				WHERE	ci.custid = @custid								
 			END;
@@ -365,7 +373,8 @@ BEGIN
 		FROM STRING_SPLIT(@custlist,',')
 		
 		UPDATE	CustInfo with (ROWLOCK, UPDLOCK) 
-		SET	Reject = @Suspended
+		SET	Reject = @Suspended,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE custid IN (SELECT custid FROM @tmpCust)	    
     END;
     ELSE IF @Action='Closed'
@@ -374,7 +383,8 @@ BEGIN
 	    IF @RoleID = 4 
 	    BEGIN
 		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
-		    SET		closed = @closed 
+		    SET		closed = @closed,
+					RepUpdateTime = dbo.f_GetDateTime2()
 			output INSERTED.custid into #tempCust
 		    WHERE	srecommend = @custid
 					AND (closed <> @Closed OR closed IS NULL)
@@ -382,7 +392,8 @@ BEGIN
 	    ELSE IF @RoleID = 3 
 	    BEGIN
 		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
-		    SET		closed = @closed 
+		    SET		closed = @closed,
+					RepUpdateTime = dbo.f_GetDateTime2()
 			output INSERTED.custid into #tempCust
 		    WHERE	mrecommend = @custid
 					AND (closed <> @Closed OR closed IS NULL)	
@@ -390,7 +401,8 @@ BEGIN
 	    ELSE IF @RoleID = 2 
 	    BEGIN
 		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
-		    SET		closed = @closed 
+		    SET		closed = @closed,
+					RepUpdateTime = dbo.f_GetDateTime2()
 			output INSERTED.custid into #tempCust
 		    WHERE	recommend = @custid
 					AND (closed <> @Closed OR closed IS NULL)	
@@ -447,7 +459,8 @@ BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
 		    SET	autosuspend2 = CASE WHEN @IsUpdateAutoSuspendOtherSports = 1 THEN @AutoSuspendOtherSports ELSE autosuspend2 END, 
 			    autosuspend = CASE WHEN @IsUpdateAutoSuspendSoccer = 1 THEN @AutoSuspendSoccer ELSE autosuspend END,
-				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END
+				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 		    WHERE srecommend = @custID; 
 	    END;
 
@@ -456,7 +469,8 @@ BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
 		    SET	autosuspend2 = CASE WHEN @IsUpdateAutoSuspendOtherSports = 1 THEN @AutoSuspendOtherSports ELSE autosuspend2 END, 
 			    autosuspend = CASE WHEN @IsUpdateAutoSuspendSoccer = 1 THEN @AutoSuspendSoccer ELSE autosuspend END,
-				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END
+				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 		    WHERE mrecommend = @custID; 
 	    END;
 
@@ -465,7 +479,8 @@ BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
 		    SET	autosuspend2 = CASE WHEN @IsUpdateAutoSuspendOtherSports = 1 THEN @AutoSuspendOtherSports ELSE autosuspend2 END, 
 			    autosuspend = CASE WHEN @IsUpdateAutoSuspendSoccer = 1 THEN @AutoSuspendSoccer ELSE autosuspend END,
-				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END
+				autosuspend3 = CASE WHEN @IsUpdateAutoSuspendBasketball = 1 THEN @AutoSuspendBasketball ELSE autosuspend3 END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 		    WHERE recommend = @custID; 
 	    END;
     END;    
@@ -475,7 +490,8 @@ BEGIN
 	    IF (@roleID = 4)
 	    BEGIN
 		    UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-		    SET DisableSuperLive = @DisableSuperLive
+		    SET DisableSuperLive = @DisableSuperLive,
+				RepUpdateTime = dbo.f_GetDateTime2()
 		    WHERE CustID <> @CustID
 			    AND SRecommend = @CustID;
 	    END;
@@ -483,7 +499,8 @@ BEGIN
 	    IF (@roleID = 3)
 	    BEGIN
 		    UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-		    SET DisableSuperLive = @DisableSuperLive
+		    SET DisableSuperLive = @DisableSuperLive,
+				RepUpdateTime = dbo.f_GetDateTime2()
 		    WHERE CustID <> @CustID
 			    AND MRecommend = @CustID;
 	    END;
@@ -491,7 +508,8 @@ BEGIN
 	    IF (@roleID = 2)
 	    BEGIN
 		    UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
-		    SET DisableSuperLive = @DisableSuperLive
+		    SET DisableSuperLive = @DisableSuperLive,
+				RepUpdateTime = dbo.f_GetDateTime2()
 		    WHERE CustID <> @CustID
 			    AND Recommend = @CustID;
 	    END;
@@ -526,7 +544,8 @@ BEGIN
 			CROSS APPLY	STRING_SPLIT(tv.CustIDs, ',') AS ss							
 
 		UPDATE	dbo.custInfo WITH (ROWLOCK, UPDLOCK)
-		SET	virtualmultiplier = 1
+		SET	virtualmultiplier = 1,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM custInfo
 		WHERE custid IN (SELECT custID FROM #tblCustomer)
 	END

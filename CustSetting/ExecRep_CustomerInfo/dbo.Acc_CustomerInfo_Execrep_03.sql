@@ -44,11 +44,11 @@ Revisions:
 	- 20240426@Johnson: Update CC By Sports for Special Class [redmine:#201360]
 	- 20240904@Winfred: Update SportID of CustomerClassSetting Feature name [redmine:#210321]
 	- 20240716@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
-	- 20241008@Winfred: [CTS] - Customer Classification - Classify Agent [redmine:#185799]
-	- 20241128@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
+	- 20241008@Winfred: [CTS] - Customer Classification - Classify Agent [redmine:#185799]	
 	- 20241024@Johnson: Danger Setting - Update ABI 33/46 to ORI 33/46 [redmineID: ##208301]
 	- 20241206@Johnson: LAP - Update odds group for licensee [redmine:#199306]
 	- 20240807@Helios: Scale Out DBCUST - Apply Inhouse replication for tables of problem account [Redmine:#209747] 
+	- 20241218@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	- 20250104@Winfred: Update customer's danger level Check exists data [Redmine:#216754] 
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
@@ -164,7 +164,8 @@ BEGIN
 									WHEN @DangerLevel = 16 THEN 49 
 									ELSE danger4 END,
 						Danger = CASE WHEN @DangerLevel IN (30,33,39,46) THEN @DangerLevel
-									ELSE Danger END			
+									ELSE Danger END,
+						RepUpdateTime = dbo.f_GetDateTime2()			
 				FROM custinfo c WITH(UPDLOCK,ROWLOCK) 
 					INNER JOIN @tempCust t ON c.CustID=t.CustID
 				WHERE	ID >= @StartRow 
@@ -493,7 +494,7 @@ BEGIN
 		FROM STRING_SPLIT(@CustList,',')
 		
 		UPDATE customer WITH(UPDLOCK,ROWLOCK)
-		SET ugroup = CASE WHEN LEFT (ugroup,2) = 'hk' THEN 'hk' + @oddsgroup ELSE @oddsgroup END
+		SET ugroup = CASE WHEN LEFT (ugroup,2) = 'hk' THEN 'hk' + @oddsgroup ELSE @oddsgroup END,
 			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE custid IN (SELECT custid FROM @tmpCustOddsGroup)		
 	END

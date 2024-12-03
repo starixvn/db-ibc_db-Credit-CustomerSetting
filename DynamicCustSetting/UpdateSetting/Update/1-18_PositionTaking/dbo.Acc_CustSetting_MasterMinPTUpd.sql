@@ -28,7 +28,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
-
+		- 20241211@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Parameter's Explanation:
 		- @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 		@PT = <ROOT>
@@ -337,7 +337,8 @@ BEGIN
 				    
     --update data change into db
     UPDATE cs
-	SET cs.MinPT = b.MasterMinPT		
+	SET cs.MinPT = b.MasterMinPT,
+		RepUpdateTime = dbo.f_GetDateTime2()
 	FROM CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK)
 		INNER JOIN @tblPT b ON cs.Sporttype = b.SportType
 								AND cs.bettype = b.BetType

@@ -18,7 +18,7 @@ AS
 		- 20170426@Elodie: Implementing Ticket Commission Plugin - [Redmine: #75221]
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20220622@Elodie:  Run by batch [RedmineID: #174131]
-
+		- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 		 @SettingType: 3 - Given Comm
 						5 - Charge Comm
@@ -27,13 +27,13 @@ AS
 */
 BEGIN
     SET NOCOUNT ON
-    -- check existing tables
-
-    IF dbo.f_CheckRepTable('custinfo') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 0 RETURN
-
-	DECLARE @BatchNo INT = 5000, @SettingRow TINYINT
+	
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+	)
+	RETURN;
+	
+	DECLARE @BatchNo INT = 2000, @SettingRow TINYINT
 	CREATE TABLE #Agent(custid INT)
 	CREATE TABLE #Member(custid INT)
 	CREATE TABLE #AgentTmpBatch(custid INT)
@@ -121,7 +121,8 @@ BEGIN
 			dcmem.SuperDiscount = @SuperDiscount,
 			dcmem.MasterDiscount = @MasterDiscount,
 			dcmem.AgentDiscount = @AgentDiscount,
-			dcmem.PlayerDiscount = @PlayerDiscount
+			dcmem.PlayerDiscount = @PlayerDiscount,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)  
 			INNER JOIN @NewDiscountTbl tmp ON tmp.SportType=dcmem.SportType AND tmp.BetType=dcmem.BetType  
 			INNER JOIN dbo.CustDiscount3rd_Agent dca WITH(NOLOCK) ON dca.sporttype = dcmem.sporttype AND dca.bettype = dcmem.bettype AND dca.custid=@AgentID
@@ -132,7 +133,8 @@ BEGIN
 	ELSE 
 	BEGIN
 		UPDATE main
-		SET main.Discount = tmp.Discount
+		SET main.Discount = tmp.Discount,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustDiscount3rd_Agent main WITH(ROWLOCK, UPDLOCK)
 			INNER JOIN @NewDiscountTbl tmp ON tmp.SportType=main.SportType AND tmp.BetType=main.BetType
 		WHERE main.CustID=@CustID
@@ -155,7 +157,8 @@ BEGIN
 
 			UPDATE dca
 			SET
-				dca.Discount=CASE WHEN dcu.Discount < dca.Discount THEN dcu.Discount ELSE dca.Discount  END
+				dca.Discount=CASE WHEN dcu.Discount < dca.Discount THEN dcu.Discount ELSE dca.Discount  END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustDiscount3rd_Agent dca WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewDiscountTbl fil ON dca.sporttype = fil.sporttype AND dca.bettype = fil.bettype
 				INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON dca.custid = ci.custid
@@ -192,7 +195,8 @@ BEGIN
 				dcmem.SuperDiscount = @SuperDiscount,
 				dcmem.MasterDiscount = @MasterDiscount,
 				dcmem.AgentDiscount = @AgentDiscount,
-				dcmem.PlayerDiscount = @PlayerDiscount
+				dcmem.PlayerDiscount = @PlayerDiscount,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewDiscountTbl fil ON dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
 				INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON dcmem.custid = ci.custid											  
@@ -215,7 +219,8 @@ BEGIN
 				dcmem.SuperDiscount = @SuperDiscount,
 				dcmem.MasterDiscount = @MasterDiscount,
 				dcmem.AgentDiscount = @AgentDiscount,
-				dcmem.PlayerDiscount = @PlayerDiscount
+				dcmem.PlayerDiscount = @PlayerDiscount,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewDiscountTbl fil ON dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
 				INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON dcmem.custid = ci.custid
@@ -238,7 +243,8 @@ BEGIN
 				dcmem.SuperDiscount = @SuperDiscount,
 				dcmem.MasterDiscount = @MasterDiscount,
 				dcmem.AgentDiscount = @AgentDiscount,
-				dcmem.PlayerDiscount = @PlayerDiscount
+				dcmem.PlayerDiscount = @PlayerDiscount,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewDiscountTbl fil ON dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
 				INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON dcmem.custid = ci.custid

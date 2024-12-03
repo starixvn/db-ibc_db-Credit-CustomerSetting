@@ -34,18 +34,17 @@ AS
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240628@Johnson: scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+		- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Parameter's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 */ 
 BEGIN
 	SET NOCOUNT ON
-
-    IF (dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1 		  
-		  AND dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1			 
-		  AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1	
-	   )
-	BEGIN	
-
+	
+	IF (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+	)	
+	BEGIN
 		DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency SMALLINT
 		DECLARE @RoleID TINYINT ,@SuperID INT, @MasterID INT
 
@@ -83,7 +82,8 @@ BEGIN
 			,[IsAutoSuperPT]
 			,[AutoSuperPT]
 			,[MinPT]
-			,[MaxPT])
+			,[MaxPT]
+			,RepUpdateTime)
 		SELECT 
 			@CustID
 			,cs.SportType
@@ -98,6 +98,7 @@ BEGIN
 			,[AutoSuperPT]
 			,[MinPT]
 			,100 --[MaxPT]
+			,dbo.f_GetDateTime2()
 		FROM [dbo].[CustPTSetting3rd_Agent] cs WITH(NOLOCK)
 			INNER JOIN #SportBettype_SB ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive AND ps.SettingType = 28
 		WHERE CustID = @ExistingCustID 	
@@ -105,10 +106,7 @@ BEGIN
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
-			SELECT @ErrCode = 28
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.[CustPTSetting3rd_Agent] WITH(ROWLOCK) WHERE CustID = @CustID
+			SELECT @ErrCode = 28			
 			RETURN
 		END	
 
@@ -117,11 +115,13 @@ BEGIN
 					([CustID]
 					,[SportType]
 					,[BetType]
-					,[Discount])
+					,[Discount]
+					,RepUpdateTime)
 		SELECT		@CustID
 					,cs.SportType
 					,cs.BetType
 					,cs.[Discount]
+					,dbo.f_GetDateTime2()
 		FROM [dbo].[CustDiscount3rd_Agent] cs WITH(NOLOCK)
 			INNER JOIN #SportBettype_SB ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.SettingType = 25
 		WHERE CustID = @ExistingCustID 
@@ -130,34 +130,32 @@ BEGIN
 		BEGIN
 			--Error Occurs
 			SELECT @ErrCode = 25
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.[CustPTSetting3rd_Agent] WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM dbo.[CustDiscount3rd_Agent] WITH(ROWLOCK) WHERE CustID = @CustID
 			RETURN
 		END	
 
 		-- Parlay Max Payout
 		IF @RoleID  = 4 
 		BEGIN
-			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6,RepUpdateTime)
 			SELECT @custid , cs.SportType, cs.BetType, 
 					cs.SingleMatchParlay,
 					cs.Combo2,
 					cs.Combo35,
-					cs.ComboOver6
+					cs.ComboOver6,
+					dbo.f_GetDateTime2()
 			FROM dbo.CustMaxPayoutSetting_Agent cs  WITH(NOLOCK)
 				INNER JOIN #SportBettype_SB ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.SettingType = 27
 			WHERE cs.CustID  = @ExistingCustid
 		END
 		ELSE IF @RoleID  = 3
 		BEGIN
-			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6,RepUpdateTime)
 			SELECT @custid , cs.SportType, cs.BetType, 
 					CASE WHEN cs.SingleMatchParlay > upl.SingleMatchParlay  AND upl.SingleMatchParlay > 0 THEN upl.SingleMatchParlay ELSE cs.SingleMatchParlay END AS SingleMatchParlay,
 					CASE WHEN cs.Combo2 > upl.Combo2  AND upl.Combo2 > 0 THEN upl.Combo2 ELSE cs.Combo2 END AS Combo2,
 					CASE WHEN cs.Combo35 > upl.Combo35  AND upl.Combo35 > 0 THEN upl.Combo35 ELSE cs.Combo35 END AS Combo35,
-					CASE WHEN cs.ComboOver6 > upl.ComboOver6  AND upl.ComboOver6 > 0 THEN upl.ComboOver6 ELSE cs.ComboOver6 END AS ComboOver6
+					CASE WHEN cs.ComboOver6 > upl.ComboOver6  AND upl.ComboOver6 > 0 THEN upl.ComboOver6 ELSE cs.ComboOver6 END AS ComboOver6,
+					dbo.f_GetDateTime2()
 			FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
 				INNER JOIN dbo.CustMaxPayoutSetting_Agent upl WITH (NOLOCK) ON cs.SportType = upl.SportType AND cs.BetType = upl.BetType
 				INNER JOIN #SportBettype_SB ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.SettingType = 27
@@ -165,12 +163,13 @@ BEGIN
 		END
 		ELSE IF @RoleID  = 2
 		BEGIN
-			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+			INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6,RepUpdateTime)
 			SELECT @custid , cs.SportType, cs.BetType, 
 					CASE WHEN cs.SingleMatchParlay > upl.SingleMatchParlay  AND upl.SingleMatchParlay > 0 THEN upl.SingleMatchParlay ELSE cs.SingleMatchParlay END AS SingleMatchParlay,
 					CASE WHEN cs.Combo2 > upl.Combo2  AND upl.Combo2 > 0 THEN upl.Combo2 ELSE cs.Combo2 END AS Combo2,
 					CASE WHEN cs.Combo35 > upl.Combo35  AND upl.Combo35 > 0 THEN upl.Combo35 ELSE cs.Combo35 END AS Combo35,
-					CASE WHEN cs.ComboOver6 > upl.ComboOver6  AND upl.ComboOver6 > 0 THEN upl.ComboOver6 ELSE cs.ComboOver6 END AS ComboOver6
+					CASE WHEN cs.ComboOver6 > upl.ComboOver6  AND upl.ComboOver6 > 0 THEN upl.ComboOver6 ELSE cs.ComboOver6 END AS ComboOver6,
+					dbo.f_GetDateTime2()
 			FROM dbo.CustMaxPayoutSetting_Agent cs WITH (NOLOCK)
 				INNER JOIN dbo.CustMaxPayoutSetting_Agent upl WITH (NOLOCK) ON cs.SportType = upl.SportType AND cs.BetType = upl.BetType
 				INNER JOIN #SportBettype_SB ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.SettingType = 27
@@ -180,12 +179,7 @@ BEGIN
 		IF @@ERROR <> 0
 		BEGIN
 			--Error Occurs
-			SELECT @ErrCode = 27
-				
-			-- ROLLBACK MANUALLY
-			DELETE FROM dbo.[CustPTSetting3rd_Agent] WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM dbo.[CustDiscount3rd_Agent] WITH(ROWLOCK) WHERE CustID = @CustID
-			DELETE FROM dbo.CustMaxPayoutSetting_Agent WITH(ROWLOCK) WHERE CustID = @CustID
+			SELECT @ErrCode = 27							
 			RETURN
 		END	
 	END
@@ -203,12 +197,7 @@ BEGIN
 	IF @DCSErrCode <> 0 
 	BEGIN
 		--Error Occurs
-		SELECT @ErrCode = 911
-
-		-- ROLLBACK MANUALLY
-		IF(dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1)		DELETE CustDiscount3rd_Agent WITH (ROWLOCK) WHERE custid =  @CustID
-		IF(dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1)		DELETE dbo.CustPTSetting3rd_Agent WITH(ROWLOCK) WHERE custid = @CustID 
-		IF(dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1)	DELETE CustMaxPayoutSetting_Agent WITH (ROWLOCK) WHERE custId  = @CustID		
+		SELECT @ErrCode = 911	
 	END
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/
 END

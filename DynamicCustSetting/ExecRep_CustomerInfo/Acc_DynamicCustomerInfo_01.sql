@@ -16,11 +16,17 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240312@Johnson: HF check to Group PT for SC customer [Redmine: #202119]
+		- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 */
 BEGIN
 	SET NOCOUNT ON;
 	
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+	)
+	RETURN;
+	   
 	DECLARE @iDoc INT
 
 	IF @SettingList IS NULL OR @SettingList='' RETURN
@@ -85,7 +91,8 @@ BEGIN
 				UPDATE main
 				SET main.SuperPT=npt.SuperPT,
 					main.MasterPT=npt.MasterPT,
-					main.AgentPT=npt.AgentPT
+					main.AgentPT=npt.AgentPT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
 						AND npt.BetType=main.BetType
@@ -142,11 +149,15 @@ BEGIN
 										)	
 				BEGIN
 					UPDATE cs 
-					SET IsGrouped = 1					
+					SET IsGrouped = 1,
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM dbo.CustSettingMode3rd cs WITH(ROWLOCK)
 					WHERE CustID = @CustID
 					
-					DELETE CustPTSetting3rd_Member WITH(ROWLOCK) WHERE custid = @custid
+					DELETE CustPTSetting3rd_Member WITH(ROWLOCK) 
+					OUTPUT DELETED.custid,DELETED.Sporttype,DELETED.Bettype,DELETED.IsLive,dbo.f_GetDateTime2()
+					INTO CustPTSetting3rd_Member_Del_Inhouse(custid,SportType,Bettype,IsLive,RepUpdateTime)
+					WHERE custid = @custid
 				END
 		END
 		ELSE
@@ -161,7 +172,8 @@ BEGIN
 				UPDATE main
 				SET main.SuperPT=npt.SuperPT,
 					main.MasterPT=npt.MasterPT,
-					main.AgentPT=npt.AgentPT
+					main.AgentPT=npt.AgentPT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustPTGroupSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
 						AND npt.BetType=main.BetType
@@ -186,6 +198,7 @@ BEGIN
 							,[AgentPT]
 							,[AutoSuperPT]
 							,[AutoMasterPT]
+							,RepUpdateTime
 						)
 				SELECT
 					@CustID,
@@ -198,7 +211,8 @@ BEGIN
 					grpt.MasterPT,
 					grpt.AgentPT,
 					grpt.AutoSuperPT,
-					grpt.AutoMasterPT
+					grpt.AutoMasterPT,
+					dbo.f_GetDateTime2()
 				FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
 					LEFT JOIN dbo.CustPTSetting3rd_Member mempt WITH(NOLOCK)
 						ON mempt.CustID = @CustID
@@ -211,7 +225,8 @@ BEGIN
 				UPDATE main
 				SET main.SuperPT=npt.SuperPT,
 					main.MasterPT=npt.MasterPT,
-					main.AgentPT=npt.AgentPT
+					main.AgentPT=npt.AgentPT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
 						AND npt.BetType=main.BetType
@@ -223,17 +238,14 @@ BEGIN
 		
 				---Update setting mode
 				UPDATE dbo.CustSettingMode3rd WITH(ROWLOCK,UPDLOCK)
-				SET IsGrouped = 0
+				SET IsGrouped = 0,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				WHERE CustID = @CustID
 			END
 		END
 	END
 	ELSE IF @SettingType IN (3,19) --Commission
 	BEGIN
-		IF dbo.f_CheckRepTable('custinfo') = 0 RETURN
-		IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 0 RETURN
-		IF dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 0 RETURN
-
 		DECLARE @SuperDiscount DECIMAL(9,8),
 				@MasterDiscount DECIMAL(9,8),
 				@AgentDiscount DECIMAL(9,8),
@@ -268,7 +280,8 @@ BEGIN
 			dcmem.SuperDiscount = @SuperDiscount,
 			dcmem.MasterDiscount = @MasterDiscount,
 			dcmem.AgentDiscount = @AgentDiscount,
-			dcmem.PlayerDiscount = @PlayerDiscount
+			dcmem.PlayerDiscount = @PlayerDiscount,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)  
 			INNER JOIN @NewDiscountTbl tmp ON tmp.SportType=dcmem.SportType AND tmp.BetType=dcmem.BetType  
 			INNER JOIN dbo.CustDiscount3rd_Agent dca WITH(NOLOCK) ON dca.sporttype = dcmem.sporttype AND dca.bettype = dcmem.bettype AND dca.custid=@AgentID
@@ -277,9 +290,7 @@ BEGIN
 		WHERE dcmem.CustID=@CustID AND @SettingType IN (3,19)
 	END
 	ELSE IF @SettingType=2 --BetSetting
-	BEGIN
-		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
-		
+	BEGIN		
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -312,8 +323,6 @@ BEGIN
 	END
 	ELSE IF @SettingType=9
 	BEGIN
-		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
-
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -346,8 +355,6 @@ BEGIN
 	END
 	ELSE IF @SettingType=16
 	BEGIN
-		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
-
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -380,8 +387,6 @@ BEGIN
 	END
 	ELSE IF @SettingType=20
 	BEGIN
-		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
-
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -411,8 +416,6 @@ BEGIN
 	END
 	ELSE IF @SettingType IN (6,22) --WinLossLimit
 	BEGIN
-		IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
-
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -433,6 +436,7 @@ BEGIN
 		SET main.MaxWinLimit = tmp.MaxWinLimit
 			, main.IsAutoReset = tmp.IsAutoReset
 			, main.MaxLossLimit = tmp.MaxLossLimit
+			, RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID
@@ -441,8 +445,6 @@ BEGIN
 	END
 	ELSE IF @SettingType=12 --Losslimit
 	BEGIN
-		IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
-
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	
@@ -461,6 +463,7 @@ BEGIN
 		UPDATE main
 		SET main.MaxLossLimit = tmp.MaxLossLimit
 			, main.IsAutoReset = tmp.IsAutoReset
+			, RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID
@@ -469,8 +472,6 @@ BEGIN
 	END
 	ELSE IF @SettingType IN (7,8,17) --Stakelevel
 	BEGIN
-		IF dbo.f_CheckRepTable('CustStakeLevel_Member') = 0 RETURN
-
 		CREATE TABLE #tmpStake (
 				SportType		SMALLINT
 			,	BetType			INT
@@ -495,6 +496,7 @@ BEGIN
 		UPDATE	cslm	WITH(ROWLOCK,UPDLOCK)
 		SET		cslm.StakeLevelList = ts.StakeLevelList
 				, cslm.LastUpdated = GETDATE()
+				, RepUpdateTime = dbo.f_GetDateTime2()
 		FROM		dbo.CustStakeLevel_Member AS cslm
 		INNER JOIN	#tmpStake ts
 				ON	ts.BetType = cslm.BetType
@@ -504,9 +506,6 @@ BEGIN
 	END
 	ELSE IF @SettingType=23 --BetSetting
 	BEGIN
-		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 0 RETURN
-		IF dbo.f_CheckRepTable('CustBetSetting_Member') = 0 RETURN
-		
 		--Parse XML
 		EXEC sp_xml_preparedocument @iDoc OUTPUT, @SettingList
 	

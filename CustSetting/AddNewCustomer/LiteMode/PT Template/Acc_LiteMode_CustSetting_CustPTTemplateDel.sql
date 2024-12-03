@@ -16,7 +16,7 @@ AS
 	
 	Revisions: 
 		- 20230510@Johnson: initial sp [redmine: #179159]
-
+		- 20241212@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	Param's Explanation: 
 		
 */	
@@ -45,10 +45,16 @@ BEGIN
 	SELECT @roleid = roleid 
 	FROM custinfo WITH(NOLOCK)
 	WHERE custid = @custid
-		
-	DELETE CustPTTemplateDetail WHERE TemplateID = @TemplateID
 	
-	DELETE CustPTTemplate WHERE custid = @custid AND TemplateID = @TemplateID
+	DELETE CustPTTemplateDetail 
+	OUTPUT DELETED.TemplateID, DELETED.GroupID, DELETED.SubGroupID, dbo.f_GetDateTime2()
+	INTO CustPTTemplateDetail_Del_Inhouse(TemplateID,GroupID,SubGroupID,RepUpdateTime)
+	WHERE TemplateID = @TemplateID
+	
+	DELETE CustPTTemplate 
+	OUTPUT DELETED.TemplateID, dbo.f_GetDateTime2()
+	INTO CustPTTemplate_Del_Inhouse(TemplateID,RepUpdateTime)
+	WHERE custid = @custid AND TemplateID = @TemplateID
 	
 	SET @endRun=GETDATE()
 	SET @duration=datediff(millisecond,@startRun,@endRun)

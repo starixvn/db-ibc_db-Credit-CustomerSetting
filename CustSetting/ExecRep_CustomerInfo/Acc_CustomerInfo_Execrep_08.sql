@@ -18,7 +18,9 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
+	)
 		RETURN;
 
 	DECLARE @SuperIdXML XML
