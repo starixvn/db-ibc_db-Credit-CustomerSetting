@@ -46,6 +46,7 @@ Revisions:
 	- 20240716@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	- 20241008@Winfred: [CTS] - Customer Classification - Classify Agent [redmine:#185799]
 	- 20241024@Johnson: Danger Setting - Update ABI 33/46 to ORI 33/46 [redmineID: ##208301]
+	- 20241206@Johnson: LAP - Update odds group for licensee [redmine:#199306]
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -470,7 +471,7 @@ BEGIN
 		FROM STRING_SPLIT(@CustList,',')
 		
 		UPDATE customer WITH(UPDLOCK,ROWLOCK)
-		SET ugroup = @oddsgroup
+		SET ugroup = CASE WHEN LEFT (ugroup,2) = 'hk' THEN 'hk' + @oddsgroup ELSE @oddsgroup END
 		WHERE custid IN (SELECT custid FROM @tmpCustOddsGroup)		
 	END
 	ELSE IF @mode = 'SabaDangerLevel'
