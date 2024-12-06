@@ -157,7 +157,7 @@ BEGIN
 						danger4 = CASE WHEN @DangerLevel = 11 THEN 15
 									WHEN @DangerLevel = 16 THEN 49 
 									ELSE danger4 END,
-						Danger = CASE WHEN @DangerLevel IN (30,33,39,49) THEN @DangerLevel
+						Danger = CASE WHEN @DangerLevel IN (30,33,39,46) THEN @DangerLevel
 									ELSE Danger END			
 				FROM custinfo c WITH(UPDLOCK,ROWLOCK) 
 					INNER JOIN @tempCust t ON c.CustID=t.CustID
