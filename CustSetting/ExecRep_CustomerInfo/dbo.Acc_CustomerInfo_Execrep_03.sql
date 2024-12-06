@@ -45,6 +45,7 @@ Revisions:
 	- 20240904@Winfred: Update SportID of CustomerClassSetting Feature name [redmine:#210321]
 	- 20240716@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	- 20241008@Winfred: [CTS] - Customer Classification - Classify Agent [redmine:#185799]
+	- 20241024@Johnson: Danger Setting - Update ABI 33/46 to ORI 33/46 [redmineID: ##208301]
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -155,7 +156,9 @@ BEGIN
 					SET danger2 = @DangerLevel,
 						danger4 = CASE WHEN @DangerLevel = 11 THEN 15
 									WHEN @DangerLevel = 16 THEN 49 
-									ELSE danger4 END
+									ELSE danger4 END,
+						Danger = CASE WHEN @DangerLevel IN (30,33,39,46) THEN @DangerLevel
+									ELSE Danger END			
 				FROM custinfo c WITH(UPDLOCK,ROWLOCK) 
 					INNER JOIN @tempCust t ON c.CustID=t.CustID
 				WHERE	ID >= @StartRow 
