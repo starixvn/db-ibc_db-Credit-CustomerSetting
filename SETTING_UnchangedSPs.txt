@@ -1,1 +1,5 @@
-CustSetting\AddNewCustomer\LiteMode\Select\Acc_LiteMode_CustSetting_ProductListInfoSel.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_SAg.sql
+CustSetting\AddNewCustomer\CloneSetting\Acc_CustomerInsMember_CloneSetting_SAg.sql
+CustSetting\AddNewCustomer\CloneSetting\Acc_CustomerInsMember_CloneSetting_Com.sql
