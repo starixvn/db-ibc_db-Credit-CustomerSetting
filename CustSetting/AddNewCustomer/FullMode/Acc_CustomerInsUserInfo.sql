@@ -156,6 +156,8 @@ Revisions:
 	- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]	
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
+	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
+	
 	Param's Explanation:
 - @ErrCode:
 		= 0: Insert successfully.
@@ -518,7 +520,9 @@ BEGIN
 			BEGIN				
 				EXEC dbo.Acc_CreditCollStatusInit @CustId = @custid, @UserId = @creator, @IP = @IP, @Language = @Language
 			
-				DELETE dbo.TOControl_GlobalSetting
+				DELETE dbo.TOControl_GlobalSetting WITH (ROWLOCK)
+					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2()
+					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
 				WHERE CustID IN (@srecommend,@mrecommend,@recommend)
 				
 				DELETE dbo.TOControl_Setting
@@ -540,7 +544,7 @@ BEGIN
 				SELECT @NotificationInfo = '<NewDirectCustomer  custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" />'
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 602,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -550,7 +554,7 @@ BEGIN
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
 						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
-	            
+						, dbo.f_GetDateTime2()
 				FROM (        
 						-- Soccer 
 						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
@@ -569,7 +573,9 @@ BEGIN
 					INNER JOIN dbo.Exchange e WITH (NOLOCK) ON e.ExchangeID = TO_tmp.TOCurrency
 					INNER JOIN dbo.Exchange e1 WITH (NOLOCK) ON e1.ExchangeID = @currency
 				
-				DELETE dbo.TOControl_GlobalSetting
+				DELETE dbo.TOControl_GlobalSetting WITH (ROWLOCK)
+					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2()
+					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
 				WHERE CustID IN (@srecommend,@mrecommend)
 				
 				DELETE dbo.TOControl_Setting
@@ -594,7 +600,7 @@ BEGIN
 	    
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 601,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -604,7 +610,7 @@ BEGIN
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
 						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
-	            
+						, dbo.f_GetDateTime2()
 				FROM (        
 						-- Soccer 
 						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
@@ -623,7 +629,9 @@ BEGIN
 					INNER JOIN dbo.Exchange e WITH (NOLOCK) ON e.ExchangeID = TO_tmp.TOCurrency
 					INNER JOIN dbo.Exchange e1 WITH (NOLOCK) ON e1.ExchangeID = @currency
 				
-				DELETE dbo.TOControl_GlobalSetting
+				DELETE dbo.TOControl_GlobalSetting WITH (ROWLOCK)
+					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2()
+					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
 				WHERE CustID = @srecommend
 				
 				DELETE dbo.TOControl_Setting
@@ -647,7 +655,7 @@ BEGIN
 	    
 				EXEC dbo.NAP_Email_NotificationInfoInsert @ActionID = 600,@NotificationInfo = @NotificationInfo, @CreateDate = @CreateDate
 				
-				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID)
+				INSERT INTO dbo.TOControl_GlobalSetting (CustID, MaxTurnOver, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
 				SELECT @custid
 						-- Since there are many kinds of currency default setting, default setting will be converted to RM before convert to orginal curency
 						, CASE 
@@ -657,7 +665,7 @@ BEGIN
 								ELSE  CONVERT(MONEY,(TO_tmp.MaxTurnOver * E.actualrate)/E1.actualrate)
 						END AS MaxTurnOver
 						, TO_tmp.Sporttype, 0, TO_tmp.ProfileID
-	            
+						, dbo.f_GetDateTime2()
 				FROM (        
 						-- Soccer 
 						SELECT TOP 10 f1.sporttype, f1.MaxTurnOver,f1.TOCurrency, f1.ProfileID
