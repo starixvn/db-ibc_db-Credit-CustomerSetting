@@ -23,6 +23,7 @@ Revisions:
 	- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 	- 20230623@Eden: Enhance backup [Redmine: #188850]
+	- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
 
 */
 
@@ -118,6 +119,19 @@ BEGIN
 	return
 END
 
+IF EXISTS(
+			SELECT 1 
+			FROM DBTXN.bodb02.dbo.SabaWalletTicket with (nolock) 
+			WHERE recommend = @AgentID 
+				and custid <> 0
+				AND WinlostDate >= CONVERT(DATE,DATEADD(mm,-2,GETDATE()))
+			)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
+	print @ErrMsg
+	return
+END
 
 --backup data for later rollback for this stage
 

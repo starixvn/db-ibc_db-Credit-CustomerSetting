@@ -20,6 +20,7 @@ AS
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
 		- 20240905@Eden : Scale out DBCUST [redmine: #210077]
+		- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
 
 	Param's Explanation:
 */
@@ -73,6 +74,10 @@ FROM bettransRNG with (NOLOCK) WHERE custid NOT IN(select custid from bodb_repor
 UNION
 SELECT custid
 FROM bettransLC with (NOLOCK) WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
+UNION
+SELECT custid
+FROM SabaWalletTicket with (NOLOCK) WHERE custid NOT IN(select custid from bodb_report.dbo.tempCustID)
+	AND WinlostDate >= CONVERT(DATE,DATEADD(mm,-2,GETDATE()))
 
 --update exception list
 EXEC dbo.DBA_ArchiveAccount_UpdateException
