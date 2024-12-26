@@ -12,6 +12,7 @@ AS
 		20190402@Daniel: add exception for CN88 customers
 		20190913@Daniel: Rename SP for correct English
 		20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
+		20240913@Tacy: Exclude WhiteLabel account [#RM:209633]
 	Param's Explanation:
 */
 SET NOCOUNT ON
@@ -85,6 +86,7 @@ INSERT INTO bodb_report.dbo.[Task_Cust_ArchiveAcc_Exception](CustID,Remark)
 SELECT ag.custID, ag.username 
 FROM customer ag WITH(NOLOCK)
 	LEFT JOIN bodb_report.dbo.[Task_Cust_ArchiveAcc_Exception] ce WITH (NOLOCK) ON ag.custid = ce.custid
+	LEFT JOIN WhiteLabelInfo wi WITH (NOLOCK) ON wi.CustID=ag.custid
 WHERE ag.roleid = 2 
 	AND ce.custid IS NULL
 	AND ag.srecommend NOT IN ( SELECT custID FROM bodb_report.dbo.[Task_Cust_ArchiveAcc_Exception] WITH (NOLOCK))
@@ -128,4 +130,5 @@ WHERE ag.roleid = 2
 		OR ag.username LIKE 'M008IS%'
 		OR ag.username LIKE 'CASH%'
 		OR ag.username LIKE 'CSDTEST%'--request by Jacky @20160805
+		OR wi.CustID IS NOT NULL
 	)
