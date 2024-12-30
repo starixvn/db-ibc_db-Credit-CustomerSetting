@@ -28,6 +28,7 @@ AS
 		- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 		- 20230529@Eden: Check permission of KL Environment [Redmine: #199968]
 		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
+		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	Param's Explanation:
 		@Type: 
 			+ -1-Stage 1: update closed = 1 for whole agent line
@@ -73,19 +74,19 @@ BEGIN
 		END 
 
 		--Update ClosedReason for agent and downlines
-		IF dbo.f_CheckRepTable('CustLoginInfo') = 0 
-			OR dbo.f_CheckRepTable('CustLoginInfo_Member') = 0
+		IF  dbo.f_CheckServerName() != 1 OR dbo.f_CheckEnvironment() != 'Active' 	  
 			RETURN
 		ELSE 
 		BEGIN
 			--Insert Update for Agent
 			--> Insert Update ClosedReason
 			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo WITH(NOLOCK) WHERE custid = @AgentID)
-				INSERT INTO CustLoginInfo(CustID, ClosedReason) 
-				SELECT @AgentID, 4
+				INSERT INTO CustLoginInfo(CustID, ClosedReason,RepUpdateTime) 
+				SELECT @AgentID, 4,dbo.f_GetDateTime2()
 			ELSE
 				UPDATE m
-				SET ClosedReason = 4
+				SET  ClosedReason = 4
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo m WITH (ROWLOCK, UPDLOCK)
 				WHERE m.CustID = @AgentID
 
@@ -93,10 +94,11 @@ BEGIN
 			--Insert Update for Members
 			WHILE (1=1)
 			BEGIN 
-				INSERT INTO [CustLoginInfo_Member](CustID,ClosedReason)
+				INSERT INTO [CustLoginInfo_Member](CustID,ClosedReason,RepUpdateTime)
 				SELECT TOP (5000) 
 					c.custid,
-					4 as ClosedReason
+					4 as ClosedReason,
+					dbo.f_GetDateTime2()
 				FROM  custinfo c WITH(NOLOCK) 
 				WHERE c.recommend = @AgentID 
 					AND c.roleid = 1
@@ -109,7 +111,8 @@ BEGIN
 			WHILE (1=1)
 			BEGIN 
 				UPDATE TOP (5000) m
-				SET ClosedReason = 4
+				SET  ClosedReason = 4
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo_Member m WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN custinfo c WITH(NOLOCK) ON m.CustID = c.custid
 					INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = m.CustID

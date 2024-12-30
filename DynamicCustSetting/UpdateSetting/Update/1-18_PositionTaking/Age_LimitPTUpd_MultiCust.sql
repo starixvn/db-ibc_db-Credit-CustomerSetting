@@ -71,14 +71,15 @@ BEGIN
 		BEGIN
 			UPDATE t
 			SET t.PTCount = CASE WHEN DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS  DATE) THEN  t.PTCount + 1  ELSE 1 END,
-				t.LastUpdated = CAST(GETDATE() AS  DATE)
+				t.LastUpdated = CAST(GETDATE() AS  DATE),
+				t.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM CustLimitPTSetting t WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType 
 			WHERE CustID IN (SELECT custid FROM @tblCust) AND ActorID = @Actorid 
 		END
 		
-		INSERT INTO CustLimitPTSetting (CustID,SportType,BetType,ActorID,PTCount,LastUpdated)
-		SELECT c.custid , P.SportType,p.BetType,@Actorid , 1 AS PTCount ,CAST(GETDATE() AS  DATE) AS LastUpdated
+		INSERT INTO CustLimitPTSetting (CustID,SportType,BetType,ActorID,PTCount,LastUpdated,RepUpdateTime)
+		SELECT c.custid , P.SportType,p.BetType,@Actorid , 1 AS PTCount ,CAST(GETDATE() AS  DATE) AS LastUpdated,dbo.f_GetDateTime2()
 		FROM @tblPT p 
 			CROSS APPLY @TblCust c
 		WHERE NOT EXISTS(

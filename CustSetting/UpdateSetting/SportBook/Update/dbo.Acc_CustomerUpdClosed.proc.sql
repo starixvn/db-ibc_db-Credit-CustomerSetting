@@ -48,6 +48,7 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20240422@Elodie: Change SQL Account [RedmineID: #204021]  
 	- 20241126@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+	- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 Param's Explanation
 • @custid: custid that need to be viewed.   
 
@@ -263,12 +264,14 @@ BEGIN
 			SET @ClosedReason = 1
 			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
 			BEGIN
-				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-				VALUES(@custid,NULL,@IP,@UserID,GETDATE(),1)
+				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason,RepUpdateTime)
+				VALUES(@custid,NULL,@IP,@UserID,GETDATE(),1,dbo.f_GetDateTime2())
 			END
 			ELSE
 			BEGIN
-				UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
+				UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) 
+				SET  ClosedReason = 1
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				WHERE custid = @custid
 			END
 		END
@@ -277,12 +280,14 @@ BEGIN
 			SET @ClosedReason = 2
 			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
 			BEGIN
-				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-				VALUES(@custid,NULL,@IP,@UserID,GETDATE(),2)
+				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason,RepUpdateTime)
+				VALUES(@custid,NULL,@IP,@UserID,GETDATE(),2,dbo.f_GetDateTime2())
 			END
 			ELSE
 			BEGIN
-				UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) set ClosedReason = 2
+				UPDATE [dbo].CustLoginInfo_Member WITH (ROWLOCK, UPDLOCK) 
+				SET  ClosedReason = 2
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				WHERE custid = @custid
 			END
 		END
@@ -290,14 +295,18 @@ BEGIN
 		BEGIN
 			SET @ClosedReason = 1
 
-			UPDATE [dbo].[CustLoginInfo] WITH (ROWLOCK, UPDLOCK) set ClosedReason = 1
+			UPDATE [dbo].[CustLoginInfo] WITH (ROWLOCK, UPDLOCK) 
+			SET  ClosedReason = 1
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			WHERE custid = @custid
 		END
 		ELSE
 		BEGIN
 			SET @ClosedReason = 2
 
-			UPDATE [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 2
+			UPDATE [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) 
+			SET  ClosedReason = 2
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			WHERE custid = @custid
 		END
 	END
@@ -305,11 +314,15 @@ BEGIN
 	BEGIN
 		SET @ClosedReason = 0
 		IF(@roleid=1)
-			update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) set ClosedReason = 0
+			update [dbo].CustLoginInfo_Member with (ROWLOCK, UPDLOCK) 
+			set  ClosedReason = 0
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			where custid = @custid
 		ELSE
 		BEGIN
-			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) set ClosedReason = 0
+			update [dbo].[CustLoginInfo] with (ROWLOCK, UPDLOCK) 
+			set  ClosedReason = 0
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			where custid = @custid		
 
 		END

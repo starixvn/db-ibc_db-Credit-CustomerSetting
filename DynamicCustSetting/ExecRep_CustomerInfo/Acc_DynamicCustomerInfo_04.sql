@@ -28,6 +28,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
+		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -739,7 +740,8 @@ BEGIN
 			IF @roleid = 4
 			BEGIN			
 				UPDATE	cs 
-				SET	cs.ClosedReason = @ClosedReason
+				SET	 cs.ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.CustID = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -753,7 +755,8 @@ BEGIN
 								 ELSE 0 END)	;
 			
 				UPDATE	cs 
-				SET	ClosedReason = @ClosedReason
+				SET	 ClosedReason = @ClosedReason
+					,,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -769,7 +772,8 @@ BEGIN
 			ELSE IF @roleid = 3
 			BEGIN			
 				UPDATE	cs 
-				SET	ClosedReason = @ClosedReason
+				SET	 ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.AgentStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -783,7 +787,8 @@ BEGIN
 								 ELSE 0 END)	;
 			
 				UPDATE	cs 
-				SET	ClosedReason = @ClosedReason
+				SET	 ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -800,7 +805,8 @@ BEGIN
 			ELSE IF @roleid = 2
 			BEGIN			
 				UPDATE	cs 
-				SET	ClosedReason = @ClosedReason
+				SET	 ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
