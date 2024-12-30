@@ -735,7 +735,7 @@ BEGIN
 			END	
 		END
 		
-		IF dbo.f_CheckRepTable('CustLoginInfo') = 1 AND dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
 		BEGIN
 			IF @roleid = 4
 			BEGIN			
@@ -756,7 +756,7 @@ BEGIN
 			
 				UPDATE	cs 
 				SET	 ClosedReason = @ClosedReason
-					,,RepUpdateTime = dbo.f_GetDateTime2()
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed

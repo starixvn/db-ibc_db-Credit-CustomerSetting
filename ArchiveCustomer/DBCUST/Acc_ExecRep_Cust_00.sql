@@ -519,10 +519,13 @@ BEGIN
 		END
 
 		--------------------------------------------------
-		IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1 
+		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
 		WHILE(1=1)
 		BEGIN
+			
 			DELETE TOP(5000) dbo.CustLoginInfo_Member WITH (ROWLOCK)
+			OUTPUT DELETED.custid ,dbo.f_GetDateTime2()
+			INTO CustLoginInfo_Member_Del_Inhouse(custid,RepUpdateTime)
 			WHERE custid IN(SELECT custid from custinfo WITH (NOLOCK) WHERE roleid = 1 AND recommend = @AgentID) 
 			IF @@ROWCOUNT < 5000
 				BREAK
@@ -565,16 +568,20 @@ BEGIN
 			
 		END
 
-		IF dbo.f_CheckRepTable('CustLoginInfo') = 1 
+		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
 		BEGIN
 			DELETE dbo.CustLoginInfo WITH (UPDLOCK,ROWLOCK)
+			OUTPUT DELETED.custid ,dbo.f_GetDateTime2()
+			INTO CustLoginInfo_Member_Del_Inhouse(custid,RepUpdateTime)
 			WHERE	custid = @AgentID 
 			
 		END
 
-		IF dbo.f_CheckRepTable('CustLoginInfoSub') = 1 
+		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active' 
 		BEGIN
 			DELETE dbo.CustLoginInfoSub WITH (UPDLOCK,ROWLOCK)
+			OUTPUT DELETED.SubAccID ,dbo.f_GetDateTime2()
+			INTO CustLoginInfoSub_Del_Inhouse(SubAccID,RepUpdateTime)
 			WHERE	custid = @AgentID 
 			
 		END
