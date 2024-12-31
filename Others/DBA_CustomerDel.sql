@@ -107,27 +107,65 @@ BEGIN
 	SELECT custID FROM customer WITH (NOLOCK) WHERE srecommend = @custid
 		
 	--Delete cust login info
-	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE CustLoginInfo_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustLoginInfoSub WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE CustLoginInfo WITH (ROWLOCK)  
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustLoginInfo_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE CustLoginInfo_Member WITH (ROWLOCK)   
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustLoginInfo_Member_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)
+	
+	DELETE dbo.CustLoginInfoSub WITH (ROWLOCK)    
+		OUTPUT DELETED.SubAccID, dbo.f_GetDateTime2()
+		INTO dbo.CustLoginInfoSub_Del_Inhouse(SubAccID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 
-	DELETE dbo.CustDirectAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustDirectAccount WITH (ROWLOCK)  
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustDirectAccount_Del_InHouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 
 	DELETE dbo.Acc_CustAllowList WITH (ROWLOCK) 
 		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
 		INTO dbo.Acc_CustAllowList_Del_InHouse(CustID, RepUpdateTime)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 
-	DELETE dbo.Acc_CustDirect WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustDirect WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO dbo.Acc_CustDirect_Del_InHouse(custid, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	DELETE dbo.BetTradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.TradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Cust12Bet WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.custAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustGroupHeadline WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.custAccount WITH (ROWLOCK)
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO dbo.custAccount_Del_Inhouse(custid, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)
+	
+	DELETE dbo.CustNoComm WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustNoComm_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustOTP WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, DELETED.SubAccId, dbo.f_GetDateTime2()
+		INTO CustOTP_Del_Inhouse(CustID, SubAccId, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+
+	DELETE dbo.CustOTPDetail WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, DELETED.SubAccId, DELETED.LastVerifiedDate, DELETED.DeviceId, dbo.f_GetDateTime2()
+		INTO CustOTPDetail_Del_Inhouse(CustID, SubAccId, LastVerifiedDate, DeviceId, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -369,27 +407,65 @@ BEGIN
 	SELECT custID FROM customer WITH (NOLOCK) WHERE mrecommend = @custid
 	
 	--Delete cust login info
-	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE CustLoginInfo_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustLoginInfoSub WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE CustLoginInfo WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustLoginInfo_Del_InHouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE CustLoginInfo_Member WITH (ROWLOCK)  
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustLoginInfo_Member_Del_InHouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustLoginInfoSub WITH (ROWLOCK)   
+		OUTPUT DELETED.SubAccID, dbo.f_GetDateTime2()
+		INTO dbo.CustLoginInfoSub_Del_InHouse(SubAccID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 
-	DELETE dbo.CustDirectAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustDirectAccount WITH (ROWLOCK)  
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustDirectAccount_Del_InHouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Acc_CustAllowList WITH (ROWLOCK) 
 		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
 		INTO dbo.Acc_CustAllowList_Del_InHouse(CustID, RepUpdateTime)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
-	DELETE dbo.Acc_CustDirect WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustDirect WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO dbo.Acc_CustDirect_Del_InHouse(custid, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	DELETE dbo.BetTradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.TradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Cust12Bet WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.custAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustGroupHeadline WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.custAccount WITH (ROWLOCK)
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO dbo.custAccount_Del_Inhouse(custid, RepUpdateTime) 
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustNoComm WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustNoComm_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustOTP WITH (ROWLOCK)  
+		OUTPUT DELETED.CustID, DELETED.SubAccId, dbo.f_GetDateTime2()
+		INTO CustOTP_Del_Inhouse(CustID, SubAccId, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustOTPDetail WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, DELETED.SubAccId, DELETED.LastVerifiedDate, DELETED.DeviceId, dbo.f_GetDateTime2()
+		INTO CustOTPDetail_Del_Inhouse(CustID, SubAccId, LastVerifiedDate, DeviceId, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -617,26 +693,61 @@ BEGIN
 	
 	--Delete cust login info
 	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE CustLoginInfo_Member WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustLoginInfoSub WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE CustLoginInfo_Member WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustLoginInfo_Member_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustLoginInfoSub WITH (ROWLOCK)
+		OUTPUT DELETED.SubAccID, dbo.f_GetDateTime2()
+		INTO dbo.CustLoginInfoSub_Del_Inhouse(SubAccID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 
-	DELETE dbo.CustDirectAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustDirectAccount WITH (ROWLOCK)  
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustDirectAccount_Del_InHouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Acc_CustAllowList WITH (ROWLOCK)  
 		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
 		INTO dbo.Acc_CustAllowList_Del_InHouse(CustID, RepUpdateTime)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
-	DELETE dbo.Acc_CustDirect WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.Acc_CustDirect WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO dbo.Acc_CustDirect_Del_InHouse(custid, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	DELETE dbo.BetTradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.TradeCust WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.Cust12Bet WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.custAccount WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustGroupHeadline WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.custAccount WITH (ROWLOCK)
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO dbo.custAccount_Del_Inhouse(custid, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustNoComm WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustNoComm_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustOTP WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, DELETED.SubAccId, dbo.f_GetDateTime2()
+		INTO CustOTP_Del_Inhouse(CustID, SubAccId, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
+	DELETE dbo.CustOTPDetail WITH (ROWLOCK)
+		OUTPUT DELETED.CustID, DELETED.SubAccId, DELETED.LastVerifiedDate, DELETED.DeviceId, dbo.f_GetDateTime2()
+		INTO CustOTPDetail_Del_Inhouse(CustID, SubAccId, LastVerifiedDate, DeviceId, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -848,21 +959,43 @@ BEGIN
 		RETURN
 	END
 	--Delete cust login info
-	DELETE CustLoginInfo_Member WHERE custid = @custid	
+	DELETE CustLoginInfo_Member WITH (ROWLOCK)   
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustLoginInfo_Member_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid = @custid	
 
-	DELETE dbo.CustDirectAccount WHERE custid = @custid		
+	DELETE dbo.CustDirectAccount WITH (ROWLOCK)  
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustDirectAccount_Del_InHouse(CustID, RepUpdateTime)
+	WHERE custid = @custid		
 	
 	DELETE dbo.Acc_CustAllowList WITH (ROWLOCK)  
 		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
 		INTO dbo.Acc_CustAllowList_Del_InHouse(CustID, RepUpdateTime)
 	WHERE custid = @custid	
 	
-	DELETE dbo.Acc_CustDirect WHERE custid = @custid	
+	DELETE dbo.Acc_CustDirect WITH (ROWLOCK) 
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO dbo.Acc_CustDirect_Del_InHouse(custid, RepUpdateTime)
+	WHERE custid = @custid	
+
 	DELETE dbo.Cust12Bet WHERE custid = @custid	
-	DELETE dbo.custAccount WHERE custid = @custid	
-	DELETE dbo.CustGroupHeadline WHERE custid = @custid	
-	DELETE dbo.CustNoComm WHERE custid = @custid	
-	--DELETE dbo.CustRequestGame WHERE custid = @custid	
+	
+	DELETE dbo.custAccount WITH (ROWLOCK)
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO dbo.custAccount_Del_Inhouse(custid, RepUpdateTime)
+	WHERE custid = @custid	
+	
+	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid = @custid	
+
+	DELETE dbo.CustNoComm WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO dbo.CustNoComm_Del_Inhouse(CustID, RepUpdateTime) 
+	WHERE custid = @custid	
+
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()

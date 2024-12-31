@@ -458,11 +458,13 @@ BEGIN
 		(
 			CustID, OldUserPwd, LastChangedPwdDate, isFirstLogin, SecurityCodeCount, SecurityCode,
 			isForcedChangeSecurityCode, LastChangedSecurityCodeDate,ClosedReason
+		  , RepUpdateTime
 		)
 		VALUES
 		(
 			@custid, NULL, GETDATE(), 1, 0, NULL,
 			@isForcedChangeSecurityCode, NULL,@ClosedReason
+		  , dbo.f_GetDateTime2()	
 		)
 	
 	END TRY
@@ -506,8 +508,8 @@ BEGIN
 	END CATCH				
 	
 	BEGIN TRY
-		INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status)
-		SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status
+		INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status, RepUpdateTime)
+		SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status, dbo.f_GetDateTime2() AS RepUpdateTime
 		FROM Customer ci WITH(NOLOCK)
 		WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 			AND ci.srecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))

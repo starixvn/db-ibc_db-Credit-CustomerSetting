@@ -53,7 +53,10 @@ BEGIN
 	FROM VRSettingManualUpdAcc c WITH(ROWLOCK) 
 	WHERE CustID = @CustID
 
-	DELETE FROM CustLimitPTSetting			WITH (ROWLOCK) WHERE CustID = @CustID
+	DELETE FROM CustLimitPTSetting WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, DELETED.ActorID, dbo.f_GetDateTime2() 
+		INTO CustLimitPTSetting_Del_InHouse(CustID, SportType, BetType, ActorID, RepUpdateTime)
+	WHERE CustID = @CustID
 		
 	DELETE FROM CustProductStatus WITH (ROWLOCK) 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
