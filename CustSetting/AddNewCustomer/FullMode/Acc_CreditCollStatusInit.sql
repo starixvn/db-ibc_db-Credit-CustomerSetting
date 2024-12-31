@@ -15,6 +15,7 @@ AS
 
 	Revisions:
 		--20181105@Louis: Credit Collection Summary  [RedmineID: #98621]
+		- 20241231@Hughie: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	Parameter's explaination: 		
 		• @Status: 			 0: Normal 
 							 1: Alert
@@ -29,6 +30,7 @@ BEGIN
 		
 	UPDATE CustDirectAccount WITH(ROWLOCK, UPDLOCK)
 	SET Coll_Status = 0
+		,RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE CustId = @CustId;
 	
 	SET @ErrMsg = '';		
