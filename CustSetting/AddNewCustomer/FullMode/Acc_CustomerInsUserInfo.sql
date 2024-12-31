@@ -158,6 +158,7 @@ Revisions:
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 	- 20241121@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
+	- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	
 	Param's Explanation:
 - @ErrCode:
@@ -504,8 +505,8 @@ BEGIN
 
 		IF @CreditRM > 300000 AND @roleid <> 1
 		BEGIN
-			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2)
-			SELECT @CustId, 1, 0
+			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2, RepUpdateTime)
+			SELECT @CustId, 1, 0, dbo.f_GetDateTime2() 
 		END
 	END TRY
 	BEGIN CATCH		
