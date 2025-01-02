@@ -12,6 +12,9 @@ Task : Insert custid to remove commision
 DB: dbcust/custdb
 Original: Insert custid to remove commision
 
+Revisions:
+	- 20250102@Hughie: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Update Agent successfully.
