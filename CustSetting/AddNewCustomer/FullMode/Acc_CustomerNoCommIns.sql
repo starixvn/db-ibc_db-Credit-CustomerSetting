@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 USE CustDB
 GO
 ALTER PROCEDURE [dbo].[Acc_CustomerNoCommIns] 
