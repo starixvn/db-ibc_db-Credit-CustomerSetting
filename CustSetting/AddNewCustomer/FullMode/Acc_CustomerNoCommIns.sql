@@ -30,12 +30,14 @@ INSERT INTO [CustDB].[dbo].[CustNoComm]
            ([CustID]
            ,[ModifiedDate]
            ,[Remark]
-           ,[UserID])
+           ,[UserID]
+		   ,[RepUpdateTime])
      VALUES
            (@CustID
            ,GETDATE()
            ,@Remark
-           ,@UserID)
+           ,@UserID
+		   ,dbo.f_GetDateTime2())
 IF(@@ERROR<>0)
 RETURN
  set @endRun = getdate()
