@@ -12,6 +12,7 @@ AS
 	  
 	Revisions: 
 		- Dominic@20160315:  Add Log to check who update On/Off Restriction #54083
+		- 20250108@Virgil: Apply In-house replication for profile setting tables [RedmineID: #214117]
 */  
 BEGIN  
 	SET NOCOUNT ON  
@@ -54,12 +55,14 @@ BEGIN
 	IF @IsAllowed = 1
 	BEGIN
 		UPDATE dbo.ProductSettingUpdateRestriction
-		SET RestrictionMode = 1 --Read & Write
+		SET RestrictionMode = 1, --Read & Write
+			RepUpdateTime = SYSDATETIME()
 	END
 	ELSE
 	BEGIN
 		UPDATE dbo.ProductSettingUpdateRestriction
-		SET RestrictionMode = 2 --Read Only
+		SET RestrictionMode = 2, --Read Only
+			RepUpdateTime = SYSDATETIME()
 	END
 	
 	SELECT @endRun = GETDATE()
