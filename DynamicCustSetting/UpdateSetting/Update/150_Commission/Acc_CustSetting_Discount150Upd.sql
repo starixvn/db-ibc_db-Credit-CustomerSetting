@@ -1,6 +1,7 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_Discount150Upd]
 	@custid			INT			,
+	@ugroup			VARCHAR(3) = NULL,
 	@Commission			VARCHAR(MAX)	,
 	@SubAccID			INT			= 0,
 	@UserID			INT			,	
@@ -24,7 +25,7 @@ AS
 
 	Revisions:
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
-
+		- 20250108@Johnson: Allow Agents to change member Comm group [RedmineID: #216405]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -58,10 +59,11 @@ BEGIN
 	, @mrecommend		INT
 	, @srecommend		INT
 	, @UserName			VARCHAR(30)
+	, @Site 			VARCHAR(10)
 	, @SiteID			INT 
 	, @CurrencyID		INT
 	, @JsonValues		VARCHAR(MAX)
-	, @uGroup			VARCHAR(10)
+	, @uGroup_old		VARCHAR(10)
 	, @IsAgentNoCom		BIT	= 0
 	
 	-- Declare Table
@@ -83,7 +85,8 @@ BEGIN
 		BetType		SMALLINT ,
 		NewDiscount		DECIMAL (9,8),
 		OldDiscount		DECIMAL (9,8),
-		AgentDiscount	DECIMAL (9,8),
+		AgentDiscount DECIMAL (9,8),
+		OldAgentDiscount DECIMAL (9,8),
 		Order_Comm		TINYINT,
 		SettingLevel	TINYINT,
 		ProductID		TINYINT
@@ -106,7 +109,7 @@ BEGIN
 	SET @startRun = GETDATE()
 	----------------------------------------------------------------------------------------------------------------------------
 	-- Check if JSON is null or empty
-	IF @Commission IS NULL OR @Commission = ''
+	IF (@Commission IS NULL OR @Commission = '') AND ISNULL(@ugroup,'') = ''
 		RETURN;
 
 	SELECT	@ErrCode	= 0
@@ -139,7 +142,8 @@ BEGIN
 	END
 
 	-- Get line information
-	SELECT @UserName = username, @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend, @RoleID=RoleID, @SiteID = s.siteid , @CurrencyID = c.currency , @uGroup = c.ugroup
+	SELECT @UserName = username, @recommend = recommend, @mrecommend = mrecommend, @srecommend = srecommend, @RoleID=RoleID, @SiteID = s.siteid , @site =  c.site, @CurrencyID = c.currency , @uGroup_Old = c.ugroup,
+		@ugroup = CASE WHEN roleid = 1 AND @ugroup IS NULL THEN ugroup ELSE @ugroup END -- multiple update
 	FROM customer c WITH (NOLOCK)
 	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE CustID = @CustID
@@ -193,7 +197,7 @@ BEGIN
 	WHERE ps.SettingType = 25
 		AND u.FunctionType = 1 --Edit Customer
 
-	IF NOT EXISTS( SELECT 1 FROM @New_Commission)
+	IF NOT EXISTS( SELECT 1 FROM @New_Commission) AND ISNULL(@ugroup,'') = ''
 	BEGIN
 		SELECT @ErrCode = 90017,
 				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
@@ -204,7 +208,8 @@ BEGIN
 	-- Check new values Comm is invalid
 	EXEC dbo.Acc_CustSetting_Discount150Check
 		@CustID		= @CustID
-	,	@Discount		= @Commission
+	,	@Discount	= @Commission
+	, 	@ugroup 	= @ugroup
 	,	@siteid		= @siteid
 	,	@CurrencyID		= @CurrencyID
 	,	@GroupID		= @GroupID
@@ -220,27 +225,48 @@ BEGIN
 	-- UPDATE START:
 	IF @RoleID = 1 
 	BEGIN
+		IF @ugroup <> @uGroup_Old
+		BEGIN
+			IF (@site = '76666B' AND @ugroup <> 'a')
+				OR (@CurrencyID = 45 AND @ugroup NOT IN ('dea','deb','dec','ded'))
+				OR (@CurrencyID <> 45 AND @ugroup not in ('a', 'b', 'c', 'd', 'hka', 'hkb', 'hkc', 'hkd'))
+				OR (@site = 'INDO' AND @ugroup like 'hk_')
+			BEGIN
+				SELECT @ErrCode = 12,
+					@MsgType = 100,
+					@ErrMsg =  '<Root MsgID="12" Msg="Unable to assign this commission group to the member." />'
 
+				RETURN
+			END
+			
+			UPDATE Customer WITH (ROWLOCK , UPDLOCK)
+			SET ugroup = @ugroup				
+			WHERE custid=@custid
+		END
+		
 	-- Check rule Change GroupDiscount > Upline or Not
 		-- Check rule CustNoComm
 		IF NOT EXISTS (SELECT 1 FROM CustNoComm cnc WITH (NOLOCK) WHERE cnc.CustID = @custid) 	
 			BEGIN
 				-- Check rule Change GroupDiscount > Upline or Not of GroupDiscount?
-				DECLARE @AgentDiscount DECIMAL (9,8)
-
-				SELECT @AgentDiscount = (
-									SELECT cda.Discount
-									FROM CustDiscount3rd_Agent cda WITH (NOLOCK)
-									WHERE cda.CustID =  @recommend
-									AND cda.SportType = 1
-									AND cda.BetType = (CASE 
-													WHEN @ugroup IN ('a' , 'hka' , 'dea') THEN 1
-													WHEN @ugroup IN ('b' , 'hkb' , 'deb') THEN 3
-													WHEN @ugroup IN ('c' , 'hkc' , 'dec') THEN 7
-													WHEN @uGroup IN ('d' , 'hkd' , 'ded') THEN 8
-												 END)
-								)
-
+				DECLARE @AgentDiscount DECIMAL (9,8),
+						@MasterDiscount DECIMAL (9,8),
+						@SuperDiscount DECIMAL (9,8)
+				
+				SELECT 
+					@SuperDiscount = MAX(CASE WHEN cda.CustID  =  @srecommend THEN cda.Discount END),
+					@MasterDiscount = MAX(CASE WHEN cda.CustID =  @mrecommend THEN cda.Discount END),
+					@AgentDiscount = MAX(CASE WHEN cda.CustID  =  @recommend THEN cda.Discount END)
+				FROM CustDiscount3rd_Agent cda WITH (NOLOCK)
+				WHERE cda.CustID IN (@srecommend , @mrecommend , @recommend)
+				AND cda.SportType = 1
+				AND cda.BetType = (CASE 
+								WHEN @ugroup IN ('a' , 'hka' , 'dea') THEN 1
+								WHEN @ugroup IN ('b' , 'hkb' , 'deb') THEN 3
+								WHEN @ugroup IN ('c' , 'hkc' , 'dec') THEN 7
+								WHEN @uGroup IN ('d' , 'hkd' , 'ded') THEN 8
+							 END)
+								
 				UPDATE nc SET nc.Discount = CASE WHEN nc.Discount > @AgentDiscount THEN @AgentDiscount ELSE nc.Discount END
 				FROM @New_Commission nc
 				WHERE SportType = 1 AND BetType = 1
@@ -276,34 +302,34 @@ BEGIN
 
 
 		-- Collect Data for write log
-		INSERT INTO @LogCommission (SportType , BetType , NewDiscount , OldDiscount , AgentDiscount , Order_Comm , SettingLevel , ProductID)
+		INSERT INTO @LogCommission (SportType , BetType , NewDiscount , OldDiscount , OldAgentDiscount , Order_Comm , SettingLevel , ProductID)
 		SELECT 
 			psd.SportType
 		,	psd.BetType
 		,	nc.Discount				AS NewDiscount
 		,	oc.Discount				AS OldDiscount
-		,	oc.AgentDiscount
+		,	oc.AgentDiscount		AS OldAgentDiscount 
 		,	psd.Child_DisplayOrder		 AS Order_Comm
 		,	psd.SettingLevel
 		,	psd.ProductID
 		FROM #ProductSettingDetail psd
 		INNER JOIN @New_Commission nc ON psd.SportType = nc.SportType AND psd.BetType = nc.BetType
 		INNER JOIN @Old_Commission oc ON psd.SportType = oc.SportType AND psd.BetType = oc.BetType
+		
+		UPDATE cdm
+			SET cdm.PlayerDiscount = nc.Discount,
+				cdm.SuperDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @SuperDiscount ELSE cdm.SuperDiscount END,
+				cdm.MasterDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @MasterDiscount ELSE cdm.MasterDiscount END,
+				cdm.AgentDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @AgentDiscount ELSE cdm.AgentDiscount END
+		FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
+		INNER JOIN @New_Commission nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
+		WHERE cdm.CustID = @custid	
 
-		-- Collect Json to run execrep
-		SELECT @JsonValues = (  SELECT  nc.SportType 
-							, nc.BetType 
-							, nc.Discount 
-						FROM @New_Commission nc
-						FOR JSON PATH
-					)
-
-		--Call SP Execrep to update for downline:
-		EXEC dbo.Acc_CustSetting_06
-							  @CustId			     = @CustId
-							, @RoleId			     = @RoleID
-							, @JsonComm			     = @JsonValues
-							, @GroupType		     = @GroupType
+		UPDATE l
+		SET l.AgentDiscount = cdm.AgentDiscount
+		FROM @LogCommission l 
+			INNER JOIN CustDiscount3rd_Member cdm WITH(NOLOCK) ON cdm.SportType = l.SportType AND cdm.BetType = l.BetType
+		WHERE cdm.CustID = @custid	
 	END
 
 	ELSE IF @RoleID > 1 
@@ -383,7 +409,7 @@ BEGIN
 		SELECT 
 			@CustID					AS [@CustID]
 		,	dbo.f_GetSubUsername(@SubAccID)	AS [@SubAccName]
-		,	@IP						AS [@IP]
+		,	@IP						AS [@IP]		
 		,	(
 				SELECT 
 					SportType			AS [@SportType]
@@ -404,7 +430,7 @@ BEGIN
 		SELECT 
 			@CustID					AS [@CustID]
 		,	dbo.f_GetSubUsername(@SubAccID)	AS [@SubAccName]
-		,	@IP						AS [@IP]
+		,	@IP						AS [@IP]		
 		,	(
 				SELECT 
 					SportType			AS [@SportType]
@@ -429,10 +455,11 @@ BEGIN
 			@CustID					AS [@CustID]
 		,	dbo.f_GetSubUsername(@SubAccID)	AS [@SubAccName]
 		,	@IP						AS [@IP]
+		,	@ugroup					AS [@ugroup]
 		,	(
 				SELECT 
 					SportType			AS [@SportType]
-				,	BetType			AS [@BetType]
+				,	BetType				AS [@BetType]
 				,	NewDiscount			AS [@PlayerDiscount]
 				,	AgentDiscount		AS [@AgentDiscount]
 				,	SettingLevel		AS [@SettingLevel]
@@ -451,12 +478,13 @@ BEGIN
 			@CustID					AS [@CustID]
 		,	dbo.f_GetSubUsername(@SubAccID)	AS [@SubAccName]
 		,	@IP						AS [@IP]
+		,	@ugroup_old				AS [@ugroup]
 		,	(
 				SELECT 
 					SportType			AS [@SportType]
 				,	BetType			AS [@BetType]
 				,	OldDiscount			AS [@PlayerDiscount]
-				,	AgentDiscount		AS [@AgentDiscount]
+				,	OldAgentDiscount	AS [@AgentDiscount]
 				,	SettingLevel		AS [@SettingLevel]
 				,	ProductID			AS [@ProductID]
 				FROM @LogCommission

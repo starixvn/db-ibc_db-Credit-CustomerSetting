@@ -2,6 +2,7 @@
 CREATE PROCEDURE [dbo].[Acc_CustSetting_Discount150Check]
 	  @CustID		INT
 	, @Discount		VARCHAR(MAX)
+	, @ugroup		VARCHAR(3) = NULL
 	, @SettingStatus	TINYINT			= 0
 	, @CurrencyID	INT				= 0
 	, @siteid		INT				= 0
@@ -19,7 +20,7 @@ AS
 
 	Revisions: 
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
-
+		- 20250110@Johnson: Allow Agents to change member Comm group [RedmineID: #216405]
 	Param's Explanation:
 	@Discount: Json Type
 		'[ 
@@ -96,9 +97,9 @@ BEGIN
 		AND u.FunctionType = 1 --Edit Customer
 
 	
-	DECLARE @RoleID INT , @ugroup VARCHAR(10)
-
-	SELECT @RoleID = RoleID , @ugroup = ugroup
+	DECLARE @RoleID INT 
+	
+	SELECT @RoleID = RoleID 
 	FROM Customer WITH (NOLOCK)
 	WHERE custid = @CustID
 
