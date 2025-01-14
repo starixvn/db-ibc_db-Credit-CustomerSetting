@@ -48,6 +48,7 @@ Revisions:
 	- 20241024@Johnson: Danger Setting - Update ABI 33/46 to ORI 33/46 [redmineID: ##208301]
 	- 20241206@Johnson: LAP - Update odds group for licensee [redmine:#199306]
 	- 20240807@Helios: Scale Out DBCUST - Apply Inhouse replication for tables of problem account [Redmine:#209747] 
+	- 20250104@Winfred: Update customer's danger level Check exists data [Redmine:#216754] 
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -107,7 +108,7 @@ BEGIN
 		END	
 		
 		/*region3: update danger */	
-		SET @MaxRow = (SELECT MAX(ID) FROM @tempCust)
+		SET @MaxRow = (SELECT ISNULL(MAX(ID),0) FROM @tempCust)
 				
 		IF	@Threshold >= @MaxRow
 			SET	@Threshold = @MaxRow
