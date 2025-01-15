@@ -43,6 +43,7 @@ AS
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
+		- 20250115@Johnson: Check member Comm group [RedmineID: #216405]
 
 	Param's Explanation: 
 		- @SettingXML:
@@ -109,7 +110,10 @@ BEGIN
     DECLARE @endRun DATETIME
     DECLARE @duration INT
     SET @startRun = GETDATE()
-
+	
+	IF @ugroup IS NULL 
+		SELECT @ugroup = ''
+		
 	DECLARE
 		--Discount	
 		@SettingType25 VARCHAR(MAX)= '', --SB
@@ -472,6 +476,19 @@ BEGIN
 			)
 
 	--------START: Update parametter-------------------------------------------------------------------
+	--check ugroup
+	IF (@_site = '76666B' AND @ugroup <> 'a')
+		OR (@currency = 45 AND @ugroup NOT IN ('dea','deb','dec','ded'))
+		OR (@currency <> 45 AND @ugroup not in ('a', 'b', 'c', 'd', 'hka', 'hkb', 'hkc', 'hkd'))
+		OR (@_site = 'INDO' AND @ugroup like 'hk_')
+	BEGIN
+		SELECT @ErrCode = 12,
+			@MsgType = 100,
+			@ErrMsg =  '<Root MsgID="12" Msg="Unable to assign this commission group to the member." />'
+
+		RETURN
+	END
+	
 	--check comm
 	EXEC Acc_LiteMode_CustomerInsMember_DiscountCheck_Ag
 		@srecommend = @srecommend,

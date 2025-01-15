@@ -255,7 +255,10 @@ Param's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
-
+	
+	IF @ugroup IS NULL 
+		SELECT @ugroup = ''
+		
 	DECLARE @startRun DATETIME
 			,@endRun DATETIME
 			,@duration INT
