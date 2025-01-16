@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_xnap,wsv_alp" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_SettingRestrictionUpdate]  
 	@IsAllowed	BIT = 0
 	, @UserID	INT
@@ -86,10 +87,4 @@ BEGIN
 	END CATCH
 	
 END   
-  
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [wsv_nap]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [wsv_alp]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_SettingRestrictionUpdate] TO [wsv_xnap]
