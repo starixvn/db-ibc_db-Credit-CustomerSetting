@@ -32,7 +32,7 @@ AS
 		- 20220808@Tacy: update member's StakeLevel by execrep when using Search & Copy New member function [RedmineID: #176225]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230921@Luke: Live Casino - Allow uncheck bet limit to control product status [Redmine: #194121]
-		- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -269,7 +269,6 @@ BEGIN
 			UPDATE	cslm	WITH(ROWLOCK,UPDLOCK)
 			SET		cslm.StakeLevelList = ts.StakeLevelList
 					, cslm.LastUpdated = GETDATE()
-					, RepUpdateTime = dbo.f_GetDateTime2()
 			OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
 				INTO #HistoryStakeLevelTbl(CustID, SportType, BetType, StakeLevelList, UpdateTime)
 			FROM		dbo.CustStakeLevel_Member AS cslm
@@ -319,8 +318,7 @@ BEGIN
 		
 		-- Update current customer's stake level
 		UPDATE	csla	WITH(ROWLOCK,UPDLOCK)
-		SET		csla.StakeLevelList = ts.StakeLevelList,
-				RepUpdateTime = dbo.f_GetDateTime2()
+		SET		csla.StakeLevelList = ts.StakeLevelList
 		FROM		dbo.CustStakeLevel_Agent AS csla
 		INNER JOIN	#tmpStake ts
 				ON	csla.BetType = ts.BetType

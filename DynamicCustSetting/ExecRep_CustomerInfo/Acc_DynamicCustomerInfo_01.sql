@@ -55,9 +55,6 @@ BEGIN
 				
 	IF @SettingType IN (1,18) -- PT
 	BEGIN
-		IF dbo.f_CheckRepTable('CustSettingMode3rd') = 0 RETURN
-		IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 0 RETURN
-
 		DECLARE @SettingMode	BIT = 0, 
 				@MemGroup		INT
 

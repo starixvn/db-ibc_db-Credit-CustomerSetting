@@ -251,12 +251,6 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 4
-
-			DELETE FROM CustProductStatus 
-			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
-			INTO CustProductStatus_Del_Inhouse(custid,RepUpdateTime)
-			WHERE CustID = @CustID
-						
 			RETURN
 		END CATCH
 

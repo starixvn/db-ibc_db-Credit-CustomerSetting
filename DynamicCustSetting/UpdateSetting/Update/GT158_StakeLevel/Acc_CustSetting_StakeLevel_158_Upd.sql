@@ -568,7 +568,7 @@ BEGIN
 			-- Correct downlines via ExecRep
 			ALTER TABLE #CustStakeLevelDownlines ADD ID INT IDENTITY (1,1);
 			
-			DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 20000, @StopRow INT;
+			DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 2000, @StopRow INT;
 			
 			SET @MaxRow = (SELECT MAX(ID) FROM #CustStakeLevelDownlines);
 			

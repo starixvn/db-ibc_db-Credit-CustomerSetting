@@ -25,7 +25,7 @@ AS
 			- 20211007@Johnson: write log by product incase update multiple super[redmine:#162853]
 			- 20220808@Tacy: update member's WinLossLimit by execrep when using Search & Copy New member function [RedmineID: #176225]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
-			- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+
 	Param's Explanation:
 	- @Limit:
 		6: WinLossLimit
@@ -302,7 +302,6 @@ BEGIN
 				SET main.MaxWinLimit = tmp.MaxWinLimit
 					, main.IsAutoReset = tmp.IsAutoReset
 					, main.MaxLossLimit = tmp.MaxLossLimit
-					, RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
 				INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 				WHERE main.custid = @CustID
@@ -313,7 +312,6 @@ BEGIN
 				UPDATE main
 				SET main.MaxWinLimit = tmp.MaxWinLimit
 					, main.IsAutoReset = tmp.IsAutoReset
-					, RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
 				INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 				WHERE main.custid = @CustID
@@ -324,7 +322,6 @@ BEGIN
 				UPDATE main
 				SET main.MaxLossLimit = tmp.MaxLossLimit
 					, main.IsAutoReset = tmp.IsAutoReset
-					, RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustWinLossLimit_Member main WITH(ROWLOCK,UPDLOCK)
 				INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 				WHERE main.custid = @CustID
@@ -350,7 +347,6 @@ BEGIN
 			SET main.MaxWinLimit = tmp.MaxWinLimit
 				, main.IsAutoReset = tmp.IsAutoReset
 				, main.MaxLossLimit = tmp.MaxLossLimit
-				, RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustWinLossLimit_Agent main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 			WHERE main.custid = @CustID
@@ -361,7 +357,6 @@ BEGIN
 			UPDATE main
 			SET main.MaxWinLimit = tmp.MaxWinLimit
 				, main.IsAutoReset = tmp.IsAutoReset
-				, RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustWinLossLimit_Agent main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 			WHERE main.custid = @CustID
@@ -372,7 +367,6 @@ BEGIN
 			UPDATE main
 			SET main.MaxLossLimit = tmp.MaxLossLimit
 				, main.IsAutoReset = tmp.IsAutoReset
-				, RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustWinLossLimit_Agent main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 			WHERE main.custid = @CustID

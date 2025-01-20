@@ -265,7 +265,7 @@ BEGIN
 	
 
 	SELECT @SettingMode = IsGrouped
-	FROM dbo.CustSettingMode3rd
+	FROM dbo.CustSettingMode3rd (NOLOCK)
 	WHERE CustID= @CustID
 	
 	--Get Super PT Setting Values

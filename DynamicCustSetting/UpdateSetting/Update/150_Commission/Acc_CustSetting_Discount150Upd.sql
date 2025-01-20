@@ -26,6 +26,7 @@ AS
 	Revisions:
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
 		- 20250108@Johnson: Allow Agents to change member Comm group [RedmineID: #216405]
+		- 20250120@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -240,7 +241,8 @@ BEGIN
 			END
 			
 			UPDATE Customer WITH (ROWLOCK , UPDLOCK)
-			SET ugroup = @ugroup				
+			SET ugroup = @ugroup,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			WHERE custid=@custid
 		END
 		
@@ -320,7 +322,8 @@ BEGIN
 			SET cdm.PlayerDiscount = nc.Discount,
 				cdm.SuperDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @SuperDiscount ELSE cdm.SuperDiscount END,
 				cdm.MasterDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @MasterDiscount ELSE cdm.MasterDiscount END,
-				cdm.AgentDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @AgentDiscount ELSE cdm.AgentDiscount END
+				cdm.AgentDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @AgentDiscount ELSE cdm.AgentDiscount END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 		FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 		INNER JOIN @New_Commission nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
 		WHERE cdm.CustID = @custid	
