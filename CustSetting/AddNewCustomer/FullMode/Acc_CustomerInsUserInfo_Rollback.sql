@@ -35,9 +35,15 @@ BEGIN
 	WHERE CustID = @CustID
 
 	IF @RoleID BETWEEN 2 AND 4
-		DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
+		DELETE CustLoginInfo WITH(ROWLOCK)
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO CustLoginInfo_Del_Inhouse(custid,RepUpdateTime)
+		WHERE custid = @custid
 	ELSE IF @RoleID = 1
-		DELETE FROM CustLoginInfo_Member WITH (ROWLOCK) WHERE CustID = @CustID 
+		DELETE CustLoginInfo_Member WITH(ROWLOCK)
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO CustLoginInfo_Member_Del_Inhouse(custid,RepUpdateTime)
+		WHERE custid = @custid
 
 	IF @RoleID = 4
 		DELETE c
