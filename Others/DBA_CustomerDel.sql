@@ -37,6 +37,7 @@ AS
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		- 20250220@Johnson: remove CustRequestGame [RedmineID: #212684]
+		- 20250212@Virgil.Phan: Drop BA functions [RedmineID: #216882]
 		- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 
 	Param's Explanation:
@@ -167,11 +168,6 @@ BEGIN
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	
-	DELETE dbo.Dep_CustBAActive 
-	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
-	INTO Dep_CustBAActive_Del_Inhouse(custid,RepUpdateTime)
-	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	--DCS table
 	DELETE dbo.CustProductStatus 
@@ -469,12 +465,6 @@ BEGIN
 	
 	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
-	DELETE dbo.Dep_CustBAActive 
-	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
-	INTO Dep_CustBAActive_Del_Inhouse(custid,RepUpdateTime)
-	WHERE custid IN (SELECT custID FROM @tmp_custID)
-
-	
 	--DCS table
 	DELETE dbo.CustProductStatus 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -755,11 +745,6 @@ BEGIN
 	
 	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
-	DELETE dbo.Dep_CustBAActive 
-	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
-	INTO Dep_CustBAActive_Del_Inhouse(custid,RepUpdateTime)
-	WHERE custid IN (SELECT custID FROM @tmp_custID)
-	
 	--DCS table
 	DELETE dbo.CustProductStatus 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -1003,11 +988,6 @@ BEGIN
 	WHERE custid = @custid	
 
 	--DELETE dbo.CustRequestGame WHERE custid = @custid	
-	
-	DELETE dbo.Dep_CustBAActive 
-	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
-	INTO Dep_CustBAActive_Del_Inhouse(custid,RepUpdateTime)
-	WHERE custid = @custid
 	
 	--DCS table
 	DELETE dbo.CustProductStatus 
