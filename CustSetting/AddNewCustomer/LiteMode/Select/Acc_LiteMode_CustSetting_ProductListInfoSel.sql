@@ -17,6 +17,7 @@ AS
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960]
 		- 20240521@Helios: Unify RNG Games [Redmine: #204358]
+		- 20250212@Virgil: Add Saba Keno to list "Other RNG Casino" [Redmine: #214757]
 
 	 Param's Explanation: 
 		@SettingStatus: 0: Pro, 1: UAT, 3: UAT/PRO
@@ -299,7 +300,7 @@ BEGIN
 	AND po.Type = 53
 	AND p.GroupID = 3
 	AND p.SubGroupID = 5
-	AND po.RealProductID IN (6,42,66,38,86)
+	AND po.RealProductID IN (6,42,66,38,86,102)
 	UNION ALL
 
 	-- Get data of Live & RNG Casino
@@ -310,7 +311,7 @@ BEGIN
 	AND po.Type IN (41,53)
 	AND p.GroupID = 3
 	AND p.SubGroupID IN (6,8)
-	AND po.RealProductID NOT IN (6,42,66,38,86)
+	AND po.RealProductID NOT IN (6,42,66,38,86,102)
 
 	ORDER BY GroupID,SubGroupOrder
 
