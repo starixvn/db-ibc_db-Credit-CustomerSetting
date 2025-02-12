@@ -37,6 +37,7 @@ AS
 		- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 		- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
+		- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
 
 */
     
@@ -133,6 +134,20 @@ BEGIN
 END
 
 IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransRNG with (nolock) where recommend = @AgentID)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 
+	print @ErrMsg
+	return
+END
+
+IF EXISTS(
+			SELECT 1 
+			FROM DBTXN.bodb02.dbo.SabaWalletTicket with (nolock) 
+			WHERE recommend = @AgentID 
+				and custid <> 0
+				AND WinlostDate >= CONVERT(DATE,DATEADD(mm,-2,GETDATE()))
+		)
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@AgentID,@ErrMsg,2) 

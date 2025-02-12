@@ -18,6 +18,7 @@ AS
 			- 20201210@Eden: Alpha Site | Implement Dormant Account List [RedmineID: #144903]
 			- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
 			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+			- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -100,6 +101,19 @@ BEGIN
 	END
 
 	IF EXISTS(SELECT 1 FROM DBTXN.bodb02.dbo.bettransRNG with (nolock) where recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE mrecommend = @MasterID AND roleid = 2))
+	BEGIN
+		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
+		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@MasterID,@ErrMsg,3) 
+		PRINT @ErrMsg
+		RETURN
+	END
+
+	IF EXISTS(	SELECT 1 
+				FROM DBTXN.bodb02.dbo.SabaWalletTicket WITH (NOLOCK) 
+				WHERE  mrecommend = @MasterID 
+					AND custid <> 0
+					AND WinlostDate >= CONVERT(DATE,DATEADD(mm,-2,GETDATE()))
+				)
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@MasterID,@ErrMsg,3) 

@@ -11,6 +11,7 @@ AS
 		- 20200505@Max: Archiving credit accounts process for Master & Agent levels [Redmine: #130032]
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
+		- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -86,6 +87,14 @@ BEGIN
 			AND accDate >= @_from and accdate < @_to
 			AND c.custid IS NULL
 
+		insert into tempCustID
+		SELECT distinct s.custid
+		FROM dbo.StatementExtra s WITH (NOLOCK)
+			LEFT JOIN tempCustID c WITH (NOLOCK) On c.CustID = s.custid
+		WHERE TransType <> 'balr' 
+			AND accDate >= @_from and accdate < @_to
+			AND c.custid IS NULL
+
 		SET @msg = 'Statement loaded from ' + CONVERT(varchar(10), @_from, 120) + ' to ' + CONVERT(VARCHAR(10), dateadd(dd, -1, @_to), 120)
 		RAISERROR(@msg, 0, 0) WITH NOWAIT
 
@@ -113,6 +122,14 @@ BEGIN
 				LEFT JOIN tempCustID c WITH (NOLOCK) ON c.CustID = s.custid
 			WHERE TransType <> 'bal' 
 				AND transdesc NOT LIKE 'For Delete Account%' --exclude clear balance trans inserted by Archive process
+				AND accDate >= @_from and accdate < @_to
+				AND c.custid IS NULL
+
+			insert into tempCustID
+			SELECT distinct s.custid
+			FROM dbo.StatementExtra s WITH (NOLOCK)
+				LEFT JOIN tempCustID c WITH (NOLOCK) ON c.CustID = s.custid
+			WHERE TransType <> 'balr' 
 				AND accDate >= @_from and accdate < @_to
 				AND c.custid IS NULL
 

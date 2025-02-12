@@ -25,6 +25,7 @@ Revisions:
 	- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 	- 20230524@Eden: Scale out DBTRANS for Credit  [Redmine: #181595]
 	- 20230818@Eden : Archive super level 789y [Redmine: #183447]
+	- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
 Note:
 --Pre-check needed:
 	--+Closed status
@@ -106,6 +107,14 @@ BEGIN
 END
 
 IF EXISTS(select 1 from dbo.bettransRNG with (nolock) where recommend = @AgentID)
+BEGIN
+	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
+	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2) 
+	print @ErrMsg
+	return
+END
+
+IF EXISTS(SELECT 1 FROM dbo.SabaWalletTicket WITH (NOLOCK) WHERE recommend = @AgentID AND WinlostDate >= CONVERT(DATE,DATEADD(mm,-2,GETDATE())))
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (custid, roleid) VALUES(@AgentID, 2) 
