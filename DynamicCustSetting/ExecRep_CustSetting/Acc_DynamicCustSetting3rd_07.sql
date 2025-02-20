@@ -16,19 +16,20 @@ AS
     Revisions:
 		- 20201026@Eden: Adjust new pt for 789y [Redmine: #143764]
 		- 20220622@Elodie:  Run by batch [RedmineID: #174131]                             
+		- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
     Parameter's Explanation:        
 
 */
 BEGIN
 	SET NOCOUNT ON
-
-	IF dbo.f_CheckRepTable('custinfo') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 0 RETURN
+	
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+	RETURN;
 	
 	DECLARE @tmpSportBettype TABLE(sporttype SMALLINT, bettype SMALLINT, islive BIT)
-	DECLARE @BatchNo INT = 5000, @SettingRow TINYINT
+	DECLARE @BatchNo INT = 2000, @SettingRow TINYINT
 	CREATE TABLE #Agent(custid INT, srecommend INT, mrecommend INT, recommend INT, IsUpdFirst BIT DEFAULT(0), IsUpdSecond BIT DEFAULT(0))
 	CREATE TABLE #Member(custid INT, srecommend INT, mrecommend INT, recommend INT, IsUpdFirst BIT DEFAULT(0), IsUpdSecond BIT DEFAULT(0))
 	CREATE TABLE #AgentTmpBatch(custid INT, srecommend INT, mrecommend INT, recommend INT)
@@ -148,7 +149,8 @@ BEGIN
 				,@s1 = CASE WHEN @s1 > 100 THEN 100 ELSE @s1 END
 			
 				--Aplly changes
-				,cs.SuperPT = @s1								       
+				,cs.SuperPT = @s1
+				,RepUpdateTime = dbo.f_GetDateTime2()	
 			FROM #MemberTmpBatch c WITH(NOLOCK)
 				INNER JOIN dbo.CustPTSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK) ON c.custid = cs.custid
 				INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK) on c.recommend = acs.custid AND cs.sporttype = acs.sporttype AND cs.bettype = acs.bettype AND cs.IsLive = acs.IsLive
@@ -193,7 +195,8 @@ BEGIN
 				,@s1 = CASE WHEN @s1 > 100 THEN 100 ELSE @s1 END
 
 				--Apply changes
-				,cs.SuperPT = @s1								       
+				,cs.SuperPT = @s1
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #AgentTmpBatch c WITH(NOLOCK)
 				INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK) ON c.custid = cs.AgentID
 				INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK) on c.recommend = acs.custid AND cs.sporttype = acs.sporttype AND cs.bettype = acs.bettype AND cs.IsLive = acs.IsLive
@@ -247,6 +250,7 @@ BEGIN
 					-- done apply all rule, then update to destination table
 					,cs.AgentPT = @a1
 					,cs.MasterPT = @m1
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM #MemberTmpBatch c WITH(NOLOCK)
 					INNER JOIN dbo.CustPTSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK) ON c.custid = cs.custid
 					INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK) on c.recommend = acs.custid AND cs.sporttype = acs.sporttype AND cs.bettype = acs.bettype AND cs.IsLive = acs.IsLive
@@ -289,6 +293,7 @@ BEGIN
 					-- done apply all rule, then update to destination table
 					,cs.AgentPT = @a1
 					,cs.MasterPT = @m1
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM #AgentTmpBatch c WITH(NOLOCK)
 					INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK) ON c.custid = cs.AgentID
 					INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK) on c.recommend = acs.custid AND cs.sporttype = acs.sporttype AND cs.bettype = acs.bettype AND cs.IsLive = acs.IsLive
@@ -407,6 +412,7 @@ BEGIN
 				,cs.AgentPT = @a1
 				,cs.MasterPT = @m1
 				,cs.SuperPT = @s1
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch c WITH(NOLOCK)
 				INNER JOIN dbo.CustPTSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK) ON c.custid = cs.custid
 				INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK) on c.recommend = acs.custid AND cs.sporttype = acs.sporttype AND cs.bettype = acs.bettype AND cs.IsLive = acs.IsLive
@@ -523,6 +529,7 @@ BEGIN
 				,cs.AgentPT = @a1
 				,cs.MasterPT = @m1
 				,cs.SuperPT = @s1
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #AgentTmpBatch c WITH(NOLOCK)
 				INNER JOIN dbo.CustPTGroupSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK) ON c.custid = cs.AgentID
 				INNER JOIN dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK) on c.recommend = acs.custid AND cs.sporttype = acs.sporttype AND cs.bettype = acs.bettype AND cs.IsLive = acs.IsLive

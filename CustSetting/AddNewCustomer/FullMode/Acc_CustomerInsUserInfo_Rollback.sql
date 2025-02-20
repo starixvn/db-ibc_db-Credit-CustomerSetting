@@ -10,7 +10,7 @@ AS
 
 	Revisions:
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
-		
+		- 20241121@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 
 	Examples:
@@ -20,8 +20,17 @@ BEGIN
 	DECLARE @RoleID tinyint
 	SELECT @RoleID = RoleID FROM customer (nolock) WHERE CustID = @CustID
 
-	DELETE FROM custinfo WITH (ROWLOCK)  WHERE custid = @CustID
-	DELETE FROM customer WITH (ROWLOCK)  WHERE CustID = @CustID
+	DELETE c
+	OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+	INTO custinfo_Del_InHouse(CustID,RepUpdateTime)
+	FROM custinfo c WITH (ROWLOCK)  
+	WHERE custid = @CustID
+	
+	DELETE c
+	OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+	INTO customer_Del_InHouse(CustID,RepUpdateTime)
+	FROM customer c WITH (ROWLOCK)  
+	WHERE CustID = @CustID
 
 	IF @RoleID BETWEEN 2 AND 4
 		DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
@@ -29,10 +38,22 @@ BEGIN
 		DELETE FROM CustLoginInfo_Member WITH (ROWLOCK) WHERE CustID = @CustID 
 
 	IF @RoleID = 4
-		DELETE FROM CustSuper WITH (ROWLOCK)  WHERE CustID = @CustID
+		DELETE c
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustSuper_Del_InHouse(CustID,RepUpdateTime)
+		FROM CustSuper c WITH (ROWLOCK)  
+		WHERE CustID = @CustID
 	ELSE IF @RoleID = 3
-		DELETE FROM CustMaster WITH (ROWLOCK)  WHERE CustID = @CustID
+		DELETE c 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustMaster_Del_InHouse(CustID,RepUpdateTime)
+		FROM CustMaster c WITH (ROWLOCK)  
+		WHERE CustID = @CustID
 	ELSE IF @RoleID = 2
-		DELETE FROM CustAgent WITH (ROWLOCK)  WHERE CustID = @CustID
+		DELETE c 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustAgent_Del_InHouse(CustID,RepUpdateTime)
+		FROM CustAgent c WITH (ROWLOCK)  
+		WHERE CustID = @CustID
 END
 GO

@@ -56,6 +56,7 @@ Revisions:
 	- 20190606@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 	- 20211103@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+	- 20241122@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -175,34 +176,39 @@ BEGIN
 		   refcode1 = case when @refcode1 is null then refcode1 else @refcode1 end,
 		   refcode2 = case when @refcode2 is null then refcode2 else @refcode2 end,
 		   --remark = case when @remark is null then remark else @remark end,
-		   important = case when @important is null then important else @important end
+		   important = case when @important is null then important else @important end,
+		   RepUpdateTime = dbo.f_GetDateTime2()
 	 where custID = @CustID
 	 
     if @roleid = 1 OR @roleid = 0--headline cn88
     begin
         update customer with(rowlock, updlock)
-           set remark = case when @remark is null then remark else SUBSTRING(@remark, 1, 50) end
+           set remark = case when @remark is null then remark else SUBSTRING(@remark, 1, 50) end,
+			   RepUpdateTime = dbo.f_GetDateTime2()
          where custid = @CustID
     end
 
     if @roleid = 2
     begin
         update CustAgent with(rowlock, updlock)
-           set creationRemark = case when @remark is null then creationRemark else @remark end
+           set 	creationRemark = case when @remark is null then creationRemark else @remark end,
+				RepUpdateTime = dbo.f_GetDateTime2()
          where custid = @CustID
     end
 
     if @roleid = 3
     begin
         update CustMaster with(rowlock, updlock)
-           set creationRemark = case when @remark is null then creationRemark else @remark end
+           set 	creationRemark = case when @remark is null then creationRemark else @remark end,
+				RepUpdateTime = dbo.f_GetDateTime2()
          where custid = @CustID
     end
          
     if @roleid = 4
     begin
         update CustSuper with(rowlock, updlock)
-           set creationRemark = case when @remark is null then creationRemark else @remark end
+           set 	creationRemark = case when @remark is null then creationRemark else @remark end,
+				RepUpdateTime = dbo.f_GetDateTime2()
          where custid = @CustID
      end 
 

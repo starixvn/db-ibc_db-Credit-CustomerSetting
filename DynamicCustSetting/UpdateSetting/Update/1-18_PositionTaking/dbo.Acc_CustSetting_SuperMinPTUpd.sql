@@ -23,7 +23,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240521@Helios: Unify RNG Games - Use ProductSettingProfile Table instead of ProductSettingDetail table [Redmine: #204358]
-
+		- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	Parameter's Explanation:
 		@PT = <ROOT>
 					<PT SportType="1" BetType="1" IsLive="0" MinPT="0"/>
@@ -306,7 +306,8 @@ BEGIN
 	
 	--Update data change
 	UPDATE cs
-	SET cs.MinPT = b.SuperMinPT
+	SET cs.MinPT = b.SuperMinPT,
+		RepUpdateTime = dbo.f_GetDateTime2()
 	FROM CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK)
 		INNER JOIN @tblPT b ON cs.Sporttype = b.SportType
 								AND cs.bettype = b.BetType

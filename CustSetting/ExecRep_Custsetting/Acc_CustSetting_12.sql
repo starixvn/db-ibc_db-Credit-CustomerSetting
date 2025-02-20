@@ -18,7 +18,7 @@ AS
 		- 20220516@Tacy: Insert history of member bet setting: Number Game, Happy5 [RedmineID: #170739]
 		- 20220716@Tacy: HotFix - Error when update big line NG/Happy5/Keno bet setting [RedmineID: #175836]
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
-
+		- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
     Param's Explanation:
             
 */
@@ -43,13 +43,14 @@ BEGIN
 				MaxPerMatch	MONEY, 
 				UpdateTime	DATETIME
 			)
-
+	
     -- Update MaxPayout Call From Acc_CustSetting_MaxPayoutUpd
 	IF (@GroupType = 152)
 	BEGIN
-		IF dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 0 RETURN
-		IF dbo.f_CheckRepTable('CustMaxPayoutSetting_Member') = 0 RETURN
-		IF dbo.f_CheckRepTable('MaxPayoutGlobalSetting') = 0 RETURN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
 		
 		DECLARE @NewMaxPayoutTbl TABLE (
 				  SportType			SMALLINT
@@ -83,7 +84,7 @@ BEGIN
 		IF @SportbettypeCount = 0
 			SET @SportbettypeCount = 1
 
-		SET @Batch_Num = 5000/@SportbettypeCount
+		SET @Batch_Num = 2000/@SportbettypeCount
 
 		IF @RoleId = 4
 		BEGIN
@@ -139,6 +140,7 @@ BEGIN
 														THEN tmp.Combo35 ELSE mps.Combo35 END
 					, mps.ComboOver6	= CASE WHEN (tmp.ComboOver6 > 0 AND (mps.ComboOver6 = 0 OR mps.ComboOver6 > tmp.ComboOver6)) 
 														THEN tmp.ComboOver6 ELSE mps.ComboOver6 END
+					, RepUpdateTime = dbo.f_GetDateTime2()									
 				FROM dbo.CustMaxPayoutSetting_Agent mps WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewMaxPayoutTbl tmp ON tmp.SportType = mps.sporttype AND tmp.BetType = mps.bettype
 					INNER JOIN #AgentTmpBatch c ON mps.CustId = c.CustId
@@ -172,6 +174,7 @@ BEGIN
 														THEN tmp.Combo35 ELSE mps.Combo35 END
 					, mps.ComboOver6	= CASE WHEN (tmp.ComboOver6 > 0 AND (mps.ComboOver6 = 0 OR mps.ComboOver6 > tmp.ComboOver6)) 
 														THEN tmp.ComboOver6 ELSE mps.ComboOver6 END
+					, RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustMaxPayoutSetting_Agent mps WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewMaxPayoutTbl tmp ON tmp.SportType = mps.sporttype AND tmp.BetType = mps.bettype
 					INNER JOIN #AgentTmpBatch c ON mps.CustId = c.CustId
@@ -204,6 +207,7 @@ BEGIN
 														THEN tmp.Combo35 ELSE mps.Combo35 END
 					, mps.ComboOver6	= CASE WHEN (tmp.ComboOver6 > 0 AND (mps.ComboOver6 > tmp.ComboOver6)) 
 														THEN tmp.ComboOver6 ELSE mps.ComboOver6 END
+					, RepUpdateTime = dbo.f_GetDateTime2()									
 				FROM dbo.CustMaxPayoutSetting_Member mps WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewMaxPayoutTbl tmp ON tmp.SportType = mps.sporttype AND tmp.BetType = mps.bettype
 					INNER JOIN #MemberTmpBatch c ON mps.CustId = c.CustId

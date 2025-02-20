@@ -22,7 +22,7 @@ AS
 
 	Revisions:
 		- 20240215@Eden: Unify Live Casino & RNG slot/RNG Casino [Redmine: #198960]
-
+		- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 		@StakeLevel = [
 			{"SportType": "159","BetType": "3151","StakeLevelList": "3151"},
@@ -261,6 +261,7 @@ BEGIN
 			UPDATE	cslm	WITH(ROWLOCK,UPDLOCK)
 			SET		cslm.StakeLevelList = ts.StakeLevelList
 					, cslm.LastUpdated = GETDATE()
+					, RepUpdateTime = dbo.f_GetDateTime2()
 			OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
 				INTO #HistoryStakeLevelTbl(CustID, SportType, BetType, StakeLevelList, UpdateTime)
 			FROM		dbo.CustStakeLevel_Member AS cslm
@@ -302,7 +303,8 @@ BEGIN
 		
 		-- Update current customer's stake level
 		UPDATE	csla	WITH(ROWLOCK,UPDLOCK)
-		SET		csla.StakeLevelList = ts.StakeLevelList
+		SET		csla.StakeLevelList = ts.StakeLevelList,
+				RepUpdateTime = dbo.f_GetDateTime2()
 		FROM		dbo.CustStakeLevel_Agent AS csla
 		INNER JOIN	#tmpStake ts
 				ON	csla.BetType = ts.BetType
@@ -566,7 +568,7 @@ BEGIN
 			-- Correct downlines via ExecRep
 			ALTER TABLE #CustStakeLevelDownlines ADD ID INT IDENTITY (1,1);
 			
-			DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 20000, @StopRow INT;
+			DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 2000, @StopRow INT;
 			
 			SET @MaxRow = (SELECT MAX(ID) FROM #CustStakeLevelDownlines);
 			

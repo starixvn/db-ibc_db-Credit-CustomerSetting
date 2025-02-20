@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="wsv_nap" isFunction="0" isNested="1"></info>*/
-USE [CustDB]
-GO
-
 ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_08]
 	@SuperIdList		VARCHAR(MAX)
 	,@TransferOption	TINYINT
@@ -15,19 +12,16 @@ AS
 	Revisions:
 		- 20170703@Percy: Initialize SP [RedmineID: #111365]
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
+		- 20241121@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	IF dbo.f_CheckRepTable('CustSuper') = 0
-		RETURN
-
-	IF dbo.f_CheckRepTable('CustMaster') = 0
-		RETURN
-
-	IF dbo.f_CheckRepTable('CustAgent') = 0
-		RETURN
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
+	)
+		RETURN;
 
 	DECLARE @SuperIdXML XML
 	SELECT  @SuperIdXML = CAST(@SuperIdList AS XML)
@@ -41,7 +35,8 @@ BEGIN
 	-- CustSuper
 	BEGIN
 		UPDATE s
-		SET s.TransferOption = @TransferOption
+		SET s.TransferOption = @TransferOption,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustSuper s WITH (ROWLOCK, UPDLOCK)
 			INNER JOIN #tmpSuper t ON s.custid = t.CustId
 		WHERE s.TransferOption <> @TransferOption
@@ -50,7 +45,8 @@ BEGIN
 	-- CustMaster
 	BEGIN
 		UPDATE m
-		SET m.TransferOption = @TransferOption
+		SET m.TransferOption = @TransferOption,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustMaster m WITH (ROWLOCK, UPDLOCK)
 			INNER JOIN dbo.Customer c WITH (NOLOCK) ON m.custid = c.custid
 			INNER JOIN #tmpSuper t ON c.srecommend = t.CustId
@@ -61,7 +57,8 @@ BEGIN
 	-- CustAgent
 	BEGIN
 		UPDATE a
-		SET a.TransferOption = @TransferOption
+		SET a.TransferOption = @TransferOption,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustAgent a WITH (ROWLOCK, UPDLOCK)
 			INNER JOIN dbo.Customer c WITH (NOLOCK) ON a.custid = c.custid
 			INNER JOIN #tmpSuper t ON c.srecommend = t.CustId

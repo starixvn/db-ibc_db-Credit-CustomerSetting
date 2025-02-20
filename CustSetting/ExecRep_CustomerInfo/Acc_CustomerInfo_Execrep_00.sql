@@ -75,6 +75,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20240607@Johnson: Scale out DBCUST [redmine: #199915]
 			- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 			- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
+			- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -82,15 +83,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 BEGIN
     SET NOCOUNT ON
 			
-     IF ( dbo.f_CheckRepTable('CustBetSetting_Agent') = 1
-		  AND dbo.f_CheckRepTable('CustBetSetting_Member') = 1 
-		  AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1 
-		  AND dbo.f_CheckRepTable('CustMaxPayoutSetting_Member') = 1 
-		  AND dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1 
-		  AND dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 1 
-		  AND dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1 
-		  AND dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1 
-	   )
+    IF dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	  
 	BEGIN
 		CREATE TABLE #ProductSettingDetail_ExecRep00(
 			[SettingType] [smallint] ,
@@ -114,18 +108,13 @@ BEGIN
 			[Child_DisplayOrder] [int] ,
 			SubType [TINYINT],
 			PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
-		)
+		)		
 		
-		IF dbo.f_CheckRepTable('ProductSettingProfile') = 1 
-			AND dbo.f_CheckRepTable('ProductProfileSiteCurrency') = 1		
-		BEGIN
-			INSERT INTO #ProductSettingDetail_ExecRep00(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
-			SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-					,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
-			FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
-
-		END
+		INSERT INTO #ProductSettingDetail_ExecRep00(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
+		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
+		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
 
 		--PT setting
 		BEGIN
@@ -252,7 +241,8 @@ BEGIN
 						,[IsAutoSuperPT]
 						,[AutoSuperPT]
 						,[MinPT]
-						,[MaxPT])
+						,[MaxPT]
+						,RepUpdateTime)
 					SELECT 
 						@CustID
 						,t.SportType
@@ -267,6 +257,7 @@ BEGIN
 						,0 AS AutoSuperPT
 						,t.SuperMinPT
 						,100 MaxPT
+						,dbo.f_GetDateTime2()
 					FROM @tblPT28 t
 						INNER JOIN #SportBettypeFilter28 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
 				END
@@ -285,7 +276,8 @@ BEGIN
 						,[IsAutoSuperPT]
 						,[AutoSuperPT]
 						,[MinPT]
-						,[MaxPT])
+						,[MaxPT]
+						,RepUpdateTime)
 					SELECT 
 						@CustID
 						,t.SportType
@@ -300,6 +292,7 @@ BEGIN
 						,t.AutoSuperPT
 						,t.MasterMinPT
 						,100 MaxPT
+						,dbo.f_GetDateTime2()
 					FROM @tblPT28 t
 						INNER JOIN #SportBettypeFilter28 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
 				END
@@ -318,7 +311,8 @@ BEGIN
 						,[IsAutoSuperPT]
 						,[AutoSuperPT]
 						,[MinPT]
-						,[MaxPT])
+						,[MaxPT]
+						,RepUpdateTime)
 					SELECT 
 						@CustID
 						,t.SportType
@@ -333,6 +327,7 @@ BEGIN
 						,0 as AutoSuperPT
 						,t.AgentMinPT
 						,100 MaxPT
+						,dbo.f_GetDateTime2()
 					FROM @tblPT28 t
 						INNER JOIN #SportBettypeFilter28 ft ON t.SportType = ft.SportType AND t.BetType = ft.BetType AND t.IsLive = ft.IsLive				
 				END
@@ -350,10 +345,11 @@ BEGIN
 						,[IsAutoMasterPT]
 						,[AutoMasterPT]
 						,[IsAutoSuperPT]
-						,[AutoSuperPT])		
+						,[AutoSuperPT]
+						,RepUpdateTime)		
 					SELECT 
 						@recommend,SportType,BetType,Islive,
-						SuperPT,MasterPT,AgentPT,0 IsAutoMasterPT,0 AutoMasterPT,0 IsAutoSuperPT,0 AutoSuperPT
+						SuperPT,MasterPT,AgentPT,0 IsAutoMasterPT,0 AutoMasterPT,0 IsAutoSuperPT,0 AutoSuperPT, dbo.f_GetDateTime2()
 					FROM @tblPT28
 					WHERE NOT EXISTS(SELECT TOP 1 1 FROM dbo.CustPTGroupSetting3rd_Member WHERE AgentID = @recommend)
 					AND @srecommend IN (
@@ -378,8 +374,8 @@ BEGIN
 			
 					IF @@ROWCOUNT<>0
 					BEGIN
-						INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
-							SELECT @CustID,1
+						INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped,RepUpdateTime)
+							SELECT @CustID,1,dbo.f_GetDateTime2()
 					END
 					ELSE 
 					BEGIN
@@ -436,19 +432,20 @@ BEGIN
 									,[IsAutoMasterPT]
 									,[AutoMasterPT]
 									,[IsAutoSuperPT]
-									,[AutoSuperPT])
+									,[AutoSuperPT]
+									,RepUpdateTime)
 							SELECT 
 							@CustID,SportType,BetType,Islive,
-								SuperPT,MasterPT,AgentPT,0 IsAutoMasterPT,0 AutoMasterPT,0 IsAutoSuperPT,0 AutoSuperPT
+								SuperPT,MasterPT,AgentPT,0 IsAutoMasterPT,0 AutoMasterPT,0 IsAutoSuperPT,0 AutoSuperPT, dbo.f_GetDateTime2()
 							FROM @tblPT28
 					
-							INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
-								SELECT @CustID,0
+							INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped,RepUpdateTime)
+								SELECT @CustID,0,dbo.f_GetDateTime2()
 						END
 						ELSE
 						BEGIN
-							INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped)
-								SELECT @CustID,1
+							INSERT INTO dbo.CustSettingMode3rd(CustID,IsGrouped,RepUpdateTime)
+								SELECT @CustID,1,dbo.f_GetDateTime2()
 						END
 					END				
 				END
@@ -503,12 +500,14 @@ BEGIN
 						   ([CustID]
 						   ,[SportType]
 						   ,[BetType]
-						   ,[Discount])
+						   ,[Discount]
+						   ,RepUpdateTime)
 					SELECT 
 						@CustID
 						,dc.SportType
 						,dc.BetType
 						,dc.discount
+						,dbo.f_GetDateTime2()
 					FROM @NewDiscountTbl dc
 						INNER JOIN #SportBettypeFilter25 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType
 				END	
@@ -521,7 +520,8 @@ BEGIN
 					   ,[PlayerDiscount]
 					   ,[AgentDiscount]
 					   ,[MasterDiscount]
-					   ,[SuperDiscount])
+					   ,[SuperDiscount]
+					   ,RepUpdateTime)
 					SELECT 
 						@CustID
 						,dc.SportType
@@ -530,6 +530,7 @@ BEGIN
 						,dc.discount
 						,dc.adiscount
 						,dc.sdiscount
+						,dbo.f_GetDateTime2()
 					FROM @NewDiscountTbl dc
 						INNER JOIN #SportBettypeFilter25 f ON dc.SportType = f.SportType AND dc.BetType = f.BetType   
 				END
@@ -579,23 +580,25 @@ BEGIN
 			BEGIN TRY
 				IF @roleid IN (4,3,2)
 				BEGIN 
-					INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+					INSERT INTO CustMaxPayoutSetting_Agent(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6,RepUpdateTime)
 					SELECT @custid , cs.SportType, cs.BetType, 
 							cs.SingleMatchParlay,
 							cs.Combo2,
 							cs.Combo35,
-							cs.ComboOver6
+							cs.ComboOver6,
+							dbo.f_GetDateTime2()
 					FROM @NewMaxPayoutTbl cs
 						INNER JOIN #SportBettypeFilter27 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 				END
 				ELSE IF @roleid = 1
 				BEGIN
-					INSERT INTO CustMaxPayoutSetting_Member(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
+					INSERT INTO CustMaxPayoutSetting_Member(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6,RepUpdateTime)
 					SELECT @custid , cs.SportType, cs.BetType, 
 							cs.SingleMatchParlay,
 							cs.Combo2,
 							cs.Combo35,
-							cs.ComboOver6
+							cs.ComboOver6,
+							dbo.f_GetDateTime2()
 					FROM @NewMaxPayoutTbl cs
 						INNER JOIN #SportBettypeFilter27 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 				END

@@ -45,6 +45,7 @@ Revisions:
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20230921@Tacy: CWL - Suspend member accounts when member reaches Yellow level on RNG Slots Games [RedmineID: #184911]
 	- 20240422@Elodie: Change SQL Account [RedmineID: #204021]  
+	- 20241126@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 Param's Explanation:
 • @ActionID = 1104 ~ normal flow
 			<>1104 ~ CWL flow
@@ -218,13 +219,16 @@ BEGIN
 	IF(@IsDeposit = 0) --Credit
 	BEGIN
 		UPDATE	cs 
-		SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Suspended,ISNULL(SuspendInfo,0)))	
+		SET	SuspendInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Suspended,ISNULL(SuspendInfo,0))),
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM CustProductStatus cs WITH (ROWLOCK, UPDLOCK) 		
 		WHERE custid = @CustID;
 	END
 	ELSE --Deposit
 	BEGIN
-		UPDATE CustInfo with (ROWLOCK, UPDLOCK) set Reject = @Suspended
+		UPDATE CustInfo with (ROWLOCK, UPDLOCK) 
+		set Reject = @Suspended,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE CustID = @CustID
 	END
 	if (@@error <> 0)

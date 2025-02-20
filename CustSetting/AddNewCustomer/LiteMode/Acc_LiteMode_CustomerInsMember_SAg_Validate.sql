@@ -24,6 +24,7 @@ AS
 
 	Revision:
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
+		- 20241220@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -146,7 +147,7 @@ BEGIN
 					AND nof.siteID IN (ft.SiteID, 0)
 					AND nof.Currency IN (ft.Currency, 0)
 			WHERE NOT EXISTS(	SELECT 1 
-								FROM ProductSettingDetail p WITH(NOLOCK) 
+								FROM ProductSettingProfile p WITH(NOLOCK) 
 								WHERE nof.SportType = p.SportType 
 									AND nof.BetType <> p.BetType 
 									AND p.SettingStatus = 0 

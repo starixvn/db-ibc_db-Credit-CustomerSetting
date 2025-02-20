@@ -22,7 +22,7 @@ AS
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
-
+		- 20250109@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	Parameter's Explanation:	
 	- @PT:	[
 				{"SportType": "9914","BetType": "915","IsLive": "0","AgentPT": "38"},
@@ -563,7 +563,8 @@ BEGIN
 		UPDATE grpt
 		SET grpt.SuperPT=npt.SuperPT,
 			grpt.MasterPT=npt.MasterPT,
-			grpt.AgentPT=npt.AgentPT
+			grpt.AgentPT=npt.AgentPT,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewPTTble npt 
 				ON  npt.SportType=grpt.SportType
@@ -591,6 +592,7 @@ BEGIN
 					   ,[AgentPT]
 					   ,[AutoSuperPT]
 					   ,[AutoMasterPT]
+					   ,RepUpdateTime
 					)
 		SELECT
 			cust.CustID,
@@ -603,7 +605,8 @@ BEGIN
 			grpt.MasterPT,
 			grpt.AgentPT,
 			grpt.AutoSuperPT,
-			grpt.AutoMasterPT
+			grpt.AutoMasterPT,
+			dbo.f_GetDateTime2()
 		FROM @tblCust cust
 			CROSS JOIN dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
 			LEFT JOIN dbo.CustPTSetting3rd_Member mempt
@@ -617,7 +620,8 @@ BEGIN
 		UPDATE main
 		SET main.SuperPT=npt.SuperPT,
 			main.MasterPT=npt.MasterPT,
-			main.AgentPT=npt.AgentPT
+			main.AgentPT=npt.AgentPT,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @tblCust cust ON main.CustID=cust.CustID
 			INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
@@ -631,7 +635,8 @@ BEGIN
 		
 		--Update setting mode for affected CustIDs
 		UPDATE main
-		SET main.IsGrouped=0
+		SET main.IsGrouped=0,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustSettingMode3rd main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @tblCust cust
 				ON cust.CustID=main.CustID

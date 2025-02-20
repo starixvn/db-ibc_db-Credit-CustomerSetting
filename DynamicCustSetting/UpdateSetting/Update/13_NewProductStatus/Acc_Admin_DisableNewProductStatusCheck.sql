@@ -23,7 +23,7 @@ AS
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
-
+		- 20241216@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]	
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -144,7 +144,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM #NewDisableStatTblCheck t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN ProductSettingProfile ps WITH(NOLOCK)
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)

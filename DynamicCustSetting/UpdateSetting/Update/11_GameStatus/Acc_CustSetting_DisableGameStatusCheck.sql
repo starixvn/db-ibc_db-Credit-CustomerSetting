@@ -20,7 +20,7 @@ AS
 		- 20170307@Elodie: Apply New Direction of enabling status for 3rd party products [RedmineID: #72336]
 		- 20180112@Elodie: Remove IsDisableDownline value [RedmineID:#87328]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
-
+		- 20241218@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -82,7 +82,7 @@ BEGIN
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM #NewDisableStatTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)

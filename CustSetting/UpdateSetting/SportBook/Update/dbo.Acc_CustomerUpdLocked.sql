@@ -19,6 +19,7 @@ Original:
 Revisions:
     - 20210408@Tina: Lock account & indirect close account [redmine: #148600]
 	- 20240422@Elodie: Change SQL Account [RedmineID: #204021] 
+	- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 Param's Explanation
 • @custid: custid that need to be viewed.   
 
@@ -76,7 +77,9 @@ BEGIN
 		return
 	END
 
-	update CustProductStatus with (ROWLOCK, UPDLOCK) set Locked = @Locked
+	update CustProductStatus with (ROWLOCK, UPDLOCK) 
+	set Locked = @Locked,	
+		RepUpdateTime = dbo.f_GetDateTime2()
 	where custid = @custid
 
 

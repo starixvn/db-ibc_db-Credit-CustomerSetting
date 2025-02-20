@@ -22,7 +22,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_AgentMinPT_153_Upd]
 	Revision:
 	- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
-		
+	- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
 	Parameter's Explanation:
 		@PT = <ROOT>
 				<PT SportType="9913" BetType="916" IsLive="1" MinPT="8"/>
@@ -249,7 +249,8 @@ BEGIN
 	
 	 --update data change into db
 	 UPDATE cs
-	SET cs.MinPT = b.AgentMinPT		
+	SET cs.MinPT = b.AgentMinPT,
+		RepUpdateTime = dbo.f_GetDateTime2()
 	FROM CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK)
 		INNER JOIN @tblPT b ON cs.Sporttype = b.SportType
 								AND cs.bettype = b.BetType

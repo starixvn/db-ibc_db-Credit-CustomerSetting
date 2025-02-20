@@ -21,7 +21,7 @@ AS
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
-
+		- 20241212@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Parameter's Explanation:
 		@PT = <ROOT>
 			<PT SportType="9913" BetType="916" IsLive="1" MinPT="10"/>
@@ -228,7 +228,8 @@ BEGIN
 	
 	--Update data change
 	UPDATE cs
-	SET cs.MinPT = b.SuperMinPT
+	SET cs.MinPT = b.SuperMinPT,
+		RepUpdateTime = dbo.f_GetDateTime2()
 	FROM CustPTSetting3rd_Agent cs WITH(UPDLOCK,ROWLOCK)
 		INNER JOIN @tblPT b ON cs.Sporttype = b.SportType
 								AND cs.bettype = b.BetType

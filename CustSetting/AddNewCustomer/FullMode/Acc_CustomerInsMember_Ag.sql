@@ -204,6 +204,7 @@ Revisions:
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
+	- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20250114@Johnson: Check member Comm group [RedmineID: #216405]
 Param's Explanation:	
 	- @ErrCode:
@@ -645,8 +646,8 @@ BEGIN
 	
 		IF ISNULL(@IsQRCode,0) = 1
 		BEGIN
-			INSERT INTO [dbo].[CustQRCode] (CustID)
-			SELECT @custid
+			INSERT INTO [dbo].[CustQRCode] (CustID,RepUpdateTime)
+			SELECT @custid, dbo.f_GetDateTime2()
 		END
 	
 		If @SystemID IN (2, 10) -- ALPHA, Chatbot

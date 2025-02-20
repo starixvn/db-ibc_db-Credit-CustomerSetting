@@ -34,6 +34,7 @@ Revisions:
 	- 20151014@Helen: Customer Setting for Sportsbook 2- [Redmine: #44604]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 Param's Explanation:
 - @ErrCode:
     = 0: Transaction recorded successfully.
@@ -86,7 +87,8 @@ BEGIN
     IF @Old_DisableAutoMPT = @DisableAutoMPT RETURN
 
     UPDATE CustMaster WITH(ROWLOCK, UPDLOCK)
-       SET DisableAutoMPT = @DisableAutoMPT
+       SET  DisableAutoMPT = @DisableAutoMPT,
+			RepUpdateTime = dbo.f_GetDateTime2()
      WHERE CustID = @CustID
      
     IF @DisableAutoMPT = 1
@@ -98,7 +100,8 @@ BEGIN
                 CASE
                 WHEN acs.AutoMasterPT > mcs.MasterPT - acs.AgentPT THEN mcs.MasterPT - acs.AgentPT
                 ELSE acs.AutoMasterPT
-                END
+                END,
+			RepUpdateTime = dbo.f_GetDateTime2()	
         FROM CustPTSetting3rd_Agent acs WITH(ROWLOCK, UPDLOCK) 
 			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = acs.custid
 			INNER JOIN CustPTSetting3rd_Agent mcs WITH(NOLOCK) ON acs.sporttype = mcs.sporttype
@@ -113,6 +116,7 @@ BEGIN
         UPDATE cs
         SET IsAutoMasterPT = 0
             , AutoMasterPT = 0
+			, RepUpdateTime = dbo.f_GetDateTime2()
         FROM CustPTSetting3rd_Agent cs WITH(ROWLOCK, UPDLOCK)
 			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid 
         WHERE ci.mrecommend = @CustID
@@ -123,6 +127,7 @@ BEGIN
         UPDATE cs
         SET IsAutoMasterPT = 0
             , AutoMasterPT = 0
+			, RepUpdateTime = dbo.f_GetDateTime2()
         FROM CustPTSetting3rd_Member cs WITH(ROWLOCK, UPDLOCK)
 			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid 
         WHERE ci.mrecommend = @CustID
@@ -135,6 +140,7 @@ BEGIN
 		UPDATE cs
         SET IsAutoMasterPT = 0
             , AutoMasterPT = 0
+			, RepUpdateTime = dbo.f_GetDateTime2()
         FROM CustPTGroupSetting3rd_Member  cs WITH(ROWLOCK, UPDLOCK)
 			INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = cs.AgentID 
         WHERE ci.mrecommend = @CustID

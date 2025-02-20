@@ -42,7 +42,7 @@ AS
 		- 20190829@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
-		
+		- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
     Param's Explanation: 
 
     */
@@ -51,9 +51,9 @@ BEGIN
 	SET NOCOUNT ON;
 	--------------------------------------------------------------------------------------------------------------------------------------------------------
 	-- Declare Param
-
+	
 	DECLARE  
-	  @Batch		INT = 5000
+	  @Batch		INT = 2000
 
 	-- Declare Table Temp
 	DECLARE @Tbl_Comm TABLE (
@@ -73,13 +73,10 @@ BEGIN
 	-- Update Commission Call From Acc_CustomerUpd_Commission
 	IF (@GroupType = 150)
 	BEGIN
-		IF NOT(dbo.f_CheckRepTable('custinfo') = 1 
-		   AND dbo.f_CheckRepTable('customer') = 1 
-		   AND dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1  
-		   AND dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1  
-		   )
-   
-		RETURN 
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
 	     
 		-- Parse Data Json
 		INSERT INTO @Tbl_Comm  ( SportType , BetType , Discount)
@@ -98,7 +95,8 @@ BEGIN
 
 			-- Update Main Discount Of Member
 			UPDATE cdm
-				SET cdm.PlayerDiscount = nc.Discount
+				SET cdm.PlayerDiscount = nc.Discount,
+					RepUpdateTime = dbo.f_GetDateTime2()
 			FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 			INNER JOIN @Tbl_Comm nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
 			WHERE cdm.CustID = @custid
@@ -110,7 +108,8 @@ BEGIN
 			
 			-- Update Discount Values Of main Super or Master or Agent
 			UPDATE cda
-				SET cda.Discount = nc.Discount
+				SET cda.Discount = nc.Discount,
+					RepUpdateTime = dbo.f_GetDateTime2()
 			FROM CustDiscount3rd_Agent cda WITH (ROWLOCK , UPDLOCK)
 			INNER JOIN @Tbl_Comm nc ON cda.SportType = nc.SportType AND cda.BetType = nc.BetType
 			WHERE cda.CustID = @custid
@@ -218,7 +217,8 @@ BEGIN
 
 				--SELECT 'Update Master' AS Note , cds.* , nc.Discount
 				UPDATE cds
-					SET cds.Discount = nc.Discount
+					SET cds.Discount = nc.Discount,
+						RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustDiscount3rd_Agent cds WITH (ROWLOCK , UPDLOCK)
 				INNER JOIN #AgentTmp a ON cds.CustID = a.CustID
 				INNER JOIN @Tbl_Comm nc ON cds.SportType = nc.SportType AND cds.BetType = nc.BetType
@@ -243,7 +243,8 @@ BEGIN
 					BREAK;
 
 				UPDATE cds
-					SET cds.Discount = nc.Discount
+					SET cds.Discount = nc.Discount,
+						RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustDiscount3rd_Agent cds WITH (ROWLOCK , UPDLOCK)
 				INNER JOIN Customer c  WITH (NOLOCK) ON cds.CustID = c.custid 
 				INNER JOIN #AgentTmp a ON cds.CustID = a.CustID
@@ -277,7 +278,8 @@ BEGIN
 
 						-- Update Group Discount Follow uGroup
 						UPDATE cdm SET	
-								cdm.SuperDiscount = nc.Discount 
+								cdm.SuperDiscount = nc.Discount,
+								RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -295,7 +297,8 @@ BEGIN
 					
 						-- Update 1X2 Discount , Others Discount
 						UPDATE cdm SET	
-								cdm.SuperDiscount = nc.Discount 
+								cdm.SuperDiscount = nc.Discount,
+								RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -313,7 +316,8 @@ BEGIN
 							cdm.MasterDiscount = CASE 
 											WHEN cdm.MasterDiscount > cdm.SuperDiscount THEN cdm.SuperDiscount  
 											ELSE cdm.MasterDiscount
-										   END
+										   END,
+							RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -333,7 +337,8 @@ BEGIN
 							cdm.MasterDiscount = CASE 
 											WHEN cdm.MasterDiscount > cdm.SuperDiscount THEN cdm.SuperDiscount  
 											ELSE cdm.MasterDiscount
-										   END
+										   END,
+							RepUpdateTime = dbo.f_GetDateTime2()   
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -351,7 +356,8 @@ BEGIN
 							cdm.AgentDiscount = CASE 
 											WHEN cdm.AgentDiscount > cdm.MasterDiscount THEN cdm.MasterDiscount
 											ELSE cdm.AgentDiscount
-										   END
+										   END,
+							RepUpdateTime = dbo.f_GetDateTime2()   
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -371,7 +377,8 @@ BEGIN
 							cdm.AgentDiscount = CASE 
 											WHEN cdm.AgentDiscount > cdm.MasterDiscount THEN cdm.MasterDiscount
 											ELSE cdm.AgentDiscount
-										   END
+										   END,
+							RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -386,6 +393,7 @@ BEGIN
 						SET	cdm.SuperDiscount  = nc.Discount
 						,	cdm.MasterDiscount = nc.Discount
 						,	cdm.AgentDiscount  = nc.Discount
+						,	RepUpdateTime = dbo.f_GetDateTime2()
 					FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 					INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
 					INNER JOIN @Tbl_Comm nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
@@ -398,7 +406,9 @@ BEGIN
 					-- Update MasterDiscount of Downline
 
 						-- Update Group Discount Follow uGroup
-						UPDATE cdm 	SET  cdm.MasterDiscount = nc.Discount 
+						UPDATE cdm 	
+						SET  cdm.MasterDiscount = nc.Discount,
+							 RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -415,7 +425,9 @@ BEGIN
 											END
 
 						-- Update 1X2 Discount , Others Discount
-						UPDATE cdm 	SET  cdm.MasterDiscount = nc.Discount 
+						UPDATE cdm 	
+						SET  cdm.MasterDiscount = nc.Discount,
+							 RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -432,7 +444,8 @@ BEGIN
 							cdm.AgentDiscount = CASE 
 											WHEN cdm.AgentDiscount > cdm.MasterDiscount THEN cdm.MasterDiscount  
 											ELSE cdm.AgentDiscount
-										  END
+										  END,
+							RepUpdateTime = dbo.f_GetDateTime2()	  
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -452,7 +465,8 @@ BEGIN
 							cdm.AgentDiscount = CASE 
 											WHEN cdm.AgentDiscount > cdm.MasterDiscount THEN cdm.MasterDiscount  
 											ELSE cdm.AgentDiscount
-										  END
+										  END,
+							RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -466,6 +480,7 @@ BEGIN
 					UPDATE cdm
 						SET	cdm.MasterDiscount = nc.Discount
 						,	cdm.AgentDiscount  = nc.Discount
+						,	RepUpdateTime = dbo.f_GetDateTime2()
 					FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 					INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
 					INNER JOIN @Tbl_Comm nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
@@ -479,7 +494,8 @@ BEGIN
 
 						-- Update Group Discount Follow uGroup
 						UPDATE cdm
-						SET  cdm.AgentDiscount = nc.Discount 
+						SET  cdm.AgentDiscount = nc.Discount,
+							 RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -497,7 +513,8 @@ BEGIN
 					
 						-- Update 1X2 Discount , Others Discount
 						UPDATE cdm
-						SET  cdm.AgentDiscount = nc.Discount 
+						SET  cdm.AgentDiscount = nc.Discount,
+							 RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -510,7 +527,8 @@ BEGIN
 
 					-- Part 2: WITH SportType = 2 : Handble MyanmarOdds Discount
 					UPDATE cdm
-						SET	cdm.AgentDiscount  = nc.Discount
+						SET	cdm.AgentDiscount  = nc.Discount,
+							RepUpdateTime = dbo.f_GetDateTime2()
 					FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 					INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
 					INNER JOIN @Tbl_Comm nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
@@ -527,7 +545,8 @@ BEGIN
 							cdm.PlayerDiscount = CASE 
 											WHEN cdm.PlayerDiscount > cdm.AgentDiscount THEN cdm.AgentDiscount  
 											ELSE cdm.PlayerDiscount
-										  END
+										  END,
+							RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -547,7 +566,8 @@ BEGIN
 							cdm.PlayerDiscount = CASE 
 											WHEN cdm.PlayerDiscount > cdm.AgentDiscount THEN cdm.AgentDiscount  
 											ELSE cdm.PlayerDiscount
-										  END
+										  END,
+							RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN Customer c  WITH (NOLOCK) ON cdm.CustID = c.custid 
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
@@ -557,7 +577,8 @@ BEGIN
 				
 						-- Update MO
 						UPDATE cdm
-							SET	cdm.AgentDiscount  = nc.Discount
+							SET	cdm.AgentDiscount  = nc.Discount,
+								RepUpdateTime = dbo.f_GetDateTime2()
 						FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 						INNER JOIN #MemberTmp mt ON cdm.CustID = mt.CustID
 						INNER JOIN @Tbl_Comm nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType

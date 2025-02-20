@@ -22,7 +22,7 @@ AS
 		- 20180112@Elodie: Remove IsDisableDownline value [RedmineID:#87328]
 		- 20200708@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
-
+		- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -151,19 +151,19 @@ BEGIN
 	BEGIN 
 		INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
 		SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
-		FROM ProductSettingDetail_UAT WITH(NOLOCK)
+		FROM ProductSettingProfile_UAT WITH(NOLOCK)
 	END
 	ELSE
 	BEGIN
 		INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
 		SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel 
-		FROM ProductSettingDetail WITH(NOLOCK)
+		FROM ProductSettingProfile WITH(NOLOCK)
 	END
 
 	--Exclude Update for Sport is having UM
 	DELETE t
 	FROM #NewDisableStatTbl t
-		INNER JOIN dbo.ProductSettingDetail ps WITH (NOLOCK) 
+		INNER JOIN dbo.ProductSettingProfile ps WITH (NOLOCK) 
 			ON ps.BetType = t.BetType AND ps.SportType = t.SportType
 		INNER JOIN [dbo].[f_CustSetting_SportUMByCust](@CustID) u 
 			ON u.SportType IN( t.SportType,0)
@@ -252,7 +252,8 @@ BEGIN
 			)
 			
 	UPDATE CustProductStatus
-		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
+			RepUpdateTime = dbo.f_GetDateTime2()		
 	WHERE CustID = @CustID
 	
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE IsDisabled = 0)
@@ -276,7 +277,8 @@ BEGIN
 				, TYPE
 			)
 		UPDATE CustProductStatus WITH (ROWLOCK,UPDLOCK)
-		SET bitmapIsHidden =(SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+		SET bitmapIsHidden =(SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
+			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE CustID = @CustID
 		
 	END

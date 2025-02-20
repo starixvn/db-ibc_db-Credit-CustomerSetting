@@ -28,19 +28,17 @@ AS
 		  - 20240308@Johnson: HF wrong PT on group [redmine: #202053]
 		  - 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 		  - 20240327@Johnson: HF wrong PT on group [redmine: #202119]
+		  - 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		Parameter's Explanation:
 	*/	
 BEGIN
 	SET NOCOUNT ON
 	
-     IF NOT(	
-			 dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1
-			AND dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 1	
-			AND dbo.f_CheckRepTable('CustSettingMode3rd') = 1 
-			AND dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 1 
-	   )
-	   RETURN	
-	
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+	)
+	RETURN;
+				
 	DECLARE @mpos smallmoney, @apos smallmoney, @spos smallmoney, @mapos1 smallmoney, @mapos2 smallmoney, @mapos smallmoney, @maxmapos smallmoney
 
 	IF @mode = 'SportBook' OR @mode = 'LiteMode'
@@ -59,7 +57,8 @@ BEGIN
 			UPDATE cs 
 			SET 
 				cs.AgentPT = aco.MinPT,
-				cs.MasterPT = CASE WHEN cs.MasterPT + aco.MinPT > mcs.MasterPT THEN mcs.MasterPT-aco.MinPT ELSE cs.MasterPT END
+				cs.MasterPT = CASE WHEN cs.MasterPT + aco.MinPT > mcs.MasterPT THEN mcs.MasterPT-aco.MinPT ELSE cs.MasterPT END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM 
 				CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)			
 				INNER JOIN CustPTSetting3rd_Agent as mcs with (NOLOCK) on mcs.custid = @mrecommend  AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
@@ -80,7 +79,8 @@ BEGIN
 							CASE WHEN scs.MasterPT-cs.AgentPT > (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
 							THEN (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
 							ELSE  scs.MasterPT-cs.AgentPT END
-						END
+						END,
+					RepUpdateTime = dbo.f_GetDateTime2()
 			FROM
 				CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)					
 				INNER JOIN CustPTSetting3rd_Agent as mcs with (NOLOCK) on mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
@@ -95,7 +95,8 @@ BEGIN
 			--update m1=n3-a1 if a1+m1<n3
 			UPDATE cs 
 			SET 
-				MasterPT = mco.MinPT-cs.AgentPT
+				MasterPT = mco.MinPT-cs.AgentPT,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM 
 				CustPTSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
 				INNER JOIN CustPTSetting3rd_Agent as mco WITH (NOLOCK) on mco.custid = @mrecommend  AND mco.sporttype=cs.sporttype AND mco.bettype=cs.bettype AND mco.IsLive = cs.IsLive
@@ -109,7 +110,8 @@ BEGIN
 				SET SuperPT = CASE WHEN scs.SuperPT-cs.MasterPT-cs.AgentPT >
 										(CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
 									THEN (CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
-									ELSE scs.SuperPT-cs.MasterPT-cs.AgentPT END 
+									ELSE scs.SuperPT-cs.MasterPT-cs.AgentPT END ,
+					RepUpdateTime = dbo.f_GetDateTime2()				
 			FROM
 				CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) 			
 				INNER JOIN CustPTSetting3rd_Agent as mcs WITH (NOLOCK) ON mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
@@ -121,7 +123,8 @@ BEGIN
 			--check super min/max
 			--update s1 when s1+m1+a1<n4 
 			UPDATE cs
-			SET SuperPT = sco.MinPT-cs.MasterPT-cs.AgentPT
+			SET SuperPT = sco.MinPT-cs.MasterPT-cs.AgentPT,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM 
 				CustPTSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
 				INNER JOIN CustPTSetting3rd_Agent as sco with (NOLOCK) on sco.custid = @srecommend  AND sco.sporttype=cs.sporttype AND sco.bettype=cs.bettype AND sco.IsLive = cs.IsLive
@@ -147,7 +150,8 @@ BEGIN
 				@mpos = CASE WHEN @mapos-cs.AgentPT<0 THEN 0 else @mapos-cs.AgentPT END,
 				MasterPT = @mpos,
 				@apos = CASE WHEN cs.AgentPT + @mpos>@mapos THEN @mapos-@mpos ELSE cs.AgentPT END,
-				AgentPT = CASE WHEN @apos<aco.MinPT THEN aco.MinPT ELSE @apos END
+				AgentPT = CASE WHEN @apos<aco.MinPT THEN aco.MinPT ELSE @apos END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM 
 				CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)  			
 				INNER JOIN CustPTSetting3rd_Agent as scs WITH (NOLOCK) on scs.custid = @srecommend  AND scs.sporttype=cs.sporttype AND scs.bettype=cs.bettype AND scs.IsLive = cs.IsLive
@@ -204,11 +208,15 @@ BEGIN
 										)	
 			BEGIN
 				UPDATE cs 
-				SET IsGrouped = 1					
+				SET IsGrouped = 1,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustSettingMode3rd cs WITH(ROWLOCK)
 				WHERE CustID = @CustID
 				
-				DELETE CustPTSetting3rd_Member WITH(ROWLOCK) WHERE custid = @custid
+				DELETE CustPTSetting3rd_Member WITH(ROWLOCK) 
+				OUTPUT DELETED.custid,DELETED.Sporttype,DELETED.Bettype,DELETED.IsLive,dbo.f_GetDateTime2()
+				INTO CustPTSetting3rd_Member_Del_Inhouse(custid,SportType,Bettype,IsLive,RepUpdateTime)
+				WHERE custid = @custid
 			END	
 		END
 		ELSE
@@ -218,7 +226,8 @@ BEGIN
 			UPDATE cs 
 			SET 
 				cs.AgentPT = aco.MinPT,
-				cs.MasterPT = CASE WHEN cs.MasterPT + aco.MinPT > mcs.MasterPT THEN mcs.MasterPT-aco.MinPT ELSE cs.MasterPT END
+				cs.MasterPT = CASE WHEN cs.MasterPT + aco.MinPT > mcs.MasterPT THEN mcs.MasterPT-aco.MinPT ELSE cs.MasterPT END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM 
 				CustPTGroupSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)			
 				INNER JOIN CustPTSetting3rd_Agent as mcs with (NOLOCK) on mcs.custid = @mrecommend  AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
@@ -239,7 +248,8 @@ BEGIN
 							CASE WHEN scs.MasterPT-cs.AgentPT > (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
 							THEN (CASE WHEN cs.IsAutoMasterPT = 1 THEN cs.AutoMasterPT ELSE acs.AutoMasterPT END)
 							ELSE  scs.MasterPT-cs.AgentPT END
-						END
+						END,
+					RepUpdateTime = dbo.f_GetDateTime2()	
 			FROM
 				CustPTGroupSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)					
 				INNER JOIN CustPTSetting3rd_Agent as mcs with (NOLOCK) on mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
@@ -253,7 +263,8 @@ BEGIN
 			--update m1=n3-a1 if a1+m1<n3
 			UPDATE cs 
 			SET 
-				MasterPT = mco.MinPT-cs.AgentPT
+				MasterPT = mco.MinPT-cs.AgentPT,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM 
 				CustPTGroupSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
 				INNER JOIN CustPTSetting3rd_Agent as mco WITH (NOLOCK) on mco.custid = @mrecommend  AND mco.sporttype=cs.sporttype AND mco.bettype=cs.bettype AND mco.IsLive = cs.IsLive
@@ -267,7 +278,8 @@ BEGIN
 				SET SuperPT = CASE WHEN scs.SuperPT-cs.MasterPT-cs.AgentPT >
 										(CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
 									THEN (CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
-									ELSE scs.SuperPT-cs.MasterPT-cs.AgentPT END 
+									ELSE scs.SuperPT-cs.MasterPT-cs.AgentPT END,
+					RepUpdateTime = dbo.f_GetDateTime2()					
 			FROM
 				CustPTGroupSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) 			
 				INNER JOIN CustPTSetting3rd_Agent as mcs WITH (NOLOCK) ON mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
@@ -279,7 +291,8 @@ BEGIN
 			--check super min/max
 			--update s1 when s1+m1+a1<n4 
 			UPDATE cs
-			SET SuperPT = sco.MinPT-cs.MasterPT-cs.AgentPT
+			SET SuperPT = sco.MinPT-cs.MasterPT-cs.AgentPT,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM 
 				CustPTGroupSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
 				INNER JOIN CustPTSetting3rd_Agent as sco with (NOLOCK) on sco.custid = @srecommend  AND sco.sporttype=cs.sporttype AND sco.bettype=cs.bettype AND sco.IsLive = cs.IsLive
@@ -305,7 +318,8 @@ BEGIN
 				@mpos = CASE WHEN @mapos-cs.AgentPT<0 THEN 0 else @mapos-cs.AgentPT END,
 				MasterPT = @mpos,
 				@apos = CASE WHEN cs.AgentPT + @mpos>@mapos THEN @mapos-@mpos ELSE cs.AgentPT END,
-				AgentPT = CASE WHEN @apos<aco.MinPT THEN aco.MinPT ELSE @apos END
+				AgentPT = CASE WHEN @apos<aco.MinPT THEN aco.MinPT ELSE @apos END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM 
 				CustPTGroupSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)  			
 				INNER JOIN CustPTSetting3rd_Agent as scs WITH (NOLOCK) on scs.custid = @srecommend  AND scs.sporttype=cs.sporttype AND scs.bettype=cs.bettype AND scs.IsLive = cs.IsLive

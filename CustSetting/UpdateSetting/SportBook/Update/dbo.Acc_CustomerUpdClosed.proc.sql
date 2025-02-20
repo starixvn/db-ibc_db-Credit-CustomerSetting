@@ -47,6 +47,7 @@ Revisions:
 	- 20210722@Tina: fix the issue that closeinfo cannot replicate on time [redmine: #158917]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20240422@Elodie: Change SQL Account [RedmineID: #204021]  
+	- 20241126@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 Param's Explanation
 • @custid: custid that need to be viewed.   
 
@@ -241,13 +242,17 @@ BEGIN
 	--Credit
 	IF(@IsDeposit = 0)
 	BEGIN
-		UPDATE cps SET cps.CloseInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Closed,ISNULL(CloseInfo,0)))
+		UPDATE cps 
+		SET cps.CloseInfo = (SELECT suspendinfo FROM dbo.f_GenerateSuspendInfo(@roleid,@Closed,ISNULL(CloseInfo,0))),
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM CustProductStatus cps WITH (ROWLOCK, UPDLOCK)
 		WHERE cps.CustID = @CustID			
 	END
 	ELSE --Deposit
 	BEGIN
-		UPDATE custinfo with (ROWLOCK, UPDLOCK) SET Closed = @Closed
+		UPDATE custinfo with (ROWLOCK, UPDLOCK) 
+		SET Closed = @Closed,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE custid = @custid
 	END
 	
@@ -311,7 +316,9 @@ BEGIN
 	END
 
 	IF (@Old_Closed = 1 and @Closed = 0 and @LoginCount > 5) or (@Old_Closed = 1 and @Closed = 0 and @roleid = 1 and @logincount = 5)
-		update customer with (ROWLOCK, UPDLOCK) set logincount = 0
+		update customer with (ROWLOCK, UPDLOCK) 
+		set logincount = 0,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		where custid = @custid 
 
 	if (@@error <> 0)

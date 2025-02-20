@@ -16,7 +16,7 @@ AS
 		- 20161005@Elodie: Update LastUpdated field - [Redmine: #54994]
 		- 20210727@Elodie: Adjust downline's betsetting [Redmine: #158073]
 		- 20220511@Tacy: Insert history of member bet setting [RedmineID: #170739]
-
+		- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -49,10 +49,10 @@ BEGIN
 
 	IF @Mode = 'StakeLevel'
 	BEGIN
-		IF dbo.f_CheckRepTable('CustStakeLevel_Agent') = 0
-			RETURN
-		IF dbo.f_CheckRepTable('CustStakeLevel_Member') = 0
-			RETURN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
 
 		CREATE TABLE #StakeLevel (
 				CustID			INT
@@ -77,7 +77,8 @@ BEGIN
 		EXECUTE sys.sp_xml_removedocument @iDoc
 
 		UPDATE csla
-		SET	csla.StakeLevelList = sl.StakeLevelList
+		SET	csla.StakeLevelList = sl.StakeLevelList,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM		dbo.CustStakeLevel_Agent AS csla WITH(ROWLOCK,UPDLOCK)
 		INNER JOIN	#StakeLevel AS sl
 				ON	sl.CustID  = csla.CustID
@@ -86,6 +87,7 @@ BEGIN
 		UPDATE cslm
 		SET	cslm.StakeLevelList = sl.StakeLevelList
 			, cslm.LastUpdated = GETDATE()
+			, RepUpdateTime = dbo.f_GetDateTime2()
 		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
 			INTO @HistoryTbl(CustID, SportType, BetType, StakeLevelList, UpdateTime)
 		FROM		dbo.CustStakeLevel_Member AS cslm WITH(ROWLOCK,UPDLOCK)

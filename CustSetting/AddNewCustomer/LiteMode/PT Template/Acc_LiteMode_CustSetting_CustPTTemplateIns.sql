@@ -22,7 +22,7 @@ AS
 	Revisions: 
 		- 20230508@Johnson: initial sp [redmine: #179159]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
-
+		- 20241206@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation: 
 		- @Settings = '<Root>
 						<r group="1" sub="1" pt="85" />
@@ -85,7 +85,8 @@ BEGIN
 	IF @IsDefault = 1
 	BEGIN
 		UPDATE CustPTTemplate WITH(ROWLOCK)
-		SET IsDefault = 0
+		SET IsDefault = 0,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE custid = @custid
 			AND IsDefault = 1
 	END
@@ -93,8 +94,9 @@ BEGIN
 	INSERT INTO [dbo].[CustPTTemplate]
            ([custid]
            ,[TemplateName]
-           ,[IsDefault])
-    VALUES (@custid,@TemplateName,@IsDefault)
+           ,[IsDefault]
+		   ,RepUpdateTime)
+    VALUES (@custid,@TemplateName,@IsDefault,dbo.f_GetDateTime2())
 	 
 	SELECT @TemplateID = SCOPE_IDENTITY()
 
@@ -102,8 +104,9 @@ BEGIN
            ([TemplateID]
            ,[GroupID]
            ,[SubGroupID]
-           ,[PT])
-	SELECT @TemplateID, GroupID, SubGroupID, PT
+           ,[PT]
+		   ,RepUpdateTime)
+	SELECT @TemplateID, GroupID, SubGroupID, PT,dbo.f_GetDateTime2()
 	FROM @tmpSetting
 	
 	SET @endRun=GETDATE()

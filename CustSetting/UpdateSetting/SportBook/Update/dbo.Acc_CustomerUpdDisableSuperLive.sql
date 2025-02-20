@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_alp,wsv_nap,wsv_xnap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableSuperLive]
 	@custid		INT,
 	@Disable	BIT = NULL,	
@@ -17,7 +18,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableSuperLive]
 		DB: DBCUST/CustDB
 		
 		Revisions:
-
+			- 20250109@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 		Parameter's Explanation:
 	*/
 BEGIN
@@ -95,7 +96,8 @@ BEGIN
 	END 
 	
 	UPDATE dbo.CustInfo WITH(ROWLOCK, UPDLOCK)
-	SET DisableSuperLive = @Disable
+	SET DisableSuperLive = @Disable,
+		RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE custid = @CustID
 		
 	--Check condition for update all downlines
@@ -189,12 +191,4 @@ BEGIN
 		
 END
 
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [wsv_nap]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [wsv_alp]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableSuperLive] TO [wsv_xnap]
-GO 
+GO

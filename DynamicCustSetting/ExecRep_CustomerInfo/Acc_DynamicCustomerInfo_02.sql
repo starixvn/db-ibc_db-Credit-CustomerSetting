@@ -42,10 +42,16 @@ AS
 		- 20231228@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240628@Johnson: scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+		- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
-BEGIN
+BEGIN	
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+	RETURN;
+				
 	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
 	DECLARE @AgentID INT, @RoleID TINYINT		
 	DECLARE @xmlStrDisabled XML, @xmlStrHidden XML, @xmlStrSync XML
@@ -82,16 +88,12 @@ BEGIN
 	SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID
 	SELECT @_SiteID = siteid FROM dbo.Site WITH(NOLOCK) WHERE site = @_Site
 
-	IF dbo.f_CheckRepTable('ProductStatusProfile') = 1
-	BEGIN
-		INSERT INTO #ProductSettingDetail_tmp02(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
-		SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
-				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
-		FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@_SiteID,@_Currency) 
-	END
-
-	if dbo.f_CheckRepTable('CustProductStatus') = 1
+	INSERT INTO #ProductSettingDetail_tmp02(SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+		,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType)
+	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
+			,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,SubType
+	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@_SiteID,@_Currency) 
+		
 	BEGIN
 		SELECT @AgentID = recommend, @RoleID = roleid FROM Customer WITH (NOLOCK) WHERE custid = @CustID
 		IF @RoleID = 1
@@ -102,19 +104,18 @@ BEGIN
 		BEGIN TRY
 			IF EXISTS(SELECT 1 FROM [dbo].[CustProductStatus] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
 			BEGIN
-				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,suspendinfo,CloseInfo)
+				INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,suspendinfo,CloseInfo,RepUpdateTime)
 				SELECT @CustID,cs.bitmapIsDisabled,cs.bitmapIsHidden,
 						CASE WHEN @RoleID = 4 THEN 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF ELSE bitmapHasSynced END,
 						suspendinfo,
-						CloseInfo
+						CloseInfo,
+						dbo.f_GetDateTime2()
 				FROM [dbo].[CustProductStatus] cs WITH(NOLOCK)
 				WHERE CustID = @ExistingCustID
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 4
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-
+			SELECT @ErrCode = 4			
 			RETURN
 		END CATCH
 
@@ -227,15 +228,14 @@ BEGIN
 					UPDATE cs
 					SET bitmapIsDisabled = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 						bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
+						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync))),
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
 					WHERE cs.CustID = @CustID     
 
 				END TRY
 				BEGIN CATCH
 					SELECT @ErrCode = 4
-
-					DELETE FROM CustProductStatus WHERE CustID = @CustID
 					RETURN
 				END CATCH
 			END
@@ -312,15 +312,14 @@ BEGIN
 					UPDATE cs
 					SET bitmapIsDisabled = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 						bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
+						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync))),
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
 					WHERE cs.CustID = @CustID     
 
 				END TRY
 				BEGIN CATCH
 					SELECT @ErrCode = 13
-
-					DELETE FROM CustProductStatus WHERE CustID = @CustID
 					RETURN
 				END CATCH
 			END
@@ -397,15 +396,14 @@ BEGIN
 					UPDATE cs
 					SET bitmapIsDisabled = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 						bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
+						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync))),
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
 					WHERE cs.CustID = @CustID     
 
 				END TRY
 				BEGIN CATCH
 					SELECT @ErrCode = 21
-
-					DELETE FROM CustProductStatus WHERE CustID = @CustID
 					RETURN
 				END CATCH
 			END
@@ -482,28 +480,19 @@ BEGIN
 					UPDATE cs
 					SET bitmapIsDisabled = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 						bitmapIsHidden = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync)))									
+						bitmapHasSynced = (select bitmap from dbo.f_GenerateProductStatus_multiple (bitmapHasSynced, CONVERT(VARCHAR(MAX),@xmlStrSync))),
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM CustProductStatus cs WITH (ROWLOCK,UPDLOCK)
 					WHERE cs.CustID = @CustID     
 
 				END TRY
 				BEGIN CATCH
 					SELECT @ErrCode = 11
-
-					DELETE FROM CustProductStatus WHERE CustID = @CustID
 					RETURN
 				END CATCH
 			END
 		END		
-	END
-
-	if (dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1
-		AND dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 1
-		AND dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1	
-		AND dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 1
-		AND dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1
-	   )
-	BEGIN					
+						
 		CREATE TABLE #ProductProfile(
 			[SettingType] [smallint] NOT NULL,
 			[ProductID] [tinyint] NOT NULL,
@@ -688,7 +677,8 @@ BEGIN
 						,[IsAutoSuperPT]
 						,[AutoSuperPT]
 						,[MinPT]
-						,[MaxPT])
+						,[MaxPT]
+						,RepUpdateTime)
 					SELECT 
 						@CustID
 						,cs.SportType
@@ -703,6 +693,7 @@ BEGIN
 						,[AutoSuperPT]
 						,[MinPT]
 						,100 --[MaxPT]
+						,dbo.f_GetDateTime2()
 					FROM [dbo].[CustPTSetting3rd_Agent] cs WITH(NOLOCK)
 						INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType AND ps.IsLive = cs.IsLive
 					WHERE CustID = @ExistingCustID AND ps.SettingType IN (1,18) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
@@ -722,7 +713,8 @@ BEGIN
 				   ,[IsAutoSuperPT]
 				   ,[AutoSuperPT]
 				   ,[MinPT]
-				   ,[MaxPT])
+				   ,[MaxPT]
+				   ,RepUpdateTime)
 				SELECT 
 					@Custid
 					,dtl.SportType
@@ -730,6 +722,7 @@ BEGIN
 					,dtl.IsLive
 					,0,0,0,0,0,0,0,0
 					,100 --dtl.MaxPT
+					,dbo.f_GetDateTime2()
 				FROM #ProductSettingDetail_tmp02 dtl WITH (NOLOCK)
 					INNER JOIN #ProductProfile ps ON ps.BetType = dtl.BetType AND ps.SportType = dtl.SportType AND ps.IsLive = dtl.IsLive  AND ps.SettingType = dtl.SettingType
 				WHERE ps.SettingType IN (1,18) AND (ps.IsHiddenSource = 1 OR ps.HasSyncSource = 0)
@@ -737,9 +730,6 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 1
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID
-			
 			RETURN
 		END CATCH
 	
@@ -803,11 +793,6 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 2
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID		
-			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-		
 			RETURN
 		END CATCH
 	
@@ -818,11 +803,13 @@ BEGIN
 						   ([CustID]
 						   ,[SportType]
 						   ,[BetType]
-						   ,[Discount])
+						   ,[Discount]
+						   ,RepUpdateTime)
 				SELECT		@CustID
 						   ,cs.SportType
 						   ,cs.BetType
 						   ,[Discount]
+						   ,dbo.f_GetDateTime2()
 				FROM [dbo].[CustDiscount3rd_Agent] cs WITH(NOLOCK)
 					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
 				WHERE CustID = @ExistingCustID AND ps.SettingType IN (3,5,14,19) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
@@ -833,24 +820,20 @@ BEGIN
 					   ([CustID]
 					   ,[SportType]
 					   ,[BetType]
-					   ,[Discount])
+					   ,[Discount]
+					   ,RepUpdateTime)
 				SELECT 
 					@CustID
 					,t.SportType
 					,t.BetType
 					,0 -- 0 zero by default
+					,dbo.f_GetDateTime2()
 				FROM #ProductProfile t 
 				WHERE t.SettingType IN (3,5,14,19) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
 			END
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 3
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-		
 			RETURN
 		END CATCH
 
@@ -863,13 +846,15 @@ BEGIN
 							,[BetType]
 							,[MaxWinLimit]
 							,[MaxLossLimit]
-							,[IsAutoReset])
+							,[IsAutoReset]
+							,RepUpdateTime)
 				SELECT		@CustID
 							,cs.SportType
 							,cs.BetType
 							,MaxWinLimit
 							,MaxLossLimit
 							,IsAutoReset
+							,dbo.f_GetDateTime2()
 				FROM [dbo].[CustWinLossLimit_Agent] cs WITH (NOLOCK)
 					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
 				WHERE CustID = @ExistingCustID AND ps.SettingType IN( 6,12,22) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
@@ -882,7 +867,8 @@ BEGIN
 					   ,[BetType]
 					   ,[MaxWinLimit]
 					   ,[MaxLossLimit]
-					   ,[IsAutoReset])
+					   ,[IsAutoReset]
+					   ,RepUpdateTime)
 				SELECT
 					@CustID
 					,t.SportType
@@ -890,6 +876,7 @@ BEGIN
 					,0
 					,gs.DefaultLossLimit
 					,1
+					,dbo.f_GetDateTime2()
 				FROM #ProductProfile t 
 					INNER JOIN LossLimit_GlobalSetting gs ON gs.ProductId = t.ProductID
 					INNER JOIN CustInfo ci WITH (NOLOCK) ON gs.ExchangeId = ci.currency
@@ -898,13 +885,6 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 6
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-			DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-		
 			RETURN
 		END CATCH
 
@@ -917,11 +897,13 @@ BEGIN
 						(CustID
 					,	SportType
 					,	BetType
-					,	StakeLevelList)
+					,	StakeLevelList
+					,	RepUpdateTime)
 				SELECT	@CustID
 					,	cs.SportType
 					,	cs.BetType
 					,	cs.StakeLevelList
+					,	dbo.f_GetDateTime2()
 				FROM dbo.CustStakeLevel_Agent AS cs
 					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
 				WHERE CustID = @ExistingCustID AND ps.SettingType IN (7,17,8) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
@@ -929,8 +911,8 @@ BEGIN
 			IF	@RoleID = 4
 			BEGIN
 				INSERT INTO	dbo.CustStakeLevel_Agent
-					(	CustID , SportType    , BetType    , StakeLevelList)
-				SELECT	@CustID, ps.SportType, ps.Bettype, LEFT(sl.list, LEN(sl.list) - 1)
+					(	CustID , SportType    , BetType    , StakeLevelList, RepUpdateTime)
+				SELECT	@CustID, ps.SportType, ps.Bettype, LEFT(sl.list, LEN(sl.list) - 1), dbo.f_GetDateTime2()
 				FROM	#ProductProfile ps 
 					CROSS APPLY (
 						SELECT	CAST(sl.StakeLevelID AS VARCHAR) + ','
@@ -945,15 +927,7 @@ BEGIN
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 7
-			DELETE FROM CustProductStatus WHERE CustID = @CustID
-			DELETE FROM CustPTSetting3rd_Agent WHERE CustID = @CustID	
-			DELETE FROM CustBetSetting3rd_Agent WHERE CustID = @CustID
-			DELETE FROM CustBetSetting_Agent WHERE CustID = @CustID
-			DELETE FROM CustDiscount3rd_Agent WHERE CustID = @CustID
-			DELETE FROM CustWinLossLimit_Agent WHERE CustID = @CustID
-			DELETE FROM dbo.CustStakeLevel_Agent WHERE CustID = @CustID
-		
+			SELECT @ErrCode = 7			
 			RETURN
 		END CATCH
 	END	

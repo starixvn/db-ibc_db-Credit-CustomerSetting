@@ -21,7 +21,7 @@ AS
 
 	Revisions:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
-		
+		- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 	- @IsDisabled
 		'[
@@ -250,7 +250,8 @@ BEGIN
 			)
 			
 	UPDATE CustProductStatus
-		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
+			RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE CustID = @CustID
 	
 	UPDATE ns 
@@ -276,7 +277,8 @@ BEGIN
 			)
 
 		UPDATE CustProductStatus WITH (ROWLOCK,UPDLOCK)
-		SET bitmapIsHidden =(SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+		SET bitmapIsHidden =(SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
+			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE CustID = @CustID
 		
 	END
