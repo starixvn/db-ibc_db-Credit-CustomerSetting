@@ -409,19 +409,21 @@ BEGIN
 		    WHERE	recommend = @custid
 					AND (closed <> @Closed OR closed IS NULL)	
 	    END;	
-		
-
-		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
-		BEGIN
-			IF (@SystemID=1)
-			BEGIN	
-			   
+			
+		IF (@SystemID=1)
+		BEGIN	
+			
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
+			BEGIN
 				UPDATE cl
 				set cl.ClosedReason = 1
 					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[CustLoginInfo] cl with (ROWLOCK, UPDLOCK) 
 				INNER JOIN #tempCust t ON cl.CustID=t.CustID
-			 
+			END
+		 
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE cl
 				set cl.ClosedReason = 1
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -433,16 +435,22 @@ BEGIN
 				FROM #tempCust t
 				INNER JOIN custInfo c ON t.CustID=c.custid
 				WHERE t.CustID  NOT IN(SELECT CustID FROM [CustLoginInfo_Member] WITH(NOLOCK)) AND c.roleid=1
-			 
-			END			
-			ELSE 
+			END
+		 
+		END			
+		ELSE 
+		BEGIN
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
 			BEGIN
 				UPDATE cl
 				set cl.ClosedReason = 2
 					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[CustLoginInfo] cl with (ROWLOCK, UPDLOCK) 
 				INNER JOIN #tempCust t ON cl.CustID=t.CustID
+			END
 			
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE cl
 				set cl.ClosedReason = 2
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -454,8 +462,9 @@ BEGIN
 				FROM #tempCust t
 				INNER JOIN custInfo c ON t.CustID=c.custid
 				WHERE t.CustID  NOT IN(SELECT CustID FROM [CustLoginInfo_Member] WITH(NOLOCK)) AND c.roleid=1
-			END			
-		END 
+			END
+		END			
+		 
     END;      
 
     else if @Action = 'AutoSuspend'

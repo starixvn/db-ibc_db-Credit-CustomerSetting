@@ -74,12 +74,10 @@ BEGIN
 		END 
 
 		--Update ClosedReason for agent and downlines
-		IF  dbo.f_CheckServerName() != 1 OR dbo.f_CheckEnvironment() != 'Active' 	  
-			RETURN
-		ELSE 
+		--Insert Update for Agent
+		--> Insert Update ClosedReason
+		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
 		BEGIN
-			--Insert Update for Agent
-			--> Insert Update ClosedReason
 			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo WITH(NOLOCK) WHERE custid = @AgentID)
 				INSERT INTO CustLoginInfo(CustID, ClosedReason,RepUpdateTime) 
 				SELECT @AgentID, 4,dbo.f_GetDateTime2()
@@ -89,9 +87,12 @@ BEGIN
 					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo m WITH (ROWLOCK, UPDLOCK)
 				WHERE m.CustID = @AgentID
+		END
 
-			
-			--Insert Update for Members
+		
+		--Insert Update for Members
+		IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+		BEGIN
 			WHILE (1=1)
 			BEGIN 
 				INSERT INTO [CustLoginInfo_Member](CustID,ClosedReason,RepUpdateTime)
@@ -123,7 +124,8 @@ BEGIN
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END 
-		END 
+		END
+		 
 	END	
 	ELSE 
 	IF @Type = 0 
@@ -519,7 +521,7 @@ BEGIN
 		END
 
 		--------------------------------------------------
-		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
+		IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
 		WHILE(1=1)
 		BEGIN
 			
@@ -572,7 +574,7 @@ BEGIN
 		BEGIN
 			DELETE dbo.CustLoginInfo WITH (UPDLOCK,ROWLOCK)
 			OUTPUT DELETED.custid ,dbo.f_GetDateTime2()
-			INTO CustLoginInfo_Member_Del_Inhouse(custid,RepUpdateTime)
+			INTO CustLoginInfo_Del_Inhouse(custid,RepUpdateTime)
 			WHERE	custid = @AgentID 
 			
 		END

@@ -735,10 +735,10 @@ BEGIN
 			END	
 		END
 		
-		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
+		IF @roleid = 4
 		BEGIN
-			IF @roleid = 4
-			BEGIN			
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
+			BEGIN
 				UPDATE	cs 
 				SET	 cs.ClosedReason = @ClosedReason
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -753,7 +753,10 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
-			
+			END
+
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE	cs 
 				SET	 ClosedReason = @ClosedReason
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -768,9 +771,12 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
-			END	
-			ELSE IF @roleid = 3
-			BEGIN			
+			END
+		END	
+		ELSE IF @roleid = 3
+		BEGIN	
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
+			BEGIN
 				UPDATE	cs 
 				SET	 ClosedReason = @ClosedReason
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -785,7 +791,10 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
+			END
 			
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE	cs 
 				SET	 ClosedReason = @ClosedReason
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -800,10 +809,13 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
-								
-			END	
-			ELSE IF @roleid = 2
-			BEGIN			
+			ENd
+							
+		END	
+		ELSE IF @roleid = 2
+		BEGIN	
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE	cs 
 				SET	 ClosedReason = @ClosedReason
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -819,9 +831,10 @@ BEGIN
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
 			END
+		END
 
 
-		END		
+			
 	END
 	DROP TABLE #ProductSettingDetail_tmp04
 END
