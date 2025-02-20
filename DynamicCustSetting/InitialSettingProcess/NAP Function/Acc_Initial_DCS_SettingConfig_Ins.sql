@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBGLOB-GlobCustDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Initial_DCS_SettingConfig_Ins]
 	@ProductID TINYINT,
 	@SportTypeList VARCHAR(MAX), 
@@ -17,12 +17,12 @@ AS
 /*
 	Created: 20211011@Eden
 	Task : Insert Initial Setting config
-	DB: DBCUST/CUSTDB
+	DB: DBGLOB-GlobCustDB
 	Original:
 
 	Revisions:  
 	- 20211011@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
-
+	- 20250218@Johnson: move sp to GlobCustDB [redmine: #216870]
 	Parameter Definition
 
 	Example: 

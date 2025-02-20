@@ -1,16 +1,16 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBGLOB-GlobCustDB" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Initial_DCS_InsertStepByConfigID]
 	@ConfigID INT
 AS
 /*
 	Created: 20210713@Eden
 	Task : insert data for Initial_StepByConfig
-	DB: DBCUST/CUSTDB
+	DB: DBGLOB-GlobCustDB
 	Original:
 
 	Revisions:  
 	- 20210713@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
-
+	- 20250218@Johnson: move sp to GlobCustDB [redmine: #216870]
 	Parameter Definition
 		StepID = :
 			1: Delete existing customer setting
