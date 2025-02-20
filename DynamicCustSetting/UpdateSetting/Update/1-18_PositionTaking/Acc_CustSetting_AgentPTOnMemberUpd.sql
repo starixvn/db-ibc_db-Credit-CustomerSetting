@@ -29,7 +29,7 @@ AS
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20230410@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
-
+			- 20250220@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 		Parameter's Explanation:
 		• @PT:
 					<ROOT>
@@ -634,7 +634,8 @@ BEGIN
 				UPDATE main
 				SET main.SuperPT=npt.SuperPT,
 					main.MasterPT=npt.MasterPT,
-					main.AgentPT=npt.AgentPT
+					main.AgentPT=npt.AgentPT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
 						AND npt.BetType=main.BetType
@@ -656,7 +657,8 @@ BEGIN
 				UPDATE main
 				SET main.SuperPT=npt.SuperPT,
 					main.MasterPT=npt.MasterPT,
-					main.AgentPT=npt.AgentPT
+					main.AgentPT=npt.AgentPT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustPTGroupSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
 						AND npt.BetType=main.BetType
@@ -681,6 +683,7 @@ BEGIN
 							,[AgentPT]
 							,[AutoSuperPT]
 							,[AutoMasterPT]
+							,RepUpdateTime
 						)
 				SELECT
 					@CustID,
@@ -693,7 +696,8 @@ BEGIN
 					grpt.MasterPT,
 					grpt.AgentPT,
 					grpt.AutoSuperPT,
-					grpt.AutoMasterPT
+					grpt.AutoMasterPT,
+					dbo.f_GetDateTime2()
 				FROM dbo.CustPTGroupSetting3rd_Member grpt WITH(NOLOCK)
 					LEFT JOIN dbo.CustPTSetting3rd_Member mempt
 						ON mempt.CustID = @CustID
@@ -706,7 +710,8 @@ BEGIN
 				UPDATE main
 				SET main.SuperPT=npt.SuperPT,
 					main.MasterPT=npt.MasterPT,
-					main.AgentPT=npt.AgentPT
+					main.AgentPT=npt.AgentPT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.CustPTSetting3rd_Member main WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @NewPTTble npt ON  npt.SportType=main.SportType
 						AND npt.BetType=main.BetType
@@ -718,7 +723,8 @@ BEGIN
 		
 				---Update setting mode
 				UPDATE dbo.CustSettingMode3rd WITH(ROWLOCK,UPDLOCK)
-				SET IsGrouped = 0
+				SET IsGrouped = 0,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				WHERE CustID = @CustID
 			END
 		END
