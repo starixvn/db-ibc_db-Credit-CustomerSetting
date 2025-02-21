@@ -145,7 +145,7 @@ BEGIN
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 		INTO dbo.custAccount_Del_Inhouse(custid, RepUpdateTime)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
 		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
 		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
@@ -166,6 +166,7 @@ BEGIN
 		INTO CustOTPDetail_Del_Inhouse(CustID, SubAccId, LastVerifiedDate, DeviceId, RepUpdateTime)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
+	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -359,7 +360,7 @@ BEGIN
 
 	UPDATE Dep_ChargeInfoSetting 
 	SET	RepUpdateTime = dbo.f_GetDateTime2(),
-		IsDeleted = 1	
+		IsDeleted = 1
 	WHERE custid = @custid
 
 	DELETE custinfo 
@@ -445,7 +446,7 @@ BEGIN
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 		INTO dbo.custAccount_Del_Inhouse(custid, RepUpdateTime) 
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
 		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
 		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
@@ -466,6 +467,7 @@ BEGIN
 		INTO CustOTPDetail_Del_Inhouse(CustID, SubAccId, LastVerifiedDate, DeviceId, RepUpdateTime)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
+	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -727,7 +729,7 @@ BEGIN
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 		INTO dbo.custAccount_Del_Inhouse(custid, RepUpdateTime)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
 		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
 		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
@@ -748,6 +750,7 @@ BEGIN
 		INTO CustOTPDetail_Del_Inhouse(CustID, SubAccId, LastVerifiedDate, DeviceId, RepUpdateTime)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
+	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -996,6 +999,7 @@ BEGIN
 		INTO dbo.CustNoComm_Del_Inhouse(CustID, RepUpdateTime) 
 	WHERE custid = @custid	
 
+	--DELETE dbo.CustRequestGame WHERE custid = @custid	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
