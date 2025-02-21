@@ -36,6 +36,7 @@ AS
 		- 20240726@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20250220@Johnson: remove CustRequestGame [RedmineID: #212684]
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
 
@@ -119,7 +120,7 @@ BEGIN
 	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -311,9 +312,9 @@ BEGIN
 	INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
 	WHERE custid = @custid
 
-	DELETE Dep_ChargeInfoSetting 
-	OUTPUT DELETED.ChargeId, dbo.f_GetDateTime2()
-	INTO Dep_ChargeInfoSetting_Del_InHouse(ChargeId,RepUpdateTime)
+	UPDATE Dep_ChargeInfoSetting 
+	SET	RepUpdateTime = dbo.f_GetDateTime2(),
+		IsDeleted = 1	
 	WHERE custid = @custid
 
 	DELETE custinfo 
@@ -376,7 +377,7 @@ BEGIN
 	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -618,7 +619,7 @@ BEGIN
 	DELETE dbo.CustNoComm WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTP WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	DELETE dbo.CustOTPDetail WHERE custid IN (SELECT custID FROM @tmp_custID)	
-	DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	--DELETE dbo.CustRequestGame WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
@@ -839,7 +840,7 @@ BEGIN
 	DELETE dbo.custAccount WHERE custid = @custid	
 	DELETE dbo.CustGroupHeadline WHERE custid = @custid	
 	DELETE dbo.CustNoComm WHERE custid = @custid	
-	DELETE dbo.CustRequestGame WHERE custid = @custid	
+	--DELETE dbo.CustRequestGame WHERE custid = @custid	
 	
 	DELETE dbo.Dep_CustBAActive 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
