@@ -29,12 +29,11 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
 		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+		- 20250224@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 */
 BEGIN
 	SET NOCOUNT ON 
 	
-	IF dbo.f_CheckRepTable('custinfo') = 0 RETURN
-		
 	--Check if XML is null or empty
 	IF @Action NOT IN ('SuspendInfo', 'CloseInfo') AND ( @IsDisabled_XML IS NULL OR @IsDisabled_XML='') RETURN
 

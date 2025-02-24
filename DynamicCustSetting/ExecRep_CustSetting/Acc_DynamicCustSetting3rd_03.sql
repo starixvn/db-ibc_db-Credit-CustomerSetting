@@ -16,7 +16,7 @@ AS
 		- 20210716@Eden: Flexible Initializing Customer Setting - [Redmine: #156667]
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
-
+		- 20250303@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 	Param's Explanation:
 		@StepID = :
 			1: Delete existing customer setting
@@ -27,21 +27,21 @@ BEGIN
 	
 	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at all replicated servers
 	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at dbcust only
-
-	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
-	IF dbo.f_CheckRepTable('Customer') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('StakeLevel') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustStakeLevel_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustStakeLevel_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('ProductSettingProfile') = 0 RETURN
-
+	
+	IF OBJECT_ID('CustInfo') IS NULL RETURN
+	IF OBJECT_ID('Customer') IS NULL RETURN
+	IF OBJECT_ID('CustPTSetting3rd_Agent') IS NULL RETURN
+	IF OBJECT_ID('CustPTSetting3rd_Member') IS NULL RETURN
+	IF OBJECT_ID('CustPTGroupSetting3rd_Member') IS NULL RETURN
+	IF OBJECT_ID('StakeLevel') IS NULL RETURN
+	IF OBJECT_ID('CustStakeLevel_Agent') IS NULL RETURN
+	IF OBJECT_ID('CustStakeLevel_Member') IS NULL RETURN
+	IF OBJECT_ID('CustDiscount3rd_Member') IS NULL RETURN
+	IF OBJECT_ID('CustDiscount3rd_Agent') IS NULL RETURN
+	IF OBJECT_ID('CustWinLossLimit_Agent') IS NULL RETURN
+	IF OBJECT_ID('CustWinLossLimit_Member') IS NULL RETURN
+	IF OBJECT_ID('ProductSettingProfile') IS NULL RETURN
+	
 	CREATE TABLE #TempConfig(
 		[SportType] [smallint],
 		[BetType] [smallint],
@@ -665,6 +665,7 @@ BEGIN
 					,[AutoSuperPT]
 					,[MinPT]
 					,[MaxPT]
+					,RepUpdateTime
 				)
 				SELECT 
 					 C.custid
@@ -680,6 +681,7 @@ BEGIN
 					,C.AutoSuperPT
 					,C.MinPT
 					,C.MaxPT
+					,NULL
 				FROM dbo.CustPTSetting3rd_Agent C WITH(NOLOCK) 
 					INNER JOIN #DummyAcc ci 
 						ON ci.custid = C.custid
@@ -728,6 +730,7 @@ BEGIN
 					,[AutoMasterPT]
 					,[IsAutoSuperPT]
 					,[AutoSuperPT]
+					,RepUpdateTime
 				)
 				SELECT 
 					 C.AgentID
@@ -741,6 +744,7 @@ BEGIN
 					,C.AutoMasterPT
 					,C.IsAutoSuperPT
 					,C.AutoSuperPT
+					,NULL
 				FROM dbo.CustPTGroupSetting3rd_Member C WITH(NOLOCK) 
 					INNER JOIN #DummyAcc ci 
 						ON ci.custid = C.AgentID AND ci.RoleID = 2
@@ -771,6 +775,7 @@ BEGIN
 				,[AutoSuperPT]
 				,[MinPT]
 				,[MaxPT]
+				,RepUpdateTime
 			)
 			SELECT 
 				 C.custid
@@ -786,6 +791,7 @@ BEGIN
 				,C.AutoSuperPT
 				,C.MinPT
 				,C.MaxPT
+				,NULL
 			FROM dbo.CustPTSetting3rd_Agent C WITH(NOLOCK) 
 				INNER JOIN #SMATemp ci 
 					ON ci.custid = C.custid
@@ -822,6 +828,7 @@ BEGIN
 					,[AutoMasterPT]
 					,[IsAutoSuperPT]
 					,[AutoSuperPT]
+					,RepUpdateTime
 				)
 				SELECT 
 					 C.custid
@@ -835,6 +842,7 @@ BEGIN
 					,C.AutoMasterPT
 					,C.IsAutoSuperPT
 					,C.AutoSuperPT
+					,NULL
 				FROM dbo.CustPTSetting3rd_Member C WITH(NOLOCK) 
 					INNER JOIN #MemberTemp_Batch ci 
 						ON ci.custid = C.custid
@@ -858,6 +866,7 @@ BEGIN
 				,[AutoMasterPT]
 				,[IsAutoSuperPT]
 				,[AutoSuperPT]
+				,RepUpdateTime
 			)
 			SELECT 
 				 C.AgentID
@@ -871,6 +880,7 @@ BEGIN
 				,C.AutoMasterPT
 				,C.IsAutoSuperPT
 				,C.AutoSuperPT
+				,NULL
 			FROM dbo.CustPTGroupSetting3rd_Member C WITH(NOLOCK) 
 				INNER JOIN #SMATemp ci 
 					ON ci.custid = C.AgentID
@@ -992,8 +1002,8 @@ BEGIN
 				WHERE t.SettingName = 'Commission' 
 					AND t.IsDefault = 0
 
-				INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount)
-				SELECT c.CustID, t.SportType, t.BetType, c.Discount	
+				INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount,RepUpdateTime)
+				SELECT c.CustID, t.SportType, t.BetType, c.Discount, NULL	
 				FROM dbo.CustDiscount3rd_Agent c WITH(NOLOCK)
 					INNER JOIN #DummyAcc ci 
 						ON ci.custid = C.CustID
@@ -1010,8 +1020,8 @@ BEGIN
 			END
 
 			--SMA level
-			INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount)
-			SELECT c.CustID, t.SportType, t.BetType, c.Discount	
+			INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount,RepUpdateTime)
+			SELECT c.CustID, t.SportType, t.BetType, c.Discount, NULL	
 			FROM dbo.CustDiscount3rd_Agent c WITH(NOLOCK)
 				INNER JOIN #SMATemp ci  
 					ON c.CustID = ci.custid
@@ -1037,8 +1047,8 @@ BEGIN
 					BREAK;
 
 				--Member Level
-				INSERT INTO dbo.CustDiscount3rd_Member(CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
-				SELECT c.CustID, t.SportType, t.BetType, c.PlayerDiscount, c.AgentDiscount, c.MasterDiscount, c.SuperDiscount 
+				INSERT INTO dbo.CustDiscount3rd_Member(CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount,RepUpdateTime)
+				SELECT c.CustID, t.SportType, t.BetType, c.PlayerDiscount, c.AgentDiscount, c.MasterDiscount, c.SuperDiscount, NULL 
 				FROM dbo.CustDiscount3rd_Member c WITH(NOLOCK)
 					INNER JOIN #MemberTemp_Batch ci  
 						ON c.CustID = ci.custid
@@ -1053,8 +1063,8 @@ BEGIN
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Commission' AND IsDefault = 1)
 		BEGIN
 			--Normal Super level
-			INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount)
-			SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper	
+			INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount,RepUpdateTime)
+			SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, NULL	
 			FROM #SMATemp ci
 				CROSS JOIN #TempConfig t 
 			WHERE t.SettingName = 'Commission' 
@@ -1075,8 +1085,8 @@ BEGIN
 				WHERE t.SettingName = 'Commission' 
 					AND t.IsDefault = 1
 
-				INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount)
-				SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper	
+				INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount,RepUpdateTime)
+				SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, NULL	
 				FROM #DummyAcc ci
 					CROSS JOIN #TempConfig t 
 					LEFT JOIN CustDiscount3rd_Agent cb WITH(NOLOCK)
@@ -1088,8 +1098,8 @@ BEGIN
 					AND cb.CustID IS NULL
 
 				--Direct Master/Agent level
-				INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount)
-				SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper	
+				INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount,RepUpdateTime)
+				SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, NULL	
 				FROM #SMATemp ci
 					CROSS JOIN #TempConfig t 
 				WHERE t.SettingName = 'Commission' 
@@ -1099,8 +1109,8 @@ BEGIN
 			END
 
 			--Master level 
-			INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount)
-			SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueMaster	
+			INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount,RepUpdateTime)
+			SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueMaster, NULL	
 			FROM #SMATemp ci
 				CROSS JOIN #TempConfig t 
 			WHERE t.SettingName = 'Commission' 
@@ -1109,8 +1119,8 @@ BEGIN
 				AND ci.CustID <> @DirectCustID
 
 			--Agent level 
-			INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount)
-			SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueAgent	
+			INSERT INTO dbo.CustDiscount3rd_Agent(CustID, SportType, BetType, Discount,RepUpdateTime)
+			SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueAgent,NULL	
 			FROM #SMATemp ci
 				CROSS JOIN #TempConfig t 
 			WHERE t.SettingName = 'Commission' 
@@ -1134,12 +1144,13 @@ BEGIN
 					BREAK;
 
 				--Member Level
-				INSERT INTO dbo.CustDiscount3rd_Member(CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount)
+				INSERT INTO dbo.CustDiscount3rd_Member(CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount,RepUpdateTime)
 				SELECT ci.CustID, t.SportType, t.BetType
 					, CASE WHEN @DirectCustRoleID = 1 THEN t.DefaultValueSuper ELSE t.DefaultValueMember END
 					, CASE WHEN @DirectCustRoleID IN (1,2) THEN t.DefaultValueSuper ELSE t.DefaultValueAgent END
 					, CASE WHEN @DirectCustRoleID IN (1,2,3) THEN t.DefaultValueSuper ELSE t.DefaultValueMaster END
 					, t.DefaultValueSuper
+					, NULL
 				FROM #MemberTemp_Batch ci
 					CROSS JOIN #TempConfig t 
 				WHERE t.SettingName = 'Commission' 
@@ -1171,10 +1182,10 @@ BEGIN
 				WHERE t.SettingName = 'Win Loss Limit' 
 					AND t.IsDefault = 0
 
-				INSERT INTO dbo.CustWinLossLimit_Agent(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
+				INSERT INTO dbo.CustWinLossLimit_Agent(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset,RepUpdateTime)
 				SELECT c.CustID, t.SportType, t.BetType
 					, CASE WHEN t.HaveWinLimit = 1 THEN c.MaxWinLimit ELSE NULL END
-					, c.MaxLossLimit, c.IsAutoReset	
+					, c.MaxLossLimit, c.IsAutoReset, NULL	
 				FROM dbo.CustWinLossLimit_Agent c WITH(NOLOCK)
 					INNER JOIN #DummyAcc ci  
 						ON c.CustID = ci.custid
@@ -1191,10 +1202,10 @@ BEGIN
 			END
 
 			--SMA level
-			INSERT INTO dbo.CustWinLossLimit_Agent(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
+			INSERT INTO dbo.CustWinLossLimit_Agent(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset,RepUpdateTime)
 			SELECT c.CustID, t.SportType, t.BetType
 				, CASE WHEN t.HaveWinLimit = 1 THEN c.MaxWinLimit ELSE NULL END
-				, c.MaxLossLimit, c.IsAutoReset	
+				, c.MaxLossLimit, c.IsAutoReset, NULL	
 			FROM dbo.CustWinLossLimit_Agent c WITH(NOLOCK)
 				INNER JOIN #SMATemp ci  
 					ON c.CustID = ci.custid
@@ -1220,10 +1231,10 @@ BEGIN
 					BREAK;
 
 				--Member Level
-				INSERT INTO dbo.CustWinLossLimit_Member(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
+				INSERT INTO dbo.CustWinLossLimit_Member(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset,RepUpdateTime)
 				SELECT c.CustID, t.SportType, t.BetType
 					, CASE WHEN t.HaveWinLimit = 1 THEN c.MaxWinLimit ELSE NULL END
-					, c.MaxLossLimit, c.IsAutoReset
+					, c.MaxLossLimit, c.IsAutoReset, NULL
 				FROM dbo.CustWinLossLimit_Member c WITH(NOLOCK)
 					INNER JOIN #MemberTemp_Batch ci  
 						ON c.CustID = ci.custid
@@ -1256,8 +1267,8 @@ BEGIN
 				WHERE t.SettingName = 'Win Loss Limit' 
 					AND t.IsDefault = 1
 
-				INSERT INTO dbo.CustWinLossLimit_Agent(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
-				SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, g.DefaultLossLimit, t.SpecialRequirement	
+				INSERT INTO dbo.CustWinLossLimit_Agent(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset,RepUpdateTime)
+				SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, g.DefaultLossLimit, t.SpecialRequirement, NULL	
 				FROM #DummyAcc ci
 					CROSS JOIN #TempConfig t
 					INNER JOIN LossLimit_GlobalSetting g WITH(NOLOCK) 
@@ -1273,8 +1284,8 @@ BEGIN
 			END
 			
 			--SMA level
-			INSERT INTO dbo.CustWinLossLimit_Agent(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
-			SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, g.DefaultLossLimit, t.SpecialRequirement	
+			INSERT INTO dbo.CustWinLossLimit_Agent(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset,RepUpdateTime)
+			SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, g.DefaultLossLimit, t.SpecialRequirement, NULL	
 			FROM #SMATemp ci 
 				CROSS JOIN #TempConfig t
 				INNER JOIN LossLimit_GlobalSetting g WITH(NOLOCK) 
@@ -1299,8 +1310,8 @@ BEGIN
 					BREAK;
 
 				--Member Level
-				INSERT INTO dbo.CustWinLossLimit_Member(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset)
-				SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, g.DefaultLossLimit, t.SpecialRequirement	
+				INSERT INTO dbo.CustWinLossLimit_Member(CustID, SportType, BetType, MaxWinLimit, MaxLossLimit, IsAutoReset,RepUpdateTime)
+				SELECT ci.CustID, t.SportType, t.BetType, t.DefaultValueSuper, g.DefaultLossLimit, t.SpecialRequirement, NULL	
 				FROM #MemberTemp_Batch ci 
 					CROSS JOIN #TempConfig t
 					INNER JOIN LossLimit_GlobalSetting g WITH(NOLOCK) 
@@ -1345,8 +1356,8 @@ BEGIN
 						AND tb.SportType = cb.SportType
 						AND tb.BettypeID = cb.BetType
 
-				INSERT INTO dbo.CustStakeLevel_Agent ([CustID],[SportType],[BetType],[StakeLevelList]) 
-				SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.StakeLevelList
+				INSERT INTO dbo.CustStakeLevel_Agent ([CustID],[SportType],[BetType],[StakeLevelList],RepUpdateTime) 
+				SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.StakeLevelList, NULL
 				FROM  #tmpSTList tb
 					CROSS JOIN #DummyAcc t
 					LEFT JOIN CustStakeLevel_Agent cb WITH(NOLOCK)
@@ -1357,8 +1368,8 @@ BEGIN
 			END
 
 			--SMA Level
-			INSERT INTO dbo.CustStakeLevel_Agent ([CustID],[SportType],[BetType],[StakeLevelList]) 
-			SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.StakeLevelList
+			INSERT INTO dbo.CustStakeLevel_Agent ([CustID],[SportType],[BetType],[StakeLevelList],RepUpdateTime) 
+			SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.StakeLevelList, NULL
 			FROM  #tmpSTList tb
 				CROSS JOIN  #SMATemp t
 			
@@ -1378,8 +1389,8 @@ BEGIN
 					BREAK;
 
 				--Member Level
-				INSERT INTO dbo.CustStakeLevel_Member ([CustID],[SportType],[BetType],[StakeLevelList],LastUpdated) 
-				SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.Min_StakeLevel,@CurrentDTS
+				INSERT INTO dbo.CustStakeLevel_Member ([CustID],[SportType],[BetType],[StakeLevelList],LastUpdated,RepUpdateTime) 
+				SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.Min_StakeLevel,@CurrentDTS, NULL
 				FROM  #tmpSTList tb
 					CROSS JOIN  #MemberTemp_Batch t
 			END
