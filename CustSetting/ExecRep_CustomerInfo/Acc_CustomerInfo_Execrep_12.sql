@@ -30,6 +30,7 @@ AS
 		- 20210422@Johnson: change source ProblemAccount to ProblemAccountClassification for UpdateReviewStatus [redmine:#153059]
 		- 20220422@Johnson: Add Creator into ProblemAccount [redmine: #171686]
 		- 20240807@Helios: Scale Out DBCUST - Apply Inhouse replication for tables of problem account [Redmine:#209747]
+		- 20250219@Helios: HF - Apply Inhouse replication for tables of problem account [Redmine:#218106] 
 	Param's Explanation:
 		@Action: MarkProblem, RemoveReduceBetLimit
 		
@@ -37,14 +38,15 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+	)
+	RETURN;
+
 	DECLARE @SetBit1 INT, @Pos TINYINT, @SubIssueTypeId TINYINT
 	CREATE TABLE #DownlineCust (CustID INT PRIMARY KEY, RoleID TINYINT)
 	CREATE TABLE #DownlineSuccess (CustID INT)
 	CREATE TABLE #DirectMarkCust (CustID INT, RoleID TINYINT)
-
-	IF dbo.f_CheckRepTable('custInfo') = 0 RETURN
-	IF dbo.f_CheckRepTable('ProblemAccount') = 0 RETURN
-	IF dbo.f_CheckRepTable('ProblemAccountAction') = 0 RETURN
 	
 	IF @RoleID = 4 --Super			
 	BEGIN
