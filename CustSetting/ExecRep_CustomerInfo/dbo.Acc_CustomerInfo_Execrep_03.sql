@@ -451,7 +451,8 @@ BEGIN
 			DROP TABLE #tblCustClassSport
 		END
 		
-		IF (dbo.f_CheckRepTable('CustomerClassSetting') = 1) 
+		IF (EXISTS ( SELECT 1 FROM sys.tables WHERE Name='CustomerClassSetting') AND dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' )-- run on KBT
 		BEGIN
 			CREATE TABLE #tblCustClassSport2 (custid INT, SportType SMALLINT, CustomerClass SMALLINT, isFinished BIT DEFAULT(0) PRIMARY KEY(custid,sporttype))
 			DECLARE @tmpCustClassSport2 TABLE (custid INT, SportType SMALLINT, CustomerClass SMALLINT PRIMARY KEY(custid,sporttype))
