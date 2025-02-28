@@ -694,7 +694,10 @@ BEGIN
 	SELECT custID FROM customer WITH (NOLOCK) WHERE recommend = @custid
 	
 	--Delete cust login info
-	DELETE CustLoginInfo WHERE custid IN (SELECT custID FROM @tmp_custID)	
+	DELETE CustLoginInfo WITH (ROWLOCK)  
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustLoginInfo_Del_Inhouse(CustID, RepUpdateTime)
+	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE CustLoginInfo_Member WITH (ROWLOCK) 
 		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
