@@ -158,6 +158,7 @@ Revisions:
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 	- 20241121@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
+	- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	
 	Param's Explanation:
 - @ErrCode:
@@ -422,12 +423,14 @@ BEGIN
 	    (
 	        CustID, OldUserPwd, LastChangedPwdDate, isFirstLogin, SecurityCodeCount,
 	        SecurityCode, isForcedChangeSecurityCode, LastChangedSecurityCodeDate,ClosedReason
-	    )
+		  , RepUpdateTime
+		)
 	    VALUES
 	    (
 	        @custid, NULL, GETDATE(), 1, 0,
 	        NULL, @isForcedChangeSecurityCode, NULL,@ClosedReason
-	    )
+		  , dbo.f_GetDateTime2()	
+		)
 
 	    IF @@ERROR <> 0
 	    BEGIN
@@ -444,8 +447,9 @@ BEGIN
 	BEGIN		
 		IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
 		BEGIN
-			INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-			VALUES(@custid,NULL,@IP,@creator,GETDATE(),@ClosedReason)
+			INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason, RepUpdateTime)
+			VALUES(@custid,NULL,@IP,@creator,GETDATE(),@ClosedReason, dbo.f_GetDateTime2())
+
 			IF @@ERROR <> 0
 			BEGIN
 				SELECT	@ErrMsg = CASE @Language
@@ -504,8 +508,8 @@ BEGIN
 
 		IF @CreditRM > 300000 AND @roleid <> 1
 		BEGIN
-			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2)
-			SELECT @CustId, 1, 0
+			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2, RepUpdateTime)
+			SELECT @CustId, 1, 0, dbo.f_GetDateTime2() 
 		END
 	END TRY
 	BEGIN CATCH		
@@ -522,8 +526,8 @@ BEGIN
     BEGIN
 		IF @roleid = 1 
 		BEGIN
-			INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status)
-			SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status
+			INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status, RepUpdateTime)
+			SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status, dbo.f_GetDateTime2() AS RepUpdateTime
 			FROM Customer ci WITH(NOLOCK)
 			WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 				AND ci.recommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
@@ -543,8 +547,8 @@ BEGIN
 		END
 		ELSE IF @roleid = 2
 		BEGIN
-			INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status)
-			SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status
+			INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status, RepUpdateTime)
+			SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status, dbo.f_GetDateTime2() AS RepUpdateTime
 			FROM Customer ci WITH(NOLOCK)
 			WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 				AND ci.mrecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
@@ -598,8 +602,8 @@ BEGIN
 		END	
 		ELSE IF @roleid = 3
 		BEGIN
-			INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status)
-			SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status
+			INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status, RepUpdateTime)
+			SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status, dbo.f_GetDateTime2() AS RepUpdateTime
 			FROM Customer ci WITH(NOLOCK)
 			WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 				AND ci.srecommend IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
@@ -654,8 +658,8 @@ BEGIN
 		END
 		ELSE IF @roleid = 4
 		BEGIN
-			INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status)
-			SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status
+			INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status, RepUpdateTime)
+			SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status, dbo.f_GetDateTime2() AS RepUpdateTime
 			FROM Customer ci WITH(NOLOCK)
 			WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 			

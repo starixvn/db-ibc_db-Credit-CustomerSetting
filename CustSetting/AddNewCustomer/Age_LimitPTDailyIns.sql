@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Age_LimitPTDailyIns]
+ALTER PROCEDURE [dbo].[Age_LimitPTDailyIns]
 	-- Add the parameters for the stored procedure here
 	  @Actorid				INT,
 	  @custid				INT,
@@ -16,6 +16,8 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230620@Luke: Limitation to update PT for new member [Redmine: #188950]
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+		- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+		
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -70,8 +72,8 @@ BEGIN
 				) fn (IsNonOffer)
 		WHERE fn.IsNonOffer = 0
 		
-		INSERT INTO CustLimitPTSetting (CustID,SportType,BetType,ActorID,PTCount,LastUpdated)
-		SELECT @custid , P.SportType,p.BetType,@Actorid , 1 AS PTCount ,CAST(GETDATE() AS  DATE) AS LastUpdated
+		INSERT INTO CustLimitPTSetting (CustID,SportType,BetType,ActorID,PTCount,LastUpdated,RepUpdateTime)
+		SELECT @custid , P.SportType, p.BetType, @Actorid , 1 AS PTCount, CAST(GETDATE() AS  DATE) AS LastUpdated, dbo.f_GetDateTime2()
 		FROM @tblPT p 
 		
 	END TRY

@@ -13,6 +13,8 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+
 	Param's Explanation:
 
 	Examples:
@@ -51,13 +53,21 @@ BEGIN
 	FROM VRSettingManualUpdAcc c WITH(ROWLOCK) 
 	WHERE CustID = @CustID
 
-	DELETE FROM CustLimitPTSetting			WITH (ROWLOCK) WHERE CustID = @CustID
-	DELETE FROM SuspiciousCust				WITH (ROWLOCK) WHERE CustID = @CustID
-	
-	DELETE FROM CustProductStatus			WITH (ROWLOCK) 
+	DELETE FROM CustLimitPTSetting WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, DELETED.ActorID, dbo.f_GetDateTime2() 
+		INTO CustLimitPTSetting_Del_InHouse(CustID, SportType, BetType, ActorID, RepUpdateTime)
+	WHERE CustID = @CustID
+		
+	DELETE FROM CustProductStatus WITH (ROWLOCK) 
 	OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 	INTO CustProductStatus_Del_InHouse(custid,RepUpdateTime)
 	WHERE CustID = @CustID
+	
+	DELETE FROM SuspiciousCust WITH (ROWLOCK) 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2() 
+		INTO SuspiciousCust_Del_InHouse(CustID, RepUpdateTime)
+	WHERE CustID = @CustID
+	
 
 	IF @RoleID IN (2,3,4)
 	BEGIN			

@@ -99,6 +99,7 @@ AS
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 	- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
+	- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -293,8 +294,8 @@ BEGIN
 		
 		IF @CreditRM > 300000
 		BEGIN
-			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2)
-			SELECT @CustId, 1, 0
+			INSERT INTO SuspiciousCust (CustID, NotifyStatus1, NotifyStatus2, RepUpdateTime)
+			SELECT @CustId, 1, 0, dbo.f_GetDateTime2()
 		END
 
 		DECLARE @ProductProfile VARCHAR(MAX) = ''
@@ -386,18 +387,20 @@ BEGIN
 		(
 		    CustID, OldUserPwd, LastChangedPwdDate, isFirstLogin, SecurityCodeCount,
 		    SecurityCode, isForcedChangeSecurityCode, LastChangedSecurityCodeDate,ClosedReason
+		  , RepUpdateTime
 		)
 		VALUES
 		(   @custid, NULL, GETDATE(), 1, 0,
 		    NULL, @isForcedChangeSecurityCode, NULL,@ClosedReason
+		  , dbo.f_GetDateTime2()
 		)
 	
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
 		SELECT custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime 
 		FROM f_GenerateVirtualSettingBySite (@site,@CustID)
 	
-		INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status)
-		SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status
+		INSERT INTO CustDirectAccount (CustID,ApprovedBy,Boss,ProcessedBy,RequestedBy, Coll_Status, RepUpdateTime)
+		SELECT ci.custid,'' AS ApprovedBy,'' AS Boss,'' AS ProcessedBy,'' AS RequestedBy, NULL AS Coll_Status, dbo.f_GetDateTime2() AS RepUpdateTime
 		FROM Customer ci WITH(NOLOCK)
 		WHERE CI.custid = @custid AND ci.Custid NOT IN (SELECT custid from Acc_CustDirect WITH(NOLOCK))
 		
@@ -530,8 +533,10 @@ BEGIN
 			INSERT INTO [dbo].[Age_CustDateLimit]
 				   ([CustId]
 				   ,[MinDate]
-				   ,[LimitDays])
-			SELECT @custId, @MinDate, @LimitDays
+				   ,[LimitDays]
+				   ,RepUpdateTime
+				  )
+			SELECT @custId, @MinDate, @LimitDays, dbo.f_GetDateTime2()
 		END
 		
 	END
