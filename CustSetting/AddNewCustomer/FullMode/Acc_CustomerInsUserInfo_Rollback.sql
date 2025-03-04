@@ -39,7 +39,6 @@ BEGIN
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 		INTO CustLoginInfo_Del_Inhouse(custid,RepUpdateTime)
 		WHERE custid = @custid
-
 	ELSE IF @RoleID = 1
 		DELETE CustLoginInfo_Member WITH(ROWLOCK)
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()

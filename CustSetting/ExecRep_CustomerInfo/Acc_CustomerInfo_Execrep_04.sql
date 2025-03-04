@@ -90,6 +90,8 @@ AS
 		- 20231129@Luke: NAP - Virtual rate - Enhance VR [Redmine: #194939]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting [redmine: #207029]
 		- 20241129@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
+		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+
 	Param's Explanation:
 		@Action: 
 			+ 'VirtualMultiplier': Virtual Rate [@virtualmultiplier]
@@ -407,49 +409,62 @@ BEGIN
 		    WHERE	recommend = @custid
 					AND (closed <> @Closed OR closed IS NULL)	
 	    END;	
-		
-
-		IF	dbo.f_CheckRepTable('CustLoginInfo') = 1 and dbo.f_CheckRepTable('CustLoginInfo_Member') = 1 
-		BEGIN
-			IF (@SystemID=1)
-			BEGIN	
-			   
+			
+		IF (@SystemID=1)
+		BEGIN	
+			
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
+			BEGIN
 				UPDATE cl
 				set cl.ClosedReason = 1
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[CustLoginInfo] cl with (ROWLOCK, UPDLOCK) 
 				INNER JOIN #tempCust t ON cl.CustID=t.CustID
-			 
+			END
+		 
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE cl
 				set cl.ClosedReason = 1
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[CustLoginInfo_Member] cl with (ROWLOCK, UPDLOCK) 
 				INNER JOIN #tempCust t ON cl.CustID=t.CustID
 
-				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-				SELECT t.Custid ,NULL,NULL,NULL,GETDATE(),1
+				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason,RepUpdateTime)
+				SELECT t.Custid ,NULL,NULL,NULL,GETDATE(),1,dbo.f_GetDateTime2()
 				FROM #tempCust t
 				INNER JOIN custInfo c ON t.CustID=c.custid
 				WHERE t.CustID  NOT IN(SELECT CustID FROM [CustLoginInfo_Member] WITH(NOLOCK)) AND c.roleid=1
-			 
-			END			
-			ELSE 
+			END
+		 
+		END			
+		ELSE 
+		BEGIN
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
 			BEGIN
 				UPDATE cl
 				set cl.ClosedReason = 2
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[CustLoginInfo] cl with (ROWLOCK, UPDLOCK) 
 				INNER JOIN #tempCust t ON cl.CustID=t.CustID
+			END
 			
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE cl
 				set cl.ClosedReason = 2
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[CustLoginInfo_Member] cl with (ROWLOCK, UPDLOCK) 
 				INNER JOIN #tempCust t ON cl.CustID=t.CustID
 
-				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-				SELECT t.Custid ,NULL,NULL,NULL,GETDATE(),2
+				INSERT INTO [CustLoginInfo_Member]([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason,RepUpdateTime)
+				SELECT t.Custid ,NULL,NULL,NULL,GETDATE(),2,dbo.f_GetDateTime2()
 				FROM #tempCust t
 				INNER JOIN custInfo c ON t.CustID=c.custid
 				WHERE t.CustID  NOT IN(SELECT CustID FROM [CustLoginInfo_Member] WITH(NOLOCK)) AND c.roleid=1
-			END			
-		END 
+			END
+		END			
+		 
     END;      
 
     else if @Action = 'AutoSuspend'

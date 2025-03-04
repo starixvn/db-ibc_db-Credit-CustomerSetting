@@ -28,6 +28,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
+		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -734,12 +735,13 @@ BEGIN
 			END	
 		END
 		
-		IF dbo.f_CheckRepTable('CustLoginInfo') = 1 AND dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+		IF @roleid = 4
 		BEGIN
-			IF @roleid = 4
-			BEGIN			
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
+			BEGIN
 				UPDATE	cs 
-				SET	cs.ClosedReason = @ClosedReason
+				SET	 cs.ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.CustID = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -751,9 +753,13 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
-			
+			END
+
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE	cs 
-				SET	ClosedReason = @ClosedReason
+				SET	 ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -765,11 +771,15 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
-			END	
-			ELSE IF @roleid = 3
-			BEGIN			
+			END
+		END	
+		ELSE IF @roleid = 3
+		BEGIN	
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
+			BEGIN
 				UPDATE	cs 
-				SET	ClosedReason = @ClosedReason
+				SET	 ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.AgentStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -781,9 +791,13 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
+			END
 			
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE	cs 
-				SET	ClosedReason = @ClosedReason
+				SET	 ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -795,12 +809,16 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
-								
-			END	
-			ELSE IF @roleid = 2
-			BEGIN			
+			ENd
+							
+		END	
+		ELSE IF @roleid = 2
+		BEGIN	
+			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			BEGIN
 				UPDATE	cs 
-				SET	ClosedReason = @ClosedReason
+				SET	 ClosedReason = @ClosedReason
+					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM CustLoginInfo_Member cs WITH (ROWLOCK, UPDLOCK) 
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
@@ -813,9 +831,10 @@ BEGIN
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
 			END
+		END
 
 
-		END		
+			
 	END
 	DROP TABLE #ProductSettingDetail_tmp04
 END

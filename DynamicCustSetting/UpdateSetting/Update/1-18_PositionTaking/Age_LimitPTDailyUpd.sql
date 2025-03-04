@@ -15,6 +15,7 @@ AS
 			- 20211027@Winfred: NAP CM -  Limit Daily PT Update [Redmine: #162476]
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+			- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	*/
 BEGIN
 	SET NOCOUNT ON;
@@ -50,14 +51,15 @@ BEGIN
 		BEGIN
 			UPDATE t
 			SET t.PTCount = CASE WHEN DATEADD(DAY,30,CAST(LastUpdated AS DATE)) >= CAST(GETDATE() AS  DATE) THEN  t.PTCount + 1  ELSE 1 END,
-				t.LastUpdated = CAST(GETDATE() AS  DATE)
+				t.LastUpdated = CAST(GETDATE() AS  DATE),
+				t.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM CustLimitPTSetting t WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tblPT p ON t.SportType = p.SportType AND t.BetType = P.BetType 
 			WHERE CustID = @custid AND ActorID = @Actorid 
 		END
 		
-		INSERT INTO CustLimitPTSetting (CustID,SportType,BetType,ActorID,PTCount,LastUpdated)
-		SELECT @custid , P.SportType,p.BetType,@Actorid , 1 AS PTCount ,CAST(GETDATE() AS  DATE) AS LastUpdated
+		INSERT INTO CustLimitPTSetting (CustID,SportType,BetType,ActorID,PTCount,LastUpdated,RepUpdateTime)
+		SELECT @custid , P.SportType,p.BetType,@Actorid , 1 AS PTCount ,CAST(GETDATE() AS  DATE) AS LastUpdated,dbo.f_GetDateTime2()
 		FROM @tblPT p 
 		WHERE  NOT EXISTS( SELECT TOP 1 1 FROM CustLimitPTSetting t WITH(NOLOCK)  
 							  WHERE CustID = @custid AND ActorID = @Actorid AND t.SportType = p.SportType AND t.BetType = P.BetType )
