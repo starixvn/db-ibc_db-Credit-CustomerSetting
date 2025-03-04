@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 USE CustDB
 GO
 ALTER PROCEDURE [dbo].[Acc_CustomerNoCommIns] 
@@ -11,6 +12,9 @@ Created: 20160912@Winnie
 Task : Insert custid to remove commision
 DB: dbcust/custdb
 Original: Insert custid to remove commision
+
+Revisions:
+	- 20250102@Hughie: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 
 Param's Explanation:
 • @ErrCode:
@@ -30,12 +34,14 @@ INSERT INTO [CustDB].[dbo].[CustNoComm]
            ([CustID]
            ,[ModifiedDate]
            ,[Remark]
-           ,[UserID])
+           ,[UserID]
+		   ,[RepUpdateTime])
      VALUES
            (@CustID
            ,GETDATE()
            ,@Remark
-           ,@UserID)
+           ,@UserID
+		   ,dbo.f_GetDateTime2())
 IF(@@ERROR<>0)
 RETURN
  set @endRun = getdate()
