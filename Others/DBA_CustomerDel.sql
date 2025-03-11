@@ -38,6 +38,7 @@ AS
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		- 20250220@Johnson: remove CustRequestGame [RedmineID: #212684]
 		- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+		- 20250219@Eden:Scale Out DBCUST - bodb_Licensee [Redmine:#216866]
 
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
@@ -45,6 +46,13 @@ AS
 	Notes: Call sp on siteDB first to delete Balance, delete Bet ticket (if exists)
 		EXEC bodb02.dbo.DBA_CustomerDel_Balance @custid = @custid, @roleid = @roleid, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 		EXEC bodb02.dbo.DBA_CustomerDel_Bets @srecommend = @custid ( roleID = 4)
+
+		Split step: IF @roleid = 1, call sp delete Licensee setting on DBGLOB.bodb_licensee
+		EXEC bodb_licensee.dbo.DBA_LicenseeCustomerDel 
+			@custid = @custid, 
+			@roleid = @roleid,
+			@ErrCode  = @ErrCode OUTPUT,
+			@ErrMsg  = @ErrMsg OUTPUT
 */		
 DECLARE @roleid INT, @custid INT
 SELECT @roleid = 0 
@@ -1129,18 +1137,18 @@ BEGIN
 		RETURN
 	END
 	
-	--delete licensee customer on bodb_licensee
-	EXEC bodb_licensee.dbo.DBA_LicenseeCustomerDel 
-		@custid = @custid, 
-		@roleid = @roleid,
-		@ErrCode  = @ErrCode OUTPUT,
-		@ErrMsg  = @ErrMsg OUTPUT
+	----delete licensee customer on bodb_licensee
+	--EXEC bodb_licensee.dbo.DBA_LicenseeCustomerDel 
+	--	@custid = @custid, 
+	--	@roleid = @roleid,
+	--	@ErrCode  = @ErrCode OUTPUT,
+	--	@ErrMsg  = @ErrMsg OUTPUT
 
-	IF @ErrCode <> 0 
-	BEGIN 
-		SELECT @ErrCode = @ErrCode, @ErrMsg = @ErrMsg
-		RETURN
-	END
+	--IF @ErrCode <> 0 
+	--BEGIN 
+	--	SELECT @ErrCode = @ErrCode, @ErrMsg = @ErrMsg
+	--	RETURN
+	--END
 	
 END
 
