@@ -30,6 +30,7 @@ AS
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
 		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 		- 20250224@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
+		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for CustLoginInfo_Member [Redmine: #215627]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -752,10 +753,7 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
-			END
 
-			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
-			BEGIN
 				UPDATE	cs 
 				SET	 ClosedReason = @ClosedReason
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -790,10 +788,7 @@ BEGIN
 					AND 1 = (CASE WHEN @Closed = 1 AND cps.closed <> @Closed THEN 1
 								 WHEN @Closed = 0 AND cps.closed = @Closed THEN 1
 								 ELSE 0 END)	;
-			END
-			
-			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
-			BEGIN
+
 				UPDATE	cs 
 				SET	 ClosedReason = @ClosedReason
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -813,7 +808,7 @@ BEGIN
 		END	
 		ELSE IF @roleid = 2
 		BEGIN	
-			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
+			IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
 			BEGIN
 				UPDATE	cs 
 				SET	 ClosedReason = @ClosedReason
