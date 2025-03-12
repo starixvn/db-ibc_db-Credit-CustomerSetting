@@ -91,6 +91,7 @@ AS
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting [redmine: #207029]
 		- 20241129@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+		- 20250221@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 
 	Param's Explanation:
 		@Action: 
@@ -121,7 +122,11 @@ SET NOCOUNT ON;
 
 IF	@action = 'VirtualMultiplier'
 BEGIN
-								
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+	RETURN;
+		
 	DECLARE	@EnableVirtualrateOld	BIT;
 
 	CREATE TABLE #tblCustVR (custID INT)
@@ -134,47 +139,16 @@ BEGIN
 	WHERE	custid = @custid;
 	
 	DECLARE @BetTradeAccount TABLE (CustID INT)
-	
-	IF( dbo.f_CheckRepTable('Customer') = 1 AND dbo.f_CheckRepTable('BetTradeCust') = 1)
+		
+	IF (@EnableVirtualrate=1 AND @EnableVirtualrateOld <> @EnableVirtualrate 
+	AND EXISTS(SELECT TOP 1 1 FROM Customer c WITH(NOLOCK) WHERE custid = @custid AND site IN ('TLC', 'asiabet88')))
 	BEGIN
-		IF (@EnableVirtualrate=1 AND @EnableVirtualrateOld <> @EnableVirtualrate 
-		AND EXISTS(SELECT TOP 1 1 FROM Customer c WITH(NOLOCK) WHERE custid = @custid AND site IN ('TLC', 'asiabet88')))
-		BEGIN
-			IF @roleid = 4 
-			BEGIN
-				INSERT INTO @BetTradeAccount (CustID)
-				SELECT c.Custid  
-				FROM Customer c WITH(NOLOCK)
-					INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
-				WHERE c.srecommend = @custid 
-			END
-			ELSE IF @roleid = 3
-			BEGIN
-				INSERT INTO @BetTradeAccount (CustID)
-				SELECT c.Custid  
-				FROM Customer c WITH(NOLOCK)
-					INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
-				WHERE c.mrecommend = @custid 
-			END
-			ELSE IF @roleid = 2
-			BEGIN
-				INSERT INTO @BetTradeAccount (CustID)
-				SELECT c.Custid  
-				FROM Customer c WITH(NOLOCK)
-					INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
-				WHERE c.recommend = @custid 
-			END
-		END
-	END
-	
-	IF( dbo.f_CheckRepTable('Customer') = 1 AND dbo.f_CheckRepTable('TradeCust') = 1 AND @EnableVirtualrate=1 AND @EnableVirtualrateOld <> @EnableVirtualrate )
-	BEGIN	
 		IF @roleid = 4 
 		BEGIN
 			INSERT INTO @BetTradeAccount (CustID)
 			SELECT c.Custid  
 			FROM Customer c WITH(NOLOCK)
-				INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
+				INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
 			WHERE c.srecommend = @custid 
 		END
 		ELSE IF @roleid = 3
@@ -182,7 +156,7 @@ BEGIN
 			INSERT INTO @BetTradeAccount (CustID)
 			SELECT c.Custid  
 			FROM Customer c WITH(NOLOCK)
-				INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
+				INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
 			WHERE c.mrecommend = @custid 
 		END
 		ELSE IF @roleid = 2
@@ -190,184 +164,211 @@ BEGIN
 			INSERT INTO @BetTradeAccount (CustID)
 			SELECT c.Custid  
 			FROM Customer c WITH(NOLOCK)
-				INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
-			WHERE c.recommend = @custid 		
+				INNER JOIN BetTradeCust b WITH(NOLOCK) ON c.custid=b.custid
+			WHERE c.recommend = @custid 
 		END
-	END
-	
-	IF dbo.f_CheckRepTable('custinfo') = 1
+	END	
+			
+	IF @roleid = 4 
 	BEGIN
-		IF (@EnableVirtualrate = 1 AND @EnableVirtualrate <> @EnableVirtualrateOld)			--not enable downlines
-		BEGIN
+		INSERT INTO @BetTradeAccount (CustID)
+		SELECT c.Custid  
+		FROM Customer c WITH(NOLOCK)
+			INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
+		WHERE c.srecommend = @custid 
+	END
+	ELSE IF @roleid = 3
+	BEGIN
+		INSERT INTO @BetTradeAccount (CustID)
+		SELECT c.Custid  
+		FROM Customer c WITH(NOLOCK)
+			INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
+		WHERE c.mrecommend = @custid 
+	END
+	ELSE IF @roleid = 2
+	BEGIN
+		INSERT INTO @BetTradeAccount (CustID)
+		SELECT c.Custid  
+		FROM Customer c WITH(NOLOCK)
+			INNER JOIN TradeCust b WITH(NOLOCK) ON c.custid=b.custid
+		WHERE c.recommend = @custid 		
+	END		
+	
+	IF (@EnableVirtualrate = 1 AND @EnableVirtualrate <> @EnableVirtualrateOld)			--not enable downlines
+	BEGIN
+		UPDATE	ci
+		SET	ci.virtualmultiplier = @EnableVirtualrate,
+			RepUpdateTime = dbo.f_GetDateTime2()
+		FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+		WHERE custID = @custid
+	END
+	ELSE IF (@EnableVirtualrate = 0)																			--disable downlines
+	BEGIN
+		SET @batchUpdate = 2000--for update custinfo
+		IF	@roleid = 4
+		BEGIN			
+			DELETE #tblCustVR
+		
+			INSERT INTO #tblCustVR(custID)
+			SELECT custid
+			FROM dbo.custInfo ci WITH (NOLOCK)
+			WHERE	ci.srecommend = @custid
+			AND	NOT EXISTS (
+						SELECT	1
+						FROM	@BetTradeAccount AS lm
+						WHERE	lm.custID = ci.custid
+					)
+				
+			SELECT @maxcustid = MAX(custID)
+			FROM #tblCustVR
+		
+			WHILE(1=1)
+			BEGIN
+				TRUNCATE TABLE #tmpCustBatchVR
+			
+				DELETE TOP (@batchUpdate) t
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
+				FROM #tblCustVR t
+			
+				IF @@rowcount = 0 
+					BREAK;
+				
+				UPDATE	ci
+				SET	ci.virtualmultiplier = @EnableVirtualrate,
+					RepUpdateTime = dbo.f_GetDateTime2()
+				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
+			END	
+		
+			--update newly customer if any
 			UPDATE	ci
 			SET	ci.virtualmultiplier = @EnableVirtualrate,
 				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-			WHERE custID = @custid
-		END
-		ELSE IF (@EnableVirtualrate = 0)																			--disable downlines
-		BEGIN
-			SET @batchUpdate = 2000--for update custinfo
-			IF	@roleid = 4
-			BEGIN			
-				DELETE #tblCustVR
-			
-				INSERT INTO #tblCustVR(custID)
-				SELECT custid
-				FROM dbo.custInfo ci WITH (NOLOCK)
-				WHERE	ci.srecommend = @custid
-				AND	NOT EXISTS (
-							SELECT	1
-							FROM	@BetTradeAccount AS lm
-							WHERE	lm.custID = ci.custid
-						)
-					
-				SELECT @maxcustid = MAX(custID)
-				FROM #tblCustVR
-			
-				WHILE(1=1)
-				BEGIN
-					TRUNCATE TABLE #tmpCustBatchVR
+			WHERE	ci.srecommend = @custid
+			AND ci.custid > @maxcustid
+			AND	NOT EXISTS (
+						SELECT	1
+						FROM	@BetTradeAccount AS lm
+						WHERE	lm.custID = ci.custid
+					)	
+		END;
+		ELSE IF	@roleid = 3
+		BEGIN			
+			DELETE #tblCustVR
+		
+			INSERT INTO #tblCustVR(custID)
+			SELECT custid
+			FROM dbo.custInfo ci WITH (NOLOCK)
+			WHERE	ci.mrecommend = @custid
+			AND	NOT EXISTS (
+						SELECT	1
+						FROM	@BetTradeAccount AS lm
+						WHERE	lm.custID = ci.custid
+					)
 				
-					DELETE TOP (@batchUpdate) t
-					OUTPUT DELETED.custid INTO #tmpCustBatchVR
-					FROM #tblCustVR t
-				
-					IF @@rowcount = 0 
-						BREAK;
-					
-					UPDATE	ci
-					SET	ci.virtualmultiplier = @EnableVirtualrate,
-						RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
-				END	
+			SELECT @maxcustid = ISNULL(MAX(custID),0)
+			FROM #tblCustVR
+		
+			WHILE(1=1)
+			BEGIN
+				TRUNCATE TABLE #tmpCustBatchVR
 			
-				--update newly customer if any
+				DELETE TOP (@batchUpdate) t
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
+				FROM #tblCustVR t
+			
+				IF @@rowcount = 0 
+					BREAK;
+				
 				UPDATE	ci
 				SET	ci.virtualmultiplier = @EnableVirtualrate,
 					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE	ci.srecommend = @custid
-				AND ci.custid > @maxcustid
+				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
+			END	
+		
+			UPDATE	ci
+			SET	ci.virtualmultiplier = @EnableVirtualrate,
+				RepUpdateTime = dbo.f_GetDateTime2()
+			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+			WHERE	ci.mrecommend = @custid
+				AND ci.custID > @maxcustid
 				AND	NOT EXISTS (
-							SELECT	1
-							FROM	@BetTradeAccount AS lm
-							WHERE	lm.custID = ci.custid
-						)	
-			END;
-			ELSE IF	@roleid = 3
-			BEGIN			
-				DELETE #tblCustVR
-			
-				INSERT INTO #tblCustVR(custID)
-				SELECT custid
-				FROM dbo.custInfo ci WITH (NOLOCK)
-				WHERE	ci.mrecommend = @custid
-				AND	NOT EXISTS (
-							SELECT	1
-							FROM	@BetTradeAccount AS lm
-							WHERE	lm.custID = ci.custid
-						)
-					
-				SELECT @maxcustid = ISNULL(MAX(custID),0)
-				FROM #tblCustVR
-			
-				WHILE(1=1)
-				BEGIN
-					TRUNCATE TABLE #tmpCustBatchVR
+						SELECT	1
+						FROM	@BetTradeAccount AS lm
+						WHERE	lm.custID = ci.custid
+					)
+		END;
+		ELSE IF	@roleid = 2
+		BEGIN			
+			DELETE #tblCustVR
+		
+			INSERT INTO #tblCustVR(custID)
+			SELECT custid
+			FROM dbo.custInfo ci WITH (NOLOCK)
+			WHERE	ci.recommend = @custid
+			AND	NOT EXISTS (
+						SELECT	1
+						FROM	@BetTradeAccount AS lm
+						WHERE	lm.custID = ci.custid
+					)
 				
-					DELETE TOP (@batchUpdate) t
-					OUTPUT DELETED.custid INTO #tmpCustBatchVR
-					FROM #tblCustVR t
-				
-					IF @@rowcount = 0 
-						BREAK;
-					
-					UPDATE	ci
-					SET	ci.virtualmultiplier = @EnableVirtualrate,
-						RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
-				END	
+			SELECT @maxcustid = ISNULL(MAX(custID),0)
+			FROM #tblCustVR
+		
+			WHILE(1=1)
+			BEGIN
+				TRUNCATE TABLE #tmpCustBatchVR
 			
+				DELETE TOP (@batchUpdate) t
+				OUTPUT DELETED.custid INTO #tmpCustBatchVR
+				FROM #tblCustVR t
+			
+				IF @@rowcount = 0 
+					BREAK;
+				
 				UPDATE	ci
 				SET	ci.virtualmultiplier = @EnableVirtualrate,
 					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE	ci.mrecommend = @custid
-					AND ci.custID > @maxcustid
-					AND	NOT EXISTS (
-							SELECT	1
-							FROM	@BetTradeAccount AS lm
-							WHERE	lm.custID = ci.custid
-						)
-			END;
-			ELSE IF	@roleid = 2
-			BEGIN			
-				DELETE #tblCustVR
-			
-				INSERT INTO #tblCustVR(custID)
-				SELECT custid
-				FROM dbo.custInfo ci WITH (NOLOCK)
-				WHERE	ci.recommend = @custid
+				WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
+			END
+		
+			UPDATE	ci
+			SET	ci.virtualmultiplier = @EnableVirtualrate,
+				RepUpdateTime = dbo.f_GetDateTime2()
+			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+			WHERE	ci.recommend = @custid
+				AND custid > @maxcustid
 				AND	NOT EXISTS (
-							SELECT	1
-							FROM	@BetTradeAccount AS lm
-							WHERE	lm.custID = ci.custid
-						)
-					
-				SELECT @maxcustid = ISNULL(MAX(custID),0)
-				FROM #tblCustVR
-			
-				WHILE(1=1)
-				BEGIN
-					TRUNCATE TABLE #tmpCustBatchVR
-				
-					DELETE TOP (@batchUpdate) t
-					OUTPUT DELETED.custid INTO #tmpCustBatchVR
-					FROM #tblCustVR t
-				
-					IF @@rowcount = 0 
-						BREAK;
-					
-					UPDATE	ci
-					SET	ci.virtualmultiplier = @EnableVirtualrate,
-						RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-					WHERE custID IN (SELECT custID FROM #tmpCustBatchVR)
-				END
-			
-				UPDATE	ci
-				SET	ci.virtualmultiplier = @EnableVirtualrate,
-					RepUpdateTime = dbo.f_GetDateTime2()
-				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE	ci.recommend = @custid
-					AND custid > @maxcustid
-					AND	NOT EXISTS (
-							SELECT	1
-							FROM	@BetTradeAccount AS lm
-							WHERE	lm.custID = ci.custid
-						)		
-			END;
-			ELSE IF	@roleid = 1
-			BEGIN			
-				UPDATE	ci
-				SET	ci.virtualmultiplier = @EnableVirtualrate,
-					RepUpdateTime = dbo.f_GetDateTime2()
-				FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
-				WHERE	ci.custid = @custid								
-			END;
-		END;			
+						SELECT	1
+						FROM	@BetTradeAccount AS lm
+						WHERE	lm.custID = ci.custid
+					)		
+		END;
+		ELSE IF	@roleid = 1
+		BEGIN			
+			UPDATE	ci
+			SET	ci.virtualmultiplier = @EnableVirtualrate,
+				RepUpdateTime = dbo.f_GetDateTime2()
+			FROM dbo.custInfo ci WITH (ROWLOCK, UPDLOCK)
+			WHERE	ci.custid = @custid								
+		END;					
 	END
 	
 	DROP TABLE #tblCustVR
 	DROP TABLE #tmpCustBatchVR
 END;
-ELSE IF	dbo.f_CheckRepTable('custinfo') = 1
+ELSE 
 BEGIN
 	IF	@Action ='Suspended' 
     BEGIN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
+		
 		DECLARE @tmpCust TABLE(CustID INT)
 			    
 		INSERT INTO @tmpCust(custid)	
@@ -382,34 +383,39 @@ BEGIN
     ELSE IF @Action='Closed'
     BEGIN
 		create table #tempCust ( CustID int PRIMARY KEY)
-	    IF @RoleID = 4 
-	    BEGIN
-		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
-		    SET		closed = @closed,
-					RepUpdateTime = dbo.f_GetDateTime2()
-			output INSERTED.custid into #tempCust
-		    WHERE	srecommend = @custid
-					AND (closed <> @Closed OR closed IS NULL)
-	    END;
-	    ELSE IF @RoleID = 3 
-	    BEGIN
-		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
-		    SET		closed = @closed,
-					RepUpdateTime = dbo.f_GetDateTime2()
-			output INSERTED.custid into #tempCust
-		    WHERE	mrecommend = @custid
-					AND (closed <> @Closed OR closed IS NULL)	
-	    END;
-	    ELSE IF @RoleID = 2 
-	    BEGIN
-		    UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
-		    SET		closed = @closed,
-					RepUpdateTime = dbo.f_GetDateTime2()
-			output INSERTED.custid into #tempCust
-		    WHERE	recommend = @custid
-					AND (closed <> @Closed OR closed IS NULL)	
-	    END;	
-			
+		
+		IF (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		BEGIN		
+			IF @RoleID = 4 
+			BEGIN
+				UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
+				SET		closed = @closed,
+						RepUpdateTime = dbo.f_GetDateTime2()
+				output INSERTED.custid into #tempCust
+				WHERE	srecommend = @custid
+						AND (closed <> @Closed OR closed IS NULL)
+			END;
+			ELSE IF @RoleID = 3 
+			BEGIN
+				UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
+				SET		closed = @closed,
+						RepUpdateTime = dbo.f_GetDateTime2()
+				output INSERTED.custid into #tempCust
+				WHERE	mrecommend = @custid
+						AND (closed <> @Closed OR closed IS NULL)	
+			END;
+			ELSE IF @RoleID = 2 
+			BEGIN
+				UPDATE	custinfo WITH (ROWLOCK, UPDLOCK) 
+				SET		closed = @closed,
+						RepUpdateTime = dbo.f_GetDateTime2()
+				output INSERTED.custid into #tempCust
+				WHERE	recommend = @custid
+						AND (closed <> @Closed OR closed IS NULL)	
+			END;	
+		END	
 		IF (@SystemID=1)
 		BEGIN	
 			
@@ -469,6 +475,11 @@ BEGIN
 
     else if @Action = 'AutoSuspend'
     BEGIN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
+		
 	    IF @roleID = 4 
 	    BEGIN
 		    UPDATE custinfo WITH (ROWLOCK,UPDLOCK)	
@@ -502,6 +513,11 @@ BEGIN
     
 	ELSE IF @Action = 'SuperLive'
     BEGIN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
+		
 	    IF (@roleID = 4)
 	    BEGIN
 		    UPDATE dbo.CustInfo WITH (ROWLOCK, UPDLOCK) 
@@ -532,6 +548,11 @@ BEGIN
     
 	ELSE IF	@action = 'EnableVirtualMultiplier'
 	BEGIN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
+				
 		DECLARE	@tblEnableVirtualrate	TABLE (CustIDs VARCHAR(MAX))
 		CREATE	TABLE #tblCustomer (CustID INT PRIMARY KEY)
 		DECLARE	@DocHandlerXML			INT

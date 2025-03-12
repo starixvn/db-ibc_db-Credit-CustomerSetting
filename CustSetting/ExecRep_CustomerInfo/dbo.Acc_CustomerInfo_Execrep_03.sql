@@ -50,6 +50,7 @@ Revisions:
 	- 20240807@Helios: Scale Out DBCUST - Apply Inhouse replication for tables of problem account [Redmine:#209747] 
 	- 20241218@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	- 20250104@Winfred: Update customer's danger level Check exists data [Redmine:#216754] 
+	- 20250221@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -63,7 +64,11 @@ BEGIN
 	/*region1: Declare params and check table replicated */
 	IF @mode = 'DangerStatus'
 	BEGIN		
-		IF (dbo.f_CheckRepTable('custinfo') = 0) RETURN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
+	
 		DECLARE @tempCust TABLE(CustID INT, 
 								ID	INT IDENTITY (1,1),
 								PRIMARY KEY CLUSTERED (ID))
@@ -261,7 +266,10 @@ BEGIN
 	END	
 	ELSE IF @mode = 'CTSUpdDanger'
 	BEGIN
-		IF (dbo.f_CheckRepTable('custinfo') = 0) RETURN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
 		
 		CREATE TABLE #tblCustDanger (custid INT, Danger TINYINT, isFinished BIT DEFAULT(0))
 		DECLARE @tmpCustDanger TABLE (custid INT PRIMARY KEY, Danger TINYINT)
@@ -299,7 +307,10 @@ BEGIN
 	END	
 	ELSE IF @mode = 'CustomerClass'
 	BEGIN
-		IF (dbo.f_CheckRepTable('custinfo') = 0) RETURN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
 		IF OBJECT_ID('Dep_Custsuper') IS NULL RETURN
 				
 		CREATE TABLE #tblCustClass (custid INT,RoleID TINYINT, CustomerClass INT, OldCustomerClass SMALLINT, CategoryID INT, isDeposit BIT, isFinished BIT DEFAULT(0))
@@ -392,7 +403,9 @@ BEGIN
 	BEGIN
 		DECLARE @xmlCustClassSport XML = CAST (@CustList as XML)
 		
-		IF (dbo.f_CheckRepTable('custinfo') = 1) 
+		IF (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
 		BEGIN
 			CREATE TABLE #tblCustClassSport (custid INT PRIMARY KEY, CC1 SMALLINT, CC2 SMALLINT, CC43 SMALLINT, CC99 SMALLINT, CC229 SMALLINT, CC145 SMALLINT, CC912 SMALLINT, isFinished BIT DEFAULT(0))
 			DECLARE @tmpCustClassSport TABLE (custid INT PRIMARY KEY, CC1 SMALLINT, CC2 SMALLINT, CC43 SMALLINT, CC99 SMALLINT, CC229 SMALLINT, CC145 SMALLINT, CC912 SMALLINT)
@@ -485,7 +498,10 @@ BEGIN
 	END
 	ELSE IF @mode = 'UpdateOddsGroup'
 	BEGIN
-		IF (dbo.f_CheckRepTable('customer') = 0) RETURN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
 		
 		DECLARE @tmpCustOddsGroup TABLE (custid INT PRIMARY KEY)
 		
@@ -500,7 +516,10 @@ BEGIN
 	END
 	ELSE IF @mode = 'SabaDangerLevel'
 	BEGIN
-		IF (dbo.f_CheckRepTable('custinfo') = 0) RETURN
+		IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN;
 		
 		CREATE TABLE #tblCustSaba (custid INT PRIMARY KEY, DangerLevel BIGINT, isFinished BIT DEFAULT(0))
 		DECLARE @tmpSaba TABLE (custid INT PRIMARY KEY, DangerLevel BIGINT)

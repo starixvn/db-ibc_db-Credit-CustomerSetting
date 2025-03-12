@@ -4,7 +4,7 @@ ALTER PROCEDURE [dbo].[Acc_DynamicCustomerInfo_05]
 	,@Maxcustid INT
 	,@Target VARCHAR(20)
 	,@StepID TINYINT = 0
-	,@XMLConfig VARCHAR(MAX) = NULL
+	,@XMLConfig VARCHAR(MAX) = NULL	
 AS
 /*
 	Created: 20210716@Eden
@@ -14,7 +14,7 @@ AS
 
 	Revisions:
 		- 20210716@Eden: Flexible Initializing Customer Setting - [Redmine: #156667]
-
+		- 20250303@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 	Param's Explanation:
 		@StepID = :
 			3: Enable status  
@@ -24,10 +24,11 @@ BEGIN
 	SET NOCOUNT ON;
 	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at all replicated servers
 	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at dbcust only
+	
 
-	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
-	IF dbo.f_CheckRepTable('ProductStatusProfile') = 0 RETURN
-	IF dbo.f_CheckRepTable('CustProductStatus') = 0 RETURN
+	IF OBJECT_ID('CustInfo') IS NULL RETURN
+	IF OBJECT_ID('ProductStatusProfile') IS NULL RETURN
+	IF OBJECT_ID('CustProductStatus') IS NULL RETURN
 
 	CREATE TABLE #TempConfig(
 		[SportType] [smallint],
