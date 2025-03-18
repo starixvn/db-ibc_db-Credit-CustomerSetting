@@ -17,6 +17,7 @@ AS
 	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20240520@Eden: Unify RNG Games [redmine: #204358]   
 	- 20250114@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+	- 20250314@Johnson: move to Glob for updating UM Config [redmine: #216870]
 	Parameter Definition
 		StepID = :
 			4: Insert setting for new customers
@@ -379,6 +380,7 @@ BEGIN
 	
 	IF @StepID = 4 --Insert setting for new customers
 	BEGIN
+		/*
 		-----------Update UMConfig.BeginTime = current Datetime-----------------------------
 		IF @Currency <> '20'
 		BEGIN
@@ -436,7 +438,7 @@ BEGIN
 				AND u.SuperID = 0
 				AND u.Currency = 20
 		END
-
+		*/
 		----------START : DELETE REDUDANT SETTING------------------------------------------
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Position Taking')
 		BEGIN
