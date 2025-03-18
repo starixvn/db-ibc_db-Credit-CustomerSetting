@@ -531,8 +531,8 @@ BEGIN
                 INNER JOIN dbo.Exchange e1 WITH (NOLOCK) ON e1.ExchangeID = @currency
 		
 			DELETE dbo.TOControl_GlobalSetting WITH (ROWLOCK)
-				OUTPUT DELETED.ID, dbo.f_GetDateTime2()
-				INTO dbo.TOControl_GlobalSetting_Del_Inhouse(ID, RepUpdateTime)
+				OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2(), DELETED.ID
+				INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime, ID)
 			WHERE CustID IN (@ExistingSrecommend,@mrecommend)
 			
 			DELETE dbo.TOControl_Setting

@@ -149,8 +149,8 @@ BEGIN
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
-		OUTPUT DELETED.ID, dbo.f_GetDateTime2()
-		INTO dbo.CustGroupHeadline_Del_Inhouse(ID, RepUpdateTime)
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2(), DELETED.ID
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime, ID)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	DELETE dbo.CustNoComm WITH (ROWLOCK) 
@@ -448,8 +448,8 @@ BEGIN
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
-		OUTPUT DELETED.ID, dbo.f_GetDateTime2()
-		INTO dbo.CustGroupHeadline_Del_Inhouse(ID, RepUpdateTime)
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2(), DELETED.ID
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime, ID)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustNoComm WITH (ROWLOCK) 
@@ -732,8 +732,8 @@ BEGIN
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
-		OUTPUT DELETED.ID, dbo.f_GetDateTime2()
-		INTO dbo.CustGroupHeadline_Del_Inhouse(ID, RepUpdateTime)
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2(), DELETED.ID
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime, ID)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustNoComm WITH (ROWLOCK) 
@@ -989,8 +989,8 @@ BEGIN
 	WHERE custid = @custid	
 	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
-		OUTPUT DELETED.ID, dbo.f_GetDateTime2()
-		INTO dbo.CustGroupHeadline_Del_Inhouse(ID, RepUpdateTime)
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2(), DELETED.ID
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime, ID)
 	WHERE custid = @custid	
 
 	DELETE dbo.CustNoComm WITH (ROWLOCK) 
