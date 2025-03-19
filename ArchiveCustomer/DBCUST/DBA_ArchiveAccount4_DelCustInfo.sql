@@ -18,7 +18,7 @@ AS
 		- 20210316@Helen: backup CustSub and delete for stage 4 [RedmineID: #130032]
 		- 20240905@Eden : Scale out DBCUST - Delete data custinfomini [redmine: #210077]
 		- 20241007@Helios : Scale out DBCUST - Delete data custinfomini - remove call link Server DBGLOB [redmine: #210077]
-
+		- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]
 */
     
 SET NOCOUNT ON
@@ -77,12 +77,15 @@ DECLARE @CustIDs VARCHAR(MAX) = ''
 SELECT @CustIDs = @CustIDs + cast(custid AS VARCHAR(10)) + ','
 FROM custinfo with (nolock) where recommend = @AgentID	
 
-EXEC DBPRO.bodb02.dbo.DBA_ArchiveAccount4_DelCustInfo_ForDBPRO @CustIDs = @CustIDs
 
-Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 2 
+--just keep code 8 table Balance
+Exec Acc_ExecRep_Cust_00 @CustIDs = @CustIDs, @Type = 2 
+
+--For archive Acc (New) - update/delete part in stage 1,2,3 
+Exec Acc_ExecRep_Cust_03 @AgentID = @AgentID, @Type = 2 
 
 --Delete custinfomini
-EXEC GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustIDs
+EXEC DBGLOB.GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustIDs
 ----------------------------------------------------------------
 print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 

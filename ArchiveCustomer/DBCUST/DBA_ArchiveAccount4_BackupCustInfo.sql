@@ -23,7 +23,7 @@ AS
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
-
+		- 20231019@Helios: Customer Setting - Remove old Structure un Use [RedmineID: #193083]
 */
     
 SET NOCOUNT ON
@@ -93,7 +93,7 @@ insert into DBARCCUST.bodb_Customer.dbo.custinfo_old(
                       danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161, 
                       MaxPerBall161,
                       Abnormal, DoubleCommLosing,
-                      autosuspend2, HideKeno, DisableEsports, HideGoldDeluxe, DisableGoldDeluxe,  
+                      autosuspend2, HideKeno, HideGoldDeluxe, DisableGoldDeluxe,  
                       DisableSuperLive, DisableColossusBet, HideColossusBet, 
                       LockUpd, MaxPerMatch1MP, BonusWalletFlag
 )
@@ -104,7 +104,7 @@ select	@Now,
                       danger3, DisableOutright, 0, 0, 0, 
                       0,
                       Abnormal, DoubleCommLosing,
-                      autosuspend2, 0, DisableEsports, 0, 0,  
+                      autosuspend2, 0, 0, 0,  
                       DisableSuperLive, 1,1, 
                       LockUpd, 0, BonusWalletFlag
 from	custinfo (nolock)

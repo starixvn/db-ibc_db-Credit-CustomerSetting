@@ -44,10 +44,7 @@ BEGIN
 	--PRE-CHECK BEFORE DELETE
 	--===============================
 	--Pre-check: Make sure cust setting data already backed-up in DBRACCUST
-	IF NOT EXISTS(
-		SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsetting_old WITH(NOLOCK) 
-		WHERE custid = @CustID 
-		)
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.BetSetting_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
 	BEGIN
 		Select @ErrMsg = @AccName +':'+ 'Cust setting data of this ' + @Level + ' have not been backed-up yet. Auto backup activated', @ErrCode = 10
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@CustID,@ErrMsg,3) 

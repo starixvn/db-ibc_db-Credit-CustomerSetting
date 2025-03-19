@@ -89,7 +89,7 @@ BEGIN
 	Exec DBA_Archive_Cust_SuperMaster @CustID = @CustID, @stage = 4 
 
 	--Delete custinfomini
-	EXEC GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustID
+	EXEC DBGLOB.GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustID
 	----------------------------------------------------------------
 	print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 
