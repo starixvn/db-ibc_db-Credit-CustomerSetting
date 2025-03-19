@@ -14,6 +14,8 @@ AS
 	
 	Revisions:
 		20180320@Daniel: rename SP to count stage from 1 => No. 3 for this stage
+		20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+		20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]
 
 */
     
@@ -24,11 +26,13 @@ declare @endRun datetime
 declare @duration int
 set @startRun = getdate()
 
-Declare @roleid int, @AgentID int, @Enabled bit
+Declare @roleid int, @AgentID int, @Enabled BIT, @CountDownline INT , @AutobackUp_Activated BIT = 0
 
 SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled
 FROM custinfo (nolock)
 WHERE username = @AccName
+
+SELECT @CountDownline = (SELECT COUNT(1) FROM custInfo i WITH (NOLOCK) WHERE i.recommend = @AgentId AND i.roleid = 1)
 
 if isnull(@AgentID,0) = 0 or @roleid NOT in (2)
 BEGIN
@@ -43,10 +47,19 @@ print  @AccName +':'+ 'START:' + convert(varchar(50), getdate(), 113)
 --PRE-CHECK BEFORE DELETE
 --===============================
 --Pre-check: Make sure cust setting data already backed-up in DBRACCUST
-IF NOT EXISTS(
-	SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsetting_old WITH(NOLOCK) 
-	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
-	)
+
+IF	   NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.BetSetting_Agent_old WITH(NOLOCK) WHERE custid = @AgentID)
+BEGIN
+	SET @AutobackUp_Activated = 1
+END
+
+IF	   @CountDownline > 0
+	AND NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.BetSetting_Member_old WITH(NOLOCK) WHERE custid IN (SELECT CustID FROM custInfo i WITH (NOLOCK) WHERE i.recommend = @AgentID))
+BEGIN
+	SET @AutobackUp_Activated = 1
+END
+
+IF @AutobackUp_Activated = 1
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'Cust setting data of this agent have not been backed-up yet. Auto backup activated', @ErrCode = 10
 	INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg, Roleid) VALUES(@AgentID,@ErrMsg, 2) 
@@ -61,7 +74,11 @@ END
 --PERFORM DELETE MEMBERS SETTINGS
 --===============================
 
-Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 1 
+----just keep code 8 table Balance
+--Exec Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = 1 
+
+--For archive Acc (New) - update/delete part in stage 1,2,3 
+Exec Acc_ExecRep_Cust_03 @AgentID = @AgentID, @Type = 1 
 ----------------------------------------------------------------
 print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 

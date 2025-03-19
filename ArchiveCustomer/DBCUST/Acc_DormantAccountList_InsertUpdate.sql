@@ -19,6 +19,7 @@ AS
 	- 20210617@Eden: Enhance the archiving account process on Stage 4 [RedmineID: #157123]
 	- 20210614@Eden: All sites - Dormant SMA Account List [RedmineID: #155969]
 	- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
+	- 20241030@Helios: Apply In House Cust_ArchiveAccount [RedmineID: #201061] 
 
 	Parameter Definition
 
@@ -47,7 +48,8 @@ BEGIN
 			UPDATE c
 			SET AccountDeletedDate = @ProcessedDate,
 				ArchivedDate = @ArchivedDate,
-				StageID = @StageID
+				StageID = @StageID,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM Cust_ArchiveAccount c WITH(ROWLOCK)
 			WHERE c.recommend = @CustID
 				AND c.roleid IN (1,2)
@@ -57,7 +59,8 @@ BEGIN
 			UPDATE c
 			SET AccountDeletedDate = @ProcessedDate,
 				ArchivedDate = @ArchivedDate,
-				StageID = @StageID
+				StageID = @StageID,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM Cust_ArchiveAccount c WITH(ROWLOCK)
 			WHERE c.CustID = @CustID
 		END
@@ -85,7 +88,8 @@ BEGIN
 			mrecommend = ci.mrecommend,
 			srecommend = ci.srecommend,
 			Username = CASE WHEN @StageID = 3 THEN ci.username ELSE c.Username END,
-			Lastlogged = CASE WHEN @StageID = 3 THEN cu.Lastlogged ELSE c.Lastlogged END
+			Lastlogged = CASE WHEN @StageID = 3 THEN cu.Lastlogged ELSE c.Lastlogged END,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM Cust_ArchiveAccount c WITH(ROWLOCK)
 			INNER JOIN custInfo ci WITH(NOLOCK) ON c.CustID = ci.custid
 			INNER JOIN Customer cu WITH(NOLOCK) ON c.CustID = cu.custid
@@ -103,7 +107,8 @@ BEGIN
 				ArchivedDate,
 				recommend,
 				mrecommend,
-				srecommend
+				srecommend,
+				RepUpdateTime
 			)
 			SELECT c.CustID, 
 				StageID = @StageID, 
@@ -113,7 +118,8 @@ BEGIN
 				@ArchivedDate,
 				c.recommend,
 				c.mrecommend,
-				c.srecommend 
+				c.srecommend,
+				dbo.f_GetDateTime2()
 			FROM custinfo c WITH(NOLOCK)
 			WHERE c.recommend = @CustID
 				AND c.roleid IN (1,2)
@@ -151,7 +157,8 @@ BEGIN
 				srecommend,
 				Username,
 				Lastlogged,
-				SettingDeletedDate
+				SettingDeletedDate,
+				RepUpdateTime
 			)
 			SELECT c.CustID, 
 				StageID = @StageID, 
@@ -164,7 +171,8 @@ BEGIN
 				c.srecommend,
 				Username = CASE WHEN @StageID = 3 THEN c.username END,
 				Lastlogged = CASE WHEN @StageID = 3 THEN c.Lastlogged END,
-				SettingDeletedDate = CASE WHEN @StageID = 3 THEN @ProcessedDate END
+				SettingDeletedDate = CASE WHEN @StageID = 3 THEN @ProcessedDate END,
+				dbo.f_GetDateTime2()
 			FROM Customer c WITH(NOLOCK)
 			WHERE c.custid = @CustID
 		END
@@ -182,7 +190,8 @@ BEGIN
 				mrecommend = ci.mrecommend,
 				srecommend = ci.srecommend,
 				Username = CASE WHEN @StageID = 3 THEN ci.username ELSE c.Username END,
-				Lastlogged = CASE WHEN @StageID = 3 THEN cu.Lastlogged ELSE c.Lastlogged END
+				Lastlogged = CASE WHEN @StageID = 3 THEN cu.Lastlogged ELSE c.Lastlogged END,
+				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM Cust_ArchiveAccount c WITH(ROWLOCK)
 				INNER JOIN custinfo ci WITH(NOLOCK) ON ci.custid = c.CustID
 				INNER JOIN Customer cu WITH(NOLOCK) ON c.CustID = cu.custid

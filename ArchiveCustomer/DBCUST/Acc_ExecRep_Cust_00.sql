@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [Acc_ExecRep_Cust_00]
-	@AgentID	INT,
+	--@AgentID	INT,
+	@CustIDs	VARCHAR(MAX),
 	@Type		SMALLINT
 AS 
 /*
@@ -29,6 +30,9 @@ AS
 		- 20230529@Eden: Check permission of KL Environment [Redmine: #199968]
 		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
 		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+		- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]   
+
 	Param's Explanation:
 		@Type: 
 			+ -1-Stage 1: update closed = 1 for whole agent line
@@ -39,369 +43,17 @@ AS
  --test rep---
 */
 BEGIN
-	DECLARE @RoleID INT
-	CREATE TABLE #tmp_UpdateBatch (CustID INT, RoleID INT)
-	IF @Type = -1 --1st stage (1)
-	BEGIN 
-		--CLosed Agent and downlines
-		IF dbo.f_CheckRepTable('Custinfo') = 0
-		   OR dbo.f_CheckRepTable('CustProductStatus') = 0
-			RETURN
-		ELSE 
-		BEGIN
-			SET @RoleID = 2
-
-			UPDATE cps
-				SET CloseInfo = CloseInfo|POWER(2,@RoleID - 1) -- turn on agent's bit = 1. It means this agent is closed.
-			FROM dbo.custInfo ci WITH (NOLOCK)
-				INNER JOIN CustProductStatus cps WITH (UPDLOCK,ROWLOCK) ON cps.CustID = ci.custid
-			WHERE ci.custid = @AgentID 
-				AND CloseInfo&POWER(2,@RoleID - 1) = 0 --check agent's bit = 0. It means this agent opens.
-
-			WHILE (1=1)
-			BEGIN 
-				UPDATE TOP(5000) cps
-					SET CloseInfo = CloseInfo|3 -- turn on member's bit = 1 and agent's bit = 1
-				FROM dbo.custInfo ci WITH (NOLOCK)
-					INNER JOIN CustProductStatus cps WITH (UPDLOCK,ROWLOCK) ON cps.CustID = ci.custid
-				WHERE ci.recommend = @AgentID 
-					AND (CloseInfo&POWER(2,0) = 0 OR CloseInfo&POWER(2,@RoleID - 1) = 0) --check member's bit = 0 or agent's bit = 0. It means this direct agent opens or this member still opens.
-					AND ci.roleid = 1
-
-				IF @@ROWCOUNT < 5000
-					BREAK
-			END 
-		END 
-
-		--Update ClosedReason for agent and downlines
-		--Insert Update for Agent
-		--> Insert Update ClosedReason
-		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
-		BEGIN
-			IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo WITH(NOLOCK) WHERE custid = @AgentID)
-				INSERT INTO CustLoginInfo(CustID, ClosedReason,RepUpdateTime) 
-				SELECT @AgentID, 4,dbo.f_GetDateTime2()
-			ELSE
-				UPDATE m
-				SET  ClosedReason = 4
-					,RepUpdateTime = dbo.f_GetDateTime2()
-				FROM CustLoginInfo m WITH (ROWLOCK, UPDLOCK)
-				WHERE m.CustID = @AgentID
-		END
-
-		
-		--Insert Update for Members
-		IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
-		BEGIN
-			WHILE (1=1)
-			BEGIN 
-				INSERT INTO [CustLoginInfo_Member](CustID,ClosedReason,RepUpdateTime)
-				SELECT TOP (5000) 
-					c.custid,
-					4 as ClosedReason,
-					dbo.f_GetDateTime2()
-				FROM  custinfo c WITH(NOLOCK) 
-				WHERE c.recommend = @AgentID 
-					AND c.roleid = 1
-					AND NOT EXISTS ( SELECT 1 FROM CustLoginInfo_Member m WITH (NOLOCK) WHERE m.CustID = c.custid)
-
-				IF @@ROWCOUNT < 5000
-					BREAK
-			END 
-
-			WHILE (1=1)
-			BEGIN 
-				UPDATE TOP (5000) m
-				SET  ClosedReason = 4
-					,RepUpdateTime = dbo.f_GetDateTime2()
-				FROM CustLoginInfo_Member m WITH (ROWLOCK, UPDLOCK)
-					INNER JOIN custinfo c WITH(NOLOCK) ON m.CustID = c.custid
-					INNER JOIN CustProductStatus cps WITH(NOLOCK) ON cps.CustID = m.CustID
-				WHERE ISNULL(ClosedReason,0) <> 4
-					AND c.recommend = @AgentID
-					AND cps.CloseInfo > 0
-
-				IF @@ROWCOUNT < 5000
-					BREAK
-			END 
-		END
-		 
-	END	
-	ELSE 
-	IF @Type = 0 
-	BEGIN 
-		IF dbo.f_CheckRepTable('Custinfo') = 0
-			RETURN
-		ELSE 
-		BEGIN
-			WHILE (1=1)
-			BEGIN 
-				DELETE #tmp_UpdateBatch
-
-				UPDATE TOP(5000) dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
-				SET		[enabled] = 0, credit = 0
-				OUTPUT DELETED.custid, DELETED.roleid
-				INTO #tmp_UpdateBatch(CustID, RoleID)
-				WHERE	recommend = @AgentID AND [enabled] = 1 
-				
-				IF @@ROWCOUNT = 0
-					BREAK
-
-				--CLosed Agent and downlines
-				IF(dbo.f_CheckRepTable('CustProductStatus') = 1)
-				BEGIN
-					UPDATE cps
-						SET CloseInfo = CASE WHEN ci.RoleID = 1 THEN CloseInfo|3 -- turn on member's bit = 1 and agent's bit = 1
-											 WHEN ci.RoleID = 2 THEN CloseInfo|POWER(2,@RoleID - 1) -- turn on agent's bit = 1. It means this agent is closed.
-										END  
-					FROM #tmp_UpdateBatch ci WITH (NOLOCK)
-						INNER JOIN CustProductStatus cps WITH (UPDLOCK,ROWLOCK) ON cps.CustID = ci.custid
-					WHERE ci.roleid = 1 AND (CloseInfo&POWER(2,0) = 0 OR CloseInfo&POWER(2,@RoleID - 1) = 0) --check member's bit = 0 or agent's bit = 0. It means this direct agent opens or this member still opens.
-						OR (ci.RoleID = 2 AND CloseInfo&POWER(2,@RoleID - 1) = 0) --check agent's bit = 0. It means this agent opens.)
-				END
-			END 
-		END
-		
-	END	
-	ELSE IF @Type = 1
+	
+	IF @Type = 2  --Stage 4
 	BEGIN
-		IF dbo.f_CheckRepTable('CustVirtualSetting') = 1
-		BEGIN
-			WHILE 1=1
-			BEGIN
-				DELETE TOP(5000)
-				FROM dbo.CustVirtualSetting WITH(ROWLOCK,UPDLOCK)
-				WHERE custid IN (SELECT custid 
-								 FROM custinfo WITH(NOLOCK) 
-								 WHERE recommend = @AgentID
-								)
-				IF @@ROWCOUNT < 5000
-					BREAK
-			END
-		END
+		CREATE TABLE #CustTemps (CustID INT)
+		CREATE TABLE #CustTemps_batch (CustID INT)
 
-
-	     IF dbo.f_CheckRepTable('CustSetting') = 1 		 	     
-		BEGIN
-			WHILE(1=1)
-			BEGIN
-				DELETE TOP(5000) dbo.CustSetting WITH (UPDLOCK,ROWLOCK)
-				WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) WHERE recommend = @AgentID)
-						
-				IF @@ROWCOUNT < 5000 
-					BREAK
-			END						
-		END
-		   
-		--------- Archive more settings data (new tables/DCS)
-
-		IF dbo.f_CheckRepTable('CustBetSetting3rd_Member') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustBetSetting3rd_Member WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		IF dbo.f_CheckRepTable('CustDiscount3rd_Member') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustDiscount3rd_Member WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		IF dbo.f_CheckRepTable('CustPTSetting3rd_Member') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustPTSetting3rd_Member WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		IF dbo.f_CheckRepTable('CustSettingMode3rd') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustSettingMode3rd WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		IF dbo.f_CheckRepTable('CustStakeLevel_Member') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustStakeLevel_Member WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		IF dbo.f_CheckRepTable('CustWinLossLimit_Member') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustWinLossLimit_Member WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		--#162050 : more tables
-		IF dbo.f_CheckRepTable('CustBetSetting_Member') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustBetSetting_Member WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		IF dbo.f_CheckRepTable('CustCommRate') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustCommRate WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		--#188850  : more tables
-		IF dbo.f_CheckRepTable('CustMaxPayoutSetting_Member') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustMaxPayoutSetting_Member WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE roleid = 1 
-									AND recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		-->Agent
-		IF dbo.f_CheckRepTable('CustPTGroupSetting3rd_Member') = 1 
-		BEGIN
-			DELETE dbo.CustPTGroupSetting3rd_Member WITH (UPDLOCK,ROWLOCK)
-			WHERE	AgentID = @AgentID 
+		INSERT INTO #CustTemps (CustID)
+		SELECT value 
+		FROM STRING_SPLIT(@CustIDs,',')
+		WHERE value <> 0
 			
-		END
-
-		IF dbo.f_CheckRepTable('CustBetSetting3rd_Agent') = 1 
-		BEGIN
-			DELETE dbo.CustBetSetting3rd_Agent WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('CustDiscount3rd_Agent') = 1 
-		BEGIN
-			DELETE dbo.CustDiscount3rd_Agent WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('custOverride') = 1 
-		BEGIN
-			DELETE dbo.custOverride WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END		
-
-		IF dbo.f_CheckRepTable('CustPTSetting3rd_Agent') = 1 
-		BEGIN
-			DELETE dbo.CustPTSetting3rd_Agent WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('CustStakeLevel_Agent') = 1 
-		BEGIN
-			DELETE dbo.CustStakeLevel_Agent WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('CustWinLossLimit_Agent') = 1 
-		BEGIN
-			DELETE dbo.CustWinLossLimit_Agent WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('AgentCommRate') = 1 
-		BEGIN
-			DELETE dbo.AgentCommRate WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckRepTable('CustBetSetting_Agent') = 1 
-		BEGIN
-			DELETE dbo.CustBetSetting_Agent WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		--#188850  : more tables
-		IF dbo.f_CheckRepTable('CustMaxPayoutSetting_Agent') = 1 
-		BEGIN
-			DELETE dbo.CustMaxPayoutSetting_Agent WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF DATABASEPROPERTYEX('bodb_Credit', 'Updateability') = 'READ_WRITE' -- allow update
-		BEGIN
-			IF OBJECT_ID('bodb_Credit.dbo.CustProfilePicture') IS NOT NULL
-			BEGIN
-				DECLARE @CustProfilePicture TABLE (CustId int, ImageId int) 
-
-				UPDATE t
-				SET t.IsDeleted = 1,
-					t.RepUpdateTime = SYSDATETIME()
-				OUTPUT deleted.CustId,deleted.ImageId INTO @CustProfilePicture(CustId,ImageId)
-				FROM bodb_Credit.dbo.CustProfilePicture t WITH (UPDLOCK,ROWLOCK)
-				WHERE custid = @AgentID 
-			
-				UPDATE t
-				SET t.IsDeleted = 1,
-					t.RepUpdateTime = SYSDATETIME()
-				FROM bodb_Credit.dbo.ProfilePicture t WITH (UPDLOCK,ROWLOCK)
-					INNER JOIN @CustProfilePicture c
-						ON t.ImageId = c.ImageId
-				WHERE t.ImageId > 1000000 -- just delete user upload image ( id > 1000000, not delete system library image id <= 1000000)
-			END
-		END
-	END 
-	ELSE IF @Type = 2  --Stage 4
-	BEGIN
 		IF @@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DB66')  
 			OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
 			OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
@@ -413,10 +65,8 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalCreditSports WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT custid 
-									FROM  Custinfo c WITH (NOLOCK)
-									WHERE	c.roleid = 1 AND c.recommend = @AgentID 
-								)
+				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -425,10 +75,7 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalDebitSports WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT custid 
-									FROM  Custinfo c WITH (NOLOCK)
-									WHERE	c.roleid = 1 AND c.recommend = @AgentID 
-								)
+				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -437,10 +84,7 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalCreditCasino WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT custid 
-									FROM  Custinfo c WITH (NOLOCK)
-									WHERE	c.roleid = 1 AND c.recommend = @AgentID 
-								)
+				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -449,10 +93,7 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalDebitCasino WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT custid 
-									FROM  Custinfo c WITH (NOLOCK)
-									WHERE	c.roleid = 1 AND c.recommend = @AgentID 
-								)
+				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -461,10 +102,7 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalCreditOthers WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT custid 
-									FROM  Custinfo c WITH (NOLOCK)
-									WHERE	c.roleid = 1 AND c.recommend = @AgentID 
-								)
+				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -473,10 +111,7 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalDebitOthers WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT custid 
-									FROM  Custinfo c WITH (NOLOCK)
-									WHERE	c.roleid = 1 AND c.recommend = @AgentID 
-								)
+				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -485,10 +120,7 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalCreditTransfer WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT custid 
-									FROM  Custinfo c WITH (NOLOCK)
-									WHERE	c.roleid = 1 AND c.recommend = @AgentID 
-								)
+				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -497,96 +129,13 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalDebitTransfer WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT custid 
-									FROM  Custinfo c WITH (NOLOCK)
-									WHERE	c.roleid = 1 AND c.recommend = @AgentID 
-								)
+				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
 
 		END -- END of DBTRANS - delete balance tables
 
-		----- add more tables----------------------------
-
-		IF dbo.f_CheckRepTable('CustProductStatus') = 1 		
-		WHILE(1=1)
-		BEGIN
-			DELETE TOP(5000) dbo.CustProductStatus WITH (ROWLOCK)
-			WHERE	custid IN (SELECT custid FROM Custinfo WITH (NOLOCK) 
-								WHERE  recommend = @AgentID
-									)
-			IF @@ROWCOUNT < 5000 
-				BREAK
-		END
-
-		--------------------------------------------------
-		IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
-		WHILE(1=1)
-		BEGIN
-			
-			DELETE TOP(5000) dbo.CustLoginInfo_Member WITH (ROWLOCK)
-			OUTPUT DELETED.custid ,dbo.f_GetDateTime2()
-			INTO CustLoginInfo_Member_Del_Inhouse(custid,RepUpdateTime)
-			WHERE custid IN(SELECT custid from custinfo WITH (NOLOCK) WHERE roleid = 1 AND recommend = @AgentID) 
-			IF @@ROWCOUNT < 5000
-				BREAK
-		END 
-		--------------------------------------------------
-				
-	    IF (dbo.f_CheckRepTable('Custinfo') = 1 
-		  AND dbo.f_CheckRepTable('Customer') = 1 
-	    )
-		BEGIN
-			WHILE(1=1)
-			BEGIN
-				DELETE TOP(5000) dbo.Custinfo WITH (UPDLOCK,ROWLOCK)
-				WHERE	recommend = @AgentID 
-				IF @@ROWCOUNT < 5000
-					BREAK
-
-			END 
-			WHILE(1=1)
-			BEGIN
-				DELETE TOP(5000) dbo.Customer WITH (UPDLOCK,ROWLOCK)
-				WHERE	recommend = @AgentID 
-				IF @@ROWCOUNT < 5000
-					BREAK			
-			END
-		END
-				
-	    IF dbo.f_CheckRepTable('custsub') = 1 
-		BEGIN
-			DELETE dbo.custSub WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		--#162050 : more tables
-		IF dbo.f_CheckRepTable('CustAgent') = 1 
-		BEGIN
-			DELETE dbo.CustAgent WITH (UPDLOCK,ROWLOCK)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active'
-		BEGIN
-			DELETE dbo.CustLoginInfo WITH (UPDLOCK,ROWLOCK)
-			OUTPUT DELETED.custid ,dbo.f_GetDateTime2()
-			INTO CustLoginInfo_Del_Inhouse(custid,RepUpdateTime)
-			WHERE	custid = @AgentID 
-			
-		END
-
-		IF dbo.f_CheckServerName() = 1 AND dbo.f_CheckEnvironment() = 'Active' 
-		BEGIN
-			DELETE dbo.CustLoginInfoSub WITH (UPDLOCK,ROWLOCK)
-			OUTPUT DELETED.SubAccID ,dbo.f_GetDateTime2()
-			INTO CustLoginInfoSub_Del_Inhouse(SubAccID,RepUpdateTime)
-			WHERE	custid = @AgentID 
-			
-		END
 		
 	END 
 END

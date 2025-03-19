@@ -24,6 +24,8 @@ AS
 		- 20221123@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 		- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
+		- 20231019@Helios: Customer Setting - Remove old Structure un Use [RedmineID: #193083]
+		- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061] 
 
 */
 BEGIN    
@@ -107,7 +109,7 @@ BEGIN
                       danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161, 
                       MaxPerBall161,
                       Abnormal, DoubleCommLosing,
-                      autosuspend2, HideKeno, DisableEsports, HideGoldDeluxe, DisableGoldDeluxe,  
+                      autosuspend2, HideKeno, HideGoldDeluxe, DisableGoldDeluxe,  
                       DisableSuperLive, DisableColossusBet, HideColossusBet, 
                       LockUpd, MaxPerMatch1MP, BonusWalletFlag
 	)
@@ -118,76 +120,11 @@ BEGIN
                       danger3, DisableOutright, 0, 0, 0, 
                       0,
                       Abnormal, DoubleCommLosing,
-                      autosuspend2, 0, DisableEsports, 0, 0,  
+                      autosuspend2, 0, 0, 0,  
                       DisableSuperLive, 1,1, 
                       LockUpd, 0, BonusWalletFlag
 	from	custinfo (nolock)
 	where	recommend = @AgentID
-
-	--Copy custSetting data to bodb_Customer before delete
-	insert into DBARCCUST.bodb_Customer.dbo.custSetting_old(
-		custid, 
-		bettype, 
-		sporttype, 
-		apositiontaking, 
-		mpositiontaking, 
-		spositiontaking, 
-		alivepositiontaking, 
-		mlivepositiontaking, 
-		slivepositiontaking,
-		playerdiscount, 
-		discount, 
-		adiscount, 
-		sdiscount, 
-		groupa, 
-		groupb, 
-		groupc, 
-		groupd, 
-		groupe, 
-		groupf, 
-		minbet, 
-		maxbet, 
-		autopositiontaking,
-		autolivepositiontaking, 
-		isautopositiontaking, 
-		isautolivepositiontaking, 
-		autompositiontaking, 
-		autolivempositiontaking, 
-		isautompositiontaking,
-		isautolivempositiontaking 
-	)
-	select 	cs.custid, 
-			bettype, 
-			sporttype, 
-			apositiontaking, 
-			mpositiontaking, 
-			spositiontaking, 
-			alivepositiontaking, 
-			mlivepositiontaking, 
-			slivepositiontaking,
-			playerdiscount, 
-			discount, 
-			adiscount, 
-			sdiscount, 
-			groupa, 
-			groupb, 
-			groupc, 
-			groupd, 
-			groupe, 
-			groupf, 
-			0, 
-			0, 
-			autopositiontaking,
-			autolivepositiontaking, 
-			isautopositiontaking, 
-			isautolivepositiontaking, 
-			autompositiontaking, 
-			autolivempositiontaking, 
-			isautompositiontaking,
-			isautolivempositiontaking  
-	from	custSetting cs WITH(nolock) 
-		INNER JOIN  custinfo ci with (nolock) ON ci.custid = cs.custID 
-	where	ci.recommend = @AgentID
 
 	--- copy DBTRANS.BODB02.dbo.CustVirtualSetting data to DB05.bodb_Customer.dbo.CustVirtualSetting_Old
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustVirtualSetting_Old(custid, seqNo, bitmapVirtual)
@@ -198,16 +135,6 @@ BEGIN
 
 
 	--------- Involve more tables (new tables/DCS)
-
-	insert into DBARCCUST.bodb_Customer.dbo.CustBetSetting3rd_Member_old(
-		CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch
-	) 
-	SELECT	cs.CustID, SportType, BetType, MinBet, MaxBet, cs.MaxPerMatch
-	FROM	CustBetSetting3rd_Member cs WITH(NOLOCK) 
-		INNER JOIN  custinfo ci WITH (NOLOCK) ON ci.custid = cs.custID 
-	WHERE	ci.recommend = @AgentID		
-
-
 	insert into DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Member_old(
 		CustID, SportType, BetType, PlayerDiscount, AgentDiscount, MasterDiscount, SuperDiscount
 	) 
@@ -272,20 +199,9 @@ BEGIN
 	FROM	custsub WITH (NOLOCK)
 	WHERE	custid = @AgentID
 
-	--> MORE TABLES
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBetSetting3rd_Agent_old(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
-	FROM CustBetSetting3rd_Agent WITH(NOLOCK)
-	WHERE custid = @AgentID
-
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Agent_old(CustID,SportType,BetType,Discount)
 	SELECT CustID,SportType,BetType,Discount
 	FROM CustDiscount3rd_Agent WITH(NOLOCK)
-	WHERE custid = @AgentID
-
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.custOverride_old(custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking)
-	SELECT custid,bettype,sporttype,minpositiontaking,maxpositiontaking,minlivepositiontaking,maxlivepositiontaking
-	FROM custOverride WITH(NOLOCK)
 	WHERE custid = @AgentID
 
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTSetting3rd_Agent_old(CustID,SportType,BetType,IsLive,IsAutoMasterPT,IsAutoSuperPT
@@ -303,16 +219,6 @@ BEGIN
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustWinLossLimit_Agent_old(CustId,SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset)
 	SELECT CustId,SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
 	FROM CustWinLossLimit_Agent WITH(NOLOCK)
-	WHERE custid = @AgentID
-
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.AgentCommRate_old(CustId,Sporttype,Bettype,CommRate)
-	SELECT CustId,Sporttype,Bettype,CommRate
-	FROM AgentCommRate WITH(NOLOCK)
-	WHERE custid = @AgentID
-
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBetSetting_Agent_old(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
-	FROM CustBetSetting_Agent WITH(NOLOCK)
 	WHERE custid = @AgentID
 
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTGroupSetting3rd_Member_old(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT
@@ -343,16 +249,6 @@ BEGIN
 	FROM CustLoginInfoSub WITH(NOLOCK)
 	WHERE custid = @AgentID
 
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustCommRate_old(CustId,Sporttype,Bettype,sdiscount,adiscount,discount,playerdiscount)
-	SELECT CustId,Sporttype,Bettype,sdiscount,adiscount,discount,playerdiscount
-	FROM CustCommRate WITH(NOLOCK)
-	WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
-
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBetSetting_Member_old(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
-	FROM CustBetSetting_Member WITH(NOLOCK)
-	WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE roleid = 1 and recommend = @AgentID)
-
 	--#188850
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustMaxPayoutSetting_Member_old(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
 	SELECT CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6
@@ -366,9 +262,327 @@ BEGIN
 
 	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old(CustId,ImageId,Modified)
 	SELECT CustId,ImageId,Modified
-	FROM bodb_Credit.dbo.CustProfilePicture WITH(NOLOCK)
+	FROM dbo.CustProfilePicture WITH(NOLOCK)
 	WHERE custid = @AgentID
 	
+	--#201061
+	--Agent & Downline
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.BetLimitControlCustSetting_old
+	(
+		CustID
+		, BetLimitTypeID
+		, MaxBet
+		, MaxPerMatch
+		, Mode
+	)
+	SELECT CustID
+		, BetLimitTypeID
+		, MaxBet
+		, MaxPerMatch
+		, Mode
+	FROM dbo.BetLimitControlCustSetting WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE recommend = @AgentID)
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRCustLockStatus_old (CustID, Type)
+	SELECT CustID, Type
+	FROM dbo.VRCustLockStatus WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE recommend = @AgentID)
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRCustSetting_old
+	(
+		CustID
+		, LevelID
+		, ValueIDLIVE
+		, ValueIDNonLIVE
+	)
+	SELECT CustID
+		, LevelID
+		, ValueIDLIVE
+		, ValueIDNonLIVE
+	FROM dbo.VRCustSetting WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE recommend = @AgentID)
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRSettingManualUpdAcc_old	(SportType , CustID)
+	SELECT SportType , CustID
+	FROM dbo.VRSettingManualUpdAcc WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custInfo WITH (NOLOCK) WHERE recommend = @AgentID)
+
+	-- Agent
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTTemplate_old
+	(
+		TemplateID
+	    , custid
+	    , TemplateName
+	    , IsDefault
+	)
+	SELECT TemplateID
+	    , custid
+	    , TemplateName
+	    , IsDefault
+	FROM dbo.CustPTTemplate WITH(NOLOCK)
+	WHERE custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTTemplateDetail_old 
+	(
+		TemplateID
+		, GroupID
+		, SubGroupID
+		, PT
+	)
+	SELECT 
+		ptDetail.TemplateID
+		, GroupID
+		, SubGroupID
+		, PT
+	FROM dbo.CustPTTemplateDetail ptDetail WITH(NOLOCK)
+	INNER JOIN dbo.CustPTTemplate pt WITH(NOLOCK) ON ptDetail.TemplateID = pt.TemplateID
+	WHERE pt.custid = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.BetSetting3rd_Agent_old
+	(
+		CustID
+		, SportType
+		, BetType
+		, MinBet
+		, MaxBet
+		, MaxPerMatch
+		, MaxPerNumber
+	)
+	SELECT CustID
+		, SportType
+		, BetType
+		, MinBet
+		, MaxBet
+		, MaxPerMatch
+		, MaxPerNumber
+	FROM dbo.BetSetting3rd_Agent WITH(NOLOCK)
+	WHERE CustID = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.BetSetting_Agent_old
+	(
+		CustID
+		, SportType
+		, BetType
+		, MinBet
+		, MaxBet
+		, MaxPerMatch
+		, MaxPayoutPerMatch
+	)
+	SELECT CustID
+		, SportType
+		, BetType
+		, MinBet
+		, MaxBet
+		, MaxPerMatch
+		, MaxPayoutPerMatch
+	FROM dbo.BetSetting_Agent WITH(NOLOCK)
+	WHERE CustID = @AgentID
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRAgentAutoAdjustment_old
+	(
+		AgentID
+		, Type
+		, Status
+		, VR0_Date
+	)
+	SELECT AgentID
+		, Type
+		, Status
+		, VR0_Date
+	FROM dbo.VRAgentAutoAdjustment WITH(NOLOCK)
+	WHERE AgentID = @AgentID
+
+	--Member
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.BetSetting_Member_old
+	(
+		CustID
+		, SportType
+		, BetType
+		, MinBet
+		, MaxBet
+		, MaxPerMatch
+		, MaxPayoutPerMatch
+	)
+	SELECT CustID
+		, SportType
+		, BetType
+		, MinBet
+		, MaxBet
+		, MaxPerMatch
+		, MaxPayoutPerMatch
+	FROM dbo.BetSetting_Member WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.BetSetting3rd_Member_old
+	(
+		CustID
+		, SportType
+		, BetType
+		, MinBet
+		, MaxBet
+		, MaxPerMatch
+		, MaxPerNumber
+	)
+	SELECT CustID
+		, SportType
+		, BetType
+		, MinBet
+		, MaxBet
+		, MaxPerMatch
+		, MaxPerNumber
+	FROM dbo.BetSetting3rd_Member WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustQRCode_old (custid)
+	SELECT custid
+	FROM dbo.CustQRCode WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.RobotList_old
+	(
+		custid
+		, isActive
+		, creator
+		, createdate
+		, lastmodifytime
+		, lastmodifyuser
+		, remark
+	)	
+	SELECT custid
+		, isActive
+		, creator
+		, createdate
+		, lastmodifytime
+		, lastmodifyuser
+		, remark
+	FROM dbo.RobotList WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRCustAutoAdjustment_old
+	(
+		SportType
+		, CustID
+		, FirstBetDate
+		, Status
+	)
+	SELECT SportType
+		, CustID
+		, FirstBetDate
+		, Status
+	FROM dbo.VRCustAutoAdjustment WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRMemberBigStake_old
+	(
+		CustID
+		, Type
+		, FirstBetDate
+		, Status
+	)
+	SELECT CustID
+		, Type
+		, FirstBetDate
+		, Status
+	FROM dbo.VRMemberBigStake WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.WinLimit_CustGameMonitoring_History_old
+	(
+		  LogID
+		, CustID
+		, ProductID
+		, WinlostDate
+		, LevelID
+		, MaxWinLimit
+		, TotalWinAmt
+		, WinAmt
+		, ActionID
+		, ModifiedDate
+		, IsNotified
+		, ModifiedBy
+		, CreatedBy
+		, MaxWinLimitSetting
+		, TotalWinAmt_RM
+		, GroupID
+		, BettypeIDList
+		, TransID
+	)
+	SELECT  LogID
+		, CustID
+		, ProductID
+		, WinlostDate
+		, LevelID
+		, MaxWinLimit
+		, TotalWinAmt
+		, WinAmt
+		, ActionID
+		, ModifiedDate
+		, IsNotified
+		, ModifiedBy
+		, CreatedBy
+		, CAST(MaxWinLimitSetting AS VARCHAR(MAX)) AS MaxWinLimitSetting
+		, TotalWinAmt_RM
+		, GroupID
+		, BettypeIDList
+		, TransID
+	FROM dbo.WinLimit_CustGameMonitoring_History WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.WinLimit_CustGameMonitoring_old
+	(
+		CustID
+		, ProductID
+		, WinlostDate
+		, LevelID
+		, MaxWinLimit
+		, TotalWinAmt
+		, WinAmt
+		, ModifiedDate
+		, IsNotified
+		, ModifiedBy
+		, CreatedBy
+		, MaxWinLimitSetting
+		, TotalWinAmt_RM
+		, GroupID
+		, BettypeIDList
+	)
+	SELECT CustID
+		, ProductID
+		, WinlostDate
+		, LevelID
+		, MaxWinLimit
+		, TotalWinAmt
+		, WinAmt
+		, ModifiedDate
+		, IsNotified
+		, ModifiedBy
+		, CreatedBy
+		, CAST(MaxWinLimitSetting AS VARCHAR(MAX)) AS MaxWinLimitSetting
+		, TotalWinAmt_RM
+		, GroupID
+		, BettypeIDList
+	FROM dbo.WinLimit_CustGameMonitoring WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
+
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.WinLimit_CustGameStatus_old
+	(
+		CustID
+		, ProductID
+		, BettypeID
+		, IsBlockedPlaceBet
+		, IsBlockedTransfer
+		, ActionID
+		, ModifiedDate
+	)
+	SELECT CustID
+		, ProductID
+		, BettypeID
+		, IsBlockedPlaceBet
+		, IsBlockedTransfer
+		, ActionID
+		, ModifiedDate
+	FROM dbo.WinLimit_CustGameStatus WITH(NOLOCK)
+	WHERE custid IN (SELECT custid FROM custinfo WITH(NOLOCK) WHERE roleid = 1 AND recommend = @AgentID )
 	-----------------------------------------------------------------------------------------------------------
 
 

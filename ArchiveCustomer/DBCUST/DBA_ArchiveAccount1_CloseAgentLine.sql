@@ -24,6 +24,7 @@ Revisions:
 	- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 	- 20230623@Eden: Enhance backup [Redmine: #188850]
 	- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
+	- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061] 
 
 */
 
@@ -198,8 +199,12 @@ SELECT
 	[ClosedReason]
 FROM #tempbackup
 
---close whole line using ExecRep
-EXEC dbo.Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = -1
+
+--#201061: close whole line using ExecRep
+EXEC dbo.Acc_ExecRep_Cust_03 @AgentID = @AgentID, @Type = -1
+
+--just keep code 8 table Balance
+--EXEC dbo.Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = -1
 
 --> Insert data for Cust_ArchiveAccount
 DECLARE @IsOverwrite BIT

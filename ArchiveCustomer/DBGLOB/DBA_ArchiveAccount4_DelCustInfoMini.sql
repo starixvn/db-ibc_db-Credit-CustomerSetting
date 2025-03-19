@@ -48,8 +48,8 @@ BEGIN
 			IF @IsFinish_CustSubMini = 0
 			BEGIN
 				DELETE TOP(@BatchNum) c
-				--OUTPUT deleted.subaccid,dbo.f_GetDateTime2()   
-				--INTO CustSubMini_Del_Inhouse(subaccid,RepUpdateTime)
+				OUTPUT deleted.subaccid,dbo.f_GetDateTime2()   
+				INTO CustSubMini_Del_Inhouse(subaccid,RepUpdateTime)
 				FROM dbo.CustSubMini c WITH(ROWLOCK,UPDLOCK)
 				WHERE custid IN (SELECT custid FROM #CustTemps_batch)
 
@@ -63,8 +63,8 @@ BEGIN
 			IF @IsFinish_CustinfoMini = 0
 			BEGIN
 				DELETE TOP(@BatchNum) c
-				--OUTPUT deleted.custID,dbo.f_GetDateTime2()   
-				--INTO CustInfoMini_Del_Inhouse(custid,RepUpdateTime)
+				OUTPUT deleted.custID,dbo.f_GetDateTime2()   
+				INTO CustInfoMini_Del_Inhouse(custid,RepUpdateTime)
 				FROM dbo.CustInfoMini c WITH(ROWLOCK,UPDLOCK)
 				WHERE custid IN (SELECT custid FROM #CustTemps_batch)
 
