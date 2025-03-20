@@ -92,6 +92,7 @@ AS
 		- 20241129@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 		- 20250221@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
+		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for CustLoginInfo_Member [Redmine: #215627]
 
 	Param's Explanation:
 		@Action: 
@@ -426,10 +427,7 @@ BEGIN
 					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[CustLoginInfo] cl with (ROWLOCK, UPDLOCK) 
 				INNER JOIN #tempCust t ON cl.CustID=t.CustID
-			END
-		 
-			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
-			BEGIN
+
 				UPDATE cl
 				set cl.ClosedReason = 1
 					,RepUpdateTime = dbo.f_GetDateTime2()
@@ -453,10 +451,7 @@ BEGIN
 					,RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[CustLoginInfo] cl with (ROWLOCK, UPDLOCK) 
 				INNER JOIN #tempCust t ON cl.CustID=t.CustID
-			END
-			
-			IF dbo.f_CheckRepTable('CustLoginInfo_Member') = 1
-			BEGIN
+
 				UPDATE cl
 				set cl.ClosedReason = 2
 					,RepUpdateTime = dbo.f_GetDateTime2()
