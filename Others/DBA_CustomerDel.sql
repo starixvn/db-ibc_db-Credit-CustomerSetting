@@ -39,7 +39,7 @@ AS
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		- 20250220@Johnson: remove CustRequestGame [RedmineID: #212684]
 		- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
-		- 20250317@July: Scale Out DBCUST - Change unique key table CustGroupHeadline [Redmine: #215627]
+		- 20250317@July: Scale Out DBCUST - Change unique key table CustGroupHeadline [Redmine: #221252]
 		
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
