@@ -18,6 +18,7 @@ AS
 		- 20230310@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240418@Eden: HotFix - Master update Agent bet setting RNG Keno, but member bet setting still not updated [Redmine: #204104]
 		- 20240627@Johnson: Scale out DBCUST [redmine: #199915]
+		- 20250331@Elodie: Tune SP [redmine: #222466]
 	Param's Explanation:
 */
 BEGIN
@@ -28,6 +29,8 @@ BEGIN
 
 	IF ISNULL(@BetSettingXML,'') = ''
 		RETURN
+	DECLARE @__CustId INT
+	SET @__CustId = @custid
 
 	DECLARE @DocHandler INT	
 	DECLARE @BetSetting TABLE(
@@ -74,7 +77,7 @@ BEGIN
 							INNER JOIN BetSetting_Agent a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.srecommend = @custid AND c.roleID IN (2,3)
+						WHERE c.srecommend = @__CustId AND c.roleID IN (2,3)
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -92,7 +95,7 @@ BEGIN
 							INNER JOIN BetSetting_Member a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.srecommend = @custid AND c.roleID = 1
+						WHERE c.srecommend = @__CustId AND c.roleID = 1
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -113,7 +116,7 @@ BEGIN
 							INNER JOIN BetSetting_Agent a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.mrecommend = @custid AND c.roleID = 2
+						WHERE c.mrecommend = @__CustId AND c.roleID = 2
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -131,7 +134,7 @@ BEGIN
 							INNER JOIN BetSetting_Member a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.mrecommend = @custid AND c.roleID = 1
+						WHERE c.mrecommend = @__CustId AND c.roleID = 1
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -152,7 +155,7 @@ BEGIN
 							INNER JOIN BetSetting_Member a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.recommend = @custid AND c.roleID = 1
+						WHERE c.recommend = @__CustId AND c.roleID = 1
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -176,7 +179,7 @@ BEGIN
 							INNER JOIN CustBetSetting_Agent a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.srecommend = @custid AND c.roleID IN (2,3)
+						WHERE c.srecommend = @__CustId AND c.roleID IN (2,3)
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -194,7 +197,7 @@ BEGIN
 							INNER JOIN CustBetSetting_Member a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.srecommend = @custid AND c.roleID = 1
+						WHERE c.srecommend = @__CustId AND c.roleID = 1
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -215,7 +218,7 @@ BEGIN
 							INNER JOIN CustBetSetting_Agent a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.mrecommend = @custid AND c.roleID = 2
+						WHERE c.mrecommend = @__CustId AND c.roleID = 2
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -233,7 +236,7 @@ BEGIN
 							INNER JOIN CustBetSetting_Member a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.mrecommend = @custid AND c.roleID = 1
+						WHERE c.mrecommend = @__CustId AND c.roleID = 1
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -254,7 +257,7 @@ BEGIN
 							INNER JOIN CustBetSetting_Member a WITH(NOLOCK)
 								ON t.SportType = a.SportType AND t.BetType = a.BetType
 							INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-						WHERE c.recommend = @custid AND c.roleID = 1
+						WHERE c.recommend = @__CustId AND c.roleID = 1
 							AND c.enabled = 1
 							AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 									OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -281,7 +284,7 @@ BEGIN
 						INNER JOIN CustBetSetting3rd_Agent a WITH(NOLOCK)
 							ON t.SportType = a.SportType AND t.BetType = a.BetType
 						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-					WHERE c.srecommend = @custid AND c.roleID IN (2,3)
+					WHERE c.srecommend = @__CustId AND c.roleID IN (2,3)
 						AND c.enabled = 1
 						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -298,7 +301,7 @@ BEGIN
 						INNER JOIN CustBetSetting3rd_Member a WITH(NOLOCK)
 							ON t.SportType = a.SportType AND t.BetType = a.BetType
 						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-					WHERE c.srecommend = @custid AND c.roleID = 1
+					WHERE c.srecommend = @__CustId AND c.roleID = 1
 						AND c.enabled = 1
 						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -318,7 +321,7 @@ BEGIN
 						INNER JOIN CustBetSetting3rd_Agent a WITH(NOLOCK)
 							ON t.SportType = a.SportType AND t.BetType = a.BetType
 						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-					WHERE c.mrecommend = @custid AND c.roleID = 2
+					WHERE c.mrecommend = @__CustId AND c.roleID = 2
 						AND c.enabled = 1
 						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -335,7 +338,7 @@ BEGIN
 						INNER JOIN CustBetSetting3rd_Member a WITH(NOLOCK)
 							ON t.SportType = a.SportType AND t.BetType = a.BetType
 						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-					WHERE c.mrecommend = @custid AND c.roleID = 1
+					WHERE c.mrecommend = @__CustId AND c.roleID = 1
 						AND c.enabled = 1
 						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
@@ -355,7 +358,7 @@ BEGIN
 						INNER JOIN CustBetSetting3rd_Member a WITH(NOLOCK)
 							ON t.SportType = a.SportType AND t.BetType = a.BetType
 						INNER JOIN custInfo c WITH(NOLOCK) ON a.CustID = c.custid
-					WHERE c.recommend = @custid AND c.roleID = 1
+					WHERE c.recommend = @__CustId AND c.roleID = 1
 						AND c.enabled = 1
 						AND (  (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 								OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
