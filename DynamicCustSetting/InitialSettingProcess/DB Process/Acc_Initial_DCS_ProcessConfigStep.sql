@@ -17,6 +17,7 @@ AS
 	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20240520@Eden: Unify RNG Games [redmine: #204358]   
 	- 20250114@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+	- 20250324@Eden: Reduce the partial UM for the initial customer setting [Redmine: #219867]
 	Parameter Definition
 		StepID = :
 			4: Insert setting for new customers
@@ -37,11 +38,11 @@ BEGIN
 	SET NOCOUNT ON;
 	
 	CREATE TABLE #Supers(SuperID INT PRIMARY KEY, Site VARCHAR(10))
-	DECLARE @Site VARCHAR(MAX), @Currency VARCHAR(MAX)
+	DECLARE @Site VARCHAR(MAX), @Currency VARCHAR(MAX), @StartTime DATETIME
 	DECLARE @TBL_site TABLE(SiteID INT,Site VARCHAR(10) PRIMARY KEY)
 	DECLARE @TBL_Currency TABLE(Currency INT PRIMARY KEY)
 
-	SELECT @Site = Site, @Currency = Currency
+	SELECT @Site = Site, @Currency = Currency, @StartTime = StartTime
 	FROM Initial_ProductConfig WITH(NOLOCK)
 	WHERE ConfigID = @ConfigID
 		AND Status = 1 --Running
@@ -1471,17 +1472,18 @@ BEGIN
 				INNER JOIN #TempConfig t 
 					ON csa.SportType = t.SportType AND csa.BetType = t.BetType AND t.SettingName = 'Position Taking' AND t.IsDefault = 0
 					AND C.bettype = t.CopyFromBetType AND C.SportType = t.CopyFromSportType
-				WHERE ci.roleid IN (2,3,4) AND Enabled = 1
-					AND (  C.SuperPT <> csa.SuperPT
-						OR C.MasterPT  <> csa.MasterPT
-						OR C.AgentPT <> csa.AgentPT
-						OR C.IsAutoMasterPT <> csa.IsAutoMasterPT
-						OR C.AutoMasterPT  <> csa.AutoMasterPT
-						OR C.IsAutoSuperPT <> csa.IsAutoSuperPT
-						OR C.AutoSuperPT  <> csa.AutoSuperPT
-						OR C.MinPT  <> csa.MinPT
-						OR C.MaxPT <> csa.MaxPT
-						)
+			WHERE ci.roleid IN (2,3,4) AND Enabled = 1
+				AND (  C.SuperPT <> csa.SuperPT
+					OR C.MasterPT  <> csa.MasterPT
+					OR C.AgentPT <> csa.AgentPT
+					OR C.IsAutoMasterPT <> csa.IsAutoMasterPT
+					OR C.AutoMasterPT  <> csa.AutoMasterPT
+					OR C.IsAutoSuperPT <> csa.IsAutoSuperPT
+					OR C.AutoSuperPT  <> csa.AutoSuperPT
+					OR C.MinPT  <> csa.MinPT
+					OR C.MaxPT <> csa.MaxPT
+					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL -- direct master
 			SELECT C.custid, t.SportType, t.BetType, C.SuperPT, C.MasterPT, C.AgentPT, C.IsAutoMasterPT, C.AutoMasterPT
 					, C.IsAutoSuperPT, C.AutoSuperPT, C.MinPT, C.MaxPT
@@ -1492,17 +1494,18 @@ BEGIN
 				INNER JOIN #TempConfig t 
 					ON csa.SportType = t.SportType AND csa.BetType = t.BetType AND t.SettingName = 'Position Taking' AND t.IsDefault = 0
 					AND C.bettype = t.CopyFromBetType AND C.SportType = t.CopyFromSportType
-				WHERE ci.roleid IN (2,3) AND Enabled = 1
-					AND (  C.SuperPT <> csa.SuperPT
-						OR C.MasterPT  <> csa.MasterPT
-						OR C.AgentPT <> csa.AgentPT
-						OR C.IsAutoMasterPT <> csa.IsAutoMasterPT
-						OR C.AutoMasterPT  <> csa.AutoMasterPT
-						OR C.IsAutoSuperPT <> csa.IsAutoSuperPT
-						OR C.AutoSuperPT  <> csa.AutoSuperPT
-						OR C.MinPT  <> csa.MinPT
-						OR C.MaxPT <> csa.MaxPT
-						)
+			WHERE ci.roleid IN (2,3) AND Enabled = 1
+				AND (  C.SuperPT <> csa.SuperPT
+					OR C.MasterPT  <> csa.MasterPT
+					OR C.AgentPT <> csa.AgentPT
+					OR C.IsAutoMasterPT <> csa.IsAutoMasterPT
+					OR C.AutoMasterPT  <> csa.AutoMasterPT
+					OR C.IsAutoSuperPT <> csa.IsAutoSuperPT
+					OR C.AutoSuperPT  <> csa.AutoSuperPT
+					OR C.MinPT  <> csa.MinPT
+					OR C.MaxPT <> csa.MaxPT
+					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL -- direct agent
 			SELECT C.custid, t.SportType, t.BetType, C.SuperPT, C.MasterPT, C.AgentPT, C.IsAutoMasterPT, C.AutoMasterPT
 					, C.IsAutoSuperPT, C.AutoSuperPT, C.MinPT, C.MaxPT
@@ -1513,17 +1516,18 @@ BEGIN
 				INNER JOIN #TempConfig t 
 					ON csa.SportType = t.SportType AND csa.BetType = t.BetType AND t.SettingName = 'Position Taking' AND t.IsDefault = 0
 					AND C.bettype = t.CopyFromBetType AND C.SportType = t.CopyFromSportType
-				WHERE ci.roleid = 2 AND Enabled = 1
-					AND (  C.SuperPT <> csa.SuperPT
-						OR C.MasterPT  <> csa.MasterPT
-						OR C.AgentPT <> csa.AgentPT
-						OR C.IsAutoMasterPT <> csa.IsAutoMasterPT
-						OR C.AutoMasterPT  <> csa.AutoMasterPT
-						OR C.IsAutoSuperPT <> csa.IsAutoSuperPT
-						OR C.AutoSuperPT  <> csa.AutoSuperPT
-						OR C.MinPT  <> csa.MinPT
-						OR C.MaxPT <> csa.MaxPT
-						)
+			WHERE ci.roleid = 2 AND Enabled = 1
+				AND (  C.SuperPT <> csa.SuperPT
+					OR C.MasterPT  <> csa.MasterPT
+					OR C.AgentPT <> csa.AgentPT
+					OR C.IsAutoMasterPT <> csa.IsAutoMasterPT
+					OR C.AutoMasterPT  <> csa.AutoMasterPT
+					OR C.IsAutoSuperPT <> csa.IsAutoSuperPT
+					OR C.AutoSuperPT  <> csa.AutoSuperPT
+					OR C.MinPT  <> csa.MinPT
+					OR C.MaxPT <> csa.MaxPT
+					)
+				AND c.RepUpdateTime >= @StartTime
 
 			--MEMBER LEVEL
 			INSERT INTO #MemberList_PT (custid, Sporttype, Bettype, SPositionTaking, MPositionTaking, APositionTaking
@@ -1537,15 +1541,16 @@ BEGIN
 				INNER JOIN #TempConfig t 
 					ON csm.SportType = t.SportType AND csm.BetType = t.BetType AND t.SettingName = 'Position Taking' AND t.IsDefault = 0
 					AND C.bettype = t.CopyFromBetType AND C.SportType = t.CopyFromSportType
-				WHERE ci.roleid = 1 AND Enabled = 1
-					AND (  C.SuperPT <> csm.SuperPT
-						OR C.MasterPT <> csm.MasterPT
-						OR C.AgentPT<> csm.AgentPT
-						OR C.IsAutoMasterPT <> csm.IsAutoMasterPT
-						OR C.AutoMasterPT  <> csm.AutoMasterPT
-						OR C.IsAutoSuperPT <> csm.IsAutoSuperPT
-						OR C.AutoSuperPT <> csm.AutoSuperPT
-						)
+			WHERE ci.roleid = 1 AND Enabled = 1
+				AND (  C.SuperPT <> csm.SuperPT
+					OR C.MasterPT <> csm.MasterPT
+					OR C.AgentPT<> csm.AgentPT
+					OR C.IsAutoMasterPT <> csm.IsAutoMasterPT
+					OR C.AutoMasterPT  <> csm.AutoMasterPT
+					OR C.IsAutoSuperPT <> csm.IsAutoSuperPT
+					OR C.AutoSuperPT <> csm.AutoSuperPT
+					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --Direct master
 			SELECT C.custid, t.SportType, t.BetType, C.SuperPT, C.MasterPT, C.AgentPT
 				, C.IsAutoMasterPT, C.AutoMasterPT, C.IsAutoSuperPT, C.AutoSuperPT
@@ -1556,15 +1561,16 @@ BEGIN
 				INNER JOIN #TempConfig t 
 					ON csm.SportType = t.SportType AND csm.BetType = t.BetType AND t.SettingName = 'Position Taking' AND t.IsDefault = 0
 					AND C.bettype = t.CopyFromBetType AND C.SportType = t.CopyFromSportType
-				WHERE ci.roleid = 1 AND Enabled = 1
-					AND (  C.SuperPT <> csm.SuperPT
-						OR C.MasterPT <> csm.MasterPT
-						OR C.AgentPT<> csm.AgentPT
-						OR C.IsAutoMasterPT <> csm.IsAutoMasterPT
-						OR C.AutoMasterPT  <> csm.AutoMasterPT
-						OR C.IsAutoSuperPT <> csm.IsAutoSuperPT
-						OR C.AutoSuperPT <> csm.AutoSuperPT
-						)
+			WHERE ci.roleid = 1 AND Enabled = 1
+				AND (  C.SuperPT <> csm.SuperPT
+					OR C.MasterPT <> csm.MasterPT
+					OR C.AgentPT<> csm.AgentPT
+					OR C.IsAutoMasterPT <> csm.IsAutoMasterPT
+					OR C.AutoMasterPT  <> csm.AutoMasterPT
+					OR C.IsAutoSuperPT <> csm.IsAutoSuperPT
+					OR C.AutoSuperPT <> csm.AutoSuperPT
+					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --Direct agent
 			SELECT C.custid, t.SportType, t.BetType, C.SuperPT, C.MasterPT, C.AgentPT
 				, C.IsAutoMasterPT, C.AutoMasterPT, C.IsAutoSuperPT, C.AutoSuperPT
@@ -1575,15 +1581,16 @@ BEGIN
 				INNER JOIN #TempConfig t 
 					ON csm.SportType = t.SportType AND csm.BetType = t.BetType AND t.SettingName = 'Position Taking' AND t.IsDefault = 0
 					AND C.bettype = t.CopyFromBetType AND C.SportType = t.CopyFromSportType
-				WHERE ci.roleid = 1 AND Enabled = 1
-					AND (  C.SuperPT <> csm.SuperPT
-						OR C.MasterPT <> csm.MasterPT
-						OR C.AgentPT<> csm.AgentPT
-						OR C.IsAutoMasterPT <> csm.IsAutoMasterPT
-						OR C.AutoMasterPT  <> csm.AutoMasterPT
-						OR C.IsAutoSuperPT <> csm.IsAutoSuperPT
-						OR C.AutoSuperPT <> csm.AutoSuperPT
-						)
+			WHERE ci.roleid = 1 AND Enabled = 1
+				AND (  C.SuperPT <> csm.SuperPT
+					OR C.MasterPT <> csm.MasterPT
+					OR C.AgentPT<> csm.AgentPT
+					OR C.IsAutoMasterPT <> csm.IsAutoMasterPT
+					OR C.AutoMasterPT  <> csm.AutoMasterPT
+					OR C.IsAutoSuperPT <> csm.IsAutoSuperPT
+					OR C.AutoSuperPT <> csm.AutoSuperPT
+					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --Direct member
 			SELECT C.custid, t.SportType, t.BetType, C.SuperPT, C.MasterPT, C.AgentPT
 				, C.IsAutoMasterPT, C.AutoMasterPT, C.IsAutoSuperPT, C.AutoSuperPT
@@ -1594,15 +1601,16 @@ BEGIN
 				INNER JOIN #TempConfig t 
 					ON csm.SportType = t.SportType AND csm.BetType = t.BetType AND t.SettingName = 'Position Taking' AND t.IsDefault = 0
 					AND C.bettype = t.CopyFromBetType AND C.SportType = t.CopyFromSportType
-				WHERE ci.roleid = 1 AND Enabled = 1
-					AND (  C.SuperPT <> csm.SuperPT
-						OR C.MasterPT <> csm.MasterPT
-						OR C.AgentPT<> csm.AgentPT
-						OR C.IsAutoMasterPT <> csm.IsAutoMasterPT
-						OR C.AutoMasterPT  <> csm.AutoMasterPT
-						OR C.IsAutoSuperPT <> csm.IsAutoSuperPT
-						OR C.AutoSuperPT <> csm.AutoSuperPT
-						)
+			WHERE ci.roleid = 1 AND Enabled = 1
+				AND (  C.SuperPT <> csm.SuperPT
+					OR C.MasterPT <> csm.MasterPT
+					OR C.AgentPT<> csm.AgentPT
+					OR C.IsAutoMasterPT <> csm.IsAutoMasterPT
+					OR C.AutoMasterPT  <> csm.AutoMasterPT
+					OR C.IsAutoSuperPT <> csm.IsAutoSuperPT
+					OR C.AutoSuperPT <> csm.AutoSuperPT
+					)
+				AND c.RepUpdateTime >= @StartTime
 	
 			--Group PT
 			INSERT INTO #AgentGroupPT (AgentID, Sporttype, Bettype, IsLive, SuperPT, MasterPT, AgentPT
@@ -1625,6 +1633,7 @@ BEGIN
 					OR C.IsAutoSuperPT	<> csa.IsAutoSuperPT
 					OR C.AutoSuperPT	<> csa.AutoSuperPT
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL--direct master
 			SELECT C.AgentID, t.SportType, t.BetType, C.IsLive, C.SuperPT, C.MasterPT, C.AgentPT
 				, C.IsAutoMasterPT, C.AutoMasterPT, C.IsAutoSuperPT, C.AutoSuperPT
@@ -1644,6 +1653,7 @@ BEGIN
 					OR C.IsAutoSuperPT	<> csa.IsAutoSuperPT
 					OR C.AutoSuperPT	<> csa.AutoSuperPT
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL--direct agent
 			SELECT C.AgentID, t.SportType, t.BetType, C.IsLive, C.SuperPT, C.MasterPT, C.AgentPT
 				, C.IsAutoMasterPT, C.AutoMasterPT, C.IsAutoSuperPT, C.AutoSuperPT
@@ -1663,6 +1673,7 @@ BEGIN
 					OR C.IsAutoSuperPT	<> csa.IsAutoSuperPT
 					OR C.AutoSuperPT	<> csa.AutoSuperPT
 					)
+				AND c.RepUpdateTime >= @StartTime
 
 			--Wrong PT
 			INSERT INTO #Super_WrongPT (custid, Sporttype, Bettype)
@@ -1740,6 +1751,7 @@ BEGIN
 					AND c.bettype = t.CopyFromBetType AND c.SportType = t.CopyFromSportType
 			WHERE ci.roleid IN (2,3,4) AND Enabled = 1
 				AND c.Discount <> csa.Discount
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --Direct master
 			SELECT C.custid, t.Sporttype, t.Bettype, C.Discount
 			FROM dbo.CustDiscount3rd_Agent c WITH(NOLOCK)
@@ -1751,6 +1763,7 @@ BEGIN
 					AND c.bettype = t.CopyFromBetType AND c.SportType = t.CopyFromSportType
 			WHERE ci.roleid IN (2,3) AND Enabled = 1
 				AND c.Discount <> csa.Discount
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --Direct agent
 			SELECT C.custid, t.Sporttype, t.Bettype, C.Discount
 			FROM dbo.CustDiscount3rd_Agent c WITH(NOLOCK)
@@ -1762,6 +1775,7 @@ BEGIN
 					AND c.bettype = t.CopyFromBetType AND c.SportType = t.CopyFromSportType
 			WHERE ci.roleid = 2 AND Enabled = 1
 				AND c.Discount <> csa.Discount
+				AND c.RepUpdateTime >= @StartTime
 
 			--Member Level
 			INSERT INTO #MemberList_CommSetting (custid, Sporttype, Bettype, SuperDiscount, MasterDiscount, AgentDiscount, PlayerDiscount)
@@ -1779,6 +1793,7 @@ BEGIN
 					OR C.AgentDiscount	 <> csm.AgentDiscount			
 					OR C.PlayerDiscount <> csm.PlayerDiscount
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --Direct Master
 			SELECT C.custid, t.Sporttype, t.Bettype, C.SuperDiscount, C.MasterDiscount, C.AgentDiscount, C.PlayerDiscount
 			FROM dbo.CustDiscount3rd_Member C WITH(NOLOCK) 
@@ -1794,6 +1809,7 @@ BEGIN
 					OR C.AgentDiscount	 <> csm.AgentDiscount			
 					OR C.PlayerDiscount <> csm.PlayerDiscount
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --Direct agent
 			SELECT C.custid, t.Sporttype, t.Bettype, C.SuperDiscount, C.MasterDiscount, C.AgentDiscount, C.PlayerDiscount
 			FROM dbo.CustDiscount3rd_Member C WITH(NOLOCK) 
@@ -1809,6 +1825,7 @@ BEGIN
 					OR C.AgentDiscount	 <> csm.AgentDiscount			
 					OR C.PlayerDiscount <> csm.PlayerDiscount
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --Direct member
 			SELECT C.custid, t.Sporttype, t.Bettype, C.SuperDiscount, C.MasterDiscount, C.AgentDiscount, C.PlayerDiscount
 			FROM dbo.CustDiscount3rd_Member C WITH(NOLOCK) 
@@ -1824,6 +1841,7 @@ BEGIN
 					OR C.AgentDiscount	 <> csm.AgentDiscount			
 					OR C.PlayerDiscount <> csm.PlayerDiscount
 					)
+				AND c.RepUpdateTime >= @StartTime
 
 			UPDATE csa
 			SET csa.Discount = cs.Discount,
@@ -1860,6 +1878,7 @@ BEGIN
 					OR (C.MaxWinLimit <> csa.MaxWinLimit AND t.HaveWinLimit = 1)
 					OR C.IsAutoReset <> csa.IsAutoReset
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct master
 			SELECT ci.custid, t.SportType, t.BetType
 				, CASE WHEN t.HaveWinLimit = 1 THEN c.MaxWinLimit ELSE NULL END
@@ -1876,6 +1895,7 @@ BEGIN
 					OR (C.MaxWinLimit <> csa.MaxWinLimit AND t.HaveWinLimit = 1)
 					OR C.IsAutoReset <> csa.IsAutoReset
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct agent
 			SELECT ci.custid, t.SportType, t.BetType
 				, CASE WHEN t.HaveWinLimit = 1 THEN c.MaxWinLimit ELSE NULL END
@@ -1892,6 +1912,7 @@ BEGIN
 					OR (C.MaxWinLimit <> csa.MaxWinLimit AND t.HaveWinLimit = 1)
 					OR C.IsAutoReset <> csa.IsAutoReset
 					)
+				AND c.RepUpdateTime >= @StartTime
 
 			--Member Level
 			INSERT INTO #MemberList_WL (CustId, Sporttype, Bettype, MaxWinLimit, MaxLossLimit, IsAutoReset)
@@ -1910,6 +1931,7 @@ BEGIN
 						OR (C.MaxWinLimit <> csm.MaxWinLimit AND t.HaveWinLimit = 1)
 						OR C.IsAutoReset <> csm.IsAutoReset
 						)
+					AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct master
 			SELECT ci.custid, t.SportType, t.BetType
 				, CASE WHEN t.HaveWinLimit = 1 THEN c.MaxWinLimit ELSE NULL END
@@ -1926,6 +1948,7 @@ BEGIN
 						OR (C.MaxWinLimit <> csm.MaxWinLimit AND t.HaveWinLimit = 1)
 						OR C.IsAutoReset <> csm.IsAutoReset
 						)
+					AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct agent
 			SELECT ci.custid, t.SportType, t.BetType
 				, CASE WHEN t.HaveWinLimit = 1 THEN c.MaxWinLimit ELSE NULL END
@@ -1942,6 +1965,7 @@ BEGIN
 						OR (C.MaxWinLimit <> csm.MaxWinLimit AND t.HaveWinLimit = 1)
 						OR C.IsAutoReset <> csm.IsAutoReset
 						)
+					AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct member
 			SELECT ci.custid, t.SportType, t.BetType
 				, CASE WHEN t.HaveWinLimit = 1 THEN c.MaxWinLimit ELSE NULL END
@@ -1958,6 +1982,7 @@ BEGIN
 						OR (C.MaxWinLimit <> csm.MaxWinLimit AND t.HaveWinLimit = 1)
 						OR C.IsAutoReset <> csm.IsAutoReset
 						)
+					AND c.RepUpdateTime >= @StartTime
 
 			UPDATE csa
 			SET csa.MaxWinLimit = cs.MaxWinLimiT,csa.MaxLossLimit = cs.MaxLossLimit, csa.IsAutoReset = cs.IsAutoReset,
@@ -1993,6 +2018,7 @@ BEGIN
 					OR (c.MaxPerMatch <> csa.MaxPerMatch AND t.HaveMaxPerMatch = 1)
 					OR (c.MaxPerNumber <> csa.MaxPerNumber AND t.HaveMaxPerNumber = 1)
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct master
 			SELECT C.custid, t.Sporttype, t.Bettype, c.Minbet, c.MaxBet
 					, CASE WHEN t.HaveMaxPerMatch = 1 THEN c.MaxPerMatch ELSE NULL END
@@ -2010,6 +2036,7 @@ BEGIN
 					OR (c.MaxPerMatch <> csa.MaxPerMatch AND t.HaveMaxPerMatch = 1)
 					OR (c.MaxPerNumber <> csa.MaxPerNumber AND t.HaveMaxPerNumber = 1)
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct agent
 			SELECT C.custid, t.Sporttype, t.Bettype, c.Minbet, c.MaxBet
 					, CASE WHEN t.HaveMaxPerMatch = 1 THEN c.MaxPerMatch ELSE NULL END
@@ -2027,6 +2054,7 @@ BEGIN
 					OR (c.MaxPerMatch <> csa.MaxPerMatch AND t.HaveMaxPerMatch = 1)
 					OR (c.MaxPerNumber <> csa.MaxPerNumber AND t.HaveMaxPerNumber = 1)
 					)
+				AND c.RepUpdateTime >= @StartTime
 
 			--Member Level
 			INSERT INTO #MemberList_BetSettingGame (custid, Sporttype, Bettype, Minbet, MaxBet, MaxPerMatch, MaxPerNumber)
@@ -2046,6 +2074,7 @@ BEGIN
 					OR (c.MaxPerMatch <> csm.MaxPerMatch AND t.HaveMaxPerMatch = 1)
 					OR (c.MaxPerNumber <> csm.MaxPerNumber AND t.HaveMaxPerNumber = 1)
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct master
 			SELECT C.custid, t.Sporttype, t.Bettype, c.Minbet, c.MaxBet
 					, CASE WHEN t.HaveMaxPerMatch = 1 THEN c.MaxPerMatch ELSE NULL END
@@ -2063,6 +2092,7 @@ BEGIN
 					OR (c.MaxPerMatch <> csm.MaxPerMatch AND t.HaveMaxPerMatch = 1)
 					OR (c.MaxPerNumber <> csm.MaxPerNumber AND t.HaveMaxPerNumber = 1)
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct agent
 			SELECT C.custid, t.Sporttype, t.Bettype, c.Minbet, c.MaxBet
 					, CASE WHEN t.HaveMaxPerMatch = 1 THEN c.MaxPerMatch ELSE NULL END
@@ -2080,6 +2110,7 @@ BEGIN
 					OR (c.MaxPerMatch <> csm.MaxPerMatch AND t.HaveMaxPerMatch = 1)
 					OR (c.MaxPerNumber <> csm.MaxPerNumber AND t.HaveMaxPerNumber = 1)
 					)
+				AND c.RepUpdateTime >= @StartTime
 			UNION ALL --direct member
 			SELECT C.custid, t.Sporttype, t.Bettype, c.Minbet, c.MaxBet
 					, CASE WHEN t.HaveMaxPerMatch = 1 THEN c.MaxPerMatch ELSE NULL END
@@ -2097,6 +2128,7 @@ BEGIN
 					OR (c.MaxPerMatch <> csm.MaxPerMatch AND t.HaveMaxPerMatch = 1)
 					OR (c.MaxPerNumber <> csm.MaxPerNumber AND t.HaveMaxPerNumber = 1)
 					)
+				AND c.RepUpdateTime >= @StartTime
 
 			UPDATE csa
 			SET csa.MinBet = cs.Minbet,       
