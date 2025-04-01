@@ -13,7 +13,7 @@ AS
 	Revisions:
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
-	
+	- 20250324@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Param's Explanation:
 		• @SettingType: 6,22: WinLossLimit
 						8: WinLimit
@@ -21,7 +21,7 @@ AS
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
 BEGIN
-	DECLARE	@Currency	TINYINT,
+	DECLARE	@Currency	INT,
 			@RoleID	TINYINT,
 			@SuperID	INT,
 			@MasterID	INT,

@@ -1,9 +1,4 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustSetting_CustomerLineInfoSelect] 
 	  @UserName		NVARCHAR(50)
 AS
@@ -15,6 +10,8 @@ AS
 
 	Param's Explanation:
 	
+	Revisions:
+		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
 	*/
 BEGIN
 	DECLARE @CustID INT
@@ -25,7 +22,7 @@ BEGIN
 		, @SRecommend INT
 		, @MRecommend INT
 		, @Recommend INT
-		, @currency TINYINT
+		, @currency INT
 		
 	SELECT @CustID = CustID
 		, @currency = currency
@@ -66,8 +63,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerLineInfoSelect] TO [wsv_nap]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerLineInfoSelect] TO [wsv_alp]
-GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_CustomerLineInfoSelect] TO [wsv_xnap]

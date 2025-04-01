@@ -43,6 +43,7 @@ AS
 		- 20240628@Johnson: scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20250324@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -52,7 +53,7 @@ BEGIN
 		)
 	RETURN;
 				
-	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency TINYINT
+	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency INT, @_SourceSite VARCHAR(10), @_SourceSiteID INT, @_SourceCurrency INT
 	DECLARE @AgentID INT, @RoleID TINYINT		
 	DECLARE @xmlStrDisabled XML, @xmlStrHidden XML, @xmlStrSync XML
 

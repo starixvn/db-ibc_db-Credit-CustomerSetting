@@ -56,6 +56,7 @@ AS
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 		- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20250324@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Parameter's explanation:
 		- @isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -68,7 +69,7 @@ BEGIN
 	RETURN;
 				
 	SELECT @ErrCode = 0
-	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT
+	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency INT
 
 	CREATE TABLE #ProductSettingDetail_tmp00(
 		[SettingType] [smallint] ,

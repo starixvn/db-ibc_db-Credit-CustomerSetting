@@ -13,7 +13,7 @@ AS
 
 	Revision:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
-
+		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
 
@@ -22,7 +22,7 @@ AS
 	
 	*/
 BEGIN
-	DECLARE	@Currency	TINYINT,
+	DECLARE	@Currency	INT,
 			@RoleID	TINYINT,
 			@SuperID	INT,
 			@MasterID	INT,

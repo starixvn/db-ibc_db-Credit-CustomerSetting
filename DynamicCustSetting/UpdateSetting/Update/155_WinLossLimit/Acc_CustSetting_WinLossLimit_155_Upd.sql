@@ -23,6 +23,7 @@ AS
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 	- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+	- 20250324@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Param's Explanation:
 	- @Limit:
 		22: WinLossLimit
@@ -53,7 +54,7 @@ BEGIN
 		, @SuperID		INT
 		, @RoleID		INT
 		, @SiteID		INT
-		, @Currency		TINYINT
+		, @Currency		INT
 		
 	DECLARE @OldLimitTbl TABLE (
 		  ProductID			TINYINT
