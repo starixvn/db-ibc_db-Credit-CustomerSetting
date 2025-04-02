@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerCreditInfoSel]
-	@RefCust NVARCHAR(50)
+	@RefCust VARCHAR(50)
 /*
 	Created: 20230306@Johnson
 	Task :  Get Credit available of new customer
@@ -10,12 +10,13 @@ ALTER PROCEDURE [dbo].[Acc_CustomerCreditInfoSel]
 	Revisions:
 		- 20230306@Johnson: get Credit available of new customer for clone account [redmine: #183697]
 		- 20240401@Elodie: The max credit per member got wrong calculation when creating multi-account [Redmine: #203180]
+		- 20250328@Elodie: Get info by username2 [Redmine: #197737]
 */	
 AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @roleid TINYINT,		
+	DECLARE @roleid TINYINT, @custid INT,	
 		@UplineID INT,
 		@Credit MONEY = 0,
 		@UplineCredit MONEY = 0,
@@ -31,6 +32,21 @@ BEGIN
 	FROM custinfo WITH(NOLOCK)
 	WHERE username = @RefCust
 	
+	IF @UplineID IS NULL
+	BEGIN
+		SELECT @custid = custid,		
+			@roleid = roleid,
+			@UplineID = CASE WHEN roleid = 1 THEN recommend 
+							WHEN roleid = 2 THEN mrecommend  
+							WHEN roleid = 3 THEN srecommend END
+		FROM customer WITH(NOLOCK)
+		WHERE username2 = @RefCust
+
+		SELECT @Credit = Credit
+		FROM custinfo WITH(NOLOCK)
+		WHERE custid = @custid
+	END
+
 	SELECT @UplineCredit = Credit 
 	FROM  custinfo WITH(NOLOCK)
 	WHERE custid = @UplineID
