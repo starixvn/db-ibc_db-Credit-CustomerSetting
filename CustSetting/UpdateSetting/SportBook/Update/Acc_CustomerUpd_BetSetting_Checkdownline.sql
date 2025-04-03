@@ -80,7 +80,7 @@ BEGIN
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
 			FROM BetSettingCheck t
-				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Agent WITH(NOLOCK) WHERE t.SportType = SportType AND t.BetType = BetType and t.custid = custid) a
+				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Agent b WITH(NOLOCK) WHERE t.SportType = b.SportType AND t.BetType = b.BetType and t.custid = b.custid) a
 			WHERE (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 						OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
 						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0)
@@ -104,7 +104,7 @@ BEGIN
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
 			FROM BetSettingCheck t
-				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Member WITH(NOLOCK) WHERE t.SportType = SportType AND t.BetType = BetType and t.custid = custid) a
+				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Member b WITH(NOLOCK) WHERE t.SportType = b.SportType AND t.BetType = b.BetType and t.custid = b.custid) a
 			WHERE (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 						OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
 						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0)
@@ -133,7 +133,7 @@ BEGIN
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
 			FROM BetSettingCheck t
-				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Agent WITH(NOLOCK) WHERE t.SportType = SportType AND t.BetType = BetType and t.custid = custid) a
+				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Agent b WITH(NOLOCK) WHERE t.SportType = b.SportType AND t.BetType = b.BetType and t.custid = b.custid) a
 			WHERE (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 						OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
 						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0)
@@ -158,7 +158,7 @@ BEGIN
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
 			FROM BetSettingCheck t
-				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Member WITH(NOLOCK) WHERE t.SportType = SportType AND t.BetType = BetType and t.custid = custid) a
+				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Member b WITH(NOLOCK) WHERE t.SportType = b.SportType AND t.BetType = b.BetType and t.custid = b.custid) a
 			WHERE (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 						OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
 						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0)
@@ -187,7 +187,7 @@ BEGIN
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
 			FROM BetSettingCheck t 
-				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Member WITH(NOLOCK) WHERE t.SportType = SportType AND t.BetType = BetType and t.custid = custid) a
+				CROSS APPLY (SELECT TOP 1 MaxBet, MaxPerMatch, MaxPayoutPerMatch FROM dbo.BetSetting_Member b WITH(NOLOCK) WHERE t.SportType = b.SportType AND t.BetType = b.BetType and t.custid = b.custid) a
 			WHERE (a.MaxBet > t.MaxBet AND t.MaxBet > 0)
 						OR (a.MaxPerMatch > t.MaxPerMatch AND t.MaxPerMatch > 0)
 						OR (a.MaxPayoutPerMatch > t.MaxPayoutPerMatch AND t.MaxPayoutPerMatch > 0)
