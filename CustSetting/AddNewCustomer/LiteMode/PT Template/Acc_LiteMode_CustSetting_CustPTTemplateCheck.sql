@@ -17,6 +17,7 @@ AS
 	Revisions: 
 		- 20230509@Johnson: initial sp [redmine: #179159]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20250404@Helios: Database - Remove un-used tables of credit - Remove redundant code [redmine: #221908]
 
 	Param's Explanation: 
 		- @Settings = '<Root>
@@ -64,29 +65,6 @@ BEGIN
 		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency) 
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel,MaxPT)
-		SELECT cs.sporttype, cs.bettype, 0 IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,
-			(CASE WHEN cs.spositiontaking<co.maxpositiontaking THEN cs.spositiontaking ELSE co.maxpositiontaking END)*100 MaxPT
-		FROM CustSetting cs WITH(NOLOCK) 
-			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
-			INNER JOIN #SportBettypeFilter s 
-				ON s.SportType = cs.sporttype  
-				AND s.BetType = cs.bettype 
-				AND s.IsLive = 0
-		WHERE cs.CustID = @custid
-			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
-		UNION ALL 
-		SELECT cs.sporttype, cs.bettype, 1 as IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,			
-			(CASE WHEN cs.slivepositiontaking<co.maxlivepositiontaking THEN cs.slivepositiontaking ELSE co.maxlivepositiontaking END)*100 MaxPT
-		FROM CustSetting cs WITH(NOLOCK) 
-			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
-			INNER JOIN #SportBettypeFilter s 
-				ON s.SportType = cs.sporttype  
-				AND s.BetType = cs.bettype 
-				AND s.IsLive = 1
-		WHERE cs.CustID = @custid
-			AND cs.sporttype = 1
-			AND cs.bettype IN (1,3,7,8)
-		UNION ALL
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
@@ -267,29 +245,6 @@ BEGIN
 		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
-		SELECT cs.sporttype, cs.bettype, 0 IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,
-			(CASE WHEN cs.mpositiontaking<co.maxpositiontaking then cs.mpositiontaking else co.maxpositiontaking end)*100 MaxPT
-		FROM CustSetting cs WITH(NOLOCK) 
-			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
-			INNER JOIN #SportBettypeFilter s 
-				ON s.SportType = cs.sporttype  
-				AND s.BetType = cs.bettype 
-				AND s.IsLive = 0
-		WHERE cs.CustID = @custid
-			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
-		UNION ALL 
-		SELECT cs.sporttype, cs.bettype, 1 as IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,			
-			(CASE WHEN cs.mlivepositiontaking<co.maxlivepositiontaking THEN cs.mlivepositiontaking ELSE co.maxlivepositiontaking END)*100 MaxPT
-		FROM CustSetting cs WITH(NOLOCK) 
-			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
-			INNER JOIN #SportBettypeFilter s 
-				ON s.SportType = cs.sporttype  
-				AND s.BetType = cs.bettype 
-				AND s.IsLive = 1
-		WHERE cs.CustID = @custid
-			AND cs.sporttype = 1
-			AND cs.bettype IN (1,3,7,8)
-		UNION ALL
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
@@ -470,39 +425,6 @@ BEGIN
 		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT, MinPT)
-		SELECT cs.sporttype, cs.bettype, 0 IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,
-			(CASE WHEN cs.apositiontaking<co.maxpositiontaking 
-					THEN CASE WHEN cs.apositiontaking < scs.apositiontaking THEN cs.apositiontaking ELSE scs.apositiontaking END 
-					ELSE CASE WHEN co.maxpositiontaking < scs.apositiontaking THEN co.maxpositiontaking ELSE scs.apositiontaking END 
-					END)*100 MaxPT,
-			co.minpositiontaking*100 as MinPT		
-		FROM CustSetting cs WITH(NOLOCK) 
-			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
-			INNER JOIN #SportBettypeFilter s 
-				ON s.SportType = cs.sporttype  
-				AND s.BetType = cs.bettype 
-				AND s.IsLive = 0
-			INNER JOIN custsetting as scs with(NOLOCK) on scs.custid = @srecommend and cs.sporttype = scs.sporttype and cs.bettype = scs.bettype
-		WHERE cs.CustID = @custid
-			AND 1 = case when cs.Sporttype = 2 AND cs.Bettype IN (7,8) THEN 0 ELSE 1 END
-		UNION ALL 
-		SELECT cs.sporttype, cs.bettype, 1 as IsLive,ProductID, @GroupID, @SubGroupID,SettingLevel,			
-			(CASE WHEN cs.alivepositiontaking<co.maxlivepositiontaking 
-					THEN CASE WHEN cs.alivepositiontaking < scs.alivepositiontaking THEN cs.alivepositiontaking ELSE scs.alivepositiontaking END 
-					ELSE CASE WHEN co.maxlivepositiontaking < scs.alivepositiontaking THEN co.maxlivepositiontaking ELSE scs.alivepositiontaking END 
-					END)*100 MaxPT,
-			co.minlivepositiontaking*100 as MinPT
-		FROM CustSetting cs WITH(NOLOCK) 
-			LEFT JOIN custoverride as co WITH (NOLOCK) ON cs.custid = co.custid AND cs.sporttype=co.sporttype and cs.bettype=co.bettype
-			INNER JOIN #SportBettypeFilter s 
-				ON s.SportType = cs.sporttype  
-				AND s.BetType = cs.bettype 
-				AND s.IsLive = 1
-			INNER JOIN custsetting as scs with(NOLOCK) on scs.custid = @srecommend and cs.sporttype = scs.sporttype and cs.bettype = scs.bettype	
-		WHERE cs.CustID = @custid
-			AND cs.sporttype = 1
-			AND cs.bettype IN (1,3,7,8)
-		UNION ALL
 		SELECT cs.SportType  
 			, cs.BetType  
 			, cs.IsLive  
