@@ -17,7 +17,7 @@ AS
 		- 20230310@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240418@Eden: HotFix - Master update Agent bet setting RNG Keno, but member bet setting still not updated [Redmine: #204104]
 		- 20240627@Johnson: Scale out DBCUST [redmine: #199915]
-		- 20250331@Elodie: Tune SP again [redmine: #222466]
+		- 20250331@Elodie: Tune SP [redmine: #222466]
 	Param's Explanation:
 */
 BEGIN
@@ -75,7 +75,7 @@ BEGIN
 										t.MaxPayoutPerMatch,
 										t.MaxPerNumber
 									FROM @BetSetting t
-									CROSS JOIN custInfo c 
+									CROSS JOIN custInfo c WITH (NOLOCK)
 									WHERE c.srecommend = @__CustId AND c.roleID IN (2,3)
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
@@ -99,7 +99,7 @@ BEGIN
 										t.MaxPayoutPerMatch,
 										t.MaxPerNumber
 									FROM @BetSetting t
-									CROSS JOIN custInfo c 
+									CROSS JOIN custInfo c WITH (NOLOCK)
 									WHERE c.srecommend = @__CustId AND c.roleID IN (1)
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
@@ -128,7 +128,7 @@ BEGIN
 										t.MaxPayoutPerMatch,
 										t.MaxPerNumber
 									FROM @BetSetting t
-									CROSS JOIN custInfo c 
+									CROSS JOIN custInfo c WITH (NOLOCK)
 									WHERE c.mrecommend = @__CustId AND c.roleID = 2
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
@@ -153,7 +153,7 @@ BEGIN
 										t.MaxPayoutPerMatch,
 										t.MaxPerNumber
 									FROM @BetSetting t
-									CROSS JOIN custInfo c 
+									CROSS JOIN custInfo c WITH (NOLOCK)
 									WHERE c.mrecommend = @__CustId AND c.roleID = 1
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
@@ -182,7 +182,7 @@ BEGIN
 										t.MaxPayoutPerMatch,
 										t.MaxPerNumber
 									FROM @BetSetting t
-									CROSS JOIN custInfo c 
+									CROSS JOIN custInfo c WITH (NOLOCK)
 									WHERE c.recommend = @__CustId AND c.roleID = 1
 								AND c.enabled = 1)
 			SELECT TOP 1 @__exist = 1
