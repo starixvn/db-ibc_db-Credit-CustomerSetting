@@ -14,6 +14,7 @@ AS
 	Revisions:
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 		- 20241311@Helios: Missing code Into CustMaxBetSetting_History [redmine: #213631]
+		- 20241205@Tacy: Capture old value - MaxPerNumber [RedmineId: #199571]
 		
 	Param's Explanation:
 	*/
@@ -32,11 +33,12 @@ BEGIN
 
 	CREATE TABLE #History_BetSetting(
 				CustID		INT,
-				SportType		SMALLINT, 
+				SportType	SMALLINT, 
 				BetType		SMALLINT, 
 				MaxBet		MONEY, 
-				MaxPerMatch		MONEY, 
-				UpdateTime		DATETIME
+				MaxPerMatch	MONEY, 
+				MaxPerNumber MONEY, 
+				UpdateTime	DATETIME
 			)
 
 	IF ISNULL(@JsonData,'') = ''
@@ -244,8 +246,8 @@ BEGIN
 					b.MaxPerMatch = @NewMaxPerMatch,
 					b.MaxPerNumber = @NewMaxPerNumber,
 					b.RepUpdateTime = dbo.f_GetDateTime2()
-				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch , GETDATE()
-					INTO #History_BetSetting(CustID,SportType,BetType,MaxBet,MaxPerMatch,UpdateTime)
+				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, deleted.MaxPerNumber, GETDATE()
+					INTO #History_BetSetting(CustID,SportType,BetType,MaxBet,MaxPerMatch,MaxPerNumber,UpdateTime)
 				FROM dbo.BetSetting3rd_Member b WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN @BetSetting_CustBatch new 
 						ON b.sporttype = new.sporttype AND b.bettype = new.bettype AND b.CustID= new.CustID 
@@ -258,26 +260,23 @@ BEGIN
 				--insert Bet Setting history
 				DELETE old				
 				FROM #History_BetSetting old
-				INNER JOIN @BetSetting_CustBatch new ON new.SportType=old.SportType AND new.BetType=old.BetType
-				WHERE new.MaxBet=old.MaxBet AND new.MaxPerMatch=old.MaxPerMatch
-
-				-- exclude case change MaxperNumber, don't change Maxbet , MaxPerMatch of NumberGame
-				DELETE old				
-				FROM #History_BetSetting old
-				INNER JOIN BetSetting3rd_Member m WITH (NOLOCK) ON old.CustID = m.CustID AND old.SportType = m.SportType AND old.BetType = m.BetType
-				INNER JOIN @BetSetting_CustBatch new ON new.CustID=m.CustID AND new.SportType=m.SportType AND new.BetType=m.BetType
-				WHERE old.SportType = 161
-				AND old.MaxBet=m.MaxBet AND old.MaxPerMatch=m.MaxPerMatch
-				AND new.MaxPerNumber = m.MaxPerNumber
+				INNER JOIN @BetSetting_CustBatch new ON new.CustID=old.CustID
+													AND new.SportType=old.SportType 
+													AND new.BetType=old.BetType
+				WHERE new.MaxBet=old.MaxBet 
+					AND new.MaxPerMatch=old.MaxPerMatch 
+					AND ISNULL(new.MaxPerNumber,0)=ISNULL(old.MaxPerNumber,0)
 
 				IF EXISTS (SELECT 1 FROM #History_BetSetting)
 				BEGIN
-					SET @CustList = (SELECT		CustID		AS '@CustID',
-										SportType		AS '@SportType',
+					SET @CustList = (SELECT		
+										CustID		AS '@CustID',
+										SportType	AS '@SportType',
 										BetType		AS '@BetType',
 										MaxBet		AS '@MaxBet',
-										MaxPerMatch		AS '@MaxPerMatch',
-										UpdateTime		AS '@UpdateTime'
+										MaxPerMatch	AS '@MaxPerMatch',
+										MaxPerNumber AS '@MaxPerNumber',
+										UpdateTime	AS '@UpdateTime'
 									FROM #History_BetSetting
 									FOR XML PATH('r'), ROOT ('root')
 									)

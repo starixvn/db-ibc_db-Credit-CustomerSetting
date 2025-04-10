@@ -23,7 +23,8 @@ AS
 
 	Revisions:
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
-		
+		- 20241205@Tacy: Capture old value - MaxPerNumber [RedmineId: #199571]
+
 	Param's Explanation:
 	- @BetLimit:
 		[
@@ -79,13 +80,15 @@ BEGIN
 		)
 
 	DECLARE @HistoryBetSettingTbl TABLE (
-		  CustID				INT
+		  CustID			INT
 		, SportType			SMALLINT
 		, BetType			SMALLINT
 		, MaxBet			MONEY
 		, MaxPerMatch		MONEY
+		, MaxPerNumber		MONEY
 		, UpdateTime		DATETIME
 		)
+
 	CREATE TABLE #ProductSettingDetail(
 		SettingType SMALLINT,
 		SportType SMALLINT,
@@ -318,8 +321,8 @@ BEGIN
 			a.MaxPerNumber = CASE WHEN t.SubType = 2 THEN t.MaxPerNumber END,
 			a.MinBet = t.MinBet,
 			a.RepUpdateTime = dbo.f_GetDateTime2()
-		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
-		INTO @HistoryBetSettingTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
+		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, deleted.MaxPerNumber, GETDATE()
+		INTO @HistoryBetSettingTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, MaxPerNumber, UpdateTime)
 		FROM @NewBetLimitTbl t
 			INNER JOIN BetSetting3rd_Member a WITH(ROWLOCK,UPDLOCK) ON t.SportType = a.SportType AND t.BetType = a.BetType
 		WHERE a.CustID = @custid
@@ -335,13 +338,14 @@ BEGIN
 			DELETE hbs
 			FROM @HistoryBetSettingTbl hbs
 				INNER JOIN @NewBetLimitTbl bs ON bs.SportType=hbs.SportType AND bs.BetType=hbs.BetType
-			WHERE (bs.MaxBet=hbs.MaxBet AND bs.MaxPerMatch=hbs.MaxPerMatch)
+			WHERE (bs.MaxBet=hbs.MaxBet AND bs.MaxPerMatch=hbs.MaxPerMatch AND ISNULL(bs.MaxPerNumber,0)=ISNULL(hbs.MaxPerNumber,0))
 
 			SET @CustList = (SELECT CustID		AS '@CustID',
 									SportType	AS '@SportType',
 									BetType		AS '@BetType',
 									MaxBet		AS '@MaxBet',
 									MaxPerMatch	AS '@MaxPerMatch',
+									MaxPerNumber AS '@MaxPerNumber',
 									'NULL'		AS '@StakeLevelList',
 									UpdateTime	AS '@UpdateTime'
 								FROM @HistoryBetSettingTbl
