@@ -8,7 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatus_160_Check]
 	, @GroupID			TINYINT		= 3
 	, @GroupType		TINYINT		= 160
 	, @siteid			SMALLINT
-	, @Currency			TINYINT
+	, @Currency			INT
 	, @ErrCode			INT			= 0		OUTPUT
 	, @MsgType			INT			= 0		OUTPUT
 	, @ErrMsg			NVARCHAR(MAX)	= ''		OUTPUT
@@ -24,7 +24,7 @@ AS
 	Revision: 
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]  
-
+		- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 	Param's Explanation:
 	@IsDisabled
 		[

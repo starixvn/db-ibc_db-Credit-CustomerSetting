@@ -17,6 +17,7 @@ AS
 		- 20230620@Luke: Limitation to update PT for new member [Redmine: #188950]
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 		- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+		- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 		
 */
 BEGIN
@@ -26,7 +27,7 @@ BEGIN
 		DECLARE @srecommend INT,
 				@mrecommend INT,
 				@recommend	INT , 
-				@Currency	TINYINT,
+				@Currency	INT,
 				@site		NVARCHAR(50),
 				@SiteID		INT	,
 				@roleActorid TINYINT = 5
