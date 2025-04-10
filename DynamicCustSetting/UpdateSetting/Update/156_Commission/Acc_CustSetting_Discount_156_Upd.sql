@@ -21,7 +21,7 @@ AS
 
 	Revisions:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
-
+		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Param's Explanation:
 		- @Discount:
 				'[
@@ -53,7 +53,7 @@ BEGIN
 		,	@SuperID				INT
 		,	@RoleID				INT
 		,	@SiteID				SMALLINT
-		,	@Currency				TINYINT
+		,	@Currency				INT
 		,	@SettingType			SMALLINT
 		
 		

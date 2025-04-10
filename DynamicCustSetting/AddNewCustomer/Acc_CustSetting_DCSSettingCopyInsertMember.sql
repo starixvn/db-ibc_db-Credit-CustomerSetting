@@ -47,7 +47,7 @@ AS
 		- 20230310@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240215@Eden: Unify Live Casino & RNG slot/RNG Casino [Redmine: #198960]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
-
+		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 	
 	*/
@@ -58,7 +58,7 @@ BEGIN
 	DECLARE @SettingMode BIT, @AgentID INT, @GroupType TINYINT, @GroupID TINYINT
 	SELECT @ErrCode = 0		
 
-	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency TINYINT
+	DECLARE @_Site VARCHAR(10), @_SiteID INT, @_Currency INT
 
 	--Get site/currency
 	SELECT @_Site = Site, @_Currency = currency FROM dbo.Customer WITH(NOLOCK) WHERE CustID = @CustID

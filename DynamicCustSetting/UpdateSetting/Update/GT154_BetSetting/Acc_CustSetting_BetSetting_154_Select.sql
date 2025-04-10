@@ -13,7 +13,7 @@ AS
 
 	Revision: 
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
-
+		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1 or 3 : UAT
 
@@ -26,7 +26,7 @@ AS
 		
 */
 BEGIN
-	DECLARE	@Currency	TINYINT,
+	DECLARE	@Currency	INT,
 			@RoleID		TINYINT,
 			@SuperID	INT,
 			@MasterID	INT,

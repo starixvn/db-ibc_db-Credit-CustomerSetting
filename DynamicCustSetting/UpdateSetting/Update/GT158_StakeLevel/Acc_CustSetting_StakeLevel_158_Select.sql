@@ -13,7 +13,7 @@ ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevel_158_Select
 	
 	Revisions:
 		- 20240215@Eden: Unify Live Casino & RNG slot/RNG Casino [Redmine: #198960]
-
+		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1,3: UAT
 
@@ -28,7 +28,7 @@ ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevel_158_Select
 BEGIN
     SET NOCOUNT ON;
 
-	DECLARE	@Currency	TINYINT
+	DECLARE	@Currency	INT
 		,	@RoleID		TINYINT
 		,	@srecommend	INT
 		,	@mrecommend	INT
