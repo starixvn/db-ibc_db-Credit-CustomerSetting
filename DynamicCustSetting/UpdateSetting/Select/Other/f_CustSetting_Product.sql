@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBAGE-bodb02,DBACC-bodb02" selecters="" viewers="" isFunction="1"></info>*/
+﻿/*<info serverAlias="DBAGE-bodb02,DBACC-bodb02, DBCUST-CustDB" selecters="" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION dbo.f_CustSetting_Product (@SettingStatus TINYINT)
 RETURNS TABLE  
 AS
@@ -6,7 +6,7 @@ AS
 	Created by: Helios  
 	Date: 20240314  
 	Task: Get data Product
-	DB: DBAGE/bodb02, DBACC-bodb02
+	DB: DBAGE/bodb02, DBACC-bodb02, DBCUST-CustDB
 	Original:   
 			
 	Revisions:  
