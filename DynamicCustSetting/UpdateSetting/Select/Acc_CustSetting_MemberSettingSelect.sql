@@ -20,6 +20,7 @@ AS
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]
 
  Param's Explanation:  
 	- @CustID: Member's ID  
@@ -133,14 +134,6 @@ BEGIN
 				AND pdt.IsLive = ptgr.islive  
 				AND ptgr.AgentID = @AgentID  
 	END
-	ELSE IF @SettingType = 2
-	BEGIN
-		DECLARE @Currency TINYINT  
-
-		SELECT @Currency = Currency  
-		FROM dbo.Customer c  
-		WHERE c.custID = @CustID 
-	END
 	
 	IF @RoleID = 4  
 	BEGIN  
@@ -172,25 +165,6 @@ BEGIN
 			AND mb.IsLive = superpt.islive  
 			AND superpt.custid = @SuperID 
 		END 
-		--Bet Limit Setting  
-		ELSE IF @SettingType = 2
-		BEGIN
-			SELECT pdt.SportType  
-				, pdt.BetType  
-				, bl.MinBet  
-				, bl.MaxBet  
-				, bl.MaxPerMatch  
-			FROM #ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft 
-				ON pdt.SportType = ft.sporttype
-					AND pdt.BetType = ft.bettype
-					AND pdt.IsLive = ft.islive
-					AND pdt.SettingType = ft.SettingType
-			INNER JOIN dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)  
-				ON pdt.SportType = bl.sporttype  
-				AND pdt.BetType = bl.bettype  
-				AND bl.custid = @CustID  
-		END  
 		--Product Status  
 		ELSE IF @SettingType = 4
 		BEGIN
@@ -244,25 +218,6 @@ BEGIN
 				AND mb.BetType = agentpt.bettype  
 				AND mb.IsLive = agentpt.islive  
 				AND agentpt.custid = @AgentID 
-		END
-		--Bet Limit Setting  
-		ELSE IF @SettingType = 2
-		BEGIN
-			SELECT pdt.SportType  
-				, pdt.BetType  
-				, bl.MinBet  
-				, bl.MaxBet  
-				, bl.MaxPerMatch  
-			FROM #ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft 
-				ON pdt.SportType = ft.sporttype
-					AND pdt.BetType = ft.bettype
-					AND pdt.IsLive = ft.islive
-					AND pdt.SettingType = ft.SettingType
-			INNER JOIN dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)  
-				ON pdt.SportType = bl.sporttype  
-				AND pdt.BetType = bl.bettype  
-				AND bl.custid = @CustID  
 		END
 		--Product Status  
 		ELSE IF @SettingType = 4
@@ -357,77 +312,6 @@ BEGIN
 				AND mb.IsLive = superpt.islive  
 				AND superpt.custid = @SuperID  
 		END
-		--Bet Limit Setting  
-		ELSE IF @SettingType = 2
-		BEGIN
-			SELECT pdt.SportType  
-				, pdt.BetType  
-				, bl.MinBet  
-				, bl.MaxBet  
-				, bl.MaxPerMatch  
-				, CASE   
-				WHEN sbl.minbet >= mbl.minbet  
-				AND sbl.minbet >= abl.minbet  
-				AND sbl.minbet >= pbs.MinBet  
-				THEN sbl.minbet  
-				WHEN mbl.minbet >= sbl.minbet  
-				AND mbl.minbet >= abl.minbet  
-				AND mbl.minbet >= pbs.MinBet  
-				THEN mbl.minbet  
-				WHEN abl.minbet >= sbl.minbet  
-				AND abl.minbet >= mbl.minbet  
-				AND abl.minbet >= pbs.MinBet  
-				THEN abl.minbet  
-				WHEN pbs.MinBet >= sbl.minbet  
-				AND pbs.MinBet >= mbl.minbet  
-				AND pbs.MinBet >= abl.minbet  
-				THEN pbs.MinBet  
-				END AS MinBetMin  
-				, CASE   
-				WHEN ((sbl.maxbet <= mbl.maxbet OR mbl.maxbet=0)  
-				AND (sbl.maxbet <= abl.maxbet OR abl.maxbet=0)) AND sbl.maxbet <> 0  
-				THEN sbl.maxbet  
-				WHEN ((mbl.maxbet <= sbl.maxbet OR sbl.maxbet=0)  
-				AND (mbl.maxbet <= abl.maxbet OR abl.maxbet=0)) AND mbl.maxbet <> 0  
-				THEN mbl.maxbet  
-				ELSE abl.maxbet  
-				END AS MaxBetMax  
-				, CASE   
-				WHEN ((sbl.maxpermatch <= mbl.maxpermatch OR mbl.maxpermatch=0)  
-				AND (sbl.maxpermatch <= abl.maxpermatch OR abl.maxpermatch=0)) AND sbl.maxpermatch <> 0  
-				THEN sbl.maxpermatch  
-				WHEN ((mbl.maxpermatch <= sbl.maxpermatch OR sbl.maxpermatch=0)  
-				AND (mbl.maxpermatch <= abl.maxpermatch OR abl.maxpermatch=0)) AND mbl.maxpermatch <> 0  
-				THEN mbl.maxpermatch  
-				ELSE abl.maxpermatch  
-				END AS MaxPerMatchMax  
-			FROM #ProductSettingDetail pdt WITH (NOLOCK)  
-			INNER JOIN #SportBettypeFilter ft 
-				ON pdt.SportType = ft.sporttype
-					AND pdt.BetType = ft.bettype
-					AND pdt.IsLive = ft.islive
-					AND pdt.SettingType = ft.SettingType
-			INNER JOIN dbo.CustBetSetting3rd_Member bl WITH (NOLOCK)  
-				ON pdt.SportType = bl.sporttype  
-				AND pdt.BetType = bl.bettype  
-				AND bl.custid = @CustID  
-			INNER JOIN dbo.ProductBetSetting pbs  
-				ON pbs.SportType = bl.sporttype  
-				AND pbs.BetType = bl.bettype  
-				AND pbs.Currency = @Currency  
-			INNER JOIN dbo.CustBetSetting3rd_Agent abl WITH (NOLOCK)  
-				ON pdt.SportType = abl.sporttype  
-				AND pdt.BetType = abl.bettype  
-				AND abl.custid = @AgentID  
-			INNER JOIN dbo.CustBetSetting3rd_Agent mbl WITH (NOLOCK)  
-				ON pdt.SportType = mbl.sporttype  
-				AND pdt.BetType = mbl.bettype  
-				AND mbl.custid = @MasterID  
-			INNER JOIN dbo.CustBetSetting3rd_Agent sbl WITH (NOLOCK)  
-				ON pdt.SportType = sbl.sporttype  
-				AND pdt.BetType = sbl.bettype  
-				AND sbl.custid = @SuperID  
-		END  
 		--Product Status  
 		ELSE IF @SettingType = 4
 		BEGIN

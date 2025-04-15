@@ -14,8 +14,9 @@ AS
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 	- 20250324@Johnson: change datatype for ExchangeID[redmine: #221098]
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
-		• @SettingType: 6,22: WinLossLimit
+		- @SettingType: 6,22: WinLossLimit
 						8: WinLimit
 						12: LossLimit
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -107,7 +108,7 @@ BEGIN
 										WHEN @RoleID = 2 THEN @MasterID END
 			ORDER BY sbf.Child_DisplayOrder
 		END
-	ELSE
+	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member 
 		BEGIN
 			SELECT	CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
 					wl.SportType,
@@ -131,8 +132,54 @@ BEGIN
 				AND uwl.CustId = @AgentID
 			ORDER BY sbf.Child_DisplayOrder
 		END
-	--END
-	
+	ELSE IF @RoleID = 1 AND @AgentID = -4 --Super Direct Member
+		BEGIN
+			SELECT	CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
+					wl.SportType,
+					wl.BetType,
+					wl.MaxWinLimit,
+					uwl.MaxWinLimit AS MaxWinRange,
+					wl.MaxLossLimit,
+					gs.MinLossLimit AS MinLossRange,
+					uwl.MaxLossLimit AS MaxLossRange,
+					wl.IsAutoReset,
+					uwl.IsAutoReset AS IsAutoResetUpline,
+					sbf.SubType,
+					sbf.Child_DisplayOrder
+			FROM CustWinLossLimit_Member wl WITH (NOLOCK)
+			INNER JOIN	#ProductSettingDetail AS sbf
+					ON	sbf.Bettype = wl.BetType
+					AND	sbf.SportType = wl.SportType
+				INNER JOIN CustWinLossLimit_Agent uwl WITH (NOLOCK) ON wl.SportType = uwl.SportType AND wl.BetType = uwl.BetType
+				INNER JOIN LossLimit_GlobalSetting gs WITH (NOLOCK) ON gs.ProductId = sbf.ProductID AND gs.ExchangeId = @Currency
+			WHERE wl.CustId = @CustID 
+				AND uwl.CustId = @SuperID
+			ORDER BY sbf.Child_DisplayOrder
+		END
+	ELSE IF @RoleID = 1 AND @AgentID = -3 --Master Direct Member
+		BEGIN
+			SELECT	CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
+					wl.SportType,
+					wl.BetType,
+					wl.MaxWinLimit,
+					uwl.MaxWinLimit AS MaxWinRange,
+					wl.MaxLossLimit,
+					gs.MinLossLimit AS MinLossRange,
+					uwl.MaxLossLimit AS MaxLossRange,
+					wl.IsAutoReset,
+					uwl.IsAutoReset AS IsAutoResetUpline,
+					sbf.SubType,
+					sbf.Child_DisplayOrder
+			FROM CustWinLossLimit_Member wl WITH (NOLOCK)
+			INNER JOIN	#ProductSettingDetail AS sbf
+					ON	sbf.Bettype = wl.BetType
+					AND	sbf.SportType = wl.SportType
+				INNER JOIN CustWinLossLimit_Agent uwl WITH (NOLOCK) ON wl.SportType = uwl.SportType AND wl.BetType = uwl.BetType
+				INNER JOIN LossLimit_GlobalSetting gs WITH (NOLOCK) ON gs.ProductId = sbf.ProductID AND gs.ExchangeId = @Currency
+			WHERE wl.CustId = @CustID 
+				AND uwl.CustId = @MasterID
+			ORDER BY sbf.Child_DisplayOrder
+		END
 	
 	DROP TABLE #ProductSettingDetail
 END

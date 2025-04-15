@@ -1,5 +1,5 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_xnap" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatus_160_Select] 
+ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatus_160_Select] 
 	  @CustID			INT
 	, @GroupID			TINYINT	 = 3
 	, @GroupType		TINYINT	 = 160  
@@ -14,31 +14,35 @@ AS
 
 	Revision:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
 
 	EXEC Acc_Admin_DisableNewProductStatus_160_Select @CustID = 112216817, @SettingStatus = 3 , @GroupID = 3 , @GroupType = 160
-	
-	
 	*/
 BEGIN
-	DECLARE	@Currency		TINYINT,
+	DECLARE	@Currency	TINYINT,
 			@RoleID		TINYINT,
-			@SuperID		INT,
-			@MasterID		INT,
-			@AgentID		INT,
-			@SiteID		INT
+			@SuperID	INT,
+			@MasterID	INT,
+			@AgentID	INT,
+			@SiteID		INT,
+			@UplineID	INT
 
 	CREATE TABLE #DownlineEnableStatus (	Sporttype SMALLINT, Bettype SMALLINT, 
 											TotalEnabledMasters INT,
 											TotalEnabledAgents INT,
-											TotalEnabledMembers INT)
+											TotalEnabledMembers INT,
+											TotalEnabledSuperDirectMembers INT,
+											TotalEnabledMasterDirectMembers INT)
 
 	CREATE TABLE #DownlineDisableStatus (	Sporttype SMALLINT, Bettype SMALLINT, 
 											TotalDisabledMasters INT,
 											TotalDisabledAgents INT,
-											TotalDisabledMembers INT)
+											TotalDisabledMembers INT,
+											TotalDisabledSuperDirectMembers INT,
+											TotalDisabledMasterDirectMembers INT)
 
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT, Child_DisplayOrder INT)
 
@@ -93,11 +97,13 @@ BEGIN
 
 	IF @RoleID = 4
 	BEGIN
-		INSERT INTO #DownlineDisableStatus (Sporttype, Bettype, TotalDisabledMasters, TotalDisabledAgents, TotalDisabledMembers)
+		INSERT INTO #DownlineDisableStatus (Sporttype, Bettype, TotalDisabledMasters, TotalDisabledAgents, TotalDisabledMembers, TotalDisabledSuperDirectMembers, TotalDisabledMasterDirectMembers)
 		SELECT	ft.SportType, ft.Bettype,
 				SUM(CASE WHEN roleid = 3 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN roleid = 2 THEN 1 ELSE 0 END),
-				SUM(CASE WHEN roleid = 1 THEN 1 ELSE 0 END)
+				SUM(CASE WHEN roleid = 1 AND ci.recommend NOT IN (-3,-4) THEN 1 ELSE 0 END),
+				SUM(CASE WHEN roleid = 1 AND ci.recommend = -4 THEN 1 ELSE 0 END),
+				SUM(CASE WHEN roleid = 1 AND ci.recommend = -3 THEN 1 ELSE 0 END)
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON ci.srecommend = @CustID AND ci.custid <> @CustID
@@ -107,11 +113,13 @@ BEGIN
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 		GROUP BY ft.SportType, ft.Bettype
 
-		INSERT INTO #DownlineEnableStatus (Sporttype, Bettype, TotalEnabledMasters, TotalEnabledAgents, TotalEnabledMembers)
+		INSERT INTO #DownlineEnableStatus (Sporttype, Bettype, TotalEnabledMasters, TotalEnabledAgents, TotalEnabledMembers, TotalEnabledSuperDirectMembers, TotalEnabledMasterDirectMembers)
 		SELECT	ft.SportType, ft.Bettype,
 				SUM(CASE WHEN roleid = 3 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN roleid = 2 THEN 1 ELSE 0 END),
-				SUM(CASE WHEN roleid = 1 THEN 1 ELSE 0 END)
+				SUM(CASE WHEN roleid = 1 AND ci.recommend NOT IN (-3,-4) THEN 1 ELSE 0 END),
+				SUM(CASE WHEN roleid = 1 AND ci.recommend = -4 THEN 1 ELSE 0 END),
+				SUM(CASE WHEN roleid = 1 AND ci.recommend = -3 THEN 1 ELSE 0 END)
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON ci.srecommend = @CustID AND ci.custid <> @CustID
@@ -134,6 +142,10 @@ BEGIN
 				ISNULL(TotalEnabledAgents,0) AS TotalEnabledAgents, 
 				ISNULL(TotalDisabledMembers,0) AS TotalDisabledMembers,
 				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers,
+				ISNULL(dsd.TotalDisabledSuperDirectMembers,0) AS TotalDisabledSuperDirectMembers,
+				ISNULL(dse.TotalEnabledSuperDirectMembers,0) AS TotalEnabledSuperDirectMembers,
+				ISNULL(dsd.TotalDisabledMasterDirectMembers,0) AS TotalDisabledMasterDirectMembers,
+				ISNULL(dse.TotalEnabledMasterDirectMembers,0) AS TotalEnabledMasterDirectMembers,
 				ft.ParentSportType,
 				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
@@ -146,11 +158,12 @@ BEGIN
 	END	
 	ELSE IF @RoleID = 3
 	BEGIN
-		INSERT INTO #DownlineDisableStatus (Sporttype, Bettype, TotalDisabledMasters, TotalDisabledAgents, TotalDisabledMembers)
+		INSERT INTO #DownlineDisableStatus (Sporttype, Bettype, TotalDisabledMasters, TotalDisabledAgents, TotalDisabledMembers, TotalDisabledMasterDirectMembers)
 		SELECT	ft.SportType, ft.Bettype,
 				SUM(CASE WHEN roleid = 3 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN roleid = 2 THEN 1 ELSE 0 END),
-				SUM(CASE WHEN roleid = 1 THEN 1 ELSE 0 END)
+				SUM(CASE WHEN roleid = 1 AND ci.recommend NOT IN (-3,-4) THEN 1 ELSE 0 END),
+				SUM(CASE WHEN roleid = 1 AND ci.recommend = -3 THEN 1 ELSE 0 END)
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON ci.mrecommend = @CustID AND ci.custid <> @CustID
@@ -160,11 +173,12 @@ BEGIN
 			AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 		GROUP BY ft.SportType, ft.Bettype
 
-		INSERT INTO #DownlineEnableStatus (Sporttype, Bettype, TotalEnabledMasters, TotalEnabledAgents, TotalEnabledMembers)
+		INSERT INTO #DownlineEnableStatus (Sporttype, Bettype, TotalEnabledMasters, TotalEnabledAgents, TotalEnabledMembers, TotalEnabledMasterDirectMembers)
 		SELECT	ft.SportType, ft.Bettype,
 				SUM(CASE WHEN roleid = 3 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN roleid = 2 THEN 1 ELSE 0 END),
-				SUM(CASE WHEN roleid = 1 THEN 1 ELSE 0 END)
+				SUM(CASE WHEN roleid = 1 AND ci.recommend NOT IN (-3,-4) THEN 1 ELSE 0 END),
+				SUM(CASE WHEN roleid = 1 AND ci.recommend = -3 THEN 1 ELSE 0 END)
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON ci.mrecommend = @CustID AND ci.custid <> @CustID
@@ -187,6 +201,10 @@ BEGIN
 				ISNULL(TotalEnabledAgents,0) AS TotalEnabledAgents, 
 				ISNULL(TotalDisabledMembers,0) AS TotalDisabledMembers,
 				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers,
+				0 AS TotalDisabledSuperDirectMembers,
+				0 AS TotalEnabledSuperDirectMembers,
+				ISNULL(dsd.TotalDisabledMasterDirectMembers,0) AS TotalDisabledMasterDirectMembers,
+				ISNULL(dse.TotalEnabledMasterDirectMembers,0) AS TotalEnabledMasterDirectMembers,
 				ft.ParentSportType,
 				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
@@ -241,6 +259,10 @@ BEGIN
 				ISNULL(TotalEnabledAgents,0) AS TotalEnabledAgents, 
 				ISNULL(TotalDisabledMembers,0) AS TotalDisabledMembers,
 				ISNULL(TotalEnabledMembers,0) AS TotalEnabledMembers,
+				0 AS TotalDisabledSuperDirectMembers,
+				0 AS TotalEnabledSuperDirectMembers,
+				0 AS TotalDisabledMasterDirectMembers,
+				0 AS TotalEnabledMasterDirectMembers,
 				ft.ParentSportType,
 				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
@@ -252,8 +274,13 @@ BEGIN
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 		ORDER BY ft.Child_DisplayOrder
 	END	
-	ELSE 
+	ELSE IF @RoleID = 1
 	BEGIN
+		SELECT @UplineID = CASE WHEN @AgentID = -4 THEN @SuperID 
+								WHEN @AgentID = -3 THEN @MasterID 
+								ELSE @AgentID
+							END
+		
 		SELECT	ft.SportType,
 				ft.BetType,
 				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) as IsSync,
@@ -267,12 +294,16 @@ BEGIN
 				0 AS TotalEnabledAgents, 
 				0 AS TotalDisabledMembers,
 				0 AS TotalEnabledMembers,
+				0 AS TotalDisabledSuperDirectMembers,
+				0 AS TotalEnabledSuperDirectMembers,
+				0 AS TotalDisabledMasterDirectMembers,
+				0 AS TotalEnabledMasterDirectMembers,
 				ft.ParentSportType,
 				ft.ParentBetType
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
-			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @AgentID
+			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @UplineID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 		ORDER BY ft.Child_DisplayOrder
 	END

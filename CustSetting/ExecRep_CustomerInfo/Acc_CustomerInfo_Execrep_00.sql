@@ -76,6 +76,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 			- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 			- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+			- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT

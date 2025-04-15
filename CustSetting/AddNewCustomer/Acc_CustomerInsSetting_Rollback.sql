@@ -14,6 +14,7 @@ AS
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]   
 
 	Param's Explanation:
 
@@ -76,8 +77,6 @@ BEGIN
 		INTO CustPTSetting3rd_Agent_Del_Inhouse(custid,SportType,Bettype,IsLive,RepUpdateTime)
 		WHERE CustID = @CustID
 		
-		DELETE FROM CustBetSetting_Agent		WITH (ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustBetSetting3rd_Agent		WITH (ROWLOCK) WHERE CustID = @CustID					
 		
 		DELETE FROM CustDiscount3rd_Agent		WITH (ROWLOCK) 
 		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()
@@ -129,8 +128,6 @@ BEGIN
 		INTO CustPTSetting3rd_Member_Del_Inhouse(custid,SportType,Bettype,IsLive,RepUpdateTime)
 		WHERE CustID = @CustID
 		
-		DELETE FROM CustBetSetting_Member		WITH(ROWLOCK) WHERE CustID = @CustID
-		DELETE FROM CustBetSetting3rd_Member	WITH(ROWLOCK) WHERE CustID = @CustID
 		
 		DELETE FROM CustDiscount3rd_Member		WITH(ROWLOCK) 
 		OUTPUT DELETED.custid, DELETED.SportType, DELETED.Bettype, dbo.f_GetDateTime2()

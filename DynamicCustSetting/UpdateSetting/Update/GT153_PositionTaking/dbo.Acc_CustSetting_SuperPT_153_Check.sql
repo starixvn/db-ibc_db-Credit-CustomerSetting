@@ -18,6 +18,7 @@ AS
 
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 
 	Parameter's Explanations:
 		- @PT = <ROOT>
@@ -127,6 +128,8 @@ BEGIN
 
 	INSERT INTO #AgentTbl(CustID, UserName)
 	SELECT CustID, username FROM CustInfo WITH (NOLOCK) WHERE srecommend = @SuperID AND roleid = 2 AND Enabled = 1
+	UNION ALL SELECT -4, NULL
+	UNION ALL SELECT -3, NULL
 
 	SELECT @ErrCode = MAX (CASE	WHEN s.SuperPT < 0 OR s.SuperPT > ps.MaxPT OR s.MasterPT < 0 OR s.MasterPT > ps.MaxPT OR s.AgentPT < 0 OR s.AgentPT > ps.MaxPT
 									OR s.SuperMinPT < 0 OR s.SuperPT < s.MasterPT OR s.MasterPT < s.AgentPT THEN 200 
@@ -329,8 +332,8 @@ BEGIN
 					SELECT b.SportType, b.BetType, b.IsLive, username, b.ProductID, b.SettingLevel, ROW_NUMBER() OVER(ORDER BY b.SportType, b.BetType, b.IsLive) rn
 					FROM CustPTSetting3rd_Member cs WITH(NOLOCK) 
 						INNER JOIN @tblPT b ON cs.sporttype = b.sporttype AND cs.bettype = b.bettype AND cs.IsLive = b.IsLive
-						INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = cs.custid					
-					WHERE c.custid IN (SELECT custid FROM CustInfo WITH (NOLOCK) WHERE recommend IN (SELECT CustID FROM #AgentTbl))
+						INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = cs.custid	AND c.srecommend = @SuperID				
+					WHERE c.recommend IN (SELECT CustID FROM #AgentTbl)
 						AND c.roleid     = 1
 						AND c.Enabled    = 1
 						AND (1*cs.SuperPT+cs.MasterPT+cs.AgentPT>b.SuperPT--convert datatype to ignore sql exception
@@ -407,8 +410,8 @@ BEGIN
 					SELECT b.SportType, b.BetType, b.IsLive, username, b.ProductID, b.SettingLevel, ROW_NUMBER() OVER(ORDER BY b.SportType, b.BetType, b.IsLive) rn
 					FROM CustPTSetting3rd_Member cs WITH(NOLOCK) 
 						INNER JOIN @tblPT b ON cs.sporttype = b.sporttype AND cs.bettype = b.bettype AND cs.IsLive = b.IsLive
-						INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = cs.custid					
-					WHERE c.custid IN (SELECT custid FROM CustInfo WITH (NOLOCK) WHERE recommend IN (SELECT CustID FROM #AgentTbl))
+						INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = cs.custid	AND c.srecommend = @SuperID				
+					WHERE c.recommend IN (SELECT CustID FROM #AgentTbl)
 						   AND c.roleid     = 1
 						   AND c.Enabled    = 1
 						   AND cs.MasterPT + cs.AgentPT > b.MasterPT
@@ -482,8 +485,8 @@ BEGIN
 					 SELECT b.SportType, b.BetType, b.IsLive, username, b.ProductID, b.SettingLevel, ROW_NUMBER() OVER(ORDER BY b.SportType, b.BetType, b.IsLive) rn				 
 					 FROM CustPTSetting3rd_Member cs WITH(NOLOCK) 
 						INNER JOIN @tblPT b ON cs.sporttype = b.sporttype AND cs.bettype = b.bettype AND cs.IsLive = b.IsLive
-						INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = cs.custid					
-					WHERE c.custid IN (SELECT custid FROM CustInfo WITH (NOLOCK) WHERE recommend IN (SELECT CustID FROM #AgentTbl))
+						INNER JOIN custinfo c WITH(NOLOCK) ON c.custid = cs.custid AND c.srecommend = @SuperID					
+					WHERE c.recommend IN (SELECT CustID FROM #AgentTbl)
 					   AND c.roleid     = 1
 					   AND c.Enabled    = 1
 					   AND cs.AgentPT > b.AgentPT

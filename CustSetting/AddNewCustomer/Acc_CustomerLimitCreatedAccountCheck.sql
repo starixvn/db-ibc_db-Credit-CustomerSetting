@@ -25,6 +25,7 @@ AS
  - 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
  - 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
  - 20240704@Helen: Revise code for scaleout dbcust - remove rule check IP - [Redmine:#206823]
+ - 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 
  */
 BEGIN
@@ -55,136 +56,210 @@ BEGIN
 	-- Limit maximum account created per day by Site (300 accounts, IBCIndo only)
 	DECLARE 
 			@DefaultValueLimitAcc		INT = 0, 
+			@DirectMember_LimitAcc		INT = 0, 
 			@lastAccountToDay			INT = 0, 
 			@CurrentDate				DATETIME,
 			@Site						VARCHAR(10)
 
 	SET @CurrentDate  = CONVERT(DATE,GETDATE())
-	SET @Site = (SELECT Site FROM Customer WITH (NOLOCK) where custid = @Srecommend)
-	SET @DefaultValueLimitAcc = ISNULL((SELECT Limit FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)),0)
+	SET @Site = (SELECT Site FROM Customer WITH (NOLOCK) where custid = @custid)
+	
+	SELECT @DefaultValueLimitAcc = ISNULL(Limit,0)
+		,@DirectMember_LimitAcc = ISNULL(DirectMember_Limit,0)
+	FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)
 	
 	-- Cannot create more 1296 accounts Master,Agent. And 46656 accounts Member
 	DECLARE @seqname	VARCHAR(10) = ''
 	DECLARE @downline	INT
 
 	---------------------------------------------------------------------------------------------------------------------
-
-	IF @RuleID = 'AG'			-- SP related : Acc_CustomerInsMember_Ag
+	IF @RuleID IN('AG','DAG') -- Normal member, Super/master direct member
 	BEGIN
-		-- Limit Create New Account
-		 IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid)) 
-		 BEGIN
-			SELECT @cntDownlines = COUNT(1) 
-				FROM customer WITH(NOLOCK) 
-				WHERE recommend = @custid 
-					AND creatdate >= @today
-					AND roleid = 1
-			IF @cntDownlines >=5
-			BEGIN
-				SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry, you can only create 5 members per day, please try again tomorrow.'
-										ELSE [dbo].[f_Get_MsgNamebyMsgID](40062, @Language) 
-								 END,
-					   @ErrCode = 1002
-				RETURN
-			END
-		 END
-		--END
-
-		-- Agent can only create up to 200 new members every day by QR
-		IF @IsQRCode = 1
+		IF @RuleID = 'DAG' -- SP related : Acc_CustomerInsMember_DirectMember_Validate
 		BEGIN
-			DECLARE @QRMemberCount INT
-
-			SELECT @QRMemberCount = COUNT(1) 
-			FROM Customer a WITH(NOLOCK) 
-				INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
-			WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
-
-			IF @QRMemberCount >= 200
+			-- Limit Create New Account
+			IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend)) 
 			BEGIN
-				SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'You can only create up to 200 new members every day by this function.'
-										ELSE [dbo].[f_Get_MsgNamebyMsgID](40051,@Language)
-									END,
-					   @ErrCode = 40051
-				RETURN
+				IF @RoleID = 4
+				BEGIN
+					SELECT @cntDownlines = COUNT(1) 
+						FROM customer WITH(NOLOCK) 
+						WHERE srecommend = @custid 
+							AND creatdate >= @today
+							AND recommend = -4
+							AND roleid = 1
+				END
+				ELSE IF @RoleID = 3
+				BEGIN
+					SELECT @cntDownlines = COUNT(1) 
+						FROM customer WITH(NOLOCK) 
+						WHERE mrecommend = @custid 
+							AND creatdate >= @today
+							AND recommend = -3
+							AND roleid = 1
+				END
+
+				IF @cntDownlines >=5
+				BEGIN
+					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry, you can only create 5 members per day, please try again tomorrow.'
+											ELSE [dbo].[f_Get_MsgNamebyMsgID](40062, @Language) 
+										END,
+							@ErrCode = 1002
+					RETURN
+				END
+			END
+
+			-- Limit maximum account created per day by Site (300 accounts, IBCIndo only)
+			IF @DirectMember_LimitAcc > 0
+			BEGIN
+				IF @RoleID = 4
+				BEGIN
+					SET @lastAccountToDay = (SELECT  COUNT(1)
+											FROM Customer c WITH(NOLOCK)
+											WHERE c.srecommend = @custid
+												AND c.roleid = 1
+												AND c.recommend = -4
+												AND c.creatdate  > @CurrentDate
+											)
+				END
+				ELSE IF @RoleID = 3
+				BEGIN
+					SET @lastAccountToDay = (SELECT  COUNT(1)
+											FROM Customer c WITH(NOLOCK)
+											WHERE c.mrecommend = @custid
+												AND c.roleid = 1
+												AND c.recommend = -3
+												AND c.creatdate  > @CurrentDate
+											)
+				END
+
+				IF @lastAccountToDay + 1 > @DirectMember_LimitAcc
+				BEGIN
+					SELECT	@ErrMsg = CASE @Language  WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DirectMember_LimitAcc AS VARCHAR(10)) +'.'
+											ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DirectMember_LimitAcc AS VARCHAR(10))),'(300)',CAST(@DirectMember_LimitAcc AS VARCHAR(10)))
+										END,
+							@ErrCode = 40056	
+					RETURN
+				END
 			END
 		END
-
-		-- Limit maximum account created per day by Site (300 accounts, IBCIndo only)
-		IF @DefaultValueLimitAcc > 0
+		IF @RuleID = 'AG'  -- SP related : Acc_CustomerInsMember_Ag
 		BEGIN
-			SET @lastAccountToDay = (SELECT  COUNT(1)
-					FROM Customer c WITH(NOLOCK)
-					WHERE c.recommend = @recommend
-								AND c.roleid = 1
-								AND c.creatdate  > @CurrentDate)
-			IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
+			-- Limit Create New Account
+			 IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid)) 
+			 BEGIN
+				SELECT @cntDownlines = COUNT(1) 
+					FROM customer WITH(NOLOCK) 
+					WHERE recommend = @custid 
+						AND creatdate >= @today
+						AND roleid = 1
+				IF @cntDownlines >=5
+				BEGIN
+					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry, you can only create 5 members per day, please try again tomorrow.'
+											ELSE [dbo].[f_Get_MsgNamebyMsgID](40062, @Language) 
+									 END,
+						   @ErrCode = 1002
+					RETURN
+				END
+			 END
+			--END
+
+			-- Agent can only create up to 200 new members every day by QR
+			IF @IsQRCode = 1
 			BEGIN
-				SELECT	@ErrMsg = CASE @Language  WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
-										ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10))),'(300)',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
-									END,
-						@ErrCode = 40056	
-				RETURN
+				DECLARE @QRMemberCount INT
+
+				SELECT @QRMemberCount = COUNT(1) 
+				FROM Customer a WITH(NOLOCK) 
+					INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
+				WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+
+				IF @QRMemberCount >= 200
+				BEGIN
+					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'You can only create up to 200 new members every day by this function.'
+											ELSE [dbo].[f_Get_MsgNamebyMsgID](40051,@Language)
+										END,
+						   @ErrCode = 40051
+					RETURN
+				END
 			END
-		END
+
+			-- Limit maximum account created per day by Site (300 accounts, IBCIndo only)
+			IF @DefaultValueLimitAcc > 0
+			BEGIN
+				SET @lastAccountToDay = (SELECT  COUNT(1)
+						FROM Customer c WITH(NOLOCK)
+						WHERE c.recommend = @recommend
+							AND c.roleid = 1
+							AND c.creatdate  > @CurrentDate)
+				IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
+				BEGIN
+					SELECT	@ErrMsg = CASE @Language  WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
+											ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10))),'(300)',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
+										END,
+							@ErrCode = 40056	
+					RETURN
+				END
+			END
 		
-		-- Cannot create more 46656 accounts Member
-		DECLARE @rowcnt INT 
+			-- Cannot create more 46656 accounts Member
+			DECLARE @rowcnt INT 
 		
-		SELECT	@rowcnt = COUNT(1)
-		FROM	dbo.custInfo  WITH(NOLOCK)
-		WHERE	Recommend = @CustID AND RoleID = 1 
+			SELECT	@rowcnt = COUNT(1)
+			FROM	dbo.custInfo  WITH(NOLOCK)
+			WHERE	Recommend = @CustID AND RoleID = 1 
 	
-		IF @rowcnt > 7000
-		BEGIN 
-			CREATE TABLE #tmpSeq (
-				Username	NVARCHAR(30),
-				SeqName		VARCHAR(3)
-			)
+			IF @rowcnt > 7000
+			BEGIN 
+				CREATE TABLE #tmpSeq (
+					Username	NVARCHAR(30),
+					SeqName		VARCHAR(3)
+				)
 
-			INSERT INTO #tmpSeq(
-				Username,
-				SeqName
-			)
-			SELECT   @prefix + SeqName 
-					,SeqName
-			FROM age_custSeq with (nolock)
-			WHERE type = 1  
+				INSERT INTO #tmpSeq(
+					Username,
+					SeqName
+				)
+				SELECT   @prefix + SeqName 
+						,SeqName
+				FROM age_custSeq with (nolock)
+				WHERE type = 1  
 
-			CREATE CLUSTERED INDEX IX_tmpSeq_Useranme  
-			ON #tmpSeq (Username,SeqName)	
+				CREATE CLUSTERED INDEX IX_tmpSeq_Useranme  
+				ON #tmpSeq (Username,SeqName)	
 
-			SELECT TOP 1 @seqname = SeqName
-			FROM	#tmpSeq S with (nolock)
-				LEFT JOIN dbo.custInfo c WITH(NOLOCK) on s.username = c.username and c.recommend = @custid AND c.roleid = 1
-			WHERE  c.username is null 	
+				SELECT TOP 1 @seqname = SeqName
+				FROM	#tmpSeq S with (nolock)
+					LEFT JOIN dbo.custInfo c WITH(NOLOCK) on s.username = c.username and c.recommend = @custid AND c.roleid = 1
+				WHERE  c.username is null 	
 			
-			DROP TABLE #tmpSeq
+				DROP TABLE #tmpSeq
 		 
-		END
-		ELSE 
-		BEGIN
-			SELECT top 1 @seqname = SeqName
-			FROM age_custSeq WITH(NOLOCK)
-			WHERE type = 1
-			AND @prefix + SeqName NOT IN (
-				SELECT username			
-				FROM dbo.custInfo WITH(NOLOCK)
-				WHERE recommend = @custid AND roleid = 1
-				)			
-		END
+			END
+			ELSE 
+			BEGIN
+				SELECT top 1 @seqname = SeqName
+				FROM age_custSeq WITH(NOLOCK)
+				WHERE type = 1
+				AND @prefix + SeqName NOT IN (
+					SELECT username			
+					FROM dbo.custInfo WITH(NOLOCK)
+					WHERE recommend = @custid AND roleid = 1
+					)			
+			END
 
-		SELECT @downline=COUNT(1) 
-		FROM custInfo WITH(NOLOCK)
-			WHERE recommend = @custid AND roleid = 1
+			SELECT @downline=COUNT(1) 
+			FROM custInfo WITH(NOLOCK)
+				WHERE recommend = @custid AND roleid = 1
 		
-		IF ISNULL(@seqname,'')='' AND @downline>=46656
-		BEGIN
-			SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry, you cannot create more accounts because the total downlines have reached the limit (46656 accounts). Please contact your upline for further assistance.'
-									ELSE [dbo].[f_Get_MsgNamebyMsgID](40040, @Language) 
-								END,
-				   @ErrCode=40040
-			RETURN
+			IF ISNULL(@seqname,'')='' AND @downline>=46656
+			BEGIN
+				SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry, you cannot create more accounts because the total downlines have reached the limit (46656 accounts). Please contact your upline for further assistance.'
+										ELSE [dbo].[f_Get_MsgNamebyMsgID](40040, @Language) 
+									END,
+					   @ErrCode=40040
+				RETURN
+			END
 		END
 
 		-- Check Limit max members creation per Super
@@ -192,12 +267,7 @@ BEGIN
 		BEGIN
 			DECLARE 
 				@CurrentMembers			INT,  
-				@MaxMemberLimit			INT,  
-				@SuperId				INT  
-    
-			SELECT @SuperId = srecommend  
-			FROM dbo.custinfo WITH (NOLOCK)  
-			WHERE custid = @Recommend  
+				@MaxMemberLimit			INT
     
 			SELECT @MaxMemberLimit = MaxMember  
 			FROM dbo.CustSuper WITH (NOLOCK)  
@@ -223,7 +293,6 @@ BEGIN
 				RETURN
 			END  
 		END
-
 	END
 
 	IF @RuleID = 'SAG'			-- SP related : Acc_CustomerInsMember_SAg

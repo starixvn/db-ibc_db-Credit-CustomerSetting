@@ -24,6 +24,7 @@ AS
 		- 20241001@Helen: release with new structure on GlobCustDB instead of using view on CUSTDB - [Redmine:#206823]
 		- 20241028@July: [Scale out DBCUST] Wrong Currency [Redmine: #212777]
 		- 20241028@July: [Scale out DBCUST] Update RepUpdateTime for inhouse [Redmine: #212777]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		
 	Parameter's Explanation:
 		
@@ -60,16 +61,26 @@ BEGIN
 	END
 	
 	-----------Generate systemid (username)---------------
-	DECLARE @recommend INT = 0,	@mrecommend INT = 0, @srecommend INT = 0
+	DECLARE @recommend INT = 0,	@mrecommend INT = 0, @srecommend INT = 0, @UplineRoleID TINYINT
 
 	IF @roleid = 1
 	BEGIN
 		SELECT @recommend = recommend,
 			@mrecommend = mrecommend,
 			@srecommend = srecommend,
-			@Currency = Currency
+			@Currency = Currency,
+			@UplineRoleID = RoleID
 		FROM dbo.CustInfoMini WITH(NOLOCK)    
 		WHERE custid = @UplineID 
+
+		IF @UplineRoleID = 4 --Super Create Direct member
+		BEGIN
+			SELECT @mrecommend = -4, @recommend = -4
+		END
+		IF @UplineRoleID = 3 --Master Create Direct member
+		BEGIN
+			SELECT @recommend = -3
+		END
 	END
 	ELSE IF @roleid = 2
 	BEGIN

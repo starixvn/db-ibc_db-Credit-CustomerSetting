@@ -29,6 +29,7 @@ AS
 		  - 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 		  - 20240327@Johnson: HF wrong PT on group [redmine: #202119]
 		  - 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		  - 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 		Parameter's Explanation:
 	*/	
 BEGIN
@@ -328,6 +329,86 @@ BEGIN
 			WHERE cs.AgentID = @recommend
 				AND cs.SuperPT+cs.AgentPT+cs.MasterPT>scs.SuperPT
 		END
+	END
+	ELSE IF @Mode = 'Direct'
+	BEGIN	
+		DECLARE @PT_VirtualUpline TABLE (
+			 IsAutoMasterPT	bit
+			,IsAutoSuperPT	bit
+			,SuperPT		smallmoney
+			,MasterPT		smallmoney
+			,AgentPT		smallmoney
+			,AutoSuperPT	smallmoney
+			,AutoMasterPT	smallmoney
+			,MinPT			smallmoney
+			,MaxPT			smallmoney
+		)
+		INSERT INTO @PT_VirtualUpline(IsAutoMasterPT,IsAutoSuperPT,SuperPT	,MasterPT,AgentPT,AutoSuperPT,AutoMasterPT,MinPT,MaxPT)
+		SELECT 0,0,0,0,0,0,0,0,0
+
+		IF @recommend = -3 -- Master direct member
+		BEGIN
+			--check master min/max
+			--update m1=n3-a1 if a1+m1<n3
+			UPDATE cs 
+			SET MasterPT = mco.MinPT-cs.AgentPT,
+				RepUpdateTime = dbo.f_GetDateTime2()
+			FROM CustPTSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
+				INNER JOIN CustPTSetting3rd_Agent as mco WITH (NOLOCK) ON mco.custid = @mrecommend  AND mco.sporttype=cs.sporttype AND mco.bettype=cs.bettype AND mco.IsLive = cs.IsLive
+			WHERE cs.custid = @custid 
+				AND cs.AgentPT+cs.MasterPT<mco.MinPT
+			
+			--recal autopos
+			--if @updautosuper = 1 
+			--begin
+			UPDATE cs
+			SET SuperPT = CASE WHEN scs.SuperPT-cs.MasterPT-cs.AgentPT >
+									(CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
+								THEN (CASE WHEN cs.IsAutoSuperPT=1 THEN cs.AutoSuperPT ELSE mcs.AutoSuperPT END) 
+							ELSE scs.SuperPT-cs.MasterPT-cs.AgentPT END ,
+				RepUpdateTime = dbo.f_GetDateTime2()
+			FROM CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK) 			
+				INNER JOIN CustPTSetting3rd_Agent as mcs WITH (NOLOCK) ON mcs.custid = @mrecommend AND mcs.sporttype=cs.sporttype AND mcs.bettype=cs.bettype AND mcs.IsLive = cs.IsLive
+				INNER JOIN CustPTSetting3rd_Agent as scs WITH (NOLOCK) ON scs.custid = @srecommend AND scs.sporttype=cs.sporttype AND scs.bettype=cs.bettype AND scs.IsLive = cs.IsLive
+			where
+				cs.custid = @custid			
+				AND (cs.IsAutoSuperPT=1 OR mcs.IsAutoSuperPT=1)
+		END
+
+		--check super min/max
+		--update s1 when s1+m1+a1<n4 
+		UPDATE cs
+		SET SuperPT = sco.MinPT-cs.MasterPT-cs.AgentPT,
+			RepUpdateTime = dbo.f_GetDateTime2()
+		FROM CustPTSetting3rd_Member cs with (ROWLOCK, UPDLOCK)			
+			INNER JOIN CustPTSetting3rd_Agent as sco with (NOLOCK) on sco.custid = @srecommend  AND sco.sporttype=cs.sporttype AND sco.bettype=cs.bettype AND sco.IsLive = cs.IsLive
+		WHERE cs.custid = @custid 
+			AND cs.AgentPT+cs.MasterPT+cs.SuperPT<sco.MinPT
+
+		--update s1,m1,a1 in case s1+m1+a1>s4
+		--s1=max(0,s4-m1-a1)
+		--@mapos1=iif(s1_new+m1+a1>s4,s4-s1_new,m1+a1)
+		--@maxmapos=min(m3,l3)
+		--@mapos2=min(@mapos1,@maxmapos)
+		--@mapos=max(@mapos2,n3)
+		--m1=max(0,@mapos-a1)
+		UPDATE cs
+		SET 
+			@spos = CASE WHEN scs.SuperPT-cs.MasterPT-cs.AgentPT<0 THEN 0 ELSE scs.SuperPT-cs.MasterPT-cs.AgentPT END,
+			SuperPT = @spos,
+			@mapos1 = CASE WHEN @spos+cs.MasterPT+cs.AgentPT>scs.SuperPT THEN scs.SuperPT-@spos ELSE cs.MasterPT+cs.AgentPT END,
+			@maxmapos = CASE WHEN mcs.MasterPT>mcs.MaxPT THEN mcs.MaxPT ELSE mcs.MasterPT END,
+			@mapos2 = CASE WHEN @mapos1>@maxmapos THEN @maxmapos ELSE @mapos1 END,
+			@mapos = CASE WHEN @mapos2<mcs.MinPT THEN mcs.MinPT ELSE @mapos2 END,
+			@mpos = CASE WHEN @mapos-cs.AgentPT<0 THEN 0 else @mapos-cs.AgentPT END,
+			MasterPT = @mpos,
+			RepUpdateTime = dbo.f_GetDateTime2()
+		FROM 
+			CustPTSetting3rd_Member cs WITH (ROWLOCK, UPDLOCK)  			
+			INNER JOIN CustPTSetting3rd_Agent as scs WITH (NOLOCK) on scs.custid = @srecommend  AND scs.sporttype=cs.sporttype AND scs.bettype=cs.bettype AND scs.IsLive = cs.IsLive
+			CROSS JOIN @PT_VirtualUpline as mcs 			
+		WHERE cs.custid = @custid 
+			AND cs.SuperPT+cs.AgentPT+cs.MasterPT>scs.SuperPT
 	END
 END
 GO

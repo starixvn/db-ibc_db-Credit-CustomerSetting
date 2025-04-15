@@ -23,6 +23,7 @@ AS
 	Revisions:
 		- 20240215@Eden: Unify Live Casino & RNG slot/RNG Casino [Redmine: #198960]
 		- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20241126@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 	Param's Explanation:
 		@StakeLevel = [
 			{"SportType": "159","BetType": "3151","StakeLevelList": "3151"},
@@ -312,6 +313,24 @@ BEGIN
 		
 		IF EXISTS (SELECT TOP(1) 1 FROM #tmpStake)
 		BEGIN
+				INSERT INTO #CustStakeLevelDownlines (
+								CustID
+							,	DirectUplineID
+							,	RoleID
+							,	BetType
+							,	StakeLevelList
+							,	StakeLevelList_New
+							,	StakeLevelList_Upline
+							)
+				SELECT			@CustID					AS CustID
+							,	NULL					AS DirectUplineID		
+							,	@RoleID					AS RoleID
+							,	csla.BetType			AS BetType
+							,	csla.StakeLevelList		AS StakeLevelList
+							,	csla.StakeLevelList		AS StakeLevelList_New
+							,	csla.StakeLevelList		AS StakeLevelList_Upline
+				FROM		#tmpStake					AS csla 
+
 			-- Starting Update downline process
 			IF @RoleID = 4
 			BEGIN
@@ -343,7 +362,11 @@ BEGIN
 					AND	ci.roleid IN (2, 3)
 				UNION ALL
 				SELECT			ci.custid				AS CustID
-							,	ci.recommend			AS DirectUplineID		
+							,	CASE 
+									WHEN ci.recommend = -4 THEN srecommend
+									WHEN ci.recommend = -3 THEN mrecommend	
+									WHEN ci.recommend NOT IN( -4,-3) THEN recommend
+								END						AS DirectUplineID		
 							,	ci.roleid				AS RoleID
 							,	cslm.BetType			AS BetType
 							,	cslm.StakeLevelList		AS StakeLevelList
@@ -384,7 +407,10 @@ BEGIN
 					AND	ci.roleid = 2
 				UNION ALL
 				SELECT			ci.custid				AS CustID
-							,	ci.recommend			AS DirectUplineID		
+							,	CASE 
+									WHEN ci.recommend = -3 THEN mrecommend	
+									WHEN ci.recommend NOT IN (-4,-3) THEN recommend
+								END						AS DirectUplineID		
 							,	ci.roleid				AS RoleID
 							,	cslm.BetType			AS BetType
 							,	cslm.StakeLevelList		AS StakeLevelList
@@ -458,6 +484,7 @@ BEGIN
 			WHERE csld.StakeLevelList_New IS NULL;
 
 				-- Update masters: Get lowest value of Super if master has no value
+				-- OR Update SuperDirectMember: Get lowest value of Super if SuperDirectMember has no value
 			IF	@RoleID = 4
 			BEGIN
 				UPDATE	csld
@@ -473,11 +500,12 @@ BEGIN
 							ON	ss.val = sl.StakeLevelID
 					ORDER BY	sl.MaxStake, sl.MinStake, sl.GameGroupID
 				) sr
-				WHERE	csld.RoleID = 3
+				WHERE	((csld.RoleID = 3) OR (csld.RoleID = 1 AND csld.DirectUplineID = -4))
 					AND	csld.StakeLevelList_New = '';
 			END;
 
 				-- Update agents: Get lowest value of Master if agent has no value
+				-- OR Update MasterDirectMember: Get lowest value of Master if MasterDirectMember has no value
 			IF	@RoleID = 4
 			BEGIN
 				UPDATE	csld
@@ -497,7 +525,7 @@ BEGIN
 							ON	ss.val = sl.StakeLevelID
 					ORDER BY	sl.MaxStake, sl.MinStake, sl.GameGroupID
 				) sr
-				WHERE	csld.RoleID = 2
+				WHERE	((csld.RoleID = 2)  OR (csld.RoleID = 1 AND csld.DirectUplineID = -3))
 					AND	csld.StakeLevelList_New = '';
 			END;
 			ELSE IF	@RoleID = 3
@@ -515,7 +543,7 @@ BEGIN
 							ON	ss.val = sl.StakeLevelID
 					ORDER BY	sl.MaxStake, sl.MinStake, sl.GameGroupID
 				) sr
-				WHERE	csld.RoleID = 2
+				WHERE	((csld.RoleID = 2)  OR (csld.RoleID = 1 AND csld.DirectUplineID = -3))
 					AND	csld.StakeLevelList_New = '';
 			END;
 
@@ -539,7 +567,7 @@ BEGIN
 							ON	ss.val = sl.StakeLevelID
 					ORDER BY	sl.MaxStake, sl.MinStake, sl.GameGroupID
 				) sr
-				WHERE	csld.RoleID = 1
+				WHERE	csld.RoleID = 1 AND csld.DirectUplineID NOT IN (-3,-4)
 					AND	csld.StakeLevelList_New = '';
 			END;
 			ELSE IF	@RoleID = 2
@@ -557,13 +585,16 @@ BEGIN
 							ON	ss.val = sl.StakeLevelID
 					ORDER BY	sl.MaxStake, sl.MinStake, sl.GameGroupID
 				) sr
-				WHERE	csld.RoleID = 1
+				WHERE	csld.RoleID = 1 AND csld.DirectUplineID NOT IN (-3,-4)
 					AND	csld.StakeLevelList_New = '';
 			END;
 			
 			-- No need to update if having the same value between old and new
 			DELETE	#CustStakeLevelDownlines
 			WHERE	StakeLevelList_New = StakeLevelList;
+
+			DELETE	#CustStakeLevelDownlines
+			WHERE	RoleID = @RoleID
 			
 			-- Correct downlines via ExecRep
 			ALTER TABLE #CustStakeLevelDownlines ADD ID INT IDENTITY (1,1);

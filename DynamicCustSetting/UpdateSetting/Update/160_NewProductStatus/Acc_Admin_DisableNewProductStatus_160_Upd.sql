@@ -1,5 +1,5 @@
 ﻿/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_xnap" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatus_160_Upd] 
+ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatus_160_Upd] 
 	  @CustID			INT
 	, @IsDisabled		VARCHAR(MAX)
 	, @UserID			INT
@@ -21,14 +21,21 @@ AS
 	Revisions:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
-	@IsDisabled
+	@IsDisabled:
 		[
-			{ "SportType":"9906" , "BetType":"4001" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" }, 
-			{ "SportType":"9918" , "BetType":"4601" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" }, 
-			{ "SportType":"9904" , "BetType":"4001" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" }, 
-			{ "SportType":"9911" , "BetType":"2400" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" }		
+			{ "SportType":"9906" , "BetType":"4001" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" , "UpdateAllSuperDirectMembers":"0" , "DisableAllSuperDirectMembers":"0" , "UpdateAllMasterDirectMembers":"0" , "DisableAllMasterDirectMembers":"0" }, 
+			{ "SportType":"9918" , "BetType":"4601" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" , "UpdateAllSuperDirectMembers":"0" , "DisableAllSuperDirectMembers":"0" , "UpdateAllMasterDirectMembers":"0" , "DisableAllMasterDirectMembers":"0" }, 
+			{ "SportType":"9904" , "BetType":"4001" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" , "UpdateAllSuperDirectMembers":"0" , "DisableAllSuperDirectMembers":"0" , "UpdateAllMasterDirectMembers":"0" , "DisableAllMasterDirectMembers":"0" }, 
+			{ "SportType":"9911" , "BetType":"2400" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" , "UpdateAllSuperDirectMembers":"0" , "DisableAllSuperDirectMembers":"0" , "UpdateAllMasterDirectMembers":"0" , "DisableAllMasterDirectMembers":"0" }	
 		]
+	- @GroupID:
+			0 : Cash Out (SportType : 9903), Saba Virtual Sports (SportType : 98)
+			1 : SportsBook
+			2 : RNG Games
+			3 : Live Casino , RNG Casino
+
 	Example:
 		DECLARE @p3 int
 		SET @p3=0
@@ -43,20 +50,19 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @startRun	DATETIME
-		, @endRun		DATETIME
-		, @duration		INT
-		
-	DECLARE @logSpData		NVARCHAR(MAX)
-		, @logSpData_Old	NVARCHAR(MAX)
-		, @xml				XML
-		, @WriteLogMaster	BIT = 0
-		, @WriteLogAgent	BIT = 0
-		, @WriteLogMember	BIT = 0
-		, @ActionID			INT
-		, @UpdateAllMasters	BIT = 0
-		, @UpdateAllAgents  BIT = 0
-		, @UpdateAllMembers BIT = 0
+	DECLARE
+		@startRun DATETIME
+	    , @endRun   DATETIME
+	    , @duration INT
+
+	DECLARE
+		@logSpData		NVARCHAR(MAX)
+	    , @logSpData_Old    NVARCHAR(MAX)
+	    , @xml			XML
+	    , @ActionID		INT
+	    , @UpdateAllMasters BIT = 0
+	    , @UpdateAllAgents  BIT = 0
+	    , @UpdateAllMembers BIT = 0
 
 	DECLARE @LogAction TABLE (ActionID INT, IsFinished BIT DEFAULT (0))
 
@@ -77,6 +83,10 @@ BEGIN
 		, DisableAllMasters		BIT
 		, DisableAllAgents		BIT
 		, DisableAllMembers		BIT
+		, UpdateAllSuperDirectMembers		BIT
+		, DisableAllSuperDirectMembers	BIT
+		, UpdateAllMasterDirectMembers	BIT
+		, DisableAllMasterDirectMembers	BIT
 		, RealProductId			TINYINT
 		)
 	CREATE TABLE #OldDisableStatTbl  (
@@ -89,6 +99,10 @@ BEGIN
 		, DisableAllMasters		BIT
 		, DisableAllAgents		BIT
 		, DisableAllMembers		BIT
+		, UpdateAllSuperDirectMembers		BIT
+		, DisableAllSuperDirectMembers	BIT
+		, UpdateAllMasterDirectMembers	BIT
+		, DisableAllMasterDirectMembers	BIT
 		)
 
 	SELECT	@ErrCode	= 0
@@ -156,8 +170,8 @@ BEGIN
 	AND (GroupID = @GroupID OR @GroupID IS NULL)
 
 	-- Parse Data Json
-	INSERT INTO #NewDisableStatTbl (SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
-	SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers
+	INSERT INTO #NewDisableStatTbl (SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers,UpdateAllSuperDirectMembers, DisableAllSuperDirectMembers, UpdateAllMasterDirectMembers, DisableAllMasterDirectMembers)
+	SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers,UpdateAllSuperDirectMembers, DisableAllSuperDirectMembers, UpdateAllMasterDirectMembers, DisableAllMasterDirectMembers
 	FROM OPENJSON(@IsDisabled)
 	WITH 
 		(	SportType				SMALLINT
@@ -169,6 +183,10 @@ BEGIN
 			, DisableAllMasters		BIT
 			, DisableAllAgents		BIT
 			, DisableAllMembers		BIT
+			, UpdateAllSuperDirectMembers		BIT
+			, DisableAllSuperDirectMembers	BIT
+			, UpdateAllMasterDirectMembers	BIT
+			, DisableAllMasterDirectMembers	BIT
 		) AS DisabledProductStatus
 
 	--Exclude Update for Sport is having UM
@@ -189,13 +207,13 @@ BEGIN
 
 		RETURN
 	END
-	
+
 	SELECT TOP 1 @UpdateAllMasters =  1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1
 	SELECT TOP 1 @UpdateAllAgents =  1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1
-	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1
+	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE (UpdateAllMembers = 1) OR (UpdateAllSuperDirectMembers = 1) OR (UpdateAllMasterDirectMembers = 1)
 
 	--Check Allowed downlines	
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1) AND @RoleID <> 1
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1 OR UpdateAllSuperDirectMembers = 1 OR UpdateAllMasterDirectMembers = 1) AND @RoleID <> 1
 	BEGIN
 		EXEC dbo.Acc_AdminCheckAllowedDownlinesByLevel 
 				@custid				= @custid
@@ -241,7 +259,7 @@ BEGIN
 	--Get old disabled status
 	DECLARE @downlines BIT  = 0
 	
-	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
+	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers,UpdateAllSuperDirectMembers, DisableAllSuperDirectMembers, UpdateAllMasterDirectMembers, DisableAllMasterDirectMembers)
 	SELECT psp.SportType
 		, psp.BetType
 		, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled
@@ -250,7 +268,11 @@ BEGIN
 		, tmp.UpdateAllMembers
 		, tmp.DisableAllMasters
 		, tmp.DisableAllAgents
-		, tmp.DisableAllMembers			
+		, tmp.DisableAllMembers
+		, tmp.UpdateAllSuperDirectMembers
+		, tmp.DisableAllSuperDirectMembers
+		, tmp.UpdateAllMasterDirectMembers
+		, tmp.DisableAllMasterDirectMembers
 	FROM #NewDisableStatTbl tmp
 		INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
 		INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
@@ -260,7 +282,7 @@ BEGIN
 			SELECT TOP 1 1
 			FROM #NewDisableStatTbl tmp
 				INNER JOIN #OldDisableStatTbl stt ON tmp.SportType	= stt.SportType	AND tmp.BetType = stt.BetType
-			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 OR tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1
+			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 OR tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1 OR stt.UpdateAllSuperDirectMembers = 1 OR stt.UpdateAllMasterDirectMembers = 1
 			)
 		RETURN
 
@@ -283,7 +305,7 @@ BEGIN
 				, TYPE
 			)
 			
-	UPDATE CustProductStatus
+	UPDATE CustProductStatus WITH (ROWLOCK, UPDLOCK)
 		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 			RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE CustID = @CustID
@@ -321,7 +343,7 @@ BEGIN
 	--call execrept to update downline
 	DECLARE @IsDisabled_Downline XML
 	
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1) AND @RoleID <> 1
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1 OR UpdateAllSuperDirectMembers = 1 OR UpdateAllMasterDirectMembers = 1) AND @RoleID <> 1
 	BEGIN		
 		SET @IsDisabled_Downline = (
 				SELECT (
@@ -335,8 +357,12 @@ BEGIN
 							,DisableAllMasters AS '@DisableAllMasters'
 							,DisableAllAgents AS '@DisableAllAgents'
 							,DisableAllMembers AS '@DisableAllMembers'
+							,UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers'
+							,UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers'
+							,DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers'
+							,DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #NewDisableStatTbl
-						WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1
+						WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1 OR UpdateAllSuperDirectMembers = 1 OR UpdateAllMasterDirectMembers = 1
 						FOR XML PATH('ProductStatus')
 							, TYPE
 						)
@@ -384,22 +410,8 @@ BEGIN
 				, @SettingStatus		= @SettingStatus
 		END
 	END
+
 	--START LOGGING			
-
-	--Get ActionID
-	SELECT @WriteLogMaster = 1
-	FROM #NewDisableStatTbl
-	WHERE UpdateAllMasters = 1
-
-	SELECT @WriteLogAgent = 1
-	FROM #NewDisableStatTbl
-	WHERE UpdateAllAgents = 1
-
-	SELECT @WriteLogMember = 1
-	FROM #NewDisableStatTbl
-	WHERE UpdateAllMembers= 1
-
-	
 	IF @RoleId = 4
 	BEGIN
 		INSERT INTO @LogAction (ActionID)
@@ -427,17 +439,6 @@ BEGIN
 			SELECT 75663
 	END
 
-
-	--INSERT INTO @LogAction (ActionID)
-	--SELECT l.ActionID
-	--FROM DBLOG.bodb_CustomerLog.dbo.LogAction l WITH (NOLOCK)
-	--	INNER JOIN DBLOG.bodb_CustomerLog.dbo.LogActionDetail ld WITH (NOLOCK) ON ld.ActionID = l.ActionID	
-	--WHERE l.SPName = @SPName AND ld.ProductID = @ProductID AND ld.Level = @RoleID
-	--	AND ((l.ActionID BETWEEN 60500 AND 64999 AND @RoleID = 4)
-	--		OR (l.ActionID BETWEEN 65500 AND 69999 AND ((@RoleID = 4 AND @WriteLogMaster = 1) OR @RoleID = 3))
-	--		OR (l.ActionID BETWEEN 70500 AND 74999 AND ((@RoleID IN (4,3) AND @WriteLogAgent = 1) OR @RoleID = 2))
-	--		OR (l.ActionID BETWEEN 75500 AND 79999 AND ((@RoleID IN (4,3,2) AND @WriteLogMember = 1) OR @RoleID = 1)))
-
 	-- Log Old Collect
 	SET @xml = (
 		SELECT	
@@ -456,7 +457,11 @@ BEGIN
 							UpdateAllAgents		AS '@UpdateAllAgents',
 							DisableAllAgents		AS '@DisableAllAgents',
 							UpdateAllMembers		AS '@UpdateAllMembers',
-							DisableAllMembers		AS '@DisableAllMembers'
+							DisableAllMembers		AS '@DisableAllMembers',
+							UpdateAllSuperDirectMembers		AS '@UpdateAllSuperDirectMembers',
+							DisableAllSuperDirectMembers		AS '@DisableAllSuperDirectMembers',
+							UpdateAllMasterDirectMembers		AS '@UpdateAllMasterDirectMembers',
+							DisableAllMasterDirectMembers		AS '@DisableAllMasterDirectMembers'
 					FROM #OldDisableStatTbl od
 					INNER JOIN #ProductSettingDetail psd ON od.SportType = psd.SportType AND od.BetType = psd.BetType
 					FOR XML PATH('ProductStatus'),
@@ -486,7 +491,11 @@ BEGIN
 								UpdateAllAgents			AS '@UpdateAllAgents',
 								DisableAllAgents			AS '@DisableAllAgents',
 								UpdateAllMembers			AS '@UpdateAllMembers',
-								DisableAllMembers			AS '@DisableAllMembers'
+								DisableAllMembers			AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers		AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers		AS '@DisableAllSuperDirectMembers',
+								UpdateAllMasterDirectMembers		AS '@UpdateAllMasterDirectMembers',
+								DisableAllMasterDirectMembers		AS '@DisableAllMasterDirectMembers'
 						FROM #NewDisableStatTbl nd
 						INNER JOIN #ProductSettingDetail psd ON nd.SportType = psd.SportType AND nd.BetType = psd.BetType
 						FOR XML PATH('ProductStatus'),

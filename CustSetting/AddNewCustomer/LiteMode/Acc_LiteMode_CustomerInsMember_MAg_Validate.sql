@@ -24,6 +24,7 @@ AS
 
 	Revision:
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 
 	Param's Explanation: 
 		- @SettingXML:
@@ -180,13 +181,13 @@ BEGIN
 	RETURN 
 
 	declare	@currency INT	
-			,@Credit_AllOtherAgent MONEY
-			,@Credit_AllMember MONEY
+			,@Credit_AllOtherDownline MONEY
 			,@Credit_MAg MONEY
 			,@srecommend INT
 
 	SELECT @currency = currency
 			,@srecommend = srecommend
+			,@Credit_MAg = isnull(credit, 0)
     FROM CustInfo ci WITH(NOLOCK) 
 		CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
 							,CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject									
@@ -195,11 +196,16 @@ BEGIN
 					) AS cs
      WHERE CustID = @mrecommend
 
-	SELECT @Credit_AllOtherAgent = isnull(sum(credit), 0) FROM custinfo as ci WITH(NOLOCK) WHERE mrecommend = @mrecommend and RoleID = 2
+	SELECT @Credit_AllOtherDownline = ISNULL(sum(Credit), 0) 
+	FROM custinfo WITH(NOLOCK) 
+	WHERE MRecommend = @mrecommend 
+		AND (RoleID = 2  --Masters
+				OR (roleid = 1 AND recommend = -3) --master direct members
+			)
 
-    IF @Credit_AllOtherAgent + @Credit >@Credit_MAg
+    IF @Credit_AllOtherDownline + @Credit >@Credit_MAg
     BEGIN
-		SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_MAg - @Credit_AllOtherAgent, '#,#0.####'))
+		SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_MAg - @Credit_AllOtherDownline, '#,#0.####'))
 
 	    SELECT @ErrCode = 104
 	    return

@@ -22,6 +22,7 @@ AS
 		- 20200717@Eden: Minimize UM Time - Lock updating customer settings [#136464] 
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -245,7 +246,7 @@ BEGIN
 				, TYPE
 			)
 	-- update isDisabled CustID		
-	UPDATE CustProductStatus
+	UPDATE CustProductStatus WITH (ROWLOCK, UPDLOCK)
 		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 			RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE CustID = @CustID

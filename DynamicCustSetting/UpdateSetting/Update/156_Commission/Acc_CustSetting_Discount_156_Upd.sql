@@ -22,6 +22,7 @@ AS
 	Revisions:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
+		- 20241126@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 	Param's Explanation:
 		- @Discount:
 				'[
@@ -29,7 +30,7 @@ AS
 					{ "SportType":"242"  , "BetType":"3201"  , "Discount":"0.0025" }
 				]'
 		
-		• @SettingType: 3 - Given Comm
+		- @SettingType: 3 - Given Comm
 						5 - Charge Comm
 	
 	*/
@@ -125,6 +126,14 @@ BEGIN
 	FROM dbo.Customer  c WITH (NOLOCK)
 	INNER JOIN Site s WITH (NOLOCK) ON c.site = s.site
 	WHERE custid = @CustID
+
+	DECLARE @UplineID INT
+	IF (@AgentID = -4 AND @RoleID = 1) OR @RoleID = 3
+		SET @UplineID = @SuperID
+	ELSE IF (@AgentID = -3 AND @RoleID = 1) OR @RoleID = 2
+		SET @UplineID = @MasterID 
+	ELSE IF @RoleID = 1 AND @AgentID NOT IN ( -3,-4)
+		SET @UplineID = @AgentID
 
 	--Check Allowed downlines	
 	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
@@ -222,51 +231,18 @@ BEGIN
 				AND dc.CustID	= @CustID
 	END
 
-	IF @RoleID = 3
-	BEGIN
-		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, super_discount)
-		UPDATE tmp
-		SET tmp.Discount = CASE 
-				WHEN tmp.Discount < dcs.Discount
-					THEN tmp.Discount
-				ELSE dcs.Discount
-				END
-		FROM @NewDiscountTbl tmp
-		INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH (NOLOCK)
-			ON tmp.SportType	= dcs.SportType
-				AND tmp.BetType = dcs.BetType
-				AND dcs.custid	= @SuperID
-	END
-	ELSE IF @RoleID = 2
-	BEGIN
-		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, master_discount)
-		UPDATE tmp
-		SET tmp.Discount = CASE 
-				WHEN tmp.Discount < dcm.Discount
-					THEN tmp.Discount
-				ELSE dcm.Discount
-				END
-		FROM @NewDiscountTbl tmp
-		INNER JOIN dbo.CustDiscount3rd_Agent dcm WITH (NOLOCK)
-			ON tmp.SportType	= dcm.SportType
-				AND tmp.BetType = dcm.BetType
-				AND dcm.custid	= @MasterID
-	END
-	ELSE IF @RoleID = 1
-	BEGIN
-		--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, agent_discount)
-		UPDATE tmp
-		SET tmp.Discount = CASE 
-				WHEN tmp.Discount < dca.Discount
-					THEN tmp.Discount
-				ELSE dca.Discount
-				END
-		FROM @NewDiscountTbl tmp
+	--Update NEW_DISCOUNT = MIN( @NEW_DISCOUNT, upline_discount)
+	UPDATE tmp
+	SET tmp.Discount = CASE 
+			WHEN tmp.Discount < dca.Discount
+				THEN tmp.Discount
+			ELSE dca.Discount
+			END
+	FROM @NewDiscountTbl tmp
 		INNER JOIN dbo.CustDiscount3rd_Agent dca WITH (NOLOCK)
 			ON dca.SportType	= tmp.SportType
 				AND dca.BetType = tmp.BetType
-				AND dca.custid	= @AgentID
-	END
+				AND dca.custid	= @UplineID
 
 	--Return XML result
 	SELECT @CorrectedDiscount_XML = (

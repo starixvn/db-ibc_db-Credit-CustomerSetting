@@ -20,7 +20,7 @@ AS
 	Original:
 	Revisions:
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
-
+	- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 	- @Limit:
 		22: WinLossLimit
@@ -125,7 +125,7 @@ BEGIN
 			AND u.ProductID  IN (ps.ProductID, 0)
 	WHERE u.FunctionType = 1 --Edit Customer
 
-	IF @RoleID = 3
+	IF (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)	-- Master or SuperDirectMember : Collect Upline Super
 	BEGIN
 		--Get super's bet limit
 		INSERT INTO @UplineLimitTbl
@@ -138,7 +138,7 @@ BEGIN
 			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = wl.SportType AND tmp.BetType = wl.BetType
 		WHERE wl.CustID	= @SuperID		
 	END
-	ELSE IF @RoleID = 2
+	ELSE IF (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)	-- Agent or MasterDirectMember : Collect Upline Super, Master
 	BEGIN
 		--Get master 's bet limit
 		INSERT INTO @UplineLimitTbl
@@ -151,7 +151,7 @@ BEGIN
 			INNER JOIN @NewLimitTbl tmp ON tmp.SportType = wl.SportType AND tmp.BetType = wl.BetType
 		WHERE wl.CustID	= @MasterID
 	END
-	ELSE IF @RoleID = 1
+	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member : Collect Upline Super, Master, Agent
 	BEGIN
 		--Get agent 's bet limit
 		INSERT INTO @UplineLimitTbl

@@ -21,6 +21,7 @@ AS
   
  Revisions:  
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -113,19 +114,20 @@ BEGIN
 		END	
 
 	--CREDIT CHECK
-	DECLARE @Credit_AllOtherAgent MONEY, @Credit_MAg MONEY
+	DECLARE @Credit_AllOtherDownline MONEY, @Credit_MAg MONEY
 	
 	SELECT @Credit_MAg = ISNULL(credit, 0)		
 	FROM CustInfo as ci with (NOLOCK) 
 	WHERE CustID = @mrecommend
 
+	SELECT @Credit_AllOtherDownline = ISNULL(sum(Credit), 0) 
+	FROM custinfo WITH(NOLOCK) 
+	WHERE MRecommend = @mrecommend 
+		AND (RoleID = 2  --Masters
+				OR (roleid = 1 AND recommend = -3) --master direct members
+			)	
 
-	SELECT @Credit_AllOtherAgent = ISNULL(SUM(credit), 0) 
-	FROM custinfo AS ci WITH (NOLOCK) 
-	WHERE mrecommend = @mrecommend and RoleID = 2
-		
-
-	IF @Credit_AllOtherAgent + @Credit >@Credit_MAg
+	IF @Credit_AllOtherDownline + @Credit >@Credit_MAg
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'You have exceeded your credit limit.'  

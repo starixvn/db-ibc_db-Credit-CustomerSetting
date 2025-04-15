@@ -24,6 +24,7 @@ ALTER PROCEDURE [dbo].[Acc_CustSetting_MasterPTOnMember_153_Upd]
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 	- 20241212@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]
 	Parameter's Explanation:
 		@PT =[
 				{"SportType": "9914","BetType": "915","IsLive": "0","MasterPT": "38","AutoMasterPT": "38","IsAutoMasterPT": "1"},
@@ -188,6 +189,14 @@ BEGIN
 			,AutoMasterPT
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
 
+	IF @_AgentID IN(-4,-3)
+	BEGIN
+		UPDATE t
+		SET t.IsAutoMasterPT = 0
+			,t.AutoMasterPT = 0
+		FROM @tblPT t
+	END
+
 	DECLARE  @SiteID SMALLINT,
 		@Currency SMALLINT	
 	
@@ -284,16 +293,27 @@ BEGIN
 	WHERE mcs.CustID = @_MasterID
 	
 	--Get Agent PT Setting Values
-	INSERT @_AgentPTTbl(SportType,BetType,IsLive,S2,M2,A2
-				,IM2,UM2,IS2,US2,N2,L2)	
-	SELECT acs.SportType,acs.BetType,acs.IsLive,acs.SuperPT,acs.MasterPT,acs.AgentPT
-				,acs.IsAutoMasterPT,acs.AutoMasterPT,acs.IsAutoSuperPT,acs.AutoSuperPT,MinPT,MaxPT 
-	FROM dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK)
-		INNER JOIN @tblPT mt 
-			ON mt.SportType = acs.SportType
-				AND mt.BetType = acs.BetType
-				AND mt.IsLive = acs.IsLive
-	WHERE acs.CustID = @_AgentID
+	IF @_AgentID NOT IN (-4,-3)
+	BEGIN
+		INSERT @_AgentPTTbl(SportType,BetType,IsLive,S2,M2,A2
+					,IM2,UM2,IS2,US2,N2,L2)	
+		SELECT acs.SportType,acs.BetType,acs.IsLive,acs.SuperPT,acs.MasterPT,acs.AgentPT
+					,acs.IsAutoMasterPT,acs.AutoMasterPT,acs.IsAutoSuperPT,acs.AutoSuperPT,MinPT,MaxPT 
+		FROM dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK)
+			INNER JOIN @tblPT mt 
+				ON mt.SportType = acs.SportType
+					AND mt.BetType = acs.BetType
+					AND mt.IsLive = acs.IsLive
+		WHERE acs.CustID = @_AgentID
+	END
+	ELSE
+	BEGIN
+		SET @SettingMode = 0 -- Direct member does not offer PT group
+
+		INSERT @_AgentPTTbl(SportType,BetType,IsLive,S2,M2,A2,IM2,UM2,IS2,US2,N2,L2)	
+		SELECT  mt.SportType,mt.BetType,mt.IsLive,0,0,0,0,0,0,0,0,0
+		FROM @tblPT mt 
+	END
 --------------------------------------------------------------------------------------------------------	
 
 	UPDATE tmp
@@ -359,8 +379,8 @@ BEGIN
 									cs.bettype										AS '@BetType',
 									cs.isLive										AS '@IsLive',
 									dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
-									cs.IsAutoMasterPT								AS '@IsAutoMasterPT',
-									dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+									CASE WHEN @_AgentID <> - 3 THEN cs.IsAutoMasterPT END AS '@IsAutoMasterPT',
+									CASE WHEN @_AgentID <> - 3 THEN dbo.f_FomatNumericToChar(cs.AutoMasterPT/100.0)	END AS '@AutoMasterPT',
 									t.SettingLevel									AS '@SettingLevel'
 							FROM        CustPTSetting3rd_Member cs WITH(NOLOCK)
 							INNER JOIN  @tblPT t 
@@ -430,8 +450,8 @@ BEGIN
 									cs.bettype										AS '@BetType',
 									cs.isLive										AS '@IsLive',
 									dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
-									cs.IsAutoMasterPT								AS '@IsAutoMasterPT',
-									dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+									CASE WHEN @_AgentID <> - 3 THEN cs.IsAutoMasterPT END AS '@IsAutoMasterPT',
+									CASE WHEN @_AgentID <> - 3 THEN dbo.f_FomatNumericToChar(cs.AutoMasterPT/100.0)	END AS '@AutoMasterPT',
 									t.SettingLevel									AS '@SettingLevel'
 							FROM        CustPTGroupSetting3rd_Member cs WITH(NOLOCK)
 							INNER JOIN  @tblPT t 
@@ -463,8 +483,8 @@ BEGIN
 								cs.bettype										AS '@BetType',
 								cs.isLive										AS '@IsLive',
 								dbo.f_FomatNumericToChar(cs.MasterPT		/100.0)	AS '@MasterPT',
-								cs.IsAutoMasterPT								AS '@IsAutoMasterPT',
-								dbo.f_FomatNumericToChar(cs.AutoMasterPT	/100.0)	AS '@AutoMasterPT',
+								CASE WHEN @_AgentID <> - 3 THEN cs.IsAutoMasterPT END AS '@IsAutoMasterPT',
+								CASE WHEN @_AgentID <> - 3 THEN dbo.f_FomatNumericToChar(cs.AutoMasterPT/100.0)	END AS '@AutoMasterPT',
 								cs.SettingLevel									AS '@SettingLevel'
 						FROM    @tblPT cs	
 						ORDER BY cs.Child_DisplayOrder
@@ -826,9 +846,11 @@ BEGIN
 
 	DECLARE @ActionID INT
 
-	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 519 -- SB
-								ELSE 531 -- 3rdProducts
-							END
+	SELECT @ActionID = CASE WHEN @GroupID = 1 AND @_AgentID <> -3	THEN 519 -- SB, normal member
+							WHEN @GroupID = 1 AND @_AgentID = -3	THEN 200012 -- SB, Master direct member
+							WHEN ISNULL(@GroupID,0) <> 1 AND @_AgentID <> -3	THEN 531 -- 3rd products, normal member
+							WHEN ISNULL(@GroupID,0) <> 1 AND @_AgentID = -3		THEN 200015 -- 3rd products, Master direct member
+						END
 						
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @UserID,

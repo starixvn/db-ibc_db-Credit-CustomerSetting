@@ -14,6 +14,7 @@ AS
 	Revision: 
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1 or 3 : UAT
 
@@ -133,7 +134,7 @@ BEGIN
 		WHERE bl.CustID = @CustID AND sbl.CustID IN (@SuperID, @MasterID)
 		GROUP BY ft.sporttype,ft.bettype
 	END
-	ELSE IF @RoleID = 1
+	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member
 	BEGIN
 		INSERT INTO @BetSetting( SportType,BetType,SubType,Child_DisplayOrder			
 								,MinBet,MaxBet,MaxPerMatch,MaxPerNumber		
@@ -154,6 +155,52 @@ BEGIN
 			INNER JOIN dbo.BetSetting3rd_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype
 			INNER JOIN dbo.BetSetting3rd_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
 		WHERE bl.CustID = @CustID AND sbl.CustID IN (@SuperID, @MasterID, @AgentID)
+		GROUP BY ft.sporttype,ft.bettype
+	END
+	ELSE IF @RoleID = 1 AND @AgentID = -4 --Super Direct Member
+	BEGIN
+		INSERT INTO @BetSetting( SportType,BetType,SubType,Child_DisplayOrder			
+								,MinBet,MaxBet,MaxPerMatch,MaxPerNumber		
+								,MinBetMin,MaxBetMax,MaxPerMatchMax,MaxPerNumberMax)
+		SELECT	ft.SportType,
+				ft.BetType,
+				MAX(ft.SubType) AS SubType,
+				MAX(ft.Child_DisplayOrder) AS Child_DisplayOrder,
+				MAX(bl.MinBet) AS MinBet,
+				MAX(bl.MaxBet) AS MaxBet,
+				MAX(bl.MaxPerMatch) AS MaxPerMatch, 
+				MAX(bl.MaxPerNumber)AS MaxPerNumber,
+				ISNULL(MAX(CASE WHEN sbl.MinBet = 0 then NULL ELSE sbl.MinBet END),0) AS MinBetMin,  
+				ISNULL(MIN(CASE WHEN sbl.MaxBet = 0 then NULL ELSE sbl.MaxBet END),0) AS MaxBetMax,  
+				ISNULL(MIN(CASE WHEN sbl.MaxPerMatch = 0 then NULL ELSE sbl.MaxPerMatch END),0) AS MaxPerMatchMax, 
+				ISNULL(MIN(CASE WHEN sbl.MaxPerNumber = 0 then NULL ELSE sbl.MaxPerNumber END),0) AS MaxPerNumberMax
+		FROM #SportBettypeFilter ft 
+			INNER JOIN dbo.BetSetting3rd_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype
+			INNER JOIN dbo.BetSetting3rd_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
+		WHERE bl.CustID = @CustID AND sbl.CustID = @SuperID
+		GROUP BY ft.sporttype,ft.bettype
+	END
+	ELSE IF @RoleID = 1 AND @AgentID = -3 --Master Direct Member
+	BEGIN
+		INSERT INTO @BetSetting( SportType,BetType,SubType,Child_DisplayOrder			
+								,MinBet,MaxBet,MaxPerMatch,MaxPerNumber		
+								,MinBetMin,MaxBetMax,MaxPerMatchMax,MaxPerNumberMax)
+		SELECT	ft.SportType,
+				ft.BetType,
+				MAX(ft.SubType) AS SubType,
+				MAX(ft.Child_DisplayOrder) AS Child_DisplayOrder,
+				MAX(bl.MinBet) AS MinBet,
+				MAX(bl.MaxBet) AS MaxBet,
+				MAX(bl.MaxPerMatch) AS MaxPerMatch, 
+				MAX(bl.MaxPerNumber)AS MaxPerNumber,
+				ISNULL(MAX(CASE WHEN sbl.MinBet = 0 then NULL ELSE sbl.MinBet END),0) AS MinBetMin,  
+				ISNULL(MIN(CASE WHEN sbl.MaxBet = 0 then NULL ELSE sbl.MaxBet END),0) AS MaxBetMax,  
+				ISNULL(MIN(CASE WHEN sbl.MaxPerMatch = 0 then NULL ELSE sbl.MaxPerMatch END),0) AS MaxPerMatchMax, 
+				ISNULL(MIN(CASE WHEN sbl.MaxPerNumber = 0 then NULL ELSE sbl.MaxPerNumber END),0) AS MaxPerNumberMax
+		FROM #SportBettypeFilter ft 
+			INNER JOIN dbo.BetSetting3rd_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype
+			INNER JOIN dbo.BetSetting3rd_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
+		WHERE bl.CustID = @CustID AND sbl.CustID IN(@SuperID, @MasterID)
 		GROUP BY ft.sporttype,ft.bettype
 	END
 

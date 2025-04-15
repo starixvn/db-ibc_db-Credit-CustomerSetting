@@ -1,5 +1,5 @@
 ﻿/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_CustSetting_CustomerInfoSBSelect] 
+ALTER PROCEDURE [dbo].[Acc_CustSetting_CustomerInfoSBSelect] 
 	  @CustID		INT,
 	  @SystemID		INT = 0
 AS
@@ -17,6 +17,7 @@ AS
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
 		- 20240423@Elodie: Member Max Credit, Member Given Credit enhancements [Redmine: #203332]
 		- 20241028@July: [Scale out DBCUST] Wrong Currency [Redmine: #212777]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 
 	Param's Explanation:
 	
@@ -50,6 +51,8 @@ BEGIN
 			@Credit_Ag_Bal			MONEY,
 			--@Credit_Mem_Max			MONEY,
 			@MaxCredit_Mem			MONEY,
+			@Credit_AllOtherDirectMember	MONEY,
+			@IsDirectMember			INT,
 
 			-- Param get Cust Info
 			@RoleID				INT,
@@ -122,7 +125,8 @@ BEGIN
 			@mrecommend		= c.mrecommend,
 			@recommend		= c.recommend,
 			@uGroup		= c.ugroup,
-			@SpecialPlatfrom  = ISNULL(s.SpecialPlatfrom , 0)
+			@SpecialPlatfrom  = ISNULL(s.SpecialPlatfrom , 0),
+			@IsDirectMember	= CASE WHEN c.recommend IN (-3,-4) THEN c.recommend ELSE 0 END
 		FROM	Customer c WITH (NOLOCK)
 		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 		INNER JOIN exchange e WITH (NOLOCK) ON c.currency = e.ExchangeId
@@ -134,9 +138,9 @@ BEGIN
 		SELECT @Credit_SAg_Min = MAX(c.credit)
 		FROM
 			(
-				SELECT ISNULL(SUM(credit), 0) as credit FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID and RoleID=3
+				SELECT ISNULL(SUM(credit), 0) as credit FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID and ((RoleID=3) OR (RoleID=1 AND recommend = -4))
 				UNION ALL
-				SELECT ISNULL(SUM(credit), 0) as credit FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID and RoleID=1
+				SELECT ISNULL(SUM(credit), 0) as credit FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID and RoleID=1 AND recommend NOT IN (-3,-4)
 				UNION ALL
 				SELECT ISNULL(SUM(credit), 0) as credit FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID and RoleID=2
 			) c
@@ -167,7 +171,7 @@ BEGIN
 
 	ELSE IF @RoleID = 3
 	BEGIN
-		SELECT @Credit_AllOtherMaster = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE srecommend = @srecommend and RoleID = 3 and custid <> @CustId
+		SELECT @Credit_AllOtherMaster = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE srecommend = @srecommend and custid <> @CustID AND ((RoleID = 3) OR (RoleID = 1 AND ci.recommend = -4))
 		SELECT @Credit_SAg = ISNULL(credit, 0) FROM CustInfo as ci WITH (NOLOCK) WHERE CustID = @srecommend
 
 		IF @srecommend <= 100
@@ -183,9 +187,9 @@ BEGIN
 		SELECT @Credit_MAg_Min = MAX(c.credit)
 		FROM
 			(
-			SELECT ISNULL(SUM(credit), 0) AS credit	FROM custinfo WITH (NOLOCK) WHERE mrecommend = @CustID and RoleID=1
+			SELECT ISNULL(SUM(credit), 0) AS credit	FROM custinfo WITH (NOLOCK) WHERE mrecommend = @CustID and RoleID=1 AND recommend NOT IN (-3,-4)
 			UNION ALL
-			SELECT ISNULL(SUM(credit), 0) AS credit	FROM custinfo WITH (NOLOCK) WHERE mrecommend = @CustID and RoleID=2
+			SELECT ISNULL(SUM(credit), 0) AS credit	FROM custinfo WITH (NOLOCK) WHERE mrecommend = @CustID and ((RoleID=2) OR (RoleID=1 AND recommend = -3))
 			) c
 
 		SELECT        
@@ -219,7 +223,7 @@ BEGIN
 		SELECT @Mem_MaxCredit = ISNULL(maxcredit,0) FROM CustAgent WITH (NOLOCK) 
 		WHERE  custid=@CustID 
 
-		SELECT @Credit_AllOtherAgent = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE mrecommend = @mrecommend and RoleID = 2 and Custid <> @CustId
+		SELECT @Credit_AllOtherAgent = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE mrecommend = @mrecommend and Custid <> @CustID AND ((RoleID = 2) OR (ci.roleid = 1 AND ci.recommend = -3))
 		SELECT @Credit_MAg = ISNULL(credit, 0) FROM CustInfo AS ci WITH (NOLOCK) WHERE CustID = @mrecommend
 
 		SELECT @Credit_Ag_Max = @Credit_MAg - @Credit_AllOtherAgent
@@ -268,15 +272,68 @@ BEGIN
 
 	ELSE IF @RoleID = 1
 	BEGIN
-		SELECT @Credit_AllOtherMember = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE recommend = @recommend and RoleID = 1 AND CustID <> @CustID
-		SELECT @Credit_Ag = ISNULL(credit, 0) FROM CustInfo AS ci WITH (NOLOCK) WHERE CustID = @recommend
+		IF @IsDirectMember = 0
+		BEGIN
+			-- MaxCredit_Mem : Maximum Normal Member Credit Set by Upline
+			SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) ,@site = ca.site, @sitelabel=s.sitelabel
+			FROM CustAgent ca WITH (NOLOCK) 
+			INNER JOIN site s WITH (NOLOCK) ON s.site=ca.site
+			WHERE ca.CustID = @recommend
 
-		SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) ,@site = ca.site, @sitelabel=s.sitelabel
-		FROM CustAgent ca WITH (NOLOCK) 
-		INNER JOIN site s WITH (NOLOCK) ON s.site=ca.site
-		WHERE ca.CustID = @recommend
+			-- MaxCreditMax : Avaiable Credit
+			SELECT @Credit_Ag = ISNULL(credit, 0) FROM CustInfo AS ci WITH (NOLOCK) WHERE CustID = @recommend
+			SELECT @Credit_AllOtherMember = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE recommend = @recommend and RoleID = 1 AND CustID <> @CustID
 
-		SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember
+			SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember
+		END
+		ELSE IF @IsDirectMember = -3
+		BEGIN
+			-- MaxCredit_Mem : Maximum Normal Member Credit Set by Upline
+			SELECT @MaxCredit_Mem = 0
+
+			-- MaxCreditMax : Avaiable Credit
+			SELECT @Credit_MAg = isnull(credit, 0)
+			FROM CustInfo AS ci with (NOLOCK) 
+			WHERE CustID = @mrecommend
+
+			SELECT @Credit_AllOtherAgent = isnull(sum(credit), 0) 
+			FROM custinfo as ci with (NOLOCK) 
+			WHERE ci.mrecommend = @mrecommend 
+				AND RoleID = 2
+
+			SELECT @Credit_AllOtherDirectMember = isnull(sum(credit), 0) 
+			FROM custinfo as ci with (NOLOCK) 
+			WHERE mrecommend = @mrecommend 
+				AND RoleID = 1
+				AND recommend = -3
+				AND ci.custid <> @CustID
+
+			SELECT @Credit_Ag_Bal = @Credit_MAg - @Credit_AllOtherAgent - @Credit_AllOtherDirectMember
+		END
+		ELSE IF @IsDirectMember = -4
+		BEGIN
+			-- MaxCredit_Mem : Maximum Normal Member Credit Set by Upline
+			SELECT @MaxCredit_Mem = 0
+
+			-- MaxCreditMax : Avaiable Credit
+			SELECT @Credit_SAg = isnull(credit, 0)
+			FROM CustInfo as ci with (NOLOCK) 
+			WHERE CustID = @srecommend
+
+			SELECT @Credit_AllOtherMaster = isnull(sum(credit), 0) 
+			FROM custinfo as ci with (NOLOCK) 
+			WHERE srecommend = @srecommend 
+				AND RoleID = 3
+
+			SELECT @Credit_AllOtherDirectMember = isnull(sum(credit), 0) 
+			FROM custinfo as ci with (NOLOCK) 
+			WHERE srecommend = @srecommend 
+				AND RoleID = 1
+				AND recommend = -4
+				AND ci.custid <> @CustID
+
+			SELECT @Credit_Ag_Bal = @Credit_SAg - @Credit_AllOtherMaster - @Credit_AllOtherDirectMember
+		END
 		----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		--SELECT @Credit_Mem_Max = CASE WHEN @MaxCredit_Mem =0 THEN @Credit_Ag_Bal
 		--							WHEN @MaxCredit_Mem > @Credit_Ag_Bal THEN @Credit_Ag_Bal

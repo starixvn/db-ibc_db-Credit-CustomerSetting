@@ -24,6 +24,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -37,6 +38,10 @@ AS
 						DisableAllMasters="0"
 						DisableAllAgents="0"
 						DisableAllMembers="0"
+						UpdateAllSuperDirectMembers="0"
+						DisableAllSuperDirectMembers="0"
+						UpdateAllMasterDirectMembers="0"
+						DisableAllMasterDirectMembers="0"
 				/>
 		</ROOT>
 	Example:
@@ -88,6 +93,10 @@ BEGIN
 		, DisableAllMasters		BIT
 		, DisableAllAgents		BIT
 		, DisableAllMembers		BIT
+		, UpdateAllSuperDirectMembers			BIT
+		, DisableAllSuperDirectMembers		BIT
+		, UpdateAllMasterDirectMembers		BIT
+		, DisableAllMasterDirectMembers		BIT
 		, RealProductId			TINYINT
 		)
 	CREATE TABLE #OldDisableStatTbl  (
@@ -100,11 +109,15 @@ BEGIN
 		, DisableAllMasters		BIT
 		, DisableAllAgents		BIT
 		, DisableAllMembers		BIT
+		, UpdateAllSuperDirectMembers			BIT
+		, DisableAllSuperDirectMembers		BIT
+		, UpdateAllMasterDirectMembers		BIT
+		, DisableAllMasterDirectMembers		BIT
 		)
 
 	SELECT	@ErrCode	= 0
 		,	@MsgType	= 0
-		,	@ErrMsg			= ''
+		,	@ErrMsg	= ''
 
 	--Check if XML is null or empty
 	IF @IsDisabled IS NULL
@@ -168,8 +181,8 @@ BEGIN
 		, @IsDisabled
 
 	
-	INSERT INTO #NewDisableStatTbl (SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
-	SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers
+	INSERT INTO #NewDisableStatTbl (SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers, UpdateAllSuperDirectMembers, DisableAllSuperDirectMembers, UpdateAllMasterDirectMembers, DisableAllMasterDirectMembers)
+	SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers, UpdateAllSuperDirectMembers, DisableAllSuperDirectMembers, UpdateAllMasterDirectMembers, DisableAllMasterDirectMembers
 	FROM OPENXML(@iDoc, '/ROOT/ProductStatus', 1) WITH (
 			SportType				SMALLINT
 			, BetType				SMALLINT
@@ -180,6 +193,10 @@ BEGIN
 			, DisableAllMasters		BIT
 			, DisableAllAgents		BIT
 			, DisableAllMembers		BIT
+			, UpdateAllSuperDirectMembers	BIT
+			, DisableAllSuperDirectMembers BIT
+			, UpdateAllMasterDirectMembers BIT
+			, DisableAllMasterDirectMembers BIT
 			)
 	
 	EXEC sp_xml_removedocument @iDoc
@@ -207,7 +224,7 @@ BEGIN
 	
 	SELECT TOP 1 @UpdateAllMasters =  1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1
 	SELECT TOP 1 @UpdateAllAgents =  1 FROM #NewDisableStatTbl WHERE UpdateAllAgents = 1
-	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1
+	SELECT TOP 1 @UpdateAllMembers =  1 FROM #NewDisableStatTbl WHERE UpdateAllMembers = 1 OR UpdateAllSuperDirectMembers = 1 OR UpdateAllMasterDirectMembers = 1
 
 	--Check Allowed downlines	
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1) AND @RoleID <> 1
@@ -250,7 +267,7 @@ BEGIN
 	--Get old disabled status
 	DECLARE @downlines BIT  = 0
 	
-	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
+	INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,UpdateAllMasters,UpdateAllAgents,UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers,UpdateAllSuperDirectMembers, DisableAllSuperDirectMembers, UpdateAllMasterDirectMembers, DisableAllMasterDirectMembers)
 	SELECT psp.SportType
 		, psp.BetType
 		, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled
@@ -260,6 +277,10 @@ BEGIN
 		, tmp.DisableAllMasters
 		, tmp.DisableAllAgents
 		, tmp.DisableAllMembers			
+		, tmp.UpdateAllSuperDirectMembers
+		, tmp.DisableAllSuperDirectMembers
+		, tmp.UpdateAllMasterDirectMembers
+		, tmp.DisableAllMasterDirectMembers
 	FROM #NewDisableStatTbl tmp
 		INNER JOIN ProductStatusProfile PSP WITH (NOLOCK) ON tmp.SportType = psp.Sporttype AND tmp.BetType = psp.Bettype
 		INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON stt.CustID = @CustID
@@ -269,7 +290,7 @@ BEGIN
 			SELECT TOP 1 1
 			FROM #NewDisableStatTbl tmp
 				INNER JOIN #OldDisableStatTbl stt ON tmp.SportType	= stt.SportType	AND tmp.BetType = stt.BetType
-			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 OR tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1
+			WHERE tmp.IsDisabled <> stt.IsDisabled OR tmp.UpdateAllMasters = 1 OR tmp.UpdateAllAgents = 1 OR tmp.UpdateAllMembers = 1 OR tmp.UpdateAllSuperDirectMembers = 1 OR tmp.UpdateAllMasterDirectMembers = 1
 			)
 		RETURN
 
@@ -292,7 +313,7 @@ BEGIN
 				, TYPE
 			)
 			
-	UPDATE CustProductStatus
+	UPDATE CustProductStatus WITH (ROWLOCK, UPDLOCK)
 		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 			RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE CustID = @CustID
@@ -334,7 +355,7 @@ BEGIN
 	--call execrept to update downline
 	DECLARE @IsDisabled_Downline XML
 	
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1) AND @RoleID <> 1
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTbl WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1 OR UpdateAllSuperDirectMembers = 1 OR UpdateAllMasterDirectMembers = 1) AND @RoleID <> 1
 	BEGIN		
 		SET @IsDisabled_Downline = (
 				SELECT (
@@ -348,8 +369,12 @@ BEGIN
 							,DisableAllMasters AS '@DisableAllMasters'
 							,DisableAllAgents AS '@DisableAllAgents'
 							,DisableAllMembers AS '@DisableAllMembers'
+							,UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers'
+							,DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers'
+							,UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers'
+							,DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #NewDisableStatTbl
-						WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1
+						WHERE UpdateAllMasters = 1 OR UpdateAllAgents = 1 OR UpdateAllMembers = 1 OR UpdateAllSuperDirectMembers = 1 OR UpdateAllMasterDirectMembers = 1
 						FOR XML PATH('ProductStatus')
 							, TYPE
 						)
@@ -458,7 +483,11 @@ BEGIN
 								UpdateAllAgents		AS '@UpdateAllAgents',
 								DisableAllAgents	AS '@DisableAllAgents',
 								UpdateAllMembers	AS '@UpdateAllMembers',
-								DisableAllMembers	AS '@DisableAllMembers'
+								DisableAllMembers	AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers', 
+								UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers', 								
+								DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -483,7 +512,11 @@ BEGIN
 								UpdateAllAgents		AS '@UpdateAllAgents',
 								DisableAllAgents	AS '@DisableAllAgents',
 								UpdateAllMembers	AS '@UpdateAllMembers',
-								DisableAllMembers	AS '@DisableAllMembers'
+								DisableAllMembers	AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers', 
+								UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers', 								
+								DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -508,7 +541,11 @@ BEGIN
 								UpdateAllAgents		AS '@UpdateAllAgents',
 								DisableAllAgents	AS '@DisableAllAgents',
 								UpdateAllMembers	AS '@UpdateAllMembers',
-								DisableAllMembers	AS '@DisableAllMembers'
+								DisableAllMembers	AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers', 
+								UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers', 								
+								DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -534,7 +571,11 @@ BEGIN
 								UpdateAllAgents		AS '@UpdateAllAgents',
 								DisableAllAgents	AS '@DisableAllAgents',
 								UpdateAllMembers	AS '@UpdateAllMembers',
-								DisableAllMembers	AS '@DisableAllMembers'
+								DisableAllMembers	AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers', 
+								UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers', 								
+								DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #OldDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -562,7 +603,11 @@ BEGIN
 								UpdateAllAgents		AS '@UpdateAllAgents',
 								DisableAllAgents	AS '@DisableAllAgents',
 								UpdateAllMembers	AS '@UpdateAllMembers',
-								DisableAllMembers	AS '@DisableAllMembers'
+								DisableAllMembers	AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers', 
+								UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers', 								
+								DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -587,7 +632,11 @@ BEGIN
 								UpdateAllAgents		AS '@UpdateAllAgents',
 								DisableAllAgents	AS '@DisableAllAgents',
 								UpdateAllMembers	AS '@UpdateAllMembers',
-								DisableAllMembers	AS '@DisableAllMembers'
+								DisableAllMembers	AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers', 
+								UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers', 								
+								DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -612,7 +661,11 @@ BEGIN
 								UpdateAllAgents		AS '@UpdateAllAgents',
 								DisableAllAgents	AS '@DisableAllAgents',
 								UpdateAllMembers	AS '@UpdateAllMembers',
-								DisableAllMembers	AS '@DisableAllMembers'
+								DisableAllMembers	AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers', 
+								UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers', 								
+								DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE
@@ -638,7 +691,11 @@ BEGIN
 								UpdateAllAgents		AS '@UpdateAllAgents',
 								DisableAllAgents	AS '@DisableAllAgents',
 								UpdateAllMembers	AS '@UpdateAllMembers',
-								DisableAllMembers	AS '@DisableAllMembers'
+								DisableAllMembers	AS '@DisableAllMembers',
+								UpdateAllSuperDirectMembers AS '@UpdateAllSuperDirectMembers',
+								DisableAllSuperDirectMembers AS '@DisableAllSuperDirectMembers', 
+								UpdateAllMasterDirectMembers AS '@UpdateAllMasterDirectMembers', 								
+								DisableAllMasterDirectMembers AS '@DisableAllMasterDirectMembers'
 						FROM #NewDisableStatTbl
 						FOR XML PATH('ProductStatus'),
 						TYPE

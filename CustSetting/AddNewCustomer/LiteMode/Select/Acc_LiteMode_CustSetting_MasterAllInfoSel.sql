@@ -3,7 +3,8 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_MasterAllInfoSel]
 	@CustID INT,		
 	@GroupID INT = 0,
 	@GroupType INT = 0,
-	@SettingStatus TINYINT = 0
+	@SettingStatus TINYINT = 0,
+	@IsDirectMember BIT = 0
 AS
 /*
 	Created by: 20230622@Johnson	
@@ -17,6 +18,7 @@ AS
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]   
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -46,7 +48,7 @@ BEGIN
 	IF @GroupType = 0
 	BEGIN
 		DECLARE @Msuspended BIT,
-				@Credit_AllOtherAgent MONEY, 
+				@Credit_AllOtherAgent MONEY, @Credit_AllOtherDirectMember MONEY,
 				@Credit_MAg MONEY, 
 				@Credit_Ag_Max MONEY,								
 				@DisableAutoMPT BIT,
@@ -57,12 +59,18 @@ BEGIN
 		SELECT @Credit_AllOtherAgent = ISNULL(SUM(credit), 0) 
 		FROM custinfo as ci WITH (NOLOCK) 
 		WHERE mrecommend = @CustID AND RoleID = 2
+
+		SELECT @Credit_AllOtherDirectMember = isnull(sum(credit), 0) 
+		FROM custinfo as ci with (NOLOCK) 
+		WHERE mrecommend = @CustID 
+			AND RoleID = 1
+			AND recommend = -3
 		
 		SELECT @Credit_MAg = isnull(credit, 0)
 		FROM CustInfo as ci with (NOLOCK) 
 		WHERE CustID = @CustID
 		
-		SELECT @Credit_Ag_Max = @Credit_MAg - @Credit_AllOtherAgent
+		SELECT @Credit_Ag_Max = @Credit_MAg - @Credit_AllOtherAgent - @Credit_AllOtherDirectMember
 		
 		SELECT @Msuspended = CASE WHEN cps.SuspendInfo > 0 THEN 1 ELSE 0 END 
 		FROM CustProductStatus cps WITH (NOLOCK) 
@@ -95,12 +103,19 @@ BEGIN
 			@currency currency			
 	END
 	
-	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT,SubGroupID TINYINT,SubGroupOrder TINYINT)
+	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT,SubGroupID TINYINT,SubGroupOrder TINYINT
+		, [Parent_ProductSettingID] [int], [ProductSettingID] [int], ParentSportType SMALLINT, ParentBetType SMALLINT,SettingType smallint, MaxChoice tinyint)
 		
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder)
-	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice)
+	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice
 	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@SettingStatus,@siteID,@currency) 
 	
+	UPDATE t
+	SET t.ParentSportType = pr.SportType, t.ParentBetType = pr.Bettype
+	FROM #SportBettypeFilter t 
+		INNER JOIN #SportBettypeFilter pr 
+			ON t.Parent_ProductSettingID = pr.ProductSettingID
+	WHERE t.Parent_ProductSettingID IS NOT NULL
 	----------------------------------------------------------------------------------
 	--BEGIN SB Settings
 	
@@ -113,6 +128,9 @@ BEGIN
 				ON t.sporttype = s.sporttype
 				AND t.bettype = s.bettype
 		WHERE t.CustID = @CustID
+			AND (	@IsDirectMember = 0 
+					OR NOT (t.SportType = 1 AND t.BetType IN (3,7,8))
+				 ) -- Load default Group A when create Direct member
 		ORDER BY s.SubGroupOrder,s.Child_DisplayOrder									
 	END
 	
@@ -150,37 +168,75 @@ BEGIN
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent mMp WITH (NOLOCK) ON s.SportType = mMp.sporttype AND s.BetType = mMp.bettype
 		WHERE cs.custid = @srecommend  AND mMp.CustID = @custid 
 		
-		SELECT	ft.SportType,
-				ft.BetType,					
-				CASE	WHEN bu.SingleMatchParlay_IsAllowUnlimit = 1 
-						THEN 0
-						ELSE (SELECT MIN(SingleMatchParlay) FROM (VALUES  (CASE WHEN sbl.SingleMatchParlay = 0 THEN NULL ELSE sbl.SingleMatchParlay END), 
-														(CASE WHEN mbl.SingleMatchParlay = 0 THEN NULL ELSE mbl.SingleMatchParlay END)) AS t(SingleMatchParlay)) END AS SingleMatchParlay,  
+		IF @IsDirectMember = 1
+		BEGIN
+			SELECT	ft.SportType,
+					ft.BetType,					
+					CASE	WHEN bu.SingleMatchParlay_IsAllowUnlimit = 1 
+							THEN mps.SingleMatchParlay
+							ELSE (SELECT MIN(SingleMatchParlay) FROM (VALUES  (CASE WHEN sbl.SingleMatchParlay = 0 THEN NULL ELSE sbl.SingleMatchParlay END), 
+															(CASE WHEN mbl.SingleMatchParlay = 0 THEN NULL ELSE mbl.SingleMatchParlay END)) AS t(SingleMatchParlay)) END AS SingleMatchParlay,  
 
-				CASE	WHEN bu.Combo2_IsAllowUnlimit = 1 
-						THEN 0
-						ELSE (SELECT MIN(Combo2) FROM (VALUES  (CASE WHEN sbl.Combo2 = 0 THEN NULL ELSE sbl.Combo2 END), 
-														(CASE WHEN mbl.Combo2 = 0 THEN NULL ELSE mbl.Combo2 END)) AS t(Combo2)) END AS Combo2,  
+					CASE	WHEN bu.Combo2_IsAllowUnlimit = 1 
+							THEN mps.Combo2
+							ELSE (SELECT MIN(Combo2) FROM (VALUES  (CASE WHEN sbl.Combo2 = 0 THEN NULL ELSE sbl.Combo2 END), 
+															(CASE WHEN mbl.Combo2 = 0 THEN NULL ELSE mbl.Combo2 END)) AS t(Combo2)) END AS Combo2,  
 
-				CASE	WHEN bu.Combo35_IsAllowUnlimit = 1 
-						THEN 0
-						ELSE (SELECT MIN(Combo35) FROM (VALUES (CASE WHEN sbl.Combo35 = 0 THEN NULL ELSE sbl.Combo35 END), 
-																(CASE WHEN mbl.Combo35 = 0 THEN NULL ELSE mbl.Combo35 END)) AS t(Combo35)) END AS Combo35,
+					CASE	WHEN bu.Combo35_IsAllowUnlimit = 1 
+							THEN mps.Combo35
+							ELSE (SELECT MIN(Combo35) FROM (VALUES (CASE WHEN sbl.Combo35 = 0 THEN NULL ELSE sbl.Combo35 END), 
+																	(CASE WHEN mbl.Combo35 = 0 THEN NULL ELSE mbl.Combo35 END)) AS t(Combo35)) END AS Combo35,
 						
-				CASE	WHEN bu.ComboOver6_IsAllowUnlimit = 1 
-						THEN 0
-						ELSE (SELECT MIN(ComboOver6) FROM (VALUES (CASE WHEN sbl.ComboOver6 = 0 THEN NULL ELSE sbl.ComboOver6 END), 
-															(CASE WHEN mbl.ComboOver6 = 0 THEN NULL ELSE mbl.ComboOver6 END)) AS t(ComboOver6)) END AS ComboOver6,	
-				bu.SingleMatchParlay_IsAllowUnlimit AS SingleMatchParlay_IsAllowUnlimit,
-				bu.Combo2_IsAllowUnlimit AS Combo2_IsAllowUnlimit,
-				bu.Combo35_IsAllowUnlimit AS Combo35_IsAllowUnlimit,
-				bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit		
-		FROM #SportBettypeFilter ft 
-			INNER JOIN @MatchParlayUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype			
-			INNER JOIN dbo.CustMaxPayoutSetting_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
-			INNER JOIN dbo.CustMaxPayoutSetting_Agent mbl WITH (NOLOCK) ON ft.SportType = mbl.sporttype AND ft.BetType = mbl.bettype
-		WHERE sbl.CustID = @srecommend AND mbl.CustID = @custid
-		ORDER BY ft.SubGroupOrder, ft.Child_DisplayOrder
+					CASE	WHEN bu.ComboOver6_IsAllowUnlimit = 1 
+							THEN mps.ComboOver6
+							ELSE (SELECT MIN(ComboOver6) FROM (VALUES (CASE WHEN sbl.ComboOver6 = 0 THEN NULL ELSE sbl.ComboOver6 END), 
+																(CASE WHEN mbl.ComboOver6 = 0 THEN NULL ELSE mbl.ComboOver6 END)) AS t(ComboOver6)) END AS ComboOver6,	
+					bu.SingleMatchParlay_IsAllowUnlimit AS SingleMatchParlay_IsAllowUnlimit,
+					bu.Combo2_IsAllowUnlimit AS Combo2_IsAllowUnlimit,
+					bu.Combo35_IsAllowUnlimit AS Combo35_IsAllowUnlimit,
+					bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit		
+			FROM #SportBettypeFilter ft 
+				INNER JOIN @MatchParlayUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype			
+				INNER JOIN dbo.CustMaxPayoutSetting_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
+				INNER JOIN dbo.CustMaxPayoutSetting_Agent mbl WITH (NOLOCK) ON ft.SportType = mbl.sporttype AND ft.BetType = mbl.bettype
+				LEFT JOIN MaxPayoutGlobalSetting mps WITH(NOLOCK) ON ft.BetType = mps.BetType  AND ft.SportType = mps.SportType AND mps.Currency = @currency
+			WHERE sbl.CustID = @srecommend AND mbl.CustID = @custid
+			ORDER BY ft.SubGroupOrder, ft.Child_DisplayOrder
+		END
+		ELSE
+		BEGIN
+			SELECT	ft.SportType,
+					ft.BetType,					
+					CASE	WHEN bu.SingleMatchParlay_IsAllowUnlimit = 1 
+							THEN 0
+							ELSE (SELECT MIN(SingleMatchParlay) FROM (VALUES  (CASE WHEN sbl.SingleMatchParlay = 0 THEN NULL ELSE sbl.SingleMatchParlay END), 
+															(CASE WHEN mbl.SingleMatchParlay = 0 THEN NULL ELSE mbl.SingleMatchParlay END)) AS t(SingleMatchParlay)) END AS SingleMatchParlay,  
+
+					CASE	WHEN bu.Combo2_IsAllowUnlimit = 1 
+							THEN 0
+							ELSE (SELECT MIN(Combo2) FROM (VALUES  (CASE WHEN sbl.Combo2 = 0 THEN NULL ELSE sbl.Combo2 END), 
+															(CASE WHEN mbl.Combo2 = 0 THEN NULL ELSE mbl.Combo2 END)) AS t(Combo2)) END AS Combo2,  
+
+					CASE	WHEN bu.Combo35_IsAllowUnlimit = 1 
+							THEN 0
+							ELSE (SELECT MIN(Combo35) FROM (VALUES (CASE WHEN sbl.Combo35 = 0 THEN NULL ELSE sbl.Combo35 END), 
+																	(CASE WHEN mbl.Combo35 = 0 THEN NULL ELSE mbl.Combo35 END)) AS t(Combo35)) END AS Combo35,
+						
+					CASE	WHEN bu.ComboOver6_IsAllowUnlimit = 1 
+							THEN 0
+							ELSE (SELECT MIN(ComboOver6) FROM (VALUES (CASE WHEN sbl.ComboOver6 = 0 THEN NULL ELSE sbl.ComboOver6 END), 
+																(CASE WHEN mbl.ComboOver6 = 0 THEN NULL ELSE mbl.ComboOver6 END)) AS t(ComboOver6)) END AS ComboOver6,	
+					bu.SingleMatchParlay_IsAllowUnlimit AS SingleMatchParlay_IsAllowUnlimit,
+					bu.Combo2_IsAllowUnlimit AS Combo2_IsAllowUnlimit,
+					bu.Combo35_IsAllowUnlimit AS Combo35_IsAllowUnlimit,
+					bu.ComboOver6_IsAllowUnlimit AS ComboOver6_IsAllowUnlimit		
+			FROM #SportBettypeFilter ft 
+				INNER JOIN @MatchParlayUnlimit bu ON ft.SportType = bu.sporttype AND ft.BetType = bu.bettype			
+				INNER JOIN dbo.CustMaxPayoutSetting_Agent sbl WITH (NOLOCK) ON ft.SportType = sbl.sporttype AND ft.BetType = sbl.bettype
+				INNER JOIN dbo.CustMaxPayoutSetting_Agent mbl WITH (NOLOCK) ON ft.SportType = mbl.sporttype AND ft.BetType = mbl.bettype
+			WHERE sbl.CustID = @srecommend AND mbl.CustID = @custid
+			ORDER BY ft.SubGroupOrder, ft.Child_DisplayOrder
+		END
 	END
 
 	--SB PT
@@ -318,7 +374,7 @@ BEGIN
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch,	
 			s.SubGroupOrder,
 			s.Child_DisplayOrder
-		FROM CustBetSetting3rd_Agent cs WITH(NOLOCK)
+		FROM BetSetting3rd_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.sporttype = s.sporttype
 												AND cs.bettype = s.bettype
 		WHERE custid IN (@custid,@srecommend)
@@ -354,6 +410,82 @@ BEGIN
 	END
 	--END Others Games
 	----------------------------------------------------------------------------------
+	------- Create New Direct Member
+	--Product Status
+	IF @GroupType = 160
+	BEGIN						
+		SELECT	--ft.RealProductID,
+				ft.SportType,
+				ft.BetType,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) as IsSync,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
+				ft.ParentSportType,
+				ft.ParentBetType,
+				ft.Child_DisplayOrder
+		FROM #SportBettypeFilter ft 
+			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
+			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
+		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+			AND ft.SportType NOT IN(161)
+		ORDER BY ft.Child_DisplayOrder
+	END
+
+	--Product Status
+	IF @GroupType = 155
+	BEGIN
+		SELECT
+				CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
+				wl.SportType,
+				wl.BetType,
+				wl.MaxWinLimit,
+				wl.MaxWinLimit AS MaxWinRange,
+				wl.MaxLossLimit,
+				gs.MinLossLimit AS MinLossRange,
+				wl.MaxLossLimit AS MaxLossRange,
+				wl.IsAutoReset,
+				wl.IsAutoReset AS IsAutoResetUpline,
+				sbf.SubType,
+				sbf.Child_DisplayOrder
+			FROM CustWinLossLimit_Agent wl WITH (NOLOCK)
+			INNER JOIN	#SportBettypeFilter AS sbf
+					ON	sbf.Bettype = wl.BetType
+					AND	sbf.SportType = wl.SportType
+				INNER JOIN LossLimit_GlobalSetting gs WITH (NOLOCK) ON gs.ProductId = sbf.ProductID AND gs.ExchangeId = @Currency
+			WHERE wl.CustId = @CustID 
+			ORDER BY sbf.Child_DisplayOrder
+	END
+
+	--Stake Level
+	IF @GroupType = 158
+	BEGIN
+		;WITH Temp AS(
+		SELECT	csla.SportType,	csla.BetType, sl.StakeLevelID
+		, StakeLevelName = sl.MinLabel + N' - ' + sl.MaxLabel
+		, sl.MaxStake
+		, sbtf.ProductID
+		, sbtf.Child_DisplayOrder
+		, sbtf.SettingType
+		, sbtf.MaxChoice
+		, RN = ROW_NUMBER () OVER (PARTITION BY csla.SportType, csla.BetType ORDER BY sl.MaxStake,sl.MinStake,sl.GameGroupID)
+		FROM dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
+			INNER JOIN	#SportBettypeFilter AS sbtf
+				ON	sbtf.SportType = csla.SportType
+				AND	sbtf.BetType = csla.BetType
+			CROSS APPLY	STRING_SPLIT(ISNULL(csla.StakeLevelList, ''), ',') AS ss
+			INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
+				ON	sl.GameTypeID = sbtf.BetType
+				AND	sl.StakeLevelID = CAST(ss.value AS INT)
+		WHERE csla.CustID =	@CustID
+		)
+		SELECT SportType, BetType, StakeLevelID, StakeLevelName, ProductID
+			, isChecked = CASE WHEN RN = 1 THEN 1 ELSE 0 END
+			,MaxChoice
+			,ProductID
+			,CAST(CASE WHEN SettingType = 17 THEN 1 ELSE 0 END AS BIT) IsMultipleChoice
+		FROM Temp
+		ORDER BY Child_DisplayOrder, SportType, BetType, MaxStake
+	END
 			
 	DROP TABLE #SportBettypeFilter
 END	

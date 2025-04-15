@@ -18,6 +18,7 @@ AS
 		- 20240423@Elodie: Member Max Credit, Member Given Credit enhancements [Redmine: #203332]
 		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -303,27 +304,7 @@ BEGIN
 		ORDER BY SubGroupOrder,s.Child_DisplayOrder	
 	END
 	
-	--Bet Setting
-	IF @GroupID = 4 AND @GroupType = 157
-	BEGIN
-		;WITH T AS (
-		SELECT cs.Sporttype, cs.Bettype,
-			ISNULL(MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),0)  AS MinBet, 
-			ISNULL(MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),0) AS MaxBet, 
-			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 			
-			SubGroupOrder,
-			s.Child_DisplayOrder
-		FROM CustBetSetting3rd_Agent cs WITH (NOLOCK)
-			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
-												AND cs.Bettype = s.Bettype
-		WHERE cs.CustID IN (@custid,@srecommend,@mrecommend)
-		GROUP BY cs.sporttype, cs.bettype, s.SubType, SubGroupOrder,s.Child_DisplayOrder
-		)
-		SELECT Sporttype, Bettype, MinBet, MaxBet, MaxPerMatch, Child_DisplayOrder
-		FROM T
-		ORDER BY SubGroupOrder,Child_DisplayOrder
-	END
-	
+
 	--PT
 	IF @GroupID = 4 AND @GroupType = 153
 	BEGIN	

@@ -20,6 +20,7 @@ AS
   
  Revisions:  
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 
  Explanation's Param:  
 	- @ErrCode:
@@ -113,16 +114,19 @@ BEGIN
 			RETURN		
 		END	
 
-	DECLARE @Credit_AllOtherMaster MONEY, @Credit_SAg MONEY
-	SELECT @Credit_AllOtherMaster = ISNULL(SUM(credit), 0) 
-	FROM custinfo AS ci WITH (NOLOCK) 
-	WHERE srecommend = @srecommend and RoleID = 3  
+	DECLARE @Credit_AllOtherDownline MONEY, @Credit_SAg MONEY
+	SELECT @Credit_AllOtherDownline = ISNULL(sum(Credit), 0) 
+	FROM custinfo WITH(NOLOCK) 
+	WHERE SRecommend = @srecommend 
+		AND (RoleID = 3  --Masters
+				OR (roleid = 1 AND recommend = -4) --Super direct members
+			)
   
 	SELECT @Credit_SAg = ISNULL(credit, 0)		
 	FROM CustInfo as ci with (NOLOCK) 
 	WHERE CustID = @srecommend
 
-	IF @Credit_AllOtherMaster + @Credit > @Credit_SAg
+	IF @Credit_AllOtherDownline + @Credit > @Credit_SAg
 	BEGIN  
 		SET @ErrMsg = CASE @Language   
 		  WHEN 'E' THEN 'You have exceeded your credit limit.'  

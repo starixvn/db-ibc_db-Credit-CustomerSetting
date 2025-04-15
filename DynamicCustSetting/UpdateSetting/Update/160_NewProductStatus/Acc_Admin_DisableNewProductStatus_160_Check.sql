@@ -1,5 +1,5 @@
 ﻿/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,wsv_xnap" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatus_160_Check] 
+ALTER PROCEDURE [dbo].[Acc_Admin_DisableNewProductStatus_160_Check] 
 	  @IsDisabled		VARCHAR(MAX)
 	, @RoleID			INT
 	, @AgentID			INT
@@ -23,14 +23,15 @@ AS
 		Acc_Admin_DisableNewProductStatusCheck
 	Revision: 
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]  
 
 	Param's Explanation:
 	@IsDisabled
 		[
-			{ "SportType":"9906" , "BetType":"4001" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" }, 
-			{ "SportType":"9918" , "BetType":"4601" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" }, 
-			{ "SportType":"9904" , "BetType":"4001" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" }, 
-			{ "SportType":"9911" , "BetType":"2400" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" }		
+			{ "SportType":"9906" , "BetType":"4001" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" , "UpdateAllSuperDirectMembers":"0" , "DisableAllSuperDirectMembers":"0" , "UpdateAllMasterDirectMembers":"0" , "DisableAllMasterDirectMembers":"0" }, 
+			{ "SportType":"9918" , "BetType":"4601" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" , "UpdateAllSuperDirectMembers":"0" , "DisableAllSuperDirectMembers":"0" , "UpdateAllMasterDirectMembers":"0" , "DisableAllMasterDirectMembers":"0" }, 
+			{ "SportType":"9904" , "BetType":"4001" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" , "UpdateAllSuperDirectMembers":"0" , "DisableAllSuperDirectMembers":"0" , "UpdateAllMasterDirectMembers":"0" , "DisableAllMasterDirectMembers":"0" }, 
+			{ "SportType":"9911" , "BetType":"2400" , "IsDisabled":"1" , "UpdateAllMasters":"1" , "UpdateAllAgents":"1" , "UpdateAllMembers":"1" , "DisableAllMasters":"0" , "DisableAllAgents":"0" , "DisableAllMembers":"0" , "UpdateAllSuperDirectMembers":"0" , "DisableAllSuperDirectMembers":"0" , "UpdateAllMasterDirectMembers":"0" , "DisableAllMasterDirectMembers":"0" }	
 		]
 	• @SystemID: 1 = NAP, 2 = ALPHA, 4 = EXT
 	*/
@@ -50,6 +51,10 @@ BEGIN
 			, DisableAllMembers		BIT
 			, ParentSporttype			SMALLINT
 			, ParentBetType			SMALLINT
+			, UpdateAllSuperDirectMembers	BIT
+			, DisableAllSuperDirectMembers	BIT
+			, UpdateAllMasterDirectMembers	BIT
+			, DisableAllMasterDirectMembers BIT
 	)
 	CREATE TABLE #OldDisableStatTbl 
 	(
@@ -61,7 +66,11 @@ BEGIN
 			, UpdateAllMembers		BIT
 			, DisableAllMasters		BIT
 			, DisableAllAgents		BIT
-			, DisableAllMembers		BIT			
+			, DisableAllMembers		BIT
+			, UpdateAllSuperDirectMembers		BIT
+			, DisableAllSuperDirectMembers	BIT
+			, UpdateAllMasterDirectMembers	BIT
+			, DisableAllMasterDirectMembers	BIT
 	)
 	CREATE TABLE #ErrorSportTypeTbl
 	(
@@ -87,8 +96,12 @@ BEGIN
 		, DisableAllMasters	
 		, DisableAllAgents	
 		, DisableAllMembers
+		, UpdateAllSuperDirectMembers
+		, DisableAllSuperDirectMembers
+		, UpdateAllMasterDirectMembers
+		, DisableAllMasterDirectMembers
 	)
-	SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers
+	SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers,UpdateAllSuperDirectMembers,DisableAllSuperDirectMembers,UpdateAllMasterDirectMembers,DisableAllMasterDirectMembers
 	FROM OPENJSON(@IsDisabled)
 	WITH 
 		(	SportType				SMALLINT
@@ -100,6 +113,10 @@ BEGIN
 			, DisableAllMasters		BIT
 			, DisableAllAgents		BIT
 			, DisableAllMembers		BIT
+			, UpdateAllSuperDirectMembers  BIT
+			, DisableAllSuperDirectMembers BIT
+			, UpdateAllMasterDirectMembers BIT
+			, DisableAllMasterDirectMembers BIT
 		) AS DisabledProductStatus
 
 	IF @RoleID = 4
@@ -143,7 +160,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE IsDisabled = 0)
 	BEGIN
 	
-		IF @RoleID = 3
+		IF @RoleID = 3 OR (@RoleID = 1 AND @AgentID = -4)
 		BEGIN
 			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 			SELECT PSP.SportType
@@ -155,7 +172,7 @@ BEGIN
 			WHERE dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) = 1
 				AND tmp.IsDisabled	= 0
 		END
-		ELSE IF @RoleID = 2
+		ELSE IF @RoleID = 2 OR (@RoleID = 1 AND @AgentID = -3)
 		BEGIN
 			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 			SELECT PSP.SportType
@@ -166,9 +183,8 @@ BEGIN
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @MasterID
 			WHERE dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) = 1
 				AND tmp.IsDisabled	= 0
-				
 		END
-		ELSE IF @RoleID = 1
+		ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3)
 		BEGIN
 			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 			SELECT PSP.SportType
@@ -184,18 +200,29 @@ BEGIN
 
 	--90012: You are not allowed to perform this action.
 	--Update disable of upline and not update for downline
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE IsDisabled = 1 AND ((UpdateAllMasters = 0 AND @RoleID = 4) OR (UpdateAllAgents = 0 AND @RoleID IN (4,3)) OR (UpdateAllMembers = 0 AND @RoleID IN (4,3,2))))
+	IF EXISTS 
+	(SELECT 1 FROM #NewDisableStatTblCheck WHERE IsDisabled = 1 AND 
+		(
+			((UpdateAllMasters = 0 OR UpdateAllSuperDirectMembers = 0) AND @RoleID = 4) OR 
+			((UpdateAllAgents = 0 OR UpdateAllMasterDirectMembers = 0) AND @RoleID IN (4,3)) OR 
+			(UpdateAllMembers = 0 AND @RoleID IN (4,3,2))
+		)
+	)	
 	BEGIN
 		INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 		SELECT tmp.SportType
 			, tmp.BetType
 			, 90012 AS MsgID
 		FROM #NewDisableStatTblCheck tmp
-		WHERE IsDisabled = 1 AND ((UpdateAllMasters = 0 AND @RoleID = 4) OR (UpdateAllAgents = 0 AND @RoleID IN (4,3)) OR (UpdateAllMembers = 0 AND @RoleID IN (4,3,2)))
+		WHERE IsDisabled = 1 AND (
+							((UpdateAllMasters = 0 OR UpdateAllSuperDirectMembers = 0) AND @RoleID = 4) OR 
+							((UpdateAllAgents = 0 OR UpdateAllMasterDirectMembers = 0) AND @RoleID IN (4,3)) OR 
+							(UpdateAllMembers = 0 AND @RoleID IN (4,3,2))
+						)
 	END
 
 	--90012: You are not allowed to perform this action.
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE UpdateAllMasters = 1 AND DisableAllMasters = 0 AND IsDisabled = 1) 
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE IsDisabled = 1 AND ((UpdateAllMasters = 1 AND DisableAllMasters = 0) OR (UpdateAllSuperDirectMembers = 1 AND DisableAllSuperDirectMembers = 0))) 
 	BEGIN
 		IF @RoleID = 4--disable super and enable master
 		BEGIN
@@ -207,10 +234,20 @@ BEGIN
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @SuperID
 			WHERE UpdateAllMasters = 1 AND DisableAllMasters = 0 AND IsDisabled = 1
+
+			-- Add new for SuperDirectMember
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
+			SELECT PSP.SportType
+				, psp.BetType
+				, 90012 AS MsgID
+			FROM #NewDisableStatTblCheck tmp
+				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
+				INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK) ON  stt.CustID	= @SuperID
+			WHERE UpdateAllSuperDirectMembers = 1 AND DisableAllSuperDirectMembers = 0 AND IsDisabled = 1
 		END
 	END
-
-	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE UpdateAllAgents = 1 AND DisableAllAgents = 0) 
+	
+	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE (UpdateAllAgents = 1 AND DisableAllAgents = 0) OR (UpdateAllMasterDirectMembers = 1 AND DisableAllMasterDirectMembers = 0)) 
 	BEGIN
 	
 		IF @RoleID = 4--(disable super/disable master) and enable agent
@@ -229,6 +266,22 @@ BEGIN
 								WHERE ci.srecommend = @SuperID AND ci.roleid = 3
 									AND ((dbo.f_GetProductStatus(stMaster.bitmapIsDisabled, PSP.bitmapOrder) = 1 AND tmp.UpdateAllMasters = 0)
 										OR (tmp.UpdateAllMasters = 1 AND tmp.DisableAllMasters = 1))))
+
+			--(disable super/disable master) and enable MasterDirectMember
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
+			SELECT PSP.SportType
+				, psp.BetType
+				, 90012 AS MsgID
+			FROM #NewDisableStatTblCheck tmp
+				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
+			WHERE tmp.UpdateAllMasterDirectMembers = 1 AND tmp.DisableAllMasterDirectMembers = 0
+				AND (IsDisabled = 1
+					OR EXISTS (	SELECT TOP 1 1 
+								FROM dbo.CustProductStatus stMaster WITH (NOLOCK)
+									INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.custid = stMaster.CustID
+								WHERE ci.srecommend = @SuperID AND ci.roleid = 3
+									AND ((dbo.f_GetProductStatus(stMaster.bitmapIsDisabled, PSP.bitmapOrder) = 1 AND tmp.UpdateAllMasters = 0)
+										OR (tmp.UpdateAllMasters = 1 AND tmp.DisableAllMasters = 1))))
 		END
 		ELSE IF @RoleID = 3--disable master and enable agent
 		BEGIN
@@ -239,8 +292,16 @@ BEGIN
 			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 			WHERE UpdateAllAgents = 1 AND DisableAllAgents = 0 AND IsDisabled = 1
-				
-		END
+			
+			--disable master and enable MasterDirectMember
+			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
+			SELECT PSP.SportType
+				, psp.BetType
+				, 90012 AS MsgID
+			FROM #NewDisableStatTblCheck tmp
+				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
+			WHERE tmp.UpdateAllMasterDirectMembers = 1 AND tmp.DisableAllMasterDirectMembers = 0 AND IsDisabled = 1
+		END	
 	END
 
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE UpdateAllMembers = 1 AND DisableAllMembers = 0)
@@ -302,7 +363,7 @@ BEGIN
 			FROM #NewDisableStatTblCheck tmp
 				INNER JOIN dbo.ProductStatusProfile PSP WITH (NOLOCK) ON PSP.Sporttype = TMP.SportType AND PSP.Bettype = TMP.BetType
 			WHERE UpdateAllMembers = 1 AND DisableAllMembers = 0 AND IsDisabled = 1
-		END
+		END	
 	END
 
 	--IF there's no error data then return
@@ -356,6 +417,8 @@ BEGIN
 		WHERE (t.UpdateAllMasters = 1 AND t.DisableAllMasters = 0 AND par.DisableAllMasters = 1)
 			OR (t.UpdateAllAgents = 1 AND t.DisableAllAgents = 0 AND par.DisableAllAgents = 1)
 			OR (t.UpdateAllMembers = 1 AND t.DisableAllMembers = 0 AND par.DisableAllMembers = 1)
+			OR (t.UpdateAllSuperDirectMembers = 1 AND t.DisableAllSuperDirectMembers = 0 AND par.DisableAllSuperDirectMembers = 1)
+			OR (t.UpdateAllMasterDirectMembers = 1 AND t.DisableAllMasterDirectMembers = 0 AND par.DisableAllMasterDirectMembers = 1)
 
 		IF @@ROWCOUNT > 0
 		BEGIN
@@ -428,7 +491,7 @@ BEGIN
 					, t.ParentBetType
 			FROM #NewDisableStatTblCheck t
 				LEFT JOIN #NewDisableStatTblCheck par 
-					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND par.UpdateAllMembers = 1
+					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND (par.UpdateAllMembers = 1 OR par.UpdateAllSuperDirectMembers = 1 OR par.UpdateAllMasterDirectMembers = 1)
 				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
 					ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
 				CROSS APPLY (   SELECT TOP 1 1 AS IsDisabled
@@ -439,8 +502,12 @@ BEGIN
 									AND roleid = 1
 									AND s.value = 1
 									AND par.SportType IS NULL
-									AND t.UpdateAllMembers = 1 
-									AND t.DisableAllMembers = 0 
+									AND (
+											(t.UpdateAllMembers = 1 AND t.DisableAllMembers = 0)
+										OR	(t.UpdateAllSuperDirectMembers = 1 AND t.DisableAllSuperDirectMembers = 0)
+										OR	(t.UpdateAllMasterDirectMembers = 1 AND t.DisableAllMasterDirectMembers = 0)
+									     )
+
 							) st -- check if any disabled Member
 				
 			IF @@ROWCOUNT > 0
@@ -486,7 +553,7 @@ BEGIN
 					, t.ParentBetType
 			FROM #NewDisableStatTblCheck t
 				LEFT JOIN #NewDisableStatTblCheck par 
-					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND par.UpdateAllMembers = 1
+					ON t.ParentSporttype = par.SportType AND t.ParentBetType = par.BetType AND (par.UpdateAllMembers = 1 OR par.UpdateAllMasterDirectMembers = 1 )
 				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
 					ON p.Sporttype = t.ParentSporttype AND p.Bettype = t.ParentBetType
 				CROSS APPLY (   SELECT TOP 1 1 AS IsDisabled
@@ -497,8 +564,11 @@ BEGIN
 									AND roleid = 1
 									AND s.value = 1
 									AND par.SportType IS NULL
-									AND t.UpdateAllMembers = 1 
-									AND t.DisableAllMembers = 0 
+									AND (
+										(t.UpdateAllMembers = 1 AND t.DisableAllMembers = 0)
+										OR
+										(t.UpdateAllMasterDirectMembers = 1 AND t.DisableAllMasterDirectMembers = 0)
+									    )
 							) st -- check if any disabled Member
 				
 			IF @@ROWCOUNT > 0
@@ -621,7 +691,7 @@ BEGIN
 										AND tempde.SportType IS NULL
 										AND t.UpdateAllAgents = 1 
 										AND t.DisableAllAgents = 1 
-								) st -- check if any Enabled Master
+								) st -- check if any Enabled Agent
 
 			IF @@ROWCOUNT > 0
 			BEGIN
@@ -640,7 +710,7 @@ BEGIN
 				INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 					ON d.ProductSettingID = de.Parent_ProductSettingID 
 				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
-					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMembers = 1
+					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND (tempde.UpdateAllMembers = 1 OR tempde.UpdateAllSuperDirectMembers = 1)
 				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
 					ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
 				CROSS APPLY (       SELECT TOP 1 1 AS IsDisabled
@@ -651,9 +721,11 @@ BEGIN
 										AND roleid = 1
 										AND s.value = 0
 										AND tempde.SportType IS NULL
-										AND t.UpdateAllMembers = 1 
-										AND t.DisableAllMembers = 1 
-								) st -- check if any Enabled Master
+										AND (
+											(t.UpdateAllMembers = 1 AND t.DisableAllMembers = 1)
+										OR	(t.UpdateAllSuperDirectMembers = 1 AND t.DisableAllSuperDirectMembers = 1)
+										)
+								) st -- check if any Enabled Member (Normal & Direct)
 
 			IF @@ROWCOUNT > 0
 			BEGIN
@@ -687,7 +759,7 @@ BEGIN
 										AND tempde.SportType IS NULL
 										AND t.UpdateAllAgents = 1 
 										AND t.DisableAllAgents = 1 
-								) st -- check if any Enabled Master
+								) st -- check if any Enabled Agent
 
 			IF @@ROWCOUNT > 0
 			BEGIN
@@ -706,7 +778,7 @@ BEGIN
 				INNER JOIN #ProductSettingDetail_Check de WITH(NOLOCK) 
 					ON d.ProductSettingID = de.Parent_ProductSettingID 
 				LEFT JOIN #NewDisableStatTblCheck tempde --Check exists depended Sport on input
-					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND tempde.UpdateAllMembers = 1
+					ON de.SportType = tempde.SportType AND de.BetType = tempde.BetType AND (tempde.UpdateAllMembers = 1 OR tempde.UpdateAllMasterDirectMembers = 1)
 				INNER JOIN ProductStatusProfile p WITH(NOLOCK) 
 					ON p.Sporttype = de.SportType AND p.Bettype = de.BetType
 				CROSS APPLY (       SELECT TOP 1 1 AS IsDisabled
@@ -717,9 +789,11 @@ BEGIN
 										AND roleid = 1
 										AND s.value = 0
 										AND tempde.SportType IS NULL
-										AND t.UpdateAllMembers = 1 
-										AND t.DisableAllMembers = 1 
-								) st -- check if any Enabled Master
+										AND (
+											(t.UpdateAllMembers = 1 AND t.DisableAllMembers = 1)
+										OR	(t.UpdateAllMasterDirectMembers = 1 AND t.DisableAllMasterDirectMembers = 1)
+										)
+								) st -- check if any Enabled Member (Normal & Direct)
 
 			IF @@ROWCOUNT > 0
 			BEGIN
@@ -753,7 +827,7 @@ BEGIN
 										AND tempde.SportType IS NULL
 										AND t.UpdateAllMembers = 1 
 										AND t.DisableAllMembers = 1 
-								) st -- check if any Enabled Master
+								) st -- check if any Enabled Member Normal
 
 			IF @@ROWCOUNT > 0
 			BEGIN

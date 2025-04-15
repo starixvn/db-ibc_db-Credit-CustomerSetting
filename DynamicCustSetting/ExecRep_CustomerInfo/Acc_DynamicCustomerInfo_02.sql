@@ -44,6 +44,7 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		- 20250324@Johnson: change datatype for ExchangeID[redmine: #221098]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 	Parameter's explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	*/
@@ -731,69 +732,6 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SELECT @ErrCode = 1
-			RETURN
-		END CATCH
-	
-		/********************************************* Bet Limit : SettingType = 2,9,16,20,23 ****************************************/
-		BEGIN TRY
-			IF EXISTS(SELECT TOP 1 1 FROM [dbo].[CustBetSetting3rd_Agent] WITH(NOLOCK) WHERE CustID = @ExistingCustID)
-				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
-						   ([CustID]
-						   ,[SportType]
-						   ,[BetType]
-						   ,[MinBet]
-						   ,[MaxBet]
-						   ,[MaxPerMatch])
-				SELECT		@CustID
-						   ,cs.SportType
-						   ,cs.BetType
-						   ,[MinBet]
-						   ,[MaxBet]
-						   ,[MaxPerMatch]
-				FROM [dbo].[CustBetSetting3rd_Agent] cs WITH (NOLOCK)
-					INNER JOIN #ProductProfile ps ON ps.BetType = cs.BetType AND ps.SportType = cs.SportType
-				WHERE CustID = @ExistingCustID AND ps.SettingType IN (2,9,16,20) AND ps.IsHiddenSource = 0 AND (@RoleID <> 4 OR ps.HasSyncSource = 1)
-
-			IF @RoleID = 4
-			BEGIN
-				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
-					   ([CustID]
-					   ,[SportType]
-					   ,[BetType]
-					   ,[MinBet]
-					   ,[MaxBet]
-					   ,[MaxPerMatch])
-				SELECT
-					@CustID
-					,t.SportType
-					,t.BetType
-					,0
-					,0
-					,0
-				FROM #ProductProfile t 
-				WHERE t.SettingType IN (2) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
-				
-				INSERT INTO [dbo].[CustBetSetting3rd_Agent]
-					   ([CustID]
-					   ,[SportType]
-					   ,[BetType]
-					   ,[MinBet]
-					   ,[MaxBet]
-					   ,[MaxPerMatch])
-				SELECT
-					@CustID
-					,t.SportType
-					,t.BetType
-					,ps.DefaultMinBet
-					,ps.DefaultMaxBet
-					,ISNULL(ps.DefaultMaxPerMatch,0)
-				FROM #ProductProfile t 
-					INNER JOIN dbo.ProductBetSetting ps WITH (NOLOCK) ON t.SportType = ps.Sporttype AND t.Bettype = ps.Bettype AND ps.IsDep = 0 AND ps.Currency = @_Currency
-				WHERE t.SettingType IN (9,16,20) AND (t.IsHiddenSource = 1 OR t.HasSyncSource = 0)
-			END
-		END TRY
-		BEGIN CATCH
-			SELECT @ErrCode = 2
 			RETURN
 		END CATCH
 	

@@ -25,6 +25,7 @@ AS
 	Revision:
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
 		- 20241220@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]   
 */
 BEGIN
 	SET NOCOUNT ON
@@ -50,7 +51,7 @@ BEGIN
 		,@SiteID int
 		,@currency INT
 		,@uplineUsername NVARCHAR(50)
-		,@Credit_AllOtherMaster MONEY
+		,@Credit_AllOtherDownline MONEY
 		,@Credit_SAg MONEY
 		,@IsMyanmarOdds BIT = 0
 
@@ -256,10 +257,16 @@ BEGIN
 	    RETURN	
 	END
 
-	SELECT @Credit_AllOtherMaster = isnull(sum(credit), 0) FROM custinfo AS ci WITH(NOLOCK) WHERE srecommend = @srecommend AND RoleID = 3
-    IF @Credit_AllOtherMaster + @Credit > @Credit_SAg AND @srecommend>100
+	SELECT @Credit_AllOtherDownline = ISNULL(sum(Credit), 0) 
+	FROM custinfo WITH(NOLOCK) 
+	WHERE SRecommend = @srecommend 
+		AND (RoleID = 3  --Masters
+				OR (roleid = 1 AND recommend = -4) --Super direct members
+			)
+
+    IF @Credit_AllOtherDownline + @Credit > @Credit_SAg AND @srecommend>100
     BEGIN
-	    SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_SAg - @Credit_AllOtherMaster, '#,#0.####'))
+	    SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_SAg - @Credit_AllOtherDownline, '#,#0.####'))
 	    SELECT @ErrCode = 106
 	    return
     END

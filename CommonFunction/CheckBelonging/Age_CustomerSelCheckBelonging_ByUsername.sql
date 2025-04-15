@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBAGE-bodb02" executers="wsv_nap,wsv_alp,wsv_alpv,wsv_xnap" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Age_CustomerSelCheckBelonging_ByUsername]
 	@uplineID INT, --user who is logging
 	@userName VARCHAR(30) = NULL, --userName to check belong
@@ -7,7 +6,8 @@ ALTER PROCEDURE [dbo].[Age_CustomerSelCheckBelonging_ByUsername]
 	@isActive BIT = 0 OUTPUT,
 	@custID INT OUTPUT, -- return custID of @userName, -1 = not valid
 	@isSubAcc BIT OUTPUT, -- return 1 if @userName is sub account
-	@roleID INT = NULL OUTPUT
+	@roleID INT = NULL OUTPUT,
+	@AgentID INT = 0 OUTPUT
 AS
 
 /*
@@ -23,7 +23,8 @@ Revisions:
     - 20130719@Elodie: Correct link server DBACC instead of DBARC
     - 20150226@Johnson: add sub-accountID and check user is active or not
     - 20161129@Helen: change @userName parameter (NVARCHAR(50) -> VARCHAR(30)) for performance issue - [Redmine:N/A]
-	- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+    - 20210524@Tina: Lock account & indirect close account [redmine: #148600]
+    - 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
     
 Param's Explanation:
 • @uplineID: user who is logging.
@@ -67,7 +68,7 @@ BEGIN
 		DECLARE @AccID INT
 		Exec @AccID = DBACC.bodb02.dbo.f_GetCustIDFromUsername @username
 		--Check valid downline by @Username
-		SELECT @custID = custID, @roleID = roleid
+		SELECT @custID = custID, @roleID = roleid, @AgentID = CASE WHEN recommend IN (-3,-4) THEN recommend ELSE 0 END 
 		FROM CustInfo WITH (NOLOCK)
 		WHERE custid = @AccID AND 
 				(srecommend = @uplineid OR mrecommend = @uplineid OR recommend = @uplineid
@@ -75,6 +76,8 @@ BEGIN
 				 
 		SELECT @roleID = ISNULL(@roleID, 0)
 		SELECT @custID = ISNULL(@custID, -1)
+
+		SELECT @AgentID = ISNULL(@AgentID, 0)
 	END
 
 	--check user do this action is active or not

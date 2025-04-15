@@ -15,6 +15,7 @@ AS
 
 	Revision:
 		- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		
 	Param's Explanation:
 		- @CustID: Super's ID
@@ -133,7 +134,7 @@ BEGIN
 			AND pdt.IsLive = ptgr.islive  
 			AND ptgr.AgentID = @AgentID  
 	
-	IF @RoleID = 4  
+	IF @RoleID = 4 AND @AgentID NOT IN (-4,-3) --Super edit Normal member
 	BEGIN  
 		--PT SETTING  
 		SELECT  
@@ -162,7 +163,7 @@ BEGIN
 		AND superpt.custid = @SuperID 
 		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
 	END 
-	ELSE IF @RoleID = 3  
+	ELSE IF @RoleID = 3 AND @AgentID NOT IN (-4,-3) --Master edit Normal member
 	BEGIN  
 		--Disable auto master PT  
 		SELECT @DisableAutoMPT = ISNULL(DisableAutoMPT, 0)
@@ -194,7 +195,7 @@ BEGIN
 			AND agentpt.custid = @AgentID 
 		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
 	END  
-	ELSE IF @RoleID = 2  
+	ELSE IF @RoleID = 2 AND @AgentID NOT IN (-4,-3) --Agent edit Normal member
 	BEGIN  
 		SELECT  
 			mb.SportType  
@@ -261,6 +262,71 @@ BEGIN
 			AND mb.BetType = superpt.bettype  
 			AND mb.IsLive = superpt.islive  
 			AND superpt.custid = @SuperID  
+		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
+	END  
+	ELSE IF @RoleID = 4 AND @AgentID = -4 ---Super edit Direct Member
+	BEGIN  
+		SELECT  mb.SportType  
+			, mb.BetType  
+			, mb.IsLive  
+			, mb.S1 
+			, superpt.SuperPT AS S4 
+			, superpt.MinPT AS N4  
+		FROM @MemberPT mb  
+		INNER JOIN dbo.CustPTSetting3rd_Agent superpt WITH (NOLOCK)  
+			ON mb.SportType = superpt.sporttype  
+			AND mb.BetType = superpt.bettype  
+			AND mb.IsLive = superpt.islive  
+			AND superpt.custid = @SuperID  
+		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
+	END  
+	ELSE IF @RoleID = 4 AND @AgentID = -3 ---Super edit Master Direct Member
+	BEGIN  
+		SELECT  
+		  mb.SportType  
+		, mb.BetType  
+		, mb.IsLive  
+		, mb.M1  
+		, mb.S1  
+		, mb.IS1  
+		, mb.US1  
+		, superpt.SuperPT AS S4  
+		, superpt.MinPT AS N4  
+		, masterpt.MasterPT AS M3  
+		, masterpt.IsAutoSuperPT AS IS3
+		FROM @MemberPT mb  
+		INNER JOIN dbo.CustPTSetting3rd_Agent masterpt WITH (NOLOCK)  
+		ON mb.SportType = masterpt.sporttype  
+		AND mb.BetType = masterpt.bettype  
+		AND mb.IsLive = masterpt.islive  
+		AND masterpt.custid = @MasterID  
+		INNER JOIN dbo.CustPTSetting3rd_Agent superpt WITH (NOLOCK)  
+		ON mb.SportType = superpt.sporttype  
+		AND mb.BetType = superpt.bettype  
+		AND mb.IsLive = superpt.islive  
+		AND superpt.custid = @SuperID 
+		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
+	END  
+	ELSE IF @RoleID = 3 AND @AgentID = -3 ---Master edit Master Direct Member
+	BEGIN  
+		SELECT  
+		  mb.SportType  
+		, mb.BetType  
+		, mb.IsLive  
+		, mb.M1  
+		, CASE WHEN superpt.MasterPT > masterpt.MasterPT THEN masterpt.MasterPT ELSE  superpt.MasterPT END AS M3  
+		, masterpt.MinPT AS N3
+		FROM @MemberPT mb  
+		INNER JOIN dbo.CustPTSetting3rd_Agent masterpt WITH (NOLOCK)  
+		ON mb.SportType = masterpt.sporttype  
+		AND mb.BetType = masterpt.bettype  
+		AND mb.IsLive = masterpt.islive  
+		AND masterpt.custid = @MasterID  
+		INNER JOIN dbo.CustPTSetting3rd_Agent superpt WITH (NOLOCK)  
+		ON mb.SportType = superpt.sporttype  
+		AND mb.BetType = superpt.bettype  
+		AND mb.IsLive = superpt.islive  
+		AND superpt.custid = @SuperID 
 		ORDER BY mb.Child_DisplayOrder,mb.SportType,mb.BetType,mb.IsLive
 	END  
 	

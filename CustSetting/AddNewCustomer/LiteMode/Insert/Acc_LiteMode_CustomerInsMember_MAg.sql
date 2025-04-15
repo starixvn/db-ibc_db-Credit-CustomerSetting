@@ -44,6 +44,7 @@ AS
 		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 	
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
 
@@ -141,7 +142,6 @@ BEGIN
 	
 	declare 
 	    @transcode bigint, @currency INT, @pwdexpiry datetime,	
-	    @Credit_AllOtherAgent MONEY, @Credit_AllMember MONEY, @Credit_MAg MONEY,
 	    @srecommend INT,	 
 	    @matchlimit SMALLMONEY,
 	    @TransferOption_dec TINYINT,
@@ -161,8 +161,6 @@ BEGIN
 
 	SELECT @currency = currency
 		, @UplineClosed = cs.closed
-
-		, @Credit_MAg = isnull(credit, 0)
 		, @srecommend = srecommend
 		, @matchlimit = matchlimit
 		, @DisableOutright = DisableOutright
@@ -208,23 +206,6 @@ BEGIN
 		    @TransferOption_dec = TransferOption 
     FROM custmaster with (nolock) 
     WHERE CustID = @mrecommend
-
-    SELECT @Credit_AllOtherAgent = isnull(sum(credit), 0) FROM custinfo as ci WITH(NOLOCK) WHERE mrecommend = @mrecommend and RoleID = 2
-
-    IF @Credit_AllOtherAgent + @Credit >@Credit_MAg
-    BEGIN
-		SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_MAg - @Credit_AllOtherAgent, '#,#0.####'))
-
-	    SELECT @ErrCode = 104
-	    return
-    END
-    -- maxcredit 
-    if (isnull(@maxcredit ,0) > @credit )
-    BEGIN 
-	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70034,@Language), '{number}', FORMAT(@maxcredit, '#,#0.####')),  
-			@ErrCode = 116  
-		return  
-    END 
 
 	DECLARE @Comm_Tbl TABLE(
 		 SportType SMALLINT  
