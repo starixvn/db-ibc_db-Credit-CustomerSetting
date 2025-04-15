@@ -14,6 +14,7 @@ ALTER PROCEDURE	dbo.Acc_CustSetting_StakeLevel_158_Select
 	Revisions:
 		- 20240215@Eden: Unify Live Casino & RNG slot/RNG Casino [Redmine: #198960]
 		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1,3: UAT
 
@@ -100,7 +101,9 @@ BEGIN
 				AND	sl.StakeLevelID = CAST(ss.value AS INT)
 		WHERE	csla.CustID =	CASE	WHEN @RoleID = 3 THEN @srecommend
 										WHEN @RoleID = 2 THEN @mrecommend
-										WHEN @RoleID = 1 THEN @recommend
+										WHEN @RoleID = 1 AND @recommend NOT IN (-3,-4) THEN @recommend
+										WHEN @RoleID = 1 AND @recommend = -4 THEN @srecommend
+										WHEN @RoleID = 1 AND @recommend = -3 THEN @mrecommend
 								END
 		ORDER BY csla.SportType, csla.BetType, sl.MaxStake,sl.MinStake							
 	END

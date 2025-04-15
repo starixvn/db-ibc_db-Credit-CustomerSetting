@@ -1,5 +1,5 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_CustSetting_Discount150Sel]     
+ALTER PROCEDURE [dbo].[Acc_CustSetting_Discount150Sel]     
 	@CustId			INT		
 ,	@GroupID			TINYINT	= 1
 ,	@GroupType			TINYINT	= 150
@@ -15,6 +15,7 @@ AS
 
 	Revisions:
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]  
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 
 	Param's Explanation:
 		- @GroupType:	150 - Discount
@@ -58,20 +59,16 @@ BEGIN
 		SubType		TINYINT,
 		Child_DisplayOrder TINYINT
 	)
-
-
 	----------------------------------------------------------------
-
-
 	-- Select customer's information
 	SELECT	
 			@RoleID		= c.roleid,
 			@srecommend		= c.srecommend,
 			@mrecommend		= c.mrecommend,
 			@recommend		= c.recommend,
-			@siteid		= s.siteid,
+			@siteid			= s.siteid,
 			@CurrencyID		= c.currency,
-			@ugroup		= c.ugroup
+			@ugroup			= c.ugroup
 	FROM	Customer c WITH (NOLOCK)
 			INNER JOIN Site s WITH (NOLOCK) ON s.site = c.site
 	WHERE	c.custID = @CustID 
@@ -124,7 +121,7 @@ BEGIN
 			WHERE cda.CustID = @CustID AND cdam.CustID = @mrecommend
 			ORDER BY psp.Child_DisplayOrder , cda.SportType , cda.BetType 
 		END
-	ELSE IF @RoleID = 1
+	ELSE IF @RoleID = 1 AND @recommend NOT IN (-4,-3) --Normal member
 		BEGIN
 			IF @UplineRoleID = 4
 			BEGIN
@@ -178,10 +175,33 @@ BEGIN
 				FROM #ProductSettingProfile psp WITH (NOLOCK)  
 					INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON psp.SportType = dc.sporttype AND psp.BetType = dc.bettype   
 				WHERE dc.custid = @CustID
-				
 				ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType 
 			END
 
 		END
-	END
+	ELSE IF @RoleID = 1 AND @recommend = -4 ----Super Direct Member
+		BEGIN
+			SELECT	psp.SportType,  
+					psp.BetType,
+					dc.PlayerDiscount, 
+					dc.SuperDiscount,
+					psp.IntervalValue AS IntervalComm
+			FROM #ProductSettingProfile psp WITH (NOLOCK)  
+				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON psp.SportType = dc.sporttype AND psp.BetType = dc.bettype   
+			WHERE dc.custid = @CustID
+			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType 
+		END
+	ELSE IF @RoleID = 1 AND @recommend = -3 --Master Direct Member
+		BEGIN
+			SELECT	psp.SportType,  
+					psp.BetType,  
+					dc.PlayerDiscount,  
+					dc.MasterDiscount,
+					psp.IntervalValue AS IntervalComm
+			FROM #ProductSettingProfile psp WITH (NOLOCK)  
+			INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON psp.SportType = dc.sporttype AND psp.BetType = dc.bettype 
+			WHERE dc.custid = @CustID
+			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType  
+		END
+END
 GO

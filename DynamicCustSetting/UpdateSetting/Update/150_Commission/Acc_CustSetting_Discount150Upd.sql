@@ -27,6 +27,8 @@ AS
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
 		- 20250108@Johnson: Allow Agents to change member Comm group [RedmineID: #216405]
 		- 20250120@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]
+
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -66,6 +68,7 @@ BEGIN
 	, @JsonValues		VARCHAR(MAX)
 	, @uGroup_old		VARCHAR(10)
 	, @IsAgentNoCom		BIT	= 0
+	, @UplineID			INT
 	
 	-- Declare Table
 	DECLARE @New_Commission TABLE (
@@ -149,6 +152,13 @@ BEGIN
 	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE CustID = @CustID
 
+	IF (@recommend = -4 AND @RoleID = 1) OR @RoleID = 3
+		SET @UplineID = @srecommend
+	ELSE IF (@recommend = -3 AND @RoleID = 1) OR @RoleID = 2
+		SET @UplineID = @mrecommend 
+	ELSE IF @RoleID = 1 AND @recommend NOT IN ( -3,-4)
+		SET @UplineID = @recommend
+
 	-- Check Allowed downlines	
 	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
 							@custid		= @custid
@@ -198,7 +208,7 @@ BEGIN
 	WHERE ps.SettingType = 25
 		AND u.FunctionType = 1 --Edit Customer
 
-	IF NOT EXISTS( SELECT 1 FROM @New_Commission) AND ISNULL(@ugroup,'') = ''
+	IF NOT EXISTS( SELECT 1 FROM @New_Commission) --AND ISNULL(@ugroup,'') = ''
 	BEGIN
 		SELECT @ErrCode = 90017,
 				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
@@ -226,6 +236,12 @@ BEGIN
 	-- UPDATE START:
 	IF @RoleID = 1 
 	BEGIN
+		DECLARE @AgentDiscount DECIMAL (9,8),
+				@MasterDiscount DECIMAL (9,8),
+				@SuperDiscount DECIMAL (9,8),
+				@UplineDiscount DECIMAL (9,8),
+				@PlayerDiscount  DECIMAL (9,8)
+
 		IF @ugroup <> @uGroup_Old
 		BEGIN
 			IF (@site = '76666B' AND @ugroup <> 'a')
@@ -251,10 +267,6 @@ BEGIN
 		IF NOT EXISTS (SELECT 1 FROM CustNoComm cnc WITH (NOLOCK) WHERE cnc.CustID = @custid) 	
 			BEGIN
 				-- Check rule Change GroupDiscount > Upline or Not of GroupDiscount?
-				DECLARE @AgentDiscount DECIMAL (9,8),
-						@MasterDiscount DECIMAL (9,8),
-						@SuperDiscount DECIMAL (9,8)
-				
 				SELECT 
 					@SuperDiscount = MAX(CASE WHEN cda.CustID  =  @srecommend THEN cda.Discount END),
 					@MasterDiscount = MAX(CASE WHEN cda.CustID =  @mrecommend THEN cda.Discount END),
@@ -269,7 +281,12 @@ BEGIN
 								WHEN @uGroup IN ('d' , 'hkd' , 'ded') THEN 8
 							 END)
 								
-				UPDATE nc SET nc.Discount = CASE WHEN nc.Discount > @AgentDiscount THEN @AgentDiscount ELSE nc.Discount END
+				SELECT @UplineDiscount = CASE   WHEN @recommend = -4 THEN @SuperDiscount
+												WHEN @recommend = -3 THEN @MasterDiscount
+												ELSE @AgentDiscount
+											END
+
+				UPDATE nc SET nc.Discount = CASE WHEN nc.Discount > @UplineDiscount THEN @UplineDiscount ELSE nc.Discount END
 				FROM @New_Commission nc
 				WHERE SportType = 1 AND BetType = 1
 
@@ -279,25 +296,28 @@ BEGIN
 					SET nc.Discount = CASE WHEN nc.Discount > cda.Discount THEN cda.Discount ELSE nc.Discount END
 				FROM @New_Commission nc
 				INNER JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON cda.SportType = nc.SportType AND nc.BetType = cda.BetType
-				WHERE cda.CustID =  @recommend
+				WHERE cda.CustID =  @UplineID
 				AND cda.SportType = 1 
 				AND cda.BetType IN (4,5)
 			END
 
-		-- Of MO Odds?
-		UPDATE nc
-			SET nc.Discount = CASE WHEN nc.Discount > cda.Discount THEN cda.Discount ELSE nc.Discount END
-		FROM @New_Commission nc
-		INNER JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON cda.SportType = nc.SportType AND cda.BetType = nc.BetType
-		WHERE cda.CustID =  @recommend
-		AND cda.SportType = 2 
-		AND cda.BetType = 1
+		---- Of MO Odds?
+		--UPDATE nc
+		--	SET nc.Discount = CASE WHEN nc.Discount > cda.Discount THEN cda.Discount ELSE nc.Discount END
+		--FROM @New_Commission nc
+		--INNER JOIN CustDiscount3rd_Agent cda WITH (NOLOCK) ON cda.SportType = nc.SportType AND cda.BetType = nc.BetType
+		--WHERE cda.CustID =  @recommend
+		--AND cda.SportType = 2 
+		--AND cda.BetType = 1
 
 	-- End Check
 
 		-- Get Old Comm for write log
 		INSERT INTO @Old_Commission (SportType , BetType , Discount , AgentDiscount)
-		SELECT cda.SportType , cda.BetType , cda.PlayerDiscount , cda.AgentDiscount
+		SELECT cda.SportType , cda.BetType , cda.PlayerDiscount 
+			, CASE WHEN @recommend = -4 THEN cda.SuperDiscount
+				   WHEN @recommend = -3 THEN cda.MasterDiscount
+			  ELSE cda.AgentDiscount END
 		FROM CustDiscount3rd_Member cda WITH (NOLOCK)
 		INNER JOIN #ProductSettingDetail psd ON cda.SportType = psd.SportType AND cda.BetType = psd.BetType
 		WHERE cda.CustID = @custid	
@@ -311,7 +331,7 @@ BEGIN
 		,	nc.Discount				AS NewDiscount
 		,	oc.Discount				AS OldDiscount
 		,	oc.AgentDiscount		AS OldAgentDiscount 
-		,	psd.Child_DisplayOrder		 AS Order_Comm
+		,	psd.Child_DisplayOrder	AS Order_Comm
 		,	psd.SettingLevel
 		,	psd.ProductID
 		FROM #ProductSettingDetail psd
@@ -319,17 +339,28 @@ BEGIN
 		INNER JOIN @Old_Commission oc ON psd.SportType = oc.SportType AND psd.BetType = oc.BetType
 		
 		UPDATE cdm
-			SET cdm.PlayerDiscount = nc.Discount,
-				cdm.SuperDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @SuperDiscount ELSE cdm.SuperDiscount END,
-				cdm.MasterDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @MasterDiscount ELSE cdm.MasterDiscount END,
-				cdm.AgentDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @AgentDiscount ELSE cdm.AgentDiscount END,
+			SET @PlayerDiscount = nc.Discount,
+				--get SMA discount by ugroup
+				@SuperDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @SuperDiscount ELSE cdm.SuperDiscount END,
+				@MasterDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @MasterDiscount ELSE cdm.MasterDiscount END,
+				@AgentDiscount	= CASE WHEN @ugroup <> @uGroup_Old AND cdm.SportType = 1 AND cdm.Bettype = 1 THEN @AgentDiscount ELSE cdm.AgentDiscount END,
+				--Get SMA discount for direct member
+				@MasterDiscount = CASE  WHEN @recommend = -4 THEN @PlayerDiscount ELSE @MasterDiscount END,
+				@AgentDiscount  = CASE  WHEN @recommend IN (-3,-4) THEN @PlayerDiscount ELSE @AgentDiscount END,
+				--Update new value
+				cdm.SuperDiscount = @SuperDiscount,
+				cdm.MasterDiscount = @MasterDiscount,
+				cdm.AgentDiscount = @AgentDiscount,
+				cdm.PlayerDiscount = @PlayerDiscount,
 				RepUpdateTime = dbo.f_GetDateTime2()
 		FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
 		INNER JOIN @New_Commission nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
 		WHERE cdm.CustID = @custid	
 
 		UPDATE l
-		SET l.AgentDiscount = cdm.AgentDiscount
+		SET l.AgentDiscount = CASE WHEN @recommend = -4 THEN cdm.SuperDiscount
+								   WHEN @recommend = -3 THEN cdm.MasterDiscount
+								ELSE cdm.AgentDiscount END
 		FROM @LogCommission l 
 			INNER JOIN CustDiscount3rd_Member cdm WITH(NOLOCK) ON cdm.SportType = l.SportType AND cdm.BetType = l.BetType
 		WHERE cdm.CustID = @custid	
@@ -451,7 +482,7 @@ BEGIN
 		)	
 	END
 
-	ELSE 
+	ELSE IF @RoleID = 1 AND @recommend NOT IN ( -4,-3)
 	BEGIN
 		SET @XML = (
 		SELECT 
@@ -485,9 +516,105 @@ BEGIN
 		,	(
 				SELECT 
 					SportType			AS [@SportType]
-				,	BetType			AS [@BetType]
+				,	BetType				AS [@BetType]
 				,	OldDiscount			AS [@PlayerDiscount]
 				,	OldAgentDiscount	AS [@AgentDiscount]
+				,	SettingLevel		AS [@SettingLevel]
+				,	ProductID			AS [@ProductID]
+				FROM @LogCommission
+				ORDER BY Order_Comm
+				FOR XML PATH ('Comm'),
+				TYPE
+			)
+		FOR XML PATH ('ROOT'),
+		TYPE
+		)	
+	END
+	ELSE IF @RoleID = 1 AND @recommend = -3
+	BEGIN
+		SET @XML = (
+		SELECT 
+			@CustID					AS [@CustID]
+		,	dbo.f_GetSubUsername(@SubAccID)	AS [@SubAccName]
+		,	@IP						AS [@IP]
+		,	@ugroup					AS [@ugroup]
+		,	(
+				SELECT 
+					SportType			AS [@SportType]
+				,	BetType				AS [@BetType]
+				,	NewDiscount			AS [@PlayerDiscount]
+				,	AgentDiscount		AS [@MasterDiscount]
+				,	SettingLevel		AS [@SettingLevel]
+				,	ProductID			AS [@ProductID]
+				FROM @LogCommission
+				ORDER BY Order_Comm
+				FOR XML PATH ('Comm'),
+				TYPE
+			)
+		FOR XML PATH ('ROOT'),
+		TYPE
+		)	
+
+		SET @XML_Old = (
+		SELECT 
+			@CustID					AS [@CustID]
+		,	dbo.f_GetSubUsername(@SubAccID)	AS [@SubAccName]
+		,	@IP						AS [@IP]
+		,	@ugroup_old				AS [@ugroup]
+		,	(
+				SELECT 
+					SportType			AS [@SportType]
+				,	BetType				AS [@BetType]
+				,	OldDiscount			AS [@PlayerDiscount]
+				,	OldAgentDiscount	AS [@MasterDiscount]
+				,	SettingLevel		AS [@SettingLevel]
+				,	ProductID			AS [@ProductID]
+				FROM @LogCommission
+				ORDER BY Order_Comm
+				FOR XML PATH ('Comm'),
+				TYPE
+			)
+		FOR XML PATH ('ROOT'),
+		TYPE
+		)	
+	END
+	ELSE IF @RoleID = 1 AND @recommend = -4
+	BEGIN
+		SET @XML = (
+		SELECT 
+			@CustID					AS [@CustID]
+		,	dbo.f_GetSubUsername(@SubAccID)	AS [@SubAccName]
+		,	@IP						AS [@IP]
+		,	@ugroup					AS [@ugroup]
+		,	(
+				SELECT 
+					SportType			AS [@SportType]
+				,	BetType				AS [@BetType]
+				,	NewDiscount			AS [@PlayerDiscount]
+				,	AgentDiscount		AS [@SuperDiscount]
+				,	SettingLevel		AS [@SettingLevel]
+				,	ProductID			AS [@ProductID]
+				FROM @LogCommission
+				ORDER BY Order_Comm
+				FOR XML PATH ('Comm'),
+				TYPE
+			)
+		FOR XML PATH ('ROOT'),
+		TYPE
+		)	
+
+		SET @XML_Old = (
+		SELECT 
+			@CustID					AS [@CustID]
+		,	dbo.f_GetSubUsername(@SubAccID)	AS [@SubAccName]
+		,	@IP						AS [@IP]
+		,	@ugroup_old				AS [@ugroup]
+		,	(
+				SELECT 
+					SportType			AS [@SportType]
+				,	BetType				AS [@BetType]
+				,	OldDiscount			AS [@PlayerDiscount]
+				,	OldAgentDiscount	AS [@SuperDiscount]
 				,	SettingLevel		AS [@SettingLevel]
 				,	ProductID			AS [@ProductID]
 				FROM @LogCommission
@@ -517,8 +644,13 @@ BEGIN
 		SET @ActionID = 252
 	ELSE IF @RoleID = 2
 		SET @ActionID = 253
-	ELSE IF @RoleID = 1
+	ELSE IF @RoleID = 1 AND @recommend NOT IN (-4,-3)
 		SET @ActionID = 254
+	ELSE IF @RoleID = 1 AND @recommend = -4
+		SET @ActionID = 257
+	ELSE IF @RoleID = 1 AND @recommend = -3
+		SET @ActionID = 258
+
 
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 			  @UserID			= @UserID

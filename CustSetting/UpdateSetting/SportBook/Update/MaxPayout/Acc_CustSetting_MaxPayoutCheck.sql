@@ -28,6 +28,7 @@ AS
 	Revision: 
 		- 20210518@Winfred: Initial SP [RedmineID:#154104]	
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]   
 
 	Param's Explanation:
 	@MaxPayoutLimit:
@@ -127,7 +128,7 @@ BEGIN
 	
 	IF @RoleID BETWEEN 1 AND 3
 	BEGIN
-		IF @RoleID = 1 
+		IF @RoleID = 1 AND @AgentID NOT IN (-3,-4)  --Normal member : Collect Upline Super, Master, Agent
 		BEGIN
 			INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
 			SELECT cs.SportType,cs.BetType,
@@ -141,7 +142,7 @@ BEGIN
 				INNER JOIN dbo.CustMaxPayoutSetting_Agent aMp WITH (NOLOCK) ON s.SportType = aMp.sporttype AND s.BetType = aMp.bettype
 			WHERE cs.custid = @SuperID  AND mMp.CustID = @MasterID AND aMp.CustID = @AgentID  
 		END
-		ELSE IF @RoleID = 2 
+		ELSE IF (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)	-- Agent or MasterDirectMember : Collect Upline Super, Master
 		BEGIN
 			INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
 			SELECT cs.SportType,cs.BetType,
@@ -154,7 +155,7 @@ BEGIN
 				INNER JOIN dbo.CustMaxPayoutSetting_Agent mMp WITH (NOLOCK) ON s.SportType = mMp.sporttype AND s.BetType = mMp.bettype
 			WHERE cs.custid = @SuperID  AND mMp.CustID = @MasterID  
 		END
-		ELSE IF @RoleID = 3 
+		ELSE IF (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)	-- Master or SuperDirectMember : Collect Upline Super
 		BEGIN
 			INSERT INTO @MatchParlayUnlimit(SportType,BetType,SingleMatchParlay_IsAllowUnlimit,Combo2_IsAllowUnlimit,Combo35_IsAllowUnlimit,ComboOver6_IsAllowUnlimit)
 			SELECT cs.SportType,cs.BetType,
@@ -182,7 +183,7 @@ BEGIN
 		FROM @NewMaxPayoutTbl cs
 	END
 
-	IF @RoleID = 3
+	IF (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)	-- Master or SuperDirectMember : Collect Upline Super
 	BEGIN
 		--Get super 's Max Payout
 		INSERT INTO @UplineMaxPayoutTbl(SportType, BetType, SingleMatchParlay, Combo2, Combo35, ComboOver6)
@@ -216,7 +217,7 @@ BEGIN
 		GROUP BY bl.SportType
 			, bl.BetType
 	END
-	ELSE IF @RoleID = 2
+	ELSE IF (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)	-- Agent or MasterDirectMember : Collect Upline Super, Master
 	BEGIN
 		--Get super/master 's Max Payout
 		INSERT INTO @UplineMaxPayoutTbl(SportType, BetType, SingleMatchParlay, Combo2, Combo35, ComboOver6)
@@ -251,7 +252,7 @@ BEGIN
 		GROUP BY bl.SportType
 			, bl.BetType
 	END
-	ELSE IF @RoleID = 1
+	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member : Collect Upline Super, Master, Agent
 	BEGIN
 		--Get super/master 's Max Payout
 		INSERT INTO @UplineMaxPayoutTbl(SportType, BetType, SingleMatchParlay, Combo2, Combo35, ComboOver6)

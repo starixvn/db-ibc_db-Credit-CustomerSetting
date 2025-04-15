@@ -17,7 +17,7 @@ AS
 		- 20200702@Winfred: Get enabled status of Cust when SettingType = 4 (ProductStatus)  (ProductStatus) [RedmineID:#136210]
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
-
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
 
@@ -43,7 +43,11 @@ BEGIN
 		,	@RoleID     = c.roleid
 		,	@SuperID	= c.srecommend
 		,	@MasterID	= c.mrecommend
-		,	@AgentID	= c.recommend
+		,	@AgentID	= CASE
+							WHEN c.recommend = -4 THEN c.srecommend
+							WHEN c.recommend = -3 THEN c.mrecommend
+							ELSE c.recommend
+					  END
 	FROM	dbo.Customer AS c WITH(NOLOCK)
 	WHERE	c.custid = @CustID
 

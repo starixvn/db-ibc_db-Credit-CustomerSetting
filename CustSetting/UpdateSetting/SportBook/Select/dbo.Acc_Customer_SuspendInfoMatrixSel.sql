@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20190408@Johnson: initial sp [redmine: #105587]
 		- 20210510@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 	Parameter's Explanation:
 */
 BEGIN
@@ -36,7 +37,11 @@ BEGIN
 		ISNULL(cl.SuperStatus, 0) as SuspendBySuper,
 		ISNULL(cl.MasterStatus, 0) as SuspendByMaster,
 		ISNULL(cl.AgentStatus, 0) as SuspendByAgent,
-		ISNULL(cl.MemberStatus, 0) as SuspendMember
+		ISNULL(cl.MemberStatus, 0) as SuspendMember,
+		CASE 
+			WHEN ci.recommend IN (-3,-4) THEN ci.recommend
+			ELSE 0
+		END AS AgentID
 	FROM dbo.CustProductStatus cs WITH(NOLOCK)
 		CROSS APPLY (SELECT * FROM f_GetInfoStatus(cs.SuspendInfo)) AS cl
 		INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid

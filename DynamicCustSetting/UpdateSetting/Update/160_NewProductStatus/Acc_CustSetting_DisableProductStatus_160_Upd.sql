@@ -23,6 +23,7 @@ AS
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 		- 20241203@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 	- @IsDisabled
 		'[
@@ -250,7 +251,7 @@ BEGIN
 				, TYPE
 			)
 			
-	UPDATE CustProductStatus
+	UPDATE CustProductStatus WITH (ROWLOCK,UPDLOCK)
 		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 			RepUpdateTime = dbo.f_GetDateTime2()
 	WHERE CustID = @CustID
@@ -301,6 +302,10 @@ BEGIN
 						,1 AS '@DisableAllMasters'
 						,1 AS '@DisableAllAgents'
 						,1 AS '@DisableAllMembers'
+						,1 AS '@UpdateAllSuperDirectMembers'
+						,1 AS '@UpdateAllMasterDirectMembers'
+						,1 AS '@DisableAllSuperDirectMembers'
+						,1 AS '@DisableAllMasterDirectMembers'
 					FROM #NewDisableStatTbl
 					WHERE IsDisabled = 1
 					FOR XML PATH('ProductStatus')

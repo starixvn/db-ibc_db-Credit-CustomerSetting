@@ -23,6 +23,7 @@ AS
 	- 20230726@Tacy: Enhance performance [redmine: #190504]
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 	- 20241017@Johnson: remove column IsSync, isSyncedUpline [redmine: #201396]
+	- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]  
  Param's Explanation:  
 	- @SettingStatus: 0: Pro, 1: UAT
  
@@ -35,7 +36,12 @@ BEGIN
 	DECLARE @SuperID INT, @MasterID INT, @AgentID INT , @IsIMBC BIT = 0   , @SiteID INT  , @CurrencyID  INT
    
 	-- Get line information
-	SELECT @SuperID = c.srecommend, @MasterID = mrecommend, @AgentID = c.recommend , @SiteID = s.siteid , @CurrencyID = c.currency
+	SELECT @SuperID = c.srecommend, @MasterID = mrecommend, @AgentID = CASE 
+													WHEN c.recommend = -4 THEN c.srecommend 
+													WHEN c.recommend = -3 THEN c.mrecommend
+													ELSE c.recommend
+												 END 
+	, @SiteID = s.siteid , @CurrencyID = c.currency
 	FROM customer c WITH (NOLOCK)
 	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE CustID = @CustID 
@@ -84,7 +90,7 @@ BEGIN
 
 	IF @RoleID = 4  
 	BEGIN  
-		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND roleid = 3)  
+		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID AND ((roleid = 3) OR (roleid = 1 AND recommend = -4)))  
 			SET @downlines = 1     
      
 		SELECT ft.RealProductID, ft.ProductID, ft.SportType, ft.BetType,  			
@@ -116,7 +122,7 @@ BEGIN
 	END  
 	ELSE IF @RoleID = 3  
 	BEGIN  
-		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE mrecommend = @CustID AND roleid = 2)  
+		IF EXISTS (SELECT 1 FROM custinfo WITH (NOLOCK) WHERE mrecommend = @CustID AND ((roleid = 2) OR (roleid = 1 AND recommend = -3)))  
 			SET @downlines = 1   
      
 		SELECT ft.RealProductID, ft.ProductID, ft.SportType, ft.BetType, 

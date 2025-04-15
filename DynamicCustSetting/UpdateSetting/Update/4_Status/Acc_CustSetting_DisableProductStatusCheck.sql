@@ -20,6 +20,7 @@ AS
 		- 20200702@Winfred: Validate enabled status of Cust when SettingType = 4 (ProductStatus) [RedmineID:#136210]
 		- 20200914@Eden: Minimize UM Time - Lock updating customer settings [#136464]
 		- 20241219@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -95,7 +96,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM #NewDisableStatTblCheck WHERE IsDisabled = 0)
 	BEGIN
 	
-		IF @RoleID = 3
+		IF (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)				-- Master or SuperDirectMember : Collect Upline Super
 		BEGIN
 			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 			SELECT PSP.SportType
@@ -107,7 +108,7 @@ BEGIN
 			WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) = 1
 				AND tmp.IsDisabled	= 0
 		END
-		ELSE IF @RoleID = 2
+		ELSE IF (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)	-- Agent or MasterDirectMember : Collect Upline Super, Master
 		BEGIN
 			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 			SELECT PSP.SportType
@@ -120,7 +121,7 @@ BEGIN
 				AND tmp.IsDisabled	= 0
 				
 		END
-		ELSE IF @RoleID = 1
+		ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member : Collect Upline Super, Master, Agent
 		BEGIN
 			INSERT INTO #ErrorSportTypeTbl (SportType, BetType, MsgID)
 			SELECT PSP.SportType

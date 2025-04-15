@@ -31,6 +31,7 @@ AS
 		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 		- 20250224@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for CustLoginInfo_Member [Redmine: #215627]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -60,6 +61,8 @@ BEGIN
 				@xmlStrDisabledMasters XML, 
 				@xmlStrDisabledAgents XML, 
 				@xmlStrDisabledMembers XML, 
+				@xmlStrDisabledSuperDirectMembers XML, 
+				@xmlStrDisabledMasterDirectMembers XML, 
 				@xmlStrHidden XML, 
 				@xmlStrDisabled XML, 
 				@ProductID INT,
@@ -186,7 +189,7 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)				
 				
@@ -196,7 +199,7 @@ BEGIN
 					UPDATE T 
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.CustProductStatus T 
+					FROM dbo.CustProductStatus T  WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)
 					
@@ -208,17 +211,17 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
 				
 				IF EXISTS (SELECT 1 FROM #DisableStatTbl WHERE IsDisabled = 0)
 				BEGIN
 				
-					UPDATE T WITH (UPDLOCK,ROWLOCK)
+					UPDATE T
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.CustProductStatus T 
+					FROM dbo.CustProductStatus T  WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
 					
@@ -229,7 +232,7 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.recommend = @custid AND CI.roleid = 1
 				
@@ -238,7 +241,7 @@ BEGIN
 					UPDATE T 
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.CustProductStatus T 
+					FROM dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.recommend = @custid AND CI.roleid = 1
 					
@@ -257,17 +260,21 @@ BEGIN
 					DisableAllMasters	BIT,
 					DisableAllAgents	BIT,
 					DisableAllMembers	BIT,
+					UpdateAllSuperDirectMembers	BIT,
+					UpdateAllMasterDirectMembers	BIT,
+					DisableAllSuperDirectMembers	BIT,
+					DisableAllMasterDirectMembers	BIT,
 					RealProductId		TINYINT
 				)
 
 			--Parse XML				
 			EXEC sp_xml_preparedocument @iDoc OUTPUT, @IsDisabled_XML
 			
-			INSERT INTO #NewStatTbl (SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
-			SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers
+			INSERT INTO #NewStatTbl (SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers,UpdateAllSuperDirectMembers, UpdateAllMasterDirectMembers, DisableAllSuperDirectMembers, DisableAllMasterDirectMembers)
+			SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers,UpdateAllSuperDirectMembers, UpdateAllMasterDirectMembers, DisableAllSuperDirectMembers, DisableAllMasterDirectMembers
 			FROM OPENXML (@iDoc, '/ROOT/ProductStatus',1) 
-			WITH(SportType smallint,BetType smallint,IsDisabled BIT,UpdateAllMasters BIT,UpdateAllAgents BIT,UpdateAllMembers BIT,DisableAllMasters BIT,DisableAllAgents BIT,DisableAllMembers BIT)	
-			
+			WITH(SportType smallint,BetType smallint,IsDisabled BIT,UpdateAllMasters BIT,UpdateAllAgents BIT,UpdateAllMembers BIT,DisableAllMasters BIT,DisableAllAgents BIT,DisableAllMembers BIT,UpdateAllSuperDirectMembers BIT, UpdateAllMasterDirectMembers BIT, DisableAllSuperDirectMembers BIT, DisableAllMasterDirectMembers BIT)	
+		
 			EXEC sp_xml_removedocument @iDoc
 			
 			UPDATE ns 
@@ -343,10 +350,38 @@ BEGIN
 						, TYPE
 					)
 
+			SET @xmlStrDisabledSuperDirectMembers = (
+				SELECT (
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
+							, tmp.DisableAllSuperDirectMembers	AS '@s'
+						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+						WHERE tmp.UpdateAllSuperDirectMembers = 1
+						FOR XML PATH('r')
+							, TYPE
+						)
+				FOR XML PATH('root')
+					, TYPE
+				)
+
+			SET @xmlStrDisabledMasterDirectMembers = (
+				SELECT (
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
+							, tmp.DisableAllMasterDirectMembers	AS '@s'
+						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+						WHERE tmp.UpdateAllMasterDirectMembers = 1
+						FOR XML PATH('r')
+							, TYPE
+						)
+				FOR XML PATH('root')
+					, TYPE
+				)
+
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMasters))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.srecommend = @custid AND CI.roleid = 3
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -354,25 +389,41 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledAgents))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.srecommend = @custid AND CI.roleid = 2
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
 
 				UPDATE T 
-				SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMembers))),
-					RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMembers))),
+						RepUpdateTime = dbo.f_GetDateTime2()
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
-				WHERE CI.srecommend = @custid AND CI.roleid = 1
+				WHERE CI.srecommend = @custid AND CI.roleid = 1 AND CI.recommend NOT IN (-3,-4)			-- Update bitmapIsDisabled Normal Member
+				AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+
+				UPDATE T 
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledSuperDirectMembers))),
+						RepUpdateTime = dbo.f_GetDateTime2()
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+				WHERE CI.srecommend = @custid AND CI.roleid = 1 AND CI.recommend = -4
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+
+				UPDATE T 
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMasterDirectMembers))),
+						RepUpdateTime = dbo.f_GetDateTime2()
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+				WHERE CI.srecommend = @custid AND CI.roleid = 1 AND CI.recommend = -3
+						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
 
 				IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
 				BEGIN
 					UPDATE T 
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.CustProductStatus T 
+					FROM dbo.CustProductStatus T  WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)
 						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -408,10 +459,24 @@ BEGIN
 						, TYPE
 					)
 
+			SET @xmlStrDisabledMasterDirectMembers = (
+				SELECT (
+						SELECT DISTINCT psp.bitmapOrder	AS '@b'
+							, tmp.DisableAllMasterDirectMembers	AS '@s'
+						FROM dbo.ProductStatusProfile psp WITH (NOLOCK)
+							INNER JOIN #NewStatTbl tmp ON PSP.Sporttype = tmp.SportType AND psp.Bettype = tmp.BetType
+						WHERE tmp.UpdateAllMasterDirectMembers = 1
+						FOR XML PATH('r')
+							, TYPE
+						)
+				FOR XML PATH('root')
+					, TYPE
+				)
+
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledAgents))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.mrecommend = @custid AND CI.roleid = 2
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -419,17 +484,25 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMembers))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
-				WHERE CI.mrecommend = @custid AND CI.roleid = 1
-					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+				WHERE CI.mrecommend = @custid AND CI.roleid = 1 AND CI.recommend NOT IN (-3,-4)			-- Update bitmapIsDisabled Normal Member
+				AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
+
+				UPDATE T 
+					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMasterDirectMembers))),
+						RepUpdateTime = dbo.f_GetDateTime2()
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
+					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
+				WHERE CI.mrecommend = @custid AND CI.roleid = 1 AND CI.recommend = -3
+						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
 
 				IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
 				BEGIN
 					UPDATE T 
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.CustProductStatus T 
+					FROM dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
 						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -454,9 +527,9 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMembers))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
-				WHERE CI.recommend = @custid AND CI.roleid = 1
+				WHERE CI.recommend = @custid AND CI.roleid = 1 AND CI.recommend NOT IN (-3,-4)			-- Update bitmapIsDisabled Normal Member
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
 
 				IF EXISTS (SELECT 1 FROM #NewStatTbl WHERE IsDisabled = 0)
@@ -464,7 +537,7 @@ BEGIN
 					UPDATE T 
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM dbo.CustProductStatus T 
+					FROM dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.recommend = @custid AND CI.roleid = 1
 						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -571,7 +644,7 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMasters))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.srecommend = @custid AND CI.roleid = 3
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -579,7 +652,7 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledAgents))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.srecommend = @custid AND CI.roleid = 2
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -587,7 +660,7 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMembers))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.srecommend = @custid AND CI.roleid = 1
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -597,7 +670,7 @@ BEGIN
 					UPDATE T 
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM CustProductStatus T 
+					FROM CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.srecommend = @custid AND CI.roleid IN (1,2,3)
 						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -637,7 +710,7 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledAgents))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.mrecommend = @custid AND CI.roleid = 2
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -645,7 +718,7 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMembers))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.mrecommend = @custid AND CI.roleid = 1
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -655,7 +728,7 @@ BEGIN
 					UPDATE T 
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM CustProductStatus T 
+					FROM CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.mrecommend = @custid AND CI.roleid IN (1,2)
 						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -680,7 +753,7 @@ BEGIN
 				UPDATE T 
 					SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabledMembers))),
 						RepUpdateTime = dbo.f_GetDateTime2()
-				FROM  dbo.CustProductStatus T
+				FROM  dbo.CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 					INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE CI.recommend = @custid AND CI.roleid = 1
 					AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1
@@ -690,7 +763,7 @@ BEGIN
 					UPDATE T 
 						SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
 							RepUpdateTime = dbo.f_GetDateTime2()
-					FROM CustProductStatus T 
+					FROM CustProductStatus T WITH (ROWLOCK, UPDLOCK)
 						INNER JOIN custInfo CI WITH (NOLOCK) ON T.CustID = CI.custid	
 					WHERE CI.mrecommend = @custid AND CI.roleid = 1
 						AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(bitmapHasSynced, @BitmapOrder)) = 1

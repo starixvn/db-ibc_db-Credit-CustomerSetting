@@ -18,6 +18,7 @@ AS
 	- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]
 
  Param's Explanation:  
  - @CustID: Master's ID  
@@ -82,46 +83,6 @@ BEGIN
 			AND pdt.IsLive = superpt.islive  
 			AND superpt.custid = @SuperID   
 	END
-	--Bet Limit Setting
-	ELSE IF @SettingType = 2
-	BEGIN 
-		DECLARE @Currency TINYINT  
-
-		SELECT @Currency = Currency  
-		FROM dbo.Customer c  
-		WHERE c.custID = @CustID  
- 
-		SELECT pdt.SportType  
-		, pdt.BetType  
-		, bl.MinBet  
-		, bl.MaxBet  
-		, bl.MaxPerMatch  
-		, CASE   
-			WHEN sbl.minbet > pbs.MinBet  
-			THEN sbl.minbet  
-			ELSE pbs.MinBet  
-		END AS MinBetMin  
-		, sbl.maxbet AS MaxBetMax  
-		, sbl.maxpermatch AS MaxPerMatchMax  
-		FROM #ProductSettingDetail pdt WITH (NOLOCK) 
-		INNER JOIN #SportBettypeFilter ft 
-				ON pdt.SportType = ft.sporttype
-					AND pdt.BetType = ft.bettype
-					AND pdt.IsLive = ft.islive
-					AND pdt.SettingType = ft.SettingType 
-		INNER JOIN dbo.CustBetSetting3rd_Agent bl WITH (NOLOCK)  
-			ON pdt.SportType = bl.sporttype  
-			AND pdt.BetType = bl.bettype  
-			AND bl.custid = @CustID  
-		INNER JOIN dbo.ProductBetSetting pbs  
-			ON pbs.SportType = bl.sporttype  
-			AND pbs.BetType = bl.bettype  
-			AND pbs.Currency = @Currency    
-		INNER JOIN dbo.CustBetSetting3rd_Agent sbl WITH (NOLOCK)  
-			ON pdt.SportType = sbl.sporttype  
-			AND pdt.BetType = sbl.bettype  
-			AND sbl.custid = @SuperID  
-	END 
 	--Product Status  
 	ELSE IF @SettingType = 4
 	BEGIN 

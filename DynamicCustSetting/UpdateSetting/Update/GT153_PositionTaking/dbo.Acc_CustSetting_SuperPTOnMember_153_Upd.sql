@@ -24,6 +24,7 @@ AS
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 	- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 	Parameter's Explanation:
 		@PT = [
 			{"SportType": "9914","BetType": "915","IsLive": "0","SuperPT": "38","AutoSuperPT": "38","IsAutoSuperPT": "1"},
@@ -186,6 +187,14 @@ BEGIN
 			,0
 	FROM dbo.f_DCS_PT_XMLParse(@PT)
 
+	IF @_AgentID = -4 
+	BEGIN
+		UPDATE t
+		SET t.IsAutoSuperPT = 0
+			,t.AutoSuperPT = 0
+		FROM @tblPT t
+	END
+
 	DECLARE  @SiteID SMALLINT,
 		@Currency SMALLINT	
 	
@@ -281,28 +290,48 @@ BEGIN
 	WHERE cs.CustID = @_SuperID
 	
 	--Get master PT Setting Values
-	INSERT @_MasterPTTbl(SportType,BetType,IsLive,S3,M3,A3
-				,IM3,UM3,IS3,US3,N3,L3)	
-	SELECT mcs.SportType,mcs.BetType,mcs.IsLive,mcs.SuperPT,mcs.MasterPT,mcs.AgentPT
-				,mcs.IsAutoMasterPT,mcs.AutoMasterPT,mcs.IsAutoSuperPT,mcs.AutoSuperPT,MinPT,MaxPT 
-	FROM dbo.CustPTSetting3rd_Agent mcs WITH(NOLOCK)
-		INNER JOIN @tblPT mt 
-			ON mt.SportType = mcs.SportType
-				AND mt.BetType = mcs.BetType
-				AND mt.IsLive = mcs.IsLive
-	WHERE mcs.CustID = @_MasterID
+	IF @_AgentID <> -4 
+	BEGIN
+		INSERT @_MasterPTTbl(SportType,BetType,IsLive,S3,M3,A3
+					,IM3,UM3,IS3,US3,N3,L3)	
+		SELECT mcs.SportType,mcs.BetType,mcs.IsLive,mcs.SuperPT,mcs.MasterPT,mcs.AgentPT
+					,mcs.IsAutoMasterPT,mcs.AutoMasterPT,mcs.IsAutoSuperPT,mcs.AutoSuperPT,MinPT,MaxPT 
+		FROM dbo.CustPTSetting3rd_Agent mcs WITH(NOLOCK)
+			INNER JOIN @tblPT mt 
+				ON mt.SportType = mcs.SportType
+					AND mt.BetType = mcs.BetType
+					AND mt.IsLive = mcs.IsLive
+		WHERE mcs.CustID = @_MasterID
+	END
+	ELSE 
+	BEGIN
+		INSERT @_MasterPTTbl(SportType,BetType,IsLive,S3,M3,A3,IM3,UM3,IS3,US3,N3,L3)	
+		SELECT  mt.SportType,mt.BetType,mt.IsLive,0,0,0,0,0,0,0,0,0
+		FROM @tblPT mt 
+	END
 	
 	--Get Agent PT Setting Values
-	INSERT @_AgentPTTbl(SportType,BetType,IsLive,S2,M2,A2
-				,IM2,UM2,IS2,US2,N2,L2)	
-	SELECT acs.SportType,acs.BetType,acs.IsLive,acs.SuperPT,acs.MasterPT,acs.AgentPT
-				,acs.IsAutoMasterPT,acs.AutoMasterPT,acs.IsAutoSuperPT,acs.AutoSuperPT,MinPT,MaxPT 
-	FROM dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK)
-		INNER JOIN @tblPT mt 
-			ON mt.SportType = acs.SportType
-				AND mt.BetType = acs.BetType
-				AND mt.IsLive = acs.IsLive
-	WHERE acs.CustID = @_AgentID		
+	IF @_AgentID NOT IN (-4,-3)
+	BEGIN
+		INSERT @_AgentPTTbl(SportType,BetType,IsLive,S2,M2,A2
+					,IM2,UM2,IS2,US2,N2,L2)	
+		SELECT acs.SportType,acs.BetType,acs.IsLive,acs.SuperPT,acs.MasterPT,acs.AgentPT
+					,acs.IsAutoMasterPT,acs.AutoMasterPT,acs.IsAutoSuperPT,acs.AutoSuperPT,MinPT,MaxPT 
+		FROM dbo.CustPTSetting3rd_Agent acs WITH(NOLOCK)
+			INNER JOIN @tblPT mt 
+				ON mt.SportType = acs.SportType
+					AND mt.BetType = acs.BetType
+					AND mt.IsLive = acs.IsLive
+		WHERE acs.CustID = @_AgentID	
+	END
+	ELSE
+	BEGIN
+		SET @SettingMode = 0 -- Direct member does not offer PT group
+
+		INSERT @_AgentPTTbl(SportType,BetType,IsLive,S2,M2,A2,IM2,UM2,IS2,US2,N2,L2)	
+		SELECT  mt.SportType,mt.BetType,mt.IsLive,0,0,0,0,0,0,0,0,0
+		FROM @tblPT mt 
+	END
 	
 ------------------------------------------------------------------------------------------------------------------	
 	IF @SettingMode = 0
@@ -359,8 +388,8 @@ BEGIN
 								cs.bettype										AS '@BetType',
 								cs.isLive										AS '@IsLive',
 								dbo.f_FomatNumericToChar(cs.SuperPT		/100.0)	AS '@SuperPT',
-								cs.isAutoSuperPT								AS '@IsAutoSuperPT',
-								dbo.f_FomatNumericToChar(cs.AutoSuperPT	/100.0)	AS '@AutoSuperPT',
+								CASE WHEN @_AgentID <> - 4 THEN cs.isAutoSuperPT END AS '@IsAutoSuperPT',
+								CASE WHEN @_AgentID <> - 4 THEN dbo.f_FomatNumericToChar(cs.AutoSuperPT	/100.0) END	AS '@AutoSuperPT',
 								t.SettingLevel									AS '@SettingLevel'
 						FROM        CustPTSetting3rd_Member cs WITH(NOLOCK)
 						INNER JOIN  @tblPT t 
@@ -429,8 +458,8 @@ BEGIN
 								cs.bettype										AS '@BetType',
 								cs.isLive										AS '@IsLive',
 								dbo.f_FomatNumericToChar(cs.SuperPT		/100.0)	AS '@SuperPT',
-								cs.isAutoSuperPT								AS '@IsAutoSuperPT',
-								dbo.f_FomatNumericToChar(cs.AutoSuperPT	/100.0)	AS '@AutoSuperPT',
+								CASE WHEN @_AgentID <> - 4 THEN cs.isAutoSuperPT END AS '@IsAutoSuperPT',
+								CASE WHEN @_AgentID <> - 4 THEN dbo.f_FomatNumericToChar(cs.AutoSuperPT	/100.0) END	AS '@AutoSuperPT',
 								t.SettingLevel									AS '@SettingLevel'
 						FROM        CustPTGroupSetting3rd_Member cs WITH(NOLOCK)
 						INNER JOIN  @tblPT t 
@@ -462,8 +491,8 @@ BEGIN
 								cs.bettype										AS '@BetType',
 								cs.isLive										AS '@IsLive',
 								dbo.f_FomatNumericToChar(cs.SuperPT		/100.0)	AS '@SuperPT',
-								cs.isAutoSuperPT								AS '@IsAutoSuperPT',
-								dbo.f_FomatNumericToChar(cs.AutoSuperPT	/100.0)	AS '@AutoSuperPT',
+								CASE WHEN @_AgentID <> - 4 THEN cs.isAutoSuperPT END AS '@IsAutoSuperPT',
+								CASE WHEN @_AgentID <> - 4 THEN dbo.f_FomatNumericToChar(cs.AutoSuperPT	/100.0) END	AS '@AutoSuperPT',
 								cs.SettingLevel									AS '@SettingLevel'
 						FROM    @tblPT cs	
 						ORDER BY cs.Child_DisplayOrder
@@ -765,9 +794,14 @@ BEGIN
 						
 	DECLARE @ActionID INT
 
-	SELECT @ActionID = CASE WHEN @GroupID = 1 THEN 518 -- SB
-								ELSE 530 -- 3rdProducts
-							END
+	SELECT @ActionID = CASE WHEN @GroupID = 1 AND @_AgentID NOT IN (-3,-4)	THEN 518 -- SB, normal member
+							WHEN @GroupID = 1 AND @_AgentID = -4			THEN 200011 -- SB, Super direct member
+							WHEN @GroupID = 1 AND @_AgentID = -3			THEN 200013 -- SB, Master direct member
+							WHEN ISNULL(@GroupID,0) <> 1 AND @_AgentID NOT IN (-3,-4)	THEN 530 -- 3rd products, normal member
+							WHEN ISNULL(@GroupID,0) <> 1 AND @_AgentID = -4				THEN 200014 -- 3rd products, Super direct member
+							WHEN ISNULL(@GroupID,0) <> 1 AND @_AgentID = -3				THEN 200016 -- 3rd products, Master direct member
+						END
+
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper 
 		@UserID = @UserID,
 		@CustID = @CustID,

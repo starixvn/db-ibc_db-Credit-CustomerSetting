@@ -43,6 +43,8 @@ AS
 		- 20200918@Winfred: Reinsert MyanmarOdds [Redmine: #141926]	
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
 		- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
+		
     Param's Explanation: 
 
     */
@@ -54,6 +56,7 @@ BEGIN
 	
 	DECLARE  
 	  @Batch		INT = 2000
+	DECLARE @AgentID INT
 
 	-- Declare Table Temp
 	DECLARE @Tbl_Comm TABLE (
@@ -92,13 +95,16 @@ BEGIN
 		-- UPDATE Main Discount Role Member
 		IF @RoleID = 1
 		BEGIN
+			SELECT @AgentID = recommend from custinfo WITH(NOLOCK) WHERE custid = @CustId
 
 			-- Update Main Discount Of Member
 			UPDATE cdm
-				SET cdm.PlayerDiscount = nc.Discount,
-					RepUpdateTime = dbo.f_GetDateTime2()
+			SET cdm.PlayerDiscount = nc.Discount,
+				cdm.AgentDiscount = CASE WHEN @AgentID IN(-3,-4) THEN nc.Discount ELSE cdm.AgentDiscount END, 
+				cdm.MasterDiscount = CASE WHEN @AgentID = -4 THEN nc.Discount ELSE cdm.MasterDiscount END,
+				cdm.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM CustDiscount3rd_Member cdm WITH (ROWLOCK , UPDLOCK)
-			INNER JOIN @Tbl_Comm nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
+				INNER JOIN @Tbl_Comm nc ON cdm.SportType = nc.SportType AND cdm.BetType = nc.BetType
 			WHERE cdm.CustID = @custid
 		END
 

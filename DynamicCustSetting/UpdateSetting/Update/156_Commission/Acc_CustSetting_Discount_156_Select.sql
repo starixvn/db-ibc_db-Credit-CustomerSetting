@@ -14,6 +14,7 @@ AS
 
 	Revision:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -103,7 +104,7 @@ BEGIN
 		WHERE dc.custid = @CustID AND mdc.custid = @MasterID 
 		ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
 	END
-	ELSE IF @RoleID = 1
+	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member
 	BEGIN
 		IF @UplineRoleID = 4
 		BEGIN
@@ -144,7 +145,47 @@ BEGIN
 			ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
 		END
 	END
-	
+	ELSE IF @RoleID = 1 AND @AgentID = -4 --Super Direct Member
+	BEGIN
+		SELECT	pdt.SportType,  
+				pdt.BetType,
+				dc.PlayerDiscount, 
+				adc.Discount AS SuperDiscount,
+				pdt.IntervalValue AS IntervalComm
+		FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
+			INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype   
+			INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON pdt.SportType = adc.sporttype AND pdt.BetType = adc.bettype 
+		WHERE dc.custid = @CustID AND adc.custid = @SuperID  
+		ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+	END
+	ELSE IF @RoleID = 1 AND @AgentID = -3 --Master Direct Member
+	BEGIN
+		IF @UplineRoleID = 4
+		BEGIN
+			SELECT	pdt.SportType,  
+					pdt.BetType,  
+					dc.PlayerDiscount,  
+					dc.MasterDiscount,
+					pdt.IntervalValue AS IntervalComm
+				FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
+				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
+			WHERE dc.custid = @CustID
+			ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+		END
+		ELSE IF @UplineRoleID = 3
+		BEGIN
+			SELECT	pdt.SportType,  
+					pdt.BetType,
+					dc.PlayerDiscount, 
+					adc.Discount AS MasterDiscount,
+					pdt.IntervalValue AS IntervalComm
+			FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
+				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype   
+				INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON pdt.SportType = adc.sporttype AND pdt.BetType = adc.bettype 
+			WHERE dc.custid = @CustID AND adc.custid = @MasterID  
+			ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+		END
+	END
 	DROP TABLE #ProductSettingDetail_Sel
 
 END

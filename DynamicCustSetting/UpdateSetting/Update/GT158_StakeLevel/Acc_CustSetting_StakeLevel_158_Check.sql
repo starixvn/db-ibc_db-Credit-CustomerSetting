@@ -21,7 +21,7 @@ AS
 	Original:
 	Revisions:
 		- 20240215@Eden: Unify Live Casino & RNG slot/RNG Casino [Redmine: #198960] 
-
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -237,21 +237,21 @@ BEGIN
 			IF @@ROWCOUNT = 0
 				BREAK;  
 
-			IF	@RoleID = 3  
+			IF	(@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)			-- Master or SuperDirectMember : Collect Upline Super
 			BEGIN  
 				SELECT	@UplineStakeLevelList = StakeLevelList
 				FROM	dbo.CustStakeLevel_Agent WITH(NOLOCK)
 				WHERE	CustID = @SuperID
 					AND	BetType = @BetType;
 			END;           
-			ELSE IF	@RoleID = 2  
+			ELSE IF	(@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)		-- Agent or MasterDirectMember : Collect Upline Super, Master  
 			BEGIN  
 				SELECT	@UplineStakeLevelList = StakeLevelList
 				FROM	dbo.CustStakeLevel_Agent WITH(NOLOCK)
 				WHERE	CustID = @MasterID
 					AND	BetType = @BetType;
 			END;           
-			ELSE IF	@RoleID = 1  
+			ELSE IF	@RoleID = 1 AND @AgentID NOT IN (-4,-3)				 -- Normal member : Collect Upline Super, Master, Agent
 			BEGIN  
 				SELECT	@UplineStakeLevelList = StakeLevelList
 				FROM	dbo.CustStakeLevel_Agent WITH(NOLOCK)

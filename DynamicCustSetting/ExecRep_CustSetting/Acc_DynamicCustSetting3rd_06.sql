@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0" isNested="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_06]
     @CustId int,
     @RoleId int,
@@ -19,6 +18,7 @@ AS
 		- 20200615@Elodie: Implement new setting type 19 [Redmine: #135363]
 		- 20220622@Elodie:  Run by batch [RedmineID: #174131]
 		- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 		 @SettingType: 3 - Given Comm
 						5 - Charge Comm
@@ -35,9 +35,9 @@ BEGIN
 	
 	DECLARE @BatchNo INT = 2000, @SettingRow TINYINT
 	CREATE TABLE #Agent(custid INT)
-	CREATE TABLE #Member(custid INT)
-	CREATE TABLE #AgentTmpBatch(custid INT)
-	CREATE TABLE #MemberTmpBatch(custid INT)
+	CREATE TABLE #Member(custid INT , Recommend INT)
+	CREATE TABLE #AgentTmpBatch(custid INT )
+	CREATE TABLE #MemberTmpBatch(custid INT , Recommend INT)
 
 	DECLARE @NewDiscountTbl TABLE(
 		SportType SMALLINT,
@@ -53,7 +53,7 @@ BEGIN
 			@MasterDiscount DECIMAL(9,8),
 			@AgentDiscount DECIMAL(9,8),
 			@PlayerDiscount DECIMAL(9,8),
-			@SuperID INT, @MasterID INT, @AgentID INT
+			@SuperID INT, @MasterID INT, @AgentID INT, @UplineID INT
 	
 	EXEC sp_xml_preparedocument @iDoc OUTPUT, @Discount_XML	
 	
@@ -69,6 +69,8 @@ BEGIN
 
 	SELECT @BatchNo = @BatchNo / @SettingRow
 
+	DECLARE @IsDirectMember  INT = 0
+		
 	IF @RoleId = 4
 	BEGIN
 		INSERT INTO #Agent(custid)
@@ -76,10 +78,11 @@ BEGIN
 		FROM custInfo c WITH(NOLOCK) 
 		WHERE srecommend = @CustId AND roleid IN (3,2) AND Enabled = 1
 
-		INSERT INTO #Member(custid)
-		SELECT custid
+		INSERT INTO #Member(custid , Recommend)
+		SELECT custid , c.recommend
 		FROM custInfo c WITH(NOLOCK) 
-		WHERE srecommend = @CustId AND roleid = 1 AND Enabled = 1					
+		WHERE srecommend = @CustId AND roleid = 1 AND Enabled = 1	
+
 	END
 	ELSE IF @RoleId = 3
 	BEGIN
@@ -90,23 +93,29 @@ BEGIN
 		FROM custInfo c WITH(NOLOCK) 
 		WHERE mrecommend = @CustId AND roleid = 2 AND Enabled = 1	
 			
-		INSERT INTO #Member(custid)
-		SELECT custid
+		INSERT INTO #Member(custid , Recommend)
+		SELECT custid , c.recommend
 		FROM custInfo c WITH(NOLOCK) 
 		WHERE mrecommend = @CustId AND roleid = 1 AND Enabled = 1
+
 	END
 	ELSE IF @RoleId = 2
 	BEGIN
 		SELECT @SuperID = srecommend, @MasterID = mrecommend FROM Custinfo WITH (NOLOCK) WHERE custid = @CustId
 
-		INSERT INTO #Member(custid)
-		SELECT custid
+		INSERT INTO #Member(custid , Recommend)
+		SELECT custid , c.recommend
 		FROM custInfo c WITH(NOLOCK) 
 		WHERE recommend = @CustId AND roleid = 1 AND Enabled = 1
 	END
+	ELSE IF @RoleId = 1
+	BEGIN
+		-- Check Member updated is Normal or Direct
+		SELECT @IsDirectMember = recommend FROM Custinfo WITH (NOLOCK) WHERE custid = @custid AND roleid = 1 AND Enabled = 1 AND recommend IN (-3,-4)
+	END
 	
-	--Update main
-	IF @RoleID=1
+	--Update main is member normal account
+	IF @RoleID=1 AND @IsDirectMember NOT IN (-3,-4)
 	BEGIN
 		SELECT @SuperID = srecommend, @MasterID = mrecommend, @AgentID = recommend FROM Custinfo WITH (NOLOCK) WHERE custid = @CustId
 
@@ -130,11 +139,56 @@ BEGIN
 			INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
 		WHERE dcmem.CustID=@CustID AND @SettingType IN (3,19)
 	END
-	ELSE 
+	
+	--Update main is direct account : SuperDirectMember
+	ELSE IF @RoleID=1 AND @IsDirectMember = -4
+	BEGIN
+		SELECT @SuperID = srecommend, @MasterID = mrecommend, @AgentID = recommend FROM Custinfo WITH (NOLOCK) WHERE custid = @CustId
+
+		UPDATE dcmem  
+		SET   @SuperDiscount = dcs.Discount,
+			@PlayerDiscount = tmp.Discount,	
+			@SuperDiscount = CASE WHEN @SuperDiscount < @PlayerDiscount THEN @PlayerDiscount ELSE @SuperDiscount END,
+			dcmem.SuperDiscount = @SuperDiscount,
+			dcmem.PlayerDiscount = @PlayerDiscount,
+			dcmem.AgentDiscount  = @PlayerDiscount,
+			dcmem.MasterDiscount = @PlayerDiscount,
+			dcmem.RepUpdateTime = dbo.f_GetDateTime2()
+		FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)  
+			INNER JOIN @NewDiscountTbl tmp ON tmp.SportType=dcmem.SportType AND tmp.BetType=dcmem.BetType  
+			INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
+		WHERE dcmem.CustID=@CustID AND @SettingType IN (3,19)
+	END
+	
+	--Update main is direct account : MasterDirectMember
+	ELSE IF @RoleID=1 AND @IsDirectMember = -3
+	BEGIN
+		SELECT @SuperID = srecommend, @MasterID = mrecommend, @AgentID = recommend FROM Custinfo WITH (NOLOCK) WHERE custid = @CustId
+
+		UPDATE dcmem  
+		SET   @SuperDiscount = dcs.Discount,
+			@MasterDiscount = dcm.Discount,
+			@PlayerDiscount = tmp.Discount,	
+			@SuperDiscount = CASE WHEN @SuperDiscount < @PlayerDiscount THEN @PlayerDiscount ELSE @SuperDiscount END,
+			@MasterDiscount= CASE WHEN @MasterDiscount < @PlayerDiscount THEN @PlayerDiscount ELSE @MasterDiscount END,
+			dcmem.SuperDiscount = @SuperDiscount,
+			dcmem.MasterDiscount = @MasterDiscount,
+			dcmem.PlayerDiscount = @PlayerDiscount,
+			dcmem.AgentDiscount = @PlayerDiscount,
+			dcmem.RepUpdateTime = dbo.f_GetDateTime2()
+		FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)  
+			INNER JOIN @NewDiscountTbl tmp ON tmp.SportType=dcmem.SportType AND tmp.BetType=dcmem.BetType  
+			INNER JOIN dbo.CustDiscount3rd_Agent dcm WITH(NOLOCK) ON dcm.sporttype = dcmem.sporttype AND dcm.bettype = dcmem.bettype AND dcm.custid=@MasterID
+			INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
+		WHERE dcmem.CustID=@CustID AND @SettingType IN (3,19)
+	END
+
+	-- Update main is Super or Master or Agent
+	ELSE IF @roleid IN (2,3,4)
 	BEGIN
 		UPDATE main
 		SET main.Discount = tmp.Discount,
-			RepUpdateTime = dbo.f_GetDateTime2()
+			main.RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.CustDiscount3rd_Agent main WITH(ROWLOCK, UPDLOCK)
 			INNER JOIN @NewDiscountTbl tmp ON tmp.SportType=main.SportType AND tmp.BetType=main.BetType
 		WHERE main.CustID=@CustID
@@ -158,7 +212,7 @@ BEGIN
 			UPDATE dca
 			SET
 				dca.Discount=CASE WHEN dcu.Discount < dca.Discount THEN dcu.Discount ELSE dca.Discount  END,
-				RepUpdateTime = dbo.f_GetDateTime2()
+				dca.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustDiscount3rd_Agent dca WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewDiscountTbl fil ON dca.sporttype = fil.sporttype AND dca.bettype = fil.bettype
 				INNER JOIN #AgentTmpBatch ci WITH(NOLOCK) ON dca.custid = ci.custid
@@ -171,18 +225,20 @@ BEGIN
 	BEGIN
 		TRUNCATE TABLE #MemberTmpBatch
 		DELETE TOP (@BatchNo) a
-		OUTPUT deleted.custid INTO #MemberTmpBatch(custid)
+		OUTPUT deleted.custid ,DELETED.Recommend INTO #MemberTmpBatch(custid ,Recommend)
 		FROM #Member a
 
 		IF @@ROWCOUNT = 0 
 			BREAK
 
-		IF @RoleId = 4
+		IF @RoleId = 4 
 		BEGIN
 			--downline_member_sdiscount = @NEW_DISCOUNT
 			--downline_member_adiscount = min(downline_member_adiscount, downline_member_sdiscount)
 			--downline_member_discount = min(downline_member_discount, downline_member_adiscount)
 			--downline_member_playerdiscount = min(downline_member_playerdiscount, downline_member_discount)			
+			
+			--Adjust Normal member:
 			UPDATE dcmem
 			SET
 				@SuperDiscount = dcs.Discount,
@@ -196,17 +252,20 @@ BEGIN
 				dcmem.MasterDiscount = @MasterDiscount,
 				dcmem.AgentDiscount = @AgentDiscount,
 				dcmem.PlayerDiscount = @PlayerDiscount,
-				RepUpdateTime = dbo.f_GetDateTime2()
+				dcmem.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewDiscountTbl fil ON dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
-				INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON dcmem.custid = ci.custid											  
+				INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON dcmem.custid = ci.custid 
 				INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@CustID
+				
 		END
 		ELSE IF @RoleID = 3
 		BEGIN
 			--downline_member_adiscount = @NEW_DISCOUNT
 			--downline_member_discount = min(downline_member_discount, downline_member_adiscount)
 			--downline_member_playerdiscount = min(downline_member_playerdiscount, downline_member_discount)									
+			
+			-- Update Normal Member
 			UPDATE dcmem
 			SET
 				@SuperDiscount = dcs.Discount,
@@ -220,7 +279,7 @@ BEGIN
 				dcmem.MasterDiscount = @MasterDiscount,
 				dcmem.AgentDiscount = @AgentDiscount,
 				dcmem.PlayerDiscount = @PlayerDiscount,
-				RepUpdateTime = dbo.f_GetDateTime2()
+				dcmem.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN @NewDiscountTbl fil ON dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
 				INNER JOIN #MemberTmpBatch ci WITH(NOLOCK) ON dcmem.custid = ci.custid

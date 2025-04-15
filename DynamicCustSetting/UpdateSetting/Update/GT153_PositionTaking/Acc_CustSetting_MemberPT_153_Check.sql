@@ -21,6 +21,7 @@ AS
 
 	Revision:
 	- 20231101@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 
 	Param's Explanation:
 	- @PT:
@@ -68,6 +69,22 @@ BEGIN
 		, Old_IsAutoMasterPT BIT
 		, [ProductID] [tinyint]
 		, [SettingLevel] [tinyint]
+		)
+
+	DECLARE @UplinePT TABLE (
+		 CustID		int
+		,SportType	smallint
+		,BetType	smallint
+		,IsLive		bit
+		,IsAutoMasterPT	bit
+		,IsAutoSuperPT	bit
+		,SuperPT		smallmoney
+		,MasterPT		smallmoney
+		,AgentPT		smallmoney
+		,AutoSuperPT	smallmoney
+		,AutoMasterPT	smallmoney
+		,MinPT			smallmoney
+		,MaxPT			smallmoney
 		)
 		
 	DECLARE @IsGrouped BIT = 0
@@ -154,6 +171,30 @@ BEGIN
 	FROM dbo.CustSettingMode3rd WITH(NOLOCK)
 	WHERE CustID=@CustID
 
+	IF @AgentID IN(-4,-3)
+	BEGIN
+		SET @IsGrouped = 0
+
+		IF @AgentID = -4 --Super edit super direct member
+		BEGIN
+			UPDATE t
+			SET  t.IsAutoSuperPT = 0
+				,t.AutoSuperPT = 0
+				,t.MasterPT = 0
+				,t.IsAutoMasterPT = 0
+				,t.AutoMasterPT = 0
+				,t.AgentPT = 0
+			FROM @NewPTTble t
+		END
+		ELSE -- Super/master edit master direct member
+		BEGIN
+			UPDATE t
+			SET t.IsAutoMasterPT = 0
+				,t.AutoMasterPT = 0
+				,t.AgentPT = 0
+			FROM @NewPTTble t
+		END
+	END
 			
 	IF @RoleID = 2 --When Agent update members
 	BEGIN
@@ -577,7 +618,42 @@ BEGIN
                     , @MsgType = 3                                    
             RETURN
         END	
-		
+
+		-----------get Upline PT----------
+		INSERT INTO @UplinePT(
+			 CustID			
+			,SportType		
+			,BetType		
+			,IsLive			
+			,IsAutoMasterPT	
+			,IsAutoSuperPT	
+			,SuperPT		
+			,MasterPT		
+			,AgentPT		
+			,AutoSuperPT	
+			,AutoMasterPT	
+			,MinPT			
+			,MaxPT			
+		)
+		SELECT  ISNULL(a.CustID,@AgentID)
+			,t.SportType 
+		    ,t.BetType  
+		    ,t.IsLive
+			,ISNULL(a.IsAutoMasterPT,0)
+			,ISNULL(a.IsAutoSuperPT,0)
+			,ISNULL(a.SuperPT,0)
+			,ISNULL(a.MasterPT,0)
+			,ISNULL(a.AgentPT,0)
+			,ISNULL(a.AutoSuperPT,0)
+			,ISNULL(a.AutoMasterPT,0)
+			,ISNULL(a.MinPT,0)
+			,ISNULL(a.MaxPT,100) 
+		FROM @NewPTTble t
+			LEFT JOIN dbo.CustPTSetting3rd_Agent a WITH (NOLOCK)
+				ON t.SportType = a.SportType
+				AND t.BetType = a.BetType
+				AND t.IsLive = a.IsLive
+				AND a.custid = @AgentID
 		
 		--if im1=0 and im2=0 then m1<=m3-a1
 		SELECT @ErrInfo = (
@@ -585,7 +661,7 @@ BEGIN
 									mpt.MasterPT - mempt.AgentPT AS MaxPT
 									, mempt.ProductID, mempt.SettingLevel
 							FROM @NewPTTble mempt
-								INNER JOIN dbo.CustPTSetting3rd_Agent apt WITH (NOLOCK)
+								INNER JOIN @UplinePT apt 
 									ON apt.SportType=mempt.SportType
 											AND apt.BetType=mempt.BetType
 											AND apt.IsLive=mempt.IsLive
@@ -619,7 +695,7 @@ BEGIN
 								CASE WHEN mpt.MinPT + (-1)*mempt.AgentPT < 0 THEN 0 ELSE mpt.MinPT - mempt.AgentPT END  AS MinPT
 								, mempt.ProductID, mempt.SettingLevel
 							FROM @NewPTTble mempt
-								INNER JOIN dbo.CustPTSetting3rd_Agent apt WITH (NOLOCK)
+								INNER JOIN @UplinePT apt 
 									ON apt.SportType=mempt.SportType
 											AND apt.BetType=mempt.BetType
 											AND apt.IsLive=mempt.IsLive
@@ -812,6 +888,42 @@ BEGIN
                     , @MsgType = 3                                    
             RETURN
         END	
+
+		-----------get Upline PT----------
+		INSERT INTO @UplinePT(
+			 CustID			
+			,SportType		
+			,BetType		
+			,IsLive			
+			,IsAutoMasterPT	
+			,IsAutoSuperPT	
+			,SuperPT		
+			,MasterPT		
+			,AgentPT		
+			,AutoSuperPT	
+			,AutoMasterPT	
+			,MinPT			
+			,MaxPT			
+		)
+		SELECT  ISNULL(a.CustID,@MasterID)
+			,t.SportType 
+			,t.BetType  
+			,t.IsLive
+			,ISNULL(a.IsAutoMasterPT,0)
+			,ISNULL(a.IsAutoSuperPT,0)
+			,ISNULL(a.SuperPT,0)
+			,ISNULL(a.MasterPT,0)
+			,ISNULL(a.AgentPT,0)
+			,ISNULL(a.AutoSuperPT,0)
+			,ISNULL(a.AutoMasterPT,0)
+			,ISNULL(a.MinPT,0)
+			,ISNULL(a.MaxPT,100) 
+		FROM @NewPTTble t
+			LEFT JOIN dbo.CustPTSetting3rd_Agent a WITH (NOLOCK)
+				ON t.SportType = a.SportType
+				AND t.BetType = a.BetType
+				AND t.IsLive = a.IsLive
+				AND a.custid = @MasterID
 		
 		--if is1=0 AND is3=0 then s1<=max(min(s4,l4) - m3,max(n4-m1-a1,0))
 		SELECT @ErrInfo = (
@@ -844,7 +956,7 @@ BEGIN
 											AND spt.BetType=mempt.BetType
 											AND spt.IsLive=mempt.IsLive
 											AND spt.CustID=@SuperID
-								INNER JOIN dbo.CustPTSetting3rd_Agent mpt WITH (NOLOCK)
+								INNER JOIN @UplinePT mpt 
 									ON mpt.SportType=mempt.SportType
 											AND mpt.BetType=mempt.BetType
 											AND mpt.IsLive=mempt.IsLive
@@ -902,7 +1014,7 @@ BEGIN
 											AND spt.BetType=mempt.BetType
 											AND spt.IsLive=mempt.IsLive
 											AND spt.CustID=@SuperID
-								INNER JOIN dbo.CustPTSetting3rd_Agent mpt WITH (NOLOCK)
+								INNER JOIN @UplinePT mpt 
 									ON mpt.SportType=mempt.SportType
 											AND mpt.BetType=mempt.BetType
 											AND mpt.IsLive=mempt.IsLive

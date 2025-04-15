@@ -11,6 +11,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerCreditInfoSel]
 		- 20230306@Johnson: get Credit available of new customer for clone account [redmine: #183697]
 		- 20240401@Elodie: The max credit per member got wrong calculation when creating multi-account [Redmine: #203180]
 		- 20250328@Elodie: Get info by username2 [Redmine: #197737]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]  
 */	
 AS
 BEGIN
@@ -56,7 +57,7 @@ BEGIN
 		SELECT @Credit_AllDownlines = ISNULL(SUM(credit), 0) 
 		FROM custinfo as ci WITH (NOLOCK) 
 		WHERE srecommend = @UplineID 
-			AND RoleID = 3
+			AND ((RoleID = 3) OR (RoleID = 1 AND ci.recommend = -4))
 			
 		IF @UplineID <= 100
 		BEGIN
@@ -73,7 +74,7 @@ BEGIN
 		SELECT @Credit_AllDownlines = ISNULL(SUM(credit), 0) 
 		FROM custinfo as ci WITH (NOLOCK) 
 		WHERE mrecommend = @UplineID 
-			AND RoleID = 2
+			AND ((RoleID = 2) OR (RoleID = 1 AND ci.recommend = -3))
 		
 		SELECT @Credit_Max = @UplineCredit - @Credit_AllDownlines	
 	END

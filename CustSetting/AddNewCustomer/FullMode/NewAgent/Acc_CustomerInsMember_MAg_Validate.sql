@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0"></info>*/
-CREATE PROC Acc_CustomerInsMember_MAg_Validate
+ALTER PROC Acc_CustomerInsMember_MAg_Validate
 (
 	@Language		VARCHAR(2)= 'E'
 	,@mrecommend	INT
@@ -24,6 +24,7 @@ AS
 
 	Revision:
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 
 	Param's Explanation:
 	- @ErrCode:
@@ -81,7 +82,8 @@ BEGIN
 	DECLARE @uplineUsername NVARCHAR(50)
 			,@currency INT
 			,@srecommend INT
-			,@Credit_AllOtherAgent MONEY, @Credit_AllMember MONEY, @Credit_MAg MONEY
+			,@Credit_AllOtherDownline MONEY
+			,@Credit_MAg MONEY
 			,@SiteID int
 			,@SettingType25	VARCHAR(MAX)= ''
 			,@SettingType26	VARCHAR(MAX)= ''
@@ -120,14 +122,19 @@ BEGIN
 	FROM CustInfo ci WITH(NOLOCK) 
 	WHERE CustID = @mrecommend
 
-	SELECT @Credit_AllOtherAgent = isnull(sum(credit), 0) FROM custinfo as ci WITH(NOLOCK) WHERE mrecommend = @mrecommend and RoleID = 2
+	SELECT @Credit_AllOtherDownline = ISNULL(sum(Credit), 0) 
+	FROM custinfo WITH(NOLOCK) 
+	WHERE MRecommend = @mrecommend 
+		AND (RoleID = 2  --Masters
+				OR (roleid = 1 AND recommend = -3) --master direct members
+			)
 
-    if @Credit_AllOtherAgent + @Credit >@Credit_MAg
+    IF @Credit_AllOtherDownline + @Credit >@Credit_MAg
     BEGIN
-        SET @ErrMsg = REPLACE( [dbo].[f_Get_MsgNamebyMsgID](70030,@Language) , '{number}', FORMAT(@Credit_MAg - @Credit_AllOtherAgent, '#,#0.####'))
+		SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_MAg - @Credit_AllOtherDownline, '#,#0.####'))
 
-        SELECT @ErrCode = 104
-        return
+	    SELECT @ErrCode = 104
+	    return
     END
 
     IF (isnull(@maxcredit ,0) > @credit )

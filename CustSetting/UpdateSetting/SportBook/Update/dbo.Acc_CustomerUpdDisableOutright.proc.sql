@@ -28,6 +28,7 @@ Revisions:
 	- 20130218@Dan: Change linked server DB053 to DBAGE; Write more log on DBTXN server in case of DBLOG server failure
 	- 20150606@Elodie: Separate CustDB to DBCUST server (Move Acc_CustomerSelCheckAllowedDownlines, Acc_CustomerSelCheckEnable to DBCUST.CustDB)
 	- 20241204@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+	- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]  
 Param's Explanation:
 */
 
@@ -71,7 +72,11 @@ IF @Old_DisableOutright = @DisableOutright
 	return
 
 IF @roleid = 1
-	Select @UplineDisableOutright = isnull(disableoutright,0) from Custinfo with (nolock) where custid = @recommend 
+	Select @UplineDisableOutright = isnull(disableoutright,0) from Custinfo with (nolock) where custid = CASE 
+																			WHEN @recommend = -4 THEN @srecommend
+																			WHEN @recommend = -3 THEN @mrecommend
+																			ELSE @recommend
+																	     END
 ELSE IF @roleid = 2
 	Select @UplineDisableOutright = isnull(disableoutright,0) from Custinfo with (nolock) where custid = @mrecommend 
 ELSE IF @roleid = 3

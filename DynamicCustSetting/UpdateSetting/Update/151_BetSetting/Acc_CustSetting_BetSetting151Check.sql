@@ -25,6 +25,7 @@ AS
 	Revisions: 
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
 		- 20240612@Johnson: Scale out DBCUST [redmine: #199915]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 	Param's Explanation:
 	@BetSetting: Json Type
 		'[
@@ -145,7 +146,7 @@ BEGIN
 	WHERE ps.SettingType = 26
 		AND u.FunctionType = 1 --Edit Customer
 
-	IF @roleid = 3
+	IF  (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)	-- Master or SuperDirectMember : Collect Upline Super
 	  BEGIN
 		INSERT INTO @UplineLimitTbl (SportType , BetType , MinBet , MaxBet , MaxPerMatch , MaxPayoutPerMatch)
 		SELECT bl.SportType
@@ -178,7 +179,7 @@ BEGIN
 		GROUP BY bl.SportType
 			, bl.BetType
 	  END
-	 ELSE IF @RoleID = 2
+	 ELSE IF (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)	-- Agent or MasterDirectMember : Collect Upline Super, Master
 	 BEGIN
 		--Get super/master 's bet limit
 		INSERT INTO @UplineLimitTbl (SportType , BetType , MinBet , MaxBet , MaxPerMatch , MaxPayoutPerMatch)
@@ -208,12 +209,11 @@ BEGIN
 		INNER JOIN @NewBetSettingTbl tmp
 			ON tmp.SportType	= bl.SportType
 				AND tmp.BetType = bl.BetType
-		WHERE bl.CustID		= @SuperID
-			OR bl.CustID	= @MasterID
+		WHERE bl.CustID		IN (@SuperID, @MasterID)
 		GROUP BY bl.SportType
 			, bl.BetType
 	END
-	ELSE IF @RoleID = 1
+	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member : Collect Upline Super, Master, Agent
 	BEGIN
 		--Get super/master 's bet limit
 		INSERT INTO @UplineLimitTbl (SportType , BetType , MinBet , MaxBet , MaxPerMatch , MaxPayoutPerMatch)
@@ -243,13 +243,11 @@ BEGIN
 		INNER JOIN @NewBetSettingTbl tmp
 			ON tmp.SportType	= bl.SportType
 				AND tmp.BetType = bl.BetType
-		WHERE bl.CustID		= @SuperID
-			OR bl.CustID	= @MasterID
-			OR bl.CustID	= @AgentID
+		WHERE bl.CustID		IN (@SuperID,@MasterID,@AgentID)
 		GROUP BY bl.SportType
 			, bl.BetType
 	END
-
+	
 	-- Check rule : Wrong Min bet/ Max bet/ Max per match
 
 	--Get 1 error row
@@ -613,5 +611,4 @@ BEGIN
 			RETURN
 		END
 	END
-
 END

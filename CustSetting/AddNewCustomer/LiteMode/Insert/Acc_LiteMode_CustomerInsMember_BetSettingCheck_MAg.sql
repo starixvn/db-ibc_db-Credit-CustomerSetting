@@ -30,6 +30,7 @@ AS
 		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]
 
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
@@ -666,21 +667,6 @@ BEGIN
 		WHERE cb.custid IN (@srecommend,@mrecommend)
 		GROUP BY cb.Sporttype,cb.Bettype
 
-		--Other Settingtype
-		INSERT INTO @Upline_BetSetting (SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-		SELECT  cb.Sporttype,cb.Bettype,
-				MinBet = ISNULL(MAX(CASE WHEN cb.MinBet = 0 THEN NULL ELSE cb.MinBet END),0), 
-				MaxBet = ISNULL(MIN(CASE WHEN cb.MaxBet = 0 THEN NULL ELSE cb.MaxBet END),0),
-				MaxPerMatch = ISNULL(MIN(CASE WHEN cb.MaxPerMatch = 0 THEN NULL ELSE cb.MaxPerMatch END),0)
-		FROM CustBetSetting3rd_Agent cb WITH (NOLOCK,FORCESEEK)
-			INNER JOIN @BetSetting b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
-			INNER JOIN #ProductSettingDetail_Check d 
-				ON b.SportType = d.SportType
-				AND b.BetType = d.BetType
-				AND d.SettingType <> 23
-		WHERE cb.custid IN (@srecommend,@mrecommend)
-		GROUP BY cb.Sporttype,cb.Bettype
-
 		--> Check rule : Min Bet must be equal to or greater than Upline's Min Bet
 		IF EXISTS (SELECT TOP 1 1
 				FROM @BetSetting t
@@ -821,7 +807,8 @@ BEGIN
 				RETURN
 		END
 	END	
-		
+
+	/*	
 	--check Others Games
 	IF ISNULL(@SettingType16,'') <> '' 
 	BEGIN
@@ -1073,6 +1060,6 @@ BEGIN
 				RETURN
 		END		
 	END
-	
+	*/
 	DROP TABLE #ProductSettingDetail_Check
 END	

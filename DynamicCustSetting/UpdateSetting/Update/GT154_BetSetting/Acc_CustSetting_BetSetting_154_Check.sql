@@ -17,7 +17,7 @@ AS
 	Original:
 	Revisions:
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
-
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 	Param's Explanation:
 	- @BetLimit:
 		[
@@ -136,7 +136,7 @@ BEGIN
 			ON t.SportType = p.SportType
 			AND t.BetType = p.BetType		
 	
-	IF @RoleID = 3
+	IF (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)	-- Master or SuperDirectMember : Collect Upline Super
 	BEGIN
 		INSERT INTO @UplineLimitTbl (SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber)
 		SELECT  cb.Sporttype,cb.Bettype,
@@ -148,7 +148,7 @@ BEGIN
 			INNER JOIN @NewBetLimitTbl b ON cb.SportType = b.SportType AND cb.BetType = b.BetType
 		WHERE cb.custid = @SuperID
 	END
-	ELSE IF @RoleID = 2
+	ELSE IF (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)	-- Agent or MasterDirectMember : Collect Upline Super, Master
 	BEGIN
 		INSERT INTO @UplineLimitTbl(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber)
 		SELECT  cb.Sporttype,cb.Bettype,
@@ -161,7 +161,7 @@ BEGIN
 		WHERE cb.custid IN (@SuperID,@MasterID)
 		GROUP BY cb.Sporttype,cb.Bettype
 	END
-	ELSE IF @RoleID = 1
+	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member : Collect Upline Super, Master, Agent
 	BEGIN
 		INSERT INTO @UplineLimitTbl(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber)
 		SELECT  cb.Sporttype,cb.Bettype,
@@ -174,7 +174,7 @@ BEGIN
 		WHERE cb.custid IN (@SuperID,@MasterID,@AgentID)
 		GROUP BY cb.Sporttype,cb.Bettype
 	END
-
+	
 	--Get 1 error row
 	INSERT INTO @ErrorSportTypeTbl(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MinMinBet,MaxMaxBet,MaxMaxPerMatch,MaxMaxPerNumber,Subtype)
 	SELECT tmp.SportType
@@ -454,7 +454,7 @@ BEGIN
 		RETURN
 	END
 	
-	IF @RoleID IN (1, 2, 3)
+	IF @RoleID IN (1,2,3)
 	BEGIN
 		--Check if MAX(upper.minbet) > 0 and minbet>0 then minbet>=MAX(upper.minbet)
 		IF EXISTS(SELECT TOP 1 1
@@ -465,20 +465,20 @@ BEGIN
 		BEGIN
 			SET @xml = (
 					SELECT CASE 
-								WHEN @RoleID = 3
+								WHEN (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)
 									THEN 10016
-								WHEN @RoleID = 2
+								WHEN (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)
 									THEN 10019
-								WHEN @RoleID = 1
+								WHEN @RoleID = 1 AND @AgentID NOT IN (-3,-4)
 									THEN 10006
 								END 
 							AS '@MsgID'
 						, CASE 
-								WHEN @RoleID = 3
+								WHEN (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)
 									THEN 'Min bet must be equal to or greater than Super Agent min bet'
-								WHEN @RoleID = 2
+								WHEN (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)
 									THEN 'Min bet must be equal to or greater than Master Agent min bet'
-								WHEN @RoleID = 1
+								WHEN @RoleID = 1 AND @AgentID NOT IN (-3,-4)
 									THEN 'Min bet must be equal to or greater than Agent min bet'
 								END 
 							AS '@Msg'
@@ -511,20 +511,20 @@ BEGIN
 		BEGIN
 			SET @xml = (
 					SELECT CASE 
-								WHEN @RoleID = 3
+								WHEN (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)
 									THEN 10017
-								WHEN @RoleID = 2
+								WHEN (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)
 									THEN 10020
-								WHEN @RoleID = 1
+								WHEN @RoleID = 1 AND @AgentID NOT IN (-3,-4)
 									THEN 10007
 								END 
 							AS '@MsgID'
 						, CASE 
-								WHEN @RoleID = 3
+								WHEN (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)
 									THEN 'Max bet must be equal to or less than Super Agent max bet'
-								WHEN @RoleID = 2
+								WHEN (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)
 									THEN 'Max bet must be equal to or less than Master Agent max bet'
-								WHEN @RoleID = 1
+								WHEN @RoleID = 1 AND @AgentID NOT IN (-3,-4)
 									THEN 'Max bet must be equal to or less than Agent max bet'
 								END 
 							AS '@Msg'
@@ -557,20 +557,20 @@ BEGIN
 		BEGIN
 			SET @xml = (
 					SELECT CASE 
-								WHEN @RoleID = 3
+								WHEN (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)
 									THEN 10018
-								WHEN @RoleID = 2
+								WHEN (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)
 									THEN 10021
-								WHEN @RoleID = 1
+								WHEN @RoleID = 1 AND @AgentID NOT IN (-3,-4)
 									THEN 10008
 								END 
 							AS '@MsgID'
 						, CASE 
-								WHEN @RoleID = 3
+								WHEN (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)
 									THEN 'Max Per Match must be equal to or less than Super Agent Max Per Match'
-								WHEN @RoleID = 2
+								WHEN (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)
 									THEN 'Max Per Match must be equal to or less than Master Agent Max Per Match'
-								WHEN @RoleID = 1
+								WHEN @RoleID = 1 AND @AgentID NOT IN (-3,-4)
 									THEN 'Max Per Match must be equal to or less than Agent Max Per Match'
 								END
 							AS '@Msg'
@@ -603,20 +603,20 @@ BEGIN
 		BEGIN
 			SET @xml = (
 					SELECT CASE 
-								WHEN @RoleID = 3
+								WHEN (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)
 									THEN 10010
-								WHEN @RoleID = 2
+								WHEN (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)
 									THEN 10011
-								WHEN @RoleID = 1
+								WHEN @RoleID = 1 AND @AgentID NOT IN (-3,-4)
 									THEN 10009
 								END 
 							AS '@MsgID'
 						, CASE 
-								WHEN @RoleID = 3
+								WHEN (@RoleID = 3) OR (@RoleID = 1 AND @AgentID = -4)
 									THEN 'Max Per Ball must be equal to or less than Super Agent Max Per Ball'
-								WHEN @RoleID = 2
+								WHEN (@RoleID = 2) OR (@RoleID = 1 AND @AgentID = -3)
 									THEN 'Max Per Ball must be equal to or less than Master Agent Max Per Ball'
-								WHEN @RoleID = 1
+								WHEN @RoleID = 1 AND @AgentID NOT IN (-3,-4)
 									THEN 'Max Per Ball must be equal to or less than Agent Max Per Ball'
 								END
 							AS '@Msg'
@@ -640,6 +640,7 @@ BEGIN
 			RETURN
 		END
 	END
+	
 	DROP TABLE #ProductSettingDetail
 END
 GO

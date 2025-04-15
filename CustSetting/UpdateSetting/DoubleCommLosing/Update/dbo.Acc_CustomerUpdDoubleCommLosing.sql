@@ -23,6 +23,7 @@
 			- 20130507@Elodie: Correct the content of error message (MsgID=60021)
 			- 20220427@Tacy: Add check belonging - [Redmine:171928]
 			- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+			- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
@@ -53,9 +54,9 @@ SET NOCOUNT ON
 	
 	SELECT @DoubleCommLosing_Old = DoubleCommLosing
 	,@roleid = roleid
-	,@uplineID = CASE WHEN roleid = 1 THEN recommend
-					WHEN roleid = 2 THEN mrecommend
-					WHEN roleid = 3 THEN srecommend END
+	,@uplineID = CASE WHEN roleid = 1 AND recommend NOT IN (-3,-4) THEN recommend
+					WHEN (roleid = 2) OR (roleid = 1 AND recommend = -3) THEN mrecommend
+					WHEN (roleid = 3) OR (roleid = 1 AND recommend = -4) THEN srecommend END
 	FROM custinfo WITH(NOLOCK) 
 	WHERE custid = @custid
 	

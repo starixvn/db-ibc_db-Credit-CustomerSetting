@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20210603@Tina: Lock account & indirect close account [redmine: #148600]
+		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]  
 	Parameter's Explanation:
 
 	EXEC Acc_Customer_CloseInfoMatrixSel @username='SuperTest1'
@@ -38,7 +39,11 @@ BEGIN
 		ISNULL(cl.SuperStatus, 0) as ClosedBySuper,
 		ISNULL(cl.MasterStatus, 0) as ClosedByMaster,
 		ISNULL(cl.AgentStatus, 0) as ClosedByAgent,
-		ISNULL(cl.MemberStatus, 0) as ClosedMember
+		ISNULL(cl.MemberStatus, 0) as ClosedMember,
+		CASE 
+			WHEN ci.recommend IN (-3,-4) THEN ci.recommend
+			ELSE 0
+		END AS AgentID
 	FROM dbo.CustProductStatus cs WITH(NOLOCK)
 		CROSS APPLY (SELECT * FROM f_GetInfoStatus(cs.CloseInfo)) AS cl
 		INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid

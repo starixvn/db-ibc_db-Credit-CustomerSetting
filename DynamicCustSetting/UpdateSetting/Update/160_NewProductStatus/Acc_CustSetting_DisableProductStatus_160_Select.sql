@@ -1,5 +1,5 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_xnap,wsv_alp" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_CustSetting_DisableProductStatus_160_Select] 
+ALTER PROCEDURE [dbo].[Acc_CustSetting_DisableProductStatus_160_Select] 
 	  @CustID		INT
 	, @GroupID		TINYINT	 = 3
 	, @GroupType	TINYINT	 = 160  
@@ -14,6 +14,7 @@ AS
 	Revision:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
 
@@ -27,7 +28,8 @@ BEGIN
 			@SuperID	INT,
 			@MasterID	INT,
 			@AgentID	INT,
-			@SiteID	INT
+			@SiteID		INT,
+			@UplineID	INT
 
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT, Child_DisplayOrder INT, RealProductID INT)
 
@@ -78,7 +80,7 @@ BEGIN
 		LEFT JOIN #ProductSettingDetail par WITH(NOLOCK) 
 				ON d.Parent_ProductSettingID = par.ProductSettingID
 	
-	IF @RoleID = 4
+	IF @RoleID = 4 
 	BEGIN
 		SELECT	ft.RealProductID,
 				ft.SportType,
@@ -134,8 +136,13 @@ BEGIN
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 		ORDER BY ft.Child_DisplayOrder
 	END	
-	ELSE 
+	ELSE IF @RoleID = 1 
 	BEGIN
+		SELECT @UplineID = CASE WHEN @AgentID = -4 THEN @SuperID 
+								WHEN @AgentID = -3 THEN @MasterID 
+								ELSE @AgentID
+							END
+
 		SELECT	ft.RealProductID,
 				ft.SportType,
 				ft.BetType,
@@ -149,11 +156,10 @@ BEGIN
 		FROM #SportBettypeFilter ft 
 			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
-			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @AgentID
+			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @UplineID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 		ORDER BY ft.Child_DisplayOrder
 	END
-
 
 	DROP TABLE #SportBettypeFilter
 	DROP TABLE #ProductSettingDetail

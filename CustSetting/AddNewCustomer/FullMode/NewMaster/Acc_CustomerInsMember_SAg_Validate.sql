@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0"></info>*/
-CREATE PROC Acc_CustomerInsMember_SAg_Validate
+ALTER PROC Acc_CustomerInsMember_SAg_Validate
 (
 	@site			NVARCHAR(50)	
 	,@creator		INT
@@ -24,6 +24,7 @@ AS
 	Revision:
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
 		- 20241216@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]	
+		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]   
 	Param's Explanation:
 	- @ErrCode:
 		= 0: super create master successfully.
@@ -77,8 +78,7 @@ AS
 BEGIN
 	DECLARE @FromTime	VARCHAR(30)
 			,@ToTime	VARCHAR(30)
-			,@Credit_AllOtherMaster MONEY
-			,@Credit_AllMember MONEY
+			,@Credit_AllOtherDownline MONEY
 			,@Credit_SAg	MONEY
 			,@SettingType25	VARCHAR(MAX)= ''
 			,@SettingType26	VARCHAR(MAX)= ''
@@ -243,13 +243,18 @@ BEGIN
     FROM CustInfo ci WITH(NOLOCK)
     WHERE CustID = @srecommend	
 
-    SELECT @Credit_AllOtherMaster = isnull(sum(credit), 0) FROM custinfo AS ci WITH(NOLOCK) WHERE srecommend = @srecommend AND RoleID = 3
+    SELECT @Credit_AllOtherDownline = ISNULL(sum(Credit), 0) 
+	FROM custinfo WITH(NOLOCK) 
+	WHERE SRecommend = @srecommend 
+		AND (RoleID = 3  --Masters
+				OR (roleid = 1 AND recommend = -4) --Super direct members
+			)
     
-    IF @Credit_AllOtherMaster + @Credit > @Credit_SAg AND @srecommend>100
+    IF @Credit_AllOtherDownline + @Credit > @Credit_SAg AND @srecommend>100
     BEGIN
-        SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_SAg - @Credit_AllOtherMaster, '#,#0.####'))
-        SELECT @ErrCode = 106
-        return
+	    SET @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@Credit_SAg - @Credit_AllOtherDownline, '#,#0.####'))
+	    SELECT @ErrCode = 106
+	    return
     END
 
     --Parse Json to XML param

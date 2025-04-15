@@ -36,7 +36,7 @@ AS
 	- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960] 
 	- 20241023@Johnson: remove columns IsSync/IsSyncedUpline [Redmine: #201396]
-
+	- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
  Param's Explanation:  
 	- @CustID: 
 	- @SettingStatus: 0: Pro, 1: UAT
@@ -69,7 +69,13 @@ BEGIN
 	DECLARE @SuperID INT, @MasterID INT, @AgentID INT , @IsIMBC BIT = 0 , @SiteID	  INT  , @CurrencyID	INT
    
 	-- Get line information
-	SELECT @SuperID = c.srecommend, @MasterID = mrecommend, @AgentID = c.recommend , @SiteID = s.siteid , @CurrencyID = c.currency
+	SELECT @SuperID = c.srecommend, @MasterID = mrecommend, 
+	@AgentID = CASE 
+				WHEN c.recommend = -3 THEN c.mrecommend
+				WHEN c.recommend = -4 THEN c.srecommend
+				ELSE c.recommend
+			END  
+	, @SiteID = s.siteid , @CurrencyID = c.currency
 	FROM customer c WITH (NOLOCK)
 	INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE CustID = @CustID  
