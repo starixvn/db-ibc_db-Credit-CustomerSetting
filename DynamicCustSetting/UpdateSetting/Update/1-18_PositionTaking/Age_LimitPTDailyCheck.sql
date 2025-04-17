@@ -21,6 +21,7 @@ AS
 			- 20230104@Winfred: NAP CM -  Limit Monthly PT Update [Redmine: #182469]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+			- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 	*/
 BEGIN
 	SET NOCOUNT ON;
@@ -30,7 +31,7 @@ BEGIN
 	DECLARE @srecommend INT,
 			@mrecommend INT,
 			@recommend	INT , 
-			@Currency	TINYINT,
+			@Currency	INT,
 			@site		NVARCHAR(50),
 			@SiteID		INT	,
 			@roleActorid TINYINT = 5
@@ -87,7 +88,7 @@ BEGIN
 	SELECT SportType,BetType,SettingType,IsLive,ProductID
 	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	
-	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency TINYINT,SiteID INT,MaxCount TINYINT, SettingStatus TINYINT) 
+	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency INT,SiteID INT,MaxCount TINYINT, SettingStatus TINYINT) 
 
 	INSERT INTO #TempLimit(ProductID , SportType , BetType ,CustID ,Currency ,SiteID ,MaxCount , SettingStatus )  
 	SELECT l.ProductID,b.SportType,b.BetType,l.CustID,l.Currency,l.SiteID,l.MaxCount , l.SettingStatus

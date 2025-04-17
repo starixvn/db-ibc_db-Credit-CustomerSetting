@@ -18,6 +18,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
+		- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
 
@@ -26,7 +27,7 @@ AS
 	
 	*/
 BEGIN
-	DECLARE	@Currency	TINYINT,
+	DECLARE	@Currency	INT,
 			@RoleID		TINYINT,
 			@SuperID	INT,
 			@MasterID	INT,

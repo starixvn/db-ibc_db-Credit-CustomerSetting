@@ -19,6 +19,7 @@ AS
 		Revisions:
 			- 20230620@Luke: Limitation to update PT for new member [Redmine: #188950]
 			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+			- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 	*/
 BEGIN
 	SET NOCOUNT ON;
@@ -35,7 +36,7 @@ BEGIN
 	DECLARE @srecommend		INT,
 			@mrecommend		INT,
 			@recommend		INT , 
-			@currency		TINYINT,
+			@currency		INT,
 			@site			NVARCHAR(50),
 			@siteId			INT,
 			@roleActorid	TINYINT = 5
@@ -94,7 +95,7 @@ BEGIN
 	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
 	WHERE SettingType IN (1, 18)
 
-	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency TINYINT,SiteID INT,MaxCount TINYINT, SettingStatus TINYINT) 
+	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency INT,SiteID INT,MaxCount TINYINT, SettingStatus TINYINT) 
 
 	INSERT INTO #TempLimit(ProductID , SportType , BetType ,CustID ,Currency ,SiteID ,MaxCount , SettingStatus )  
 	SELECT l.ProductID,b.SportType,b.BetType,l.CustID,l.Currency,l.SiteID,l.MaxCount , l.SettingStatus

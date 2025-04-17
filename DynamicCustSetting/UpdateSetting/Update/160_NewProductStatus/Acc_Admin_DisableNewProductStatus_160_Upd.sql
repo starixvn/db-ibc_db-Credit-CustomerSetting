@@ -22,6 +22,7 @@ AS
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]	
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
+		- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 	Param's Explanation:
 	@IsDisabled:
 		[
@@ -71,7 +72,7 @@ BEGIN
 		, @SuperID		INT
 		, @RoleID		INT
 		, @SiteID		SMALLINT
-		, @Currency		TINYINT
+		, @Currency		INT
 	
 	CREATE TABLE #NewDisableStatTbl (
 		SportType				SMALLINT

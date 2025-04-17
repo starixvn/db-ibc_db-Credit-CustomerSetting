@@ -16,6 +16,7 @@ AS
 		- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
+		- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 
 	Param's Explanation:
 		- @GroupType:	152 - MaxPayout
@@ -29,7 +30,7 @@ AS
 		
 */
 BEGIN
-	DECLARE	@CurrencyID		TINYINT,
+	DECLARE	@CurrencyID		INT,
 			@RoleID		TINYINT,
 			@SuperID		INT,
 			@MasterID		INT,

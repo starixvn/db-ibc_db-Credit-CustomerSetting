@@ -15,14 +15,14 @@ AS
 	Revision:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
-
+		- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
 
 	EXEC Acc_Admin_DisableNewProductStatus_160_Select @CustID = 112216817, @SettingStatus = 3 , @GroupID = 3 , @GroupType = 160
 	*/
 BEGIN
-	DECLARE	@Currency	TINYINT,
+	DECLARE	@Currency		INT,
 			@RoleID		TINYINT,
 			@SuperID	INT,
 			@MasterID	INT,

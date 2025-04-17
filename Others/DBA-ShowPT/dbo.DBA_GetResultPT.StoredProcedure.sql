@@ -48,7 +48,7 @@ Revisions:
 	- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS - Remove Code AutoIBCPositionTaking_Fixed, AutoIBCPositionTaking_Tote [RedmineID: #193083]
-
+	- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 Param's Explanation:
 
 */
@@ -56,7 +56,7 @@ Param's Explanation:
 declare @srecommend int,
 		@mrecommend int,
 		@recommend int,
-		@currency tinyint
+		@currency int
 
 select @srecommend = srecommend,
 		@mrecommend = mrecommend,
