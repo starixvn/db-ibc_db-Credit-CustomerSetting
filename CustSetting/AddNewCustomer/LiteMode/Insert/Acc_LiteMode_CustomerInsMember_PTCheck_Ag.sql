@@ -27,6 +27,7 @@ AS
 		- 20230727@Johnson: initial sp [redmine: #179159]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
+		- 20250421@Eden: HF - wrong PT of new direct member [redmine: #224900] 	
 
 	Param's Explanation: 
 		- @SettingType28 = '<Root>
@@ -262,9 +263,9 @@ BEGIN
 													AND mcs.bettype = t.bettype
 													AND mcs.IsLive = t.IsLive
 			INNER JOIN CustPTSetting3rd_Agent scs WITH(NOLOCK) ON scs.custid = @srecommend
-													AND mcs.sporttype = t.sporttype
-													AND mcs.bettype = t.bettype
-													AND mcs.IsLive = t.IsLive
+													AND scs.sporttype = t.sporttype
+													AND scs.bettype = t.bettype
+													AND scs.IsLive = t.IsLive
 																						
 		UPDATE t
 		SET t.Child_DisplayOrder = d.Child_DisplayOrder

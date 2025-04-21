@@ -20,6 +20,7 @@ AS
 	
 	Revisions:
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
+		- 20250421@Eden: HF - wrong PT of new direct member [redmine: #224900] 	
 		
 	Parameter's Explanation:
 	- @SettingXML:
@@ -277,9 +278,9 @@ BEGIN
 													AND mcs.bettype = t.bettype
 													AND mcs.IsLive = t.IsLive
 			INNER JOIN CustPTSetting3rd_Agent scs WITH(NOLOCK) ON scs.custid = @srecommend
-													AND mcs.sporttype = t.sporttype
-													AND mcs.bettype = t.bettype
-													AND mcs.IsLive = t.IsLive
+													AND scs.sporttype = t.sporttype
+													AND scs.bettype = t.bettype
+													AND scs.IsLive = t.IsLive
 	END
 	ELSE --set m1 = 0
 	BEGIN
