@@ -34,11 +34,11 @@ AS
 		- 20240912@Virgil: Add ON Casino to Live Casino [Redmine: #210025] 
 		- 20241119@Virgil: Add GPI Live Casino to Live Casino [Redmine: #213479] 
 		- 20250409@Dave: 3rdProduct Integration (HOTDOG-139; Microgaming Live Casino-124; Playtech Live Casino-129) [RedmineID: #221188]
-
+		- 20250417@Johnson:  Upgrade ExchangeID data type [redmineID: #224440]
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 0
 */
 BEGIN
-	DECLARE @SiteID INT, @Currency TINYINT, @IsLaunched BIT
+	DECLARE @SiteID INT, @Currency INT, @IsLaunched BIT
 	SET @IsLaunched = 0
 
 	SELECT @SiteID = s.siteid, @Currency = c.currency
