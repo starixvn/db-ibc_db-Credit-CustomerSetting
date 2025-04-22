@@ -592,6 +592,14 @@ BEGIN
 				ON p.SportType = ox.SportType
 				AND p.BetType = ox.BetType
 				AND p.GroupType = 158
+		
+		INSERT INTO	dbo.CustStakeLevel_Member(CustID,SportType,BetType,StakeLevelList,LastUpdated,RepUpdateTime)
+		SELECT @custID, p.SportType,p.BetType,'',GETDATE(),dbo.f_GetDateTime2() 
+		FROM #ProductSettingDetail_tmp00 p 
+		WHERE NOT EXISTS (SELECT 1 FROM CustStakeLevel_Member cs WITH (NOLOCK) 
+							WHERE p.SportType = cs.SportType AND p.BetType = cs.BetType AND cs.CustID = @custid)
+			AND p.GroupType = 158
+
 	END TRY
 	BEGIN CATCH 
 		SELECT @ErrCode = 158			
