@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB,DBTXN-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [DBA_ArchiveAccount_GenMasterSuperGroupLevel]
 (
 	@StageId	TINYINT
@@ -24,6 +24,7 @@ AS
 		- 20220422@Eden: Exclude SuperID: 46379016 [RedmineID: #171821]
 		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
 		- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
+		- 20250102@Eden : Archiving direct member [redmine: #215533] 
 		
 	Param's Explanation:
 */
@@ -31,6 +32,47 @@ BEGIN
 	SET NOCOUNT ON
 
 	TRUNCATE TABLE dbo.tmpCustGroupLevelArchived
+
+	DECLARE @DDiff DATETIME
+	SELECT @DDiff = CASE WHEN @StageId = 1 THEN DATEADD(mm, -3, GETDATE()) 
+						 WHEN @StageId = 2 THEN DATEADD(mm, -4, GETDATE())
+						 WHEN @StageId = 3 THEN DATEADD(mm, -7, GETDATE()) 
+						 WHEN @StageId = 4 THEN DATEADD(WEEK,-2,DATEADD(mm, -7, GETDATE()))
+					END
+
+	CREATE TABLE #SuperMaster_Exception (custid INT PRIMARY KEY)
+	CREATE TABLE #CustMaster (custid INT PRIMARY KEY)
+	CREATE TABLE #CustSuper (custid INT PRIMARY KEY)
+
+	INSERT INTO #CustMaster(custid) 
+	SELECT CustID FROM dbo.CustMaster WITH (NOLOCK) WHERE IsInternal = 0
+
+	INSERT INTO #CustSuper(custid) 
+	SELECT CustID FROM dbo.CustSuper WITH (NOLOCK) WHERE IsInternal = 0
+
+	INSERT INTO #SuperMaster_Exception (custid)
+	SELECT d.CustID
+	FROM DBACC.bodb_report.dbo.[Task_Cust_ArchiveAcc_Exception] d WITH(NOLOCK)
+		INNER JOIN dbo.Custinfo ci WITH(NOLOCK) ON d.CustID = ci.custid
+	WHERE ci.RoleID IN (4,3)
+
+	--Exclude deposit super
+	INSERT INTO #SuperMaster_Exception (custid)
+	SELECT CustID 
+	FROM Dep_CustSuper WITH(NOLOCK) 
+	WHERE CustID NOT IN (SELECT custid FROM #SuperMaster_Exception)
+
+	CREATE TABLE #Cust_ArchiveAccount_Master(CustID INT, StageID TINYINT)
+	CREATE TABLE #Cust_ArchiveAccount_Super(CustID INT, StageID TINYINT)
+
+	IF @StageId <> 1
+	BEGIN
+		INSERT INTO #Cust_ArchiveAccount_Master(CustID,StageID)
+		SELECT CUSTID,StageID FROM Cust_ArchiveAccount WITH(NOLOCK) WHERE roleid = 3 AND StageID <> 4
+
+		INSERT INTO #Cust_ArchiveAccount_Super(CustID,StageID)
+		SELECT CUSTID,StageID FROM Cust_ArchiveAccount WITH(NOLOCK) WHERE roleid = 4 AND StageID <> 4
+	END
 
 	DECLARE @query NVARCHAR(MAX) = ''
 		, @ExecuteSQL NVARCHAR(MAX) = ''
@@ -68,7 +110,7 @@ BEGIN
 		) mem
 		OUTER APPLY (
 			SELECT COUNT(1) AgentCount
-			FROM customer ag WITH (NOLOCK)
+			FROM custinfo ag WITH (NOLOCK)
 			WHERE ag.roleid = 2
 				AND ag.mrecommend = t.custid
 		)mem2
@@ -78,6 +120,86 @@ BEGIN
 								ELSE 1
 							END AS isValid
 					)rules
+
+	--change M1--> M2 if their direct member have any bet ticket
+	UPDATE t
+	SET t.GroupLevelName = 'M2'
+	FROM tmpCustGroupLevelArchived t WITH(ROWLOCK,UPDLOCK)
+		CROSS APPLY (	SELECT TOP 1 d.mrecommend
+						FROM Tmp_ActiveDirectMembers d WITH(NOLOCK) 
+						WHERE t.custid = d.mrecommend 
+					) drm
+	WHERE t.Roleid = 3 AND t.GroupLevelName = 'M1'
+
+	--change M1--> M2 if create direct member on active date range condition
+	UPDATE t
+	SET t.GroupLevelName = 'M2'
+	FROM tmpCustGroupLevelArchived t WITH(ROWLOCK,UPDLOCK)
+		CROSS APPLY (	SELECT TOP 1 c.custid
+						FROM customer c WITH(NOLOCK) 
+						WHERE t.custid = c.mrecommend 
+							AND c.roleid = 1
+							AND c.recommend = -3
+							AND c.creatdate >= @DDiff
+					) drm
+	WHERE t.Roleid = 3 AND t.GroupLevelName = 'M1'
+
+	/*
+		Insert List M1:
+		Exists master direct members 
+		Not exists agent 
+		All direct members have no tickets
+		Master have no new direct member
+		Adapt status condition
+		Master have proceed previous stage (If stage > 1) 
+	*/
+	INSERT INTO dbo.tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
+	SELECT c.custid, c.roleid,'M1', @StageId
+	FROM custinfo c WITH (NOLOCK)
+		CROSS APPLY (	SELECT TOP 1 c.custid
+						FROM customer me WITH(NOLOCK) 
+						WHERE c.custid = me.mrecommend 
+							AND me.roleid = 1
+							AND me.recommend = -3
+					) drm
+		INNER JOIN #CustMaster cm  ON cm.custid = c.custid
+		OUTER APPLY (	SELECT me.custid
+						FROM customer me WITH(NOLOCK) 
+						WHERE c.custid = me.mrecommend 
+							AND me.roleid = 2
+					) Ag
+		OUTER APPLY (	SELECT me.custid
+						FROM customer me WITH(NOLOCK) 
+						WHERE c.custid = me.mrecommend 
+							AND me.roleid = 1
+							AND me.recommend = -3
+							AND me.creatdate >= @DDiff
+					) new_drm
+		OUTER APPLY (	SELECT d.mrecommend
+						FROM Tmp_ActiveDirectMembers d WITH(NOLOCK) 
+						WHERE c.custid = d.mrecommend 
+					) active_drm
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) 
+			ON cps.CustID = c.custid 
+		OUTER APPLY (	SELECT d.CustID,d.StageID
+						FROM #Cust_ArchiveAccount_Master d WITH(NOLOCK) 
+						WHERE c.custid = d.CustID 
+					) arc_master
+	WHERE c.roleid = 3
+		AND ag.custid IS NULL 
+		AND new_drm.custid IS NULL
+		AND active_drm.mrecommend IS NULL
+		AND 1 = CASE 
+					WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
+					WHEN @StageId IN (3,4) AND c.enabled = 1 THEN 0			 
+					ELSE 1
+				 END
+		AND 1 = CASE WHEN @StageId = 1 OR arc_master.StageID >= @StageId - 1 THEN 1	 --Master have previous stage
+					ELSE 0
+				 END
+		AND c.mrecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
+		AND c.srecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
+	OPTION (FORCE ORDER)
 				
 	/*Detect S1, S2 from list M1*/
 	INSERT INTO #tmpSuper (custid, MasterArchivedCount)
@@ -86,39 +208,28 @@ BEGIN
 		INNER JOIN dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
 	WHERE GroupLevelName = 'M1'
 	GROUP BY c.srecommend
-	
-	DECLARE @DDiff DATETIME
-	SELECT @DDiff = DATEADD(mm, -7, GETDATE())
-	SELECT @DDiff = DATEADD(week, -2, @DDiff)
 
+	--M0
 	INSERT INTO #tmpMaster_DetectM0 (custid,srecommend)
 	SELECT c.custid,s.custid 
 	FROM #tmpSuper s
 		INNER JOIN dbo.customer c WITH (NOLOCK) ON s.custid = c.srecommend
 		INNER JOIN dbo.custinfo ci WITH (NOLOCK) ON ci.custid = c.custid
-		INNER JOIN DBCUST.CUSTDB.dbo.CustMaster cm WITH (NOLOCK) ON cm.custid = c.custid
+		INNER JOIN #CustMaster cm  ON cm.custid = c.custid
 		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = ci.custid 
 		LEFT JOIN #tmpMaster ma ON ma.custid = c.custid
 		OUTER APPLY (SELECT TOP 1 1 AS MO_total
-					FROM dbo.customer c1 WITH (NOLOCK)
-					WHERE c.custid = c1.mrecommend AND c1.roleid = 2
-						
+					FROM dbo.custinfo c1 WITH (NOLOCK)
+					WHERE c.custid = c1.mrecommend AND c.custid <> c1.custid
 					) AS M0
 	WHERE c.roleid = 3 AND M0.MO_total IS NULL
 		AND ma.custid IS NULL 
-		AND cm.IsInternal = 0
-		AND s.custid NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
-		AND 1 = CASE WHEN @StageId = 1 AND c.creatdate < DATEADD(mm, -3, GETDATE()) THEN 1
-						 WHEN @StageId = 2 AND c.creatdate < DATEADD(mm, - 4, GETDATE()) THEN 1
-						 WHEN @StageId = 3 AND c.creatdate < DATEADD(mm, -7, GETDATE()) THEN 1
-						 WHEN @StageId = 4 AND c.creatdate < @DDiff THEN 1
-						 ELSE 0
-					END	
+		AND 1 = CASE WHEN c.creatdate < @DDiff THEN 1 ELSE 0 END	
 		AND 1 = CASE WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0			 
 				ELSE 1 END
-		AND c.username NOT LIKE 'IBC%'
-		AND c.username NOT IN ('M527','SA-RMB001','MBRM')		
+		AND c.mrecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
+		AND c.srecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
 	
 	-- Insert S1, S2	
 	INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
@@ -145,6 +256,85 @@ BEGIN
 								ELSE 1
 							END AS isValid
 					)rules		
+
+	--change S1--> S2 if their direct member have any bet ticket
+	UPDATE t
+	SET t.GroupLevelName = 'S2'
+	FROM tmpCustGroupLevelArchived t WITH(ROWLOCK,UPDLOCK)
+		CROSS APPLY (	SELECT TOP 1 d.srecommend
+						FROM Tmp_ActiveDirectMembers d WITH(NOLOCK) 
+						WHERE t.custid = d.srecommend 
+					) drm
+	WHERE t.Roleid = 4 AND t.GroupLevelName = 'S1'
+
+	--change S1--> S2 if create direct member on active date range condition
+	UPDATE t
+	SET t.GroupLevelName = 'S2'
+	FROM tmpCustGroupLevelArchived t WITH(ROWLOCK,UPDLOCK)
+		CROSS APPLY (	SELECT TOP 1 c.custid
+						FROM customer c WITH(NOLOCK) 
+						WHERE t.custid = c.srecommend 
+							AND c.roleid = 1
+							AND c.recommend = -4
+							AND c.creatdate >= @DDiff
+					) drm
+	WHERE t.Roleid = 4 AND t.GroupLevelName = 'S1'
+
+	/*
+		Insert List S1:
+		Exists super direct members 
+		Not exists master 
+		All direct members have no tickets
+		super have no new direct member
+		Adapt status condition
+		Master have proceed previous stage (If stage > 1) 
+	*/
+	INSERT INTO dbo.tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
+	SELECT c.custid, c.roleid,'S1', @StageId
+	FROM custinfo c WITH (NOLOCK)
+		CROSS APPLY (	SELECT TOP 1 c.custid
+						FROM customer me WITH(NOLOCK) 
+						WHERE c.custid = me.srecommend 
+							AND me.roleid = 1
+							AND me.recommend = -4
+					) drs
+		INNER JOIN #CustSuper cm  ON cm.custid = c.custid
+		OUTER APPLY (	SELECT me.custid
+						FROM customer me WITH(NOLOCK) 
+						WHERE c.custid = me.srecommend 
+							AND me.roleid = 3
+					) MAg
+		OUTER APPLY (	SELECT me.custid
+						FROM customer me WITH(NOLOCK) 
+						WHERE c.custid = me.srecommend 
+							AND me.roleid = 1
+							AND me.recommend = -4
+							AND me.creatdate >= @DDiff
+					) new_drs
+		OUTER APPLY (	SELECT d.srecommend
+						FROM Tmp_ActiveDirectMembers d WITH(NOLOCK) 
+						WHERE c.custid = d.srecommend 
+					) active_drs
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) 
+			ON cps.CustID = c.custid 
+		OUTER APPLY (	SELECT d.CustID,d.StageID
+						FROM #Cust_ArchiveAccount_Super d WITH(NOLOCK) 
+						WHERE c.custid = d.CustID 
+					) arc_super
+	WHERE c.roleid = 4
+		AND mag.custid IS NULL 
+		AND new_drs.custid IS NULL
+		AND active_drs.srecommend IS NULL
+		AND 1 = CASE 
+					WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
+					WHEN @StageId IN (3,4) AND c.enabled = 1 THEN 0			 
+					ELSE 1
+				 END
+		AND 1 = CASE WHEN @StageId = 1 OR arc_super.StageID >= @StageId - 1 THEN 1	 --super have previous stage
+					ELSE 0
+				 END
+		AND c.custid NOT IN (SELECT custid FROM #SuperMaster_Exception)
+	OPTION (FORCE ORDER)
 	
 	/*Get list Super from list M2 into S3*/
 	INSERT INTO dbo.tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
@@ -153,26 +343,21 @@ BEGIN
 		INNER JOIN dbo.Customer c WITH (NOLOCK) ON c.custid =  t.custid
 	WHERE GroupLevelName = 'M2'
 		AND srecommend NOT IN (SELECT custid FROM #tmpSuper)
+
 	-- Remove A0 (tmpCustArchived) if NOT M1
 	DELETE t
 	FROM tmpCustArchived t WITH (NOLOCK)
 		INNER JOIN dbo.customer c WITH (NOLOCK) ON t.Master = c.username
 		INNER JOIN tmpCustGroupLevelArchived ar WITH (NOLOCK) ON ar.custid = c.custid 
 		OUTER APPLY (
-			SELECT COUNT(1) MemCount
+			SELECT TOP 1 ci.custid
 			FROM custinfo ci WITH (NOLOCK)
-			WHERE ci.roleid = 1 AND ci.recommend = t.recommend
+			WHERE ci.recommend = t.recommend 
+				AND ci.custid <> t.recommend
 			)AS tmp
-	WHERE ISNULL(tmp.MemCount,0) = 0 AND ar.GroupLevelName NOT IN ('M1')
+	WHERE tmp.custid IS NULL
+		AND ar.GroupLevelName NOT IN ('M1')
 
-	CREATE TABLE #SuperMaster_Exception (custid INT PRIMARY KEY)
-
-	INSERT INTO #SuperMaster_Exception (custid)
-	SELECT d.CustID
-	FROM DBACC.bodb_report.dbo.[Task_Cust_ArchiveAcc_Exception] d WITH(NOLOCK)
-		INNER JOIN dbo.Custinfo ci WITH(NOLOCK) ON d.CustID = ci.custid
-	WHERE ci.RoleID IN (4,3)
-	
 	-- INSERT M0 IF S1
 	INSERT INTO tmpCustGroupLevelArchived (custid, roleid, GroupLevelName, StageID)
 	SELECT t.custid, 3, 'M0',@StageId
@@ -190,34 +375,25 @@ BEGIN
 						
 	-- Master have no downline, its Super not in list processing
 	-- Insert M0 - Master have no downline, its Super not in list processing
-	
 	INSERT INTO tmpCustGroupLevelArchived (custid, roleid, GroupLevelName, StageID)	
 	SELECT ma.custid, 3, 'M0', @StageId
 	FROM customer ma WITH (NOLOCK)
 		INNER JOIN custinfo agci WITH (NOLOCK) ON agci.custid = ma.custid
 		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = agci.custid
-		INNER JOIN DBCUST.CUSTDB.dbo.CustMaster cm WITH (NOLOCK) ON cm.custid = ma.custid 
+		INNER JOIN #CustMaster cm ON cm.custid = ma.custid 
 		OUTER APPLY (
-			SELECT TOP 1 recommend
+			SELECT TOP 1 mem.custid
 			FROM custinfo mem WITH (NOLOCK)
-			WHERE roleid = 2 AND mem.mrecommend = ma.custid
+			WHERE mem.mrecommend = ma.custid 
+				AND mem.custid <> ma.custid
 			) AS Downline
 		LEFT JOIN #tmpSuper st ON st.custid = ma.srecommend
 		LEFT JOIN tmpCustGroupLevelArchived ar WITH (NOLOCK) ON ar.custid = ma.custid
 	WHERE ma.roleid = 3
-		AND Downline.recommend IS NULL
+		AND Downline.custid IS NULL
 		AND st.custid IS NULL
-		AND ma.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
 		AND ar.custid IS NULL
-		AND 1 = CASE WHEN @StageId = 1 AND ma.creatdate < DATEADD(mm, -3, GETDATE()) THEN 1
-						 WHEN @StageId = 2 AND ma.creatdate < DATEADD(mm, - 4, GETDATE()) THEN 1
-						 WHEN @StageId = 3 AND ma.creatdate < DATEADD(mm, -7, GETDATE()) THEN 1
-						 WHEN @StageId = 4 AND ma.creatdate < @DDiff THEN 1
-						 ELSE 0
-					END
-		AND ma.currency NOT IN (20, 72)	
-		AND cm.IsInternal = 0
-		AND ma.site <> 'cn88'		
+		AND 1 = CASE WHEN ma.creatdate < @DDiff THEN 1 ELSE 0 END	
 		AND 1 = CASE WHEN @StageId = 2 AND cps.CloseInfo = 0 THEN 0 
 					 WHEN @StageId IN (3,4) AND agci.enabled = 1 THEN 0
 					ELSE 1 
@@ -231,25 +407,31 @@ BEGIN
 	FROM tmpCustGroupLevelArchived t WITH (NOLOCK)
 		INNER JOIN customer c WITH (NOLOCK) ON t.custid = c.custid 
 		INNER JOIN customer super WITH (NOLOCK) ON super.custid = c.srecommend
-		INNER JOIN DBCUST.CUSTDB.dbo.CustSuper cm WITH (NOLOCK) ON cm.custid = c.srecommend
+		INNER JOIN #CustSuper cm ON cm.custid = c.srecommend
 		LEFT JOIN tmpCustGroupLevelArchived ts WITH (NOLOCK) ON ts.custid = c.srecommend
 	WHERE t.Roleid = 3 AND t.GroupLevelName = 'M0' 
 		AND ts.custid IS NULL
-		AND cm.IsInternal = 0
-		AND c.srecommend NOT IN (SELECT custid FROM dbo.Dep_CustSuper WITH(NOLOCK))
-		AND c.currency NOT IN (20, 72)	
-		AND c.site <> 'cn88'
 		AND super.roleid = 4	
-		AND super.username NOT LIKE '3rdSuper%'
-		AND super.username NOT IN ('STAFF', 'SA-UUS', 'LC-RM', 'U3S',
-			'OPS-RM', 'OPS-RMB', 'OPS-HKK', 'OPS-THB', 'OPS-IDD', 'OPS-US$', 'OPS-GBP'--CSD request internal use @20180424
-		)
-		AND super.username NOT LIKE 'SuperTest%'
-		AND super.username NOT LIKE 'STEST%'
-		AND super.username NOT LIKE 'SIBC%'
-		AND super.username NOT LIKE '%ACCSuper%'
-		AND c.mrecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
 		AND c.srecommend NOT IN (SELECT custid FROM #SuperMaster_Exception)
+
+	--Remove supers if their direct member have any bet ticket
+	DELETE t
+	FROM #tmpSuper_M0 t
+		CROSS APPLY (	SELECT TOP 1 d.srecommend
+						FROM Tmp_ActiveDirectMembers d WITH(NOLOCK) 
+						WHERE t.custid = d.srecommend 
+					) drm
+
+	--Remove supers if create direct member on active date range condition
+	DELETE t
+	FROM #tmpSuper_M0 t 
+		CROSS APPLY (	SELECT TOP 1 c.custid
+						FROM customer c WITH(NOLOCK) 
+						WHERE t.custid = c.srecommend 
+							AND c.roleid = 1
+							AND c.recommend = -4
+							AND c.creatdate >= @DDiff
+					) drm
 		
 	INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
 	SELECT DISTINCT t.custid, 4
@@ -273,7 +455,6 @@ BEGIN
 				AND ci.srecommend = t.custid
 				AND ar.GroupLevelName = 'M0'
 		)m2
-			
 	WHERE m1.MasterCount = m2.MasterCount
 		AND ar_s.custid IS NULL
 		AND 1 = CASE 
@@ -282,6 +463,7 @@ BEGIN
 					 WHEN @StageId IN (3,4) AND ci.enabled = 1 THEN 0
 					ELSE 1 
 				END	
+
 	-- Remove M0 if super <> S1
 	DELETE t
 	FROM tmpCustGroupLevelArchived t
@@ -290,20 +472,6 @@ BEGIN
 	WHERE  t.Roleid = 3 AND t.GroupLevelName = 'M0' AND (t1.GroupLevelName <> 'S1' OR t1.GroupLevelName IS NULL)
 
 	CREATE TABLE #M0NotInPreviousStage(CustID INT, srecommend INT)
-	CREATE TABLE #Cust_ArchiveAccount_Master(CustID INT, StageID TINYINT)
-
-	IF OBJECT_ID (N'Cust_ArchiveAccount', N'U') IS NOT NULL --check table is existing ?
-	BEGIN
-		INSERT INTO #Cust_ArchiveAccount_Master(CustID,StageID)
-		SELECT CUSTID,StageID FROM Cust_ArchiveAccount WITH(NOLOCK) WHERE roleid = 3
-	END
-	ELSE
-	BEGIN
-		INSERT INTO #Cust_ArchiveAccount_Master(CustID,StageID)
-		SELECT CUSTID,StageID
-		FROM DBCUST.CUSTDB.dbo.Cust_ArchiveAccount WITH(NOLOCK) 
-		WHERE roleid = 3
-	END
 
 	--> Get M0 list who were not processed on Stage 1 yet
 	IF @StageId <> 1
@@ -335,22 +503,11 @@ BEGIN
 	CREATE TABLE #DirectMaster(CustID INT, srecommend INT)
 	IF @StageId IN (3,4)
 	BEGIN
-		IF OBJECT_ID (N'CustDirectAccount', N'U') IS NOT NULL --check table is existing ?
-		BEGIN
-			INSERT INTO #DirectMaster(CustID,srecommend)
-			SELECT d.CustID,ci.srecommend
-			FROM CustDirectAccount d WITH(NOLOCK)
-				INNER JOIN custinfo ci WITH(NOLOCK) ON d.CustID = ci.custid
-			WHERE ci.roleid = 3
-		END
-		ELSE
-		BEGIN
-			INSERT INTO #DirectMaster(CustID,srecommend)
-			SELECT d.CustID,ci.srecommend
-			FROM DBCUST.CUSTDB.dbo.CustDirectAccount d WITH(NOLOCK)
-				INNER JOIN custinfo ci WITH(NOLOCK) ON d.CustID = ci.custid
-			WHERE ci.roleid = 3
-		END
+		INSERT INTO #DirectMaster(CustID,srecommend)
+		SELECT d.CustID,ci.srecommend
+		FROM dbo.CustDirectAccount d WITH(NOLOCK)
+			INNER JOIN custinfo ci WITH(NOLOCK) ON d.CustID = ci.custid
+		WHERE ci.roleid = 3
 
 		--Update GroupLevelName = 'S2' if their downlines is direct master
 		UPDATE ar 
@@ -365,7 +522,7 @@ BEGIN
 	END
 
 	--START ---#183447 - detect S0 whose downlines is deleted all before 
-	IF @StageId IN(3,4)
+	IF @StageId IN (3,4)
 	BEGIN
 		--Mark all supers is disabled and all their downline have remove custinfo as S0
 		INSERT INTO tmpCustGroupLevelArchived (custid, Roleid, GroupLevelName, StageID)
@@ -394,6 +551,9 @@ BEGIN
 	DROP TABLE #M0NotInPreviousStage
 	DROP TABLE #Cust_ArchiveAccount_Master
 	DROP TABLE #DirectMaster
+	DROP TABLE #Cust_ArchiveAccount_Super
+	DROP TABLE #CustMaster
+	DROP TABLE #CustSuper
 END
 GO
 

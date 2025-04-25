@@ -15,6 +15,7 @@ AS
 		Revisions:    
 			- 20230608@Danny: Clear super balance [Redmine:183447]	
 			- 20230818@Eden : Archive super level 789y [Redmine: #183447]
+			- 20241118@Max: Offer Direct Member for Super/Master [Redmine: #211969]
 */
 BEGIN
 
@@ -56,6 +57,7 @@ BEGIN
 
 	CREATE TABLE #temp_recommend (recommend INT PRIMARY KEY)
 	CREATE TABLE #temp_Cust (custID INT PRIMARY KEY)
+	CREATE TABLE #temp_DirectMember (custID INT PRIMARY KEY)
 	
 	INSERT INTO #temp_recommend (recommend)
 	SELECT DISTINCT custid
@@ -67,6 +69,11 @@ BEGIN
 	FROM CustDB.dbo.custinfo WITH (NOLOCK)
 	WHERE srecommend = @srecommend AND roleid IN (3,4)
 
+	INSERT INTO #temp_DirectMember (custID)
+	SELECT DISTINCT custid
+	FROM CustDB.dbo.custinfo WITH (NOLOCK)
+	WHERE srecommend = @srecommend AND roleid = 1 AND recommend = -4
+
 	IF EXISTS(select 1 from dbo.transfer WITH (NOLOCK) where Recommend IN (SELECT recommend FROM #temp_recommend) AND bettype < 20000)
 	BEGIN
 		SELECT @ErrMsg = @FromUsername +':'+ 'This super just got active trans while processing!', @ErrCode = 101
@@ -77,6 +84,7 @@ BEGIN
 
 	DECLARE @Balance_Recommend MONEY
 	DECLARE @Balance_master_super MONEY
+	DECLARE @Balance_DirectMember MONEY
 
 	SELECT @Balance_Recommend = ISNULL(SUM(winlost - actual_stake + swinlost+ mwinlost +  awinlost + scomm), 0) 
 	FROM #temp_recommend r
@@ -93,7 +101,14 @@ BEGIN
 					 WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
 					 ELSE 1 END
 
-	SELECT @Balance =  @Balance_Recommend + @Balance_master_super
+	SELECT @Balance_DirectMember =  ISNULL(SUM(winlost-actual_stake+playercomm), 0) 
+	FROM transfer b WITH (NOLOCK)
+	WHERE custid IN (SELECT z.custID FROM #temp_DirectMember z)
+		AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+					 WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+					 ELSE 1 END
+
+	SELECT @Balance =  @Balance_Recommend + @Balance_master_super + @Balance_DirectMember
 
 	IF @Balance = 0
 		RETURN
@@ -160,4 +175,5 @@ BEGIN
 	
 	DROP TABLE #temp_Cust
 	DROP TABLE #temp_recommend
+	DROP TABLE #temp_DirectMember
 END

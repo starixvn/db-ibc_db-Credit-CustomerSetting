@@ -29,6 +29,7 @@ AS
 			- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 			- 20230524@Eden: Scale out DBTRANS for Credit  [Redmine: #181595]
 			- 20230818@Eden : Archive super level 789y [Redmine: #183447]
+			- 20241118@Max: Offer Direct Member for Super/Master [Redmine: #211969]
 */
 BEGIN
 
@@ -51,11 +52,17 @@ BEGIN
 	SELECT  @BalanceUpDate = BalanceUpDay FROM @MBBU
 
 	CREATE TABLE #temp_recommend (recommend INT PRIMARY KEY)
+	CREATE TABLE #temp_DirectMember (custID INT PRIMARY KEY)
 	
 	INSERT INTO #temp_recommend (recommend)
 	SELECT DISTINCT custid
 	FROM CustDB.dbo.custinfo WITH (NOLOCK)
 	WHERE mrecommend = @mrecommend AND roleid = 2
+
+	INSERT INTO #temp_DirectMember (custID)
+	SELECT DISTINCT custid
+	FROM CustDB.dbo.custinfo WITH (NOLOCK)
+	WHERE mrecommend = @mrecommend AND roleid = 1 AND recommend = -3
 
 	IF EXISTS(select 1 from dbo.transfer with (nolock) where Recommend IN (SELECT recommend FROM #temp_recommend) AND bettype < 20000)
 	BEGIN
@@ -67,10 +74,19 @@ BEGIN
 	
 	DECLARE @Balance_Recommend MONEY
 	DECLARE @Balance_master MONEY
+	DECLARE @Balance_DirectMember MONEY
 	
 	SELECT @Balance_Recommend = ISNULL(SUM(winlost - actual_stake + mwinlost + acomm + awinlost), 0) 
 	FROM #temp_recommend r
 		INNER JOIN dbo.transfer b WITH (NOLOCK, INDEX = IX_recommend) ON r.recommend = b.recommend
+	WHERE 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+					 WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+					 ELSE 1 END
+	OPTION (MAXDOP 1)
+	
+	SELECT @Balance_DirectMember = ISNULL(SUM(winlost-actual_stake+playercomm), 0) 
+	FROM #temp_DirectMember r
+		INNER JOIN dbo.transfer b WITH (NOLOCK) ON r.custID = b.CustId
 	WHERE 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
 					 WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
 					 ELSE 1 END
@@ -88,7 +104,7 @@ BEGIN
 	--==========================================================
 	print @mastername +':'+ 'Temp Table Done:' + convert(varchar(50), getdate(), 113)	
 
-	SET @MasterBalance =  @Balance_Recommend + @Balance_master
+	SET @MasterBalance =  @Balance_Recommend + @Balance_master + @Balance_DirectMember
 
 	IF @MasterBalance = 0
 		RETURN

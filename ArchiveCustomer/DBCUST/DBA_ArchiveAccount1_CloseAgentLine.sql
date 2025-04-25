@@ -25,6 +25,7 @@ Revisions:
 	- 20230623@Eden: Enhance backup [Redmine: #188850]
 	- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
 	- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061] 
+	- 20250102@Eden: Archiving direct member [redmine: #215533] 
 
 */
 
@@ -79,54 +80,10 @@ BEGIN
 END
 
 --== Check new active trans ==========================
+DECLARE @IsActive BIT = 0
+EXEC DBTXN.bodb02.dbo.[DBA_ArchiveAccount_CheckActiveSMA] @AccName = @AccName ,@IsActive = @IsActive OUTPUT
 
-IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans with (nolock) where recommend = @AgentID and custid <> 0)
-BEGIN
-	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
-	print @ErrMsg
-	return
-END
-
-IF EXISTS(select 1 from DBTXN.bodb02.dbo.transfer with (nolock) where recommend = @AgentID AND bettype <> 20000 and custid <> 0)
-BEGIN
-	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
-	print @ErrMsg
-	return
-END
-
-IF EXISTS(select 1 from DBTXN.bodb02.dbo.translog with (nolock) where recommend = @AgentID)
-BEGIN
-	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
-	print @ErrMsg
-	return
-END
-
-IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransLC with (nolock) where recommend = @AgentID)
-BEGIN
-	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
-	print @ErrMsg
-	return
-END
-
-IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettransRNG with (nolock) where recommend = @AgentID)
-BEGIN
-	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
-	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
-	print @ErrMsg
-	return
-END
-
-IF EXISTS(
-			SELECT 1 
-			FROM DBTXN.bodb02.dbo.SabaWalletTicket with (nolock) 
-			WHERE recommend = @AgentID 
-				and custid <> 0
-				AND WinlostDate >= CONVERT(DATE,DATEADD(mm,-2,GETDATE()))
-			)
+IF @IsActive = 1
 BEGIN
 	Select @ErrMsg = @AccName +':'+ 'This agent just got active trans while processing!', @ErrCode = 101
 	INSERT INTO [dbo].[CustArc_NewActive] (custid, ErrMsg,roleid) VALUES(@AgentID,@ErrMsg,2) 
@@ -201,10 +158,7 @@ FROM #tempbackup
 
 
 --#201061: close whole line using ExecRep
-EXEC dbo.Acc_ExecRep_Cust_03 @AgentID = @AgentID, @Type = -1
-
---just keep code 8 table Balance
---EXEC dbo.Acc_ExecRep_Cust_00 @AgentID = @AgentID, @Type = -1
+EXEC dbo.[DBA_ArchiveAccount_SMALine] @CustID = @AgentID, @StageID = 1
 
 --> Insert data for Cust_ArchiveAccount
 DECLARE @IsOverwrite BIT

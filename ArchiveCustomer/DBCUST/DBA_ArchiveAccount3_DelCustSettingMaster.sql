@@ -15,6 +15,7 @@ AS
 		Revisions:    
 			- 20200911@Helen: Archive member & agent & master, disable super, reduce credit of master, super - Phase 2 - [Redmine:130032]
 			- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
+			- 20250102@Eden: Archiving direct member [redmine: #215533] 
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -41,24 +42,19 @@ BEGIN
 	print  @AccName +':'+ 'START:' + convert(varchar(50), getdate(), 113)
 
 	--===============================
-	--PRE-CHECK BEFORE DELETE
-	--===============================
-	--Pre-check: Make sure cust setting data already backed-up in DBRACCUST
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.BetSetting_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
+	IF	   NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) WHERE custid = @CustID)
+		OR NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) WHERE custid = @CustID)
 	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'Cust setting data of this ' + @Level + ' have not been backed-up yet. Auto backup activated', @ErrCode = 10
-		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@CustID,@ErrMsg,3) 
-		print @ErrMsg
-		select @ErrMsg = ''
-		EXEC dbo.DBA_ArchiveAccount3_BackupCustSettingMaster @AccName=@AccName, @ErrMsg = @ErrMsg
-		IF @ErrMsg <> '' return
+		PRINT @AccName +':'+ 'Cust setting data of this ' + @Level + ' have not been backed-up yet. Auto backup activated'
+		--BACKUP DATA Agent
+		EXEC [DBA_ArchiveAccount2_BackupAgent] @AccName = @AccName
+		--Backup Data Member
+		EXEC [DBA_ArchiveAccount2_BackupMember]  @AccName = @AccName
 	END
-
 	--===============================
 	--PERFORM DELETE MEMBERS SETTINGS
 	--===============================
-
-	Exec DBA_Archive_Cust_SuperMaster @CustID = @CustID, @stage = 3
+	EXEC dbo.[DBA_ArchiveAccount_SMALine] @CustID = @CustID, @StageID = 3
 	----------------------------------------------------------------
 	print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 

@@ -1,8 +1,6 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" selecters="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [Acc_ExecRep_Cust_00]
-	--@AgentID	INT,
-	@CustIDs	VARCHAR(MAX),
-	@Type		SMALLINT
+	@CustIDs VARCHAR(MAX)
 AS 
 /*
 	Created by: Daniel
@@ -29,9 +27,9 @@ AS
 		- 20230529@Eden: Archiving credit accounts for additional tables [Redmine: #188850]
 		- 20230529@Eden: Check permission of KL Environment [Redmine: #199968]
 		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
-		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
-		- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]   
+		- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]
+		- 20250102@Eden: Archiving direct member [redmine: #215533] 
 
 	Param's Explanation:
 		@Type: 
@@ -43,66 +41,67 @@ AS
  --test rep---
 */
 BEGIN
-	
-	IF @Type = 2  --Stage 4
+	IF NOT (
+				@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DB66')  
+				OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
+				OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
+				OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
+				OR  @@SERVERNAME LIKE 'SITDBSITEC%'  --SIT 
+				OR  @@SERVERNAME LIKE 'TESTSITEDB%'  --Local
+			)
 	BEGIN
-		CREATE TABLE #CustTemps (CustID INT)
-		CREATE TABLE #CustTemps_batch (CustID INT)
+		RETURN
+	END
 
-		INSERT INTO #CustTemps (CustID)
-		SELECT value 
-		FROM STRING_SPLIT(@CustIDs,',')
-		WHERE value <> 0
-			
-		IF @@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DB66')  
-			OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
-			OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
-			OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
-			OR  @@SERVERNAME LIKE 'SITDBSITEC%'  --SIT 
-			OR  @@SERVERNAME LIKE 'TESTSITEDB%'  --Local
-		BEGIN
+	CREATE TABLE #temp_DirectMember (custid INT PRIMARY KEY)
 
+	INSERT INTO #temp_DirectMember(custid)
+	SELECT value 
+	FROM STRING_SPLIT(@CustIDs,',')
+	WHERE value <> 0
+
+	BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalCreditSports WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+				WHERE custid IN (SELECT custid FROM  #temp_DirectMember)
 
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
-
 
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalDebitSports WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+				WHERE custid IN (SELECT custid FROM  #temp_DirectMember)
+
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
-
 
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalCreditCasino WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+				WHERE custid IN (SELECT custid FROM  #temp_DirectMember)
+
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
-
 
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalDebitCasino WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+				WHERE custid IN (SELECT custid FROM  #temp_DirectMember)
+
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
 
-
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalCreditOthers WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+				WHERE custid IN (SELECT custid FROM  #temp_DirectMember)
+
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -111,16 +110,17 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalDebitOthers WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+				WHERE custid IN (SELECT custid FROM  #temp_DirectMember)
+
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
 
-
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalCreditTransfer WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+				WHERE custid IN (SELECT custid FROM  #temp_DirectMember)
+
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
@@ -129,13 +129,14 @@ BEGIN
 			WHILE (1=1)
 			BEGIN
 				DELETE TOP(5000) bodb02.dbo.BalDebitTransfer WITH(ROWLOCK,UPDLOCK) 
-				WHERE custid IN (	SELECT t.custid FROM #CustTemps t)
+				WHERE custid IN (SELECT custid FROM  #temp_DirectMember)
+
 				IF @@ROWCOUNT < 5000
 					BREAK
 			END
 
 		END -- END of DBTRANS - delete balance tables
 
-		
-	END 
+		DROP TABLE #temp_DirectMember
 END
+GO
