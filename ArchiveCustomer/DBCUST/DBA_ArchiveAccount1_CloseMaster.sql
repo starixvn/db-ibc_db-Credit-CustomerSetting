@@ -19,6 +19,7 @@ AS
 			- 20210203@Eden: NAP/Alpha & EXT - Mark ClosedReason = 4 for satisfied archiving accounts of stage 1 [RedmineID: #149450]
 			- 20210524@Tina: Lock account & indirect close account [redmine: #148600]
 			- 20241225@Eden: Archiving for Reward Wallet [RedmineID: #215534]
+			- 20250102@Eden: Archiving direct member [redmine: #215533] 
 */
 BEGIN    
 	SET NOCOUNT ON
@@ -73,47 +74,10 @@ BEGIN
 	END
 
 	--== Check new active trans ==========================
+	DECLARE @IsActive BIT = 0
+	EXEC DBTXN.bodb02.dbo.[DBA_ArchiveAccount_CheckActiveSMA] @AccName = @AccName ,@IsActive = @IsActive OUTPUT
 
-	IF EXISTS(select 1 from DBTXN.bodb02.dbo.bettrans WITH (NOLOCK) 
-			WHERE  recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE mrecommend = @MasterID AND roleid = 2)
-				AND bettype < 19999 and custid <> 0)
-	BEGIN
-		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
-		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@MasterID,@ErrMsg,3) 
-		PRINT @ErrMsg
-		RETURN
-	END
-
-	IF EXISTS(select 1 from DBTXN.bodb02.dbo.translog WITH (NOLOCK) WHERE recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE mrecommend = @MasterID AND roleid = 2) )
-	BEGIN
-		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
-		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@MasterID,@ErrMsg,3) 
-		PRINT @ErrMsg
-		RETURN
-	END
-
-	IF EXISTS(SELECT 1 FROM DBTXN.bodb02.dbo.bettransLC WITH (NOLOCK) WHERE recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE mrecommend = @MasterID AND roleid = 2))
-	BEGIN
-		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
-		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@MasterID,@ErrMsg,3) 
-		PRINT @ErrMsg
-		RETURN
-	END
-
-	IF EXISTS(SELECT 1 FROM DBTXN.bodb02.dbo.bettransRNG with (nolock) where recommend IN (SELECT custid FROM custdb.dbo.custinfo WITH(NOLOCK) WHERE mrecommend = @MasterID AND roleid = 2))
-	BEGIN
-		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
-		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@MasterID,@ErrMsg,3) 
-		PRINT @ErrMsg
-		RETURN
-	END
-
-	IF EXISTS(	SELECT 1 
-				FROM DBTXN.bodb02.dbo.SabaWalletTicket WITH (NOLOCK) 
-				WHERE  mrecommend = @MasterID 
-					AND custid <> 0
-					AND WinlostDate >= CONVERT(DATE,DATEADD(mm,-2,GETDATE()))
-				)
+	IF @IsActive = 1
 	BEGIN
 		SELECT @ErrMsg = @AccName +':'+ 'This master just got active trans while processing!', @ErrCode = 101
 		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,roleid) VALUES(@MasterID,@ErrMsg,3) 
@@ -122,21 +86,26 @@ BEGIN
 	END
 
 	--backup data for later rollback for this stage
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+	CREATE TABLE #tempbackup(
+		[ArchiveDate] DATETIME,
+		[custid] INT,
+		[credit] MONEY,
+		[SuspendInfo] TINYINT,
+		[CloseInfo] TINYINT,
+		[ClosedReason] TINYINT
+	)
+
+	INSERT INTO #tempbackup(
 		[ArchiveDate],
 		[custid],
-		[closed],
-		[reject],
 		[credit],
 		[SuspendInfo],
 		[CloseInfo],
 		[ClosedReason]
 	)
 	SELECT	
-		GETDATE(), 
+		GetDate(), 
 		c.[custid],
-		c.[closed],
-		c.[reject],
 		c.[credit],
 		cps.SuspendInfo,
 		cps.CloseInfo,
@@ -145,10 +114,43 @@ BEGIN
 		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
 		LEFT JOIN CustLoginInfo cl WITH (NOLOCK) ON cl.CustID = c.custid
 	WHERE c.custid = @MasterID
-		AND NOT EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = c.custid)
+	UNION ALL
+	SELECT	
+		GetDate(), 
+		c.[custid],
+		c.[credit],
+		cps.SuspendInfo,
+		cps.CloseInfo,
+		cl.ClosedReason
+	FROM custinfo c with (nolock)
+		INNER JOIN CustProductStatus cps WITH (NOLOCK) ON cps.CustID = c.custid
+		LEFT JOIN CustLoginInfo_Member cl WITH (NOLOCK) ON cl.CustID = c.custid
+	WHERE c.mrecommend = @MasterID AND roleid = 1 AND recommend = -3
+
+	DELETE t 
+	FROM #tempbackup t 
+	WHERE EXISTS (SELECT TOP 1 1 FROM DBARCCUST.bodb_Customer.dbo.CustBackupClosed WITH (NOLOCK) WHERE custid = t.custid)
+
+	--insert backup
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustBackupClosed(
+		[ArchiveDate],
+		[custid],
+		[credit],
+		[SuspendInfo],
+		[CloseInfo],
+		[ClosedReason]
+	)
+	SELECT	
+		[ArchiveDate],
+		[custid],
+		[credit],
+		[SuspendInfo],
+		[CloseInfo],
+		[ClosedReason]
+	FROM #tempbackup
 
 	--close master
-	EXEC DBA_Archive_Cust_SuperMaster @custid = @MasterID, @stage = 1
+	EXEC dbo.[DBA_ArchiveAccount_SMALine] @CustID = @MasterID, @StageID = 1
 
 	--> Insert data for Cust_ArchiveAccount
 	DECLARE @IsOverwrite BIT
@@ -203,5 +205,7 @@ BEGIN
 		@TrackingValue = @LogSPData,
 		@TrackingValue2 = @LogSPDataOld,
 		@duration = @duration
+
+	DROP TABLE #tempbackup
 END
 

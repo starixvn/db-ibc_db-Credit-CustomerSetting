@@ -3,7 +3,7 @@ ALTER PROCEDURE [DBA_ArchiveAccount2_BackupAgent]
 	@AccName VARCHAR(50)
 AS
 /*
-		Description: Disable an Master, Super
+		Description: Back up SMA setting when before them
 		Create date: 20200911
 		Original SP: 
 		DB: DBCUST/CustDB
@@ -20,6 +20,7 @@ AS
 			- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
 			- 20231019@Helios: Customer Setting - Remove old Structure un Use [RedmineID: #193083]
 			- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]  
+			- 20250102@Eden: Archiving direct member [redmine: #215533] 
 */
 BEGIN
 	    
@@ -163,6 +164,87 @@ BEGIN
 		FROM CustAgent WITH(NOLOCK)
 		WHERE custid = @CustID
 
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustMaster_old WITH(NOLOCK) WHERE custid = @CustID)
+		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustMaster_old(custid,DisableAutoMPT,IsInternal,TransferOption,LimitPerIP,SelectedBetting
+			,NicknameLoginOnly,creationRemark,IsAllDayBalTransfer)
+		SELECT custid,DisableAutoMPT,IsInternal,TransferOption,LimitPerIP,SelectedBetting
+			,NicknameLoginOnly,creationRemark,IsAllDayBalTransfer
+		FROM CustMaster WITH(NOLOCK)
+		WHERE custid = @CustID
+
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustSuper_old WITH(NOLOCK) WHERE custid = @CustID)
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustSuper_old(
+		custid
+		, AutoIBCPositionTaking_Tote
+		, AutoIBCPositionTaking_Fixed
+		, IsInternal
+		, TransferOption
+		, LimitPerIP
+		, SelectedBetting
+		, AutoIBCPT151_AU
+		, AutoIBCPT152_UK
+		, AutoIBCPT152_AU
+		, AutoIBCPT153_AU
+		, NicknameLoginOnly
+		, creationRemark
+		, IsMyanmarOdds
+		, IsAllDayBalTransfer
+		, MaxMember
+		, MaxMemberRemark
+		, UplineId
+		, CurrencyModifier
+		, IsAutoEnableADBMaster
+		, SiteDBGroupID
+		, IsSynced
+	)
+	SELECT custid
+		, AutoIBCPositionTaking_Tote
+		, AutoIBCPositionTaking_Fixed
+		, IsInternal
+		, TransferOption
+		, LimitPerIP
+		, SelectedBetting
+		, AutoIBCPT151_AU
+		, AutoIBCPT152_UK
+		, AutoIBCPT152_AU
+		, AutoIBCPT153_AU
+		, NicknameLoginOnly
+		, creationRemark
+		, IsMyanmarOdds
+		, IsAllDayBalTransfer
+		, MaxMember
+		, MaxMemberRemark
+		, UplineId
+		, CurrencyModifier
+		, IsAutoEnableADBMaster
+		, SiteDBGroupID
+		, IsSynced
+	FROM dbo.CustSuper WITH(NOLOCK)
+	WHERE custid = @CustID
+
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustSuperProfile_old WITH(NOLOCK) WHERE custid = @CustID)
+	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustSuperProfile_old	
+	(
+		custid
+		, firstname
+		, lastname
+		, phone
+		, mobilephone
+		, fax
+		, email
+		, remark
+	)
+	SELECT custid
+		, firstname
+		, lastname
+		, phone
+		, mobilephone
+		, fax
+		, email
+		, remark
+	FROM dbo.CustSuperProfile WITH(NOLOCK)
+	WHERE custid = @CustID
+
 	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustLoginInfo_old WITH(NOLOCK) WHERE custid = @CustID)
 		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustLoginInfo_old(CustID,OldUserPwd,LastChangedPwdDate,isFirstLogin,SecurityCode,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode
 			,VerifyOTPCount,ClosedReason,FunctionInfo,ProtectionCode,IsProtectedMode)
@@ -186,7 +268,7 @@ BEGIN
 		FROM CustMaxPayoutSetting_Agent WITH(NOLOCK)
 		WHERE custid = @CustID
 
-IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old WITH(NOLOCK) WHERE custid = @CustID)
+	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old WITH(NOLOCK) WHERE custid = @CustID)
 		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old(CustId,ImageId,Modified)
 		SELECT CustId,ImageId,Modified
 		FROM dbo.CustProfilePicture WITH(NOLOCK)
@@ -329,3 +411,4 @@ IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old W
 	WHERE CustID = @CustID
 			
 END
+GO

@@ -21,6 +21,7 @@ AS
 			- 20230613@Eden : Archive super level 789y (Stage 3 and Stage 4) [Redmine: #183447]
 			- 20240905@Eden : Scale out DBCUST - Delete data custinfomini [redmine: #210077]
 			- 20241007@Helios : Scale out DBCUST - Delete data custinfomini - remove call link Server DBGLOB [redmine: #210077]
+			- 20250102@Eden: Archiving direct member [redmine: #215533] 
 */
 BEGIN
 	    
@@ -52,26 +53,14 @@ BEGIN
 	--PRE-CHECK BEFORE DELETE
 	--===============================
 	--Pre-check: Make sure cust setting data already backed-up in DBRACCUST
-	IF NOT EXISTS(
-		SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) 
-		WHERE custid = @custid
-		)
+	IF	   NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) WHERE custid = @CustID)
+		OR NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) WHERE custid = @CustID)
 	BEGIN
-		Select @ErrMsg = @AccName +':'+ 'Cust info data of this '+ @Level +' have not been backed-up yet. Auto backup activated.', @ErrCode = 10
-		print @ErrMsg
-		--select @ErrMsg = ''
-		EXEC dbo.DBA_ArchiveAccount4_BackupCustInfoMaster @AccName=@AccName, @ErrMsg = @ErrMsg
-		--IF @ErrMsg <> '' return
-	END
-	
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsub_old WITH(NOLOCK) 
-				WHERE	custid = @CustID
-		)
-	BEGIN
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline)
-		SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline
-		FROM	custsub WITH (NOLOCK)
-		WHERE	custid = @CustID
+		PRINT @AccName +':'+ 'Cust info data of this '+ @Level +' have not been backed-up yet. Auto backup activated.'
+		--BACKUP DATA Agent
+		EXEC [DBA_ArchiveAccount2_BackupAgent] @AccName = @AccName
+		--Backup Data Member
+		EXEC [DBA_ArchiveAccount2_BackupMember]  @AccName = @AccName
 	END
 	
 	--Pre-check: Make sure @CustID not exists bettype 20000 in transfer
@@ -86,10 +75,34 @@ BEGIN
 	--PERFORM DELETE MEMBERS INFO
 	--===============================
 
-	Exec DBA_Archive_Cust_SuperMaster @CustID = @CustID, @stage = 4 
+	DECLARE @CustIDs VARCHAR(MAX) = ''
+	SELECT @CustIDs = CAST(@custid AS VARCHAR(10)) + ','
+
+	IF @roleid = 3
+	BEGIN
+		SELECT @CustIDs = @CustIDs + cast(custid AS VARCHAR(10)) + ','
+		FROM custinfo with (nolock) 
+		WHERE mrecommend = @CustID 
+			AND recommend = -3 
+			AND roleid = 1
+	END
+	ELSE IF @roleid = 4
+	BEGIN
+		SELECT @CustIDs = @CustIDs + cast(custid AS VARCHAR(10)) + ','
+		FROM custinfo with (nolock) 
+		WHERE srecommend = @CustID 
+			AND recommend = -4
+			AND roleid = 1
+	END
+
+	--just keep code 8 table Balance
+	Exec Acc_ExecRep_Cust_00 @CustIDs = @CustIDs
+
+	--For archive Acc (New) - update/delete part in stage 1,2,3 
+	EXEC dbo.[DBA_ArchiveAccount_SMALine] @CustID = @CustID, @StageID = 4
 
 	--Delete custinfomini
-	EXEC DBGLOB.GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustID
+	EXEC DBGLOB.GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustIDs
 	----------------------------------------------------------------
 	print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
 

@@ -15,6 +15,7 @@ AS
 		- 20210128@Winfred: Check startrun when log master / Super [RedmineID: #149262]
 		- 20211209@Eden: Split transfer out of bettrans [RedmineID: #162264]
 		- 20230818@Eden : Archive super level 789y [Redmine: #183447]
+		- 20250102@Eden: Archiving direct member [redmine: #215533] 
 */
 BEGIN
 
@@ -50,19 +51,31 @@ BEGIN
 	
 	if exists(select 1 from DBACC.bodb02.dbo.SystemSettings with(nolock) where VName = 'aa_Status' AND VValue IN ('Stage 3 - Running','Stage 3 - Done'))
 	BEGIN
-		-- from member to agent
-		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = 3
 		
+		-- Start Copy from DBCUST, will remove code when migrate dbcust to sitedb
+		TRUNCATE TABLE tmpCustArchived
+		TRUNCATE TABLE tmpCustGroupLevelArchived
+
+		INSERT INTO tmpCustArchived (Super,Master,Agent,MemCnt,recommend,IsFinished,ErrMsg)
+		SELECT Super,Master,Agent,MemCnt,recommend,IsFinished,ErrMsg FROM DBCUST.CUSTDB.dbo.tmpCustArchived WITH(NOLOCK)
+
+		INSERT INTO tmpCustGroupLevelArchived(custid,Roleid,GroupLevelName,StageID)
+		SELECT custid,Roleid,GroupLevelName,StageID FROM DBCUST.CUSTDB.dbo.tmpCustGroupLevelArchived WITH(NOLOCK)
+		-- END --> Copy from DBCUST, will remove code when migrate dbcust to sitedb
+		
+		UPDATE tmpCustArchived WITH(ROWLOCK,UPDLOCK)
+		SET IsFinished = 0 WHERE ISNULL(ErrMsg,'') = ''
+
 		WHILE(1=1)
 		BEGIN
-			
 			SELECT @ErrMsg = ''
-			SELECT TOP 1 @agent = Agent FROM tmpCustArchived WHERE IsFinished = 0	
+			SELECT TOP 1 @agent = Agent FROM tmpCustArchived WITH(NOLOCK) WHERE IsFinished = 0
+			
 			IF (@@ROWCOUNT = 0) BREAK
 	
 			EXEC bodb02.dbo.DBA_ArchiveAccount3_ClearBalance @AccName = @agent, @ErrMsg = @ErrMsg OUTPUT
 
-			UPDATE tmpCustArchived 
+			UPDATE tmpCustArchived WITH(ROWLOCK,UPDLOCK)
 			SET ErrMsg = @ErrMsg, IsFinished = 1
 			WHERE Agent = @agent
 
@@ -73,7 +86,7 @@ BEGIN
 			--IF (@ErrMsg <> '') BREAK
 		END
 		
-		EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = 3
+		--EXEC DBA_ArchiveAccount_GenMasterSuperGroupLevel @StageId = 3
 		
 		INSERT INTO #AgentToMaster_Transfer (recommend, mrecommend,srecommend,agentName, masterName, currency,currencyName, actualrate)
 		SELECT ci.custid,ci.mrecommend,ci.srecommend, ci.username, t.Master, ci.currency, e.currency,e.actualrate 
@@ -206,7 +219,16 @@ BEGIN
 					WHERE IsFinished = 0 AND t.srecommend = @custid_tmp	
 					
 					IF (@@ROWCOUNT = 0) BREAK
+
+					--Transfer from Master direct member to Master before Transfer from Master to super
+					EXEC bodb02.dbo.[DBA_ArchiveAccount3_ClearBalance_DirectMember] @AccName = @mastername, @ErrMsg = @ErrMsg OUTPUT
+
+					SET @msg = 'Stage 3 - Done transfer master direct members to master: ' + @mastername + CHAR(13)
+					RAISERROR(@msg, 0, 0) WITH NOWAIT	
+
+					SET @ErrMsg_tmp = @ErrMsg_tmp + @ErrMsg
 					
+					--Transfer from Master to super
 					EXEC bodb02.dbo.DBA_ArchiveAccount3_ClearBalance_MasterSuper @mrecommend = @mrecommend,
 						@srecommend  = @srecommend,
 						@mastername  = @mastername,
@@ -268,6 +290,12 @@ BEGIN
 			WHERE IsFinished = 0	
 				
 			IF (@@ROWCOUNT = 0) BREAK
+
+			--Transfer from super direct member to super before Transfer from super to Finance
+			EXEC bodb02.dbo.[DBA_ArchiveAccount3_ClearBalance_DirectMember] @AccName = @supername, @ErrMsg = @ErrMsg OUTPUT
+
+			SET @msg = 'Stage 3 - Done transfer super direct members to super: ' + @mastername + CHAR(13)
+			RAISERROR(@msg, 0, 0) WITH NOWAIT	
 
 			EXEC bodb02.dbo.DBA_ArchiveAccount3_ClearBalance_Super
 				@srecommend = @custid_tmp,

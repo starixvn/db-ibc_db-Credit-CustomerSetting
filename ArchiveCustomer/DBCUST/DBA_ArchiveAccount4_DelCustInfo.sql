@@ -19,6 +19,7 @@ AS
 		- 20240905@Eden : Scale out DBCUST - Delete data custinfomini [redmine: #210077]
 		- 20241007@Helios : Scale out DBCUST - Delete data custinfomini - remove call link Server DBGLOB [redmine: #210077]
 		- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]
+		- 20250102@Eden: Archiving direct member [redmine: #215533] 
 */
     
 SET NOCOUNT ON
@@ -28,9 +29,9 @@ declare @endRun datetime
 declare @duration int
 set @startRun = getdate()
 
-Declare @roleid int, @AgentID int, @Enabled bit
+Declare @roleid int, @AgentID int
 
-SELECT @roleid = roleid, @AgentID = custid, @Enabled = Enabled
+SELECT @roleid = roleid, @AgentID = custid
 FROM custinfo (nolock)
 WHERE username = @AccName
 
@@ -47,26 +48,14 @@ print  @AccName +':'+ 'START:' + convert(varchar(50), getdate(), 113)
 --PRE-CHECK BEFORE DELETE
 --===============================
 --Pre-check: Make sure cust setting data already backed-up in DBRACCUST
-IF NOT EXISTS(
-	SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) 
-	WHERE custid IN(select custid from custinfo with (nolock) WHERE recommend = @AgentID)
-	)
+IF	   NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) WHERE custid = @AgentID)
+	OR NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) WHERE custid = @AgentID)
 BEGIN
-	Select @ErrMsg = @AccName +':'+ 'Cust info data of this agent have not been backed-up yet. Auto backup activated.', @ErrCode = 10
-	print @ErrMsg
-	--select @ErrMsg = ''
-	EXEC dbo.DBA_ArchiveAccount4_BackupCustInfo @AccName=@AccName, @ErrMsg = @ErrMsg
-	--IF @ErrMsg <> '' return
-END
-
-IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsub_old WITH(NOLOCK) 
-				WHERE	custid = @AgentID
-		)
-BEGIN
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline)
-	SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline
-	FROM	custsub WITH (NOLOCK)
-	WHERE	custid = @AgentID
+	PRINT @AccName +':'+ 'Cust info data of this Agent have not been backed-up yet. Auto backup activated.'
+	--BACKUP DATA Agent
+	EXEC [DBA_ArchiveAccount2_BackupAgent] @AccName = @AccName
+	--Backup Data Member
+	EXEC [DBA_ArchiveAccount2_BackupMember]  @AccName = @AccName
 END
 --===============================
 --PERFORM DELETE MEMBERS INFO
@@ -77,12 +66,11 @@ DECLARE @CustIDs VARCHAR(MAX) = ''
 SELECT @CustIDs = @CustIDs + cast(custid AS VARCHAR(10)) + ','
 FROM custinfo with (nolock) where recommend = @AgentID	
 
-
 --just keep code 8 table Balance
-Exec Acc_ExecRep_Cust_00 @CustIDs = @CustIDs, @Type = 2 
+Exec Acc_ExecRep_Cust_00 @CustIDs = @CustIDs
 
 --For archive Acc (New) - update/delete part in stage 1,2,3 
-Exec Acc_ExecRep_Cust_03 @AgentID = @AgentID, @Type = 2 
+EXEC dbo.[DBA_ArchiveAccount_SMALine] @CustID = @AgentID, @StageID = 4
 
 --Delete custinfomini
 EXEC DBGLOB.GlobCustDB.dbo.[DBA_ArchiveAccount4_DelCustInfoMini] @CustIDs = @CustIDs

@@ -27,15 +27,16 @@ AS
 			- 20230620@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #179132]
 			- 20231019@Helios: Customer Setting - Remove old Structure un Use [RedmineID: #193083]
 			- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061] 
+			- 20250102@Eden: Archiving direct member [redmine: #215533] 
 */
 BEGIN
-	    
 	SET NOCOUNT ON
 
 	declare @startRun datetime
 	declare @endRun datetime
-	declare @duration int, @Now datetime
+	declare @duration int, @Now datetime, @Level VARCHAR(10)
 	set @startRun = getdate()
+	DECLARE @ProcessedDate DATETIME  = GETDATE()
 
 	Declare @roleid int, @CustID int, @Enabled bit
 
@@ -43,364 +44,91 @@ BEGIN
 	FROM custinfo (nolock)
 	WHERE username = @AccName
 
+	IF @roleid = 3
+		SET @Level = 'master'
+	ELSE IF @roleid = 4
+		SET @Level = 'super'
+
+	IF @Enabled = 0
+	BEGIN
+		-- Disabled before but some tables not backup yet
+		EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
+		Select @ErrMsg = @AccName +':'+ 'This '+ @Level +' has been archived!!', @ErrCode = 101
+		print @ErrMsg
+
+		EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
+			@CustId = @CustID,
+			@RoleID = @roleid,
+			@StageID = 2,
+			@ProcessedDate = @ProcessedDate,
+			@ArchivedDate = @ArchivedDate
+		return
+	END
+
+	--==Check new created members
+	IF @roleid = 3
+	IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE mrecommend = @CustID AND creatdate >= DATEADD(mm, -4, GETDATE()))
+	BEGIN
+		Select @ErrMsg = @AccName +':'+ 'This '+ @Level +' just created new members while processing!', @ErrCode = 101
+		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@CustID,@ErrMsg,@roleid) 
+		print @ErrMsg
+		return
+	END
+	ELSE IF @roleid = 4
+	IF EXISTS(SELECT 1 FROM customer c WITH (NOLOCK) WHERE srecommend = @CustID AND creatdate >= DATEADD(mm, -4, GETDATE()))
+	BEGIN
+		Select @ErrMsg = @AccName +':'+ 'This '+ @Level +' just created new members while processing!', @ErrCode = 101
+		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@CustID,@ErrMsg,@roleid) 
+		print @ErrMsg
+		return
+	END
+
+	--==Check the status has changed
+	IF EXISTS(SELECT 1 FROM CustProductStatus cps WITH (NOLOCK) WHERE cps.CustID = @CustID AND cps.CloseInfo = 0)
+	BEGIN
+		Select @ErrMsg = @AccName +':'+ 'This '+ @Level +' has been reopened while processing!', @ErrCode = 101
+		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@CustID,@ErrMsg,@roleid) 
+		print @ErrMsg
+		return
+	END
+	--== Check new active trans ==========================
+	DECLARE @IsActive BIT = 0
+	EXEC DBTXN.bodb02.dbo.[DBA_ArchiveAccount_CheckActiveSMA] @AccName = @AccName ,@IsActive = @IsActive OUTPUT
+
+	IF @IsActive = 1
+	BEGIN
+		Select @ErrMsg = @AccName +':'+ 'This '+ @Level +' just got active trans while processing!', @ErrCode = 101
+		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@CustID,@ErrMsg,@roleid) 
+		print @ErrMsg
+		RETURN
+	END
+
+	--Pre-check: Make sure cust info data not exist in DBRACCUST before backup
+	IF	EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) WHERE custid = @CustID)
+		--OR EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) WHERE mrecommend = @CustID AND recommend = -3)
+		--OR EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) WHERE srecommend = @CustID AND recommend = -4)
+		OR EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) WHERE custid = @CustID)
+		--OR EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) WHERE mrecommend = @CustID AND recommend = -3)
+		--OR EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) WHERE srecommend = @CustID AND recommend = -4)
+	BEGIN
+		-- Disabled before but some tables not backup yet
+		EXEC dbo.DBA_ArchiveAccount2_BackupAgent @AccName = @AccName
+		Select @ErrMsg = @AccName +':'+ 'Backup data of this '+ @Level +' already exist. Please check!', @ErrCode = 101
+		INSERT INTO [dbo].[CustArc_NewActive] (CustID, ErrMsg,Roleid) VALUES(@CustID,@ErrMsg,@roleid) 
+		print @ErrMsg
+		return
+	END
+
 	PRINT  @AccName +':'+ 'START:' + convert(varchar(50), getdate(), 113)
 
-	--=============================
-	--PERFORM BACKUP DATA MEMBERS
-	--=============================
+	--BACKUP DATA Super/Master
+	EXEC [DBA_ArchiveAccount2_BackupAgent] @AccName = @AccName
+	--Backup Data Member
+	EXEC [DBA_ArchiveAccount2_BackupMember]  @AccName = @AccName
 
-	SELECT @Now = current_timestamp
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.customer_old WITH(NOLOCK) 
-				WHERE	custid = @CustID
-		)
-	BEGIN
-	
-		insert into DBARCCUST.bodb_Customer.dbo.customer_old(
-			   [custid],[firstname],[lastname],[address] ,[postal],[city]
-			  ,[state] ,[country]  ,[phone]   ,[mobilephone] ,[fax]
-			  ,[email] ,[birthday] ,[refcode1],[refcode2],[remark]
-			  ,[creatdate],[creator],[username],[currency],[userpwd]
-			  ,[lastlogged],[pwdexpiry],[roleid],[mrecommend],[recommend]
-			  ,[ugroup],[logincount],[on_sessionid],[site],[iplogin]
-			  ,[important],[srecommend],[username2]
-		)
-		select [custid],[firstname],[lastname],[address] ,[postal],[city]
-			  ,[state] ,[country]  ,[phone]   ,[mobilephone] ,[fax]
-			  ,[email] ,[birthday] ,[refcode1],[refcode2],[remark]
-			  ,[creatdate],[creator],[username],[currency],[userpwd]
-			  ,[lastlogged],[pwdexpiry],[roleid],[mrecommend],[recommend]
-			  ,[ugroup],[logincount],[on_sessionid],[site],[iplogin]
-			  ,[important],[srecommend],[username2]
-		from	customer (nolock)
-		WHERE custid = @CustID
-	END
-	--Copy agent+members' custinfo to bodb_Customer 
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custinfo_old WITH(NOLOCK) 
-				WHERE	custid = @CustID
-		)
-	BEGIN
-		insert into DBARCCUST.bodb_Customer.dbo.custinfo_old(
-			   [ArchiveDate],
-				username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
-                      VirtualMultiplier, maxpermatch, maxpermatch2, maxpermatch3, maxpermatch5, maxpermatch8, maxpermatch10, maxpermatch11, maxpermatch12, 
-                      maxpermatch99, Enabled, danger, DisableCasino, SyncCasino, danger2, 
-                      danger3, DisableOutright, MaxPerMatch99MP, DisableNumber, maxpermatch161, 
-                      MaxPerBall161,
-                      Abnormal, DoubleCommLosing,
-                      autosuspend2, HideKeno, HideGoldDeluxe, DisableGoldDeluxe,  
-                      DisableSuperLive, DisableColossusBet, HideColossusBet, 
-                      LockUpd, MaxPerMatch1MP, BonusWalletFlag
-		)
-		select	@Now, 
-				username, custid, currency, roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, reject, credit, closed, MatchLimit, 
-                      VirtualMultiplier, 0, 0, 0, 0, 0, 0, 0, 0, 
-                      0, Enabled, danger, 0, 0, danger2, 
-                      danger3, DisableOutright, 0, 0, 0, 
-                      0,
-                      Abnormal, DoubleCommLosing,
-                      autosuspend2, 0, 0, 0,  
-                      DisableSuperLive, 1,1, 
-                      LockUpd, 0, BonusWalletFlag
-		from	custinfo (nolock)
-		WHERE custid = @CustID
-	END
-	
-	--- copy DBTRANS.BODB02.dbo.CustVirtualSetting data to DB05.bodb_Customer.dbo.CustVirtualSetting_Old
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustVirtualSetting_Old WITH(NOLOCK) 
-				WHERE	custid = @CustID
-		)
-	BEGIN
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustVirtualSetting_Old(custid, seqNo, bitmapVirtual)
-		SELECT custid, seqNo, bitmapVirtual
-		FROM [dbo].CustVirtualSetting WITH(NOLOCK)
-		WHERE custid = @CustID
-	END	
-	--------- Involve more tables (new tables/DCS)
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustProductStatus_old WITH(NOLOCK) 
-				WHERE	custid = @CustID
-		)
-	BEGIN
-		insert into DBARCCUST.bodb_Customer.dbo.CustProductStatus_old(
-			 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo
-		) 
-		SELECT	 CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, CloseInfo
-		FROM	CustProductStatus WITH (NOLOCK)
-		where	custid = @CustID
-	END
-	
-	------- custSub -------------------------------
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.custsub_old WITH(NOLOCK) 
-			WHERE	custid = @CustID
-	)
-	BEGIN
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.custsub_old (subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted)
-		SELECT subaccid, custid, username, userpwd, PageAccess, createdate, firstname, lastname, closed, LoginCount, UserName2, NicknameLoginOnly, IsAllDownline, IsDeleted
-		FROM	custsub WITH (NOLOCK)
-		WHERE	custid = @CustID
-	END
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustDiscount3rd_Agent_old(CustID,SportType,BetType,Discount)
-		SELECT CustID,SportType,BetType,Discount
-		FROM CustDiscount3rd_Agent WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustPTSetting3rd_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTSetting3rd_Agent_old(CustID,SportType,BetType,IsLive,IsAutoMasterPT,IsAutoSuperPT
-			,SuperPT,MasterPT,AgentPT,AutoSuperPT,AutoMasterPT,MinPT,MaxPT)
-		SELECT CustID,SportType,BetType,IsLive,IsAutoMasterPT,IsAutoSuperPT
-			,SuperPT,MasterPT,AgentPT,AutoSuperPT,AutoMasterPT,MinPT,MaxPT
-		FROM CustPTSetting3rd_Agent WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustStakeLevel_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustStakeLevel_Agent_old(CustID,SportType,BetType,StakeLevelList)
-		SELECT CustID,SportType,BetType,StakeLevelList
-		FROM CustStakeLevel_Agent WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustWinLossLimit_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustWinLossLimit_Agent_old(CustId,SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset)
-		SELECT CustId,SportType,BetType,MaxWinLimit,MaxLossLimit,IsAutoReset
-		FROM CustWinLossLimit_Agent WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustLoginInfo_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustLoginInfo_old(CustID,OldUserPwd,LastChangedPwdDate,isFirstLogin,SecurityCode,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode
-			,VerifyOTPCount,ClosedReason,FunctionInfo,ProtectionCode,IsProtectedMode)
-		SELECT CustID,OldUserPwd,LastChangedPwdDate,isFirstLogin,SecurityCode,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode
-		,VerifyOTPCount,ClosedReason,FunctionInfo,ProtectionCode,IsProtectedMode
-		FROM CustLoginInfo WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustLoginInfoSub_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustLoginInfoSub_old(SubAccID,CustID,OldUserPwd,PwdExpiry,LastChangedPwdDate,isFirstLogin,SecurityCode
-			,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode,VerifyOTPCount,FunctionInfo,ProtectionCode)
-		SELECT SubAccID,CustID,OldUserPwd,PwdExpiry,LastChangedPwdDate,isFirstLogin,SecurityCode
-			,LastChangedSecurityCodeDate,SecurityCodeCount,isForcedChangeSecurityCode,VerifyOTPCount,FunctionInfo,ProtectionCode
-		FROM CustLoginInfoSub WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustMaster_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustMaster_old(custid,DisableAutoMPT,IsInternal,TransferOption,LimitPerIP,SelectedBetting
-			,NicknameLoginOnly,creationRemark,IsAllDayBalTransfer)
-		SELECT custid,DisableAutoMPT,IsInternal,TransferOption,LimitPerIP,SelectedBetting
-			,NicknameLoginOnly,creationRemark,IsAllDayBalTransfer
-		FROM CustMaster WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	--#188850
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustMaxPayoutSetting_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustMaxPayoutSetting_Agent_old(CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6)
-		SELECT CustID,SportType,BetType,SingleMatchParlay,Combo2,Combo35,ComboOver6
-		FROM CustMaxPayoutSetting_Agent WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old WITH(NOLOCK) WHERE custid = @CustID)
-		INSERT INTO DBARCCUST.bodb_Customer.dbo.CustProfilePicture_old(CustId,ImageId,Modified)
-		SELECT CustId,ImageId,Modified
-		FROM dbo.CustProfilePicture WITH(NOLOCK)
-		WHERE custid = @CustID
-
-	--#201061
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustPTTemplate_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTTemplate_old
-	(
-		TemplateID
-	    , custid
-	    , TemplateName
-	    , IsDefault
-	)
-	SELECT TemplateID
-	    , custid
-	    , TemplateName
-	    , IsDefault
-	FROM dbo.CustPTTemplate WITH(NOLOCK)
-	WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustPTTemplateDetail_old ptDetail WITH(NOLOCK)
-				     INNER JOIN DBARCCUST.bodb_Customer.dbo.CustPTTemplate_old pt WITH(NOLOCK) ON ptDetail.TemplateID = pt.TemplateID 
-		        WHERE pt.custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustPTTemplateDetail_old 
-	(
-		TemplateID
-		, GroupID
-		, SubGroupID
-		, PT
-	)
-	SELECT 
-		ptDetail.TemplateID
-		, GroupID
-		, SubGroupID
-		, PT
-	FROM dbo.CustPTTemplateDetail ptDetail WITH(NOLOCK)
-	INNER JOIN dbo.CustPTTemplate pt WITH(NOLOCK) ON ptDetail.TemplateID = pt.TemplateID
-	WHERE pt.custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.VRCustSetting_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRCustSetting_old
-	(
-		CustID
-		, LevelID
-		, ValueIDLIVE
-		, ValueIDNonLIVE
-	)
-	SELECT CustID
-		, LevelID
-		, ValueIDLIVE
-		, ValueIDNonLIVE
-	FROM dbo.VRCustSetting WITH(NOLOCK)
-	WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.BetLimitControlCustSetting_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.BetLimitControlCustSetting_old
-	(
-		CustID
-		, BetLimitTypeID
-		, MaxBet
-		, MaxPerMatch
-		, Mode
-	)
-	SELECT CustID
-		, BetLimitTypeID
-		, MaxBet
-		, MaxPerMatch
-		, Mode
-	FROM dbo.BetLimitControlCustSetting WITH(NOLOCK)
-	WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.VRCustLockStatus_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRCustLockStatus_old (CustID, Type)
-	SELECT CustID, Type
-	FROM dbo.VRCustLockStatus WITH(NOLOCK)
-	WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.VRSettingManualUpdAcc_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.VRSettingManualUpdAcc_old	(SportType , CustID)
-	SELECT SportType , CustID
-	FROM dbo.VRSettingManualUpdAcc WITH(NOLOCK)
-	WHERE custid = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.BetSetting3rd_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.BetSetting3rd_Agent_old
-	(
-		CustID
-		, SportType
-		, BetType
-		, MinBet
-		, MaxBet
-		, MaxPerMatch
-		, MaxPerNumber
-	)
-	SELECT CustID
-		, SportType
-		, BetType
-		, MinBet
-		, MaxBet
-		, MaxPerMatch
-		, MaxPerNumber
-	FROM dbo.BetSetting3rd_Agent WITH(NOLOCK)
-	WHERE CustID = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.BetSetting_Agent_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.BetSetting_Agent_old
-	(
-		CustID
-		, SportType
-		, BetType
-		, MinBet
-		, MaxBet
-		, MaxPerMatch
-		, MaxPayoutPerMatch
-	)
-	SELECT CustID
-		, SportType
-		, BetType
-		, MinBet
-		, MaxBet
-		, MaxPerMatch
-		, MaxPayoutPerMatch
-	FROM dbo.BetSetting_Agent WITH(NOLOCK)
-	WHERE CustID = @CustID
-
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustSuper_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustSuper_old
-	(
-		custid
-		, AutoIBCPositionTaking_Tote
-		, AutoIBCPositionTaking_Fixed
-		, IsInternal
-		, TransferOption
-		, LimitPerIP
-		, SelectedBetting
-		, AutoIBCPT151_AU
-		, AutoIBCPT152_UK
-		, AutoIBCPT152_AU
-		, AutoIBCPT153_AU
-		, NicknameLoginOnly
-		, creationRemark
-		, IsMyanmarOdds
-		, IsAllDayBalTransfer
-		, MaxMember
-		, MaxMemberRemark
-		, UplineId
-		, CurrencyModifier
-		, IsAutoEnableADBMaster
-		, SiteDBGroupID
-		, IsSynced
-	)
-	SELECT custid
-		, AutoIBCPositionTaking_Tote
-		, AutoIBCPositionTaking_Fixed
-		, IsInternal
-		, TransferOption
-		, LimitPerIP
-		, SelectedBetting
-		, AutoIBCPT151_AU
-		, AutoIBCPT152_UK
-		, AutoIBCPT152_AU
-		, AutoIBCPT153_AU
-		, NicknameLoginOnly
-		, creationRemark
-		, IsMyanmarOdds
-		, IsAllDayBalTransfer
-		, MaxMember
-		, MaxMemberRemark
-		, UplineId
-		, CurrencyModifier
-		, IsAutoEnableADBMaster
-		, SiteDBGroupID
-		, IsSynced
-	FROM dbo.CustSuper WITH(NOLOCK)
-	WHERE custid = @CustID
-	
-	IF NOT EXISTS(SELECT 1 FROM DBARCCUST.bodb_Customer.dbo.CustSuperProfile_old WITH(NOLOCK) WHERE custid = @CustID)
-	INSERT INTO DBARCCUST.bodb_Customer.dbo.CustSuperProfile_old	
-	(
-		custid
-		, firstname
-		, lastname
-		, phone
-		, mobilephone
-		, fax
-		, email
-		, remark
-	)
-	SELECT custid
-		, firstname
-		, lastname
-		, phone
-		, mobilephone
-		, fax
-		, email
-		, remark
-	FROM dbo.CustSuperProfile WITH(NOLOCK)
-	WHERE custid = @CustID
 	-----------------------------------------------------------------------------------------------------------
 	--> Insert data for Cust_ArchiveAccount - Master/Super
 	BEGIN
-		DECLARE @ProcessedDate DATETIME  = GETDATE()
-
 		EXEC dbo.[Acc_DormantAccountList_InsertUpdate] 
 			@CustId = @CustID,
 			@RoleID = @roleid,
@@ -409,7 +137,8 @@ BEGIN
 			@ArchivedDate = @ArchivedDate
 	END
 
-	EXEC DBA_Archive_Cust_SuperMaster @custid = @CustID, @stage = 2
+	--Archive
+	EXEC dbo.[DBA_ArchiveAccount_SMALine] @CustID = @CustID, @StageID = 2
 	
 	----------------------------------------------------------------
 	print  @AccName +':'+ 'END:' + convert(varchar(50), getdate(), 113)
