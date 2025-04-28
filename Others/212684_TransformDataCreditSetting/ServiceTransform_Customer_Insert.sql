@@ -15,6 +15,7 @@ AS
 
 	 Revision:
 		- 20241226@Johnson: Initial [Redmine:#212684]
+		- 20250428@Johnson:Upgrade ExchangeID data type for tables setting [redmine:#225013]
 */
 BEGIN
 	SET NOCOUNT ON;	
@@ -47,7 +48,7 @@ BEGIN
 				[creatdate] [smalldatetime] NULL,
 				[creator] [int] NOT NULL,
 				[username] [varchar](30) NOT NULL,
-				[currency] [tinyint] NULL,
+				[currency] [smallint] NULL,
 				[userpwd] [varchar](40) NULL,
 				[lastlogged] [smalldatetime] NULL,
 				[pwdexpiry] [datetime] NULL,
@@ -159,7 +160,7 @@ BEGIN
 				[creatdate] [smalldatetime],
 				[creator] [int],
 				[username] [varchar](30),
-				[currency] [tinyint],
+				[currency] [int],
 				[userpwd] [varchar](40),
 				[lastlogged] [smalldatetime],
 				[pwdexpiry] [datetime],
