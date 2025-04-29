@@ -51,7 +51,7 @@ Revisions:
 	- 20241218@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	- 20250104@Winfred: Update customer's danger level Check exists data [Redmine:#216754] 
 	- 20250221@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
-	- 20250428@Thomas: Optimize CustomerClass update logic to prevent DB bloat [RedmineID: #212684]
+	- 20250428@Thomas: Optimize CustomerClass update logic to prevent DB bloat [RedmineID: #225089]
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -442,10 +442,15 @@ BEGIN
 					c.CCBasketball = CASE WHEN t.CC2 IS NOT NULL AND t.CC2 <> ISNULL(c.CCBasketball, -1) THEN NULLIF(t.CC2,-1) ELSE c.CCBasketball END,
 					c.CCEsports = CASE WHEN t.CC43 IS NOT NULL AND t.CC43 <> ISNULL(c.CCEsports, -1) THEN NULLIF(t.CC43,-1) ELSE c.CCEsports END,
 					c.CCOtherSports = CASE WHEN t.CC99 IS NOT NULL AND t.CC99 <> ISNULL(c.CCOtherSports, -1) THEN NULLIF(t.CC99,-1) ELSE  c.CCOtherSports END,
-					c.CCNonSports = CASE WHEN t.CC229 IS NOT NULL  AND t.CC229 <> ISNULL(c.CCNonSports, -1)THEN NULLIF(t.CC229,-1) ELSE c.CCNonSports END,
+					c.CCNonSports = CASE WHEN t.CC229 IS NOT NULL AND t.CC229 <> ISNULL(c.CCNonSports, -1) THEN NULLIF(t.CC229,-1) ELSE c.CCNonSports END,
 					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 					INNER JOIN @tmpCustClassSport t ON c.custid = t.custid
+				WHERE (t.CC1 IS NOT NULL AND t.CC1 <> ISNULL(c.CCSoccer, -1))
+					OR (t.CC2 IS NOT NULL AND t.CC2 <> ISNULL(c.CCBasketball, -1))
+					OR (t.CC43 IS NOT NULL AND t.CC43 <> ISNULL(c.CCEsports, -1))
+					OR (t.CC99 IS NOT NULL AND t.CC99 <> ISNULL(c.CCOtherSports, -1))
+					OR (t.CC229 IS NOT NULL AND t.CC229 <> ISNULL(c.CCNonSports, -1))
 					
 				DELETE @tmpCustClassSport	
 			END	
