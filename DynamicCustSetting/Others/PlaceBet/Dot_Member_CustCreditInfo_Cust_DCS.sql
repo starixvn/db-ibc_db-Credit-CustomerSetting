@@ -16,6 +16,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustCreditInfo_Cust_DCS] @custid INT
 	,@CustomerClass SMALLINT = NULL
 	,@StakeRM MONEY = NULL
 	,@LeagueID INT = - 1
+	,@IsExtraVR BIT = 0
+	,@KickOffTime DATETIME = NULL
 AS
 BEGIN
 	/*
@@ -71,6 +73,8 @@ BEGIN
 		-- 20230616@TwYC(DBCust): Remove logic of [custinfo.disablenumber]
 		-- 20240328@VN-Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
 		-- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+		-- 20250212@TW-YC: Remove unused table CustBetSetting3rd_Member
+		-- 20241230@VN-Winfred: [NAP CM] VR Engine - Pre-match Period with Extra VR [redmine: #215791]
 
       */
 	SET NOCOUNT ON;
@@ -502,6 +506,8 @@ BEGIN
 					,@LeagueID = @LeagueID
 					,@Istest = @Istest
 					,@CurrencyID = @currency
+					,@IsExtraVR = @IsExtraVR
+					,@KickOffTime = @KickOffTime
 					,@AccumulatedBalance = @AccumulatedBalance OUTPUT
 			END
 		END
@@ -526,6 +532,8 @@ BEGIN
 				,@LeagueID = @LeagueID
 				,@Istest = @Istest
 				,@CurrencyID = @currency
+				,@IsExtraVR = @IsExtraVR
+				,@KickOffTime = @KickOffTime
 				,@AccumulatedBalance = @AccumulatedBalance OUTPUT
 		END
 		ELSE IF @virtualrate = 1 --For a remaining sport, get VR1
@@ -549,6 +557,8 @@ BEGIN
 				,@LeagueID = @LeagueID
 				,@Istest = @Istest
 				,@CurrencyID = @currency
+				,@IsExtraVR = @IsExtraVR
+				,@KickOffTime = @KickOffTime
 				,@AccumulatedBalance = @AccumulatedBalance OUTPUT
 		END
 
@@ -562,17 +572,6 @@ BEGIN
 		END
 
 		SET @virtualrate = Isnull(@new_virtualrate, 1)
-	END
-
-	--Get data from DCS structure
-	IF @sporttype IN (44)
-		AND @isLicensee = 0 --MuayThai for Credit
-	BEGIN
-		SELECT @MaxperMatch = Isnull(maxpermatch, @Zero)
-		FROM dbo.custbetsetting3rd_member bs WITH (NOLOCK)
-		WHERE bs.custid = @custid
-			AND bs.bettype = 3
-			AND bs.sporttype = @Sporttype
 	END
  
 	SELECT @username username

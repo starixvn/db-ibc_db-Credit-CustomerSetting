@@ -22,6 +22,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_CustomerGetVirtualRateBySportBettype]
 					@LeagueID			INT = -1,
 					@Istest				BIT = 0,
 					@CurrencyID			INT = 0,
+					@IsExtraVR			BIT = 0,
+					@KickOffTime		DATETIME = NULL,
 					@AccumulatedBalance	BIT = 0 OUTPUT
 AS
 /*
@@ -51,12 +53,13 @@ AS
 		-- 20230307@VN-Johnson: Return Basketball VR to its original state [redmine:#184339]
 		-- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
 		-- 20240328@VN-Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
+		-- 20241230@VN-Winfred: [NAP CM] VR Engine - Pre-match Period with Extra VR [redmine: #215791]
 
     Parameter's Explanation:
 */
 BEGIN
     SET NOCOUNT ON
-	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00, @CurrentHKDate DATETIME, @CurrentHKTime TIME, @DateOfWeek TINYINT
+	DECLARE @VRLeagueGroupID SMALLINT, @CurrencyModifier SMALLMONEY = 1.00, @CurrentDate DATETIME, @CurrentHKDate DATETIME, @CurrentHKTime TIME, @DateOfWeek TINYINT, @TimeBeforeKO SMALLMONEY = 0
 	DECLARE @SiteType TINYINT
 	
 	IF @usertype = 2 --CN88 : Not apply VR
@@ -64,11 +67,16 @@ BEGIN
 
 	SELECT @StakeRM = ISNULL(@StakeRM,0),
 		   @CustomerClass = ISNULL(@CustomerClass,0)
-
-	SELECT @CurrentHKDate = DATEADD(HOUR, 12, GETDATE())
+	SELECT @CurrentDate  = GETDATE()
+	SELECT @CurrentHKDate = DATEADD(HOUR, 12, @CurrentDate)
 	SELECT @CurrentHKTime = CONVERT(VARCHAR(12),@CurrentHKDate,114)
 	SELECT @DateOfWeek = DATEPART(DW,@CurrentHKDate)
 	SELECT @SiteType = CASE WHEN @IsLicensee = 1 THEN 2 ELSE 1 END --1 : Credit, 2: Deposit
+
+	IF @IsExtraVR = 1
+	BEGIN
+		SET @TimeBeforeKO = DATEDIFF(MINUTE, @CurrentDate, @KickOffTime);
+	END
 			
 	IF @SportType = 1
 	BEGIN --For Soccer
@@ -235,6 +243,8 @@ BEGIN
 		,@LiveIndicator			= @isLive
 		,@Istest				= @Istest
 		,@CurrencyID			= @CurrencyID
+		,@IsExtraVR				= @IsExtraVR
+		,@TimeBeforeKO			= @TimeBeforeKO
 		,@AccumulatedBalance	= @AccumulatedBalance OUTPUT
 
 	ReturnVR:

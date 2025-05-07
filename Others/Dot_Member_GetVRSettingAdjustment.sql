@@ -17,6 +17,8 @@ ALTER PROCEDURE dbo.Dot_Member_GetVRSettingAdjustment (
 			,@Istest				BIT = 0
 			,@CurrencyID			INT = 0
 			,@AccumulatedBalance	BIT = 0 OUTPUT
+			,@IsExtraVR				BIT = 0
+			,@TimeBeforeKO			SMALLMONEY = 0
 )
 AS  
 /*  
@@ -31,6 +33,7 @@ AS
 		- 20230307@Johnson: Return Basketball VR to its original state [redmine:#184339]
 		- 20230421@VN-Elodie: Change data type of betfrom [Redmine:#177296]
 		- 20240328@Luke: [NAP CM] VR Engine - Add in new criteria: Apply follow the VR accumulated balance, Currency [Redmine: #201333]
+		- 20241230@Winfred: [NAP CM] VR Engine - Pre-match Period with Extra VR [redmine: #215791]
 
 	Param's Explanation:  
 	DECLARE @VRValue SMALLMONEY = 0.5
@@ -51,6 +54,8 @@ AS
 		@Time          = '23:59:59.9999', 
 		@LiveIndicator = 1,
 		@CurrencyID	   = 20,
+		@@IsExtraVR	   = 0,
+		@@TimeBeforeKO = 120,
 		@AccumulatedBalance = @AccumulatedBalance OUTPUT
 	SELECT @VRValue, @AccumulatedBalance
 */  
@@ -128,12 +133,20 @@ BEGIN
 		AND r.VR_From <= @VRValue
 		AND r.VR_To > = CASE WHEN r.VR_To = 0 THEN r.VR_To ELSE @VRValue END
 		AND r.VRStatus IN( 2,ISNULL(@VRStatus,r.VRStatus))
+		AND 1 = (CASE WHEN @IsExtraVR = 1
+							AND r.TimeBeforeKO = (CASE WHEN r.TimeBeforeKO * 60 >= @TimeBeforeKO AND @TimeBeforeKO > 0 AND r.Adjustmenttype = 3 THEN r.TimeBeforeKO
+													   WHEN r.Adjustmenttype <> 3 THEN r.TimeBeforeKO   
+													ELSE -1 END) THEN 1
+					  WHEN @IsExtraVR = 0 AND r.Adjustmenttype <> 3 THEN 1
+					  ELSE 0 
+				 END)
 		AND rd0.ruleid IS NULL
 		AND r.Status <= @Istest
 	ORDER BY r.Priority
 
 	SELECT @VRValue = CASE WHEN @Adjustmenttype = 1 THEN @AdjustmentValue
 							WHEN @Adjustmenttype = 2 THEN @AdjustmentValue + @VRValue
+							WHEN @Adjustmenttype = 3 THEN (1 + @AdjustmentValue) * @VRValue
 							WHEN @VRStatus = 0 AND @Sporttype NOT IN(43) THEN 1.00
 							ELSE @VRValue END
 END
