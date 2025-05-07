@@ -439,11 +439,11 @@ BEGIN
 					BREAK;
 					
 				UPDATE c
-				SET c.CCSoccer = CASE WHEN t.CC1 IS NOT NULL AND t.CC1 <> ISNULL(c.CCSoccer, -1) THEN NULLIF(t.CC1,-1) ELSE c.CCSoccer END,
-					c.CCBasketball = CASE WHEN t.CC2 IS NOT NULL AND t.CC2 <> ISNULL(c.CCBasketball, -1) THEN NULLIF(t.CC2,-1) ELSE c.CCBasketball END,
-					c.CCEsports = CASE WHEN t.CC43 IS NOT NULL AND t.CC43 <> ISNULL(c.CCEsports, -1) THEN NULLIF(t.CC43,-1) ELSE c.CCEsports END,
-					c.CCOtherSports = CASE WHEN t.CC99 IS NOT NULL AND t.CC99 <> ISNULL(c.CCOtherSports, -1) THEN NULLIF(t.CC99,-1) ELSE  c.CCOtherSports END,
-					c.CCNonSports = CASE WHEN t.CC229 IS NOT NULL AND t.CC229 <> ISNULL(c.CCNonSports, -1) THEN NULLIF(t.CC229,-1) ELSE c.CCNonSports END,
+				SET c.CCSoccer = CASE WHEN t.CC1 IS NOT NULL THEN NULLIF(t.CC1,-1) ELSE c.CCSoccer END,
+					c.CCBasketball = CASE WHEN t.CC2 IS NOT NULL THEN NULLIF(t.CC2,-1) ELSE c.CCBasketball END,
+					c.CCEsports = CASE WHEN t.CC43 IS NOT NULL THEN NULLIF(t.CC43,-1) ELSE c.CCEsports END,
+					c.CCOtherSports = CASE WHEN t.CC99 IS NOT NULL THEN NULLIF(t.CC99,-1) ELSE  c.CCOtherSports END,
+					c.CCNonSports = CASE WHEN t.CC229 IS NOT NULL THEN NULLIF(t.CC229,-1) ELSE c.CCNonSports END,
 					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 					INNER JOIN @tmpCustClassSport t ON c.custid = t.custid
