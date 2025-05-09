@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_03]  
+CREATE PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_03]  
 	@custid				INT = 0,  
 	@roleid				TINYINT = 0,
 	@DangerType			TINYINT = 0,
@@ -51,6 +51,8 @@ Revisions:
 	- 20241218@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	- 20250104@Winfred: Update customer's danger level Check exists data [Redmine:#216754] 
 	- 20250221@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
+	- 20250121@Winfred: [NAP CM] Scale Out DBCUST - Apply Inhouse replication for Customer Class[Redmine: #214119]
+	- 20250428@Thomas: Optimize CustomerClass update logic to prevent DB bloat [RedmineID: #225089]
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -355,6 +357,7 @@ BEGIN
 				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tmp t ON c.custid = t.custid AND t.roleid = 1
+			WHERE t.CustomerClass IS NOT NULL AND t.CustomerClass <> ISNULL(t.OldCustomerClass, -1)
 			
 			IF dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
 			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
@@ -444,6 +447,11 @@ BEGIN
 					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 					INNER JOIN @tmpCustClassSport t ON c.custid = t.custid
+				WHERE (t.CC1 IS NOT NULL AND t.CC1 <> ISNULL(c.CCSoccer, -1))
+					OR (t.CC2 IS NOT NULL AND t.CC2 <> ISNULL(c.CCBasketball, -1))
+					OR (t.CC43 IS NOT NULL AND t.CC43 <> ISNULL(c.CCEsports, -1))
+					OR (t.CC99 IS NOT NULL AND t.CC99 <> ISNULL(c.CCOtherSports, -1))
+					OR (t.CC229 IS NOT NULL AND t.CC229 <> ISNULL(c.CCNonSports, -1))
 					
 				DELETE @tmpCustClassSport	
 			END	
@@ -487,9 +495,10 @@ BEGIN
 					AND Target.SportType = Source.SportType
 				WHEN MATCHED 
 				THEN UPDATE SET Target.CustomerClass = Source.CustomerClass,
-								Target.ModifiedDate = GETDATE()
+								Target.ModifiedDate = GETDATE(),
+								Target.RepUpdateTime = [dbo].[f_GetDateTime2]()
 				WHEN NOT MATCHED BY TARGET
-				THEN INSERT(custid,sporttype,customerclass,ModifiedDate) VALUES(Source.custid,source.sporttype,source.customerclass,GETDATE());		
+				THEN INSERT(custid,sporttype,customerclass,ModifiedDate,RepUpdateTime) VALUES(Source.custid,source.sporttype,source.customerclass,GETDATE(),[dbo].[f_GetDateTime2]());		
 				
 				DELETE @tmpCustClassSport2
 			END	
