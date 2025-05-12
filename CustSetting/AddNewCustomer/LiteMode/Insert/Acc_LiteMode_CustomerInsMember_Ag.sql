@@ -44,6 +44,7 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
 		- 20250115@Johnson: Check member Comm group [RedmineID: #216405]
+		- 20250521@Johnson: Add log Potential Win Limit [RedmineID: #226060]
 
 	Param's Explanation: 
 		- @SettingXML:
@@ -1300,6 +1301,14 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max)), SPACE(1))
 			+ '</Discount>'
+			+ '<PotentialWinLimit GroupType="162">' 
+				+ COALESCE(CAST((SELECT SportType,BetType,0 WinLimit,1 IsAutoReset,SettingLevel,ProductID
+							FROM #TmpProductSettingDetail
+							WHERE SettingType = 30
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
+			+ '</PotentialWinLimit>'
 			+ '<BetSetting GroupType="151">'
 				+ COALESCE(REPLACE(REPLACE(@SettingType26,'<Root>',''),'</Root>',''), SPACE(1)) --SB
 				+ COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet, MaxPerMatch MPM	

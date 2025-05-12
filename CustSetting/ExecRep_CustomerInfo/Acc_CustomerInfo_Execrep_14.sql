@@ -51,6 +51,7 @@ AS
 			- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 			- 20241206@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 			- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]
+			- 20250513@Johnson: Add Potential Winning Limit/Threshold [redmine:#226060]
 	Param's Explanation: 
 	
 */
@@ -1057,6 +1058,27 @@ BEGIN
 		BEGIN CATCH 
 			SELECT @ErrCode = 27								
 			RETURN	
+		END CATCH
+		
+		/********************************************* Potential Win Limit : SettingType = 30 ****************************************/
+		IF @roleid = 1
+		BEGIN TRY
+			CREATE TABLE #SportBettypeFilter30 (ProductID TINYINT, SportType SMALLINT,Bettype INT)
+			
+			INSERT INTO #SportBettypeFilter30(ProductID ,SportType ,Bettype)
+			SELECT ProductID ,SportType ,Bettype
+			FROM #ProductSettingDetail_tmp00
+			WHERE SettingType IN (30)
+
+			INSERT INTO CustPotentialWinLimit(CustID,SportType,BetType,PotentialWinLimit,IsAutoReset,RepUpdateTime)
+			SELECT @CustID, Sporttype, Bettype, 0 PotentialWinLimit, 1 IsAutoReset, dbo.f_GetDateTime2()
+			FROM #SportBettypeFilter30
+			
+			DROP TABLE #SportBettypeFilter30
+		END	TRY
+		BEGIN CATCH
+			SELECT @ErrCode = 30
+			RETURN
 		END CATCH
 		
 		DROP TABLE #SportBettypeFilter1

@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].Acc_CustomerIns_CloneMemberSetting_Sel
 	@SettingType26 VARCHAR(MAX)= '' OUTPUT,
 	@SettingType27 VARCHAR(MAX)= '' OUTPUT,
 	@SettingType28 VARCHAR(MAX)= '' OUTPUT,
+	@SettingType30 VARCHAR(MAX)= '' OUTPUT,
 	@SettingStatus TINYINT = 0
 AS
 /*
@@ -19,6 +20,7 @@ AS
 	Revisions: 
 		- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240619@Johnson: Scale out dbcust [redmine:#199915]
+		- 20250512@Johnson: Add Potential Win Limit [redmine: #226060]
 	Examples:
 		DECLARE @SettingType25 VARCHAR(MAX)= '',
 				@SettingType26 VARCHAR(MAX)= '',
@@ -33,12 +35,14 @@ AS
 			,@SettingType26 = @SettingType26 OUT
 			,@SettingType27 = @SettingType27 OUT
 			,@SettingType28 = @SettingType28 OUT
+			,@SettingType30 = @SettingType30 OUT
 			,@SettingStatus = 3
 
 		SELECT CONVERT(XML,@SettingType25)
 			,CONVERT(XML,@SettingType26)
 			,CONVERT(XML,@SettingType27)
 			,CONVERT(XML,@SettingType28)
+			,CONVERT(XML,@SettingType30)
 */	
 BEGIN
 	SET NOCOUNT ON
@@ -59,7 +63,7 @@ BEGIN
 	INSERT INTO @ProductSettingDetail(SportType,BetType,SettingType,IsLive,Child_DisplayOrder)
 	SELECT SportType,BetType,SettingType,IsLive,Child_DisplayOrder
 	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteid,@currency)
-	WHERE SettingType IN (25,26,27,28)
+	WHERE SettingType IN (25,26,27,28,30)
 
 	SELECT @SettingType25 = CONVERT(VARCHAR(MAX),
 				(
@@ -141,5 +145,19 @@ BEGIN
 				)
 			)
 	END
+
+	SELECT @SettingType30 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT cs.SportType
+						, cs.BetType
+						, cs.PotentialWinLimit as WinLimit
+						, cs.IsAutoReset
+					FROM dbo.CustPotentialWinLimit cs WITH(NOLOCK)
+						INNER JOIN @ProductSettingDetail fil ON fil.SportType = cs.SportType AND fil.BetType = cs.BetType AND fil.SettingType = 30
+					WHERE cs.CustID	= @ExistingCustID
+					ORDER BY fil.Child_DisplayOrder
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
 END	
 GO
