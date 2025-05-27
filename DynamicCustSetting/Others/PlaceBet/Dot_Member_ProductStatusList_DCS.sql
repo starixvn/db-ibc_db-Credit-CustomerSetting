@@ -35,6 +35,7 @@ AS
 		- 20241119@Virgil: Add GPI Live Casino to Live Casino [Redmine: #213479] 
 		- 20250409@Dave: 3rdProduct Integration (HOTDOG-139; Microgaming Live Casino-124; Playtech Live Casino-129) [RedmineID: #221188]
 		- 20250417@Johnson:  Upgrade ExchangeID data type [redmineID: #224440]
+		- 20250523@Dave: Add W Casino to Live Casino (136) [Redmine: #223130]
 	Example: EXEC Dot_Member_ProductStatusList_DCS @CustID = 1176092, @IsTest = 0
 */
 BEGIN
@@ -86,6 +87,7 @@ BEGIN
 											WHEN 144	THEN CAST(11500 AS SMALLINT)
 											WHEN 124	THEN CAST(13900 AS SMALLINT)
 											WHEN 129	THEN CAST(15600 AS SMALLINT)
+											WHEN 136	THEN CAST(12000 AS SMALLINT)
 											--Other RNG Casino
 											WHEN 245	THEN CAST(4601	AS SMALLINT)
 											WHEN 208	THEN CAST(2101	AS SMALLINT)
@@ -108,7 +110,7 @@ BEGIN
 								AND psc.Currency IN(@Currency,0) 
 								AND NOT (psc.Currency = 0  AND psc.SiteID = 0) -- Not apply config for all site currency
 								AND  (CASE WHEN psc.SportType IN (248,237,156,224,139) THEN 9906 --RNG Casino
-										   WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176,138,144,124,129) THEN 9911 --Live Casino
+										   WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176,138,144,124,129,136) THEN 9911 --Live Casino
 										   WHEN psc.SportType IN (245,208,171,200,240) THEN 9918 --Other RNG Casino
 										   WHEN psc.SportType IN (220,222) THEN 9919 --Keno/Lottery
 										   ELSE psc.SportType END) = ps.Sporttype
@@ -151,6 +153,7 @@ BEGIN
 											WHEN 144	THEN CAST(11500 AS SMALLINT)
 											WHEN 124	THEN CAST(13900 AS SMALLINT)
 											WHEN 129	THEN CAST(15600 AS SMALLINT)
+											WHEN 136	THEN CAST(12000 AS SMALLINT)
 											--Other RNG Casino
 											WHEN 245	THEN CAST(4601	AS SMALLINT)
 											WHEN 208	THEN CAST(2101	AS SMALLINT)
@@ -173,7 +176,7 @@ BEGIN
 								AND psc.Currency IN(@Currency,0) 
 								AND NOT (psc.Currency = 0  AND psc.SiteID = 0) -- Not apply config for all site currency
 								AND  (CASE WHEN psc.SportType IN (248,237,156,224,139) THEN 9906 --RNG Casino
-										   WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176,138,144,124,129) THEN 9911 --Live Casino
+										   WHEN psc.SportType IN (159,170,211,225,233,236,239,241,242,243,244,228,176,138,144,124,129,136) THEN 9911 --Live Casino
 										   WHEN psc.SportType IN (245,208,171,200,240) THEN 9918 --Other RNG Casino
 										   WHEN psc.SportType IN (220,222) THEN 9919 --Keno/Lottery
 										   ELSE psc.SportType END) = ps.Sporttype
