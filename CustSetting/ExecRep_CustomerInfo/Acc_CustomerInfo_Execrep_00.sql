@@ -13,6 +13,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 	@SettingType26 VARCHAR(MAX)= '', --Bet Setting
 	@SettingType27 VARCHAR(MAX)= '', --Parlay Max Payout
 	@SettingType28 VARCHAR(MAX)= '', --PT
+	@SettingType30 VARCHAR(MAX)= '', --Potential Win Limit
 	@SettingStatus TINYINT = 0,
 	@ErrCode INT = 0 OUTPUT,
 	@ProductProfile	VARCHAR(MAX) = NULL OUTPUT -- Json
@@ -77,6 +78,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 			- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 			- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
+			- 20250512@Johnson: Add Potential Win Limit for new member [redmine: #226060]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -610,10 +612,56 @@ BEGIN
 			END CATCH
 		END
 		
+		--Potential Win Limit
+		BEGIN
+			CREATE TABLE #SportBettypeFilter30 (ProductID TINYINT, SportType SMALLINT,Bettype INT,IsLive BIT, SettingType SMALLINT, RealProductId TINYINT)
+			DECLARE @NewPotentialWinLimitTbl TABLE (
+						SportType			SMALLINT
+						, BetType			INT
+						, WinLimit			MONEY
+						, IsAutoReset		BIT
+						)
+		
+			INSERT INTO #SportBettypeFilter30(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
+			SELECT ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId
+			FROM #ProductSettingDetail_ExecRep00
+			WHERE SettingType IN (30)
+		
+			IF ISNULL(@SettingType30,'') <> ''
+			BEGIN
+				SELECT @xml = CONVERT(XML,@SettingType30)
+				
+				INSERT INTO @NewPotentialWinLimitTbl(SportType, 
+					BetType, 
+					WinLimit,
+					IsAutoReset)
+				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
+					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
+					T.c.query('.').value('(R/@WinLimit)[1]', 'money') AS WinLimit,
+					T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+				FROM  @xml.nodes('/Root/R') T(c)
+			END		
+		
+			BEGIN TRY
+				IF @roleid = 1
+				BEGIN
+					INSERT INTO CustPotentialWinLimit(CustID,SportType,BetType,PotentialWinLimit,IsAutoReset,RepUpdateTime)
+					SELECT @custid , cs.SportType, cs.BetType, cs.WinLimit, cs.IsAutoReset, dbo.f_GetDateTime2()
+					FROM @NewPotentialWinLimitTbl cs
+						INNER JOIN #SportBettypeFilter30 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
+				END	
+			END TRY
+			BEGIN CATCH 
+				SELECT @ErrCode = 30			
+				RETURN	
+			END CATCH			
+		END 
+
 		DROP TABLE #ProductSettingDetail_ExecRep00
 		DROP TABLE #SportBettypeFilter25		
 		DROP TABLE #SportBettypeFilter27
 		DROP TABLE #SportBettypeFilter28
+		DROP TABLE #SportBettypeFilter30
 	END
 
 	/*DOMINIC-CUSTOMER SETTING RENOVATION-START*/

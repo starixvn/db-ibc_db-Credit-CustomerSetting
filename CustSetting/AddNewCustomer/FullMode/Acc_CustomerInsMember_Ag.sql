@@ -206,6 +206,7 @@ Revisions:
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 	- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20250114@Johnson: Check member Comm group [RedmineID: #216405]
+	- 20250509@Johnson: Apply Potential Win Limit for new customer [RedmineID: #226060]
 Param's Explanation:	
 	- @ErrCode:
 		= 0: add new member successfully.
@@ -250,6 +251,9 @@ Param's Explanation:
 			{"SportType": "9913","BetType": "915","IsLive": "1","AgentPT": "38"},
 			{"SportType": "9913","BetType": "916","IsLive": "1","AgentPT": "38"},
 			{"SportType": "9914","BetType": "916","IsLive": "0","AgentPT": "38"}
+		],
+		"162": [
+			{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1"}
 		]
 	}'
 	
@@ -267,6 +271,7 @@ BEGIN
 			,@SettingType26	VARCHAR(MAX)= ''
 			,@SettingType27	VARCHAR(MAX)= ''
 			,@SettingType28	VARCHAR(MAX)= ''
+			,@SettingType30 VARCHAR(MAX)= ''
 
     SET @startRun = GETDATE()
 
@@ -370,6 +375,7 @@ BEGIN
 			,@SettingType26 = @SettingType26 OUT
 			,@SettingType27 = @SettingType27 OUT
 			,@SettingType28 = @SettingType28 OUT
+			,@SettingType30 = @SettingType30 OUT
 			,@SettingStatus = @SettingStatus
 	END
 	ELSE --Fullmode --> Get setting from Json input value
@@ -429,6 +435,31 @@ BEGIN
 						FOR XML RAW('R'), ROOT ('Root'), TYPE
 					)
 				)
+
+		SELECT @SettingType30 = CONVERT(VARCHAR(MAX),
+					(
+						SELECT SportType,BetType,WinLimit,IsAutoReset
+						FROM OPENJSON(@SettingXML,'$."162"') WITH (
+								SportType SMALLINT  '$.SportType'
+								,BetType INT  '$.BetType'								
+								,WinLimit MONEY  '$.WinLimit'
+								,IsAutoReset BIT  '$.IsAutoReset'
+							)
+						FOR XML RAW('R'), ROOT ('Root'), TYPE
+					)
+				)	
+
+		IF ISNULL(@SettingType30,'') = ''
+		BEGIN
+			SELECT @SettingType30 = CONVERT(VARCHAR(MAX),
+				(
+					SELECT SportType,BetType,0 WinLimit	,1 IsAutoReset
+					FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency)
+					WHERE SettingType = 30
+					FOR XML RAW('R'), ROOT ('Root'), TYPE
+				)
+			)
+		END 			
 	END
 
 	--------START: Update parametter-------------------------------------------------------------------
@@ -575,6 +606,7 @@ BEGIN
 			--@SettingType26 = @SettingType26, --Bet Setting
 			@SettingType27 = @SettingType27, --Parlay Max Payout
 			@SettingType28 = @SettingType28, --PT
+			@SettingType30 = @SettingType30, --Potential Win Limit
 			@SettingStatus = @SettingStatus,
 			@ErrCode = @ErrCode OUTPUT
 
@@ -906,7 +938,13 @@ BEGIN
 			AgentPT			SMALLMONEY
 			)
 
-	
+	DECLARE @tblPT30 TABLE (
+			SportType		SMALLINT,
+			BetType			INT,
+			WinLimit		MONEY,
+			IsAutoReset		BIT
+			)
+
 	--Log Commission
 	SELECT @xml = CONVERT(XML,@SettingType25)
 	
@@ -979,6 +1017,40 @@ BEGIN
 		@UserID = @Creator,
 		@CustID = @CustID,
 		@ActionID = 263003,
+		@TrackingValue = @LogSPData,
+		@duration = @duration 
+
+	--Log Potential Win Limit
+	SELECT @xml = CONVERT(XML, @SettingType30)
+	INSERT INTO @tblPT30(
+			SportType,
+			BetType, 
+			WinLimit,
+			IsAutoReset)
+	SELECT
+		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
+		T.c.query('.').value('(R/@BetType)[1]', 'int') AS BetType,
+		T.c.query('.').value('(R/@WinLimit)[1]', 'money') AS WinLimit,
+		T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+	FROM  @xml.nodes('/Root/R') T(c)
+
+	SELECT @LogSPData = '<Root>' 
+			+ '<WinLimit>'
+				+ COALESCE(CAST((SELECT cs.SportType, cs.BetType, cs.ProductID, WinLimit, IsAutoReset
+							FROM @tblPT30 t
+							INNER JOIN (SELECT SportType, BetType, ProductID  
+										FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency)
+										WHERE SettingType = 30) cs ON t.SportType = cs.SportType
+																	AND t.BetType = cs.BetType
+							FOR XML RAW('R')
+							) as VARCHAR(max)), SPACE(1))
+			+ '</WinLimit>'
+			+ '</Root>'
+
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserID = @Creator,
+		@CustID = @CustID,
+		@ActionID = 265000,
 		@TrackingValue = @LogSPData,
 		@duration = @duration 
 

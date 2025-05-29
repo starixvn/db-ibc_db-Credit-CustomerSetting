@@ -15,7 +15,7 @@ AS
 		- 20241125@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]   
-
+		- 20250513@Johnson: Add Potential Win Limit [redmine: #226060]
 	Param's Explanation:
 
 	Examples:
@@ -161,6 +161,12 @@ BEGIN
 		OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, dbo.f_GetDateTime2() 
 		INTO BetSetting_Member_Del_Inhouse(CustID,Sporttype,Bettype,RepUpdateTime)
 		FROM BetSetting_Member c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
+
+		DELETE c
+		OUTPUT deleted.CustID, deleted.Sporttype, deleted.BetType, dbo.f_GetDateTime2()
+		INTO CustPotentialWinLimit_Del_Inhouse(CustID,Sporttype,Bettype,RepUpdateTime)
+		FROM CustPotentialWinLimit c WITH(ROWLOCK) 
 		WHERE CustID = @CustID
 	END
 END
