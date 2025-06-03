@@ -1,9 +1,10 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv,asv_CashService" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerLimitCreatedAccountCheck]
 	@custid					INT ,
 	@RuleID					VARCHAR(10) ,
 	@existingMrecommend		INT = 0,
 	@existingSrecommend		INT = 0,
+	@ServiceType			TINYINT = 0,
 	@Prefix					VARCHAR(50),
 	@GroupName				VARCHAR(50),
 	@IsQRCode				BIT,
@@ -22,11 +23,11 @@ AS
  DB: DBCUST/CustDB
   
  Revisions:  
- - 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
- - 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
- - 20240704@Helen: Revise code for scaleout dbcust - remove rule check IP - [Redmine:#206823]
- - 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
-
+	- 20230622@Helios: Alpha/ExtNAP - Create new downlines - Remove some obsolete rules [Redmine: #190167]
+	- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+	- 20240704@Helen: Revise code for scaleout dbcust - remove rule check IP - [Redmine:#206823]
+	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
+	- 20250423@Elodie: Offer Cash Member [redmine: #223896] 
  */
 BEGIN
 
@@ -37,7 +38,7 @@ BEGIN
 		@Srecommend		INT ,		
 		@Mrecommend		INT ,	
 		@Recommend		INT ,
-		@RoleID			INT
+		@RoleID			INT 		 
 
 	SELECT 
 		@RoleID		=	roleid,
@@ -45,7 +46,7 @@ BEGIN
 		@Mrecommend =	mrecommend,
 		@Recommend	=	recommend
 	FROM custinfo WITH(NOLOCK) 
-	WHERE custid = @custid
+	WHERE custid = @custid		
 
 	-- Limit Create New Account
 	DECLARE @ToDay				DATE,
@@ -73,7 +74,7 @@ BEGIN
 	DECLARE @downline	INT
 
 	---------------------------------------------------------------------------------------------------------------------
-	IF @RuleID IN('AG','DAG') -- Normal member, Super/master direct member
+	IF @RuleID IN('AG','DAG','CashAG') -- Normal member, Super/master direct member, cash member
 	BEGIN
 		IF @RuleID = 'DAG' -- SP related : Acc_CustomerInsMember_DirectMember_Validate
 		BEGIN
@@ -143,65 +144,121 @@ BEGIN
 				END
 			END
 		END
-		IF @RuleID = 'AG'  -- SP related : Acc_CustomerInsMember_Ag
+		IF @RuleID IN('AG','CashAG')  
 		BEGIN
-			-- Limit Create New Account
-			 IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid)) 
-			 BEGIN
-				SELECT @cntDownlines = COUNT(1) 
-					FROM customer WITH(NOLOCK) 
-					WHERE recommend = @custid 
-						AND creatdate >= @today
-						AND roleid = 1
-				IF @cntDownlines >=5
-				BEGIN
-					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry, you can only create 5 members per day, please try again tomorrow.'
-											ELSE [dbo].[f_Get_MsgNamebyMsgID](40062, @Language) 
-									 END,
-						   @ErrCode = 1002
-					RETURN
-				END
-			 END
-			--END
-
-			-- Agent can only create up to 200 new members every day by QR
-			IF @IsQRCode = 1
+			IF @RuleID IN('AG') -- SP related : Acc_CustomerInsMember_Ag
 			BEGIN
-				DECLARE @QRMemberCount INT
-
-				SELECT @QRMemberCount = COUNT(1) 
-				FROM Customer a WITH(NOLOCK) 
-					INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
-				WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
-
-				IF @QRMemberCount >= 200
+				-- Limit Create New Account
+				IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid)) 
 				BEGIN
-					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'You can only create up to 200 new members every day by this function.'
-											ELSE [dbo].[f_Get_MsgNamebyMsgID](40051,@Language)
+					IF @ServiceType = 0
+					BEGIN
+						SELECT @cntDownlines = COUNT(1) 
+							FROM customer WITH(NOLOCK) 
+							WHERE recommend = @custid 
+								AND creatdate >= @today
+								AND roleid = 1
+					END
+					ELSE IF @ServiceType = 1
+					BEGIN
+						SELECT @cntDownlines = COUNT(1) 
+							FROM customer ci WITH(NOLOCK) 
+								CROSS APPLY  
+								(
+									SELECT TOP 1 cs.ServiceType								
+									FROM vw_CustInfoExtra cs WITH(NOLOCK)
+									WHERE cs.CustID = ci.custid
+								) AS cs
+							WHERE ci.recommend = @custid 
+								AND ci.creatdate >= @today
+								AND ci.roleid = 1
+								AND cs.ServiceType = 0
+					END
+					
+					IF @cntDownlines >=5
+					BEGIN
+						SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Sorry, you can only create 5 members per day, please try again tomorrow.'
+												ELSE [dbo].[f_Get_MsgNamebyMsgID](40062, @Language) 
 										END,
-						   @ErrCode = 40051
-					RETURN
+							@ErrCode = 1002
+						RETURN
+					END
+				END
+				--END
+
+				-- Agent can only create up to 200 new members every day by QR
+				IF @IsQRCode = 1
+				BEGIN
+					DECLARE @QRMemberCount INT
+					IF @ServiceType = 0
+					BEGIN
+						SELECT @QRMemberCount = COUNT(1) 
+							FROM Customer a WITH(NOLOCK) 
+								INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
+							WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+					END
+					ELSE IF @ServiceType = 1
+					BEGIN
+						SELECT @QRMemberCount = COUNT(1) 
+							FROM Customer a WITH(NOLOCK) 
+								CROSS APPLY  
+								(
+									SELECT TOP 1 cs.ServiceType								
+									FROM vw_CustInfoExtra cs WITH(NOLOCK)
+									WHERE cs.CustID = a.custid
+								) AS cs
+								INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
+							WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+								AND cs.ServiceType = 0
+					END
+
+					IF @QRMemberCount >= 200
+					BEGIN
+						SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'You can only create up to 200 new members every day by this function.'
+												ELSE [dbo].[f_Get_MsgNamebyMsgID](40051,@Language)
+											END,
+							@ErrCode = 40051
+						RETURN
+					END
+				END
+
+				-- Limit maximum account created per day by Site (300 accounts, IBCIndo only)
+				IF @DefaultValueLimitAcc > 0
+				BEGIN
+					IF @ServiceType = 0	
+					BEGIN
+						SET @lastAccountToDay = (SELECT  COUNT(1)
+							FROM Customer c WITH(NOLOCK)
+							WHERE c.recommend = @recommend
+								AND c.roleid = 1
+								AND c.creatdate  > @CurrentDate)
+					END
+					ELSE IF @ServiceType = 1
+					BEGIN
+						SET @lastAccountToDay = (SELECT  COUNT(1)
+							FROM Customer c WITH(NOLOCK)
+								CROSS APPLY  
+								(
+									SELECT TOP 1 cs.ServiceType								
+									FROM vw_CustInfoExtra cs WITH(NOLOCK)
+									WHERE cs.CustID = c.custid
+								) AS cs
+							WHERE c.recommend = @recommend 
+								AND c.roleid = 1
+								AND cs.ServiceType = 0
+								AND c.creatdate  > @CurrentDate)
+					END
+					IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
+					BEGIN
+						SELECT	@ErrMsg = CASE @Language  WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
+												ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10))),'(300)',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
+											END,
+								@ErrCode = 40056	
+						RETURN
+					END
 				END
 			END
 
-			-- Limit maximum account created per day by Site (300 accounts, IBCIndo only)
-			IF @DefaultValueLimitAcc > 0
-			BEGIN
-				SET @lastAccountToDay = (SELECT  COUNT(1)
-						FROM Customer c WITH(NOLOCK)
-						WHERE c.recommend = @recommend
-							AND c.roleid = 1
-							AND c.creatdate  > @CurrentDate)
-				IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
-				BEGIN
-					SELECT	@ErrMsg = CASE @Language  WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
-											ELSE REPLACE(REPLACE([dbo].[f_Get_MsgNamebyMsgID](40056,@Language),'<300>',CAST(@DefaultValueLimitAcc AS VARCHAR(10))),'(300)',CAST(@DefaultValueLimitAcc AS VARCHAR(10)))
-										END,
-							@ErrCode = 40056	
-					RETURN
-				END
-			END
-		
 			-- Cannot create more 46656 accounts Member
 			DECLARE @rowcnt INT 
 		
@@ -262,36 +319,55 @@ BEGIN
 			END
 		END
 
-		-- Check Limit max members creation per Super
-		IF @SystemID <> 1
+		IF @RuleID NOT IN('CashAG') 
 		BEGIN
-			DECLARE 
-				@CurrentMembers			INT,  
-				@MaxMemberLimit			INT
+			-- Check Limit max members creation per Super
+			IF @SystemID <> 1
+			BEGIN
+				DECLARE 
+					@CurrentMembers			INT,  
+					@MaxMemberLimit			INT
     
-			SELECT @MaxMemberLimit = MaxMember  
-			FROM dbo.CustSuper WITH (NOLOCK)  
-			WHERE CustId = @Srecommend  
+				SELECT @MaxMemberLimit = MaxMember  
+				FROM dbo.CustSuper WITH (NOLOCK)  
+				WHERE CustId = @Srecommend  
    
-			IF @MaxMemberLimit = -1  
-			BEGIN  
-				RETURN  
-			END  
-   
-			SELECT @CurrentMembers = COUNT(1)  
-			FROM dbo.custinfo WITH (NOLOCK)  
-			WHERE srecommend = @Srecommend  
-				AND roleid = 1  
-				AND [Enabled] = 1  
-   
-			SET @ErrCode = CASE WHEN @CurrentMembers > = @MaxMemberLimit THEN 1  ELSE 0  END  
-			IF @ErrCode <> 0  
-			BEGIN  
-				SELECT @ErrMsg = CASE @Language WHEN 'E' THEN N'Sorry, you cannot create more Member accounts because the total Members under your upline have exceeded the limit. Please contact your upline for further assistance.'  
-										ELSE [dbo].[f_Get_MsgNamebyMsgID](40038,@Language)  
-									END  
-				RETURN
-			END  
+				IF @MaxMemberLimit = -1  
+				BEGIN  
+					RETURN  
+				END  
+				IF @ServiceType = 0
+				BEGIN
+					SELECT @CurrentMembers = COUNT(1)  
+					FROM dbo.custinfo ci WITH (NOLOCK)  
+					WHERE srecommend = @Srecommend  
+						AND roleid = 1  
+						AND [Enabled] = 1  
+				END
+				ELSE IF @ServiceType = 1
+				BEGIN
+					SELECT @CurrentMembers = COUNT(1)  
+					FROM dbo.custinfo ci WITH (NOLOCK)  
+						CROSS APPLY  
+									(
+										SELECT TOP 1 cs.ServiceType								
+										FROM vw_CustInfoExtra cs WITH(NOLOCK)
+										WHERE cs.CustID = ci.custid
+									) AS cs
+					WHERE srecommend = @Srecommend  
+						AND roleid = 1  
+						AND [Enabled] = 1  
+						AND cs.ServiceType = 0
+				END
+				SET @ErrCode = CASE WHEN @CurrentMembers > = @MaxMemberLimit THEN 1  ELSE 0  END  
+				IF @ErrCode <> 0  
+				BEGIN  
+					SELECT @ErrMsg = CASE @Language WHEN 'E' THEN N'Sorry, you cannot create more Member accounts because the total Members under your upline have exceeded the limit. Please contact your upline for further assistance.'  
+											ELSE [dbo].[f_Get_MsgNamebyMsgID](40038,@Language)  
+										END  
+					RETURN
+				END  
+			END
 		END
 	END
 

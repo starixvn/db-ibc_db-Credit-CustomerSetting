@@ -1,4 +1,4 @@
-/*<info serverAlias="DBGLOB-GLOBCUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,asv_cust" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBGLOB-GLOBCUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,asv_cust,asv_CashService" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerIns_Rollback]
 (
 	@SubAccID	INT = 0, -- for sub account

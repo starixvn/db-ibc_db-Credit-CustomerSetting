@@ -11,6 +11,7 @@ AS
  Revision:  
   - 20230731@Helios: Init function [RedmineID: #189389]  
   - 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+  - 20250424@Elodie: Get profile setting for credit only [RedmineID: #223896] 
   
  Param's Explanation:  
  SELECT * FROM dbo.f_CustSetting_ProductProfileSel (NULL,3,487,0)  
@@ -25,6 +26,7 @@ RETURN
 		AND SettingStatus <> 2
 		AND (@SettingType IS NULL OR SettingType = @SettingType)
 		AND MarketType = 0
+		AND OfferType IN (0,1)
 	UNION
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,p.ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,GroupID,GroupType,SubType
@@ -38,6 +40,7 @@ RETURN
 		AND MarketType = 1
 		AND s.SiteID = @SiteID
 		AND 1 = CASE WHEN s.currency = @currency OR s.currency = 0 THEN 1 ELSE 0 END	
+		AND OfferType IN (0,1)
 	UNION
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,GroupID,GroupType,SubType
@@ -46,6 +49,7 @@ RETURN
 		AND SettingStatus <> 2
 		AND (@SettingType IS NULL OR SettingType = @SettingType)
 		AND MarketType = 0
+		AND OfferType IN (0,1)
 	UNION 
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,p.ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder,GroupID,GroupType,SubType
@@ -57,6 +61,7 @@ RETURN
 		AND MarketType = 1
 		AND s.SiteID = @SiteID
 		AND 1 = CASE WHEN s.currency = @currency OR s.currency = 0 THEN 1 ELSE 0 END
+		AND OfferType IN (0,1)
 		
 GO
    

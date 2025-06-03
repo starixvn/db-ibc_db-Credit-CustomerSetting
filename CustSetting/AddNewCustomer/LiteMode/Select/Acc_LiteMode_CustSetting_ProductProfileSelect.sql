@@ -1,11 +1,12 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_ProductProfileSelect]   
+ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_ProductProfileSelect]
 	@SettingStatus TINYINT = 0,
 	@site	VARCHAR(50)= '',
 	@currency SMALLINT = 0,
 	@GroupID TINYINT = NULL,
 	@SystemID TINYINT  = 0,
-	@Mode TINYINT = 1 -- 1: Addnew, 2: Edit
+	@Mode TINYINT = 1, -- 1: Addnew, 2: Edit
+	@ServiceType TINYINT = 0 -- 0: Credit, 1: Cash
 AS  
 /*  
 	 Created: 20230428@Johnson  
@@ -17,9 +18,11 @@ AS
 		- 20231201@Johnson: Separate PT for Live & RNG Casino [redmine: #197629]
 		- 20230918@Eden:  DCS Sportsbook Credit[redmine: #193083]
 		- 20240215@Eden: Unify Live Casino & RNG slot/RNG Casino [Redmine: #198960]
+		- 20250424@Elodie: Offer cash service [Redmine: #223896]
+
 	 Param's Explanation: 
 		@SettingStatus: 0: Pro, 1: UAT, 3: UAT/PRO
-
+		@ServiceType: 0: Credit, 1: Cash
 		@GroupID = 
 			NULL: LiteMode --> all sport
 			1: FullMode --> Sportsbook only
@@ -32,102 +35,98 @@ AS
 			@GroupID = 1,
 			@SystemID = 1
  */  
-BEGIN   
+BEGIN
 	SET NOCOUNT ON
-	CREATE TABLE #ProductSettingProfile (
-		 SettingType	smallint
-		,SportType	smallint
-		,BetType	smallint
-		,IsLive	bit
-		,GroupID	tinyint
-		,GroupType	tinyint
-		,GroupTypeOrder	tinyint
-		,SubGroupID	tinyint
-		,SubGroupOrder	tinyint
-		,SettingStatus	tinyint
-		,DisplayType	tinyint
-		,Child_DisplayOrder	int
-		,ProductSettingID	int
-		,MarketType	tinyint
-		,ProductID	tinyint
-		,SettingLevel	tinyint
-	)
-	
-	CREATE TABLE #ProductSettingSiteDisplay(ProductID TINYINT, SettingType SMALLINT,SystemID TINYINT,DisplayMode TINYINT)  
+	CREATE TABLE #ProductSettingProfile (SettingType SMALLINT, SportType SMALLINT, BetType SMALLINT, IsLive BIT, GroupID TINYINT, GroupType TINYINT, GroupTypeOrder TINYINT, 
+											SubGroupID TINYINT, SubGroupOrder TINYINT, SettingStatus TINYINT, DisplayType TINYINT, Child_DisplayOrder INT, ProductSettingID INT, 
+											MarketType TINYINT, ProductID TINYINT, SettingLevel TINYINT)
 
-	INSERT INTO #ProductSettingSiteDisplay(ProductID,SettingType,SystemID,DisplayMode)  
-	SELECT ProductID,SettingType,SystemID,DisplayMode
-	FROM dbo.ProductSettingSystemDisplay WITH(NOLOCK)  
-	WHERE SystemID = @SystemID  
+	CREATE TABLE #ProductSettingSiteDisplay (ProductID TINYINT, SettingType SMALLINT, SystemID TINYINT, DisplayMode TINYINT)
+
+	INSERT INTO #ProductSettingSiteDisplay (ProductID, SettingType, SystemID, DisplayMode)
+	SELECT ProductID, SettingType, SystemID, DisplayMode
+	FROM dbo.ProductSettingSystemDisplay WITH(NOLOCK)
+	WHERE SystemID = @SystemID
 
 	DECLARE @siteID SMALLINT
+	SELECT @siteID = siteid
+	FROM Site WITH(NOLOCK)
+	WHERE site = @site
 
-	SELECT @siteID = siteid FROM Site WITH(NOLOCK) WHERE site = @site
-	
+	IF @ServiceType = 1 -- Cash
+		SELECT @Mode = 2
+		
 	IF @SettingStatus IN (1,0)
 	BEGIN
-		INSERT INTO #ProductSettingProfile(SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType,ProductID,SettingLevel)
-		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType,ProductID,SettingLevel
-		FROM dbo.ProductSettingProfile p WITH(NOLOCK)
-		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
-			AND GroupID IS NOT NULL
-			AND MarketType = 0	
-			AND (GroupType NOT IN (155,158,159,160) 
-					OR (@Mode = 2 AND ISNULL(@GroupID,0) <> 1)
+		INSERT INTO #ProductSettingProfile
+			(SettingType, SportType, BetType, IsLive, GroupID, GroupType, GroupTypeOrder, SubGroupID, SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType,ProductID,SettingLevel)
+					SELECT SettingType, SportType, BetType, IsLive, GroupID, GroupType, GroupTypeOrder, SubGroupID, SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType, ProductID, SettingLevel
+			FROM dbo.ProductSettingProfile p WITH(NOLOCK)
+			WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+				AND ((@ServiceType = 0 AND OfferType IN (0,1)) OR (@ServiceType = 1 AND OfferType IN (0,2) AND SettingType NOT IN (25, 19, 3)))
+				AND GroupID IS NOT NULL
+				AND MarketType = 0
+				AND (GroupType NOT IN (155,158,159,160)
+				OR (@Mode = 2 AND ISNULL(@GroupID,0) <> 1)
 				)
-			AND 1 = CASE WHEN p.GroupID = @GroupID OR @GroupID IS NULL THEN 1 ELSE 0 END
-		UNION 
-		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType,ProductID,SettingLevel
-		FROM dbo.ProductSettingProfile p  WITH(NOLOCK)
-			INNER JOIN ProductProfileSiteCurrency s WITH(NOLOCK) ON p.ProductSettingID = s.ProductSettingID
-		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
-			AND GroupID IS NOT NULL
-			AND MarketType = 1
-			AND (GroupType NOT IN (155,158,159,160) 
-					OR (@Mode = 2 AND ISNULL(@GroupID,0) <> 1)
+				AND 1 = CASE WHEN p.GroupID = @GroupID OR @GroupID IS NULL THEN 1 ELSE 0 END
+		UNION
+			SELECT SettingType, SportType, BetType, IsLive, GroupID, GroupType, GroupTypeOrder, SubGroupID, SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType, ProductID, SettingLevel
+			FROM dbo.ProductSettingProfile p  WITH(NOLOCK)
+				INNER JOIN ProductProfileSiteCurrency s WITH(NOLOCK) ON p.ProductSettingID = s.ProductSettingID
+			WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+				AND ((@ServiceType = 0 AND OfferType IN (0,1)) OR (@ServiceType = 1 AND OfferType IN (0,2) AND SettingType NOT IN (25, 19, 3)))
+				AND GroupID IS NOT NULL
+				AND MarketType = 1
+				AND (GroupType NOT IN (155,158,159,160)
+				OR (@Mode = 2 AND ISNULL(@GroupID,0) <> 1)
 				)
-			AND s.SiteID = @SiteID
-			AND 1 = CASE WHEN s.currency = @currency OR s.currency = 0 THEN 1 ELSE 0 END
-			AND 1 = CASE WHEN p.GroupID = @GroupID OR @GroupID IS NULL THEN 1 ELSE 0 END
+				AND s.SiteID = @SiteID
+				AND 1 = CASE WHEN s.currency = @currency OR s.currency = 0 THEN 1 ELSE 0 END
+				AND 1 = CASE WHEN p.GroupID = @GroupID OR @GroupID IS NULL THEN 1 ELSE 0 END
 		ORDER BY GroupID, GroupTypeOrder, SubGroupOrder, Child_DisplayOrder
 	END
 	ELSE IF @SettingStatus = 3
 	BEGIN
-		INSERT INTO #ProductSettingProfile(SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType,ProductID,SettingLevel)
-		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType,ProductID,SettingLevel
-		FROM dbo.ProductSettingProfile_UAT p WITH(NOLOCK)
-		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
-			AND GroupID IS NOT NULL
-			AND MarketType = 0		
-			AND (GroupType NOT IN (155,158,159,160) 
-					OR (@Mode = 2 AND ISNULL(@GroupID,0) <> 1)
+		INSERT INTO #ProductSettingProfile
+			(SettingType, SportType, BetType, IsLive, GroupID, GroupType, GroupTypeOrder, SubGroupID, SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType,ProductID,SettingLevel)
+					SELECT SettingType, SportType, BetType, IsLive, GroupID, GroupType, GroupTypeOrder, SubGroupID, SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType, ProductID, SettingLevel
+			FROM dbo.ProductSettingProfile_UAT p WITH(NOLOCK)
+			WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+				AND ((@ServiceType = 0 AND OfferType IN (0,1)) OR (@ServiceType = 1 AND OfferType IN (0,2) AND SettingType NOT IN (25, 19, 3)))
+				AND GroupID IS NOT NULL
+				AND MarketType = 0
+				AND (GroupType NOT IN (155,158,159,160)
+				OR (@Mode = 2 AND ISNULL(@GroupID,0) <> 1)
 				)
-			AND 1 = CASE WHEN p.GroupID = @GroupID OR @GroupID IS NULL THEN 1 ELSE 0 END
-		UNION 
-		SELECT SettingType,	SportType, BetType, IsLive,	GroupID, GroupType,	GroupTypeOrder,	SubGroupID,	SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType,ProductID,SettingLevel
-		FROM dbo.ProductSettingProfile_UAT p  WITH(NOLOCK)
-			INNER JOIN ProductProfileSiteCurrency_UAT s WITH(NOLOCK) ON p.ProductSettingID = s.ProductSettingID
-		WHERE SettingStatus <> 2
-			AND GroupID IS NOT NULL
-			AND MarketType = 1
-			AND (GroupType NOT IN (155,158,159,160) 
-					OR (@Mode = 2 AND ISNULL(@GroupID,0) <> 1)
+				AND 1 = CASE WHEN p.GroupID = @GroupID OR @GroupID IS NULL THEN 1 ELSE 0 END
+		UNION
+			SELECT SettingType, SportType, BetType, IsLive, GroupID, GroupType, GroupTypeOrder, SubGroupID, SubGroupOrder, SettingStatus, DisplayType, Child_DisplayOrder, p.ProductSettingID, MarketType, ProductID, SettingLevel
+			FROM dbo.ProductSettingProfile_UAT p  WITH(NOLOCK)
+				INNER JOIN ProductProfileSiteCurrency_UAT s WITH(NOLOCK) ON p.ProductSettingID = s.ProductSettingID
+			WHERE SettingStatus <> 2
+				AND ((@ServiceType = 0 AND OfferType IN (0,1)) OR (@ServiceType = 1 AND OfferType IN (0,2) AND SettingType NOT IN (25, 19, 3)))
+				AND GroupID IS NOT NULL
+				AND MarketType = 1
+				AND (GroupType NOT IN (155,158,159,160)
+				OR (@Mode = 2 AND ISNULL(@GroupID,0) <> 1)
 				)
-			AND s.SiteID = @SiteID
-			AND 1 = CASE WHEN s.currency = @currency OR s.currency = 0 THEN 1 ELSE 0 END
-			AND 1 = CASE WHEN p.GroupID = @GroupID OR @GroupID IS NULL THEN 1 ELSE 0 END
-		ORDER BY GroupID, GroupTypeOrder, SubGroupOrder, Child_DisplayOrder		
+				AND s.SiteID = @SiteID
+				AND 1 = CASE WHEN s.currency = @currency OR s.currency = 0 THEN 1 ELSE 0 END
+				AND 1 = CASE WHEN p.GroupID = @GroupID OR @GroupID IS NULL THEN 1 ELSE 0 END
+		ORDER BY GroupID, GroupTypeOrder, SubGroupOrder, Child_DisplayOrder
 	END
 
 	SELECT p.SettingType, p.SportType, p.BetType, p.IsLive, p.GroupID, p.GroupType, p.GroupTypeOrder, p.SubGroupID, p.SubGroupOrder
-		, p.SettingStatus, p.DisplayType, p.Child_DisplayOrder, p.ProductSettingID, p.MarketType, p.ProductID,p.SettingLevel
+		, p.SettingStatus, p.DisplayType, p.Child_DisplayOrder, p.ProductSettingID, p.MarketType, p.ProductID, p.SettingLevel
 	   --1 - Update  
 	   --2 - Read Only  
 	   --3 - Hidden  
-	   , ISNULL(dpl.DisplayMode,1) DisplayMode  
-	 FROM #ProductSettingProfile p WITH(NOLOCK)   
-		LEFT JOIN #ProductSettingSiteDisplay dpl  
-		ON dpl.SettingType = p.SettingType  
-		AND dpl.ProductID = p.ProductID
-	 ORDER BY p.GroupID, p.GroupTypeOrder, p.GroupType, p.SubGroupOrder, p.Child_DisplayOrder		
+	   , ISNULL(dpl.DisplayMode,1) DisplayMode
+	FROM #ProductSettingProfile p WITH(NOLOCK)
+		LEFT JOIN #ProductSettingSiteDisplay dpl
+		ON dpl.SettingType = p.SettingType
+			AND dpl.ProductID = p.ProductID
+	ORDER BY p.GroupID, p.GroupTypeOrder, p.GroupType, p.SubGroupOrder, p.Child_DisplayOrder
 END
+GO
