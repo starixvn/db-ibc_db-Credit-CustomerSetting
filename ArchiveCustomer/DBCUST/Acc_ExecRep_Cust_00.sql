@@ -30,6 +30,7 @@ AS
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 		- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]
 		- 20250102@Eden: Archiving direct member [redmine: #215533] 
+		- 20250516@Dave: Add Instance Name DBTRANS\INST2 [Redmine: #227628]
 
 	Param's Explanation:
 		@Type: 
@@ -42,7 +43,7 @@ AS
 */
 BEGIN
 	IF NOT (
-				@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DB66')  
+				@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DB66','DBTRANS\INST2')  
 				OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
 				OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
 				OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
