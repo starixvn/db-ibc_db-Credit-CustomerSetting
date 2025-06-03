@@ -20,7 +20,8 @@ AS
 	
 	Revisions:
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
-		- 20250421@Eden: HF - wrong PT of new direct member [redmine: #224900] 	
+		- 20250421@Eden: HF - wrong PT of new direct member [redmine: #224900] 
+		- 20250528@Johnson: Add potential win limit setting for direct member [redmine: #226060]	
 		
 	Parameter's Explanation:
 	- @SettingXML:
@@ -603,6 +604,24 @@ BEGIN
 	END TRY
 	BEGIN CATCH 
 		SELECT @ErrCode = 158			
+		RETURN
+	END CATCH
+
+	BEGIN TRY
+		INSERT INTO [dbo].[CustPotentialWinLimit]
+					([CustID]
+					,[SportType]
+					,[BetType]
+					,[PotentialWinLimit]					
+					,[IsAutoReset]
+					,RepUpdateTime
+					)
+		SELECT @custID, SportType, Bettype, 0, 1, dbo.f_GetDateTime2()
+		FROM #ProductSettingDetail_tmp00 p 
+		WHERE SettingType = 30 
+	END TRY
+	BEGIN CATCH 
+		SELECT @ErrCode = 162			
 		RETURN
 	END CATCH
 
