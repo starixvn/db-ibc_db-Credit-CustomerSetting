@@ -12,13 +12,14 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 		- 20241121@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
-
+		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
 	Param's Explanation:
 
 	Examples:
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = xxx 
 */
-BEGIN
+BEGIN		
+	SET NOCOUNT ON	
 	DECLARE @RoleID tinyint
 	SELECT @RoleID = RoleID FROM customer (nolock) WHERE CustID = @CustID
 
@@ -40,10 +41,17 @@ BEGIN
 		INTO CustLoginInfo_Del_Inhouse(custid,RepUpdateTime)
 		WHERE custid = @custid
 	ELSE IF @RoleID = 1
+	BEGIN
 		DELETE CustLoginInfo_Member WITH(ROWLOCK)
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 		INTO CustLoginInfo_Member_Del_Inhouse(custid,RepUpdateTime)
 		WHERE custid = @custid
+/*
+		DELETE AgencyCashService.dbo.CashMemberBankAccount WITH(ROWLOCK)
+		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+		INTO AgencyCashService.dbo.CashMemberBankAccount_Del_Inhouse(custid,RepUpdateTime)
+		WHERE custid = @custid */
+	END
 
 	IF @RoleID = 4
 		DELETE c

@@ -3,7 +3,8 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustSetting_AgentAllInfoSel]
 	@CustID INT,		
 	@GroupID INT = 0,
 	@GroupType INT = 0,
-	@SettingStatus TINYINT = 0
+	@SettingStatus TINYINT = 0,
+	@ServiceType TINYINT = 0
 AS
 /*
 	Created by: 2023710@Johnson	
@@ -20,6 +21,7 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		- 20250512@Johnson: Add Potential Win Limit for create member [redmine: #226060]
+		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -46,7 +48,7 @@ BEGIN
 		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
 	WHERE custid = @custid
 	
-	IF @GroupType = 0
+	IF @GroupType = 0 
 	BEGIN
 		DECLARE @Asuspended BIT, 
 				@UplineClosed BIT, 
@@ -56,27 +58,30 @@ BEGIN
 				@Credit_Ag_Bal MONEY,
 				@MaxCredit_Mem MONEY
 		
-		SELECT @Credit_AllOtherMember = ISNULL(SUM(credit), 0) 
-		FROM custinfo as ci WITH (NOLOCK) 
-		WHERE recommend = @CustID 
-			AND RoleID = 1
+		IF @ServiceType = 0
+		BEGIN
+			SELECT @Credit_AllOtherMember = ISNULL(SUM(credit), 0) 
+			FROM custinfo as ci WITH (NOLOCK) 
+			WHERE recommend = @CustID 
+				AND RoleID = 1
 
-		SELECT	@Credit_Ag = isnull(credit, 0),
-				@Asuspended = cs.reject , 
-				@UplineClosed = cs.closed
-		FROM CustInfo as ci with (NOLOCK) 
-			CROSS APPLY  (SELECT CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
-												, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
-											FROM dbo.CustProductStatus  WITH(NOLOCK)
-											WHERE CustID = ci.custid
-										) AS cs
-		WHERE CustID = @CustID
+			SELECT	@Credit_Ag = isnull(credit, 0)
+			FROM CustInfo as ci with (NOLOCK) 
+			WHERE CustID = @CustID
 
-		SELECT @MaxCredit_Mem = isnull(maxcredit,0) 
-		FROM CustAgent WITH (NOLOCK) 
-		WHERE CustID = @CustID
+			SELECT @MaxCredit_Mem = isnull(maxcredit,0) 
+			FROM CustAgent WITH (NOLOCK) 
+			WHERE CustID = @CustID
 
-		SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember
+			SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember
+		END
+
+		SELECT
+			@Asuspended = CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END, 				 
+			@UplineClosed = CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END	
+		FROM dbo.CustProductStatus  WITH(NOLOCK)
+		WHERE CustID = custid
+					
 		----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		--SELECT @Credit_Mem_Max = CASE WHEN @MaxCredit_Mem =0  THEN @Credit_Ag_Bal 
 		--							  WHEN @MaxCredit_Mem > @Credit_Ag_Bal THEN @Credit_Ag_Bal
@@ -92,15 +97,44 @@ BEGIN
 			@currency currency
 	END
 	
-	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT,SubGroupID TINYINT,SubGroupOrder TINYINT)
+	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT
+				, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT,SubGroupID TINYINT,SubGroupOrder TINYINT
+				, [Parent_ProductSettingID] [int], [ProductSettingID] [int], ParentSportType SMALLINT, ParentBetType SMALLINT,SettingType smallint, MaxChoice tinyint)
 		
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder)
-	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder
-	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@SettingStatus,@siteID,@currency) 
+	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice)
+	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice
+	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterCashSelect(@GroupID, @GroupType,NULL,@SettingStatus,@siteID,@currency) 
+
+	UPDATE t
+	SET t.ParentSportType = pr.SportType, t.ParentBetType = pr.Bettype
+	FROM #SportBettypeFilter t 
+		INNER JOIN #SportBettypeFilter pr 
+			ON t.Parent_ProductSettingID = pr.ProductSettingID
+	WHERE t.Parent_ProductSettingID IS NOT NULL
 	
 	----------------------------------------------------------------------------------
 	--BEGIN SB Settings
-	
+	------- Create New Cash Member
+	--Product Status
+	IF @GroupType = 160
+	BEGIN						
+		SELECT	--ft.RealProductID,
+				ft.SportType,
+				ft.BetType,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) as IsSync,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
+				ft.ParentSportType,
+				ft.ParentBetType,
+				ft.Child_DisplayOrder
+		FROM #SportBettypeFilter ft 
+			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
+			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
+		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+			AND ft.SportType NOT IN (161)
+		ORDER BY ft.Child_DisplayOrder
+	END
+
 	--comm SB
 	IF  @GroupID = 1 AND @GroupType = 150
 	BEGIN
@@ -335,6 +369,78 @@ BEGIN
 	END
 	--END Others Games
 	----------------------------------------------------------------------------------
-			
+	------- Create New Cash Member -------		
+	IF @GroupType = 161
+	BEGIN
+		SELECT
+				CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
+				wl.SportType,
+				wl.BetType,
+				wl.MaxWinLimit * ci.credit AS MaxWinLimit,
+				wl.MaxWinLimit * ci.credit AS MaxWinRange,				
+				wl.IsAutoReset,
+				wl.IsAutoReset AS IsAutoResetUpline,
+				sbf.SubType,
+				sbf.Child_DisplayOrder
+			FROM CustWinLossLimit_Agent wl WITH (NOLOCK)
+			INNER JOIN	#SportBettypeFilter AS sbf
+					ON	sbf.Bettype = wl.BetType
+					AND	sbf.SportType = wl.SportType
+				INNER JOIN CustInfo ci WITH (NOLOCK) ON wl.custid = ci.custid
+			WHERE wl.CustId = @CustID 
+			ORDER BY sbf.Child_DisplayOrder
+	END
+
+	--Stake Level
+	IF @GroupType = 158
+	BEGIN
+		;WITH Temp AS(
+		SELECT	csla.SportType,	csla.BetType, sl.StakeLevelID
+		, StakeLevelName = sl.MinLabel + N' - ' + sl.MaxLabel
+		, sl.MaxStake
+		, sbtf.ProductID
+		, sbtf.Child_DisplayOrder
+		, sbtf.SettingType
+		, sbtf.MaxChoice
+		, RN = ROW_NUMBER () OVER (PARTITION BY csla.SportType, csla.BetType ORDER BY sl.MaxStake,sl.MinStake,sl.GameGroupID)
+		FROM dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
+			INNER JOIN	#SportBettypeFilter AS sbtf
+				ON	sbtf.SportType = csla.SportType
+				AND	sbtf.BetType = csla.BetType
+			CROSS APPLY	STRING_SPLIT(ISNULL(csla.StakeLevelList, ''), ',') AS ss
+			INNER JOIN	dbo.StakeLevel AS sl WITH(NOLOCK)
+				ON	sl.GameTypeID = sbtf.BetType
+				AND	sl.StakeLevelID = CAST(ss.value AS INT)
+		WHERE csla.CustID =	@CustID
+		)
+		SELECT SportType, BetType, StakeLevelID, StakeLevelName, ProductID
+			, isChecked = CASE WHEN RN = 1 THEN 1 ELSE 0 END
+			,MaxChoice
+			,ProductID
+			,CAST(CASE WHEN SettingType = 17 THEN 1 ELSE 0 END AS BIT) IsMultipleChoice
+		FROM Temp
+		ORDER BY Child_DisplayOrder, SportType, BetType, MaxStake
+	END
+
+	--Product Status
+	IF @GroupType = 160
+	BEGIN						
+		SELECT	--ft.RealProductID,
+				ft.SportType,
+				ft.BetType,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapHasSynced, PSP.bitmapOrder)) as IsSync,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) as isHidden,
+				(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, PSP.bitmapOrder)) as isDisabled,
+				ft.ParentSportType,
+				ft.ParentBetType,
+				ft.Child_DisplayOrder
+		FROM #SportBettypeFilter ft 
+			INNER JOIN dbo.ProductStatusProfile psp WITH (NOLOCK) ON PSP.Bettype = ft.BetType AND PSP.Sporttype = ft.SportType															
+			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
+		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
+			AND ft.SportType NOT IN(161)
+		ORDER BY ft.Child_DisplayOrder
+	END
+
 	DROP TABLE #SportBettypeFilter
 END	
