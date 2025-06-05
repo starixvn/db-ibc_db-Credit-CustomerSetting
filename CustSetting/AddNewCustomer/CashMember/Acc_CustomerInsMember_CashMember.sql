@@ -481,6 +481,7 @@ BEGIN
 	SELECT t.SportType,t.BetType,0,t.GroupID,t.Child_DisplayOrder
 	FROM #TmpProductSettingDetail t 			
 	WHERE t.GroupType IN (150,156)	
+		AND NOT (t.SportType = 1 AND t.BetType IN (3,7,8))
 
 	--Correct comm get from setting
 	UPDATE t 
