@@ -101,9 +101,18 @@ BEGIN
 				, ProductID TINYINT, IntervalValue DECIMAL(9,8), SubType TINYINT, Child_DisplayOrder INT,SubGroupID TINYINT,SubGroupOrder TINYINT
 				, [Parent_ProductSettingID] [int], [ProductSettingID] [int], ParentSportType SMALLINT, ParentBetType SMALLINT,SettingType smallint, MaxChoice tinyint)
 		
-	INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice)
-	SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice
-	FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterCashSelect(@GroupID, @GroupType,NULL,@SettingStatus,@siteID,@currency) 
+	IF @ServiceType = 0
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice)
+		SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType,NULL,@SettingStatus,@siteID,@currency) 
+	END
+	ELSE IF @ServiceType = 1
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice)
+		SELECT SportType,Bettype,IsLive,ProductID,IntervalValue,SubType,Child_DisplayOrder,SubGroupID,SubGroupOrder,Parent_ProductSettingID,ProductSettingID,SettingType,MaxChoice
+		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterCashSelect(@GroupID, @GroupType,NULL,@SettingStatus,@siteID,@currency) 
+	END
 
 	UPDATE t
 	SET t.ParentSportType = pr.SportType, t.ParentBetType = pr.Bettype

@@ -72,20 +72,10 @@ BEGIN
 	
 	/*********************** Product Status: GroupType = 160 **************************/
 	BEGIN TRY		
-		--INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo,ServiceType,RepUpdateTime)
-		--SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced,cs.SuspendInfo,cs.CloseInfo,ServiceType,dbo.f_GetDateTime2()
-		--FROM [dbo].[CustProductStatus] cs WITH (NOLOCK)
-		--WHERE cs.CustID = @UplineID
-
-		INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo,RepUpdateTime)
-		SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced,cs.SuspendInfo,cs.CloseInfo,dbo.f_GetDateTime2()
+		INSERT INTO [dbo].[CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo,ServiceType,RepUpdateTime)
+		SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced,cs.SuspendInfo,cs.CloseInfo,ServiceType,dbo.f_GetDateTime2()
 		FROM [dbo].[CustProductStatus] cs WITH (NOLOCK)
-		WHERE cs.CustID = @UplineID
-
-		INSERT INTO [dbo].[CustProductStatus_UAT]([CustID],bitmapIsDisabled,bitmapIsHidden,bitmapHasSynced,SuspendInfo,CloseInfo,ServiceType,RepUpdateTime)
-		SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden,cs.bitmapHasSynced,cs.SuspendInfo,cs.CloseInfo,1,dbo.f_GetDateTime2()
-		FROM [dbo].[CustProductStatus] cs WITH (NOLOCK)
-		WHERE cs.CustID = @UplineID		   
+		WHERE cs.CustID = @UplineID			   
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 160
