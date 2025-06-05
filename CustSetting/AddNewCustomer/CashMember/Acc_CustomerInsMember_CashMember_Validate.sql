@@ -136,6 +136,12 @@ BEGIN
 	FROM vw_CustInfoExtra WITH(NOLOCK) 
 	WHERE custid = @recommend
 	
+	IF @ServiceType = 0 
+	BEGIN
+		SELECT @ErrMsg = 'This account was disabled the Cash Service.', @ErrCode = 100
+		RETURN
+	END
+
 	EXEC Acc_CustomerLimitCreatedAccountCheck
 			@Custid				= @recommend , 
 			@RuleID				= 'CashAG' , 
