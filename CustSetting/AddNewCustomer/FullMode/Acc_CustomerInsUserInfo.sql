@@ -159,6 +159,7 @@ Revisions:
 	- 20241121@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
 	- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+	- 20250317@July: Scale Out DBCUST - Change unique key table TOControl_GlobalSetting [Redmine: #221252]
 	
 	Param's Explanation:
 - @ErrCode:
@@ -537,8 +538,8 @@ BEGIN
 				EXEC dbo.Acc_CreditCollStatusInit @CustId = @custid, @UserId = @creator, @IP = @IP, @Language = @Language
 			
 				DELETE dbo.TOControl_GlobalSetting WITH (ROWLOCK)
-					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2()
-					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
+					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2(), DELETED.ID
+					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime, ID)
 				WHERE CustID IN (@srecommend,@mrecommend,@recommend)
 				
 				DELETE dbo.TOControl_Setting
@@ -590,8 +591,8 @@ BEGIN
 					INNER JOIN dbo.Exchange e1 WITH (NOLOCK) ON e1.ExchangeID = @currency
 				
 				DELETE dbo.TOControl_GlobalSetting WITH (ROWLOCK)
-					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2()
-					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
+					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2(), DELETED.ID
+					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime, ID)
 				WHERE CustID IN (@srecommend,@mrecommend)
 				
 				DELETE dbo.TOControl_Setting
@@ -646,8 +647,8 @@ BEGIN
 					INNER JOIN dbo.Exchange e1 WITH (NOLOCK) ON e1.ExchangeID = @currency
 				
 				DELETE dbo.TOControl_GlobalSetting WITH (ROWLOCK)
-					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2()
-					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime)
+					OUTPUT DELETED.CustID, DELETED.Sporttype, DELETED.IsGroupHeadLine, DELETED.ProfileID, dbo.f_GetDateTime2(), DELETED.ID
+					INTO dbo.TOControl_GlobalSetting_Del_Inhouse(CustID, Sporttype, IsGroupHeadLine, ProfileID, RepUpdateTime, ID)
 				WHERE CustID = @srecommend
 				
 				DELETE dbo.TOControl_Setting

@@ -39,7 +39,8 @@ AS
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		- 20250220@Johnson: remove CustRequestGame [RedmineID: #212684]
 		- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
-
+		- 20250317@July: Scale Out DBCUST - Change unique key table CustGroupHeadline [Redmine: #221252]
+		
 	Param's Explanation:
 		@username: pass the username of customer you want to delete.
 
@@ -148,8 +149,8 @@ BEGIN
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
-		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
-		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2(), DELETED.ID
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime, ID)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)
 	
 	DELETE dbo.CustNoComm WITH (ROWLOCK) 
@@ -447,8 +448,8 @@ BEGIN
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
-		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
-		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2(), DELETED.ID
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime, ID)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustNoComm WITH (ROWLOCK) 
@@ -731,8 +732,8 @@ BEGIN
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
-		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
-		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2(), DELETED.ID
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime, ID)
 	WHERE custid IN (SELECT custID FROM @tmp_custID)	
 	
 	DELETE dbo.CustNoComm WITH (ROWLOCK) 
@@ -988,8 +989,8 @@ BEGIN
 	WHERE custid = @custid	
 	
 	DELETE dbo.CustGroupHeadline WITH (ROWLOCK) 
-		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
-		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime)
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2(), DELETED.ID
+		INTO dbo.CustGroupHeadline_Del_Inhouse(CustID, RepUpdateTime, ID)
 	WHERE custid = @custid	
 
 	DELETE dbo.CustNoComm WITH (ROWLOCK) 
