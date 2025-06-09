@@ -1,5 +1,5 @@
-/*<info serverAlias="DBAGE-bodb02" selecters="wsv_nap, wsv_alp, wsv_xnap, wsv_alpv" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE Age_ToolTip_ForProductStatusJackpot
+/*<info serverAlias="DBAGE-bodb02" selecters="wsv_nap, wsv_alp, wsv_xnap" viewers="" isFunction="0"></info>*/
+CREATE PROCEDURE Acc_CustSetting_JackpotStatusTooltip
 (
 	@Custid			INT,
 	@SettingStatus	TINYINT = 0
