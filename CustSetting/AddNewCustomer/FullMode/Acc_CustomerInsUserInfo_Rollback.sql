@@ -46,11 +46,11 @@ BEGIN
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 		INTO CustLoginInfo_Member_Del_Inhouse(custid,RepUpdateTime)
 		WHERE custid = @custid
-/*
+
 		DELETE AgencyCashService.dbo.CashMemberBankAccount WITH(ROWLOCK)
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 		INTO AgencyCashService.dbo.CashMemberBankAccount_Del_Inhouse(custid,RepUpdateTime)
-		WHERE custid = @custid */
+		WHERE custid = @custid
 	END
 
 	IF @RoleID = 4

@@ -258,8 +258,8 @@ BEGIN
     'creator="'+ COALESCE(CAST(@creator AS VARCHAR(50)), SPACE(1)) + '" ' +
     'username="'+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + '" ' +
     'phone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@phone AS VARCHAR(100)), SPACE(1))) + '" ' +   
-    'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@BankId AS VARCHAR(50)), SPACE(1))) + '" ' +
-	'BankId="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)), SPACE(1))) + '" ' +
+    'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(50)), SPACE(1))) + '" ' +
+	'BankId="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@BankId AS VARCHAR(100)), SPACE(1))) + '" ' +
 	'AccNumber="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@AccountNumber AS VARCHAR(100)), SPACE(1))) + '" ' +
 	'recommend="'+ COALESCE(CAST(@recommend AS VARCHAR(50)), SPACE(1)) + '" ' +    
     'ugroup="'+ COALESCE(CAST(@ugroup AS VARCHAR(5)), SPACE(1)) + '" ' +
