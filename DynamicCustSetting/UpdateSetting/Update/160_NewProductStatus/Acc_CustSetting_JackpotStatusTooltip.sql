@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20250609@Dave
 	Task: Live & RNG Casino - Product Status - Jackpot- Add Tooltip
-	DB: DBAGE-bodb02
+	DB: DBAGE/bodb02
 	
 	Revisions:
 		- 20250609@Dave: Initial SP [Redmine: #229765]
@@ -34,7 +34,7 @@ BEGIN
 	FROM bettype AS sm WITH (NOLOCK)
 		INNER JOIN SportBettypeSettingMatrix AS r WITH (NOLOCK) 
 			ON sm.typeid = r.BetType
-		INNER JOIN f_CustSetting_Product(@SettingStatus) AS p
+		INNER JOIN Products AS p WITH (NOLOCK) 
 			ON r.RealProductId = p.ProductID
 		LEFT JOIN SportNonOfferedSiteCurrency AS sno WITH (NOLOCK) 
 			ON r.RealProductId = sno.RealProductID 
@@ -45,6 +45,7 @@ BEGIN
 		AND r.isActive = 1
 		AND r.Site IN ('ALL','all', @Site )
 		AND sno.SportType IS NULL
+		AND p.Enabled = 1
 		AND p.Environment <= @SettingStatus;
 
 END
