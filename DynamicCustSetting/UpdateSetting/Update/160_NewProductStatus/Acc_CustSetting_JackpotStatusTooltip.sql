@@ -14,6 +14,7 @@ AS
 		- 20250609@Dave: Initial SP [Redmine: #229765]
 		
 	Parameter's Explanation:
+		@SettingStatus: 0 - PRO ; 1 - UAT
 		
 */	
 BEGIN
@@ -43,7 +44,6 @@ BEGIN
 	WHERE sm.typenamee = 'Jackpot Contribution'
 		AND r.isLicensee = @isLicensee
 		AND r.isActive = 1
-		AND r.Site IN ('ALL','all', @Site )
 		AND sno.SportType IS NULL
 		AND p.Enabled = 1
 		AND p.Environment <= @SettingStatus;
