@@ -23,10 +23,9 @@ BEGIN
 	DECLARE 
 		@SiteID			INT,
 		@Site			NVARCHAR(50),
-		@Currency		INT,
-		@isLicensee		BIT = 0
+		@Currency		INT;
 
-	SELECT @SiteID= s.siteid, @Site = s.site ,@isLicensee = s.isLicensee, @Currency =cus.currency
+	SELECT @SiteID= s.siteid, @Site = s.site, @Currency =cus.currency
 	FROM Customer AS cus WITH (NOLOCK) 
 		INNER JOIN Site AS s WITH (NOLOCK) ON cus.site = s.site
 	WHERE cus.custid = @Custid;
@@ -42,7 +41,7 @@ BEGIN
 			AND sno.Currency IN (0, @Currency)
 			AND sno.SiteID IN (0, @SiteID)
 	WHERE sm.typenamee = 'Jackpot Contribution'
-		AND r.isLicensee = @isLicensee
+		AND r.isLicensee = 0
 		AND r.isActive = 1
 		AND sno.SportType IS NULL
 		AND p.Enabled = 1
