@@ -48,8 +48,8 @@ BEGIN
 		WHERE custid = @custid
 
 		DELETE AgencyCashService.dbo.CashMemberBankAccount WITH(ROWLOCK)
-		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
-		INTO AgencyCashService.dbo.CashMemberBankAccount_Del_Inhouse(custid,RepUpdateTime)
+		OUTPUT DELETED.BankAccountMemberID, dbo.f_GetDateTime2()
+		INTO AgencyCashService.dbo.CashMemberBankAccount_Del_Inhouse(BankAccountMemberID,RepUpdateTime)
 		WHERE custid = @custid
 	END
 
