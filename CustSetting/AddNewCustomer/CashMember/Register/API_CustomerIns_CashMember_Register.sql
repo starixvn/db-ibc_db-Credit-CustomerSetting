@@ -37,6 +37,14 @@ AS
 */	
 BEGIN
 	SET NOCOUNT ON 
+	IF @Username = @username2
+	BEGIN
+		SELECT @ErrMsg = 'The username is not available.'
+			, @ErrCode = 10
+
+		RETURN
+	END
+
 	--Check exist username2
 	IF EXISTS(SELECT 1 FROM CustInfoMini WITH(NOLOCK) WHERE username = @username2)  
 		OR EXISTS(SELECT 1 FROM CustInfoMini WITH (NOLOCK) WHERE username2 = @username2)  

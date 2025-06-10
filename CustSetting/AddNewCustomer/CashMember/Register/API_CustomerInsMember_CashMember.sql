@@ -241,7 +241,7 @@ BEGIN
 
     Declare @LogSPData VARCHAR(8000)
     --Log customer general info
-    SELECT @LogSPData = '<R custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
     'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)), SPACE(1))) + '" ' +
     'username="'+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + '" ' +   
@@ -349,7 +349,7 @@ BEGIN
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @UplineID AND Type = 4)
 		SET @VRAccumulatedBalance = 1
 
-    SELECT @LogSPData = '<R custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'closed="'+ COALESCE(CAST(@UplineClosed AS VARCHAR(50)), SPACE(1)) + '" ' +
     'suspended="'+ COALESCE(CAST(@suspended AS VARCHAR(50)), SPACE(1)) + '" ' +
     'Danger="'+ COALESCE(CAST(@UplineDanger AS VARCHAR(5)), SPACE(1)) + '" ' +
@@ -458,6 +458,7 @@ BEGIN
 	SELECT t.SportType,t.BetType,0,t.GroupID,t.Child_DisplayOrder
 	FROM #TmpProductSettingDetail t 			
 	WHERE t.GroupType IN (150,156)	
+		AND NOT (t.SportType = 1 AND t.BetType IN (3,7,8))
 
 	--Correct comm get from setting
 	UPDATE t 
