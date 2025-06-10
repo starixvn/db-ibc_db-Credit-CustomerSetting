@@ -36,14 +36,14 @@ BEGIN
     IF @ErrCode <>0	
 	RETURN
 
-	DECLARE @ServiceType TINYINT = 0, @IsAllowRegister BIT = 0, @IsAllowDeposit BIT = 0, @CloseInfo TINYINT = 0
+	DECLARE @ServiceType TINYINT = 0, @IsAllowRegister BIT = 0, @IsAllowDeposit BIT = 0, @CloseInfo TINYINT = 0, @SuspendInfo TINYINT = 0
 	
 	SELECT @AgentName = username 
 	FROM customer WITH(NOLOCK)
 	WHERE custid = @AgentId
 
 	SELECT 
-		@ServiceType = ServiceType, @CloseInfo = CloseInfo
+		@ServiceType = ServiceType, @CloseInfo = CloseInfo, @SuspendInfo = SuspendInfo
 	FROM vw_CustInfoExtra WITH(NOLOCK) 
 	WHERE custid = @AgentId
 
@@ -53,6 +53,12 @@ BEGIN
 		RETURN
 	END
 
+	IF @SuspendInfo <> 0 
+	BEGIN
+		SELECT @ErrMsg = 'Your upline was suspended.	', @ErrCode = 105
+		RETURN
+	END
+	
 	IF @ServiceType = 0 
 	BEGIN
 		SELECT @ErrMsg = 'Your upline has not yet enabled the Cash Service. Kindly check with them for further assistance.', @ErrCode = 101
