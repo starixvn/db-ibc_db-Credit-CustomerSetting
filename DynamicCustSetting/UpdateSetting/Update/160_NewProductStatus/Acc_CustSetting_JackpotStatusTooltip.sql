@@ -43,6 +43,7 @@ BEGIN
 	WHERE sm.typenamee = 'Jackpot Contribution'
 		AND r.isLicensee = 0
 		AND r.isActive = 1
+		AND r.isDeleted = 0
 		AND sno.SportType IS NULL
 		AND p.Enabled = 1
 		AND p.Environment <= @SettingStatus;
