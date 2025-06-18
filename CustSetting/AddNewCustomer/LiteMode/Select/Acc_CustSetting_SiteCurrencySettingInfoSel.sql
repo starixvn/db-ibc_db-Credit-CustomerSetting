@@ -13,7 +13,7 @@ AS
 	
 	Revisions:
 		- 20230920@Eden: initial sp [redmine: #193083]
-		
+		- 20250728@Johnson: add Max Payout Per Match for E-Sports [redmine: #230652]
 	Parameter's explaination:
 		- @GroupID: 1: SB
 		- @GroupType: group setting Type
@@ -62,7 +62,7 @@ BEGIN
 	IF @GroupID = 1 AND @GroupType = 151
 	BEGIN				
 		SELECT sporttype, bettype, 0 AS MinBet, 0 AS MaxBet, 0 AS MaxPerMatch
-				,CASE WHEN SportType IN(43,44) THEN NULL ELSE 0 END AS MaxPayoutPerMatch
+				,0 AS MaxPayoutPerMatch
 		FROM #SportBettypeFilter t
 		ORDER BY t.SubGroupOrder,t.Child_DisplayOrder		
 	END

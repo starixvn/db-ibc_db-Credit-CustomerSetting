@@ -1,1 +1,1 @@
-DynamicCustSetting\UpdateSetting\Update\155_WinLossLimit\Acc_CustSetting_WinLossLimit_155_Upd.sql
+DynamicCustSetting\UpdateSetting\Update\151_BetSetting\Acc_CustSetting_BetSetting151Upd_Multi.sql

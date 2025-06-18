@@ -22,6 +22,7 @@ AS
 	Revisions:
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
+		- 20250617@Johnson: add Max Payout Per Match for E-Sports & Muay Thai [redmine: #230652]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -250,16 +251,6 @@ BEGIN
 	END
 
 	DECLARE @BetSettingXML VARCHAR(MAX)  = '', @IsAffected BIT = 0
-
-	-- reset MaxPayoutPerMatch of E-Sports & Muay Thai
-	IF EXISTS (SELECT TOP 1 1 FROM @New_BetSetting WHERE SportType IN (43,44))
-	BEGIN
-		UPDATE nb
-			SET MaxPayoutPerMatch = NULL
-		FROM @New_BetSetting nb
-		WHERE nb.SportType IN (43, 44)
-	END
-
 
 	IF @RoleID > 1
 	BEGIN
