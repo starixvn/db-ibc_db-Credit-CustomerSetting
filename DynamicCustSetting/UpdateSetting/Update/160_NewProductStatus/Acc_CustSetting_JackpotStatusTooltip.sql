@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAGE-bodb02" executers="wsv_nap, wsv_alp, wsv_xnap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02" executers="wsv_nap, wsv_alp, wsv_xnap, wsv_alpv" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE Acc_CustSetting_JackpotStatusTooltip
 (
 	@Custid			INT,
