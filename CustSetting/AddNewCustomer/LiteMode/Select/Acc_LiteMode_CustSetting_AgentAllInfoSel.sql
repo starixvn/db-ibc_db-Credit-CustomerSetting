@@ -385,7 +385,7 @@ BEGIN
 				CASE WHEN @GroupID = 3 THEN sbf.ProductID ELSE NULL END AS ProductID,
 				wl.SportType,
 				wl.BetType,
-				wl.MaxWinLimit * ci.credit AS MaxWinLimit,
+				CASE WHEN ci.credit = 0 THEN 0.1 ELSE wl.MaxWinLimit * ci.credit END AS MaxWinLimit,
 				wl.MaxWinLimit * ci.credit AS MaxWinRange,				
 				wl.IsAutoReset,
 				wl.IsAutoReset AS IsAutoResetUpline,
