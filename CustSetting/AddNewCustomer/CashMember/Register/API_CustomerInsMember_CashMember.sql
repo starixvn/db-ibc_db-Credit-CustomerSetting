@@ -62,11 +62,12 @@ BEGIN
 		@Closed BIT = 0, 
 		@Suspend BIT = 0,
 		@ugroup	VARCHAR(5) = 'a',
-		@AgentCredit MONEY = 0
-	DECLARE @EnableVR BIT
+		@AgentCredit MONEY = 0,
+		@UplineName VARCHAR(30) = '',
+		@EnableVR BIT
 	
 	SELECT @_Site = c.site,
-		@siteID = s.siteid
+		@siteID = s.siteid, @UplineName = c.username
 	FROM dbo.customer c WITH(NOLOCK)
 		INNER JOIN site s WITH(NOLOCK) ON c.site = s.site
 	WHERE CustID = @UplineID
@@ -241,17 +242,17 @@ BEGIN
 
     Declare @LogSPData VARCHAR(8000)
     --Log customer general info
-    SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    SELECT @LogSPData = '<Root ' +
     'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
     'lname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@lastname AS VARCHAR(100)), SPACE(1))) + '" ' +
     'username="'+ COALESCE(CAST(@username AS VARCHAR(30)), SPACE(1)) + '" ' +   
-	'username2="'+ COALESCE(CAST(@username2 AS VARCHAR(50)), SPACE(1)) + '" ' + 
+	'Nickname="'+ COALESCE(CAST(@username2 AS VARCHAR(50)), SPACE(1)) + '" ' + 
     'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(50)), SPACE(1))) + '" ' +	
-	'recommend="'+ COALESCE(CAST(@recommend AS VARCHAR(50)), SPACE(1)) + '" ' +    
+	'UplineName="'+ COALESCE(CAST(@UplineName AS VARCHAR(50)), SPACE(1)) + '" ' +    
     'ugroup="'+ COALESCE(CAST(@ugroup AS VARCHAR(5)), SPACE(1)) + '" ' +
     'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' + 
     'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1)) + '" ' +
-    'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(4000)), SPACE(1)) + '" />'						
+    'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(4000)), SPACE(1)) + '" />'					
     
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @CustID,
@@ -349,7 +350,7 @@ BEGIN
 	IF EXISTS ( SELECT 1 FROM VRCustLockStatus WITH(NOLOCK) WHERE custid = @UplineID AND Type = 4)
 		SET @VRAccumulatedBalance = 1
 
-    SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
+    SELECT @LogSPData = '<Root '+ 
     'closed="'+ COALESCE(CAST(@UplineClosed AS VARCHAR(50)), SPACE(1)) + '" ' +
     'suspended="'+ COALESCE(CAST(@suspended AS VARCHAR(50)), SPACE(1)) + '" ' +
     'Danger="'+ COALESCE(CAST(@UplineDanger AS VARCHAR(5)), SPACE(1)) + '" ' +
@@ -545,10 +546,10 @@ BEGIN
 	END;
 
 	--log all settings
-	SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' + 'UplineRoleID="'+ coalesce(cast(@UplineRoleID as VARCHAR(10)),space(1)) + '"  >' 
+	SELECT @LogSPData = '<Root UplineRoleID="'+ coalesce(cast(@UplineRoleID as VARCHAR(10)),space(1)) + '"  >' 
 			+ '<Group ID="1">'--SB
 			+ '<Discount GroupType="150">' 
-				+ COALESCE(CAST((SELECT SportType,BetType,PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount
+				+ COALESCE(CAST((SELECT SportType,BetType,PlayerDiscount,AgentDiscount
 						FROM @DiscountTbl
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
@@ -608,7 +609,7 @@ BEGIN
 			+ '</Group>'
 			+ '<Group ID="3">'--LCS
 			+ '<Discount GroupType="156">' 
-				+ COALESCE(CAST((SELECT SportType,BetType,PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount
+				+ COALESCE(CAST((SELECT SportType,BetType,PlayerDiscount,AgentDiscount
 						FROM @DiscountTbl
 						WHERE GroupID = 3
 						ORDER BY Child_DisplayOrder
