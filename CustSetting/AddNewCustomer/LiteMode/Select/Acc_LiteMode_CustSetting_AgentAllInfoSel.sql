@@ -22,8 +22,6 @@ AS
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		- 20250512@Johnson: Add Potential Win Limit for create member [redmine: #226060]
 		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
-		- 20250626@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
-		
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -58,8 +56,7 @@ BEGIN
 				@Credit_Ag MONEY,
 				@Credit_Mem_Max MONEY, 
 				@Credit_Ag_Bal MONEY,
-				@MaxCredit_Mem MONEY,
-				@AccumCredit_AllCashMember MONEY
+				@MaxCredit_Mem MONEY
 		
 		IF @ServiceType = 0
 		BEGIN
@@ -76,11 +73,7 @@ BEGIN
 			FROM CustAgent WITH (NOLOCK) 
 			WHERE CustID = @CustID
 
-			SELECT @AccumCredit_AllCashMember = ISNULL(SUM(AccumCreditReturn),0)
-    		FROM dbo.CashAccumCredit WITH (NOLOCK)
-			WHERE recommend = @CustID;
-
-			SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember - @AccumCredit_AllCashMember;
+			SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember
 		END
 
 		SELECT

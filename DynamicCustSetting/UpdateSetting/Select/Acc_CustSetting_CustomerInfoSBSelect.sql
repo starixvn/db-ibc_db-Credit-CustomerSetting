@@ -18,7 +18,6 @@ AS
 		- 20240423@Elodie: Member Max Credit, Member Given Credit enhancements [Redmine: #203332]
 		- 20241028@July: [Scale out DBCUST] Wrong Currency [Redmine: #212777]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
-		- 20250626@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
 
 	Param's Explanation:
 	
@@ -74,8 +73,7 @@ BEGIN
 			@recommend				INT,
 			@uGroup				VARCHAR(3),
 			@DisableAutoMPT			BIT = 0,
-			@SpecialPlatfrom			TINYINT,
-			@AccumCredit_AllCashMember	MONEY
+			@SpecialPlatfrom			TINYINT
 
 
 	----------------------------------------------------------------
@@ -230,12 +228,7 @@ BEGIN
 
 		SELECT @Credit_Ag_Max = @Credit_MAg - @Credit_AllOtherAgent
 		-----------------------------------------------------------------
-				
-		SELECT @AccumCredit_AllCashMember = ISNULL(SUM(AccumCreditReturn),0)
-		FROM dbo.CashAccumCredit WITH (NOLOCK)
-		WHERE recommend = @CustID;
-
-		SELECT @Credit_Ag_Min = MAX(c.credit) + ISNULL(@AccumCredit_AllCashMember, 0)
+		SELECT @Credit_Ag_Min = MAX(c.credit)
 		from
 			(
 			Select ISNULL(SUM(credit), 0) AS credit FROM custinfo WITH (NOLOCK) WHERE recommend = @CustID and RoleID=1
