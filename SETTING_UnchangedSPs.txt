@@ -1,1 +1,3 @@
-CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
+DynamicCustSetting\UpdateSetting\Update\156_Commission\Acc_CustSetting_Discount_156_Upd.sql
+DynamicCustSetting\UpdateSetting\Update\3_Commission-5_ChargeComm\Acc_CustSetting_DiscountUpd.sql
+DynamicCustSetting\UpdateSetting\Update\14_TicketCommission\Acc_CustSetting_TicketCommissionUpd.sql
