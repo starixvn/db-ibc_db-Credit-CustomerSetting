@@ -16,6 +16,7 @@ AS
 
 	 Revision:
 		- 20250103@Johnson: Initial [Redmine:#212684]
+		- 20250703@Dave: Customer Setting - Reset Banlace WinLimit for Cash Member [Redmine: #232054]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -40,6 +41,7 @@ BEGIN
 										,MaxWinLimit		AS 'maxw'
 										,MaxLossLimit		AS 'maxl'
 										,IsAutoReset		AS 'isa'	
+										,RestedDate			AS 'rd'	
 										,UpdateTime			AS 'ut'
 								FROM CustWinLossLimit_Member_History WITH(NOLOCK)
 								WHERE rID > @rID 

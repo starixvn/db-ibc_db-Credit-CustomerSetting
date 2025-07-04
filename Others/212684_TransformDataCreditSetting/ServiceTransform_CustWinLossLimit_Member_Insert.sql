@@ -15,6 +15,7 @@ AS
 
 	 Revision:
 		- 20250103@Johnson: Initial [Redmine:#212684]
+		- 20250703@Dave: Customer Setting - Reset Banlace WinLimit for Cash Member [Redmine: #232054]
 */
 BEGIN
 	SET NOCOUNT ON;	
@@ -33,11 +34,12 @@ BEGIN
 				,MaxWinLimit	SMALLMONEY
 				,MaxLossLimit	MONEY
 				,IsAutoReset	BIT
+				,RestedDate	DATETIME2
 				,UpdateTime DATETIME
 			)
 		
-			INSERT INTO @tmp_CustWinLossLimit_Member ( rID ,CustID, SportType, Bettype, MaxWinLimit, MaxLossLimit, IsAutoReset, UpdateTime)
-			SELECT rid ,cid , s, bt, maxw, maxl, isa, ut		
+			INSERT INTO @tmp_CustWinLossLimit_Member ( rID ,CustID, SportType, Bettype, MaxWinLimit, MaxLossLimit, IsAutoReset, RestedDate, UpdateTime)
+			SELECT rid ,cid , s, bt, maxw, maxl, isa, rd, ut		
 			FROM  OPENJSON (  CAST( DECOMPRESS(@TransformJson) AS NVARCHAR(MAX)) )
 			WITH (	rid		BIGINT
 					,cid	INT	
@@ -46,13 +48,14 @@ BEGIN
 					,maxw	SMALLMONEY
 					,maxl	MONEY
 					,isa	BIT
+					,rd 	DATETIME2
 					,ut		DATETIME
 					)
 				
 			SELECT @MaxID = MAX(rID) FROM @tmp_CustWinLossLimit_Member
 
-			INSERT INTO CustWinLossLimit_Member_History ( rID ,CustID, SportType, Bettype, MaxWinLimit, MaxLossLimit, IsAutoReset, UpdateTime, SiteDBGroupID)
-			SELECT  rID ,CustID, SportType, Bettype, MaxWinLimit, MaxLossLimit, IsAutoReset, UpdateTime, @SiteDBGroupID
+			INSERT INTO CustWinLossLimit_Member_History ( rID ,CustID, SportType, Bettype, MaxWinLimit, MaxLossLimit, IsAutoReset, RestedDate, UpdateTime, SiteDBGroupID)
+			SELECT  rID ,CustID, SportType, Bettype, MaxWinLimit, MaxLossLimit, IsAutoReset, RestedDate, UpdateTime, @SiteDBGroupID
 			FROM @tmp_CustWinLossLimit_Member
 
 			UPDATE Dest_ServiceTransform
