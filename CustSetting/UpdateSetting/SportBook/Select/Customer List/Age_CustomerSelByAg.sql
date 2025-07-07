@@ -13,7 +13,8 @@ ALTER PROCEDURE [dbo].[Age_CustomerSelByAg]
 	@TotalItems int=0 OUTPUT,
 	@Userid		INT=NULL,
 	@Locked BIT = NULL, -- 1: Locked filter
-	@AutoTransfer TINYINT = 2
+	@AutoTransfer 	TINYINT = 2,
+	@ServiceType	TINYINT = 2
 AS 
 BEGIN 
 /*  
@@ -33,6 +34,8 @@ BEGIN
 		- 20240917@Elodie: Tuning sp [redmine: #210892]
 		- 20241022@Johnson: remove MyanmarOdds [redmine: #201396]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]    
+		- 20250707@Dave: Agency Cash Service - Customer Setting - Sprint 6 - Add filter for Member Type (@ServiceType) [Redmine: #232372]
+		
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -42,6 +45,11 @@ BEGIN
 			0: Not Allowed Auto Transfer
 			1: Allowed Auto Transfer
 			2: All
+		- @ServiceType:
+			0: Credit Member
+			1: Cash Member
+			2: All
+
 */  
 	  
 	SET NOCOUNT ON  
@@ -68,7 +76,7 @@ BEGIN
 	SELECT CustID , DoubleCommLosing , i.Enabled , i.username FROM custInfo i WITH (NOLOCK) WHERE i.srecommend = @UplineID AND i.roleid = 1 AND i.recommend = -4
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL  AND @DoubleCommLosing =2 AND @Locked IS NULL
-		AND @AutoTransfer = 2 -- default condition: get all
+		AND @AutoTransfer = 2 /*default condition: get all */ AND @ServiceType = 2 /*get all*/
 	BEGIN
 		IF @TotalPages = 0
 		BEGIN
@@ -103,6 +111,9 @@ BEGIN
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
 									WHERE CustID = ci.custid
 								) AS cs
+				CROSS APPLY (SELECT TOP (1) ServiceType
+									FROM dbo.vw_CustInfoExtra WITH(NOLOCK)
+									WHERE CustID = ci.custid) AS v_csm
 			WHERE enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 				AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END  
 				AND isnull(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END     
@@ -112,6 +123,11 @@ BEGIN
 							WHEN @AutoTransfer = 0 AND cbs.ToCustID IS NULL THEN 1 
 							WHEN @AutoTransfer = 1 AND cbs.ToCustID > 0 THEN  1 
 							WHEN @AutoTransfer = 2 THEN 1
+							ELSE 0 
+						END
+				AND 1 = CASE 
+							WHEN @ServiceType = 2 THEN 1
+							WHEN ISNULL(v_csm.ServiceType, 0) = @ServiceType THEN 1
 							ELSE 0 
 						END
 		END
@@ -128,6 +144,9 @@ BEGIN
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
 									WHERE CustID = ci.custid
 								) AS cs
+					CROSS APPLY (SELECT TOP (1) ServiceType
+									FROM dbo.vw_CustInfoExtra WITH(NOLOCK)
+									WHERE CustID = ci.custid) AS v_csm
 				WHERE enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 					AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END  
 					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END     
@@ -139,6 +158,11 @@ BEGIN
 							WHEN @AutoTransfer = 2 THEN 1
 							ELSE 0 
 						END
+					AND 1 = CASE 
+								WHEN @ServiceType = 2 THEN 1
+								WHEN ISNULL(v_csm.ServiceType, 0) = @ServiceType THEN 1
+								ELSE 0 
+							END
 			) x
 		WHERE rn BETWEEN @rowstart AND @rowend
 	END
@@ -156,6 +180,9 @@ BEGIN
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
 									WHERE CustID = ci.custid
 								) AS cs
+				CROSS APPLY (SELECT TOP (1) ServiceType
+									FROM dbo.vw_CustInfoExtra WITH(NOLOCK)
+									WHERE CustID = ci.custid) AS v_csm
 			WHERE (ci.username LIKE '%' + @Username + '%' OR (@Userid = @UplineID AND c.username2 LIKE '%' + @Username + '%'))
 				AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END  
 				AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
@@ -168,6 +195,11 @@ BEGIN
 							WHEN @AutoTransfer = 2 THEN 1
 							ELSE 0 
 						END
+				AND 1 = CASE 
+						WHEN @ServiceType = 2 THEN 1
+						WHEN ISNULL(v_csm.ServiceType, 0) = @ServiceType THEN 1
+						ELSE 0 
+					END
 		END
 		INSERT INTO #memberList (custid, rn)
 		SELECT custid, rn
@@ -183,6 +215,9 @@ BEGIN
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
 									WHERE CustID = ci.custid
 								) AS cs
+					CROSS APPLY (SELECT TOP (1) ServiceType
+									FROM dbo.vw_CustInfoExtra WITH(NOLOCK)
+									WHERE CustID = ci.custid) AS v_csm
 				WHERE (ci.username LIKE '%' + @Username + '%' OR (@Userid = @UplineID AND c.username2 LIKE '%' + @Username + '%'))
 					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END  
 					AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END  
@@ -195,6 +230,11 @@ BEGIN
 							WHEN @AutoTransfer = 2 THEN 1
 							ELSE 0 
 						END			
+					AND 1 = CASE 
+								WHEN @ServiceType = 2 THEN 1
+								WHEN ISNULL(v_csm.ServiceType, 0) = @ServiceType THEN 1
+								ELSE 0 
+							END
 			) x
 		WHERE rn BETWEEN @rowstart AND @rowend
 	END
@@ -259,7 +299,8 @@ BEGIN
 		rn as RowNumber,
 		ISNULL(cl.ClosedReason,0) AS ClosedReason,
 		ISNULL(cps.Locked,0) AS Locked,
-		IIF(cbs.ToCustID > 0, 1, 0) AS IsAllowAutoTransfer
+		IIF(cbs.ToCustID > 0, 1, 0) AS IsAllowAutoTransfer,
+		ISNULL(v_csm.ServiceType, 0) AS ServiceType
 	FROM #Result m  
 		INNER JOIN customer c (nolock) on m.custid = c.custid  
 		INNER JOIN Custinfo ci (nolock) on m.custid = ci.custid      
@@ -269,6 +310,9 @@ BEGIN
 								FROM dbo.CustProductStatus  WITH(NOLOCK)
 								WHERE CustID = ci.custid
 							) AS cps
+		CROSS APPLY (SELECT TOP (1) ServiceType
+								FROM dbo.vw_CustInfoExtra WITH(NOLOCK)
+								WHERE CustID = ci.custid) AS v_csm
 		LEFT JOIN CustLoginInfo_Member cl WITH(NOLOCK) ON c.custid=cl.CustID
 		LEFT JOIN dbo.Age_ClearBalanceCust_Setting cbs WITH(NOLOCK) ON cbs.FromCustID = @UplineID AND cbs.ToCustID = m.custid
 	ORDER BY rn

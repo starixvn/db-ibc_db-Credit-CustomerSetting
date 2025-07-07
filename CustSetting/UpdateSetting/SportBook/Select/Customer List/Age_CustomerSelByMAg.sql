@@ -31,6 +31,8 @@ AS
 		- 20240812@Tacy: Remove linked-server/cross-db on NAP_UserControl [redmineID: #208402]
 		- 20240917@Elodie: Tuning sp [redmine: #210892]
 		- 20241022@Johnson: remove MyanmarOdds [redmine: #201396]
+		- 20250707@Dave: Agency Cash Service - Customer Setting - Sprint 6 - output ServiceType [Redmine: #232372]
+
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -213,6 +215,7 @@ BEGIN
 		SELECT	c.custid, ci.currency, ci.roleid, autosuspend, cps.reject, cps.closed, MatchLimit, VirtualMultiplier, Enabled,
 				 DisableOutright,DoubleCommLosing,cm.IsInternal,
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate, ISNULL(cps.Locked,0) AS Locked
+				, ISNULL(v_csm.ServiceType, 0) AS ServiceType
 		FROM Customer c WITH(NOLOCK)
 			INNER JOIN custInfo ci WITH(NOLOCK) ON ci.custid = c.custid 
 			INNER JOIN CustAgent cm with(NOLOCK) on c.custid = cm.custid 
@@ -222,6 +225,9 @@ BEGIN
 									FROM dbo.CustProductStatus  WITH(NOLOCK)
 									WHERE CustID = ci.custid
 								) AS cps
+			CROSS APPLY (SELECT TOP (1) ServiceType
+								FROM dbo.vw_CustInfoExtra WITH(NOLOCK)
+								WHERE CustID = ci.custid) AS v_csm
 		WHERE c.custid IN (SELECT custid FROM #customer)
 	),
 	CustDiscountAgent AS
@@ -270,7 +276,8 @@ BEGIN
   			RowNumber,
 			ISNULL(cl.ClosedReason,0) AS ClosedReason,
 			ctm.Locked,
-			IIF(cbs.ToCustID > 0, 1, 0) AS IsAllowAutoTransfer
+			IIF(cbs.ToCustID > 0, 1, 0) AS IsAllowAutoTransfer,
+			ServiceType
 	FROM customers ctm 
 		INNER JOIN #customer t ON ctm.custid = t.custid 
 		LEFT JOIN CustDiscountAgent cda WITH (NOLOCK) ON ctm.custid = cda.custid
