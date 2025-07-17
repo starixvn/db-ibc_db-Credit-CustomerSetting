@@ -36,6 +36,7 @@ AS
 	
 	Revisions:
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
+		- 20250611@Johnson: apply potential winloss for member [Redmine: #226060]
 		
 	Parameter's Explanation:
 	
@@ -559,6 +560,17 @@ BEGIN
 		,Child_DisplayOrder INT
 	)
 
+	DECLARE @PotentialWinLimitTbl TABLE (
+		SportType SMALLINT
+		,BetType SMALLINT
+		,WinLimit MONEY		
+		,IsAutoReset BIT
+		,SettingLevel TINYINT
+		,ProductID TINYINT
+		,GroupID TINYINT
+		,Child_DisplayOrder INT
+	)
+
 	--Comm
 	INSERT INTO @DiscountTbl(sporttype,bettype,playerdiscount,GroupID,Child_DisplayOrder)
 	SELECT cs.SportType,cs.BetType,cs.Discount,t.GroupID,t.Child_DisplayOrder
@@ -706,6 +718,27 @@ BEGIN
 			BREAK;
 	END;
 
+	--Potential WinLimit
+	INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
+	SELECT cs.SportType,cs.BetType,cs.WinLimit,cs.IsAutoReset,t.SettingLevel,t.ProductID,t.GroupID,t.Child_DisplayOrder
+	FROM OPENJSON(@SettingXML,'$."162"') WITH (
+		 SportType		SMALLINT
+		,BetType		SMALLINT
+		,WinLimit		MONEY
+		,IsAutoReset	BIT
+	) AS cs
+		INNER JOIN #TmpProductSettingDetail t 
+			ON cs.SportType = t.SportType
+			AND cs.BetType = t.BetType
+	WHERE t.GroupType = 162
+
+	IF NOT EXISTS (SELECT 1 FROM @PotentialWinLimitTbl)
+	BEGIN
+		INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
+		SELECT SportType,BetType,0 AS WinLimit,1 AS IsAutoReset,SettingLevel,ProductID,GroupID,Child_DisplayOrder
+		FROM #TmpProductSettingDetail t
+		WHERE t.GroupType = 162
+	END
 	--log all settings
 	SELECT @LogSPData = '<Root custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' + 'UplineRoleID="'+ coalesce(cast(@UplineRoleID as VARCHAR(10)),space(1)) + '"  >' 
 			+ '<Group ID="1">'--SB
@@ -741,6 +774,14 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max)), SPACE(1))
 			+ '</PT>'
+			+ '<PotentialWinLimit GroupType="162">'
+				+ COALESCE(CAST((SELECT SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID
+							FROM @PotentialWinLimitTbl
+							WHERE GroupID = 1
+							ORDER BY Child_DisplayOrder
+							FOR XML RAW('R')
+							) as VARCHAR(max)),SPACE(1))
+			+ '</PotentialWinLimit>'
 			+ '</Group>'	
 			+ '<Group ID="2">'--RNG Games
 			+ '<BetSetting GroupType="154">'

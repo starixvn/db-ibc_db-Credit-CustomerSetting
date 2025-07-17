@@ -22,6 +22,7 @@ AS
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		- 20250421@Eden: HF - wrong PT of new direct member [redmine: #224900] 
 		- 20250528@Johnson: Add potential win limit setting for direct member [redmine: #226060]	
+		- 20250611@Johnson: update potential win limit setting for direct member [redmine: #226060]
 		
 	Parameter's Explanation:
 	- @SettingXML:
@@ -102,7 +103,12 @@ AS
 					{ "SportType":"9918" , "BetType":"4601" , "IsDisabled":"1" }, 
 					{ "SportType":"9904" , "BetType":"4001" , "IsDisabled":"1" }, 
 					{ "SportType":"9911" , "BetType":"2400" , "IsDisabled":"1" }
-				]
+				],
+
+			--Potential Win Limit:
+			"162": [
+				{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1"}
+			]
 		}'	
 	
 */	
@@ -607,18 +613,55 @@ BEGIN
 		RETURN
 	END CATCH
 
+	--162: Potential Win Limit
 	BEGIN TRY
-		INSERT INTO [dbo].[CustPotentialWinLimit]
-					([CustID]
-					,[SportType]
-					,[BetType]
-					,[PotentialWinLimit]					
-					,[IsAutoReset]
-					,RepUpdateTime
-					)
-		SELECT @custID, SportType, Bettype, 0, 1, dbo.f_GetDateTime2()
-		FROM #ProductSettingDetail_tmp00 p 
-		WHERE SettingType = 30 
+		DECLARE @tblPotentialWinLimit TABLE (
+			SportType		SMALLINT,
+			BetType			SMALLINT,
+			IsAutoReset		BIT,
+			PotentialWinLimit MONEY			
+		)
+		
+		INSERT INTO @tblPotentialWinLimit(SportType,BetType,IsAutoReset,PotentialWinLimit)
+		SELECT SportType,BetType,IsAutoReset, WinLimit
+		FROM OPENJSON(@SettingXML,'$."162"') WITH (
+				SportType		SMALLINT
+				,BetType		SMALLINT
+				,WinLimit		MONEY 
+				,IsAutoReset	BIT
+			) AS p
+
+		IF EXISTS (SELECT 1 FROM @tblPotentialWinLimit)
+		BEGIN
+			INSERT INTO [dbo].[CustPotentialWinLimit]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[PotentialWinLimit]					
+						,[IsAutoReset]
+						,RepUpdateTime
+						)
+			SELECT @custID, t.SportType, t.Bettype, t.PotentialWinLimit, t.IsAutoReset, dbo.f_GetDateTime2()
+			FROM #ProductSettingDetail_tmp00 p 
+				INNER JOIN @tblPotentialWinLimit t
+					ON p.SportType = t.SportType
+					AND p.BetType = t.BetType
+			WHERE SettingType = 30 	
+		END
+		ELSE
+		BEGIN
+			INSERT INTO [dbo].[CustPotentialWinLimit]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[PotentialWinLimit]					
+						,[IsAutoReset]
+						,RepUpdateTime
+						)
+			SELECT @custID, SportType, Bettype, 0, 1, dbo.f_GetDateTime2()
+			FROM #ProductSettingDetail_tmp00 p 
+			WHERE SettingType = 30 
+		END	
 	END TRY
 	BEGIN CATCH 
 		SELECT @ErrCode = 162			

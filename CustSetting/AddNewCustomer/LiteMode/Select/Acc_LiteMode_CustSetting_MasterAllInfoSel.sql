@@ -19,6 +19,7 @@ AS
 		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]   
+		- 20250619@Johnson: Add Potential Win Limit for direct member [redmine: #226060]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -262,6 +263,13 @@ BEGIN
 		ORDER BY s.SubGroupOrder, s.Child_DisplayOrder
 	END
 	
+	--Potential Win Limit
+	IF @GroupID = 1 AND @GroupType = 162 AND @IsDirectMember = 1
+	BEGIN		
+		SELECT Sporttype, Bettype, 0 as PotentialWinLimit, 1 as IsAutoReset
+		FROM #SportBettypeFilter
+	END
+
 	--END SB Settings
 	----------------------------------------------------------------------------------
 			
