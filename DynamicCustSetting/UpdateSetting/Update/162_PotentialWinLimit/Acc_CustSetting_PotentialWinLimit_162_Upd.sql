@@ -17,7 +17,7 @@ AS
     
     Revisions:
         - 20250509@Johnson: initial sp [redmine: #226060]
-        
+        - 20250701@Johnson: remove checking unchange for multiple update [redmine: #232037]
     Parameter's explaination:
         - @WinLimit:
 		162: WinLimit
@@ -143,25 +143,19 @@ BEGIN
 			AND u.ProductID  IN (ps.ProductID, 0)
 	WHERE u.FunctionType = 1 --Edit Customer 
 	
-	
-	INSERT INTO @OldLimitTbl (SportType, BetType, WinLimit, IsAutoReset)
-	SELECT cs.SportType, cs.BetType, cs.PotentialWinLimit, cs.IsAutoReset
-	FROM dbo.CustPotentialWinLimit cs WITH(NOLOCK)
-		INNER JOIN @NewLimitTbl tmp ON tmp.SportType = cs.Sporttype AND tmp.Bettype = cs.Bettype
-	WHERE custid = @CustID
-
-	IF NOT EXISTS( SELECT 1 FROM @NewLimitTbl)
-		OR NOT EXISTS( SELECT 1 
-					FROM @NewLimitTbl new
-						INNER JOIN @OldLimitTbl old ON old.SportType = new.SportType AND old.BetType = new.BetType
-					WHERE new.WinLimit <> old.WinLimit OR new.IsAutoReset <> old.IsAutoReset					
-			)
+	IF NOT EXISTS( SELECT 1 FROM @NewLimitTbl)		
 	BEGIN
 		SELECT @ErrCode = 90017,
 				@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](90017,'E')
 
 		RETURN
 	END
+	
+	INSERT INTO @OldLimitTbl (SportType, BetType, WinLimit, IsAutoReset)
+	SELECT cs.SportType, cs.BetType, cs.PotentialWinLimit, cs.IsAutoReset
+	FROM dbo.CustPotentialWinLimit cs WITH(NOLOCK)
+		INNER JOIN @NewLimitTbl tmp ON tmp.SportType = cs.Sporttype AND tmp.Bettype = cs.Bettype
+	WHERE custid = @CustID
 
     --update new settings
 	UPDATE main
