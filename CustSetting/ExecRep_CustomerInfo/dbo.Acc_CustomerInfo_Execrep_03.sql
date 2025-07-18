@@ -53,6 +53,7 @@ Revisions:
 	- 20250221@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 	- 20250121@Winfred: [NAP CM] Scale Out DBCUST - Apply Inhouse replication for Customer Class[Redmine: #214119]
 	- 20250428@Thomas: Optimize CustomerClass update logic to prevent DB bloat [RedmineID: #225089]
+	- 20250630@Winfred: [CTS] Customer Classification - Set to Ori 17-18-19 [Redmine: #229875]
 Parameter's Explanation: 
 	@custid: Custid of members will be updated,
 	@DangerType: type of danger,
@@ -301,6 +302,9 @@ BEGIN
 				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM custInfo c WITH(UPDLOCK,ROWLOCK)
 				INNER JOIN @tmpCustDanger t ON c.custid = t.custid
+			WHERE (@DangerType = 1 AND t.Danger <> c.Danger)
+					OR (@DangerType = 2 AND t.Danger <> c.Danger2)
+					OR (@DangerType = 3 AND t.Danger <> c.Danger3)
 				
 			DELETE @tmpCustDanger
 		END
