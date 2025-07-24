@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_alpv" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Acc_CustomerUpdGeneralInfo]
 	@custid	 INT
     , @firstname	 NVARCHAR(50)
@@ -32,6 +32,9 @@ AS
 			Acc_CustomerUpdMember_All
 	Revisions:
 	    - 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+	    - 20250623@Helios: Offer Direct Member for Super/Master [redmine: #211969]
+	    - 20250623@Helios: Offer CashService - Skip update Credit Cash Member [RedmineID: #231204]
+
 	• @ErrCode:
 	    = 0: Update successfully.
 	    > 0: Specific Error.
@@ -96,6 +99,16 @@ BEGIN
 		SELECT @ErrCode , @ErrMsg
 
 	END
+
+	DECLARE @isCashService TINYINT
+
+	EXEC Age_CashService_CustServiceTypeSel @CustID =  @custid  , @ServiceType = @isCashService OUTPUT
+	
+	IF @isCashService = 1 AND @roleid = 1 	-- skip updating the credit for Cash Member
+	BEGIN
+		RETURN;
+	END
+
 
 	-- Update Credit
 	EXEC dbo.Acc_CustomerUpdCredit @CustID    = @CustID

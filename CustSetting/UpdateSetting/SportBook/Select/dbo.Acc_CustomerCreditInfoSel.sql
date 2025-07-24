@@ -12,6 +12,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerCreditInfoSel]
 		- 20240401@Elodie: The max credit per member got wrong calculation when creating multi-account [Redmine: #203180]
 		- 20250328@Elodie: Get info by username2 [Redmine: #197737]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]  
+		- 20250627@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
 */	
 AS
 BEGIN
@@ -23,7 +24,8 @@ BEGIN
 		@UplineCredit MONEY = 0,
 		@Credit_AllDownlines MONEY = 0,
 		@Credit_Max MONEY = 0,		
-		@MaxCredit_Mem MONEY 
+		@MaxCredit_Mem MONEY,
+		@AccumCredit_AllCashMember MONEY = 0;
 
 	SELECT @Credit = Credit,		
 		@roleid = roleid,
@@ -85,7 +87,11 @@ BEGIN
 		WHERE recommend = @UplineID 
 			AND RoleID = 1
 		
-		SELECT @Credit_Max = @UplineCredit - @Credit_AllDownlines	
+		SELECT @AccumCredit_AllCashMember = ISNULL(SUM(AccumCreditReturn),0)
+		FROM dbo.CashAccumCredit WITH (NOLOCK)
+		WHERE recommend = @UplineID;
+
+		SELECT @Credit_Max = @UplineCredit - @Credit_AllDownlines - @AccumCredit_AllCashMember;
 		
 		SELECT @MaxCredit_Mem = isnull(maxcredit,0) 
 		FROM CustAgent WITH (NOLOCK) 

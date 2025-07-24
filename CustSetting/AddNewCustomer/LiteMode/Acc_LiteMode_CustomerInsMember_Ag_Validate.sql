@@ -24,6 +24,7 @@ AS
 
 	Revision:
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
+		- 20250627@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
 
 	Param's Explanation: 
 		- @SettingXML:
@@ -102,6 +103,7 @@ BEGIN
 	@SettingType28 VARCHAR(MAX)= '',-- SB
 	@SettingType1 VARCHAR(MAX)= '',-- SB2, RNG(VS), LCS(VGgaming,Saba.Games,RNG Slot)
 	@SettingType18 VARCHAR(MAX)= '' -- RNG(Lottery, Table Game, Keno,NG), LCS(Allbet, SA Gaming,...)
+	,@AccumCredit_AllCashMember MONEY = 0;
 
 	EXEC [Acc_CheckUM] @CustID = @recommend
 		,@FunctionType = 2
@@ -246,11 +248,12 @@ BEGIN
     SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) FROM custAgent WITH(NOLOCK)  WHERE CustID = @recommend
 
 	SELECT @Credit_AllOtherMember = ISNULL(sum(Credit), 0) FROM custinfo WITH(NOLOCK) WHERE Recommend = @Recommend AND RoleID = 1
-    SELECT @MaxCredit_Mem = CASE WHEN @MaxCredit_Mem =0 THEN (@AgentCredit - @Credit_AllOtherMember) 
+	SELECT @AccumCredit_AllCashMember = ISNULL(SUM(AccumCreditReturn),0) FROM dbo.CashAccumCredit WITH (NOLOCK) WHERE recommend = @Recommend;
+    SELECT @MaxCredit_Mem = CASE WHEN @MaxCredit_Mem =0 THEN (@AgentCredit - @Credit_AllOtherMember - @AccumCredit_AllCashMember) 
 						    ELSE @MaxCredit_Mem END 
-    IF @Credit + @Credit_AllOtherMember>@AgentCredit
+    IF @Credit + @Credit_AllOtherMember + @AccumCredit_AllCashMember > @AgentCredit
     BEGIN
-	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@AgentCredit - @Credit_AllOtherMember, '#,#0.####'))
+	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@AgentCredit - @Credit_AllOtherMember - @AccumCredit_AllCashMember, '#,#0.####'))
 			    , @ErrCode = 204
 	    return
     END

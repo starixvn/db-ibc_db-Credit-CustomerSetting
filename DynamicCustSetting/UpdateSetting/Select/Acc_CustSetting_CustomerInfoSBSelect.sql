@@ -18,6 +18,7 @@ AS
 		- 20240423@Elodie: Member Max Credit, Member Given Credit enhancements [Redmine: #203332]
 		- 20241028@July: [Scale out DBCUST] Wrong Currency [Redmine: #212777]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
+		- 20250626@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
 
 	Param's Explanation:
 	
@@ -73,7 +74,8 @@ BEGIN
 			@recommend				INT,
 			@uGroup				VARCHAR(3),
 			@DisableAutoMPT			BIT = 0,
-			@SpecialPlatfrom			TINYINT
+			@SpecialPlatfrom			TINYINT,
+			@AccumCredit_AllCashMember	MONEY
 
 
 	----------------------------------------------------------------
@@ -228,7 +230,12 @@ BEGIN
 
 		SELECT @Credit_Ag_Max = @Credit_MAg - @Credit_AllOtherAgent
 		-----------------------------------------------------------------
-		SELECT @Credit_Ag_Min = MAX(c.credit)
+				
+		SELECT @AccumCredit_AllCashMember = ISNULL(SUM(AccumCreditReturn),0)
+		FROM dbo.CashAccumCredit WITH (NOLOCK)
+		WHERE recommend = @CustID;
+
+		SELECT @Credit_Ag_Min = MAX(c.credit) + ISNULL(@AccumCredit_AllCashMember, 0)
 		from
 			(
 			Select ISNULL(SUM(credit), 0) AS credit FROM custinfo WITH (NOLOCK) WHERE recommend = @CustID and RoleID=1
@@ -283,8 +290,9 @@ BEGIN
 			-- MaxCreditMax : Avaiable Credit
 			SELECT @Credit_Ag = ISNULL(credit, 0) FROM CustInfo AS ci WITH (NOLOCK) WHERE CustID = @recommend
 			SELECT @Credit_AllOtherMember = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE recommend = @recommend and RoleID = 1 AND CustID <> @CustID
+			SELECT @AccumCredit_AllCashMember = ISNULL(SUM(AccumCreditReturn),0) FROM dbo.CashAccumCredit WITH (NOLOCK) WHERE recommend = @recommend AND CustID <> @CustID;
 
-			SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember
+			SELECT @Credit_Ag_Bal = @Credit_Ag - @Credit_AllOtherMember - ISNULL(@AccumCredit_AllCashMember, 0);
 		END
 		ELSE IF @IsDirectMember = -3
 		BEGIN
