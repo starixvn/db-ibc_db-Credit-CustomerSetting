@@ -15,6 +15,7 @@ AS
 
 	 Revision:
 		- 20241227@Johnson: Initial [Redmine:#212684]
+		- 20250722@Elodie: Add ServiceType column [Redmine:#230549]
 */
 BEGIN
 	SET NOCOUNT ON;	
@@ -33,12 +34,13 @@ BEGIN
 				,bitmapIsDisabled	BINARY(32) NOT NULL
 				,SuspendInfo TINYINT
 				,Locked	TINYINT
-				,CloseInfo	TINYINT			
+				,CloseInfo	TINYINT		
+				,ServiceType TINYINT
 				,UpdateTime DATETIME
 			)
 		
-			INSERT INTO @tmp_CustProductStatus ( rID, CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, Locked, CloseInfo ,UpdateTime)
-			SELECT rid ,cid ,bsync ,bhidden ,bdis ,sus ,lck ,clo ,ut		
+			INSERT INTO @tmp_CustProductStatus ( rID, CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, Locked, CloseInfo, ServiceType, UpdateTime)
+			SELECT rid ,cid ,bsync ,bhidden ,bdis ,sus ,lck ,clo ,st, ut		
 			FROM  OPENJSON (  CAST( DECOMPRESS(@TransformJson) AS NVARCHAR(MAX)) )
 			WITH (	rid		BIGINT
 					,cid	INT
@@ -48,13 +50,14 @@ BEGIN
 					,sus	TINYINT
 					,lck	TINYINT	
 					,clo	TINYINT
+					,st		TINYINT
 					,ut		DATETIME
 					)
 				
 			SELECT @MaxID = MAX(rID) FROM @tmp_CustProductStatus
 
-			INSERT INTO CustProductStatus_History ( rID ,CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, Locked, CloseInfo, UpdateTime, SiteDBGroupID)
-			SELECT  rID, CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, Locked, CloseInfo,UpdateTime, @SiteDBGroupID
+			INSERT INTO CustProductStatus_History ( rID ,CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, Locked, CloseInfo, ServiceType, UpdateTime, SiteDBGroupID)
+			SELECT  rID, CustID, bitmapHasSynced, bitmapIsHidden, bitmapIsDisabled, SuspendInfo, Locked, CloseInfo, ServiceType, UpdateTime, @SiteDBGroupID
 			FROM @tmp_CustProductStatus
 
 			UPDATE Dest_ServiceTransform
