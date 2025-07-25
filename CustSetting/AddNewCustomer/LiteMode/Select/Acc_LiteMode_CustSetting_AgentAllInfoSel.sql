@@ -393,7 +393,7 @@ BEGIN
 				wl.SportType,
 				wl.BetType,
 				CASE WHEN ci.credit = 0 THEN 0.1 ELSE wl.MaxWinLimit * ci.credit END AS MaxWinLimit,
-				wl.MaxWinLimit * ci.credit AS MaxWinRange,				
+				CASE WHEN ci.credit = 0 THEN 0.1 ELSE wl.MaxWinLimit * ci.credit END AS MaxWinRange,				
 				wl.IsAutoReset,
 				wl.IsAutoReset AS IsAutoResetUpline,
 				sbf.SubType,

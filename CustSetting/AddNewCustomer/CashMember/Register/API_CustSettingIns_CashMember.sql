@@ -364,6 +364,30 @@ BEGIN
 		RETURN
 	END CATCH
 
+	/********************************************* Potential Win Limit : GroupType = 162 ****************************************/
+	BEGIN TRY
+		INSERT INTO [dbo].[CustPotentialWinLimit]
+					([CustID]
+					,[SportType]
+					,[BetType]
+					,[PotentialWinLimit]					
+					,[IsAutoReset]
+					,RepUpdateTime
+					)
+		SELECT @custID
+			,SportType
+			,BetType
+			,0	
+			,1
+			,dbo.f_GetDateTime2()
+		FROM #ProductSettingDetail_tmp00 p				
+		WHERE p.GroupType = 162
+	END TRY
+	BEGIN CATCH 
+		SELECT @ErrCode = 162	
+		RETURN
+	END CATCH
+
 	DROP TABLE #ProductSettingDetail_tmp00
 END
 GO

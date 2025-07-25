@@ -165,6 +165,7 @@ BEGIN
 			@IP = @IP,
     		@SystemID=@SystemID,
 			@Language = @Language,
+			@SubAccID = @SubAccID,
 			@ErrCode = @ErrCode OUTPUT,
 			@ErrMsg = @ErrMsg OUTPUT
 
@@ -474,7 +475,16 @@ BEGIN
 		,GroupID TINYINT
 		,Child_DisplayOrder INT
 	)
-
+	DECLARE @PotentialWinLimitTbl TABLE (
+		SportType SMALLINT
+		,BetType SMALLINT
+		,WinLimit MONEY		
+		,IsAutoReset BIT
+		,SettingLevel TINYINT
+		,ProductID TINYINT
+		,GroupID TINYINT
+		,Child_DisplayOrder INT
+	)
 	--Comm
 	INSERT INTO @DiscountTbl(sporttype,bettype,playerdiscount,GroupID,Child_DisplayOrder)
 	SELECT t.SportType,t.BetType,0,t.GroupID,t.Child_DisplayOrder
@@ -576,6 +586,19 @@ BEGIN
 			AND cs.BetType = t.BetType
 	WHERE t.GroupType = 161
 	
+	INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
+	SELECT cs.SportType,cs.BetType,cs.WinLimit,cs.IsAutoReset,t.SettingLevel,t.ProductID,t.GroupID,t.Child_DisplayOrder
+	FROM OPENJSON(@SettingXML,'$."162"') WITH (
+		 SportType		SMALLINT
+		,BetType		SMALLINT
+		,WinLimit		MONEY
+		,IsAutoReset	BIT
+	) AS cs
+		INNER JOIN #TmpProductSettingDetail t 
+			ON cs.SportType = t.SportType
+			AND cs.BetType = t.BetType
+	WHERE t.GroupType = 162
+
 	--Stake Level
 	INSERT INTO @StakeLevelTbl (SportType,BetType ,StakeLevelList,SettingType,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
 	SELECT cs.SportType,cs.BetType ,cs.StakeLevelList,t.SettingType,t.SettingLevel,t.ProductID,t.GroupID,t.Child_DisplayOrder
@@ -643,6 +666,14 @@ BEGIN
 						FOR XML RAW('R')
 						) as VARCHAR(max)), SPACE(1))
 			+ '</PT>'
+			+ '<PotentialWinLimit GroupType="162">'
+			+ COALESCE(CAST((SELECT SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID
+						FROM @PotentialWinLimitTbl
+						WHERE GroupID = 1
+						ORDER BY Child_DisplayOrder
+						FOR XML RAW('R')
+						) as VARCHAR(max)),SPACE(1))
+			+ '</PotentialWinLimit>'
 			+ '</Group>'	
 			+ '<Group ID="2">'--RNG Games
 			+ '<BetSetting GroupType="154">'

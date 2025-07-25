@@ -88,9 +88,9 @@ BEGIN
 		@Site = c.site,
 		@Credit = ci.credit
 	FROM Customer c with (NOLOCK)
-		INNER JOIN dbo.CustInfo ci WITH (NOLOCK) ON c.custid = ci.custid
+		INNER JOIN dbo.CustInfo ci WITH (NOLOCK) ON c.recommend = ci.custid
 		INNER JOIN Site s WITH (NOLOCK) ON s.site=c.site
-	WHERE ci.custid = @CustID
+	WHERE c.custid = @CustID
 
 	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel
