@@ -31,7 +31,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo_CashMember]
 	@email NVARCHAR(50),
 	@fax NVARCHAR(50),
 	@BankId	INT = NULL,
-	@AccountNumber VARCHAR(50) = NULL,
+	@AccountNumber VARCHAR(100) = NULL,
 	@address NVARCHAR(80),
 	@city NVARCHAR(50),
 	@state NVARCHAR(50),
@@ -54,6 +54,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo_CashMember]
 	@IP VARCHAR(15)='',
 	@SystemID	TINYINT=1,
 	@Language VARCHAR(2)= 'E',
+	@SubAccID INT = NULL,
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	)
@@ -251,14 +252,17 @@ BEGIN
 		END
 	END
 
-	IF @BankId IS NOT NULL OR @AccountNumber IS NOT NULL
+	IF ISNULL(@BankId,0) <> 0 AND ISNULL(@AccountNumber,'') <> ''
 	BEGIN
 		BEGIN TRY		
 			EXEC AgencyCashService.dbo.Acc_CustomerInsBankAccount_CashMember
+				@UserID = @UplineID,
 				@custid = @custid
-				,@BankId = @BankId
-				,@AccountNumber = @AccountNumber
+				,@MemberBankId = @BankId
+				,@MemberBankAccountNumber = @AccountNumber
 				,@Language = @Language
+				,@SubAccID = @SubAccID
+				,@IP = @IP
 				,@ErrCode = @ErrCode OUTPUT
 				,@ErrMsg = @ErrMsg OUTPUT
 						

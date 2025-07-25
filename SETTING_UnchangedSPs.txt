@@ -1,1 +1,1 @@
-CustSetting\UpdateSetting\Update Danger\CTS_CustomerUpdDanger.sql
+DynamicCustSetting\UpdateSetting\Update\155_WinLossLimit\Acc_CustSetting_WinLossLimit_155_Upd.sql

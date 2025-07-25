@@ -80,14 +80,17 @@ AS
 					{ "SportType":"9918" , "BetType":"4601" , "IsDisabled":"1" }, 
 					{ "SportType":"9904" , "BetType":"4001" , "IsDisabled":"1" }, 
 					{ "SportType":"9911" , "BetType":"2400" , "IsDisabled":"1" }
-				]
+				],
 			--Winloss Limit:
 			"161": [
 					{ "SportType":"9918"  , "BetType":"4601"  , "MaxWinLimit":"2000" , "IsAutoReset":"0" }, 
 					{ "SportType":"9906"  , "BetType":"4001"  , "MaxWinLimit":"2000" , "IsAutoReset":"0" }, 
 					{ "SportType":"9911"  , "BetType":"2400"  , "MaxWinLimit":"2000" , "IsAutoReset":"0" }
 				],
-
+			--Potential Win Limit:
+			"162": [
+				{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1"}
+			]
 		}'	
 	
 */	
@@ -510,6 +513,38 @@ BEGIN
 	END TRY
 	BEGIN CATCH 
 		SELECT @ErrCode = 161			
+		RETURN
+	END CATCH
+
+	/********************************************* Potential Win Limit : GroupType = 162 ****************************************/
+	BEGIN TRY
+		INSERT INTO [dbo].[CustPotentialWinLimit]
+					([CustID]
+					,[SportType]
+					,[BetType]
+					,[PotentialWinLimit]					
+					,[IsAutoReset]
+					,RepUpdateTime
+					)
+		SELECT @custID
+			,bs.SportType
+			,bs.BetType
+			,bs.WinLimit		
+			,bs.IsAutoReset
+			,dbo.f_GetDateTime2()
+		FROM OPENJSON(@SettingXML,'$."162"') WITH (
+				SportType		SMALLINT
+				,BetType		SMALLINT
+				,WinLimit		MONEY
+				,IsAutoReset	BIT
+			) AS bs
+			INNER JOIN #ProductSettingDetail_tmp00 p
+				ON p.SportType = bs.SportType
+				AND p.BetType = bs.BetType
+				AND p.GroupType = 162
+	END TRY
+	BEGIN CATCH 
+		SELECT @ErrCode = 162		
 		RETURN
 	END CATCH
 

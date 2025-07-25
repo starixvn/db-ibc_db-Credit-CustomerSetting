@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,asv_CashService" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo_Rollback]
 	@CustID int
 AS
@@ -20,8 +20,10 @@ AS
 */
 BEGIN		
 	SET NOCOUNT ON	
-	DECLARE @RoleID tinyint
+	DECLARE @RoleID tinyint, @ServiceType TINYINT = 0
 	SELECT @RoleID = RoleID FROM customer (nolock) WHERE CustID = @CustID
+	IF @RoleID = 1
+		SELECT @ServiceType = ServiceType FROM vw_CustInfoExtra (nolock) WHERE CustID = @CustID
 
 	DELETE c
 	OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
@@ -46,6 +48,11 @@ BEGIN
 		OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 		INTO CustLoginInfo_Member_Del_Inhouse(custid,RepUpdateTime)
 		WHERE custid = @custid	
+
+		IF @ServiceType = 1 -- Cash Member
+		BEGIN
+			EXECUTE AgencyCashService.dbo.Acc_CashService_CustomerInsRollback @CustID = @CustID
+		END
 	END
 
 	IF @RoleID = 4

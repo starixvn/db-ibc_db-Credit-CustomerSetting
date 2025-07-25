@@ -66,7 +66,7 @@ BEGIN
 				wl.SportType,
 				wl.BetType,
 				wl.MaxWinLimit,
-				uwl.MaxWinLimit * @AgentCredit AS MaxWinRange,					
+				CASE WHEN @AgentCredit = 0 THEN 0.1 ELSE uwl.MaxWinLimit * @AgentCredit END AS MaxWinRange,			
 				wl.IsAutoReset,
 				uwl.IsAutoReset AS IsAutoResetUpline,
 				sbf.SubType,

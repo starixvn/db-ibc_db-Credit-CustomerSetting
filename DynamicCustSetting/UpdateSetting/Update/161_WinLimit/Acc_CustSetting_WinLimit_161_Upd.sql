@@ -181,7 +181,7 @@ BEGIN
 	END
 	
 	--Validate new bet settings
-	EXEC [dbo].[Acc_CustSetting_WinLossLimit_161_Check] 
+	EXEC [dbo].[Acc_CustSetting_WinLimit_161_Check] 
 		 @CustID		= @CustID
 		, @RoleID		= @RoleID
 		, @AgentID		= @AgentID
@@ -261,7 +261,7 @@ BEGIN
 							t.SettingLevel								AS '@SettingLevel'
 					FROM @OldLimitTbl t
 					ORDER BY Child_DisplayOrder
-					FOR XML PATH('WinLossLimit'),
+					FOR XML PATH('WinLimit'),
 					TYPE
 				)
 		FOR XML PATH('ROOT'),
@@ -288,7 +288,7 @@ BEGIN
 							t.SettingLevel								AS '@SettingLevel'
 					FROM @NewLimitTbl t
 					ORDER BY Child_DisplayOrder
-					FOR XML PATH('WinLossLimit'),
+					FOR XML PATH('WinLimit'),
 					TYPE
 				)
 		FOR XML PATH('ROOT'),
