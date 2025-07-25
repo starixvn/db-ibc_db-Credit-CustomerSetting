@@ -30,7 +30,7 @@ BEGIN
 				,CustID		INT NOT NULL				
 				,SportType	SMALLINT NOT NULL
 				,BetType	SMALLINT NOT NULL	
-				,MaxWinLimit	SMALLMONEY
+				,MaxWinLimit	MONEY
 				,MaxLossLimit	MONEY
 				,IsAutoReset	BIT
 				,UpdateTime DATETIME
@@ -43,7 +43,7 @@ BEGIN
 					,cid	INT	
 					,s		SMALLINT 
 					,bt		SMALLINT
-					,maxw	SMALLMONEY
+					,maxw	MONEY
 					,maxl	MONEY
 					,isa	BIT
 					,ut		DATETIME

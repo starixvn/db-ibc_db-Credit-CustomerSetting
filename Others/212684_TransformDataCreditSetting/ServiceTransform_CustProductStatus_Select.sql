@@ -16,6 +16,7 @@ AS
 
 	 Revision:
 		- 20241227@Johnson: Initial [Redmine:#212684]
+		- 20250722@Elodie: Add ServiceType column [Redmine:#230549
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -41,6 +42,7 @@ BEGIN
 										,SuspendInfo		AS 'sus'
 										,Locked				AS 'lck'
 										,CloseInfo			AS 'clo'
+										,ServiceType		AS 'st'
 										,UpdateTime			AS 'ut'
 								FROM CustProductStatus_History WITH(NOLOCK)
 								WHERE rID > @rID 
