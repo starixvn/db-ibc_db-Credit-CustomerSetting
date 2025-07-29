@@ -18,6 +18,7 @@ AS
     
     Revisions:
         - 20250623@Helios: Offer CashService - Remove Bank Account Member [RedmineID: #231204]
+	  - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 7 [redmine: #233474] 
     
     Parameter's Explanation:
     · @userID: User performing the action
@@ -57,8 +58,8 @@ BEGIN
         @ServiceType    TINYINT    -- Added for service type check
     
     -- Initialize error handling variables
-    SELECT  @ErrCode = 0,
-            @ErrMsg = ''
+    SELECT @ErrCode = 0,
+           @ErrMsg = ''
     
     SET @startRun = GETDATE()
     
@@ -82,10 +83,20 @@ BEGIN
         RETURN;
     END;
 
-    DECLARE @Old_MemberBankStatus BIT = NULL;
+    DECLARE 
+        @Old_MemberBankStatus       BIT = NULL,
+        @MemberBankId               INT = 0,
+        @MemberBankAccountNumber    VARCHAR(100) = NULL,
+        @AgentBankAccountID         INT = 0,
+        @AgentBankAccountNumber_Old VARCHAR(100) = NULL
+	
+
 
     -- Check if member bank account exists and is active
-    SELECT @Old_MemberBankStatus = IsActive
+    SELECT @Old_MemberBankStatus     = IsActive,
+           @MemberBankId             = BankId,
+           @MemberBankAccountNumber  = AccountNumber,
+           @AgentBankAccountID       = BankAccountAgentID
     FROM dbo.CashMemberBankAccount WITH (NOLOCK)
     WHERE CustId = @custid 
       AND BankAccountMemberID = @MemberBankAccountID
@@ -98,10 +109,14 @@ BEGIN
         RETURN;
     END;
 
+    SELECT @AgentBankAccountNumber_Old = caba.BankAccountNumber
+    FROM CashAgentBankAccount caba WITH (NOLOCK)
+    WHERE caba.AgentBankAccountID = @AgentBankAccountID;
+
     -- Delete Operation (Soft Delete)
     BEGIN TRY
         UPDATE dbo.CashMemberBankAccount WITH (ROWLOCK, UPDLOCK)
-        SET IsActive = 0,
+        SET IsActive      = 0,
             RepUpdateTime = [dbo].[f_GetDateTime2]()
         WHERE CustId = @custid
           AND BankAccountMemberID = @MemberBankAccountID
@@ -121,37 +136,63 @@ BEGIN
     END
 
     -- Write Log
-    DECLARE 
-        @TrackingValue  NVARCHAR(MAX),
-        @TrackingValue2 NVARCHAR(MAX),
-        @ActionID INT = 300005  -- Action ID for bank account deletion
+    DECLARE @TrackingValue      NVARCHAR(MAX),
+            @TrackingValue2     NVARCHAR(MAX),
+            @TrackingValueMask  NVARCHAR(MAX),
+            @TrackingValueMask2 NVARCHAR(MAX),
+            @ActionID           INT = 300009  -- Action ID for bank account deletion
     
-    SET @endRun = GETDATE()
-    SET @DurationTime = DATEDIFF(millisecond, @startRun, @endRun)
+    SET @endRun       = GETDATE();
+    SET @DurationTime = DATEDIFF(millisecond, @startRun, @endRun);
+
+    DECLARE @BankCode VARCHAR(10);
+    SELECT @BankCode = cbl.BankCode 
+    FROM CashBankList cbl WITH (NOLOCK) 
+    WHERE cbl.BankID = @MemberBankId;
 
     -- LOG NEW VALUES
-    SELECT @TrackingValue = '<Acc_CustomerDelBankAccount_CashMember 
-                            CustID="' + convert(varchar(20), @CustID) 
-                            +'" SubAccName="' + CustDB.dbo.f_GetSubUsername(@SubAccID) 
-                            +'" IP="' + convert(varchar(50), @IP)   
-                            +'" IsActive="' + convert(varchar(20), 0) +'" />'
+    SELECT @TrackingValueMask = '<Acc_CustomerDelBankAccount_CashMember 
+                            CustID="' + CONVERT(VARCHAR(20), @CustID) 
+                            + '" SubAccName="' + CustDB.dbo.f_GetSubUsername(@SubAccID) 
+                            + '" IP="' + CONVERT(VARCHAR(50), @IP) 
+                            + '" MemberBankId="' + CONVERT(VARCHAR(50), @MemberBankId) 
+                            + '" MemberBankCode="' + CONVERT(VARCHAR(10), @BankCode)   
+                            + '" MemberBankAccountNumber="' + CONVERT(VARCHAR(100), ISNULL(@MemberBankAccountNumber, N'NoMatchingBankAccount'))   
+                            + '" AgentBankAccountNumber="' + CONVERT(VARCHAR(100), ISNULL(@AgentBankAccountNumber_Old, N'NoMatchingBankAccount'))     
+                            + '" />';
 
-    -- LOG OLD VALUES
-    SELECT @TrackingValue2 = '<Acc_CustomerDelBankAccount_CashMember 
-                            CustID="' + convert(varchar(20), @CustID) 
-                            +'" SubAccName="' + CustDB.dbo.f_GetSubUsername(@SubAccID) 
-                            +'" IP="'  + convert(varchar(50), @IP)    
-                            +'" IsActive="' +  convert(varchar(20), @Old_MemberBankStatus)  +'" />'
 
+    -- Then create display values with empty account numbers by replacing the actual account numbers
+    SELECT @TrackingValue = @TrackingValueMask;
+
+    IF @MemberBankAccountNumber IS NOT NULL
+    BEGIN
+        SET @TrackingValue = REPLACE(
+            @TrackingValue,
+            'MemberBankAccountNumber="' + CONVERT(VARCHAR(100), @MemberBankAccountNumber) + '"',
+            'MemberBankAccountNumber=""'
+        );
+    END;
+    
+    IF @AgentBankAccountNumber_Old IS NOT NULL 
+    BEGIN
+        SET @TrackingValue = REPLACE(
+            @TrackingValue,
+            'AgentBankAccountNumber="' + CONVERT(VARCHAR(100), @AgentBankAccountNumber_Old) + '"',
+            'AgentBankAccountNumber=""'
+        );
+    END;
+	
+
+   
     -- Return Log Data Object
-    SELECT 
-        @UserID         AS UserID,
-        @CustID         AS CustID,
-        @ActionID       AS ActionID,
-        @TrackingValue  AS TrackingValue,
-        @TrackingValue2 AS TrackingValue2,
-        @TrackingValue  AS TrackingValueMask,
-        @TrackingValue2 AS TrackingValueMask2,
-        @DurationTime   AS Duration;
+    SELECT @UserID           AS UserID,
+           @CustID           AS CustID,
+           @ActionID         AS ActionID,
+           @TrackingValue    AS TrackingValue,
+           NULL              AS TrackingValue2,
+           @TrackingValueMask AS TrackingValueMask,
+           NULL              AS TrackingValueMask2,
+           @DurationTime     AS Duration;
 END;
 GO
