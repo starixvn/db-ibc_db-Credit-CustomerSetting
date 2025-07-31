@@ -8,6 +8,7 @@ AS
 	
 	Revision:
 		- 20241217@Johnson: check servername DBCUST for execrep sps [RedmineID: #212684]
+		- 20250730@Tacy: Add DBSPARE1 [RedmineID: #234728]
 		
 	Param's Explanation:
 	SELECT dbo.f_CheckEnvironment()
@@ -15,6 +16,6 @@ AS
 		Any change on this function need to deploy all servers
 */
 BEGIN
-	RETURN CASE WHEN @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST') 
+	RETURN CASE WHEN @@SERVERNAME NOT IN ('DBCUST','DBSPARE','DBSPARE1','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST') 
 				THEN 0 ELSE 1 END
 END
