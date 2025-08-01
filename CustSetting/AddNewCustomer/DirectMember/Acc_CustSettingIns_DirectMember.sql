@@ -23,7 +23,7 @@ AS
 		- 20250421@Eden: HF - wrong PT of new direct member [redmine: #224900] 
 		- 20250528@Johnson: Add potential win limit setting for direct member [redmine: #226060]	
 		- 20250611@Johnson: update potential win limit setting for direct member [redmine: #226060]
-		
+		- 20250801@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
 	Parameter's Explanation:
 	- @SettingXML:
 		'{
@@ -107,7 +107,7 @@ AS
 
 			--Potential Win Limit:
 			"162": [
-				{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1"}
+				{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1","IncludeParlay":"0"}
 			]
 		}'	
 	
@@ -619,16 +619,18 @@ BEGIN
 			SportType		SMALLINT,
 			BetType			SMALLINT,
 			IsAutoReset		BIT,
-			PotentialWinLimit MONEY			
+			PotentialWinLimit MONEY,
+			IncludeParlay  	BIT			
 		)
 		
-		INSERT INTO @tblPotentialWinLimit(SportType,BetType,IsAutoReset,PotentialWinLimit)
-		SELECT SportType,BetType,IsAutoReset, WinLimit
+		INSERT INTO @tblPotentialWinLimit(SportType,BetType,IsAutoReset,PotentialWinLimit,IncludeParlay)
+		SELECT SportType,BetType,IsAutoReset, WinLimit, IncludeParlay
 		FROM OPENJSON(@SettingXML,'$."162"') WITH (
 				SportType		SMALLINT
 				,BetType		SMALLINT
 				,WinLimit		MONEY 
 				,IsAutoReset	BIT
+				,IncludeParlay	BIT
 			) AS p
 
 		IF EXISTS (SELECT 1 FROM @tblPotentialWinLimit)
@@ -639,9 +641,10 @@ BEGIN
 						,[BetType]
 						,[PotentialWinLimit]					
 						,[IsAutoReset]
+						,OfferOption
 						,RepUpdateTime
 						)
-			SELECT @custID, t.SportType, t.Bettype, t.PotentialWinLimit, t.IsAutoReset, dbo.f_GetDateTime2()
+			SELECT @custID, t.SportType, t.Bettype, t.PotentialWinLimit, t.IsAutoReset, t.IncludeParlay, dbo.f_GetDateTime2()
 			FROM #ProductSettingDetail_tmp00 p 
 				INNER JOIN @tblPotentialWinLimit t
 					ON p.SportType = t.SportType
@@ -656,9 +659,10 @@ BEGIN
 						,[BetType]
 						,[PotentialWinLimit]					
 						,[IsAutoReset]
+						,OfferOption
 						,RepUpdateTime
 						)
-			SELECT @custID, SportType, Bettype, 0, 1, dbo.f_GetDateTime2()
+			SELECT @custID, SportType, Bettype, 0, 1, 0, dbo.f_GetDateTime2()
 			FROM #ProductSettingDetail_tmp00 p 
 			WHERE SettingType = 30 
 		END	

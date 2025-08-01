@@ -1,1 +1,5 @@
-DynamicCustSetting\UpdateSetting\Update\155_WinLossLimit\Acc_CustSetting_WinLossLimit_155_Upd.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_MAg.sql
+CustSetting\AddNewCustomer\LiteMode\Insert\Acc_LiteMode_CustomerInsMember_SAg.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_Com.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_SAg.sql
+CustSetting\AddNewCustomer\FullMode\Acc_CustomerInsMember_MAg.sql

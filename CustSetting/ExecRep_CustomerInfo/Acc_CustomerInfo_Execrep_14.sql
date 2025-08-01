@@ -1070,8 +1070,8 @@ BEGIN
 			FROM #ProductSettingDetail_tmp00
 			WHERE SettingType IN (30)
 
-			INSERT INTO CustPotentialWinLimit(CustID,SportType,BetType,PotentialWinLimit,IsAutoReset,RepUpdateTime)
-			SELECT @CustID, Sporttype, Bettype, 0 PotentialWinLimit, 1 IsAutoReset, dbo.f_GetDateTime2()
+			INSERT INTO CustPotentialWinLimit(CustID,SportType,BetType,PotentialWinLimit,IsAutoReset,OfferOption, RepUpdateTime)
+			SELECT @CustID, Sporttype, Bettype, 0 PotentialWinLimit, 1 IsAutoReset, 0 OfferOption, dbo.f_GetDateTime2()
 			FROM #SportBettypeFilter30
 			
 			DROP TABLE #SportBettypeFilter30

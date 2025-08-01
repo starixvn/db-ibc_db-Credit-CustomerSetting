@@ -10,6 +10,7 @@ AS
     
     Revisions:
         - 20250509@Johnson: initial sp [redmine: #226060]
+        - 20250731@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
         
     Parameter's explaination:
 */  
@@ -35,7 +36,7 @@ BEGIN
     SELECT Sporttype, Bettype
     FROM dbo.f_CustSetting_ProductProfileSel (@SettingType,@SettingStatus,@SiteID,@Currency)  
    
-    SELECT cs.Sporttype, cs.Bettype, PotentialWinLimit WinLimit, IsAutoReset
+    SELECT cs.Sporttype, cs.Bettype, PotentialWinLimit WinLimit, IsAutoReset, dbo.f_CustPotentialWinLimit_GetOfferOption(cs.OfferOption, 1) IncludeParlay
     FROM dbo.CustPotentialWinLimit cs WITH(NOLOCK)
         INNER JOIN @tblSportBettype t ON cs.Sporttype = t.Sporttype AND cs.Bettype = t.Bettype
     WHERE CustID = @CustID    

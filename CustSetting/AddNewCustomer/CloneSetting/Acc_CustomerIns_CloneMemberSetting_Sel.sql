@@ -21,6 +21,7 @@ AS
 		- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240619@Johnson: Scale out dbcust [redmine:#199915]
 		- 20250512@Johnson: Add Potential Win Limit [redmine: #226060]
+		- 20250731@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
 	Examples:
 		DECLARE @SettingType25 VARCHAR(MAX)= '',
 				@SettingType26 VARCHAR(MAX)= '',
@@ -152,6 +153,7 @@ BEGIN
 						, cs.BetType
 						, cs.PotentialWinLimit as WinLimit
 						, cs.IsAutoReset
+						, dbo.f_CustPotentialWinLimit_GetOfferOption(cs.OfferOption, 1) AS IncludeParlay
 					FROM dbo.CustPotentialWinLimit cs WITH(NOLOCK)
 						INNER JOIN @ProductSettingDetail fil ON fil.SportType = cs.SportType AND fil.BetType = cs.BetType AND fil.SettingType = 30
 					WHERE cs.CustID	= @ExistingCustID

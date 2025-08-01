@@ -19,7 +19,7 @@ AS
 	
 	Revisions:
 		- 20250423@Elodie: Offer Cash Member [redmine: #223896] 
-		
+		- 20250801@Johnson: Include Parlay to Potential Win Limit [redmine: #233805]
 	Parameter's Explanation:
 	- @SettingXML:
 		'{
@@ -89,7 +89,7 @@ AS
 				],
 			--Potential Win Limit:
 			"162": [
-				{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1"}
+				{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1","IncludeParlay":"0"}
 			]
 		}'	
 	
@@ -524,6 +524,7 @@ BEGIN
 					,[BetType]
 					,[PotentialWinLimit]					
 					,[IsAutoReset]
+					,OfferOption
 					,RepUpdateTime
 					)
 		SELECT @custID
@@ -531,12 +532,14 @@ BEGIN
 			,bs.BetType
 			,bs.WinLimit		
 			,bs.IsAutoReset
+			,bs.IncludeParlay
 			,dbo.f_GetDateTime2()
 		FROM OPENJSON(@SettingXML,'$."162"') WITH (
 				SportType		SMALLINT
 				,BetType		SMALLINT
 				,WinLimit		MONEY
 				,IsAutoReset	BIT
+				,IncludeParlay	BIT
 			) AS bs
 			INNER JOIN #ProductSettingDetail_tmp00 p
 				ON p.SportType = bs.SportType

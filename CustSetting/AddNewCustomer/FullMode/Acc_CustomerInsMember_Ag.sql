@@ -207,6 +207,7 @@ Revisions:
 	- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20250114@Johnson: Check member Comm group [RedmineID: #216405]
 	- 20250509@Johnson: Apply Potential Win Limit for new customer [RedmineID: #226060]
+	- 20250731@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
 Param's Explanation:	
 	- @ErrCode:
 		= 0: add new member successfully.
@@ -253,7 +254,7 @@ Param's Explanation:
 			{"SportType": "9914","BetType": "916","IsLive": "0","AgentPT": "38"}
 		],
 		"162": [
-			{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1"}
+			{"SportType": "0","BetType": "0","WinLimit": "0","IsAutoReset":"1", "IncludeParlay":"1"}
 		]
 	}'
 	
@@ -444,6 +445,7 @@ BEGIN
 								,BetType INT  '$.BetType'								
 								,WinLimit MONEY  '$.WinLimit'
 								,IsAutoReset BIT  '$.IsAutoReset'
+								,IncludeParlay BIT  '$.IncludeParlay'
 							)
 						FOR XML RAW('R'), ROOT ('Root'), TYPE
 					)
@@ -453,7 +455,7 @@ BEGIN
 		BEGIN
 			SELECT @SettingType30 = CONVERT(VARCHAR(MAX),
 				(
-					SELECT SportType,BetType,0 WinLimit	,1 IsAutoReset
+					SELECT SportType,BetType,0 WinLimit	,1 IsAutoReset, 0 IncludeParlay
 					FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency)
 					WHERE SettingType = 30
 					FOR XML RAW('R'), ROOT ('Root'), TYPE
@@ -942,7 +944,8 @@ BEGIN
 			SportType		SMALLINT,
 			BetType			INT,
 			WinLimit		MONEY,
-			IsAutoReset		BIT
+			IsAutoReset		BIT,
+			IncludeParlay	BIT
 			)
 
 	--Log Commission
@@ -1026,17 +1029,19 @@ BEGIN
 			SportType,
 			BetType, 
 			WinLimit,
-			IsAutoReset)
+			IsAutoReset,
+			IncludeParlay)
 	SELECT
 		T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS SportType,
 		T.c.query('.').value('(R/@BetType)[1]', 'int') AS BetType,
 		T.c.query('.').value('(R/@WinLimit)[1]', 'money') AS WinLimit,
-		T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+		T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset,
+		T.c.query('.').value('(R/@IncludeParlay)[1]', 'bit') AS IncludeParlay
 	FROM  @xml.nodes('/Root/R') T(c)
 
 	SELECT @LogSPData = '<Root>' 
 			+ '<WinLimit>'
-				+ COALESCE(CAST((SELECT cs.SportType, cs.BetType, cs.ProductID, WinLimit, IsAutoReset
+				+ COALESCE(CAST((SELECT cs.SportType, cs.BetType, cs.ProductID, WinLimit, IsAutoReset, IncludeParlay
 							FROM @tblPT30 t
 							INNER JOIN (SELECT SportType, BetType, ProductID  
 										FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@siteID,@currency)

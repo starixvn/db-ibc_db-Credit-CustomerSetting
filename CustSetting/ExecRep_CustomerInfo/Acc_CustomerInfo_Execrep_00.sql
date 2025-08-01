@@ -79,6 +79,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInfo_Execrep_00]
 			- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 			- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 			- 20250512@Johnson: Add Potential Win Limit for new member [redmine: #226060]
+			- 20250731@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
 	Parameter's explanation:
 		-@isSearchAndCopy & @copyFromCustID : support to copy suspendinfo for roleid = 1
 		-@SettingStatus: 0: Pro, 1: UAT
@@ -620,6 +621,7 @@ BEGIN
 						, BetType			INT
 						, WinLimit			MONEY
 						, IsAutoReset		BIT
+						, IncludeParlay		BIT
 						)
 		
 			INSERT INTO #SportBettypeFilter30(ProductID ,SportType ,Bettype ,IsLive ,SettingType ,RealProductId)
@@ -634,19 +636,21 @@ BEGIN
 				INSERT INTO @NewPotentialWinLimitTbl(SportType, 
 					BetType, 
 					WinLimit,
-					IsAutoReset)
+					IsAutoReset,
+					IncludeParlay)
 				SELECT T.c.query('.').value('(R/@SportType)[1]', 'smallint') AS sporttype,
 					T.c.query('.').value('(R/@BetType)[1]', 'smallint') AS bettype,
 					T.c.query('.').value('(R/@WinLimit)[1]', 'money') AS WinLimit,
-					T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset
+					T.c.query('.').value('(R/@IsAutoReset)[1]', 'bit') AS IsAutoReset,
+					T.c.query('.').value('(R/@IncludeParlay)[1]', 'bit') AS IncludeParlay
 				FROM  @xml.nodes('/Root/R') T(c)
 			END		
 		
 			BEGIN TRY
 				IF @roleid = 1
 				BEGIN
-					INSERT INTO CustPotentialWinLimit(CustID,SportType,BetType,PotentialWinLimit,IsAutoReset,RepUpdateTime)
-					SELECT @custid , cs.SportType, cs.BetType, cs.WinLimit, cs.IsAutoReset, dbo.f_GetDateTime2()
+					INSERT INTO CustPotentialWinLimit(CustID,SportType,BetType,PotentialWinLimit,IsAutoReset,OfferOption,RepUpdateTime)
+					SELECT @custid , cs.SportType, cs.BetType, cs.WinLimit, cs.IsAutoReset, cs.IncludeParlay, dbo.f_GetDateTime2()
 					FROM @NewPotentialWinLimitTbl cs
 						INNER JOIN #SportBettypeFilter30 s ON s.SportType = cs.SportType AND s.Bettype = cs.BetType
 				END	

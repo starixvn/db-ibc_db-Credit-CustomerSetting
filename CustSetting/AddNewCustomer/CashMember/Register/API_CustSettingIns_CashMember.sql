@@ -18,6 +18,7 @@ AS
 	
 	Revisions:
 		- 20250423@Elodie: Offer Cash Member [redmine: #223896] 
+		- 20250801@Johnson: Include Parlay to Potential Win Limit [redmine: #233805]
 		
 	Parameter's Explanation:
 		
@@ -372,6 +373,7 @@ BEGIN
 					,[BetType]
 					,[PotentialWinLimit]					
 					,[IsAutoReset]
+					,OfferOption
 					,RepUpdateTime
 					)
 		SELECT @custID
@@ -379,6 +381,7 @@ BEGIN
 			,BetType
 			,0	
 			,1
+			,0
 			,dbo.f_GetDateTime2()
 		FROM #ProductSettingDetail_tmp00 p				
 		WHERE p.GroupType = 162

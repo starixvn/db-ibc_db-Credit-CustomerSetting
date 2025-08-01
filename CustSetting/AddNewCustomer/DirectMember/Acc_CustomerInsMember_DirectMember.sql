@@ -37,6 +37,7 @@ AS
 	Revisions:
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 		- 20250611@Johnson: apply potential winloss for member [Redmine: #226060]
+		- 20250801@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
 		
 	Parameter's Explanation:
 	
@@ -565,6 +566,7 @@ BEGIN
 		,BetType SMALLINT
 		,WinLimit MONEY		
 		,IsAutoReset BIT
+		,IncludeParlay BIT
 		,SettingLevel TINYINT
 		,ProductID TINYINT
 		,GroupID TINYINT
@@ -719,13 +721,14 @@ BEGIN
 	END;
 
 	--Potential WinLimit
-	INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
-	SELECT cs.SportType,cs.BetType,cs.WinLimit,cs.IsAutoReset,t.SettingLevel,t.ProductID,t.GroupID,t.Child_DisplayOrder
+	INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,IncludeParlay, SettingLevel,ProductID,GroupID,Child_DisplayOrder)
+	SELECT cs.SportType,cs.BetType,cs.WinLimit,cs.IsAutoReset,cs.IncludeParlay,t.SettingLevel,t.ProductID,t.GroupID,t.Child_DisplayOrder
 	FROM OPENJSON(@SettingXML,'$."162"') WITH (
 		 SportType		SMALLINT
 		,BetType		SMALLINT
 		,WinLimit		MONEY
 		,IsAutoReset	BIT
+		,IncludeParlay 	BIT
 	) AS cs
 		INNER JOIN #TmpProductSettingDetail t 
 			ON cs.SportType = t.SportType
@@ -734,8 +737,8 @@ BEGIN
 
 	IF NOT EXISTS (SELECT 1 FROM @PotentialWinLimitTbl)
 	BEGIN
-		INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
-		SELECT SportType,BetType,0 AS WinLimit,1 AS IsAutoReset,SettingLevel,ProductID,GroupID,Child_DisplayOrder
+		INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,IncludeParlay,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
+		SELECT SportType,BetType,0 AS WinLimit,1 AS IsAutoReset,0 AS IncludeParlay,SettingLevel,ProductID,GroupID,Child_DisplayOrder
 		FROM #TmpProductSettingDetail t
 		WHERE t.GroupType = 162
 	END
@@ -775,7 +778,7 @@ BEGIN
 						) as VARCHAR(max)), SPACE(1))
 			+ '</PT>'
 			+ '<PotentialWinLimit GroupType="162">'
-				+ COALESCE(CAST((SELECT SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID
+				+ COALESCE(CAST((SELECT SportType,BetType,WinLimit,IsAutoReset,IncludeParlay,SettingLevel,ProductID
 							FROM @PotentialWinLimitTbl
 							WHERE GroupID = 1
 							ORDER BY Child_DisplayOrder

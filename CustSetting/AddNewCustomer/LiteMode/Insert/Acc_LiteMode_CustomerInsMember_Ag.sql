@@ -1302,7 +1302,7 @@ BEGIN
 						) as VARCHAR(max)), SPACE(1))
 			+ '</Discount>'
 			+ '<PotentialWinLimit GroupType="162">' 
-				+ COALESCE(CAST((SELECT SportType,BetType,0 WinLimit,1 IsAutoReset,SettingLevel,ProductID
+				+ COALESCE(CAST((SELECT SportType,BetType,0 WinLimit,1 IsAutoReset,0 IncludeParlay, SettingLevel,ProductID
 							FROM #TmpProductSettingDetail
 							WHERE SettingType = 30
 							ORDER BY Child_DisplayOrder

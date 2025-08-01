@@ -20,6 +20,7 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]   
 		- 20250619@Johnson: Add Potential Win Limit for direct member [redmine: #226060]
+		- 20250801@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -266,7 +267,7 @@ BEGIN
 	--Potential Win Limit
 	IF @GroupID = 1 AND @GroupType = 162 AND @IsDirectMember = 1
 	BEGIN		
-		SELECT Sporttype, Bettype, 0 as PotentialWinLimit, 1 as IsAutoReset
+		SELECT Sporttype, Bettype, 0 as PotentialWinLimit, 1 as IsAutoReset, 0 as IncludeParlay
 		FROM #SportBettypeFilter
 	END
 

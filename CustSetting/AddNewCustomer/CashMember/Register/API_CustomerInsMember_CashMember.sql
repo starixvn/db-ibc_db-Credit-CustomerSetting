@@ -22,7 +22,7 @@ AS
 	
 	Revisions:
 		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
-		
+		- 20250801@Johnson: Include Parlay to Potential Win Limit [redmine: #233805]
 	Parameter's Explanation:
 	
 */	
@@ -458,6 +458,7 @@ BEGIN
 		,BetType SMALLINT
 		,WinLimit MONEY		
 		,IsAutoReset BIT
+		,IncludeParlay BIT
 		,SettingLevel TINYINT
 		,ProductID TINYINT
 		,GroupID TINYINT
@@ -526,8 +527,10 @@ BEGIN
 			AND cs.BetType = t.BetType
 	WHERE t.GroupType = 161 AND cs.CustID = @custid
 	
-	INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
-	SELECT cs.SportType,cs.BetType,cs.PotentialWinLimit,cs.IsAutoReset,t.SettingLevel,t.ProductID,t.GroupID,t.Child_DisplayOrder
+	INSERT INTO @PotentialWinLimitTbl (SportType,BetType,WinLimit,IsAutoReset,IncludeParlay,SettingLevel,ProductID,GroupID,Child_DisplayOrder)
+	SELECT cs.SportType,cs.BetType,cs.PotentialWinLimit,cs.IsAutoReset
+		,dbo.f_CustPotentialWinLimit_GetOfferOption(cs.OfferOption, 1) 
+		,t.SettingLevel,t.ProductID,t.GroupID,t.Child_DisplayOrder
 	FROM CustPotentialWinLimit cs
 		INNER JOIN #TmpProductSettingDetail t 
 			ON cs.SportType = t.SportType
@@ -598,7 +601,7 @@ BEGIN
 						) as VARCHAR(max)), SPACE(1))
 			+ '</PT>'
 			+ '<PotentialWinLimit GroupType="162">'
-			+ COALESCE(CAST((SELECT SportType,BetType,WinLimit,IsAutoReset,SettingLevel,ProductID
+			+ COALESCE(CAST((SELECT SportType,BetType,WinLimit,IsAutoReset,IncludeParlay,SettingLevel,ProductID
 						FROM @PotentialWinLimitTbl
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder

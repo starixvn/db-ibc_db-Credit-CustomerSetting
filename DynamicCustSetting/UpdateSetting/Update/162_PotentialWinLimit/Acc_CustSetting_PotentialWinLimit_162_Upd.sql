@@ -18,11 +18,12 @@ AS
     Revisions:
         - 20250509@Johnson: initial sp [redmine: #226060]
         - 20250701@Johnson: remove checking unchange for multiple update [redmine: #232037]
+		- 20250731@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
     Parameter's explaination:
         - @WinLimit:
 		162: WinLimit
 		'[
-			{ "SportType":"0"  , "BetType":"0"  , "WinLimit":"0"  , "IsAutoReset":"1" }
+			{ "SportType":"0"  , "BetType":"0"  , "WinLimit":"0"  , "IsAutoReset":"1",  "IncludeParlay":"0" }
 		]'
 */  
 BEGIN
@@ -101,7 +102,8 @@ BEGIN
 		, SettingLevel		TINYINT
 		, WinLimit		    MONEY 		
 		, IsAutoReset		BIT
-		, IsLog			BIT DEFAULT 0
+		, IncludeParlay 	BIT
+		, IsLog				BIT DEFAULT 0
 		, Child_DisplayOrder	INT
 		)
 
@@ -112,6 +114,7 @@ BEGIN
 		, SettingLevel		TINYINT
 		, WinLimit		    MONEY 		
 		, IsAutoReset		BIT
+		, IncludeParlay 	BIT
 		, IsLog			BIT DEFAULT 0
 		, Child_DisplayOrder	INT
 		)
@@ -121,8 +124,8 @@ BEGIN
 	FROM dbo.f_CustSetting_ProductProfileSel(@SettingType,@SettingStatus,@SiteID,@Currency)
 				
     -- Parse Data Json
-	INSERT @NewLimitTbl (SportType, BetType, WinLimit, IsAutoReset)	
-    SELECT SportType, BetType, WinLimit, IsAutoReset
+	INSERT @NewLimitTbl (SportType, BetType, WinLimit, IsAutoReset, IncludeParlay)	
+    SELECT SportType, BetType, WinLimit, IsAutoReset, IncludeParlay
     FROM OPENJSON(@WinLimit)
     WITH 
         (
@@ -130,6 +133,7 @@ BEGIN
             , BetType		INT
             , WinLimit		MONEY			
             , IsAutoReset	BIT
+			, IncludeParlay	BIT
         ) AS WinLimit
 
 	--Exclude Update for Sport is having UM
@@ -151,8 +155,8 @@ BEGIN
 		RETURN
 	END
 	
-	INSERT INTO @OldLimitTbl (SportType, BetType, WinLimit, IsAutoReset)
-	SELECT cs.SportType, cs.BetType, cs.PotentialWinLimit, cs.IsAutoReset
+	INSERT INTO @OldLimitTbl (SportType, BetType, WinLimit, IsAutoReset, IncludeParlay)
+	SELECT cs.SportType, cs.BetType, cs.PotentialWinLimit, cs.IsAutoReset, dbo.f_CustPotentialWinLimit_GetOfferOption(cs.OfferOption, 1) IncludeParlay
 	FROM dbo.CustPotentialWinLimit cs WITH(NOLOCK)
 		INNER JOIN @NewLimitTbl tmp ON tmp.SportType = cs.Sporttype AND tmp.Bettype = cs.Bettype
 	WHERE custid = @CustID
@@ -160,12 +164,14 @@ BEGIN
     --update new settings
 	UPDATE main
 	SET main.PotentialWinLimit = tmp.WinLimit
-		, main.IsAutoReset = tmp.IsAutoReset	
+		, main.IsAutoReset = tmp.IsAutoReset
+		, main.OfferOption = dbo.f_CustPotentialWinLimit_GenerateOfferOption(main.OfferOption,1, tmp.IncludeParlay)	
 		, RepUpdateTime = dbo.f_GetDateTime2()
 	FROM dbo.CustPotentialWinLimit main WITH(ROWLOCK,UPDLOCK)
 	INNER JOIN @NewLimitTbl tmp ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 	WHERE main.custid = @CustID
-		AND (main.PotentialWinLimit <> tmp.WinLimit OR main.IsAutoReset <> tmp.IsAutoReset)
+		AND (main.PotentialWinLimit <> tmp.WinLimit OR main.IsAutoReset <> tmp.IsAutoReset 
+			OR tmp.IncludeParlay <> dbo.f_CustPotentialWinLimit_GetOfferOption(main.OfferOption, 1))
 	
 	--Start Logging
 	UPDATE tmp
@@ -200,6 +206,7 @@ BEGIN
 								ELSE CAST(WinLimit AS VARCHAR(20))
 							END										AS '@WinLimit',
 							IsAutoReset								AS '@IsAutoReset',
+							t.IncludeParlay							AS '@IncludeParlay',
 							t.SettingLevel							AS '@SettingLevel'
 					FROM @OldLimitTbl t
 					ORDER BY Child_DisplayOrder
@@ -225,6 +232,7 @@ BEGIN
 								ELSE CAST(WinLimit AS VARCHAR(20))
 							END										AS '@WinLimit',
 							IsAutoReset								AS '@IsAutoReset',
+							t.IncludeParlay							AS '@IncludeParlay',
 							t.SettingLevel							AS '@SettingLevel'
 					FROM @NewLimitTbl t
 					ORDER BY Child_DisplayOrder

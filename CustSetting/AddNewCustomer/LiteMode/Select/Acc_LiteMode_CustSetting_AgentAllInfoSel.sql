@@ -23,7 +23,7 @@ AS
 		- 20250512@Johnson: Add Potential Win Limit for create member [redmine: #226060]
 		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
 		- 20250626@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
-		
+		- 20250731@Johnson: Include Parlay for Potential Win Limit [RedmineID: #233805]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -262,7 +262,7 @@ BEGIN
 	--Potential Win Limit
 	IF @GroupID = 1 AND @GroupType = 162
 	BEGIN		
-		SELECT Sporttype, Bettype, 0 as PotentialWinLimit, 1 as IsAutoReset
+		SELECT Sporttype, Bettype, 0 as PotentialWinLimit, 1 as IsAutoReset, 0 as IncludeParlay
 		FROM #SportBettypeFilter
 	END
 	--END SB Settings
