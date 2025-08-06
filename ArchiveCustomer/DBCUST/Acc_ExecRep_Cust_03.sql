@@ -30,6 +30,7 @@ AS
 		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
 		- 20241030@Helios: ScaleOut Apply DeleteInHouse - Extend more table - Remove Code Old Structure [RedmineID: #201061]  
 		- 20250102@Eden: Archiving direct member [redmine: #215533] 
+		- 20250610@Dave: Apply InHouse Delete for VRMemberBigStake [RedmineID: #230171]
 
 
 	Param's Explanation:
@@ -155,6 +156,7 @@ BEGIN
 	    , @IsDelete_VRCustLockStatus			    AS INT = 1
 	    , @IsDelete_VRSettingManualUpdAcc		    AS INT = 1
 	    , @IsDelete_CustVirtualSetting			    AS INT = 1
+	    , @IsDelete_VRMemberBigStake			    AS INT = 1
 
 	-- Param use for Stage 4
 	DECLARE
@@ -680,6 +682,17 @@ BEGIN
 				IF @@ROWCOUNT = 0
 					SELECT @IsDelete_CustVirtualSetting = 0
 			END
+			IF @IsDelete_VRMemberBigStake = 1
+			BEGIN
+				DELETE TOP (@BatchSize) rmv
+				OUTPUT DELETED.CustID, DELETED.[Type], dbo.f_GetDateTime2()
+				INTO VRMemberBigStake_Del_InHouse (CustID,[Type],RepUpdateTime)
+				FROM VRMemberBigStake rmv WITH (ROWLOCK)
+				WHERE	rmv.CustID IN (SELECT custid FROM #Temp_Customers)
+
+				IF @@ROWCOUNT = 0
+					SELECT @IsDelete_VRMemberBigStake = 0
+			END
 
 			IF 	 ( @IsDelete_BetSetting_Member				= 1)
 			    OR ( @IsDelete_BetSetting3rd_Member				= 1)
@@ -713,6 +726,7 @@ BEGIN
 			    OR ( @IsDelete_VRCustLockStatus					= 1)
 			    OR ( @IsDelete_VRSettingManualUpdAcc				= 1)
 			    OR ( @IsDelete_CustVirtualSetting				= 1)
+			    OR ( @IsDelete_VRMemberBigStake				= 1)
 				WAITFOR DELAY @delayTime
 
 			ELSE
@@ -737,10 +751,6 @@ BEGIN
 				ON t.ImageId = c.ImageId
 		WHERE t.ImageId > 1000000 -- just delete user upload image ( id > 1000000, not delete system library image id <= 1000000)
 
-		-- Just Normal Delete, Table Not Yet Apply Rep Inhouse / MS execrep
-		DELETE vbs
-		FROM VRMemberBigStake vbs WITH (ROWLOCK)
-		WHERE vbs.CustID IN (SELECT custid FROM #Temp_Customers)
 	END
 	ELSE IF @StageID = 4 --[Stage 4: Delete cust info for members under agent]
 	BEGIN
