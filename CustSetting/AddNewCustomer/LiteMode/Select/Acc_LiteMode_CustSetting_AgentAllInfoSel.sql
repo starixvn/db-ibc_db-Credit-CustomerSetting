@@ -23,7 +23,7 @@ AS
 		- 20250512@Johnson: Add Potential Win Limit for create member [redmine: #226060]
 		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
 		- 20250626@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
-		
+		- 20250729@Johnson:add Max Payout Per Match for E-Sports & Muay Thai [redmine: #230652]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -171,9 +171,7 @@ BEGIN
 			ISNULL(MAX(CASE WHEN cs.MinBet = 0 THEN NULL ELSE cs.MinBet END),0)  AS MinBet, 
 			ISNULL(MIN(CASE WHEN cs.MaxBet = 0 THEN NULL ELSE cs.MaxBet END),0) AS MaxBet, 
 			ISNULL(MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),0) MaxPerMatch, 	
-			MaxPayoutPerMatch = CASE WHEN cs.SportType IN(43,44) THEN NULL 
-									 ELSE ISNULL(MIN(CASE WHEN cs.MaxPayoutPerMatch = 0 THEN NULL ELSE cs.MaxPayoutPerMatch END),0) 
-								END
+			ISNULL(MIN(CASE WHEN cs.MaxPayoutPerMatch = 0 THEN NULL ELSE cs.MaxPayoutPerMatch END),0) MaxPayoutPerMatch
 		FROM BetSetting_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.Sporttype = s.SportType
 												AND cs.Bettype = s.Bettype

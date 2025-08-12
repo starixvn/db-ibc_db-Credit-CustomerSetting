@@ -13,6 +13,7 @@ AS
     
     Revisions:
 		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
+		- 20250724@Johnson: add Max Payout Per Match for E-Sports & Muay Thai [redmine: #230652]
 */	
 BEGIN
 	SET NOCOUNT ON
@@ -135,13 +136,13 @@ BEGIN
 					INNER JOIN #AgentTmpBatch ci
 						ON b.custid = ci.custid
 				WHERE 
-				b.SportType NOT IN (43,44)
-				AND ( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
+				--b.SportType NOT IN (43,44)
+				( (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
 					OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
 					OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
 					)
 					
-				-- This rule just Update BetSetting for E-Sports & Muay Thai
+				/*-- This rule just Update BetSetting for E-Sports & Muay Thai
 				UPDATE b
 				SET 
 					@NewMaxBet = CASE WHEN new.MaxBet < b.MaxBet AND new.MaxBet > 0 THEN new.MaxBet ELSE b.MaxBet END,
@@ -159,6 +160,7 @@ BEGIN
 				WHERE 
 				b.SportType IN (43,44)
 				AND (b.MinBet <> new.MinBet OR b.MaxBet <> new.MaxBet OR b.MaxPerMatch <> new.MaxPerMatch)
+				*/
 			END
 		END
 		
@@ -196,13 +198,14 @@ BEGIN
 					INNER JOIN #AgentTmpBatch ci
 						ON b.custid = ci.custid
 				WHERE 
-				b.SportType NOT IN (43,44)
-				AND (
+				--b.SportType NOT IN (43,44) AND
+				 (
 					   (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
 					OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
 					OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)
 				)
 
+				/*
 				-- This rule just Update BetSetting for E-Sports & Muay Thai
 				UPDATE b
 				SET 
@@ -221,6 +224,7 @@ BEGIN
 				WHERE 
 				b.SportType IN (43,44)
 				AND (b.MinBet <> new.MinBet OR b.MaxBet <> new.MaxBet OR b.MaxPerMatch <> new.MaxPerMatch)
+				*/
 			END
 		END
 		
@@ -258,14 +262,14 @@ BEGIN
 					INNER JOIN #MemberTmpBatch ci
 						ON b.custid = ci.custid
 				WHERE 
-				b.SportType NOT IN (43,44)
-				AND 
+				--b.SportType NOT IN (43,44) AND 
 				(		   
 						   (b.MaxBet > new.MaxBet AND new.MaxBet > 0)
 						OR (b.MaxPerMatch > new.MaxPerMatch AND new.MaxPerMatch > 0)
 						OR (b.MaxPayoutPerMatch > new.MaxPayoutPerMatch AND new.MaxPayoutPerMatch > 0)						
 				)
 
+				/*
 				-- This rule just Update BetSetting for E-Sports & Muay Thai
 				UPDATE b
 				SET 
@@ -284,7 +288,7 @@ BEGIN
 				WHERE 
 				b.SportType IN (43,44)
 				AND (b.MinBet <> new.MinBet OR b.MaxBet <> new.MaxBet OR b.MaxPerMatch <> new.MaxPerMatch)
-		
+				*/
 			END
 		END
 		

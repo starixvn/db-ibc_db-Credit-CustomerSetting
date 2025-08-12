@@ -26,6 +26,7 @@ AS
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
 		- 20240612@Johnson: Scale out DBCUST [redmine: #199915]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
+		- 20250617@Johnson: add Max Payout Per Match for E-Sports [redmine: #230652]
 	Param's Explanation:
 	@BetSetting: Json Type
 		'[
@@ -267,7 +268,7 @@ BEGIN
 	WHERE		   tmp.MinBet			< 0
 			OR tmp.MaxBet			< 0
 			OR tmp.MaxPerMatch		< 0
-			OR (tmp.SportType NOT IN (43,44) AND tmp.MaxPayoutPerMatch	< 0)
+			OR (tmp.SportType NOT IN (44) AND tmp.MaxPayoutPerMatch	< 0)
 
 			OR (tmp.SportType IN (43,44) AND tmp.MinBet			< 1 AND @SiteLabel ='789y') --789y ExtNAP and Alpha, change @SystemID by @SiteLabel
 			OR (tmp.SportType IN (43,44) AND tmp.MaxBet			< 1 AND @SiteLabel ='789y') --789y ExtNAP and Alpha, change @SystemID by @SiteLabel
@@ -276,12 +277,12 @@ BEGIN
 			OR ((tmp.MinBet	<> 0 OR tmp.MaxBet <> 0) AND tmp.MinBet > tmp.MaxBet)
 			OR ((tmp.MaxBet	<> 0 OR tmp.MaxPerMatch <> 0) AND tmp.MaxBet > tmp.MaxPerMatch)
 			OR ((tmp.MinBet	<> 0 OR tmp.MaxPerMatch <> 0) AND tmp.MinBet > tmp.MaxPerMatch)
-			OR (tmp.SportType NOT IN (43,44) AND (tmp.MaxPerMatch <> 0 OR tmp.MaxPayoutPerMatch <> 0) AND tmp.MaxPerMatch > tmp.MaxPayoutPerMatch)
+			OR ((tmp.MaxPerMatch <> 0 OR tmp.MaxPayoutPerMatch <> 0) AND tmp.MaxPerMatch > tmp.MaxPayoutPerMatch)
 
 			OR (ubl.MinBet	> 0 AND tmp.MinBet > 0 AND tmp.MinBet < ubl.MinBet)
 			OR (ubl.MaxBet	> 0 AND tmp.MaxBet > 0 AND tmp.MaxBet > ubl.MaxBet)
 			OR (ubl.MaxPerMatch > 0 AND tmp.MaxPerMatch > 0 AND tmp.MaxPerMatch > ubl.MaxPerMatch)
-			OR (tmp.SportType NOT IN (43,44) AND ubl.MaxPayoutPerMatch > 0 AND tmp.MaxPayoutPerMatch > 0 AND tmp.MaxPayoutPerMatch > ubl.MaxPayoutPerMatch)
+			OR (ubl.MaxPayoutPerMatch > 0 AND tmp.MaxPayoutPerMatch > 0 AND tmp.MaxPayoutPerMatch > ubl.MaxPayoutPerMatch)
 			
 
 	--IF there's no error data then return
@@ -337,7 +338,7 @@ BEGIN
 	IF EXISTS(SELECT TOP 1 1 
 				FROM @ErrorSportTypeTbl tmp
 					LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType	= ubl.SportType AND tmp.BetType = ubl.BetType
-				WHERE	(tmp.SportType NOT IN (43,44) AND tmp.MaxPayoutPerMatch < 0)
+				WHERE	tmp.MaxPayoutPerMatch < 0
 			)
 	BEGIN
 			SET @xml = (
@@ -351,7 +352,7 @@ BEGIN
 							FROM @ErrorSportTypeTbl tmp
 							INNER JOIN #ProductSettingDetail_Check psdc ON tmp.SportType = psdc.SportType AND tmp.BetType = psdc.BetType
 								LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType	= ubl.SportType AND tmp.BetType = ubl.BetType
-							WHERE	(tmp.SportType NOT IN (43,44) AND tmp.MaxPayoutPerMatch < 0)
+							WHERE	(tmp.SportType NOT IN (44) AND tmp.MaxPayoutPerMatch < 0)
 							FOR XML PATH('Row')
 								, TYPE
 							)
@@ -438,10 +439,8 @@ BEGIN
 	--Check MaxPerMatch <= MaxPayoutPerMatch
 	IF EXISTS(SELECT TOP 1 1
 			FROM @ErrorSportTypeTbl tmp
-			WHERE (	tmp.SportType		NOT IN (43,44)
-					AND (tmp.MaxPerMatch	<> 0 OR tmp.MaxPayoutPerMatch	<> 0)
-					AND tmp.MaxPerMatch	> tmp.MaxPayoutPerMatch
-				) 
+			WHERE (tmp.MaxPerMatch	<> 0 OR tmp.MaxPayoutPerMatch	<> 0)
+					AND tmp.MaxPerMatch	> tmp.MaxPayoutPerMatch				
 		   )
 	BEGIN
 		SET @xml = (
@@ -455,7 +454,7 @@ BEGIN
 							, psdc.GroupType AS '@GroupType'
 						FROM @ErrorSportTypeTbl tmp
 						INNER JOIN #ProductSettingDetail_Check psdc ON tmp.SportType = psdc.SportType AND tmp.BetType = psdc.BetType
-						WHERE (	tmp.SportType		NOT IN (43,44)
+						WHERE (	tmp.SportType		NOT IN (44)
 								AND (tmp.MaxPerMatch	<> 0 OR tmp.MaxPayoutPerMatch	<> 0)
 								AND tmp.MaxPerMatch	> tmp.MaxPayoutPerMatch
 							)
@@ -579,8 +578,7 @@ BEGIN
 		--Check if MIN(upper.MaxPayoutPerMatch)> 0 and MaxPayoutPerMatch>0 then MaxPayoutPerMatch<=MIN(upper.MaxPayoutPerMatch)
 		IF EXISTS(SELECT TOP 1 1
 				FROM @ErrorSportTypeTbl tmp
-				WHERE tmp.SportType NOT IN (43,44)
-					AND tmp.MaxMaxPayoutPerMatch	> 0
+				WHERE tmp.MaxMaxPayoutPerMatch	> 0
 					AND tmp.MaxPayoutPerMatch	> 0
 					AND tmp.MaxPayoutPerMatch	> tmp.MaxMaxPayoutPerMatch)
 		BEGIN
@@ -594,7 +592,7 @@ BEGIN
 								, psdc.GroupType AS '@GroupType'
 							FROM @ErrorSportTypeTbl tmp
 							INNER JOIN #ProductSettingDetail_Check psdc ON tmp.SportType = psdc.SportType AND tmp.BetType = psdc.BetType
-							WHERE tmp.SportType NOT IN (43,44)
+							WHERE tmp.SportType NOT IN (44)
 								AND tmp.MaxMaxPayoutPerMatch	> 0
 								AND tmp.MaxPayoutPerMatch	> 0
 								AND tmp.MaxPayoutPerMatch	> tmp.MaxMaxPayoutPerMatch

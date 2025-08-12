@@ -21,6 +21,7 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		- 20250619@Johnson: Add Potential Win Limit for direct member [redmine: #226060]
+		- 20250729@Johnson:add Max Payout Per Match for E-Sports & Muay Thai [redmine: #230652]
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -152,7 +153,7 @@ BEGIN
 	IF @GroupID = 1 AND @GroupType = 151
 	BEGIN				
 		SELECT cs.sporttype, cs.bettype, MinBet, MaxBet, MaxPerMatch, 
-			MaxPayoutPerMatch = CASE WHEN s.SportType IN(43,44) THEN NULL ELSE ISNULL(MaxPayoutPerMatch,0) END
+			ISNULL(MaxPayoutPerMatch,0) as MaxPayoutPerMatch
 		FROM BetSetting_Agent cs WITH(NOLOCK)
 			INNER JOIN #SportBettypeFilter s 
 				ON cs.sporttype = s.sporttype
