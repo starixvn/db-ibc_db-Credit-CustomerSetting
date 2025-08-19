@@ -1,12 +1,4 @@
 /*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_alp,wsv_alpv,wsv_xnap" viewers="vnteam" isFunction="0"></info>*/
-USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Age_MaxMemberLimitBySuperCheck]    Script Date: 10/04/2018 15:13:53 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
 ALTER PROCEDURE [dbo].[Age_MaxMemberLimitBySuperCheck]
 	@AgentId	INT,
 	@Language	VARCHAR(10) = 'E',
@@ -22,6 +14,7 @@ AS
 	
 	Revisions:
 		-20180924@Phillip: Init
+		-20250730@Dave: Exclude cash member from the total member count [Redmine: #235266]
 	
 	Param's Explanation:
 	- @AgentId: Agent Id
@@ -49,11 +42,15 @@ BEGIN
 		RETURN
 	END
 	
-	SELECT @CurrentMembers = COUNT(*)
-	FROM dbo.custinfo WITH (NOLOCK)
-	WHERE srecommend = @SuperId
-		AND roleid = 1
-		AND [Enabled] = 1
+	SELECT @CurrentMembers = COUNT(1)
+	FROM dbo.custinfo AS c WITH (NOLOCK)
+	CROSS APPLY (SELECT TOP 1 ServiceType
+				FROM vw_CustInfoExtra WITH (NOLOCK)
+				WHERE custid = c.custid) ci
+	WHERE c.srecommend = @SuperId
+		AND c.roleid = 1
+		AND c.[Enabled] = 1
+		AND ci.ServiceType = 0; /* Exclude Cash Service Members */
 	
 	SET @ErrCode = CASE
 		WHEN @CurrentMembers > = @MaxMemberLimit THEN 1
@@ -68,10 +65,3 @@ BEGIN
 	END
 END
 GO
-GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [wsv_nap]
-GO
-GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [wsv_alp]
-GO
-GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [wsv_alpv]
-GO
-GRANT EXECUTE ON [dbo].[Age_MaxMemberLimitBySuperCheck] TO [wsv_xnap]

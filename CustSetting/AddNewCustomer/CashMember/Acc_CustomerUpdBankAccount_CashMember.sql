@@ -23,7 +23,8 @@ DB: DBCUST-AgencyCashService
 
 Revisions:
     - 20250623@Helios: Offer CashService - Changed Bank Account Associate's [RedmineID: #231204]
-    - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 7 [redmine: #233474]
+    - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 7 [redmine: #233474] 
+    - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 8 [redmine: #235266] 
 
 Parameter's Explanation:
     · @userID: User performing the action
@@ -72,16 +73,19 @@ BEGIN
     SET @BankAccountNumber = NULLIF(LTRIM(RTRIM(@AgentBankAccountNumber)), '');
 
     -- Check if user has Cash Service enabled
-    EXEC CustDB.dbo.Age_CashService_CustServiceTypeSel 
-        @CustID = @userID,
-        @ServiceType = @ServiceType OUTPUT
+    --IF @SubAccID <> 0
+    --BEGIN
+	   -- EXEC CustDB.dbo.Age_CashService_CustServiceTypeSel 
+		  --@CustID = @userID,
+		  --@ServiceType = @ServiceType OUTPUT
 
-    IF @ServiceType = 0
-    BEGIN
-        SET @ErrMsg = N'Permission denied. Please enable the Cash Service to proceed.';
-        SET @ErrCode = 103;
-        RETURN;
-    END;
+	   -- IF @ServiceType = 0
+	   -- BEGIN
+		  --SET @ErrMsg = N'Permission denied. Please enable the Cash Service to proceed.';
+		  --SET @ErrCode = 103;
+		  --RETURN;
+	   -- END;
+    --END
 
     -- Validate required parameters
     IF @custid IS NULL 
@@ -141,7 +145,7 @@ BEGIN
     IF ISNULL(@IsExist_MemberBankAcc, 0) = 0
     BEGIN
         SET @ErrMsg = N'Bank account not found';
-        SET @ErrCode = 200;
+        SET @ErrCode = 203;
         RETURN;
     END;
     
@@ -159,7 +163,7 @@ BEGIN
         IF ISNULL(@AgentBankAccountID_New, 0) = 0
         BEGIN
             SET @ErrMsg = N'Bank account not found';
-            SET @ErrCode = 201;
+            SET @ErrCode = 203;
             RETURN;
         END;
     END;
@@ -232,8 +236,8 @@ BEGIN
                             + '" MemberBankId="' + CONVERT(VARCHAR(20), @MemberBankId)   
                             + '" MemberBankCode="' + CONVERT(VARCHAR(10), @BankCode)   
                             + '" MemberBankAccountID="' + CONVERT(VARCHAR(20), @MemberBankAccountID)   
-                            + '" MemberBankAccountNumber="' + CONVERT(VARCHAR(50), @MemberBankAccountNumber) 
-                            + '" AgentBankAccountID="' + CONVERT(NVARCHAR(50), ISNULL(@AgentBankAccountID_New, 0)) 
+                            + '" MemberBankAccountNumber="' + CONVERT(VARCHAR(100), @MemberBankAccountNumber) 
+                            + '" AgentBankAccountID="' + CONVERT(VARCHAR(50), ISNULL(@AgentBankAccountID_New, 0)) 
                             + '" AgentBankAccountNumber="' + CONVERT(VARCHAR(100), ISNULL(@BankAccountNumber, N'NoMatchingBankAccount')) + '" />';
 
     SELECT @TrackingValue = @TrackingValueMask;

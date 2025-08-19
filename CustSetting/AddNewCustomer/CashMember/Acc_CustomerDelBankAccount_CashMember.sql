@@ -18,7 +18,8 @@ AS
     
     Revisions:
         - 20250623@Helios: Offer CashService - Remove Bank Account Member [RedmineID: #231204]
-	  - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 7 [redmine: #233474] 
+	  - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 7 [redmine: #233474]
+	  - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 8 [redmine: #235266] 
     
     Parameter's Explanation:
     · @userID: User performing the action
@@ -64,16 +65,19 @@ BEGIN
     SET @startRun = GETDATE()
     
     -- Check if user has Cash Service enabled
-    EXEC CustDB.dbo.Age_CashService_CustServiceTypeSel 
-        @CustID = @userID,
-        @ServiceType = @ServiceType OUTPUT
+    --IF @SubAccID <> 0
+    --BEGIN
+	   -- EXEC CustDB.dbo.Age_CashService_CustServiceTypeSel 
+		  --@CustID = @userID,
+		  --@ServiceType = @ServiceType OUTPUT
 
-    IF @ServiceType = 0
-    BEGIN
-        SET @ErrMsg = N'Permission denied. Please enable the Cash Service to proceed.';
-        SET @ErrCode = 103;
-        RETURN;
-    END;
+	   -- IF @ServiceType = 0
+	   -- BEGIN
+		  --SET @ErrMsg = N'Permission denied. Please enable the Cash Service to proceed.';  
+		  --SET @ErrCode = 103;
+		  --RETURN;
+	   -- END;
+    --END
 
     -- Validate required parameters
     IF @custid IS NULL OR @MemberBankAccountID IS NULL
@@ -105,7 +109,7 @@ BEGIN
     IF @Old_MemberBankStatus IS NULL
     BEGIN
         SET @ErrMsg = N'Bank account not found';
-        SET @ErrCode = 200;
+        SET @ErrCode = 203;
         RETURN;
     END;
 

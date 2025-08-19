@@ -12,6 +12,8 @@ AS
 	Revisions:
 		- 20210224@Johnson: initial sp [Redmine: #131758]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
+		- 20250730@Dave: Exclude cash members from the agent's total member count [Redmine: #235266]
+
 	@IsDirectMember : Default = 0  , But UI create new Direct Member values = 1
 */
 BEGIN
@@ -79,10 +81,14 @@ BEGIN
 		ELSE IF @roleid = 2
 		BEGIN
 			SELECT @cntDownlines = COUNT(1) 
-			FROM customer WITH(NOLOCK) 
-			WHERE recommend = @custid
-				AND creatdate >= @today
-				AND roleid = 1
+			FROM customer AS c WITH(NOLOCK) 
+				CROSS APPLY (SELECT TOP 1 ServiceType
+					FROM vw_CustInfoExtra WITH (NOLOCK)
+					WHERE custid = c.custid) ci
+			WHERE c.recommend = @custid
+				AND c.creatdate >= @today
+				AND c.roleid = 1
+				AND ci.ServiceType = 0; /* Exclude Cash Service Members */
 		END
 		
 		IF (@roleid IN (3,4) AND @cntDownlines >= 3 AND @IsDirectMember = 0) 

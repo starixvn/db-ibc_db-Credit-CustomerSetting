@@ -16,7 +16,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag_Validate]
 	@isSearchAndCopy BIT = 0,
 	@ExistingCustID INT = 0,
 	@IsQRCode 		BIT  = 0,
-	@SettingStatus TINYINT = 0
+	@SettingStatus TINYINT = 0,
+	@AccumCreditAllCashMember MONEY = 0
 )
 AS
 /*
@@ -28,8 +29,10 @@ AS
 	Revisions:
 		- 20240704@Helen: Full Mode - Agent create member - validate - [Redmine:#206823]
 		- 20250627@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
+		- 20250729@Dave: Get data AccumCredit on SiteDB (is not select from the current DB (replicated)) [Redmine: #234627]
 		
 	Parameter's Explanation:
+		- @AccumCreditAllCashMember: total accumulated credit of all cash members under this agent (data from SiteDB)
 	
 */	
 BEGIN
@@ -47,8 +50,7 @@ BEGIN
 		,@SettingType26 VARCHAR(MAX)= ''
 		,@SettingType27 VARCHAR(MAX)= ''
 		,@SettingType28 VARCHAR(MAX)= ''
-		,@SiteID int
-		,@AccumCredit_AllCashMember MONEY = 0;
+		,@SiteID int;
 
 	SELECT @siteID = s.siteid
 	FROM dbo.customer c WITH(NOLOCK)
@@ -167,16 +169,13 @@ BEGIN
 	SELECT @MaxCredit_Mem = ISNULL(maxcredit,0) FROM custAgent WITH(NOLOCK)  WHERE CustID = @recommend
 
     SELECT @Credit_AllOtherMember = ISNULL(sum(Credit), 0) FROM custinfo WITH(NOLOCK) WHERE Recommend = @Recommend AND RoleID = 1
-			
-	SELECT @AccumCredit_AllCashMember = ISNULL(SUM(AccumCreditReturn),0)
-	FROM dbo.CashAccumCredit WITH (NOLOCK)
-	WHERE recommend = @Recommend;
 
-    SELECT @MaxCredit_Mem = CASE WHEN @MaxCredit_Mem =0 THEN (@AgentCredit - @Credit_AllOtherMember - @AccumCredit_AllCashMember) 
+
+    SELECT @MaxCredit_Mem = CASE WHEN @MaxCredit_Mem =0 THEN (@AgentCredit - @Credit_AllOtherMember - @AccumCreditAllCashMember) 
 						    ELSE @MaxCredit_Mem END 
-    IF @Credit + @Credit_AllOtherMember + @AccumCredit_AllCashMember > @AgentCredit
+    IF @Credit + @Credit_AllOtherMember + @AccumCreditAllCashMember > @AgentCredit
     BEGIN
-	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@AgentCredit - @Credit_AllOtherMember - @AccumCredit_AllCashMember, '#,#0.####'))
+	    SELECT @ErrMsg = REPLACE([dbo].[f_Get_MsgNamebyMsgID](70030,@Language), '{number}', FORMAT(@AgentCredit - @Credit_AllOtherMember - @AccumCreditAllCashMember, '#,#0.####'))
 			    , @ErrCode = 204
 	    RETURN
     END
