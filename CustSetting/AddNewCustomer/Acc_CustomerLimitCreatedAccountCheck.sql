@@ -28,6 +28,7 @@ AS
 	- 20240704@Helen: Revise code for scaleout dbcust - remove rule check IP - [Redmine:#206823]
 	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 	- 20250423@Elodie: Offer Cash Member [redmine: #223896] 
+	- 20250804@Dave: Limit maximum account created per day by Site - Exclude cash members from the total member count [Redmine: #235266]   
  */
 BEGIN
 
@@ -148,32 +149,22 @@ BEGIN
 		BEGIN
 			IF @RuleID IN('AG') -- SP related : Acc_CustomerInsMember_Ag
 			BEGIN
-				-- Limit Create New Account
-				IF EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid)) 
+				-- Limit Create New Account (Not apply this rule for Cash Member)
+				IF (EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid))
+					AND @ServiceType = 0)
 				BEGIN
-					IF @ServiceType = 0
-					BEGIN
-						SELECT @cntDownlines = COUNT(1) 
-							FROM customer WITH(NOLOCK) 
-							WHERE recommend = @custid 
-								AND creatdate >= @today
-								AND roleid = 1
-					END
-					ELSE IF @ServiceType = 1
-					BEGIN
-						SELECT @cntDownlines = COUNT(1) 
-							FROM customer ci WITH(NOLOCK) 
-								CROSS APPLY  
-								(
-									SELECT TOP 1 cs.ServiceType								
-									FROM vw_CustInfoExtra cs WITH(NOLOCK)
-									WHERE cs.CustID = ci.custid
-								) AS cs
-							WHERE ci.recommend = @custid 
-								AND ci.creatdate >= @today
-								AND ci.roleid = 1
-								AND cs.ServiceType = 0
-					END
+					SELECT @cntDownlines = COUNT(1) 
+					FROM customer ci WITH(NOLOCK) 
+						CROSS APPLY  
+						(
+							SELECT TOP 1 cs.ServiceType								
+							FROM vw_CustInfoExtra cs WITH(NOLOCK)
+							WHERE cs.CustID = ci.custid
+						) AS cs
+					WHERE ci.recommend = @custid 
+						AND ci.creatdate >= @today
+						AND ci.roleid = 1
+						AND cs.ServiceType = 0
 					
 					IF @cntDownlines >=5
 					BEGIN
@@ -189,28 +180,19 @@ BEGIN
 				-- Agent can only create up to 200 new members every day by QR
 				IF @IsQRCode = 1
 				BEGIN
-					DECLARE @QRMemberCount INT
-					IF @ServiceType = 0
-					BEGIN
-						SELECT @QRMemberCount = COUNT(1) 
-							FROM Customer a WITH(NOLOCK) 
-								INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
-							WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
-					END
-					ELSE IF @ServiceType = 1
-					BEGIN
-						SELECT @QRMemberCount = COUNT(1) 
-							FROM Customer a WITH(NOLOCK) 
-								CROSS APPLY  
-								(
-									SELECT TOP 1 cs.ServiceType								
-									FROM vw_CustInfoExtra cs WITH(NOLOCK)
-									WHERE cs.CustID = a.custid
-								) AS cs
-								INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
-							WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
-								AND cs.ServiceType = 0
-					END
+					DECLARE @QRMemberCount INT;
+
+					SELECT @QRMemberCount = COUNT(1) 
+					FROM Customer a WITH(NOLOCK) 
+						CROSS APPLY  
+						(
+							SELECT TOP 1 cs.ServiceType								
+							FROM vw_CustInfoExtra cs WITH(NOLOCK)
+							WHERE cs.CustID = a.custid
+						) AS cs
+						INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
+					WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+						AND cs.ServiceType = 0;
 
 					IF @QRMemberCount >= 200
 					BEGIN
@@ -225,29 +207,20 @@ BEGIN
 				-- Limit maximum account created per day by Site (300 accounts, IBCIndo only)
 				IF @DefaultValueLimitAcc > 0
 				BEGIN
-					IF @ServiceType = 0	
-					BEGIN
-						SET @lastAccountToDay = (SELECT  COUNT(1)
-							FROM Customer c WITH(NOLOCK)
-							WHERE c.recommend = @recommend
-								AND c.roleid = 1
-								AND c.creatdate  > @CurrentDate)
-					END
-					ELSE IF @ServiceType = 1
-					BEGIN
-						SET @lastAccountToDay = (SELECT  COUNT(1)
-							FROM Customer c WITH(NOLOCK)
-								CROSS APPLY  
-								(
-									SELECT TOP 1 cs.ServiceType								
-									FROM vw_CustInfoExtra cs WITH(NOLOCK)
-									WHERE cs.CustID = c.custid
-								) AS cs
-							WHERE c.recommend = @recommend 
-								AND c.roleid = 1
-								AND cs.ServiceType = 0
-								AND c.creatdate  > @CurrentDate)
-					END
+
+					SET @lastAccountToDay = (SELECT  COUNT(1)
+						FROM Customer c WITH(NOLOCK)
+							CROSS APPLY  
+							(
+								SELECT TOP 1 cs.ServiceType								
+								FROM vw_CustInfoExtra cs WITH(NOLOCK)
+								WHERE cs.CustID = c.custid
+							) AS cs
+						WHERE c.recommend = @recommend 
+							AND c.roleid = 1
+							AND cs.ServiceType = 0
+							AND c.creatdate  > @CurrentDate)
+
 					IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
 					BEGIN
 						SELECT	@ErrMsg = CASE @Language  WHEN 'E' THEN 'Sorry, you cannot create more accounts. The maximum accounts created per day is '+ CAST(@DefaultValueLimitAcc AS VARCHAR(10)) +'.'
@@ -336,29 +309,20 @@ BEGIN
 				BEGIN  
 					RETURN  
 				END  
-				IF @ServiceType = 0
-				BEGIN
-					SELECT @CurrentMembers = COUNT(1)  
-					FROM dbo.custinfo ci WITH (NOLOCK)  
-					WHERE srecommend = @Srecommend  
-						AND roleid = 1  
-						AND [Enabled] = 1  
-				END
-				ELSE IF @ServiceType = 1
-				BEGIN
-					SELECT @CurrentMembers = COUNT(1)  
-					FROM dbo.custinfo ci WITH (NOLOCK)  
-						CROSS APPLY  
-									(
-										SELECT TOP 1 cs.ServiceType								
-										FROM vw_CustInfoExtra cs WITH(NOLOCK)
-										WHERE cs.CustID = ci.custid
-									) AS cs
-					WHERE srecommend = @Srecommend  
-						AND roleid = 1  
-						AND [Enabled] = 1  
-						AND cs.ServiceType = 0
-				END
+				
+				SELECT @CurrentMembers = COUNT(1)  
+				FROM dbo.custinfo ci WITH (NOLOCK)  
+					CROSS APPLY  
+								(
+									SELECT TOP 1 cs.ServiceType								
+									FROM vw_CustInfoExtra cs WITH(NOLOCK)
+									WHERE cs.CustID = ci.custid
+								) AS cs
+				WHERE srecommend = @Srecommend  
+					AND roleid = 1  
+					AND [Enabled] = 1  
+					AND cs.ServiceType = 0
+
 				SET @ErrCode = CASE WHEN @CurrentMembers > = @MaxMemberLimit THEN 1  ELSE 0  END  
 				IF @ErrCode <> 0  
 				BEGIN  

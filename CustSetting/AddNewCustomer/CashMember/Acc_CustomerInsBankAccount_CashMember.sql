@@ -23,7 +23,8 @@ AS
     Revisions:
         - 20241107@Elodie: Offer Cash service [redmine: #224778]
         - 20250623@Helios: Offer CashService - Add Bank Account Member [RedmineID: #231204] 
-	  - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 7 [redmine: #233474] 
+	  - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 7 [redmine: #233474]
+	  - 20250724@Helios: Agency Cash Service -Customer Setting Sprint 8 [redmine: #235266] 
     
     Parameter's Explanation:
     DECLARE @custid   INT;
@@ -66,17 +67,20 @@ BEGIN
 
     SET @BankAccountNumber = NULLIF(LTRIM(RTRIM(@AgentBankAccountNumber)), '');
 
-    -- Check if Agent has Cash Service enabled
-    EXEC CustDB.dbo.Age_CashService_CustServiceTypeSel 
-        @CustID = @userID,
-        @ServiceType = @ServiceType OUTPUT
-
-    IF @ServiceType = 0
+    -- Check if user has Cash Service enabled
+    IF @SubAccID <> 0
     BEGIN
-        SET @ErrMsg = N'Permission denied. Please enable the Cash Service to proceed.';
-        SET @ErrCode = 103;
-        RETURN;
-    END;
+	    EXEC CustDB.dbo.Age_CashService_CustServiceTypeSel 
+		  @CustID = @userID,
+		  @ServiceType = @ServiceType OUTPUT
+
+	    IF @ServiceType = 0
+	    BEGIN
+		  SET @ErrMsg = N'Permission denied. Please enable the Cash Service to proceed.';
+		  SET @ErrCode = 103;
+		  RETURN;
+	    END;
+    END
     
     -- Validate required parameters
 
@@ -117,8 +121,7 @@ BEGIN
           AND IsActive = 1
     )
     BEGIN
-        SET @ErrMsg = N'This bank account already exists';
-        SET @ErrCode = 200;
+        SELECT @ErrMsg = N'This bank account already exist, please enter a different bank account number.', @ErrCode = 102
         RETURN;    
     END;
 

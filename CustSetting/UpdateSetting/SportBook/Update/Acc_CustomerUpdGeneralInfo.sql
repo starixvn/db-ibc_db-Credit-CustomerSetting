@@ -18,7 +18,7 @@ CREATE PROCEDURE [dbo].[Acc_CustomerUpdGeneralInfo]
     , @Username	 VARCHAR(30)	= '' 
     ,	@ErrCode	 INT	   		= 0  OUTPUT
     , @ErrMsg	 NVARCHAR(500)	= '' OUTPUT
-
+	, @AccumCreditAllCashMember	MONEY = 0
     
 
 AS
@@ -34,12 +34,16 @@ AS
 	    - 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 	    - 20250623@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 	    - 20250623@Helios: Offer CashService - Skip update Credit Cash Member [RedmineID: #231204]
+		- 20250729@Dave: Get data AccumCredit on SiteDB (is not select from the current DB (replicated)) [Redmine: #234627]
+		
 
-	• @ErrCode:
-	    = 0: Update successfully.
-	    > 0: Specific Error.
-  
-	• @ErrMsg: Error description.
+	Parameter's Explanation:
+		• AccumCreditAllCashMember: total accumulated credit of all cash members under an agent (data from SiteDB)
+		• @ErrCode:
+			= 0: Update successfully.
+			> 0: Specific Error.
+	
+		• @ErrMsg: Error description.
 */
 BEGIN
 
@@ -121,6 +125,7 @@ BEGIN
 					     , @ErrCode   = @ErrCode OUTPUT
 					     , @TotalAmt  = @TotalAmt
 					     , @IP		= @IP
+						 , @AccumCreditAllCashMember = @AccumCreditAllCashMember
 
 	IF    @ErrCode > 0
 	BEGIN
