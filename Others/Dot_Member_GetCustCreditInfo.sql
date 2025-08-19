@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CustDB" executers="svc_tig" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo] @custid INT
+CREATE PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo] @custid INT
 	,@sporttype SMALLINT
 	,@PartnerID SMALLINT = NULL
 	,@bettype SMALLINT = 0
@@ -15,9 +15,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_GetCustCreditInfo] @custid INT
 	,@WinMaxSportType SMALLINT = 0
 	,@WinMaxBetType SMALLINT = 0
 	,@Date DATE = NULL
-	,@usertype INT = 0
-	,--0:default(MBC) 1:IMBC 2:CN88
-	@LeagueGroupID SMALLINT = 0
+	,@usertype INT = 0 --0:default(MBC) 1:IMBC 2:CN88
+	,@LeagueGroupID SMALLINT = 0
 	,@IsApplyVR2 BIT = 0
 	,@RefLevelID INT = NULL
 	,@IsLowVR BIT = 0
@@ -93,6 +92,8 @@ AS
 	-- 20250212@TW-YC: Remove unused table CustBetSetting3rd_Member
 	-- 20241230@VN-Winfred: [NAP CM] VR Engine - Pre-match Period with Extra VR [redmine: #215791]
 
+	-- 20250425@TW-DavidHe: Remove unused table CustBetSetting3rd_Member
+	-- 20250818@Johnson: change data type for MaxWinLimit [redmine: #235266]
   */
 BEGIN
 	SET NOCOUNT ON
@@ -114,12 +115,11 @@ BEGIN
 		,@DisableBet BIT
 		,@MaxWinVendorGame SMALLMONEY = 0
 		,@DisBetSetting BIT
-		,@DisBetSetting3rd BIT = 0
 		,@BonusWalletFlag BIT
 		,@False BIT = 0
 		,@True BIT = 1
 		,@Zero TINYINT = 0
-		,@MaxWinLimit SMALLMONEY = 0
+		,@MaxWinLimit MONEY = 0
 		,@MaxLossLimit MONEY = 0
 		,@CN88_reject BIT = 1
 		,@CN88_closed BIT = 1
@@ -196,13 +196,6 @@ BEGIN
 
 		SELECT @DisBetSetting = isdisabled
 		FROM @tmp
-	END
-
-	IF @CheckDisableBet3rd <> 0
-	BEGIN
-		SELECT @DisBetSetting3rd = isdisabled
-		FROM disablebetbyproduct3rd WITH (NOLOCK)
-		WHERE sporttype = @sporttype
 	END
 
 	DECLARE @DisableSport BIT
@@ -697,7 +690,6 @@ BEGIN
 		,@closed closed
 		,@reject reject
 		,@DisableBet disabledBet
-		,@DisBetSetting3rd DisBetSetting3rd
 		,@BonusWalletFlag BonusWalletFlag
 		,@MaxWinLimit MaxWinLimit
 		,@MaxLossLimit MaxLossLimit
