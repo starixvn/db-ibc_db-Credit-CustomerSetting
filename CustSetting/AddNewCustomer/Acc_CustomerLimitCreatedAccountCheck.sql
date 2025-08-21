@@ -29,6 +29,7 @@ AS
 	- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 	- 20250423@Elodie: Offer Cash Member [redmine: #223896] 
 	- 20250804@Dave: Limit maximum account created per day by Site - Exclude cash members from the total member count [Redmine: #235266]   
+	- 20250730@Dave: Performance - SQL issue [Redmine: #236597]
  */
 BEGIN
 
@@ -39,7 +40,8 @@ BEGIN
 		@Srecommend		INT ,		
 		@Mrecommend		INT ,	
 		@Recommend		INT ,
-		@RoleID			INT 		 
+		@RoleID			INT ,
+		@IsOfferedCS	TINYINT = 0;
 
 	SELECT 
 		@RoleID		=	roleid,
@@ -70,6 +72,8 @@ BEGIN
 		,@DirectMember_LimitAcc = ISNULL(DirectMember_Limit,0)
 	FROM dbo.fn_LimitCreateAccountSiteConfig(@Site)
 	
+	EXECUTE dbo.Age_CashService_CustSiteCheck @Site = @Site, @IsOffered = @IsOfferedCS OUTPUT;
+
 	-- Cannot create more 1296 accounts Master,Agent. And 46656 accounts Member
 	DECLARE @seqname	VARCHAR(10) = ''
 	DECLARE @downline	INT
@@ -153,18 +157,30 @@ BEGIN
 				IF (EXISTS(SELECT 1 FROM ProblemAccountLimitDownline WITH(NOLOCK) WHERE custid IN(@srecommend,@mrecommend,@custid))
 					AND @ServiceType = 0)
 				BEGIN
-					SELECT @cntDownlines = COUNT(1) 
-					FROM customer ci WITH(NOLOCK) 
+
+					IF @IsOfferedCS = 0
+					BEGIN
+						SELECT @cntDownlines = COUNT(1) 
+						FROM customer WITH(NOLOCK) 
+						WHERE recommend = @custid 
+							AND creatdate >= @today
+							AND roleid = 1;
+					END
+					ELSE
+					BEGIN
+						SELECT @cntDownlines = COUNT(1) 
+						FROM customer ci WITH(NOLOCK) 
 						CROSS APPLY  
 						(
 							SELECT TOP 1 cs.ServiceType								
 							FROM vw_CustInfoExtra cs WITH(NOLOCK)
 							WHERE cs.CustID = ci.custid
 						) AS cs
-					WHERE ci.recommend = @custid 
-						AND ci.creatdate >= @today
-						AND ci.roleid = 1
-						AND cs.ServiceType = 0
+						WHERE ci.recommend = @custid 
+							AND ci.creatdate >= @today
+							AND ci.roleid = 1
+							AND cs.ServiceType = 0; /* Exclude Cash Service Members */
+					END
 					
 					IF @cntDownlines >=5
 					BEGIN
@@ -182,17 +198,27 @@ BEGIN
 				BEGIN
 					DECLARE @QRMemberCount INT;
 
-					SELECT @QRMemberCount = COUNT(1) 
-					FROM Customer a WITH(NOLOCK) 
+					IF @IsOfferedCS = 0
+					BEGIN
+						SELECT @QRMemberCount = COUNT(1) 
+						FROM Customer a WITH(NOLOCK) 
+						INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
+						WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE();
+					END
+					ELSE
+					BEGIN
+						SELECT @QRMemberCount = COUNT(1) 
+						FROM Customer a WITH(NOLOCK) 
+						INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
 						CROSS APPLY  
 						(
 							SELECT TOP 1 cs.ServiceType								
 							FROM vw_CustInfoExtra cs WITH(NOLOCK)
 							WHERE cs.CustID = a.custid
 						) AS cs
-						INNER JOIN CustQRCode b WITH(NOLOCK) ON a.CustID = b.CustID
-					WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
-						AND cs.ServiceType = 0;
+						WHERE a.recommend = @Recommend AND a.roleid = 1 AND a.creatdate BETWEEN CONVERT(DATE,GETDATE()) AND GETDATE()
+							AND cs.ServiceType = 0; /* Exclude Cash Service Members */
+					END
 
 					IF @QRMemberCount >= 200
 					BEGIN
@@ -208,18 +234,29 @@ BEGIN
 				IF @DefaultValueLimitAcc > 0
 				BEGIN
 
-					SET @lastAccountToDay = (SELECT  COUNT(1)
-						FROM Customer c WITH(NOLOCK)
-							CROSS APPLY  
-							(
-								SELECT TOP 1 cs.ServiceType								
-								FROM vw_CustInfoExtra cs WITH(NOLOCK)
-								WHERE cs.CustID = c.custid
-							) AS cs
-						WHERE c.recommend = @recommend 
-							AND c.roleid = 1
-							AND cs.ServiceType = 0
-							AND c.creatdate  > @CurrentDate)
+					IF @IsOfferedCS = 0
+					BEGIN
+						SET @lastAccountToDay = (SELECT  COUNT(1)
+												FROM Customer c WITH(NOLOCK)
+												WHERE c.recommend = @recommend
+													AND c.roleid = 1
+													AND c.creatdate  > @CurrentDate);
+					END
+					ELSE
+					BEGIN
+						SET @lastAccountToDay = (SELECT  COUNT(1)
+							FROM Customer c WITH(NOLOCK)
+								CROSS APPLY  
+								(
+									SELECT TOP 1 cs.ServiceType								
+									FROM vw_CustInfoExtra cs WITH(NOLOCK)
+									WHERE cs.CustID = c.custid
+								) AS cs
+							WHERE c.recommend = @recommend 
+								AND c.roleid = 1
+								AND cs.ServiceType = 0
+								AND c.creatdate  > @CurrentDate);
+					END
 
 					IF @lastAccountToDay + 1 > @DefaultValueLimitAcc
 					BEGIN
@@ -310,18 +347,29 @@ BEGIN
 					RETURN  
 				END  
 				
-				SELECT @CurrentMembers = COUNT(1)  
-				FROM dbo.custinfo ci WITH (NOLOCK)  
-					CROSS APPLY  
-								(
-									SELECT TOP 1 cs.ServiceType								
-									FROM vw_CustInfoExtra cs WITH(NOLOCK)
-									WHERE cs.CustID = ci.custid
-								) AS cs
-				WHERE srecommend = @Srecommend  
-					AND roleid = 1  
-					AND [Enabled] = 1  
-					AND cs.ServiceType = 0
+				IF @IsOfferedCS = 0
+				BEGIN
+					SELECT @CurrentMembers = COUNT(1)  
+					FROM dbo.custinfo ci WITH (NOLOCK)  
+					WHERE srecommend = @Srecommend  
+						AND roleid = 1  
+						AND [Enabled] = 1;
+				END
+				ELSE
+				BEGIN
+					SELECT @CurrentMembers = COUNT(1)  
+					FROM dbo.custinfo ci WITH (NOLOCK)  
+						CROSS APPLY  
+									(
+										SELECT TOP 1 cs.ServiceType								
+										FROM vw_CustInfoExtra cs WITH(NOLOCK)
+										WHERE cs.CustID = ci.custid
+									) AS cs
+					WHERE srecommend = @Srecommend  
+						AND roleid = 1  
+						AND [Enabled] = 1  
+						AND cs.ServiceType = 0;
+				END
 
 				SET @ErrCode = CASE WHEN @CurrentMembers > = @MaxMemberLimit THEN 1  ELSE 0  END  
 				IF @ErrCode <> 0  
