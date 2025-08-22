@@ -15,6 +15,7 @@ AS
 	Revisions:
 		-20180924@Phillip: Init
 		-20250730@Dave: Exclude cash member from the total member count [Redmine: #235266]
+		-20250730@Dave: Performance - SQL issue [Redmine: #236597]
 	
 	Param's Explanation:
 	- @AgentId: Agent Id
@@ -27,11 +28,14 @@ BEGIN
 	SET NOCOUNT ON
 	DECLARE @CurrentMembers INT,
 			@MaxMemberLimit	INT,
-			@SuperId		INT
+			@SuperId		INT,
+			@Site			NVARCHAR(50) = '',
+			@IsOffered		TINYINT = 0;
 		
 	SELECT @SuperId = srecommend
-	FROM dbo.custinfo WITH (NOLOCK)
-	WHERE custid = @AgentId
+		   ,@Site = site
+	FROM dbo.Customer WITH (NOLOCK)
+	WHERE custid = @AgentId;
 		
 	SELECT @MaxMemberLimit = MaxMember
 	FROM dbo.CustSuper WITH (NOLOCK)
@@ -42,15 +46,28 @@ BEGIN
 		RETURN
 	END
 	
-	SELECT @CurrentMembers = COUNT(1)
-	FROM dbo.custinfo AS c WITH (NOLOCK)
-	CROSS APPLY (SELECT TOP 1 ServiceType
-				FROM vw_CustInfoExtra WITH (NOLOCK)
-				WHERE custid = c.custid) ci
-	WHERE c.srecommend = @SuperId
-		AND c.roleid = 1
-		AND c.[Enabled] = 1
-		AND ci.ServiceType = 0; /* Exclude Cash Service Members */
+	EXECUTE dbo.Age_CashService_CustSiteCheck @Site = @Site, @IsOffered = @IsOffered OUTPUT;
+
+	IF @IsOffered = 0
+	BEGIN
+		SELECT @CurrentMembers = COUNT(1)
+		FROM dbo.custinfo AS c WITH (NOLOCK)
+		WHERE c.srecommend = @SuperId
+			AND c.roleid = 1
+			AND c.[Enabled] = 1;
+	END
+	ELSE 
+	BEGIN
+		SELECT @CurrentMembers = COUNT(1)
+		FROM dbo.custinfo AS c WITH (NOLOCK)
+		CROSS APPLY (SELECT TOP 1 ServiceType
+					FROM vw_CustInfoExtra WITH (NOLOCK)
+					WHERE custid = c.custid) ci
+		WHERE c.srecommend = @SuperId
+			AND c.roleid = 1
+			AND c.[Enabled] = 1
+			AND ci.ServiceType = 0; /* Exclude Cash Service Members */
+	END
 	
 	SET @ErrCode = CASE
 		WHEN @CurrentMembers > = @MaxMemberLimit THEN 1
