@@ -28,7 +28,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_Ag]
 	@ExistingCustID INT = 0,
 	@IsQRCode 		BIT  = 0,
 	--
-	@SettingStatus TINYINT = 0
+	@SettingStatus TINYINT = 0,
+	@remark NVARCHAR(200) = NULL
 AS
 /*
 Created: 20090121@Thien
@@ -207,6 +208,7 @@ Revisions:
 	- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20250114@Johnson: Check member Comm group [RedmineID: #216405]
 	- 20250509@Johnson: Apply Potential Win Limit for new customer [RedmineID: #226060]
+	- 20250822@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 Param's Explanation:	
 	- @ErrCode:
 		= 0: add new member successfully.
@@ -574,6 +576,7 @@ BEGIN
 			@copyFromCustID = @ExistingCustID,
 			@isSearchAndCopy = @isSearchAndCopy,
 			@Language = @Language,
+			@remark = @remark,
 			@ErrCode = @ErrCode OUTPUT,
 			@ErrMsg = @ErrMsg OUTPUT
 
@@ -736,7 +739,7 @@ BEGIN
     FROM customer WITH(NOLOCK)
     WHERE custid = @ExistingCustID
 
-    Declare @LogSPData VARCHAR(8000)
+    Declare @LogSPData NVARCHAR(MAX)
     --Log customer general info
     SELECT @LogSPData = '<Acc_CustomerInsMember_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
@@ -749,6 +752,7 @@ BEGIN
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
     'recommend="'+ COALESCE(CAST(@recommend AS VARCHAR(50)), SPACE(1)) + '" ' +
     'ugroup="'+ COALESCE(CAST(@ugroup AS VARCHAR(5)), SPACE(1)) + '" ' +
+	'remark="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@remark AS NVARCHAR(200)), SPACE(1))) + '" ' +
     'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +
     'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
     'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +

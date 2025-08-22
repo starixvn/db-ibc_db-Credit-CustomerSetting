@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_Ag]
 	@phone			NVARCHAR(50)= '',
 	@mobilephone	NVARCHAR(50)= '',	
 	@fax			NVARCHAR(50)= '',
+	@remark			NVARCHAR(200) = NULL,
 
 	@SettingXML		VARCHAR(MAX) = '',
 	@TemplateName	NVARCHAR(50) = '',
@@ -45,6 +46,7 @@ AS
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
 		- 20250115@Johnson: Check member Comm group [RedmineID: #216405]
 		- 20250521@Johnson: Add log Potential Win Limit [RedmineID: #226060]
+		- 20250827@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 
 	Param's Explanation: 
 		- @SettingXML:
@@ -592,6 +594,7 @@ BEGIN
 	  
 			@DisableSuperLive = @DisableSuperLive,
 
+			@remark = @remark,
     		@SystemID=@SystemID,
 			@credit = @credit,	
 			@IP = @IP,
@@ -761,6 +764,7 @@ BEGIN
     'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'remark="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@remark AS NVARCHAR(200)), SPACE(1))) + '" ' +
 	'TemplateName="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@TemplateName AS NVARCHAR(50)), SPACE(1))) + '" ' +
     'recommend="'+ COALESCE(CAST(@recommend AS VARCHAR(50)), SPACE(1)) + '" ' +
     'ugroup="'+ COALESCE(CAST(@ugroup AS VARCHAR(5)), SPACE(1)) + '" ' +

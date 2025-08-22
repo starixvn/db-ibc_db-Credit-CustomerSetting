@@ -50,6 +50,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo_CashMember]
 	@DoubleCommLosing BIT = 0,
 	@DisableSuperLive BIT = 0,	
 	@credit MONEY,
+	@remark NVARCHAR(200) = NULL,
 	
 	@IP VARCHAR(15)='',
 	@SystemID	TINYINT=1,
@@ -67,6 +68,7 @@ AS
 	
 	Revisions:
 		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
+		- 20250827@Dave: Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 		
 	Parameter's Explanation:
 	
@@ -103,7 +105,8 @@ BEGIN
 			,@currency		= @currency		
 			,@site			= @site			
 			,@ugroup		= @ugroup
-			
+			,@remark		= @remark
+
 			,@ErrCode = @ErrCode OUTPUT
 			,@ErrMsg  = @ErrMsg OUTPUT
 

@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_SAg]
 	@phone      NVARCHAR(50)= '',
 	@mobilephone NVARCHAR(50)= '',	
 	@fax        NVARCHAR(50)= '',
+	@remark		NVARCHAR(200) = NULL,
 
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in CASE dummy super add new master
 	@DisableAutoMPT   BIT = 1,--Super allow master using auto master PT or not.
@@ -47,6 +48,7 @@ AS
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
+		- 20250827@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 
 	Param's Explanation: 
 		@SettingXML :
@@ -589,6 +591,7 @@ BEGIN
     	
 			@credit = @credit,
 			@maxcredit = null,
+			@remark = @remark,
     	
 			@IP = @IP,
 			@TransferOption_dec = @TransferOption_dec,
@@ -784,6 +787,7 @@ BEGIN
 	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
     'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	
     'srecommend="'+ COALESCE(CAST(@srecommend AS VARCHAR(50)), SPACE(1)) + '" ' +	
+	'remark="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@remark AS NVARCHAR(200)), SPACE(1))) + '" ' +
     'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +
     'site="'+ COALESCE(CAST(@site AS VARCHAR(50)), SPACE(1)) + '" ' +
 	'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)), SPACE(1)) + '" ' +

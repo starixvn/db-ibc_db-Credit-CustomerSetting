@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[Acc_LiteMode_CustomerInsMember_MAg]
 	@phone      NVARCHAR(50)='',
 	@mobilephone NVARCHAR(50)='',	
 	@fax        NVARCHAR(50)='',
+	@remark		NVARCHAR(200) = NULL,
 
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in case direct master add new agent
 	@SettingXML VARCHAR(MAX) = '',
@@ -45,6 +46,7 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
+		- 20250827@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 	
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
 
@@ -571,6 +573,7 @@ BEGIN
     		@SystemID=@SystemID,
 			@credit = @credit,
 			@maxcredit = @maxcredit,
+			@remark = @remark,
 	
 			@DoubleCommLosing = @DoubleCommLosing,	 
 			@DisableSuperLive = @DisableSuperLive,
@@ -737,6 +740,7 @@ BEGIN
 	'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
 	'maxcredit="'+ COALESCE(CAST(@maxcredit as VARCHAR(50)), SPACE(1)) + '" ' +
+	'remark="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@remark AS NVARCHAR(200)), SPACE(1))) + '" ' +
     'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
 	'TemplateName="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@TemplateName AS NVARCHAR(50)), SPACE(1))) + '" ' +
 	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +

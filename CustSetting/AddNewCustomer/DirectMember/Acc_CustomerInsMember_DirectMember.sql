@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_DirectMember]
 	@mobilephone NVARCHAR(50),
 	@fax NVARCHAR(50),
 	@credit MONEY,	
+	@remark NVARCHAR(200) = NULL,
 	--
 	@SettingXML VARCHAR(MAX) = '', -- store all settings
 	--
@@ -37,6 +38,7 @@ AS
 	Revisions:
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969]  
 		- 20250611@Johnson: apply potential winloss for member [Redmine: #226060]
+		- 20250827@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 		
 	Parameter's Explanation:
 	
@@ -193,6 +195,7 @@ BEGIN
 			@DoubleCommLosing = 0,-- off double comm losing WHEN create new member   	 
 			@DisableSuperLive = @DisableSuperLive,
 			@credit = @credit,	
+			@remark = @remark,
 			@IP = @IP,
     		@SystemID=@SystemID,
 			@Language = @Language,
@@ -287,7 +290,7 @@ BEGIN
     --FROM customer WITH(NOLOCK)
     --WHERE custid = @ExistingCustID
 
-    Declare @LogSPData VARCHAR(8000)
+    Declare @LogSPData NVARCHAR(MAX)
     --Log customer general info
     SELECT @LogSPData = '<Acc_CustomerInsMember_DirectMember custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)), SPACE(1)) + '" ' +
     'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
@@ -298,6 +301,7 @@ BEGIN
     'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS VARCHAR(100)), SPACE(1))) + '" ' +
     'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS VARCHAR(100)), SPACE(1))) + '" ' +
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'remark="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@remark AS NVARCHAR(200)), SPACE(1))) + '" ' +
     CASE WHEN @UplineRoleID = 4 THEN 'Srecommend="' ELSE 'Mrecommend="' END + COALESCE(CAST(@UplineID AS VARCHAR(50)), SPACE(1)) + '" ' +
     'ugroup="'+ COALESCE(CAST(@ugroup AS VARCHAR(5)), SPACE(1)) + '" ' +
     'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +

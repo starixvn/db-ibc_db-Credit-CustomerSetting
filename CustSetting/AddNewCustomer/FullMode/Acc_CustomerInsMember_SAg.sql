@@ -22,6 +22,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_SAg]
 	@site VARCHAR(50) = '',
 	@SettingStatus TINYINT = 0,
 	@SettingXML	VARCHAR(MAX),
+	@remark		NVARCHAR(200) = NULL,
+
 	@ErrCode INT = 0 OUTPUT,
 	@MsgType INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(MAX) = '' OUTPUT
@@ -174,6 +176,7 @@ Revisions:
 	- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 	- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
+	- 20250822@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 Param's Explanation:
 	- @ErrCode:
 		= 0: super create master successfully.
@@ -475,6 +478,8 @@ BEGIN
 			@IP = @IP,
 			@TransferOption_dec = @TransferOption_dec,
 			@Language = @Language,
+			@remark = @remark,
+
 			@ErrCode = @ErrCode OUTPUT,
 			@ErrMsg = @ErrMsg OUTPUT
 
@@ -636,6 +641,7 @@ BEGIN
     'mphone="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@mobilephone AS NVARCHAR(100)), SPACE(1))) + '" ' +
 	'fax="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@fax AS NVARCHAR(100)), SPACE(1))) + '" ' +
     'credit="'+ COALESCE(CAST(@credit AS VARCHAR(50)), SPACE(1)) + '" ' +
+	'remark="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@remark AS NVARCHAR(200)), SPACE(1))) + '" ' +
     'TransferOption="'+ COALESCE(CAST(@TransferOption AS VARCHAR(8)), SPACE(1)) + '" ' +
 	'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
     'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +	

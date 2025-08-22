@@ -19,8 +19,7 @@ CREATE PROCEDURE [dbo].[Acc_CustomerUpdGeneralInfo]
     ,	@ErrCode	 INT	   		= 0  OUTPUT
     , @ErrMsg	 NVARCHAR(500)	= '' OUTPUT
 	, @AccumCreditAllCashMember	MONEY = 0
-    
-
+    , @remark		NVARCHAR(200)	= NULL
 AS
 /*
 	Created: 20231122@Helios
@@ -35,6 +34,7 @@ AS
 	    - 20250623@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 	    - 20250623@Helios: Offer CashService - Skip update Credit Cash Member [RedmineID: #231204]
 		- 20250729@Dave: Get data AccumCredit on SiteDB (is not select from the current DB (replicated)) [Redmine: #234627]
+		- 20250822@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 		
 
 	Parameter's Explanation:
@@ -44,6 +44,9 @@ AS
 			> 0: Specific Error.
 	
 		• @ErrMsg: Error description.
+		• @UpdRemarkMode: 
+			1 - NAP: Update Remark by role role 1 - customer(remark); 2 - CustAgent(creationRemark); 3 - CustMaster(creationRemark); 4 - CustSuper(creationRemark)
+			2 - ALP: Update Remark column in customer table
 */
 BEGIN
 
@@ -91,6 +94,7 @@ BEGIN
 						 , @ErrCode	    = @ErrCode OUTPUT
 						 , @IP	    = @IP
 						 , @Language    = @Language
+						 , @remark      = @remark
 
 	IF    @ErrCode > 0
 	BEGIN

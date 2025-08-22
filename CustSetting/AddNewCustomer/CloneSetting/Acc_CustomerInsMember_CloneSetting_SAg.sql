@@ -118,6 +118,7 @@ AS
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
 	- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	- 20250317@July: Scale Out DBCUST - Change unique key table TOControl_GlobalSetting [Redmine: #221252]
+	- 20250827@Dave: Alpha_Add remark field when editing info of master/Agent/member - write log @remark [Redmine: #236744]
 	
  Explanation's Param:  
 	- @ErrCode:
@@ -624,6 +625,7 @@ BEGIN
 	'phone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@phone as VARCHAR(100)),space(1))) + '" ' +
 	'fax="'+ dbo.f_EncodeXMLValue(coalesce(cast(@fax as VARCHAR(100)),space(1))) + '" ' +
 	'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as VARCHAR(100)),space(1))) + '" ' +
+	'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as NVARCHAR(200)),space(1))) + '" ' +
 
 	'credit="'+ coalesce(cast(@Credit as VARCHAR(50)),space(1)) + '" ' +	
 	'mrecommend="'+ coalesce(cast(@mrecommend as VARCHAR(50)),space(1)) + '" ' +	
@@ -662,6 +664,7 @@ BEGIN
 		'phone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@phone as VARCHAR(100)),space(1))) + '" ' +
 		'fax="'+ dbo.f_EncodeXMLValue(coalesce(cast(@fax as VARCHAR(100)),space(1))) + '" ' +
 		'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as VARCHAR(100)),space(1))) + '" ' +
+		'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as NVARCHAR(200)),space(1))) + '" ' +
 		'credit="'+ coalesce(cast(@Credit as VARCHAR(50)),space(1)) + '" ' +	
 		'mrecommend="'+ coalesce(cast(@mrecommend as VARCHAR(50)),space(1)) + '" ' +	
 		'IP="'+ coalesce(cast(@IP as VARCHAR(15)),space(1)) + '" ' +	

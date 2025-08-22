@@ -57,6 +57,7 @@ Revisions:
 	- 20211103@Johnson: Abnormal remark on Accounting Site [redmine: #163518]
 	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	- 20241122@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+	- 20250822@Dave: Alpha_Add remark field when editing info of master/Agent/member - log @remark [Redmine: #236744]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -238,7 +239,7 @@ BEGIN
 						'birthday="'+ coalesce(cast(@birthday as varchar(50)),space(1))+ '" ' +
 						'refcode1="'+ dbo.f_EncodeXMLValue(coalesce(cast(@refcode1 as nvarchar(50)),space(1)))+ '" ' +
 						'refcode2="'+ dbo.f_EncodeXMLValue(coalesce(cast(@refcode2 as nvarchar(50)),space(1)))+ '" ' +
-						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as nvarchar(50)),space(1)))+ '" ' +
+						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as nvarchar(200)),space(1)))+ '" ' +
 						'review="'+ dbo.f_EncodeXMLValue(coalesce(cast(@postal as nvarchar(50)),space(1)))+ '" ' +
 						'review2="'+ dbo.f_EncodeXMLValue(coalesce(cast(@state as nvarchar(50)),space(1)))+ '" ' +
 						'checked="'+ coalesce(cast(@important as varchar(50)),space(1))+ '" ' +
@@ -262,7 +263,7 @@ BEGIN
 						'birthday="'+ coalesce(cast(@old_birthday as varchar(50)),space(1))+ '" ' +
 						'refcode1="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_refcode1 as nvarchar(50)),space(1)))+ '" ' +
 						'refcode2="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_refcode2 as nvarchar(50)),space(1)))+ '" ' +
-						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_remark as nvarchar(50)),space(1)))+ '" ' +
+						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_remark as nvarchar(200)),space(1)))+ '" ' +
 						'review="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_postal as nvarchar(50)),space(1)))+ '" ' +
 						'review2="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_state as nvarchar(50)),space(1)))+ '" ' +
 						'checked="'+ coalesce(cast(@old_important as varchar(50)),space(1))+ '" ' +
@@ -282,6 +283,7 @@ BEGIN
 						'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as nvarchar(50)),space(1)))+ '" ' +
 						'fax="'+ dbo.f_EncodeXMLValue(coalesce(cast(@fax as nvarchar(50)),space(1)))+ '" ' +
 						'email="'+ dbo.f_EncodeXMLValue(coalesce(cast(@email as nvarchar(50)),space(1)))+ '" ' +
+						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as nvarchar(200)),space(1)))+ '" ' +
 						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1))+ '" ' +
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
@@ -296,6 +298,7 @@ BEGIN
 						'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_mobilephone as nvarchar(50)),space(1)))+ '" ' +
 						'fax="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_fax as nvarchar(50)),space(1)))+ '" ' +
 						'email="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_email as nvarchar(50)),space(1)))+ '" ' +
+						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_remark as nvarchar(200)),space(1)))+ '" ' +
 						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1))+ '" ' +
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
@@ -310,7 +313,8 @@ BEGIN
 						'lname="'+ dbo.f_EncodeXMLValue(coalesce(cast(@lastname as nvarchar(50)),space(1)))+ '" ' +
 						'phone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@phone as nvarchar(50)),space(1)))+ '" ' +
 						'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@mobilephone as nvarchar(50)),space(1)))+ '" ' +
-						'fax="'+ dbo.f_EncodeXMLValue(coalesce(cast(@fax as nvarchar(50)),space(1)))+ '" ' +						
+						'fax="'+ dbo.f_EncodeXMLValue(coalesce(cast(@fax as nvarchar(50)),space(1)))+ '" ' +			
+						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as nvarchar(200)),space(1)))+ '" ' +			
 						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1))+ '" ' +
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
@@ -323,7 +327,8 @@ BEGIN
 						'lname="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_lastname as nvarchar(50)),space(1)))+ '" ' +
 						'phone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_phone as nvarchar(50)),space(1)))+ '" ' +
 						'mphone="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_mobilephone as nvarchar(50)),space(1)))+ '" ' +
-						'fax="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_fax as nvarchar(50)),space(1)))+ '" ' +						
+						'fax="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_fax as nvarchar(50)),space(1)))+ '" ' +
+						'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@old_remark as nvarchar(200)),space(1)))+ '" ' +						
 						'SubAccName="'+ coalesce(cast(dbo.f_GetSubUsername(@SubAccID) as varchar(30)),space(1))+ '" ' +
 						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
 						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +

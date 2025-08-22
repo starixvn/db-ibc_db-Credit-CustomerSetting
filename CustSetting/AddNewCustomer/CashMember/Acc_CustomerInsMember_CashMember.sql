@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsMember_CashMember]
 	@mobilephone NVARCHAR(50),
 	@BankId	INT = NULL,
 	@AccountNumber VARCHAR(100) = NULL,	
+	@remark NVARCHAR(200) = NULL,
 	--
 	@SettingXML VARCHAR(MAX) = '', -- store all settings
 	--
@@ -32,6 +33,7 @@ AS
 	
 	Revisions:
 		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
+		- 20250827@Dave: Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 		
 	Parameter's Explanation:
 	
@@ -162,6 +164,7 @@ BEGIN
 			@DoubleCommLosing = 0,-- off double comm losing WHEN create new member   	 
 			@DisableSuperLive = @DisableSuperLive,
 			@credit = 0,	
+			@remark = @remark,
 			@IP = @IP,
     		@SystemID=@SystemID,
 			@Language = @Language,
@@ -251,7 +254,7 @@ BEGIN
     set @endRun = getdate()
     set @duration  = datediff (millisecond,@startRun,@endRun)   
 
-    Declare @LogSPData VARCHAR(8000)
+    Declare @LogSPData NVARCHAR(MAX)
     --Log customer general info
     SELECT @LogSPData = '<Root ' +
     'fname="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@firstname AS VARCHAR(100)), SPACE(1))) + '" ' +
@@ -263,6 +266,7 @@ BEGIN
 	'BankId="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@BankId AS VARCHAR(100)), SPACE(1))) + '" ' +
 	'AccNumber="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@AccountNumber AS VARCHAR(100)), SPACE(1))) + '" ' +
     'ugroup="'+ COALESCE(CAST(@ugroup AS VARCHAR(5)), SPACE(1)) + '" ' +
+	'remark="'+ dbo.f_EncodeXMLValue(COALESCE(CAST(@remark AS NVARCHAR(200)), SPACE(1))) + '" ' +
     'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)), SPACE(1)) + '" ' +
     'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)), SPACE(1)) + '" ' +
     'SubAccName="'+ COALESCE(CAST(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), SPACE(1)) + '" ' +   

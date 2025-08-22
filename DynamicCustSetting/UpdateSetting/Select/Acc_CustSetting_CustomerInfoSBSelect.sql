@@ -19,6 +19,7 @@ AS
 		- 20241028@July: [Scale out DBCUST] Wrong Currency [Redmine: #212777]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 		- 20250626@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
+		- 20250822@Dave: Alpha_Add remark field when editing info of master/Agent/member - output remark [Redmine: #236744]
 
 	Param's Explanation:
 	
@@ -75,11 +76,13 @@ BEGIN
 			@uGroup				VARCHAR(3),
 			@DisableAutoMPT			BIT = 0,
 			@SpecialPlatfrom			TINYINT,
-			@AccumCredit_AllCashMember	MONEY
+			@AccumCredit_AllCashMember	MONEY,
+			@remark				NVARCHAR(200) = NULL;
 
 
 	----------------------------------------------------------------
 	SELECT  @RoleId = roleID
+			,@remark = remark
 	FROM dbo.customer WITH (NOLOCK)   
 	WHERE custid = @CustId 
 
@@ -147,6 +150,8 @@ BEGIN
 				SELECT ISNULL(SUM(credit), 0) as credit FROM custinfo WITH (NOLOCK) WHERE srecommend = @CustID and RoleID=2
 			) c
 
+		SELECT @remark = creationRemark FROM CustSuper WITH (NOLOCK) WHERE CustID = @CustID;
+		
 		SELECT        
 			  @Username							AS UserName
 			, @Username2						AS UserName2
@@ -167,6 +172,7 @@ BEGIN
 			, @Credit_SAg_Min						AS MaxCreditMin 
 			, @RoleID							AS RoleID
 			, @SpecialPlatfrom					AS SpecialPlatfrom
+			, @remark							AS Remark
 		FROM dbo.custInfo WITH (NOLOCK)
 		WHERE custID = @CustID	
 	END
@@ -175,6 +181,7 @@ BEGIN
 	BEGIN
 		SELECT @Credit_AllOtherMaster = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE srecommend = @srecommend and custid <> @CustID AND ((RoleID = 3) OR (RoleID = 1 AND ci.recommend = -4))
 		SELECT @Credit_SAg = ISNULL(credit, 0) FROM CustInfo as ci WITH (NOLOCK) WHERE CustID = @srecommend
+		SELECT @remark = creationRemark FROM CustMaster WITH (NOLOCK) WHERE CustID = @CustID;
 
 		IF @srecommend <= 100
 		BEGIN
@@ -216,13 +223,16 @@ BEGIN
 			, @Credit_MAg_Max						AS MaxCreditMax 
 			, @RoleID							AS RoleID
 			, @SpecialPlatfrom					AS SpecialPlatfrom
+			, @remark							AS Remark
 		FROM dbo.custInfo i WITH (NOLOCK)
 		WHERE i.custID = @CustID	
 	END
 
 	ELSE IF @RoleID = 2
 	BEGIN
-		SELECT @Mem_MaxCredit = ISNULL(maxcredit,0) FROM CustAgent WITH (NOLOCK) 
+		SELECT @Mem_MaxCredit = ISNULL(maxcredit,0) 
+			, @remark = creationRemark
+		FROM CustAgent WITH (NOLOCK) 
 		WHERE  custid=@CustID 
 
 		SELECT @Credit_AllOtherAgent = ISNULL(SUM(credit), 0) FROM custinfo as ci WITH (NOLOCK) WHERE mrecommend = @mrecommend and Custid <> @CustID AND ((RoleID = 2) OR (ci.roleid = 1 AND ci.recommend = -3))
@@ -273,6 +283,7 @@ BEGIN
 			, @RoleID							AS RoleID
 			, @DisableAutoMPT						AS DisableAutoMPT
 			, @SpecialPlatfrom					AS SpecialPlatfrom
+			, @remark							AS Remark
 		FROM custInfo i WITH (NOLOCK)
 		WHERE i.custID = @CustID	
 	END
@@ -375,6 +386,7 @@ BEGIN
 			, @SpecialPlatfrom					AS SpecialPlatfrom
 			, @Credit_Ag_Bal					as MaxCreditMax
 			, @MaxCredit_Mem					AS MaxCredit_Mem
+			, @remark							AS Remark
 		FROM custInfo i WITH (NOLOCK)
 		WHERE i.custID = @CustID	
 	END

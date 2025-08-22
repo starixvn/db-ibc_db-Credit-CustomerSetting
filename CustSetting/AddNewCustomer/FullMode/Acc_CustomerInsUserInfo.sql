@@ -59,6 +59,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo]
 	@TransferOption_dec TINYINT,
 	@SystemID	TINYINT=1,
 	@Language VARCHAR(2)= 'E',
+	@remark NVARCHAR(200) = NULL,
+
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(4000) = '' OUTPUT
 	)
@@ -160,6 +162,7 @@ Revisions:
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
 	- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	- 20250317@July: Scale Out DBCUST - Change unique key table TOControl_GlobalSetting [Redmine: #221252]
+	- 20250822@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 	
 	Param's Explanation:
 - @ErrCode:
@@ -214,7 +217,8 @@ BEGIN
 			,@currency		= @currency		
 			,@site			= @site			
 			,@ugroup		= @ugroup
-			
+			,@remark		= @remark
+
 			,@ErrCode = @ErrCode OUTPUT
 			,@ErrMsg  = @ErrMsg OUTPUT
 
@@ -249,7 +253,7 @@ BEGIN
 		
 	    INSERT INTO CustSuper
 	    (
-	        custId,  IsInternal, TransferOption, MaxMember,SiteDBGroupID,RepUpdateTime
+	        custId,  IsInternal, TransferOption, MaxMember,SiteDBGroupID,RepUpdateTime, creationRemark
 	    )
 	    VALUES
 	    (
@@ -264,6 +268,7 @@ BEGIN
 	        END
 			, @SiteDBGroupID
 			, dbo.f_GetDateTime2()
+			, @remark
         )
 		
 			--Virtual rate
@@ -289,7 +294,7 @@ BEGIN
 			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE custId = @CustID
 
-	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer,RepUpdateTime)
+	    INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption, IsAllDayBalTransfer,RepUpdateTime, creationRemark)
 	    VALUES
 		(
 			@CustID,
@@ -297,7 +302,8 @@ BEGIN
 			@IsInternal, 
 			CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, 
 			CASE WHEN @IsAutoEnableADBMaster = 1 THEN ISNULL(@IsAllDayBalTransfer, 0) ELSE 0 END,
-			dbo.f_GetDateTime2()
+			dbo.f_GetDateTime2(),
+			@remark
 		)
 	
 		--Virtual rate
@@ -332,8 +338,8 @@ BEGIN
 			RepUpdateTime = dbo.f_GetDateTime2()
 		WHERE custId = @CustID
 
-	    INSERT INTO CustAgent(custId, MaxCredit, IsInternal, TransferOption, Site, RepUpdateTime)
-	    VALUES(@CustID, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, @site, dbo.f_GetDateTime2())
+	    INSERT INTO CustAgent(custId, MaxCredit, IsInternal, TransferOption, Site, RepUpdateTime, creationRemark)
+	    VALUES(@CustID, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, @site, dbo.f_GetDateTime2(), @remark)
 		
 		--Virtual rate
 		IF EXISTS(	SELECT 1

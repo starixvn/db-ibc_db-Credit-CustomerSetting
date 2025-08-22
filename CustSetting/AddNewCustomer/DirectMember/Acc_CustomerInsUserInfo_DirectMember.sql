@@ -47,7 +47,8 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsUserInfo_DirectMember]
 	@DoubleCommLosing BIT = 0,
 	@DisableSuperLive BIT = 0,	
 	@credit MONEY,
-	
+	@remark NVARCHAR(200) = NULL,
+
 	@IP VARCHAR(15)='',
 	@SystemID	TINYINT=1,
 	@Language VARCHAR(2)= 'E',
@@ -63,6 +64,7 @@ AS
 	
 	Revisions:
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
+		- 20250827@Dave: Alpha_Add remark field when editing info of master/Agent/member - Add parameter @remark [Redmine: #236744]
 		
 	Parameter's Explanation:
 	
@@ -98,7 +100,8 @@ BEGIN
 			,@currency		= @currency		
 			,@site			= @site			
 			,@ugroup		= @ugroup
-			
+			,@remark		= @remark
+
 			,@ErrCode = @ErrCode OUTPUT
 			,@ErrMsg  = @ErrMsg OUTPUT
 

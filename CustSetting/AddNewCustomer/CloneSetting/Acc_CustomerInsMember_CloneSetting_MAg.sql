@@ -115,6 +115,7 @@ AS
 	- 20241225@July: Scale out DB - In-house Replicator - Support change for SMA TO Control [Redmine: #207042]
 	- 20250220@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	- 20250317@July: Scale Out DBCUST - Change unique key table TOControl_GlobalSetting [Redmine: #221252]
+	- 20250827@Dave: Alpha_Add remark field when editing info of master/Agent/member - write log @remark [Redmine: #236744]
 	
  Explanation's Param:  
 	- @ErrCode:
@@ -582,6 +583,7 @@ BEGIN
 	'credit="'+ coalesce(cast(@Credit as varchar(50)),space(1)) + '" ' +
 	'MaxCredit="'+ coalesce(cast(@MaxCredit as varchar(50)),space(1)) + '" ' +
 	'mrecommend="'+ coalesce(cast(@mrecommend as varchar(50)),space(1)) + '" ' +	
+	'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as nvarchar(200)),space(1))) + '" ' +
 	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +	
 	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +	
 	'CopiedFrom="'+cast(@ExistingCustid as varchar(10))+'" '+
@@ -619,6 +621,7 @@ BEGIN
 		'credit="'+ coalesce(cast(@Credit as varchar(50)),space(1)) + '" ' +
 		'MaxCredit="'+ coalesce(cast(@MaxCredit as varchar(50)),space(1)) + '" ' +
 		'mrecommend="'+ coalesce(cast(@mrecommend as varchar(50)),space(1)) + '" ' +	
+		'remark="'+ dbo.f_EncodeXMLValue(coalesce(cast(@remark as nvarchar(200)),space(1))) + '" ' +
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +	
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +	
 		'CopiedFrom="'+cast(@ExistingCustid as varchar(10))+'" '+
