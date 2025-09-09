@@ -13,6 +13,7 @@ AS
 		20190913@Daniel: Rename SP for correct English
 		20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
 		20240913@Tacy: Exclude WhiteLabel account [#RM:209633]
+		20250908@Helios: Archiving credit accounts - Exclude accounts from 2 sites Special and Hedging [#RM:237129]
 	Param's Explanation:
 */
 SET NOCOUNT ON
@@ -34,7 +35,7 @@ SET NOCOUNT ON
 			OR sag.username LIKE 'STEST%'
 			OR sag.username LIKE 'SIBC%'
 			OR sag.username LIKE '%ACCSuper%'
-			OR sag.site = 'cn88'--exclude cn88 cust
+			OR sag.site IN ('cn88','Hedging','Special')--exclude cn88 cust ; [#RM:237129] : exclude Hedging and Special site
 		)
 	UNION -- All Super contain headline
 	SELECT sag.custid,sag.username		
