@@ -14,7 +14,7 @@ AS
 		- 20170915@Winnie: Update logic to VR auto-adjustment job Phase 2 [RedmineID:#82312
 		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
-
+		- 20250909@Helios: Integrate New Product - Add DBSPARE1 [redmine: #235793]
 	Param's Explanation:  
 		- @VirtualMultiplier = '<ROOT>
 									<Rate CustIds="1,2,3,4,5,6" VirtualMultiplier="0.7" />	
@@ -27,7 +27,7 @@ AS
 BEGIN
     SET NOCOUNT ON
 
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST','DBSPARE1')
 	RETURN;
 
 	CREATE TABLE	#tblVirtualRate (

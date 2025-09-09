@@ -25,6 +25,7 @@ AS
 	Revisions:
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting [redmine: #207029]
 		- 20241101@Winfred: HF  - NAP- Cannot updating VR value for licensee super line with big downline member (over 500000 members downline)  [redmine: #213009]
+		- 20250909@Helios: Integrate New Product - Add DBSPARE1 [redmine: #235793]
 
 	Param's Explanation:
 		@Action: 
@@ -41,7 +42,7 @@ AS
    
 */
 SET NOCOUNT ON; 
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST','DBSPARE1')
 	RETURN;
 
 IF	@action = 'NewVRUpd'

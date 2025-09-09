@@ -13,11 +13,12 @@ AS
 	Revisions: 
 		- 20200818@Eden: NAP CM - Auto Update Bet Limit Control [RedmineID: #139701]
 		- 20240904@Johnson: Apply Inhouse for BLC [redmine:#209892]
+		- 20250909@Helios: Integrate New Product - Add DBSPARE1 [redmine: #235793]
 	Param's Explanation:  
 		@CustID = 0 : process for all customer of this Type
 */
 BEGIN
-    IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+    IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST','DBSPARE1')
 		RETURN;
 		
 	SET NOCOUNT ON	
