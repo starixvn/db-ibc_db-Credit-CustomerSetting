@@ -16,6 +16,7 @@ AS
 	- 20210713@Eden:  Flexible Initializing Customer Setting [RedmineID: #156667]
 	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 	- 20241122@Elodie : Initial by Super for UUS and YNG [Redmine: #214128]
+	- 20250909@Helios: Integrate New Product - Add DBSPARE1 [redmine: #235793]
 	Value Mapping
 		CurrentStep = :
 			1: Delete existing customer setting
@@ -260,7 +261,7 @@ BEGIN
 	SELECT t.CustID,t.RoleID,0
 	FROM #DirectAcc t
 
-	IF @@SERVERNAME IN( 'DBSPARE','DBBACKUP2') -- DBTEST --> Get MaxcustID to test new accs steps
+	IF @@SERVERNAME IN( 'DBSPARE','DBBACKUP2','DBSPARE1') -- DBTEST --> Get MaxcustID to test new accs steps
 	BEGIN
 		SELECT @MaxcustID = MIN(custid)
 		FROM

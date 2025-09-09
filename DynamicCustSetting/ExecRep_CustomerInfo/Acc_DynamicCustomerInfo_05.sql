@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20210716@Eden: Flexible Initializing Customer Setting - [Redmine: #156667]
 		- 20250303@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
+		- 20250909@Helios: Integrate New Product - Add DBSPARE1 [redmine: #235793]
 	Param's Explanation:
 		@StepID = :
 			3: Enable status  
@@ -22,8 +23,8 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON;
-	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at all replicated servers
-	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at dbcust only
+	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2','DBSPARE1')) RETURN -- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2','DBSPARE1')) RETURN -- run at dbcust only
 	
 
 	IF OBJECT_ID('CustInfo') IS NULL RETURN

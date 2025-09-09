@@ -17,6 +17,7 @@ AS
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358]
 		- 20250303@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
+		- 20250909@Helios: Integrate New Product - Add DBSPARE1 [redmine: #235793]
 	Param's Explanation:
 		@StepID = :
 			1: Delete existing customer setting
@@ -25,8 +26,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 	
-	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at all replicated servers
-	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at dbcust only
+	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2','DBSPARE1')) RETURN -- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2','DBSPARE1')) RETURN -- run at dbcust only
 	
 	IF OBJECT_ID('CustInfo') IS NULL RETURN
 	IF OBJECT_ID('Customer') IS NULL RETURN
