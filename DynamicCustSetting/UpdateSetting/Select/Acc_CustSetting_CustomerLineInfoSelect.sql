@@ -12,13 +12,14 @@ AS
 	
 	Revisions:
 		- 20250325@Johnson: change datatype for ExchangeID[redmine: #221098]
+		- 20250910@Dave: Add remark field when editing info of master/Agent/member - Change DataType @SAg, @MAg, @Ag [Redmine: #236744]
 	*/
 BEGIN
 	DECLARE @CustID INT
 		, @RoleID TINYINT
-		, @SAg VARCHAR(20)
-		, @MAg VARCHAR(20)
-		, @Ag VARCHAR(20)
+		, @SAg NVARCHAR(50)
+		, @MAg NVARCHAR(50)
+		, @Ag NVARCHAR(50)
 		, @SRecommend INT
 		, @MRecommend INT
 		, @Recommend INT
