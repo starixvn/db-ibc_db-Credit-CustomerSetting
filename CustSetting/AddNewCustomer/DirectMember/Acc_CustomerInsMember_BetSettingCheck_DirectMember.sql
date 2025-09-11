@@ -21,7 +21,7 @@ AS
 	
 	Revisions:
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
-
+		- 20250911@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447]
 	Param's Explanation: 
 		@GroupTypeT151 :
 			[
@@ -145,7 +145,7 @@ BEGIN
 				RETURN
 			END	
 
-			--> Check rule : Wrong Max Payout Per Match
+			--> Check rule : Wrong Max Win Per Match
 			IF EXISTS(SELECT TOP 1 1
 					FROM @BetSetting
 					WHERE MaxPayoutPerMatch < 0
@@ -153,7 +153,7 @@ BEGIN
 			BEGIN
 				SET @xml = (
 					SELECT 10059 AS '@MsgID'
-							, 'Wrong Max Payout Per Match.' AS '@Msg'
+							, 'Wrong Max Win Per Match.' AS '@Msg'
 							, (
 								SELECT tmp.SportType AS '@SportType'
 									, tmp.BetType AS '@BetType'
@@ -209,7 +209,7 @@ BEGIN
 					RETURN
 			END
 		
-			--> Check rule : Max Per Match must be less than or equal to Max Payout Per Match
+			--> Check rule : Max Per Match must be less than or equal to Max Win Per Match
 			IF EXISTS(SELECT TOP 1 1
 						FROM @BetSetting
 						WHERE MaxPerMatch > MaxPayoutPerMatch 
@@ -217,7 +217,7 @@ BEGIN
 			BEGIN
 				SET @xml = (
 						SELECT 10060 AS '@MsgID'
-								, 'Max Per Match must be less than or equal to Max Payout Per Match' AS '@Msg'
+								, 'Max Per Match must be less than or equal to Max Win Per Match' AS '@Msg'
 								, (
 									SELECT tmp.SportType AS '@SportType'
 										, tmp.BetType AS '@BetType'
@@ -357,7 +357,7 @@ BEGIN
 					RETURN
 			END
 		
-			--> Check rule : Max Payout Per Match must be equal to or less than Upline's Max Payout Per Match
+			--> Check rule : Max Win Per Match must be equal to or less than Upline's Max Win Per Match
 			IF EXISTS (SELECT TOP 1 1
 					FROM @BetSetting t
 						INNER JOIN @Upline_BetSetting u 
@@ -367,7 +367,7 @@ BEGIN
 			BEGIN
 				SET @xml = (
 						SELECT 10065 AS '@MsgID'
-								, 'Max Payout Per Match must be less than or equal to Upline''s Max Payout Per Match' AS '@Msg'
+								, 'Max Win Per Match must be less than or equal to Upline''s Max Win Per Match' AS '@Msg'
 								, (
 									SELECT t.SportType AS '@SportType'
 										, t.BetType AS '@BetType'
