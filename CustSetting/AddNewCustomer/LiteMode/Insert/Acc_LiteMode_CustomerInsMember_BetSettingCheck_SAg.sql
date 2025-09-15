@@ -422,7 +422,7 @@ BEGIN
 				MinBet '@MinBet',
 				MaxBet '@MaxBet',
 				MaxPerMatch '@MPM',
-				MaxPayoutPerMatch '@MaxPayout'
+				MaxPayoutPerMatch '@MaxWin'
 			FROM @BetSetting
 			ORDER BY Child_DisplayOrder,SportType,BetType
 			FOR XML PATH ('R'), ROOT('Root')

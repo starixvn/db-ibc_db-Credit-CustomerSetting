@@ -47,6 +47,7 @@ AS
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
+		- 20250915@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447] 
 
 	Param's Explanation: 
 		@SettingXML :
@@ -1471,7 +1472,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 95088,
+		@ActionID = 95124,
 		@TrackingValue = @LogSPData,
 		@duration = @duration  
 	

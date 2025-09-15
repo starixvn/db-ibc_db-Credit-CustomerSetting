@@ -207,6 +207,7 @@ Revisions:
 	- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	- 20250114@Johnson: Check member Comm group [RedmineID: #216405]
 	- 20250509@Johnson: Apply Potential Win Limit for new customer [RedmineID: #226060]
+	- 20250915@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447]
 Param's Explanation:	
 	- @ErrCode:
 		= 0: add new member successfully.
@@ -984,7 +985,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 262003,
+		@ActionID = 262007,
 		@TrackingValue = @LogSPData,
 		@duration = @duration  
 
