@@ -32,7 +32,7 @@ AS
 	
 	Revisions:
 		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
-		
+		- 20250915@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447]
 	Parameter's Explanation:
 	
 */	
@@ -643,7 +643,7 @@ BEGIN
 						) as VARCHAR(max)), SPACE(1))
 			+ '</Discount>'
 			+ '<BetSetting GroupType="151">'
-				+ COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet,MaxPerMatch AS MPM,MaxPayoutPerMatch AS MaxPayout
+				+ COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet,MaxPerMatch AS MPM,MaxPayoutPerMatch AS MaxWin
 						FROM @BetSetting
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
@@ -740,7 +740,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 264003,
+		@ActionID = 264007,
 		@TrackingValue = @LogSPData,
 		@duration = @duration 
 

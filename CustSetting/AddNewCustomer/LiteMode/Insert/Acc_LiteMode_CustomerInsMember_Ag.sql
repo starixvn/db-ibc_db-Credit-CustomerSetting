@@ -45,7 +45,7 @@ AS
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
 		- 20250115@Johnson: Check member Comm group [RedmineID: #216405]
 		- 20250521@Johnson: Add log Potential Win Limit [RedmineID: #226060]
-
+		- 20250915@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447]
 	Param's Explanation: 
 		- @SettingXML:
 		'{
@@ -1464,7 +1464,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 95095,
+		@ActionID = 95126,
 		@TrackingValue = @LogSPData,
 		@duration = @duration  		
 		

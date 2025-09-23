@@ -22,7 +22,7 @@ AS
 	
 	Revisions:
 		- 20240607@Johnson: scale out DBCUST [redmine: #199915]
-		
+		- 20250915@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447]	
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -61,7 +61,7 @@ BEGIN
 				T.c.query('.').value('(R/@MinBet)[1]', 'money') AS minbet,
 				T.c.query('.').value('(R/@MaxBet)[1]', 'money') AS maxbet,
 				T.c.query('.').value('(R/@MPM)[1]', 'money') AS MaxPerMatch,
-				T.c.query('.').value('(R/@MaxPayout)[1]', 'money') AS MaxPayoutPerMatch
+				T.c.query('.').value('(R/@MaxWin)[1]', 'money') AS MaxPayoutPerMatch
 			FROM  @xml.nodes('/Root/R') T(c)   
 		END
 				

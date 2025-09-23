@@ -23,6 +23,7 @@ AS
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
 		- 20250617@Johnson: add Max Payout Per Match for E-Sports & Muay Thai [redmine: #230652]
+		- 20250915@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447]
 	Param's Explanation:
 	- @ErrCode:
 		= 0: Update successfully.
@@ -397,25 +398,25 @@ BEGIN
 	IF @RoleID = 4
 	BEGIN
 		INSERT INTO @LogAction (ActionID)
-			SELECT 220037
-		UNION SELECT 220038
+			SELECT 220051
+		UNION SELECT 220052
 	END
 	ELSE IF @RoleID = 3
 	BEGIN
 		INSERT INTO @LogAction (ActionID)
-			SELECT 220039
-		UNION SELECT 220040
+			SELECT 220053
+		UNION SELECT 220054
 	END
 	ELSE IF @RoleID = 2
 	BEGIN
 		INSERT INTO @LogAction (ActionID)
-			SELECT 220041
-		UNION SELECT 220042
+			SELECT 220055
+		UNION SELECT 220056
 	END
 	ELSE IF @RoleID = 1
 	BEGIN
 		INSERT INTO @LogAction (ActionID)
-			SELECT 220043
+			SELECT 220057
 	END
 
 	SET @xml = (
@@ -429,7 +430,7 @@ BEGIN
 									CONVERT(DECIMAL(20,2), old.MinBet)					AS '@MinBet',
 									CONVERT(DECIMAL(20,2), old.MaxBet)					AS '@MaxBet',
 									CONVERT(DECIMAL(20,2), old.MaxPerMatch)				AS '@MaxPerMatch',
-									CONVERT(DECIMAL(20,2), old.MaxPayoutPerMatch)			AS '@MaxPayoutPerMatch'
+									CONVERT(DECIMAL(20,2), old.MaxPayoutPerMatch)			AS '@MaxWinPerMatch'
 							FROM @New_BetSetting t
 								INNER JOIN @Old_BetSetting old ON t.SportType = old.SportType AND t.BetType = old.BetType
 							ORDER BY LogOrder 
@@ -453,7 +454,7 @@ BEGIN
 									CONVERT(DECIMAL(20,2), MinBet)				AS '@MinBet',
 									CONVERT(DECIMAL(20,2), MaxBet)				AS '@MaxBet',
 									CONVERT(DECIMAL(20,2), MaxPerMatch)				AS '@MaxPerMatch',
-									CONVERT(DECIMAL(20,2), MaxPayoutPerMatch)			AS '@MaxPayoutPerMatch'
+									CONVERT(DECIMAL(20,2), MaxPayoutPerMatch)			AS '@MaxWinPerMatch'
 							FROM @New_BetSetting t
 							ORDER BY LogOrder 
 							FOR XML PATH('BetLimit'),
@@ -484,7 +485,7 @@ BEGIN
 
 		IF @@ROWCOUNT = 0 BREAK
 		
-		IF @ActionID NOT IN (220038,220040,220042) -- Direct log
+		IF @ActionID NOT IN (220052,220054,220056) -- Direct log
 		BEGIN
 			EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 				@UserID = @UserID,

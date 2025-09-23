@@ -751,7 +751,7 @@ BEGIN
 						) as VARCHAR(max)), SPACE(1))
 			+ '</Discount>'
 			+ '<BetSetting GroupType="151">'
-				+ COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet,MaxPerMatch AS MPM,MaxPayoutPerMatch AS MaxPayout
+				+ COALESCE(CAST((SELECT SportType,BetType,MinBet,MaxBet,MaxPerMatch AS MPM,MaxPayoutPerMatch AS MaxWin
 						FROM @BetSetting
 						WHERE GroupID = 1
 						ORDER BY Child_DisplayOrder
@@ -848,7 +848,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 264001,
+		@ActionID = 264006,
 		@TrackingValue = @LogSPData,
 		@duration = @duration 
 

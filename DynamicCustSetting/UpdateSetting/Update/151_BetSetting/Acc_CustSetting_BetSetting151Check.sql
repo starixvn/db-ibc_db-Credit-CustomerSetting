@@ -27,6 +27,7 @@ AS
 		- 20240612@Johnson: Scale out DBCUST [redmine: #199915]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
 		- 20250617@Johnson: add Max Payout Per Match for E-Sports [redmine: #230652]
+		- 20250911@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447]
 	Param's Explanation:
 	@BetSetting: Json Type
 		'[
@@ -334,7 +335,7 @@ BEGIN
 			RETURN
 	END
 
-	--Check rule : Wrong Max Payout Per Match
+	--Check rule : Wrong Max Win Per Match
 	IF EXISTS(SELECT TOP 1 1 
 				FROM @ErrorSportTypeTbl tmp
 					LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType	= ubl.SportType AND tmp.BetType = ubl.BetType
@@ -343,7 +344,7 @@ BEGIN
 	BEGIN
 			SET @xml = (
 					SELECT 10059 AS '@MsgID'
-						, 'Wrong Max Payout Per Match.' AS '@Msg'
+						, 'Wrong Max Win Per Match.' AS '@Msg'
 						, (
 							SELECT  tmp.SportType AS '@SportType'
 								, tmp.BetType   AS '@BetType'
@@ -445,7 +446,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 				SELECT 10060 AS '@MsgID'
-					, 'Max Per Match must be less than or equal to Max Payout Per Match' AS '@Msg'
+					, 'Max Per Match must be less than or equal to Max Win Per Match' AS '@Msg'
 
 					, (
 						SELECT tmp.SportType AS '@SportType'
@@ -584,7 +585,7 @@ BEGIN
 		BEGIN
 			SET @xml = (
 					SELECT 10065 AS '@MsgID'
-						, 'Max Payout Per Match must be less than or equal to Upline''s Max Payout Per Match' AS '@Msg'
+						, 'Max Win Per Match must be less than or equal to Upline''s Max Win Per Match' AS '@Msg'
 						, (
 							SELECT tmp.SportType AS '@SportType'
 								, tmp.BetType AS '@BetType'

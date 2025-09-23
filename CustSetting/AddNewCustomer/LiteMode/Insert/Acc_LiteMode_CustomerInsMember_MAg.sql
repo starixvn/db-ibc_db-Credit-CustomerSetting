@@ -47,7 +47,7 @@ AS
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 	
 		- 20240704@Louisa: Scaleout DBCUST [Redmine:#206823]
-
+		- 20250915@Johnson: Max Payout Per Match - Change to Max Win [redmine: #236447]
   Limit New Account Update PT	Param's Explanation: 
 		- @SettingXML:
 		'{
@@ -1432,7 +1432,7 @@ BEGIN
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 		@UserID = @Creator,
 		@CustID = @CustID,
-		@ActionID = 95092,
+		@ActionID = 95125,
 		@TrackingValue = @LogSPData,
 		@duration = @duration  		
 		
