@@ -107,6 +107,7 @@ AS
 		- 20240405@Kelvin: Update View Master/Agent/Member list [RedmineID: #202877]
 		- 20240805@Tacy: Remove linked-server/cross-db on NAP_UserControl [redmineID: #208402]
 		- 20240917@Elodie: Tuning sp [redmine: #210892]
+		- 20251006@Dave: HF - NAP Master Agent/member List : Cannot view master list/Agent list/member list of deposit account [RedmineID: #240941]
 	Explanation's Param:
 		- @DoubleCommLosing:
 			0: Not Allowed double comm
@@ -124,14 +125,27 @@ BEGIN
 	SELECT @PageIndex = @PageIndex - 1, @RowStart = @PageSize * @PageIndex + 1, @RowEnd = @RowStart + @PageSize - 1 
 	SET @Username = ISNULL(@Username, '')
 	
-	DECLARE @SiteID INT , @Currency INT
+	DECLARE @SiteID INT , @Currency INT, @srecommend INT, @IsDep BIT = 0;
 
-	SELECT @Currency = ci.currency, @SiteID = s.siteid
-	FROM customer ci WITH(NOLOCK) 
-		INNER JOIN Site s WITH(NOLOCK) ON ci.site = s.site
-	WHERE ci.custid = @MRecommend
+	SELECT @Currency = ci.currency, @SiteID = s.siteid, @srecommend = srecommend
+	FROM dbo.customer ci WITH(NOLOCK) 
+		INNER JOIN dbo.Site s WITH(NOLOCK) ON ci.site = s.site
+	WHERE ci.custid = @MRecommend;
 	
-	CREATE TABLE #customer(custid INT, RowNumber INT ,discountMyanmarOdds DECIMAL (9,8),IsMyanmarOdds BIT)
+	IF EXISTS(SELECT TOP(1) 1 FROM dbo.Dep_CustSuper WITH (NOLOCK) WHERE CustID = @srecommend)
+	BEGIN
+		SET @IsDep = 1;
+	END
+
+	CREATE TABLE #customer(
+		custid INT
+		,RowNumber INT
+		,discountMyanmarOdds DECIMAL (9,8)
+		,IsMyanmarOdds BIT
+		,closed BIT DEFAULT 0
+		,reject BIT DEFAULT 0
+		,Locked BIT DEFAULT 0
+	);
 
 	IF @Username = '' AND @Enabled IS NULL AND @Closed IS NULL AND @Suspended IS NULL AND @Locked IS NULL
 	BEGIN
@@ -144,106 +158,185 @@ BEGIN
 				AND ci.roleid=2 								
 		END 
 				
-		INSERT INTO #customer (custid, RowNumber)
-		SELECT custid, RowNumber 
-		FROM (
-				SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled desc, cs.closed, ISNULL(cs.reject,0), ci.username) AS RowNumber 
-				FROM dbo.custinfo ci WITH(NOLOCK) 
-					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
-									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
-									, Locked
-								FROM dbo.CustProductStatus  WITH(NOLOCK)
-								WHERE CustID = ci.custid
-							) AS cs
-				WHERE MRecommend = @MRecommend AND roleid=2 						
-			) t
-		WHERE rownumber BETWEEN @rowstart AND @rowend
+		IF @IsDep = 0
+		BEGIN
+			INSERT INTO #customer (custid, closed, reject, Locked, RowNumber)
+			SELECT custid, closed, reject, Locked, RowNumber 
+			FROM (
+					SELECT ci.custid, cs.closed, ISNULL(cs.reject,0) AS reject, cs.Locked,
+						ROW_NUMBER() OVER (ORDER BY ci.enabled desc, cs.closed ASC, ISNULL(cs.reject,0) ASC, ci.username ASC) AS RowNumber 
+					FROM dbo.custinfo ci WITH(NOLOCK) 
+						CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, Locked
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cs
+					WHERE MRecommend = @MRecommend AND roleid=2 						
+				) t
+			WHERE rownumber BETWEEN @rowstart AND @rowend;
+		END
+		ELSE IF @IsDep = 1
+		BEGIN
+			INSERT INTO #customer (custid, RowNumber)
+			SELECT custid, RowNumber 
+			FROM (
+					SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.username ASC) AS RowNumber 
+					FROM dbo.custinfo ci WITH(NOLOCK) 
+					WHERE MRecommend = @MRecommend AND roleid=2 						
+				) t
+			WHERE rownumber BETWEEN @rowstart AND @rowend;
+		END
+
 	END				
 	ELSE IF @Username = ''
 	BEGIN
 		IF @TotalPages = 0
 		BEGIN			
-			SELECT 
-				@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
-			FROM dbo.Custinfo AS ci WITH (NOLOCK)		
-				CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
-									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
-									, Locked
-								FROM dbo.CustProductStatus  WITH(NOLOCK)
-								WHERE CustID = ci.custid
-							) AS cs	
-			WHERE ci.MRecommend = @MRecommend 
-				AND ci.roleid=2 
-				AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-				AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END			
-				AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END							
-				AND iSNULL(cs.Locked,0) >= ISNULL(@Locked,0)
-		END		
-
-		INSERT INTO #customer(custid, RowNumber)
-		SELECT custid, RowNumber
-		FROM (
-				SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, cs.closed, ISNULL(cs.reject,0), ci.username) as RowNumber
-				FROM dbo.custinfo ci WITH (NOLOCK) 
+			IF @IsDep = 0
+			BEGIN
+				SELECT 
+					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
+				FROM dbo.Custinfo AS ci WITH (NOLOCK)		
 					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
-									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
-									, Locked
-								FROM dbo.CustProductStatus  WITH(NOLOCK)
-								WHERE CustID = ci.custid
-							) AS cs
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, Locked
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cs
 				WHERE MRecommend = @MRecommend 
 					AND roleid=2 
 					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-					AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END
-					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END						
-					AND iSNULL(cs.Locked,0) >= ISNULL(@Locked,0)
-			) t
-		WHERE rownumber BETWEEN @rowstart AND @rowend						
+					AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END			
+					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END							
+					AND iSNULL(cs.Locked,0) >= ISNULL(@Locked,0);
+			END
+			ELSE IF @IsDep = 1
+			BEGIN
+				SELECT 
+					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
+				FROM dbo.Custinfo AS ci WITH (NOLOCK)
+				WHERE ci.MRecommend = @MRecommend
+					AND ci.roleid=2 
+					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END;
+			END
+		END		
+
+		IF @IsDep = 0
+		BEGIN
+			INSERT INTO #customer(custid, closed, reject, Locked, RowNumber)
+			SELECT custid, closed, reject, Locked, RowNumber
+			FROM (
+					SELECT ci.custid, cs.closed, ISNULL(cs.reject,0) AS reject, cs.Locked,
+						ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, cs.closed ASC, ISNULL(cs.reject,0) ASC, ci.username ASC) AS RowNumber
+					FROM dbo.custinfo ci WITH (NOLOCK) 
+						CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, Locked
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cs
+					WHERE MRecommend = @MRecommend 
+						AND roleid=2 
+						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
+						AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END
+						AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END						
+						AND iSNULL(cs.Locked,0) >= ISNULL(@Locked,0)
+				) t
+			WHERE rownumber BETWEEN @rowstart AND @rowend;
+		END
+		ELSE IF @IsDep = 1
+		BEGIN
+			INSERT INTO #customer(custid, RowNumber)
+			SELECT custid, RowNumber
+			FROM (
+					SELECT ci.custid, ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.username ASC) AS RowNumber
+					FROM dbo.custinfo ci WITH (NOLOCK)
+					WHERE MRecommend = @MRecommend 
+						AND roleid=2 
+						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
+				) t
+			WHERE rownumber BETWEEN @rowstart AND @rowend;
+		END
+
 	END
 	ELSE
 	BEGIN
 		IF @TotalPages = 0
 		BEGIN			
-			SELECT 
-				@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 then 1 else 0 end  
-			FROM dbo.Custinfo AS ci WITH (NOLOCK)
-				INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
-				CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
-									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
-									, Locked
-								FROM dbo.CustProductStatus  WITH(NOLOCK)
-								WHERE CustID = ci.custid
-							) AS cs
-			WHERE ci.MRecommend = @MRecommend 
-				AND ci.roleid=2 
-				AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
-				AND enabled = CASE WHEN coalesce(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
-				AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END
-				AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END								
-				AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)
-		END				
-				
-		INSERT INTO #customer(custid,RowNumber)
-		SELECT custid, RowNumber	
-		FROM (
-				SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled desc, cs.closed, ISNULL(cs.reject,0), ci.username) as RowNumber
-				FROM dbo.custinfo ci WITH(NOLOCK) 
+			IF @IsDep = 0
+			BEGIN
+				SELECT 
+					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
+				FROM dbo.Custinfo AS ci WITH (NOLOCK)
 					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
 					CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
-									, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
-									, Locked
-								FROM dbo.CustProductStatus  WITH(NOLOCK)
-								WHERE CustID = ci.custid
-							) AS cs
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, Locked
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cs
 				WHERE ci.MRecommend = @MRecommend 
 					AND ci.roleid=2 
 					AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
 					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
 					AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END
-					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END									
-					AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)	
-			) t 
-		WHERE rownumber BETWEEN @rowstart AND @rowend					
+					AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END								
+					AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0);
+			END
+			ELSE IF @IsDep = 1
+			BEGIN
+				SELECT 
+					@TotalItems = COUNT(ci.custid),@TotalPages=@TotalItems/@PageSize + CASE WHEN @TotalItems%@PageSize > 0 THEN 1 ELSE 0 END  
+				FROM dbo.Custinfo AS ci WITH (NOLOCK)
+					INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+				WHERE ci.MRecommend = @MRecommend 
+					AND ci.roleid=2 
+					AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
+					AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END;
+			END
+		END				
+				
+		IF @IsDep = 0
+		BEGIN
+			INSERT INTO #customer(custid, closed, reject, Locked, RowNumber)
+			SELECT custid, closed, reject, Locked, RowNumber	
+			FROM (
+					SELECT ci.custid, cs.closed, ISNULL(cs.reject,0) AS reject, cs.Locked,
+						ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, cs.closed ASC, ISNULL(cs.reject,0) ASC, ci.username ASC) AS RowNumber
+					FROM dbo.custinfo ci WITH(NOLOCK) 
+						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+						CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
+										, CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END AS reject
+										, Locked
+									FROM dbo.CustProductStatus  WITH(NOLOCK)
+									WHERE CustID = ci.custid
+								) AS cs
+					WHERE ci.MRecommend = @MRecommend 
+						AND ci.roleid=2 
+						AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
+						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
+						AND ISNULL(cs.closed,0) = CASE WHEN @suspended = 1 THEN 0 ELSE COALESCE(@closed, ISNULL(cs.closed, 0)) END
+						AND ISNULL(cs.reject,0) = CASE WHEN @Closed = 0 THEN 0 ELSE COALESCE(@suspended, ISNULL(cs.reject, 0))END									
+						AND ISNULL(cs.Locked,0) >= ISNULL(@Locked,0)	
+				) t 
+			WHERE rownumber BETWEEN @rowstart AND @rowend;
+		END
+		ELSE IF @IsDep = 1
+		BEGIN
+			INSERT INTO #customer(custid,RowNumber)
+			SELECT custid, RowNumber	
+			FROM (
+					SELECT ci.custid,ROW_NUMBER() OVER (ORDER BY ci.enabled DESC, ci.username ASC) AS RowNumber
+					FROM dbo.custinfo ci WITH(NOLOCK) 
+						INNER JOIN Customer c WITH (NOLOCK) ON c.custid = ci.custid
+					WHERE ci.MRecommend = @MRecommend 
+						AND ci.roleid=2 
+						AND (ci.username LIKE '%' + @Username + '%' OR (@Userid = @MRecommend AND c.username2 LIKE '%' + @Username + '%'))
+						AND enabled = CASE WHEN COALESCE(@Closed,@Suspended) IS NOT NULL THEN 1 ELSE COALESCE(@enabled, enabled) END
+				) t 
+			WHERE rownumber BETWEEN @rowstart AND @rowend;
+		END
 	END
 		
 	-- get data for filtered customers	
@@ -272,17 +365,12 @@ BEGIN
 				cm.IsInternal,
 				c.username, c.ugroup, c.firstname, c.lastname, c.username2, c.phone, c.mobilephone, c.iplogin, c.creatdate, ISNULL(cps.Locked,0) AS Locked
 
-		FROM Customer c WITH(NOLOCK)
-			INNER JOIN custInfo ci WITH(NOLOCK) ON ci.custid = c.custid 
-			INNER JOIN CustAgent cm with(NOLOCK) on c.custid = cm.custid 
-			CROSS APPLY  (SELECT TOP (1) CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END AS closed
-										, CASE WHEN SuspendInfo > 1 THEN 1 ELSE 0 END AS reject
-										, Locked										
-									FROM dbo.CustProductStatus  WITH(NOLOCK)
-									WHERE CustID = ci.custid
-						 ) AS cps			
-		WHERE c.custid IN (SELECT custid FROM #customer) 
-			AND c.site NOT IN (SELECT site FROM @tmp)
+		FROM dbo.Customer c WITH(NOLOCK)
+			INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON ci.custid = c.custid 
+			INNER JOIN dbo.CustAgent cm WITH(NOLOCK) ON c.custid = cm.custid 
+			INNER JOIN #customer AS cps ON cps.custid = c.custid
+			LEFT JOIN @tmp AS tmp ON c.site = tmp.site
+		WHERE tmp.site IS NULL
 	),
 	custsetting AS
 	(
@@ -293,14 +381,14 @@ BEGIN
 		,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 8 THEN cda.Discount END) AS groupd
 		,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 5 THEN cda.Discount END) AS discount1x2
 		,MAX(CASE WHEN cda.SportType = 1 AND cda.BetType = 4 THEN cda.Discount END) AS discountcs			
-		FROM CustDiscount3rd_Agent cda WITH(NOLOCK) 
-		WHERE custid IN (SELECT custid FROM #customer)
+		FROM dbo.CustDiscount3rd_Agent cda WITH(NOLOCK) 
+		WHERE EXISTS (SELECT 1 FROM #customer AS c WHERE c.custid = cda.custid)
 			AND cda.SportType IN (1)
 		GROUP BY cda.custid 
 	)	
 	SELECT  ctm.enabled,
 			ctm.closed, 
-			ISNULL(ctm.reject,0) as suspended,				
+			ISNULL(ctm.reject,0) as suspended,
 			ctm.username, 
 			ctm.custid, 
 			ctm.roleid,
@@ -325,8 +413,7 @@ BEGIN
 		INNER JOIN #customer t ON ctm.custid = t.custid 
 		LEFT JOIN custsetting cs WITH (NOLOCK) ON ctm.custid = cs.custid
 		LEFT JOIN CustLoginInfo cl WITH(NOLOCK) ON t.custid=cl.CustID
-		
-	ORDER BY  t.RowNumber	
+	ORDER BY  t.RowNumber ASC;
 
 	DROP TABLE #customer
 END
