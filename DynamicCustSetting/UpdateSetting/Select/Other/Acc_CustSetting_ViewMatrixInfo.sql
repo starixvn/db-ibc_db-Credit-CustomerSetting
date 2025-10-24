@@ -16,6 +16,7 @@ AS
 		- 20200820@Elodie: Initial SP [Redmine: #135363]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20231023@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+		- 20251027@Dave: Live Casino - Adjust-pt-comm-for-live-casino [RedmineID: #242260]
 
 
 	Param's Explanation:  
@@ -24,23 +25,12 @@ AS
    
  */  
 BEGIN  
-	CREATE TABLE #ProductSettingDetail(
-		[SettingType] [smallint],
-		[SportType] [smallint],
-		[BetType] [smallint],
-		[IsLive] [bit] ,
-		[ProductID] [tinyint],
-	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
-	)
-
-	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID)
-	SELECT SportType,BetType,SettingType,IsLive,ProductID 
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	SET NOCOUNT ON;
 
 	IF @Mode = 1 
 	BEGIN
 		SELECT TOP 1 @SettingType = SettingType 
-		FROM #ProductSettingDetail ps WITH (NOLOCK)
+		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) ps
 		WHERE ProductId = ISNULL(@ProductID, ProductId)
 			AND sporttype = ISNULL(@Sporttype, Sporttype)
 			AND SettingType IN (1,18,28)
@@ -48,12 +38,11 @@ BEGIN
 	ELSE IF @Mode = 3
 	BEGIN
 		SELECT TOP 1 @SettingType = SettingType 
-		FROM #ProductSettingDetail ps WITH (NOLOCK)
+		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) ps
 		WHERE ProductId = ISNULL(@ProductID, ProductId)
 			AND sporttype = ISNULL(@Sporttype, Sporttype)
 			AND SettingType IN (3,5,14,19,25)
 	END
 
-	DROP TABLE #ProductSettingDetail
 END  
 GO

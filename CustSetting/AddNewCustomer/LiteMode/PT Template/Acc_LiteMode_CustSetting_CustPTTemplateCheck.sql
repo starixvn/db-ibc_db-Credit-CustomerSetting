@@ -17,6 +17,7 @@ AS
 	Revisions: 
 		- 20230509@Johnson: initial sp [redmine: #179159]
 		- 20230918@Eden: DCS Sportsbook Credit[redmine: #193083]
+		- 20251027@Dave: Live Casino - Adjust-pt-comm-for-live-casino [RedmineID: #242260]
 
 	Param's Explanation: 
 		- @Settings = '<Root>
@@ -47,7 +48,7 @@ BEGIN
 		INNER JOIN site s WITH(NOLOCK) ON c.site = s.site
 	WHERE CustID = @custid
 		
-	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT,SettingLevel TINYINT, productID TINYINT)
+	CREATE TABLE #SportBettypeFilter(SportType SMALLINT,Bettype SMALLINT, IsLive BIT,SettingLevel TINYINT, productID TINYINT, SubGroupID TINYINT)
 	CREATE TABLE #tmpPT (sporttype SMALLINT, bettype SMALLINT, IsLive BIT, ProductID TINYINT, groupID TINYINT, SubGroupID TINYINT, SettingLevel TINYINT, MaxPT SMALLMONEY, MinPT SMALLMONEY)
 	
 	DECLARE @GroupID TINYINT,
@@ -129,11 +130,12 @@ BEGIN
 		DELETE #SportBettypeFilter
 		
 		--LCS
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = NULL/*, @SubGroupID = 6*/
 		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
-		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID,SubGroupID)
+		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID,SubGroupID
 		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
+		WHERE SubGroupID IN (6,11,12,13)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -141,7 +143,7 @@ BEGIN
 			, cs.IsLive 
 			, ProductID
 			, @GroupID 
-			, @SubGroupID
+			, ft.SubGroupID
 			,SettingLevel
 			, cs.SuperPT AS MaxPT  			 
 		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
@@ -332,11 +334,12 @@ BEGIN
 		DELETE #SportBettypeFilter
 		
 		--LCS
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = NULL--6
 		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
-		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID,SubGroupID)
+		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID,SubGroupID
 		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID,@SettingStatus,@siteID,@currency) 
+		WHERE SubGroupID IN (6,11,12,13)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT)
 		SELECT cs.SportType  
@@ -344,7 +347,7 @@ BEGIN
 			, cs.IsLive  
 			,ProductID
 			, @GroupID 
-			, @SubGroupID
+			, ft.SubGroupID
 			,SettingLevel
 			, cs.MasterPT AS MaxPT  			 
 		FROM CustPTSetting3rd_Agent cs WITH(NOLOCK)
@@ -558,11 +561,12 @@ BEGIN
 		DELETE #SportBettypeFilter
 		
 		--LCS
-		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = 6
+		SELECT @GroupID = 3, @GroupType = 153, @SubGroupID = NULL--6
 		
-		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID)
-		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID
+		INSERT INTO #SportBettypeFilter(SportType,Bettype,IsLive,SettingLevel,ProductID,SubGroupID)
+		SELECT SportType,Bettype,IsLive,SettingLevel,RealProductID,SubGroupID
 		FROM dbo.f_LiteMode_CustSetting_SportBettypeFilterSelect(@GroupID, @GroupType, @SubGroupID, @SettingStatus,@siteID,@currency)
+		WHERE SubGroupID IN (6,11,12,13)
 		
 		INSERT INTO #tmpPT(sporttype, bettype, IsLive,ProductID,GroupID,SubGroupID,SettingLevel, MaxPT, MinPT)
 		SELECT cs.SportType  
@@ -570,7 +574,7 @@ BEGIN
 			, cs.IsLive  
 			,ProductID
 			,@GroupID 
-			,@SubGroupID
+			,s.SubGroupID
 			,SettingLevel
 			,(CASE WHEN cs.AgentPT< scs.AgentPT THEN cs.AgentPT ELSE scs.AgentPT END) MaxPT			 
 			,cs.MinPT

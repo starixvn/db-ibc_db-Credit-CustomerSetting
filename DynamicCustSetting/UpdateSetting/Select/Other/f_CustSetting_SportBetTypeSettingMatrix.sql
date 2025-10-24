@@ -11,6 +11,7 @@ RETURNS TABLE AS
 	Revisions:      
 	- 20240314@Helios: Unify Live RNG Casino [Redmine: #198960]
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
+	- 20251023@Dave: Live Casino - Adjust-pt-comm-for-live-casino [RedmineID: #242260]
 
 	Explanation's Param:      
 	@SettingStatus: 0: Pro, 1: UAT      
@@ -42,3 +43,29 @@ RETURN
 		, sbsm.isDeleted
 	FROM SportBettypeSettingMatrix sbsm WITH (NOLOCK)
 	WHERE sbsm.isDeleted = 0
+	AND @SettingStatus = 1
+
+	UNION ALL
+
+	SELECT
+		  sbsm.RealProductId
+		, sbsm.ProductID
+		, sbsm.SportType
+		, sbsm.BetType
+		, sbsm.isLicensee
+		, sbsm.isLive
+		, sbsm.Site
+		, sbsm.isActive
+		, sbsm.SportTypeRefPT
+		, sbsm.BetTypeRefPT
+		, sbsm.SportTypeRefComm
+		, sbsm.BetTypeRefComm
+		, sbsm.SportTypeRefBetSetting
+		, sbsm.BetTypeRefBetSetting
+		, sbsm.SporttypeRefWinlossLimit
+		, sbsm.BettypeRefWinlossLimit
+		, sbsm.isDeleted
+	FROM SportBettypeSettingMatrix_UAT sbsm WITH (NOLOCK)
+	WHERE sbsm.isDeleted = 0
+	AND @SettingStatus = 3
+
