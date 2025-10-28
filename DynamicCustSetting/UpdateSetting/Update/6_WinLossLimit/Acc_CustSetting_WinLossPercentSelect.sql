@@ -160,7 +160,7 @@ BEGIN
 
 	SELECT SportType,BetType,MaxWinLimit,MaxWinAmount,MaxLossAmount,CurrentAmount,WinPercent,LossPercent 
 	FROM #TempResult
-	ORDER BY SportType,BetType
+	ORDER BY SportType ASC,BetType ASC
 
 	DROP TABLE #TempResult
 	DROP TABLE #tmpRealSport
