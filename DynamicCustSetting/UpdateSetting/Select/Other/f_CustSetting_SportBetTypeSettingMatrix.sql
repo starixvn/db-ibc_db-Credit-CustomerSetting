@@ -43,10 +43,10 @@ RETURN
 		, sbsm.isDeleted
 	FROM SportBettypeSettingMatrix sbsm WITH (NOLOCK)
 	WHERE sbsm.isDeleted = 0
-	AND @SettingStatus = 1
+	AND @SettingStatus = 0
 
 	UNION ALL
-
+	--UAT Mode
 	SELECT
 		  sbsm.RealProductId
 		, sbsm.ProductID
@@ -67,5 +67,5 @@ RETURN
 		, sbsm.isDeleted
 	FROM SportBettypeSettingMatrix_UAT sbsm WITH (NOLOCK)
 	WHERE sbsm.isDeleted = 0
-	AND @SettingStatus = 3
+	AND @SettingStatus >= 1
 
