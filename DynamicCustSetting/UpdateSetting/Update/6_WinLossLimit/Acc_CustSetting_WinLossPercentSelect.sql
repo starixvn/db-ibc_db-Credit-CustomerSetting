@@ -19,6 +19,7 @@ AS
 	- 20231213@Tacy: Live Casino - Hide un-launched product from Member Win Loss Limit page [Redmine: #198317]
 	- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
+	- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 
   Parameters Explanation: 
 	WinPercent: -1: winloss setting is unlimited
@@ -44,11 +45,12 @@ BEGIN
 
 	CREATE TABLE #tmpRealSport(SportType SMALLINT, BetType SMALLINT, IsFinished BIT DEFAULT 0, ProductID TINYINT)
 
-	DECLARE @Currency INT, @SiteID INT
+	DECLARE @Currency INT, @SiteID INT, @Site VARCHAR(10)
 
 	--Product Status
 	SELECT	@SiteID = s.siteid,
-			@Currency = c.currency
+			@Currency = c.currency,
+			@Site = c.site
 	FROM customer c WITH (NOLOCK)
 	    INNER JOIN Site s WITH (NOLOCK) ON c.site = s.site	
     WHERE c.custid = @custid
@@ -60,6 +62,16 @@ BEGIN
 			ON d.SportType = mt.SporttypeRefWinlossLimit
 			AND d.BetType = mt.BettypeRefWinlossLimit
 			AND mt.isLicensee = 0 AND mt.Site = 'ALL' AND mt.isDeleted = 0
+	WHERE SettingType = 22
+		AND d.SportType = @SportType
+		AND d.BetType = @BetType
+	UNION ALL
+	SELECT mt.SportType,mt.bettype,d.ProductId 
+	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) d 
+		INNER JOIN dbo.f_CustSetting_SportBetTypeSettingMatrix(@SettingStatus) mt
+			ON d.SportType = mt.SporttypeRefWinlossLimit
+			AND d.BetType = mt.BettypeRefWinlossLimit
+			AND mt.isLicensee = 0 AND mt.Site = @site AND mt.isDeleted = 0
 	WHERE SettingType = 22
 		AND d.SportType = @SportType
 		AND d.BetType = @BetType
