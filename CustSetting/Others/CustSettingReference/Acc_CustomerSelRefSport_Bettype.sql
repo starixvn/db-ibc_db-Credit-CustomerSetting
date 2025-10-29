@@ -178,7 +178,7 @@ BEGIN
             , CASE WHEN Sporttype=6 and bettype=3900 THEN 4 ELSE bettype END Bettype
             , SporttypeRef, BettypeRef, IsMyanmarOdds
     FROM CTE
-    ORDER BY Sporttype, Bettype, SporttypeRef, BettypeRef
+    ORDER BY Sporttype ASC, Bettype ASC, SporttypeRef ASC, BettypeRef ASC
 
     DROP TABLE #tempRef
 END
