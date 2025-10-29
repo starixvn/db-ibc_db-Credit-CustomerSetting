@@ -18,6 +18,7 @@ AS
 		- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960]
 		- 20240521@Helios: Unify RNG Games [Redmine: #204358]
 		- 20250212@Virgil: Add Saba Keno to list "Other RNG Casino" [Redmine: #214757]
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 
 	 Param's Explanation: 
 		@SettingStatus: 0: Pro, 1: UAT, 3: UAT/PRO
@@ -122,7 +123,7 @@ BEGIN
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
-				AND s.isLicensee = 0 AND s.Site = 'All'
+				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 3
 			AND GroupType = 153-- PT
@@ -133,7 +134,7 @@ BEGIN
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID
-				AND s.isLicensee = 0 AND s.Site = 'All'
+				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
 			AND GroupID = 3
 			AND GroupType = 153-- PT
@@ -152,7 +153,7 @@ BEGIN
 			INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.SportType = s.SportType	
-				AND s.isLicensee = 0 AND s.Site = 'All'
+				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
 			AND GroupID = 3
 			AND GroupType = 153-- PT
@@ -165,7 +166,7 @@ BEGIN
 			INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
-				AND s.isLicensee = 0 AND s.Site = 'All'
+				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
 		  AND GroupID = 3
 		  AND GroupType = 153-- PT
@@ -231,7 +232,7 @@ BEGIN
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
-				AND s.isLicensee = 0 AND s.Site = 'All'
+				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <> 2
 		  AND GroupID = 3
 		  AND GroupType = 153-- PT
@@ -242,7 +243,7 @@ BEGIN
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID
-				AND s.isLicensee = 0 AND s.Site = 'All'
+				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <> 2
 		  AND GroupID = 3
 		  AND GroupType = 153-- PT
@@ -261,7 +262,7 @@ BEGIN
 			INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.SportType = s.SportType		
-				AND s.isLicensee = 0 AND s.Site = 'All'
+				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <> 2
 		  AND GroupID = 3--Live & RnG CS
 		  AND GroupType = 153-- PT
@@ -274,7 +275,7 @@ BEGIN
 			INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
 			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId 
-				AND s.isLicensee = 0 AND s.Site = 'All'
+				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <> 2
 		  AND GroupID = 3--Live & RnG CS
 		  AND GroupType = 153-- PT
