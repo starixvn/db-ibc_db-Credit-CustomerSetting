@@ -39,6 +39,7 @@ AS
 			- 20230814@Luke: Basketball AIO [Redmine: #191334]
 			- 20231016@Luke: Offer 10 upcoming sports for Winter Sports [Redmine: #194661]
 			- 20231114@Johnson: Hide bettype SABA for site 777777 [redmine: #194591]
+            - 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
     Param's Explanation: 
             @CustID (Login account): =NULL: Admin ; =NOT NULL: SMA 
             @isShowAll: 0: Show Active Bettype, 1: Show ALL 
@@ -152,7 +153,7 @@ BEGIN
                             AND 1 = CASE WHEN @HideNG2 = 1 AND b.SportType BETWEEN 213 AND 218 THEN 0 ELSE 1 END
                             --AND 1 = CASE WHEN @HideVS = 1 AND (b.SportType BETWEEN 180 AND 186 OR b.SportType BETWEEN 190 AND 198) THEN 0 ELSE 1 END
                             --AND 1 = CASE WHEN @HideLottery = 1 AND b.SportType = 220 THEN 0 ELSE 1 END
-                            AND b.Site <> 'CN88'
+                            AND b.Site IN ('ALL','IMBC', @Site) -- Site Filter for Live Casino
 							AND 1 = CASE WHEN @SpecialPlatform = 4 AND Bettype IN (228,229) THEN 0 ELSE 1 END --Hide bettype SABA xxx for 777777
             UNION ALL
             SELECT CONVERT(SMALLINT,2) AS Sporttype, 647 AS Bettype,  CONVERT(SMALLINT,2)  AS SporttypeRefPT, 9999 AS BettypeRefPT, ISNULL(@IsMyanmarOdds,0) AS IsMyanmarOdds
