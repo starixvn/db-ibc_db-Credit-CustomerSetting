@@ -61,17 +61,7 @@ BEGIN
 		INNER JOIN dbo.f_CustSetting_SportBetTypeSettingMatrix(@SettingStatus) mt
 			ON d.SportType = mt.SporttypeRefWinlossLimit
 			AND d.BetType = mt.BettypeRefWinlossLimit
-			AND mt.isLicensee = 0 AND mt.Site = 'ALL' AND mt.isDeleted = 0
-	WHERE SettingType = 22
-		AND d.SportType = @SportType
-		AND d.BetType = @BetType
-	UNION ALL
-	SELECT mt.SportType,mt.bettype,d.ProductId 
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) d 
-		INNER JOIN dbo.f_CustSetting_SportBetTypeSettingMatrix(@SettingStatus) mt
-			ON d.SportType = mt.SporttypeRefWinlossLimit
-			AND d.BetType = mt.BettypeRefWinlossLimit
-			AND mt.isLicensee = 0 AND mt.Site = @site AND mt.isDeleted = 0
+			AND mt.isLicensee = 0 AND mt.Site IN ('ALL',@site) AND mt.isDeleted = 0
 	WHERE SettingType = 22
 		AND d.SportType = @SportType
 		AND d.BetType = @BetType

@@ -314,7 +314,7 @@ BEGIN
 	AND p.SubGroupID IN (6,8)
 	AND po.RealProductID NOT IN (6,42,66,38,86,102)
 
-	ORDER BY GroupID,SubGroupOrder
+	ORDER BY GroupID ASC, SubGroupOrder ASC
 
 	DROP TABLE #OfferedProduct
 	DROP TABLE #ProductInfo
