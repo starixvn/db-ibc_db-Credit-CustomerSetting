@@ -60,14 +60,9 @@ BEGIN
 					
     CREATE TABLE #tempRef (Bettype INT,GroupTypeId INT)        
 
-    DECLARE @SearchQuery varchar(1024)
-
-    SELECT @SearchQuery = 'SELECT * 
-    FROM OPENQUERY(DBAGE, 
-    ''SELECT Bettype , GroupTypeId FROM bodb02.dbo.f_GroupBettype( )'')'
-
-    INSERT INTO #tempRef
-    EXECUTE(@SearchQuery)
+    INSERT INTO #tempRef(Bettype,GroupTypeId)
+    SELECT Bettype , GroupTypeId 
+    FROM OPENQUERY(DBAGE, 'SELECT Bettype , GroupTypeId FROM bodb02.dbo.f_GroupBettype()')
 
     DELETE FROM #tempRef 
     WHERE bettype=GroupTypeId OR BetType IN (3915,3900)  
