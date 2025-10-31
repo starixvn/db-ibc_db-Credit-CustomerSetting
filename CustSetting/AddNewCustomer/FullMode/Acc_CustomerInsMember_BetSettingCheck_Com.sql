@@ -19,7 +19,7 @@ AS
 	Revisions: 
 		- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 		- 20240822@Eden: Scale out DBCUST - Credit Customer in GlobCustDB [redmine: #206823]
-
+		- 20251030@Johnson: Max Payout Per Match - Change to Max Win [redmine: #243066]
 	Param's Explanation: 
 		- @SettingType26 = '<Root>
 						<R SportType="1" BetType="1" MinBet="1" MaxBet="100" MPM="1000" MaxPayout="1000" />
@@ -220,9 +220,9 @@ BEGIN
 				MinBet '@MinBet',
 				MaxBet '@MaxBet',
 				MaxPerMatch '@MPM',
-				MaxPayoutPerMatch '@MaxPayout'
+				MaxPayoutPerMatch '@MaxWin'
 			FROM @BetSetting
-			ORDER BY Child_DisplayOrder,SportType,BetType
+			ORDER BY Child_DisplayOrder ASC,SportType ASC,BetType ASC
 			FOR XML PATH ('R'), ROOT('Root')
 			)	
 		END
