@@ -119,60 +119,82 @@ BEGIN
 		UNION ALL  		
 
 		-- Get data for Live & RNG Casino
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --FGG
+		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
-			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
+			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT
 				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
 		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 3
 			AND GroupType = 153-- PT
-			AND (t.Productid <> 44 OR s.RealProductId = 50)
 			AND MarketType = 0
-		UNION ALL  		
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino
-		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
-			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID
-				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
-		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
-			AND GroupID = 3
-			AND GroupType = 153-- PT
-			AND t.Productid IN (53,41)
-			AND MarketType = 0 
-			AND s.SportType NOT IN (SELECT DISTINCT SportType --Live Casino(SABA casino)
-									FROM dbo.ProductSettingProfile t WITH(NOLOCK)
-									WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
-									  AND GroupID = 3--Live & RnG CS
-									  AND GroupType = 153-- PT									 
-									  AND MarketType = 1	  
-									)
-		UNION ALL  		
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino(SABA casino)
+		UNION ALL
+		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
-			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND t.SportType = s.SportType	
+			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT	
 				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
-		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
+		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
 			AND GroupID = 3
 			AND GroupType = 153-- PT
-			AND t.Productid IN (53,41)
-			AND MarketType = 1 	
-			AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
-		UNION ALL  		
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --Saba Casino,Virtual Games,Vgaming
-		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
-			INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
-			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
-				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
-		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
-		  AND GroupID = 3
-		  AND GroupType = 153-- PT
-		  AND (t.Productid <> 44 OR s.RealProductId = 50)
-		  AND MarketType = 1
-		  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END			
+			AND MarketType = 1
+			AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END	
+		--UNION ALL  		
+		--SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --FGG
+		--FROM dbo.ProductSettingProfile t WITH(NOLOCK)
+		--	INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+		--		ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
+		--		AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
+		--WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+		--	AND GroupID = 3
+		--	AND GroupType = 153-- PT
+		--	AND (t.Productid <> 44 OR s.RealProductId = 50)
+		--	AND MarketType = 0
+		--UNION ALL  		
+		--SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino
+		--FROM dbo.ProductSettingProfile t WITH(NOLOCK)
+		--	INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+		--		ON t.ProductID = s.ProductID
+		--		AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
+		--WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
+		--	AND GroupID = 3
+		--	AND GroupType = 153-- PT
+		--	AND t.Productid IN (53,41)
+		--	AND MarketType = 0 
+		--	AND s.SportType NOT IN (SELECT DISTINCT SportType --Live Casino(SABA casino)
+		--							FROM dbo.ProductSettingProfile t WITH(NOLOCK)
+		--							WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+		--							  AND GroupID = 3--Live & RnG CS
+		--							  AND GroupType = 153-- PT									 
+		--							  AND MarketType = 1	  
+		--							)
+		--UNION ALL  		
+		--SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino(SABA casino)
+		--FROM dbo.ProductSettingProfile t WITH(NOLOCK)
+		--	INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
+		--	INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+		--		ON t.ProductID = s.ProductID AND t.SportType = s.SportType	
+		--		AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
+		--WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END  
+		--	AND GroupID = 3
+		--	AND GroupType = 153-- PT
+		--	AND t.Productid IN (53,41)
+		--	AND MarketType = 1 	
+		--	AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
+		--UNION ALL  		
+		--SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --Saba Casino,Virtual Games,Vgaming
+		--FROM dbo.ProductSettingProfile t WITH(NOLOCK)
+		--	INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
+		--	INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+		--		ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
+		--		AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
+		--WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
+		--  AND GroupID = 3
+		--  AND GroupType = 153-- PT
+		--  AND (t.Productid <> 44 OR s.RealProductId = 50)
+		--  AND MarketType = 1
+		--  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END			
 	END
 	ELSE IF @SettingStatus = 3
 	BEGIN	
@@ -228,60 +250,83 @@ BEGIN
 		UNION ALL
 
 		-- Get data for Live & RNG Casino
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --FGG
+		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
-			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
+			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT
 				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
-		WHERE SettingStatus <> 2
-		  AND GroupID = 3
-		  AND GroupType = 153-- PT
-		  AND (t.Productid <> 44 OR s.RealProductId = 50)
-		  AND MarketType = 0
-		UNION ALL  		
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino
-		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
-			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID
-				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
-		WHERE SettingStatus <> 2
-		  AND GroupID = 3
-		  AND GroupType = 153-- PT
-		  AND t.Productid IN (53,41)
-		  AND MarketType = 0 
-		  AND s.SportType NOT IN (SELECT DISTINCT SportType --Live Casino(SABA casino)
-									FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
-									WHERE SettingStatus <> 2
-									  AND GroupID = 3--Live & RnG CS
-									  AND GroupType = 153-- PT									 
-									  AND MarketType = 1	  
-									)
-		UNION ALL  		
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino(SABA casino)
+		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+			AND GroupID = 3
+			AND GroupType = 153-- PT
+			AND MarketType = 0
+		UNION ALL
+		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
-			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND t.SportType = s.SportType		
+			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT	
 				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
-		WHERE SettingStatus <> 2
-		  AND GroupID = 3--Live & RnG CS
-		  AND GroupType = 153-- PT
-		  AND t.Productid IN (53,41)
-		  AND MarketType = 1 	
-		  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
-		UNION ALL  		
-		SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --Saba Casino,Virtual Games,Vgaming
-		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
-			INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
-			INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
-				ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId 
-				AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
-		WHERE SettingStatus <> 2
-		  AND GroupID = 3--Live & RnG CS
-		  AND GroupType = 153-- PT
-		  AND (t.Productid <> 44 OR s.RealProductId = 50)
-		  AND MarketType = 1  
-		  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
+		WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END
+			AND GroupID = 3
+			AND GroupType = 153-- PT
+			AND MarketType = 1
+			AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END	
+
+		-- Get data for Live & RNG Casino
+		--SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --FGG
+		--FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
+		--	INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+		--		ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId
+		--		AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
+		--WHERE SettingStatus <> 2
+		--  AND GroupID = 3
+		--  AND GroupType = 153-- PT
+		--  AND (t.Productid <> 44 OR s.RealProductId = 50)
+		--  AND MarketType = 0
+		--UNION ALL  		
+		--SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino
+		--FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
+		--	INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+		--		ON t.ProductID = s.ProductID
+		--		AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
+		--WHERE SettingStatus <> 2
+		--  AND GroupID = 3
+		--  AND GroupType = 153-- PT
+		--  AND t.Productid IN (53,41)
+		--  AND MarketType = 0 
+		--  AND s.SportType NOT IN (SELECT DISTINCT SportType --Live Casino(SABA casino)
+		--							FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
+		--							WHERE SettingStatus <> 2
+		--							  AND GroupID = 3--Live & RnG CS
+		--							  AND GroupType = 153-- PT									 
+		--							  AND MarketType = 1	  
+		--							)
+		--UNION ALL  		
+		--SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --RNG Slot,Live Casino(SABA casino)
+		--FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
+		--	INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
+		--	INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+		--		ON t.ProductID = s.ProductID AND t.SportType = s.SportType		
+		--		AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
+		--WHERE SettingStatus <> 2
+		--  AND GroupID = 3--Live & RnG CS
+		--  AND GroupType = 153-- PT
+		--  AND t.Productid IN (53,41)
+		--  AND MarketType = 1 	
+		--  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
+		--UNION ALL  		
+		--SELECT DISTINCT GroupID,SubGroupID,SubGroupOrder,s.RealProductID --Saba Casino,Virtual Games,Vgaming
+		--FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
+		--	INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
+		--	INNER JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
+		--		ON t.ProductID = s.ProductID AND t.RealProductId = s.RealProductId 
+		--		AND s.isLicensee = 0 AND s.Site IN ('All', @Site)
+		--WHERE SettingStatus <> 2
+		--  AND GroupID = 3--Live & RnG CS
+		--  AND GroupType = 153-- PT
+		--  AND (t.Productid <> 44 OR s.RealProductId = 50)
+		--  AND MarketType = 1  
+		--  AND 1 = CASE WHEN p.Currency = 0 OR p.Currency = @Currency THEN 1 ELSE 0 END
 		
 	END
 
@@ -311,7 +356,7 @@ BEGIN
 	WHERE po.IsHidden = 0 AND (po.EndOfSupportDate > GETDATE() OR po.EndOfSupportDate IS NULL)
 	AND po.Type IN (41,53)
 	AND p.GroupID = 3
-	AND p.SubGroupID IN (6,8)
+	AND p.SubGroupID IN (6,8,11,12,13)
 	AND po.RealProductID NOT IN (6,42,66,38,86,102)
 
 	ORDER BY GroupID ASC, SubGroupOrder ASC
