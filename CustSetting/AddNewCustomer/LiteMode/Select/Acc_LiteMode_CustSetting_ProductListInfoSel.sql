@@ -119,7 +119,7 @@ BEGIN
 		UNION ALL  		
 
 		-- Get data for Live & RNG Casino
-		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
+		SELECT DISTINCT GroupID, SubGroupID, SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT
@@ -129,7 +129,7 @@ BEGIN
 			AND GroupType = 153-- PT
 			AND MarketType = 0
 		UNION ALL
-		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
+		SELECT DISTINCT GroupID, SubGroupID, SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile t WITH(NOLOCK)
 			INNER JOIN ProductProfileSiteCurrency p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
 			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
@@ -250,7 +250,7 @@ BEGIN
 		UNION ALL
 
 		-- Get data for Live & RNG Casino
-		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
+		SELECT DISTINCT GroupID, SubGroupID, SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
 				ON t.ProductID = s.ProductID AND t.SportType = s.SportTypeRefPT AND t.BetType = s.BetTypeRefPT
@@ -260,7 +260,7 @@ BEGIN
 			AND GroupType = 153-- PT
 			AND MarketType = 0
 		UNION ALL
-		SELECT DISTINCT GroupID, SubGroupID,0 AS SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
+		SELECT DISTINCT GroupID, SubGroupID, SubGroupOrder, ISNULL(s.RealProductID, t.ProductID) AS RealProductID 
 		FROM dbo.ProductSettingProfile_UAT t WITH(NOLOCK)
 			INNER JOIN ProductProfileSiteCurrency_UAT p WITH(NOLOCK) ON t.ProductSettingID = p.ProductSettingID AND SiteID = @SiteID
 			LEFT JOIN f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) s 
