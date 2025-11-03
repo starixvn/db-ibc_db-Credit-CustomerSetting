@@ -66,7 +66,7 @@ BEGIN
 		Child_DisplayOrder INT
 	)	
 	
-	INSERT @CommMatrix
+	INSERT INTO @CommMatrix(roleid, SportType, BetType, Discount, Child_DisplayOrder)
 	SELECT
 		4
 	  ,comm.[SportType]
@@ -81,7 +81,7 @@ BEGIN
 	
 	IF @RoleID IN (3, 2, 1)
 	BEGIN
-		INSERT @CommMatrix
+		INSERT INTO @CommMatrix(roleid, SportType, BetType, Discount, Child_DisplayOrder)
 		SELECT
 			3
 		  ,comm.[SportType]
@@ -96,7 +96,7 @@ BEGIN
 		
 		IF @RoleID IN (2, 1)
 		BEGIN
-			INSERT @CommMatrix
+			INSERT INTO @CommMatrix(roleid, SportType, BetType, Discount, Child_DisplayOrder)
 			SELECT
 				2
 			  ,comm.[SportType]
@@ -111,7 +111,7 @@ BEGIN
 			
 			IF @RoleID = 1
 			BEGIN
-				INSERT @CommMatrix
+				INSERT INTO @CommMatrix(roleid, SportType, BetType, Discount, Child_DisplayOrder)
 				SELECT
 					1
 				  ,comm.[SportType]

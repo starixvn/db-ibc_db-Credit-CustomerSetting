@@ -72,8 +72,8 @@ BEGIN
 	SELECT ProductID, SportType, BetType, IsLive , Child_DisplayOrder
 	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@siteid,@currency)
 	WHERE GroupType IN (153)
-		
-	INSERT @PTMatrix
+
+	INSERT INTO @PTMatrix(custID, SportType, BetType, IsLive, SuperPT, MasterPT, AgentPT, AutoSuperPT, IsAutoSuperPT, AutoMasterPT, IsAutoMasterPT, MinPT, MaxPT)
 	SELECT
 		spt.CustID
 		,spt.[SportType]
@@ -97,7 +97,7 @@ BEGIN
 	
 	IF @RoleID IN (3, 2, 1)
 	BEGIN
-		INSERT @PTMatrix
+		INSERT INTO @PTMatrix(custID, SportType, BetType, IsLive, SuperPT, MasterPT, AgentPT, AutoSuperPT, IsAutoSuperPT, AutoMasterPT, IsAutoMasterPT, MinPT, MaxPT)
 		SELECT mpt.CustID
 			, mpt.[SportType]
 			,mpt.[BetType]
@@ -120,7 +120,7 @@ BEGIN
 		
 		IF @RoleID IN (2, 1)
 		BEGIN
-			INSERT @PTMatrix
+			INSERT INTO @PTMatrix(custID, SportType, BetType, IsLive, SuperPT, MasterPT, AgentPT, AutoSuperPT, IsAutoSuperPT, AutoMasterPT, IsAutoMasterPT, MinPT, MaxPT)
 			SELECT apt.CustID
 				, apt.[SportType]
 				,apt.[BetType]
@@ -147,7 +147,7 @@ BEGIN
 							FROM dbo.CustSettingMode3rd WITH(NOLOCK) 
 							WHERE CustID = @CustID AND IsGrouped = 0)
 				BEGIN
-					INSERT @PTMatrix
+					INSERT INTO @PTMatrix(custID, SportType, BetType, IsLive, SuperPT, MasterPT, AgentPT, AutoSuperPT, IsAutoSuperPT, AutoMasterPT, IsAutoMasterPT, MinPT, MaxPT)
 					SELECT mempt.CustID
 						, mempt.[SportType]
 						, mempt.[BetType]
@@ -170,7 +170,7 @@ BEGIN
 				END
 				ELSE
 				BEGIN
-					INSERT @PTMatrix
+					INSERT INTO @PTMatrix(custID, SportType, BetType, IsLive, SuperPT, MasterPT, AgentPT, AutoSuperPT, IsAutoSuperPT, AutoMasterPT, IsAutoMasterPT, MinPT, MaxPT)
 					SELECT @CustID
 						, mempt.[SportType]
 						, mempt.[BetType]
@@ -214,7 +214,7 @@ BEGIN
 		INNER JOIN #SportList t ON pt.SportType = t.SportType
 								AND pt.BetType = t.BetType
 								AND pt.IsLive = t.IsLive
-	ORDER BY t.Child_DisplayOrder
+	ORDER BY t.Child_DisplayOrder ASC
 		, pt.[SportType] ASC
 		, pt.[BetType] ASC
 		, pt.[IsLive] ASC
