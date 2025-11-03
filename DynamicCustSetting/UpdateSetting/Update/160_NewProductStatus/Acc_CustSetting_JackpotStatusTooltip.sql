@@ -12,6 +12,7 @@ AS
 	
 	Revisions:
 		- 20250609@Dave: Initial SP [Redmine: #229765]
+		- 20251103@Dave: Adjust Live Casino PT & Commission [Redmine: #242260]
 		
 	Parameter's Explanation:
 		@SettingStatus: 0 - PRO ; 1 - UAT
@@ -32,7 +33,7 @@ BEGIN
 
 	SELECT r.RealProductId, r.SportType, r.BetType
 	FROM bettype AS sm WITH (NOLOCK)
-		INNER JOIN SportBettypeSettingMatrix AS r WITH (NOLOCK) 
+		INNER JOIN dbo.f_CustSetting_SportBetTypeSettingMatrix(@SettingStatus) AS r 
 			ON sm.typeid = r.BetType
 		INNER JOIN Products AS p WITH (NOLOCK) 
 			ON r.RealProductId = p.ProductID
@@ -44,6 +45,7 @@ BEGIN
 		AND r.isLicensee = 0
 		AND r.isActive = 1
 		AND r.isDeleted = 0
+		AND r.Site IN (@Site, 'All')
 		AND sno.SportType IS NULL
 		AND p.Enabled = 1
 		AND p.Environment <= @SettingStatus;

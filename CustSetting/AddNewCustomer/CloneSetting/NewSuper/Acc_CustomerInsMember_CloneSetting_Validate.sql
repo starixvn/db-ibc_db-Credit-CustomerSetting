@@ -21,6 +21,7 @@ AS
  Revisions:  
 	- 20240704@Helen: Revise code for scaleout dbcust - [Redmine:#206823]
 	- 20241216@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]	
+	- 20251103@Dave: Adjust Live Casino PT & Commission [Redmine: #242260]
  Explanation's Param:  
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -139,6 +140,13 @@ BEGIN
 		RETURN
 	END	
 	
+	IF (@_Site = 'INDO' OR @Site = 'INDO') AND @_Site <> @Site
+	BEGIN
+		SELECT	@ErrMsg='Cannot copy Super from ' + @_Site + ' (' + @source_SiteLabel + ') to ' + @Site + ' (' + @SiteLabel + ')',
+				@ErrCode=100
+		RETURN
+	END	
+
 	IF @SiteLabel  = '789y'	
 	BEGIN
 		IF EXISTS(SELECT 1 FROM Acc_SuperPrefix WITH(NOLOCK)

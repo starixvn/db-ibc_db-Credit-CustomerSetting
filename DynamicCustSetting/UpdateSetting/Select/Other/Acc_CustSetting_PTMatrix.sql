@@ -43,9 +43,9 @@ BEGIN
 		, @SRecommend = SRecommend
 		, @MRecommend = MRecommend
 		, @Recommend = Recommend
-		, @Site	= c.site	
-		, @Currency = c.Currency
-	FROM Custinfo WITH (NOLOCK)
+		, @Site	= site	
+		, @Currency = Currency
+	FROM Customer WITH (NOLOCK)
 	WHERE UserName = @UserName	
 
 	SELECT @SiteID = SiteID  FROM Site WITH (NOLOCK) WHERE Site = @Site
