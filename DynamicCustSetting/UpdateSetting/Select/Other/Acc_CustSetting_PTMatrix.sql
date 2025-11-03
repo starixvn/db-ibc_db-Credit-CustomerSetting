@@ -22,6 +22,7 @@ AS
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 	- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
+	- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 
  Param's Explanation:  
 
@@ -33,14 +34,21 @@ BEGIN
 		, @SRecommend INT
 		, @MRecommend INT
 		, @Recommend INT
+		, @Site	VARCHAR(10)
+		, @Currency SMALLINT
+		, @SiteID INT
 	
 	SELECT @CustID = CustID
 		, @RoleID = RoleID
 		, @SRecommend = SRecommend
 		, @MRecommend = MRecommend
 		, @Recommend = Recommend
+		, @Site	= c.site	
+		, @Currency = c.Currency
 	FROM Custinfo WITH (NOLOCK)
 	WHERE UserName = @UserName	
+
+	SELECT @SiteID = SiteID  FROM Site WITH (NOLOCK) WHERE Site = @Site
 	
 	DECLARE @PTMatrix TABLE (
 		[CustID] [int],
@@ -62,15 +70,8 @@ BEGIN
 
 	INSERT INTO #SportList (ProductID, SportType, BetType, IsLive, Child_DisplayOrder)
 	SELECT ProductID, SportType, BetType, IsLive , Child_DisplayOrder
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),1,@SettingStatus)
-	--WHERE islive <= @islive
-	UNION ALL
-	SELECT ProductID, SportType, BetType, IsLive , Child_DisplayOrder
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),18,@SettingStatus)
-	--WHERE islive <= @islive
-	UNION ALL
-	SELECT ProductID, SportType, BetType, IsLive , Child_DisplayOrder
-	FROM dbo.f_CustSetting_SportBetTypeSettingSelect(NULLIF(@productid,0),28,@SettingStatus)
+	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@siteid,@currency)
+	WHERE GroupType IN (153)
 		
 	INSERT @PTMatrix
 	SELECT
@@ -214,9 +215,9 @@ BEGIN
 								AND pt.BetType = t.BetType
 								AND pt.IsLive = t.IsLive
 	ORDER BY t.Child_DisplayOrder
-		, pt.[SportType]
-		, pt.[BetType]
-		, pt.[IsLive]
+		, pt.[SportType] ASC
+		, pt.[BetType] ASC
+		, pt.[IsLive] ASC
 		, ci.[RoleID] DESC
 
 	DROP TABLE #SportList

@@ -18,6 +18,7 @@ AS
 		- 20201009@Tina: Add new parameter @SettingStatus [Redmine: #143077]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083] 
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT 		
@@ -25,28 +26,10 @@ AS
  */  
 
 BEGIN  
-	CREATE TABLE #SportBettypeFilter (SportType SMALLINT, Bettype SMALLINT, Child_DisplayOrder INT)
-
-	INSERT INTO #SportBettypeFilter (SportType, Bettype, Child_DisplayOrder)
-	SELECT SportType, Bettype, Child_DisplayOrder
-	FROM (
-			SELECT SportType, Bettype, Child_DisplayOrder
-			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,3,@SettingStatus) -- comm
-			UNION
-			SELECT SportType, Bettype, Child_DisplayOrder
-			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,5,@SettingStatus)  
-			UNION
-			SELECT SportType, Bettype, Child_DisplayOrder
-			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,14,@SettingStatus) 
-			UNION
-			SELECT SportType, Bettype, Child_DisplayOrder
-			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,19,@SettingStatus)
-			UNION
-			SELECT SportType, Bettype, Child_DisplayOrder
-			FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,25,@SettingStatus)
-			) tmp
-	
 	SET NOCOUNT ON
+
+	CREATE TABLE #SportBettypeFilter (SportType SMALLINT, Bettype SMALLINT, Child_DisplayOrder INT)
+	
 	DECLARE @CustID INT
 		, @RoleID INT
 		, @SRecommend INT
@@ -54,6 +37,8 @@ BEGIN
 		, @Recommend INT
 		, @ugroup VARCHAR(5)
 		, @Site	VARCHAR(10)
+		, @Currency SMALLINT
+		, @SiteID INT
 
 	SELECT @CustID = CustID
 		, @RoleID = RoleID
@@ -62,9 +47,16 @@ BEGIN
 		, @Recommend = Recommend
 		, @ugroup	= c.ugroup
 		, @Site	= c.site	
+		, @Currency = c.Currency
 	FROM Customer c WITH (NOLOCK)
 	WHERE UserName = @UserName	
-	
+
+	SELECT @SiteID = SiteID  FROM Site WITH (NOLOCK) WHERE Site = @Site
+
+	INSERT INTO #SportBettypeFilter (SportType, Bettype, Child_DisplayOrder)
+	SELECT SportType, Bettype, Child_DisplayOrder
+	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@siteid,@currency)
+	WHERE GroupType IN (150, 156)
 	
 	DECLARE @CommMatrix TABLE (
 		[RoleID] [TINYINT],
@@ -73,7 +65,6 @@ BEGIN
 		[Discount] Decimal(9,8),
 		Child_DisplayOrder INT
 	)	
-	
 	
 	INSERT @CommMatrix
 	SELECT
@@ -225,8 +216,10 @@ BEGIN
 		, Discount
 		, comm.Child_DisplayOrder
 	FROM @CommMatrix comm
-	ORDER BY comm.Child_DisplayOrder , [SportType]
-		, [BetType] , [RoleID] DESC
+	ORDER BY comm.Child_DisplayOrder ASC
+		, [SportType] ASC
+		, [BetType] ASC
+		, [RoleID] DESC
 
 	DROP TABLE #SportBettypeFilter
 END  
