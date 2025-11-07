@@ -57,6 +57,7 @@ BEGIN
 	SELECT SportType, Bettype, Child_DisplayOrder
 	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@siteid,@currency)
 	WHERE GroupType IN (150, 156)
+		AND (@ProductID IS NULL OR ProductID = @ProductID)
 	
 	DECLARE @CommMatrix TABLE (
 		[RoleID] [TINYINT],
