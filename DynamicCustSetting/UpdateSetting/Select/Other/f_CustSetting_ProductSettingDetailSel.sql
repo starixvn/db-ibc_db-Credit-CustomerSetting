@@ -18,14 +18,12 @@ RETURN
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder, SubType
 	FROM dbo.ProductSettingProfile WITH(NOLOCK)
-	WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1
-								WHEN @SettingStatus = 0 THEN 0
-								ELSE NULL END 
-		AND ISNULL(SettingStatus,0) <> 2
+	WHERE SettingStatus <= CASE WHEN @SettingStatus = 1 THEN 1 ELSE 0 END 
+		AND SettingStatus <> 2
 	UNION
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder, SubType
 	FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
 	WHERE @SettingStatus = 3
-		AND ISNULL(SettingStatus,0) <> 2
+		AND SettingStatus <> 2
 GO
