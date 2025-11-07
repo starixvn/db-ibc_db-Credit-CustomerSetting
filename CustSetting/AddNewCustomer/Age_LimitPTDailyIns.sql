@@ -20,6 +20,7 @@ AS
 		- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 		- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
 		- 20250423@Elodie: Offer Cash Member [redmine: #223896] 
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 		
 */
 BEGIN
@@ -62,7 +63,7 @@ BEGIN
 			INSERT INTO @tblPT( SportType , BetType ,MaxCount  )  
 			SELECT b.SportType,b.BetType,MIN(l.MaxCount) AS MaxCount
 			FROM LimitPTDailySetting l WITH(NOLOCK) 
-				INNER JOIN dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) b ON l.ProductID = b.ProductID
+				INNER JOIN dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID, @currency) b ON l.ProductID = b.ProductID
 			WHERE b.SettingType IN (1,18)
 				AND (l.Currency = @Currency OR l.Currency = 0) AND (l.SiteID = @SiteID OR l.SiteID = 0)
 				AND (l.CustID = 0 OR  l.CustID IN (@srecommend,@mrecommend,@recommend))

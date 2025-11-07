@@ -15,6 +15,7 @@ AS
 		Revisions:
 			- 202130620@Luke: Limitation to update PT for new member [Redmine: #188950]
 			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
+			- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 	*/
 BEGIN
 	SET NOCOUNT ON;
@@ -22,6 +23,11 @@ BEGIN
 	EXEC Acc_CustSetting_PT_JsonParse @PTSetting = @UpdatePT OUTPUT
 
 	BEGIN TRY
+		DECLARE @representCustId INT,
+			@currency		INT,
+			@site			NVARCHAR(50),
+			@siteId			INT
+
 		DECLARE @TblCust AS TABLE(
 			custId INT
 		)
@@ -30,6 +36,16 @@ BEGIN
 		SELECT value
 		FROM string_split(@CustIdList, ',')
 		WHERE value <> ''
+
+		SELECT TOP 1 @representCustId = custID
+		FROM @TblCust
+		
+		SELECT @currency	= currency,
+				@site		= site
+		FROM customer c WITH (NOLOCK)
+		WHERE c.custid = @representCustId
+
+		SELECT @SiteID = siteid FROM Site WITH(NOLOCK) WHERE site = @site
 
 		DECLARE @tmpPT AS TABLE(
 			SportType	SMALLINT,
@@ -58,7 +74,7 @@ BEGIN
 					BetType
 				)
 		SELECT DISTINCT t.Sporttype, t.Bettype 
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) p
+		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID, @currency) p
 			INNER JOIN LimitPTDailySetting l WITH (NOLOCK) ON p.productID = l.ProductID
 			INNER JOIN @tmpPT t ON p.SportType = t.SportType AND p.BetType = t.BetType
 		WHERE SettingType IN (1, 18)

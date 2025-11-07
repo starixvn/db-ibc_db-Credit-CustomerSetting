@@ -22,6 +22,7 @@ AS
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 			- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
+			- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 	*/
 BEGIN
 	SET NOCOUNT ON;
@@ -86,7 +87,8 @@ BEGIN
 
 	INSERT INTO #ProductSettingDetail_DailyCheck(SportType,BetType,SettingType,IsLive,ProductID)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID, @currency)
+	WHERE SettingType IN (1,18)
 	
 	CREATE TABLE #TempLimit (ProductID TINYINT,	SportType SMALLINT,	BetType	SMALLINT,CustID INT,Currency INT,SiteID INT,MaxCount TINYINT, SettingStatus TINYINT) 
 

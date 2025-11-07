@@ -9,6 +9,7 @@ AS
 	Revision:
 		- 20221121@Eden: Init function [RedmineID: #180640]
 		- 20240521@Helios: Unify RNG Games - Move from table ProductSettingDetail to ProductSettingProfile [Redmine: #204358] 
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 
 	Param's Explanation:
 	SELECT * FROM dbo.f_CustSetting_ProductSettingDetailSel(3)
@@ -21,7 +22,7 @@ RETURN
 								WHEN @SettingStatus = 0 THEN 0
 								ELSE NULL END 
 		AND SettingStatus <> 2
-	UNION ALL
+	UNION
 	SELECT SettingType,SportType,BetType,IsLive,ProductID,MaxPT,MaxDiscount,IsSync,IsHidden,IsDisabled,SettingLevel,DisplayOrder
 				,SettingStatus,IntervalValue,RealProductId,MaxChoice,ProductSettingID,Parent_ProductSettingID,Child_DisplayOrder, SubType
 	FROM dbo.ProductSettingProfile_UAT WITH(NOLOCK)
