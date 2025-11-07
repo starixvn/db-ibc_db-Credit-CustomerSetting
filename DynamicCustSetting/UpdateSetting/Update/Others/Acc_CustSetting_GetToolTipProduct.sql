@@ -18,9 +18,9 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @siteid INT;
+    DECLARE @siteid INT, @SiteLabel NVARCHAR(50);
 
-    SELECT @siteid = siteid
+    SELECT @siteid = siteid, @SiteLabel = SiteLabel
     FROM Site WITH (NOLOCK)
     WHERE Site = @Site;
 
@@ -38,9 +38,7 @@ BEGIN
     EXEC dbo.Age_GetOfferedProductBySiteCurrency @Site = @Site, @Currency = @currency, @SettingStatus = @SettingStatus;
 
     DELETE #OfferedProducts
-    WHERE 
-        EndOfSupportDate IS NOT NULL AND EndOfSupportDate < CAST(GETDATE() AS DATE)
-        AND IsHidden = 1;
+    WHERE EndOfSupportDate < CAST(GETDATE() AS DATE) OR IsHidden = 1;
 
     -- Return tooltip product list only when RealProduct is offered for site/currency
     SELECT PR.GroupType,
@@ -55,6 +53,7 @@ BEGIN
     INNER JOIN #OfferedProducts OP
         ON MT.RealProductId = OP.ProductID
     WHERE PR.GroupType IN (156)
+        AND @SiteLabel IN ('MBC')
 
     UNION
 
@@ -70,6 +69,7 @@ BEGIN
     INNER JOIN #OfferedProducts OP2
         ON MT.RealProductId = OP2.ProductID
     WHERE PR.GroupType IN (153)
+    AND MT.SportTypeRefPT <> 9911
 
     ORDER BY GroupType ASC, SportType ASC, BetType ASC, RealProductId ASC;
 
