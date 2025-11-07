@@ -57,13 +57,12 @@ BEGIN
 
 	INSERT INTO #tmpRealSport(SportType,BetType,ProductID)
 	SELECT mt.SportType,mt.bettype,d.ProductId 
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) d 
+	FROM dbo.f_CustSetting_ProductProfileSel(22,@SettingStatus,@SiteID,@Currency) d 
 		INNER JOIN dbo.f_CustSetting_SportBetTypeSettingMatrix(@SettingStatus) mt
 			ON d.SportType = mt.SporttypeRefWinlossLimit
 			AND d.BetType = mt.BettypeRefWinlossLimit
 			AND mt.isLicensee = 0 AND mt.Site IN ('ALL',@site) AND mt.isDeleted = 0
-	WHERE SettingType = 22
-		AND d.SportType = @SportType
+	WHERE d.SportType = @SportType
 		AND d.BetType = @BetType
 
 	IF NOT EXISTS( SELECT 1 FROM #tmpRealSport)
