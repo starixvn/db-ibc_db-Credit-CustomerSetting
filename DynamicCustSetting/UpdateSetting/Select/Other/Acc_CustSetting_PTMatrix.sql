@@ -72,6 +72,7 @@ BEGIN
 	SELECT ProductID, SportType, BetType, IsLive , Child_DisplayOrder
 	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@siteid,@currency)
 	WHERE GroupType IN (153)
+		AND (@ProductID IS NULL OR ProductID = @ProductID)
 
 	INSERT INTO @PTMatrix(custID, SportType, BetType, IsLive, SuperPT, MasterPT, AgentPT, AutoSuperPT, IsAutoSuperPT, AutoMasterPT, IsAutoMasterPT, MinPT, MaxPT)
 	SELECT
