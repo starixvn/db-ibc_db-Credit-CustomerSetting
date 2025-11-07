@@ -30,7 +30,7 @@ BEGIN
 	IF @Mode = 1 
 	BEGIN
 		SELECT TOP 1 @SettingType = SettingType 
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) ps
+		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,0,0) ps
 		WHERE ProductId = ISNULL(@ProductID, ProductId)
 			AND sporttype = ISNULL(@Sporttype, Sporttype)
 			AND SettingType IN (1,18,28)
@@ -38,7 +38,7 @@ BEGIN
 	ELSE IF @Mode = 3
 	BEGIN
 		SELECT TOP 1 @SettingType = SettingType 
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) ps
+		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,0,0) ps
 		WHERE ProductId = ISNULL(@ProductID, ProductId)
 			AND sporttype = ISNULL(@Sporttype, Sporttype)
 			AND SettingType IN (3,5,14,19,25)
