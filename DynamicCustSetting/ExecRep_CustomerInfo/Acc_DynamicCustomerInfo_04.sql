@@ -863,7 +863,7 @@ BEGIN
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.AgentStatus > 0 THEN 1 ELSE 0 END AS closed
 								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
-										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+										CROSS APPLY (SELECT SuperStatus,MasterStatus,AgentStatus,MemberStatus FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
 								  WHERE CustID = ci.custid
 								  ) AS cps
 				WHERE ci.MRecommend = @CustID AND cs.CustID <> @CustID
