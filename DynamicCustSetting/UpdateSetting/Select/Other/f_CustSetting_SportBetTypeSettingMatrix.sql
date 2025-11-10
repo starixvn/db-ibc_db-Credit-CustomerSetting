@@ -1,11 +1,11 @@
-﻿/*<info serverAlias="DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB" selecters="wsv_xnap" viewers="" isFunction="1"></info>*/
+﻿/*<info serverAlias="DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB,DBTP-bodb02" selecters="wsv_xnap,wsv_nap,wsv_alp,wsv_alpv" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION dbo.f_CustSetting_SportBetTypeSettingMatrix ( @SettingStatus TINYINT )
 RETURNS TABLE AS
 /*      
 	Created by: Helios      
 	Date: 20240314      
 	Task: Get data SportBetTypeSettingMatrix    
-	DB: DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB    
+	DB: DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB,DBTP-bodb02
 	Original:       
 		         
 	Revisions:      
