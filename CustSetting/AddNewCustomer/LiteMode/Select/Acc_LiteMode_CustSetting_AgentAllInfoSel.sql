@@ -21,9 +21,11 @@ AS
 		- 20240520@Eden: Unify RNG Games [redmine: #204358] 
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
 		- 20250512@Johnson: Add Potential Win Limit for create member [redmine: #226060]
-		- 20241107@Elodie: Offer Cash service [redmine: #224778]  
+		- 20241107@Elodie: Offer Cash service [redmine: #224778]  		
 		- 20250626@Dave: Add AccumCredit of AllCashMember to AgentUsedCredit [Redmine: #231524]
 		- 20250729@Johnson:add Max Payout Per Match for E-Sports & Muay Thai [redmine: #230652]
+		- 20241107@Elodie: Fix bug WHERE CustID = CustID
+
 	Parameter's explaination:
 		- @GroupID: 1: SB, 2: RnG Games, 3: LCS
 		- @GroupType: group setting Type
@@ -87,7 +89,7 @@ BEGIN
 			@Asuspended = CASE WHEN SuspendInfo > 0 THEN 1 ELSE 0 END, 				 
 			@UplineClosed = CASE WHEN CloseInfo > 0 THEN 1 ELSE 0 END	
 		FROM dbo.CustProductStatus  WITH(NOLOCK)
-		WHERE CustID = custid
+		WHERE CustID = @CustID
 					
 		----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		--SELECT @Credit_Mem_Max = CASE WHEN @MaxCredit_Mem =0  THEN @Credit_Ag_Bal 
@@ -148,7 +150,7 @@ BEGIN
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 			AND ft.SportType NOT IN (161)
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.Child_DisplayOrder ASC
 	END
 
 	--comm SB
@@ -161,7 +163,7 @@ BEGIN
 				AND t.bettype = s.bettype
 		WHERE t.CustID = @CustID
 			AND NOT (t.SportType = 1 AND t.BetType IN (3,7,8)) -- Load default Group A 
-		ORDER BY s.SubGroupOrder, s.Child_DisplayOrder									
+		ORDER BY s.SubGroupOrder ASC, s.Child_DisplayOrder ASC									
 	END
 	
 	--Bet setting SB
@@ -177,7 +179,7 @@ BEGIN
 												AND cs.Bettype = s.Bettype
 		WHERE cs.CustID IN (@custid,@srecommend,@mrecommend)
 		GROUP BY cs.sporttype, cs.bettype,s.SubGroupOrder,s.Child_DisplayOrder
-		ORDER BY s.SubGroupOrder,s.Child_DisplayOrder
+		ORDER BY s.SubGroupOrder ASC,s.Child_DisplayOrder ASC
 	END
 	
 	--Parlay MaxPayoutPerMatch
@@ -234,7 +236,7 @@ BEGIN
 			INNER JOIN dbo.CustMaxPayoutSetting_Agent mbl WITH (NOLOCK) ON ft.SportType = mbl.sporttype AND ft.BetType = mbl.bettype
 			LEFT JOIN MaxPayoutGlobalSetting mps WITH(NOLOCK) ON ft.BetType = mps.BetType  AND ft.SportType = mps.SportType AND mps.Currency = @currency
 		WHERE bl.CustID = @CustID AND sbl.CustID = @srecommend AND mbl.CustID = @mrecommend		
-		ORDER BY ft.SubGroupOrder,ft.Child_DisplayOrder
+		ORDER BY ft.SubGroupOrder ASC,ft.Child_DisplayOrder ASC
 	END
 	
 	--SB PT
@@ -254,7 +256,7 @@ BEGIN
 																AND scs.BetType = cs.bettype  
 																AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid
-		ORDER BY s.SubGroupOrder, s.Child_DisplayOrder
+		ORDER BY s.SubGroupOrder ASC, s.Child_DisplayOrder ASC
 	END
 
 	--Potential Win Limit
@@ -284,7 +286,7 @@ BEGIN
 												AND cs.Bettype = s.Bettype
 		WHERE cs.CustID IN (@custid,@srecommend,@mrecommend)
 		GROUP BY cs.sporttype, cs.bettype, s.SubType,SubGroupOrder, s.Child_DisplayOrder
-		ORDER BY s.SubGroupOrder,s.Child_DisplayOrder
+		ORDER BY s.SubGroupOrder ASC,s.Child_DisplayOrder ASC
 	END
 	
 	--PT
@@ -305,7 +307,7 @@ BEGIN
 																AND scs.BetType = cs.bettype  
 																AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid	
-		ORDER BY SubGroupOrder, Child_DisplayOrder
+		ORDER BY SubGroupOrder ASC, Child_DisplayOrder ASC
 	END
 	
 	--END RNG Games	
@@ -321,7 +323,7 @@ BEGIN
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
 		WHERE cs.custid = @custid	
-		ORDER BY SubGroupOrder,s.Child_DisplayOrder	
+		ORDER BY SubGroupOrder ASC,s.Child_DisplayOrder	ASC
 	END
 	
 	--PT
@@ -342,7 +344,7 @@ BEGIN
 																AND scs.BetType = cs.bettype  
 																AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid	
-		ORDER BY SubGroupOrder,Child_DisplayOrder
+		ORDER BY SubGroupOrder ASC,Child_DisplayOrder ASC
 	END
 	--END Live & RnG Casino
 	----------------------------------------------------------------------------------
@@ -357,7 +359,7 @@ BEGIN
 		FROM dbo.CustDiscount3rd_Agent cs WITH (NOLOCK)
 			INNER JOIN #SportBettypeFilter s ON cs.SportType = s.sporttype AND cs.BetType = s.bettype  
 		WHERE cs.custid = @custid	
-		ORDER BY SubGroupOrder,s.Child_DisplayOrder	
+		ORDER BY SubGroupOrder ASC,s.Child_DisplayOrder ASC
 	END
 	
 
@@ -379,7 +381,7 @@ BEGIN
 																AND scs.BetType = cs.bettype  
 																AND scs.IsLive = cs.islive	
 		WHERE cs.CustID = @custid	
-		ORDER BY SubGroupOrder,Child_DisplayOrder
+		ORDER BY SubGroupOrder ASC,Child_DisplayOrder ASC
 	END
 	--END Others Games
 	----------------------------------------------------------------------------------
@@ -402,7 +404,7 @@ BEGIN
 					AND	sbf.SportType = wl.SportType
 				INNER JOIN CustInfo ci WITH (NOLOCK) ON wl.custid = ci.custid
 			WHERE wl.CustId = @CustID 
-			ORDER BY sbf.Child_DisplayOrder
+			ORDER BY sbf.Child_DisplayOrder ASC
 	END
 
 	--Stake Level
@@ -416,7 +418,7 @@ BEGIN
 		, sbtf.Child_DisplayOrder
 		, sbtf.SettingType
 		, sbtf.MaxChoice
-		, RN = ROW_NUMBER () OVER (PARTITION BY csla.SportType, csla.BetType ORDER BY sl.MaxStake,sl.MinStake,sl.GameGroupID)
+		, RN = ROW_NUMBER () OVER (PARTITION BY csla.SportType, csla.BetType ORDER BY sl.MaxStake ASC,sl.MinStake ASC,sl.GameGroupID ASC)
 		FROM dbo.CustStakeLevel_Agent AS csla WITH(NOLOCK)
 			INNER JOIN	#SportBettypeFilter AS sbtf
 				ON	sbtf.SportType = csla.SportType
@@ -433,7 +435,7 @@ BEGIN
 			,ProductID
 			,CAST(CASE WHEN SettingType = 17 THEN 1 ELSE 0 END AS BIT) IsMultipleChoice
 		FROM Temp
-		ORDER BY Child_DisplayOrder, SportType, BetType, MaxStake
+		ORDER BY Child_DisplayOrder ASC, SportType ASC, BetType ASC, MaxStake ASC
 	END
 
 	--Product Status
@@ -453,7 +455,7 @@ BEGIN
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
 			AND ft.SportType NOT IN(161)
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.Child_DisplayOrder ASC
 	END
 
 	DROP TABLE #SportBettypeFilter
