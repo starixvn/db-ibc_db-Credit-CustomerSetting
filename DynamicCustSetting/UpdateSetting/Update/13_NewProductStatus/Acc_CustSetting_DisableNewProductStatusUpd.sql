@@ -29,6 +29,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20250220@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 	Param's Explanation:
 	- @IsDisabled
 		<ROOT>
@@ -54,6 +55,9 @@ BEGIN
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
 		, @duration		INT
+		, @Currency		INT
+		, @site			NVARCHAR(50)
+		, @siteId		INT
 		
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
@@ -113,8 +117,12 @@ BEGIN
 		, @MasterID = mrecommend
 		, @SuperID	= srecommend
 		, @RoleID	= RoleID
-	FROM dbo.custInfo WITH (NOLOCK)
+		, @Currency = currency
+		, @site		= site
+	FROM dbo.Customer WITH (NOLOCK)
 	WHERE custid = @CustID
+
+	SELECT @SiteID = siteid FROM Site WITH(NOLOCK) WHERE site = @site
 	
 	--Check belonging
 	EXEC dbo.Age_CustomerSelCheckBelonging 
@@ -142,7 +150,7 @@ BEGIN
 
 	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,RealProductID)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,RealProductID 
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID, @currency)
 
 	--Parse XML
 	DECLARE @iDoc INT

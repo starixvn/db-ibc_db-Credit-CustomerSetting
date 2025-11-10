@@ -25,6 +25,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20241216@Johnson: Change to use ProductSettingProfile [RedmineID: #212684]	
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]  
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -91,7 +92,12 @@ BEGIN
 			, ParentSporttype   SMALLINT
 			, ParentBetType		SMALLINT
 	)
-	DECLARE @xml XML, @iDoc INT
+
+	DECLARE @xml		XML
+		, @iDoc			INT
+		, @Currency		INT
+		, @site			NVARCHAR(50)
+		, @siteId		INT
 
 	SELECT @ErrCode = 0
 		, @ErrMsg	= ''
@@ -154,6 +160,14 @@ BEGIN
 	IF @RoleID = 2
 		SET @custID = @AgentID
 
+	--Get line information
+	SELECT @Currency = currency
+		, @site		= site
+	FROM dbo.Customer WITH (NOLOCK)
+	WHERE custid = @CustID
+
+	SELECT @SiteID = siteid FROM Site WITH(NOLOCK) WHERE site = @site
+
 	CREATE TABLE #ProductSettingDetail_Check(
 		[SettingType] [smallint],
 		[SportType] [smallint],
@@ -166,7 +180,7 @@ BEGIN
 
 	INSERT INTO #ProductSettingDetail_Check(SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID)
 	SELECT SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID, @currency)
 
 	--Exclude Update for Sport is having UM
 	DELETE t
