@@ -14,13 +14,14 @@ RETURNS BIT
   
 	Revisions:
 		- 20230731@Eden: Simplify Live Casino Customer Setting - [Redmine: #189389] 
+		- 20251110@Dave: Live Casino - Adjust-pt-comm-for-live-casino [RedmineID: #242260]
 
 	Examples:
 	SELECT dbo.f_CustSetting_GetSportOfferStatusBySiteCurrency(1,20,242,3201,3)
 	SELECT dbo.f_CustSetting_GetSportOfferStatusBySiteCurrency(1,20,211,2401,3)
 */
 BEGIN 
-	DECLARE @IsHidden BIT
+	DECLARE @IsHidden BIT, @SettingType TINYINT = NULL
 
 	IF EXISTS(
 		SELECT 1
@@ -47,7 +48,7 @@ BEGIN
 
 	IF EXISTS(
 		SELECT 1 
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) t
+		FROM dbo.f_CustSetting_ProductProfileSel(@SettingType,@SettingStatus,@SiteID,@Currency) t
 		WHERE t.SettingType IN(4,11,13,21)
 			AND t.SportType = @Sporttype 
 			AND t.BetType = @Bettype
