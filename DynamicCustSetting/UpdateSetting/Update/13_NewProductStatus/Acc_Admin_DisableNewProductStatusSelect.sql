@@ -23,6 +23,7 @@ AS
 		- 20230307@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
 		- 20250410@Johnson: change datatype for ExchangeID[redmine: #223630]
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 	Param's Explanation: 
 		- @SettingStatus: 0: Pro, 1: UAT
 
@@ -36,7 +37,9 @@ BEGIN
 			@SuperID				INT,
 			@MasterID				INT,
 			@AgentID				INT,
-			@UplineID				INT
+			@UplineID				INT,
+			@site					NVARCHAR(50),
+			@siteId					INT
 
 	CREATE TABLE #DownlineEnableStatus (	Sporttype SMALLINT, Bettype SMALLINT, 
 											TotalEnabledMasters INT,
@@ -54,22 +57,17 @@ BEGIN
 
 	CREATE TABLE #SportBettypeFilter (sporttype SMALLINT, bettype SMALLINT, ParentSportType SMALLINT, ParentBetType SMALLINT, Child_DisplayOrder INT)
 
-	IF @SettingType IS NULL
-	BEGIN
-		INSERT INTO #SportBettypeFilter(SportType,Bettype)
-		SELECT SportType,Bettype
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,13,@SettingStatus)
+	-- Select customer's information
+	SELECT	@Currency   = c.currency
+		,	@RoleID     = c.roleid
+		,	@SuperID	= c.srecommend
+		,	@MasterID	= c.mrecommend
+		,	@AgentID	= c.recommend
+		,	@site		= c.site
+	FROM	dbo.Customer AS c WITH(NOLOCK)
+	WHERE	c.custid = @CustID
 
-		INSERT INTO #SportBettypeFilter (SportType,Bettype)
-		SELECT SportType,Bettype
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
-	END
-	ELSE 
-	BEGIN
-		INSERT INTO #SportBettypeFilter (SportType,Bettype)
-		SELECT SportType,Bettype
-		FROM dbo.f_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
-	END
+	SELECT @SiteID = siteid FROM Site WITH(NOLOCK) WHERE site = @site
 
 	CREATE TABLE #ProductSettingDetail(
 		[SettingType] [smallint],
@@ -79,13 +77,31 @@ BEGIN
 		[Parent_ProductSettingID] [int],
 		[ProductSettingID] [int],
 		Child_DisplayOrder INT,
+		ProductID INT
 	PRIMARY KEY([SettingType] ASC,[SportType] ASC,[BetType] ASC,[IsLive] ASC)
 	)
 
-	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder)
-	SELECT t.SportType,t.BetType,t.SettingType,t.IsLive,t.Parent_ProductSettingID,t.ProductSettingID,t.Child_DisplayOrder
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus) t
+	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,Parent_ProductSettingID,ProductSettingID,Child_DisplayOrder,ProductID)
+	SELECT t.SportType,t.BetType,t.SettingType,t.IsLive,t.Parent_ProductSettingID,t.ProductSettingID,t.Child_DisplayOrder,t.ProductID
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID, @currency) t
 	WHERE t.SettingType IN(4,11,13,21)
+
+	IF @SettingType IS NULL
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype)
+		SELECT SportType,Bettype
+		FROM #ProductSettingDetail 
+		WHERE SettingType IN (4,13)
+			AND productID = @ProductID
+	END
+	ELSE 
+	BEGIN
+		INSERT INTO #SportBettypeFilter(SportType,Bettype)
+		SELECT SportType,Bettype
+		FROM #ProductSettingDetail 
+		WHERE SettingType = @SettingType
+			AND productID = @ProductID
+	END
 
 	UPDATE t
 	SET t.ParentSportType = par.SportType
@@ -98,15 +114,6 @@ BEGIN
 			AND d.SettingType = @SettingType
 		LEFT JOIN #ProductSettingDetail par WITH(NOLOCK) 
 				ON d.Parent_ProductSettingID = par.ProductSettingID
-	
-	-- Select customer's information
-	SELECT	@Currency   = c.currency
-		,	@RoleID     = c.roleid
-		,	@SuperID	= c.srecommend
-		,	@MasterID	= c.mrecommend
-		,	@AgentID	= c.recommend
-	FROM	dbo.Customer AS c WITH(NOLOCK)
-	WHERE	c.custid = @CustID
 
 	IF @RoleID = 4
 	BEGIN
@@ -167,7 +174,7 @@ BEGIN
 			LEFT JOIN #DownlineEnableStatus dse ON dse.Bettype = ft.BetType AND dse.Sporttype = ft.SportType		
 			LEFT JOIN #DownlineDisableStatus dsd ON dsd.Bettype = ft.BetType AND dsd.Sporttype = ft.SportType
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.Child_DisplayOrder ASC
 	END	
 	ELSE IF @RoleID = 3
 	BEGIN
@@ -227,7 +234,7 @@ BEGIN
 			LEFT JOIN #DownlineEnableStatus dse ON dse.Bettype = ft.BetType AND dse.Sporttype = ft.SportType		
 			LEFT JOIN #DownlineDisableStatus dsd ON dsd.Bettype = ft.BetType AND dsd.Sporttype = ft.SportType		
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.Child_DisplayOrder ASC
 	END
 	ELSE IF @RoleID = 2
 	BEGIN
@@ -285,7 +292,7 @@ BEGIN
 			LEFT JOIN #DownlineEnableStatus dse ON dse.Bettype = ft.BetType AND dse.Sporttype = ft.SportType		
 			LEFT JOIN #DownlineDisableStatus dsd ON dsd.Bettype = ft.BetType AND dsd.Sporttype = ft.SportType
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.Child_DisplayOrder ASC
 	END	
 	ELSE IF @RoleID = 1
 	BEGIN
@@ -318,7 +325,7 @@ BEGIN
 			INNER JOIN dbo.CustProductStatus stt WITH (NOLOCK)	ON stt.CustID = @CustID
 			INNER JOIN  dbo.CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @UplineID
 		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsHidden, PSP.bitmapOrder)) = 0
-		ORDER BY ft.Child_DisplayOrder
+		ORDER BY ft.Child_DisplayOrder ASC
 	END
 
 	DROP TABLE #SportBettypeFilter

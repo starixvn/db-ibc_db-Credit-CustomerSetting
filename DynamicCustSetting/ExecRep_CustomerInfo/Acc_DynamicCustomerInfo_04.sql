@@ -32,6 +32,7 @@ AS
 		- 20250224@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for CustLoginInfo_Member [Redmine: #215627]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969]
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -53,9 +54,17 @@ BEGIN
 	IF dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
 		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT
 	BEGIN		
+		DECLARE @Currency INT, @SiteID INT
+
+		SELECT	@SiteID = s.siteid,
+				@Currency = c.currency
+		FROM customer c WITH (NOLOCK)
+			INNER JOIN Site s WITH (NOLOCK) ON c.site = s.site	
+		WHERE c.custid = @custid
+
 		INSERT INTO #ProductSettingDetail_tmp04(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,RealProductID)
 		SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,RealProductID 
-		FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+		FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID,@Currency)
 			
 		DECLARE @iDoc INT, 
 				@xmlStrDisabledMasters XML, 

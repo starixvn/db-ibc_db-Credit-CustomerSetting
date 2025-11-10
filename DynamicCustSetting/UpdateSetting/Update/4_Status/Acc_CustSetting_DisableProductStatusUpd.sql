@@ -23,6 +23,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20241202@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 		- 20241107@Helios: Offer Direct Member for Super/Master [redmine: #211969] 
+		- 20251027@Eden: Adjust Live Casino PT & Commission [Redmine: #242260]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -51,6 +52,9 @@ BEGIN
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
 		, @duration		INT
+		, @Currency		INT
+		, @site			NVARCHAR(50)
+		, @siteId		INT
 		
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
@@ -110,8 +114,12 @@ BEGIN
 		, @MasterID = mrecommend
 		, @SuperID	= srecommend
 		, @RoleID	= RoleID
-	FROM dbo.custInfo WITH (NOLOCK)
+		, @Currency = currency
+		, @site		= site
+	FROM dbo.Customer WITH (NOLOCK)
 	WHERE custid = @CustID
+
+	SELECT @SiteID = siteid FROM Site WITH(NOLOCK) WHERE site = @site
 	
 	--Check belonging
 	EXEC dbo.Age_CustomerSelCheckBelonging 
@@ -155,7 +163,7 @@ BEGIN
 
 	INSERT INTO #ProductSettingDetail(SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,RealProductId)
 	SELECT SportType,BetType,SettingType,IsLive,ProductID,SettingLevel,RealProductId
-	FROM dbo.f_CustSetting_ProductSettingDetailSel(@SettingStatus)
+	FROM dbo.f_CustSetting_ProductProfileSel(NULL,@SettingStatus,@SiteID, @currency)
 
 	DELETE t
 	FROM #NewDisableStatTbl t
