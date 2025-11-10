@@ -143,8 +143,8 @@ BEGIN
 			--Parse XML				
 			EXEC sp_xml_preparedocument @iDoc OUTPUT, @IsDisabled_XML
 			
-			INSERT INTO #DisableStatTbl
-			SELECT *
+			INSERT INTO #DisableStatTbl(SportType, BetType, IsDisabled, IsDisabledDownline)
+			SELECT SportType, BetType, IsDisabled, IsDisabledDownline
 			FROM OPENXML (@iDoc, '/ROOT/ProductStatus',1) 
 			WITH(SportType smallint, BetType smallint, IsDisabled BIT,IsDisabledDownline BIT
 				)	
@@ -570,8 +570,8 @@ BEGIN
 			--Parse XML		
 			EXEC sp_xml_preparedocument @iDoc OUTPUT, @IsDisabled_XML
 			
-			INSERT INTO #GameDisableStatTbl
-			SELECT *
+			INSERT INTO #GameDisableStatTbl(SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers)
+			SELECT SportType, BetType, IsDisabled, UpdateAllMasters, UpdateAllAgents, UpdateAllMembers,DisableAllMasters,DisableAllAgents,DisableAllMembers
 			FROM OPENXML (@iDoc, '/ROOT/ProductStatus',1) 
 			WITH(SportType smallint,BetType smallint,IsDisabled BIT,UpdateAllMasters BIT,UpdateAllAgents BIT,UpdateAllMembers BIT,DisableAllMasters BIT,DisableAllAgents BIT,DisableAllMembers BIT)	
 			
@@ -828,7 +828,7 @@ BEGIN
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.CustID = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus > 0 THEN 1 ELSE 0 END AS closed
 								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
-										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+										CROSS APPLY (SELECT SuperStatus,MasterStatus,AgentStatus,MemberStatus FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
 								  WHERE CustID = ci.custid
 								  ) AS cps
 				WHERE ci.SRecommend = @CustID AND cs.CustID <> @CustID 
@@ -843,7 +843,7 @@ BEGIN
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MasterStatus + cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
 								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
-										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+										CROSS APPLY (SELECT SuperStatus,MasterStatus,AgentStatus,MemberStatus FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
 								  WHERE CustID = ci.custid
 								  ) AS cps
 				WHERE ci.SRecommend = @CustID AND cs.CustID <> @CustID
@@ -878,7 +878,7 @@ BEGIN
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.AgentStatus + cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
 								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
-										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+										CROSS APPLY (SELECT SuperStatus,MasterStatus,AgentStatus,MemberStatus FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
 								  WHERE CustID = ci.custid
 								  ) AS cps
 				WHERE ci.MRecommend = @CustID AND cs.CustID <> @CustID
@@ -899,7 +899,7 @@ BEGIN
 					INNER JOIN custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 					CROSS APPLY  (SELECT CASE WHEN cl.MemberStatus > 0 THEN 1 ELSE 0 END AS closed
 								  FROM dbo.CustProductStatus cp WITH(NOLOCK)
-										CROSS APPLY (SELECT * FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
+										CROSS APPLY (SELECT SuperStatus,MasterStatus,AgentStatus,MemberStatus FROM f_GetInfoStatus(cp.CloseInfo)) AS cl
 								  WHERE CustID = ci.custid
 								  ) AS cps
 				WHERE ci.Recommend = @CustID
