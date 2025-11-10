@@ -56,7 +56,7 @@ BEGIN
 	INSERT INTO #SportBettypeFilter (SportType, Bettype, Child_DisplayOrder)
 	SELECT SportType, Bettype, Child_DisplayOrder
 	FROM dbo.f_CustSetting_ProductProfileSel (NULL,@SettingStatus,@siteid,@currency)
-	WHERE GroupType IN (150, 156)
+	WHERE SettingType IN (3,5,14,19,25)
 		AND (ISNULL(@ProductID,0) = 0 OR ProductID = @ProductID)
 	
 	DECLARE @CommMatrix TABLE (
