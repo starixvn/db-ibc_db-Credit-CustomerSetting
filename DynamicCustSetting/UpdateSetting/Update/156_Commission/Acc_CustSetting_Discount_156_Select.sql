@@ -15,7 +15,7 @@ AS
 	Revision:
 		- 20240216@Helios: Unify Live RNG Casino [Redmine: #198960]
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
-
+		- 20251010@Helios: Upgrade ExchangeID DataType [Redmine:#242140]
 	Param's Explanation:
 		- @SettingStatus: 0: Pro, 1: UAT
 	
@@ -25,7 +25,7 @@ BEGIN
 			@SuperID		INT,
 			@MasterID		INT,
 			@AgentID		INT,
-			@Currency		TINYINT,
+			@Currency		SMALLINT,
 			@SiteID		INT
 
 	CREATE TABLE #ProductSettingDetail_Sel(
@@ -76,7 +76,7 @@ BEGIN
 		FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 		WHERE dc.custid = @CustID
-		ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+		ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC 
 	END
 	ELSE IF @RoleID = 3
 	BEGIN
@@ -89,7 +89,7 @@ BEGIN
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype    
 			INNER JOIN dbo.CustDiscount3rd_Agent sdc WITH (NOLOCK) ON pdt.SportType = sdc.sporttype AND pdt.BetType = sdc.bettype 
 		WHERE dc.custid = @CustID AND sdc.custid = @SuperID
-		ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+		ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC 
 	END
 	ELSE IF @RoleID = 2
 	BEGIN
@@ -102,7 +102,7 @@ BEGIN
 			INNER JOIN dbo.CustDiscount3rd_Agent dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			INNER JOIN dbo.CustDiscount3rd_Agent mdc WITH (NOLOCK) ON pdt.SportType = mdc.sporttype AND pdt.BetType = mdc.bettype 
 		WHERE dc.custid = @CustID AND mdc.custid = @MasterID 
-		ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+		ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC 
 	END
 	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member
 	BEGIN
@@ -117,7 +117,7 @@ BEGIN
 				FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			WHERE dc.custid = @CustID
-			ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+			ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC
 		END
 		ELSE IF @UplineRoleID = 3
 		BEGIN
@@ -129,7 +129,7 @@ BEGIN
 			FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			WHERE dc.custid = @CustID
-			ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+			ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC
 		END
 		ELSE IF @UplineRoleID = 2
 		BEGIN
@@ -142,7 +142,7 @@ BEGIN
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype   
 				INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON pdt.SportType = adc.sporttype AND pdt.BetType = adc.bettype 
 			WHERE dc.custid = @CustID AND adc.custid = @AgentID  
-			ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+			ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC
 		END
 	END
 	ELSE IF @RoleID = 1 AND @AgentID = -4 --Super Direct Member
@@ -156,7 +156,7 @@ BEGIN
 			INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype   
 			INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON pdt.SportType = adc.sporttype AND pdt.BetType = adc.bettype 
 		WHERE dc.custid = @CustID AND adc.custid = @SuperID  
-		ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+	ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC
 	END
 	ELSE IF @RoleID = 1 AND @AgentID = -3 --Master Direct Member
 	BEGIN
@@ -170,7 +170,7 @@ BEGIN
 				FROM #ProductSettingDetail_Sel pdt WITH (NOLOCK)  
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype 
 			WHERE dc.custid = @CustID
-			ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+			ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC
 		END
 		ELSE IF @UplineRoleID = 3
 		BEGIN
@@ -183,7 +183,7 @@ BEGIN
 				INNER JOIN dbo.CustDiscount3rd_Member dc WITH (NOLOCK) ON pdt.SportType = dc.sporttype AND pdt.BetType = dc.bettype   
 				INNER JOIN dbo.CustDiscount3rd_Agent adc WITH (NOLOCK) ON pdt.SportType = adc.sporttype AND pdt.BetType = adc.bettype 
 			WHERE dc.custid = @CustID AND adc.custid = @MasterID  
-			ORDER BY pdt.Child_DisplayOrder,pdt.SportType, pdt.BetType, pdt.IsLive 
+			ORDER BY pdt.Child_DisplayOrder ASC, pdt.SportType ASC, pdt.BetType ASC, pdt.IsLive ASC
 		END
 	END
 	DROP TABLE #ProductSettingDetail_Sel
