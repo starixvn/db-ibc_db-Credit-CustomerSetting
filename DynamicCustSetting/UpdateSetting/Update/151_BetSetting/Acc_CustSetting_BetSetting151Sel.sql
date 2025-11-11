@@ -15,6 +15,7 @@ AS
 		- 20231019@Helios: Customer Setting - Migrate Sportsbook to DCS [RedmineID: #193083]
 		- 20240610@Johnson: Scale out DBCUST [redmine: #199915]
 		- 20241107@Eden: Offer Direct Member for Super/Master [redmine: #211969] 
+		- 20251010@Helios: Upgrade ExchangeID DataType [Redmine:#242140]
 	Param's Explanation:
 		- @GroupType:	151 - Discount
 		- @SettingStatus: 0: Pro, 1: UAT
@@ -29,12 +30,11 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE	@Currency		TINYINT,
-			@RoleID		TINYINT,
+	DECLARE	@RoleID		TINYINT,
 			@SuperID		INT,
 			@MasterID		INT,
 			@AgentID		INT,
-			@CurrencyID		INT,
+			@CurrencyID		SMALLINT,
 			@SiteID		INT
 
 	CREATE TABLE #ProductSettingProfile(
@@ -80,7 +80,7 @@ BEGIN
 			FROM #ProductSettingProfile psp
 				INNER JOIN dbo.BetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
 			WHERE bl.CustID = @CustID
-			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+			ORDER BY psp.Child_DisplayOrder ASC, psp.SportType ASC, psp.BetType ASC
 		END
 	ELSE IF @RoleID = 3
 		BEGIN
@@ -100,7 +100,7 @@ BEGIN
 				INNER JOIN dbo.BetSetting_Agent bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
 				INNER JOIN dbo.BetSetting_Agent sbl WITH (NOLOCK) ON psp.SportType = sbl.sporttype AND psp.BetType = sbl.bettype
 			WHERE bl.CustID = @CustID AND sbl.CustID = @SuperID
-			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+			ORDER BY psp.Child_DisplayOrder ASC, psp.SportType ASC, psp.BetType ASC
 		END
 	ELSE IF @RoleID = 2
 		SELECT
@@ -173,7 +173,7 @@ BEGIN
 			INNER JOIN dbo.BetSetting_Agent Sbl WITH (NOLOCK) ON psp.SportType = Sbl.sporttype AND psp.BetType = Sbl.bettype
 			INNER JOIN dbo.BetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
 		WHERE bl.CustID = @CustID AND Sbl.CustID = @SuperID AND Mbl.CustID = @MasterID
-		ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+		ORDER BY psp.Child_DisplayOrder ASC, psp.SportType ASC, psp.BetType ASC
 	ELSE IF @RoleID = 1 AND @AgentID NOT IN (-4,-3) --Normal member
 		SELECT	
 				    psp.SportType
@@ -266,7 +266,7 @@ BEGIN
 			INNER JOIN dbo.BetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
 			INNER JOIN dbo.BetSetting_Agent Abl WITH (NOLOCK) ON psp.SportType = Abl.sporttype AND psp.BetType = Abl.bettype
 		WHERE cbsm.CustID = @CustID AND Sbl.CustID = @SuperID AND Mbl.CustID = @MasterID AND Abl.CustID = @AgentID
-		ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+		ORDER BY psp.Child_DisplayOrder ASC, psp.SportType ASC, psp.BetType ASC
 	ELSE IF @RoleID = 1 AND @AgentID = -4 --Super Direct Member
 		BEGIN
 			SELECT
@@ -285,7 +285,7 @@ BEGIN
 				INNER JOIN dbo.BetSetting_Member bl WITH (NOLOCK) ON psp.SportType = bl.sporttype AND psp.BetType = bl.bettype
 				INNER JOIN dbo.BetSetting_Agent sbl WITH (NOLOCK) ON psp.SportType = sbl.sporttype AND psp.BetType = sbl.bettype
 			WHERE bl.CustID = @CustID AND sbl.CustID = @SuperID
-			ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+			ORDER BY psp.Child_DisplayOrder ASC, psp.SportType ASC, psp.BetType ASC
 		END
 	ELSE IF @RoleID = 1 AND @AgentID = -3 --Master Direct Member
 		SELECT
@@ -358,7 +358,7 @@ BEGIN
 			INNER JOIN dbo.BetSetting_Agent Sbl WITH (NOLOCK) ON psp.SportType = Sbl.sporttype AND psp.BetType = Sbl.bettype
 			INNER JOIN dbo.BetSetting_Agent Mbl WITH (NOLOCK) ON psp.SportType = Mbl.sporttype AND psp.BetType = Mbl.bettype
 		WHERE bl.CustID = @CustID AND Sbl.CustID = @SuperID AND Mbl.CustID = @MasterID
-		ORDER BY psp.Child_DisplayOrder , psp.SportType , psp.BetType
+		ORDER BY psp.Child_DisplayOrder ASC, psp.SportType ASC, psp.BetType ASC
 
 	DROP TABLE #ProductSettingProfile
 END
