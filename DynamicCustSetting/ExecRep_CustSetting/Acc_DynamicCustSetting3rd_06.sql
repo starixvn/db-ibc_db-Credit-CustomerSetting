@@ -255,8 +255,8 @@ BEGIN
 				dcmem.PlayerDiscount = @PlayerDiscount,
 				dcmem.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch ci 
-				CROSS APPLY (SELECT TOP 1 sporttype, bettype, SuperDiscount, MasterDiscount, AgentDiscount, PlayerDiscount, RepUpdateTime FROM dbo.CustDiscount3rd_Member WITH(ROWLOCK, UPDLOCK) WHERE custid = ci.custid) dcmem
-				INNER JOIN @NewDiscountTbl fil ON dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
+				CROSS JOIN @NewDiscountTbl fil
+				CROSS APPLY (SELECT TOP 1 sporttype, bettype, SuperDiscount, MasterDiscount, AgentDiscount, PlayerDiscount, RepUpdateTime FROM dbo.CustDiscount3rd_Member WITH(ROWLOCK, UPDLOCK) WHERE custid = ci.custid AND sporttype = fil.sporttype AND bettype = fil.bettype) dcmem
 				INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@CustID
 		END
 		ELSE IF @RoleID = 3
@@ -281,8 +281,8 @@ BEGIN
 				dcmem.PlayerDiscount = @PlayerDiscount,
 				dcmem.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch ci WITH(NOLOCK)
-				CROSS APPLY (SELECT TOP 1 sporttype, bettype, SuperDiscount, MasterDiscount, AgentDiscount, PlayerDiscount, RepUpdateTime FROM dbo.CustDiscount3rd_Member WITH(ROWLOCK, UPDLOCK) WHERE custid = ci.custid) dcmem
-				INNER JOIN @NewDiscountTbl fil ON dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
+				CROSS JOIN @NewDiscountTbl fil 
+				CROSS APPLY (SELECT TOP 1 sporttype, bettype, SuperDiscount, MasterDiscount, AgentDiscount, PlayerDiscount, RepUpdateTime FROM dbo.CustDiscount3rd_Member WITH(ROWLOCK, UPDLOCK) WHERE custid = ci.custid AND sporttype = fil.sporttype AND bettype = fil.bettype) dcmem
 				INNER JOIN dbo.CustDiscount3rd_Agent dcm WITH(NOLOCK) ON dcm.sporttype = dcmem.sporttype AND dcm.bettype = dcmem.bettype AND dcm.custid=@CustID
 				INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
 		END
@@ -305,8 +305,8 @@ BEGIN
 				dcmem.PlayerDiscount = @PlayerDiscount,
 				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch ci WITH(NOLOCK)
-				CROSS APPLY (SELECT TOP 1 sporttype, bettype, SuperDiscount, MasterDiscount, AgentDiscount, PlayerDiscount, RepUpdateTime FROM dbo.CustDiscount3rd_Member WITH(ROWLOCK, UPDLOCK) WHERE custid = ci.custid) dcmem
-				INNER JOIN @NewDiscountTbl fil ON dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
+				CROSS JOIN @NewDiscountTbl fil
+				CROSS APPLY (SELECT TOP 1 sporttype, bettype, SuperDiscount, MasterDiscount, AgentDiscount, PlayerDiscount, RepUpdateTime FROM dbo.CustDiscount3rd_Member WITH(ROWLOCK, UPDLOCK) WHERE custid = ci.custid AND sporttype = fil.sporttype AND bettype = fil.bettype) dcmem
 				INNER JOIN dbo.CustDiscount3rd_Agent dca WITH(NOLOCK) ON dca.sporttype = dcmem.sporttype AND dca.bettype = dcmem.bettype AND dca.custid=@CustID
 				INNER JOIN dbo.CustDiscount3rd_Agent dcm WITH(NOLOCK) ON dcm.sporttype = dcmem.sporttype AND dcm.bettype = dcmem.bettype AND dcm.custid=@MasterID
 				INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
