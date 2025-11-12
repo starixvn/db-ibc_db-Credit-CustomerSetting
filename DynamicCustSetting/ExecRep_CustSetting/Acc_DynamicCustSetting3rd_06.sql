@@ -241,7 +241,7 @@ BEGIN
 		OUTPUT deleted.custid ,DELETED.Recommend, fil.sporttype, fil.bettype, fil.Discount 
 		INTO #MemberTmpBatch(custid ,Recommend, sporttype, bettype, Discount)
 		FROM #Member a
-			CROSS JOIN #NewDiscountTbl fil
+			CROSS JOIN @NewDiscountTbl fil
 
 		IF @@ROWCOUNT = 0 
 			BREAK
