@@ -58,7 +58,7 @@ BEGIN
 	
 	EXEC sp_xml_preparedocument @iDoc OUTPUT, @Discount_XML	
 	
-	INSERT @NewDiscountTbl
+	INSERT @NewDiscountTbl (SportType, BetType, Discount)
 	SELECT SportType,BetType,CAST(Discount AS DECIMAL(9,8)) AS Discount
 	FROM OPENXML (@iDoc, '/ROOT/Discount',1) 
 	WITH(SportType smallint, BetType smallint, Discount VARCHAR(15))	
