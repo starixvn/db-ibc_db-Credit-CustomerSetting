@@ -269,7 +269,7 @@ BEGIN
 				dcmem.PlayerDiscount = @PlayerDiscount,
 				dcmem.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch ci 
-				INNER JOIN dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK) ON dcmem.custid = ci.custid AND dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
+				INNER JOIN dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK) ON dcmem.custid = ci.custid AND dcmem.sporttype = ci.sporttype AND dcmem.bettype = ci.bettype
 				INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@CustID
 		END
 		ELSE IF @RoleID = 3
@@ -294,7 +294,7 @@ BEGIN
 				dcmem.PlayerDiscount = @PlayerDiscount,
 				dcmem.RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch ci 
-				INNER JOIN dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK) ON dcmem.custid = ci.custid AND dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
+				INNER JOIN dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK) ON dcmem.custid = ci.custid AND dcmem.sporttype = ci.sporttype AND dcmem.bettype = ci.bettype
 				INNER JOIN dbo.CustDiscount3rd_Agent dcm WITH(NOLOCK) ON dcm.sporttype = dcmem.sporttype AND dcm.bettype = dcmem.bettype AND dcm.custid=@CustID
 				INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
 		END
@@ -317,7 +317,7 @@ BEGIN
 				dcmem.PlayerDiscount = @PlayerDiscount,
 				RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #MemberTmpBatch ci 
-				INNER JOIN dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK) ON dcmem.custid = ci.custid AND dcmem.sporttype = fil.sporttype AND dcmem.bettype = fil.bettype
+				INNER JOIN dbo.CustDiscount3rd_Member dcmem WITH(ROWLOCK, UPDLOCK) ON dcmem.custid = ci.custid AND dcmem.sporttype = ci.sporttype AND dcmem.bettype = ci.bettype
 				INNER JOIN dbo.CustDiscount3rd_Agent dca WITH(NOLOCK) ON dca.sporttype = dcmem.sporttype AND dca.bettype = dcmem.bettype AND dca.custid=@CustID
 				INNER JOIN dbo.CustDiscount3rd_Agent dcm WITH(NOLOCK) ON dcm.sporttype = dcmem.sporttype AND dcm.bettype = dcmem.bettype AND dcm.custid=@MasterID
 				INNER JOIN dbo.CustDiscount3rd_Agent dcs WITH(NOLOCK) ON dcs.sporttype = dcmem.sporttype AND dcs.bettype = dcmem.bettype AND dcs.custid=@SuperID
