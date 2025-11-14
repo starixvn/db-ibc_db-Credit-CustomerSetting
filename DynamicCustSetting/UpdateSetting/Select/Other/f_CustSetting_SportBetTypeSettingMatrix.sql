@@ -1,16 +1,17 @@
-﻿/*<info serverAlias="DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB" selecters="wsv_xnap" viewers="" isFunction="1"></info>*/
+﻿/*<info serverAlias="DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB,DBTP-bodb02" selecters="wsv_xnap,wsv_nap,wsv_alp,wsv_alpv" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION dbo.f_CustSetting_SportBetTypeSettingMatrix ( @SettingStatus TINYINT )
 RETURNS TABLE AS
 /*      
 	Created by: Helios      
 	Date: 20240314      
 	Task: Get data SportBetTypeSettingMatrix    
-	DB: DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB    
+	DB: DBCUST-CustDB,DBAGE-bodb02,DBACC-bodb02,DBTXN-CustDB,DBTP-bodb02
 	Original:       
 		         
 	Revisions:      
 	- 20240314@Helios: Unify Live RNG Casino [Redmine: #198960]
 	- 20240521@Helios: Unify RNG Games [Redmine: #204358]
+	- 20251023@Dave: Live Casino - Adjust-pt-comm-for-live-casino [RedmineID: #242260]
 
 	Explanation's Param:      
 	@SettingStatus: 0: Pro, 1: UAT      
@@ -42,3 +43,29 @@ RETURN
 		, sbsm.isDeleted
 	FROM SportBettypeSettingMatrix sbsm WITH (NOLOCK)
 	WHERE sbsm.isDeleted = 0
+	AND @SettingStatus = 0
+
+	UNION ALL
+	--UAT Mode
+	SELECT
+		  sbsm.RealProductId
+		, sbsm.ProductID
+		, sbsm.SportType
+		, sbsm.BetType
+		, sbsm.isLicensee
+		, sbsm.isLive
+		, sbsm.Site
+		, sbsm.isActive
+		, sbsm.SportTypeRefPT
+		, sbsm.BetTypeRefPT
+		, sbsm.SportTypeRefComm
+		, sbsm.BetTypeRefComm
+		, sbsm.SportTypeRefBetSetting
+		, sbsm.BetTypeRefBetSetting
+		, sbsm.SporttypeRefWinlossLimit
+		, sbsm.BettypeRefWinlossLimit
+		, sbsm.isDeleted
+	FROM SportBettypeSettingMatrix_UAT sbsm WITH (NOLOCK)
+	WHERE sbsm.isDeleted = 0
+	AND @SettingStatus >= 1
+
