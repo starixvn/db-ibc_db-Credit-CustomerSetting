@@ -15,6 +15,7 @@ AS
 		- 20211014@Johnson: Initial sp [redmine:#161351]
 		- 20220803@Tacy: Add ActionID 1189; 1190 [RedmineID: #175857]
 		- 20221110@Tacy: Add ActionID 1191-1196, remove 1187,1188 [RedmineId: #179078]
+		- 20251126@Winfred: Risk Control Upgrade SportType DataType [RedmineId: #245209]
 
     Param's Explaination:    	
 		- @UserID: UserId perform this action
@@ -38,7 +39,7 @@ BEGIN
 
 	CREATE TABLE #tblCustLog(
 				custid			INT, 
-				sporttype		TINYINT, 
+				sporttype		SMALLINT, 
 				NewFlag			BIT,
 				OldFlag			BIT, 
 				NewLevel		TINYINT, 
@@ -51,7 +52,7 @@ BEGIN
 	BEGIN
 		INSERT INTO #tblCustLog(custid,SportType)
 		SELECT	t.c.value('@CustID[1]','int'),
-				t.c.value('@SportType[1]','tinyint')
+				t.c.value('@SportType[1]','SMALLINT')
 		FROM @xml.nodes('Root/r')as t(c)
 		
 		;WITH Tmp AS (
@@ -76,7 +77,7 @@ BEGIN
 	BEGIN
 		INSERT INTO #tblCustLog(custid,SportType)
 		SELECT	t.c.value('@CustID[1]','int'),
-				t.c.value('@SportType[1]','tinyint')
+				t.c.value('@SportType[1]','SMALLINT')
 		FROM @xml.nodes('Root/r')as t(c)
 		OPTION (OPTIMIZE FOR (@xml = NULL))
 
@@ -102,7 +103,7 @@ BEGIN
 	BEGIN		
 		INSERT INTO #tblCustLog(custid,SportType,newlevel,oldlevel,Winloss,IsUpdatedByPA)
 		SELECT t.c.value('@id[1]','int'),
-				t.c.value('@sport[1]','tinyint'),
+				t.c.value('@sport[1]','SMALLINT'),
 				t.c.value('@newlevel[1]','tinyint'),
 				t.c.value('@oldlevel[1]','tinyint'),
 				CASE WHEN ISNUMERIC(t.c.value('@wl[1]','varchar(10)'))=0 THEN NULL ELSE t.c.value('@wl[1]','money') END,
@@ -156,7 +157,7 @@ BEGIN
 	BEGIN
 		INSERT INTO #tblCustLog(custid,SportType,newflag,oldflag,newlevel,oldlevel)
 		SELECT t.c.value('@id[1]','int'),
-				t.c.value('@sport[1]','tinyint'),
+				t.c.value('@sport[1]','SMALLINT'),
 				t.c.value('@newflag[1]','bit'),
 				t.c.value('@oldflag[1]','bit'),
 				t.c.value('@newlevel[1]','tinyint'),

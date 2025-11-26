@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20220802@Tacy: Create SP
 		- 20221110@Tacy: LAP - Support Danger Level report, modify ActionID writelog [RedmineID: #179078]
+		- 20251126@Winfred: Risk Control Upgrade SportType DataType [RedmineId: #245209]
 	Parameter's Explanation:		
 		- @CustList  =  '<Root>
 							<r CustID="100" SportType="1" Action="1"/>
@@ -28,7 +29,7 @@ BEGIN
 
 	CREATE TABLE #tblCustOld (
 			CustID		INT
-		,	SportType	TINYINT
+		,	SportType	SMALLINT
 		,	CreateDate	DATETIME
 		,	RemoveDate	DATETIME
 		,	Action		SMALLINT	
@@ -45,7 +46,7 @@ BEGIN
 
 	CREATE TABLE #tblCustList (
 			CustID		INT
-		,	SportType	TINYINT
+		,	SportType	SMALLINT
 		,	Action		SMALLINT	
 		,	PRIMARY KEY CLUSTERED (CustID, SportType)
 	)
@@ -81,7 +82,7 @@ BEGIN
 	SELECT CustID, SportType, Action
 	FROM OPENXML(@iDoc, '/Root/r', 1) WITH (
 			CustID		INT
-		,	SportType	TINYINT
+		,	SportType	SMALLINT
 		,	Action		SMALLINT
 	)
 	
